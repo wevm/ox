@@ -20,6 +20,9 @@ jobs:
 
       - name: Lint code
         run: pnpm lint
+
+      - name: Lint JSDoc
+        run: pnpm lint:jsdoc
       
       - uses: stefanzweifel/git-auto-commit-action@v5
         env:

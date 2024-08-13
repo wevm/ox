@@ -10,6 +10,24 @@ export type ConcatErrorType =
   | ConcatHexErrorType
   | ErrorType
 
+/**
+ * Concatenates two or more {@link Bytes} or {@link Hex}.
+ *
+ * @example
+ * ```ts
+ * import { Data } from 'ox'
+ * const bytes = Data.concat(
+ *   Uint8Array.from([1, 2, 3]),
+ *   Uint8Array.from([4, 5, 6])
+ * )
+ * ```
+ *
+ * @example
+ * ```ts
+ * import { Data } from 'ox'
+ * const hex = Data.concat('0x1234', '0x5678')
+ * ```
+ */
 export function concat<value extends Hex | Bytes>(
   ...values: readonly value[]
 ): ConcatReturnType<value> {
