@@ -1,0 +1,42 @@
+{
+  "name": "stdeth",
+  "description": "Ethereum Standard Library",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./_cjs/index.js",
+  "module": "./_esm/index.js",
+  "types": "./_esm/index.d.ts",
+  "typings": "./_esm/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "*",
+    "!**/*.bench.ts",
+    "!**/*.bench-d.ts",
+    "!**/*.test.ts",
+    "!**/*.test.ts.snap",
+    "!**/*.test-d.ts",
+    "!**/*.tsbuildinfo",
+    "!tsconfig.build.json",
+    "!jsr.json"
+  ],
+  "dependencies": {},
+  "peerDependencies": {
+    "typescript": ">=5.4.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "license": "MIT",
+  "homepage": "https://wevm.dev",
+  "repository": "wevm/stdeth",
+  "authors": ["awkweb", "jxom"],
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/wevm"
+    }
+  ],
+  "keywords": ["ethereum", "standard", "library", "typescript", "evm"]
+}

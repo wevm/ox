@@ -1,0 +1,13 @@
+{
+  // This configuration is used for local development and type checking.
+  "extends": "./tsconfig.base.json",
+  "include": [".scripts", "src", "test"],
+  "exclude": [],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~test/*": ["./test/*"],
+      "stdeth": ["src/index.ts"]
+    }
+  }
+}

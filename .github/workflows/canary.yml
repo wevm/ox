@@ -1,0 +1,35 @@
+name: Release (Canary)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  canary:
+    name: Release canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        uses: wevm/actions/.github/actions/pnpm@main
+        with: 
+          node-version: 22
+
+      - name: Setup .npmrc file
+        uses: actions/setup-node@v4
+        with:
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm
+        run: | 
+          cd src && pnpm version $(npm pkg get version | sed 's/"//g')-$(date +'%Y%m%dT%H%M%S') && cd ../ 
+          pnpm update-version
+          pnpm prepublish
+          pnpm build
+          cd src && pnpm publish --no-git-checks --provenance false && cd ../
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
