@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     alias: {
-      stdeth: join(__dirname, '../src'),
+      ox: join(__dirname, '../src'),
       '~test': join(__dirname, '../test/src'),
     },
     benchmark: {

@@ -1,10 +1,10 @@
 import * as ethjs from '@ethereumjs/util'
 import * as ethers from 'ethers'
-import { Data } from 'stdeth'
+import { Data } from 'ox'
 import { bench, describe } from 'vitest'
 
 describe('concat (bytes)', () => {
-  bench('stdeth', () => {
+  bench('ox', () => {
     Data.concat(
       Data.randomBytes(64),
       Data.randomBytes(64),
@@ -34,7 +34,7 @@ describe('concat (bytes)', () => {
 
 // TODO: random hex
 describe('concat (hex)', () => {
-  bench('stdeth', () => {
+  bench('ox', () => {
     Data.concat(
       '0xdeadbeefdeadbeefdeadbeef',
       '0xdeadbeefdeadbeefdeadbeef',

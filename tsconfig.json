@@ -7,7 +7,7 @@
     "baseUrl": ".",
     "paths": {
       "~test/*": ["./test/*"],
-      "stdeth": ["src/index.ts"]
+      "ox": ["src/index.ts"]
     }
   }
 }

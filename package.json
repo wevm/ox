@@ -1,5 +1,5 @@
 {
-  "name": "stdeth",
+  "name": "ox",
   "type": "module",
   "scripts": {
     "bench": "vitest -c ./test/vitest.config.ts bench",

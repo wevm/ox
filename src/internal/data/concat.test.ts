@@ -1,4 +1,4 @@
-import { Data } from 'stdeth'
+import { Data } from 'ox'
 import { expect, test } from 'vitest'
 
 test('default', () => {

@@ -1,5 +1,5 @@
 {
-  "name": "stdeth",
+  "name": "ox",
   "description": "Ethereum Standard Library",
   "version": "0.0.0",
   "type": "module",
@@ -30,7 +30,7 @@
   },
   "license": "MIT",
   "homepage": "https://wevm.dev",
-  "repository": "wevm/stdeth",
+  "repository": "wevm/ox",
   "authors": ["awkweb", "jxom"],
   "funding": [
     {
