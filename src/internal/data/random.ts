@@ -1,10 +1,16 @@
-import type { ErrorType } from '../errors/Error.js'
+import type { ErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 export type RandomBytesErrorType = ErrorType
 
 /**
  * Generates a random byte array of the specified length.
+ *
+ * @example
+ * ```ts
+ * import { Bytes } from 'ox'
+ * const bytes = Bytes.random(32)
+ * ```
  *
  * @example
  * ```ts

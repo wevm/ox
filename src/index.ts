@@ -1,3 +1,6 @@
+export * as Bytes from './Bytes.js'
 export * as Data from './Data.js'
 export * as Errors from './Errors.js'
+export * as Hex from './Hex.js'
+export * as Rlp from './Rlp.js'
 export * as Types from './Types.js'

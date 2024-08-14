@@ -19,7 +19,10 @@
     "!tsconfig.build.json",
     "!jsr.json"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "@noble/curves": "1.5.0",
+    "@noble/hashes": "1.4.0"
+  },
   "peerDependencies": {
     "typescript": ">=5.4.0"
   },

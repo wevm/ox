@@ -1,13 +1,14 @@
+import { Errors } from 'ox'
 import { afterAll, beforeAll, vi } from 'vitest'
 
 beforeAll(() => {
-  vi.stubGlobal('window', {
-    location: {
-      hostname: 'https://example.com',
+  Errors.setErrorConfig({
+    getDocsUrl({ docsBaseUrl, docsPath }) {
+      return docsPath
+        ? `${docsBaseUrl ?? 'https://oxlib.sh'}${docsPath}`
+        : undefined
     },
-    document: {
-      title: 'My Website',
-    },
+    version: 'ox@x.y.z',
   })
 })
 

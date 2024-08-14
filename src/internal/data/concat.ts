@@ -1,4 +1,4 @@
-import type { ErrorType } from '../errors/Error.js'
+import type { ErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 export type ConcatReturnType<value extends Hex | Bytes> = value extends Hex
@@ -61,8 +61,5 @@ type ConcatHexErrorType = ErrorType
 
 /** @internal */
 function concatHex(...values: readonly Hex[]): Hex {
-  return `0x${(values as Hex[]).reduce(
-    (acc, x) => acc + x.replace('0x', ''),
-    '',
-  )}`
+  return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
 }
