@@ -1,5 +1,6 @@
 {
   "name": "ox",
+  "private": true,
   "type": "module",
   "scripts": {
     "bench": "vitest -c ./test/vitest.config.ts bench",
@@ -44,6 +45,7 @@
     "fs-extra": "^11.2.0",
     "knip": "^5.27.2",
     "rimraf": "^5.0.10",
+    "sherif": "^0.11.0",
     "simple-git-hooks": "^2.11.1",
     "size-limit": "^11.1.4",
     "tsx": "^4.17.0",
@@ -86,9 +88,24 @@
       "import": "*"
     },
     {
+      "name": "import { Bytes } from 'ox';\n  console.log(Bytes.from)",
+      "path": "./src/_esm/index.js",
+      "import": "{ Bytes.from }"
+    },
+    {
       "name": "import { Data } from 'ox';\n  console.log(Data.concat)",
       "path": "./src/_esm/index.js",
       "import": "{ Data.concat }"
+    },
+    {
+      "name": "import { Hex } from 'ox';\n  console.log(Hex.from)",
+      "path": "./src/_esm/index.js",
+      "import": "{ Hex.from }"
+    },
+    {
+      "name": "import { Rlp } from 'ox';\n  console.log(Rlp.encode)",
+      "path": "./src/_esm/index.js",
+      "import": "{ Rlp.encode }"
     }
   ],
   "pnpm": {
