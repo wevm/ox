@@ -14,6 +14,8 @@
     "clean": "rimraf src/_esm src/_cjs ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
     "deps": "pnpx taze -r",
     "dev": "pnpm preconstruct && pnpm playground",
+    "docs:dev": "pnpm --filter site dev",
+    "docs:build": "pnpm --filter site build",
     "knip": "knip --production",
     "lint": "biome check . --fix --unsafe",
     "lint:jsdoc": "eslint src -c jsdoc.config.js",
