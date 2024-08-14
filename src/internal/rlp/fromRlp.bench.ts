@@ -17,7 +17,7 @@ const generateList = (length: number) => {
 }
 
 describe('rlp: prefix === 0xb8', () => {
-  const bytes = Rlp.from(generateBytes(255))
+  const bytes = Rlp.encode(generateBytes(255))
 
   bench('ox: `Rlp.to`', () => {
     fromRlp(bytes)
@@ -33,7 +33,7 @@ describe('rlp: prefix === 0xb8', () => {
 })
 
 describe('rlp: prefix === 0xb9', () => {
-  const bytes = Rlp.from(generateBytes(65_535))
+  const bytes = Rlp.encode(generateBytes(65_535))
 
   bench('ox: `Rlp.to`', () => {
     fromRlp(bytes)
@@ -49,7 +49,7 @@ describe('rlp: prefix === 0xb9', () => {
 })
 
 describe('rlp: prefix === 0xba', () => {
-  const bytes = Rlp.from(generateBytes(16_777_215))
+  const bytes = Rlp.encode(generateBytes(16_777_215))
 
   bench('ox: `Rlp.to`', () => {
     fromRlp(bytes)
@@ -65,7 +65,7 @@ describe('rlp: prefix === 0xba', () => {
 })
 
 describe('rlp list: prefix === 0xf8', () => {
-  const list = Rlp.from(generateList(60))
+  const list = Rlp.encode(generateList(60))
 
   bench('ox: `Rlp.to`', () => {
     fromRlp(list)
@@ -81,7 +81,7 @@ describe('rlp list: prefix === 0xf8', () => {
 })
 
 describe('rlp list: prefix === 0xf8 (recursive)', () => {
-  const list = Rlp.from([
+  const list = Rlp.encode([
     generateList(4),
     [generateList(8), [generateList(3), generateBytes(1)]],
     [
@@ -108,7 +108,7 @@ describe('rlp list: prefix === 0xf8 (recursive)', () => {
 })
 
 describe('rlp: tx (2048kB - prefix: 0xfa)', () => {
-  const list = Rlp.from([
+  const list = Rlp.encode([
     generateBytes(1),
     generateBytes(4),
     generateBytes(8),

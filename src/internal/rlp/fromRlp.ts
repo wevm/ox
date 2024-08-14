@@ -32,7 +32,7 @@ export type FromRlpErrorType =
  *
  * @example
  * import { Rlp } from 'ox'
- * Rlp.to('0x8b68656c6c6f20776f726c64')
+ * Rlp.decode('0x8b68656c6c6f20776f726c64')
  * // 0x68656c6c6f20776f726c64
  */
 export function fromRlp<
