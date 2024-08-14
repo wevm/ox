@@ -1,4 +1,10 @@
 export {
+  type ConcatErrorType,
+  type ConcatReturnType,
+  concat,
+} from './internal/data/concat.js'
+
+export {
   type IsBytesErrorType,
   isBytes,
 } from './internal/data/isBytes.js'

@@ -75,7 +75,7 @@ export function fromHex<to extends To>(
   if (to === 'bigint') return hexToBigInt(hex, options) as FromHexReturnType<to>
   if (to === 'string') return hexToString(hex, options) as FromHexReturnType<to>
   if (to === 'boolean')
-    return HexToBoolean(hex, options) as FromHexReturnType<to>
+    return hexToBoolean(hex, options) as FromHexReturnType<to>
   if (to === 'bytes') return hexToBytes(hex, options) as FromHexReturnType<to>
   throw new InvalidTypeError(to)
 }
@@ -144,7 +144,7 @@ export type HexToBooleanErrorType =
  * Hex.toBoolean('0x0000000000000000000000000000000000000000000000000000000000000001', { size: 32 })
  * // true
  */
-export function HexToBoolean(
+export function hexToBoolean(
   hex_: Hex,
   options: HexToBooleanOptions = {},
 ): boolean {

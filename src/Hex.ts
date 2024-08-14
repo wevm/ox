@@ -1,4 +1,10 @@
 export {
+  type ConcatErrorType,
+  type ConcatReturnType,
+  concat,
+} from './internal/data/concat.js'
+
+export {
   type IsHexErrorType,
   isHex,
 } from './internal/data/isHex.js'
@@ -52,8 +58,8 @@ export {
   fromHex as to,
   hexToBigInt,
   hexToBigInt as toBigInt,
-  HexToBoolean,
-  HexToBoolean as toBoolean,
+  hexToBoolean,
+  hexToBoolean as toBoolean,
   hexToNumber,
   hexToNumber as toNumber,
   hexToString,
