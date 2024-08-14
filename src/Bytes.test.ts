@@ -4,6 +4,7 @@ import * as exports from './Bytes.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "concat",
       "isBytes",
       "isEqual",
       "padLeft",
@@ -24,8 +25,8 @@ test('exports', () => {
       "toNumber",
       "bytesToString",
       "toString",
-      "boolToBytes",
-      "fromBool",
+      "booleanToBytes",
+      "fromBoolean",
       "hexToBytes",
       "fromHex",
       "numberToBytes",

@@ -26,7 +26,7 @@ export type ToBytesErrorType =
   | InvalidTypeErrorType
   | IsBytesErrorType
   | NumberToBytesErrorType
-  | BoolToBytesErrorType
+  | BooleanToBytesErrorType
   | HexToBytesErrorType
   | StringToBytesErrorType
   | IsHexErrorType
@@ -56,19 +56,19 @@ export function toBytes(
 ): Bytes {
   if (isBytes(value)) return value
   if (isHex(value)) return hexToBytes(value, options)
-  if (typeof value === 'boolean') return boolToBytes(value, options)
+  if (typeof value === 'boolean') return booleanToBytes(value, options)
   if (typeof value === 'string') return stringToBytes(value, options)
   if (typeof value === 'number' || typeof value === 'bigint')
     return numberToBytes(value, options)
   throw new InvalidTypeError(typeof value)
 }
 
-export type BoolToBytesOptions = {
+export type BooleanToBytesOptions = {
   /** Size of the output bytes. */
   size?: number | undefined
 }
 
-export type BoolToBytesErrorType =
+export type BooleanToBytesErrorType =
   | AssertSizeErrorType
   | PadLeftErrorType
   | ErrorType
@@ -78,15 +78,18 @@ export type BoolToBytesErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * const data = Bytes.fromBool(true)
+ * const data = Bytes.fromBoolean(true)
  * // Uint8Array([1])
  *
  * @example
  * import { Bytes } from 'ox'
- * const data = Bytes.fromBool(true, { size: 32 })
+ * const data = Bytes.fromBoolean(true, { size: 32 })
  * // Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
  */
-export function boolToBytes(value: boolean, options: BoolToBytesOptions = {}) {
+export function booleanToBytes(
+  value: boolean,
+  options: BooleanToBytesOptions = {},
+) {
   const { size } = options
   const bytes = new Uint8Array(1)
   bytes[0] = Number(value)

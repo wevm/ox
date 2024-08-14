@@ -26,7 +26,7 @@ export type ToHexParameters = {
 }
 
 export type ToHexErrorType =
-  | BoolToHexErrorType
+  | BooleanToHexErrorType
   | BytesToHexErrorType
   | IsHexErrorType
   | InvalidTypeErrorType
@@ -61,16 +61,16 @@ export function toHex(
   if (typeof value === 'number' || typeof value === 'bigint')
     return numberToHex(value, options)
   if (typeof value === 'string') return stringToHex(value, options)
-  if (typeof value === 'boolean') return boolToHex(value, options)
+  if (typeof value === 'boolean') return booleanToHex(value, options)
   throw new InvalidTypeError(typeof value)
 }
 
-export type BoolToHexOptions = {
+export type BooleanToHexOptions = {
   /** The size (in bytes) of the output hex value. */
   size?: number | undefined
 }
 
-export type BoolToHexErrorType =
+export type BooleanToHexErrorType =
   | AssertSizeErrorType
   | PadLeftErrorType
   | ErrorType
@@ -80,20 +80,23 @@ export type BoolToHexErrorType =
  *
  * @example
  * import { Hex } from 'ox'
- * Hex.fromBool(true)
+ * Hex.fromBoolean(true)
  * // '0x1'
  *
  * @example
  * import { Hex } from 'ox'
- * Hex.fromBool(false)
+ * Hex.fromBoolean(false)
  * // '0x0'
  *
  * @example
  * import { Hex } from 'ox'
- * Hex.fromBool(true, { size: 32 })
+ * Hex.fromBoolean(true, { size: 32 })
  * // '0x0000000000000000000000000000000000000000000000000000000000000001'
  */
-export function boolToHex(value: boolean, options: BoolToHexOptions = {}): Hex {
+export function booleanToHex(
+  value: boolean,
+  options: BooleanToHexOptions = {},
+): Hex {
   const hex: Hex = `0x${Number(value)}`
   if (typeof options.size === 'number') {
     assertSize(hex, options.size)

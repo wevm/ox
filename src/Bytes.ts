@@ -73,8 +73,8 @@ export {
 } from './internal/bytes/fromBytes.js'
 
 export {
-  type BoolToBytesErrorType,
-  type BoolToBytesOptions,
+  type BooleanToBytesErrorType,
+  type BooleanToBytesOptions,
   type HexToBytesErrorType,
   type HexToBytesOptions,
   type NumberToBytesErrorType,
@@ -82,8 +82,8 @@ export {
   type StringToBytesOptions,
   type ToBytesErrorType,
   type ToBytesOptions,
-  boolToBytes,
-  boolToBytes as fromBool,
+  booleanToBytes,
+  booleanToBytes as fromBoolean,
   hexToBytes,
   hexToBytes as fromHex,
   numberToBytes,

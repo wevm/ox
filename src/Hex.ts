@@ -74,8 +74,8 @@ export {
 } from './internal/bytes/toBytes.js'
 
 export {
-  type BoolToHexErrorType,
-  type BoolToHexOptions,
+  type BooleanToHexErrorType,
+  type BooleanToHexOptions,
   type BytesToHexErrorType,
   type BytesToHexOptions,
   type NumberToHexErrorType,
@@ -84,8 +84,8 @@ export {
   type StringToHexOptions,
   type ToHexErrorType,
   type ToHexParameters,
-  boolToHex,
-  boolToHex as fromBool,
+  booleanToHex,
+  booleanToHex as fromBoolean,
   bytesToHex,
   bytesToHex as fromBytes,
   numberToHex,

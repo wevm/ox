@@ -241,8 +241,8 @@ describe('boolean to hex', () => {
     expect(Hex.from(true)).toMatchInlineSnapshot('"0x1"')
     expect(Hex.from(false)).toMatchInlineSnapshot('"0x0"')
 
-    expect(Hex.fromBool(true)).toMatchInlineSnapshot('"0x1"')
-    expect(Hex.fromBool(false)).toMatchInlineSnapshot('"0x0"')
+    expect(Hex.fromBoolean(true)).toMatchInlineSnapshot('"0x1"')
+    expect(Hex.fromBoolean(false)).toMatchInlineSnapshot('"0x0"')
   })
 
   test('args: size', () => {
@@ -252,10 +252,10 @@ describe('boolean to hex', () => {
     expect(Hex.from(true, { size: 32 })).toMatchInlineSnapshot(
       '"0x0000000000000000000000000000000000000000000000000000000000000001"',
     )
-    expect(Hex.fromBool(false, { size: 16 })).toMatchInlineSnapshot(
+    expect(Hex.fromBoolean(false, { size: 16 })).toMatchInlineSnapshot(
       '"0x00000000000000000000000000000000"',
     )
-    expect(Hex.fromBool(false, { size: 32 })).toMatchInlineSnapshot(
+    expect(Hex.fromBoolean(false, { size: 32 })).toMatchInlineSnapshot(
       '"0x0000000000000000000000000000000000000000000000000000000000000000"',
     )
   })
@@ -271,7 +271,7 @@ describe('boolean to hex', () => {
     `,
     )
     expect(() =>
-      Hex.fromBool(false, { size: 0 }),
+      Hex.fromBoolean(false, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(`
       [SizeOverflowError: Size cannot exceed 0 bytes. Given size: 1 bytes.
 

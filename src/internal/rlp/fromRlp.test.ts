@@ -50,10 +50,10 @@ describe('prefix < 0x80', () => {
     expect(Rlp.decode(Rlp.fromBytes(Bytes.fromString('~')))).toEqual(
       Bytes.fromHex('0x7e'),
     )
-    expect(Rlp.decode(Rlp.fromBytes(Bytes.fromBool(true)))).toEqual(
+    expect(Rlp.decode(Rlp.fromBytes(Bytes.fromBoolean(true)))).toEqual(
       Bytes.fromHex('0x01'),
     )
-    expect(Rlp.decode(Rlp.fromBytes(Bytes.fromBool(false)))).toEqual(
+    expect(Rlp.decode(Rlp.fromBytes(Bytes.fromBoolean(false)))).toEqual(
       Bytes.fromHex('0x00'),
     )
     expect(Rlp.decode(Rlp.fromBytes(Bytes.fromNumber(0)))).toEqual(
@@ -75,8 +75,12 @@ describe('prefix < 0x80', () => {
     expect(Rlp.decode(Rlp.encode(Bytes.fromString('!'), 'hex'))).toEqual('0x21')
     expect(Rlp.decode(Rlp.encode(Bytes.fromString('a'), 'hex'))).toEqual('0x61')
     expect(Rlp.decode(Rlp.encode(Bytes.fromString('~'), 'hex'))).toEqual('0x7e')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromBool(true), 'hex'))).toEqual('0x01')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromBool(false), 'hex'))).toEqual('0x00')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromBoolean(true), 'hex'))).toEqual(
+      '0x01',
+    )
+    expect(Rlp.decode(Rlp.encode(Bytes.fromBoolean(false), 'hex'))).toEqual(
+      '0x00',
+    )
     expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(0), 'hex'))).toEqual('0x00')
     expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(69), 'hex'))).toEqual('0x45')
     expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(127), 'hex'))).toEqual('0x7f')
@@ -90,8 +94,8 @@ describe('prefix < 0x80', () => {
     expect(Rlp.decode(Rlp.fromHex(Hex.fromString('!')))).toEqual('0x21')
     expect(Rlp.decode(Rlp.fromHex(Hex.fromString('a')))).toEqual('0x61')
     expect(Rlp.decode(Rlp.fromHex(Hex.fromString('~')))).toEqual('0x7e')
-    expect(Rlp.decode(Rlp.fromHex(Hex.fromBool(true)))).toEqual('0x01')
-    expect(Rlp.decode(Rlp.fromHex(Hex.fromBool(false)))).toEqual('0x00')
+    expect(Rlp.decode(Rlp.fromHex(Hex.fromBoolean(true)))).toEqual('0x01')
+    expect(Rlp.decode(Rlp.fromHex(Hex.fromBoolean(false)))).toEqual('0x00')
     expect(Rlp.decode(Rlp.fromHex(Hex.fromNumber(0)))).toEqual('0x00')
     expect(Rlp.decode(Rlp.fromHex(Hex.fromNumber(69)))).toEqual('0x45')
     expect(Rlp.decode(Rlp.fromHex(Hex.fromNumber(127)))).toEqual('0x7f')
@@ -119,10 +123,10 @@ describe('prefix < 0x80', () => {
     expect(Rlp.decode(Rlp.encode(Hex.fromString('~'), 'bytes'))).toEqual(
       Bytes.fromHex('0x7e'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromBool(true), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromBoolean(true), 'bytes'))).toEqual(
       Bytes.fromHex('0x01'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromBool(false), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromBoolean(false), 'bytes'))).toEqual(
       Bytes.fromHex('0x00'),
     )
     expect(Rlp.decode(Rlp.encode(Hex.fromNumber(0), 'bytes'))).toEqual(

@@ -614,12 +614,12 @@ describe('boolean to bytes', () => {
       ]
     `)
 
-    expect(Bytes.fromBool(true)).toMatchInlineSnapshot(`
+    expect(Bytes.fromBoolean(true)).toMatchInlineSnapshot(`
       Uint8Array [
         1,
       ]
     `)
-    expect(Bytes.fromBool(false)).toMatchInlineSnapshot(`
+    expect(Bytes.fromBoolean(false)).toMatchInlineSnapshot(`
       Uint8Array [
         0,
       ]
@@ -687,7 +687,7 @@ describe('boolean to bytes', () => {
       ]
     `,
     )
-    expect(Bytes.fromBool(false, { size: 16 })).toMatchInlineSnapshot(
+    expect(Bytes.fromBoolean(false, { size: 16 })).toMatchInlineSnapshot(
       `
       Uint8Array [
         0,
@@ -709,7 +709,7 @@ describe('boolean to bytes', () => {
       ]
     `,
     )
-    expect(Bytes.fromBool(false, { size: 32 })).toMatchInlineSnapshot(
+    expect(Bytes.fromBoolean(false, { size: 32 })).toMatchInlineSnapshot(
       `
       Uint8Array [
         0,
@@ -760,7 +760,7 @@ describe('boolean to bytes', () => {
     `,
     )
     expect(() =>
-      Bytes.fromBool(false, { size: 0 }),
+      Bytes.fromBoolean(false, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(`
       [SizeOverflowError: Size cannot exceed 0 bytes. Given size: 1 bytes.
 

@@ -35,8 +35,12 @@ describe('prefix < 0x80', () => {
     expect(Rlp.fromBytes(Bytes.fromString('a'))).toEqual(Bytes.fromHex('0x61'))
     expect(Rlp.fromBytes(Bytes.fromString('~'))).toEqual(Bytes.fromHex('0x7e'))
 
-    expect(Rlp.fromBytes(Bytes.fromBool(true))).toEqual(Bytes.fromHex('0x01'))
-    expect(Rlp.fromBytes(Bytes.fromBool(false))).toEqual(Bytes.fromHex('0x00'))
+    expect(Rlp.fromBytes(Bytes.fromBoolean(true))).toEqual(
+      Bytes.fromHex('0x01'),
+    )
+    expect(Rlp.fromBytes(Bytes.fromBoolean(false))).toEqual(
+      Bytes.fromHex('0x00'),
+    )
 
     expect(Rlp.fromBytes(Bytes.fromNumber(0))).toEqual(Bytes.fromHex('0x00'))
     expect(Rlp.fromBytes(Bytes.fromNumber(69))).toEqual(Bytes.fromHex('0x45'))
@@ -53,8 +57,8 @@ describe('prefix < 0x80', () => {
     expect(Rlp.encode(Bytes.fromString('a'), 'hex')).toEqual('0x61')
     expect(Rlp.encode(Bytes.fromString('~'), 'hex')).toEqual('0x7e')
 
-    expect(Rlp.encode(Bytes.fromBool(true), 'hex')).toEqual('0x01')
-    expect(Rlp.encode(Bytes.fromBool(false), 'hex')).toEqual('0x00')
+    expect(Rlp.encode(Bytes.fromBoolean(true), 'hex')).toEqual('0x01')
+    expect(Rlp.encode(Bytes.fromBoolean(false), 'hex')).toEqual('0x00')
 
     expect(Rlp.encode(Bytes.fromNumber(0), 'hex')).toEqual('0x00')
     expect(Rlp.encode(Bytes.fromNumber(69), 'hex')).toEqual('0x45')
@@ -71,8 +75,8 @@ describe('prefix < 0x80', () => {
     expect(Rlp.fromHex(Hex.fromString('a'))).toEqual('0x61')
     expect(Rlp.fromHex(Hex.fromString('~'))).toEqual('0x7e')
 
-    expect(Rlp.fromHex(Hex.fromBool(true))).toEqual('0x01')
-    expect(Rlp.fromHex(Hex.fromBool(false))).toEqual('0x00')
+    expect(Rlp.fromHex(Hex.fromBoolean(true))).toEqual('0x01')
+    expect(Rlp.fromHex(Hex.fromBoolean(false))).toEqual('0x00')
 
     expect(Rlp.fromHex(Hex.fromNumber(0))).toEqual('0x00')
     expect(Rlp.fromHex(Hex.fromNumber(69))).toEqual('0x45')
@@ -95,10 +99,10 @@ describe('prefix < 0x80', () => {
       Bytes.fromHex('0x7e'),
     )
 
-    expect(Rlp.encode(Hex.fromBool(true), 'bytes')).toEqual(
+    expect(Rlp.encode(Hex.fromBoolean(true), 'bytes')).toEqual(
       Bytes.fromHex('0x01'),
     )
-    expect(Rlp.encode(Hex.fromBool(false), 'bytes')).toEqual(
+    expect(Rlp.encode(Hex.fromBoolean(false), 'bytes')).toEqual(
       Bytes.fromHex('0x00'),
     )
 

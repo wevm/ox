@@ -4,6 +4,7 @@ import * as exports from './Hex.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "concat",
       "isHex",
       "isEqual",
       "padLeft",
@@ -16,7 +17,7 @@ test('exports', () => {
       "to",
       "hexToBigInt",
       "toBigInt",
-      "HexToBoolean",
+      "hexToBoolean",
       "toBoolean",
       "hexToNumber",
       "toNumber",
@@ -24,8 +25,8 @@ test('exports', () => {
       "toString",
       "hexToBytes",
       "toBytes",
-      "boolToHex",
-      "fromBool",
+      "booleanToHex",
+      "fromBoolean",
       "bytesToHex",
       "fromBytes",
       "numberToHex",
