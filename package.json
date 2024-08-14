@@ -19,15 +19,15 @@
     "lint:jsdoc": "eslint src -c jsdoc.config.js",
     "lint:repo": "sherif",
     "postinstall": "pnpm build",
-    "preconstruct": "tsx ./.scripts/preconstruct.ts",
-    "prepublish": "tsx ./.scripts/prepublish.ts",
+    "preconstruct": "tsx ./scripts/preconstruct.ts",
+    "prepublish": "tsx ./scripts/prepublish.ts",
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
     "test": "vitest -c ./test/vitest.config.ts",
     "test:cov": "vitest -c ./test/vitest.config.ts --coverage",
     "typecheck": "tsc --noEmit",
-    "update-version": "tsx ./.scripts/update-version.ts"
+    "update-version": "tsx ./scripts/update-version.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
@@ -63,7 +63,7 @@
   "knip": {
     "ignore": [
       ".github/**",
-      ".scripts/**",
+      "scripts/**",
       "test/**",
       "vectors/**",
       "src/package.json",
