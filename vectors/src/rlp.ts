@@ -2,7 +2,7 @@
 
 import { join } from 'node:path'
 
-import { Rlp, Hex } from '../../src/index.js'
+import { Hex, Rlp } from '../../src/index.js'
 
 const generateBytes = (length: number) => {
   const bytes = new Uint8Array(length)

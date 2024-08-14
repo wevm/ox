@@ -1,7 +1,7 @@
 /// <reference types="@types/bun" />
 
-import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
+import { join } from 'node:path'
 
 import { Rlp } from '../../src/index.js'
 import { readGzippedJson } from '../utils.js'
