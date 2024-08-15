@@ -6,7 +6,7 @@ description: Decodes Bytes into a Hex value
 
 **Alias:** `bytesToHex`
 
-Decodes [Bytes](/api/bytes) into a [Hex](/api/hex) value.
+Decodes [Bytes](/api/bytes) into a [Hex](#TODO) value.
 
 ## Imports
 

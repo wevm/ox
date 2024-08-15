@@ -6,8 +6,8 @@ export default defineConfig({
     process.env.VERCEL_ENV === 'production'
       ? 'https://oxlib.sh'
       : process.env.VERCEL_URL,
-  title: 'ox',
-  titleTemplate: '%s · ox',
+  title: 'Ox',
+  titleTemplate: '%s · Ox',
   description: 'Ethereum Standard Library',
   editLink: {
     pattern: 'https://github.com/wevm/ox/edit/main/site/pages/:path',
@@ -27,8 +27,8 @@ export default defineConfig({
   // ogImageUrl: {
   //   '/': '/og-image.png',
   // },
-  // iconUrl: { light: '/favicons/light.png', dark: '/favicons/dark.png' },
-  // logoUrl: { light: '/icon-light.png', dark: '/icon-dark.png' },
+  iconUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
+  logoUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   rootDir: '.',
   sidebar: [
     { text: 'Introduction', link: '/' },
