@@ -15,7 +15,7 @@ Encodes an arbitrary value to **[Bytes](/api/bytes)**.
 // Named Import
 import { Bytes } from 'ox'
 
-// Named Import Imports
+// Named Imports
 import * as Bytes from 'ox/Bytes'
 import { toBytes } from 'ox/Bytes'
 ```

@@ -10,6 +10,7 @@ test('exports', () => {
       "padLeft",
       "padRight",
       "isBytesEqual",
+      "randomHex",
       "randomBytes",
       "size",
       "slice",

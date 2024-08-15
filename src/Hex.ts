@@ -50,4 +50,6 @@ export {
   toHex as from,
 } from './internal/hex/toHex.js'
 
+export { randomHex as random } from './internal/data/random.js'
+
 export type { Hex } from './internal/types/data.js'

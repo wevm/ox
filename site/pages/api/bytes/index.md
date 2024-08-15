@@ -6,7 +6,7 @@ The **Bytes** Module provides a set of Ethereum-related utility functions for wo
 
 - **Alias:** `Uint8Array`
 
-**Bytes** can be represented via the `Bytes` type.
+**Bytes** can be represented via the `Bytes` type. It is an alias to a JavaScript `Uint8Array`.
 
 ```ts twoslash
 // @noErrors

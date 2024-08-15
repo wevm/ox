@@ -15,7 +15,7 @@ Concatenates two or more [`Bytes`](/api/bytes) values.
 // Named Import 
 import { Bytes } from 'ox'
 
-// Named Import Imports
+// Named Imports
 import * as Bytes from 'ox/Bytes'
 import { concat } from 'ox/Bytes'
 ```
@@ -26,7 +26,7 @@ import { concat } from 'ox/Bytes'
 import { Bytes } from 'ox';
 
 const bytes = Bytes.concat(
-  Bytes.from('hello'), 
+  Bytes.from([104, 101, 108, 108, 111]), 
   Bytes.from(true), 
   Bytes.from('world')
 )
@@ -49,7 +49,7 @@ Bytes to concatenate.
 import { Bytes } from 'ox';
 
 const bytes = Bytes.concat(
-  Bytes.from('hello'), // [!code focus]
+  Bytes.from([104, 101, 108, 108, 111]), // [!code focus]
   Bytes.from(true), // [!code focus]
   Bytes.from('world') // [!code focus]
 )

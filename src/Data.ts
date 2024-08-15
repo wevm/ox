@@ -11,7 +11,7 @@ export {
 
 export { isBytesEqual } from './internal/data/isBytesEqual.js'
 
-export { randomBytes } from './internal/data/random.js'
+export { randomHex, randomBytes } from './internal/data/random.js'
 
 export { size } from './internal/data/size.js'
 

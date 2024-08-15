@@ -15,7 +15,7 @@ Encodes a [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Refer
 // Named Import
 import { Bytes } from 'ox'
 
-// Named Import Imports
+// Named Imports
 import * as Bytes from 'ox/Bytes'
 import { numberToBytes } from 'ox/Bytes'
 ```
