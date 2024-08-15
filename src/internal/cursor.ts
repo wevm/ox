@@ -5,9 +5,9 @@ import {
   type PositionOutOfBoundsErrorType,
   RecursiveReadLimitExceededError,
   type RecursiveReadLimitExceededErrorType,
-} from '../errors/cursor.js'
-import type { ErrorType } from '../errors/error.js'
-import type { Bytes } from '../types/data.js'
+} from './errors/cursor.js'
+import type { ErrorType } from './errors/error.js'
+import type { Bytes } from './types/data.js'
 
 export type Cursor = {
   bytes: Bytes

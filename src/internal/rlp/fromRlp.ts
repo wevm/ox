@@ -1,4 +1,9 @@
 import { type HexToBytesErrorType, hexToBytes } from '../bytes/toBytes.js'
+import {
+  type CreateCursorErrorType,
+  type Cursor,
+  createCursor,
+} from '../cursor.js'
 import { BaseError, type BaseErrorType } from '../errors/base.js'
 import {
   InvalidHexValueError,
@@ -7,11 +12,6 @@ import {
 import type { ErrorType } from '../errors/error.js'
 import { type BytesToHexErrorType, bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
-import {
-  type CreateCursorErrorType,
-  type Cursor,
-  createCursor,
-} from '../utils/cursor.js'
 import type { RecursiveArray } from './toRlp.js'
 
 type To = 'hex' | 'bytes'
