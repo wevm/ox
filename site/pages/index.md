@@ -2,7 +2,7 @@
 
 ## Overview
 
-Ox is the foundation of performant Ethereum software written in TypeScript. It is an **Ethereum Standard Library** that provides a set of lightweight, performant, and robust TypeScript modules for Ethereum.
+Ox (⦻) is the foundation of robust Ethereum software written in TypeScript. It is an **Ethereum Standard Library** that provides a set of lightweight, performant, and type-safe TypeScript modules for Ethereum.
 
 It offers core utilities & types for primitives such as: ABIs, Addresses, Blocks, Bytes, ECDSA, Hex, JSON-RPC, RLP, Signatures, Transactions, and more.
 
