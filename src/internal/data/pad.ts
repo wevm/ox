@@ -5,6 +5,11 @@ import {
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
+export declare namespace padLeft {
+  type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
+  type ErrorType = pad.ErrorType | ErrorType_
+}
+
 /**
  * Pads a {@link Bytes} or {@link Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
@@ -18,15 +23,16 @@ import type { Bytes, Hex } from '../types/data.js'
  * Hex.padLeft('0x1234', 4)
  * // '0x00001234'
  */
-export declare namespace padLeft {
-  type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
-  type ErrorType = pad.ErrorType | ErrorType_
-}
 export function padLeft<value extends Bytes | Hex>(
   value: value,
   size?: number | undefined,
 ): padLeft.ReturnType<value> {
   return pad(value, { dir: 'left', size })
+}
+
+export declare namespace padRight {
+  type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
+  type ErrorType = pad.ErrorType | ErrorType_
 }
 
 /**
@@ -42,10 +48,6 @@ export function padLeft<value extends Bytes | Hex>(
  * Hex.padRight('0x1234', 4)
  * // '0x12340000'
  */
-export declare namespace padRight {
-  type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
-  type ErrorType = pad.ErrorType | ErrorType_
-}
 export function padRight<value extends Bytes | Hex>(
   value: value,
   size?: number | undefined,

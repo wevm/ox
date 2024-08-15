@@ -7,6 +7,20 @@ import type { Bytes, Hex } from '../types/data.js'
 import { isHex } from './isHex.js'
 import { size } from './size.js'
 
+export declare namespace slice {
+  type Options = {
+    strict?: boolean | undefined
+  }
+
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
+
+  type ErrorType =
+    | isHex.ErrorType
+    | sliceBytes.ErrorType
+    | sliceHex.ErrorType
+    | ErrorType_
+}
+
 /**
  * Returns a section of a {@link Hex} or {@link Bytes} value given a start/end bytes offset.
  *
@@ -23,19 +37,6 @@ import { size } from './size.js'
  * Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1, 4)
  * // Uint8Array([2, 3, 4])
  */
-export declare namespace slice {
-  type Options = {
-    strict?: boolean | undefined
-  }
-
-  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
-
-  type ErrorType =
-    | isHex.ErrorType
-    | sliceBytes.ErrorType
-    | sliceHex.ErrorType
-    | ErrorType_
-}
 export function slice<value extends Bytes | Hex>(
   value: value,
   start?: number | undefined,

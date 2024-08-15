@@ -12,26 +12,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'bytes' | 'bigint' | 'number' | 'boolean'
 
-/**
- * Decodes a {@link Hex} value into a string, number, bigint, boolean, or {@link Bytes}.
- *
- * @example
- * import { Hex } from 'ox'
- * Hex.to('0x1a4', 'number')
- * // 420
- *
- * @example
- * import { Hex } from 'ox'
- * Hex.to('0x48656c6c6f20576f726c6421', 'string')
- * // 'Hello world'
- *
- * @example
- * import { Hex } from 'ox'
- * Hex.to('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', 'string', {
- *   size: 32,
- * })
- * // 'Hello world'
- */
 export declare namespace fromHex {
   type Options = {
     /** Size (in bytes) of the hex value. */
@@ -54,6 +34,27 @@ export declare namespace fromHex {
     | InvalidTypeErrorType
     | ErrorType_
 }
+
+/**
+ * Decodes a {@link Hex} value into a string, number, bigint, boolean, or {@link Bytes}.
+ *
+ * @example
+ * import { Hex } from 'ox'
+ * Hex.to('0x1a4', 'number')
+ * // 420
+ *
+ * @example
+ * import { Hex } from 'ox'
+ * Hex.to('0x48656c6c6f20576f726c6421', 'string')
+ * // 'Hello world'
+ *
+ * @example
+ * import { Hex } from 'ox'
+ * Hex.to('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', 'string', {
+ *   size: 32,
+ * })
+ * // 'Hello world'
+ */
 export function fromHex<to extends To>(
   hex: Hex,
   to: to | To,
@@ -71,6 +72,17 @@ export function fromHex<to extends To>(
   throw new InvalidTypeError(to)
 }
 
+export declare namespace hexToBigInt {
+  type Options = {
+    /** Whether or not the number of a signed representation. */
+    signed?: boolean | undefined
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | ErrorType_
+}
+
 /**
  * Decodes a {@link Hex} value into a BigInt.
  *
@@ -84,16 +96,6 @@ export function fromHex<to extends To>(
  * Hex.toBigInt('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420n
  */
-export declare namespace hexToBigInt {
-  type Options = {
-    /** Whether or not the number of a signed representation. */
-    signed?: boolean | undefined
-    /** Size (in bytes) of the hex value. */
-    size?: number | undefined
-  }
-
-  type ErrorType = assertSize.ErrorType | ErrorType_
-}
 export function hexToBigInt(
   hex: Hex,
   options: hexToBigInt.Options = {},
@@ -112,6 +114,19 @@ export function hexToBigInt(
   return value - BigInt(`0x${'f'.padStart(size * 2, 'f')}`) - 1n
 }
 
+export declare namespace hexToBoolean {
+  type Options = {
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType =
+    | assertSize.ErrorType
+    | trimLeft.ErrorType
+    | InvalidHexBooleanErrorType
+    | ErrorType_
+}
+
 /**
  * Decodes a {@link Hex} value into a boolean.
  *
@@ -125,18 +140,6 @@ export function hexToBigInt(
  * Hex.toBoolean('0x0000000000000000000000000000000000000000000000000000000000000001', { size: 32 })
  * // true
  */
-export declare namespace hexToBoolean {
-  type Options = {
-    /** Size (in bytes) of the hex value. */
-    size?: number | undefined
-  }
-
-  type ErrorType =
-    | assertSize.ErrorType
-    | trimLeft.ErrorType
-    | InvalidHexBooleanErrorType
-    | ErrorType_
-}
 export function hexToBoolean(
   hex_: Hex,
   options: hexToBoolean.Options = {},
@@ -149,6 +152,12 @@ export function hexToBoolean(
   if (trimLeft(hex) === '0x00') return false
   if (trimLeft(hex) === '0x01') return true
   throw new InvalidHexBooleanError(hex)
+}
+
+export declare namespace hexToNumber {
+  type Options = hexToBigInt.Options
+
+  type ErrorType = hexToBigInt.ErrorType | ErrorType_
 }
 
 /**
@@ -164,11 +173,6 @@ export function hexToBoolean(
  * Hex.toNumber('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420
  */
-export declare namespace hexToNumber {
-  type Options = hexToBigInt.Options
-
-  type ErrorType = hexToBigInt.ErrorType | ErrorType_
-}
 export function hexToNumber(
   hex: Hex,
   options: hexToNumber.Options = {},
@@ -176,6 +180,19 @@ export function hexToNumber(
   const { signed, size } = options
   if (!signed && !size) return Number(hex)
   return Number(hexToBigInt(hex, options))
+}
+
+export declare namespace hexToString {
+  type Options = {
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType =
+    | assertSize.ErrorType
+    | hexToBytes.ErrorType
+    | trimRight.ErrorType
+    | ErrorType_
 }
 
 /**
@@ -193,18 +210,6 @@ export function hexToNumber(
  * })
  * // 'Hello world'
  */
-export declare namespace hexToString {
-  type Options = {
-    /** Size (in bytes) of the hex value. */
-    size?: number | undefined
-  }
-
-  type ErrorType =
-    | assertSize.ErrorType
-    | hexToBytes.ErrorType
-    | trimRight.ErrorType
-    | ErrorType_
-}
 export function hexToString(
   hex: Hex,
   options: hexToString.Options = {},

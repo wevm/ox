@@ -12,22 +12,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'hex' | 'bigint' | 'number' | 'boolean'
 
-/**
- * Decodes {@link Bytes} into a UTF-8 string, {@link Hex}, number, bigint or boolean.
- *
- * @example
- * import { Bytes } from 'ox'
- * Bytes.to(Bytes.from([1, 164]), 'number')
- * // 420
- *
- * @example
- * import { Bytes } from 'ox'
- * Bytes.to(
- *   Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
- *   'string'
- * )
- * // 'Hello world'
- */
 export declare namespace fromBytes {
   type Options = {
     /** Size of the bytes. */
@@ -50,6 +34,23 @@ export declare namespace fromBytes {
     | InvalidTypeErrorType
     | ErrorType_
 }
+
+/**
+ * Decodes {@link Bytes} into a UTF-8 string, {@link Hex}, number, bigint or boolean.
+ *
+ * @example
+ * import { Bytes } from 'ox'
+ * Bytes.to(Bytes.from([1, 164]), 'number')
+ * // 420
+ *
+ * @example
+ * import { Bytes } from 'ox'
+ * Bytes.to(
+ *   Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
+ *   'string'
+ * )
+ * // 'Hello world'
+ */
 export function fromBytes<
   to extends 'string' | 'hex' | 'bigint' | 'number' | 'boolean',
 >(
@@ -70,14 +71,6 @@ export function fromBytes<
   throw new InvalidTypeError(to)
 }
 
-/**
- * Decodes a byte array into a bigint.
- *
- * @example
- * import { Bytes } from 'ox'
- * Bytes.toBigInt(Bytes.from([1, 164]))
- * // 420n
- */
 export declare namespace bytesToBigInt {
   type Options = {
     /** Whether or not the number of a signed representation. */
@@ -88,6 +81,15 @@ export declare namespace bytesToBigInt {
 
   type ErrorType = bytesToHex.ErrorType | hexToBigInt.ErrorType | ErrorType_
 }
+
+/**
+ * Decodes a byte array into a bigint.
+ *
+ * @example
+ * import { Bytes } from 'ox'
+ * Bytes.toBigInt(Bytes.from([1, 164]))
+ * // 420n
+ */
 export function bytesToBigInt(
   bytes: Bytes,
   options: bytesToBigInt.Options = {},
@@ -98,14 +100,6 @@ export function bytesToBigInt(
   return hexToBigInt(hex, options)
 }
 
-/**
- * Decodes a byte array into a boolean.
- *
- * @example
- * import { Bytes } from 'ox'
- * Bytes.toBoolean(Bytes.from([1]))
- * // true
- */
 export declare namespace bytesToBoolean {
   type Options = {
     /** Size of the bytes. */
@@ -114,6 +108,15 @@ export declare namespace bytesToBoolean {
 
   type ErrorType = assertSize.ErrorType | trimLeft.ErrorType | ErrorType_
 }
+
+/**
+ * Decodes a byte array into a boolean.
+ *
+ * @example
+ * import { Bytes } from 'ox'
+ * Bytes.toBoolean(Bytes.from([1]))
+ * // true
+ */
 export function bytesToBoolean(
   bytes_: Bytes,
   options: bytesToBoolean.Options = {},
@@ -129,14 +132,6 @@ export function bytesToBoolean(
   return Boolean(bytes[0])
 }
 
-/**
- * Decodes a byte array into a number.
- *
- * @example
- * import { Bytes } from 'ox'
- * Bytes.toNumber(Bytes.from([1, 164]))
- * // 420
- */
 export declare namespace bytesToNumber {
   export type Options = bytesToBigInt.Options
 
@@ -145,6 +140,15 @@ export declare namespace bytesToNumber {
     | hexToNumber.ErrorType
     | ErrorType_
 }
+
+/**
+ * Decodes a byte array into a number.
+ *
+ * @example
+ * import { Bytes } from 'ox'
+ * Bytes.toNumber(Bytes.from([1, 164]))
+ * // 420
+ */
 export function bytesToNumber(
   bytes: Bytes,
   options: bytesToNumber.Options = {},
@@ -157,14 +161,6 @@ export function bytesToNumber(
 
 const decoder = /*#__PURE__*/ new TextDecoder()
 
-/**
- * Decodes a byte array into a UTF-8 string.
- *
- * @example
- * import { Bytes } from 'ox'
- * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
- * // 'Hello world'
- */
 export declare namespace bytesToString {
   export type Options = {
     /** Size of the bytes. */
@@ -176,6 +172,15 @@ export declare namespace bytesToString {
     | trimRight.ErrorType
     | ErrorType_
 }
+
+/**
+ * Decodes a byte array into a UTF-8 string.
+ *
+ * @example
+ * import { Bytes } from 'ox'
+ * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * // 'Hello world'
+ */
 export function bytesToString(
   bytes_: Bytes,
   options: bytesToString.Options = {},

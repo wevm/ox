@@ -219,12 +219,13 @@ const staticCursor: Cursor = {
   },
 }
 
-/** @internal */
 export declare namespace createCursor {
   type Config = { recursiveReadLimit?: number | undefined }
 
   type ErrorType = CursorErrorType | StaticCursorErrorType | ErrorType_
 }
+
+/** @internal */
 export function createCursor(
   bytes: Bytes,
   { recursiveReadLimit = 8_192 }: createCursor.Config = {},

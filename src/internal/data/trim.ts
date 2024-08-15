@@ -1,6 +1,12 @@
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
+export declare namespace trimLeft {
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
+
+  type ErrorType = trim.ErrorType | ErrorType_
+}
+
 /**
  * Trims leading zeros from a {@link Bytes} or {@link Hex} value.
  *
@@ -16,15 +22,18 @@ import type { Bytes, Hex } from '../types/data.js'
  * import { Bytes } from 'ox'
  * Bytes.trimLeft(Bytes.from([0, 0, 0, 0, 1, 2, 3])) // Uint8Array([1, 2, 3])
  */
-export declare namespace trimLeft {
-  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
-
-  type ErrorType = trim.ErrorType | ErrorType_
-}
 export function trimLeft<value extends Bytes | Hex>(
   value: value,
 ): trimLeft.ReturnType<value> {
   return trim(value, { dir: 'left' })
+}
+
+export declare namespace trimRight {
+  export type ReturnType<value extends Bytes | Hex> = value extends Hex
+    ? Hex
+    : Bytes
+
+  export type ErrorType = trim.ErrorType | ErrorType_
 }
 
 /**
@@ -42,13 +51,6 @@ export function trimLeft<value extends Bytes | Hex>(
  * import { Bytes } from 'ox'
  * Bytes.trimRight(Bytes.from([1, 2, 3, 0, 0, 0, 0])) // Uint8Array([1, 2, 3])
  */
-export declare namespace trimRight {
-  export type ReturnType<value extends Bytes | Hex> = value extends Hex
-    ? Hex
-    : Bytes
-
-  export type ErrorType = trim.ErrorType | ErrorType_
-}
 export function trimRight<value extends Bytes | Hex>(
   value: value,
 ): trimRight.ReturnType<value> {

@@ -12,14 +12,6 @@ import type { RecursiveArray } from './toRlp.js'
 
 type To = 'hex' | 'bytes'
 
-/**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} or {@link Hex} value.
- *
- * @example
- * import { Rlp } from 'ox'
- * Rlp.decode('0x8b68656c6c6f20776f726c64')
- * // 0x68656c6c6f20776f726c64
- */
 export declare namespace fromRlp {
   type ReturnType<to extends To> =
     | (to extends 'bytes' ? RecursiveArray<Bytes> : never)
@@ -32,6 +24,15 @@ export declare namespace fromRlp {
     | InvalidHexValueErrorType
     | ErrorType_
 }
+
+/**
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} or {@link Hex} value.
+ *
+ * @example
+ * import { Rlp } from 'ox'
+ * Rlp.decode('0x8b68656c6c6f20776f726c64')
+ * // 0x68656c6c6f20776f726c64
+ */
 export function fromRlp<
   value extends Bytes | Hex,
   to extends To = value extends Bytes ? 'bytes' : 'hex',
@@ -55,6 +56,11 @@ export function fromRlp<
   return result as fromRlp.ReturnType<to>
 }
 
+export declare namespace rlpToBytes {
+  type ErrorType = fromRlp.ErrorType
+  type ReturnType = fromRlp.ReturnType<'bytes'>
+}
+
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} value.
  *
@@ -63,12 +69,13 @@ export function fromRlp<
  * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
  * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  */
-export declare namespace rlpToBytes {
-  type ErrorType = fromRlp.ErrorType
-  type ReturnType = fromRlp.ReturnType<'bytes'>
-}
 export function rlpToBytes(value: Bytes | Hex): rlpToBytes.ReturnType {
   return fromRlp(value, 'bytes')
+}
+
+export declare namespace rlpToHex {
+  type ErrorType = fromRlp.ErrorType
+  type ReturnType = fromRlp.ReturnType<'hex'>
 }
 
 /**
@@ -79,10 +86,6 @@ export function rlpToBytes(value: Bytes | Hex): rlpToBytes.ReturnType {
  * Rlp.toHex('0x8b68656c6c6f20776f726c64')
  * // 0x68656c6c6f20776f726c64
  */
-export declare namespace rlpToHex {
-  type ErrorType = fromRlp.ErrorType
-  type ReturnType = fromRlp.ReturnType<'hex'>
-}
 export function rlpToHex(value: Bytes | Hex): rlpToHex.ReturnType {
   return fromRlp(value, 'hex')
 }

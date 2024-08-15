@@ -1,6 +1,11 @@
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
+export declare namespace concat {
+  type ReturnType<value extends Hex | Bytes> = value extends Hex ? Hex : Bytes
+  type ErrorType = concatBytes.ErrorType | concatHex.ErrorType | ErrorType_
+}
+
 /**
  * Concatenates two or more {@link Bytes} or {@link Hex}.
  *
@@ -19,10 +24,6 @@ import type { Bytes, Hex } from '../types/data.js'
  * const hex = Data.concat('0x1234', '0x5678')
  * ```
  */
-export declare namespace concat {
-  type ReturnType<value extends Hex | Bytes> = value extends Hex ? Hex : Bytes
-  type ErrorType = concatBytes.ErrorType | concatHex.ErrorType | ErrorType_
-}
 export function concat<value extends Hex | Bytes>(
   ...values: readonly value[]
 ): concat.ReturnType<value> {
@@ -37,10 +38,11 @@ export function concat<value extends Hex | Bytes>(
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @internal */
 export declare namespace concatBytes {
   type ErrorType = ErrorType_
 }
+
+/** @internal */
 function concatBytes(...values: readonly Bytes[]): Bytes {
   let length = 0
   for (const arr of values) {
@@ -55,10 +57,11 @@ function concatBytes(...values: readonly Bytes[]): Bytes {
   return result
 }
 
-/** @internal */
 export declare namespace concatHex {
   type ErrorType = ErrorType_
 }
+
+/** @internal */
 function concatHex(...values: readonly Hex[]): Hex {
   return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
 }

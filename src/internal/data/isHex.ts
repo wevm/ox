@@ -1,6 +1,14 @@
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
+export declare namespace isHex {
+  type Options = {
+    strict?: boolean | undefined
+  }
+
+  type ErrorType = ErrorType_
+}
+
 /**
  * Checks if the given value is {@link Hex}.
  *
@@ -9,13 +17,6 @@ import type { Hex } from '../types/data.js'
  * Hex.isHex('0x') // true
  * Hex.isHex(Bytes.from([1, 2, 3])) // false
  */
-export declare namespace isHex {
-  type Options = {
-    strict?: boolean | undefined
-  }
-
-  type ErrorType = ErrorType_
-}
 export function isHex(
   value: unknown,
   options: isHex.Options = {},

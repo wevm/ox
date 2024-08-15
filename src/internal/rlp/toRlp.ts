@@ -14,14 +14,6 @@ type Encodable = {
   encode(cursor: Cursor): void
 }
 
-/**
- * Encodes a {@link Bytes} or {@link Hex} value into a Recursive-Length Prefix (RLP) value.
- *
- * @example
- * import { Rlp } from 'ox'
- * Rlp.encode('0x68656c6c6f20776f726c64')
- * // 0x8b68656c6c6f20776f726c64
- */
 export declare namespace toRlp {
   type ReturnType<to extends To> =
     | (to extends 'bytes' ? Bytes : never)
@@ -33,6 +25,15 @@ export declare namespace toRlp {
     | hexToBytes.ErrorType
     | ErrorType_
 }
+
+/**
+ * Encodes a {@link Bytes} or {@link Hex} value into a Recursive-Length Prefix (RLP) value.
+ *
+ * @example
+ * import { Rlp } from 'ox'
+ * Rlp.encode('0x68656c6c6f20776f726c64')
+ * // 0x8b68656c6c6f20776f726c64
+ */
 export function toRlp<
   bytes extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
   to extends To = bytes extends RecursiveArray<Bytes> ? 'bytes' : 'hex',
@@ -46,6 +47,11 @@ export function toRlp<
   return cursor.bytes as toRlp.ReturnType<to>
 }
 
+export declare namespace bytesToRlp {
+  type ReturnType<to extends To> = toRlp.ReturnType<to>
+  type ErrorType = toRlp.ErrorType | ErrorType_
+}
+
 /**
  * Encodes a {@link Bytes} value into a Recursive-Length Prefix (RLP) value.
  *
@@ -54,15 +60,16 @@ export function toRlp<
  * Rlp.fromBytes(Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]))
  * // Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  */
-export declare namespace bytesToRlp {
-  type ReturnType<to extends To> = toRlp.ReturnType<to>
-  type ErrorType = toRlp.ErrorType | ErrorType_
-}
 export function bytesToRlp<to extends To = 'bytes'>(
   bytes: RecursiveArray<Bytes>,
   to: to | To | undefined = 'bytes',
 ): bytesToRlp.ReturnType<to> {
   return toRlp(bytes, to)
+}
+
+export declare namespace hexToRlp {
+  type ReturnType<to extends To> = toRlp.ReturnType<to>
+  type ErrorType = toRlp.ErrorType | ErrorType_
 }
 
 /**
@@ -73,10 +80,6 @@ export function bytesToRlp<to extends To = 'bytes'>(
  * Rlp.fromHex('0x68656c6c6f20776f726c64')
  * // 0x8b68656c6c6f20776f726c64
  */
-export declare namespace hexToRlp {
-  type ReturnType<to extends To> = toRlp.ReturnType<to>
-  type ErrorType = toRlp.ErrorType | ErrorType_
-}
 export function hexToRlp<to extends To = 'hex'>(
   hex: RecursiveArray<Hex>,
   to: to | To | undefined = 'hex',
