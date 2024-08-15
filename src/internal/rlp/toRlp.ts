@@ -56,7 +56,7 @@ export function toRlp<
  */
 export declare namespace bytesToRlp {
   type ReturnType<to extends To> = toRlp.ReturnType<to>
-  export type ErrorType = toRlp.ErrorType | ErrorType_
+  type ErrorType = toRlp.ErrorType | ErrorType_
 }
 export function bytesToRlp<to extends To = 'bytes'>(
   bytes: RecursiveArray<Bytes>,
@@ -75,7 +75,7 @@ export function bytesToRlp<to extends To = 'bytes'>(
  */
 export declare namespace hexToRlp {
   type ReturnType<to extends To> = toRlp.ReturnType<to>
-  export type ErrorType = toRlp.ErrorType | ErrorType_
+  type ErrorType = toRlp.ErrorType | ErrorType_
 }
 export function hexToRlp<to extends To = 'hex'>(
   hex: RecursiveArray<Hex>,
