@@ -1,36 +1,12 @@
-import { type AssertSizeErrorType, assertSize } from '../data/assertSize.js'
-import { type IsBytesErrorType, isBytes } from '../data/isBytes.js'
-import { type IsHexErrorType, isHex } from '../data/isHex.js'
-import {
-  type PadLeftErrorType,
-  type PadRightErrorType,
-  padLeft,
-  padRight,
-} from '../data/pad.js'
+import { assertSize } from '../data/assertSize.js'
+import { isBytes } from '../data/isBytes.js'
+import { isHex } from '../data/isHex.js'
+import { padLeft, padRight } from '../data/pad.js'
 import { BaseError } from '../errors/base.js'
 import { InvalidTypeError, type InvalidTypeErrorType } from '../errors/data.js'
-import type { ErrorType } from '../errors/error.js'
-import {
-  type NumberToHexErrorType,
-  type NumberToHexOptions,
-  numberToHex,
-} from '../hex/toHex.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import { numberToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
-
-export type ToBytesOptions = {
-  /** Size of the output bytes. */
-  size?: number | undefined
-}
-
-export type ToBytesErrorType =
-  | InvalidTypeErrorType
-  | IsBytesErrorType
-  | NumberToBytesErrorType
-  | BooleanToBytesErrorType
-  | HexToBytesErrorType
-  | StringToBytesErrorType
-  | IsHexErrorType
-  | ErrorType
 
 /**
  * Encodes an arbitrary value to {@link Bytes}.
@@ -50,9 +26,25 @@ export type ToBytesErrorType =
  * const data = Bytes.from(420, { size: 4 })
  * // Uint8Array([0, 0, 1, 164])
  */
+export declare namespace toBytes {
+  export type Options = {
+    /** Size of the output bytes. */
+    size?: number | undefined
+  }
+
+  export type ErrorType =
+    | numberToBytes.ErrorType
+    | booleanToBytes.ErrorType
+    | hexToBytes.ErrorType
+    | stringToBytes.ErrorType
+    | isBytes.ErrorType
+    | isHex.ErrorType
+    | InvalidTypeErrorType
+    | ErrorType_
+}
 export function toBytes(
   value: string | bigint | number | boolean | Hex | Bytes | readonly number[],
-  options: ToBytesOptions = {},
+  options: toBytes.Options = {},
 ): Bytes {
   if (isBytes(value)) return value
   if (Array.isArray(value)) return Uint8Array.from(value)
@@ -63,16 +55,6 @@ export function toBytes(
     return numberToBytes(value, options)
   throw new InvalidTypeError(typeof value)
 }
-
-export type BooleanToBytesOptions = {
-  /** Size of the output bytes. */
-  size?: number | undefined
-}
-
-export type BooleanToBytesErrorType =
-  | AssertSizeErrorType
-  | PadLeftErrorType
-  | ErrorType
 
 /**
  * Encodes a boolean value into {@link Bytes}.
@@ -87,9 +69,17 @@ export type BooleanToBytesErrorType =
  * const data = Bytes.fromBoolean(true, { size: 32 })
  * // Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
  */
+export declare namespace booleanToBytes {
+  type Options = {
+    /** Size of the output bytes. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | ErrorType_
+}
 export function booleanToBytes(
   value: boolean,
-  options: BooleanToBytesOptions = {},
+  options: booleanToBytes.Options = {},
 ) {
   const { size } = options
   const bytes = new Uint8Array(1)
@@ -121,16 +111,6 @@ function charCodeToBase16(char: number) {
   return undefined
 }
 
-export type HexToBytesOptions = {
-  /** Size of the output bytes. */
-  size?: number | undefined
-}
-
-export type HexToBytesErrorType =
-  | AssertSizeErrorType
-  | PadRightErrorType
-  | ErrorType
-
 /**
  * Encodes a hex value into {@link Bytes}.
  *
@@ -149,7 +129,15 @@ export type HexToBytesErrorType =
  * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', { size: 32 })
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  */
-export function hexToBytes(hex_: Hex, options: HexToBytesOptions = {}): Bytes {
+export declare namespace hexToBytes {
+  type Options = {
+    /** Size of the output bytes. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | ErrorType_
+}
+export function hexToBytes(hex_: Hex, options: hexToBytes.Options = {}): Bytes {
   const { size } = options
 
   let hex = hex_
@@ -176,11 +164,6 @@ export function hexToBytes(hex_: Hex, options: HexToBytesOptions = {}): Bytes {
   return bytes
 }
 
-export type NumberToBytesErrorType =
-  | NumberToHexErrorType
-  | HexToBytesErrorType
-  | ErrorType
-
 /**
  * Encodes a number value into {@link Bytes}.
  *
@@ -194,23 +177,29 @@ export type NumberToBytesErrorType =
  * const data = Bytes.fromNumber(420, { size: 4 })
  * // Uint8Array([0, 0, 1, 164])
  */
+export declare namespace numberToBytes {
+  export type Options = numberToHex.Options
+  export type ErrorType =
+    | numberToHex.ErrorType
+    | hexToBytes.ErrorType
+    | ErrorType_
+}
 export function numberToBytes(
   value: bigint | number,
-  options?: NumberToHexOptions | undefined,
+  options?: numberToBytes.Options | undefined,
 ) {
   const hex = numberToHex(value, options)
   return hexToBytes(hex)
 }
 
-export type StringToBytesOptions = {
-  /** Size of the output bytes. */
-  size?: number | undefined
-}
+export declare namespace stringToBytes {
+  type Options = {
+    /** Size of the output bytes. */
+    size?: number | undefined
+  }
 
-export type StringToBytesErrorType =
-  | AssertSizeErrorType
-  | PadRightErrorType
-  | ErrorType
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | ErrorType_
+}
 
 const encoder = /*#__PURE__*/ new TextEncoder()
 
@@ -229,7 +218,7 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  */
 export function stringToBytes(
   value: string,
-  options: StringToBytesOptions = {},
+  options: stringToBytes.Options = {},
 ): Bytes {
   const { size } = options
 

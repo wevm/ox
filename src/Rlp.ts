@@ -1,8 +1,4 @@
 export {
-  type FromRlpErrorType,
-  type FromRlpReturnType,
-  type RlpToBytesErrorType,
-  type RlpToHexErrorType,
   fromRlp,
   fromRlp as decode,
   rlpToBytes,
@@ -13,10 +9,6 @@ export {
 
 export {
   type RecursiveArray,
-  type BytesToRlpErrorType,
-  type HexToRlpErrorType,
-  type ToRlpErrorType,
-  type ToRlpReturnType,
   toRlp,
   toRlp as encode,
   bytesToRlp,

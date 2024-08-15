@@ -1,7 +1,5 @@
-import type { ErrorType } from '../errors/error.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
-
-export type IsBytesErrorType = ErrorType
 
 /**
  * Checks if the given value is {@link Bytes}.
@@ -11,6 +9,9 @@ export type IsBytesErrorType = ErrorType
  * Bytes.isBytes('0x') // false
  * Bytes.isBytes(Bytes.from([1, 2, 3])) // true
  */
+export declare namespace isBytes {
+  export type ErrorType = ErrorType_
+}
 export function isBytes(value: unknown): value is Bytes {
   if (!value) return false
   if (typeof value !== 'object') return false

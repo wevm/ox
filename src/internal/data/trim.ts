@@ -1,11 +1,5 @@
-import type { ErrorType } from '../errors/error.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
-
-export type TrimLeftReturnType<value extends Bytes | Hex> = value extends Hex
-  ? Hex
-  : Bytes
-
-export type TrimLeftErrorType = TrimErrorType
 
 /**
  * Trims leading zeros from a {@link Bytes} or {@link Hex} value.
@@ -22,17 +16,16 @@ export type TrimLeftErrorType = TrimErrorType
  * import { Bytes } from 'ox'
  * Bytes.trimLeft(Bytes.from([0, 0, 0, 0, 1, 2, 3])) // Uint8Array([1, 2, 3])
  */
+export declare namespace trimLeft {
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
+
+  type ErrorType = trim.ErrorType | ErrorType_
+}
 export function trimLeft<value extends Bytes | Hex>(
   value: value,
-): TrimReturnType<value> {
+): trimLeft.ReturnType<value> {
   return trim(value, { dir: 'left' })
 }
-
-export type TrimRightReturnType<value extends Bytes | Hex> = value extends Hex
-  ? Hex
-  : Bytes
-
-export type TrimRightErrorType = TrimErrorType
 
 /**
  * Trims trailing zeros from a {@link Bytes} or {@link Hex} value.
@@ -49,9 +42,16 @@ export type TrimRightErrorType = TrimErrorType
  * import { Bytes } from 'ox'
  * Bytes.trimRight(Bytes.from([1, 2, 3, 0, 0, 0, 0])) // Uint8Array([1, 2, 3])
  */
+export declare namespace trimRight {
+  export type ReturnType<value extends Bytes | Hex> = value extends Hex
+    ? Hex
+    : Bytes
+
+  export type ErrorType = trim.ErrorType | ErrorType_
+}
 export function trimRight<value extends Bytes | Hex>(
   value: value,
-): TrimReturnType<value> {
+): trimRight.ReturnType<value> {
   return trim(value, { dir: 'right' })
 }
 
@@ -59,18 +59,19 @@ export function trimRight<value extends Bytes | Hex>(
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-type TrimOptions = {
-  dir?: 'left' | 'right' | undefined
+export declare namespace trim {
+  type Options = {
+    dir?: 'left' | 'right' | undefined
+  }
+
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
+
+  type ErrorType = ErrorType_
 }
-
-type TrimReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
-
-type TrimErrorType = ErrorType
-
 function trim<value extends Bytes | Hex>(
   value: value,
-  options: TrimOptions = {},
-): TrimReturnType<value> {
+  options: trim.Options = {},
+): trim.ReturnType<value> {
   const { dir = 'left' } = options
 
   let data: any = typeof value === 'string' ? value.replace('0x', '') : value
@@ -88,7 +89,7 @@ function trim<value extends Bytes | Hex>(
 
   if (typeof value === 'string') {
     if (data.length === 1 && dir === 'right') data = `${data}0`
-    return `0x${data.length % 2 === 1 ? `0${data}` : data}` as TrimReturnType<value>
+    return `0x${data.length % 2 === 1 ? `0${data}` : data}` as trim.ReturnType<value>
   }
-  return data as TrimReturnType<value>
+  return data as trim.ReturnType<value>
 }

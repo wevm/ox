@@ -6,7 +6,7 @@ import {
   RecursiveReadLimitExceededError,
   type RecursiveReadLimitExceededErrorType,
 } from './errors/cursor.js'
-import type { ErrorType } from './errors/error.js'
+import type { ErrorType as ErrorType_ } from './errors/error.js'
 import type { Bytes } from './types/data.js'
 
 export type Cursor = {
@@ -48,13 +48,13 @@ type CursorErrorType =
   | CursorAssertPositionErrorType
   | CursorDecrementPositionErrorType
   | CursorIncrementPositionErrorType
-  | ErrorType
+  | ErrorType_
 
-type CursorAssertPositionErrorType = PositionOutOfBoundsErrorType | ErrorType
+type CursorAssertPositionErrorType = PositionOutOfBoundsErrorType | ErrorType_
 
-type CursorDecrementPositionErrorType = NegativeOffsetError | ErrorType
+type CursorDecrementPositionErrorType = NegativeOffsetError | ErrorType_
 
-type CursorIncrementPositionErrorType = NegativeOffsetError | ErrorType
+type CursorIncrementPositionErrorType = NegativeOffsetError | ErrorType_
 
 type StaticCursorErrorType =
   | NegativeOffsetErrorType
@@ -219,17 +219,15 @@ const staticCursor: Cursor = {
   },
 }
 
-type CursorConfig = { recursiveReadLimit?: number | undefined }
-
-export type CreateCursorErrorType =
-  | CursorErrorType
-  | StaticCursorErrorType
-  | ErrorType
-
 /** @internal */
+export declare namespace createCursor {
+  type Config = { recursiveReadLimit?: number | undefined }
+
+  type ErrorType = CursorErrorType | StaticCursorErrorType | ErrorType_
+}
 export function createCursor(
   bytes: Bytes,
-  { recursiveReadLimit = 8_192 }: CursorConfig = {},
+  { recursiveReadLimit = 8_192 }: createCursor.Config = {},
 ): Cursor {
   const cursor: Cursor = Object.create(staticCursor)
   cursor.bytes = bytes

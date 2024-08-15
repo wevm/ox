@@ -1,47 +1,16 @@
-import { type AssertSizeErrorType, assertSize } from '../data/assertSize.js'
-import {
-  type TrimLeftErrorType,
-  type TrimRightErrorType,
-  trimLeft,
-  trimRight,
-} from '../data/trim.js'
+import { assertSize } from '../data/assertSize.js'
+import { trimLeft, trimRight } from '../data/trim.js'
 import {
   InvalidBytesBooleanError,
   InvalidTypeError,
   type InvalidTypeErrorType,
 } from '../errors/data.js'
-import type { ErrorType } from '../errors/error.js'
-import {
-  type HexToBigIntErrorType,
-  type HexToNumberErrorType,
-  hexToBigInt,
-  hexToNumber,
-} from '../hex/fromHex.js'
-import { type BytesToHexErrorType, bytesToHex } from '../hex/toHex.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import { hexToBigInt, hexToNumber } from '../hex/fromHex.js'
+import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'hex' | 'bigint' | 'number' | 'boolean'
-
-export type FromBytesOptions = {
-  /** Size of the bytes. */
-  size?: number | undefined
-}
-
-export type FromBytesReturnType<to extends To> =
-  | (to extends 'string' ? string : never)
-  | (to extends 'hex' ? Hex : never)
-  | (to extends 'bigint' ? bigint : never)
-  | (to extends 'number' ? number : never)
-  | (to extends 'boolean' ? boolean : never)
-
-export type FromBytesErrorType =
-  | BytesToHexErrorType
-  | BytesToBigIntErrorType
-  | BytesToBooleanErrorType
-  | BytesToNumberErrorType
-  | BytesToStringErrorType
-  | InvalidTypeErrorType
-  | ErrorType
 
 /**
  * Decodes {@link Bytes} into a UTF-8 string, {@link Hex}, number, bigint or boolean.
@@ -59,36 +28,47 @@ export type FromBytesErrorType =
  * )
  * // 'Hello world'
  */
+export declare namespace fromBytes {
+  type Options = {
+    /** Size of the bytes. */
+    size?: number | undefined
+  }
+
+  type ReturnType<to extends To> =
+    | (to extends 'string' ? string : never)
+    | (to extends 'hex' ? Hex : never)
+    | (to extends 'bigint' ? bigint : never)
+    | (to extends 'number' ? number : never)
+    | (to extends 'boolean' ? boolean : never)
+
+  type ErrorType =
+    | bytesToBigInt.ErrorType
+    | bytesToBoolean.ErrorType
+    | bytesToNumber.ErrorType
+    | bytesToString.ErrorType
+    | bytesToHex.ErrorType
+    | InvalidTypeErrorType
+    | ErrorType_
+}
 export function fromBytes<
   to extends 'string' | 'hex' | 'bigint' | 'number' | 'boolean',
 >(
   bytes: Bytes,
   to: to | To,
-  options: FromBytesOptions = {},
-): FromBytesReturnType<to> {
+  options: fromBytes.Options = {},
+): fromBytes.ReturnType<to> {
   if (to === 'number')
-    return bytesToNumber(bytes, options) as FromBytesReturnType<to>
+    return bytesToNumber(bytes, options) as fromBytes.ReturnType<to>
   if (to === 'bigint')
-    return bytesToBigInt(bytes, options) as FromBytesReturnType<to>
+    return bytesToBigInt(bytes, options) as fromBytes.ReturnType<to>
   if (to === 'boolean')
-    return bytesToBoolean(bytes, options) as FromBytesReturnType<to>
+    return bytesToBoolean(bytes, options) as fromBytes.ReturnType<to>
   if (to === 'string')
-    return bytesToString(bytes, options) as FromBytesReturnType<to>
-  if (to === 'hex') return bytesToHex(bytes, options) as FromBytesReturnType<to>
+    return bytesToString(bytes, options) as fromBytes.ReturnType<to>
+  if (to === 'hex')
+    return bytesToHex(bytes, options) as fromBytes.ReturnType<to>
   throw new InvalidTypeError(to)
 }
-
-export type BytesToBigIntOptions = {
-  /** Whether or not the number of a signed representation. */
-  signed?: boolean | undefined
-  /** Size of the bytes. */
-  size?: number | undefined
-}
-
-export type BytesToBigIntErrorType =
-  | BytesToHexErrorType
-  | HexToBigIntErrorType
-  | ErrorType
 
 /**
  * Decodes a byte array into a bigint.
@@ -98,25 +78,25 @@ export type BytesToBigIntErrorType =
  * Bytes.toBigInt(Bytes.from([1, 164]))
  * // 420n
  */
+export declare namespace bytesToBigInt {
+  type Options = {
+    /** Whether or not the number of a signed representation. */
+    signed?: boolean | undefined
+    /** Size of the bytes. */
+    size?: number | undefined
+  }
+
+  type ErrorType = bytesToHex.ErrorType | hexToBigInt.ErrorType | ErrorType_
+}
 export function bytesToBigInt(
   bytes: Bytes,
-  options: BytesToBigIntOptions = {},
+  options: bytesToBigInt.Options = {},
 ): bigint {
   const { size } = options
   if (typeof size !== 'undefined') assertSize(bytes, size)
   const hex = bytesToHex(bytes, options)
   return hexToBigInt(hex, options)
 }
-
-export type BytesToBooleanOptions = {
-  /** Size of the bytes. */
-  size?: number | undefined
-}
-
-export type BytesToBooleanErrorType =
-  | AssertSizeErrorType
-  | TrimLeftErrorType
-  | ErrorType
 
 /**
  * Decodes a byte array into a boolean.
@@ -126,9 +106,17 @@ export type BytesToBooleanErrorType =
  * Bytes.toBoolean(Bytes.from([1]))
  * // true
  */
+export declare namespace bytesToBoolean {
+  type Options = {
+    /** Size of the bytes. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | trimLeft.ErrorType | ErrorType_
+}
 export function bytesToBoolean(
   bytes_: Bytes,
-  options: BytesToBooleanOptions = {},
+  options: bytesToBoolean.Options = {},
 ): boolean {
   const { size } = options
   let bytes = bytes_
@@ -141,13 +129,6 @@ export function bytesToBoolean(
   return Boolean(bytes[0])
 }
 
-export type BytesToNumberOptions = BytesToBigIntOptions
-
-export type BytesToNumberErrorType =
-  | BytesToHexErrorType
-  | HexToNumberErrorType
-  | ErrorType
-
 /**
  * Decodes a byte array into a number.
  *
@@ -156,25 +137,23 @@ export type BytesToNumberErrorType =
  * Bytes.toNumber(Bytes.from([1, 164]))
  * // 420
  */
+export declare namespace bytesToNumber {
+  export type Options = bytesToBigInt.Options
+
+  export type ErrorType =
+    | bytesToHex.ErrorType
+    | hexToNumber.ErrorType
+    | ErrorType_
+}
 export function bytesToNumber(
   bytes: Bytes,
-  options: BytesToNumberOptions = {},
+  options: bytesToNumber.Options = {},
 ): number {
   const { size } = options
   if (typeof size !== 'undefined') assertSize(bytes, size)
   const hex = bytesToHex(bytes, options)
   return hexToNumber(hex, options)
 }
-
-export type BytesToStringOptions = {
-  /** Size of the bytes. */
-  size?: number | undefined
-}
-
-export type BytesToStringErrorType =
-  | AssertSizeErrorType
-  | TrimRightErrorType
-  | ErrorType
 
 const decoder = /*#__PURE__*/ new TextDecoder()
 
@@ -186,9 +165,20 @@ const decoder = /*#__PURE__*/ new TextDecoder()
  * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // 'Hello world'
  */
+export declare namespace bytesToString {
+  export type Options = {
+    /** Size of the bytes. */
+    size?: number | undefined
+  }
+
+  export type ErrorType =
+    | assertSize.ErrorType
+    | trimRight.ErrorType
+    | ErrorType_
+}
 export function bytesToString(
   bytes_: Bytes,
-  options: BytesToStringOptions = {},
+  options: bytesToString.Options = {},
 ): string {
   const { size } = options
 

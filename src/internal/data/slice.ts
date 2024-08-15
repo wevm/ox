@@ -2,24 +2,10 @@ import {
   SliceOffsetOutOfBoundsError,
   type SliceOffsetOutOfBoundsErrorType,
 } from '../errors/data.js'
-import type { ErrorType } from '../errors/error.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
-import { type IsHexErrorType, isHex } from './isHex.js'
-import { type SizeErrorType, size } from './size.js'
-
-export type SliceOptions = {
-  strict?: boolean | undefined
-}
-
-export type SliceReturnType<value extends Bytes | Hex> = value extends Hex
-  ? Hex
-  : Bytes
-
-export type SliceErrorType =
-  | IsHexErrorType
-  | SliceBytesErrorType
-  | SliceHexErrorType
-  | ErrorType
+import { isHex } from './isHex.js'
+import { size } from './size.js'
 
 /**
  * Returns a section of a {@link Hex} or {@link Bytes} value given a start/end bytes offset.
@@ -37,31 +23,42 @@ export type SliceErrorType =
  * Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1, 4)
  * // Uint8Array([2, 3, 4])
  */
+export declare namespace slice {
+  type Options = {
+    strict?: boolean | undefined
+  }
+
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
+
+  type ErrorType =
+    | isHex.ErrorType
+    | sliceBytes.ErrorType
+    | sliceHex.ErrorType
+    | ErrorType_
+}
 export function slice<value extends Bytes | Hex>(
   value: value,
   start?: number | undefined,
   end?: number | undefined,
-  options: SliceOptions = {},
-): SliceReturnType<value> {
+  options: slice.Options = {},
+): slice.ReturnType<value> {
   const { strict } = options
   if (isHex(value, { strict: false }))
     return sliceHex(value as Hex, start, end, {
       strict,
-    }) as SliceReturnType<value>
+    }) as slice.ReturnType<value>
   return sliceBytes(value as Bytes, start, end, {
     strict,
-  }) as SliceReturnType<value>
+  }) as slice.ReturnType<value>
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-type AssertStartOffsetErrorType =
-  | SliceOffsetOutOfBoundsErrorType
-  | SizeErrorType
-  | ErrorType
-
+declare namespace assertStartOffset {
+  type ErrorType = SliceOffsetOutOfBoundsErrorType | size.ErrorType | ErrorType_
+}
 function assertStartOffset(value: Hex | Bytes, start?: number | undefined) {
   if (typeof start === 'number' && start > 0 && start > size(value) - 1)
     throw new SliceOffsetOutOfBoundsError({
@@ -71,11 +68,9 @@ function assertStartOffset(value: Hex | Bytes, start?: number | undefined) {
     })
 }
 
-type AssertEndOffsetErrorType =
-  | SliceOffsetOutOfBoundsErrorType
-  | SizeErrorType
-  | ErrorType
-
+declare namespace assertEndOffset {
+  type ErrorType = SliceOffsetOutOfBoundsErrorType | size.ErrorType | ErrorType_
+}
 function assertEndOffset(
   value: Hex | Bytes,
   start?: number | undefined,
@@ -94,16 +89,17 @@ function assertEndOffset(
   }
 }
 
-type SliceBytesErrorType =
-  | AssertStartOffsetErrorType
-  | AssertEndOffsetErrorType
-  | ErrorType
-
+declare namespace sliceBytes {
+  type ErrorType =
+    | assertStartOffset.ErrorType
+    | assertEndOffset.ErrorType
+    | ErrorType_
+}
 function sliceBytes(
   value_: Bytes,
   start?: number | undefined,
   end?: number | undefined,
-  options: SliceOptions = {},
+  options: slice.Options = {},
 ): Bytes {
   const { strict } = options
   assertStartOffset(value_, start)
@@ -112,16 +108,17 @@ function sliceBytes(
   return value
 }
 
-type SliceHexErrorType =
-  | AssertStartOffsetErrorType
-  | AssertEndOffsetErrorType
-  | ErrorType
-
+declare namespace sliceHex {
+  type ErrorType =
+    | assertStartOffset.ErrorType
+    | assertEndOffset.ErrorType
+    | ErrorType_
+}
 function sliceHex(
   value_: Hex,
   start?: number | undefined,
   end?: number | undefined,
-  options: SliceOptions = {},
+  options: slice.Options = {},
 ): Hex {
   const { strict } = options
   assertStartOffset(value_, start)

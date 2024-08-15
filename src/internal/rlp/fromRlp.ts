@@ -1,31 +1,16 @@
-import { type HexToBytesErrorType, hexToBytes } from '../bytes/toBytes.js'
-import {
-  type CreateCursorErrorType,
-  type Cursor,
-  createCursor,
-} from '../cursor.js'
+import { hexToBytes } from '../bytes/toBytes.js'
+import { type Cursor, createCursor } from '../cursor.js'
 import { BaseError, type BaseErrorType } from '../errors/base.js'
 import {
   InvalidHexValueError,
   type InvalidHexValueErrorType,
 } from '../errors/data.js'
-import type { ErrorType } from '../errors/error.js'
-import { type BytesToHexErrorType, bytesToHex } from '../hex/toHex.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { RecursiveArray } from './toRlp.js'
 
 type To = 'hex' | 'bytes'
-
-export type FromRlpReturnType<to extends To> =
-  | (to extends 'bytes' ? RecursiveArray<Bytes> : never)
-  | (to extends 'hex' ? RecursiveArray<Hex> : never)
-
-export type FromRlpErrorType =
-  | CreateCursorErrorType
-  | FromRlpCursorErrorType
-  | HexToBytesErrorType
-  | InvalidHexValueErrorType
-  | ErrorType
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} or {@link Hex} value.
@@ -35,10 +20,22 @@ export type FromRlpErrorType =
  * Rlp.decode('0x8b68656c6c6f20776f726c64')
  * // 0x68656c6c6f20776f726c64
  */
+export declare namespace fromRlp {
+  type ReturnType<to extends To> =
+    | (to extends 'bytes' ? RecursiveArray<Bytes> : never)
+    | (to extends 'hex' ? RecursiveArray<Hex> : never)
+
+  type ErrorType =
+    | hexToBytes.ErrorType
+    | fromRlpCursor.ErrorType
+    | createCursor.ErrorType
+    | InvalidHexValueErrorType
+    | ErrorType_
+}
 export function fromRlp<
   value extends Bytes | Hex,
   to extends To = value extends Bytes ? 'bytes' : 'hex',
->(value: value, to_?: to | To | undefined): FromRlpReturnType<to> {
+>(value: value, to_?: to | To | undefined): fromRlp.ReturnType<to> {
   const to = to_ ?? (typeof value === 'string' ? 'hex' : 'bytes')
 
   const bytes = (() => {
@@ -55,10 +52,8 @@ export function fromRlp<
   })
   const result = fromRlpCursor(cursor, to)
 
-  return result as FromRlpReturnType<to>
+  return result as fromRlp.ReturnType<to>
 }
-
-export type RlpToBytesErrorType = FromRlpErrorType
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} value.
@@ -68,11 +63,13 @@ export type RlpToBytesErrorType = FromRlpErrorType
  * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
  * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  */
-export function rlpToBytes(value: Bytes | Hex): FromRlpReturnType<'bytes'> {
+export declare namespace rlpToBytes {
+  type ErrorType = fromRlp.ErrorType
+  type ReturnType = fromRlp.ReturnType<'bytes'>
+}
+export function rlpToBytes(value: Bytes | Hex): rlpToBytes.ReturnType {
   return fromRlp(value, 'bytes')
 }
-
-export type RlpToHexErrorType = FromRlpErrorType
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Hex} value.
@@ -82,7 +79,11 @@ export type RlpToHexErrorType = FromRlpErrorType
  * Rlp.toHex('0x8b68656c6c6f20776f726c64')
  * // 0x68656c6c6f20776f726c64
  */
-export function rlpToHex(value: Bytes | Hex): FromRlpReturnType<'hex'> {
+export declare namespace rlpToHex {
+  type ErrorType = fromRlp.ErrorType
+  type ReturnType = fromRlp.ReturnType<'hex'>
+}
+export function rlpToHex(value: Bytes | Hex): rlpToHex.ReturnType {
   return fromRlp(value, 'hex')
 }
 
@@ -90,20 +91,22 @@ export function rlpToHex(value: Bytes | Hex): FromRlpReturnType<'hex'> {
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-type FromRlpCursorErrorType =
-  | BytesToHexErrorType
-  | ReadLengthErrorType
-  | ReadListErrorType
-  | ErrorType
-
+declare namespace fromRlpCursor {
+  type ReturnType<to extends To = 'hex'> = fromRlp.ReturnType<to>
+  type ErrorType =
+    | bytesToHex.ErrorType
+    | readLength.ErrorType
+    | readList.ErrorType
+    | ErrorType_
+}
 function fromRlpCursor<to extends To = 'hex'>(
   cursor: Cursor,
   to: to | To | undefined = 'hex',
-): FromRlpReturnType<to> {
+): fromRlpCursor.ReturnType<to> {
   if (cursor.bytes.length === 0)
     return (
       to === 'hex' ? bytesToHex(cursor.bytes) : cursor.bytes
-    ) as FromRlpReturnType<to>
+    ) as fromRlpCursor.ReturnType<to>
 
   const prefix = cursor.readByte()
   if (prefix < 0x80) cursor.decrementPosition(1)
@@ -112,16 +115,19 @@ function fromRlpCursor<to extends To = 'hex'>(
   if (prefix < 0xc0) {
     const length = readLength(cursor, prefix, 0x80)
     const bytes = cursor.readBytes(length)
-    return (to === 'hex' ? bytesToHex(bytes) : bytes) as FromRlpReturnType<to>
+    return (
+      to === 'hex' ? bytesToHex(bytes) : bytes
+    ) as fromRlpCursor.ReturnType<to>
   }
 
   // list
   const length = readLength(cursor, prefix, 0xc0)
-  return readList(cursor, length, to) as {} as FromRlpReturnType<to>
+  return readList(cursor, length, to) as {} as fromRlpCursor.ReturnType<to>
 }
 
-type ReadLengthErrorType = BaseErrorType | ErrorType
-
+declare namespace readLength {
+  type ErrorType = BaseErrorType | ErrorType_
+}
 function readLength(cursor: Cursor, prefix: number, offset: number) {
   if (offset === 0x80 && prefix < 0x80) return 1
   if (prefix <= offset + 55) return prefix - offset
@@ -132,11 +138,12 @@ function readLength(cursor: Cursor, prefix: number, offset: number) {
   throw new BaseError('Invalid RLP prefix')
 }
 
-type ReadListErrorType = ErrorType
-
+declare namespace readList {
+  type ErrorType = ErrorType_
+}
 function readList<to extends To>(cursor: Cursor, length: number, to: to | To) {
   const position = cursor.position
-  const value: FromRlpReturnType<to>[] = []
+  const value: fromRlpCursor.ReturnType<to>[] = []
   while (cursor.position - position < length)
     value.push(fromRlpCursor(cursor, to))
   return value

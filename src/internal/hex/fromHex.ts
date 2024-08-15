@@ -1,42 +1,16 @@
-import { type HexToBytesErrorType, hexToBytes } from '../bytes/toBytes.js'
-import { type AssertSizeErrorType, assertSize } from '../data/assertSize.js'
-import {
-  type TrimLeftErrorType,
-  type TrimRightErrorType,
-  trimLeft,
-  trimRight,
-} from '../data/trim.js'
+import { hexToBytes } from '../bytes/toBytes.js'
+import { assertSize } from '../data/assertSize.js'
+import { trimLeft, trimRight } from '../data/trim.js'
 import {
   InvalidHexBooleanError,
   type InvalidHexBooleanErrorType,
   InvalidTypeError,
   type InvalidTypeErrorType,
 } from '../errors/data.js'
-import type { ErrorType } from '../errors/error.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'bytes' | 'bigint' | 'number' | 'boolean'
-
-export type FromHexOptions = {
-  /** Size (in bytes) of the hex value. */
-  size?: number | undefined
-}
-
-export type FromHexReturnType<to> =
-  | (to extends 'string' ? string : never)
-  | (to extends 'bytes' ? Bytes : never)
-  | (to extends 'bigint' ? bigint : never)
-  | (to extends 'number' ? number : never)
-  | (to extends 'boolean' ? boolean : never)
-
-export type FromHexErrorType =
-  | HexToNumberErrorType
-  | HexToBigIntErrorType
-  | HexToBooleanErrorType
-  | HexToStringErrorType
-  | HexToBytesErrorType
-  | InvalidTypeErrorType
-  | ErrorType
 
 /**
  * Decodes a {@link Hex} value into a string, number, bigint, boolean, or {@link Bytes}.
@@ -58,28 +32,44 @@ export type FromHexErrorType =
  * })
  * // 'Hello world'
  */
+export declare namespace fromHex {
+  type Options = {
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ReturnType<to> =
+    | (to extends 'string' ? string : never)
+    | (to extends 'bytes' ? Bytes : never)
+    | (to extends 'bigint' ? bigint : never)
+    | (to extends 'number' ? number : never)
+    | (to extends 'boolean' ? boolean : never)
+
+  type ErrorType =
+    | hexToNumber.ErrorType
+    | hexToBigInt.ErrorType
+    | hexToBoolean.ErrorType
+    | hexToString.ErrorType
+    | hexToBytes.ErrorType
+    | InvalidTypeErrorType
+    | ErrorType_
+}
 export function fromHex<to extends To>(
   hex: Hex,
   to: to | To,
-  options: FromHexOptions = {},
-): FromHexReturnType<to> {
-  if (to === 'number') return hexToNumber(hex, options) as FromHexReturnType<to>
-  if (to === 'bigint') return hexToBigInt(hex, options) as FromHexReturnType<to>
-  if (to === 'string') return hexToString(hex, options) as FromHexReturnType<to>
+  options: fromHex.Options = {},
+): fromHex.ReturnType<to> {
+  if (to === 'number')
+    return hexToNumber(hex, options) as fromHex.ReturnType<to>
+  if (to === 'bigint')
+    return hexToBigInt(hex, options) as fromHex.ReturnType<to>
+  if (to === 'string')
+    return hexToString(hex, options) as fromHex.ReturnType<to>
   if (to === 'boolean')
-    return hexToBoolean(hex, options) as FromHexReturnType<to>
-  if (to === 'bytes') return hexToBytes(hex, options) as FromHexReturnType<to>
+    return hexToBoolean(hex, options) as fromHex.ReturnType<to>
+  if (to === 'bytes') return hexToBytes(hex, options) as fromHex.ReturnType<to>
   throw new InvalidTypeError(to)
 }
-
-export type HexToBigIntOptions = {
-  /** Whether or not the number of a signed representation. */
-  signed?: boolean | undefined
-  /** Size (in bytes) of the hex value. */
-  size?: number | undefined
-}
-
-export type HexToBigIntErrorType = AssertSizeErrorType | ErrorType
 
 /**
  * Decodes a {@link Hex} value into a BigInt.
@@ -94,9 +84,19 @@ export type HexToBigIntErrorType = AssertSizeErrorType | ErrorType
  * Hex.toBigInt('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420n
  */
+export declare namespace hexToBigInt {
+  type Options = {
+    /** Whether or not the number of a signed representation. */
+    signed?: boolean | undefined
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | ErrorType_
+}
 export function hexToBigInt(
   hex: Hex,
-  options: HexToBigIntOptions = {},
+  options: hexToBigInt.Options = {},
 ): bigint {
   const { signed } = options
 
@@ -112,17 +112,6 @@ export function hexToBigInt(
   return value - BigInt(`0x${'f'.padStart(size * 2, 'f')}`) - 1n
 }
 
-export type HexToBooleanOptions = {
-  /** Size (in bytes) of the hex value. */
-  size?: number | undefined
-}
-
-export type HexToBooleanErrorType =
-  | AssertSizeErrorType
-  | InvalidHexBooleanErrorType
-  | TrimLeftErrorType
-  | ErrorType
-
 /**
  * Decodes a {@link Hex} value into a boolean.
  *
@@ -136,9 +125,21 @@ export type HexToBooleanErrorType =
  * Hex.toBoolean('0x0000000000000000000000000000000000000000000000000000000000000001', { size: 32 })
  * // true
  */
+export declare namespace hexToBoolean {
+  type Options = {
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType =
+    | assertSize.ErrorType
+    | trimLeft.ErrorType
+    | InvalidHexBooleanErrorType
+    | ErrorType_
+}
 export function hexToBoolean(
   hex_: Hex,
-  options: HexToBooleanOptions = {},
+  options: hexToBoolean.Options = {},
 ): boolean {
   let hex = hex_
   if (options.size) {
@@ -149,10 +150,6 @@ export function hexToBoolean(
   if (trimLeft(hex) === '0x01') return true
   throw new InvalidHexBooleanError(hex)
 }
-
-export type HexToNumberOptions = HexToBigIntOptions
-
-export type HexToNumberErrorType = HexToBigIntErrorType | ErrorType
 
 /**
  * Decodes a {@link Hex} value into a number.
@@ -167,25 +164,19 @@ export type HexToNumberErrorType = HexToBigIntErrorType | ErrorType
  * Hex.toNumber('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420
  */
+export declare namespace hexToNumber {
+  type Options = hexToBigInt.Options
+
+  type ErrorType = hexToBigInt.ErrorType | ErrorType_
+}
 export function hexToNumber(
   hex: Hex,
-  options: HexToNumberOptions = {},
+  options: hexToNumber.Options = {},
 ): number {
   const { signed, size } = options
   if (!signed && !size) return Number(hex)
   return Number(hexToBigInt(hex, options))
 }
-
-export type HexToStringOptions = {
-  /** Size (in bytes) of the hex value. */
-  size?: number | undefined
-}
-
-export type HexToStringErrorType =
-  | AssertSizeErrorType
-  | HexToBytesErrorType
-  | TrimRightErrorType
-  | ErrorType
 
 /**
  * Decodes a {@link Hex} value into a UTF-8 string.
@@ -202,9 +193,21 @@ export type HexToStringErrorType =
  * })
  * // 'Hello world'
  */
+export declare namespace hexToString {
+  type Options = {
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType =
+    | assertSize.ErrorType
+    | hexToBytes.ErrorType
+    | trimRight.ErrorType
+    | ErrorType_
+}
 export function hexToString(
   hex: Hex,
-  options: HexToStringOptions = {},
+  options: hexToString.Options = {},
 ): string {
   const { size } = options
 

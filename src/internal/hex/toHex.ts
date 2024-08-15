@@ -1,38 +1,19 @@
-import { type AssertSizeErrorType, assertSize } from '../data/assertSize.js'
+import { assertSize } from '../data/assertSize.js'
 import { isBytes } from '../data/isBytes.js'
-import { type IsHexErrorType, isHex } from '../data/isHex.js'
-import {
-  type PadLeftErrorType,
-  type PadRightErrorType,
-  padLeft,
-  padRight,
-} from '../data/pad.js'
+import { isHex } from '../data/isHex.js'
+import { padLeft, padRight } from '../data/pad.js'
 import {
   IntegerOutOfRangeError,
   type IntegerOutOfRangeErrorType,
   InvalidTypeError,
   type InvalidTypeErrorType,
 } from '../errors/data.js'
-import type { ErrorType } from '../errors/error.js'
+import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
-
-export type ToHexParameters = {
-  /** The size (in bytes) of the output hex value. */
-  size?: number | undefined
-}
-
-export type ToHexErrorType =
-  | BooleanToHexErrorType
-  | BytesToHexErrorType
-  | IsHexErrorType
-  | InvalidTypeErrorType
-  | NumberToHexErrorType
-  | StringToHexErrorType
-  | ErrorType
 
 /**
  * Encodes an arbitrary value into a {@link Hex} value.
@@ -52,9 +33,24 @@ export type ToHexErrorType =
  * Hex.from('Hello world', { size: 32 })
  * // '0x48656c6c6f20776f726c64210000000000000000000000000000000000000000'
  */
+export declare namespace toHex {
+  type Parameters = {
+    /** The size (in bytes) of the output hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType =
+    | booleanToHex.ErrorType
+    | bytesToHex.ErrorType
+    | numberToHex.ErrorType
+    | stringToHex.ErrorType
+    | isHex.ErrorType
+    | InvalidTypeErrorType
+    | ErrorType_
+}
 export function toHex(
   value: string | number | bigint | boolean | readonly number[] | Bytes,
-  options: ToHexParameters = {},
+  options: toHex.Parameters = {},
 ): Hex {
   if (isHex(value)) return value
   if (isBytes(value)) return bytesToHex(value, options)
@@ -65,16 +61,6 @@ export function toHex(
   if (typeof value === 'boolean') return booleanToHex(value, options)
   throw new InvalidTypeError(typeof value)
 }
-
-export type BooleanToHexOptions = {
-  /** The size (in bytes) of the output hex value. */
-  size?: number | undefined
-}
-
-export type BooleanToHexErrorType =
-  | AssertSizeErrorType
-  | PadLeftErrorType
-  | ErrorType
 
 /**
  * Encodes a boolean into a {@link Hex} value.
@@ -94,9 +80,17 @@ export type BooleanToHexErrorType =
  * Hex.fromBoolean(true, { size: 32 })
  * // '0x0000000000000000000000000000000000000000000000000000000000000001'
  */
+export declare namespace booleanToHex {
+  type Options = {
+    /** The size (in bytes) of the output hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | ErrorType_
+}
 export function booleanToHex(
   value: boolean,
-  options: BooleanToHexOptions = {},
+  options: booleanToHex.Options = {},
 ): Hex {
   const hex: Hex = `0x${Number(value)}`
   if (typeof options.size === 'number') {
@@ -105,16 +99,6 @@ export function booleanToHex(
   }
   return hex
 }
-
-export type BytesToHexOptions = {
-  /** The size (in bytes) of the output hex value. */
-  size?: number | undefined
-}
-
-export type BytesToHexErrorType =
-  | AssertSizeErrorType
-  | PadRightErrorType
-  | ErrorType
 
 /**
  * Encodes a {@link Bytes} value into a {@link Hex} value.
@@ -134,7 +118,18 @@ export type BytesToHexErrorType =
  * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
  * // '0x48656c6c6f20576f726c642100000000000000000000000000000000000000000'
  */
-export function bytesToHex(value: Bytes, options: BytesToHexOptions = {}): Hex {
+export declare namespace bytesToHex {
+  type Options = {
+    /** The size (in bytes) of the output hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | ErrorType_
+}
+export function bytesToHex(
+  value: Bytes,
+  options: bytesToHex.Options = {},
+): Hex {
   let string = ''
   for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
   const hex = `0x${string}` as const
@@ -145,24 +140,6 @@ export function bytesToHex(value: Bytes, options: BytesToHexOptions = {}): Hex {
   }
   return hex
 }
-
-export type NumberToHexOptions =
-  | {
-      /** Whether or not the number of a signed representation. */
-      signed?: boolean | undefined
-      /** The size (in bytes) of the output hex value. */
-      size: number
-    }
-  | {
-      signed?: undefined
-      /** The size (in bytes) of the output hex value. */
-      size?: number | undefined
-    }
-
-export type NumberToHexErrorType =
-  | IntegerOutOfRangeErrorType
-  | PadLeftErrorType
-  | ErrorType
 
 /**
  * Encodes a number or bigint into a {@link Hex} value.
@@ -177,9 +154,25 @@ export type NumberToHexErrorType =
  * Hex.fromNumber(420, { size: 32 })
  * // '0x00000000000000000000000000000000000000000000000000000000000001a4'
  */
+export declare namespace numberToHex {
+  type Options =
+    | {
+        /** Whether or not the number of a signed representation. */
+        signed?: boolean | undefined
+        /** The size (in bytes) of the output hex value. */
+        size: number
+      }
+    | {
+        signed?: undefined
+        /** The size (in bytes) of the output hex value. */
+        size?: number | undefined
+      }
+
+  type ErrorType = IntegerOutOfRangeErrorType | padLeft.ErrorType | ErrorType_
+}
 export function numberToHex(
   value_: number | bigint,
-  options: NumberToHexOptions = {},
+  options: numberToHex.Options = {},
 ): Hex {
   const { signed, size } = options
 
@@ -214,13 +207,6 @@ export function numberToHex(
   return hex
 }
 
-export type StringToHexOptions = {
-  /** The size (in bytes) of the output hex value. */
-  size?: number | undefined
-}
-
-export type StringToHexErrorType = BytesToHexErrorType | ErrorType
-
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
@@ -236,9 +222,17 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * Hex.fromString('Hello World!', { size: 32 })
  * // '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
  */
+export declare namespace stringToHex {
+  type Options = {
+    /** The size (in bytes) of the output hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType = bytesToHex.ErrorType | ErrorType_
+}
 export function stringToHex(
   value_: string,
-  options: StringToHexOptions = {},
+  options: stringToHex.Options = {},
 ): Hex {
   const value = encoder.encode(value_)
   return bytesToHex(value, options)
