@@ -12,13 +12,11 @@ Generates random [`Bytes`](/api/bytes) of the specified length.
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Namespace Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { randomBytes } from 'ox/Bytes'
 ```
 

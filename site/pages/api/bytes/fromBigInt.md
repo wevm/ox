@@ -12,13 +12,11 @@ Encodes a [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Refer
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import
 import { Bytes } from 'ox'
 
-// Module
+// Named Import Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { numberToBytes } from 'ox/Bytes'
 ```
 

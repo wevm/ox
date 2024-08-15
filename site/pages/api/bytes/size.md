@@ -10,13 +10,11 @@ Retrieves the size of a **[Bytes](/api/bytes)** value.
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Namespace Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { size } from 'ox/Bytes'
 ```
 

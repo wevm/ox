@@ -10,13 +10,11 @@ Returns a section of a **[Bytes](/api/bytes)** value given a start (and end) byt
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Namespace Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { slice } from 'ox/Bytes'
 ```
 

@@ -10,13 +10,11 @@ Trims trailing zero bytes from a **[Bytes](/api/bytes)** value.
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Namespace Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { trimRight } from 'ox/Bytes'
 ```
 

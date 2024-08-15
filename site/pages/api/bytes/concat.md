@@ -12,13 +12,11 @@ Concatenates two or more [`Bytes`](/api/bytes) values.
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Named Import Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { concat } from 'ox/Bytes'
 ```
 

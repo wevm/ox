@@ -10,13 +10,11 @@ Pads a **[Bytes](/api/bytes)** value to the left with zero bytes until it reache
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Namespace Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { padLeft } from 'ox/Bytes'
 ```
 

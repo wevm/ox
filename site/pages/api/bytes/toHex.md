@@ -12,13 +12,11 @@ Decodes [Bytes](/api/bytes) into a [Hex](#TODO) value.
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Namespace Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { bytesToHex } from 'ox/Bytes'
 ```
 

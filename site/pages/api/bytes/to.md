@@ -12,13 +12,11 @@ Decodes [Bytes](/api/bytes) into a string, number, bigint, boolean, or hex value
 
 ```ts twoslash
 // @noErrors
-// Namespace 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module
+// Namespace Imports
 import * as Bytes from 'ox/Bytes'
-
-// Function
 import { fromBytes } from 'ox/Bytes'
 ```
 
