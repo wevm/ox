@@ -8,6 +8,8 @@ export declare namespace randomBytes {
 /**
  * Generates a random byte array of the specified length.
  *
+ * - Docs: https://oxlib.sh/api/bytes/random
+ *
  * @example
  * ```ts
  * import { Bytes } from 'ox'

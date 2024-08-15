@@ -8,6 +8,8 @@ export declare namespace isBytes {
 /**
  * Checks if the given value is {@link Bytes}.
  *
+ * - Docs: https://oxlib.sh/api/bytes/isBytes
+ *
  * @example
  * import { Bytes } from 'ox'
  * Bytes.isBytes('0x') // false

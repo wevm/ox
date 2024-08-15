@@ -12,6 +12,9 @@ export declare namespace isBytesEqual {
 /**
  * Checks if two {@link Bytes} or {@link Hex} values are equal.
  *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/isEqual
+ * - Docs (Hex): https://oxlib.sh/api/hex/isEqual
+ *
  * @example
  * import { Bytes } from 'ox'
  * Bytes.isEqual(Bytes.from([1]), Bytes.from([1])) // true

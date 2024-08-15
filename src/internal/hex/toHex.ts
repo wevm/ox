@@ -34,6 +34,8 @@ export declare namespace toHex {
 /**
  * Encodes an arbitrary value into a {@link Hex} value.
  *
+ * - Docs: https://oxlib.sh/api/hex/from
+ *
  * @example
  * import { Hex } from 'ox'
  * Hex.from('Hello world')
@@ -75,6 +77,8 @@ export declare namespace booleanToHex {
 /**
  * Encodes a boolean into a {@link Hex} value.
  *
+ * - Docs: https://oxlib.sh/api/hex/fromBoolean
+ *
  * @example
  * import { Hex } from 'ox'
  * Hex.fromBoolean(true)
@@ -113,6 +117,8 @@ export declare namespace bytesToHex {
 
 /**
  * Encodes a {@link Bytes} value into a {@link Hex} value.
+ *
+ * - Docs: https://oxlib.sh/api/hex/fromBytes
  *
  * @example
  * import { Bytes } from 'ox'
@@ -163,6 +169,8 @@ export declare namespace numberToHex {
 
 /**
  * Encodes a number or bigint into a {@link Hex} value.
+ *
+ * - Docs: https://oxlib.sh/api/hex/fromNumber
  *
  * @example
  * import { Hex } from 'ox'
@@ -224,6 +232,8 @@ export declare namespace stringToHex {
 
 /**
  * Encodes a UTF-8 string into a hex string
+ *
+ * - Docs: https://oxlib.sh/api/hex/fromString
 
  * @example
  * import { Hex } from 'ox'

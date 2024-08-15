@@ -38,6 +38,8 @@ export declare namespace fromHex {
 /**
  * Decodes a {@link Hex} value into a string, number, bigint, boolean, or {@link Bytes}.
  *
+ * - Docs: https://oxlib.sh/api/hex/to
+ *
  * @example
  * import { Hex } from 'ox'
  * Hex.to('0x1a4', 'number')
@@ -86,6 +88,8 @@ export declare namespace hexToBigInt {
 /**
  * Decodes a {@link Hex} value into a BigInt.
  *
+ * - Docs: https://oxlib.sh/api/hex/toBigInt
+ *
  * @example
  * import { Hex } from 'ox'
  * Hex.toBigInt('0x1a4')
@@ -130,6 +134,8 @@ export declare namespace hexToBoolean {
 /**
  * Decodes a {@link Hex} value into a boolean.
  *
+ * - Docs: https://oxlib.sh/api/hex/toBoolean
+ *
  * @example
  * import { Hex } from 'ox'
  * Hex.toBoolean('0x01')
@@ -162,6 +168,8 @@ export declare namespace hexToNumber {
 
 /**
  * Decodes a {@link Hex} value into a number.
+ *
+ * - Docs: https://oxlib.sh/api/hex/toNumber
  *
  * @example
  * import { Hex } from 'ox'
@@ -197,6 +205,8 @@ export declare namespace hexToString {
 
 /**
  * Decodes a {@link Hex} value into a UTF-8 string.
+ *
+ * - Docs: https://oxlib.sh/api/hex/toString
  *
  * @example
  * import { Hex } from 'ox'

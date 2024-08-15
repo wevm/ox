@@ -24,6 +24,9 @@ export declare namespace slice {
 /**
  * Returns a section of a {@link Hex} or {@link Bytes} value given a start/end bytes offset.
  *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/slice
+ * - Docs (Hex): https://oxlib.sh/api/hex/slice
+ *
  * @example
  * import { Data } from 'ox'
  * Data.slice('0x0123456789', 1, 4) // '0x234567'

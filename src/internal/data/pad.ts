@@ -13,6 +13,9 @@ export declare namespace padLeft {
 /**
  * Pads a {@link Bytes} or {@link Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/padLeft
+ * - Docs (Hex): https://oxlib.sh/api/hex/padLeft
+ *
  * @example
  * import { Bytes } from 'ox'
  * Bytes.padLeft(Bytes.from([1]), 4)
@@ -37,6 +40,9 @@ export declare namespace padRight {
 
 /**
  * Pads a {@link Bytes} or {@link Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
+ *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/padRight
+ * - Docs (Hex): https://oxlib.sh/api/hex/padRight
  *
  * @example
  * import { Bytes } from 'ox'

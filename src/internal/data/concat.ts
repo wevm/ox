@@ -9,6 +9,9 @@ export declare namespace concat {
 /**
  * Concatenates two or more {@link Bytes} or {@link Hex}.
  *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/concat
+ * - Docs (Hex): https://oxlib.sh/api/hex/concat
+ *
  * @example
  * ```ts
  * import { Data } from 'ox'

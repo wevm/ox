@@ -38,6 +38,8 @@ export declare namespace fromBytes {
 /**
  * Decodes {@link Bytes} into a UTF-8 string, {@link Hex}, number, bigint or boolean.
  *
+ * - Docs: https://oxlib.sh/api/bytes/to
+ *
  * @example
  * import { Bytes } from 'ox'
  * Bytes.to(Bytes.from([1, 164]), 'number')
@@ -84,6 +86,8 @@ export declare namespace bytesToBigInt {
 
 /**
  * Decodes a byte array into a bigint.
+ * 
+ - Docs: https://oxlib.sh/api/bytes/toBigInt
  *
  * @example
  * import { Bytes } from 'ox'
@@ -111,6 +115,8 @@ export declare namespace bytesToBoolean {
 
 /**
  * Decodes a byte array into a boolean.
+ *
+ * - Docs: https://oxlib.sh/api/bytes/toBoolean
  *
  * @example
  * import { Bytes } from 'ox'
@@ -144,6 +150,8 @@ export declare namespace bytesToNumber {
 /**
  * Decodes a byte array into a number.
  *
+ * - Docs: https://oxlib.sh/api/bytes/toNumber
+ *
  * @example
  * import { Bytes } from 'ox'
  * Bytes.toNumber(Bytes.from([1, 164]))
@@ -175,6 +183,8 @@ export declare namespace bytesToString {
 
 /**
  * Decodes a byte array into a UTF-8 string.
+ *
+ * - Docs: https://oxlib.sh/api/bytes/toString
  *
  * @example
  * import { Bytes } from 'ox'

@@ -10,6 +10,9 @@ export declare namespace trimLeft {
 /**
  * Trims leading zeros from a {@link Bytes} or {@link Hex} value.
  *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/trimLeft
+ * - Docs (Hex): https://oxlib.sh/api/hex/trimLeft
+ *
  * @example
  * import { Data } from 'ox'
  * Data.trimLeft('0x00000000deadbeef') // '0xdeadbeef'
@@ -38,6 +41,9 @@ export declare namespace trimRight {
 
 /**
  * Trims trailing zeros from a {@link Bytes} or {@link Hex} value.
+ *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/trimRight
+ * - Docs (Hex): https://oxlib.sh/api/hex/trimRight
  *
  * @example
  * import { Data } from 'ox'

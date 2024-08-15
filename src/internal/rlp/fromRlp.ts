@@ -28,6 +28,8 @@ export declare namespace fromRlp {
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} or {@link Hex} value.
  *
+ * - Docs: https://oxlib.sh/api/rlp/decode
+ *
  * @example
  * import { Rlp } from 'ox'
  * Rlp.decode('0x8b68656c6c6f20776f726c64')
@@ -64,6 +66,8 @@ export declare namespace rlpToBytes {
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} value.
  *
+ * - Docs: https://oxlib.sh/api/rlp/toBytes
+ *
  * @example
  * import { Rlp } from 'ox'
  * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
@@ -80,6 +84,8 @@ export declare namespace rlpToHex {
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Hex} value.
+ *
+ * - Docs: https://oxlib.sh/api/rlp/toHex
  *
  * @example
  * import { Rlp } from 'ox'

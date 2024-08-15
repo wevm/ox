@@ -12,6 +12,8 @@ export declare namespace isHex {
 /**
  * Checks if the given value is {@link Hex}.
  *
+ * - Docs: https://oxlib.sh/api/hex/isHex
+ *
  * @example
  * import { Hex } from 'ox'
  * Hex.isHex('0x') // true

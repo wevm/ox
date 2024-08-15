@@ -9,6 +9,9 @@ export declare namespace size {
 /**
  * Retrieves the size of a {@link Hex} or {@link Bytes} value (in bytes).
  *
+ * - Docs (Bytes): https://oxlib.sh/api/bytes/size
+ * - Docs (Hex): https://oxlib.sh/api/hex/size
+ *
  * @example
  * import { Data } from 'ox'
  * Data.size('0xdeadbeef') // 4

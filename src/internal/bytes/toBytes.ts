@@ -28,6 +28,8 @@ export declare namespace toBytes {
 /**
  * Encodes an arbitrary value to {@link Bytes}.
  *
+ * - Docs: https://oxlib.sh/api/bytes/from
+ *
  * @example
  * import { Bytes } from 'ox'
  * const data = Bytes.from('Hello world')
@@ -68,6 +70,8 @@ export declare namespace booleanToBytes {
 
 /**
  * Encodes a boolean value into {@link Bytes}.
+ *
+ * - Docs: https://oxlib.sh/api/bytes/fromBoolean
  *
  * @example
  * import { Bytes } from 'ox'
@@ -125,6 +129,8 @@ export declare namespace hexToBytes {
 /**
  * Encodes a hex value into {@link Bytes}.
  *
+ * - Docs: https://oxlib.sh/api/bytes/fromHex
+ *
  * @example
  * import { Hex } from 'ox'
  * const data = Hex.toBytes('0x48656c6c6f20776f726c6421')
@@ -178,6 +184,8 @@ export declare namespace numberToBytes {
 /**
  * Encodes a number value into {@link Bytes}.
  *
+ * - Docs: https://oxlib.sh/api/bytes/fromNumber
+ *
  * @example
  * import { Bytes } from 'ox'
  * const data = Bytes.fromNumber(420)
@@ -209,6 +217,8 @@ const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
  * Encodes a UTF-8 string into a byte array.
+ *
+ * - Docs: https://oxlib.sh/api/bytes/fromString
  *
  * @example
  * import { Bytes } from 'ox'
