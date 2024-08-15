@@ -36,6 +36,153 @@ export default defineConfig({
       text: 'API Reference',
       items: [
         {
+          text: 'ABI',
+          collapsed: true,
+          link: '/api/abi',
+          items: [
+            { text: '.encode', link: '/api/abi/encode' },
+            {
+              text: '.encodePacked',
+              link: '/api/abi/encodePacked',
+            },
+            {
+              text: '.encodeDeployData',
+              link: '/api/abi/encodeDeployData',
+            },
+            {
+              text: '.encodeErrorResult',
+              link: '/api/abi/encodeErrorResult',
+            },
+            {
+              text: '.encodeFunctionData',
+              link: '/api/abi/encodeFunctionData',
+            },
+            {
+              text: '.encodeFunctionResult',
+              link: '/api/abi/encodeFunctionResult',
+            },
+            { text: '.encodeLogTopics', link: '/api/abi/encodeLogTopics' },
+            { text: '.decode', link: '/api/abi/decode' },
+            {
+              text: '.decodeDeployData',
+              link: '/api/abi/decodeDeployData',
+            },
+            {
+              text: '.decodeErrorResult',
+              link: '/api/abi/decodeErrorResult',
+            },
+            {
+              text: '.decodeFunctionData',
+              link: '/api/abi/decodeFunctionData',
+            },
+            {
+              text: '.decodeFunctionResult',
+              link: '/api/abi/decodeFunctionResult',
+            },
+            {
+              text: '.decodeLog',
+              link: '/api/abi/decodeLog',
+            },
+            { text: '.formatAbi', link: '/api/abi/formatAbi' },
+            { text: '.formatAbiItem', link: '/api/abi/formatAbiItem' },
+            {
+              text: '.formatAbiParameter',
+              link: '/api/abi/formatAbiParameter',
+            },
+            {
+              text: '.formatAbiParameters',
+              link: '/api/abi/formatAbiParameters',
+            },
+            { text: '.parseAbi', link: '/api/abi/parseAbi' },
+            { text: '.parseAbiItem', link: '/api/abi/parseAbiItem' },
+            {
+              text: '.parseAbiParameter',
+              link: '/api/abi/parseAbiParameter',
+            },
+            {
+              text: '.parseAbiParameters',
+              link: '/api/abi/parseAbiParameters',
+            },
+          ],
+        },
+        {
+          text: 'Address',
+          collapsed: true,
+          link: '/api/address',
+          items: [
+            { text: '.from', link: '/api/address/from' },
+            { text: '.checksum', link: '/api/address/checksum' },
+            {
+              text: '.getContractAddress',
+              link: '/api/address/getContractAddress',
+            },
+            {
+              text: '.getCreateAddress',
+              link: '/api/address/getCreateAddress',
+            },
+            {
+              text: '.getCreate2Address',
+              link: '/api/address/getCreate2Address',
+            },
+            { text: '.isAddress', link: '/api/address/isAddress' },
+            { text: '.isEqual', link: '/api/address/isEqual' },
+          ],
+        },
+        {
+          text: 'Base58',
+          collapsed: true,
+          link: '/api/base58',
+          items: [
+            { text: '.encode', link: '/api/base58/encode' },
+            { text: '.decode', link: '/api/base58/decode' },
+          ],
+        },
+        {
+          text: 'Base64',
+          collapsed: true,
+          link: '/api/base64',
+          items: [
+            { text: '.encode', link: '/api/base64/encode' },
+            { text: '.decode', link: '/api/base64/decode' },
+          ],
+        },
+        {
+          text: 'Blobs',
+          collapsed: true,
+          link: '/api/blobs',
+          items: [
+            { text: '.from', link: '/api/blobs/from' },
+            {
+              text: '.commitmentToVersionedHash',
+              link: '/api/blobs/commitmentToVersionedHash',
+            },
+            {
+              text: '.commitmentsToVersionedHashes',
+              link: '/api/blobs/commitmentsToVersionedHashes',
+            },
+            {
+              text: '.sidecarsToVersionedHashes',
+              link: '/api/blobs/sidecarsToVersionedHashes',
+            },
+            { text: '.to', link: '/api/blobs/to' },
+            { text: '.toBytes', link: '/api/blobs/toBytes' },
+            { text: '.toCommitments', link: '/api/blobs/toCommitments' },
+            { text: '.toHex', link: '/api/blobs/toHex' },
+            { text: '.toProofs', link: '/api/blobs/toProofs' },
+            { text: '.toSidecars', link: '/api/blobs/toSidecars' },
+          ],
+        },
+        {
+          text: 'Block',
+          collapsed: true,
+          link: '/api/block',
+          items: [
+            { text: '.from', link: '/api/block/from' },
+            { text: '.fromRpc', link: '/api/block/fromRpc' },
+            { text: '.toRpc', link: '/api/block/toRpc' },
+          ],
+        },
+        {
           text: 'Bytes',
           collapsed: true,
           link: '/api/bytes',
@@ -62,6 +209,466 @@ export default defineConfig({
             { text: '.toString', link: '/api/bytes/toString' },
             { text: '.trimLeft', link: '/api/bytes/trimLeft' },
             { text: '.trimRight', link: '/api/bytes/trimRight' },
+          ],
+        },
+        {
+          text: 'Constants',
+          collapsed: true,
+          link: '/api/constants',
+          items: [],
+        },
+        {
+          text: 'ENS',
+          collapsed: true,
+          link: '/api/ens',
+          items: [
+            {
+              text: '.deserializeLabelhash',
+              link: '/api/ens/deserializeLabelhash',
+            },
+            { text: '.labelhash', link: '/api/ens/labelhash' },
+            { text: '.namehash', link: '/api/ens/namehash' },
+            { text: '.normalize', link: '/api/ens/normalize' },
+            { text: '.packetToBytes', link: '/api/ens/packetToBytes' },
+            {
+              text: '.serializeLabelhash',
+              link: '/api/ens/serializeLabelhash',
+            },
+          ],
+        },
+        {
+          text: 'Hash',
+          collapsed: true,
+          link: '/api/hash',
+          items: [
+            { text: '.isHash', link: '/api/hash/isHash' },
+            { text: '.keccak256', link: '/api/hash/keccak256' },
+            {
+              text: '.normalizeSignature',
+              link: '/api/hash/normalizeSignature',
+            },
+            {
+              text: '.ripemd160',
+              link: '/api/hash/ripemd160',
+            },
+            {
+              text: '.sha256',
+              link: '/api/hash/sha256',
+            },
+            {
+              text: '.toEventHash',
+              link: '/api/hash/toEventHash',
+            },
+            {
+              text: '.toEventSelector',
+              link: '/api/hash/toEventSelector',
+            },
+            {
+              text: '.toEventSignature',
+              link: '/api/hash/toEventSignature',
+            },
+            {
+              text: '.toFunctionHash',
+              link: '/api/hash/toFunctionHash',
+            },
+            {
+              text: '.toFunctionSelector',
+              link: '/api/hash/toFunctionSelector',
+            },
+            {
+              text: '.toFunctionSignature',
+              link: '/api/hash/toFunctionSignature',
+            },
+            {
+              text: '.toSignature',
+              link: '/api/hash/toSignature',
+            },
+            {
+              text: '.toSignatureHash',
+              link: '/api/hash/toSignatureHash',
+            },
+          ],
+        },
+        {
+          text: 'Hex',
+          collapsed: true,
+          link: '/api/hex',
+          items: [
+            { text: '.concat', link: '/api/hex/concat' },
+            { text: '.isHex', link: '/api/hex/isHex' },
+            { text: '.isEqual', link: '/api/hex/isEqual' },
+            { text: '.from', link: '/api/hex/from' },
+            { text: '.fromBigInt', link: '/api/hex/fromBigInt' },
+            { text: '.fromBoolean', link: '/api/hex/fromBoolean' },
+            { text: '.fromBytes', link: '/api/hex/fromBytes' },
+            { text: '.fromNumber', link: '/api/hex/fromNumber' },
+            { text: '.fromString', link: '/api/hex/fromString' },
+            { text: '.padLeft', link: '/api/hex/padLeft' },
+            { text: '.padRight', link: '/api/hex/padRight' },
+            { text: '.random', link: '/api/hex/random' },
+            { text: '.size', link: '/api/hex/size' },
+            { text: '.slice', link: '/api/hex/slice' },
+            { text: '.to', link: '/api/hex/to' },
+            { text: '.toBigInt', link: '/api/hex/toBigInt' },
+            { text: '.toBoolean', link: '/api/hex/toBoolean' },
+            { text: '.toBytes', link: '/api/toBytes' },
+            { text: '.toNumber', link: '/api/hex/toNumber' },
+            { text: '.toString', link: '/api/hex/toString' },
+            { text: '.trimLeft', link: '/api/hex/trimLeft' },
+            { text: '.trimRight', link: '/api/hex/trimRight' },
+          ],
+        },
+        {
+          text: 'Json',
+          collapsed: true,
+          link: '/api/json',
+          items: [
+            { text: '.deserialize', link: '/api/json/deserialize' },
+            { text: '.serialize', link: '/api/json/serialize' },
+            { text: '.stringify', link: '/api/json/stringify' },
+          ],
+        },
+        {
+          text: 'Kzg',
+          collapsed: true,
+          link: '/api/kzg',
+          items: [
+            { text: '.from', link: '/api/kzg/from' },
+            { text: '.setup', link: '/api/kzg/setup' },
+          ],
+        },
+        {
+          text: 'Log',
+          collapsed: true,
+          link: '/api/log',
+          items: [
+            { text: '.from', link: '/api/log/from' },
+            { text: '.decode', link: '/api/log/decode' },
+            { text: '.fromRpc', link: '/api/log/fromRpc' },
+            { text: '.parseLogs', link: '/api/log/parseLogs' },
+            { text: '.toRpc', link: '/api/log/toRpc' },
+          ],
+        },
+        {
+          text: 'Rlp',
+          collapsed: true,
+          link: '/api/rlp',
+          items: [
+            { text: '.encode', link: '/api/rlp/encode' },
+            { text: '.decode', link: '/api/rlp/decode' },
+          ],
+        },
+        {
+          text: 'Rpc',
+          collapsed: true,
+          link: '/api/rpc',
+          items: [
+            { text: '.getHttpClient', link: '/api/rpc/getHttpClient' },
+            { text: '.getIpcClient', link: '/api/rpc/getIpcClient' },
+            { text: '.getSocketClient', link: '/api/rpc/getSocketClient' },
+            {
+              text: '.getWebSocketClient',
+              link: '/api/rpc/getWebSocketClient',
+            },
+          ],
+        },
+        {
+          text: 'Secp256k1',
+          collapsed: true,
+          link: '/api/secp256k1',
+          items: [
+            {
+              text: '.recoverAddress',
+              link: '/api/secp256k1/recoverAddress',
+            },
+            {
+              text: '.recoverPublicKey',
+              link: '/api/secp256k1/recoverPublicKey',
+            },
+            {
+              text: '.sign',
+              link: '/api/secp256k1/sign',
+            },
+            {
+              text: '.verify',
+              link: '/api/secp256k1/verify',
+            },
+          ],
+        },
+        {
+          text: 'SignedData (EIP-191)',
+          collapsed: true,
+          link: '/api/signedData',
+          items: [
+            {
+              text: '.hashPersonalSignData',
+              link: '/api/signedData/hashPersonalSignData',
+            },
+            {
+              text: '.hashTypedData',
+              link: '/api/signedData/hashTypedData',
+            },
+            {
+              text: '.hashValidatorData',
+              link: '/api/signedData/hashValidatorData',
+            },
+            {
+              text: '.toPersonalSignData',
+              link: '/api/signedData/toPersonalSignData',
+            },
+            {
+              text: '.toTypedData',
+              link: '/api/signedData/toTypedData',
+            },
+            {
+              text: '.toValidatorData',
+              link: '/api/signedData/toValidatorData',
+            },
+          ],
+        },
+        {
+          text: 'Signature',
+          collapsed: true,
+          link: '/api/signature',
+          items: [
+            { text: '.from', link: '/api/signature/from' },
+            { text: '.fromCompact', link: '/api/signature/fromCompact' },
+            { text: '.fromSerialized', link: '/api/signature/fromSerialized' },
+            { text: '.isErc6492', link: '/api/signature/isErc6492' },
+            { text: '.parseErc6492', link: '/api/signature/parseErc6492' },
+            { text: '.serialize', link: '/api/signature/serialize' },
+            {
+              text: '.serializeCompact',
+              link: '/api/signature/serializeCompact',
+            },
+            {
+              text: '.serializeErc6492',
+              link: '/api/signature/serializeErc6492',
+            },
+            {
+              text: '.serializeErc6492',
+              link: '/api/signature/serializeErc6492',
+            },
+            {
+              text: '.toCompact',
+              link: '/api/signature/toCompact',
+            },
+            {
+              text: '.vToYParity',
+              link: '/api/signature/vToYParity',
+            },
+            {
+              text: '.yParityToV',
+              link: '/api/signature/yParityToV',
+            },
+          ],
+        },
+        {
+          text: 'Siwe (ERC-4361)',
+          collapsed: true,
+          link: '/api/siwe',
+          items: [
+            {
+              text: '.createMessage',
+              link: '/api/siwe/createMessage',
+            },
+            {
+              text: '.generateNonce',
+              link: '/api/siwe/generateNonce',
+            },
+            {
+              text: '.isUri',
+              link: '/api/siwe/isUri',
+            },
+            {
+              text: '.parseMessage',
+              link: '/api/siwe/parseMessage',
+            },
+            {
+              text: '.validateMessage',
+              link: '/api/siwe/validateMessage',
+            },
+          ],
+        },
+        {
+          text: 'Transaction',
+          collapsed: true,
+          link: '/api/transaction',
+          items: [
+            { text: '.from', link: '/api/transaction/from' },
+            { text: '.fromRpc', link: '/api/transaction/fromRpc' },
+            { text: '.assertLegacy', link: '/api/transaction/assertLegacy' },
+            { text: '.assertEip1559', link: '/api/transaction/assertEip1559' },
+            { text: '.assertEip2930', link: '/api/transaction/assertEip2930' },
+            { text: '.assertEip4844', link: '/api/transaction/assertEip4844' },
+            { text: '.assertEip7702', link: '/api/transaction/assertEip7702' },
+            {
+              text: '.getSerializedType',
+              link: '/api/transaction/getSerializedType',
+            },
+            { text: '.getType', link: '/api/transaction/getType' },
+            { text: '.toRpc', link: '/api/transaction/toRpc' },
+          ],
+        },
+        {
+          text: 'TransactionEnvelope',
+          collapsed: true,
+          link: '/api/transactionEnvelope',
+          items: [
+            { text: '.from', link: '/api/transactionEnvelope/from' },
+            {
+              text: '.assertLegacy',
+              link: '/api/transactionEnvelope/assertLegacy',
+            },
+            {
+              text: '.assertEip1559',
+              link: '/api/transactionEnvelope/assertEip1559',
+            },
+            {
+              text: '.assertEip2930',
+              link: '/api/transactionEnvelope/assertEip2930',
+            },
+            {
+              text: '.assertEip4844',
+              link: '/api/transactionEnvelope/assertEip4844',
+            },
+            {
+              text: '.assertEip7702',
+              link: '/api/transactionEnvelope/assertEip7702',
+            },
+            {
+              text: '.getSerializedType',
+              link: '/api/transactionEnvelope/getSerializedType',
+            },
+            { text: '.getType', link: '/api/transactionEnvelope/getType' },
+            { text: '.parse', link: '/api/transactionEnvelope/parse' },
+            {
+              text: '.parseLegacy',
+              link: '/api/transactionEnvelope/parseLegacy',
+            },
+            {
+              text: '.parseEip1559',
+              link: '/api/transactionEnvelope/parseEip1559',
+            },
+            {
+              text: '.parseEip2930',
+              link: '/api/transactionEnvelope/parseEip2930',
+            },
+            {
+              text: '.parseEip4844',
+              link: '/api/transactionEnvelope/parseEip4844',
+            },
+            {
+              text: '.parseEip7702',
+              link: '/api/transactionEnvelope/parseEip7702',
+            },
+            { text: '.serialize', link: '/api/transactionEnvelope/serialize' },
+            {
+              text: '.serializeLegacy',
+              link: '/api/transactionEnvelope/serializeLegacy',
+            },
+            {
+              text: '.serializeEip1559',
+              link: '/api/transactionEnvelope/serializeEip1559',
+            },
+            {
+              text: '.serializeEip2930',
+              link: '/api/transactionEnvelope/serializeEip2930',
+            },
+            {
+              text: '.serializeEip4844',
+              link: '/api/transactionEnvelope/serializeEip4844',
+            },
+            {
+              text: '.serializeEip7702',
+              link: '/api/transactionEnvelope/serializeEip7702',
+            },
+          ],
+        },
+        {
+          text: 'TransactionReceipt',
+          collapsed: true,
+          link: '/api/transactionReceipt',
+          items: [
+            { text: '.from', link: '/api/transactionReceipt/from' },
+            { text: '.fromRpc', link: '/api/transactionReceipt/fromRpc' },
+            { text: '.toRpc', link: '/api/transactionReceipt/toRpc' },
+          ],
+        },
+        {
+          text: 'TypedData (EIP-712)',
+          collapsed: true,
+          link: '/api/typedData',
+          items: [
+            {
+              text: '.from',
+              link: '/api/typedData/from',
+            },
+            {
+              text: '.domainSeparator',
+              link: '/api/typedData/domainSeparator',
+            },
+            {
+              text: '.encodeType',
+              link: '/api/typedData/encodeType',
+            },
+            {
+              text: '.getEip712DomainTypes',
+              link: '/api/typedData/getEip712DomainTypes',
+            },
+            {
+              text: '.hash',
+              link: '/api/typedData/hash',
+            },
+            {
+              text: '.hashDomain',
+              link: '/api/typedData/hashDomain',
+            },
+            {
+              text: '.hashStruct',
+              link: '/api/typedData/hashStruct',
+            },
+            {
+              text: '.serialize',
+              link: '/api/typedData/serialize',
+            },
+            {
+              text: '.validate',
+              link: '/api/typedData/validate',
+            },
+          ],
+        },
+        {
+          text: 'Unit',
+          collapsed: true,
+          link: '/api/unit',
+          items: [
+            { text: '.formatEther', link: '/api/unit/formatEther' },
+            { text: '.formatGwei', link: '/api/unit/formatGwei' },
+            { text: '.formatUnits', link: '/api/unit/formatUnits' },
+            { text: '.parseEther', link: '/api/unit/parseEther' },
+            { text: '.parseGwei', link: '/api/unit/parseGwei' },
+            { text: '.parseUnits', link: '/api/unit/parseUnits' },
+          ],
+        },
+        {
+          text: 'WebAuthnP256',
+          collapsed: true,
+          link: '/api/webAuthnP256',
+          items: [
+            { text: '.createCredential', link: '/api/unit/createCredential' },
+            { text: '.parsePublicKey', link: '/api/unit/parsePublicKey' },
+            { text: '.parseSignature', link: '/api/unit/parseSignature' },
+            { text: '.sign', link: '/api/unit/sign' },
+            {
+              text: '.serializePublicKey',
+              link: '/api/unit/serializePublicKey',
+            },
+            {
+              text: '.serializeSignature',
+              link: '/api/unit/serializeSignature',
+            },
+            { text: '.verify', link: '/api/unit/verify' },
           ],
         },
       ],
