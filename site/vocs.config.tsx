@@ -49,6 +49,8 @@ export default defineConfig({
             { text: '.fromHex', link: '/api/bytes/fromHex' },
             { text: '.fromNumber', link: '/api/bytes/fromNumber' },
             { text: '.fromString', link: '/api/bytes/fromString' },
+            { text: '.padLeft', link: '/api/bytes/padLeft' },
+            { text: '.padRight', link: '/api/bytes/padRight' },
             { text: '.random', link: '/api/bytes/random' },
             { text: '.size', link: '/api/bytes/size' },
             { text: '.slice', link: '/api/bytes/slice' },

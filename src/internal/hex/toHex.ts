@@ -53,11 +53,12 @@ export type ToHexErrorType =
  * // '0x48656c6c6f20776f726c64210000000000000000000000000000000000000000'
  */
 export function toHex(
-  value: string | number | bigint | boolean | Bytes,
+  value: string | number | bigint | boolean | readonly number[] | Bytes,
   options: ToHexParameters = {},
 ): Hex {
   if (isHex(value)) return value
   if (isBytes(value)) return bytesToHex(value, options)
+  if (Array.isArray(value)) return bytesToHex(Uint8Array.from(value), options)
   if (typeof value === 'number' || typeof value === 'bigint')
     return numberToHex(value, options)
   if (typeof value === 'string') return stringToHex(value, options)
@@ -120,17 +121,17 @@ export type BytesToHexErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.toHex(Uint8Array.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * Bytes.toHex(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * // '0x48656c6c6f20576f726c6421'
  *
  * @example
  * import { Hex } from 'ox'
- * Hex.fromBytes(Uint8Array.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * // '0x48656c6c6f20576f726c6421'
  *
  * @example
  * import { Hex } from 'ox'
- * Hex.fromBytes(Uint8Array.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
+ * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
  * // '0x48656c6c6f20576f726c642100000000000000000000000000000000000000000'
  */
 export function bytesToHex(value: Bytes, options: BytesToHexOptions = {}): Hex {

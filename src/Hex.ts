@@ -44,7 +44,7 @@ export {
 
 export {
   type FromHexErrorType,
-  type FromHexParameters,
+  type FromHexOptions,
   type FromHexReturnType,
   type HexToBigIntErrorType,
   type HexToBigIntOptions,
@@ -89,6 +89,7 @@ export {
   bytesToHex,
   bytesToHex as fromBytes,
   numberToHex,
+  numberToHex as fromBigInt,
   numberToHex as fromNumber,
   stringToHex,
   stringToHex as fromString,

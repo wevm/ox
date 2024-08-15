@@ -9,7 +9,7 @@ export type IsBytesErrorType = ErrorType
  * @example
  * import { Bytes } from 'ox'
  * Bytes.isBytes('0x') // false
- * Bytes.isBytes(Uint8Array.from([1, 2, 3])) // true
+ * Bytes.isBytes(Bytes.from([1, 2, 3])) // true
  */
 export function isBytes(value: unknown): value is Bytes {
   if (!value) return false

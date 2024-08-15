@@ -87,6 +87,7 @@ export {
   hexToBytes,
   hexToBytes as fromHex,
   numberToBytes,
+  numberToBytes as fromBigInt,
   numberToBytes as fromNumber,
   stringToBytes,
   stringToBytes as fromString,

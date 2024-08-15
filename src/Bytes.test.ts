@@ -30,6 +30,7 @@ test('exports', () => {
       "hexToBytes",
       "fromHex",
       "numberToBytes",
+      "fromBigInt",
       "fromNumber",
       "stringToBytes",
       "fromString",

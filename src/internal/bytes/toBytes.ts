@@ -51,10 +51,11 @@ export type ToBytesErrorType =
  * // Uint8Array([0, 0, 1, 164])
  */
 export function toBytes(
-  value: string | bigint | number | boolean | Hex | Bytes,
+  value: string | bigint | number | boolean | Hex | Bytes | readonly number[],
   options: ToBytesOptions = {},
 ): Bytes {
   if (isBytes(value)) return value
+  if (Array.isArray(value)) return Uint8Array.from(value)
   if (isHex(value)) return hexToBytes(value, options)
   if (typeof value === 'boolean') return booleanToBytes(value, options)
   if (typeof value === 'string') return stringToBytes(value, options)

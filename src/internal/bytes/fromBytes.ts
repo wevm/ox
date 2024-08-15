@@ -22,15 +22,10 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'hex' | 'bigint' | 'number' | 'boolean'
 
-export type FromBytesOptions<to extends To> =
-  | to
-  | To
-  | {
-      /** Size of the bytes. */
-      size?: number | undefined
-      /** Type to convert to. */
-      to: to | To
-    }
+export type FromBytesOptions = {
+  /** Size of the bytes. */
+  size?: number | undefined
+}
 
 export type FromBytesReturnType<to extends To> =
   | (to extends 'string' ? string : never)
@@ -53,24 +48,24 @@ export type FromBytesErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.to(new Uint8Array([1, 164]), 'number')
+ * Bytes.to(Bytes.from([1, 164]), 'number')
  * // 420
  *
  * @example
  * import { Bytes } from 'ox'
  * Bytes.to(
- *   new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
+ *   Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
  *   'string'
  * )
  * // 'Hello world'
  */
 export function fromBytes<
   to extends 'string' | 'hex' | 'bigint' | 'number' | 'boolean',
->(bytes: Bytes, toOrOptions: FromBytesOptions<to>): FromBytesReturnType<to> {
-  const options =
-    typeof toOrOptions === 'string' ? { to: toOrOptions } : toOrOptions
-  const { to } = options
-
+>(
+  bytes: Bytes,
+  to: to | To,
+  options: FromBytesOptions = {},
+): FromBytesReturnType<to> {
   if (to === 'number')
     return bytesToNumber(bytes, options) as FromBytesReturnType<to>
   if (to === 'bigint')
@@ -100,7 +95,7 @@ export type BytesToBigIntErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.toBigInt(new Uint8Array([1, 164]))
+ * Bytes.toBigInt(Bytes.from([1, 164]))
  * // 420n
  */
 export function bytesToBigInt(
@@ -128,7 +123,7 @@ export type BytesToBooleanErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.toBoolean(new Uint8Array([1]))
+ * Bytes.toBoolean(Bytes.from([1]))
  * // true
  */
 export function bytesToBoolean(
@@ -158,7 +153,7 @@ export type BytesToNumberErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.toNumber(new Uint8Array([1, 164]))
+ * Bytes.toNumber(Bytes.from([1, 164]))
  * // 420
  */
 export function bytesToNumber(
@@ -188,7 +183,7 @@ const decoder = /*#__PURE__*/ new TextDecoder()
  *
  * @example
  * import { Bytes } from 'ox'
- * const data = Bytes.toString(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // 'Hello world'
  */
 export function bytesToString(

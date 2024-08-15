@@ -20,7 +20,7 @@ export type TrimLeftErrorType = TrimErrorType
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.trimLeft(Uint8Array.from([0, 0, 0, 0, 1, 2, 3])) // Uint8Array([1, 2, 3])
+ * Bytes.trimLeft(Bytes.from([0, 0, 0, 0, 1, 2, 3])) // Uint8Array([1, 2, 3])
  */
 export function trimLeft<value extends Bytes | Hex>(
   value: value,
@@ -47,7 +47,7 @@ export type TrimRightErrorType = TrimErrorType
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.trimRight(Uint8Array.from([1, 2, 3, 0, 0, 0, 0])) // Uint8Array([1, 2, 3])
+ * Bytes.trimRight(Bytes.from([1, 2, 3, 0, 0, 0, 0])) // Uint8Array([1, 2, 3])
  */
 export function trimRight<value extends Bytes | Hex>(
   value: value,

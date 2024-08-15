@@ -1,4 +1,4 @@
-import { Hex } from 'ox'
+import { Bytes, Hex } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('hex to number', () => {
@@ -41,9 +41,8 @@ describe('hex to number', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(69420, { size: 32 }), {
+      Hex.to(Hex.from(69420, { size: 32 }), 'number', {
         size: 32,
-        to: 'number',
       }),
     ).toEqual(69420)
     expect(
@@ -118,9 +117,8 @@ describe('hex to bigint', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(69420n, { size: 32 }), {
+      Hex.to(Hex.from(69420n, { size: 32 }), 'bigint', {
         size: 32,
-        to: 'bigint',
       }),
     ).toEqual(69420n)
     expect(
@@ -154,9 +152,8 @@ describe('hex to boolean', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(true, { size: 32 }), {
+      Hex.to(Hex.from(true, { size: 32 }), 'boolean', {
         size: 32,
-        to: 'boolean',
       }),
     ).toEqual(true)
     expect(Hex.toBoolean(Hex.from(true, { size: 32 }), { size: 32 })).toEqual(
@@ -204,9 +201,8 @@ describe('hex to string', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from('wagmi', { size: 32 }), {
+      Hex.to(Hex.from('wagmi', { size: 32 }), 'string', {
         size: 32,
-        to: 'string',
       }),
     ).toEqual('wagmi')
     expect(
@@ -268,9 +264,8 @@ describe('hex to bytes', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(Uint8Array.from([69, 420]), { size: 32 }), {
+      Hex.to(Hex.from(Bytes.from([69, 420]), { size: 32 }), 'bytes', {
         size: 32,
-        to: 'bytes',
       }),
     ).toMatchInlineSnapshot(`
       Uint8Array [
@@ -309,7 +304,7 @@ describe('hex to bytes', () => {
       ]
     `)
     expect(
-      Hex.toBytes(Hex.from(Uint8Array.from([69, 420]), { size: 32 }), {
+      Hex.toBytes(Hex.from(Bytes.from([69, 420]), { size: 32 }), {
         size: 32,
       }),
     ).toMatchInlineSnapshot(`
@@ -352,7 +347,7 @@ describe('hex to bytes', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Hex.toString(Hex.from(Uint8Array.from([69, 420]), { size: 64 }), {
+      Hex.toString(Hex.from(Bytes.from([69, 420]), { size: 64 }), {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`

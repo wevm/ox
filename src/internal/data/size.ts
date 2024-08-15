@@ -10,11 +10,11 @@ export type SizeErrorType = IsHexErrorType | ErrorType
  * @example
  * import { Data } from 'ox'
  * Data.size('0xdeadbeef') // 4
- * Data.size(Uint8Array.from([1, 2, 3, 4])) // 4
+ * Data.size(Bytes.from([1, 2, 3, 4])) // 4
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.size(Uint8Array.from([1, 2, 3, 4])) // 4
+ * Bytes.size(Bytes.from([1, 2, 3, 4])) // 4
  *
  * @example
  * import { Hex } from 'ox'

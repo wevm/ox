@@ -1241,6 +1241,20 @@ describe('bytes to bytes', () => {
   })
 })
 
+describe('number array to bytes', () => {
+  test('default', () => {
+    expect(Bytes.from([1, 2, 3])).toMatchInlineSnapshot(
+      `
+      Uint8Array [
+        1,
+        2,
+        3,
+      ]
+    `,
+    )
+  })
+})
+
 test('error: invalid type', () => {
   // @ts-expect-error
   expect(() => Bytes.from(new Date())).toThrowErrorMatchingInlineSnapshot(`

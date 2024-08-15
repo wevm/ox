@@ -34,7 +34,7 @@ export type SliceErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.slice(Uint8Array.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1, 4)
+ * Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1, 4)
  * // Uint8Array([2, 3, 4])
  */
 export function slice<value extends Bytes | Hex>(

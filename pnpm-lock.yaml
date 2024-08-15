@@ -101,8 +101,8 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
       vocs:
-        specifier: 1.0.0-alpha.57
-        version: 1.0.0-alpha.57(@types/node@20.14.15)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4)
+        specifier: 1.0.0-alpha.58-main.20240814T230219
+        version: 1.0.0-alpha.58-main.20240814T230219(@types/node@20.14.15)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4)
 
   src:
     dependencies:
@@ -1937,7 +1937,6 @@ packages:
 
   bun@1.1.24:
     resolution: {integrity: sha512-vZt5zNVaoNTSlNprdVdQVZInBcGC2QSik6o9ZsMzuYiiUEAEqpRwwMXAYDUN85mt2FNnsGvmk/8xVlUXS7IzEw==}
-    cpu: [arm64, x64]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -4387,8 +4386,8 @@ packages:
       jsdom:
         optional: true
 
-  vocs@1.0.0-alpha.57:
-    resolution: {integrity: sha512-pr22wM5xWVW1ze0KxjyNnTy9N5ogvXIMOL3UvcWLFvwhsaizOMQG7z+kGX1Gs9BAE01EPhcjDvaRIcx4jJnBzQ==}
+  vocs@1.0.0-alpha.58-main.20240814T230219:
+    resolution: {integrity: sha512-S4AIGKEkZvL05HAilFKVsxshtPuRRMPFtH4qFwouF2i5Euc+aIQoJIWANHpPeF8F2Mh68sfAnyCm2mjj6eLTgA==}
     hasBin: true
     peerDependencies:
       react: ^18.2.0
@@ -9420,7 +9419,7 @@ snapshots:
       - supports-color
       - terser
 
-  vocs@1.0.0-alpha.57(@types/node@20.14.15)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4):
+  vocs@1.0.0-alpha.58-main.20240814T230219(@types/node@20.14.15)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4):
     dependencies:
       '@floating-ui/react': 0.26.22(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@hono/node-server': 1.12.0

@@ -17,8 +17,8 @@ export type ConcatErrorType =
  * ```ts
  * import { Data } from 'ox'
  * const bytes = Data.concat(
- *   Uint8Array.from([1, 2, 3]),
- *   Uint8Array.from([4, 5, 6])
+ *   Bytes.from([1, 2, 3]),
+ *   Bytes.from([4, 5, 6])
  * )
  * ```
  *

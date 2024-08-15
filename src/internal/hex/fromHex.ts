@@ -17,14 +17,10 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'bytes' | 'bigint' | 'number' | 'boolean'
 
-export type FromHexParameters<to extends To> =
-  | to
-  | {
-      /** Size (in bytes) of the hex value. */
-      size?: number | undefined
-      /** Type to convert to. */
-      to: to
-    }
+export type FromHexOptions = {
+  /** Size (in bytes) of the hex value. */
+  size?: number | undefined
+}
 
 export type FromHexReturnType<to> =
   | (to extends 'string' ? string : never)
@@ -57,20 +53,16 @@ export type FromHexErrorType =
  *
  * @example
  * import { Hex } from 'ox'
- * Hex.to('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', {
+ * Hex.to('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', 'string', {
  *   size: 32,
- *   to: 'string'
  * })
  * // 'Hello world'
  */
 export function fromHex<to extends To>(
   hex: Hex,
-  toOrOptions: FromHexParameters<to>,
+  to: to | To,
+  options: FromHexOptions = {},
 ): FromHexReturnType<to> {
-  const options =
-    typeof toOrOptions === 'string' ? { to: toOrOptions } : toOrOptions
-  const to = options.to
-
   if (to === 'number') return hexToNumber(hex, options) as FromHexReturnType<to>
   if (to === 'bigint') return hexToBigInt(hex, options) as FromHexReturnType<to>
   if (to === 'string') return hexToString(hex, options) as FromHexReturnType<to>

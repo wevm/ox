@@ -15,8 +15,8 @@ export type IsBytesEqualErrorType =
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.isEqual(Uint8Array.from([1]), Uint8Array.from([1])) // true
- * Bytes.isEqual(Uint8Array.from([1]), Uint8Array.from([2])) // false
+ * Bytes.isEqual(Bytes.from([1]), Bytes.from([1])) // true
+ * Bytes.isEqual(Bytes.from([1]), Bytes.from([2])) // false
  *
  * @example
  * import { Hex } from 'ox'

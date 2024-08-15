@@ -1,8 +1,12 @@
+---
+description: Encodes an arbitrary value to Bytes.
+---
+
 # Bytes.from 
 
 **Alias:** `toBytes`
 
-Encodes an arbitrary value to `Uint8Array` **[Bytes](/api/bytes)**.
+Encodes an arbitrary value to **[Bytes](/api/bytes)**.
 
 ## Imports
 
@@ -27,6 +31,9 @@ import { Bytes } from 'ox';
 const bytes = Bytes.from(420)
 // Uint8Array([1, 164])
 
+const bytes = Bytes.from([420, 69])
+// Uint8Array([420, 69])
+
 const bytes = Bytes.from('abc');
 // Uint8Array([97, 98, 99])
 
@@ -45,7 +52,7 @@ const bytes = Bytes.from(true, { size: 8 })
 
 ### value
 
-- **Type:** `string | bigint | number | boolean | Hex | Bytes`
+- **Type:** `string | bigint | number | boolean | Hex | Bytes | number[]`
 
 An arbitrary value to encode to Bytes.
 

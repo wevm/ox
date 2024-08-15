@@ -13,7 +13,7 @@ export type IsHexErrorType = ErrorType
  * @example
  * import { Hex } from 'ox'
  * Hex.isHex('0x') // true
- * Hex.isHex(Uint8Array.from([1, 2, 3])) // false
+ * Hex.isHex(Bytes.from([1, 2, 3])) // false
  */
 export function isHex(
   value: unknown,

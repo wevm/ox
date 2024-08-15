@@ -14,7 +14,7 @@ export type PadLeftErrorType = PadErrorType
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.padLeft(Uint8Array.from([1]), 4)
+ * Bytes.padLeft(Bytes.from([1]), 4)
  * // Uint8Array([0, 0, 0, 1])
  *
  * @example
@@ -38,7 +38,7 @@ export type PadRightErrorType = PadErrorType
  *
  * @example
  * import { Bytes } from 'ox'
- * Bytes.padRight(Uint8Array.from([1]), 4)
+ * Bytes.padRight(Bytes.from([1]), 4)
  * // Uint8Array([1, 0, 0, 0])
  *
  * @example
