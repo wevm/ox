@@ -12,10 +12,10 @@ Decodes [Hex](/api/hex) into a boolean value.
 
 ```ts twoslash
 // @noErrors
-// Named Import 
+// Named Module Import 
 import { Hex } from 'ox'
 
-// Namespace Imports
+// Module Imports
 import * as Hex from 'ox/Hex'
 import { hexToBoolean } from 'ox/Hex'
 ```

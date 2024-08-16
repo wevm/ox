@@ -28,10 +28,14 @@ bun i ox
 
 ## Example Usage
 
-Below is an example of using the [`Hex`](#TODO) and [`Rlp`](#TODO) modules of Ox. Using [Namespace Imports](#TODO) can provide a better developer experience for readability and IDE autocompletion, without compromising on tree-shakability.
+Below is an example of using the [`Hex`](#TODO) and [`Rlp`](#TODO) modules of Ox.
 
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
 
 const rlp = Rlp.encode([Hex.from('hello'), Hex.from('world')])
 ```
+
+:::tip
+Using [Named Module Imports](#TODO) can provide a better developer experience for readability, conflicting modules, and IDE autocompletion, without compromising on tree-shakability.
+:::

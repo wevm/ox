@@ -10,10 +10,10 @@ Retrieves the size of a **[Hex](/api/hex)** value.
 
 ```ts twoslash
 // @noErrors
-// Named Import 
+// Named Module Import 
 import { Hex } from 'ox'
 
-// Namespace Imports
+// Module Imports
 import * as Hex from 'ox/Hex'
 import { size } from 'ox/Hex'
 ```

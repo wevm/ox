@@ -12,10 +12,10 @@ Generates random [`Hex`](/api/bytes) of the specified length.
 
 ```ts twoslash
 // @noErrors
-// Named Import 
+// Named Module Import 
 import { Hex } from 'ox'
 
-// Namespace Imports
+// Module Imports
 import * as Hex from 'ox/Hex'
 import { randomHex } from 'ox/Hex'
 ```

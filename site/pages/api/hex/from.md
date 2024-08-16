@@ -12,10 +12,10 @@ Encodes an arbitrary value to **[Hex](/api/hex)**.
 
 ```ts twoslash
 // @noErrors
-// Named Import
+// Named Module Import
 import { Hex } from 'ox'
 
-// Named Imports
+// Module Imports
 import * as Hex from 'ox/Hex'
 import { toHex } from 'ox/Hex'
 ```

@@ -12,10 +12,10 @@ Asserts if the given value is [Bytes](/api/bytes).
 
 ```ts twoslash
 // @noErrors
-// Named Import 
+// Named Module Import 
 import { Bytes } from 'ox'
 
-// Namespace Imports
+// Module Imports
 import * as Bytes from 'ox/Bytes'
 import { assertBytes } from 'ox/Bytes'
 ```

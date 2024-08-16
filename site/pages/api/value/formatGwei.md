@@ -10,10 +10,10 @@ Formats a `bigint` Value (default: wei) to a string representation of Gwei.
 
 ```ts twoslash
 // @noErrors
-// Named Import
+// Named Module Import
 import { Value } from 'ox'
 
-// Named Imports
+// Module Imports
 import * as Value from 'ox/Value'
 import { formatGwei } from 'ox/Value'
 ```

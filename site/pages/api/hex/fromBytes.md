@@ -12,10 +12,10 @@ Encodes a [Hex](#TODO) value to **[Hex](/api/bytes)**.
 
 ```ts twoslash
 // @noErrors
-// Named Import 
+// Named Module Import 
 import { Hex } from 'ox'
 
-// Namespace Imports
+// Module Imports
 import * as Hex from 'ox/Hex'
 import { bytesToHex } from 'ox/Hex'
 ```

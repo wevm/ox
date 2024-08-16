@@ -12,10 +12,10 @@ Concatenates two or more [`Hex`](/api/hex) values.
 
 ```ts twoslash
 // @noErrors
-// Named Import 
+// Named Module Import 
 import { Hex } from 'ox'
 
-// Named Imports
+// Module Imports
 import * as Hex from 'ox/Hex'
 import { concat } from 'ox/Hex'
 ```
