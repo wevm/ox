@@ -108,7 +108,7 @@ test('metaMessages', () => {
 })
 
 test('walk: no predicate fn (walks to leaf)', () => {
-  class FooError extends BaseError {}
+  class FooError<cause extends Error | undefined> extends BaseError<cause> {}
   class BarError extends BaseError {}
 
   const err = new BaseError('test1', {
@@ -118,7 +118,7 @@ test('walk: no predicate fn (walks to leaf)', () => {
 })
 
 test('walk: predicate fn', () => {
-  class FooError extends BaseError {}
+  class FooError<cause extends Error | undefined> extends BaseError<cause> {}
   class BarError extends BaseError {}
 
   const err = new BaseError('test1', {

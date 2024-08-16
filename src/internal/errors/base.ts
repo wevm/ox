@@ -1,8 +1,8 @@
 import { getVersion } from './utils.js'
 
 export declare namespace BaseError {
-  type Options = {
-    cause?: BaseError | Error | undefined
+  type Options<cause extends Error | undefined = Error | undefined> = {
+    cause?: cause | undefined
     details?: string | undefined
     docsPath?: string | undefined
     metaMessages?: string[] | undefined
@@ -16,17 +16,21 @@ export declare namespace BaseError {
  * import { Errors } from 'ox'
  * throw new Errors.BaseError('An error occurred')
  */
-export class BaseError extends Error {
+export class BaseError<
+  cause extends Error | undefined = undefined,
+> extends Error {
   details: string
   docs?: string | undefined
   docsPath?: string | undefined
   shortMessage: string
 
+  // @ts-expect-error: assigned via super()
+  override cause: cause
   override name = 'BaseError'
 
   version = `ox@${getVersion()}`
 
-  constructor(shortMessage: string, options: BaseError.Options = {}) {
+  constructor(shortMessage: string, options: BaseError.Options<cause> = {}) {
     const details = (() => {
       if (options.cause instanceof BaseError) return options.cause.details
       if (options.cause?.message) return options.cause.message
