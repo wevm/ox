@@ -2,7 +2,7 @@
 description: Formats a Value to its string representation of Gwei.
 ---
 
-# formatGwei
+# Value.formatGwei
 
 Formats a `bigint` Value (default: wei) to a string representation of Gwei.
 

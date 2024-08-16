@@ -7,6 +7,7 @@ test('exports', () => {
       "Bytes",
       "Data",
       "Errors",
+      "Hash",
       "Hex",
       "Rlp",
       "Types",

@@ -2,7 +2,7 @@
 description: Formats a Value to its string representation of Ether.
 ---
 
-# formatEther
+# Value.formatEther
 
 Formats a `bigint` Value (default: wei) to a string representation of Ether.
 

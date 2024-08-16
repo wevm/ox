@@ -2,7 +2,7 @@
 description: Parses a string representation of a Gwei value.
 ---
 
-# fromGwei
+# Value.fromGwei
 
 - **Alias:** `parseGwei`
 

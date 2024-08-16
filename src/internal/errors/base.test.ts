@@ -151,6 +151,7 @@ test('properties', () => {
     }, {} as any),
   ).toMatchInlineSnapshot(`
     {
+      "cause": [Error: test2],
       "details": "test2",
       "docs": "https://oxlib.sh/lol",
       "docsPath": "/lol",

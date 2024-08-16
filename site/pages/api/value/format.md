@@ -2,7 +2,7 @@
 description: Formats a Value to its string representation.
 ---
 
-# format
+# Value.format
 
 - **Alias:** `formatValue`
 

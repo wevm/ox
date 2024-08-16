@@ -2,7 +2,7 @@
 description: Parses a string representation of an Ether value.
 ---
 
-# fromEther
+# Value.fromEther
 
 - **Alias:** `parseEther`
 

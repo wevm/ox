@@ -24,7 +24,6 @@ export class BaseError<
   docsPath?: string | undefined
   shortMessage: string
 
-  // @ts-expect-error: assigned via super()
   override cause: cause
   override name = 'BaseError'
 
@@ -55,6 +54,7 @@ export class BaseError<
 
     super(message, options.cause ? { cause: options.cause } : undefined)
 
+    this.cause = options.cause as any
     this.details = details
     this.docs = docs
     this.docsPath = docsPath
@@ -73,7 +73,7 @@ function walk(
   fn?: ((err: unknown) => boolean) | undefined,
 ): unknown {
   if (fn?.(err)) return err
-  if (err && typeof err === 'object' && 'cause' in err)
+  if (err && typeof err === 'object' && 'cause' in err && err.cause)
     return walk(err.cause, fn)
   return fn ? null : err
 }

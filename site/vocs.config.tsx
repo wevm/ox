@@ -241,16 +241,12 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Hash 🚧',
+          text: 'Hash',
           collapsed: true,
           link: '/api/hash',
           items: [
             { text: '.isHash', link: '/api/hash/isHash' },
             { text: '.keccak256', link: '/api/hash/keccak256' },
-            {
-              text: '.normalizeSignature',
-              link: '/api/hash/normalizeSignature',
-            },
             {
               text: '.ripemd160',
               link: '/api/hash/ripemd160',
@@ -258,38 +254,6 @@ export default defineConfig({
             {
               text: '.sha256',
               link: '/api/hash/sha256',
-            },
-            {
-              text: '.toEventHash',
-              link: '/api/hash/toEventHash',
-            },
-            {
-              text: '.toEventSelector',
-              link: '/api/hash/toEventSelector',
-            },
-            {
-              text: '.toEventSignature',
-              link: '/api/hash/toEventSignature',
-            },
-            {
-              text: '.toFunctionHash',
-              link: '/api/hash/toFunctionHash',
-            },
-            {
-              text: '.toFunctionSelector',
-              link: '/api/hash/toFunctionSelector',
-            },
-            {
-              text: '.toFunctionSignature',
-              link: '/api/hash/toFunctionSignature',
-            },
-            {
-              text: '.toSignature',
-              link: '/api/hash/toSignature',
-            },
-            {
-              text: '.toSignatureHash',
-              link: '/api/hash/toSignatureHash',
             },
           ],
         },
@@ -483,6 +447,45 @@ export default defineConfig({
             {
               text: '.validateMessage',
               link: '/api/siwe/validateMessage',
+            },
+          ],
+        },
+        {
+          text: 'Solidity 🚧',
+          collapsed: true,
+          link: '/api/solidity',
+          items: [
+            {
+              text: '.toEventHash',
+              link: '/api/hash/toEventHash',
+            },
+            {
+              text: '.toEventSelector',
+              link: '/api/hash/toEventSelector',
+            },
+            {
+              text: '.toEventSignature',
+              link: '/api/hash/toEventSignature',
+            },
+            {
+              text: '.toFunctionHash',
+              link: '/api/hash/toFunctionHash',
+            },
+            {
+              text: '.toFunctionSelector',
+              link: '/api/hash/toFunctionSelector',
+            },
+            {
+              text: '.toFunctionSignature',
+              link: '/api/hash/toFunctionSignature',
+            },
+            {
+              text: '.toSignature',
+              link: '/api/hash/toSignature',
+            },
+            {
+              text: '.toSignatureHash',
+              link: '/api/hash/toSignatureHash',
             },
           ],
         },

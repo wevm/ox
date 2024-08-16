@@ -2,7 +2,7 @@
 description: Parses a string representation of units.
 ---
 
-# from
+# Value.from
 
 - **Alias:** `parseValue`
 
