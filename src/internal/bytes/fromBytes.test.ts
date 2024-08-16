@@ -32,11 +32,13 @@ describe('bytes to number', () => {
       Bytes.toNumber(Bytes.from(69420, { size: 64 }), {
         size: 32,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
-    `)
+      See: https://oxlib.sh/errors#sizeoverflowerror]
+    `,
+    )
   })
 })
 
@@ -90,11 +92,13 @@ describe('bytes to bigint', () => {
       Bytes.toBigInt(Bytes.from(69420, { size: 64 }), {
         size: 32,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
-    `)
+      See: https://oxlib.sh/errors#sizeoverflowerror]
+    `,
+    )
   })
 })
 
@@ -125,28 +129,34 @@ describe('bytes to boolean', () => {
       Bytes.toBoolean(Bytes.from(true, { size: 64 }), {
         size: 32,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
-    `)
+      See: https://oxlib.sh/errors#sizeoverflowerror]
+    `,
+    )
   })
 
   test('error: invalid boolean', () => {
     expect(() =>
       Bytes.toBoolean(Bytes.from([69])),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [InvalidBytesBooleanError: Bytes value "69" is not a valid boolean. The bytes array must contain a single byte of either a 0 or 1 value.
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [InvalidBytesBooleanError: Bytes value \`69\` is not a valid boolean. The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
-      Version: ox@x.y.z]
-    `)
+      See: https://oxlib.sh/errors#invalidbytesbooleanerror]
+    `,
+    )
     expect(() =>
       Bytes.toBoolean(Bytes.from([1, 2])),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [InvalidBytesBooleanError: Bytes value "1,2" is not a valid boolean. The bytes array must contain a single byte of either a 0 or 1 value.
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [InvalidBytesBooleanError: Bytes value \`1,2\` is not a valid boolean. The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
-      Version: ox@x.y.z]
-    `)
+      See: https://oxlib.sh/errors#invalidbytesbooleanerror]
+    `,
+    )
   })
 })
 
@@ -194,11 +204,13 @@ describe('bytes to string', () => {
       Bytes.toString(Bytes.from('wagmi', { size: 64 }), {
         size: 32,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
-    `)
+      See: https://oxlib.sh/errors#sizeoverflowerror]
+    `,
+    )
   })
 })
 
@@ -254,19 +266,23 @@ describe('bytes to hex', () => {
       Bytes.toHex(Bytes.from('0x420696', { size: 64 }), {
         size: 32,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
-    `)
+      See: https://oxlib.sh/errors#sizeoverflowerror]
+    `,
+    )
   })
 })
 
 test('error: invalid `to`', () => {
   // @ts-expect-error
-  expect(() => Bytes.to(420, 'fake')).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidTypeError: Type "fake" is invalid.
+  expect(() => Bytes.to(420, 'fake')).toThrowErrorMatchingInlineSnapshot(
+    `
+    [InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | hex | bigint | number | boolean\`
 
-    Version: ox@x.y.z]
-  `)
+    See: https://oxlib.sh/errors#invalidtypeerror]
+  `,
+  )
 })

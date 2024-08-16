@@ -1,4 +1,5 @@
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import { assertHex } from '../hex/assert.js'
 import type { Hex } from '../types/data.js'
 
 export declare namespace isHex {
@@ -24,7 +25,10 @@ export function isHex(
   options: isHex.Options = {},
 ): value is Hex {
   const { strict = true } = options
-  if (!value) return false
-  if (typeof value !== 'string') return false
-  return strict ? /^0x[0-9a-fA-F]*$/.test(value) : value.startsWith('0x')
+  try {
+    assertHex(value, { strict })
+    return true
+  } catch {
+    return false
+  }
 }

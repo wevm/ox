@@ -58,9 +58,9 @@ describe('hex to number', () => {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 })
@@ -134,9 +134,9 @@ describe('hex to bigint', () => {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 })
@@ -165,18 +165,18 @@ describe('hex to boolean', () => {
     expect(() =>
       Hex.toBoolean(Hex.from(true, { size: 64 }), { size: 32 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 
   test('error: invalid boolean', () => {
     expect(() => Hex.toBoolean('0xa')).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidHexBooleanError: Hex value "0xa" is not a valid boolean. The hex value must be "0x0" (false) or "0x1" (true).
+      [InvalidHexBooleanError: Hex value \`"0xa"\` is not a valid boolean. The hex value must be \`"0x0"\` (false) or \`"0x1"\` (true).
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#invalidhexbooleanerror]
     `,
     )
   })
@@ -218,9 +218,9 @@ describe('hex to string', () => {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 })
@@ -351,28 +351,26 @@ describe('hex to bytes', () => {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 32 bytes. Given size: 64 bytes.
+      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 
   test('error: invalid bytes', () => {
     expect(() =>
       Hex.to('0x420fggf11a', 'bytes'),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [BaseError: Invalid byte sequence ("gg" in "420fggf11a").
-
-      Version: ox@x.y.z]
-    `)
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Invalid byte sequence ("gg" in "420fggf11a").]`,
+    )
   })
 })
 
 test('error: invalid `to`', () => {
   // @ts-expect-error
   expect(() => Hex.to(420, 'fake')).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidTypeError: Type "fake" is invalid.
+    [InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | bytes | bigint | number | boolean\`
 
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/errors#invalidtypeerror]
   `)
 })

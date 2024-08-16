@@ -2,12 +2,7 @@ import { assertSize } from '../data/assertSize.js'
 import { isBytes } from '../data/isBytes.js'
 import { isHex } from '../data/isHex.js'
 import { padLeft, padRight } from '../data/pad.js'
-import {
-  IntegerOutOfRangeError,
-  type IntegerOutOfRangeErrorType,
-  InvalidTypeError,
-  type InvalidTypeErrorType,
-} from '../errors/data.js'
+import { IntegerOutOfRangeError, InvalidTypeError } from '../errors/data.js'
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
@@ -27,7 +22,7 @@ export declare namespace toHex {
     | numberToHex.ErrorType
     | stringToHex.ErrorType
     | isHex.ErrorType
-    | InvalidTypeErrorType
+    | InvalidTypeError
     | ErrorType_
 }
 
@@ -62,7 +57,10 @@ export function toHex(
     return numberToHex(value, options)
   if (typeof value === 'string') return stringToHex(value, options)
   if (typeof value === 'boolean') return booleanToHex(value, options)
-  throw new InvalidTypeError(typeof value)
+  throw new InvalidTypeError(
+    typeof value,
+    'string | number | bigint | boolean | Bytes | readonly number[]',
+  )
 }
 
 export declare namespace booleanToHex {
@@ -98,7 +96,7 @@ export function booleanToHex(
   value: boolean,
   options: booleanToHex.Options = {},
 ): Hex {
-  const hex: Hex = `0x${Number(value)}`
+  const hex: Hex = `0x0${Number(value)}`
   if (typeof options.size === 'number') {
     assertSize(hex, options.size)
     return padLeft(hex, options.size)
@@ -164,7 +162,7 @@ export declare namespace numberToHex {
         size?: number | undefined
       }
 
-  type ErrorType = IntegerOutOfRangeErrorType | padLeft.ErrorType | ErrorType_
+  type ErrorType = IntegerOutOfRangeError | padLeft.ErrorType | ErrorType_
 }
 
 /**
@@ -211,10 +209,12 @@ export function numberToHex(
     })
   }
 
-  const hex = `0x${(signed && value < 0
-    ? (1n << BigInt(size * 8)) + BigInt(value)
-    : value
-  ).toString(16)}` as Hex
+  const stringValue = (
+    signed && value < 0 ? (1n << BigInt(size * 8)) + BigInt(value) : value
+  ).toString(16)
+
+  const hex =
+    `0x${stringValue.length % 2 === 0 ? stringValue : `0${stringValue}`}` as Hex
   if (size) return padLeft(hex, size) as Hex
   return hex
 }

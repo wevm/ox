@@ -1,7 +1,4 @@
-import {
-  SizeExceedsPaddingSizeError,
-  type SizeExceedsPaddingSizeErrorType,
-} from '../errors/data.js'
+import { SizeExceedsPaddingSizeError } from '../errors/data.js'
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
@@ -87,7 +84,8 @@ function pad<value extends Bytes | Hex>(
 
 export declare namespace padHex {
   type Options = pad.Options
-  type ErrorType = SizeExceedsPaddingSizeErrorType | ErrorType_
+
+  type ErrorType = SizeExceedsPaddingSizeError | ErrorType_
 }
 function padHex(hex_: Hex, options: padHex.Options = {}) {
   const { dir, size = 32 } = options
@@ -107,7 +105,8 @@ function padHex(hex_: Hex, options: padHex.Options = {}) {
 
 export declare namespace padBytes {
   type Options = pad.Options
-  type ErrorType = SizeExceedsPaddingSizeErrorType | ErrorType_
+
+  type ErrorType = SizeExceedsPaddingSizeError | ErrorType_
 }
 function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
   const { dir, size = 32 } = options

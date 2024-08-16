@@ -1,7 +1,4 @@
-import {
-  SliceOffsetOutOfBoundsError,
-  type SliceOffsetOutOfBoundsErrorType,
-} from '../errors/data.js'
+import { SliceOffsetOutOfBoundsError } from '../errors/data.js'
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { isHex } from './isHex.js'
@@ -61,7 +58,7 @@ export function slice<value extends Bytes | Hex>(
 /////////////////////////////////////////////////////////////////////////////////
 
 declare namespace assertStartOffset {
-  type ErrorType = SliceOffsetOutOfBoundsErrorType | size.ErrorType | ErrorType_
+  type ErrorType = SliceOffsetOutOfBoundsError | size.ErrorType | ErrorType_
 }
 function assertStartOffset(value: Hex | Bytes, start?: number | undefined) {
   if (typeof start === 'number' && start > 0 && start > size(value) - 1)
@@ -73,7 +70,7 @@ function assertStartOffset(value: Hex | Bytes, start?: number | undefined) {
 }
 
 declare namespace assertEndOffset {
-  type ErrorType = SliceOffsetOutOfBoundsErrorType | size.ErrorType | ErrorType_
+  type ErrorType = SliceOffsetOutOfBoundsError | size.ErrorType | ErrorType_
 }
 function assertEndOffset(
   value: Hex | Bytes,

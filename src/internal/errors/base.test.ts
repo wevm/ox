@@ -1,29 +1,19 @@
 import { expect, test } from 'vitest'
 
-import { BaseError, setErrorConfig } from './base.js'
+import { BaseError } from './base.js'
 
 test('BaseError', () => {
-  expect(new BaseError('An error occurred.')).toMatchInlineSnapshot(`
-    [BaseError: An error occurred.
-
-    Version: ox@x.y.z]
-  `)
+  expect(new BaseError('An error occurred.')).toMatchInlineSnapshot(
+    '[BaseError: An error occurred.]',
+  )
 
   expect(
     new BaseError('An error occurred.', { details: 'details' }),
-  ).toMatchInlineSnapshot(`
-    [BaseError: An error occurred.
+  ).toMatchInlineSnapshot('[BaseError: An error occurred.]')
 
-    Details: details
-    Version: ox@x.y.z]
-  `)
-
-  expect(new BaseError('', { details: 'details' })).toMatchInlineSnapshot(`
-    [BaseError: An error occurred.
-
-    Details: details
-    Version: ox@x.y.z]
-  `)
+  expect(new BaseError('', { details: 'details' })).toMatchInlineSnapshot(
+    '[BaseError: An error occurred.]',
+  )
 })
 
 test('BaseError (w/ docsPath)', () => {
@@ -35,9 +25,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
-    Docs: https://oxlib.sh/lol
-    Details: details
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/lol]
   `)
   expect(
     new BaseError('An error occurred.', {
@@ -46,8 +34,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
-    Docs: https://oxlib.sh/docs
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/docs]
   `)
   expect(
     new BaseError('An error occurred.', {
@@ -57,8 +44,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
-    Docs: https://oxlib.sh/lol
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/lol]
   `)
   expect(
     new BaseError('An error occurred.', {
@@ -68,42 +54,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
-    Docs: https://oxlib.sh/lol
-    Details: details
-    Version: ox@x.y.z]
-  `)
-})
-
-test('BaseError (w/ docsBaseUrl)', () => {
-  expect(
-    new BaseError('An error occurred.', {
-      docsBaseUrl: 'https://test',
-      details: 'details',
-      docsPath: '/lol',
-    }),
-  ).toMatchInlineSnapshot(`
-    [BaseError: An error occurred.
-
-    Docs: https://test/lol
-    Details: details
-    Version: ox@x.y.z]
-  `)
-})
-
-test('BaseError (w/ metaMessages)', () => {
-  expect(
-    new BaseError('An error occurred.', {
-      details: 'details',
-      metaMessages: ['Reason: idk', 'Cause: lol'],
-    }),
-  ).toMatchInlineSnapshot(`
-    [BaseError: An error occurred.
-
-    Reason: idk
-    Cause: lol
-
-    Details: details
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/lol]
   `)
 })
 
@@ -119,9 +70,7 @@ test('inherited BaseError', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An internal error occurred.
 
-    Docs: https://oxlib.sh/lol
-    Details: details
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/lol]
   `)
 })
 
@@ -135,9 +84,7 @@ test('inherited Error', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An internal error occurred.
 
-    Docs: https://oxlib.sh/lol
-    Details: details
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/lol]
   `)
 })
 
@@ -148,11 +95,7 @@ test('walk: no predicate fn (walks to leaf)', () => {
   const err = new BaseError('test1', {
     cause: new FooError('test2', { cause: new BarError('test3') }),
   })
-  expect(err.walk()).toMatchInlineSnapshot(`
-    [BaseError: test3
-
-    Version: ox@x.y.z]
-  `)
+  expect(err.walk()).toMatchInlineSnapshot('[BaseError: test3]')
 })
 
 test('walk: predicate fn', () => {
@@ -162,11 +105,9 @@ test('walk: predicate fn', () => {
   const err = new BaseError('test1', {
     cause: new FooError('test2', { cause: new BarError('test3') }),
   })
-  expect(err.walk((err) => err instanceof FooError)).toMatchInlineSnapshot(`
-    [BaseError: test2
-
-    Version: ox@x.y.z]
-  `)
+  expect(err.walk((err) => err instanceof FooError)).toMatchInlineSnapshot(
+    '[BaseError: test2]',
+  )
 })
 
 test('walk: predicate fn (no match)', () => {
@@ -179,33 +120,24 @@ test('walk: predicate fn (no match)', () => {
   expect(err.walk((err) => err instanceof FooError)).toBeNull()
 })
 
-test('setErrorConfig', () => {
-  class FooError extends BaseError {
-    constructor() {
-      super('An error occurred', {
-        name: 'FooError',
-      })
-    }
-  }
-
-  setErrorConfig({
-    getDocsUrl({ name }) {
-      if (name === 'FooError') return 'https://sweetlib.com/xyz'
-      return undefined
-    },
-    version: 'sweetlib@1.2.3',
+test('properties', () => {
+  const err = new BaseError('test1', {
+    cause: new Error('test2'),
+    docsPath: '/lol',
   })
-
-  expect(new BaseError('An error occurred.')).toMatchInlineSnapshot(`
-    [BaseError: An error occurred.
-
-    Version: sweetlib@1.2.3]
-  `)
-
-  expect(new FooError()).toMatchInlineSnapshot(`
-    [FooError: An error occurred
-
-    Docs: https://sweetlib.com/xyz
-    Version: sweetlib@1.2.3]
+  expect(
+    Object.entries(err).reduce((acc, [key, value]) => {
+      acc[key] = value
+      return acc
+    }, {} as any),
+  ).toMatchInlineSnapshot(`
+    {
+      "details": "test2",
+      "docs": "https://oxlib.sh/lol",
+      "docsPath": "/lol",
+      "name": "BaseError",
+      "shortMessage": "test1",
+      "version": "ox@x.y.z",
+    }
   `)
 })

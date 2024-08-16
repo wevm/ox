@@ -1,3 +1,5 @@
+export { assertBytes, assertBytes as assert } from './internal/bytes/assert.js'
+
 export { concat } from './internal/data/concat.js'
 
 export { isBytes } from './internal/data/isBytes.js'

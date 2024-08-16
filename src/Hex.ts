@@ -1,3 +1,5 @@
+export { assertHex, assertHex as assert } from './internal/hex/assert.js'
+
 export { concat } from './internal/data/concat.js'
 
 export { isHex } from './internal/data/isHex.js'

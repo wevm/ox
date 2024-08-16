@@ -1,10 +1,7 @@
 import {
   NegativeOffsetError,
-  type NegativeOffsetErrorType,
   PositionOutOfBoundsError,
-  type PositionOutOfBoundsErrorType,
   RecursiveReadLimitExceededError,
-  type RecursiveReadLimitExceededErrorType,
 } from './errors/cursor.js'
 import type { ErrorType as ErrorType_ } from './errors/error.js'
 import type { Bytes } from './types/data.js'
@@ -50,15 +47,15 @@ type CursorErrorType =
   | CursorIncrementPositionErrorType
   | ErrorType_
 
-type CursorAssertPositionErrorType = PositionOutOfBoundsErrorType | ErrorType_
+type CursorAssertPositionErrorType = PositionOutOfBoundsError | ErrorType_
 
 type CursorDecrementPositionErrorType = NegativeOffsetError | ErrorType_
 
 type CursorIncrementPositionErrorType = NegativeOffsetError | ErrorType_
 
 type StaticCursorErrorType =
-  | NegativeOffsetErrorType
-  | RecursiveReadLimitExceededErrorType
+  | NegativeOffsetError
+  | RecursiveReadLimitExceededError
 
 const staticCursor: Cursor = {
   bytes: new Uint8Array(),

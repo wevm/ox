@@ -193,6 +193,7 @@ export default defineConfig({
             { text: '.fromHex', link: '/api/bytes/fromHex' },
             { text: '.fromNumber', link: '/api/bytes/fromNumber' },
             { text: '.fromString', link: '/api/bytes/fromString' },
+            { text: '.assert', link: '/api/bytes/assert' },
             { text: '.concat', link: '/api/bytes/concat' },
             { text: '.isBytes', link: '/api/bytes/isBytes' },
             { text: '.isEqual', link: '/api/bytes/isEqual' },
@@ -300,6 +301,7 @@ export default defineConfig({
             { text: '.fromBytes', link: '/api/hex/fromBytes' },
             { text: '.fromNumber', link: '/api/hex/fromNumber' },
             { text: '.fromString', link: '/api/hex/fromString' },
+            { text: '.assert', link: '/api/hex/assert' },
             { text: '.concat', link: '/api/hex/concat' },
             { text: '.isHex', link: '/api/hex/isHex' },
             { text: '.isEqual', link: '/api/hex/isEqual' },
@@ -670,6 +672,15 @@ export default defineConfig({
             },
             { text: '.verify', link: '/api/unit/verify' },
           ],
+        },
+      ],
+    },
+    {
+      text: 'Glossary',
+      items: [
+        {
+          text: 'Errors',
+          link: '/errors',
         },
       ],
     },

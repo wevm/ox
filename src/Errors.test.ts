@@ -5,14 +5,13 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "BaseError",
-      "setErrorConfig",
       "NegativeOffsetError",
       "PositionOutOfBoundsError",
       "RecursiveReadLimitExceededError",
       "IntegerOutOfRangeError",
       "InvalidBytesBooleanError",
       "InvalidHexBooleanError",
-      "InvalidHexValueError",
+      "InvalidHexLengthError",
       "InvalidTypeError",
       "SizeExceedsPaddingSizeError",
       "SizeOverflowError",

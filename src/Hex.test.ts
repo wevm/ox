@@ -4,6 +4,8 @@ import * as exports from './Hex.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "assertHex",
+      "assert",
       "concat",
       "isHex",
       "isEqual",

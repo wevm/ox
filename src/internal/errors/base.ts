@@ -1,46 +1,10 @@
-import { version } from '../../version.js'
-
-type ErrorConfig = {
-  getDocsUrl?: ((args: BaseErrorParameters) => string | undefined) | undefined
-  version?: string | undefined
-}
-
-let errorConfig: ErrorConfig = {
-  getDocsUrl: ({
-    docsBaseUrl,
-    docsPath = '',
-    docsSlug,
-  }: BaseErrorParameters) =>
-    docsPath
-      ? `${docsBaseUrl ?? 'https://oxlib.sh'}${docsPath}${docsSlug ? `#${docsSlug}` : ''}`
-      : undefined,
-  version,
-}
-
-/**
- * Sets the global error configuration.
- *
- * @example
- * import { Errors } from 'ox'
- * Errors.setErrorConfig({
- *   getDocsUrl({ name }) {
- *     return `https://mylib.sh/docs/errors?name=${name}`
- *   },
- *   version: 'mylib@1.0.0',
- * })
- */
-export function setErrorConfig(config: ErrorConfig) {
-  errorConfig = config
-}
+import { getVersion } from './utils.js'
 
 type BaseErrorParameters = {
   cause?: BaseError | Error | undefined
   details?: string | undefined
-  docsBaseUrl?: string | undefined
   docsPath?: string | undefined
-  docsSlug?: string | undefined
   metaMessages?: string[] | undefined
-  name?: string | undefined
 }
 
 export type BaseErrorType = BaseError & { name: 'BaseError' }
@@ -54,12 +18,13 @@ export type BaseErrorType = BaseError & { name: 'BaseError' }
  */
 export class BaseError extends Error {
   details: string
+  docs?: string | undefined
   docsPath?: string | undefined
-  metaMessages?: string[] | undefined
   shortMessage: string
-  version: string
 
   override name = 'BaseError'
+
+  version = `ox@${getVersion()}`
 
   constructor(shortMessage: string, args: BaseErrorParameters = {}) {
     const details = (() => {
@@ -72,25 +37,23 @@ export class BaseError extends Error {
         return args.cause.docsPath || args.docsPath
       return args.docsPath
     })()
-    const docsUrl = errorConfig.getDocsUrl?.({ ...args, docsPath })
+
+    const docsBaseUrl = 'https://oxlib.sh'
+    const docs = `${docsBaseUrl}${docsPath ?? ''}`
 
     const message = [
       shortMessage || 'An error occurred.',
-      '',
-      ...(args.metaMessages ? [...args.metaMessages, ''] : []),
-      ...(docsUrl ? [`Docs: ${docsUrl}`] : []),
-      ...(details ? [`Details: ${details}`] : []),
-      ...(errorConfig.version ? [`Version: ${errorConfig.version}`] : []),
-    ].join('\n')
+      docsPath && `\nSee: ${docs}`,
+    ]
+      .filter((x) => typeof x === 'string')
+      .join('\n')
 
     super(message, args.cause ? { cause: args.cause } : undefined)
 
     this.details = details
+    this.docs = docs
     this.docsPath = docsPath
-    this.metaMessages = args.metaMessages
-    this.name = args.name ?? this.name
     this.shortMessage = shortMessage
-    this.version = version
   }
 
   walk(): Error

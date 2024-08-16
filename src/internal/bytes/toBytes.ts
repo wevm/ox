@@ -3,7 +3,7 @@ import { isBytes } from '../data/isBytes.js'
 import { isHex } from '../data/isHex.js'
 import { padLeft, padRight } from '../data/pad.js'
 import { BaseError } from '../errors/base.js'
-import { InvalidTypeError, type InvalidTypeErrorType } from '../errors/data.js'
+import { InvalidHexLengthError, InvalidTypeError } from '../errors/data.js'
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import { numberToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
@@ -21,7 +21,7 @@ export declare namespace toBytes {
     | stringToBytes.ErrorType
     | isBytes.ErrorType
     | isHex.ErrorType
-    | InvalidTypeErrorType
+    | InvalidTypeError
     | ErrorType_
 }
 
@@ -56,7 +56,10 @@ export function toBytes(
   if (typeof value === 'string') return stringToBytes(value, options)
   if (typeof value === 'number' || typeof value === 'bigint')
     return numberToBytes(value, options)
-  throw new InvalidTypeError(typeof value)
+  throw new InvalidTypeError(
+    typeof value,
+    'string | bigint | number | boolean | Bytes | Hex | readonly number[]',
+  )
 }
 
 export declare namespace booleanToBytes {
@@ -149,14 +152,15 @@ export declare namespace hexToBytes {
 export function hexToBytes(hex_: Hex, options: hexToBytes.Options = {}): Bytes {
   const { size } = options
 
+  if (hex_.length % 2) throw new InvalidHexLengthError(hex_)
+
   let hex = hex_
   if (size) {
     assertSize(hex, size)
     hex = padRight(hex, size)
   }
 
-  let hexString = hex.slice(2) as string
-  if (hexString.length % 2) hexString = `0${hexString}`
+  const hexString = hex.slice(2) as string
 
   const length = hexString.length / 2
   const bytes = new Uint8Array(length)

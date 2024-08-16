@@ -3,31 +3,31 @@ import { describe, expect, test } from 'vitest'
 
 describe('numbers to hex', () => {
   test('default', () => {
-    expect(Hex.from(0)).toMatchInlineSnapshot('"0x0"')
-    expect(Hex.from(7)).toMatchInlineSnapshot('"0x7"')
+    expect(Hex.from(0)).toMatchInlineSnapshot(`"0x00"`)
+    expect(Hex.from(7)).toMatchInlineSnapshot(`"0x07"`)
     expect(Hex.from(69)).toMatchInlineSnapshot('"0x45"')
-    expect(Hex.from(420)).toMatchInlineSnapshot('"0x1a4"')
+    expect(Hex.from(420)).toMatchInlineSnapshot(`"0x01a4"`)
 
-    expect(Hex.fromNumber(0)).toMatchInlineSnapshot('"0x0"')
-    expect(Hex.fromNumber(7)).toMatchInlineSnapshot('"0x7"')
+    expect(Hex.fromNumber(0)).toMatchInlineSnapshot(`"0x00"`)
+    expect(Hex.fromNumber(7)).toMatchInlineSnapshot(`"0x07"`)
     expect(Hex.fromNumber(69)).toMatchInlineSnapshot('"0x45"')
-    expect(Hex.fromNumber(420)).toMatchInlineSnapshot('"0x1a4"')
+    expect(Hex.fromNumber(420)).toMatchInlineSnapshot(`"0x01a4"`)
 
     expect(() =>
       // biome-ignore lint/correctness/noPrecisionLoss: precision loss expected for test
       Hex.fromNumber(420182738912731283712937129),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "4.2018273891273126e+26" is not in safe integer range (0 to 9007199254740991)
+      [IntegerOutOfRangeError: Number \`4.2018273891273126e+26\` is not in safe integer range (\`0\` to \`9007199254740991\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() => Hex.fromNumber(-69)).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "-69" is not in safe integer range (0 to 9007199254740991)
+      [IntegerOutOfRangeError: Number \`-69\` is not in safe integer range (\`0\` to \`9007199254740991\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
   })
@@ -44,27 +44,27 @@ describe('numbers to hex', () => {
       Hex.fromNumber(-7, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "-7" is not in safe 8-bit unsigned integer range (0 to 255)
+      [IntegerOutOfRangeError: Number \`-7\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() =>
       Hex.fromNumber(256, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "256" is not in safe 8-bit unsigned integer range (0 to 255)
+      [IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() =>
       Hex.fromNumber(65536, { size: 2 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "65536" is not in safe 16-bit unsigned integer range (0 to 65535)
+      [IntegerOutOfRangeError: Number \`65536\` is not in safe 16-bit unsigned integer range (\`0\` to \`65535\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
   })
@@ -92,18 +92,18 @@ describe('numbers to hex', () => {
       Hex.fromNumber(32768, { size: 2, signed: true }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "32768" is not in safe 16-bit signed integer range (-32768 to 32767)
+      [IntegerOutOfRangeError: Number \`32768\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() =>
       Hex.fromNumber(-32769, { size: 2, signed: true }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "-32769" is not in safe 16-bit signed integer range (-32768 to 32767)
+      [IntegerOutOfRangeError: Number \`-32769\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
   })
@@ -111,27 +111,27 @@ describe('numbers to hex', () => {
 
 describe('bigints to hex', () => {
   test('default', () => {
-    expect(Hex.from(0)).toMatchInlineSnapshot('"0x0"')
-    expect(Hex.from(7n)).toMatchInlineSnapshot('"0x7"')
+    expect(Hex.from(0)).toMatchInlineSnapshot(`"0x00"`)
+    expect(Hex.from(7n)).toMatchInlineSnapshot(`"0x07"`)
     expect(Hex.from(69n)).toMatchInlineSnapshot('"0x45"')
-    expect(Hex.from(420n)).toMatchInlineSnapshot('"0x1a4"')
+    expect(Hex.from(420n)).toMatchInlineSnapshot(`"0x01a4"`)
     expect(
       Hex.from(4206942069420694206942069420694206942069n),
-    ).toMatchInlineSnapshot('"0xc5cf39211876fb5e5884327fa56fc0b75"')
+    ).toMatchInlineSnapshot(`"0x0c5cf39211876fb5e5884327fa56fc0b75"`)
 
-    expect(Hex.fromNumber(0)).toMatchInlineSnapshot('"0x0"')
-    expect(Hex.fromNumber(7n)).toMatchInlineSnapshot('"0x7"')
+    expect(Hex.fromNumber(0)).toMatchInlineSnapshot(`"0x00"`)
+    expect(Hex.fromNumber(7n)).toMatchInlineSnapshot(`"0x07"`)
     expect(Hex.fromNumber(69n)).toMatchInlineSnapshot('"0x45"')
-    expect(Hex.fromNumber(420n)).toMatchInlineSnapshot('"0x1a4"')
+    expect(Hex.fromNumber(420n)).toMatchInlineSnapshot(`"0x01a4"`)
     expect(
       Hex.fromNumber(4206942069420694206942069420694206942069n),
-    ).toMatchInlineSnapshot('"0xc5cf39211876fb5e5884327fa56fc0b75"')
+    ).toMatchInlineSnapshot(`"0x0c5cf39211876fb5e5884327fa56fc0b75"`)
 
     expect(() => Hex.fromNumber(-69n)).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "-69n" is not in safe integer range (above 0n)
+      [IntegerOutOfRangeError: Number \`-69n\` is not in safe integer range (above \`0n\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
   })
@@ -148,36 +148,36 @@ describe('bigints to hex', () => {
       Hex.fromNumber(-7n, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "-7n" is not in safe 8-bit unsigned integer range (0n to 255n)
+      [IntegerOutOfRangeError: Number \`-7n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() =>
       Hex.fromNumber(256n, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "256n" is not in safe 8-bit unsigned integer range (0n to 255n)
+      [IntegerOutOfRangeError: Number \`256n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() =>
       Hex.fromNumber(65536n, { size: 2 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "65536n" is not in safe 16-bit unsigned integer range (0n to 65535n)
+      [IntegerOutOfRangeError: Number \`65536n\` is not in safe 16-bit unsigned integer range (\`0n\` to \`65535n\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() =>
       Hex.fromNumber(18446744073709551616n, { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "18446744073709551616n" is not in safe 64-bit unsigned integer range (0n to 18446744073709551615n)
+      [IntegerOutOfRangeError: Number \`18446744073709551616n\` is not in safe 64-bit unsigned integer range (\`0n\` to \`18446744073709551615n\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
   })
@@ -216,9 +216,9 @@ describe('bigints to hex', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "170141183460469231731687303715884105728n" is not in safe 128-bit signed integer range (-170141183460469231731687303715884105728n to 170141183460469231731687303715884105727n)
+      [IntegerOutOfRangeError: Number \`170141183460469231731687303715884105728n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
     expect(() =>
@@ -228,9 +228,9 @@ describe('bigints to hex', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number "-170141183460469231731687303715884105729n" is not in safe 128-bit signed integer range (-170141183460469231731687303715884105728n to 170141183460469231731687303715884105727n)
+      [IntegerOutOfRangeError: Number \`-170141183460469231731687303715884105729n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#integeroutofrangeerror]
     `,
     )
   })
@@ -238,11 +238,11 @@ describe('bigints to hex', () => {
 
 describe('boolean to hex', () => {
   test('default', () => {
-    expect(Hex.from(true)).toMatchInlineSnapshot('"0x1"')
-    expect(Hex.from(false)).toMatchInlineSnapshot('"0x0"')
+    expect(Hex.from(true)).toMatchInlineSnapshot(`"0x01"`)
+    expect(Hex.from(false)).toMatchInlineSnapshot(`"0x00"`)
 
-    expect(Hex.fromBoolean(true)).toMatchInlineSnapshot('"0x1"')
-    expect(Hex.fromBoolean(false)).toMatchInlineSnapshot('"0x0"')
+    expect(Hex.fromBoolean(true)).toMatchInlineSnapshot(`"0x01"`)
+    expect(Hex.fromBoolean(false)).toMatchInlineSnapshot(`"0x00"`)
   })
 
   test('args: size', () => {
@@ -265,17 +265,17 @@ describe('boolean to hex', () => {
       Hex.from(true, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeOverflowError: Size cannot exceed 0 bytes. Given size: 1 bytes.
+      [SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `,
     )
     expect(() =>
       Hex.fromBoolean(false, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 0 bytes. Given size: 1 bytes.
+      [SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 })
@@ -316,16 +316,16 @@ describe('string to hex', () => {
     expect(() =>
       Hex.from('Hello World!', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 8 bytes. Given size: 12 bytes.
+      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
     expect(() =>
       Hex.fromString('Hello World!', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 8 bytes. Given size: 12 bytes.
+      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 })
@@ -417,9 +417,9 @@ describe('bytes to hex', () => {
         },
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 8 bytes. Given size: 12 bytes.
+      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
     expect(() =>
       Hex.fromBytes(
@@ -431,9 +431,9 @@ describe('bytes to hex', () => {
         },
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed 8 bytes. Given size: 12 bytes.
+      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeoverflowerror]
     `)
   })
 })
@@ -448,9 +448,9 @@ test('error: invalid type', () => {
   // @ts-expect-error
   expect(() => Hex.from(new Date())).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidTypeError: Type "object" is invalid.
+    [InvalidTypeError: Type \`object\` is invalid. Expected: \`string | number | bigint | boolean | Bytes | readonly number[]\`
 
-    Version: ox@x.y.z]
+    See: https://oxlib.sh/errors#invalidtypeerror]
   `,
   )
 })

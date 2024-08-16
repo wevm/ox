@@ -1,3 +1,4 @@
+import { assertBytes } from '../bytes/assert.js'
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
@@ -16,10 +17,10 @@ export declare namespace isBytes {
  * Bytes.isBytes(Bytes.from([1, 2, 3])) // true
  */
 export function isBytes(value: unknown): value is Bytes {
-  if (!value) return false
-  if (typeof value !== 'object') return false
-  if (!('BYTES_PER_ELEMENT' in value)) return false
-  return (
-    value.BYTES_PER_ELEMENT === 1 && value.constructor.name === 'Uint8Array'
-  )
+  try {
+    assertBytes(value)
+    return true
+  } catch {
+    return false
+  }
 }

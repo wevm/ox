@@ -1,10 +1,9 @@
 import type { Bytes, Hex } from '../types/data.js'
 import { BaseError } from './base.js'
 
-export type IntegerOutOfRangeErrorType = IntegerOutOfRangeError & {
-  name: 'IntegerOutOfRangeError'
-}
 export class IntegerOutOfRangeError extends BaseError {
+  override readonly name = 'IntegerOutOfRangeError'
+
   constructor({
     max,
     min,
@@ -19,81 +18,122 @@ export class IntegerOutOfRangeError extends BaseError {
     value: string
   }) {
     super(
-      `Number "${value}" is not in safe ${
+      `Number \`${value}\` is not in safe ${
         size ? `${size * 8}-bit ${signed ? 'signed' : 'unsigned'} ` : ''
-      }integer range ${max ? `(${min} to ${max})` : `(above ${min})`}`,
-      { name: 'IntegerOutOfRangeError' },
+      }integer range ${max ? `(\`${min}\` to \`${max}\`)` : `(above \`${min}\`)`}`,
+      {
+        docsPath: '/errors#integeroutofrangeerror',
+      },
     )
   }
 }
 
-export type InvalidBytesBooleanErrorType = InvalidBytesBooleanError & {
-  name: 'InvalidBytesBooleanError'
-}
 export class InvalidBytesBooleanError extends BaseError {
+  override readonly name = 'InvalidBytesBooleanError'
+
   constructor(bytes: Bytes) {
     super(
-      `Bytes value "${bytes}" is not a valid boolean. The bytes array must contain a single byte of either a 0 or 1 value.`,
+      `Bytes value \`${bytes}\` is not a valid boolean. The bytes array must contain a single byte of either a \`0\` or \`1\` value.`,
       {
-        name: 'InvalidBytesBooleanError',
+        docsPath: '/errors#invalidbytesbooleanerror',
       },
     )
   }
 }
 
-export type InvalidHexBooleanErrorType = InvalidHexBooleanError & {
-  name: 'InvalidHexBooleanError'
-}
 export class InvalidHexBooleanError extends BaseError {
+  override readonly name = 'InvalidHexBooleanError'
+
   constructor(hex: Hex) {
     super(
-      `Hex value "${hex}" is not a valid boolean. The hex value must be "0x0" (false) or "0x1" (true).`,
-      { name: 'InvalidHexBooleanError' },
+      `Hex value \`"${hex}"\` is not a valid boolean. The hex value must be \`"0x0"\` (false) or \`"0x1"\` (true).`,
+      {
+        docsPath: '/errors#invalidhexbooleanerror',
+      },
     )
   }
 }
 
-export type InvalidHexValueErrorType = InvalidHexValueError & {
-  name: 'InvalidHexValueError'
+export class InvalidBytesTypeError extends BaseError {
+  override readonly name = 'InvalidBytesTypeError'
+
+  constructor(value: unknown) {
+    super(
+      // TODO: use `stringify` always.
+      `Value \`${typeof value === 'object' ? JSON.stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value. Bytes values must be of type \`Bytes\`.`,
+      {
+        docsPath: '/errors#invalidbytestypeerror',
+      },
+    )
+  }
 }
-export class InvalidHexValueError extends BaseError {
+
+export class InvalidHexLengthError extends BaseError {
+  override readonly name = 'InvalidHexLengthError'
+
   constructor(value: Hex) {
     super(
-      `Hex value "${value}" is an odd length (${value.length}). It must be an even length.`,
+      `Hex value \`"${value}"\` is an odd length (${value.length - 2} nibbles). It must be an even length.`,
       {
-        name: 'InvalidHexValueError',
+        docsPath: '/errors#invalidhexlengtherror',
       },
     )
   }
 }
 
-export type InvalidTypeErrorType = InvalidTypeError & {
-  name: 'InvalidTypeError'
-}
-export class InvalidTypeError extends BaseError {
-  constructor(type: string) {
-    super(`Type "${type}" is invalid.`, { name: 'InvalidTypeError' })
+export class InvalidHexTypeError extends BaseError {
+  override readonly name = 'InvalidHexTypeError'
+
+  constructor(value: unknown) {
+    super(
+      // TODO: use `stringify` always.
+      `Value \`${typeof value === 'object' ? JSON.stringify(value) : value}\` of type \`${typeof value}\` is an invalid hex type. Hex types must be represented as \`"0x$\{string}"\`.`,
+      {
+        docsPath: '/errors#invalidhextypeerror',
+      },
+    )
   }
 }
 
-export type SizeOverflowErrorType = SizeOverflowError & {
-  name: 'SizeOverflowError'
+export class InvalidHexValueError extends BaseError {
+  override readonly name = 'InvalidHexValueError'
+
+  constructor(value: unknown) {
+    super(
+      `Value \`${value}\` is an invalid hex value. Hex values must start with "0x" and contain only hexadecimal characters (0-9, a-f, A-F).`,
+      {
+        docsPath: '/errors#invalidhexvalueerror',
+      },
+    )
+  }
 }
+
+export class InvalidTypeError extends BaseError {
+  override readonly name = 'InvalidTypeError'
+
+  constructor(type: string, expected: string) {
+    super(`Type \`${type}\` is invalid. Expected: \`${expected}\``, {
+      docsPath: '/errors#invalidtypeerror',
+    })
+  }
+}
+
 export class SizeOverflowError extends BaseError {
+  override readonly name = 'SizeOverflowError'
+
   constructor({ givenSize, maxSize }: { givenSize: number; maxSize: number }) {
     super(
-      `Size cannot exceed ${maxSize} bytes. Given size: ${givenSize} bytes.`,
+      `Size cannot exceed \`${maxSize}\` bytes. Given size: \`${givenSize}\` bytes.`,
       {
-        name: 'SizeOverflowError',
+        docsPath: '/errors#sizeoverflowerror',
       },
     )
   }
 }
 
-export type SliceOffsetOutOfBoundsErrorType = SliceOffsetOutOfBoundsError & {
-  name: 'SliceOffsetOutOfBoundsError'
-}
 export class SliceOffsetOutOfBoundsError extends BaseError {
+  override readonly name = 'SliceOffsetOutOfBoundsError'
+
   constructor({
     offset,
     position,
@@ -102,16 +142,17 @@ export class SliceOffsetOutOfBoundsError extends BaseError {
     super(
       `Slice ${
         position === 'start' ? 'starting' : 'ending'
-      } at offset "${offset}" is out-of-bounds (size: ${size}).`,
-      { name: 'SliceOffsetOutOfBoundsError' },
+      } at offset \`${offset}\` is out-of-bounds (size: \`${size}\`).`,
+      {
+        docsPath: '/errors#sliceoffsetoutofboundserror',
+      },
     )
   }
 }
 
-export type SizeExceedsPaddingSizeErrorType = SizeExceedsPaddingSizeError & {
-  name: 'SizeExceedsPaddingSizeError'
-}
 export class SizeExceedsPaddingSizeError extends BaseError {
+  override readonly name = 'SizeExceedsPaddingSizeError'
+
   constructor({
     size,
     targetSize,
@@ -124,8 +165,10 @@ export class SizeExceedsPaddingSizeError extends BaseError {
     super(
       `${type.charAt(0).toUpperCase()}${type
         .slice(1)
-        .toLowerCase()} size (${size}) exceeds padding size (${targetSize}).`,
-      { name: 'SizeExceedsPaddingSizeError' },
+        .toLowerCase()} size (\`${size}\`) exceeds padding size (\`${targetSize}\`).`,
+      {
+        docsPath: '/errors#sizeexceedspaddingsizeerror',
+      },
     )
   }
 }

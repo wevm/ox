@@ -1,12 +1,7 @@
 import { hexToBytes } from '../bytes/toBytes.js'
 import { assertSize } from '../data/assertSize.js'
 import { trimLeft, trimRight } from '../data/trim.js'
-import {
-  InvalidHexBooleanError,
-  type InvalidHexBooleanErrorType,
-  InvalidTypeError,
-  type InvalidTypeErrorType,
-} from '../errors/data.js'
+import { InvalidHexBooleanError, InvalidTypeError } from '../errors/data.js'
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
@@ -31,7 +26,7 @@ export declare namespace fromHex {
     | hexToBoolean.ErrorType
     | hexToString.ErrorType
     | hexToBytes.ErrorType
-    | InvalidTypeErrorType
+    | InvalidTypeError
     | ErrorType_
 }
 
@@ -71,7 +66,7 @@ export function fromHex<to extends To>(
   if (to === 'boolean')
     return hexToBoolean(hex, options) as fromHex.ReturnType<to>
   if (to === 'bytes') return hexToBytes(hex, options) as fromHex.ReturnType<to>
-  throw new InvalidTypeError(to)
+  throw new InvalidTypeError(to, 'string | bytes | bigint | number | boolean')
 }
 
 export declare namespace hexToBigInt {
@@ -127,7 +122,7 @@ export declare namespace hexToBoolean {
   type ErrorType =
     | assertSize.ErrorType
     | trimLeft.ErrorType
-    | InvalidHexBooleanErrorType
+    | InvalidHexBooleanError
     | ErrorType_
 }
 

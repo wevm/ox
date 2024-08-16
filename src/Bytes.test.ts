@@ -4,6 +4,8 @@ import * as exports from './Bytes.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "assertBytes",
+      "assert",
       "concat",
       "isBytes",
       "isEqual",

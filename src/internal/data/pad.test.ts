@@ -111,9 +111,9 @@ describe('hex', () => {
       ),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeExceedsPaddingSizeError: Hex size (43) exceeds padding size (32).
+      [SizeExceedsPaddingSizeError: Hex size (\`43\`) exceeds padding size (\`32\`).
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
     `,
     )
   })
@@ -131,9 +131,9 @@ describe('hex', () => {
       Data.padLeft('0x1a4e12a45', 4),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeExceedsPaddingSizeError: Hex size (5) exceeds padding size (4).
+      [SizeExceedsPaddingSizeError: Hex size (\`5\`) exceeds padding size (\`4\`).
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
     `,
     )
   })
@@ -231,9 +231,9 @@ describe('bytes', () => {
       ),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeExceedsPaddingSizeError: Bytes size (44) exceeds padding size (32).
+      [SizeExceedsPaddingSizeError: Bytes size (\`44\`) exceeds padding size (\`32\`).
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
     `,
     )
   })
@@ -282,9 +282,9 @@ describe('bytes', () => {
       Data.padLeft(new Uint8Array([1, 122, 51, 123, 11]), 4),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeExceedsPaddingSizeError: Bytes size (5) exceeds padding size (4).
+      [SizeExceedsPaddingSizeError: Bytes size (\`5\`) exceeds padding size (\`4\`).
 
-      Version: ox@x.y.z]
+      See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
     `,
     )
   })
