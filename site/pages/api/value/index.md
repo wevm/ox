@@ -9,7 +9,7 @@ import { Value } from 'ox'
 const value = Value.fromEther('1')
 // 1_000_000_000_000_000_000n
 
-const formattedValue = Value.formatWei(value)
+const formattedValue = Value.formatEther(value)
 // '1'
 
 const value = Value.fromEther('1', 'szabo')

@@ -36,7 +36,7 @@ export default defineConfig({
       text: 'API Reference',
       items: [
         {
-          text: 'Abi',
+          text: 'Abi 🚧',
           collapsed: true,
           link: '/api/abi',
           items: [
@@ -106,7 +106,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Address',
+          text: 'Address 🚧',
           collapsed: true,
           link: '/api/address',
           items: [
@@ -129,7 +129,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Base58',
+          text: 'Base58 🚧',
           collapsed: true,
           link: '/api/base58',
           items: [
@@ -138,7 +138,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Base64',
+          text: 'Base64 🚧',
           collapsed: true,
           link: '/api/base64',
           items: [
@@ -147,7 +147,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Blobs',
+          text: 'Blobs 🚧',
           collapsed: true,
           link: '/api/blobs',
           items: [
@@ -173,7 +173,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Block',
+          text: 'Block 🚧',
           collapsed: true,
           link: '/api/block',
           items: [
@@ -213,13 +213,13 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Constants',
+          text: 'Constants 🚧',
           collapsed: true,
           link: '/api/constants',
           items: [],
         },
         {
-          text: 'Ens',
+          text: 'Ens 🚧',
           collapsed: true,
           link: '/api/ens',
           items: [
@@ -238,7 +238,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Hash',
+          text: 'Hash 🚧',
           collapsed: true,
           link: '/api/hash',
           items: [
@@ -321,7 +321,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Json',
+          text: 'Json 🚧',
           collapsed: true,
           link: '/api/json',
           items: [
@@ -331,7 +331,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'JsonRpc',
+          text: 'JsonRpc 🚧',
           collapsed: true,
           link: '/api/jsonRpc',
           items: [
@@ -346,7 +346,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Kzg',
+          text: 'Kzg 🚧',
           collapsed: true,
           link: '/api/kzg',
           items: [
@@ -355,7 +355,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Log',
+          text: 'Log 🚧',
           collapsed: true,
           link: '/api/log',
           items: [
@@ -367,7 +367,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Rlp',
+          text: 'Rlp 🚧',
           collapsed: true,
           link: '/api/rlp',
           items: [
@@ -376,7 +376,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Secp256k1',
+          text: 'Secp256k1 🚧',
           collapsed: true,
           link: '/api/secp256k1',
           items: [
@@ -399,7 +399,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'SignedData (EIP-191)',
+          text: 'SignedData (EIP-191) 🚧',
           collapsed: true,
           link: '/api/signedData',
           items: [
@@ -430,27 +430,17 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Signature',
+          text: 'Signature 🚧',
           collapsed: true,
           link: '/api/signature',
           items: [
             { text: '.from', link: '/api/signature/from' },
             { text: '.fromCompact', link: '/api/signature/fromCompact' },
             { text: '.fromSerialized', link: '/api/signature/fromSerialized' },
-            { text: '.isErc6492', link: '/api/signature/isErc6492' },
-            { text: '.parseErc6492', link: '/api/signature/parseErc6492' },
             { text: '.serialize', link: '/api/signature/serialize' },
             {
               text: '.serializeCompact',
               link: '/api/signature/serializeCompact',
-            },
-            {
-              text: '.serializeErc6492',
-              link: '/api/signature/serializeErc6492',
-            },
-            {
-              text: '.serializeErc6492',
-              link: '/api/signature/serializeErc6492',
             },
             {
               text: '.toCompact',
@@ -467,7 +457,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Siwe (ERC-4361)',
+          text: 'Siwe (ERC-4361) 🚧',
           collapsed: true,
           link: '/api/siwe',
           items: [
@@ -494,7 +484,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Transaction',
+          text: 'Transaction 🚧',
           collapsed: true,
           link: '/api/transaction',
           items: [
@@ -514,7 +504,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'TransactionEnvelope',
+          text: 'TransactionEnvelope 🚧',
           collapsed: true,
           link: '/api/transactionEnvelope',
           items: [
@@ -589,7 +579,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'TransactionReceipt',
+          text: 'TransactionReceipt 🚧',
           collapsed: true,
           link: '/api/transactionReceipt',
           items: [
@@ -599,7 +589,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'TypedData (EIP-712)',
+          text: 'TypedData (EIP-712) 🚧',
           collapsed: true,
           link: '/api/typedData',
           items: [
@@ -655,7 +645,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'WebAuthnP256',
+          text: 'WebAuthnP256 🚧',
           collapsed: true,
           link: '/api/webAuthnP256',
           items: [
