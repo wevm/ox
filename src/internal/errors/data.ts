@@ -32,12 +32,12 @@ export class InvalidBytesBooleanError extends BaseError {
   override readonly name = 'InvalidBytesBooleanError'
 
   constructor(bytes: Bytes) {
-    super(
-      `Bytes value \`${bytes}\` is not a valid boolean. The bytes array must contain a single byte of either a \`0\` or \`1\` value.`,
-      {
-        docsPath: '/errors#invalidbytesbooleanerror',
-      },
-    )
+    super(`Bytes value \`${bytes}\` is not a valid boolean.`, {
+      docsPath: '/errors#invalidbytesbooleanerror',
+      metaMessages: [
+        'The bytes array must contain a single byte of either a `0` or `1` value.',
+      ],
+    })
   }
 }
 
@@ -45,12 +45,12 @@ export class InvalidHexBooleanError extends BaseError {
   override readonly name = 'InvalidHexBooleanError'
 
   constructor(hex: Hex) {
-    super(
-      `Hex value \`"${hex}"\` is not a valid boolean. The hex value must be \`"0x0"\` (false) or \`"0x1"\` (true).`,
-      {
-        docsPath: '/errors#invalidhexbooleanerror',
-      },
-    )
+    super(`Hex value \`"${hex}"\` is not a valid boolean.`, {
+      docsPath: '/errors#invalidhexbooleanerror',
+      metaMessages: [
+        'The hex value must be `"0x0"` (false) or `"0x1"` (true).',
+      ],
+    })
   }
 }
 
@@ -60,9 +60,10 @@ export class InvalidBytesTypeError extends BaseError {
   constructor(value: unknown) {
     super(
       // TODO: use `stringify` always.
-      `Value \`${typeof value === 'object' ? JSON.stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value. Bytes values must be of type \`Bytes\`.`,
+      `Value \`${typeof value === 'object' ? JSON.stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`,
       {
         docsPath: '/errors#invalidbytestypeerror',
+        metaMessages: ['Bytes values must be of type `Bytes`.'],
       },
     )
   }
@@ -73,9 +74,10 @@ export class InvalidHexLengthError extends BaseError {
 
   constructor(value: Hex) {
     super(
-      `Hex value \`"${value}"\` is an odd length (${value.length - 2} nibbles). It must be an even length.`,
+      `Hex value \`"${value}"\` is an odd length (${value.length - 2} nibbles).`,
       {
         docsPath: '/errors#invalidhexlengtherror',
+        metaMessages: ['It must be an even length.'],
       },
     )
   }
@@ -87,9 +89,10 @@ export class InvalidHexTypeError extends BaseError {
   constructor(value: unknown) {
     super(
       // TODO: use `stringify` always.
-      `Value \`${typeof value === 'object' ? JSON.stringify(value) : value}\` of type \`${typeof value}\` is an invalid hex type. Hex types must be represented as \`"0x$\{string}"\`.`,
+      `Value \`${typeof value === 'object' ? JSON.stringify(value) : value}\` of type \`${typeof value}\` is an invalid hex type.`,
       {
         docsPath: '/errors#invalidhextypeerror',
+        metaMessages: ['Hex types must be represented as `"0x${string}"`.'],
       },
     )
   }
@@ -99,12 +102,12 @@ export class InvalidHexValueError extends BaseError {
   override readonly name = 'InvalidHexValueError'
 
   constructor(value: unknown) {
-    super(
-      `Value \`${value}\` is an invalid hex value. Hex values must start with "0x" and contain only hexadecimal characters (0-9, a-f, A-F).`,
-      {
-        docsPath: '/errors#invalidhexvalueerror',
-      },
-    )
+    super(`Value \`${value}\` is an invalid hex value.`, {
+      docsPath: '/errors#invalidhexvalueerror',
+      metaMessages: [
+        'Hex values must start with `"0x"` and contain only hexadecimal characters (0-9, a-f, A-F).',
+      ],
+    })
   }
 }
 

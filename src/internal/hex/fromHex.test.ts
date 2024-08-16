@@ -174,7 +174,9 @@ describe('hex to boolean', () => {
   test('error: invalid boolean', () => {
     expect(() => Hex.toBoolean('0xa')).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidHexBooleanError: Hex value \`"0xa"\` is not a valid boolean. The hex value must be \`"0x0"\` (false) or \`"0x1"\` (true).
+      [InvalidHexBooleanError: Hex value \`"0xa"\` is not a valid boolean.
+
+      The hex value must be \`"0x0"\` (false) or \`"0x1"\` (true).
 
       See: https://oxlib.sh/errors#invalidhexbooleanerror]
     `,

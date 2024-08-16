@@ -991,7 +991,9 @@ describe('hex to bytes', () => {
   test('error: invalid length', () => {
     expect(() => Bytes.fromHex('0xabcde')).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidHexLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles). It must be an even length.
+      [InvalidHexLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
+
+      It must be an even length.
 
       See: https://oxlib.sh/errors#invalidhexlengtherror]
     `,

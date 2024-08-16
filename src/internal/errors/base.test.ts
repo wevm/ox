@@ -88,6 +88,25 @@ test('inherited Error', () => {
   `)
 })
 
+test('metaMessages', () => {
+  expect(
+    new BaseError('An internal error occurred.', {
+      docsPath: '/lol',
+      metaMessages: [
+        '- Address must be 20 bytes long',
+        '- Address must match its checksum counterpart',
+      ],
+    }),
+  ).toMatchInlineSnapshot(`
+    [BaseError: An internal error occurred.
+
+    - Address must be 20 bytes long
+    - Address must match its checksum counterpart
+
+    See: https://oxlib.sh/lol]
+  `)
+})
+
 test('walk: no predicate fn (walks to leaf)', () => {
   class FooError extends BaseError {}
   class BarError extends BaseError {}

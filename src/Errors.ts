@@ -1,7 +1,4 @@
-export {
-  BaseError,
-  type BaseErrorType,
-} from './internal/errors/base.js'
+export { BaseError } from './internal/errors/base.js'
 
 export {
   NegativeOffsetError,

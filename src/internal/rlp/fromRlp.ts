@@ -1,6 +1,6 @@
 import { hexToBytes } from '../bytes/toBytes.js'
 import { type Cursor, createCursor } from '../cursor.js'
-import { BaseError, type BaseErrorType } from '../errors/base.js'
+import { BaseError } from '../errors/base.js'
 import { InvalidHexLengthError } from '../errors/data.js'
 import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'
@@ -132,7 +132,7 @@ function fromRlpCursor<to extends To = 'hex'>(
 }
 
 declare namespace readLength {
-  type ErrorType = BaseErrorType | ErrorType_
+  type ErrorType = BaseError | ErrorType_
 }
 function readLength(cursor: Cursor, prefix: number, offset: number) {
   if (offset === 0x80 && prefix < 0x80) return 1

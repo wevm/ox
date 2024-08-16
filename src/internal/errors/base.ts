@@ -1,13 +1,13 @@
 import { getVersion } from './utils.js'
 
-type BaseErrorParameters = {
-  cause?: BaseError | Error | undefined
-  details?: string | undefined
-  docsPath?: string | undefined
-  metaMessages?: string[] | undefined
+export declare namespace BaseError {
+  type Options = {
+    cause?: BaseError | Error | undefined
+    details?: string | undefined
+    docsPath?: string | undefined
+    metaMessages?: string[] | undefined
+  }
 }
-
-export type BaseErrorType = BaseError & { name: 'BaseError' }
 
 /**
  * Base error class inherited by all errors thrown by ox.
@@ -26,16 +26,16 @@ export class BaseError extends Error {
 
   version = `ox@${getVersion()}`
 
-  constructor(shortMessage: string, args: BaseErrorParameters = {}) {
+  constructor(shortMessage: string, options: BaseError.Options = {}) {
     const details = (() => {
-      if (args.cause instanceof BaseError) return args.cause.details
-      if (args.cause?.message) return args.cause.message
-      return args.details!
+      if (options.cause instanceof BaseError) return options.cause.details
+      if (options.cause?.message) return options.cause.message
+      return options.details!
     })()
     const docsPath = (() => {
-      if (args.cause instanceof BaseError)
-        return args.cause.docsPath || args.docsPath
-      return args.docsPath
+      if (options.cause instanceof BaseError)
+        return options.cause.docsPath || options.docsPath
+      return options.docsPath
     })()
 
     const docsBaseUrl = 'https://oxlib.sh'
@@ -43,12 +43,13 @@ export class BaseError extends Error {
 
     const message = [
       shortMessage || 'An error occurred.',
+      ...(options.metaMessages ? ['', ...options.metaMessages] : []),
       docsPath && `\nSee: ${docs}`,
     ]
       .filter((x) => typeof x === 'string')
       .join('\n')
 
-    super(message, args.cause ? { cause: args.cause } : undefined)
+    super(message, options.cause ? { cause: options.cause } : undefined)
 
     this.details = details
     this.docs = docs

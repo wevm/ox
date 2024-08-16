@@ -143,7 +143,9 @@ describe('bytes to boolean', () => {
       Bytes.toBoolean(Bytes.from([69])),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidBytesBooleanError: Bytes value \`69\` is not a valid boolean. The bytes array must contain a single byte of either a \`0\` or \`1\` value.
+      [InvalidBytesBooleanError: Bytes value \`69\` is not a valid boolean.
+
+      The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
       See: https://oxlib.sh/errors#invalidbytesbooleanerror]
     `,
@@ -152,7 +154,9 @@ describe('bytes to boolean', () => {
       Bytes.toBoolean(Bytes.from([1, 2])),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidBytesBooleanError: Bytes value \`1,2\` is not a valid boolean. The bytes array must contain a single byte of either a \`0\` or \`1\` value.
+      [InvalidBytesBooleanError: Bytes value \`1,2\` is not a valid boolean.
+
+      The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
       See: https://oxlib.sh/errors#invalidbytesbooleanerror]
     `,

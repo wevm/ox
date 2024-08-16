@@ -293,7 +293,9 @@ describe('list', () => {
 test('error: invalid hex value', () => {
   expect(() => Rlp.decode('0x010')).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidHexLengthError: Hex value \`"0x010"\` is an odd length (3 nibbles). It must be an even length.
+    [InvalidHexLengthError: Hex value \`"0x010"\` is an odd length (3 nibbles).
+
+    It must be an even length.
 
     See: https://oxlib.sh/errors#invalidhexlengtherror]
   `,
