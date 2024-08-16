@@ -48,44 +48,8 @@ export default defineConfig({
               text: '.encodePacked',
               link: '/api/abi/encodePacked',
             },
-            {
-              text: '.encodeDeployData',
-              link: '/api/abi/encodeDeployData',
-            },
-            {
-              text: '.encodeErrorResult',
-              link: '/api/abi/encodeErrorResult',
-            },
-            {
-              text: '.encodeFunctionData',
-              link: '/api/abi/encodeFunctionData',
-            },
-            {
-              text: '.encodeFunctionResult',
-              link: '/api/abi/encodeFunctionResult',
-            },
-            { text: '.encodeLogTopics', link: '/api/abi/encodeLogTopics' },
             { text: '.decode', link: '/api/abi/decode' },
-            {
-              text: '.decodeDeployData',
-              link: '/api/abi/decodeDeployData',
-            },
-            {
-              text: '.decodeErrorResult',
-              link: '/api/abi/decodeErrorResult',
-            },
-            {
-              text: '.decodeFunctionData',
-              link: '/api/abi/decodeFunctionData',
-            },
-            {
-              text: '.decodeFunctionResult',
-              link: '/api/abi/decodeFunctionResult',
-            },
-            {
-              text: '.decodeLog',
-              link: '/api/abi/decodeLog',
-            },
+            { text: '.getAbiItem', link: '/api/abi/getAbiItem' },
             { text: '.formatAbi', link: '/api/abi/formatAbi' },
             { text: '.formatAbiItem', link: '/api/abi/formatAbiItem' },
             {
@@ -221,25 +185,25 @@ export default defineConfig({
           link: '/api/constants',
           items: [],
         },
-        {
-          text: 'Ens 🚧',
-          collapsed: true,
-          link: '/api/ens',
-          items: [
-            {
-              text: '.deserializeLabelhash',
-              link: '/api/ens/deserializeLabelhash',
-            },
-            { text: '.labelhash', link: '/api/ens/labelhash' },
-            { text: '.namehash', link: '/api/ens/namehash' },
-            { text: '.normalize', link: '/api/ens/normalize' },
-            { text: '.packetToBytes', link: '/api/ens/packetToBytes' },
-            {
-              text: '.serializeLabelhash',
-              link: '/api/ens/serializeLabelhash',
-            },
-          ],
-        },
+        // {
+        //   text: 'Ens 🚧',
+        //   collapsed: true,
+        //   link: '/api/ens',
+        //   items: [
+        //     {
+        //       text: '.deserializeLabelhash',
+        //       link: '/api/ens/deserializeLabelhash',
+        //     },
+        //     { text: '.labelhash', link: '/api/ens/labelhash' },
+        //     { text: '.namehash', link: '/api/ens/namehash' },
+        //     { text: '.normalize', link: '/api/ens/normalize' },
+        //     { text: '.packetToBytes', link: '/api/ens/packetToBytes' },
+        //     {
+        //       text: '.serializeLabelhash',
+        //       link: '/api/ens/serializeLabelhash',
+        //     },
+        //   ],
+        // },
         {
           text: 'Hash',
           collapsed: true,
@@ -423,33 +387,33 @@ export default defineConfig({
             },
           ],
         },
-        {
-          text: 'Siwe (ERC-4361) 🚧',
-          collapsed: true,
-          link: '/api/siwe',
-          items: [
-            {
-              text: '.createMessage',
-              link: '/api/siwe/createMessage',
-            },
-            {
-              text: '.generateNonce',
-              link: '/api/siwe/generateNonce',
-            },
-            {
-              text: '.isUri',
-              link: '/api/siwe/isUri',
-            },
-            {
-              text: '.parseMessage',
-              link: '/api/siwe/parseMessage',
-            },
-            {
-              text: '.validateMessage',
-              link: '/api/siwe/validateMessage',
-            },
-          ],
-        },
+        // {
+        //   text: 'Siwe (ERC-4361) 🚧',
+        //   collapsed: true,
+        //   link: '/api/siwe',
+        //   items: [
+        //     {
+        //       text: '.createMessage',
+        //       link: '/api/siwe/createMessage',
+        //     },
+        //     {
+        //       text: '.generateNonce',
+        //       link: '/api/siwe/generateNonce',
+        //     },
+        //     {
+        //       text: '.isUri',
+        //       link: '/api/siwe/isUri',
+        //     },
+        //     {
+        //       text: '.parseMessage',
+        //       link: '/api/siwe/parseMessage',
+        //     },
+        //     {
+        //       text: '.validateMessage',
+        //       link: '/api/siwe/validateMessage',
+        //     },
+        //   ],
+        // },
         {
           text: 'Solidity 🚧',
           collapsed: true,
