@@ -2,8 +2,8 @@ import { parseUnits as parseUnits_ethers } from 'ethers'
 import { bench, describe } from 'vitest'
 import { parseValue } from './from.js'
 
-describe('Parse Unit', () => {
-  bench('viem: `parseValue`', () => {
+describe('Parse Value', () => {
+  bench('ox: `parseValue`', () => {
     parseValue('40', 18)
   })
 

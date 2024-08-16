@@ -12,7 +12,7 @@ export declare namespace parseEther {
  * - Docs: https://oxlib.sh/api/value/fromEther
  *
  * @example
- * import { Value } from 'viem'
+ * import { Value } from 'ox'
  *
  * Value.fromEther('420')
  * // 420000000000000000000n

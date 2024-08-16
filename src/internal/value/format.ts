@@ -10,7 +10,7 @@ export declare namespace formatValue {
  * - Docs: https://oxlib.sh/api/value/format
  *
  * @example
- * import { Value } from 'viem'
+ * import { Value } from 'ox'
  *
  * Value.format(420_000_000_000n, 9)
  * // '420'

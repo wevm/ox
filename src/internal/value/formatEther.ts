@@ -13,7 +13,7 @@ export declare namespace formatEther {
  * - Docs: https://oxlib.sh/api/value/formatEther
  *
  * @example
- * import { Value } from 'viem'
+ * import { Value } from 'ox'
  *
  * Value.formatEther(1_000_000_000_000_000_000n)
  * // '1'

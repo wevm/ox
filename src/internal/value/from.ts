@@ -10,7 +10,7 @@ export declare namespace parseValue {
  * - Docs: https://oxlib.sh/api/value/from
  *
  * @example
- * import { Value } from 'viem'
+ * import { Value } from 'ox'
  *
  * Value.from('420', 9)
  * // 420000000000n

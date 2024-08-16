@@ -13,7 +13,7 @@ export declare namespace formatGwei {
  * - Docs: https://oxlib.sh/api/value/formatGwei
  *
  * @example
- * import { Value } from 'viem'
+ * import { Value } from 'ox'
  *
  * Value.formatGwei(1_000_000_000n)
  * // '1'

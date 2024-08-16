@@ -12,7 +12,7 @@ export declare namespace parseGwei {
  * - Docs: https://oxlib.sh/api/value/fromGwei
  *
  * @example
- * import { Value } from 'viem'
+ * import { Value } from 'ox'
  *
  * Value.fromGwei('420')
  * // 420000000000n
