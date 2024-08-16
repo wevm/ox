@@ -1,10 +1,10 @@
 import { SizeExceedsPaddingSizeError } from '../errors/data.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 export declare namespace padLeft {
   type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
-  type ErrorType = pad.ErrorType | ErrorType_
+  type ErrorType = pad.ErrorType | GlobalErrorType
 }
 
 /**
@@ -32,7 +32,7 @@ export function padLeft<value extends Bytes | Hex>(
 
 export declare namespace padRight {
   type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
-  type ErrorType = pad.ErrorType | ErrorType_
+  type ErrorType = pad.ErrorType | GlobalErrorType
 }
 
 /**
@@ -70,7 +70,7 @@ export declare namespace pad {
 
   type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
 
-  type ErrorType = padHex.ErrorType | padBytes.ErrorType | ErrorType_
+  type ErrorType = padHex.ErrorType | padBytes.ErrorType | GlobalErrorType
 }
 function pad<value extends Bytes | Hex>(
   value: value,
@@ -85,7 +85,7 @@ function pad<value extends Bytes | Hex>(
 export declare namespace padHex {
   type Options = pad.Options
 
-  type ErrorType = SizeExceedsPaddingSizeError | ErrorType_
+  type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
 }
 function padHex(hex_: Hex, options: padHex.Options = {}) {
   const { dir, size = 32 } = options
@@ -106,7 +106,7 @@ function padHex(hex_: Hex, options: padHex.Options = {}) {
 export declare namespace padBytes {
   type Options = pad.Options
 
-  type ErrorType = SizeExceedsPaddingSizeError | ErrorType_
+  type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
 }
 function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
   const { dir, size = 32 } = options

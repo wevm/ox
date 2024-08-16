@@ -1,10 +1,10 @@
 import { valueExponents } from '../constants/value.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 
 import { formatValue } from './format.js'
 
 export declare namespace formatEther {
-  type ErrorType = formatValue.ErrorType | ErrorType_
+  type ErrorType = formatValue.ErrorType | GlobalErrorType
 }
 
 /**

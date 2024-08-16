@@ -3,7 +3,7 @@ import { isBytes } from '../data/isBytes.js'
 import { isHex } from '../data/isHex.js'
 import { padLeft, padRight } from '../data/pad.js'
 import { IntegerOutOfRangeError, InvalidTypeError } from '../errors/data.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
@@ -23,7 +23,7 @@ export declare namespace toHex {
     | stringToHex.ErrorType
     | isHex.ErrorType
     | InvalidTypeError
-    | ErrorType_
+    | GlobalErrorType
 }
 
 /**
@@ -69,7 +69,7 @@ export declare namespace booleanToHex {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | ErrorType_
+  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
 }
 
 /**
@@ -110,7 +110,7 @@ export declare namespace bytesToHex {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | ErrorType_
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
 
 /**
@@ -162,7 +162,7 @@ export declare namespace numberToHex {
         size?: number | undefined
       }
 
-  type ErrorType = IntegerOutOfRangeError | padLeft.ErrorType | ErrorType_
+  type ErrorType = IntegerOutOfRangeError | padLeft.ErrorType | GlobalErrorType
 }
 
 /**
@@ -227,7 +227,7 @@ export declare namespace stringToHex {
     size?: number | undefined
   }
 
-  type ErrorType = bytesToHex.ErrorType | ErrorType_
+  type ErrorType = bytesToHex.ErrorType | GlobalErrorType
 }
 
 /**

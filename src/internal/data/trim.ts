@@ -1,10 +1,10 @@
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 export declare namespace trimLeft {
   type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
 
-  type ErrorType = trim.ErrorType | ErrorType_
+  type ErrorType = trim.ErrorType | GlobalErrorType
 }
 
 /**
@@ -36,7 +36,7 @@ export declare namespace trimRight {
     ? Hex
     : Bytes
 
-  export type ErrorType = trim.ErrorType | ErrorType_
+  export type ErrorType = trim.ErrorType | GlobalErrorType
 }
 
 /**
@@ -74,7 +74,7 @@ export declare namespace trim {
 
   type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
 
-  type ErrorType = ErrorType_
+  type ErrorType = GlobalErrorType
 }
 function trim<value extends Bytes | Hex>(
   value: value,

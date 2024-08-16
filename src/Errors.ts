@@ -17,4 +17,4 @@ export {
   SliceOffsetOutOfBoundsError,
 } from './internal/errors/data.js'
 
-export type { ErrorType } from './internal/errors/error.js'
+export type { GlobalErrorType } from './internal/errors/error.js'

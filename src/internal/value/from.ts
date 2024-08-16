@@ -1,7 +1,7 @@
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 
 export declare namespace parseValue {
-  type ErrorType = ErrorType_
+  type ErrorType = GlobalErrorType
 }
 
 /**

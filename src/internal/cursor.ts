@@ -3,7 +3,7 @@ import {
   PositionOutOfBoundsError,
   RecursiveReadLimitExceededError,
 } from './errors/cursor.js'
-import type { ErrorType as ErrorType_ } from './errors/error.js'
+import type { GlobalErrorType } from './errors/error.js'
 import type { Bytes } from './types/data.js'
 
 export type Cursor = {
@@ -45,13 +45,13 @@ type CursorErrorType =
   | CursorAssertPositionErrorType
   | CursorDecrementPositionErrorType
   | CursorIncrementPositionErrorType
-  | ErrorType_
+  | GlobalErrorType
 
-type CursorAssertPositionErrorType = PositionOutOfBoundsError | ErrorType_
+type CursorAssertPositionErrorType = PositionOutOfBoundsError | GlobalErrorType
 
-type CursorDecrementPositionErrorType = NegativeOffsetError | ErrorType_
+type CursorDecrementPositionErrorType = NegativeOffsetError | GlobalErrorType
 
-type CursorIncrementPositionErrorType = NegativeOffsetError | ErrorType_
+type CursorIncrementPositionErrorType = NegativeOffsetError | GlobalErrorType
 
 type StaticCursorErrorType =
   | NegativeOffsetError
@@ -219,7 +219,7 @@ const staticCursor: Cursor = {
 export declare namespace createCursor {
   type Config = { recursiveReadLimit?: number | undefined }
 
-  type ErrorType = CursorErrorType | StaticCursorErrorType | ErrorType_
+  type ErrorType = CursorErrorType | StaticCursorErrorType | GlobalErrorType
 }
 
 /** @internal */

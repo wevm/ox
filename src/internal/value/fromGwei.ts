@@ -1,9 +1,9 @@
 import { valueExponents } from '../constants/value.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { parseValue } from './from.js'
 
 export declare namespace parseGwei {
-  type ErrorType = parseValue.ErrorType | ErrorType_
+  type ErrorType = parseValue.ErrorType | GlobalErrorType
 }
 
 /**

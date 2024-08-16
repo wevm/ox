@@ -1,1 +1,3 @@
-export type ErrorType<name extends string = 'Error'> = Error & { name: name }
+export type GlobalErrorType<name extends string = 'Error'> = Error & {
+  name: name
+}

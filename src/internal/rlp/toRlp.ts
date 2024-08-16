@@ -1,7 +1,7 @@
 import { hexToBytes } from '../bytes/toBytes.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { BaseError } from '../errors/base.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
@@ -23,7 +23,7 @@ export declare namespace toRlp {
     | createCursor.ErrorType
     | bytesToHex.ErrorType
     | hexToBytes.ErrorType
-    | ErrorType_
+    | GlobalErrorType
 }
 
 /**
@@ -51,7 +51,7 @@ export function toRlp<
 
 export declare namespace bytesToRlp {
   type ReturnType<to extends To> = toRlp.ReturnType<to>
-  type ErrorType = toRlp.ErrorType | ErrorType_
+  type ErrorType = toRlp.ErrorType | GlobalErrorType
 }
 
 /**
@@ -73,7 +73,7 @@ export function bytesToRlp<to extends To = 'bytes'>(
 
 export declare namespace hexToRlp {
   type ReturnType<to extends To> = toRlp.ReturnType<to>
-  type ErrorType = toRlp.ErrorType | ErrorType_
+  type ErrorType = toRlp.ErrorType | GlobalErrorType
 }
 
 /**

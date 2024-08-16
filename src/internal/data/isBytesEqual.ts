@@ -1,12 +1,12 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 
 import { toBytes } from '../bytes/toBytes.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { isHex } from './isHex.js'
 
 export declare namespace isBytesEqual {
-  type ErrorType = isHex.ErrorType | toBytes.ErrorType | ErrorType_
+  type ErrorType = isHex.ErrorType | toBytes.ErrorType | GlobalErrorType
 }
 
 /**

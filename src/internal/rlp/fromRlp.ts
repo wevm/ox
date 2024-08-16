@@ -2,7 +2,7 @@ import { hexToBytes } from '../bytes/toBytes.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { BaseError } from '../errors/base.js'
 import { InvalidHexLengthError } from '../errors/data.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { RecursiveArray } from './toRlp.js'
@@ -19,7 +19,7 @@ export declare namespace fromRlp {
     | fromRlpCursor.ErrorType
     | createCursor.ErrorType
     | InvalidHexLengthError
-    | ErrorType_
+    | GlobalErrorType
 }
 
 /**
@@ -103,7 +103,7 @@ declare namespace fromRlpCursor {
     | bytesToHex.ErrorType
     | readLength.ErrorType
     | readList.ErrorType
-    | ErrorType_
+    | GlobalErrorType
 }
 function fromRlpCursor<to extends To = 'hex'>(
   cursor: Cursor,
@@ -132,7 +132,7 @@ function fromRlpCursor<to extends To = 'hex'>(
 }
 
 declare namespace readLength {
-  type ErrorType = BaseError | ErrorType_
+  type ErrorType = BaseError | GlobalErrorType
 }
 function readLength(cursor: Cursor, prefix: number, offset: number) {
   if (offset === 0x80 && prefix < 0x80) return 1
@@ -145,7 +145,7 @@ function readLength(cursor: Cursor, prefix: number, offset: number) {
 }
 
 declare namespace readList {
-  type ErrorType = ErrorType_
+  type ErrorType = GlobalErrorType
 }
 function readList<to extends To>(cursor: Cursor, length: number, to: to | To) {
   const position = cursor.position

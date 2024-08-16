@@ -1,10 +1,10 @@
 import { SizeOverflowError } from '../errors/data.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { size } from './size.js'
 
 export declare namespace assertSize {
-  type ErrorType = size.ErrorType | SizeOverflowError | ErrorType_
+  type ErrorType = size.ErrorType | SizeOverflowError | GlobalErrorType
 }
 
 /** @internal */

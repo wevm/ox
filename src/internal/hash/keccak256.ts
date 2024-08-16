@@ -2,7 +2,7 @@ import { keccak_256 } from '@noble/hashes/sha3'
 
 import { toBytes } from '../bytes/toBytes.js'
 import { isHex } from '../data/isHex.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
@@ -17,7 +17,7 @@ export declare namespace keccak256 {
     | toBytes.ErrorType
     | toHex.ErrorType
     | isHex.ErrorType
-    | ErrorType_
+    | GlobalErrorType
 }
 
 /**

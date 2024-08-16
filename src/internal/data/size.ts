@@ -1,9 +1,9 @@
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { isHex } from './isHex.js'
 
 export declare namespace size {
-  export type ErrorType = isHex.ErrorType | ErrorType_
+  export type ErrorType = isHex.ErrorType | GlobalErrorType
 }
 
 /**

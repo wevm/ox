@@ -1,9 +1,9 @@
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 export declare namespace concat {
   type ReturnType<value extends Hex | Bytes> = value extends Hex ? Hex : Bytes
-  type ErrorType = concatBytes.ErrorType | concatHex.ErrorType | ErrorType_
+  type ErrorType = concatBytes.ErrorType | concatHex.ErrorType | GlobalErrorType
 }
 
 /**
@@ -42,7 +42,7 @@ export function concat<value extends Hex | Bytes>(
 /////////////////////////////////////////////////////////////////////////////////
 
 export declare namespace concatBytes {
-  type ErrorType = ErrorType_
+  type ErrorType = GlobalErrorType
 }
 
 /** @internal */
@@ -61,7 +61,7 @@ function concatBytes(...values: readonly Bytes[]): Bytes {
 }
 
 export declare namespace concatHex {
-  type ErrorType = ErrorType_
+  type ErrorType = GlobalErrorType
 }
 
 /** @internal */

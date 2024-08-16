@@ -1,9 +1,9 @@
 import { InvalidBytesTypeError } from '../errors/data.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 export declare namespace assertBytes {
-  type ErrorType = InvalidBytesTypeError | ErrorType_
+  type ErrorType = InvalidBytesTypeError | GlobalErrorType
 }
 
 /**

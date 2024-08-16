@@ -4,7 +4,7 @@ import { isHex } from '../data/isHex.js'
 import { padLeft, padRight } from '../data/pad.js'
 import { BaseError } from '../errors/base.js'
 import { InvalidHexLengthError, InvalidTypeError } from '../errors/data.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { numberToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
@@ -22,7 +22,7 @@ export declare namespace toBytes {
     | isBytes.ErrorType
     | isHex.ErrorType
     | InvalidTypeError
-    | ErrorType_
+    | GlobalErrorType
 }
 
 /**
@@ -68,7 +68,7 @@ export declare namespace booleanToBytes {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | ErrorType_
+  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
 }
 
 /**
@@ -126,7 +126,7 @@ export declare namespace hexToBytes {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | ErrorType_
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
 
 /**
@@ -182,7 +182,7 @@ export declare namespace numberToBytes {
   export type ErrorType =
     | numberToHex.ErrorType
     | hexToBytes.ErrorType
-    | ErrorType_
+    | GlobalErrorType
 }
 
 /**
@@ -214,7 +214,7 @@ export declare namespace stringToBytes {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | ErrorType_
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
 
 const encoder = /*#__PURE__*/ new TextEncoder()

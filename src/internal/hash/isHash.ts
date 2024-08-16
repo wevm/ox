@@ -1,10 +1,10 @@
 import { isHex } from '../data/isHex.js'
 import { size } from '../data/size.js'
-import type { ErrorType as ErrorType_ } from '../errors/error.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 export declare namespace isHash {
-  type ErrorType = isHex.ErrorType | size.ErrorType | ErrorType_
+  type ErrorType = isHex.ErrorType | size.ErrorType | GlobalErrorType
 }
 
 /**
