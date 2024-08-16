@@ -70,6 +70,18 @@ export default defineConfig({
               text: '.parseAbiParameters',
               link: '/api/abi/parseAbiParameters',
             },
+            {
+              text: '.toSelector',
+              link: '/api/abi/toSelector',
+            },
+            {
+              text: '.toSignature',
+              link: '/api/abi/toSignature',
+            },
+            {
+              text: '.toSignatureHash',
+              link: '/api/abi/toSignatureHash',
+            },
           ],
         },
         {
@@ -414,45 +426,6 @@ export default defineConfig({
         //     },
         //   ],
         // },
-        {
-          text: 'Solidity 🚧',
-          collapsed: true,
-          link: '/api/solidity',
-          items: [
-            {
-              text: '.toEventHash',
-              link: '/api/hash/toEventHash',
-            },
-            {
-              text: '.toEventSelector',
-              link: '/api/hash/toEventSelector',
-            },
-            {
-              text: '.toEventSignature',
-              link: '/api/hash/toEventSignature',
-            },
-            {
-              text: '.toFunctionHash',
-              link: '/api/hash/toFunctionHash',
-            },
-            {
-              text: '.toFunctionSelector',
-              link: '/api/hash/toFunctionSelector',
-            },
-            {
-              text: '.toFunctionSignature',
-              link: '/api/hash/toFunctionSignature',
-            },
-            {
-              text: '.toSignature',
-              link: '/api/hash/toSignature',
-            },
-            {
-              text: '.toSignatureHash',
-              link: '/api/hash/toSignatureHash',
-            },
-          ],
-        },
         {
           text: 'Transaction 🚧',
           collapsed: true,

@@ -1,3 +1,4 @@
+export * as Abi from './Abi.js'
 export * as Bytes from './Bytes.js'
 export * as Data from './Data.js'
 export * as Errors from './Errors.js'
