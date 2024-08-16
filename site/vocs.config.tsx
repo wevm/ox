@@ -32,9 +32,9 @@ export default defineConfig({
   rootDir: '.',
   sidebar: [
     { text: 'Introduction', link: '/' },
-    { text: 'Installation', link: '/installation' },
-    { text: 'Modules & Imports', link: '/modules-imports' },
-    { text: 'Platform Compatibility', link: '/platform-compatibility' },
+    { text: 'Installation 🚧', link: '/installation' },
+    { text: 'Modules & Imports 🚧', link: '/modules-imports' },
+    { text: 'Platform Compatibility 🚧', link: '/platform-compatibility' },
     {
       text: 'API Reference',
       items: [

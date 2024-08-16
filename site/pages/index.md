@@ -37,5 +37,5 @@ const rlp = Rlp.encode([Hex.from('hello'), Hex.from('world')])
 ```
 
 :::tip
-Using [Named Module Imports](#TODO) can provide a better developer experience for readability, conflicting modules, and IDE autocompletion, without compromising on tree-shakability.
+Using [Named Module Imports](#TODO) aligns closer with Ox's philosophy of module-driven Standard Library development, which enables categorical grouping of utilities and intuitive editor autocompletion. This does not compromise on tree-shakability and application bundle size.
 :::
