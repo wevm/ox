@@ -36,7 +36,7 @@ export default defineConfig({
       text: 'API Reference',
       items: [
         {
-          text: 'ABI',
+          text: 'Abi',
           collapsed: true,
           link: '/api/abi',
           items: [
@@ -219,7 +219,7 @@ export default defineConfig({
           items: [],
         },
         {
-          text: 'ENS',
+          text: 'Ens',
           collapsed: true,
           link: '/api/ens',
           items: [
@@ -331,6 +331,21 @@ export default defineConfig({
           ],
         },
         {
+          text: 'JsonRpc',
+          collapsed: true,
+          link: '/api/jsonRpc',
+          items: [
+            {
+              text: '.createRequestBuilder',
+              link: '/api/jsonRpc/createRequestBuilder',
+            },
+            {
+              text: '.parseResponse',
+              link: '/api/jsonRpc/parseResponse',
+            },
+          ],
+        },
+        {
           text: 'Kzg',
           collapsed: true,
           link: '/api/kzg',
@@ -358,20 +373,6 @@ export default defineConfig({
           items: [
             { text: '.encode', link: '/api/rlp/encode' },
             { text: '.decode', link: '/api/rlp/decode' },
-          ],
-        },
-        {
-          text: 'Rpc',
-          collapsed: true,
-          link: '/api/rpc',
-          items: [
-            { text: '.getHttpClient', link: '/api/rpc/getHttpClient' },
-            { text: '.getIpcClient', link: '/api/rpc/getIpcClient' },
-            { text: '.getSocketClient', link: '/api/rpc/getSocketClient' },
-            {
-              text: '.getWebSocketClient',
-              link: '/api/rpc/getWebSocketClient',
-            },
           ],
         },
         {
@@ -641,16 +642,16 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Unit',
+          text: 'Value',
           collapsed: true,
-          link: '/api/unit',
+          link: '/api/value',
           items: [
-            { text: '.formatEther', link: '/api/unit/formatEther' },
-            { text: '.formatGwei', link: '/api/unit/formatGwei' },
-            { text: '.formatUnits', link: '/api/unit/formatUnits' },
-            { text: '.parseEther', link: '/api/unit/parseEther' },
-            { text: '.parseGwei', link: '/api/unit/parseGwei' },
-            { text: '.parseUnits', link: '/api/unit/parseUnits' },
+            { text: '.from', link: '/api/value/from' },
+            { text: '.fromEther', link: '/api/value/fromEther' },
+            { text: '.fromGwei', link: '/api/value/fromGwei' },
+            { text: '.format', link: '/api/value/format' },
+            { text: '.formatEther', link: '/api/value/formatEther' },
+            { text: '.formatGwei', link: '/api/value/formatGwei' },
           ],
         },
         {

@@ -10,6 +10,7 @@ test('exports', () => {
       "Hex",
       "Rlp",
       "Types",
+      "Value",
     ]
   `)
 })
