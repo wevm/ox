@@ -7,7 +7,7 @@ export declare namespace assertHex {
     strict?: boolean | undefined
   }
 
-  type ErrorType = ErrorType_
+  type ErrorType = InvalidHexTypeError | InvalidHexValueError | ErrorType_
 }
 
 /**

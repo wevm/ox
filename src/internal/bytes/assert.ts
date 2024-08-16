@@ -3,7 +3,7 @@ import type { ErrorType as ErrorType_ } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 export declare namespace assertBytes {
-  type ErrorType = ErrorType_
+  type ErrorType = InvalidBytesTypeError | ErrorType_
 }
 
 /**
