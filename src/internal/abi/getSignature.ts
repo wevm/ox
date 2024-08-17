@@ -17,7 +17,7 @@ export declare namespace getSignature {
  * const signature = Abi.getSignature('function ownerOf(uint256 tokenId)')
  * // 'ownerOf(uint256)'
  *
- * const singature = Abi.getSignature({
+ * const signature = Abi.getSignature({
  *   name: 'ownerOf',
  *   type: 'function',
  *   inputs: [{ name: 'tokenId', type: 'uint256' }],

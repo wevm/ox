@@ -39,7 +39,7 @@ export default defineConfig({
       text: 'API Reference',
       items: [
         {
-          text: 'Abi 🚧',
+          text: 'Abi',
           collapsed: true,
           link: '/api/abi',
           items: [
@@ -49,7 +49,6 @@ export default defineConfig({
               link: '/api/abi/encodePacked',
             },
             { text: '.decode', link: '/api/abi/decode' },
-            { text: '.getAbiItem', link: '/api/abi/getAbiItem' },
             { text: '.formatAbi', link: '/api/abi/formatAbi' },
             { text: '.formatAbiItem', link: '/api/abi/formatAbiItem' },
             {
@@ -70,17 +69,18 @@ export default defineConfig({
               text: '.parseAbiParameters',
               link: '/api/abi/parseAbiParameters',
             },
+            { text: '.getAbiItem', link: '/api/abi/getAbiItem' },
             {
-              text: '.toSelector',
-              link: '/api/abi/toSelector',
+              text: '.getSelector',
+              link: '/api/abi/getSelector',
             },
             {
-              text: '.toSignature',
-              link: '/api/abi/toSignature',
+              text: '.getSignature',
+              link: '/api/abi/getSignature',
             },
             {
-              text: '.toSignatureHash',
-              link: '/api/abi/toSignatureHash',
+              text: '.getSignatureHash',
+              link: '/api/abi/getSignatureHash',
             },
           ],
         },
