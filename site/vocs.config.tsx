@@ -310,7 +310,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Rlp 🚧',
+          text: 'Rlp',
           collapsed: true,
           link: '/api/rlp',
           items: [
