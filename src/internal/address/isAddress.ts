@@ -1,10 +1,8 @@
 import type { Address } from 'abitype'
-import type { GlobalErrorType } from '../errors/error.js'
 import { assertAddress } from './assert.js'
 
 export declare namespace isAddress {
   export type Options = assertAddress.Options
-  export type ErrorType = assertAddress.ErrorType | GlobalErrorType
 }
 
 /**
