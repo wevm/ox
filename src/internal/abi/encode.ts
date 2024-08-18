@@ -23,7 +23,7 @@ import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { booleanToHex, numberToHex, stringToHex } from '../hex/toHex.js'
 import type { Hex } from '../types/data.js'
-import type { Prettify } from '../types/utils.js'
+import type { Compute } from '../types/utils.js'
 
 // TODO: These types should be in abitype?
 /** @internal */
@@ -32,7 +32,7 @@ export type IsomorphicAbiParameter = AbiParameter | AbiType | (string & {})
 /** @internal */
 export type IsomorphicAbiParametersToPrimitiveTypes<
   types extends readonly IsomorphicAbiParameter[],
-> = Prettify<{
+> = Compute<{
   [key in keyof types]: types[key] extends AbiParameter
     ? AbiParameterToPrimitiveType<types[key]>
     : types[key] extends AbiType

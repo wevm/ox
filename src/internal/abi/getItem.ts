@@ -11,7 +11,7 @@ import type {
   Widen,
 } from '../types/abi.js'
 import type { Hex } from '../types/data.js'
-import type { UnionEvaluate } from '../types/utils.js'
+import type { UnionCompute } from '../types/utils.js'
 import { getSelector } from './getSelector.js'
 import { getSignatureHash } from './getSignatureHash.js'
 
@@ -28,7 +28,7 @@ export type GetAbiItemParameters<
     | allNames // show all options
     | (name extends allNames ? name : never) // infer value
     | Hex // function selector
-} & UnionEvaluate<
+} & UnionCompute<
   readonly [] extends allArgs
     ? {
         args?:
