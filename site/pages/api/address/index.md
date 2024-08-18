@@ -10,9 +10,10 @@ The **Address** Module provides a set of utility functions for working with Ethe
 // @noErrors
 import { Address } from 'ox'
 
-const address = Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e') 
-                  satisfies Address.Address
-//                                  ^? 
+const address = Address.from(
+  '0x0000000000000000000000000000000000000000'
+) satisfies Address.Address
+//                  ^? 
 
 
 
