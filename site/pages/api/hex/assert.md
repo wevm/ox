@@ -12,10 +12,10 @@ Asserts if the given value is [Hex](/api/hex).
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Hex } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hex from 'ox/Hex'
 import { assertHex } from 'ox/Hex'
 ```

@@ -10,10 +10,10 @@ Trims leading zero bytes from a **[Bytes](/api/bytes)** value.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Bytes from 'ox/Bytes'
 import { trimLeft } from 'ox/Bytes'
 ```

@@ -10,10 +10,10 @@ Checks if a string is a valid 32 byte hash value.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Hash } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hash from 'ox/Hash'
 import { isHash } from 'ox/Hash'
 ```

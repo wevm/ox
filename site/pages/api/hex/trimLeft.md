@@ -10,10 +10,10 @@ Trims leading zeroes from a **[Hex](/api/bytes)** value.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Hex } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hex from 'ox/Hex'
 import { trimLeft } from 'ox/Hex'
 ```

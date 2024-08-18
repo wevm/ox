@@ -12,10 +12,10 @@ Checks if two [`Bytes`](/api/bytes) values are equal.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Bytes from 'ox/Bytes'
 import { isBytesEqual } from 'ox/Bytes'
 ```

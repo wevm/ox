@@ -10,10 +10,10 @@ Retrieves the size of a **[Bytes](/api/bytes)** value.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Bytes } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Bytes from 'ox/Bytes'
 import { size } from 'ox/Bytes'
 ```

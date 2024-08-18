@@ -10,10 +10,10 @@ Computes the stringified signature for an ABI Item.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Abi } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Abi from 'ox/Abi'
 import { getSignature } from 'ox/Abi'
 ```

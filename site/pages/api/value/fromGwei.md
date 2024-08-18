@@ -12,10 +12,10 @@ Parses a string representation of Gwei to a `bigint` Value (default: wei).
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Value } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Value from 'ox/Value'
 import { parseGwei } from 'ox/Value'
 ```

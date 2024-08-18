@@ -12,10 +12,10 @@ Useful for computing **Event Topic** values.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Abi } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Abi from 'ox/Abi'
 import { getSignatureHash } from 'ox/Abi'
 ```

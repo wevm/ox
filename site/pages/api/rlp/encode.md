@@ -12,10 +12,10 @@ Encodes a [Bytes](/api/bytes) or [Hex](/api/hex) value into a [Recursive-Length 
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Rlp } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Rlp from 'ox/Rlp'
 import { toRlp } from 'ox/Rlp'
 ```

@@ -12,10 +12,10 @@ Encodes an arbitrary value to **[Bytes](/api/bytes)**.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Bytes } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Bytes from 'ox/Bytes'
 import { toBytes } from 'ox/Bytes'
 ```

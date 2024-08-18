@@ -12,10 +12,10 @@ Formats a `bigint` Value to its string representation (divided by the given expo
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Value } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Value from 'ox/Value'
 import { formatValue } from 'ox/Value'
 ```

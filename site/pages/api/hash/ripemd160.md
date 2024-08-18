@@ -12,10 +12,10 @@ This function is a re-export of `keccak_256` from [`@noble/hashes`](https://gith
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Hash } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hash from 'ox/Hash'
 import { ripemd160 } from 'ox/Hash'
 ```

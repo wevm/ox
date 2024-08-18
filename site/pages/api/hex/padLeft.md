@@ -10,10 +10,10 @@ Pads a **[Hex](/api/hex)** value to the left with zero bytes until it reaches th
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Hex } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hex from 'ox/Hex'
 import { padLeft } from 'ox/Hex'
 ```

@@ -12,10 +12,10 @@ Computes the checksum address for the given address.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Address } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Address from 'ox/Address'
 import { checksumAddress } from 'ox/Address'
 ```

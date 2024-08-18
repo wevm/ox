@@ -12,10 +12,10 @@ Decodes a [Recursive-Length Prefix (RLP)](https://ethereum.org/en/developers/doc
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Rlp } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Rlp from 'ox/Rlp'
 import { fromRlp } from 'ox/Rlp'
 ```

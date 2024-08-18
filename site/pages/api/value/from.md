@@ -12,10 +12,10 @@ Parses a `string` representation of a Value to `bigint` (multiplied by the given
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Value } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Value from 'ox/Value'
 import { parseValue } from 'ox/Value'
 ```

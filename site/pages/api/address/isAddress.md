@@ -10,10 +10,10 @@ Checks if the given address is a valid address.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Address } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Address from 'ox/Address'
 import { isAddress } from 'ox/Address'
 ```

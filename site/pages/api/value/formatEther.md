@@ -10,10 +10,10 @@ Formats a `bigint` Value (default: wei) to a string representation of Ether.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Value } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Value from 'ox/Value'
 import { formatEther } from 'ox/Value'
 ```

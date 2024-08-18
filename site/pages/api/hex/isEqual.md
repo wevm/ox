@@ -12,10 +12,10 @@ Checks if two [`Hex`](/api/hex) values are equal.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Hex } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hex from 'ox/Hex'
 import { isHexEqual } from 'ox/Hex'
 ```

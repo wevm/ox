@@ -12,10 +12,10 @@ Asserts that the given value is a valid address.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Address } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Address from 'ox/Address'
 import { assertAddress } from 'ox/Address'
 ```

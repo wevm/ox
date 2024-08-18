@@ -12,10 +12,10 @@ Decodes [Hex](/api/hex) into a string, number, bigint, boolean, or hex value.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Hex } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hex from 'ox/Hex'
 import { fromHex } from 'ox/Hex'
 ```

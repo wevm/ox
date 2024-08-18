@@ -33,7 +33,7 @@ export default defineConfig({
   sidebar: [
     { text: 'Introduction', link: '/' },
     { text: 'Installation', link: '/installation' },
-    { text: 'Modules & Imports 🚧', link: '/modules-imports' },
+    { text: 'Imports & Bundle Size', link: '/imports' },
     { text: 'Platform Compatibility', link: '/platform-compatibility' },
     {
       text: 'API Reference',

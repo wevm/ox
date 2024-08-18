@@ -10,10 +10,10 @@ Returns a section of a **[Hex](/api/hex)** value given a start (and end) bytes o
 
 ```ts twoslash
 // @noErrors
-// Named Module Import 
+// Named Import 
 import { Hex } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hex from 'ox/Hex'
 import { slice } from 'ox/Hex'
 ```

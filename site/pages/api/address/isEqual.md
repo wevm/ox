@@ -12,10 +12,10 @@ Checks if two addresses are equal.
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Address } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Address from 'ox/Address'
 import { isAddressEqual } from 'ox/Address'
 ```

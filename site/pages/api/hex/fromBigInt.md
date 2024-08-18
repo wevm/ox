@@ -12,10 +12,10 @@ Encodes a [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Refer
 
 ```ts twoslash
 // @noErrors
-// Named Module Import
+// Named Import
 import { Hex } from 'ox'
 
-// Module Imports
+// Entrypoint Imports
 import * as Hex from 'ox/Hex'
 import { numberToHex } from 'ox/Hex'
 ```
