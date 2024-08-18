@@ -4,6 +4,151 @@ showOutline: 1
 
 # Errors [Glossary of Errors in Ox]
 
+## `AbiEncodingArrayLengthMismatchError`
+
+### Why?
+
+The length of the array value does not match the length specified in the corresponding ABI parameter.
+
+### Example
+
+```ts
+Abi.encode(['uint256[3]'], [[69n, 420n]])
+//                   ↑ expected: 3  ↑ ❌ length: 2
+```
+
+```
+AbiEncodingArrayLengthMismatchError: ABI encoding array length mismatch 
+for type `uint256[3]`. Expected: `3`. Given: `2`.
+```
+
+### Solution
+
+Pass an array of the correct length.
+
+```ts
+Abi.encode(['uint256[3]'], [[69n, 420n, 69n]])
+//                           ↑ ✅ length: 3
+```
+
+## `AbiEncodingBytesSizeMismatchError`
+
+### Why?
+
+The size of the bytes value does not match the size specified in the corresponding ABI parameter.
+
+### Example
+
+```ts
+Abi.encode(['bytes8'], [['0xdeadbeefdeadbeefdeadbeef']])
+//                ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
+```
+
+```
+AbiEncodingBytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef" 
+(bytes12) does not match expected size (bytes8).
+```
+
+### Solution
+
+Pass a bytes value of the correct size.
+
+```ts
+Abi.encode(['bytes8'], [['0xdeadbeefdeadbeef']])
+//                        ↑ ✅ size: 8 bytes
+```
+
+
+## `AbiEncodingLengthMismatchError`
+
+### Why?
+
+The length of the values to encode does not match the length of the ABI parameters.
+
+### Example
+
+```ts
+Abi.encode(['string', 'uint256'], ['hello'])
+```
+
+```
+AbiEncodingLengthMismatchError: ABI encoding params/values length mismatch.
+Expected length (params): 2
+Given length (values): 1
+```
+
+### Solution
+
+Pass the correct number of values to encode.
+
+## `AbiEncodingInvalidTypeError`
+
+### Why?
+
+The type provided in the ABI Parameters is not a valid ABI type.
+
+### Example
+
+```ts
+Abi.encode(['lol'], [69]),
+```
+
+```
+AbiEncodingInvalidTypeError: Type `lol` is not a valid encoding type.
+```
+
+### Solution
+
+Pass a [valid ABI type](https://docs.soliditylang.org/en/develop/abi-spec.html#types).
+
+## `AbiEncodingInvalidArrayError`
+
+### Why?
+
+The value provided is not a valid array as specified in the corresponding ABI parameter.
+
+### Example
+
+```ts
+Abi.encode(['uint256[3]'], [69])
+```
+
+### Solution
+
+Pass an array value.
+
+## `AbiItemAmbiguityError`
+
+### Why?
+
+Ambiguity was found within overloaded ABI Items. 
+
+### Example
+
+In the example below, we cannot disambiguate which `foo` function to call as we cannot distinguish between the `address` and `bytes20` types at runtime.
+
+```ts
+Abi.getItem({
+  abi: Abi.parse(['function foo(address)', 'function foo(bytes20)']),
+  name: 'foo',
+  args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+})
+```
+
+```
+AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
+
+`bytes20` in `foo(bytes20)`, and
+`address` in `foo(address)`
+
+These types encode differently and cannot be distinguished at runtime.
+Remove one of the ambiguous items in the ABI.
+```
+
+### Solution
+
+Remove one of the ambiguous items in the ABI.
+
 ## `IntegerOutOfRangeError`
 
 ### Why?

@@ -69,7 +69,7 @@ export default defineConfig({
               text: '.parseAbiParameters',
               link: '/api/abi/parseAbiParameters',
             },
-            { text: '.getAbiItem', link: '/api/abi/getAbiItem' },
+            { text: '.getItem', link: '/api/abi/getItem' },
             {
               text: '.getSelector',
               link: '/api/abi/getSelector',
