@@ -32,9 +32,9 @@ export default defineConfig({
   rootDir: '.',
   sidebar: [
     { text: 'Introduction', link: '/' },
-    { text: 'Installation 🚧', link: '/installation' },
+    { text: 'Installation', link: '/installation' },
     { text: 'Modules & Imports 🚧', link: '/modules-imports' },
-    { text: 'Platform Compatibility 🚧', link: '/platform-compatibility' },
+    { text: 'Platform Compatibility', link: '/platform-compatibility' },
     {
       text: 'API Reference',
       items: [
@@ -615,6 +615,25 @@ export default defineConfig({
             { text: '.verify', link: '/api/unit/verify' },
           ],
         },
+      ],
+    },
+    {
+      text: 'Guides',
+      // collapsed: true,
+      items: [
+        { text: 'Applications of ABIs 🚧', link: '/guides/abis' },
+        { text: 'Applications of RLP 🚧', link: '/guides/rlp' },
+        { text: 'Bytes & Hex Manipulation 🚧', link: '/guides/bytes-hex' },
+        {
+          text: 'Constructing EIP-4844 Blobs 🚧',
+          link: '/guides/eip-4844-blobs',
+        },
+        { text: 'Secp256k1 Signatures 🚧', link: '/guides/secp256k1' },
+        {
+          text: 'Serializing Transactions 🚧',
+          link: '/guides/transaction-envelopes',
+        },
+        { text: 'WebAuthn Signatures 🚧', link: '/guides/webauthn' },
       ],
     },
     {
