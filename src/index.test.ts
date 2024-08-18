@@ -13,6 +13,7 @@ test('exports', () => {
       "Hash",
       "Hex",
       "Rlp",
+      "TypedData",
       "Types",
       "Value",
     ]

@@ -1,5 +1,8 @@
-declare const symbol: unique symbol
+/** Combines members of an intersection into a readable type. */
+// https://twitter.com/mattpocockuk/status/1622730173446557697?s=20&t=NdpAcmEFXY01xkqU3KO0Mg
+export type Compute<type> = { [key in keyof type]: type[key] } & unknown
 
+declare const symbol: unique symbol
 /**
  * Creates a branded type of {@link T} with the brand {@link U}.
  *
@@ -155,23 +158,6 @@ export type PartialBy<T, K extends keyof T> = Omit<T, K> &
   ExactPartial<Pick<T, K>>
 
 /**
- * @description Combines members of an intersection into a readable type.
- *
- * @see {@link https://twitter.com/mattpocockuk/status/1622730173446557697?s=20&t=NdpAcmEFXY01xkqU3KO0Mg}
- * @example
- * Prettify<{ a: string } & { b: string } & { c: number, d: bigint }>
- * => { a: string, b: string, c: number, d: bigint }
- */
-export type Prettify<T> = {
-  [K in keyof T]: T[K]
-} & {}
-
-/** @internal */
-export type Evaluate<type> = {
-  [key in keyof type]: type[key]
-} & {}
-
-/**
  * @description Creates a type that is T with the required keys K.
  *
  * @example
@@ -235,7 +221,7 @@ export type IsUnion<
 export type MaybePartial<
   type,
   enabled extends boolean | undefined,
-> = enabled extends true ? Prettify<ExactPartial<type>> : type
+> = enabled extends true ? Compute<ExactPartial<type>> : type
 
 export type ExactPartial<type> = {
   [key in keyof type]?: type[key] | undefined
@@ -251,7 +237,7 @@ export type OneOf<
   ///
   keys extends KeyofUnion<union> = KeyofUnion<union>,
 > = union extends infer item
-  ? Prettify<
+  ? Compute<
       item & {
         [key in Exclude<keys, keyof item>]?: fallback extends object
           ? key extends keyof fallback
@@ -278,7 +264,7 @@ export type LooseOmit<type, keys extends string> = Pick<
 ///////////////////////////////////////////////////////////////////////////
 // Union types
 
-export type UnionEvaluate<type> = type extends object ? Prettify<type> : type
+export type UnionCompute<type> = type extends object ? Compute<type> : type
 
 export type UnionLooseOmit<type, keys extends string> = type extends any
   ? LooseOmit<type, keys>
