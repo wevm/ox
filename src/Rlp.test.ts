@@ -4,13 +4,13 @@ import * as exports from './Rlp.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "fromRlp",
+      "decodeRlp",
       "decode",
       "rlpToBytes",
       "toBytes",
       "rlpToHex",
       "toHex",
-      "toRlp",
+      "encodeRlp",
       "encode",
       "bytesToRlp",
       "fromBytes",

@@ -14,7 +14,7 @@ type Encodable = {
   encode(cursor: Cursor): void
 }
 
-export declare namespace toRlp {
+export declare namespace encodeRlp {
   type ReturnType<to extends To> =
     | (to extends 'bytes' ? Bytes : never)
     | (to extends 'hex' ? Hex : never)
@@ -36,22 +36,22 @@ export declare namespace toRlp {
  * Rlp.encode('0x68656c6c6f20776f726c64')
  * // 0x8b68656c6c6f20776f726c64
  */
-export function toRlp<
+export function encodeRlp<
   bytes extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
   to extends To = bytes extends RecursiveArray<Bytes> ? 'bytes' : 'hex',
->(bytes: bytes, to_?: to | To | undefined): toRlp.ReturnType<to> {
+>(bytes: bytes, to_?: to | To | undefined): encodeRlp.ReturnType<to> {
   const encodable = getEncodable(bytes)
   const cursor = createCursor(new Uint8Array(encodable.length))
   encodable.encode(cursor)
 
   const to = to_ || getType(bytes)
-  if (to === 'hex') return bytesToHex(cursor.bytes) as toRlp.ReturnType<to>
-  return cursor.bytes as toRlp.ReturnType<to>
+  if (to === 'hex') return bytesToHex(cursor.bytes) as encodeRlp.ReturnType<to>
+  return cursor.bytes as encodeRlp.ReturnType<to>
 }
 
 export declare namespace bytesToRlp {
-  type ReturnType<to extends To> = toRlp.ReturnType<to>
-  type ErrorType = toRlp.ErrorType | GlobalErrorType
+  type ReturnType<to extends To> = encodeRlp.ReturnType<to>
+  type ErrorType = encodeRlp.ErrorType | GlobalErrorType
 }
 
 /**
@@ -68,12 +68,12 @@ export function bytesToRlp<to extends To = 'bytes'>(
   bytes: RecursiveArray<Bytes>,
   to: to | To | undefined = 'bytes',
 ): bytesToRlp.ReturnType<to> {
-  return toRlp(bytes, to)
+  return encodeRlp(bytes, to)
 }
 
 export declare namespace hexToRlp {
-  type ReturnType<to extends To> = toRlp.ReturnType<to>
-  type ErrorType = toRlp.ErrorType | GlobalErrorType
+  type ReturnType<to extends To> = encodeRlp.ReturnType<to>
+  type ErrorType = encodeRlp.ErrorType | GlobalErrorType
 }
 
 /**
@@ -90,7 +90,7 @@ export function hexToRlp<to extends To = 'hex'>(
   hex: RecursiveArray<Hex>,
   to: to | To | undefined = 'hex',
 ): hexToRlp.ReturnType<to> {
-  return toRlp(hex, to)
+  return encodeRlp(hex, to)
 }
 
 /////////////////////////////////////////////////////////////////////////////////
