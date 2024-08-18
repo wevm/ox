@@ -318,6 +318,15 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Provider (EIP-1193) 🚧',
+          collapsed: true,
+          link: '/api/provider',
+          items: [
+            { text: '.from', link: '/api/provider/from' },
+            { text: '.createEmitter', link: '/api/provider/createEmitter' },
+          ],
+        },
+        {
           text: 'Rlp',
           collapsed: true,
           link: '/api/rlp',
