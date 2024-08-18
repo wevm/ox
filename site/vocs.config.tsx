@@ -85,24 +85,13 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Address 🚧',
+          text: 'Address',
           collapsed: true,
           link: '/api/address',
           items: [
             { text: '.from', link: '/api/address/from' },
+            { text: '.assert', link: '/api/address/assert' },
             { text: '.checksum', link: '/api/address/checksum' },
-            {
-              text: '.getContractAddress',
-              link: '/api/address/getContractAddress',
-            },
-            {
-              text: '.getCreateAddress',
-              link: '/api/address/getCreateAddress',
-            },
-            {
-              text: '.getCreate2Address',
-              link: '/api/address/getCreate2Address',
-            },
             { text: '.isAddress', link: '/api/address/isAddress' },
             { text: '.isEqual', link: '/api/address/isEqual' },
           ],
@@ -196,6 +185,25 @@ export default defineConfig({
           collapsed: true,
           link: '/api/constants',
           items: [],
+        },
+        {
+          text: 'ContractAddress 🚧',
+          collapsed: true,
+          link: '/api/contractAddress',
+          items: [
+            {
+              text: '.from',
+              link: '/api/contractAddress/from',
+            },
+            {
+              text: '.getCreateAddress',
+              link: '/api/contractAddress/getCreateAddress',
+            },
+            {
+              text: '.getCreate2Address',
+              link: '/api/contractAddress/getCreate2Address',
+            },
+          ],
         },
         // {
         //   text: 'Ens 🚧',

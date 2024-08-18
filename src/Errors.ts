@@ -1,3 +1,5 @@
+export { InvalidAddressError } from './internal/errors/address.js'
+
 export { BaseError } from './internal/errors/base.js'
 
 export {

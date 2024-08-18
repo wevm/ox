@@ -57,7 +57,7 @@ type StaticCursorErrorType =
   | NegativeOffsetError
   | RecursiveReadLimitExceededError
 
-const staticCursor: Cursor = {
+const staticCursor: Cursor = /*#__PURE__*/ {
   bytes: new Uint8Array(),
   dataView: new DataView(new ArrayBuffer(0)),
   position: 0,

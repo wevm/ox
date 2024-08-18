@@ -4,6 +4,7 @@ import * as exports from './Errors.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "InvalidAddressError",
       "BaseError",
       "NegativeOffsetError",
       "PositionOutOfBoundsError",

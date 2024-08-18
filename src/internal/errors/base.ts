@@ -31,7 +31,10 @@ export class BaseError<
 
   constructor(shortMessage: string, options: BaseError.Options<cause> = {}) {
     const details = (() => {
-      if (options.cause instanceof BaseError) return options.cause.details
+      if (options.cause instanceof BaseError) {
+        if (options.cause.details) return options.cause.details
+        if (options.cause.shortMessage) return options.cause.shortMessage
+      }
       if (options.cause?.message) return options.cause.message
       return options.details!
     })()
@@ -47,7 +50,13 @@ export class BaseError<
     const message = [
       shortMessage || 'An error occurred.',
       ...(options.metaMessages ? ['', ...options.metaMessages] : []),
-      docsPath && `\nSee: ${docs}`,
+      ...(details || docsPath
+        ? [
+            '',
+            details ? `Details: ${details}` : undefined,
+            docsPath ? `See: ${docs}` : undefined,
+          ]
+        : []),
     ]
       .filter((x) => typeof x === 'string')
       .join('\n')

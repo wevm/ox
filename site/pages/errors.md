@@ -28,6 +28,26 @@ On the other hand, an 8-bit **_signed_** integer can range from `-2 ** (8 - 1)` 
 
 Pass a number within the valid signed or unsigned integer range.
 
+## `InvalidAddressError`
+
+### Why?
+
+The provided value is not a valid address. Either the value is not a 20 byte (40 character) hexadecimal value, or the value does not match its checksum counterpart.
+
+### Example
+
+An example of this error may occur when trying to convert an invalid address string to a typed `Address` value (ie. `Address.from('0xdeadbeef')`).
+
+```
+Address "0xdeadbeef" is invalid.
+
+Details: Address is not a 20 byte (40 hexadecimal character) value.
+```
+
+### Solution
+
+Ensure that the value is a 40 character hexadecimal address, and that it matches its checksum counterpart.
+
 ## `InvalidBytesBooleanError`
 
 ### Why?

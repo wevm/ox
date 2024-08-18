@@ -9,10 +9,18 @@ test('BaseError', () => {
 
   expect(
     new BaseError('An error occurred.', { details: 'details' }),
-  ).toMatchInlineSnapshot('[BaseError: An error occurred.]')
+  ).toMatchInlineSnapshot(`
+    [BaseError: An error occurred.
+
+    Details: details]
+  `)
 
   expect(new BaseError('', { details: 'details' })).toMatchInlineSnapshot(
-    '[BaseError: An error occurred.]',
+    `
+    [BaseError: An error occurred.
+
+    Details: details]
+  `,
   )
 })
 
@@ -25,6 +33,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
+    Details: details
     See: https://oxlib.sh/lol]
   `)
   expect(
@@ -34,6 +43,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
+    Details: error
     See: https://oxlib.sh/docs]
   `)
   expect(
@@ -44,6 +54,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
+    Details: error
     See: https://oxlib.sh/lol]
   `)
   expect(
@@ -54,6 +65,7 @@ test('BaseError (w/ docsPath)', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An error occurred.
 
+    Details: details
     See: https://oxlib.sh/lol]
   `)
 })
@@ -70,6 +82,7 @@ test('inherited BaseError', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An internal error occurred.
 
+    Details: details
     See: https://oxlib.sh/lol]
   `)
 })
@@ -84,6 +97,7 @@ test('inherited Error', () => {
   ).toMatchInlineSnapshot(`
     [BaseError: An internal error occurred.
 
+    Details: details
     See: https://oxlib.sh/lol]
   `)
 })
@@ -125,7 +139,11 @@ test('walk: predicate fn', () => {
     cause: new FooError('test2', { cause: new BarError('test3') }),
   })
   expect(err.walk((err) => err instanceof FooError)).toMatchInlineSnapshot(
-    '[BaseError: test2]',
+    `
+    [BaseError: test2
+
+    Details: test3]
+  `,
   )
 })
 
