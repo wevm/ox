@@ -1,6 +1,20 @@
 import type { Bytes, Hex } from '../types/data.js'
 import { BaseError } from './base.js'
 
+// TODO: Use SizeOverflowError instead?
+export class BytesSizeMismatchError extends BaseError {
+  override readonly name = 'BytesSizeMismatchError'
+
+  constructor({
+    expectedSize,
+    givenSize,
+  }: { expectedSize: number; givenSize: number }) {
+    super(`Expected bytes${expectedSize}, got bytes${givenSize}.`, {
+      docsPath: '/bytessizemismatcherror',
+    })
+  }
+}
+
 export class IntegerOutOfRangeError extends BaseError {
   override readonly name = 'IntegerOutOfRangeError'
 

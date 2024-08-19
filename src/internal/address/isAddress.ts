@@ -1,10 +1,6 @@
 import type { Address } from 'abitype'
 import { assertAddress } from './assert.js'
 
-export declare namespace isAddress {
-  export type Options = assertAddress.Options
-}
-
 /**
  * Checks if the given address is a valid address.
  *
@@ -30,4 +26,8 @@ export function isAddress(
   } catch {
     return false
   }
+}
+
+export declare namespace isAddress {
+  export type Options = assertAddress.Options
 }

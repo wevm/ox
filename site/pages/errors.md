@@ -132,6 +132,10 @@ Remove one of the ambiguous items in the ABI.
 
 Remove one of the ambiguous items in the ABI.
 
+## `BytesSizeMismatchError`
+
+TODO
+
 ## `IntegerOutOfRangeError`
 
 ### Why?
@@ -309,6 +313,10 @@ Value `"0xzz"` is an invalid hex value. Hex values must start with "0x" and cont
 ### Solution
 
 Pass a valid hex string value in the format of `"0x{0-9A-Fa-f}"`.
+
+## `InvalidPrimaryTypeError`
+
+TODO
 
 ## `InvalidTypeError`
 

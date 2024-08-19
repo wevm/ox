@@ -1,13 +1,8 @@
-import type {
-  TypedData,
-  TypedDataDomain,
-  TypedDataParameter,
-  TypedDataToPrimitiveTypes,
-} from 'abitype'
+import type { TypedData, TypedDataParameter } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
 import { stringify } from '../stringify.js'
-import type { Compute } from '../types/utils.js'
+import type { TypedDataDefinition } from '../types/typedData.js'
 
 /**
  * Serializes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema into string.
@@ -84,61 +79,9 @@ export declare namespace serializeTypedData {
   type Parameters<
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
-    ///
-    primaryTypes = typedData extends TypedData ? keyof typedData : string,
-  > = primaryType extends 'EIP712Domain'
-    ? EIP712DomainDefinition<typedData, primaryType>
-    : MessageDefinition<typedData, primaryType, primaryTypes>
+  > = TypedDataDefinition<typedData, primaryType>
 
   type ReturnType = string
 
   type ErrorType = stringify.ErrorType | GlobalErrorType
-}
-
-/** @internal */
-type EIP712DomainDefinition<
-  typedData extends TypedData | Record<string, unknown> = TypedData,
-  primaryType extends 'EIP712Domain' = 'EIP712Domain',
-  ///
-  schema extends Record<string, unknown> = typedData extends TypedData
-    ? TypedDataToPrimitiveTypes<typedData>
-    : Record<string, unknown>,
-> = {
-  types?: typedData | undefined
-} & {
-  primaryType:
-    | 'EIP712Domain'
-    | (primaryType extends 'EIP712Domain' ? primaryType : never)
-  domain: schema extends { EIP712Domain: infer domain }
-    ? domain
-    : Compute<TypedDataDomain>
-  message?: undefined
-}
-
-/** @internal */
-type MessageDefinition<
-  typedData extends TypedData | Record<string, unknown> = TypedData,
-  primaryType extends keyof typedData = keyof typedData,
-  ///
-  primaryTypes = typedData extends TypedData ? keyof typedData : string,
-  schema extends Record<string, unknown> = typedData extends TypedData
-    ? TypedDataToPrimitiveTypes<typedData>
-    : Record<string, unknown>,
-  message = schema[primaryType extends keyof schema
-    ? primaryType
-    : keyof schema],
-> = {
-  types: typedData
-} & {
-  primaryType:
-    | primaryTypes // show all values
-    | (primaryType extends primaryTypes ? primaryType : never) // infer value
-  domain?:
-    | (schema extends { EIP712Domain: infer domain }
-        ? domain
-        : Compute<TypedDataDomain>)
-    | undefined
-  message: { [_: string]: any } extends message // Check if message was inferred
-    ? Record<string, unknown>
-    : message
 }
