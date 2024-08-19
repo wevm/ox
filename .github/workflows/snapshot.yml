@@ -1,13 +1,14 @@
-name: Release (Canary)
+name: Snapshot
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
   canary:
-    name: Release canary
+    name: Release snapshot version
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     timeout-minutes: 5
 
     steps:
@@ -27,9 +28,7 @@ jobs:
       - name: Publish to npm
         run: | 
           cd src && pnpm version $(npm pkg get version | sed 's/"//g')-$(date +'%Y%m%dT%H%M%S') && cd ../ 
-          pnpm update-version
-          pnpm prepublish
-          pnpm build
+          pnpm changeset:prepublish
           cd src && pnpm publish --no-git-checks --provenance false && cd ../
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -33,7 +33,7 @@ for (const dirName of ['_cjs', '_esm']) {
 }
 
 // Link exports to dist locations
-for (const [key, exports] of Object.entries(packageJson.exports)) {
+for (const [key, exports] of Object.entries(packageJson.exports ?? {})) {
   // Skip `package.json` exports
   if (/package\.json$/.test(key)) continue
 

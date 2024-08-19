@@ -7,6 +7,8 @@ test('exports', () => {
     [
       "serializeTypedData",
       "serialize",
+      "validateTypedData",
+      "validate",
     ]
   `)
 })
