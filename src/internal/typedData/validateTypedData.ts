@@ -1,18 +1,18 @@
 import type { TypedData, TypedDataParameter } from 'abitype'
 
-import { numberToHex } from '../hex/toHex.js'
+import { isAddress } from '../address/isAddress.js'
+import { bytesRegex, integerRegex } from '../constants/regex.js'
+import { size } from '../data/size.js'
 import {
   InvalidAddressError,
   InvalidAddressInputError,
 } from '../errors/address.js'
-import type { GlobalErrorType } from '../errors/error.js'
-import { isAddress } from '../address/isAddress.js'
-import { bytesRegex, integerRegex } from '../constants/regex.js'
-import { size } from '../data/size.js'
-import type { Hex } from '../types/data.js'
 import { BytesSizeMismatchError } from '../errors/data.js'
-import type { TypedDataDefinition } from '../types/typedData.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidPrimaryTypeError } from '../errors/typedData.js'
+import { numberToHex } from '../hex/toHex.js'
+import type { Hex } from '../types/data.js'
+import type { TypedDataDefinition } from '../types/typedData.js'
 
 /**
  * Validates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
