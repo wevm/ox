@@ -1,6 +1,7 @@
 import type { Address } from 'abitype'
 
 import { assertAddress } from './assert.js'
+import type { GlobalErrorType } from '../errors/error.js'
 
 /**
  * Checks if two addresses are equal.
@@ -27,3 +28,10 @@ export function isAddressEqual(a: Address, b: Address): boolean {
   assertAddress(b, { strict: false })
   return a.toLowerCase() === b.toLowerCase()
 }
+
+export declare namespace isAddressEqual {
+  export type ErrorType = assertAddress.ErrorType | GlobalErrorType
+}
+
+isAddressEqual.parseError = (error: unknown) =>
+  error as isAddressEqual.ErrorType

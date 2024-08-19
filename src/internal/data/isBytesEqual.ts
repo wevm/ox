@@ -5,10 +5,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { isHex } from './isHex.js'
 
-export declare namespace isBytesEqual {
-  type ErrorType = isHex.ErrorType | toBytes.ErrorType | GlobalErrorType
-}
-
 /**
  * Checks if two {@link Bytes} or {@link Hex} values are equal.
  *
@@ -30,3 +26,9 @@ export function isBytesEqual(a_: Bytes | Hex, b_: Bytes | Hex) {
   const b = isHex(b_, { strict: false }) ? toBytes(b_) : b_
   return equalBytes(a, b)
 }
+
+export declare namespace isBytesEqual {
+  type ErrorType = isHex.ErrorType | toBytes.ErrorType | GlobalErrorType
+}
+
+isBytesEqual.parseError = (error: unknown) => error as isBytesEqual.ErrorType

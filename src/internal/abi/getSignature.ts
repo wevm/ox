@@ -2,12 +2,6 @@ import { type Abi, formatAbiItem } from 'abitype'
 import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
 
-export declare namespace getSignature {
-  type Parameters = string | Abi[number]
-
-  type ErrorType = normalizeSignature.ErrorType | GlobalErrorType
-}
-
 /**
  * Computes the stringified signature for a given ABI Item.
  *
@@ -33,6 +27,14 @@ export const getSignature = (abiItem: getSignature.Parameters) => {
   })()
   return normalizeSignature(signature)
 }
+
+export declare namespace getSignature {
+  type Parameters = string | Abi[number]
+
+  type ErrorType = normalizeSignature.ErrorType | GlobalErrorType
+}
+
+getSignature.parseError = (error: unknown) => error as getSignature.ErrorType
 
 ///////////////////////////////////////////////////////////////////////////
 // Utilities

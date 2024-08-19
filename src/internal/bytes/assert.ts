@@ -2,10 +2,6 @@ import { InvalidBytesTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
-export declare namespace assertBytes {
-  type ErrorType = InvalidBytesTypeError | GlobalErrorType
-}
-
 /**
  * Asserts if the given value is {@link Bytes}.
  *
@@ -23,3 +19,9 @@ export function assertBytes(value: unknown): asserts value is Bytes {
   if (value.BYTES_PER_ELEMENT !== 1 || value.constructor.name !== 'Uint8Array')
     throw new InvalidBytesTypeError(value)
 }
+
+export declare namespace assertBytes {
+  type ErrorType = InvalidBytesTypeError | GlobalErrorType
+}
+
+assertBytes.parseError = (error: unknown) => error as assertBytes.ErrorType

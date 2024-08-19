@@ -85,3 +85,6 @@ export declare namespace serializeTypedData {
 
   type ErrorType = stringify.ErrorType | GlobalErrorType
 }
+
+serializeTypedData.parseError = (error: unknown) =>
+  error as serializeTypedData.ErrorType

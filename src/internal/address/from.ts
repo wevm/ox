@@ -1,12 +1,7 @@
 import type { Address } from 'abitype'
 import { assertAddress } from './assert.js'
 import { checksumAddress } from './checksum.js'
-
-export declare namespace toAddress {
-  export type Options = {
-    checksum?: boolean
-  }
-}
+import type { GlobalErrorType } from '../errors/error.js'
 
 /**
  * Converts an address string to a typed (checksummed) Address.
@@ -32,3 +27,16 @@ export function toAddress(
   if (checksum) return checksumAddress(address)
   return address as Address
 }
+
+export declare namespace toAddress {
+  export type Options = {
+    checksum?: boolean
+  }
+
+  export type ErrorType =
+    | assertAddress.ErrorType
+    | checksumAddress.ErrorType
+    | GlobalErrorType
+}
+
+toAddress.parseError = (error: unknown) => error as toAddress.ErrorType

@@ -8,18 +8,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'hex' | 'bytes'
 
-export declare namespace sha256 {
-  type ReturnType<to extends To> =
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'hex' ? Hex : never)
-
-  type ErrorType =
-    | toBytes.ErrorType
-    | isHex.ErrorType
-    | toHex.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a Bytes or Hex value.
  *
@@ -42,3 +30,17 @@ export function sha256<to extends To = 'hex'>(
   if (to === 'bytes') return bytes as sha256.ReturnType<to>
   return toHex(bytes) as sha256.ReturnType<to>
 }
+
+export declare namespace sha256 {
+  type ReturnType<to extends To> =
+    | (to extends 'bytes' ? Bytes : never)
+    | (to extends 'hex' ? Hex : never)
+
+  type ErrorType =
+    | toBytes.ErrorType
+    | isHex.ErrorType
+    | toHex.ErrorType
+    | GlobalErrorType
+}
+
+sha256.parseError = (error: unknown) => error as sha256.ErrorType

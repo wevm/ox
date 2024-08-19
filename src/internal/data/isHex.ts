@@ -2,14 +2,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { assertHex } from '../hex/assert.js'
 import type { Hex } from '../types/data.js'
 
-export declare namespace isHex {
-  type Options = {
-    strict?: boolean | undefined
-  }
-
-  type ErrorType = GlobalErrorType
-}
-
 /**
  * Checks if the given value is {@link Hex}.
  *
@@ -32,3 +24,13 @@ export function isHex(
     return false
   }
 }
+
+export declare namespace isHex {
+  type Options = {
+    strict?: boolean | undefined
+  }
+
+  type ErrorType = GlobalErrorType
+}
+
+isHex.parseError = (error: unknown) => error as isHex.ErrorType

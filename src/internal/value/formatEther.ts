@@ -3,10 +3,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 
 import { formatValue } from './format.js'
 
-export declare namespace formatEther {
-  type ErrorType = formatValue.ErrorType | GlobalErrorType
-}
-
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Ether.
  *
@@ -24,3 +20,9 @@ export function formatEther(
 ) {
   return formatValue(wei, valueExponents.ether - valueExponents[unit])
 }
+
+export declare namespace formatEther {
+  type ErrorType = formatValue.ErrorType | GlobalErrorType
+}
+
+formatEther.parseError = (error: unknown) => error as formatEther.ErrorType

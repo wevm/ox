@@ -9,19 +9,6 @@ import type { RecursiveArray } from './encode.js'
 
 type To = 'hex' | 'bytes'
 
-export declare namespace decodeRlp {
-  type ReturnType<to extends To> =
-    | (to extends 'bytes' ? RecursiveArray<Bytes> : never)
-    | (to extends 'hex' ? RecursiveArray<Hex> : never)
-
-  type ErrorType =
-    | hexToBytes.ErrorType
-    | decodeRlpCursor.ErrorType
-    | createCursor.ErrorType
-    | InvalidHexLengthError
-    | GlobalErrorType
-}
-
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} or {@link Hex} value.
  *
@@ -55,10 +42,20 @@ export function decodeRlp<
   return result as decodeRlp.ReturnType<to>
 }
 
-export declare namespace rlpToBytes {
-  type ErrorType = decodeRlp.ErrorType
-  type ReturnType = decodeRlp.ReturnType<'bytes'>
+export declare namespace decodeRlp {
+  type ReturnType<to extends To> =
+    | (to extends 'bytes' ? RecursiveArray<Bytes> : never)
+    | (to extends 'hex' ? RecursiveArray<Hex> : never)
+
+  type ErrorType =
+    | hexToBytes.ErrorType
+    | decodeRlpCursor.ErrorType
+    | createCursor.ErrorType
+    | InvalidHexLengthError
+    | GlobalErrorType
 }
+
+decodeRlp.parseError = (error: unknown) => error as decodeRlp.ErrorType
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} value.
@@ -74,10 +71,12 @@ export function rlpToBytes(value: Bytes | Hex): rlpToBytes.ReturnType {
   return decodeRlp(value, 'bytes')
 }
 
-export declare namespace rlpToHex {
+export declare namespace rlpToBytes {
   type ErrorType = decodeRlp.ErrorType
-  type ReturnType = decodeRlp.ReturnType<'hex'>
+  type ReturnType = decodeRlp.ReturnType<'bytes'>
 }
+
+rlpToBytes.parseError = (error: unknown) => error as rlpToBytes.ErrorType
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Hex} value.
@@ -92,6 +91,13 @@ export declare namespace rlpToHex {
 export function rlpToHex(value: Bytes | Hex): rlpToHex.ReturnType {
   return decodeRlp(value, 'hex')
 }
+
+export declare namespace rlpToHex {
+  type ErrorType = decodeRlp.ErrorType
+  type ReturnType = decodeRlp.ReturnType<'hex'>
+}
+
+rlpToHex.parseError = (error: unknown) => error as rlpToHex.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities

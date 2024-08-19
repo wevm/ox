@@ -7,29 +7,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'bytes' | 'bigint' | 'number' | 'boolean'
 
-export declare namespace fromHex {
-  type Options = {
-    /** Size (in bytes) of the hex value. */
-    size?: number | undefined
-  }
-
-  type ReturnType<to> =
-    | (to extends 'string' ? string : never)
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'bigint' ? bigint : never)
-    | (to extends 'number' ? number : never)
-    | (to extends 'boolean' ? boolean : never)
-
-  type ErrorType =
-    | hexToNumber.ErrorType
-    | hexToBigInt.ErrorType
-    | hexToBoolean.ErrorType
-    | hexToString.ErrorType
-    | hexToBytes.ErrorType
-    | InvalidTypeError
-    | GlobalErrorType
-}
-
 /**
  * Decodes a {@link Hex} value into a string, number, bigint, boolean, or {@link Bytes}.
  *
@@ -69,16 +46,30 @@ export function fromHex<to extends To>(
   throw new InvalidTypeError(to, 'string | bytes | bigint | number | boolean')
 }
 
-export declare namespace hexToBigInt {
+export declare namespace fromHex {
   type Options = {
-    /** Whether or not the number of a signed representation. */
-    signed?: boolean | undefined
     /** Size (in bytes) of the hex value. */
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | GlobalErrorType
+  type ReturnType<to> =
+    | (to extends 'string' ? string : never)
+    | (to extends 'bytes' ? Bytes : never)
+    | (to extends 'bigint' ? bigint : never)
+    | (to extends 'number' ? number : never)
+    | (to extends 'boolean' ? boolean : never)
+
+  type ErrorType =
+    | hexToNumber.ErrorType
+    | hexToBigInt.ErrorType
+    | hexToBoolean.ErrorType
+    | hexToString.ErrorType
+    | hexToBytes.ErrorType
+    | InvalidTypeError
+    | GlobalErrorType
 }
+
+fromHex.parseError = (error: unknown) => error as fromHex.ErrorType
 
 /**
  * Decodes a {@link Hex} value into a BigInt.
@@ -113,18 +104,18 @@ export function hexToBigInt(
   return value - BigInt(`0x${'f'.padStart(size * 2, 'f')}`) - 1n
 }
 
-export declare namespace hexToBoolean {
+export declare namespace hexToBigInt {
   type Options = {
+    /** Whether or not the number of a signed representation. */
+    signed?: boolean | undefined
     /** Size (in bytes) of the hex value. */
     size?: number | undefined
   }
 
-  type ErrorType =
-    | assertSize.ErrorType
-    | trimLeft.ErrorType
-    | InvalidHexBooleanError
-    | GlobalErrorType
+  type ErrorType = assertSize.ErrorType | GlobalErrorType
 }
+
+hexToBigInt.parseError = (error: unknown) => error as hexToBigInt.ErrorType
 
 /**
  * Decodes a {@link Hex} value into a boolean.
@@ -155,11 +146,20 @@ export function hexToBoolean(
   throw new InvalidHexBooleanError(hex)
 }
 
-export declare namespace hexToNumber {
-  type Options = hexToBigInt.Options
+export declare namespace hexToBoolean {
+  type Options = {
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
 
-  type ErrorType = hexToBigInt.ErrorType | GlobalErrorType
+  type ErrorType =
+    | assertSize.ErrorType
+    | trimLeft.ErrorType
+    | InvalidHexBooleanError
+    | GlobalErrorType
 }
+
+hexToBoolean.parseError = (error: unknown) => error as hexToBoolean.ErrorType
 
 /**
  * Decodes a {@link Hex} value into a number.
@@ -185,18 +185,13 @@ export function hexToNumber(
   return Number(hexToBigInt(hex, options))
 }
 
-export declare namespace hexToString {
-  type Options = {
-    /** Size (in bytes) of the hex value. */
-    size?: number | undefined
-  }
+export declare namespace hexToNumber {
+  type Options = hexToBigInt.Options
 
-  type ErrorType =
-    | assertSize.ErrorType
-    | hexToBytes.ErrorType
-    | trimRight.ErrorType
-    | GlobalErrorType
+  type ErrorType = hexToBigInt.ErrorType | GlobalErrorType
 }
+
+hexToNumber.parseError = (error: unknown) => error as hexToNumber.ErrorType
 
 /**
  * Decodes a {@link Hex} value into a UTF-8 string.
@@ -228,3 +223,18 @@ export function hexToString(
   }
   return new TextDecoder().decode(bytes)
 }
+
+export declare namespace hexToString {
+  type Options = {
+    /** Size (in bytes) of the hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType =
+    | assertSize.ErrorType
+    | hexToBytes.ErrorType
+    | trimRight.ErrorType
+    | GlobalErrorType
+}
+
+hexToString.parseError = (error: unknown) => error as hexToString.ErrorType

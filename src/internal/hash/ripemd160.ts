@@ -8,18 +8,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'hex' | 'bytes'
 
-export declare namespace ripemd160 {
-  type ReturnType<to extends To> =
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'hex' ? Hex : never)
-
-  type ErrorType =
-    | toBytes.ErrorType
-    | isHex.ErrorType
-    | toHex.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a Bytes or Hex value.
  *
@@ -42,3 +30,17 @@ export function ripemd160<to extends To = 'hex'>(
   if (to === 'bytes') return bytes as ripemd160.ReturnType<to>
   return toHex(bytes) as ripemd160.ReturnType<to>
 }
+
+export declare namespace ripemd160 {
+  type ReturnType<to extends To> =
+    | (to extends 'bytes' ? Bytes : never)
+    | (to extends 'hex' ? Hex : never)
+
+  type ErrorType =
+    | toBytes.ErrorType
+    | isHex.ErrorType
+    | toHex.ErrorType
+    | GlobalErrorType
+}
+
+ripemd160.parseError = (error: unknown) => error as ripemd160.ErrorType

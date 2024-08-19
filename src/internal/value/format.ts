@@ -1,9 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
 
-export declare namespace formatValue {
-  type ErrorType = GlobalErrorType
-}
-
 /**
  * Formats a `bigint` Value to its string representation (divided by the given exponent).
  *
@@ -32,3 +28,9 @@ export function formatValue(value: bigint, decimals = 0) {
     fraction ? `.${fraction}` : ''
   }`
 }
+
+export declare namespace formatValue {
+  type ErrorType = GlobalErrorType
+}
+
+formatValue.parseError = (error: unknown) => error as formatValue.ErrorType

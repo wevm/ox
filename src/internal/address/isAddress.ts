@@ -1,5 +1,6 @@
 import type { Address } from 'abitype'
 import { assertAddress } from './assert.js'
+import type { GlobalErrorType } from '../errors/error.js'
 
 /**
  * Checks if the given address is a valid address.
@@ -30,4 +31,8 @@ export function isAddress(
 
 export declare namespace isAddress {
   export type Options = assertAddress.Options
+
+  export type ErrorType = assertAddress.ErrorType | GlobalErrorType
 }
+
+isAddress.parseError = (error: unknown) => error as isAddress.ErrorType

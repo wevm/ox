@@ -4,15 +4,6 @@ import { slice } from '../data/slice.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { getSignatureHash } from './getSignatureHash.js'
 
-export declare namespace getSelector {
-  type Parameters = getSignatureHash.Parameters
-
-  type ErrorType =
-    | getSignatureHash.ErrorType
-    | slice.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Computes the selector for an ABI Item.
  *
@@ -32,3 +23,14 @@ export declare namespace getSelector {
  */
 export const getSelector = (abiItem: string | AbiFunction) =>
   slice(getSignatureHash(abiItem), 0, 4)
+
+export declare namespace getSelector {
+  type Parameters = getSignatureHash.Parameters
+
+  type ErrorType =
+    | getSignatureHash.ErrorType
+    | slice.ErrorType
+    | GlobalErrorType
+}
+
+getSelector.parseError = (error: unknown) => error as getSelector.ErrorType

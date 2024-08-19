@@ -3,10 +3,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { size } from './size.js'
 
-export declare namespace assertSize {
-  type ErrorType = size.ErrorType | SizeOverflowError | GlobalErrorType
-}
-
 /** @internal */
 export function assertSize(hexOrBytes: Hex | Bytes, size_: number): void {
   if (size(hexOrBytes) > size_)
@@ -14,4 +10,8 @@ export function assertSize(hexOrBytes: Hex | Bytes, size_: number): void {
       givenSize: size(hexOrBytes),
       maxSize: size_,
     })
+}
+
+export declare namespace assertSize {
+  type ErrorType = size.ErrorType | SizeOverflowError | GlobalErrorType
 }

@@ -9,19 +9,6 @@ import { checksumAddress } from './checksum.js'
 
 const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
-export declare namespace assertAddress {
-  export type Options = {
-    /**
-     * Enables strict mode. Whether or not to compare the address against its checksum.
-     *
-     * @default true
-     */
-    strict?: boolean | undefined
-  }
-
-  export type ErrorType = InvalidAddressError | GlobalErrorType
-}
-
 /**
  * Asserts that the given value is a valid address.
  *
@@ -57,3 +44,18 @@ export function assertAddress(
       })
   }
 }
+
+export declare namespace assertAddress {
+  export type Options = {
+    /**
+     * Enables strict mode. Whether or not to compare the address against its checksum.
+     *
+     * @default true
+     */
+    strict?: boolean | undefined
+  }
+
+  export type ErrorType = InvalidAddressError | GlobalErrorType
+}
+
+assertAddress.parseError = (error: unknown) => error as assertAddress.ErrorType

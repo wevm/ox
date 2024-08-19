@@ -10,22 +10,6 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
 )
 
-export declare namespace toHex {
-  type Parameters = {
-    /** The size (in bytes) of the output hex value. */
-    size?: number | undefined
-  }
-
-  type ErrorType =
-    | booleanToHex.ErrorType
-    | bytesToHex.ErrorType
-    | numberToHex.ErrorType
-    | stringToHex.ErrorType
-    | isHex.ErrorType
-    | InvalidTypeError
-    | GlobalErrorType
-}
-
 /**
  * Encodes an arbitrary value into a {@link Hex} value.
  *
@@ -63,14 +47,23 @@ export function toHex(
   )
 }
 
-export declare namespace booleanToHex {
-  type Options = {
+export declare namespace toHex {
+  type Parameters = {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
+  type ErrorType =
+    | booleanToHex.ErrorType
+    | bytesToHex.ErrorType
+    | numberToHex.ErrorType
+    | stringToHex.ErrorType
+    | isHex.ErrorType
+    | InvalidTypeError
+    | GlobalErrorType
 }
+
+toHex.parseError = (error: unknown) => error as toHex.ErrorType
 
 /**
  * Encodes a boolean into a {@link Hex} value.
@@ -104,14 +97,16 @@ export function booleanToHex(
   return hex
 }
 
-export declare namespace bytesToHex {
+export declare namespace booleanToHex {
   type Options = {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
+  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
 }
+
+booleanToHex.parseError = (error: unknown) => error as booleanToHex.ErrorType
 
 /**
  * Encodes a {@link Bytes} value into a {@link Hex} value.
@@ -148,22 +143,16 @@ export function bytesToHex(
   return hex
 }
 
-export declare namespace numberToHex {
-  type Options =
-    | {
-        /** Whether or not the number of a signed representation. */
-        signed?: boolean | undefined
-        /** The size (in bytes) of the output hex value. */
-        size: number
-      }
-    | {
-        signed?: undefined
-        /** The size (in bytes) of the output hex value. */
-        size?: number | undefined
-      }
+export declare namespace bytesToHex {
+  type Options = {
+    /** The size (in bytes) of the output hex value. */
+    size?: number | undefined
+  }
 
-  type ErrorType = IntegerOutOfRangeError | padLeft.ErrorType | GlobalErrorType
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
+
+bytesToHex.parseError = (error: unknown) => error as bytesToHex.ErrorType
 
 /**
  * Encodes a number or bigint into a {@link Hex} value.
@@ -219,16 +208,26 @@ export function numberToHex(
   return hex
 }
 
-const encoder = /*#__PURE__*/ new TextEncoder()
+export declare namespace numberToHex {
+  type Options =
+    | {
+        /** Whether or not the number of a signed representation. */
+        signed?: boolean | undefined
+        /** The size (in bytes) of the output hex value. */
+        size: number
+      }
+    | {
+        signed?: undefined
+        /** The size (in bytes) of the output hex value. */
+        size?: number | undefined
+      }
 
-export declare namespace stringToHex {
-  type Options = {
-    /** The size (in bytes) of the output hex value. */
-    size?: number | undefined
-  }
-
-  type ErrorType = bytesToHex.ErrorType | GlobalErrorType
+  type ErrorType = IntegerOutOfRangeError | padLeft.ErrorType | GlobalErrorType
 }
+
+numberToHex.parseError = (error: unknown) => error as numberToHex.ErrorType
+
+const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
  * Encodes a UTF-8 string into a hex string
@@ -252,3 +251,14 @@ export function stringToHex(
   const value = encoder.encode(value_)
   return bytesToHex(value, options)
 }
+
+export declare namespace stringToHex {
+  type Options = {
+    /** The size (in bytes) of the output hex value. */
+    size?: number | undefined
+  }
+
+  type ErrorType = bytesToHex.ErrorType | GlobalErrorType
+}
+
+stringToHex.parseError = (error: unknown) => error as stringToHex.ErrorType

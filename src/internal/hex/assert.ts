@@ -2,14 +2,6 @@ import { InvalidHexTypeError, InvalidHexValueError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
-export declare namespace assertHex {
-  type Options = {
-    strict?: boolean | undefined
-  }
-
-  type ErrorType = InvalidHexTypeError | InvalidHexValueError | GlobalErrorType
-}
-
 /**
  * Asserts if the given value is {@link Hex}.
  *
@@ -32,3 +24,13 @@ export function assertHex(
   }
   if (!value.startsWith('0x')) throw new InvalidHexValueError(value)
 }
+
+export declare namespace assertHex {
+  type Options = {
+    strict?: boolean | undefined
+  }
+
+  type ErrorType = InvalidHexTypeError | InvalidHexValueError | GlobalErrorType
+}
+
+assertHex.parseError = (error: unknown) => error as assertHex.ErrorType

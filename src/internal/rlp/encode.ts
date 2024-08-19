@@ -14,18 +14,6 @@ type Encodable = {
   encode(cursor: Cursor): void
 }
 
-export declare namespace encodeRlp {
-  type ReturnType<to extends To> =
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'hex' ? Hex : never)
-
-  type ErrorType =
-    | createCursor.ErrorType
-    | bytesToHex.ErrorType
-    | hexToBytes.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Encodes a {@link Bytes} or {@link Hex} value into a Recursive-Length Prefix (RLP) value.
  *
@@ -49,10 +37,19 @@ export function encodeRlp<
   return cursor.bytes as encodeRlp.ReturnType<to>
 }
 
-export declare namespace bytesToRlp {
-  type ReturnType<to extends To> = encodeRlp.ReturnType<to>
-  type ErrorType = encodeRlp.ErrorType | GlobalErrorType
+export declare namespace encodeRlp {
+  type ReturnType<to extends To> =
+    | (to extends 'bytes' ? Bytes : never)
+    | (to extends 'hex' ? Hex : never)
+
+  type ErrorType =
+    | createCursor.ErrorType
+    | bytesToHex.ErrorType
+    | hexToBytes.ErrorType
+    | GlobalErrorType
 }
+
+encodeRlp.parseError = (error: unknown) => error as encodeRlp.ErrorType
 
 /**
  * Encodes a {@link Bytes} value into a Recursive-Length Prefix (RLP) value.
@@ -71,10 +68,12 @@ export function bytesToRlp<to extends To = 'bytes'>(
   return encodeRlp(bytes, to)
 }
 
-export declare namespace hexToRlp {
+export declare namespace bytesToRlp {
   type ReturnType<to extends To> = encodeRlp.ReturnType<to>
   type ErrorType = encodeRlp.ErrorType | GlobalErrorType
 }
+
+bytesToRlp.parseError = (error: unknown) => error as bytesToRlp.ErrorType
 
 /**
  * Encodes a {@link Hex} value into a Recursive-Length Prefix (RLP) value.
@@ -92,6 +91,13 @@ export function hexToRlp<to extends To = 'hex'>(
 ): hexToRlp.ReturnType<to> {
   return encodeRlp(hex, to)
 }
+
+export declare namespace hexToRlp {
+  type ReturnType<to extends To> = encodeRlp.ReturnType<to>
+  type ErrorType = encodeRlp.ErrorType | GlobalErrorType
+}
+
+hexToRlp.parseError = (error: unknown) => error as hexToRlp.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities

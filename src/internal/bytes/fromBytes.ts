@@ -8,29 +8,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'string' | 'hex' | 'bigint' | 'number' | 'boolean'
 
-export declare namespace fromBytes {
-  type Options = {
-    /** Size of the bytes. */
-    size?: number | undefined
-  }
-
-  type ReturnType<to extends To> =
-    | (to extends 'string' ? string : never)
-    | (to extends 'hex' ? Hex : never)
-    | (to extends 'bigint' ? bigint : never)
-    | (to extends 'number' ? number : never)
-    | (to extends 'boolean' ? boolean : never)
-
-  type ErrorType =
-    | bytesToBigInt.ErrorType
-    | bytesToBoolean.ErrorType
-    | bytesToNumber.ErrorType
-    | bytesToString.ErrorType
-    | bytesToHex.ErrorType
-    | InvalidTypeError
-    | GlobalErrorType
-}
-
 /**
  * Decodes {@link Bytes} into a UTF-8 string, {@link Hex}, number, bigint or boolean.
  *
@@ -69,19 +46,30 @@ export function fromBytes<
   throw new InvalidTypeError(to, 'string | hex | bigint | number | boolean')
 }
 
-export declare namespace bytesToBigInt {
+export declare namespace fromBytes {
   type Options = {
-    /** Whether or not the number of a signed representation. */
-    signed?: boolean | undefined
     /** Size of the bytes. */
     size?: number | undefined
   }
 
+  type ReturnType<to extends To> =
+    | (to extends 'string' ? string : never)
+    | (to extends 'hex' ? Hex : never)
+    | (to extends 'bigint' ? bigint : never)
+    | (to extends 'number' ? number : never)
+    | (to extends 'boolean' ? boolean : never)
+
   type ErrorType =
+    | bytesToBigInt.ErrorType
+    | bytesToBoolean.ErrorType
+    | bytesToNumber.ErrorType
+    | bytesToString.ErrorType
     | bytesToHex.ErrorType
-    | hexToBigInt.ErrorType
+    | InvalidTypeError
     | GlobalErrorType
 }
+
+fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
 
 /**
  * Decodes a byte array into a bigint.
@@ -103,14 +91,21 @@ export function bytesToBigInt(
   return hexToBigInt(hex, options)
 }
 
-export declare namespace bytesToBoolean {
+export declare namespace bytesToBigInt {
   type Options = {
+    /** Whether or not the number of a signed representation. */
+    signed?: boolean | undefined
     /** Size of the bytes. */
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | trimLeft.ErrorType | GlobalErrorType
+  type ErrorType =
+    | bytesToHex.ErrorType
+    | hexToBigInt.ErrorType
+    | GlobalErrorType
 }
+
+bytesToBigInt.parseError = (error: unknown) => error as bytesToBigInt.ErrorType
 
 /**
  * Decodes a byte array into a boolean.
@@ -137,14 +132,17 @@ export function bytesToBoolean(
   return Boolean(bytes[0])
 }
 
-export declare namespace bytesToNumber {
-  export type Options = bytesToBigInt.Options
+export declare namespace bytesToBoolean {
+  type Options = {
+    /** Size of the bytes. */
+    size?: number | undefined
+  }
 
-  export type ErrorType =
-    | bytesToHex.ErrorType
-    | hexToNumber.ErrorType
-    | GlobalErrorType
+  type ErrorType = assertSize.ErrorType | trimLeft.ErrorType | GlobalErrorType
 }
+
+bytesToBoolean.parseError = (error: unknown) =>
+  error as bytesToBoolean.ErrorType
 
 /**
  * Decodes a byte array into a number.
@@ -166,19 +164,18 @@ export function bytesToNumber(
   return hexToNumber(hex, options)
 }
 
-const decoder = /*#__PURE__*/ new TextDecoder()
-
-export declare namespace bytesToString {
-  export type Options = {
-    /** Size of the bytes. */
-    size?: number | undefined
-  }
+export declare namespace bytesToNumber {
+  export type Options = bytesToBigInt.Options
 
   export type ErrorType =
-    | assertSize.ErrorType
-    | trimRight.ErrorType
+    | bytesToHex.ErrorType
+    | hexToNumber.ErrorType
     | GlobalErrorType
 }
+
+bytesToNumber.parseError = (error: unknown) => error as bytesToNumber.ErrorType
+
+const decoder = /*#__PURE__*/ new TextDecoder()
 
 /**
  * Decodes a byte array into a UTF-8 string.
@@ -203,3 +200,17 @@ export function bytesToString(
   }
   return decoder.decode(bytes)
 }
+
+export declare namespace bytesToString {
+  export type Options = {
+    /** Size of the bytes. */
+    size?: number | undefined
+  }
+
+  export type ErrorType =
+    | assertSize.ErrorType
+    | trimRight.ErrorType
+    | GlobalErrorType
+}
+
+bytesToString.parseError = (error: unknown) => error as bytesToString.ErrorType

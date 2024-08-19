@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
+    "neverthrow": "^7.0.1",
     "ox": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

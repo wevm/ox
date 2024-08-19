@@ -2,10 +2,6 @@ import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { parseValue } from './from.js'
 
-export declare namespace parseGwei {
-  type ErrorType = parseValue.ErrorType | GlobalErrorType
-}
-
 /**
  * Parses a string representation of Gwei to a `bigint` Value (default: wei).
  *
@@ -20,3 +16,9 @@ export declare namespace parseGwei {
 export function parseGwei(ether: string, unit: 'wei' = 'wei') {
   return parseValue(ether, valueExponents.gwei - valueExponents[unit])
 }
+
+export declare namespace parseGwei {
+  type ErrorType = parseValue.ErrorType | GlobalErrorType
+}
+
+parseGwei.parseError = (error: unknown) => error as parseGwei.ErrorType

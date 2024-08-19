@@ -2,10 +2,6 @@ import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { parseValue } from './from.js'
 
-export declare namespace parseEther {
-  type ErrorType = parseValue.ErrorType | GlobalErrorType
-}
-
 /**
  * Parses a string representation of Ether to a `bigint` Value (default: wei).
  *
@@ -23,3 +19,9 @@ export function parseEther(
 ) {
   return parseValue(ether, valueExponents.ether - valueExponents[unit])
 }
+
+export declare namespace parseEther {
+  type ErrorType = parseValue.ErrorType | GlobalErrorType
+}
+
+parseEther.parseError = (error: unknown) => error as parseEther.ErrorType

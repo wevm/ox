@@ -16,57 +16,6 @@ import type { UnionCompute } from '../types/utils.js'
 import { getSelector } from './getSelector.js'
 import { getSignatureHash } from './getSignatureHash.js'
 
-export declare namespace extractAbiItem {
-  type Options<
-    abi extends Abi | readonly unknown[] = Abi,
-    name extends AbiItemName<abi> = AbiItemName<abi>,
-    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
-    ///
-    allArgs = AbiItemArgs<abi, name>,
-    allNames = AbiItemName<abi>,
-  > = {
-    name:
-      | allNames // show all options
-      | (name extends allNames ? name : never) // infer value
-      | Hex // function selector
-  } & UnionCompute<
-    readonly [] extends allArgs
-      ? {
-          args?:
-            | allArgs // show all options
-            // infer value, widen inferred value of `args` conditionally to match `allArgs`
-            | (abi extends Abi
-                ? args extends allArgs
-                  ? Widen<args>
-                  : never
-                : never)
-            | undefined
-        }
-      : {
-          args?:
-            | allArgs // show all options
-            | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
-            | undefined
-        }
-  >
-
-  type ReturnType<
-    abi extends Abi | readonly unknown[] = Abi,
-    name extends AbiItemName<abi> = AbiItemName<abi>,
-    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
-  > = abi extends Abi
-    ? Abi extends abi
-      ? AbiItem | undefined
-      : ExtractAbiItemForArgs<
-          abi,
-          name,
-          args extends AbiItemArgs<abi, name> ? args : AbiItemArgs<abi, name>
-        >
-    : AbiItem | undefined
-
-  type ErrorType = GlobalErrorType
-}
-
 /**
  * Extracts an ABI Item from an ABI given a name and optional arguments.
  *
@@ -160,6 +109,60 @@ export function extractAbiItem<
     return matchedAbiItem as extractAbiItem.ReturnType<abi, name, args>
   return abiItems[0] as extractAbiItem.ReturnType<abi, name, args>
 }
+
+export declare namespace extractAbiItem {
+  type Options<
+    abi extends Abi | readonly unknown[] = Abi,
+    name extends AbiItemName<abi> = AbiItemName<abi>,
+    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
+    ///
+    allArgs = AbiItemArgs<abi, name>,
+    allNames = AbiItemName<abi>,
+  > = {
+    name:
+      | allNames // show all options
+      | (name extends allNames ? name : never) // infer value
+      | Hex // function selector
+  } & UnionCompute<
+    readonly [] extends allArgs
+      ? {
+          args?:
+            | allArgs // show all options
+            // infer value, widen inferred value of `args` conditionally to match `allArgs`
+            | (abi extends Abi
+                ? args extends allArgs
+                  ? Widen<args>
+                  : never
+                : never)
+            | undefined
+        }
+      : {
+          args?:
+            | allArgs // show all options
+            | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
+            | undefined
+        }
+  >
+
+  type ReturnType<
+    abi extends Abi | readonly unknown[] = Abi,
+    name extends AbiItemName<abi> = AbiItemName<abi>,
+    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
+  > = abi extends Abi
+    ? Abi extends abi
+      ? AbiItem | undefined
+      : ExtractAbiItemForArgs<
+          abi,
+          name,
+          args extends AbiItemArgs<abi, name> ? args : AbiItemArgs<abi, name>
+        >
+    : AbiItem | undefined
+
+  type ErrorType = GlobalErrorType
+}
+
+extractAbiItem.parseError = (error: unknown) =>
+  error as extractAbiItem.ErrorType
 
 /** @internal */
 export function isArgOfType(arg: unknown, abiParameter: AbiParameter): boolean {

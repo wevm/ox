@@ -1,12 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-export declare namespace trimLeft {
-  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
-
-  type ErrorType = trim.ErrorType | GlobalErrorType
-}
-
 /**
  * Trims leading zeros from a {@link Bytes} or {@link Hex} value.
  *
@@ -31,13 +25,13 @@ export function trimLeft<value extends Bytes | Hex>(
   return trim(value, { dir: 'left' })
 }
 
-export declare namespace trimRight {
-  export type ReturnType<value extends Bytes | Hex> = value extends Hex
-    ? Hex
-    : Bytes
+export declare namespace trimLeft {
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
 
-  export type ErrorType = trim.ErrorType | GlobalErrorType
+  type ErrorType = trim.ErrorType | GlobalErrorType
 }
+
+trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
 
 /**
  * Trims trailing zeros from a {@link Bytes} or {@link Hex} value.
@@ -62,6 +56,16 @@ export function trimRight<value extends Bytes | Hex>(
 ): trimRight.ReturnType<value> {
   return trim(value, { dir: 'right' })
 }
+
+export declare namespace trimRight {
+  export type ReturnType<value extends Bytes | Hex> = value extends Hex
+    ? Hex
+    : Bytes
+
+  export type ErrorType = trim.ErrorType | GlobalErrorType
+}
+
+trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities

@@ -8,23 +8,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { numberToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-export declare namespace toBytes {
-  export type Options = {
-    /** Size of the output bytes. */
-    size?: number | undefined
-  }
-
-  export type ErrorType =
-    | numberToBytes.ErrorType
-    | booleanToBytes.ErrorType
-    | hexToBytes.ErrorType
-    | stringToBytes.ErrorType
-    | isBytes.ErrorType
-    | isHex.ErrorType
-    | InvalidTypeError
-    | GlobalErrorType
-}
-
 /**
  * Encodes an arbitrary value to {@link Bytes}.
  *
@@ -62,14 +45,24 @@ export function toBytes(
   )
 }
 
-export declare namespace booleanToBytes {
-  type Options = {
+export declare namespace toBytes {
+  export type Options = {
     /** Size of the output bytes. */
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
+  export type ErrorType =
+    | numberToBytes.ErrorType
+    | booleanToBytes.ErrorType
+    | hexToBytes.ErrorType
+    | stringToBytes.ErrorType
+    | isBytes.ErrorType
+    | isHex.ErrorType
+    | InvalidTypeError
+    | GlobalErrorType
 }
+
+toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
 
 /**
  * Encodes a boolean value into {@link Bytes}.
@@ -100,6 +93,18 @@ export function booleanToBytes(
   return bytes
 }
 
+export declare namespace booleanToBytes {
+  type Options = {
+    /** Size of the output bytes. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
+}
+
+booleanToBytes.parseError = (error: unknown) =>
+  error as booleanToBytes.ErrorType
+
 // We use very optimized technique to convert hex string to byte array
 const charCodeMap = {
   zero: 48,
@@ -118,15 +123,6 @@ function charCodeToBase16(char: number) {
   if (char >= charCodeMap.a && char <= charCodeMap.f)
     return char - (charCodeMap.a - 10)
   return undefined
-}
-
-export declare namespace hexToBytes {
-  type Options = {
-    /** Size of the output bytes. */
-    size?: number | undefined
-  }
-
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
 
 /**
@@ -177,13 +173,16 @@ export function hexToBytes(hex_: Hex, options: hexToBytes.Options = {}): Bytes {
   return bytes
 }
 
-export declare namespace numberToBytes {
-  export type Options = numberToHex.Options
-  export type ErrorType =
-    | numberToHex.ErrorType
-    | hexToBytes.ErrorType
-    | GlobalErrorType
+export declare namespace hexToBytes {
+  type Options = {
+    /** Size of the output bytes. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
+
+hexToBytes.parseError = (error: unknown) => error as hexToBytes.ErrorType
 
 /**
  * Encodes a number value into {@link Bytes}.
@@ -208,14 +207,15 @@ export function numberToBytes(
   return hexToBytes(hex)
 }
 
-export declare namespace stringToBytes {
-  type Options = {
-    /** Size of the output bytes. */
-    size?: number | undefined
-  }
-
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
+export declare namespace numberToBytes {
+  export type Options = numberToHex.Options
+  export type ErrorType =
+    | numberToHex.ErrorType
+    | hexToBytes.ErrorType
+    | GlobalErrorType
 }
+
+numberToBytes.parseError = (error: unknown) => error as numberToBytes.ErrorType
 
 const encoder = /*#__PURE__*/ new TextEncoder()
 
@@ -247,3 +247,14 @@ export function stringToBytes(
   }
   return bytes
 }
+
+export declare namespace stringToBytes {
+  type Options = {
+    /** Size of the output bytes. */
+    size?: number | undefined
+  }
+
+  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
+}
+
+stringToBytes.parseError = (error: unknown) => error as stringToBytes.ErrorType

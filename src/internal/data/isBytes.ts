@@ -2,10 +2,6 @@ import { assertBytes } from '../bytes/assert.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
-export declare namespace isBytes {
-  export type ErrorType = GlobalErrorType
-}
-
 /**
  * Checks if the given value is {@link Bytes}.
  *
@@ -24,3 +20,9 @@ export function isBytes(value: unknown): value is Bytes {
     return false
   }
 }
+
+export declare namespace isBytes {
+  export type ErrorType = GlobalErrorType
+}
+
+isBytes.parseError = (error: unknown) => error as isBytes.ErrorType

@@ -117,3 +117,6 @@ export declare namespace validateTypedData {
     | size.ErrorType
     | GlobalErrorType
 }
+
+validateTypedData.parseError = (error: unknown) =>
+  error as validateTypedData.ErrorType

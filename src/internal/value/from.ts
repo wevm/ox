@@ -1,9 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
 
-export declare namespace parseValue {
-  type ErrorType = GlobalErrorType
-}
-
 /**
  * Parses a `string` representation of a Value to `bigint` (multiplied by the given exponent).
  *
@@ -53,3 +49,9 @@ export function parseValue(value: string, decimals = 0) {
 
   return BigInt(`${negative ? '-' : ''}${integer}${fraction}`)
 }
+
+export declare namespace parseValue {
+  type ErrorType = GlobalErrorType
+}
+
+parseValue.parseError = (error: unknown) => error as parseValue.ErrorType

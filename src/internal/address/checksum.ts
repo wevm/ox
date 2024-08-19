@@ -6,14 +6,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
 import { assertAddress } from './assert.js'
 
-export declare namespace checksumAddress {
-  export type ErrorType =
-    | assertAddress.ErrorType
-    | keccak256.ErrorType
-    | stringToBytes.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Computes the checksum address for the given address.
  *
@@ -47,3 +39,14 @@ export function checksumAddress(address_: string): Address {
   Caches.checksum.set(address_, result)
   return result
 }
+
+export declare namespace checksumAddress {
+  export type ErrorType =
+    | assertAddress.ErrorType
+    | keccak256.ErrorType
+    | stringToBytes.ErrorType
+    | GlobalErrorType
+}
+
+checksumAddress.parseError = (error: unknown) =>
+  error as checksumAddress.ErrorType

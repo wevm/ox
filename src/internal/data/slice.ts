@@ -4,20 +4,6 @@ import type { Bytes, Hex } from '../types/data.js'
 import { isHex } from './isHex.js'
 import { size } from './size.js'
 
-export declare namespace slice {
-  type Options = {
-    strict?: boolean | undefined
-  }
-
-  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
-
-  type ErrorType =
-    | isHex.ErrorType
-    | sliceBytes.ErrorType
-    | sliceHex.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Returns a section of a {@link Hex} or {@link Bytes} value given a start/end bytes offset.
  *
@@ -52,6 +38,22 @@ export function slice<value extends Bytes | Hex>(
     strict,
   }) as slice.ReturnType<value>
 }
+
+export declare namespace slice {
+  type Options = {
+    strict?: boolean | undefined
+  }
+
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
+
+  type ErrorType =
+    | isHex.ErrorType
+    | sliceBytes.ErrorType
+    | sliceHex.ErrorType
+    | GlobalErrorType
+}
+
+slice.parseError = (error: unknown) => error as slice.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities

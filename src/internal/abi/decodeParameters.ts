@@ -25,24 +25,6 @@ import {
   getArrayComponents,
 } from './encodeParameters.js'
 
-export declare namespace decodeAbiParameters {
-  type ReturnType<
-    parameters extends
-      readonly IsomorphicAbiParameter[] = readonly IsomorphicAbiParameter[],
-  > = IsomorphicAbiParametersToPrimitiveTypes<
-    parameters extends readonly IsomorphicAbiParameter[]
-      ? parameters
-      : AbiParameter[]
-  >
-
-  type ErrorType =
-    | hexToBytes.ErrorType
-    | decodeParameter.ErrorType
-    | AbiDecodingZeroDataError
-    | AbiDecodingDataSizeTooSmallError
-    | GlobalErrorType
-}
-
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.
  *
@@ -104,6 +86,27 @@ export function decodeAbiParameters<
   }
   return values as decodeAbiParameters.ReturnType<parameters>
 }
+
+export declare namespace decodeAbiParameters {
+  type ReturnType<
+    parameters extends
+      readonly IsomorphicAbiParameter[] = readonly IsomorphicAbiParameter[],
+  > = IsomorphicAbiParametersToPrimitiveTypes<
+    parameters extends readonly IsomorphicAbiParameter[]
+      ? parameters
+      : AbiParameter[]
+  >
+
+  type ErrorType =
+    | hexToBytes.ErrorType
+    | decodeParameter.ErrorType
+    | AbiDecodingZeroDataError
+    | AbiDecodingDataSizeTooSmallError
+    | GlobalErrorType
+}
+
+decodeAbiParameters.parseError = (error: unknown) =>
+  error as decodeAbiParameters.ErrorType
 
 declare namespace decodeParameter {
   type ErrorType =

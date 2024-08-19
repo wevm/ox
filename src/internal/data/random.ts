@@ -2,10 +2,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-export declare namespace randomBytes {
-  type ErrorType = GlobalErrorType
-}
-
 /**
  * Generates a random byte array of the specified length.
  *
@@ -27,9 +23,11 @@ export function randomBytes(length: number): Bytes {
   return crypto.getRandomValues(new Uint8Array(length))
 }
 
-export declare namespace randomHex {
+export declare namespace randomBytes {
   type ErrorType = GlobalErrorType
 }
+
+randomBytes.parseError = (error: unknown) => error as randomBytes.ErrorType
 
 /**
  * Generates a random Hex value of the specified length.
@@ -51,3 +49,9 @@ export declare namespace randomHex {
 export function randomHex(length: number): Hex {
   return bytesToHex(randomBytes(length))
 }
+
+export declare namespace randomHex {
+  type ErrorType = GlobalErrorType
+}
+
+randomHex.parseError = (error: unknown) => error as randomHex.ErrorType

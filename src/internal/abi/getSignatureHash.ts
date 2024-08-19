@@ -3,16 +3,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
 import { getSignature } from './getSignature.js'
 
-export declare namespace getSignatureHash {
-  type Parameters = getSignature.Parameters
-
-  type ErrorType =
-    | getSignature.ErrorType
-    | keccak256.ErrorType
-    | toBytes.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Computes the signature hash for an ABI Item.
  *
@@ -36,3 +26,16 @@ export declare namespace getSignatureHash {
 export function getSignatureHash(abiItem: getSignatureHash.Parameters) {
   return keccak256(toBytes(getSignature(abiItem)))
 }
+
+export declare namespace getSignatureHash {
+  type Parameters = getSignature.Parameters
+
+  type ErrorType =
+    | getSignature.ErrorType
+    | keccak256.ErrorType
+    | toBytes.ErrorType
+    | GlobalErrorType
+}
+
+getSignatureHash.parseError = (error: unknown) =>
+  error as getSignatureHash.ErrorType

@@ -8,18 +8,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'hex' | 'bytes'
 
-export declare namespace keccak256 {
-  type ReturnType<to extends To> =
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'hex' ? Hex : never)
-
-  type ErrorType =
-    | toBytes.ErrorType
-    | toHex.ErrorType
-    | isHex.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a Bytes or Hex value.
  *
@@ -45,3 +33,17 @@ export function keccak256<to extends To = 'hex'>(
   if (to === 'bytes') return bytes as keccak256.ReturnType<to>
   return toHex(bytes) as keccak256.ReturnType<to>
 }
+
+export declare namespace keccak256 {
+  type ReturnType<to extends To> =
+    | (to extends 'bytes' ? Bytes : never)
+    | (to extends 'hex' ? Hex : never)
+
+  type ErrorType =
+    | toBytes.ErrorType
+    | toHex.ErrorType
+    | isHex.ErrorType
+    | GlobalErrorType
+}
+
+keccak256.parseError = (error: unknown) => error as keccak256.ErrorType

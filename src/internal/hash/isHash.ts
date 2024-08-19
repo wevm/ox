@@ -3,10 +3,6 @@ import { size } from '../data/size.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
-export declare namespace isHash {
-  type ErrorType = isHex.ErrorType | size.ErrorType | GlobalErrorType
-}
-
 /**
  * Checks if a string is a valid hash value.
  *
@@ -22,3 +18,9 @@ export declare namespace isHash {
 export function isHash(hash: string): hash is Hex {
   return isHex(hash) && size(hash) === 32
 }
+
+export declare namespace isHash {
+  type ErrorType = isHex.ErrorType | size.ErrorType | GlobalErrorType
+}
+
+isHash.parseError = (error: unknown) => error as isHash.ErrorType

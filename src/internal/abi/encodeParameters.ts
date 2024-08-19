@@ -42,16 +42,6 @@ export type IsomorphicAbiParametersToPrimitiveTypes<
         : never
 }>
 
-declare namespace encodeAbiParameters {
-  export type ReturnType = Hex
-
-  type ErrorType =
-    | AbiEncodingLengthMismatchError
-    | encodeParameters.ErrorType
-    | prepareParameters.ErrorType
-    | GlobalErrorType
-}
-
 /**
  * Encodes primitive values into ABI encoded data as per the [Application Binary Interface (ABI) Specification](https://docs.soliditylang.org/en/latest/abi-spec).
  *
@@ -101,6 +91,19 @@ export function encodeAbiParameters<
   if (data.length === 0) return '0x'
   return data
 }
+
+export declare namespace encodeAbiParameters {
+  type ReturnType = Hex
+
+  type ErrorType =
+    | AbiEncodingLengthMismatchError
+    | encodeParameters.ErrorType
+    | prepareParameters.ErrorType
+    | GlobalErrorType
+}
+
+encodeAbiParameters.parseError = (error: unknown) =>
+  error as encodeAbiParameters.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities

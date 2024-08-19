@@ -2,11 +2,6 @@ import { SizeExceedsPaddingSizeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-export declare namespace padLeft {
-  type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
-  type ErrorType = pad.ErrorType | GlobalErrorType
-}
-
 /**
  * Pads a {@link Bytes} or {@link Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
@@ -30,10 +25,12 @@ export function padLeft<value extends Bytes | Hex>(
   return pad(value, { dir: 'left', size })
 }
 
-export declare namespace padRight {
+export declare namespace padLeft {
   type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
   type ErrorType = pad.ErrorType | GlobalErrorType
 }
+
+padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
 
 /**
  * Pads a {@link Bytes} or {@link Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
@@ -57,6 +54,13 @@ export function padRight<value extends Bytes | Hex>(
 ): padRight.ReturnType<value> {
   return pad(value, { dir: 'right', size })
 }
+
+export declare namespace padRight {
+  type ReturnType<value extends Bytes | Hex> = pad.ReturnType<value>
+  type ErrorType = pad.ErrorType | GlobalErrorType
+}
+
+padRight.parseError = (error: unknown) => error as padRight.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities

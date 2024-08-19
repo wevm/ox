@@ -39,13 +39,6 @@ type EncodePackedValues<
     : unknown
 }
 
-export declare namespace encodePacked {
-  type ErrorType =
-    | concatHex.ErrorType
-    | AbiEncodingLengthMismatchError
-    | GlobalErrorType
-}
-
 /**
  * Encodes an array of primitive values to a [packed ABI encoding](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode).
  *
@@ -77,6 +70,15 @@ export function encodePacked<
   }
   return concatHex(...data)
 }
+
+export declare namespace encodePacked {
+  type ErrorType =
+    | concatHex.ErrorType
+    | AbiEncodingLengthMismatchError
+    | GlobalErrorType
+}
+
+encodePacked.parseError = (error: unknown) => error as encodePacked.ErrorType
 
 declare namespace encode {
   type ErrorType =

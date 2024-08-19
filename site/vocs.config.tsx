@@ -34,6 +34,7 @@ export default defineConfig({
     { text: 'Introduction', link: '/' },
     { text: 'Installation', link: '/installation' },
     { text: 'Imports & Bundle Size', link: '/imports' },
+    { text: 'Error Handling', link: '/error-handling' },
     { text: 'Platform Compatibility', link: '/platform-compatibility' },
     {
       text: 'API Reference',

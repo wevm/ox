@@ -1,11 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-export declare namespace concat {
-  type ReturnType<value extends Hex | Bytes> = value extends Hex ? Hex : Bytes
-  type ErrorType = concatBytes.ErrorType | concatHex.ErrorType | GlobalErrorType
-}
-
 /**
  * Concatenates two or more {@link Bytes} or {@link Hex}.
  *
@@ -36,6 +31,14 @@ export function concat<value extends Hex | Bytes>(
     ...(values as readonly Bytes[]),
   ) as concat.ReturnType<value>
 }
+
+export declare namespace concat {
+  type ReturnType<value extends Hex | Bytes> = value extends Hex ? Hex : Bytes
+
+  type ErrorType = concatBytes.ErrorType | concatHex.ErrorType | GlobalErrorType
+}
+
+concat.parseError = (error: unknown) => error as concat.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities
