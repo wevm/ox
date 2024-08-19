@@ -6,6 +6,7 @@ test('exports', () => {
     [
       "encodeAbiParameters",
       "encodeParameters",
+      "encodePacked",
       "decodeAbiParameters",
       "decodeParameters",
       "extractAbiItem",

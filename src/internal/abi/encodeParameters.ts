@@ -8,7 +8,7 @@ import type {
 import { parseAbiParameter } from 'abitype'
 
 import { assertAddress } from '../address/assert.js'
-import { concat } from '../data/concat.js'
+import { concatHex } from '../data/concat.js'
 import { padLeft, padRight } from '../data/pad.js'
 import { size } from '../data/size.js'
 import { slice } from '../data/slice.js'
@@ -203,7 +203,7 @@ function prepareParameter<const parameter extends IsomorphicAbiParameter>({
 
 declare namespace encodeParameters {
   type ErrorType =
-    | concat.ErrorType
+    | concatHex.ErrorType
     | numberToHex.ErrorType
     | size.ErrorType
     | GlobalErrorType
@@ -234,7 +234,7 @@ function encodeParameters(preparedParameters: PreparedParameter[]): Hex {
   }
 
   // 3. Concatenate static and dynamic parts.
-  return concat(...staticParameters, ...dynamicParameters)
+  return concatHex(...staticParameters, ...dynamicParameters)
 }
 
 /////////////////////////////////////////////////////////////////
@@ -252,7 +252,7 @@ declare namespace encodeArray {
   type ErrorType =
     | AbiEncodingInvalidArrayError
     | AbiEncodingArrayLengthMismatchError
-    | concat.ErrorType
+    | concatHex.ErrorType
     | numberToHex.ErrorType
     | GlobalErrorType
 }
@@ -291,14 +291,15 @@ function encodeArray<const parameter extends AbiParameter>(
       const length = numberToHex(preparedParameters.length, { size: 32 })
       return {
         dynamic: true,
-        encoded: preparedParameters.length > 0 ? concat(length, data) : length,
+        encoded:
+          preparedParameters.length > 0 ? concatHex(length, data) : length,
       }
     }
     if (dynamicChild) return { dynamic: true, encoded: data }
   }
   return {
     dynamic: false,
-    encoded: concat(...preparedParameters.map(({ encoded }) => encoded)),
+    encoded: concatHex(...preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 
@@ -325,7 +326,7 @@ function encodeBytes(
       value_ = padRight(value_, Math.ceil((value.length - 2) / 2 / 32) * 32)
     return {
       dynamic: true,
-      encoded: concat(padLeft(numberToHex(bytesSize, { size: 32 })), value_),
+      encoded: concatHex(padLeft(numberToHex(bytesSize, { size: 32 })), value_),
     }
   }
   if (bytesSize !== Number.parseInt(parametersize))
@@ -383,7 +384,7 @@ function encodeString(value: string): PreparedParameter {
   }
   return {
     dynamic: true,
-    encoded: concat(
+    encoded: concatHex(
       padRight(numberToHex(size(hexValue), { size: 32 })),
       ...parts,
     ),
@@ -391,7 +392,7 @@ function encodeString(value: string): PreparedParameter {
 }
 
 declare namespace encodeTuple {
-  type ErrorType = concat.ErrorType | GlobalErrorType
+  type ErrorType = concatHex.ErrorType | GlobalErrorType
 }
 
 function encodeTuple<
@@ -418,7 +419,7 @@ function encodeTuple<
     dynamic,
     encoded: dynamic
       ? encodeParameters(preparedParameters)
-      : concat(...preparedParameters.map(({ encoded }) => encoded)),
+      : concatHex(...preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 

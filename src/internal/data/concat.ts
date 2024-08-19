@@ -46,7 +46,7 @@ export declare namespace concatBytes {
 }
 
 /** @internal */
-function concatBytes(...values: readonly Bytes[]): Bytes {
+export function concatBytes(...values: readonly Bytes[]): Bytes {
   let length = 0
   for (const arr of values) {
     length += arr.length
@@ -65,6 +65,6 @@ export declare namespace concatHex {
 }
 
 /** @internal */
-function concatHex(...values: readonly Hex[]): Hex {
+export function concatHex(...values: readonly Hex[]): Hex {
   return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
 }

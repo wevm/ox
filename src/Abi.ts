@@ -19,6 +19,8 @@ export {
   encodeAbiParameters as encodeParameters,
 } from './internal/abi/encodeParameters.js'
 
+export { encodePacked } from './internal/abi/encodePacked.js'
+
 export {
   decodeAbiParameters,
   decodeAbiParameters as decodeParameters,
