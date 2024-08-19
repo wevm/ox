@@ -566,8 +566,8 @@ export default defineConfig({
               link: '/api/typedData/encodeType',
             },
             {
-              text: '.getEip712DomainTypes',
-              link: '/api/typedData/getEip712DomainTypes',
+              text: '.extractEip712DomainTypes',
+              link: '/api/typedData/extractEip712DomainTypes',
             },
             {
               text: '.hash',

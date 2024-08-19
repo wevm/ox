@@ -3,12 +3,12 @@ import type { TypedDataDomain, TypedDataParameter } from 'abitype'
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
  *
- * - Docs: https://oxlib.sh/api/typedData/getTypesForEip712Domain
+ * - Docs: https://oxlib.sh/api/typedData/extractEip712Domain
  *
  * @example
  * import { TypedData } from 'ox'
  *
- * TypedData.getTypesForEip712Domain({
+ * TypedData.extractEip712Domain({
  *   name: 'Ether!',
  *   version: '1',
  *   chainId: 1,
@@ -16,7 +16,7 @@ import type { TypedDataDomain, TypedDataParameter } from 'abitype'
  * })
  * // [{ 'name': 'name', 'type': 'string' }, { 'name': 'version', 'type': 'string' }, { 'name': 'chainId', 'type': 'uint256' }, { 'name': 'verifyingContract', 'type': 'address' }]
  */
-export function getTypesForEip712Domain(
+export function extractEip712DomainTypes(
   domain: TypedDataDomain | undefined,
 ): TypedDataParameter[] {
   return [

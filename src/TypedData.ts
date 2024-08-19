@@ -1,4 +1,4 @@
-export { getTypesForEip712Domain } from './internal/typedData/getTypesForEip712Domain.js'
+export { extractEip712DomainTypes } from './internal/typedData/extractEip712DomainTypes.js'
 
 export {
   serializeTypedData,

@@ -5,7 +5,7 @@ import * as exports from './TypedData.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "getTypesForEip712Domain",
+      "extractEip712DomainTypes",
       "serializeTypedData",
       "serialize",
       "validateTypedData",

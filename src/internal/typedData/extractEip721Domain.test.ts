@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { padRight } from '../data/pad.js'
 import { toHex } from '../hex/toHex.js'
-import { getTypesForEip712Domain } from './getTypesForEip712Domain.js'
+import { extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 
 const FULL_DOMAIN = {
   name: 'example.metamask.io',
@@ -12,7 +12,7 @@ const FULL_DOMAIN = {
 } as const
 
 test('basic', () => {
-  expect(getTypesForEip712Domain(FULL_DOMAIN)).toMatchInlineSnapshot(`
+  expect(extractEip712DomainTypes(FULL_DOMAIN)).toMatchInlineSnapshot(`
     [
       {
         "name": "name",
@@ -40,7 +40,7 @@ test('basic', () => {
 
 test('partial', () => {
   expect(
-    getTypesForEip712Domain({
+    extractEip712DomainTypes({
       ...FULL_DOMAIN,
       name: undefined,
       version: undefined,
@@ -64,5 +64,5 @@ test('partial', () => {
 })
 
 test('empty', () => {
-  expect(getTypesForEip712Domain({})).toMatchInlineSnapshot('[]')
+  expect(extractEip712DomainTypes({})).toMatchInlineSnapshot('[]')
 })
