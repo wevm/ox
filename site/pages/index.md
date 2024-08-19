@@ -50,29 +50,29 @@ You can also skim the **Module API Reference** to get a quick overview of the av
 
 ## Modules
 
-| Module    | Description |
-| -------- | ------- |
-| [Abi](/api/abi)  | Utility functions for encoding, decoding, and working with [ABIs](https://docs.soliditylang.org/en/latest/abi-spec.html) |
-| [Address](/api/address) | Utility functions for working with Ethereum addresses. |
-| [Base58](/api/base58)    |  |
-| [Base64](/api/base64)    |  |
-| [Block](/api/block)    |  |
-| [Bytes](/api/bytes)    | Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances. |
-| [Constants](/api/constants)    |  |
-| [ContractAddress](/api/contractAddress)    |  |
-| [Hash](/api/hash)    | Utility functions for hashing. |
-| [Hex](/api/hex)    | Utility functions for working with hexadecimal string values. |
-| [Json](/api/json)    ||
-| [JsonRpc](/api/jsonRpc)    |  |
-| [Kzg](/api/kzg)    |  |
-| [Log](/api/log)    |  |
-| [Rlp](/api/rlp)    | Utility functions for encoding and decoding [RLP structures](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/). |
-| [Secp256k1](/api/secp256k1)    |  |
-| [SignedData](/api/signedData)    |  |
-| [Signature](/api/signature)    |  |
-| [Transaction](/api/transaction)    |  |
-| [TransactionEnvelope](/api/transactionEnvelope)    |  |
-| [TransactionReceipt](/api/transactionReceipt)    |  |
-| [TypedData](/api/typedData)    |  |
-| [Value](/api/value)    | Utility functions for displaying and parsing Ethereum Values |
-| [WebAuthnP256](/api/webauthn)    |  |
+| Module                                          | Description                                                                              |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [Abi](/api/abi)                                 | Utility functions for encoding, decoding, and working with [ABIs](https://docs.soliditylang.org/en/latest/abi-spec.html) |
+| [Address](/api/address)                         | Utility functions for working with Ethereum addresses.                                   |
+| [Base58](/api/base58)                           |                                                                                          |
+| [Base64](/api/base64)                           |                                                                                          |
+| [Block](/api/block)                             |                                                                                          |
+| [Bytes](/api/bytes)                             | Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances. |
+| [Constants](/api/constants)                     |                                                                                          |
+| [ContractAddress](/api/contractAddress)         |                                                                                          |
+| [Hash](/api/hash)                               | Utility functions for hashing.                                                           |
+| [Hex](/api/hex)                                 | Utility functions for working with hexadecimal string values.                            |
+| [Json](/api/json)                               |                                                                                          |
+| [JsonRpc](/api/jsonRpc)                         |                                                                                          |
+| [Kzg](/api/kzg)                                 |                                                                                          |
+| [Log](/api/log)                                 |                                                                                          |
+| [Rlp](/api/rlp)                                 | Utility functions for encoding and decoding [RLP structures](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/). |
+| [Secp256k1](/api/secp256k1)                     |                                                                                          |
+| [SignedData](/api/signedData)                   |                                                                                          |
+| [Signature](/api/signature)                     |                                                                                          |
+| [Transaction](/api/transaction)                 |                                                                                          |
+| [TransactionEnvelope](/api/transactionEnvelope) |                                                                                          |
+| [TransactionReceipt](/api/transactionReceipt)   |                                                                                          |
+| [TypedData](/api/typedData)                     | Utility functions for [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).      |
+| [Value](/api/value)                             | Utility functions for displaying and parsing Ethereum Values.                            |
+| [WebAuthnP256](/api/webauthn)                   |                                                                                          |
