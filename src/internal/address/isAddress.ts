@@ -1,6 +1,6 @@
 import type { Address } from 'abitype'
-import { assertAddress } from './assert.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { assertAddress } from './assert.js'
 
 /**
  * Checks if the given address is a valid address.
