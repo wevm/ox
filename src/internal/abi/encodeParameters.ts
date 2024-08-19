@@ -16,8 +16,8 @@ import {
   AbiEncodingArrayLengthMismatchError,
   AbiEncodingBytesSizeMismatchError,
   AbiEncodingInvalidArrayError,
-  AbiEncodingInvalidTypeError,
   AbiEncodingLengthMismatchError,
+  InvalidAbiTypeError,
 } from '../errors/abi.js'
 import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
@@ -42,7 +42,7 @@ export type IsomorphicAbiParametersToPrimitiveTypes<
         : never
 }>
 
-declare namespace encodeAbi {
+declare namespace encodeAbiParameters {
   export type ReturnType = Hex
 
   type ErrorType =
@@ -59,25 +59,25 @@ declare namespace encodeAbi {
  * ```ts
  * import { Abi } from 'ox'
  *
- * const data = Abi.encode(
+ * const data = Abi.encodeParameters(
  *   ['string', 'uint', 'bool'],
  *   ['wagmi', 420n, true]
  * )
  * ```
  *
- * You can also pass in Human Readable parameters with the `Abi.parse` utility.
+ * You can also pass in Human Readable parameters with the `Abi.parseParameters` utility.
  *
  * @example
  * ```ts
  * import { Abi } from 'ox'
  *
- * const data = Abi.encode(
+ * const data = Abi.encodeParameters(
  *   Abi.parseParameters('string x, uint y, bool z'),
  *   ['wagmi', 420n, true]
  * )
  * ```
  */
-export function encodeAbi<
+export function encodeAbiParameters<
   const parameters extends
     | readonly IsomorphicAbiParameter[]
     | readonly unknown[],
@@ -86,7 +86,7 @@ export function encodeAbi<
   values: parameters extends readonly IsomorphicAbiParameter[]
     ? IsomorphicAbiParametersToPrimitiveTypes<parameters>
     : never,
-): encodeAbi.ReturnType {
+): encodeAbiParameters.ReturnType {
   if (parameters.length !== values.length)
     throw new AbiEncodingLengthMismatchError({
       expectedLength: parameters.length as number,
@@ -143,7 +143,7 @@ declare namespace prepareParameter {
     | encodeBoolean.ErrorType
     | encodeBytes.ErrorType
     | encodeString.ErrorType
-    | AbiEncodingInvalidTypeError
+    | InvalidAbiTypeError
     | GlobalErrorType
 }
 
@@ -196,7 +196,7 @@ function prepareParameter<const parameter extends IsomorphicAbiParameter>({
   if (parameter.type === 'string') {
     return encodeString(value as unknown as string)
   }
-  throw new AbiEncodingInvalidTypeError(parameter.type)
+  throw new InvalidAbiTypeError(parameter.type)
 }
 
 /////////////////////////////////////////////////////////////////

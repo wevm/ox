@@ -3,16 +3,16 @@ import { describe, expect, test } from 'vitest'
 
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
-import { getArrayComponents } from './encode.js'
+import { getArrayComponents } from './encodeParameters.js'
 
 describe('static', () => {
   test('blank', () => {
-    expect(Abi.encode([], [])).toBe('0x')
+    expect(Abi.encodeParameters([], [])).toBe('0x')
   })
 
   test('uint', () => {
     expect(
-      Abi.encode(
+      Abi.encodeParameters(
         [
           {
             type: 'uint256',
@@ -22,7 +22,7 @@ describe('static', () => {
       ),
     ).toBe('0x0000000000000000000000000000000000000000000000000000000000010f2c')
 
-    expect(Abi.encode(['uint256'], [69420n])).toBe(
+    expect(Abi.encodeParameters(['uint256'], [69420n])).toBe(
       '0x0000000000000000000000000000000000000000000000000000000000010f2c',
     )
   })
@@ -30,7 +30,7 @@ describe('static', () => {
   describe('uint8', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -46,7 +46,7 @@ describe('static', () => {
 
     test('invalid value', () => {
       try {
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -56,7 +56,7 @@ describe('static', () => {
           // @ts-expect-error
           [69420n],
         )
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -73,7 +73,7 @@ describe('static', () => {
   describe('uint32', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -89,7 +89,7 @@ describe('static', () => {
 
     test('invalid value', () => {
       try {
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -99,7 +99,7 @@ describe('static', () => {
           // @ts-expect-error
           [69420n],
         )
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -116,7 +116,7 @@ describe('static', () => {
   describe('int', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -132,7 +132,7 @@ describe('static', () => {
 
     test('negative (twos compliment)', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -150,7 +150,7 @@ describe('static', () => {
   describe('int8', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -166,7 +166,7 @@ describe('static', () => {
 
     test('negative (twos compliment)', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -182,7 +182,7 @@ describe('static', () => {
 
     test('invalid value', () => {
       try {
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -192,7 +192,7 @@ describe('static', () => {
           // @ts-expect-error
           [69420n],
         )
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -209,7 +209,7 @@ describe('static', () => {
   describe('int32', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -225,7 +225,7 @@ describe('static', () => {
 
     test('negative (twos compliment)', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -241,7 +241,7 @@ describe('static', () => {
 
     test('invalid value', () => {
       try {
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -251,7 +251,7 @@ describe('static', () => {
           // @ts-expect-error
           [69420n],
         )
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -268,7 +268,7 @@ describe('static', () => {
   describe('address', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -286,7 +286,7 @@ describe('static', () => {
   describe('bool', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -299,7 +299,7 @@ describe('static', () => {
         '0x0000000000000000000000000000000000000000000000000000000000000001',
       )
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -317,7 +317,7 @@ describe('static', () => {
   describe('bytes8', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -333,7 +333,7 @@ describe('static', () => {
 
     test('overflow', () => {
       expect(() =>
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -357,7 +357,7 @@ describe('static', () => {
   describe('bytes16', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -373,7 +373,7 @@ describe('static', () => {
 
     test('overflow', () => {
       expect(() =>
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -397,7 +397,7 @@ describe('static', () => {
   describe('uint[3]', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -415,7 +415,7 @@ describe('static', () => {
   describe('int[3]', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -433,7 +433,7 @@ describe('static', () => {
   describe('address[2]', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -456,7 +456,7 @@ describe('static', () => {
   describe('bool[2]', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -474,7 +474,7 @@ describe('static', () => {
   describe('bytes8[2]', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -492,7 +492,7 @@ describe('static', () => {
   describe('uint[3][2]', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -515,7 +515,7 @@ describe('static', () => {
   describe('uint[3][2][4]', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               type: 'uint256[3][2][4]',
@@ -547,7 +547,7 @@ describe('static', () => {
       )
 
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           ['uint256[3][2][4]'],
           [
             [
@@ -580,7 +580,7 @@ describe('static', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a((uint256,bool,address))" "(420,true,0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -619,7 +619,7 @@ describe('static', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a((uint256,bool,address))" "(420,true,0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -645,7 +645,7 @@ describe('static', () => {
 
       expect(
         // cast abi-encode "a((uint256,bool,address))" "(420,true,0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)"
-        Abi.encode(
+        Abi.encodeParameters(
           ['(uint256,bool,address)'],
           [[420n, true, '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']],
         ),
@@ -655,7 +655,7 @@ describe('static', () => {
 
       expect(
         // cast abi-encode "a((uint256,bool,address))" "(420,true,0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC)"
-        Abi.encode(
+        Abi.encodeParameters(
           ['(uint256,bool,address)'],
           [[420n, true, '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']],
         ),
@@ -669,7 +669,7 @@ describe('static', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(((uint256,bool,address),(uint256,bool,address),uint8[2]))" "((420,true,0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC),(69,false,0xc961145a54C96E3aE9bAA048c4F4D6b04C13916b),[1,2])"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -743,7 +743,7 @@ describe('static', () => {
   describe('struct: (uint8,bytes[])', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -766,7 +766,7 @@ describe('static', () => {
 
     test('empty bytes', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -791,7 +791,7 @@ describe('static', () => {
   describe('(uint256[2],bool,string[])', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             { name: 'xOut', type: 'uint256[2]' },
             { name: 'yOut', type: 'bool' },
@@ -808,7 +808,7 @@ describe('static', () => {
   describe('multiple (uint,bool,address)', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -834,7 +834,7 @@ describe('static', () => {
   describe('multiple params unnamed: (uint,bool,address)', () => {
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: '',
@@ -856,7 +856,7 @@ describe('static', () => {
       )
 
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           ['uint256', 'bool', 'address'],
           [420n, true, '0xc961145a54C96E3aE9bAA048c4F4D6b04C13916b'],
         ),
@@ -872,7 +872,7 @@ describe('dynamic', () => {
     // cast abi-encode "a(string)" "wagmi"
     test('default', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xOut',
@@ -889,7 +889,7 @@ describe('dynamic', () => {
     // cast abi-encode "a(string)" "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc faucibus lorem a libero auctor condimentum. Donec ornare massa rhoncus lacus rutrum, eget pulvinar arcu elementum. Nunc mauris lorem, sodales eget viverra in, euismod quis mi. Praesent nec commodo leo. Phasellus condimentum mauris sed accumsan eleifend. Praesent ac blandit sem, et rutrum ipsum. Etiam in tellus ac enim facilisis ultrices. Fusce ac vestibulum quam. Duis sed purus scelerisque, sollicitudin erat ac, pulvinar nisi. Pellentesque eu purus nec sapien vehicula convallis ut vel elit. Suspendisse eget ex vitae enim volutpat scelerisque. Sed quis elit tristique erat luctus egestas a ac odio. Duis vehicula enim ac metus gravida, vel maximus nisi imperdiet."
     test('> 32 bytes', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xOut',
@@ -908,7 +908,7 @@ describe('dynamic', () => {
     // cast abi-encode "a(string)" "👨‍👨‍👦‍👦🏴‍☠️"
     test('emojis', () => {
       expect(
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xOut',
@@ -927,7 +927,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(string,uint,bool)" "wagmi" 420 true
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -954,7 +954,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(uint[2],bool,string)" "[420,69]" true "wagmi"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -981,7 +981,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(bytes)" "0x42069"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -995,7 +995,7 @@ describe('dynamic', () => {
       )
       expect(
         // cast abi-encode "a(bytes)" "0xd83ddc68200dd83ddc68200dd83ddc66200dd83ddc66d83cdff4200d2620fe0f"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1011,7 +1011,7 @@ describe('dynamic', () => {
       )
       expect(
         // cast abi-encode "a(bytes)" "0x70a08231000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1027,7 +1027,7 @@ describe('dynamic', () => {
       )
       expect(
         // cast abi-encode "a(bytes)" "0x70a08231000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa9604570a08231000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1043,7 +1043,7 @@ describe('dynamic', () => {
       )
       expect(
         // cast abi-encode "a(bytes)" "0x"
-        Abi.encode([{ type: 'bytes' }], ['0x']),
+        Abi.encodeParameters([{ type: 'bytes' }], ['0x']),
       ).toMatchInlineSnapshot(
         '"0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000"',
       )
@@ -1054,7 +1054,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(uint[])" "[420,69,22,55]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1071,7 +1071,7 @@ describe('dynamic', () => {
     test('empty', () => {
       expect(
         // cast abi-encode "a(uint[])" "[]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1090,7 +1090,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(uint[][])" "[[420,69]]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1107,7 +1107,7 @@ describe('dynamic', () => {
     test('empty', () => {
       expect(
         // cast abi-encode "a(uint[][])" "[[]]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1124,7 +1124,7 @@ describe('dynamic', () => {
     test('complex', () => {
       expect(
         // cast abi-encode "a(uint[][])" "[[420,69],[22,55,22],[51,52,66,11]]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1149,7 +1149,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(uint[][][])" "[[[420,69]]]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1168,7 +1168,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(string[2])" "["wagmi","viem"]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1187,7 +1187,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(string[2][3])" "[["wagmi","viem"],["jake","tom"],["lol","haha"]]"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               name: 'xIn',
@@ -1212,7 +1212,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a((uint256[],bool,string[]))" "([1,2,3,4],true,[hello,world])"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -1251,7 +1251,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a(((uint256[],bool,string[]),uint256,string[]))" "(([1,2,3,4],true,[hello,world]),420,[wagmi,viem])"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -1308,7 +1308,7 @@ describe('dynamic', () => {
     test('default', () => {
       expect(
         // cast abi-encode "a((uint256[],bool,string[]),(((uint256[],bool,string),uint256,string[]),((uint256[],bool,string),uint256,string[]),uint256,string[]))" "([1,2,3,4],true,[hello, world])" "((([420,69],true,[nice,haha]),420,[wagmi,allday]),(([420,420],true,[this,is,a,param]),69420,[hello,there]),4204202,[lol,haha])"
-        Abi.encode(
+        Abi.encodeParameters(
           [
             {
               components: [
@@ -1559,11 +1559,10 @@ const orderComponents = [
 
 describe('seaport', () => {
   test('cancel', () => {
-    const cancel = Abi.getItem({
-      abi: seaportContractConfig.abi,
+    const cancel = Abi.extractItem(seaportContractConfig.abi, {
       name: 'cancel',
     })
-    const data = Abi.encode(cancel.inputs, [orderComponents])
+    const data = Abi.encodeParameters(cancel.inputs, [orderComponents])
     expect(data).toMatchInlineSnapshot(
       '"0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000540000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa9604500000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000360000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000001caab5c3b30000000000000000000000000000000000000000000000000000001caab5c3b3511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511a00000000000000000000000000000000000000000000000000000000498f3973511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511a00000000000000000000000000000000000000000000000000000000498f39730000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000005414d89a8bf7e99d732bc52f3e6a3ef461c0c07800000000000000000000000000000000000000000000000000000000000002030000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000b000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa9604500000000000000000000000000000000000000000000000000000000034fb5b7000000000000000000000000000000000000000000000000000000000000006f000000000000000000000000000000000000000000000000000000000001e0f30000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000037000000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000008d000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa9604500000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000360000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000001caab5c3b30000000000000000000000000000000000000000000000000000001caab5c3b3511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511a00000000000000000000000000000000000000000000000000000000498f3973511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511aaa511a00000000000000000000000000000000000000000000000000000000498f39730000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000005414d89a8bf7e99d732bc52f3e6a3ef461c0c07800000000000000000000000000000000000000000000000000000000000002030000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000b000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa9604500000000000000000000000000000000000000000000000000000000034fb5b7000000000000000000000000000000000000000000000000000000000000006f000000000000000000000000000000000000000000000000000000000001e0f30000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000037000000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000008d000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045"',
     )
@@ -1583,11 +1582,10 @@ describe('seaport', () => {
       zoneHash,
     } = orderComponents[0]
 
-    const fulfillAdvancedOrder = Abi.getItem({
-      abi: seaportContractConfig.abi,
+    const fulfillAdvancedOrder = Abi.extractItem(seaportContractConfig.abi, {
       name: 'fulfillAdvancedOrder',
     })
-    const data = Abi.encode(fulfillAdvancedOrder.inputs, [
+    const data = Abi.encodeParameters(fulfillAdvancedOrder.inputs, [
       {
         denominator: 69n,
         extraData: '0x123123',
@@ -1640,11 +1638,10 @@ describe('seaport', () => {
       zoneHash,
     } = orderComponents[0]
 
-    const fulfillAdvancedOrder = Abi.getItem({
-      abi: seaportContractConfig.abi,
+    const fulfillAdvancedOrder = Abi.extractItem(seaportContractConfig.abi, {
       name: 'fulfillAvailableAdvancedOrders',
     })
-    const data = Abi.encode(fulfillAdvancedOrder.inputs, [
+    const data = Abi.encodeParameters(fulfillAdvancedOrder.inputs, [
       [
         {
           denominator: 24n,
@@ -1689,11 +1686,10 @@ describe('seaport', () => {
   })
 
   test('getCounter', () => {
-    const getCounter = Abi.getItem({
-      abi: seaportContractConfig.abi,
+    const getCounter = Abi.extractItem(seaportContractConfig.abi, {
       name: 'getCounter',
     })
-    const data = Abi.encode(getCounter.inputs, [address.vitalik])
+    const data = Abi.encodeParameters(getCounter.inputs, [address.vitalik])
     expect(data).toMatchInlineSnapshot(
       '"0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045"',
     )
@@ -1713,11 +1709,10 @@ describe('seaport', () => {
       zoneHash,
     } = orderComponents[0]
 
-    const fulfillAdvancedOrder = Abi.getItem({
-      abi: seaportContractConfig.abi,
+    const fulfillAdvancedOrder = Abi.extractItem(seaportContractConfig.abi, {
       name: 'validate',
     })
-    const data = Abi.encode(fulfillAdvancedOrder.inputs, [
+    const data = Abi.encodeParameters(fulfillAdvancedOrder.inputs, [
       [
         {
           parameters: {
@@ -1745,26 +1740,26 @@ describe('seaport', () => {
 
 test('invalid type', () => {
   expect(() =>
-    Abi.encode([{ name: 'x', type: 'lol' }], [69]),
+    Abi.encodeParameters([{ name: 'x', type: 'lol' }], [69]),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [AbiEncodingInvalidTypeError: Type \`lol\` is not a valid encoding type.
+    [InvalidAbiTypeError: Type \`lol\` is not a valid ABI Type.
 
-    See: https://oxlib.sh/errors#abiencodinginvalidtypeerror]
+    See: https://oxlib.sh/errors#invalidabitypeerror]
   `,
   )
 })
 
 test('invalid params/values lengths', () => {
   expect(() =>
-    Abi.encode(
+    Abi.encodeParameters(
       [{ name: 'x', type: 'uint256[3]' }],
       /* @ts-expect-error */
       [69, 420],
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEncodingLengthMismatchError: ABI encoding params/values length mismatch.
-    Expected length (params): 1
+    [AbiEncodingLengthMismatchError: ABI encoding parameters/values length mismatch.
+    Expected length (parameters): 1
     Given length (values): 2
 
     See: https://oxlib.sh/errors#abiencodinglengthmismatcherror]
@@ -1773,7 +1768,7 @@ test('invalid params/values lengths', () => {
 
 test('invalid address', () => {
   expect(() =>
-    Abi.encode([{ name: 'x', type: 'address' }], ['0x111']),
+    Abi.encodeParameters([{ name: 'x', type: 'address' }], ['0x111']),
   ).toThrowErrorMatchingInlineSnapshot(`
     [InvalidAddressError: Address "0x111" is invalid.
 
@@ -1784,7 +1779,7 @@ test('invalid address', () => {
 
 test('invalid array', () => {
   expect(() =>
-    Abi.encode(
+    Abi.encodeParameters(
       [{ name: 'x', type: 'uint256[3]' }],
       /* @ts-expect-error */
       [69],
@@ -1800,7 +1795,7 @@ test('invalid array', () => {
 
 test('invalid array lengths', () => {
   expect(() =>
-    Abi.encode(
+    Abi.encodeParameters(
       [{ name: 'x', type: 'uint256[3]' }],
       /* @ts-expect-error */
       [[69n, 420n]],
@@ -1816,7 +1811,7 @@ test('invalid array lengths', () => {
 
 test('invalid bytes', () => {
   expect(() =>
-    Abi.encode([{ name: 'x', type: 'bytes8' }], ['0x111']),
+    Abi.encodeParameters([{ name: 'x', type: 'bytes8' }], ['0x111']),
   ).toThrowErrorMatchingInlineSnapshot(
     `
     [AbiEncodingBytesSizeMismatchError: Size of bytes "0x111" (bytes2) does not match expected size (bytes8).
@@ -1837,7 +1832,7 @@ test('getArrayComponents', () => {
 
 test('https://github.com/wevm/viem/issues/1960', () => {
   expect(() =>
-    Abi.encode(
+    Abi.encodeParameters(
       [
         {
           name: 'boolz',

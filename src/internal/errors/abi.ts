@@ -1,8 +1,36 @@
-import { type Abi, formatAbiItem } from 'abitype'
+import {
+  type Abi,
+  type AbiParameter,
+  formatAbiItem,
+  formatAbiParameters,
+} from 'abitype'
 import { normalizeSignature } from '../abi/getSignature.js'
 import { size } from '../data/size.js'
 import type { Hex } from '../types/data.js'
 import { BaseError } from './base.js'
+
+export class AbiDecodingDataSizeTooSmallError extends BaseError {
+  override readonly name = 'AbiDecodingDataSizeTooSmallError'
+  constructor({
+    data,
+    parameters,
+    size,
+  }: { data: Hex; parameters: readonly AbiParameter[]; size: number }) {
+    super(`Data size of ${size} bytes is too small for given parameters.`, {
+      metaMessages: [
+        `Params: (${formatAbiParameters(parameters as readonly [AbiParameter])})`,
+        `Data:   ${data} (${size} bytes)`,
+      ],
+    })
+  }
+}
+
+export class AbiDecodingZeroDataError extends BaseError {
+  override readonly name = 'AbiDecodingZeroDataError'
+  constructor() {
+    super('Cannot decode zero data ("0x") with ABI parameters.')
+  }
+}
 
 export class AbiEncodingArrayLengthMismatchError extends BaseError {
   override readonly name = 'AbiEncodingArrayLengthMismatchError'
@@ -42,23 +70,14 @@ export class AbiEncodingLengthMismatchError extends BaseError {
   }: { expectedLength: number; givenLength: number }) {
     super(
       [
-        'ABI encoding params/values length mismatch.',
-        `Expected length (params): ${expectedLength}`,
+        'ABI encoding parameters/values length mismatch.',
+        `Expected length (parameters): ${expectedLength}`,
         `Given length (values): ${givenLength}`,
       ].join('\n'),
       {
         docsPath: '/errors#abiencodinglengthmismatcherror',
       },
     )
-  }
-}
-
-export class AbiEncodingInvalidTypeError extends BaseError {
-  override readonly name = 'AbiEncodingInvalidTypeError'
-  constructor(type: string) {
-    super(`Type \`${type}\` is not a valid encoding type.`, {
-      docsPath: '/errors#abiencodinginvalidtypeerror',
-    })
   }
 }
 
@@ -87,6 +106,15 @@ export class AbiItemAmbiguityError extends BaseError {
         'These types encode differently and cannot be distinguished at runtime.',
         'Remove one of the ambiguous items in the ABI.',
       ],
+    })
+  }
+}
+
+export class InvalidAbiTypeError extends BaseError {
+  override readonly name = 'InvalidAbiTypeError'
+  constructor(type: string) {
+    super(`Type \`${type}\` is not a valid ABI Type.`, {
+      docsPath: '/errors#invalidabitypeerror',
     })
   }
 }

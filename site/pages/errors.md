@@ -13,8 +13,8 @@ The length of the array value does not match the length specified in the corresp
 ### Example
 
 ```ts
-Abi.encode(['uint256[3]'], [[69n, 420n]])
-//                   ↑ expected: 3  ↑ ❌ length: 2
+Abi.encodeParameters(['uint256[3]'], [[69n, 420n]])
+//                             ↑ expected: 3  ↑ ❌ length: 2
 ```
 
 ```
@@ -27,7 +27,7 @@ for type `uint256[3]`. Expected: `3`. Given: `2`.
 Pass an array of the correct length.
 
 ```ts
-Abi.encode(['uint256[3]'], [[69n, 420n, 69n]])
+Abi.encodeParameters(['uint256[3]'], [[69n, 420n, 69n]])
 //                           ↑ ✅ length: 3
 ```
 
@@ -40,8 +40,8 @@ The size of the bytes value does not match the size specified in the correspondi
 ### Example
 
 ```ts
-Abi.encode(['bytes8'], [['0xdeadbeefdeadbeefdeadbeef']])
-//                ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
+Abi.encodeParameters(['bytes8'], [['0xdeadbeefdeadbeefdeadbeef']])
+//                          ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
 ```
 
 ```
@@ -54,7 +54,7 @@ AbiEncodingBytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
 Pass a bytes value of the correct size.
 
 ```ts
-Abi.encode(['bytes8'], [['0xdeadbeefdeadbeef']])
+Abi.encodeParameters(['bytes8'], [['0xdeadbeefdeadbeef']])
 //                        ↑ ✅ size: 8 bytes
 ```
 
@@ -68,7 +68,7 @@ The length of the values to encode does not match the length of the ABI paramete
 ### Example
 
 ```ts
-Abi.encode(['string', 'uint256'], ['hello'])
+Abi.encodeParameters(['string', 'uint256'], ['hello'])
 ```
 
 ```
@@ -80,22 +80,6 @@ Given length (values): 1
 ### Solution
 
 Pass the correct number of values to encode.
-
-## `AbiEncodingInvalidTypeError`
-
-### Why?
-
-The type provided in the ABI Parameters is not a valid ABI type.
-
-### Example
-
-```ts
-Abi.encode(['lol'], [69]),
-```
-
-```
-AbiEncodingInvalidTypeError: Type `lol` is not a valid encoding type.
-```
 
 ### Solution
 
@@ -110,7 +94,7 @@ The value provided is not a valid array as specified in the corresponding ABI pa
 ### Example
 
 ```ts
-Abi.encode(['uint256[3]'], [69])
+Abi.encodeParameters(['uint256[3]'], [69])
 ```
 
 ### Solution
@@ -128,8 +112,7 @@ Ambiguity was found within overloaded ABI Items.
 In the example below, we cannot disambiguate which `foo` function to call as we cannot distinguish between the `address` and `bytes20` types at runtime.
 
 ```ts
-Abi.getItem({
-  abi: Abi.parse(['function foo(address)', 'function foo(bytes20)']),
+Abi.extractItem(Abi.parse(['function foo(address)', 'function foo(bytes20)']), {
   name: 'foo',
   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
 })
@@ -172,6 +155,22 @@ On the other hand, an 8-bit **_signed_** integer can range from `-2 ** (8 - 1)` 
 ### Solution
 
 Pass a number within the valid signed or unsigned integer range.
+
+## `InvalidAbiTypeError`
+
+### Why?
+
+The type provided in the ABI Parameters is not a valid ABI type.
+
+### Example
+
+```ts
+Abi.encodeParameters(['lol'], [69]),
+```
+
+```
+InvalidAbiTypeError: Type `lol` is not a valid encoding type.
+```
 
 ## `InvalidAddressError`
 

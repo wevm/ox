@@ -19,7 +19,7 @@ export async function generateAbiVectors() {
     if (i > 0) writer.write(',')
     const parameters = generateParameters(10)
     const values = generateValues(parameters)
-    const encoded = Abi.encode(parameters, values)
+    const encoded = Abi.encodeParameters(parameters, values)
     writer.write(stringify({ parameters, values, encoded }, null, 2))
   }
 

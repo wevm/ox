@@ -3,12 +3,11 @@ import { Abi, Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
-import { getAmbiguousTypes, isArgOfType } from './getItem.js'
+import { getAmbiguousTypes, isArgOfType } from './extractItem.js'
 
 test('default', () => {
   expect(
-    Abi.getItem({
-      abi: wagmiContractConfig.abi,
+    Abi.extractItem(wagmiContractConfig.abi, {
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
     }),
@@ -36,8 +35,7 @@ test('default', () => {
 describe('selector', () => {
   test('function', () => {
     expect(
-      Abi.getItem({
-        abi: wagmiContractConfig.abi,
+      Abi.extractItem(wagmiContractConfig.abi, {
         name: '0x70a08231',
       }),
     ).toMatchInlineSnapshot(`
@@ -63,8 +61,7 @@ describe('selector', () => {
 
   test('event', () => {
     expect(
-      Abi.getItem({
-        abi: wagmiContractConfig.abi,
+      Abi.extractItem(wagmiContractConfig.abi, {
         name: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
       }),
     ).toMatchInlineSnapshot(`
@@ -96,8 +93,7 @@ describe('selector', () => {
 
 test('no matching name', () => {
   expect(
-    Abi.getItem({
-      abi: [],
+    Abi.extractItem([], {
       // @ts-expect-error
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
@@ -107,8 +103,8 @@ test('no matching name', () => {
 
 test('overloads: no inputs', () => {
   expect(
-    Abi.getItem({
-      abi: [
+    Abi.extractItem(
+      [
         {
           name: 'balanceOf',
           outputs: [{ name: 'x', type: 'uint256' }],
@@ -123,9 +119,11 @@ test('overloads: no inputs', () => {
           type: 'function',
         },
       ],
-      name: 'balanceOf',
-      args: ['0x0000000000000000000000000000000000000000'],
-    }),
+      {
+        name: 'balanceOf',
+        args: ['0x0000000000000000000000000000000000000000'],
+      },
+    ),
   ).toMatchInlineSnapshot(`
     {
       "name": "balanceOf",
@@ -143,8 +141,8 @@ test('overloads: no inputs', () => {
 
 test('overloads: undefined inputs', () => {
   expect(
-    Abi.getItem({
-      abi: [
+    Abi.extractItem(
+      [
         {
           inputs: undefined,
           name: 'balanceOf',
@@ -160,9 +158,11 @@ test('overloads: undefined inputs', () => {
           type: 'function',
         },
       ],
-      name: 'balanceOf',
-      args: ['0x0000000000000000000000000000000000000000'],
-    }),
+      {
+        name: 'balanceOf',
+        args: ['0x0000000000000000000000000000000000000000'],
+      },
+    ),
   ).toMatchInlineSnapshot(`
     {
       "inputs": undefined,
@@ -181,8 +181,8 @@ test('overloads: undefined inputs', () => {
 
 test('overloads: no args', () => {
   expect(
-    Abi.getItem({
-      abi: [
+    Abi.extractItem(
+      [
         {
           inputs: [{ name: '', type: 'uint256' }],
           name: 'balanceOf',
@@ -198,8 +198,10 @@ test('overloads: no args', () => {
           type: 'function',
         },
       ],
-      name: 'balanceOf',
-    }),
+      {
+        name: 'balanceOf',
+      },
+    ),
   ).toMatchInlineSnapshot(`
     {
       "inputs": [],
@@ -280,30 +282,26 @@ test('overload: different lengths without abi order define effect', () => {
     }
   `
   expect(
-    Abi.getItem({
-      abi: abis,
+    Abi.extractItem(abis, {
       name: 'safeTransferFrom',
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
   expect(
-    Abi.getItem({
-      abi: abis.reverse(),
+    Abi.extractItem(abis.reverse(), {
       name: 'safeTransferFrom',
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
 
   expect(
-    Abi.getItem({
-      abi: abis,
+    Abi.extractItem(abis, {
       name: 'safeTransferFrom',
       args: longArgs,
     }),
   ).toMatchInlineSnapshot(longSnapshot)
   expect(
-    Abi.getItem({
-      abi: abis.reverse(),
+    Abi.extractItem(abis.reverse(), {
       name: 'safeTransferFrom',
       args: longArgs,
     }),
@@ -336,8 +334,7 @@ test('overload: different types', () => {
   ]
 
   expect(
-    Abi.getItem({
-      abi,
+    Abi.extractItem(abi, {
       name: 'mint',
     }),
   ).toMatchInlineSnapshot(`
@@ -351,8 +348,7 @@ test('overload: different types', () => {
   `)
 
   expect(
-    Abi.getItem({
-      abi,
+    Abi.extractItem(abi, {
       name: 'mint',
       args: [420n],
     }),
@@ -372,8 +368,7 @@ test('overload: different types', () => {
   `)
 
   expect(
-    Abi.getItem({
-      abi,
+    Abi.extractItem(abi, {
       name: 'mint',
       args: ['foo'],
     }),
@@ -395,8 +390,8 @@ test('overload: different types', () => {
 
 test('overloads: tuple', () => {
   expect(
-    Abi.getItem({
-      abi: [
+    Abi.extractItem(
+      [
         {
           inputs: [
             { name: 'foo', type: 'uint256' },
@@ -448,16 +443,18 @@ test('overloads: tuple', () => {
           type: 'function',
         },
       ],
-      name: 'foo',
-      args: [
-        420n,
-        {
-          a: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-          b: { merp: 'test', meep: 'test' },
-          c: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-        },
-      ],
-    }),
+      {
+        name: 'foo',
+        args: [
+          420n,
+          {
+            a: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+            b: { merp: 'test', meep: 'test' },
+            c: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+          },
+        ],
+      },
+    ),
   ).toMatchInlineSnapshot(`
     {
       "inputs": [
@@ -504,11 +501,13 @@ test('overloads: tuple', () => {
 
 test('overloads: ambiguious types', () => {
   expect(() =>
-    Abi.getItem({
-      abi: parseAbi(['function foo(address)', 'function foo(bytes20)']),
-      name: 'foo',
-      args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
-    }),
+    Abi.extractItem(
+      parseAbi(['function foo(address)', 'function foo(bytes20)']),
+      {
+        name: 'foo',
+        args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      },
+    ),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
 
@@ -522,15 +521,17 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.getItem({
-      abi: parseAbi([
+    Abi.extractItem(
+      parseAbi([
         'function foo(string)',
         'function foo(uint)',
         'function foo(address)',
       ]),
-      name: 'foo',
-      args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
-    }),
+      {
+        name: 'foo',
+        args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      },
+    ),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
 
@@ -544,16 +545,18 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(
-    Abi.getItem({
-      abi: parseAbi([
+    Abi.extractItem(
+      parseAbi([
         'function foo(string)',
         'function foo(uint)',
         'function foo(address)',
       ]),
-      name: 'foo',
-      // 21 bytes (invalid address)
-      args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251eee'],
-    }),
+      {
+        name: 'foo',
+        // 21 bytes (invalid address)
+        args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251eee'],
+      },
+    ),
   ).toMatchInlineSnapshot(`
     {
       "inputs": [
@@ -569,16 +572,18 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(
-    Abi.getItem({
-      abi: parseAbi([
+    Abi.extractItem(
+      parseAbi([
         'function foo(string)',
         'function foo(uint)',
         'function foo(address)',
       ]),
-      name: 'foo',
-      // non-hex (invalid address)
-      args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251z'],
-    }),
+      {
+        name: 'foo',
+        // non-hex (invalid address)
+        args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251z'],
+      },
+    ),
   ).toMatchInlineSnapshot(`
     {
       "inputs": [
@@ -594,15 +599,17 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.getItem({
-      abi: parseAbi([
+    Abi.extractItem(
+      parseAbi([
         'function foo(address)',
         'function foo(uint)',
         'function foo(string)',
       ]),
-      name: 'foo',
-      args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
-    }),
+      {
+        name: 'foo',
+        args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      },
+    ),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
 
@@ -616,11 +623,13 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.getItem({
-      abi: parseAbi(['function foo((address))', 'function foo((bytes20))']),
-      name: 'foo',
-      args: [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
-    }),
+    Abi.extractItem(
+      parseAbi(['function foo((address))', 'function foo((bytes20))']),
+      {
+        name: 'foo',
+        args: [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
+      },
+    ),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
 
@@ -634,14 +643,16 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.getItem({
-      abi: parseAbi([
+    Abi.extractItem(
+      parseAbi([
         'function foo(string, (address))',
         'function foo(string, (bytes))',
       ]),
-      name: 'foo',
-      args: ['foo', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
-    }),
+      {
+        name: 'foo',
+        args: ['foo', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
+      },
+    ),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
 

@@ -3,6 +3,7 @@ import type { Abi, AbiParameter, Address } from 'abitype'
 import { isAddress } from '../address/isAddress.js'
 import { isHex } from '../data/isHex.js'
 import { AbiItemAmbiguityError } from '../errors/abi.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import type {
   AbiItem,
   AbiItemArgs,
@@ -15,53 +16,56 @@ import type { UnionCompute } from '../types/utils.js'
 import { getSelector } from './getSelector.js'
 import { getSignatureHash } from './getSignatureHash.js'
 
-export type GetAbiItemParameters<
-  abi extends Abi | readonly unknown[] = Abi,
-  name extends AbiItemName<abi> = AbiItemName<abi>,
-  args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
-  ///
-  allArgs = AbiItemArgs<abi, name>,
-  allNames = AbiItemName<abi>,
-> = {
-  abi: abi
-  name:
-    | allNames // show all options
-    | (name extends allNames ? name : never) // infer value
-    | Hex // function selector
-} & UnionCompute<
-  readonly [] extends allArgs
-    ? {
-        args?:
-          | allArgs // show all options
-          // infer value, widen inferred value of `args` conditionally to match `allArgs`
-          | (abi extends Abi
-              ? args extends allArgs
-                ? Widen<args>
-                : never
-              : never)
-          | undefined
-      }
-    : {
-        args?:
-          | allArgs // show all options
-          | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
-          | undefined
-      }
->
+export declare namespace extractAbiItem {
+  type Options<
+    abi extends Abi | readonly unknown[] = Abi,
+    name extends AbiItemName<abi> = AbiItemName<abi>,
+    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
+    ///
+    allArgs = AbiItemArgs<abi, name>,
+    allNames = AbiItemName<abi>,
+  > = {
+    name:
+      | allNames // show all options
+      | (name extends allNames ? name : never) // infer value
+      | Hex // function selector
+  } & UnionCompute<
+    readonly [] extends allArgs
+      ? {
+          args?:
+            | allArgs // show all options
+            // infer value, widen inferred value of `args` conditionally to match `allArgs`
+            | (abi extends Abi
+                ? args extends allArgs
+                  ? Widen<args>
+                  : never
+                : never)
+            | undefined
+        }
+      : {
+          args?:
+            | allArgs // show all options
+            | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
+            | undefined
+        }
+  >
 
-export type GetAbiItemReturnType<
-  abi extends Abi | readonly unknown[] = Abi,
-  name extends AbiItemName<abi> = AbiItemName<abi>,
-  args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
-> = abi extends Abi
-  ? Abi extends abi
-    ? AbiItem | undefined
-    : ExtractAbiItemForArgs<
-        abi,
-        name,
-        args extends AbiItemArgs<abi, name> ? args : AbiItemArgs<abi, name>
-      >
-  : AbiItem | undefined
+  type ReturnType<
+    abi extends Abi | readonly unknown[] = Abi,
+    name extends AbiItemName<abi> = AbiItemName<abi>,
+    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
+  > = abi extends Abi
+    ? Abi extends abi
+      ? AbiItem | undefined
+      : ExtractAbiItemForArgs<
+          abi,
+          name,
+          args extends AbiItemArgs<abi, name> ? args : AbiItemArgs<abi, name>
+        >
+    : AbiItem | undefined
+
+  type ErrorType = GlobalErrorType
+}
 
 /**
  * Extracts an ABI Item from an ABI given a name and optional arguments.
@@ -70,25 +74,7 @@ export type GetAbiItemReturnType<
  * ```ts
  * import { Abi } from 'ox'
  *
- * const encodedData = getAbiItem({
- *   abi: [
- *     {
- *       name: 'x',
- *       type: 'function',
- *       inputs: [{ type: 'uint256' }],
- *       outputs: [],
- *       stateMutability: 'payable'
- *     },
- *     {
- *       name: 'z',
- *       type: 'function',
- *       inputs: [{ type: 'string' }],
- *       outputs: [{ type: 'uint256' }],
- *       stateMutability: 'view'
- *     }
- *   ],
- *   name: 'y',
- * })
+ * const abiItem = extractAbiItem(abi, { name: 'y' })
  *
  * // {
  * //   name: 'y',
@@ -100,14 +86,15 @@ export type GetAbiItemReturnType<
  *
  * ```
  */
-export function getAbiItem<
+export function extractAbiItem<
   const abi extends Abi | readonly unknown[],
   name extends AbiItemName<abi>,
   const args extends AbiItemArgs<abi, name> | undefined = undefined,
 >(
-  parameters: GetAbiItemParameters<abi, name, args>,
-): GetAbiItemReturnType<abi, name, args> {
-  const { abi, args = [], name } = parameters as unknown as GetAbiItemParameters
+  abi: abi,
+  options: extractAbiItem.Options<abi, name, args>,
+): extractAbiItem.ReturnType<abi, name, args> {
+  const { args = [], name } = options as unknown as extractAbiItem.Options
 
   const isSelector = isHex(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
@@ -120,16 +107,16 @@ export function getAbiItem<
   })
 
   if (abiItems.length === 0)
-    return undefined as GetAbiItemReturnType<abi, name, args>
+    return undefined as extractAbiItem.ReturnType<abi, name, args>
   if (abiItems.length === 1)
-    return abiItems[0] as GetAbiItemReturnType<abi, name, args>
+    return abiItems[0] as extractAbiItem.ReturnType<abi, name, args>
 
   let matchedAbiItem: AbiItem | undefined = undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
       if (!abiItem.inputs || abiItem.inputs.length === 0)
-        return abiItem as GetAbiItemReturnType<abi, name, args>
+        return abiItem as extractAbiItem.ReturnType<abi, name, args>
       continue
     }
     if (!abiItem.inputs) continue
@@ -170,8 +157,8 @@ export function getAbiItem<
   }
 
   if (matchedAbiItem)
-    return matchedAbiItem as GetAbiItemReturnType<abi, name, args>
-  return abiItems[0] as GetAbiItemReturnType<abi, name, args>
+    return matchedAbiItem as extractAbiItem.ReturnType<abi, name, args>
+  return abiItems[0] as extractAbiItem.ReturnType<abi, name, args>
 }
 
 /** @internal */

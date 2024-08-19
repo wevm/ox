@@ -8,19 +8,18 @@ import { readGzippedJson } from '../utils.js'
 
 const vectors = await readGzippedJson(join(import.meta.dir, './abi.json.gz'))
 
-describe('Abi.encode', () => {
+describe('Abi.encodeParameters', () => {
   vectors.forEach((v, i) => {
     test(`${i}`, () => {
-      expect(Abi.encode(v.parameters, v.values)).toEqual(v.encoded)
+      expect(Abi.encodeParameters(v.parameters, v.values)).toEqual(v.encoded)
     })
   })
 })
 
-// TODO
-// describe.skip('Abi.decode', () => {
-//   vectors.forEach((v, i) => {
-//     test(`${i}`, () => {
-//       expect(Abi.decode(v.parameters, v.encoded)).toEqual(v.values)
-//     });
-//   });
-// })
+describe.skip('Abi.decodeParameters', () => {
+  vectors.forEach((v, i) => {
+    test(`${i}`, () => {
+      expect(Abi.decodeParameters(v.parameters, v.encoded)).toEqual(v.values)
+    })
+  })
+})

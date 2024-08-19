@@ -1,11 +1,11 @@
 import { AbiCoder } from 'ethers'
 import { bench, describe } from 'vitest'
 import { address } from '../../../test/constants/addresses.js'
-import { encodeAbi } from './encode.js'
+import { encodeAbiParameters } from './encodeParameters.js'
 
 describe('ABI Encode', () => {
   bench('ox: `encodeAbi`', () => {
-    encodeAbi(
+    encodeAbiParameters(
       [
         {
           components: [
@@ -144,7 +144,7 @@ describe('ABI Encode', () => {
 
 describe('Seaport function', () => {
   bench('ox: `encodeAbi`', () => {
-    encodeAbi(
+    encodeAbiParameters(
       [
         {
           components: [

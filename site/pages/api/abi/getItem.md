@@ -2,9 +2,9 @@
 description: Extracts an ABI Item from an ABI.
 ---
 
-# Abi.getItem
+# Abi.extractItem
 
-**Alias:** `getAbiItem`
+**Alias:** `extractAbiItem`
 
 Extracts an ABI Item from an ABI given a `name` and optional `args`.
 
@@ -17,7 +17,7 @@ import { Abi } from 'ox'
 
 // Entrypoint Imports
 import * as Abi from 'ox/Abi'
-import { getAbiItem } from 'ox/Abi'
+import { extractAbiItem } from 'ox/Abi'
 ```
 
 ## Usage
@@ -25,8 +25,8 @@ import { getAbiItem } from 'ox/Abi'
 ```ts twoslash
 import { Abi } from 'ox'
 
-const data = Abi.getItem({
-  abi: [
+const abiItem = Abi.extractItem(
+  [
     { 
       name: 'x', 
       type: 'function', 
@@ -48,9 +48,11 @@ const data = Abi.getItem({
       outputs: [{ type: 'uint256' }],
       stateMutability: 'view'
     }
-  ],
-  name: 'y',
-})
+  ], 
+  {
+    name: 'y',
+  }
+)
 /**
  * { 
  *  name: 'y', 
@@ -77,10 +79,12 @@ The ABI item.
 The contract's ABI.
 
 ```ts 
-const data = Abi.getItem({
-  abi: [...], // [!code focus]
-  name: 'x',
-})
+const abiItem = Abi.extractItem(
+  [...], // [!code focus]
+  {
+    name: 'x',
+  }
+)
 ```
 
 ### name
@@ -90,19 +94,23 @@ const data = Abi.getItem({
 Name of the ABI item to extract.
 
 ```ts
-const data = Abi.getItem({
-  abi: [...],
-  name: 'x', // [!code focus]
-})
+const abiItem = Abi.extractItem(
+  [...],
+  {
+    name: 'x', // [!code focus]
+  }
+)
 ```
 
 You can also provide the ABI item's 4byte selector:
 
 ```ts
-const data = Abi.getItem({
-  abi: [...],
-  name: '0x70a08231', // [!code focus]
-})
+const abiItem = Abi.extractItem(
+  [...],
+  {
+    name: '0x70a08231', // [!code focus]
+  }
+)
 ```
 
 ### args (optional)
@@ -112,9 +120,11 @@ const data = Abi.getItem({
 Optional arguments to identify function overrides.
 
 ```ts
-const data = Abi.getItem({
-  abi: [...],
-  name: 'y',
-  args: ['0x0000000000000000000000000000000000000000'], // [!code focus]
-})
+const abiItem = Abi.extractItem(
+  [...],
+  {
+    name: 'y',
+    args: ['0x0000000000000000000000000000000000000000'], // [!code focus]
+  }
+)
 ```

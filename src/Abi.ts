@@ -14,9 +14,20 @@ export type {
   AbiParameter as Parameter,
 } from 'abitype'
 
-export { encodeAbi, encodeAbi as encode } from './internal/abi/encode.js'
+export {
+  encodeAbiParameters,
+  encodeAbiParameters as encodeParameters,
+} from './internal/abi/encodeParameters.js'
 
-export { getAbiItem, getAbiItem as getItem } from './internal/abi/getItem.js'
+export {
+  decodeAbiParameters,
+  decodeAbiParameters as decodeParameters,
+} from './internal/abi/decodeParameters.js'
+
+export {
+  extractAbiItem,
+  extractAbiItem as extractItem,
+} from './internal/abi/extractItem.js'
 
 export { getSelector } from './internal/abi/getSelector.js'
 

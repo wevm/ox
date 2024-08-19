@@ -4,10 +4,12 @@ import * as exports from './Abi.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "encodeAbi",
-      "encode",
-      "getAbiItem",
-      "getItem",
+      "encodeAbiParameters",
+      "encodeParameters",
+      "decodeAbiParameters",
+      "decodeParameters",
+      "extractAbiItem",
+      "extractItem",
       "getSelector",
       "getSignature",
       "getSignatureHash",
