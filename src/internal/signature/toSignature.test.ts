@@ -1,0 +1,57 @@
+import { Signature } from 'ox'
+import { expect, test } from 'vitest'
+
+test('default', () => {
+  const signature = {
+    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    yParity: 1,
+  } as const
+  expect(Signature.from(signature)).toMatchInlineSnapshot(`
+    {
+      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "yParity": 1,
+    }
+  `)
+
+  expect(Signature.from(Signature.toCompact(signature))).toEqual(signature)
+  expect(Signature.from(Signature.serialize(signature))).toEqual(signature)
+  expect(
+    Signature.from(Signature.serialize(signature, { to: 'bytes' })),
+  ).toEqual(signature)
+})
+
+test('behavior: legacy', () => {
+  const signature = {
+    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    v: 27,
+  } as const
+  expect(Signature.from(signature)).toMatchInlineSnapshot(`
+    {
+      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "yParity": 0,
+    }
+  `)
+
+  expect(Signature.from(Signature.serialize(signature))).toMatchInlineSnapshot(
+    `
+    {
+      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "yParity": 0,
+    }
+  `,
+  )
+  expect(
+    Signature.from(Signature.serialize(signature, { to: 'bytes' })),
+  ).toMatchInlineSnapshot(`
+    {
+      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "yParity": 0,
+    }
+  `)
+})

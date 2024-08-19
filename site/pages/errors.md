@@ -318,6 +318,75 @@ Pass a valid hex string value in the format of `"0x{0-9A-Fa-f}"`.
 
 TODO
 
+## `InvalidSerializedSignatureSizeError`
+
+### Why?
+
+The provided serialized bytes or hex signature is of an invalid length/size. A signature must be 64 bytes (for compact signatures) or 65 bytes.
+
+### Example
+
+```ts
+Signature.from('0xdeadbeef')
+```
+
+```
+InvalidSerializedSignatureSizeError: Value `0xdeadbeef` is an invalid 
+signature size. Expected: 64 (compact) or 65 bytes. Received 4 bytes.
+```
+
+### Solution
+
+Pass a valid 64 or 65 byte signature value.
+
+## `InvalidSignatureVError`
+
+### Why?
+
+The provided v value is not valid. A valid v value must be 27, 28, or above 35.
+
+### Example
+
+```ts
+Signature.from({
+  r: ...,
+  s: ...,
+  yParity: 5
+})
+```
+
+```
+InvalidSignatureVError: Value `5` is an invalid v value.
+```
+
+### Solution
+
+Pass a valid v value (27, 28, or above 35).
+
+## `InvalidSignatureYParityError`
+
+### Why?
+
+The provided y-parity value is not valid. A valid y-parity value must be 0 or 1.
+
+### Example
+
+```ts
+Signature.from({
+  r: ...,
+  s: ...,
+  yParity: 69
+})
+```
+
+```
+InvalidSignatureYParityError: Value `69` is an invalid y-parity value.
+```
+
+### Solution
+
+Pass a valid y-parity value (0 or 1).
+
 ## `InvalidTypeError`
 
 ### Why?

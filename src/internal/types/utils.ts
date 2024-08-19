@@ -127,9 +127,6 @@ type Assign_<T, U> = {
     : K]: K extends keyof U ? U[K] : T[K]
 }
 
-// TODO: Remove when peer dep `typescript@>=4.5` (NoInfer is native)
-export type NoInfer<type> = [type][type extends any ? 0 : never]
-
 /**
  * @description Constructs a type by excluding `undefined` from `T`.
  *

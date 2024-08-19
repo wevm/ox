@@ -51,24 +51,24 @@ export default defineConfig({
             { text: '.encodeParameters', link: '/api/abi/encodeParameters' },
             { text: '.decodeParameters', link: '/api/abi/decodeParameters' },
             { text: '.extractItem', link: '/api/abi/getItem' },
-            { text: '.formatAbi', link: '/api/abi/formatAbi' },
-            { text: '.formatAbiItem', link: '/api/abi/formatAbiItem' },
+            { text: '.formatAbi 🚧', link: '/api/abi/formatAbi' },
+            { text: '.formatAbiItem 🚧', link: '/api/abi/formatAbiItem' },
             {
-              text: '.formatAbiParameter',
+              text: '.formatAbiParameter 🚧',
               link: '/api/abi/formatAbiParameter',
             },
             {
-              text: '.formatAbiParameters',
+              text: '.formatAbiParameters 🚧',
               link: '/api/abi/formatAbiParameters',
             },
-            { text: '.parseAbi', link: '/api/abi/parseAbi' },
-            { text: '.parseAbiItem', link: '/api/abi/parseAbiItem' },
+            { text: '.parseAbi 🚧', link: '/api/abi/parseAbi' },
+            { text: '.parseAbiItem 🚧', link: '/api/abi/parseAbiItem' },
             {
-              text: '.parseAbiParameter',
+              text: '.parseAbiParameter 🚧',
               link: '/api/abi/parseAbiParameter',
             },
             {
-              text: '.parseAbiParameters',
+              text: '.parseAbiParameters 🚧',
               link: '/api/abi/parseAbiParameters',
             },
             {
@@ -391,29 +391,17 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Signature 🚧',
+          text: 'Signature',
           collapsed: true,
           link: '/api/signature',
           items: [
             { text: '.from', link: '/api/signature/from' },
             { text: '.fromCompact', link: '/api/signature/fromCompact' },
-            { text: '.fromSerialized', link: '/api/signature/fromSerialized' },
+            { text: '.deserialize', link: '/api/signature/deserialize' },
             { text: '.serialize', link: '/api/signature/serialize' },
-            {
-              text: '.serializeCompact',
-              link: '/api/signature/serializeCompact',
-            },
             {
               text: '.toCompact',
               link: '/api/signature/toCompact',
-            },
-            {
-              text: '.vToYParity',
-              link: '/api/signature/vToYParity',
-            },
-            {
-              text: '.yParityToV',
-              link: '/api/signature/yParityToV',
             },
           ],
         },
