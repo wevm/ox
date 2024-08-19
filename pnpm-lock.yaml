@@ -91,9 +91,6 @@ importers:
       '@types/react':
         specifier: ^18.3.3
         version: 18.3.3
-      effect:
-        specifier: ^3.6.4
-        version: 3.6.4
       neverthrow:
         specifier: ^7.0.1
         version: 7.0.1
@@ -2265,9 +2262,6 @@ packages:
 
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
-
-  effect@3.6.4:
-    resolution: {integrity: sha512-nNsn+Uw/n4bHKR8w45IIuYGLCgHsQodjRPB+BHreylQJ89W3iLc/Av9CiL9uvtO/ERp4e3oy5wrTO2J2pkbRRw==}
 
   electron-to-chromium@1.5.6:
     resolution: {integrity: sha512-jwXWsM5RPf6j9dPYzaorcBSUg6AiqocPEyMpkchkvntaH9HGfOOMZwxMJjDY/XEs3T5dM7uyH1VhRMkqUU9qVw==}
@@ -6732,8 +6726,6 @@ snapshots:
       wcwidth: 1.0.1
 
   ee-first@1.1.1: {}
-
-  effect@3.6.4: {}
 
   electron-to-chromium@1.5.6: {}
 
