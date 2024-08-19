@@ -6,10 +6,10 @@ The **Abi** Module provides a set of utility functions for encoding, decoding, a
 // @noErrors
 import { Abi } from 'ox'
 
-const data = Abi.encode(['uint256', 'boolean', 'string'], [1n, true, 'hello'])
+const data = Abi.encodeParameters(['uint256', 'boolean', 'string'], [1n, true, 'hello'])
 // '0x...'
 
-const arguments = Abi.decode(['uint256', 'boolean', 'string'], data)
+const arguments = Abi.encodeParameters(['uint256', 'boolean', 'string'], data)
 // [1n, true, 'hello']
 
 const selector = Abi.getSelector('approve(address,uint256)')

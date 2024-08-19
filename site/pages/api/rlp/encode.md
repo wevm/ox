@@ -4,7 +4,7 @@ title: Encodes a value into RLP format.
 
 # Rlp.encode
 
-- **Alias:** `toRlp`
+- **Alias:** `encodeRlp`
 
 Encodes a [Bytes](/api/bytes) or [Hex](/api/hex) value into a [Recursive-Length Prefix (RLP)](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) value.
 
@@ -17,7 +17,7 @@ import { Rlp } from 'ox'
 
 // Entrypoint Imports
 import * as Rlp from 'ox/Rlp'
-import { toRlp } from 'ox/Rlp'
+import { encodeRlp } from 'ox/Rlp'
 ```
 
 ## Usage

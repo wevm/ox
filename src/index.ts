@@ -1,6 +1,7 @@
 export * as Abi from './Abi.js'
 export * as Address from './Address.js'
 export * as Caches from './Caches.js'
+export * as Constants from './Constants.js'
 export * as Bytes from './Bytes.js'
 export * as Data from './Data.js'
 export * as Errors from './Errors.js'

@@ -4,7 +4,7 @@ title: Decodes an RLP value.
 
 # Rlp.decode
 
-- **Alias:** `fromRlp`
+- **Alias:** `decodeRlp`
 
 Decodes a [Recursive-Length Prefix (RLP)](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) value into a [Bytes](/api/bytes) or [Hex](/api/hex) value.
 
@@ -17,7 +17,7 @@ import { Rlp } from 'ox'
 
 // Entrypoint Imports
 import * as Rlp from 'ox/Rlp'
-import { fromRlp } from 'ox/Rlp'
+import { decodeRlp } from 'ox/Rlp'
 ```
 
 ## Usage

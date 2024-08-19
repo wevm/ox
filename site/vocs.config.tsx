@@ -43,12 +43,13 @@ export default defineConfig({
           collapsed: true,
           link: '/api/abi',
           items: [
-            { text: '.encode', link: '/api/abi/encode' },
             {
               text: '.encodePacked',
               link: '/api/abi/encodePacked',
             },
-            { text: '.decode', link: '/api/abi/decode' },
+            { text: '.encodeParameters', link: '/api/abi/encodeParameters' },
+            { text: '.decodeParameters', link: '/api/abi/decodeParameters' },
+            { text: '.extractItem', link: '/api/abi/getItem' },
             { text: '.formatAbi', link: '/api/abi/formatAbi' },
             { text: '.formatAbiItem', link: '/api/abi/formatAbiItem' },
             {
@@ -69,7 +70,6 @@ export default defineConfig({
               text: '.parseAbiParameters',
               link: '/api/abi/parseAbiParameters',
             },
-            { text: '.getAbiItem', link: '/api/abi/getAbiItem' },
             {
               text: '.getSelector',
               link: '/api/abi/getSelector',

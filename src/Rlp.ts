@@ -1,18 +1,18 @@
 export {
-  fromRlp,
-  fromRlp as decode,
+  decodeRlp,
+  decodeRlp as decode,
   rlpToBytes,
   rlpToBytes as toBytes,
   rlpToHex,
   rlpToHex as toHex,
-} from './internal/rlp/fromRlp.js'
+} from './internal/rlp/decode.js'
 
 export {
   type RecursiveArray,
-  toRlp,
-  toRlp as encode,
+  encodeRlp,
+  encodeRlp as encode,
   bytesToRlp,
   bytesToRlp as fromBytes,
   hexToRlp,
   hexToRlp as fromHex,
-} from './internal/rlp/toRlp.js'
+} from './internal/rlp/encode.js'

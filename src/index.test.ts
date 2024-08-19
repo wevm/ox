@@ -7,6 +7,7 @@ test('exports', () => {
       "Abi",
       "Address",
       "Caches",
+      "Constants",
       "Bytes",
       "Data",
       "Errors",
