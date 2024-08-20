@@ -1,6 +1,28 @@
 import type { TypedData } from 'abitype'
 import type { GlobalErrorType } from '../errors/error.js'
 
+// TODO: Add error for `primaryType` not in `types`
+
+/**
+ * Encodes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for the provided primaryType.
+ *
+ * - Docs: https://oxlib.sh/api/typedData/encodeType
+ *
+ * @example
+ * import { TypedData } from 'ox'
+ *
+ * TypedData.encodeType({
+ *   types: {
+ *     Foo: [
+ *       { name: 'address', type: 'address' },
+ *       { name: 'name', type: 'string' },
+ *       { name: 'foo', type: 'string' },
+ *     ],
+ *   },
+ *   primaryType: 'Foo',
+ * })
+ * // 'Foo(address address,string name,string foo)'
+ */
 export function encodeType(value: encodeType.Value): encodeType.ReturnType {
   const { primaryType, types } = value
 

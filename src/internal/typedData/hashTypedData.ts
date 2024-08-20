@@ -10,6 +10,31 @@ import { hashDomain } from './hashDomain.js'
 import { hashStruct } from './hashStruct.js'
 import { validateTypedData } from './validateTypedData.js'
 
+/**
+ * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
+ *
+ * - Docs: https://oxlib.sh/api/typedData/hash
+ *
+ * @example
+ * import { TypedData } from 'ox'
+ *
+ * TypedData.hash({
+ *   types: {
+ *     Foo: [
+ *       { name: 'address', type: 'address' },
+ *       { name: 'name', type: 'string' },
+ *       { name: 'foo', type: 'string' },
+ *     ],
+ *   },
+ *   primaryType: 'Foo',
+ *   message: {
+ *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+ *     name: 'jxom',
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+ *   },
+ * })
+ * // '0x7ef8d6931ed54977c7593289c0feb25c7d7424fb997f4fc20aa3fe51b5141188'
+ */
 export function hashTypedData<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',

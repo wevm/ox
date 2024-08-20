@@ -7,6 +7,34 @@ import { toHex } from '../hex/toHex.js'
 import type { Hex } from '../types/data.js'
 import { encodeType } from './encodeType.js'
 
+// TODO: Add error for `primaryType` not in `types`
+// TODO: Add type inference?
+
+/**
+ * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) struct.
+ *
+ * - Docs: https://oxlib.sh/api/typedData/hashStruct
+ *
+ * @example
+ * import { TypedData } from 'ox'
+ *
+ * TypedData.hashStruct({
+ *   types: {
+ *     Foo: [
+ *       { name: 'address', type: 'address' },
+ *       { name: 'name', type: 'string' },
+ *       { name: 'foo', type: 'string' },
+ *     ],
+ *   },
+ *   primaryType: 'Foo',
+ *   data: {
+ *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+ *     name: 'jxom',
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+ *   },
+ * })
+ * // '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
+ */
 export function hashStruct(value: hashStruct.Value): hashStruct.ReturnType {
   const { data, primaryType, types } = value
   const encoded = encodeData({
