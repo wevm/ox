@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { parseSiweMessage } from './parseSiweMessage.js'
+import { parseSiweMessage } from './parseMessage.js'
 
 test('default', () => {
   const message = `example.com wants you to sign in with your Ethereum account:

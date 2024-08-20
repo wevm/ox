@@ -1,8 +1,8 @@
 import type { GlobalErrorType } from 'src/Errors.js'
 import { toAddress } from '../address/from.js'
 import { SiweInvalidMessageFieldError } from '../errors/siwe.js'
-import { isUri } from './isUri.js'
 import type { SiweMessage } from '../types/siwe.js'
+import { isUri } from './isUri.js'
 
 /**
  * Creates EIP-4361 formatted message.

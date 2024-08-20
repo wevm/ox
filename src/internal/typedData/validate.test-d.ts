@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 
-import { validateTypedData } from './validateTypedData.js'
+import { validateTypedData } from './validate.js'
 
 const EIP712Domain = [
   { name: 'name', type: 'string' },

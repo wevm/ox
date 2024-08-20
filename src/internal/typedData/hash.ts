@@ -8,7 +8,7 @@ import type { TypedDataDefinition } from '../types/typedData.js'
 import { extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { hashDomain } from './hashDomain.js'
 import { hashStruct } from './hashStruct.js'
-import { validateTypedData } from './validateTypedData.js'
+import { validateTypedData } from './validate.js'
 
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).

@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { validateTypedData } from './validateTypedData.js'
+import { validateTypedData } from './validate.js'
 
 test('default', () => {
   validateTypedData({

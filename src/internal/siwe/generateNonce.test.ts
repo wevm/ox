@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { generateSiweNonce } from './generateSiweNonce.js'
+import { generateSiweNonce } from './generateNonce.js'
 
 test('default', () => {
   const nonce = generateSiweNonce()

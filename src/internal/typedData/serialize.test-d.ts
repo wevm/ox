@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 
-import { serializeTypedData } from './serializeTypedData.js'
+import { serializeTypedData } from './serialize.js'
 
 const EIP712Domain = [
   { name: 'name', type: 'string' },

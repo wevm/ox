@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { serializeTypedData } from './serializeTypedData.js'
+import { serializeTypedData } from './serialize.js'
 
 test('default', () => {
   expect(

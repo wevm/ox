@@ -7,7 +7,7 @@ export { extractEip712DomainTypes } from './internal/typedData/extractEip712Doma
 export {
   hashTypedData as hash,
   hashTypedData,
-} from './internal/typedData/hashTypedData.js'
+} from './internal/typedData/hash.js'
 
 export { hashDomain } from './internal/typedData/hashDomain.js'
 
@@ -16,9 +16,9 @@ export { hashStruct } from './internal/typedData/hashStruct.js'
 export {
   serializeTypedData as serialize,
   serializeTypedData,
-} from './internal/typedData/serializeTypedData.js'
+} from './internal/typedData/serialize.js'
 
 export {
   validateTypedData as validate,
   validateTypedData,
-} from './internal/typedData/validateTypedData.js'
+} from './internal/typedData/validate.js'
