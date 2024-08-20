@@ -17,6 +17,7 @@ test('exports', () => {
       "Signature",
       "Rlp",
       "Siwe",
+      "TransactionEnvelope",
       "TypedData",
       "Types",
       "Value",

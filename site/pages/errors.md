@@ -136,6 +136,10 @@ Remove one of the ambiguous items in the ABI.
 
 TODO
 
+## `CannotInferTransactionTypeError`
+
+TODO
+
 ## `IntegerOutOfRangeError`
 
 ### Why?

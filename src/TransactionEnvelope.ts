@@ -1,0 +1,32 @@
+export {
+  toTransactionEnvelope,
+  toTransactionEnvelope as from,
+  toTransactionEnvelopeLegacy,
+  toTransactionEnvelopeLegacy as fromLegacy,
+  toTransactionEnvelopeEip1559,
+  toTransactionEnvelopeEip1559 as fromEip1559,
+  toTransactionEnvelopeEip2930,
+  toTransactionEnvelopeEip2930 as fromEip2930,
+  toTransactionEnvelopeEip4844,
+  toTransactionEnvelopeEip4844 as fromEip4844,
+  toTransactionEnvelopeEip7702,
+  toTransactionEnvelopeEip7702 as fromEip7702,
+} from './internal/transactionEnvelope/toTransactionEnvelope.js'
+
+export type {
+  TransactionEnvelope,
+  TransactionEnvelopeBase,
+  TransactionEnvelopeBase as Base,
+  TransactionEnvelopeEip1559,
+  TransactionEnvelopeEip1559 as Eip1559,
+  TransactionEnvelopeEip2930,
+  TransactionEnvelopeEip2930 as Eip2930,
+  TransactionEnvelopeEip4844,
+  TransactionEnvelopeEip4844 as Eip4844,
+  TransactionEnvelopeEip7702,
+  TransactionEnvelopeEip7702 as Eip7702,
+  TransactionEnvelopeLegacy,
+  TransactionEnvelopeLegacy as Legacy,
+  TransactionType,
+  TransactionType as Type,
+} from './internal/types/transactionEnvelope.js'
