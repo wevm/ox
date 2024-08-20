@@ -7,6 +7,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Encodes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for the provided primaryType.
  *
  * - Docs: https://oxlib.sh/api/typedData/encodeType
+ * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-encodetype
  *
  * @example
  * import { TypedData } from 'ox'

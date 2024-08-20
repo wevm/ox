@@ -9,6 +9,7 @@ import { hashDomain } from './hashDomain.js'
  * Creates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) domainSeparator for the provided domain.
  *
  * - Docs: https://oxlib.sh/api/typedData/domainSeparator
+ * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
  *
  * @example
  * import { TypedData } from 'ox'

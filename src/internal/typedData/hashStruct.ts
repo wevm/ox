@@ -14,6 +14,7 @@ import { encodeType } from './encodeType.js'
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) struct.
  *
  * - Docs: https://oxlib.sh/api/typedData/hashStruct
+ * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct
  *
  * @example
  * import { TypedData } from 'ox'
