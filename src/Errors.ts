@@ -20,3 +20,7 @@ export {
 } from './internal/errors/data.js'
 
 export type { GlobalErrorType } from './internal/errors/error.js'
+
+export { SiweInvalidMessageFieldError } from './internal/errors/siwe.js'
+
+export { InvalidPrimaryTypeError } from './internal/errors/typedData.js'

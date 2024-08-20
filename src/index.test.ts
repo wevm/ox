@@ -16,6 +16,7 @@ test('exports', () => {
       "Secp256k1",
       "Signature",
       "Rlp",
+      "Siwe",
       "TypedData",
       "Types",
       "Value",

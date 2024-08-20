@@ -17,6 +17,8 @@ test('exports', () => {
       "SizeExceedsPaddingSizeError",
       "SizeOverflowError",
       "SliceOffsetOutOfBoundsError",
+      "SiweInvalidMessageFieldError",
+      "InvalidPrimaryTypeError",
     ]
   `)
 })
