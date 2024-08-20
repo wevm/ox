@@ -6,7 +6,7 @@ description: Encodes a Hex value to Bytes.
 
 **Alias:** `hexToBytes`
 
-Encodes a [Hex](#TODO) value to **[Bytes](/api/bytes)**.
+Encodes a [Hex](/api/hex) value to **[Bytes](/api/bytes)**.
 
 ## Imports
 

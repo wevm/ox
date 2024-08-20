@@ -4,7 +4,7 @@ description: Computes the selector for an ABI Item.
 
 # Abi.getSelector
 
-Computes the selector for an ABI Item.
+Computes the 4-byte selector for an ABI Item.
 
 Useful for computing function selectors for calldata.
 

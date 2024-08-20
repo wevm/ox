@@ -12,3 +12,10 @@ const data = Rlp.encode([Hex.from('hello'), Hex.from('world')])
 const values = Rlp.decode(data)
 // [Hex.from('hello'), Hex.from('world')]
 ```
+
+## Functions
+
+| Function                        | Description                    |
+| ------------------------------- | ------------------------------ |
+| [`Rlp.encode`](/api/rlp/encode) | Encodes a value to RLP format. |
+| [`Rlp.decode`](/api/rlp/decode) | Decodes an RLP value.          |

@@ -6,7 +6,7 @@ description: Calculates the ripemd160 hash of Bytes or a Hex value.
 
 Calculates the [ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of [Bytes](/api/bytes) or a [Hex](/api/hex) value.
 
-This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) – an audited & minimal JS hashing library.
+This function is a re-export of `ripemd160` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) – an audited & minimal JS hashing library.
 
 ## Imports
 
