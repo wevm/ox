@@ -39,14 +39,14 @@ export function serializeTypedData<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
 >(
-  parameters: serializeTypedData.Parameters<typedData, primaryType>,
+  value: serializeTypedData.Value<typedData, primaryType>,
 ): serializeTypedData.ReturnType {
   const {
     domain: domain_,
     message: message_,
     primaryType,
     types,
-  } = parameters as unknown as serializeTypedData.Parameters
+  } = value as unknown as serializeTypedData.Value
 
   const normalizeData = (
     struct: readonly TypedDataParameter[],
@@ -76,7 +76,7 @@ export function serializeTypedData<
 }
 
 export declare namespace serializeTypedData {
-  type Parameters<
+  type Value<
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
   > = TypedDataDefinition<typedData, primaryType>

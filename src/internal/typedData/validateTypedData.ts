@@ -47,9 +47,9 @@ import type { TypedDataDefinition } from '../types/typedData.js'
 export function validateTypedData<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
->(parameters: validateTypedData.Parameters<typedData, primaryType>) {
+>(value: validateTypedData.Value<typedData, primaryType>) {
   const { domain, message, primaryType, types } =
-    parameters as unknown as validateTypedData.Parameters
+    value as unknown as validateTypedData.Value
 
   const validateData = (
     struct: readonly TypedDataParameter[],
@@ -105,7 +105,7 @@ export function validateTypedData<
 }
 
 export declare namespace validateTypedData {
-  type Parameters<
+  type Value<
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
   > = TypedDataDefinition<typedData, primaryType>

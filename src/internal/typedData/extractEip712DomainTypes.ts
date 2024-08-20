@@ -1,4 +1,5 @@
 import type { TypedDataDomain, TypedDataParameter } from 'abitype'
+import type { GlobalErrorType } from '../errors/error.js'
 
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
@@ -32,4 +33,8 @@ export function extractEip712DomainTypes(
     },
     domain?.salt && { name: 'salt', type: 'bytes32' },
   ].filter(Boolean) as TypedDataParameter[]
+}
+
+export declare namespace extractEip712DomainTypes {
+  type ErrorType = GlobalErrorType
 }
