@@ -8,6 +8,8 @@ export {
   generateSiweNonce,
 } from './internal/siwe/generateSiweNonce.js'
 
+export { isUri } from './internal/siwe/isUri.js'
+
 export {
   parseSiweMessage as parseMessage,
   parseSiweMessage,

@@ -413,33 +413,33 @@ export default defineConfig({
             },
           ],
         },
-        // {
-        //   text: 'Siwe (ERC-4361) 🚧',
-        //   collapsed: true,
-        //   link: '/api/siwe',
-        //   items: [
-        //     {
-        //       text: '.createMessage',
-        //       link: '/api/siwe/createMessage',
-        //     },
-        //     {
-        //       text: '.generateNonce',
-        //       link: '/api/siwe/generateNonce',
-        //     },
-        //     {
-        //       text: '.isUri',
-        //       link: '/api/siwe/isUri',
-        //     },
-        //     {
-        //       text: '.parseMessage',
-        //       link: '/api/siwe/parseMessage',
-        //     },
-        //     {
-        //       text: '.validateMessage',
-        //       link: '/api/siwe/validateMessage',
-        //     },
-        //   ],
-        // },
+        {
+          text: 'Siwe (ERC-4361) 🚧',
+          collapsed: true,
+          link: '/api/siwe',
+          items: [
+            {
+              text: '.createMessage',
+              link: '/api/siwe/createMessage',
+            },
+            {
+              text: '.generateNonce',
+              link: '/api/siwe/generateNonce',
+            },
+            {
+              text: '.isUri',
+              link: '/api/siwe/isUri',
+            },
+            {
+              text: '.parseMessage',
+              link: '/api/siwe/parseMessage',
+            },
+            {
+              text: '.validateMessage',
+              link: '/api/siwe/validateMessage',
+            },
+          ],
+        },
         {
           text: 'Transaction 🚧',
           collapsed: true,

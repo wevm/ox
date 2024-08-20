@@ -1,7 +1,19 @@
-/** @internal */
-export function isUri(value: string) {
-  // based on https://github.com/ogt/valid-url
+// based on https://github.com/ogt/valid-url
 
+/**
+ * Check if the given URI is a valid URI.
+ *
+ * - Docs: https://oxlib.sh/api/siwe/isUri
+ * - Spec: https://www.rfc-editor.org/rfc/rfc3986
+ *
+ * @example
+ * import { Siwe } from 'ox'
+ *
+ * Siwe.isUri('https://example.com/foo')
+ * // true
+ */
+
+export function isUri(value: string) {
   // check for illegal characters
   if (/[^a-z0-9\:\/\?\#\[\]\@\!\$\&\'\(\)\*\+\,\;\=\.\-\_\~\%]/i.test(value))
     return false
