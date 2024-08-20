@@ -12,7 +12,6 @@
  * Siwe.isUri('https://example.com/foo')
  * // true
  */
-
 export function isUri(value: string) {
   // check for illegal characters
   if (/[^a-z0-9\:\/\?\#\[\]\@\!\$\&\'\(\)\*\+\,\;\=\.\-\_\~\%]/i.test(value))

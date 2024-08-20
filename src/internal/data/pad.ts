@@ -66,6 +66,17 @@ padRight.parseError = (error: unknown) => error as padRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
+export function pad<value extends Bytes | Hex>(
+  value: value,
+  options: pad.Options = {},
+): pad.ReturnType<value> {
+  const { dir, size = 32 } = options
+  if (typeof value === 'string')
+    return padHex(value, { dir, size }) as pad.ReturnType<value>
+  return padBytes(value, { dir, size }) as pad.ReturnType<value>
+}
+
 export declare namespace pad {
   type Options = {
     dir?: 'left' | 'right' | undefined
@@ -75,15 +86,6 @@ export declare namespace pad {
   type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
 
   type ErrorType = padHex.ErrorType | padBytes.ErrorType | GlobalErrorType
-}
-function pad<value extends Bytes | Hex>(
-  value: value,
-  options: pad.Options = {},
-): pad.ReturnType<value> {
-  const { dir, size = 32 } = options
-  if (typeof value === 'string')
-    return padHex(value, { dir, size }) as pad.ReturnType<value>
-  return padBytes(value, { dir, size }) as pad.ReturnType<value>
 }
 
 export declare namespace padHex {
