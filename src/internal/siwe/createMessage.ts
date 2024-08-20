@@ -1,5 +1,5 @@
-import type { GlobalErrorType } from 'src/Errors.js'
 import { toAddress } from '../address/from.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { SiweInvalidMessageFieldError } from '../errors/siwe.js'
 import type { SiweMessage } from '../types/siwe.js'
 import { isUri } from './isUri.js'

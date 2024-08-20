@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from 'src/Errors.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { getCreate2Address } from './getCreate2Address.js'
 import { getCreateAddress } from './getCreateAddress.js'
 
