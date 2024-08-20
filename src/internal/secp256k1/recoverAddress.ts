@@ -1,7 +1,7 @@
 import type { Address } from 'abitype'
 
-import type { GlobalErrorType } from '../errors/error.js'
 import { publicKeyToAddress } from '../address/fromPublicKey.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { recoverPublicKey } from './recoverPublicKey.js'
 
 type To = 'bytes' | 'hex'

@@ -1,9 +1,9 @@
 import type { Address } from 'abitype'
 
-import type { Bytes, Hex } from '../types/data.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
 import { toHex } from '../hex/toHex.js'
-import type { GlobalErrorType } from '../errors/error.js'
+import type { Bytes, Hex } from '../types/data.js'
 import { toAddress } from './from.js'
 
 /**

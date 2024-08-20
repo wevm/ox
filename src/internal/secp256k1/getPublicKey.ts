@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
-import type { Bytes, Hex } from '../types/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
+import type { Bytes, Hex } from '../types/data.js'
 
 type To = 'bytes' | 'hex'
 

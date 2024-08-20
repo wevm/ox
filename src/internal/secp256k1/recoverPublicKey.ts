@@ -1,10 +1,10 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
-import type { Bytes, Hex } from '../types/data.js'
-import type { Signature } from '../types/signature.js'
+import { toBytes } from '../bytes/toBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
-import { toBytes } from '../bytes/toBytes.js'
+import type { Bytes, Hex } from '../types/data.js'
+import type { Signature } from '../types/signature.js'
 
 type To = 'bytes' | 'hex'
 

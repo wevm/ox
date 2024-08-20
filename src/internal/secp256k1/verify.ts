@@ -1,10 +1,10 @@
 import type { Address } from 'abitype'
 
 import { isAddressEqual } from '../address/isEqual.js'
-import { recoverAddress } from './recoverAddress.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
+import { recoverAddress } from './recoverAddress.js'
 
 /**
  * Verifies a payload was signed by the provided address.

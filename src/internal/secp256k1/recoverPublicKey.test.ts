@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { Secp256k1 } from 'ox'
+import { expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
 const privateKey = accounts[0].privateKey
