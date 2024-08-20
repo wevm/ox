@@ -21,3 +21,6 @@ export declare namespace domainSeparator {
 
   type ErrorType = hashDomain.ErrorType | GlobalErrorType
 }
+
+domainSeparator.parseError = (error: unknown) =>
+  error as domainSeparator.ErrorType

@@ -68,3 +68,5 @@ export declare namespace hashTypedData {
     | validateTypedData.ErrorType
     | GlobalErrorType
 }
+
+hashTypedData.parseError = (error: unknown) => error as hashTypedData.ErrorType

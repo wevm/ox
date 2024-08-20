@@ -20,3 +20,5 @@ export declare namespace hashDomain {
 
   type ErrorType = hashStruct.ErrorType | GlobalErrorType
 }
+
+hashDomain.parseError = (error: unknown) => error as hashDomain.ErrorType

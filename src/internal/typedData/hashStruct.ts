@@ -29,6 +29,8 @@ export declare namespace hashStruct {
   type ErrorType = encodeData.ErrorType | keccak256.ErrorType | GlobalErrorType
 }
 
+hashStruct.parseError = (error: unknown) => error as hashStruct.ErrorType
+
 function encodeData(value: {
   data: Record<string, unknown>
   primaryType: string

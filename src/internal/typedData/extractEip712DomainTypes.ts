@@ -38,3 +38,6 @@ export function extractEip712DomainTypes(
 export declare namespace extractEip712DomainTypes {
   type ErrorType = GlobalErrorType
 }
+
+extractEip712DomainTypes.parseError = (error: unknown) =>
+  error as extractEip712DomainTypes.ErrorType
