@@ -1,10 +1,10 @@
 import type { Address } from 'abitype'
+import type { AccessList } from './accessList.js'
+import type { AuthorizationList } from './authorization.js'
+import type { BlobSidecar } from './blob.js'
 import type { Hex } from './data.js'
 import type { LegacySignature, Signature } from './signature.js'
 import type { Compute, IsNarrowable, OneOf } from './utils.js'
-import type { AccessList } from './accessList.js'
-import type { BlobSidecar } from './blob.js'
-import type { AuthorizationList } from './authorization.js'
 
 export type TransactionType =
   | 'legacy'

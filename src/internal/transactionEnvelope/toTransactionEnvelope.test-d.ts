@@ -1,5 +1,5 @@
-import { expectTypeOf, test } from 'vitest'
 import { TransactionEnvelope } from 'ox'
+import { expectTypeOf, test } from 'vitest'
 import type {
   TransactionEnvelopeEip1559,
   TransactionEnvelopeLegacy,

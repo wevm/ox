@@ -1,5 +1,5 @@
-import { expectTypeOf, test } from 'vitest'
 import type { TransactionEnvelope } from 'ox'
+import { expectTypeOf, test } from 'vitest'
 import { getTransactionType } from './getTransactionType.js'
 
 test('empty', () => {

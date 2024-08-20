@@ -1,6 +1,6 @@
 import type { Address } from 'abitype'
-import type { Signature } from './signature.js'
 import type { Hex } from './data.js'
+import type { Signature } from './signature.js'
 import type { ComputeSignature } from './transactionEnvelope.js'
 import type { Compute } from './utils.js'
 
