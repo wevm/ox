@@ -4,7 +4,7 @@ import { assertAddress } from './assert.js'
 import { checksumAddress } from './checksum.js'
 
 /**
- * Converts an address string to a typed (checksummed) Address.
+ * Converts a stringified address to a typed (checksummed) Address.
  *
  * @example
  * import { Address } from 'ox'

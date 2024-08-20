@@ -11,6 +11,8 @@ test('exports', () => {
       "isAddress",
       "toAddress",
       "from",
+      "publicKeyToAddress",
+      "fromPublicKey",
       "isAddressEqual",
       "isEqual",
     ]

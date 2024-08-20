@@ -337,10 +337,18 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Secp256k1 🚧',
+          text: 'Secp256k1',
           collapsed: true,
           link: '/api/secp256k1',
           items: [
+            {
+              text: '.getPublicKey',
+              link: '/api/secp256k1/getPublicKey',
+            },
+            {
+              text: '.randomPrivateKey',
+              link: '/api/secp256k1/randomPrivateKey',
+            },
             {
               text: '.recoverAddress',
               link: '/api/secp256k1/recoverAddress',

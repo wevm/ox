@@ -18,6 +18,11 @@ export {
 } from './internal/address/from.js'
 
 export {
+  publicKeyToAddress,
+  publicKeyToAddress as fromPublicKey,
+} from './internal/address/fromPublicKey.js'
+
+export {
   isAddressEqual,
   isAddressEqual as isEqual,
 } from './internal/address/isEqual.js'

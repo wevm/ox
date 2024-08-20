@@ -13,6 +13,7 @@ test('exports', () => {
       "Errors",
       "Hash",
       "Hex",
+      "Secp256k1",
       "Signature",
       "Rlp",
       "TypedData",
