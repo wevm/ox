@@ -74,7 +74,11 @@ test('error: invalid signature', async () => {
   expect(() =>
     Signature.deserialize('0xdeadbeef'),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidSerializedSignatureSizeError: Value `0xdeadbeef` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received 4 bytes.]',
+    `
+    [InvalidSerializedSignatureSizeError: Value \`0xdeadbeef\` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received 4 bytes.
+
+    See: https://oxlib.sh/errors#invalidserializedsignaturesizeerror]
+  `,
   )
 })
 
@@ -84,20 +88,32 @@ test('error: invalid yParity', async () => {
       '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81d',
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidYParityError: Value `29` is an invalid y-parity value.]',
+    `
+    [InvalidSignatureYParityError: Value \`29\` is an invalid y-parity value.
+
+    See: https://oxlib.sh/errors#invalidsignatureyparityerror]
+  `,
   )
   expect(() =>
     Signature.deserialize(
       '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db802',
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidYParityError: Value `2` is an invalid y-parity value.]',
+    `
+    [InvalidSignatureYParityError: Value \`2\` is an invalid y-parity value.
+
+    See: https://oxlib.sh/errors#invalidsignatureyparityerror]
+  `,
   )
   expect(() =>
     Signature.deserialize(
       '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81a',
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidYParityError: Value `26` is an invalid y-parity value.]',
+    `
+    [InvalidSignatureYParityError: Value \`26\` is an invalid y-parity value.
+
+    See: https://oxlib.sh/errors#invalidsignatureyparityerror]
+  `,
   )
 })

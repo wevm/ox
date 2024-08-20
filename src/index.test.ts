@@ -13,6 +13,7 @@ test('exports', () => {
       "Errors",
       "Hash",
       "Hex",
+      "Signature",
       "Rlp",
       "TypedData",
       "Types",
