@@ -1,3 +1,4 @@
+import type { GlobalErrorType } from '../errors/error.js'
 import { CannotInferTransactionTypeError } from '../errors/transactionEnvelope.js'
 import type {
   FeeValuesEip1559,
@@ -95,6 +96,10 @@ export function getTransactionType<
   }
 
   throw new CannotInferTransactionTypeError({ transaction })
+}
+
+export declare namespace getTransactionType {
+  type ErrorType = CannotInferTransactionTypeError | GlobalErrorType
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

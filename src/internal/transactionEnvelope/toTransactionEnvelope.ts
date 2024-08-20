@@ -1,3 +1,4 @@
+import type { GlobalErrorType } from '../errors/error.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelopeEip1559,
@@ -43,6 +44,10 @@ export function toTransactionEnvelope<
   return { ...envelope, type }
 }
 
+export declare namespace toTransactionEnvelope {
+  type ErrorType = getTransactionType.ErrorType | GlobalErrorType
+}
+
 /**
  * Converts an arbitrary transaction object into a legacy Transaction Envelope.
  *
@@ -62,6 +67,10 @@ export function toTransactionEnvelopeLegacy<
   const envelope extends PartialBy<TransactionEnvelopeLegacy, 'type'>,
 >(envelope: envelope): envelope {
   return envelope
+}
+
+export declare namespace toTransactionEnvelopeLegacy {
+  type ErrorType = GlobalErrorType
 }
 
 /**
@@ -86,6 +95,10 @@ export function toTransactionEnvelopeEip1559<
   return envelope
 }
 
+export declare namespace toTransactionEnvelopeEip1559 {
+  type ErrorType = GlobalErrorType
+}
+
 /**
  * Converts an arbitrary transaction object into an EIP-2930 Transaction Envelope.
  *
@@ -106,6 +119,10 @@ export function toTransactionEnvelopeEip2930<
   const envelope extends PartialBy<TransactionEnvelopeEip2930, 'type'>,
 >(envelope: envelope): envelope {
   return envelope
+}
+
+export declare namespace toTransactionEnvelopeEip2930 {
+  type ErrorType = GlobalErrorType
 }
 
 /**
@@ -132,6 +149,10 @@ export function toTransactionEnvelopeEip4844<
   return envelope
 }
 
+export declare namespace toTransactionEnvelopeEip4844 {
+  type ErrorType = GlobalErrorType
+}
+
 /**
  * Converts an arbitrary transaction object into an EIP-7702 Transaction Envelope.
  *
@@ -153,4 +174,8 @@ export function toTransactionEnvelopeEip7702<
   const envelope extends PartialBy<TransactionEnvelopeEip7702, 'type'>,
 >(envelope: envelope): envelope {
   return envelope
+}
+
+export declare namespace toTransactionEnvelopeEip7702 {
+  type ErrorType = GlobalErrorType
 }
