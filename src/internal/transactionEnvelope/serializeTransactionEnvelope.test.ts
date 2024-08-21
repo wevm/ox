@@ -1,3 +1,5 @@
+// TODO: Add `eth_sendRawTransaction` tests.
+
 import { Secp256k1, TransactionEnvelope, Value } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'

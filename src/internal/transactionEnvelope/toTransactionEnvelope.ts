@@ -60,7 +60,9 @@ export function toTransactionEnvelope<
   const envelope extends
     | UnionPartialBy<TransactionEnvelope, 'type'>
     | TransactionEnvelopeSerialized,
->(envelope: envelope): toTransactionEnvelope.ReturnType<envelope> {
+>(
+  envelope: envelope,
+): Compute<Compute<toTransactionEnvelope.ReturnType<envelope>>> {
   if (typeof envelope === 'string')
     return deserializeTransactionEnvelope(envelope) as never
 
@@ -77,15 +79,13 @@ export declare namespace toTransactionEnvelope {
       | TransactionEnvelopeSerialized =
       | UnionPartialBy<TransactionEnvelope, 'type'>
       | TransactionEnvelopeSerialized,
-  > =
-    | (envelope extends TransactionEnvelopeSerialized
-        ? deserializeTransactionEnvelope.ReturnType<envelope>
-        : never)
-    | (envelope extends UnionPartialBy<TransactionEnvelope, 'type'>
-        ? IsNarrowable<GetTransactionType<envelope>, string> extends true
-          ? envelope
-          : never
-        : never)
+  > = envelope extends TransactionEnvelopeSerialized
+    ? deserializeTransactionEnvelope.ReturnType<envelope>
+    : envelope extends UnionPartialBy<TransactionEnvelope, 'type'>
+      ? IsNarrowable<GetTransactionType<envelope>, string> extends true
+        ? envelope
+        : never
+      : never
 
   type ErrorType = getTransactionType.ErrorType | GlobalErrorType
 }
@@ -109,7 +109,9 @@ export function toTransactionEnvelopeLegacy<
   const envelope extends
     | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
     | TransactionEnvelopeSerializedLegacy,
->(envelope: envelope): toTransactionEnvelopeLegacy.ReturnType<envelope> {
+>(
+  envelope: envelope,
+): Compute<toTransactionEnvelopeLegacy.ReturnType<envelope>> {
   if (typeof envelope === 'string')
     return deserializeTransactionEnvelopeLegacy(envelope) as never
 
@@ -151,7 +153,9 @@ export function toTransactionEnvelopeEip1559<
   const envelope extends
     | UnionPartialBy<TransactionEnvelopeEip1559, 'type'>
     | TransactionEnvelopeSerializedEip1559,
->(envelope: envelope): toTransactionEnvelopeEip1559.ReturnType<envelope> {
+>(
+  envelope: envelope,
+): Compute<toTransactionEnvelopeEip1559.ReturnType<envelope>> {
   if (typeof envelope === 'string')
     return deserializeTransactionEnvelopeEip1559(envelope) as never
 
@@ -193,7 +197,9 @@ export function toTransactionEnvelopeEip2930<
   const envelope extends
     | UnionPartialBy<TransactionEnvelopeEip2930, 'type'>
     | TransactionEnvelopeSerializedEip2930,
->(envelope: envelope): toTransactionEnvelopeEip2930.ReturnType<envelope> {
+>(
+  envelope: envelope,
+): Compute<toTransactionEnvelopeEip2930.ReturnType<envelope>> {
   if (typeof envelope === 'string')
     return deserializeTransactionEnvelopeEip2930(envelope) as never
 
@@ -235,7 +241,9 @@ export declare namespace toTransactionEnvelopeEip2930 {
  */
 export function toTransactionEnvelopeEip4844<
   const envelope extends UnionPartialBy<TransactionEnvelopeEip4844, 'type'>,
->(envelope: envelope): toTransactionEnvelopeEip4844.ReturnType<envelope> {
+>(
+  envelope: envelope,
+): Compute<toTransactionEnvelopeEip4844.ReturnType<envelope>> {
   // TODO:
   // if (typeof envelope === 'string')
   //   return deserializeTransactionEnvelopeEip4844(envelope) as never
@@ -271,7 +279,9 @@ export declare namespace toTransactionEnvelopeEip4844 {
  */
 export function toTransactionEnvelopeEip7702<
   const envelope extends UnionPartialBy<TransactionEnvelopeEip7702, 'type'>,
->(envelope: envelope): toTransactionEnvelopeEip7702.ReturnType<envelope> {
+>(
+  envelope: envelope,
+): Compute<toTransactionEnvelopeEip7702.ReturnType<envelope>> {
   // TODO:
   // if (typeof envelope === 'string')
   //   return deserializeTransactionEnvelopeEip7702(envelope) as never

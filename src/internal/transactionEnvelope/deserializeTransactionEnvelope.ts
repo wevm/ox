@@ -24,7 +24,7 @@ import type {
   TransactionEnvelopeSerializedLegacy,
   TransactionType,
 } from '../types/transactionEnvelope.js'
-import type { IsNarrowable } from '../types/utils.js'
+import type { Compute, IsNarrowable } from '../types/utils.js'
 import {
   assertTransactionEnvelopeEip1559,
   assertTransactionEnvelopeEip2930,
@@ -59,15 +59,15 @@ export function deserializeTransactionEnvelope<
   const serialized extends TransactionEnvelopeSerialized,
 >(
   serialized: serialized,
-): deserializeTransactionEnvelope.ReturnType<serialized> {
+): Compute<deserializeTransactionEnvelope.ReturnType<serialized>> {
   const type = getSerializedTransactionType(serialized)
 
   if (type === 'legacy')
-    return deserializeTransactionEnvelopeLegacy(serialized as any)
+    return deserializeTransactionEnvelopeLegacy(serialized as any) as never
   if (type === 'eip2930')
-    return deserializeTransactionEnvelopeEip2930(serialized as any)
+    return deserializeTransactionEnvelopeEip2930(serialized as any) as never
   if (type === 'eip1559')
-    return deserializeTransactionEnvelopeEip1559(serialized as any)
+    return deserializeTransactionEnvelopeEip1559(serialized as any) as never
 
   // TODO: 7702, 4844
 
@@ -111,7 +111,7 @@ export declare namespace deserializeTransactionEnvelope {
  */
 export function deserializeTransactionEnvelopeLegacy(
   serializedTransaction: TransactionEnvelopeSerializedLegacy,
-): deserializeTransactionEnvelopeLegacy.ReturnType {
+): Compute<deserializeTransactionEnvelopeLegacy.ReturnType> {
   const tuple = decodeRlp(serializedTransaction, 'hex')
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
@@ -200,7 +200,7 @@ export declare namespace deserializeTransactionEnvelopeLegacy {
  */
 export function deserializeTransactionEnvelopeEip2930(
   serializedTransaction: TransactionEnvelopeSerializedEip2930,
-): deserializeTransactionEnvelopeEip2930.ReturnType {
+): Compute<deserializeTransactionEnvelopeEip2930.ReturnType> {
   const transactionArray = decodeRlp(slice(serializedTransaction, 1))
 
   const [
@@ -296,7 +296,7 @@ export declare namespace deserializeTransactionEnvelopeEip2930 {
  */
 export function deserializeTransactionEnvelopeEip1559(
   serializedTransaction: TransactionEnvelopeSerializedEip1559,
-): deserializeTransactionEnvelopeEip1559.ReturnType {
+): Compute<deserializeTransactionEnvelopeEip1559.ReturnType> {
   const transactionArray = decodeRlp(slice(serializedTransaction, 1))
 
   const [
