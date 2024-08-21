@@ -23,6 +23,24 @@ test('default', () => {
   }
 
   {
+    const envelope = TransactionEnvelope.fromLegacy({
+      to: '0x0000000000000000000000000000000000000000',
+      value: 69n,
+    })
+    const serialized = TransactionEnvelope.serialize(envelope)
+    expect(TransactionEnvelope.from(serialized)).toEqual(envelope)
+  }
+
+  {
+    const envelope = TransactionEnvelope.fromLegacy({
+      to: '0x0000000000000000000000000000000000000000',
+      value: 69n,
+    })
+    const serialized = TransactionEnvelope.serialize(envelope)
+    expect(TransactionEnvelope.fromLegacy(serialized)).toEqual(envelope)
+  }
+
+  {
     const envelope = TransactionEnvelope.from({
       chainId: 1,
       maxFeePerGas: 69420n,
@@ -55,6 +73,16 @@ test('default', () => {
   }
 
   {
+    const envelope = TransactionEnvelope.fromEip1559({
+      chainId: 1,
+      maxFeePerGas: 69420n,
+      to: '0x0000000000000000000000000000000000000000',
+    })
+    const serialized = TransactionEnvelope.serialize(envelope)
+    expect(TransactionEnvelope.fromEip1559(serialized)).toEqual(envelope)
+  }
+
+  {
     const envelope = TransactionEnvelope.from({
       accessList: [],
       chainId: 1,
@@ -84,6 +112,15 @@ test('default', () => {
         "type": "eip2930",
       }
     `)
+  }
+
+  {
+    const envelope = TransactionEnvelope.fromEip2930({
+      chainId: 1,
+      gasPrice: 69420n,
+    })
+    const serialized = TransactionEnvelope.serialize(envelope)
+    expect(TransactionEnvelope.fromEip2930(serialized)).toEqual(envelope)
   }
 
   {

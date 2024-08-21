@@ -23,6 +23,11 @@ test('legacy', () => {
     const envelope = TransactionEnvelope.fromLegacy({})
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
   }
+
+  {
+    const envelope = TransactionEnvelope.from('0xabc')
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+  }
 })
 
 test('eip1559', () => {
@@ -44,6 +49,11 @@ test('eip1559', () => {
     const envelope = TransactionEnvelope.fromEip1559({
       chainId: 1,
     })
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559>()
+  }
+
+  {
+    const envelope = TransactionEnvelope.from('0x02abc')
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559>()
   }
 })
