@@ -8,7 +8,7 @@ import { pad } from '../data/pad.js'
 import { slice } from '../data/slice.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
-import type { ByteArray, Hex } from '../types/data.js'
+import type { Bytes, Hex } from '../types/data.js'
 
 /**
  * Generates contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
@@ -47,14 +47,14 @@ export function getCreate2Address(opts: getCreate2Address.Options) {
 export declare namespace getCreate2Address {
   type Options =
     | {
-        bytecode: ByteArray | Hex
+        bytecode: Bytes | Hex
         from: Address
-        salt: ByteArray | Hex
+        salt: Bytes | Hex
       }
     | {
-        bytecodeHash: ByteArray | Hex
+        bytecodeHash: Bytes | Hex
         from: Address
-        salt: ByteArray | Hex
+        salt: Bytes | Hex
       }
 
   type ErrorType =

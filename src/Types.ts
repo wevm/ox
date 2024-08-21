@@ -27,7 +27,7 @@ export type { AccessList } from './internal/types/accessList.js'
 
 export type { BlobSidecar, BlobSidecars } from './internal/types/blob.js'
 
-export type { ByteArray, Bytes, Hex } from './internal/types/data.js'
+export type { Bytes, Hex } from './internal/types/data.js'
 
 export type {
   FeeHistory,

@@ -39,7 +39,7 @@ const value = Hash.keccak256(Hex.from('hello world'))
 
 ## Returns
 
-`Hex | ByteArray`
+`Hex | Bytes`
 
 The hashed value.
 
@@ -47,7 +47,7 @@ The hashed value.
 
 ### value
 
-- **Type:** `Hex | ByteArray`
+- **Type:** `Hex | Bytes`
 
 The Bytes or Hex value to hash.
 
