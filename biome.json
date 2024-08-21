@@ -6,6 +6,7 @@
       "node_modules",
       "src/_esm",
       "src/_cjs",
+      "test/kzg",
       "tsconfig.json",
       "tsconfig.*.json"
     ]

@@ -3,6 +3,22 @@ import type { Hex } from '../types/data.js'
 
 import { BaseError } from './base.js'
 
+export class BlobSizeTooLargeError extends BaseError {
+  override readonly name = 'BlobSizeTooLargeError'
+  constructor({ maxSize, size }: { maxSize: number; size: number }) {
+    super('Blob size is too large.', {
+      metaMessages: [`Max: ${maxSize} bytes`, `Given: ${size} bytes`],
+    })
+  }
+}
+
+export class EmptyBlobError extends BaseError {
+  override readonly name = 'EmptyBlobError'
+  constructor() {
+    super('Blob data must not be empty.')
+  }
+}
+
 export class EmptyBlobVersionedHashesError extends BaseError {
   override readonly name = 'EmptyBlobVersionedHashesError'
   constructor() {

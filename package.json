@@ -45,6 +45,7 @@
     "@types/node": "^20.14.15",
     "@vitest/coverage-v8": "1.0.4",
     "bun": "^1.1.24",
+    "c-kzg": "^2.1.2",
     "eslint": "^9.9.0",
     "eslint-plugin-jsdoc": "^50.0.1",
     "ethers": "^6.13.2",
@@ -57,6 +58,7 @@
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.1.0",
+    "vite-tsconfig-paths": "^5.0.1",
     "vitest": "1.0.4"
   },
   "packageManager": "pnpm@9.7.0",
@@ -73,7 +75,8 @@
       "test/**",
       "vectors/**",
       "src/package.json",
-      "jsdoc.config.js"
+      "jsdoc.config.js",
+      "src/node/internal/paths/trustedSetups_cjs.ts"
     ],
     "ignoreBinaries": ["dev", "forge", "only-allow", "printf"],
     "ignoreDependencies": ["@size-limit/preset-big-lib"],
@@ -83,7 +86,7 @@
     },
     "workspaces": {
       "src": {
-        "entry": ["index.ts!"]
+        "entry": ["index.ts!", "node/index.ts!"]
       }
     }
   },

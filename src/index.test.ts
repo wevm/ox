@@ -6,6 +6,7 @@ test('exports', () => {
     [
       "Abi",
       "Address",
+      "Blobs",
       "Caches",
       "Constants",
       "Bytes",
@@ -13,6 +14,7 @@ test('exports', () => {
       "Errors",
       "Hash",
       "Hex",
+      "Kzg",
       "Secp256k1",
       "Signature",
       "Rlp",
