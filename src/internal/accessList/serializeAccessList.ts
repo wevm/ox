@@ -1,7 +1,7 @@
-import { assertAddress } from '../address/assert.js'
+import { assertAddress } from '../address/assertAddress.js'
 import { size } from '../data/size.js'
 import { InvalidStorageKeySizeError } from '../errors/accessList.js'
-import type { RecursiveArray } from '../rlp/encode.js'
+import type { RecursiveArray } from '../rlp/encodeRlp.js'
 import type { AccessList } from '../types/accessList.js'
 import type { Hex } from '../types/data.js'
 

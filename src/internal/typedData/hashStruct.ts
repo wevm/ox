@@ -1,6 +1,6 @@
 import type { AbiParameter, TypedData } from 'abitype'
 
-import { encodeAbiParameters } from '../abi/encodeParameters.js'
+import { encodeAbiParameters } from '../abi/encodeAbiParameters.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
 import { toHex } from '../hex/toHex.js'

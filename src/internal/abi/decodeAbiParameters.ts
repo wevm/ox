@@ -23,7 +23,7 @@ import {
   type IsomorphicAbiParameter,
   type IsomorphicAbiParametersToPrimitiveTypes,
   getArrayComponents,
-} from './encodeParameters.js'
+} from './encodeAbiParameters.js'
 
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.

@@ -1,10 +1,10 @@
 import type { Address } from 'abitype'
 
-import { toAddress } from '../address/from.js'
+import { toAddress } from '../address/toAddress.js'
 import { toBytes } from '../bytes/toBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
-import { encodeRlp } from '../rlp/encode.js'
+import { encodeRlp } from '../rlp/encodeRlp.js'
 
 /**
  * Generates contract address via [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode.

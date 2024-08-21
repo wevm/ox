@@ -5,7 +5,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidSignatureVError } from '../errors/signature.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import { toHex } from '../hex/toHex.js'
-import { encodeRlp } from '../rlp/encode.js'
+import { encodeRlp } from '../rlp/encodeRlp.js'
 import { toSignatureTuple } from '../signature/toSignatureTuple.js'
 import type { Signature } from '../types/signature.js'
 import type {

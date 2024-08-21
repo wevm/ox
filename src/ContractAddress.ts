@@ -1,7 +1,7 @@
 export {
   getContractAddress as from,
   getContractAddress,
-} from './internal/contractAddress/from.js'
+} from './internal/contractAddress/getContractAddress.js'
 
 export { getCreateAddress } from './internal/contractAddress/getCreateAddress.js'
 

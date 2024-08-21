@@ -7,8 +7,8 @@ import {
   InvalidSerializedTransactionError,
   TransactionTypeNotImplementedError,
 } from '../errors/transactionEnvelope.js'
-import { decodeRlp } from '../rlp/decode.js'
-import type { RecursiveArray } from '../rlp/encode.js'
+import { decodeRlp } from '../rlp/decodeRlp.js'
+import type { RecursiveArray } from '../rlp/encodeRlp.js'
 import { fromSignatureTuple } from '../signature/fromSignatureTuple.js'
 import type { Hex } from '../types/data.js'
 import type {

@@ -1,7 +1,7 @@
 import type { Address } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
-import { assertAddress } from './assert.js'
+import { assertAddress } from './assertAddress.js'
 
 /**
  * Checks if two addresses are equal.

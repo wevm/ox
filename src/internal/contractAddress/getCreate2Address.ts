@@ -1,6 +1,6 @@
 import type { Address } from 'abitype'
 
-import { toAddress } from '../address/from.js'
+import { toAddress } from '../address/toAddress.js'
 import { toBytes } from '../bytes/toBytes.js'
 import { concat } from '../data/concat.js'
 import { isBytes } from '../data/isBytes.js'

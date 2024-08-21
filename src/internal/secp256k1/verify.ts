@@ -1,6 +1,6 @@
 import type { Address } from 'abitype'
 
-import { isAddressEqual } from '../address/isEqual.js'
+import { isAddressEqual } from '../address/isAddressEqual.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'

@@ -10,7 +10,7 @@ import type {
   SolidityString,
 } from 'abitype'
 
-import { assertAddress } from '../address/assert.js'
+import { assertAddress } from '../address/assertAddress.js'
 import { arrayRegex, bytesRegex, integerRegex } from '../constants/regex.js'
 import { concatHex } from '../data/concat.js'
 import { padLeft, padRight } from '../data/pad.js'

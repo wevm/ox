@@ -1,6 +1,6 @@
 import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { parseValue } from './from.js'
+import { parseValue } from './parseValue.js'
 
 /**
  * Parses a string representation of Gwei to a `bigint` Value (default: wei).

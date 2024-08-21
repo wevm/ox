@@ -1,6 +1,6 @@
 import type { Address } from 'abitype'
 
-import { isAddressEqual } from '../address/isEqual.js'
+import { isAddressEqual } from '../address/isAddressEqual.js'
 import type { SiweMessage } from '../types/siwe.js'
 import type { ExactPartial } from '../types/utils.js'
 

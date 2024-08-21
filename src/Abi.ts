@@ -17,19 +17,19 @@ export type {
 export {
   encodeAbiParameters,
   encodeAbiParameters as encodeParameters,
-} from './internal/abi/encodeParameters.js'
+} from './internal/abi/encodeAbiParameters.js'
 
 export { encodePacked } from './internal/abi/encodePacked.js'
 
 export {
   decodeAbiParameters,
   decodeAbiParameters as decodeParameters,
-} from './internal/abi/decodeParameters.js'
+} from './internal/abi/decodeAbiParameters.js'
 
 export {
   extractAbiItem,
   extractAbiItem as extractItem,
-} from './internal/abi/extractItem.js'
+} from './internal/abi/extractAbiItem.js'
 
 export { getSelector } from './internal/abi/getSelector.js'
 

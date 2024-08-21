@@ -1,7 +1,7 @@
 import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
 
-import { formatValue } from './format.js'
+import { formatValue } from './formatValue.js'
 
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Ether.

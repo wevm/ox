@@ -5,7 +5,7 @@ import { InvalidHexLengthError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
-import type { RecursiveArray } from './encode.js'
+import type { RecursiveArray } from './encodeRlp.js'
 
 type To = 'hex' | 'bytes'
 

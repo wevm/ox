@@ -1,7 +1,7 @@
 import { AbiCoder } from 'ethers'
 import { bench, describe } from 'vitest'
 import { address } from '../../../test/constants/addresses.js'
-import { encodeAbiParameters } from './encodeParameters.js'
+import { encodeAbiParameters } from './encodeAbiParameters.js'
 
 describe('ABI Encode', () => {
   bench('ox: `encodeAbi`', () => {

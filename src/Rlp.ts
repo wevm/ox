@@ -5,7 +5,7 @@ export {
   rlpToBytes as toBytes,
   rlpToHex,
   rlpToHex as toHex,
-} from './internal/rlp/decode.js'
+} from './internal/rlp/decodeRlp.js'
 
 export {
   type RecursiveArray,
@@ -15,4 +15,4 @@ export {
   bytesToRlp as fromBytes,
   hexToRlp,
   hexToRlp as fromHex,
-} from './internal/rlp/encode.js'
+} from './internal/rlp/encodeRlp.js'

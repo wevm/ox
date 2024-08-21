@@ -1,4 +1,4 @@
-import { toAddress } from '../address/from.js'
+import { toAddress } from '../address/toAddress.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { SiweInvalidMessageFieldError } from '../errors/siwe.js'
 import type { SiweMessage } from '../types/siwe.js'

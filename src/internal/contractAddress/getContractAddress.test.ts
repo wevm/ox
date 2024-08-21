@@ -1,10 +1,10 @@
 import { parseAbiParameters } from 'abitype'
 import { expect, test } from 'vitest'
 
-import { encodeAbiParameters } from '../abi/encodeParameters.js'
+import { encodeAbiParameters } from '../abi/encodeAbiParameters.js'
 import { toBytes } from '../bytes/toBytes.js'
 import { keccak256 } from '../hash/keccak256.js'
-import { getContractAddress } from './from.js'
+import { getContractAddress } from './getContractAddress.js'
 
 test('gets contract address (CREATE)', () => {
   expect(

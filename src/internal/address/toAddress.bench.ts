@@ -1,7 +1,7 @@
 import * as ethers from 'ethers'
 import { bench, describe } from 'vitest'
 
-import { toAddress } from './from.js'
+import { toAddress } from './toAddress.js'
 
 describe('Address', () => {
   bench('ox: `toAddress`', () => {

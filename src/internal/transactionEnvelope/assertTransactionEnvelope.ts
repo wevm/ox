@@ -1,4 +1,4 @@
-import { assertAddress } from '../address/assert.js'
+import { assertAddress } from '../address/assertAddress.js'
 import { versionedHashVersionKzg } from '../constants/kzg.js'
 import { size } from '../data/size.js'
 import { slice } from '../data/slice.js'

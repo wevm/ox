@@ -3,7 +3,7 @@ import { Abi } from 'ox'
 import { bench, describe } from 'vitest'
 
 import { seaportContractConfig } from '../../../test/constants/abis.js'
-import { decodeAbiParameters } from './decodeParameters.js'
+import { decodeAbiParameters } from './decodeAbiParameters.js'
 
 const fulfillAdvancedOrder = Abi.extractItem(seaportContractConfig.abi, {
   name: 'fulfillAdvancedOrder',

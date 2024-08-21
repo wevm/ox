@@ -5,7 +5,7 @@ import {
   InvalidAddressInputError,
 } from '../errors/address.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { checksumAddress } from './checksum.js'
+import { checksumAddress } from './checksumAddress.js'
 
 const addressRegex = /^0x[a-fA-F0-9]{40}$/
 

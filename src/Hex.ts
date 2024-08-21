@@ -1,4 +1,4 @@
-export { assertHex, assertHex as assert } from './internal/hex/assert.js'
+export { assertHex, assertHex as assert } from './internal/hex/assertHex.js'
 
 export { concatHex as concat } from './internal/data/concat.js'
 

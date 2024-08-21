@@ -7,18 +7,18 @@ export { formatGwei } from './internal/value/formatGwei.js'
 export {
   formatValue,
   formatValue as format,
-} from './internal/value/format.js'
+} from './internal/value/formatValue.js'
 
 export {
   parseEther,
   parseEther as fromEther,
-} from './internal/value/fromEther.js'
+} from './internal/value/parseEther.js'
 
-export { parseGwei, parseGwei as fromGwei } from './internal/value/fromGwei.js'
+export { parseGwei, parseGwei as fromGwei } from './internal/value/parseGwei.js'
 
 export {
   parseValue,
   parseValue as from,
-} from './internal/value/from.js'
+} from './internal/value/parseValue.js'
 
 export type Value = bigint

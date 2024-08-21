@@ -1,5 +1,5 @@
 import type { Address } from 'abitype'
-import { assertAddress } from './assert.js'
+import { assertAddress } from './assertAddress.js'
 
 /**
  * Checks if the given address is a valid address.

@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
-import { getArrayComponents } from './encodeParameters.js'
+import { getArrayComponents } from './encodeAbiParameters.js'
 
 describe('static', () => {
   test('blank', () => {

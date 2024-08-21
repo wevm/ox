@@ -3,7 +3,7 @@ import { Abi, Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
-import { getAmbiguousTypes, isArgOfType } from './extractItem.js'
+import { getAmbiguousTypes, isArgOfType } from './extractAbiItem.js'
 
 test('default', () => {
   expect(

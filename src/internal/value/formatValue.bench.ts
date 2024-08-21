@@ -1,6 +1,6 @@
 import { formatUnits as formatUnits_ethers } from 'ethers'
 import { bench, describe } from 'vitest'
-import { formatValue } from './format.js'
+import { formatValue } from './formatValue.js'
 
 describe('Format Value', () => {
   bench('ox: `Unit.formatValue`', () => {

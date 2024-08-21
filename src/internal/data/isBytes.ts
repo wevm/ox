@@ -1,4 +1,4 @@
-import { assertBytes } from '../bytes/assert.js'
+import { assertBytes } from '../bytes/assertBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 

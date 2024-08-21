@@ -4,7 +4,7 @@ import { stringToBytes } from '../bytes/toBytes.js'
 import * as Caches from '../caches.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
-import { assertAddress } from './assert.js'
+import { assertAddress } from './assertAddress.js'
 
 /**
  * Computes the checksum address for the given address.

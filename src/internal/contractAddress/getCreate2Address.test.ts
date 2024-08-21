@@ -1,7 +1,7 @@
 import { parseAbiParameters } from 'abitype'
 import { expect, test } from 'vitest'
 
-import { encodeAbiParameters } from '../abi/encodeParameters.js'
+import { encodeAbiParameters } from '../abi/encodeAbiParameters.js'
 import { toBytes } from '../bytes/toBytes.js'
 import { keccak256 } from '../hash/keccak256.js'
 import { toHex } from '../hex/toHex.js'

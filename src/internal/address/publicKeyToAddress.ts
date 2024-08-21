@@ -4,7 +4,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
 import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
-import { toAddress } from './from.js'
+import { toAddress } from './toAddress.js'
 
 /**
  * Converts an ECDSA public key to an Ethereum address.

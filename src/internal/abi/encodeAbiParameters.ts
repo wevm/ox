@@ -7,7 +7,7 @@ import type {
 } from 'abitype'
 import { parseAbiParameter } from 'abitype'
 
-import { assertAddress } from '../address/assert.js'
+import { assertAddress } from '../address/assertAddress.js'
 import { concatHex } from '../data/concat.js'
 import { padLeft, padRight } from '../data/pad.js'
 import { size } from '../data/size.js'
