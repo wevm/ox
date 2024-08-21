@@ -42,6 +42,7 @@ export type {
   CompactSignature,
   LegacySignature,
   Signature,
+  SignatureTuple,
 } from './internal/types/signature.js'
 
 export type { SiweMessage } from './internal/types/siwe.js'
@@ -59,7 +60,6 @@ export type {
   TransactionEnvelopeSerializedEip2930,
   TransactionEnvelopeSerializedEip4844,
   TransactionEnvelopeSerializedEip7702,
-  TransactionEnvelopeSerializedGeneric,
   TransactionEnvelopeSerializedLegacy,
   TransactionType,
 } from './internal/types/transactionEnvelope.js'

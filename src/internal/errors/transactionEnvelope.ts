@@ -1,3 +1,5 @@
+import type { Hex } from '../types/data.js'
+import type { TransactionType } from '../types/transactionEnvelope.js'
 import { formatGwei } from '../value/formatGwei.js'
 import { BaseError } from './base.js'
 
@@ -61,6 +63,29 @@ export class InvalidChainIdError extends BaseError {
         ? `Chain ID "${chainId}" is invalid.`
         : 'Chain ID is invalid.',
     )
+  }
+}
+
+export class InvalidSerializedTransactionError extends BaseError {
+  override readonly name = 'InvalidSerializedTransactionError'
+  constructor({
+    attributes,
+    serializedTransaction,
+    type,
+  }: {
+    attributes: Record<string, unknown>
+    serializedTransaction: Hex
+    type: TransactionType
+  }) {
+    const missing = Object.entries(attributes)
+      .map(([key, value]) => (typeof value === 'undefined' ? key : undefined))
+      .filter(Boolean)
+    super(`Invalid serialized transaction of type "${type}" was provided.`, {
+      metaMessages: [
+        `Serialized Transaction: "${serializedTransaction}"`,
+        missing.length > 0 ? `Missing Attributes: ${missing.join(', ')}` : '',
+      ].filter(Boolean),
+    })
   }
 }
 

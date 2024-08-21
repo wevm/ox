@@ -4,6 +4,8 @@ export type {
   CompactSignature as Compact,
   LegacySignature,
   LegacySignature as Legacy,
+  SignatureTuple,
+  SignatureTuple as Tuple,
 } from './internal/types/signature.js'
 
 export {
@@ -20,6 +22,11 @@ export {
   deserializeSignature,
   deserializeSignature as deserialize,
 } from './internal/signature/deserializeSignature.js'
+
+export {
+  fromSignatureTuple,
+  fromSignatureTuple as fromTuple,
+} from './internal/signature/fromSignatureTuple.js'
 
 export {
   serializeSignature,

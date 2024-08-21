@@ -29,7 +29,20 @@ import {
  * Serializes a {@link TransactionEnvelope}.
  *
  * @example
- * // TODO
+ * ```ts
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const serialized = TransactionEnvelope.serialize(envelope)
+ * // '0x...'
+ * ```
  */
 export function serializeTransactionEnvelope<
   envelope extends TransactionEnvelope,
@@ -70,7 +83,17 @@ export declare namespace serializeTransactionEnvelope {
  * Serializes a legacy {@link TransactionEnvelope}.
  *
  * @example
- * // TODO
+ * ```ts
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.fromLegacy({
+ *   gasPrice: 1000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ * })
+ *
+ * const serialized = TransactionEnvelope.serializeLegacy(envelope)
+ * // '0x...'
+ * ```
  */
 export function serializeTransactionEnvelopeLegacy(
   envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
@@ -165,7 +188,18 @@ export declare namespace serializeTransactionEnvelopeLegacy {
  * Serializes an EIP-2930 {@link TransactionEnvelope}.
  *
  * @example
- * // TODO
+ * ```ts
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.fromEip2930({
+ *   accessList: [...],
+ *   gasPrice: 1000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ * })
+ *
+ * const serialized = TransactionEnvelope.serializeEip2930(envelope)
+ * // '0x01...'
+ * ```
  */
 export function serializeTransactionEnvelopeEip2930(
   envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
@@ -219,7 +253,17 @@ export declare namespace serializeTransactionEnvelopeEip2930 {
  * Serializes an EIP-1559 {@link TransactionEnvelope}.
  *
  * @example
- * // TODO
+ * ```ts
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.fromEip1559({
+ *   maxFeePerGas: 1000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ * })
+ *
+ * const serialized = TransactionEnvelope.serializeEip1559(envelope)
+ * // '0x02...'
+ * ```
  */
 export function serializeTransactionEnvelopeEip1559(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,

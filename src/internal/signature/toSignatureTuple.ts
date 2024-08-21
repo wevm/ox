@@ -2,7 +2,7 @@ import { trimLeft } from '../data/trim.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
 import { assertSignature } from '../signature/assertSignature.js'
-import type { Signature } from '../types/signature.js'
+import type { Signature, SignatureTuple } from '../types/signature.js'
 import type { ExactPartial } from '../types/utils.js'
 
 /**
@@ -20,7 +20,9 @@ import type { ExactPartial } from '../types/utils.js'
  * // [yParity: '0x01', r: '0x7b', s: '0x1c8']
  * ```
  */
-export function toSignatureTuple(signature: ExactPartial<Signature>) {
+export function toSignatureTuple(
+  signature: ExactPartial<Signature>,
+): toSignatureTuple.ReturnType {
   const { r, s, yParity } = signature
 
   if (typeof r === 'undefined' && typeof s === 'undefined') return []
@@ -34,6 +36,8 @@ export function toSignatureTuple(signature: ExactPartial<Signature>) {
 }
 
 export declare namespace toSignatureTuple {
+  type ReturnType = SignatureTuple | readonly []
+
   type ErrorType =
     | assertSignature.ErrorType
     | trimLeft.ErrorType

@@ -1,3 +1,5 @@
+import type { Hex } from './data.js'
+
 /** [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) compact signature. */
 export type CompactSignature<bigintType = bigint> = {
   r: bigintType
@@ -17,3 +19,5 @@ export type Signature<bigintType = bigint> = {
   s: bigintType
   yParity: 0 | 1
 }
+
+export type SignatureTuple = readonly [yParity: Hex, r: Hex, s: Hex]

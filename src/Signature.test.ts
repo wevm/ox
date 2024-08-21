@@ -10,6 +10,8 @@ test('exports', () => {
       "fromCompact",
       "deserializeSignature",
       "deserialize",
+      "fromSignatureTuple",
+      "fromTuple",
       "serializeSignature",
       "serialize",
       "signatureToCompactSignature",

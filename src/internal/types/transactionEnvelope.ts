@@ -121,7 +121,6 @@ export type TransactionEnvelopeSerializedLegacy = Branded<
   `0x${string}`,
   'legacy'
 >
-export type TransactionEnvelopeSerializedGeneric = `0x${string}`
 export type TransactionEnvelopeSerialized<
   type extends TransactionType = TransactionType,
   result =
@@ -130,7 +129,11 @@ export type TransactionEnvelopeSerialized<
     | (type extends 'eip4844' ? TransactionEnvelopeSerializedEip4844 : never)
     | (type extends 'eip7702' ? TransactionEnvelopeSerializedEip7702 : never)
     | (type extends 'legacy' ? TransactionEnvelopeSerializedLegacy : never),
-> = IsNever<result> extends true ? TransactionEnvelopeSerializedGeneric : result
+> = IsNarrowable<type, string> extends true
+  ? IsNever<result> extends true
+    ? `0x${string}`
+    : result
+  : `0x${string}`
 
 /////////////////////////////////////////////////////////////////////////
 // Utilities

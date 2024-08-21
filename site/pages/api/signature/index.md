@@ -84,3 +84,27 @@ const signature = {
 
 
 ```
+
+### `SignatureTuple`
+
+Tuple signatures are represented via the `SignatureTuple` type, and is a JavaScript `Array` with `yParity`, `r`, and `s` properties
+
+```ts twoslash
+// @noErrors
+import { Signature } from 'ox'
+
+const tuple = [
+  '0x01', 
+  '0x9328da16089fcba9bececa81663203989f2df5fe1faa6291a45381c81bd17f76', 
+  '0x139c6d6b623b42da56557e5e734a43dc83345ddfadec52cbe24d0cc64f550793'
+] satisfies Signature.Tuple
+//                    ^?
+
+
+
+
+
+
+
+
+```

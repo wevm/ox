@@ -14,6 +14,13 @@ export {
 } from './internal/transactionEnvelope/assertTransactionEnvelope.js'
 
 export {
+  deserializeTransactionEnvelope,
+  deserializeTransactionEnvelope as deserialize,
+  deserializeTransactionEnvelopeLegacy,
+  deserializeTransactionEnvelopeLegacy as deserializeLegacy,
+} from './internal/transactionEnvelope/deserializeTransactionEnvelope.js'
+
+export {
   serializeTransactionEnvelope,
   serializeTransactionEnvelope as serialize,
   serializeTransactionEnvelopeLegacy,
