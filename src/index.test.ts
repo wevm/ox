@@ -9,6 +9,7 @@ test('exports', () => {
       "Blobs",
       "Caches",
       "Constants",
+      "ContractAddress",
       "Bytes",
       "Data",
       "Errors",
