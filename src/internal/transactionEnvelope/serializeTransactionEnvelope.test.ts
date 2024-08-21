@@ -1,4 +1,4 @@
-import { Hash, Secp256k1, TransactionEnvelope, Value } from 'ox'
+import { Secp256k1, TransactionEnvelope, Value } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -105,7 +105,7 @@ describe('legacy', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: Hash.keccak256(TransactionEnvelope.serialize(transaction)),
+      payload: TransactionEnvelope.hash(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, { signature })
@@ -167,9 +167,7 @@ describe('legacy', () => {
       chainId: 69,
     })
     const signature = Secp256k1.sign({
-      payload: Hash.keccak256(
-        TransactionEnvelope.serialize(transaction_chainId),
-      ),
+      payload: TransactionEnvelope.hash(transaction_chainId),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction_chainId, {
@@ -433,7 +431,7 @@ describe('eip2930', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: Hash.keccak256(TransactionEnvelope.serialize(transaction)),
+      payload: TransactionEnvelope.hash(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, {
@@ -592,7 +590,7 @@ describe('eip1559', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: Hash.keccak256(TransactionEnvelope.serialize(transaction)),
+      payload: TransactionEnvelope.hash(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, { signature })

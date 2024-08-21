@@ -4,7 +4,14 @@ import type { AuthorizationList } from './authorization.js'
 import type { BlobSidecar } from './blob.js'
 import type { Hex } from './data.js'
 import type { LegacySignature, Signature } from './signature.js'
-import type { Branded, Compute, IsNarrowable, IsNever, OneOf } from './utils.js'
+import type {
+  Branded,
+  Compute,
+  ExactPartial,
+  IsNarrowable,
+  IsNever,
+  OneOf,
+} from './utils.js'
 
 export type TransactionType =
   | 'legacy'
@@ -45,73 +52,68 @@ export type TransactionEnvelopeBase<
 // Transaction Types
 /////////////////////////////////////////////////////////////////////////
 
-export type TransactionEnvelopeLegacy<signed extends boolean = boolean> =
-  Compute<
-    TransactionEnvelopeBase<'legacy'> & {
-      /** EIP-155 Chain ID. */
-      chainId?: number | undefined
-      /** Base fee per gas. */
-      gasPrice?: bigint | undefined
-    } & ComputeSignature<LegacySignature, signed>
-  >
+export type TransactionEnvelopeLegacy = Compute<
+  TransactionEnvelopeBase<'legacy'> & {
+    /** EIP-155 Chain ID. */
+    chainId?: number | undefined
+    /** Base fee per gas. */
+    gasPrice?: bigint | undefined
+  } & ExactPartial<LegacySignature>
+>
 
-export type TransactionEnvelopeEip1559<signed extends boolean = boolean> =
-  Compute<
-    TransactionEnvelopeBase<'eip1559'> & {
-      /** EIP-2930 Access List. */
-      accessList?: AccessList | undefined
-      /** EIP-155 Chain ID. */
-      chainId: number
-      /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
-      maxFeePerGas?: bigint | undefined
-      /** Max priority fee per gas (in wei). */
-      maxPriorityFeePerGas?: bigint | undefined
-    } & ComputeSignature<Signature | LegacySignature, signed>
-  >
+export type TransactionEnvelopeEip1559 = Compute<
+  TransactionEnvelopeBase<'eip1559'> & {
+    /** EIP-2930 Access List. */
+    accessList?: AccessList | undefined
+    /** EIP-155 Chain ID. */
+    chainId: number
+    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
+    maxFeePerGas?: bigint | undefined
+    /** Max priority fee per gas (in wei). */
+    maxPriorityFeePerGas?: bigint | undefined
+  } & ExactPartial<Signature | LegacySignature>
+>
 
-export type TransactionEnvelopeEip2930<signed extends boolean = boolean> =
-  Compute<
-    TransactionEnvelopeBase<'eip2930'> & {
-      /** EIP-2930 Access List. */
-      accessList?: AccessList | undefined
-      /** EIP-155 Chain ID. */
-      chainId: number
-      /** Base fee per gas. */
-      gasPrice?: bigint | undefined
-    } & ComputeSignature<Signature | LegacySignature, signed>
-  >
+export type TransactionEnvelopeEip2930 = Compute<
+  TransactionEnvelopeBase<'eip2930'> & {
+    /** EIP-2930 Access List. */
+    accessList?: AccessList | undefined
+    /** EIP-155 Chain ID. */
+    chainId: number
+    /** Base fee per gas. */
+    gasPrice?: bigint | undefined
+  } & ExactPartial<Signature | LegacySignature>
+>
 
-export type TransactionEnvelopeEip4844<signed extends boolean = boolean> =
-  Compute<
-    TransactionEnvelopeBase<'eip4844'> & {
-      /** Versioned hashes of blobs to be included in the transaction. */
-      blobVersionedHashes: readonly Hex[]
-      /** EIP-155 Chain ID. */
-      chainId: number
-      /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
-      maxFeePerBlobGas?: bigint | undefined
-      /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
-      maxFeePerGas?: bigint | undefined
-      /** Max priority fee per gas (in wei). */
-      maxPriorityFeePerGas?: bigint | undefined
-      /** The sidecars associated with this transaction. When `false`, sidecars are not attached to the envelope. */
-      sidecars?: readonly BlobSidecar<Hex>[] | false | undefined
-    } & ComputeSignature<Signature, signed>
-  >
+export type TransactionEnvelopeEip4844 = Compute<
+  TransactionEnvelopeBase<'eip4844'> & {
+    /** Versioned hashes of blobs to be included in the transaction. */
+    blobVersionedHashes: readonly Hex[]
+    /** EIP-155 Chain ID. */
+    chainId: number
+    /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
+    maxFeePerBlobGas?: bigint | undefined
+    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
+    maxFeePerGas?: bigint | undefined
+    /** Max priority fee per gas (in wei). */
+    maxPriorityFeePerGas?: bigint | undefined
+    /** The sidecars associated with this transaction. When `false`, sidecars are not attached to the envelope. */
+    sidecars?: readonly BlobSidecar<Hex>[] | false | undefined
+  } & ExactPartial<Signature>
+>
 
-export type TransactionEnvelopeEip7702<signed extends boolean = boolean> =
-  Compute<
-    TransactionEnvelopeBase<'eip7702'> & {
-      /** EIP-7702 Authorization List. */
-      authorizationList: AuthorizationList<true>
-      /** EIP-155 Chain ID. */
-      chainId: number
-      /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
-      maxFeePerGas?: bigint | undefined
-      /** Max priority fee per gas (in wei). */
-      maxPriorityFeePerGas?: bigint | undefined
-    } & ComputeSignature<Signature, signed>
-  >
+export type TransactionEnvelopeEip7702 = Compute<
+  TransactionEnvelopeBase<'eip7702'> & {
+    /** EIP-7702 Authorization List. */
+    authorizationList: AuthorizationList<true>
+    /** EIP-155 Chain ID. */
+    chainId: number
+    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
+    maxFeePerGas?: bigint | undefined
+    /** Max priority fee per gas (in wei). */
+    maxPriorityFeePerGas?: bigint | undefined
+  } & ExactPartial<Signature>
+>
 
 export type TransactionEnvelopeSerializedEip1559 = `0x02${string}`
 export type TransactionEnvelopeSerializedEip2930 = `0x01${string}`
@@ -134,17 +136,3 @@ export type TransactionEnvelopeSerialized<
     ? `0x${string}`
     : result
   : `0x${string}`
-
-/////////////////////////////////////////////////////////////////////////
-// Utilities
-/////////////////////////////////////////////////////////////////////////
-
-/** @internal */
-export type ComputeSignature<
-  signature extends Signature | LegacySignature,
-  signed extends boolean | undefined,
-> = IsNarrowable<signed, true> extends true
-  ? OneOf<signature | {}>
-  : signed extends true
-    ? OneOf<signature>
-    : {}

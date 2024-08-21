@@ -20,6 +20,8 @@ test('exports', () => {
       "deserialize",
       "deserializeTransactionEnvelopeLegacy",
       "deserializeLegacy",
+      "hashTransactionEnvelope",
+      "hash",
       "serializeTransactionEnvelope",
       "serialize",
       "serializeTransactionEnvelopeLegacy",

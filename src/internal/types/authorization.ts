@@ -1,8 +1,7 @@
 import type { Address } from 'abitype'
 import type { Hex } from './data.js'
 import type { Signature } from './signature.js'
-import type { ComputeSignature } from './transactionEnvelope.js'
-import type { Compute } from './utils.js'
+import type { Compute, ExactPartial } from './utils.js'
 
 export type Authorization<
   signed extends boolean = boolean,
@@ -16,7 +15,7 @@ export type Authorization<
     chainId: numberType
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
-  } & ComputeSignature<Signature, signed>
+  } & (signed extends true ? Signature : ExactPartial<Signature>)
 >
 
 export type AuthorizationList<

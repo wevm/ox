@@ -21,6 +21,11 @@ export {
 } from './internal/transactionEnvelope/deserializeTransactionEnvelope.js'
 
 export {
+  hashTransactionEnvelope,
+  hashTransactionEnvelope as hash,
+} from './internal/transactionEnvelope/hashTransactionEnvelope.js'
+
+export {
   serializeTransactionEnvelope,
   serializeTransactionEnvelope as serialize,
   serializeTransactionEnvelopeLegacy,
