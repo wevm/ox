@@ -453,16 +453,6 @@ export default defineConfig({
           items: [
             { text: '.from', link: '/api/transaction/from' },
             { text: '.fromRpc', link: '/api/transaction/fromRpc' },
-            { text: '.assertLegacy', link: '/api/transaction/assertLegacy' },
-            { text: '.assertEip1559', link: '/api/transaction/assertEip1559' },
-            { text: '.assertEip2930', link: '/api/transaction/assertEip2930' },
-            { text: '.assertEip4844', link: '/api/transaction/assertEip4844' },
-            { text: '.assertEip7702', link: '/api/transaction/assertEip7702' },
-            {
-              text: '.getSerializedType',
-              link: '/api/transaction/getSerializedType',
-            },
-            { text: '.getType', link: '/api/transaction/getType' },
             { text: '.toRpc', link: '/api/transaction/toRpc' },
           ],
         },
