@@ -7,8 +7,19 @@ import type {
   TransactionEnvelopeEip7702,
   TransactionEnvelopeLegacy,
 } from '../types/transactionEnvelope.js'
-import type { PartialBy, UnionPartialBy } from '../types/utils.js'
-import { getTransactionType } from './getTransactionType.js'
+import type { Compute, IsNarrowable, UnionPartialBy } from '../types/utils.js'
+import {
+  assertTransactionEnvelope,
+  assertTransactionEnvelopeEip1559,
+  assertTransactionEnvelopeEip2930,
+  assertTransactionEnvelopeEip4844,
+  assertTransactionEnvelopeEip7702,
+  assertTransactionEnvelopeLegacy,
+} from './assertTransactionEnvelope.js'
+import {
+  type GetTransactionType,
+  getTransactionType,
+} from './getTransactionType.js'
 
 // TODO: support deserialize
 
@@ -39,12 +50,20 @@ import { getTransactionType } from './getTransactionType.js'
  */
 export function toTransactionEnvelope<
   const envelope extends UnionPartialBy<TransactionEnvelope, 'type'>,
->(envelope: envelope): envelope {
+>(envelope: envelope): toTransactionEnvelope.ReturnType<envelope> {
   const type = getTransactionType(envelope)
-  return { ...envelope, type }
+  const envelope_ = { ...envelope, type } as never
+  assertTransactionEnvelope(envelope_)
+  return envelope_
 }
 
 export declare namespace toTransactionEnvelope {
+  type ReturnType<
+    envelope extends UnionPartialBy<TransactionEnvelope, 'type'>,
+  > = IsNarrowable<GetTransactionType<envelope>, string> extends true
+    ? envelope
+    : never
+
   type ErrorType = getTransactionType.ErrorType | GlobalErrorType
 }
 
@@ -64,12 +83,17 @@ export declare namespace toTransactionEnvelope {
  * ```
  */
 export function toTransactionEnvelopeLegacy<
-  const envelope extends PartialBy<TransactionEnvelopeLegacy, 'type'>,
->(envelope: envelope): envelope {
-  return envelope
+  const envelope extends UnionPartialBy<TransactionEnvelopeLegacy, 'type'>,
+>(envelope: envelope): toTransactionEnvelopeLegacy.ReturnType<envelope> {
+  assertTransactionEnvelopeLegacy(envelope)
+  return { ...envelope, type: 'legacy' } as never
 }
 
 export declare namespace toTransactionEnvelopeLegacy {
+  type ReturnType<
+    envelope extends UnionPartialBy<TransactionEnvelopeLegacy, 'type'>,
+  > = Compute<envelope & { type: 'legacy' }>
+
   type ErrorType = GlobalErrorType
 }
 
@@ -90,12 +114,17 @@ export declare namespace toTransactionEnvelopeLegacy {
  * ```
  */
 export function toTransactionEnvelopeEip1559<
-  const envelope extends PartialBy<TransactionEnvelopeEip1559, 'type'>,
->(envelope: envelope): envelope {
-  return envelope
+  const envelope extends UnionPartialBy<TransactionEnvelopeEip1559, 'type'>,
+>(envelope: envelope): toTransactionEnvelopeEip1559.ReturnType<envelope> {
+  assertTransactionEnvelopeEip1559(envelope)
+  return { ...envelope, type: 'eip1559' } as never
 }
 
 export declare namespace toTransactionEnvelopeEip1559 {
+  type ReturnType<
+    envelope extends UnionPartialBy<TransactionEnvelopeEip1559, 'type'>,
+  > = Compute<envelope & { type: 'eip1559' }>
+
   type ErrorType = GlobalErrorType
 }
 
@@ -116,12 +145,17 @@ export declare namespace toTransactionEnvelopeEip1559 {
  * ```
  */
 export function toTransactionEnvelopeEip2930<
-  const envelope extends PartialBy<TransactionEnvelopeEip2930, 'type'>,
->(envelope: envelope): envelope {
-  return envelope
+  const envelope extends UnionPartialBy<TransactionEnvelopeEip2930, 'type'>,
+>(envelope: envelope): toTransactionEnvelopeEip2930.ReturnType<envelope> {
+  assertTransactionEnvelopeEip2930(envelope)
+  return { ...envelope, type: 'eip2930' } as never
 }
 
 export declare namespace toTransactionEnvelopeEip2930 {
+  type ReturnType<
+    envelope extends UnionPartialBy<TransactionEnvelopeEip2930, 'type'>,
+  > = Compute<envelope & { type: 'eip2930' }>
+
   type ErrorType = GlobalErrorType
 }
 
@@ -144,12 +178,17 @@ export declare namespace toTransactionEnvelopeEip2930 {
  * ```
  */
 export function toTransactionEnvelopeEip4844<
-  const envelope extends PartialBy<TransactionEnvelopeEip4844, 'type'>,
->(envelope: envelope): envelope {
-  return envelope
+  const envelope extends UnionPartialBy<TransactionEnvelopeEip4844, 'type'>,
+>(envelope: envelope): toTransactionEnvelopeEip4844.ReturnType<envelope> {
+  assertTransactionEnvelopeEip4844(envelope)
+  return { ...envelope, type: 'eip4844' } as never
 }
 
 export declare namespace toTransactionEnvelopeEip4844 {
+  type ReturnType<
+    envelope extends UnionPartialBy<TransactionEnvelopeEip4844, 'type'>,
+  > = Compute<envelope & { type: 'eip4844' }>
+
   type ErrorType = GlobalErrorType
 }
 
@@ -171,11 +210,16 @@ export declare namespace toTransactionEnvelopeEip4844 {
  * ```
  */
 export function toTransactionEnvelopeEip7702<
-  const envelope extends PartialBy<TransactionEnvelopeEip7702, 'type'>,
->(envelope: envelope): envelope {
-  return envelope
+  const envelope extends UnionPartialBy<TransactionEnvelopeEip7702, 'type'>,
+>(envelope: envelope): toTransactionEnvelopeEip7702.ReturnType<envelope> {
+  assertTransactionEnvelopeEip7702(envelope)
+  return { ...envelope, type: 'eip7702' } as never
 }
 
 export declare namespace toTransactionEnvelopeEip7702 {
+  type ReturnType<
+    envelope extends UnionPartialBy<TransactionEnvelopeEip7702, 'type'>,
+  > = Compute<envelope & { type: 'eip7702' }>
+
   type ErrorType = GlobalErrorType
 }

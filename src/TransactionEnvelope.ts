@@ -1,4 +1,30 @@
 export {
+  assertTransactionEnvelope,
+  assertTransactionEnvelope as assert,
+  assertTransactionEnvelopeEip1559,
+  assertTransactionEnvelopeEip1559 as assertEip1559,
+  assertTransactionEnvelopeEip2930,
+  assertTransactionEnvelopeEip2930 as assertEip2930,
+  assertTransactionEnvelopeEip4844,
+  assertTransactionEnvelopeEip4844 as assertEip4844,
+  assertTransactionEnvelopeEip7702,
+  assertTransactionEnvelopeEip7702 as assertEip7702,
+  assertTransactionEnvelopeLegacy,
+  assertTransactionEnvelopeLegacy as assertLegacy,
+} from './internal/transactionEnvelope/assertTransactionEnvelope.js'
+
+export {
+  serializeTransactionEnvelope,
+  serializeTransactionEnvelope as serialize,
+  serializeTransactionEnvelopeLegacy,
+  serializeTransactionEnvelopeLegacy as serializeLegacy,
+  serializeTransactionEnvelopeEip1559,
+  serializeTransactionEnvelopeEip1559 as serializeEip1559,
+  serializeTransactionEnvelopeEip2930,
+  serializeTransactionEnvelopeEip2930 as serializeEip2930,
+} from './internal/transactionEnvelope/serializeTransactionEnvelope.js'
+
+export {
   toTransactionEnvelope,
   toTransactionEnvelope as from,
   toTransactionEnvelopeLegacy,
@@ -27,6 +53,18 @@ export type {
   TransactionEnvelopeEip7702 as Eip7702,
   TransactionEnvelopeLegacy,
   TransactionEnvelopeLegacy as Legacy,
+  TransactionEnvelopeSerialized,
+  TransactionEnvelopeSerialized as Serialized,
+  TransactionEnvelopeSerializedEip1559,
+  TransactionEnvelopeSerializedEip1559 as SerializedEip1559,
+  TransactionEnvelopeSerializedEip2930,
+  TransactionEnvelopeSerializedEip2930 as SerializedEip2930,
+  TransactionEnvelopeSerializedEip4844,
+  TransactionEnvelopeSerializedEip4844 as SerializedEip4844,
+  TransactionEnvelopeSerializedEip7702,
+  TransactionEnvelopeSerializedEip7702 as SerializedEip7702,
+  TransactionEnvelopeSerializedLegacy,
+  TransactionEnvelopeSerializedLegacy as SerializedLegacy,
   TransactionType,
   TransactionType as Type,
 } from './internal/types/transactionEnvelope.js'

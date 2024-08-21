@@ -4,7 +4,7 @@ import type { AuthorizationList } from './authorization.js'
 import type { BlobSidecar } from './blob.js'
 import type { Hex } from './data.js'
 import type { LegacySignature, Signature } from './signature.js'
-import type { Compute, IsNarrowable, OneOf } from './utils.js'
+import type { Branded, Compute, IsNarrowable, IsNever, OneOf } from './utils.js'
 
 export type TransactionType =
   | 'legacy'
@@ -27,6 +27,8 @@ export type TransactionEnvelopeBase<
 > = {
   /** Contract code or a hashed method call with encoded args */
   data?: Hex | undefined
+  /** @alias `data` – added for JSON-RPC backwards compatibility. */
+  input?: Hex | undefined
   /** Gas provided for transaction execution */
   gas?: bigint | undefined
   /** Unique number identifying this transaction */
@@ -110,6 +112,25 @@ export type TransactionEnvelopeEip7702<signed extends boolean = boolean> =
       maxPriorityFeePerGas?: bigint | undefined
     } & ComputeSignature<Signature, signed>
   >
+
+export type TransactionEnvelopeSerializedEip1559 = `0x02${string}`
+export type TransactionEnvelopeSerializedEip2930 = `0x01${string}`
+export type TransactionEnvelopeSerializedEip4844 = `0x03${string}`
+export type TransactionEnvelopeSerializedEip7702 = `0x04${string}`
+export type TransactionEnvelopeSerializedLegacy = Branded<
+  `0x${string}`,
+  'legacy'
+>
+export type TransactionEnvelopeSerializedGeneric = `0x${string}`
+export type TransactionEnvelopeSerialized<
+  type extends TransactionType = TransactionType,
+  result =
+    | (type extends 'eip1559' ? TransactionEnvelopeSerializedEip1559 : never)
+    | (type extends 'eip2930' ? TransactionEnvelopeSerializedEip2930 : never)
+    | (type extends 'eip4844' ? TransactionEnvelopeSerializedEip4844 : never)
+    | (type extends 'eip7702' ? TransactionEnvelopeSerializedEip7702 : never)
+    | (type extends 'legacy' ? TransactionEnvelopeSerializedLegacy : never),
+> = IsNever<result> extends true ? TransactionEnvelopeSerializedGeneric : result
 
 /////////////////////////////////////////////////////////////////////////
 // Utilities

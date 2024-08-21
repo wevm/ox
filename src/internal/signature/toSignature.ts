@@ -6,6 +6,7 @@ import type {
   Signature,
 } from '../types/signature.js'
 import type { Compute, OneOf } from '../types/utils.js'
+import { assertSignature } from './assertSignature.js'
 import { compactSignatureToSignature } from './compactSignatureToSignature.js'
 import { deserializeSignature } from './deserializeSignature.js'
 import { vToYParity } from './vToYParity.js'
@@ -64,16 +65,25 @@ export function toSignature(
     | Hex
     | Bytes,
 ): Compute<Signature> {
-  if (typeof signature === 'string') return deserializeSignature(signature)
-  if (signature instanceof Uint8Array) return deserializeSignature(signature)
-  if (signature.yParityAndS) return compactSignatureToSignature(signature)
-  if (signature.v)
-    return { r: signature.r, s: signature.s, yParity: vToYParity(signature.v) }
-  return signature as Signature
+  const signature_ = (() => {
+    if (typeof signature === 'string') return deserializeSignature(signature)
+    if (signature instanceof Uint8Array) return deserializeSignature(signature)
+    if (signature.yParityAndS) return compactSignatureToSignature(signature)
+    if (signature.v)
+      return {
+        r: signature.r,
+        s: signature.s,
+        yParity: vToYParity(signature.v),
+      }
+    return signature as Signature
+  })()
+  assertSignature(signature_)
+  return signature_
 }
 
 export declare namespace toSignature {
   type ErrorType =
+    | assertSignature.ErrorType
     | deserializeSignature.ErrorType
     | compactSignatureToSignature.ErrorType
     | vToYParity.ErrorType

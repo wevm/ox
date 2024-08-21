@@ -6,7 +6,7 @@ description: Deserializes a Bytes or Hex signature into a structured Signature.
 
 **Alias:** `serializeSignature`
 
-Serializes a [Signature](/api/signature#signature-1) (or an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) [CompactSignature](/api/signature#compactsignature)) to [Hex](/api/hex) or [Bytes](/api/bytes).
+Serializes a [Signature](/api/signature#signature-1) to [Hex](/api/hex) or [Bytes](/api/bytes).
 
 ## Imports
 
@@ -40,13 +40,6 @@ const signature = Signature.serialize({
   yParity: 0
 }, { compact: true })
 // @log: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
-
-// Serialize a Compact Signature.
-const signature = Signature.serialize({
-  r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
-  yParityAndS: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
-})
-// @log: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
 ```
 
 ## Returns
@@ -59,7 +52,7 @@ The serialized signature.
 
 ### signature
 
-- **Type:** `Signature | LegacySignature | CompactSignature`
+- **Type:** `Signature`
 
 Signature to serialize.
 

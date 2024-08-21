@@ -55,6 +55,26 @@ test('legacy', () => {
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy<true>>()
   }
+
+  {
+    const envelope = TransactionEnvelope.fromLegacy({})
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy<false>>()
+    expectTypeOf(envelope).toMatchTypeOf<
+      // @ts-expect-error
+      TransactionEnvelopeLegacy<true>
+    >()
+  }
+
+  {
+    const envelope = TransactionEnvelope.fromLegacy({
+      r: 0n,
+      s: 0n,
+      v: 27,
+    })
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy<true>>()
+  }
 })
 
 test('eip1559', () => {
@@ -131,4 +151,21 @@ test('eip1559', () => {
       TransactionEnvelopeLegacy<true>
     >()
   }
+
+  {
+    const envelope = TransactionEnvelope.fromEip1559({
+      chainId: 1,
+    })
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559>()
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559<false>>()
+    expectTypeOf(envelope).toMatchTypeOf<
+      // @ts-expect-error
+      TransactionEnvelopeLegacy<true>
+    >()
+  }
+})
+
+test('cannot infer transaction type', () => {
+  const envelope = TransactionEnvelope.from({ chainId: 1 })
+  expectTypeOf(envelope).toEqualTypeOf<never>()
 })

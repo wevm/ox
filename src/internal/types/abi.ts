@@ -8,6 +8,7 @@ import type { IsUnion, UnionToTuple } from './utils.js'
 
 export type AbiItem = Abi[number]
 
+/** @internal */
 export type AbiItemArgs<
   abi extends Abi | readonly unknown[] = Abi,
   name extends AbiItemName<abi> = AbiItemName<abi>,
@@ -20,19 +21,23 @@ export type AbiItemArgs<
     : args
   : readonly unknown[]
 
+/** @internal */
 export type AbiItemName<abi extends Abi | readonly unknown[] = Abi> =
   abi extends Abi ? ExtractAbiItemNames<abi> : string
 
+/** @internal */
 export type ExtractAbiItem<
   abi extends Abi,
   name extends ExtractAbiItemNames<abi>,
 > = Extract<abi[number], { name: name }>
 
+/** @internal */
 export type ExtractAbiItemNames<abi extends Abi> = Extract<
   abi[number],
   { name: string }
 >['name']
 
+/** @internal */
 export type ExtractAbiItemForArgs<
   abi extends Abi,
   name extends AbiItemName<abi>,
@@ -60,6 +65,7 @@ export type ExtractAbiItemForArgs<
     : abiItem
   : never
 
+/** @internal */
 export type Widen<type> =
   | ([unknown] extends [type] ? unknown : never)
   | (type extends Function ? type : never)

@@ -4,6 +4,8 @@ import * as exports from './Signature.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "assertSignature",
+      "assert",
       "compactSignatureToSignature",
       "fromCompact",
       "deserializeSignature",

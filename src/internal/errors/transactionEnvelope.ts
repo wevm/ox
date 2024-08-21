@@ -1,3 +1,4 @@
+import { formatGwei } from '../value/formatGwei.js'
 import { BaseError } from './base.js'
 
 export class CannotInferTransactionTypeError extends BaseError {
@@ -19,6 +20,77 @@ export class CannotInferTransactionTypeError extends BaseError {
         '- a Legacy Transaction with `gasPrice`',
       ],
     })
+  }
+}
+
+export class FeeCapTooHighError extends BaseError {
+  override readonly name = 'FeeCapTooHighError'
+  constructor({
+    feeCap,
+  }: {
+    feeCap?: bigint | undefined
+  } = {}) {
+    super(
+      `The fee cap (\`maxFeePerGas\`/\`maxPriorityFeePerGas\`${
+        feeCap ? ` = ${formatGwei(feeCap)} gwei` : ''
+      }) cannot be higher than the maximum allowed value (2^256-1).`,
+    )
+  }
+}
+
+export class GasPriceTooHighError extends BaseError {
+  override readonly name = 'GasPriceTooHighError'
+  constructor({
+    gasPrice,
+  }: {
+    gasPrice?: bigint | undefined
+  } = {}) {
+    super(
+      `The gas price (\`gasPrice\`${
+        gasPrice ? ` = ${formatGwei(gasPrice)} gwei` : ''
+      }) cannot be higher than the maximum allowed value (2^256-1).`,
+    )
+  }
+}
+
+export class InvalidChainIdError extends BaseError {
+  override readonly name = 'InvalidChainIdError'
+  constructor({ chainId }: { chainId?: number | undefined }) {
+    super(
+      typeof chainId !== 'undefined'
+        ? `Chain ID "${chainId}" is invalid.`
+        : 'Chain ID is invalid.',
+    )
+  }
+}
+
+export class TransactionTypeNotImplementedError extends BaseError {
+  override readonly name = 'TransactionTypeNotImplementedError'
+  constructor({ type }: { type: string }) {
+    super(`The provided transaction type \`${type}\` is not implemented.`)
+  }
+}
+
+export class TipAboveFeeCapError extends BaseError {
+  override readonly name = 'TipAboveFeeCapError'
+  constructor({
+    maxPriorityFeePerGas,
+    maxFeePerGas,
+  }: {
+    maxPriorityFeePerGas?: bigint | undefined
+    maxFeePerGas?: bigint | undefined
+  } = {}) {
+    super(
+      [
+        `The provided tip (\`maxPriorityFeePerGas\`${
+          maxPriorityFeePerGas
+            ? ` = ${formatGwei(maxPriorityFeePerGas)} gwei`
+            : ''
+        }) cannot be higher than the fee cap (\`maxFeePerGas\`${
+          maxFeePerGas ? ` = ${formatGwei(maxFeePerGas)} gwei` : ''
+        }).`,
+      ].join('\n'),
+    )
   }
 }
 

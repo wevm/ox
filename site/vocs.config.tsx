@@ -405,6 +405,7 @@ export default defineConfig({
           items: [
             { text: '.from', link: '/api/signature/from' },
             { text: '.fromCompact', link: '/api/signature/fromCompact' },
+            { text: '.assert', link: '/api/signature/assert' },
             { text: '.deserialize', link: '/api/signature/deserialize' },
             { text: '.serialize', link: '/api/signature/serialize' },
             {
@@ -467,6 +468,10 @@ export default defineConfig({
           items: [
             { text: '.from', link: '/api/transactionEnvelope/from' },
             {
+              text: '.assert',
+              link: '/api/transactionEnvelope/assert',
+            },
+            {
               text: '.assertLegacy',
               link: '/api/transactionEnvelope/assertLegacy',
             },
@@ -487,30 +492,28 @@ export default defineConfig({
               link: '/api/transactionEnvelope/assertEip7702',
             },
             {
-              text: '.getSerializedType',
-              link: '/api/transactionEnvelope/getSerializedType',
-            },
-            { text: '.getType', link: '/api/transactionEnvelope/getType' },
-            { text: '.parse', link: '/api/transactionEnvelope/parse' },
-            {
-              text: '.parseLegacy',
-              link: '/api/transactionEnvelope/parseLegacy',
+              text: '.deserialize',
+              link: '/api/transactionEnvelope/deserialize',
             },
             {
-              text: '.parseEip1559',
-              link: '/api/transactionEnvelope/parseEip1559',
+              text: '.deserializeLegacy',
+              link: '/api/transactionEnvelope/deserializeLegacy',
             },
             {
-              text: '.parseEip2930',
-              link: '/api/transactionEnvelope/parseEip2930',
+              text: '.deserializeEip1559',
+              link: '/api/transactionEnvelope/deserializeEip1559',
             },
             {
-              text: '.parseEip4844',
-              link: '/api/transactionEnvelope/parseEip4844',
+              text: '.deserializeEip2930',
+              link: '/api/transactionEnvelope/deserializeEip2930',
             },
             {
-              text: '.parseEip7702',
-              link: '/api/transactionEnvelope/parseEip7702',
+              text: '.deserializeEip4844',
+              link: '/api/transactionEnvelope/deserializeEip4844',
+            },
+            {
+              text: '.deserializeEip7702',
+              link: '/api/transactionEnvelope/deserializeEip7702',
             },
             { text: '.serialize', link: '/api/transactionEnvelope/serialize' },
             {

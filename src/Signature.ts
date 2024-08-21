@@ -7,6 +7,11 @@ export type {
 } from './internal/types/signature.js'
 
 export {
+  assertSignature,
+  assertSignature as assert,
+} from './internal/signature/assertSignature.js'
+
+export {
   compactSignatureToSignature,
   compactSignatureToSignature as fromCompact,
 } from './internal/signature/compactSignatureToSignature.js'

@@ -21,4 +21,4 @@ export {
   parseValue as from,
 } from './internal/value/from.js'
 
-export type { Value } from './internal/types/value.js'
+export type Value = bigint

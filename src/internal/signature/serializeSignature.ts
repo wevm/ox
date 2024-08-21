@@ -3,19 +3,13 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 import { hexToBytes } from '../bytes/toBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
-import type {
-  CompactSignature,
-  LegacySignature,
-  Signature,
-} from '../types/signature.js'
-import type { OneOf } from '../types/utils.js'
+import type { Signature } from '../types/signature.js'
 import { signatureToCompactSignature } from './signatureToCompactSignature.js'
-import { vToYParity } from './vToYParity.js'
 
 type To = 'bytes' | 'hex'
 
 /**
- * Serializes a {@link Signature} (or an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link CompactSignature}) to {@link Hex} or {@link Bytes}.
+ * Serializes a {@link Signature} to {@link Hex} or {@link Bytes}.
  *
  * @example
  * ```ts
@@ -43,26 +37,22 @@ type To = 'bytes' | 'hex'
  *
  */
 export function serializeSignature<to extends To = 'hex'>(
-  signature_: OneOf<Signature | LegacySignature | CompactSignature>,
+  signature_: Signature,
   options: serializeSignature.Options<to> = {},
 ): serializeSignature.ReturnType<to> {
   const { compact = false, to = 'hex' } = options
 
-  const isCompact = compact || typeof signature_.yParityAndS === 'bigint'
   const r = signature_.r
   const s = (() => {
     if (compact)
       return signatureToCompactSignature(signature_ as Signature).yParityAndS
-    if (isCompact) return signature_.yParityAndS
     return signature_.s
   })()
   let signature = `0x${new secp256k1.Signature(r, s!).toCompactHex()}` as const
 
   // If the signature is not compact, add the recovery byte to the signature.
-  if (!isCompact) {
-    const yParity = signature_.yParity ?? vToYParity(signature_.v!)
-    signature = `${signature}${yParity === 0 ? '00' : '01'}`
-  }
+  if (!compact)
+    signature = `${signature}${signature_.yParity === 0 ? '00' : '01'}`
 
   if (to === 'hex') return signature as serializeSignature.ReturnType<to>
   return hexToBytes(signature) as serializeSignature.ReturnType<to>
@@ -81,7 +71,6 @@ export declare namespace serializeSignature {
   type ErrorType =
     | hexToBytes.ErrorType
     | signatureToCompactSignature.ErrorType
-    | vToYParity.ErrorType
     | GlobalErrorType
 }
 

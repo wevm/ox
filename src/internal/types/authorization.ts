@@ -25,7 +25,7 @@ export type AuthorizationList<
   numberType = number,
 > = readonly Authorization<signed, bigintType, numberType>[]
 
-export type SerializedAuthorization = readonly [
+export type AuthorizationSerialized = readonly [
   chainId: Hex,
   address: Hex,
   nonce: Hex,
@@ -33,4 +33,4 @@ export type SerializedAuthorization = readonly [
   r: Hex,
   s: Hex,
 ]
-export type SerializedAuthorizationList = readonly SerializedAuthorization[]
+export type AuthorizationListSerialized = readonly AuthorizationSerialized[]

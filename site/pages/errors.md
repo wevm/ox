@@ -140,6 +140,18 @@ TODO
 
 TODO
 
+## `EmptyBlobVersionedHashesError`
+
+TODO
+
+## `FeeCapTooHighError`
+
+TODO
+
+## `GasPriceTooHighError`
+
+TODO
+
 ## `IntegerOutOfRangeError`
 
 ### Why?
@@ -241,6 +253,14 @@ const bytes = Bytes.from([1, 2, 3])
 const bytes = Bytes.from('0x123')
 const bytes = Bytes.from('hello world')
 ```
+
+## `InvalidVersionedHashSizeError`
+
+TODO
+
+## `InvalidVersionedHashVersionError`
+
+TODO
 
 ## `InvalidHexBooleanError`
 
@@ -391,6 +411,10 @@ InvalidSignatureYParityError: Value `69` is an invalid y-parity value.
 
 Pass a valid y-parity value (0 or 1).
 
+## `InvalidStorageKeySizeError`
+
+TODO
+
 ## `InvalidTypeError`
 
 ### Why?
@@ -462,3 +486,11 @@ Slice starting at offset `5` is out-of-bounds (size: `3`).
 ### Solution
 
 Pass an offset that is less than or equal to the size of the value (e.g. `Hex.slice('0xbeef', 1)`).
+
+## `TransactionTypeNotImplementedError`
+
+TODO
+
+## `TipAboveFeeCapError`
+
+TODO

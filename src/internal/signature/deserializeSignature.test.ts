@@ -89,7 +89,7 @@ test('error: invalid yParity', async () => {
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidSignatureYParityError: Value \`29\` is an invalid y-parity value.
+    [InvalidSignatureYParityError: Value \`29\` is an invalid y-parity value. Y-parity must be 0 or 1.
 
     See: https://oxlib.sh/errors#invalidsignatureyparityerror]
   `,
@@ -100,7 +100,7 @@ test('error: invalid yParity', async () => {
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidSignatureYParityError: Value \`2\` is an invalid y-parity value.
+    [InvalidSignatureYParityError: Value \`2\` is an invalid y-parity value. Y-parity must be 0 or 1.
 
     See: https://oxlib.sh/errors#invalidsignatureyparityerror]
   `,
@@ -111,7 +111,7 @@ test('error: invalid yParity', async () => {
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidSignatureYParityError: Value \`26\` is an invalid y-parity value.
+    [InvalidSignatureYParityError: Value \`26\` is an invalid y-parity value. Y-parity must be 0 or 1.
 
     See: https://oxlib.sh/errors#invalidsignatureyparityerror]
   `,
