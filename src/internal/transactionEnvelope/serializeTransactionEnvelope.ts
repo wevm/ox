@@ -1,11 +1,12 @@
 import { serializeAccessList } from '../accessList/serializeAccessList.js'
 import { concatHex } from '../data/concat.js'
 import { trimLeft } from '../data/trim.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidSignatureVError } from '../errors/signature.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import { toHex } from '../hex/toHex.js'
 import { encodeRlp } from '../rlp/encode.js'
-import { assertSignature } from '../signature/assertSignature.js'
+import { toSignatureTuple } from '../signature/toSignatureTuple.js'
 import type { Signature } from '../types/signature.js'
 import type {
   TransactionEnvelope,
@@ -17,13 +18,19 @@ import type {
   TransactionEnvelopeSerializedEip2930,
   TransactionEnvelopeSerializedLegacy,
 } from '../types/transactionEnvelope.js'
-import type { ExactPartial, PartialBy } from '../types/utils.js'
+import type { PartialBy } from '../types/utils.js'
 import {
   assertTransactionEnvelopeEip1559,
   assertTransactionEnvelopeEip2930,
   assertTransactionEnvelopeLegacy,
 } from './assertTransactionEnvelope.js'
 
+/**
+ * Serializes a {@link TransactionEnvelope}.
+ *
+ * @example
+ * // TODO
+ */
 export function serializeTransactionEnvelope<
   envelope extends TransactionEnvelope,
 >(
@@ -42,6 +49,21 @@ export function serializeTransactionEnvelope<
   throw new TransactionTypeNotImplementedError({ type: envelope.type })
 }
 
+export declare namespace serializeTransactionEnvelope {
+  type ErrorType =
+    | serializeTransactionEnvelopeLegacy.ErrorType
+    | serializeTransactionEnvelopeEip2930.ErrorType
+    | serializeTransactionEnvelopeEip1559.ErrorType
+    | TransactionTypeNotImplementedError
+    | GlobalErrorType
+}
+
+/**
+ * Serializes a legacy {@link TransactionEnvelope}.
+ *
+ * @example
+ * // TODO
+ */
 export function serializeTransactionEnvelopeLegacy(
   envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
   options: { signature?: Signature | undefined } = {},
@@ -112,6 +134,24 @@ export function serializeTransactionEnvelopeLegacy(
   return encodeRlp(serializedTransaction) as TransactionEnvelopeSerializedLegacy
 }
 
+export declare namespace serializeTransactionEnvelopeLegacy {
+  type ErrorType =
+    | assertTransactionEnvelopeLegacy.ErrorType
+    | toHex.ErrorType
+    | trimLeft.ErrorType
+    | toSignatureTuple.ErrorType
+    | concatHex.ErrorType
+    | encodeRlp.ErrorType
+    | InvalidSignatureVError
+    | GlobalErrorType
+}
+
+/**
+ * Serializes an EIP-2930 {@link TransactionEnvelope}.
+ *
+ * @example
+ * // TODO
+ */
 export function serializeTransactionEnvelopeEip2930(
   envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
   options: { signature?: Signature | undefined } = {},
@@ -142,6 +182,23 @@ export function serializeTransactionEnvelopeEip2930(
   ) as TransactionEnvelopeSerializedEip2930
 }
 
+export declare namespace serializeTransactionEnvelopeEip2930 {
+  type ErrorType =
+    | assertTransactionEnvelopeEip2930.ErrorType
+    | toHex.ErrorType
+    | trimLeft.ErrorType
+    | toSignatureTuple.ErrorType
+    | concatHex.ErrorType
+    | encodeRlp.ErrorType
+    | GlobalErrorType
+}
+
+/**
+ * Serializes an EIP-1559 {@link TransactionEnvelope}.
+ *
+ * @example
+ * // TODO
+ */
 export function serializeTransactionEnvelopeEip1559(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
   options: { signature?: Signature | undefined } = {},
@@ -183,18 +240,13 @@ export function serializeTransactionEnvelopeEip1559(
   ) as TransactionEnvelopeSerializedEip1559
 }
 
-function toSignatureTuple(signature: ExactPartial<Signature>) {
-  const { r, s, yParity } = signature
-
-  try {
-    assertSignature(signature)
-  } catch {
-    return []
-  }
-
-  return [
-    yParity ? '0x01' : '0x',
-    r === 0n ? '0x' : trimLeft(toHex(r!)),
-    s === 0n ? '0x' : trimLeft(toHex(s!)),
-  ] as const
+export declare namespace serializeTransactionEnvelopeEip1559 {
+  type ErrorType =
+    | assertTransactionEnvelopeEip1559.ErrorType
+    | toHex.ErrorType
+    | trimLeft.ErrorType
+    | toSignatureTuple.ErrorType
+    | concatHex.ErrorType
+    | encodeRlp.ErrorType
+    | GlobalErrorType
 }

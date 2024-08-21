@@ -405,12 +405,17 @@ export default defineConfig({
           items: [
             { text: '.from', link: '/api/signature/from' },
             { text: '.fromCompact', link: '/api/signature/fromCompact' },
+            { text: '.fromTuple 🚧', link: '/api/signature/fromTuple' },
             { text: '.assert', link: '/api/signature/assert' },
             { text: '.deserialize', link: '/api/signature/deserialize' },
             { text: '.serialize', link: '/api/signature/serialize' },
             {
               text: '.toCompact',
               link: '/api/signature/toCompact',
+            },
+            {
+              text: '.toTuple 🚧',
+              link: '/api/signature/toTuple',
             },
           ],
         },

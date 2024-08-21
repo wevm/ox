@@ -16,6 +16,8 @@ test('exports', () => {
       "toCompact",
       "toSignature",
       "from",
+      "toSignatureTuple",
+      "toTuple",
     ]
   `)
 })

@@ -35,3 +35,8 @@ export {
   toSignature,
   toSignature as from,
 } from './internal/signature/toSignature.js'
+
+export {
+  toSignatureTuple,
+  toSignatureTuple as toTuple,
+} from './internal/signature/toSignatureTuple.js'

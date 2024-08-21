@@ -7,6 +7,7 @@ import {
   InvalidVersionedHashSizeError,
   InvalidVersionedHashVersionError,
 } from '../errors/blob.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import {
   FeeCapTooHighError,
   GasPriceTooHighError,
@@ -25,6 +26,12 @@ import type {
 } from '../types/transactionEnvelope.js'
 import type { PartialBy } from '../types/utils.js'
 
+/**
+ * Asserts a {@link TransactionEnvelope} is valid.
+ *
+ * @example
+ * // TODO
+ */
 export function assertTransactionEnvelope(envelope: TransactionEnvelope) {
   if (envelope.type === 'legacy') assertTransactionEnvelopeLegacy(envelope)
   else if (envelope.type === 'eip2930')
@@ -41,6 +48,23 @@ export function assertTransactionEnvelope(envelope: TransactionEnvelope) {
     })
 }
 
+declare namespace assertTransactionEnvelope {
+  type ErrorType =
+    | assertTransactionEnvelopeLegacy.ErrorType
+    | assertTransactionEnvelopeEip2930.ErrorType
+    | assertTransactionEnvelopeEip1559.ErrorType
+    | assertTransactionEnvelopeEip4844.ErrorType
+    | assertTransactionEnvelopeEip7702.ErrorType
+    | TransactionTypeNotImplementedError
+    | GlobalErrorType
+}
+
+/**
+ * Asserts a legacy {@link TransactionEnvelope} is valid.
+ *
+ * @example
+ * // TODO
+ */
 export function assertTransactionEnvelopeLegacy(
   envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
 ) {
@@ -52,6 +76,20 @@ export function assertTransactionEnvelopeLegacy(
     throw new GasPriceTooHighError({ gasPrice })
 }
 
+export declare namespace assertTransactionEnvelopeLegacy {
+  type ErrorType =
+    | assertAddress.ErrorType
+    | InvalidChainIdError
+    | GasPriceTooHighError
+    | GlobalErrorType
+}
+
+/**
+ * Asserts an EIP-2930 {@link TransactionEnvelope} is valid.
+ *
+ * @example
+ * // TODO
+ */
 export function assertTransactionEnvelopeEip2930(
   envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
 ) {
@@ -62,6 +100,20 @@ export function assertTransactionEnvelopeEip2930(
     throw new GasPriceTooHighError({ gasPrice })
 }
 
+export declare namespace assertTransactionEnvelopeEip2930 {
+  type ErrorType =
+    | assertAddress.ErrorType
+    | InvalidChainIdError
+    | GasPriceTooHighError
+    | GlobalErrorType
+}
+
+/**
+ * Asserts an EIP-1559 {@link TransactionEnvelope} is valid.
+ *
+ * @example
+ * // TODO
+ */
 export function assertTransactionEnvelopeEip1559(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
 ) {
@@ -78,6 +130,21 @@ export function assertTransactionEnvelopeEip1559(
     throw new TipAboveFeeCapError({ maxFeePerGas, maxPriorityFeePerGas })
 }
 
+export declare namespace assertTransactionEnvelopeEip1559 {
+  type ErrorType =
+    | assertAddress.ErrorType
+    | InvalidChainIdError
+    | FeeCapTooHighError
+    | TipAboveFeeCapError
+    | GlobalErrorType
+}
+
+/**
+ * Asserts an EIP-4844 {@link TransactionEnvelope} is valid.
+ *
+ * @example
+ * // TODO
+ */
 export function assertTransactionEnvelopeEip4844(
   envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
 ) {
@@ -100,6 +167,24 @@ export function assertTransactionEnvelopeEip4844(
   assertTransactionEnvelopeEip1559(envelope as {} as TransactionEnvelopeEip1559)
 }
 
+export declare namespace assertTransactionEnvelopeEip4844 {
+  type ErrorType =
+    | assertTransactionEnvelopeEip1559.ErrorType
+    | size.ErrorType
+    | hexToNumber.ErrorType
+    | slice.ErrorType
+    | EmptyBlobVersionedHashesError
+    | InvalidVersionedHashSizeError
+    | InvalidVersionedHashVersionError
+    | GlobalErrorType
+}
+
+/**
+ * Asserts an EIP-7702 {@link TransactionEnvelope} is valid.
+ *
+ * @example
+ * // TODO
+ */
 export function assertTransactionEnvelopeEip7702(
   envelope: PartialBy<TransactionEnvelopeEip7702, 'type'>,
 ) {
@@ -112,4 +197,11 @@ export function assertTransactionEnvelopeEip7702(
     }
   }
   assertTransactionEnvelopeEip1559(envelope as {} as TransactionEnvelopeEip1559)
+}
+
+export declare namespace assertTransactionEnvelopeEip7702 {
+  type ErrorType =
+    | assertAddress.ErrorType
+    | InvalidChainIdError
+    | GlobalErrorType
 }
