@@ -23,7 +23,7 @@ import { vToYParity } from './vToYParity.js'
  */
 export function deserializeSignature(
   serialized: Bytes | Hex,
-): Compute<deserializeSignature.ReturnType> {
+): deserializeSignature.ReturnType {
   const hex = typeof serialized === 'string' ? serialized : toHex(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)
@@ -61,14 +61,14 @@ export function deserializeSignature(
 }
 
 export declare namespace deserializeSignature {
+  type ReturnType = Compute<Signature>
+
   type ErrorType =
     | compactSignatureToSignature.ErrorType
     | toHex.ErrorType
     | InvalidSerializedSignatureSizeError
     | InvalidSignatureYParityError
     | GlobalErrorType
-
-  type ReturnType = Signature
 }
 
 deserializeSignature.parseError = (error: unknown) =>

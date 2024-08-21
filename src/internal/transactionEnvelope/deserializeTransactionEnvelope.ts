@@ -59,7 +59,7 @@ export function deserializeTransactionEnvelope<
   const serialized extends TransactionEnvelopeSerialized,
 >(
   serialized: serialized,
-): Compute<deserializeTransactionEnvelope.ReturnType<serialized>> {
+): deserializeTransactionEnvelope.ReturnType<serialized> {
   const type = getSerializedTransactionType(serialized)
 
   if (type === 'legacy')
@@ -79,14 +79,16 @@ export declare namespace deserializeTransactionEnvelope {
     serialized extends
       TransactionEnvelopeSerialized = TransactionEnvelopeSerialized,
     type extends TransactionType = GetSerializedTransactionType<serialized>,
-  > = IsNarrowable<serialized, Hex> extends true
-    ?
-        | (type extends 'eip1559' ? TransactionEnvelopeEip1559 : never)
-        | (type extends 'eip2930' ? TransactionEnvelopeEip2930 : never)
-        | (type extends 'eip4844' ? TransactionEnvelopeEip4844 : never)
-        | (type extends 'eip7702' ? TransactionEnvelopeEip7702 : never)
-        | (type extends 'legacy' ? TransactionEnvelopeLegacy : never)
-    : TransactionEnvelope
+  > = Compute<
+    IsNarrowable<serialized, Hex> extends true
+      ?
+          | (type extends 'eip1559' ? TransactionEnvelopeEip1559 : never)
+          | (type extends 'eip2930' ? TransactionEnvelopeEip2930 : never)
+          | (type extends 'eip4844' ? TransactionEnvelopeEip4844 : never)
+          | (type extends 'eip7702' ? TransactionEnvelopeEip7702 : never)
+          | (type extends 'legacy' ? TransactionEnvelopeLegacy : never)
+      : TransactionEnvelope
+  >
 
   type ErrorType = GlobalErrorType
 }
@@ -111,7 +113,7 @@ export declare namespace deserializeTransactionEnvelope {
  */
 export function deserializeTransactionEnvelopeLegacy(
   serializedTransaction: TransactionEnvelopeSerializedLegacy,
-): Compute<deserializeTransactionEnvelopeLegacy.ReturnType> {
+): deserializeTransactionEnvelopeLegacy.ReturnType {
   const tuple = decodeRlp(serializedTransaction, 'hex')
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
@@ -174,7 +176,7 @@ export function deserializeTransactionEnvelopeLegacy(
 }
 
 export declare namespace deserializeTransactionEnvelopeLegacy {
-  type ReturnType = TransactionEnvelopeLegacy
+  type ReturnType = Compute<TransactionEnvelopeLegacy>
 
   type ErrorType = GlobalErrorType
 }
@@ -200,7 +202,7 @@ export declare namespace deserializeTransactionEnvelopeLegacy {
  */
 export function deserializeTransactionEnvelopeEip2930(
   serializedTransaction: TransactionEnvelopeSerializedEip2930,
-): Compute<deserializeTransactionEnvelopeEip2930.ReturnType> {
+): deserializeTransactionEnvelopeEip2930.ReturnType {
   const transactionArray = decodeRlp(slice(serializedTransaction, 1))
 
   const [
@@ -269,7 +271,7 @@ export function deserializeTransactionEnvelopeEip2930(
 }
 
 export declare namespace deserializeTransactionEnvelopeEip2930 {
-  type ReturnType = TransactionEnvelopeEip2930
+  type ReturnType = Compute<TransactionEnvelopeEip2930>
 
   type ErrorType = GlobalErrorType
 }
@@ -296,7 +298,7 @@ export declare namespace deserializeTransactionEnvelopeEip2930 {
  */
 export function deserializeTransactionEnvelopeEip1559(
   serializedTransaction: TransactionEnvelopeSerializedEip1559,
-): Compute<deserializeTransactionEnvelopeEip1559.ReturnType> {
+): deserializeTransactionEnvelopeEip1559.ReturnType {
   const transactionArray = decodeRlp(slice(serializedTransaction, 1))
 
   const [
@@ -369,7 +371,7 @@ export function deserializeTransactionEnvelopeEip1559(
 }
 
 export declare namespace deserializeTransactionEnvelopeEip1559 {
-  type ReturnType = TransactionEnvelopeEip1559
+  type ReturnType = Compute<TransactionEnvelopeEip1559>
 
   type ErrorType = GlobalErrorType
 }
