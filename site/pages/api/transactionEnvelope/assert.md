@@ -4,6 +4,8 @@ description: Asserts that a Transaction Envelope is valid.
 
 # TransactionEnvelope.assert
 
+**Alias:** `assertTransactionEnvelope`
+
 Asserts that a Transaction Envelope is valid.
 
 ## Imports

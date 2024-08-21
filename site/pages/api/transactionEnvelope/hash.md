@@ -4,6 +4,8 @@ description: Hashes a transaction envelope for signing.
 
 # TransactionEnvelope.hash
 
+**Alias:** `hashTransactionEnvelope`
+
 Hashes a transaction envelope for signing.
 
 ## Imports
