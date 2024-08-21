@@ -35,8 +35,8 @@ export function serializeTransactionEnvelope<
   envelope extends TransactionEnvelope,
 >(
   envelope: envelope,
-  options: { signature?: Signature | undefined } = {},
-): TransactionEnvelopeSerialized<envelope['type']> {
+  options: serializeTransactionEnvelope.Options = {},
+): serializeTransactionEnvelope.ReturnType<envelope> {
   if (envelope.type === 'legacy')
     return serializeTransactionEnvelopeLegacy(envelope, options) as never
   if (envelope.type === 'eip2930')
@@ -50,6 +50,14 @@ export function serializeTransactionEnvelope<
 }
 
 export declare namespace serializeTransactionEnvelope {
+  type Options = {
+    /** Signature to append to the serialized Transaction Envelope. */
+    signature?: Signature | undefined
+  }
+
+  type ReturnType<envelope extends TransactionEnvelope = TransactionEnvelope> =
+    TransactionEnvelopeSerialized<envelope['type']>
+
   type ErrorType =
     | serializeTransactionEnvelopeLegacy.ErrorType
     | serializeTransactionEnvelopeEip2930.ErrorType
@@ -66,8 +74,8 @@ export declare namespace serializeTransactionEnvelope {
  */
 export function serializeTransactionEnvelopeLegacy(
   envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
-  options: { signature?: Signature | undefined } = {},
-): TransactionEnvelopeSerializedLegacy {
+  options: serializeTransactionEnvelopeLegacy.Options = {},
+): serializeTransactionEnvelopeLegacy.ReturnType {
   const { chainId = 0, gas, data, input, nonce, to, value, gasPrice } = envelope
 
   assertTransactionEnvelopeLegacy(envelope)
@@ -135,6 +143,13 @@ export function serializeTransactionEnvelopeLegacy(
 }
 
 export declare namespace serializeTransactionEnvelopeLegacy {
+  type Options = {
+    /** Signature to append to the serialized Transaction Envelope. */
+    signature?: Signature | undefined
+  }
+
+  type ReturnType = TransactionEnvelopeSerializedLegacy
+
   type ErrorType =
     | assertTransactionEnvelopeLegacy.ErrorType
     | toHex.ErrorType
@@ -154,8 +169,8 @@ export declare namespace serializeTransactionEnvelopeLegacy {
  */
 export function serializeTransactionEnvelopeEip2930(
   envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
-  options: { signature?: Signature | undefined } = {},
-): TransactionEnvelopeSerializedEip2930 {
+  options: serializeTransactionEnvelopeEip2930.Options = {},
+): serializeTransactionEnvelopeEip2930.ReturnType {
   const { chainId, gas, data, input, nonce, to, value, accessList, gasPrice } =
     envelope
   const { signature } = options
@@ -183,6 +198,13 @@ export function serializeTransactionEnvelopeEip2930(
 }
 
 export declare namespace serializeTransactionEnvelopeEip2930 {
+  type Options = {
+    /** Signature to append to the serialized Transaction Envelope. */
+    signature?: Signature | undefined
+  }
+
+  type ReturnType = TransactionEnvelopeSerializedEip2930
+
   type ErrorType =
     | assertTransactionEnvelopeEip2930.ErrorType
     | toHex.ErrorType
@@ -201,8 +223,8 @@ export declare namespace serializeTransactionEnvelopeEip2930 {
  */
 export function serializeTransactionEnvelopeEip1559(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
-  options: { signature?: Signature | undefined } = {},
-): TransactionEnvelopeSerializedEip1559 {
+  options: serializeTransactionEnvelopeEip1559.Options = {},
+): serializeTransactionEnvelopeEip1559.ReturnType {
   const {
     chainId,
     gas,
@@ -241,6 +263,13 @@ export function serializeTransactionEnvelopeEip1559(
 }
 
 export declare namespace serializeTransactionEnvelopeEip1559 {
+  type Options = {
+    /** Signature to append to the serialized Transaction Envelope. */
+    signature?: Signature | undefined
+  }
+
+  type ReturnType = TransactionEnvelopeSerializedEip1559
+
   type ErrorType =
     | assertTransactionEnvelopeEip1559.ErrorType
     | toHex.ErrorType
