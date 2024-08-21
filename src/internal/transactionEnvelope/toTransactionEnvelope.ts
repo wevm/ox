@@ -82,7 +82,7 @@ export declare namespace toTransactionEnvelope {
       ? deserializeTransactionEnvelope.ReturnType<envelope>
       : envelope extends UnionPartialBy<TransactionEnvelope, 'type'>
         ? IsNarrowable<GetTransactionType<envelope>, string> extends true
-          ? envelope & { type: GetTransactionType<envelope> }
+          ? envelope & { readonly type: GetTransactionType<envelope> }
           : never
         : never
   >
@@ -127,7 +127,7 @@ export declare namespace toTransactionEnvelopeLegacy {
   > = Compute<
     envelope extends TransactionEnvelopeSerializedLegacy
       ? TransactionEnvelopeLegacy
-      : envelope & { type: 'legacy' }
+      : envelope & { readonly type: 'legacy' }
   >
 
   type ErrorType = GlobalErrorType
@@ -171,7 +171,7 @@ export declare namespace toTransactionEnvelopeEip1559 {
   > = Compute<
     envelope extends TransactionEnvelopeSerializedEip1559
       ? TransactionEnvelopeEip1559
-      : envelope & { type: 'eip1559' }
+      : envelope & { readonly type: 'eip1559' }
   >
 
   type ErrorType = GlobalErrorType
@@ -215,7 +215,7 @@ export declare namespace toTransactionEnvelopeEip2930 {
   > = Compute<
     envelope extends TransactionEnvelopeSerializedEip2930
       ? TransactionEnvelopeEip2930
-      : envelope & { type: 'eip2930' }
+      : envelope & { readonly type: 'eip2930' }
   >
 
   type ErrorType = GlobalErrorType
@@ -253,7 +253,7 @@ export function toTransactionEnvelopeEip4844<
 export declare namespace toTransactionEnvelopeEip4844 {
   type ReturnType<
     envelope extends UnionPartialBy<TransactionEnvelopeEip4844, 'type'>,
-  > = Compute<envelope & { type: 'eip4844' }>
+  > = Compute<envelope & { readonly type: 'eip4844' }>
 
   type ErrorType = GlobalErrorType
 }
@@ -289,7 +289,7 @@ export function toTransactionEnvelopeEip7702<
 export declare namespace toTransactionEnvelopeEip7702 {
   type ReturnType<
     envelope extends UnionPartialBy<TransactionEnvelopeEip7702, 'type'>,
-  > = Compute<envelope & { type: 'eip7702' }>
+  > = Compute<envelope & { readonly type: 'eip7702' }>
 
   type ErrorType = GlobalErrorType
 }

@@ -18,6 +18,10 @@ export {
   deserializeTransactionEnvelope as deserialize,
   deserializeTransactionEnvelopeLegacy,
   deserializeTransactionEnvelopeLegacy as deserializeLegacy,
+  deserializeTransactionEnvelopeEip1559,
+  deserializeTransactionEnvelopeEip1559 as deserializeEip1559,
+  deserializeTransactionEnvelopeEip2930,
+  deserializeTransactionEnvelopeEip2930 as deserializeEip2930,
 } from './internal/transactionEnvelope/deserializeTransactionEnvelope.js'
 
 export {

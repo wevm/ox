@@ -36,9 +36,9 @@ Alternatively, you can explicitly import the functions:
 
 ```ts twoslash
 import { toHex } from 'ox/Hex'
-import { toRlp } from 'ox/Rlp'
+import { encodeRlp } from 'ox/Rlp'
 
-const rlp = toRlp([toHex('hello'), toHex('world')])
+const rlp = encodeRlp([toHex('hello'), toHex('world')])
 ```
 
 :::note

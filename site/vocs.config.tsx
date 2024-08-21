@@ -467,7 +467,7 @@ export default defineConfig({
           ],
         },
         {
-          text: 'TransactionEnvelope 🚧',
+          text: 'TransactionEnvelope',
           collapsed: true,
           link: '/api/transactionEnvelope',
           items: [
