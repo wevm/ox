@@ -72,7 +72,7 @@ describe('eip4844', () => {
         chainId: 1,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.]`,
+      '[EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.]',
     )
   })
 

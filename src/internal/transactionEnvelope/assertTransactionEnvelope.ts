@@ -11,8 +11,8 @@ import {
   FeeCapTooHighError,
   GasPriceTooHighError,
   InvalidChainIdError,
-  TransactionTypeNotImplementedError,
   TipAboveFeeCapError,
+  TransactionTypeNotImplementedError,
 } from '../errors/transactionEnvelope.js'
 import { hexToNumber } from '../hex/fromHex.js'
 import type {
