@@ -1,9 +1,9 @@
 import { hexToBytes } from '../bytes/toBytes.js'
-import { bytesToHex } from '../hex/toHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { bytesToHex } from '../hex/toHex.js'
+import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Kzg } from '../types/kzg.js'
-import type { Blobs } from '../types/blob.js'
 
 type As = 'hex' | 'bytes'
 

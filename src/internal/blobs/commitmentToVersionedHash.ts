@@ -1,6 +1,6 @@
-import { bytesToHex } from '../hex/toHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { sha256 } from '../hash/sha256.js'
+import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 type As = 'hex' | 'bytes'
