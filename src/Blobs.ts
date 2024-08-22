@@ -33,6 +33,8 @@ export {
   blobsToHex as toHex,
 } from './internal/blobs/fromBlobs.js'
 
+export { sidecarsToVersionedHashes } from './internal/blobs/sidecarsToVersionedHashes.js'
+
 export { toBlobs, toBlobs as from } from './internal/blobs/toBlobs.js'
 
 export {

@@ -87,6 +87,8 @@ export type TransactionEnvelopeEip2930 = Compute<
 
 export type TransactionEnvelopeEip4844 = Compute<
   TransactionEnvelopeBase<'eip4844'> & {
+    /** EIP-2930 Access List. */
+    accessList?: AccessList | undefined
     /** Versioned hashes of blobs to be included in the transaction. */
     blobVersionedHashes: readonly Hex[]
     /** EIP-155 Chain ID. */
@@ -97,13 +99,15 @@ export type TransactionEnvelopeEip4844 = Compute<
     maxFeePerGas?: bigint | undefined
     /** Max priority fee per gas (in wei). */
     maxPriorityFeePerGas?: bigint | undefined
-    /** The sidecars associated with this transaction. When `false`, sidecars are not attached to the envelope. */
-    sidecars?: readonly BlobSidecar<Hex>[] | false | undefined
+    /** The sidecars associated with this transaction. When defined, the envelope is in the "network wrapper" format. */
+    sidecars?: readonly BlobSidecar<Hex>[] | undefined
   } & ExactPartial<Signature>
 >
 
 export type TransactionEnvelopeEip7702 = Compute<
   TransactionEnvelopeBase<'eip7702'> & {
+    /** EIP-2930 Access List. */
+    accessList?: AccessList | undefined
     /** EIP-7702 Authorization List. */
     authorizationList: AuthorizationList<true>
     /** EIP-155 Chain ID. */

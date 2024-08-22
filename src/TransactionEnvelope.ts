@@ -38,6 +38,8 @@ export {
   serializeTransactionEnvelopeEip1559 as serializeEip1559,
   serializeTransactionEnvelopeEip2930,
   serializeTransactionEnvelopeEip2930 as serializeEip2930,
+  serializeTransactionEnvelopeEip4844,
+  serializeTransactionEnvelopeEip4844 as serializeEip4844,
 } from './internal/transactionEnvelope/serializeTransactionEnvelope.js'
 
 export {

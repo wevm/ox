@@ -7,21 +7,26 @@ import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelop
 import { toHex } from '../hex/toHex.js'
 import { encodeRlp } from '../rlp/encodeRlp.js'
 import { toSignatureTuple } from '../signature/toSignatureTuple.js'
+import type { BlobSidecars } from '../types/blob.js'
+import type { Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelopeEip1559,
   TransactionEnvelopeEip2930,
+  TransactionEnvelopeEip4844,
   TransactionEnvelopeLegacy,
   TransactionEnvelopeSerialized,
   TransactionEnvelopeSerializedEip1559,
   TransactionEnvelopeSerializedEip2930,
+  TransactionEnvelopeSerializedEip4844,
   TransactionEnvelopeSerializedLegacy,
 } from '../types/transactionEnvelope.js'
 import type { PartialBy } from '../types/utils.js'
 import {
   assertTransactionEnvelopeEip1559,
   assertTransactionEnvelopeEip2930,
+  assertTransactionEnvelopeEip4844,
   assertTransactionEnvelopeLegacy,
 } from './assertTransactionEnvelope.js'
 
@@ -56,8 +61,10 @@ export function serializeTransactionEnvelope<
     return serializeTransactionEnvelopeEip2930(envelope, options) as never
   if (envelope.type === 'eip1559')
     return serializeTransactionEnvelopeEip1559(envelope, options) as never
+  if (envelope.type === 'eip4844')
+    return serializeTransactionEnvelopeEip4844(envelope, options) as never
 
-  // TODO: EIP-4844, EIP-7702
+  // TODO: EIP-7702
 
   throw new TransactionTypeNotImplementedError({ type: envelope.type })
 }
@@ -66,6 +73,8 @@ export declare namespace serializeTransactionEnvelope {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
+    /** (EIP-4844 only) Sidecars to append to the serialized Transaction Envelope. */
+    sidecars?: BlobSidecars<Hex> | undefined
   }
 
   type ReturnType<envelope extends TransactionEnvelope = TransactionEnvelope> =
@@ -80,6 +89,7 @@ export declare namespace serializeTransactionEnvelope {
 }
 
 serializeTransactionEnvelope.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as serializeTransactionEnvelope.ErrorType
 
 /**
@@ -188,6 +198,7 @@ export declare namespace serializeTransactionEnvelopeLegacy {
 }
 
 serializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as serializeTransactionEnvelopeLegacy.ErrorType
 
 /**
@@ -256,6 +267,7 @@ export declare namespace serializeTransactionEnvelopeEip2930 {
 }
 
 serializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as serializeTransactionEnvelopeEip2930.ErrorType
 
 /**
@@ -334,4 +346,95 @@ export declare namespace serializeTransactionEnvelopeEip1559 {
 }
 
 serializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as serializeTransactionEnvelopeEip1559.ErrorType
+
+/**
+ * Serializes an EIP-4844 {@link TransactionEnvelope}.
+ *
+ * @example
+ * // TODO
+ */
+export function serializeTransactionEnvelopeEip4844(
+  envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
+  options: serializeTransactionEnvelopeEip4844.Options = {},
+): serializeTransactionEnvelopeEip4844.ReturnType {
+  const {
+    blobVersionedHashes,
+    chainId,
+    gas,
+    nonce,
+    to,
+    value,
+    maxFeePerBlobGas,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+    accessList,
+    data,
+  } = envelope
+  const { signature } = options
+
+  assertTransactionEnvelopeEip4844(envelope)
+
+  const serializedAccessList = serializeAccessList(accessList)
+
+  const serializedTransaction = [
+    toHex(chainId),
+    nonce ? toHex(nonce) : '0x',
+    maxPriorityFeePerGas ? toHex(maxPriorityFeePerGas) : '0x',
+    maxFeePerGas ? toHex(maxFeePerGas) : '0x',
+    gas ? toHex(gas) : '0x',
+    to ?? '0x',
+    value ? toHex(value) : '0x',
+    data ?? '0x',
+    serializedAccessList,
+    maxFeePerBlobGas ? toHex(maxFeePerBlobGas) : '0x',
+    blobVersionedHashes ?? [],
+    ...toSignatureTuple(signature || envelope),
+  ] as const
+
+  const sidecars = options.sidecars || envelope.sidecars
+  const blobs: Hex[] = []
+  const commitments: Hex[] = []
+  const proofs: Hex[] = []
+  if (sidecars)
+    for (let i = 0; i < sidecars.length; i++) {
+      const { blob, commitment, proof } = sidecars[i]!
+      blobs.push(blob)
+      commitments.push(commitment)
+      proofs.push(proof)
+    }
+
+  return concatHex(
+    '0x03',
+    sidecars
+      ? // If sidecars are provided, envelope turns into a "network wrapper":
+        encodeRlp([serializedTransaction, blobs, commitments, proofs])
+      : // Otherwise, standard envelope is used:
+        encodeRlp(serializedTransaction),
+  ) as TransactionEnvelopeSerializedEip4844
+}
+
+export declare namespace serializeTransactionEnvelopeEip4844 {
+  type Options = {
+    /** Signature to append to the serialized Transaction Envelope. */
+    signature?: Signature | undefined
+    /** Sidecars to append to the serialized Transaction Envelope. */
+    sidecars?: BlobSidecars<Hex> | undefined
+  }
+
+  type ReturnType = TransactionEnvelopeSerializedEip4844
+
+  type ErrorType =
+    | assertTransactionEnvelopeEip1559.ErrorType
+    | toHex.ErrorType
+    | trimLeft.ErrorType
+    | toSignatureTuple.ErrorType
+    | concatHex.ErrorType
+    | encodeRlp.ErrorType
+    | GlobalErrorType
+}
+
+serializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as serializeTransactionEnvelopeEip1559.ErrorType

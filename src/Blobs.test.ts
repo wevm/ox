@@ -18,6 +18,7 @@ test('exports', () => {
       "toBytes",
       "blobsToHex",
       "toHex",
+      "sidecarsToVersionedHashes",
       "toBlobs",
       "from",
       "toBlobSidecars",

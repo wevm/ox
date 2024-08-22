@@ -1,8 +1,9 @@
 // TODO: Add `eth_sendRawTransaction` tests.
 
-import { Secp256k1, TransactionEnvelope, Value } from 'ox'
+import { Blobs, Hex, Secp256k1, TransactionEnvelope, Value } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
+import { kzg } from '../../../test/kzg.js'
 
 describe('legacy', () => {
   const transaction = TransactionEnvelope.fromLegacy({
@@ -661,6 +662,132 @@ describe('eip1559', () => {
     ).toEqual(
       '0x02f20182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080',
     )
+  })
+})
+
+describe('eip4844', () => {
+  const blobs = Blobs.from(Hex.from('abcd'))
+  const sidecars = Blobs.toSidecars(blobs, { kzg })
+  const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+  const transaction = TransactionEnvelope.fromEip4844({
+    chainId: 1,
+    nonce: 785n,
+    to: accounts[1].address,
+    value: Value.fromEther('1'),
+    blobVersionedHashes,
+  })
+
+  test('default', () => {
+    const serialized = TransactionEnvelope.serialize(transaction)
+    assertType<TransactionEnvelope.SerializedEip4844>(serialized)
+    expect(serialized).toEqual(
+      '0x03f84a018203118080809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c080e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261',
+    )
+    // expect(TransactionEnvelope.deserialize(serialized)).toEqual(transaction)
+  })
+
+  test('minimal', () => {
+    const serialized = TransactionEnvelope.serializeEip4844({
+      blobVersionedHashes,
+      chainId: 1,
+    })
+    expect(serialized).toMatchInlineSnapshot(
+      `"0x03ec0180808080808080c080e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261"`,
+    )
+  })
+
+  test('fees', () => {
+    const serialized = TransactionEnvelope.serializeEip4844({
+      chainId: 1,
+      blobVersionedHashes,
+      maxFeePerBlobGas: Value.fromGwei('20'),
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('1'),
+    })
+    expect(serialized).toMatchInlineSnapshot(
+      `"0x03f83a0180843b9aca008504a817c80080808080c08504a817c800e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261"`,
+    )
+  })
+
+  test('fees', () => {
+    const serialized = TransactionEnvelope.serializeEip4844({
+      chainId: 1,
+      blobVersionedHashes,
+      gas: 69420n,
+    })
+    expect(serialized).toMatchInlineSnapshot(
+      `"0x03ef0180808083010f2c808080c080e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261"`,
+    )
+  })
+
+  test('no blobVersionedHashes', () => {
+    // @ts-expect-error
+    const serialized = TransactionEnvelope.serializeEip4844({
+      chainId: 1,
+    })
+    expect(serialized).toMatchInlineSnapshot(
+      `"0x03cb0180808080808080c080c0"`,
+    )
+  })
+
+  test('options: signature', () => {
+    expect(
+      TransactionEnvelope.serialize(transaction, {
+        signature: {
+          r: BigInt(
+            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          ),
+          s: BigInt(
+            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          ),
+          yParity: 1,
+        },
+      }),
+    ).toEqual(
+      '0x03f88d018203118080809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c080e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed8026101a060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+    )
+    expect(
+      TransactionEnvelope.serialize(
+        transaction,
+
+        {
+          signature: {
+            r: BigInt(
+              '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+            ),
+            s: BigInt(
+              '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+            ),
+            yParity: 0,
+          },
+        },
+      ),
+    ).toEqual(
+      '0x03f88d018203118080809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c080e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed8026180a060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+    )
+  })
+
+  test('options: sidecars', () => {
+    const serialized = TransactionEnvelope.serialize(transaction, { sidecars })
+    assertType<TransactionEnvelope.SerializedEip4844>(serialized)
+    expect(serialized).toMatchSnapshot()
+  })
+
+  test('options: signature + sidecars', () => {
+    const serialized = TransactionEnvelope.serialize(transaction, {
+      sidecars,
+      signature: {
+        r: BigInt(
+          '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+        ),
+        s: BigInt(
+          '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+        ),
+        yParity: 1,
+      },
+    })
+    assertType<TransactionEnvelope.SerializedEip4844>(serialized)
+    expect(serialized).toMatchSnapshot()
   })
 })
 

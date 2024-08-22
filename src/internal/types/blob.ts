@@ -15,6 +15,5 @@ export type BlobSidecar<type extends Hex | Bytes = Hex | Bytes> = {
   proof: type
 }
 
-export type BlobSidecars<type extends Hex | Bytes = Hex | Bytes> = Compute<
-  BlobSidecar<type>
->[]
+export type BlobSidecars<type extends Hex | Bytes = Hex | Bytes> =
+  readonly Compute<BlobSidecar<type>>[]
