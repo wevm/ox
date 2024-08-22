@@ -7,7 +7,7 @@ import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { RecursiveArray } from './encodeRlp.js'
 
-type To = 'hex' | 'bytes'
+type To = 'Hex' | 'Bytes'
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} or {@link Hex} value.
@@ -21,9 +21,9 @@ type To = 'hex' | 'bytes'
  */
 export function decodeRlp<
   value extends Bytes | Hex,
-  to extends To = value extends Bytes ? 'bytes' : 'hex',
+  to extends To = value extends Bytes ? 'Bytes' : 'Hex',
 >(value: value, to_?: to | To | undefined): decodeRlp.ReturnType<to> {
-  const to = to_ ?? (typeof value === 'string' ? 'hex' : 'bytes')
+  const to = to_ ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
 
   const bytes = (() => {
     if (typeof value === 'string') {
@@ -44,8 +44,8 @@ export function decodeRlp<
 
 export declare namespace decodeRlp {
   type ReturnType<to extends To> =
-    | (to extends 'bytes' ? RecursiveArray<Bytes> : never)
-    | (to extends 'hex' ? RecursiveArray<Hex> : never)
+    | (to extends 'Bytes' ? RecursiveArray<Bytes> : never)
+    | (to extends 'Hex' ? RecursiveArray<Hex> : never)
 
   type ErrorType =
     | hexToBytes.ErrorType
@@ -68,12 +68,12 @@ decodeRlp.parseError = (error: unknown) => error as decodeRlp.ErrorType
  * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  */
 export function rlpToBytes(value: Bytes | Hex): rlpToBytes.ReturnType {
-  return decodeRlp(value, 'bytes')
+  return decodeRlp(value, 'Bytes')
 }
 
 export declare namespace rlpToBytes {
   type ErrorType = decodeRlp.ErrorType
-  type ReturnType = decodeRlp.ReturnType<'bytes'>
+  type ReturnType = decodeRlp.ReturnType<'Bytes'>
 }
 
 rlpToBytes.parseError = (error: unknown) => error as rlpToBytes.ErrorType
@@ -89,12 +89,12 @@ rlpToBytes.parseError = (error: unknown) => error as rlpToBytes.ErrorType
  * // 0x68656c6c6f20776f726c64
  */
 export function rlpToHex(value: Bytes | Hex): rlpToHex.ReturnType {
-  return decodeRlp(value, 'hex')
+  return decodeRlp(value, 'Hex')
 }
 
 export declare namespace rlpToHex {
   type ErrorType = decodeRlp.ErrorType
-  type ReturnType = decodeRlp.ReturnType<'hex'>
+  type ReturnType = decodeRlp.ReturnType<'Hex'>
 }
 
 rlpToHex.parseError = (error: unknown) => error as rlpToHex.ErrorType
@@ -104,20 +104,20 @@ rlpToHex.parseError = (error: unknown) => error as rlpToHex.ErrorType
 /////////////////////////////////////////////////////////////////////////////////
 
 declare namespace decodeRlpCursor {
-  type ReturnType<to extends To = 'hex'> = decodeRlp.ReturnType<to>
+  type ReturnType<to extends To = 'Hex'> = decodeRlp.ReturnType<to>
   type ErrorType =
     | bytesToHex.ErrorType
     | readLength.ErrorType
     | readList.ErrorType
     | GlobalErrorType
 }
-function decodeRlpCursor<to extends To = 'hex'>(
+function decodeRlpCursor<to extends To = 'Hex'>(
   cursor: Cursor,
-  to: to | To | undefined = 'hex',
+  to: to | To | undefined = 'Hex',
 ): decodeRlpCursor.ReturnType<to> {
   if (cursor.bytes.length === 0)
     return (
-      to === 'hex' ? bytesToHex(cursor.bytes) : cursor.bytes
+      to === 'Hex' ? bytesToHex(cursor.bytes) : cursor.bytes
     ) as decodeRlpCursor.ReturnType<to>
 
   const prefix = cursor.readByte()
@@ -128,7 +128,7 @@ function decodeRlpCursor<to extends To = 'hex'>(
     const length = readLength(cursor, prefix, 0x80)
     const bytes = cursor.readBytes(length)
     return (
-      to === 'hex' ? bytesToHex(bytes) : bytes
+      to === 'Hex' ? bytesToHex(bytes) : bytes
     ) as decodeRlpCursor.ReturnType<to>
   }
 

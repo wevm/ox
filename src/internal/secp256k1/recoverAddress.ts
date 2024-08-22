@@ -4,7 +4,7 @@ import { publicKeyToAddress } from '../address/publicKeyToAddress.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { recoverPublicKey } from './recoverPublicKey.js'
 
-type To = 'bytes' | 'hex'
+type As = 'Bytes' | 'Hex'
 
 /**
  * Recovers the signing address from the signed payload and signature.
@@ -21,14 +21,14 @@ type To = 'bytes' | 'hex'
  * })
  * ```
  */
-export function recoverAddress<to extends To = 'hex'>(
-  parameters: recoverAddress.Parameters<to>,
+export function recoverAddress<as extends As = 'Hex'>(
+  parameters: recoverAddress.Parameters<as>,
 ): recoverAddress.ReturnType {
   return publicKeyToAddress(recoverPublicKey(parameters))
 }
 
 export declare namespace recoverAddress {
-  type Parameters<to extends To = 'hex'> = recoverPublicKey.Parameters<to>
+  type Parameters<as extends As = 'Hex'> = recoverPublicKey.Parameters<as>
 
   type ReturnType = Address
 

@@ -13,7 +13,7 @@ import { bytesToHex } from '../hex/toHex.js'
 import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type As = 'hex' | 'bytes'
+type As = 'Hex' | 'Bytes'
 
 /**
  * Transforms arbitrary data to {@link Blobs}.
@@ -28,13 +28,13 @@ type As = 'hex' | 'bytes'
 export function toBlobs<
   const data extends Hex | Bytes,
   as extends As =
-    | (data extends Hex ? 'hex' : never)
-    | (data extends Bytes ? 'bytes' : never),
+    | (data extends Hex ? 'Hex' : never)
+    | (data extends Bytes ? 'Bytes' : never),
 >(
   data_: data | Hex | Bytes,
   options: toBlobs.Options<as> = {},
 ): toBlobs.ReturnType<as> {
-  const as = options.as ?? (typeof data_ === 'string' ? 'hex' : 'bytes')
+  const as = options.as ?? (typeof data_ === 'string' ? 'Hex' : 'Bytes')
   const data = (typeof data_ === 'string' ? hexToBytes(data_) : data_) as Bytes
 
   const size_ = size(data)
@@ -78,7 +78,7 @@ export function toBlobs<
   }
 
   return (
-    as === 'bytes'
+    as === 'Bytes'
       ? blobs.map((x) => x.bytes)
       : blobs.map((x) => bytesToHex(x.bytes))
   ) as never
@@ -91,8 +91,8 @@ export declare namespace toBlobs {
   }
 
   type ReturnType<as extends As = As> =
-    | (as extends 'bytes' ? readonly Bytes[] : never)
-    | (as extends 'hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex[] : never)
 
   type ErrorType =
     | BlobSizeTooLargeError

@@ -6,7 +6,7 @@ import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
 
-type To = 'bytes' | 'hex'
+type As = 'Bytes' | 'Hex'
 
 /**
  * Recovers the signing public key from the signed payload and signature.
@@ -23,10 +23,10 @@ type To = 'bytes' | 'hex'
  * })
  * ```
  */
-export function recoverPublicKey<to extends To = 'hex'>(
-  parameters: recoverPublicKey.Parameters<to>,
-): recoverPublicKey.ReturnType<to> {
-  const { payload, signature, to = 'hex' } = parameters
+export function recoverPublicKey<as extends As = 'Hex'>(
+  parameters: recoverPublicKey.Parameters<as>,
+): recoverPublicKey.ReturnType<as> {
+  const { payload, signature, as = 'Hex' } = parameters
   const { r, s, yParity } = signature
   const signature_ = new secp256k1.Signature(
     BigInt(r),
@@ -35,23 +35,23 @@ export function recoverPublicKey<to extends To = 'hex'>(
   const publicKey = `0x${signature_
     .recoverPublicKey(toHex(payload).substring(2))
     .toHex(false)}`
-  if (to === 'bytes') return toBytes(publicKey) as never
+  if (as === 'Bytes') return toBytes(publicKey) as never
   return publicKey as never
 }
 
 export declare namespace recoverPublicKey {
-  type Parameters<to extends To = 'hex'> = {
+  type Parameters<as extends As = 'Hex'> = {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */
     signature: Signature
-    /** Format of the returned public key. @default 'hex' */
-    to?: to | To | undefined
+    /** Format of the returned public key. @default 'Hex' */
+    as?: as | As | undefined
   }
 
-  type ReturnType<to extends To = 'hex'> =
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'hex' ? Hex : never)
+  type ReturnType<as extends As> =
+    | (as extends 'Bytes' ? Bytes : never)
+    | (as extends 'Hex' ? Hex : never)
 
   type ErrorType = toBytes.ErrorType | toHex.ErrorType | GlobalErrorType
 }

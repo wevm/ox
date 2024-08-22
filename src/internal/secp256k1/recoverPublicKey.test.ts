@@ -12,10 +12,10 @@ test('default', () => {
   )
 })
 
-test('args: to', () => {
+test('args: as', () => {
   const payload = '0xdeadbeef'
   const signature = Secp256k1.sign({ payload, privateKey })
   expect(
-    Secp256k1.recoverPublicKey({ payload, signature, to: 'bytes' }),
-  ).toStrictEqual(Secp256k1.getPublicKey({ privateKey, to: 'bytes' }))
+    Secp256k1.recoverPublicKey({ payload, signature, as: 'Bytes' }),
+  ).toStrictEqual(Secp256k1.getPublicKey({ privateKey, as: 'Bytes' }))
 })

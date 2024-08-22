@@ -128,7 +128,7 @@ deserializeTransactionEnvelope.parseError = (error: unknown) =>
 export function deserializeTransactionEnvelopeLegacy(
   serializedTransaction: TransactionEnvelopeSerializedLegacy,
 ): deserializeTransactionEnvelopeLegacy.ReturnType {
-  const tuple = decodeRlp(serializedTransaction, 'hex')
+  const tuple = decodeRlp(serializedTransaction, 'Hex')
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
     tuple as readonly Hex[]

@@ -6,7 +6,7 @@ import { hexToBigInt, hexToNumber } from '../hex/fromHex.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'string' | 'hex' | 'bigint' | 'number' | 'boolean'
+type To = 'string' | 'Hex' | 'bigint' | 'number' | 'boolean'
 
 /**
  * Decodes {@link Bytes} into a UTF-8 string, {@link Hex}, number, bigint or boolean.
@@ -27,7 +27,7 @@ type To = 'string' | 'hex' | 'bigint' | 'number' | 'boolean'
  * // 'Hello world'
  */
 export function fromBytes<
-  to extends 'string' | 'hex' | 'bigint' | 'number' | 'boolean',
+  to extends 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
 >(
   bytes: Bytes,
   to: to | To,
@@ -41,9 +41,9 @@ export function fromBytes<
     return bytesToBoolean(bytes, options) as fromBytes.ReturnType<to>
   if (to === 'string')
     return bytesToString(bytes, options) as fromBytes.ReturnType<to>
-  if (to === 'hex')
+  if (to === 'Hex')
     return bytesToHex(bytes, options) as fromBytes.ReturnType<to>
-  throw new InvalidTypeError(to, 'string | hex | bigint | number | boolean')
+  throw new InvalidTypeError(to, 'string | Hex | bigint | number | boolean')
 }
 
 export declare namespace fromBytes {
@@ -54,7 +54,7 @@ export declare namespace fromBytes {
 
   type ReturnType<to extends To> =
     | (to extends 'string' ? string : never)
-    | (to extends 'hex' ? Hex : never)
+    | (to extends 'Hex' ? Hex : never)
     | (to extends 'bigint' ? bigint : never)
     | (to extends 'number' ? number : never)
     | (to extends 'boolean' ? boolean : never)

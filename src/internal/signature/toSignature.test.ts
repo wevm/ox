@@ -18,7 +18,7 @@ test('default', () => {
   expect(Signature.from(Signature.toCompact(signature))).toEqual(signature)
   expect(Signature.from(Signature.serialize(signature))).toEqual(signature)
   expect(
-    Signature.from(Signature.serialize(signature, { to: 'bytes' })),
+    Signature.from(Signature.serialize(signature, { as: 'Bytes' })),
   ).toEqual(signature)
 })
 

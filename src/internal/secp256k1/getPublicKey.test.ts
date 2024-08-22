@@ -30,10 +30,10 @@ test('default', () => {
   }
 })
 
-test('args: to', () => {
+test('args: as', () => {
   const publicKey = Secp256k1.getPublicKey({
     privateKey: accounts[0].privateKey,
-    to: 'bytes',
+    as: 'Bytes',
   })
 
   expect(publicKey).toMatchInlineSnapshot(

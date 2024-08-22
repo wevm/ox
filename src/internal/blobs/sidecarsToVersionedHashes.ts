@@ -2,7 +2,7 @@ import type { BlobSidecars } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 
-type As = 'hex' | 'bytes'
+type As = 'Hex' | 'Bytes'
 
 /**
  * Transforms a list of sidecars to their versioned hashes.
@@ -19,8 +19,8 @@ type As = 'hex' | 'bytes'
 export function sidecarsToVersionedHashes<
   const sidecars extends BlobSidecars,
   as extends As =
-    | (sidecars extends BlobSidecars<Hex> ? 'hex' : never)
-    | (sidecars extends BlobSidecars<Bytes> ? 'bytes' : never),
+    | (sidecars extends BlobSidecars<Hex> ? 'Hex' : never)
+    | (sidecars extends BlobSidecars<Bytes> ? 'Bytes' : never),
 >(
   sidecars: sidecars | BlobSidecars,
   options: sidecarsToVersionedHashes.Options<as> = {},
@@ -28,7 +28,7 @@ export function sidecarsToVersionedHashes<
   const { version } = options
 
   const as =
-    options.as ?? (typeof sidecars[0]!.blob === 'string' ? 'hex' : 'bytes')
+    options.as ?? (typeof sidecars[0]!.blob === 'string' ? 'Hex' : 'Bytes')
 
   const hashes: Uint8Array[] | Hex[] = []
   for (const { commitment } of sidecars) {
@@ -51,6 +51,6 @@ export declare namespace sidecarsToVersionedHashes {
   }
 
   type ReturnType<as extends As> =
-    | (as extends 'bytes' ? readonly Bytes[] : never)
-    | (as extends 'hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex[] : never)
 }

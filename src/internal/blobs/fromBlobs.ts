@@ -5,7 +5,7 @@ import { bytesToHex } from '../hex/toHex.js'
 import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'hex' | 'bytes'
+type To = 'Hex' | 'Bytes'
 
 /**
  * Transforms Ox-shaped {@link Blobs} into the originating data.
@@ -22,13 +22,13 @@ type To = 'hex' | 'bytes'
 export function fromBlobs<
   const blobs extends Blobs<Hex> | Blobs<Bytes>,
   to extends To =
-    | (blobs extends Blobs<Hex> ? 'hex' : never)
-    | (blobs extends Blobs<Bytes> ? 'bytes' : never),
+    | (blobs extends Blobs<Hex> ? 'Hex' : never)
+    | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
   blobs_: blobs | Blobs<Hex> | Blobs<Bytes>,
   to_?: to | To | undefined,
 ): fromBlobs.ReturnType<to> {
-  const to = to_ ?? (typeof blobs_[0] === 'string' ? 'hex' : 'bytes')
+  const to = to_ ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
   const blobs = (
     typeof blobs_[0] === 'string'
       ? blobs_.map((x) => hexToBytes(x as Hex))
@@ -63,13 +63,13 @@ export function fromBlobs<
   }
 
   const trimmedData = data.bytes.slice(0, data.position)
-  return (to === 'hex' ? bytesToHex(trimmedData) : trimmedData) as never
+  return (to === 'Hex' ? bytesToHex(trimmedData) : trimmedData) as never
 }
 
 export declare namespace fromBlobs {
-  type ReturnType<to extends To = 'hex'> =
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'hex' ? Hex : never)
+  type ReturnType<to extends To = 'Hex'> =
+    | (to extends 'Bytes' ? Bytes : never)
+    | (to extends 'Hex' ? Hex : never)
 
   type ErrorType =
     | bytesToHex.ErrorType
@@ -96,11 +96,11 @@ fromBlobs.parseError = (error: unknown) => error as fromBlobs.ErrorType
 export function blobsToHex(
   blobs: Blobs<Hex> | Blobs<Bytes>,
 ): blobsToHex.ReturnType {
-  return fromBlobs(blobs, 'hex')
+  return fromBlobs(blobs, 'Hex')
 }
 
 export declare namespace blobsToHex {
-  type ReturnType = fromBlobs.ReturnType<'hex'>
+  type ReturnType = fromBlobs.ReturnType<'Hex'>
   type ErrorType = fromBlobs.ErrorType | GlobalErrorType
 }
 
@@ -122,11 +122,11 @@ blobsToHex.parseError = (error: unknown) => error as blobsToHex.ErrorType
 export function blobsToBytes(
   blobs: Blobs<Hex> | Blobs<Bytes>,
 ): blobsToBytes.ReturnType {
-  return fromBlobs(blobs, 'bytes')
+  return fromBlobs(blobs, 'Bytes')
 }
 
 export declare namespace blobsToBytes {
-  type ReturnType = fromBlobs.ReturnType<'bytes'>
+  type ReturnType = fromBlobs.ReturnType<'Bytes'>
   type ErrorType = fromBlobs.ErrorType | GlobalErrorType
 }
 

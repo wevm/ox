@@ -23,7 +23,7 @@ export function checksumAddress(address_: string): Address {
   assertAddress(address_, { strict: false })
 
   const hexAddress = address_.substring(2).toLowerCase()
-  const hash = keccak256(stringToBytes(hexAddress), 'bytes')
+  const hash = keccak256(stringToBytes(hexAddress), 'Bytes')
 
   const address = hexAddress.split('')
   for (let i = 0; i < 40; i += 2) {

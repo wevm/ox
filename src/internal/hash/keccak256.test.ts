@@ -16,7 +16,7 @@ test('to hex', () => {
 })
 
 test('to bytes', () => {
-  expect(Hash.keccak256('0xdeadbeef', 'bytes')).toMatchInlineSnapshot(
+  expect(Hash.keccak256('0xdeadbeef', 'Bytes')).toMatchInlineSnapshot(
     `
     Uint8Array [
       212,
@@ -58,7 +58,7 @@ test('to bytes', () => {
   expect(
     Hash.keccak256(
       new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
-      'bytes',
+      'Bytes',
     ),
   ).toMatchInlineSnapshot(
     `
