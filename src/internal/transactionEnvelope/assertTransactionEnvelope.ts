@@ -48,7 +48,7 @@ export function assertTransactionEnvelope(envelope: TransactionEnvelope) {
     })
 }
 
-declare namespace assertTransactionEnvelope {
+export declare namespace assertTransactionEnvelope {
   type ErrorType =
     | assertTransactionEnvelopeLegacy.ErrorType
     | assertTransactionEnvelopeEip2930.ErrorType
@@ -58,6 +58,9 @@ declare namespace assertTransactionEnvelope {
     | TransactionTypeNotImplementedError
     | GlobalErrorType
 }
+
+assertTransactionEnvelope.parseError = (error: unknown) =>
+  error as assertTransactionEnvelope.ErrorType
 
 /**
  * Asserts a legacy {@link TransactionEnvelope} is valid.
@@ -84,6 +87,9 @@ export declare namespace assertTransactionEnvelopeLegacy {
     | GlobalErrorType
 }
 
+assertTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  error as assertTransactionEnvelopeLegacy.ErrorType
+
 /**
  * Asserts an EIP-2930 {@link TransactionEnvelope} is valid.
  *
@@ -107,6 +113,9 @@ export declare namespace assertTransactionEnvelopeEip2930 {
     | GasPriceTooHighError
     | GlobalErrorType
 }
+
+assertTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  error as assertTransactionEnvelopeEip2930.ErrorType
 
 /**
  * Asserts an EIP-1559 {@link TransactionEnvelope} is valid.
@@ -138,6 +147,9 @@ export declare namespace assertTransactionEnvelopeEip1559 {
     | TipAboveFeeCapError
     | GlobalErrorType
 }
+
+assertTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  error as assertTransactionEnvelopeEip1559.ErrorType
 
 /**
  * Asserts an EIP-4844 {@link TransactionEnvelope} is valid.
@@ -179,6 +191,9 @@ export declare namespace assertTransactionEnvelopeEip4844 {
     | GlobalErrorType
 }
 
+assertTransactionEnvelopeEip4844.parseError = (error: unknown) =>
+  error as assertTransactionEnvelopeEip4844.ErrorType
+
 /**
  * Asserts an EIP-7702 {@link TransactionEnvelope} is valid.
  *
@@ -205,3 +220,6 @@ export declare namespace assertTransactionEnvelopeEip7702 {
     | InvalidChainIdError
     | GlobalErrorType
 }
+
+assertTransactionEnvelopeEip7702.parseError = (error: unknown) =>
+  error as assertTransactionEnvelopeEip7702.ErrorType

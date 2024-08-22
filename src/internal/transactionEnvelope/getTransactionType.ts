@@ -102,6 +102,9 @@ export declare namespace getTransactionType {
   type ErrorType = CannotInferTransactionTypeError | GlobalErrorType
 }
 
+getTransactionType.parseError = (error: unknown) =>
+  error as getTransactionType.ErrorType
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Types
 

@@ -90,8 +90,16 @@ export declare namespace deserializeTransactionEnvelope {
       : TransactionEnvelope
   >
 
-  type ErrorType = GlobalErrorType
+  type ErrorType =
+    | getSerializedTransactionType.ErrorType
+    | deserializeTransactionEnvelopeLegacy.ErrorType
+    | deserializeTransactionEnvelopeEip2930.ErrorType
+    | deserializeTransactionEnvelopeEip1559.ErrorType
+    | GlobalErrorType
 }
+
+deserializeTransactionEnvelope.parseError = (error: unknown) =>
+  error as deserializeTransactionEnvelope.ErrorType
 
 /**
  * Deserializes a legacy {@link TransactionEnvelope} from its serialized form.
@@ -181,6 +189,9 @@ export declare namespace deserializeTransactionEnvelopeLegacy {
   type ErrorType = GlobalErrorType
 }
 
+deserializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  error as deserializeTransactionEnvelopeLegacy.ErrorType
+
 /**
  * Deserializes a EIP-2930 {@link TransactionEnvelope} from its serialized form.
  *
@@ -269,6 +280,9 @@ export function deserializeTransactionEnvelopeEip2930(
 
   return transaction
 }
+
+deserializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  error as deserializeTransactionEnvelopeEip2930.ErrorType
 
 export declare namespace deserializeTransactionEnvelopeEip2930 {
   type ReturnType = Compute<TransactionEnvelopeEip2930>
@@ -375,3 +389,6 @@ export declare namespace deserializeTransactionEnvelopeEip1559 {
 
   type ErrorType = GlobalErrorType
 }
+
+deserializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  error as deserializeTransactionEnvelopeEip1559.ErrorType

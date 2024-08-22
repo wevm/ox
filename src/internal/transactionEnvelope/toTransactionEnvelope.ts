@@ -87,8 +87,15 @@ export declare namespace toTransactionEnvelope {
         : never
   >
 
-  type ErrorType = getTransactionType.ErrorType | GlobalErrorType
+  type ErrorType =
+    | assertTransactionEnvelope.ErrorType
+    | deserializeTransactionEnvelope.ErrorType
+    | getTransactionType.ErrorType
+    | GlobalErrorType
 }
+
+toTransactionEnvelope.parseError = (error: unknown) =>
+  error as toTransactionEnvelope.ErrorType
 
 /**
  * Converts an arbitrary transaction object into a legacy Transaction Envelope.
@@ -132,6 +139,9 @@ export declare namespace toTransactionEnvelopeLegacy {
 
   type ErrorType = GlobalErrorType
 }
+
+toTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  error as toTransactionEnvelopeLegacy.ErrorType
 
 /**
  * Converts an arbitrary transaction object into an EIP-1559 Transaction Envelope.
@@ -177,6 +187,9 @@ export declare namespace toTransactionEnvelopeEip1559 {
   type ErrorType = GlobalErrorType
 }
 
+toTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  error as toTransactionEnvelopeEip1559.ErrorType
+
 /**
  * Converts an arbitrary transaction object into an EIP-2930 Transaction Envelope.
  *
@@ -221,6 +234,9 @@ export declare namespace toTransactionEnvelopeEip2930 {
   type ErrorType = GlobalErrorType
 }
 
+toTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  error as toTransactionEnvelopeEip2930.ErrorType
+
 /**
  * Converts an arbitrary transaction object into an EIP-4844 Transaction Envelope.
  *
@@ -258,6 +274,9 @@ export declare namespace toTransactionEnvelopeEip4844 {
   type ErrorType = GlobalErrorType
 }
 
+toTransactionEnvelopeEip4844.parseError = (error: unknown) =>
+  error as toTransactionEnvelopeEip4844.ErrorType
+
 /**
  * Converts an arbitrary transaction object into an EIP-7702 Transaction Envelope.
  *
@@ -293,3 +312,6 @@ export declare namespace toTransactionEnvelopeEip7702 {
 
   type ErrorType = GlobalErrorType
 }
+
+toTransactionEnvelopeEip7702.parseError = (error: unknown) =>
+  error as toTransactionEnvelopeEip7702.ErrorType

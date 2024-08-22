@@ -48,3 +48,6 @@ export declare namespace hashTransactionEnvelope {
     | serializeTransactionEnvelope.ErrorType
     | GlobalErrorType
 }
+
+hashTransactionEnvelope.parseError = (error: unknown) =>
+  error as hashTransactionEnvelope.ErrorType

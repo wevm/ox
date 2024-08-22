@@ -111,3 +111,5 @@ export declare namespace toBlobs {
     | size.ErrorType
     | GlobalErrorType
 }
+
+toBlobs.parseError = (error: unknown) => error as toBlobs.ErrorType

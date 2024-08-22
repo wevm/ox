@@ -79,6 +79,9 @@ export declare namespace serializeTransactionEnvelope {
     | GlobalErrorType
 }
 
+serializeTransactionEnvelope.parseError = (error: unknown) =>
+  error as serializeTransactionEnvelope.ErrorType
+
 /**
  * Serializes a legacy {@link TransactionEnvelope}.
  *
@@ -184,6 +187,9 @@ export declare namespace serializeTransactionEnvelopeLegacy {
     | GlobalErrorType
 }
 
+serializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  error as serializeTransactionEnvelopeLegacy.ErrorType
+
 /**
  * Serializes an EIP-2930 {@link TransactionEnvelope}.
  *
@@ -248,6 +254,9 @@ export declare namespace serializeTransactionEnvelopeEip2930 {
     | encodeRlp.ErrorType
     | GlobalErrorType
 }
+
+serializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  error as serializeTransactionEnvelopeEip2930.ErrorType
 
 /**
  * Serializes an EIP-1559 {@link TransactionEnvelope}.
@@ -323,3 +332,6 @@ export declare namespace serializeTransactionEnvelopeEip1559 {
     | encodeRlp.ErrorType
     | GlobalErrorType
 }
+
+serializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  error as serializeTransactionEnvelopeEip1559.ErrorType

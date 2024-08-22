@@ -1,4 +1,5 @@
 import { slice } from '../data/slice.js'
+import type { GlobalErrorType } from '../errors/error.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import type { Hex } from '../types/data.js'
 import type {
@@ -63,3 +64,10 @@ export function getSerializedTransactionType<
 
   throw new TransactionTypeNotImplementedError({ type: serializedType })
 }
+
+export declare namespace getSerializedTransactionType {
+  type ErrorType = TransactionTypeNotImplementedError | GlobalErrorType
+}
+
+getSerializedTransactionType.parseError = (error: unknown) =>
+  error as getSerializedTransactionType.ErrorType

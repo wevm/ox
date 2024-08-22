@@ -85,3 +85,5 @@ export declare namespace fromBlobs {
     | createCursor.ErrorType
     | GlobalErrorType
 }
+
+fromBlobs.parseError = (error: unknown) => error as fromBlobs.ErrorType
