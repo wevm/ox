@@ -1,9 +1,8 @@
-import { hexToBytes } from '../bytes/toBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { BlobSidecars } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Kzg } from '../types/kzg.js'
-import type { OneOf, UnionCompute } from '../types/utils.js'
+import type { Mutable, OneOf, UnionCompute } from '../types/utils.js'
 import { blobsToCommitments } from './blobsToCommitments.js'
 import { blobsToProofs } from './blobsToProofs.js'
 
@@ -32,23 +31,18 @@ import { blobsToProofs } from './blobsToProofs.js'
 export function toBlobSidecars<
   const blobs extends readonly Hex[] | readonly Bytes[],
 >(
-  blobs_: blobs,
+  blobs: blobs,
   options: toBlobSidecars.Options<blobs>,
 ): toBlobSidecars.ReturnType<blobs> {
   const { kzg } = options
 
-  const blobs = (
-    typeof blobs_[0] === 'string'
-      ? blobs_.map((x) => hexToBytes(x as any))
-      : blobs_
-  ) as Bytes[]
   const commitments =
     options.commitments ?? blobsToCommitments(blobs, { kzg: kzg! })
   const proofs =
     options.proofs ??
     blobsToProofs(blobs, { commitments: commitments as any, kzg: kzg! })
 
-  const sidecars: BlobSidecars = []
+  const sidecars: Mutable<BlobSidecars> = []
   for (let i = 0; i < blobs.length; i++)
     sidecars.push({
       blob: blobs[i]!,
@@ -56,7 +50,7 @@ export function toBlobSidecars<
       proof: proofs[i]!,
     })
 
-  return sidecars as toBlobSidecars.ReturnType<blobs>
+  return sidecars as never
 }
 
 export declare namespace toBlobSidecars {

@@ -1,4 +1,5 @@
 import { deserializeAccessList } from '../accessList/deserializeAccessList.js'
+import { toBlobSidecars } from '../blobs/toBlobSidecars.js'
 import { isHex } from '../data/isHex.js'
 import { slice } from '../data/slice.js'
 import type { GlobalErrorType } from '../errors/error.js'
@@ -21,6 +22,7 @@ import type {
   TransactionEnvelopeSerialized,
   TransactionEnvelopeSerializedEip1559,
   TransactionEnvelopeSerializedEip2930,
+  TransactionEnvelopeSerializedEip4844,
   TransactionEnvelopeSerializedLegacy,
   TransactionType,
 } from '../types/transactionEnvelope.js'
@@ -28,6 +30,7 @@ import type { Compute, IsNarrowable } from '../types/utils.js'
 import {
   assertTransactionEnvelopeEip1559,
   assertTransactionEnvelopeEip2930,
+  assertTransactionEnvelopeEip4844,
   assertTransactionEnvelopeLegacy,
 } from './assertTransactionEnvelope.js'
 import {
@@ -68,8 +71,10 @@ export function deserializeTransactionEnvelope<
     return deserializeTransactionEnvelopeEip2930(serialized as any) as never
   if (type === 'eip1559')
     return deserializeTransactionEnvelopeEip1559(serialized as any) as never
+  if (type === 'eip4844')
+    return deserializeTransactionEnvelopeEip4844(serialized as any) as never
 
-  // TODO: 7702, 4844
+  // TODO: 7702
 
   throw new TransactionTypeNotImplementedError({ type })
 }
@@ -99,6 +104,7 @@ export declare namespace deserializeTransactionEnvelope {
 }
 
 deserializeTransactionEnvelope.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as deserializeTransactionEnvelope.ErrorType
 
 /**
@@ -190,6 +196,7 @@ export declare namespace deserializeTransactionEnvelopeLegacy {
 }
 
 deserializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as deserializeTransactionEnvelopeLegacy.ErrorType
 
 /**
@@ -269,10 +276,8 @@ export function deserializeTransactionEnvelopeEip2930(
       accessList as RecursiveArray<Hex>,
     )
 
-  const signature = (() => {
-    if (r && s && yParity) return fromSignatureTuple([yParity, r, s])
-    return undefined
-  })()
+  const signature =
+    r && s && yParity ? fromSignatureTuple([yParity, r, s]) : undefined
   if (signature)
     transaction = { ...transaction, ...signature } as TransactionEnvelopeEip2930
 
@@ -281,14 +286,15 @@ export function deserializeTransactionEnvelopeEip2930(
   return transaction
 }
 
-deserializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
-  error as deserializeTransactionEnvelopeEip2930.ErrorType
-
 export declare namespace deserializeTransactionEnvelopeEip2930 {
   type ReturnType = Compute<TransactionEnvelopeEip2930>
 
   type ErrorType = GlobalErrorType
 }
+
+deserializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as deserializeTransactionEnvelopeEip2930.ErrorType
 
 /**
  * Deserializes a EIP-1559 {@link TransactionEnvelope} from its serialized form.
@@ -351,7 +357,7 @@ export function deserializeTransactionEnvelopeEip1559(
           : {}),
       },
       serializedTransaction,
-      type: 'eip2930',
+      type: 'eip1559',
     })
 
   let transaction = {
@@ -372,10 +378,8 @@ export function deserializeTransactionEnvelopeEip1559(
       accessList as RecursiveArray<Hex>,
     )
 
-  const signature = (() => {
-    if (r && s && yParity) return fromSignatureTuple([yParity, r, s])
-    return undefined
-  })()
+  const signature =
+    r && s && yParity ? fromSignatureTuple([yParity, r, s]) : undefined
   if (signature)
     transaction = { ...transaction, ...signature } as TransactionEnvelopeEip1559
 
@@ -391,4 +395,115 @@ export declare namespace deserializeTransactionEnvelopeEip1559 {
 }
 
 deserializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as deserializeTransactionEnvelopeEip1559.ErrorType
+
+/**
+ * Deserializes a EIP-4844 {@link TransactionEnvelope} from its serialized form.
+ *
+ * @example
+ * // TODO
+ */
+export function deserializeTransactionEnvelopeEip4844(
+  serializedTransaction: TransactionEnvelopeSerializedEip4844,
+): deserializeTransactionEnvelopeEip4844.ReturnType {
+  const transactionOrWrapperArray = decodeRlp(slice(serializedTransaction, 1))
+
+  const hasNetworkWrapper = transactionOrWrapperArray.length === 4
+
+  const transactionArray = hasNetworkWrapper
+    ? transactionOrWrapperArray[0]!
+    : transactionOrWrapperArray
+  const wrapperArray = hasNetworkWrapper
+    ? transactionOrWrapperArray.slice(1)
+    : []
+
+  const [
+    chainId,
+    nonce,
+    maxPriorityFeePerGas,
+    maxFeePerGas,
+    gas,
+    to,
+    value,
+    data,
+    accessList,
+    maxFeePerBlobGas,
+    blobVersionedHashes,
+    yParity,
+    r,
+    s,
+  ] = transactionArray
+  const [blobs, commitments, proofs] = wrapperArray
+
+  if (!(transactionArray.length === 11 || transactionArray.length === 14))
+    throw new InvalidSerializedTransactionError({
+      attributes: {
+        chainId,
+        nonce,
+        maxPriorityFeePerGas,
+        maxFeePerGas,
+        gas,
+        to,
+        value,
+        data,
+        accessList,
+        ...(transactionArray.length > 9
+          ? {
+              yParity,
+              r,
+              s,
+            }
+          : {}),
+      },
+      serializedTransaction,
+      type: 'eip4844',
+    })
+
+  let transaction = {
+    blobVersionedHashes: blobVersionedHashes as Hex[],
+    chainId: Number(chainId),
+    type: 'eip4844',
+  } as TransactionEnvelopeEip4844
+  if (isHex(to) && to !== '0x') transaction.to = to
+  if (isHex(gas) && gas !== '0x') transaction.gas = BigInt(gas)
+  if (isHex(data) && data !== '0x') transaction.data = data
+  if (isHex(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
+  if (isHex(value) && value !== '0x') transaction.value = BigInt(value)
+  if (isHex(maxFeePerBlobGas) && maxFeePerBlobGas !== '0x')
+    transaction.maxFeePerBlobGas = BigInt(maxFeePerBlobGas)
+  if (isHex(maxFeePerGas) && maxFeePerGas !== '0x')
+    transaction.maxFeePerGas = BigInt(maxFeePerGas)
+  if (isHex(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
+    transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+  if (accessList?.length !== 0 && accessList !== '0x')
+    transaction.accessList = deserializeAccessList(
+      accessList as RecursiveArray<Hex>,
+    )
+  if (blobs && commitments && proofs)
+    transaction.sidecars = toBlobSidecars(blobs as Hex[], {
+      commitments: commitments as Hex[],
+      proofs: proofs as Hex[],
+    })
+
+  const signature =
+    r && s && yParity
+      ? fromSignatureTuple([yParity as Hex, r as Hex, s as Hex])
+      : undefined
+  if (signature)
+    transaction = { ...transaction, ...signature } as TransactionEnvelopeEip4844
+
+  assertTransactionEnvelopeEip4844(transaction)
+
+  return transaction
+}
+
+export declare namespace deserializeTransactionEnvelopeEip4844 {
+  type ReturnType = Compute<TransactionEnvelopeEip4844>
+
+  type ErrorType = GlobalErrorType
+}
+
+deserializeTransactionEnvelopeEip4844.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as deserializeTransactionEnvelopeEip4844.ErrorType

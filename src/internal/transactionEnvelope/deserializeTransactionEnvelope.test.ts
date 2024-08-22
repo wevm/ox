@@ -1,6 +1,7 @@
-import { Hex, Rlp, Secp256k1, TransactionEnvelope, Value } from 'ox'
+import { Blobs, Hex, Rlp, Secp256k1, TransactionEnvelope, Value } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
+import { kzg } from '../../../test/kzg.js'
 
 describe('legacy', () => {
   const transaction = TransactionEnvelope.fromLegacy({
@@ -652,7 +653,7 @@ describe('eip1559', () => {
           `0x02${Rlp.encode([], 'hex').slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip2930" was provided.
+        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip1559" was provided.
 
         Serialized Transaction: "0x02c0"
         Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
@@ -665,7 +666,7 @@ describe('eip1559', () => {
           `0x02${Rlp.encode(['0x00', '0x01']).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip2930" was provided.
+        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip1559" was provided.
 
         Serialized Transaction: "0x02c20001"
         Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
@@ -689,9 +690,222 @@ describe('eip1559', () => {
           ]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip2930" was provided.
+        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip1559" was provided.
 
         Serialized Transaction: "0x02ca80808080808080808080"
+        Missing Attributes: r, s]
+      `)
+    })
+  })
+})
+
+describe('eip4844', () => {
+  const blobs = Blobs.from(Hex.from('abcd'))
+  const sidecars = Blobs.toSidecars(blobs, { kzg })
+  const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+  const transaction = TransactionEnvelope.fromEip4844({
+    to: accounts[1].address,
+    nonce: 785n,
+    value: Value.parseEther('1'),
+    chainId: 1,
+    maxFeePerGas: Value.parseGwei('20'),
+    maxPriorityFeePerGas: Value.parseGwei('10'),
+    maxFeePerBlobGas: Value.parseGwei('2'),
+    blobVersionedHashes,
+  })
+
+  test('default', () => {
+    const serialized = TransactionEnvelope.serialize(transaction)
+    const deserialized = TransactionEnvelope.deserialize(serialized)
+    assertType<TransactionEnvelope.Eip4844>(deserialized)
+    expect(deserialized).toEqual(transaction)
+  })
+
+  test('minimal', () => {
+    const transaction = TransactionEnvelope.fromEip4844({
+      chainId: 1,
+      blobVersionedHashes: [
+        '0x01adbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      ],
+    })
+    const serialized = TransactionEnvelope.serialize(transaction)
+    const deserialized = TransactionEnvelope.deserialize(serialized)
+    expect(deserialized).toEqual(transaction)
+  })
+
+  test('gas', () => {
+    const transaction_gas = TransactionEnvelope.fromEip4844({
+      ...transaction,
+      gas: 21001n,
+    })
+    const serialized = TransactionEnvelope.serialize(transaction_gas)
+    const deserialized = TransactionEnvelope.deserialize(serialized)
+    assertType<TransactionEnvelope.Eip4844>(deserialized)
+    expect(deserialized).toEqual(transaction_gas)
+  })
+
+  test('accessList', () => {
+    const transaction_accessList = TransactionEnvelope.fromEip4844({
+      ...transaction,
+      accessList: [
+        {
+          address: '0x0000000000000000000000000000000000000000',
+          storageKeys: [
+            '0x0000000000000000000000000000000000000000000000000000000000000001',
+            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          ],
+        },
+      ],
+    })
+    const serialized = TransactionEnvelope.serialize(transaction_accessList)
+    const deserialized = TransactionEnvelope.deserialize(serialized)
+    assertType<TransactionEnvelope.Eip4844>(deserialized)
+    expect(deserialized).toEqual(transaction_accessList)
+  })
+
+  test('data', () => {
+    const transaction_data = TransactionEnvelope.fromEip4844({
+      ...transaction,
+      data: '0xdeadbeef',
+    })
+    const serialized = TransactionEnvelope.serialize(transaction_data)
+    const deserialized = TransactionEnvelope.deserialize(serialized)
+    assertType<TransactionEnvelope.Eip4844>(deserialized)
+    expect(deserialized).toEqual(transaction_data)
+  })
+
+  test('sidecars', () => {
+    const transaction_sidecars = TransactionEnvelope.fromEip4844({
+      ...transaction,
+      sidecars,
+    })
+    const serialized = TransactionEnvelope.serialize(transaction_sidecars)
+    const deserialized = TransactionEnvelope.deserialize(serialized)
+    assertType<TransactionEnvelope.Eip4844>(deserialized)
+    expect(deserialized).toEqual(transaction_sidecars)
+  })
+
+  test('signature', async () => {
+    const signature = Secp256k1.sign({
+      payload: TransactionEnvelope.hash(transaction),
+      privateKey: accounts[0].privateKey,
+    })
+    const serialized = TransactionEnvelope.serialize(transaction, {
+      sidecars,
+      signature,
+    })
+    expect(TransactionEnvelope.deserialize(serialized)).toEqual({
+      ...transaction,
+      ...signature,
+      sidecars,
+    })
+  })
+
+  describe('errors', () => {
+    test('invalid access list (invalid address)', () => {
+      expect(() =>
+        TransactionEnvelope.deserialize(
+          `0x03${Rlp.encode([
+            Hex.from(1), // chainId
+            Hex.from(0), // nonce
+            Hex.from(1), // maxPriorityFeePerGas
+            Hex.from(1), // maxFeePerGas
+            Hex.from(1), // gas
+            '0x0000000000000000000000000000000000000000', // to
+            Hex.from(0), // value
+            '0x', // data
+            [
+              [
+                '0x',
+                [
+                  '0x0000000000000000000000000000000000000000000000000000000000000001',
+                ],
+              ],
+            ], // accessList
+            '0x', // maxFeePerBlobGas,
+            ['0x'], // blobVersionedHashes
+          ]).slice(2)}`,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [InvalidAddressError: Address "0x" is invalid.
+
+        Details: Address is not a 20 byte (40 hexadecimal character) value.
+        See: https://oxlib.sh/errors#invalidaddresserror]
+      `)
+
+      expect(() =>
+        TransactionEnvelope.deserialize(
+          `0x03${Rlp.encode([
+            Hex.from(1), // chainId
+            Hex.from(0), // nonce
+            Hex.from(1), // maxPriorityFeePerGas
+            Hex.from(1), // maxFeePerGas
+            Hex.from(1), // gas
+            '0x0000000000000000000000000000000000000000', // to
+            Hex.from(0), // value
+            '0x', // data
+            [['0x123456', ['0x0']]], // accessList
+            '0x', // maxFeePerBlobGas,
+            ['0x'], // blobVersionedHashes
+          ]).slice(2)}`,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [InvalidHexLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
+
+        It must be an even length.
+
+        See: https://oxlib.sh/errors#invalidhexlengtherror]
+      `)
+    })
+
+    test('invalid transaction (all missing)', () => {
+      expect(() =>
+        TransactionEnvelope.deserialize(
+          `0x03${Rlp.encode([], 'hex').slice(2)}`,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip4844" was provided.
+
+        Serialized Transaction: "0x03c0"
+        Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+      `)
+    })
+
+    test('invalid transaction (some missing)', () => {
+      expect(() =>
+        TransactionEnvelope.deserialize(
+          `0x03${Rlp.encode(['0x00', '0x01']).slice(2)}`,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip4844" was provided.
+
+        Serialized Transaction: "0x03c20001"
+        Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+      `)
+    })
+
+    test('invalid transaction (missing signature)', () => {
+      expect(() =>
+        TransactionEnvelope.deserialize(
+          `0x03${Rlp.encode([
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+            '0x',
+          ]).slice(2)}`,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip4844" was provided.
+
+        Serialized Transaction: "0x03cc808080808080808080808080"
         Missing Attributes: r, s]
       `)
     })

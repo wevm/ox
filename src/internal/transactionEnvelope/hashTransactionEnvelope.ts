@@ -31,6 +31,10 @@ export function hashTransactionEnvelope(
   return keccak256(
     serializeTransactionEnvelope({
       ...envelope,
+
+      // Clear sidecars from envelope.
+      sidecars: undefined,
+
       // Clear signature from envelope.
       r: undefined,
       s: undefined,
