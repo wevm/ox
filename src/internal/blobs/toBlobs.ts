@@ -12,33 +12,30 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
-import type { Compute } from '../types/utils.js'
 
-type To = 'hex' | 'bytes'
+type As = 'hex' | 'bytes'
 
 /**
  * Transforms arbitrary data to {@link Blobs}.
  *
  * @example
  * ```ts
- * import { Blobs, Hex } from 'ox'
+ * import { Blobs } from 'ox'
  *
- * const blobs = Blobs.from({ data: Hex.from('hello world') })
+ * const blobs = Blobs.from('0xdeadbeef')
  * ```
  */
 export function toBlobs<
   const data extends Hex | Bytes,
-  to extends To =
+  as extends As =
     | (data extends Hex ? 'hex' : never)
     | (data extends Bytes ? 'bytes' : never),
->(parameters: toBlobs.Parameters<data, to>): toBlobs.ReturnType<to> {
-  const to =
-    parameters.to ?? (typeof parameters.data === 'string' ? 'hex' : 'bytes')
-  const data = (
-    typeof parameters.data === 'string'
-      ? hexToBytes(parameters.data)
-      : parameters.data
-  ) as Bytes
+>(
+  data_: data | Hex | Bytes,
+  options: toBlobs.Options<as> = {},
+): toBlobs.ReturnType<as> {
+  const as = options.as ?? (typeof data_ === 'string' ? 'hex' : 'bytes')
+  const data = (typeof data_ === 'string' ? hexToBytes(data_) : data_) as Bytes
 
   const size_ = size(data)
   if (!size_) throw new EmptyBlobError()
@@ -81,26 +78,21 @@ export function toBlobs<
   }
 
   return (
-    to === 'bytes'
+    as === 'bytes'
       ? blobs.map((x) => x.bytes)
       : blobs.map((x) => bytesToHex(x.bytes))
   ) as never
 }
 
 export declare namespace toBlobs {
-  type Parameters<
-    data extends Hex | Bytes = Hex | Bytes,
-    to extends To | undefined = undefined,
-  > = {
-    /** Data to transform to a blob. */
-    data: data | Hex | Bytes
+  type Options<as extends As | undefined = undefined> = {
     /** Return type. */
-    to?: to | To | undefined
+    as?: as | As | undefined
   }
 
-  type ReturnType<to extends To = To> = Compute<
-    to extends 'bytes' ? Blobs<Bytes> : Blobs<Hex>
-  >
+  type ReturnType<as extends As = As> =
+    | (as extends 'bytes' ? readonly Bytes[] : never)
+    | (as extends 'hex' ? readonly Hex[] : never)
 
   type ErrorType =
     | BlobSizeTooLargeError

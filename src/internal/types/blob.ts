@@ -1,8 +1,10 @@
 import type { Bytes, Hex } from './data.js'
+import type { Compute } from './utils.js'
 
-export type Blob<blobType = Hex> = blobType
+export type Blob<type extends Hex | Bytes = Hex | Bytes> = type
 
-export type Blobs<blobType = Hex> = readonly Blob<blobType>[]
+export type Blobs<type extends Hex | Bytes = Hex | Bytes> =
+  readonly Blob<type>[]
 
 export type BlobSidecar<type extends Hex | Bytes = Hex | Bytes> = {
   /** The blob associated with the transaction. */
@@ -13,5 +15,6 @@ export type BlobSidecar<type extends Hex | Bytes = Hex | Bytes> = {
   proof: type
 }
 
-export type BlobSidecars<type extends Hex | Bytes = Hex | Bytes> =
-  BlobSidecar<type>[]
+export type BlobSidecars<type extends Hex | Bytes = Hex | Bytes> = Compute<
+  BlobSidecar<type>
+>[]

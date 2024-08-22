@@ -14,9 +14,8 @@ type To = 'hex' | 'bytes'
  * ```ts
  * import { Blobs, Hex } from 'ox'
  *
- * const blobs = Blobs.from({ data: '0xdeadbeef' })
-
- * const data = Blobs.to({ blobs })
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const data = Blobs.to(blobs)
  * // '0xdeadbeef'
  * ```
  */
@@ -25,13 +24,15 @@ export function fromBlobs<
   to extends To =
     | (blobs extends Blobs<Hex> ? 'hex' : never)
     | (blobs extends Blobs<Bytes> ? 'bytes' : never),
->(parameters: fromBlobs.Parameters<blobs, to>): fromBlobs.ReturnType<to> {
-  const to =
-    parameters.to ?? (typeof parameters.blobs[0] === 'string' ? 'hex' : 'bytes')
+>(
+  blobs_: blobs | Blobs<Hex> | Blobs<Bytes>,
+  to_?: to | To | undefined,
+): fromBlobs.ReturnType<to> {
+  const to = to_ ?? (typeof blobs_[0] === 'string' ? 'hex' : 'bytes')
   const blobs = (
-    typeof parameters.blobs[0] === 'string'
-      ? parameters.blobs.map((x) => hexToBytes(x as Hex))
-      : parameters.blobs
+    typeof blobs_[0] === 'string'
+      ? blobs_.map((x) => hexToBytes(x as Hex))
+      : blobs_
   ) as Bytes[]
 
   const length = blobs.reduce((length, blob) => length + blob.length, 0)
@@ -66,16 +67,7 @@ export function fromBlobs<
 }
 
 export declare namespace fromBlobs {
-  type Parameters<
-    blobs extends Blobs<Hex> | Blobs<Bytes> = Blobs<Hex> | Blobs<Bytes>,
-    to extends To | undefined = undefined,
-  > = {
-    /** Blobs to transform to data. */
-    blobs: blobs | Blobs<Hex> | Blobs<Bytes>
-    to?: to | To | undefined
-  }
-
-  type ReturnType<to extends To> =
+  type ReturnType<to extends To = 'hex'> =
     | (to extends 'bytes' ? Bytes : never)
     | (to extends 'hex' ? Hex : never)
 
@@ -87,3 +79,55 @@ export declare namespace fromBlobs {
 }
 
 fromBlobs.parseError = (error: unknown) => error as fromBlobs.ErrorType
+
+/**
+ * Transforms Ox-shaped {@link Blobs} into the originating data.
+ *
+ * @example
+ * ```ts
+ * import { Blobs, Hex } from 'ox'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+
+ * const data = Blobs.toHex(blobs)
+ * // '0xdeadbeef'
+ * ```
+ */
+export function blobsToHex(
+  blobs: Blobs<Hex> | Blobs<Bytes>,
+): blobsToHex.ReturnType {
+  return fromBlobs(blobs, 'hex')
+}
+
+export declare namespace blobsToHex {
+  type ReturnType = fromBlobs.ReturnType<'hex'>
+  type ErrorType = fromBlobs.ErrorType | GlobalErrorType
+}
+
+blobsToHex.parseError = (error: unknown) => error as blobsToHex.ErrorType
+
+/**
+ * Transforms Ox-shaped {@link Blobs} into the originating data.
+ *
+ * @example
+ * ```ts
+ * import { Blobs, Hex } from 'ox'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+
+ * const data = Blobs.toBytes(blobs)
+ * // Uint8Array [ 13, 174, 190, 239 ]
+ * ```
+ */
+export function blobsToBytes(
+  blobs: Blobs<Hex> | Blobs<Bytes>,
+): blobsToBytes.ReturnType {
+  return fromBlobs(blobs, 'bytes')
+}
+
+export declare namespace blobsToBytes {
+  type ReturnType = fromBlobs.ReturnType<'bytes'>
+  type ErrorType = fromBlobs.ErrorType | GlobalErrorType
+}
+
+blobsToBytes.parseError = (error: unknown) => error as blobsToBytes.ErrorType
