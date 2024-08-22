@@ -8,10 +8,12 @@ import { parseValue } from './parseValue.js'
  * - Docs: https://oxlib.sh/api/value/fromEther
  *
  * @example
+ * ```ts
  * import { Value } from 'ox'
  *
  * Value.fromEther('420')
  * // 420000000000000000000n
+ * ```
  */
 export function parseEther(
   ether: string,

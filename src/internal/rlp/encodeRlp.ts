@@ -15,7 +15,7 @@ type Encodable = {
 }
 
 /**
- * Encodes a {@link Bytes} or {@link Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link Types#Bytes} or {@link Types#Hex} value into a Recursive-Length Prefix (RLP) value.
  *
  * - Docs: https://oxlib.sh/api/rlp/encode
  *
@@ -52,7 +52,7 @@ export declare namespace encodeRlp {
 encodeRlp.parseError = (error: unknown) => error as encodeRlp.ErrorType
 
 /**
- * Encodes a {@link Bytes} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link Types#Bytes} value into a Recursive-Length Prefix (RLP) value.
  *
  * - Docs: https://oxlib.sh/api/rlp/fromBytes
  *
@@ -76,7 +76,7 @@ export declare namespace bytesToRlp {
 bytesToRlp.parseError = (error: unknown) => error as bytesToRlp.ErrorType
 
 /**
- * Encodes a {@link Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link Types#Hex} value into a Recursive-Length Prefix (RLP) value.
  *
  * - Docs: https://oxlib.sh/api/rlp/fromHex
  *

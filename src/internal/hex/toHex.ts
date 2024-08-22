@@ -11,24 +11,30 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 )
 
 /**
- * Encodes an arbitrary value into a {@link Hex} value.
+ * Encodes an arbitrary value into a {@link Types#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/hex/from
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.from('Hello world')
  * // '0x48656c6c6f20776f726c6421'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.from(420)
  * // '0x1a4'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.from('Hello world', { size: 32 })
  * // '0x48656c6c6f20776f726c64210000000000000000000000000000000000000000'
+ * ```
  */
 export function toHex(
   value: string | number | bigint | boolean | readonly number[] | Bytes,
@@ -66,24 +72,30 @@ export declare namespace toHex {
 toHex.parseError = (error: unknown) => error as toHex.ErrorType
 
 /**
- * Encodes a boolean into a {@link Hex} value.
+ * Encodes a boolean into a {@link Types#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/hex/fromBoolean
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromBoolean(true)
  * // '0x1'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromBoolean(false)
  * // '0x0'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromBoolean(true, { size: 32 })
  * // '0x0000000000000000000000000000000000000000000000000000000000000001'
+ * ```
  */
 export function booleanToHex(
   value: boolean,
@@ -109,24 +121,30 @@ export declare namespace booleanToHex {
 booleanToHex.parseError = (error: unknown) => error as booleanToHex.ErrorType
 
 /**
- * Encodes a {@link Bytes} value into a {@link Hex} value.
+ * Encodes a {@link Types#Bytes} value into a {@link Types#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/hex/fromBytes
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.toHex(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * // '0x48656c6c6f20576f726c6421'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * // '0x48656c6c6f20576f726c6421'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
  * // '0x48656c6c6f20576f726c642100000000000000000000000000000000000000000'
+ * ```
  */
 export function bytesToHex(
   value: Bytes,
@@ -155,19 +173,23 @@ export declare namespace bytesToHex {
 bytesToHex.parseError = (error: unknown) => error as bytesToHex.ErrorType
 
 /**
- * Encodes a number or bigint into a {@link Hex} value.
+ * Encodes a number or bigint into a {@link Types#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/hex/fromNumber
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromNumber(420)
  * // '0x1a4'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromNumber(420, { size: 32 })
  * // '0x00000000000000000000000000000000000000000000000000000000000001a4'
+ * ```
  */
 export function numberToHex(
   value_: number | bigint,
@@ -235,14 +257,18 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * - Docs: https://oxlib.sh/api/hex/fromString
 
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromString('Hello World!')
  * // '0x48656c6c6f20576f726c6421'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.fromString('Hello World!', { size: 32 })
  * // '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
+ * ```
  */
 export function stringToHex(
   value_: string,

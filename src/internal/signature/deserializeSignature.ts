@@ -13,7 +13,7 @@ import { compactSignatureToSignature } from './compactSignatureToSignature.js'
 import { vToYParity } from './vToYParity.js'
 
 /**
- * Deserializes a {@link Bytes} or {@link Hex} signature into a structured {@link Signature}.
+ * Deserializes a {@link Types#Bytes} or {@link Types#Hex} signature into a structured {@link Signature}.
  *
  * @example
  * import { Signature } from 'ox'

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+
+  "extends": ["@microsoft/api-extractor/extends/tsdoc-base.json"],
+
+  "tagDefinitions": [
+    {
+      "tagName": "@alias",
+      "syntaxKind": "block",
+      "allowMultiple": false
+    },
+    {
+      "tagName": "@since",
+      "syntaxKind": "block",
+      "allowMultiple": false
+    },
+    {
+      "tagName": "@docGroup",
+      "syntaxKind": "block",
+      "allowMultiple": false
+    }
+  ],
+
+  "supportForTags": {
+    "@alias": true,
+    "@since": true,
+    "@docGroup": true
+  }
+}

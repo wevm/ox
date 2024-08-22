@@ -64,4 +64,8 @@ export type {
   TransactionType,
 } from './internal/types/transactionEnvelope.js'
 
-export type { TypedDataDefinition } from './internal/types/typedData.js'
+export type {
+  EIP712DomainDefinition,
+  MessageDefinition,
+  TypedDataDefinition,
+} from './internal/types/typedData.js'

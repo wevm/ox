@@ -10,7 +10,7 @@ import type { RecursiveArray } from './encodeRlp.js'
 type To = 'hex' | 'bytes'
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} or {@link Hex} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Types#Bytes} or {@link Types#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/rlp/decode
  *
@@ -58,7 +58,7 @@ export declare namespace decodeRlp {
 decodeRlp.parseError = (error: unknown) => error as decodeRlp.ErrorType
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Types#Bytes} value.
  *
  * - Docs: https://oxlib.sh/api/rlp/toBytes
  *
@@ -79,7 +79,7 @@ export declare namespace rlpToBytes {
 rlpToBytes.parseError = (error: unknown) => error as rlpToBytes.ErrorType
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Hex} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Types#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/rlp/toHex
  *

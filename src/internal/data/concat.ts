@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
- * Concatenates two or more {@link Bytes} or {@link Hex}.
+ * Concatenates two or more {@link Types#Bytes} or {@link Types#Hex}.
  *
  * - Docs (Bytes): https://oxlib.sh/api/bytes/concat
  * - Docs (Hex): https://oxlib.sh/api/hex/concat
@@ -44,11 +44,6 @@ concat.parseError = (error: unknown) => error as concat.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-export declare namespace concatBytes {
-  type ErrorType = GlobalErrorType
-}
-
-/** @internal */
 export function concatBytes(...values: readonly Bytes[]): Bytes {
   let length = 0
   for (const arr of values) {
@@ -63,11 +58,14 @@ export function concatBytes(...values: readonly Bytes[]): Bytes {
   return result
 }
 
-export declare namespace concatHex {
+export declare namespace concatBytes {
   type ErrorType = GlobalErrorType
 }
 
-/** @internal */
 export function concatHex(...values: readonly Hex[]): Hex {
   return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
+}
+
+export declare namespace concatHex {
+  type ErrorType = GlobalErrorType
 }

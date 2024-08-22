@@ -3,14 +3,16 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Asserts if the given value is {@link Hex}.
+ * Asserts if the given value is {@link Types#Hex}.
  *
  * - Docs: https://oxlib.sh/api/hex/assert
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.assert('abc')
  * // InvalidHexValueTypeError: Value `"abc"` of type `string` is an invalid hex type. Hex types must be represented as `"0x\${string}"`.
+ * ```
  */
 export function assertHex(
   value: unknown,

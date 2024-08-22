@@ -9,10 +9,12 @@ import { formatValue } from './formatValue.js'
  * - Docs: https://oxlib.sh/api/value/formatGwei
  *
  * @example
+ * ```ts
  * import { Value } from 'ox'
  *
  * Value.formatGwei(1_000_000_000n)
  * // '1'
+ * ```
  */
 export function formatGwei(wei: bigint, unit: 'wei' = 'wei') {
   return formatValue(wei, valueExponents.gwei - valueExponents[unit])

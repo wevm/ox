@@ -16,8 +16,7 @@ export type TypedDataDefinition<
   ? EIP712DomainDefinition<typedData, primaryType>
   : MessageDefinition<typedData, primaryType, primaryTypes>
 
-/** @internal */
-type EIP712DomainDefinition<
+export type EIP712DomainDefinition<
   typedData extends TypedData | Record<string, unknown> = TypedData,
   primaryType extends 'EIP712Domain' = 'EIP712Domain',
   ///
@@ -36,8 +35,7 @@ type EIP712DomainDefinition<
   message?: undefined
 }
 
-/** @internal */
-type MessageDefinition<
+export type MessageDefinition<
   typedData extends TypedData | Record<string, unknown> = TypedData,
   primaryType extends keyof typedData = keyof typedData,
   ///
