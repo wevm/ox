@@ -725,9 +725,7 @@ describe('eip4844', () => {
     const serialized = TransactionEnvelope.serializeEip4844({
       chainId: 1,
     })
-    expect(serialized).toMatchInlineSnapshot(
-      `"0x03cb0180808080808080c080c0"`,
-    )
+    expect(serialized).toMatchInlineSnapshot(`"0x03cb0180808080808080c080c0"`)
   })
 
   test('options: signature', () => {
