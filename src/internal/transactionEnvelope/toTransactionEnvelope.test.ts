@@ -1,5 +1,6 @@
-import { TransactionEnvelope } from 'ox'
+import { Secp256k1, TransactionEnvelope } from 'ox'
 import { expect, test } from 'vitest'
+import { accounts } from '../../../test/constants/accounts.js'
 
 test('default', () => {
   {
@@ -186,6 +187,27 @@ test('default', () => {
       }
     `)
   }
+})
+
+test('options: signature', () => {
+  const envelope = TransactionEnvelope.from({
+    chainId: 1,
+    type: 'eip1559',
+  })
+  const signature = Secp256k1.sign({
+    payload: TransactionEnvelope.getSignPayload(envelope),
+    privateKey: accounts[0].privateKey,
+  })
+  const envelope_signed = TransactionEnvelope.from(envelope, { signature })
+  expect(envelope_signed).toMatchInlineSnapshot(`
+    {
+      "chainId": 1,
+      "r": 99218249868392536448752273600463415079373675019795823914194417405750940344909n,
+      "s": 47497791629324215926073930966254967707098107987071149504035179447698122362010n,
+      "type": "eip1559",
+      "yParity": 1,
+    }
+  `)
 })
 
 test('error: invalid property', () => {
