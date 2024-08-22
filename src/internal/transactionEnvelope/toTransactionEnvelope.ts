@@ -1,4 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
+import type { Signature } from '../types/signature.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelopeEip1559,
@@ -60,17 +61,28 @@ export function toTransactionEnvelope<
   const envelope extends
     | UnionPartialBy<TransactionEnvelope, 'type'>
     | TransactionEnvelopeSerialized,
->(envelope: envelope): toTransactionEnvelope.ReturnType<envelope> {
-  if (typeof envelope === 'string')
-    return deserializeTransactionEnvelope(envelope) as never
+>(
+  envelope: envelope,
+  options: toTransactionEnvelope.Options = {},
+): toTransactionEnvelope.ReturnType<envelope> {
+  const { signature } = options
+
+  if (typeof envelope === 'string') {
+    const envelope_ = deserializeTransactionEnvelope(envelope)
+    return { ...envelope_, ...signature } as never
+  }
 
   const type = getTransactionType(envelope)
-  const envelope_ = { ...envelope, type } as never
+  const envelope_ = { ...envelope, ...signature, type } as never
   assertTransactionEnvelope(envelope_)
   return envelope_
 }
 
 export declare namespace toTransactionEnvelope {
+  type Options = {
+    signature?: Signature
+  }
+
   type ReturnType<
     envelope extends
       | UnionPartialBy<TransactionEnvelope, 'type'>

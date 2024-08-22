@@ -108,7 +108,7 @@ describe('legacy', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelope.hash(transaction),
+      payload: TransactionEnvelope.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, { signature })
@@ -170,7 +170,7 @@ describe('legacy', () => {
       chainId: 69,
     })
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelope.hash(transaction_chainId),
+      payload: TransactionEnvelope.getSignPayload(transaction_chainId),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction_chainId, {
@@ -434,7 +434,7 @@ describe('eip2930', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelope.hash(transaction),
+      payload: TransactionEnvelope.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, {
@@ -593,7 +593,7 @@ describe('eip1559', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelope.hash(transaction),
+      payload: TransactionEnvelope.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, { signature })
@@ -737,7 +737,7 @@ describe('eip4844', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelope.hash(transaction),
+      payload: TransactionEnvelope.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, {
@@ -798,7 +798,7 @@ describe('eip4844', () => {
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelope.hash(transaction),
+      payload: TransactionEnvelope.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
     const serialized = TransactionEnvelope.serialize(transaction, {

@@ -27,24 +27,31 @@ import { serializeTransactionEnvelope } from './serializeTransactionEnvelope.js'
  */
 export function hashTransactionEnvelope(
   envelope: TransactionEnvelope,
+  options: hashTransactionEnvelope.Options = {},
 ): hashTransactionEnvelope.ReturnType {
+  const { presign } = options
   return keccak256(
     serializeTransactionEnvelope({
       ...envelope,
-
-      // Clear sidecars from envelope.
-      sidecars: undefined,
-
-      // Clear signature from envelope.
-      r: undefined,
-      s: undefined,
-      yParity: undefined,
-      v: undefined,
+      ...(presign
+        ? {
+            sidecars: undefined,
+            r: undefined,
+            s: undefined,
+            yParity: undefined,
+            v: undefined,
+          }
+        : {}),
     }),
   )
 }
 
 export declare namespace hashTransactionEnvelope {
+  type Options = {
+    /** Whether to hash this transaction for signing. @default false */
+    presign?: boolean
+  }
+
   type ReturnType = Hex
 
   type ErrorType =

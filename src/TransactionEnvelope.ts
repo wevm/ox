@@ -25,6 +25,11 @@ export {
 } from './internal/transactionEnvelope/deserializeTransactionEnvelope.js'
 
 export {
+  getTransactionEnvelopeSignPayload,
+  getTransactionEnvelopeSignPayload as getSignPayload,
+} from './internal/transactionEnvelope/getTransactionEnvelopeSignPayload.js'
+
+export {
   hashTransactionEnvelope,
   hashTransactionEnvelope as hash,
 } from './internal/transactionEnvelope/hashTransactionEnvelope.js'
