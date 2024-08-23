@@ -1,14 +1,14 @@
 import { expect, test } from 'vitest'
 
-import { serializeAccessList } from './serializeAccessList.js'
+import { toAccessTupleList } from './toAccessTupleList.js'
 
 test('when accessList is empty', () => {
-  expect(serializeAccessList([])).toEqual([])
+  expect(toAccessTupleList([])).toEqual([])
 })
 
 test('when accessList contains in invalid Address', () => {
   expect(() =>
-    serializeAccessList([{ address: '0x123', storageKeys: [] }]),
+    toAccessTupleList([{ address: '0x123', storageKeys: [] }]),
   ).toThrowErrorMatchingInlineSnapshot(`
       [InvalidAddressError: Address "0x123" is invalid.
 
@@ -20,7 +20,7 @@ test('when accessList contains in invalid Address', () => {
 test('when accessList contains in invalid Storage Key', () => {
   const badKey = '0xI like cheese'
   expect(() =>
-    serializeAccessList([
+    toAccessTupleList([
       {
         address: '0x123',
         storageKeys: [
@@ -45,7 +45,7 @@ test('with valid accessList', () => {
     },
   ] as const
 
-  expect(serializeAccessList(accessList)).toEqual([
+  expect(toAccessTupleList(accessList)).toEqual([
     [
       '0x0000000000000000000000000000000000000000',
       [

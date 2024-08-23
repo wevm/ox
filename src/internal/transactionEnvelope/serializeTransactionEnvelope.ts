@@ -1,4 +1,4 @@
-import { serializeAccessList } from '../accessList/serializeAccessList.js'
+import { toAccessTupleList } from '../accessList/toAccessTupleList.js'
 import { concatHex } from '../data/concat.js'
 import { trimLeft } from '../data/trim.js'
 import type { GlobalErrorType } from '../errors/error.js'
@@ -228,7 +228,7 @@ export function serializeTransactionEnvelopeEip2930(
 
   assertTransactionEnvelopeEip2930(envelope)
 
-  const serializedAccessList = serializeAccessList(accessList)
+  const accessTupleList = toAccessTupleList(accessList)
 
   const signature = extractSignature(options.signature || envelope)
 
@@ -240,7 +240,7 @@ export function serializeTransactionEnvelopeEip2930(
     to ?? '0x',
     value ? toHex(value) : '0x',
     data ?? input ?? '0x',
-    serializedAccessList,
+    accessTupleList,
     ...(signature ? toSignatureTuple(signature) : []),
   ] as const
 
@@ -307,7 +307,7 @@ export function serializeTransactionEnvelopeEip1559(
 
   assertTransactionEnvelopeEip1559(envelope)
 
-  const serializedAccessList = serializeAccessList(accessList)
+  const accessTupleList = toAccessTupleList(accessList)
 
   const signature = extractSignature(options.signature || envelope)
 
@@ -320,7 +320,7 @@ export function serializeTransactionEnvelopeEip1559(
     to ?? '0x',
     value ? toHex(value) : '0x',
     data ?? input ?? '0x',
-    serializedAccessList,
+    accessTupleList,
     ...(signature ? toSignatureTuple(signature) : []),
   ]
 
@@ -378,7 +378,7 @@ export function serializeTransactionEnvelopeEip4844(
 
   assertTransactionEnvelopeEip4844(envelope)
 
-  const serializedAccessList = serializeAccessList(accessList)
+  const accessTupleList = toAccessTupleList(accessList)
 
   const signature = extractSignature(options.signature || envelope)
 
@@ -391,7 +391,7 @@ export function serializeTransactionEnvelopeEip4844(
     to ?? '0x',
     value ? toHex(value) : '0x',
     data ?? '0x',
-    serializedAccessList,
+    accessTupleList,
     maxFeePerBlobGas ? toHex(maxFeePerBlobGas) : '0x',
     blobVersionedHashes ?? [],
     ...(signature ? toSignatureTuple(signature) : []),

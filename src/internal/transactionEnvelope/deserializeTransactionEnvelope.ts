@@ -1,4 +1,4 @@
-import { deserializeAccessList } from '../accessList/deserializeAccessList.js'
+import { fromAccessTupleList } from '../accessList/fromAccessTupleList.js'
 import { toBlobSidecars } from '../blobs/toBlobSidecars.js'
 import { isHex } from '../data/isHex.js'
 import { slice } from '../data/slice.js'
@@ -9,7 +9,6 @@ import {
   TransactionTypeNotImplementedError,
 } from '../errors/transactionEnvelope.js'
 import { decodeRlp } from '../rlp/decodeRlp.js'
-import type { RecursiveArray } from '../rlp/encodeRlp.js'
 import { fromSignatureTuple } from '../signature/fromSignatureTuple.js'
 import type { Hex } from '../types/data.js'
 import type {
@@ -272,9 +271,7 @@ export function deserializeTransactionEnvelopeEip2930(
   if (isHex(gasPrice) && gasPrice !== '0x')
     transaction.gasPrice = BigInt(gasPrice)
   if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = deserializeAccessList(
-      accessList as RecursiveArray<Hex>,
-    )
+    transaction.accessList = fromAccessTupleList(accessList as any)
 
   const signature =
     r && s && yParity ? fromSignatureTuple([yParity, r, s]) : undefined
@@ -374,9 +371,7 @@ export function deserializeTransactionEnvelopeEip1559(
   if (isHex(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = deserializeAccessList(
-      accessList as RecursiveArray<Hex>,
-    )
+    transaction.accessList = fromAccessTupleList(accessList as any)
 
   const signature =
     r && s && yParity ? fromSignatureTuple([yParity, r, s]) : undefined
@@ -477,9 +472,7 @@ export function deserializeTransactionEnvelopeEip4844(
   if (isHex(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList?.length !== 0 && accessList !== '0x')
-    transaction.accessList = deserializeAccessList(
-      accessList as RecursiveArray<Hex>,
-    )
+    transaction.accessList = fromAccessTupleList(accessList as any)
   if (blobs && commitments && proofs)
     transaction.sidecars = toBlobSidecars(blobs as Hex[], {
       commitments: commitments as Hex[],

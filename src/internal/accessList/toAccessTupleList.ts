@@ -1,17 +1,16 @@
 import { assertAddress } from '../address/assertAddress.js'
 import { size } from '../data/size.js'
 import { InvalidStorageKeySizeError } from '../errors/accessList.js'
-import type { RecursiveArray } from '../rlp/encodeRlp.js'
-import type { AccessList } from '../types/accessList.js'
-import type { Hex } from '../types/data.js'
+import type { AccessList, AccessTupleList } from '../types/accessList.js'
+import type { Compute, Mutable } from '../types/utils.js'
 
 /** @internal */
-export function serializeAccessList(
+export function toAccessTupleList(
   accessList?: AccessList | undefined,
-): RecursiveArray<Hex> {
+): Compute<AccessTupleList> {
   if (!accessList || accessList.length === 0) return []
 
-  const serializedAccessList = []
+  const tuple: Mutable<AccessTupleList> = []
   for (const { address, storageKeys } of accessList) {
     for (let j = 0; j < storageKeys.length; j++)
       if (size(storageKeys[j]!) !== 32)
@@ -19,7 +18,7 @@ export function serializeAccessList(
 
     if (address) assertAddress(address, { strict: false })
 
-    serializedAccessList.push([address, storageKeys])
+    tuple.push([address, storageKeys])
   }
-  return serializedAccessList
+  return tuple
 }

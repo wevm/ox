@@ -23,7 +23,12 @@ export type {
   AuthorizationTupleList,
 } from './internal/types/authorization.js'
 
-export type { AccessList } from './internal/types/accessList.js'
+export type {
+  AccessList,
+  AccessItem,
+  AccessTuple,
+  AccessTupleList,
+} from './internal/types/accessList.js'
 
 export type { BlobSidecar, BlobSidecars } from './internal/types/blob.js'
 

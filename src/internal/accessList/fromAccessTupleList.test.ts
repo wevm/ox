@@ -1,10 +1,10 @@
 import { expect, test } from 'vitest'
 
-import { deserializeAccessList } from './deserializeAccessList.js'
+import { fromAccessTupleList } from './fromAccessTupleList.js'
 
-test('deserializeAccessList', () => {
+test('fromAccessTupleList', () => {
   expect(
-    deserializeAccessList([
+    fromAccessTupleList([
       [
         '0x1234512345123451234512345123451234512345',
         [
