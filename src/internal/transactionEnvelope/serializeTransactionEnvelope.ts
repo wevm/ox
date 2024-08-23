@@ -439,6 +439,6 @@ export declare namespace serializeTransactionEnvelopeEip4844 {
     | GlobalErrorType
 }
 
-serializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+serializeTransactionEnvelopeEip4844.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as serializeTransactionEnvelopeEip1559.ErrorType
+  error as serializeTransactionEnvelopeEip4844.ErrorType
