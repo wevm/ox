@@ -4,6 +4,7 @@ import tseslint from 'typescript-eslint'
 
 export default {
   files: ['src/**/*.ts'],
+  ignores: ['src/_*/**'],
   languageOptions: {
     parser: tseslint.parser,
     parserOptions: { sourceType: 'module' },

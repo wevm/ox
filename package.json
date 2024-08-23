@@ -21,7 +21,7 @@
     "format": "biome format --write",
     "lint": "biome check . --fix --unsafe",
     "lint:repo": "sherif",
-    "lint:tsdoc": "eslint src -c tsdoc.config.js",
+    "lint:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js",
     "postinstall": "pnpm preconstruct",
     "preconstruct": "tsx ./scripts/preconstruct.ts",
     "preinstall": "pnpx only-allow pnpm",
