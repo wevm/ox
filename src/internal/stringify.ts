@@ -15,6 +15,7 @@ export const stringify: typeof JSON.stringify = (value, replacer, space) =>
     space,
   )
 
+/** @internal */
 export declare namespace stringify {
   type ErrorType = GlobalErrorType
 }

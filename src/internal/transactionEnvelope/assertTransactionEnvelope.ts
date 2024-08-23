@@ -27,7 +27,7 @@ import type {
 import type { PartialBy } from '../types/utils.js'
 
 /**
- * Asserts a {@link TransactionEnvelope} is valid.
+ * Asserts a {@link Types#TransactionEnvelope} is valid.
  *
  * @example
  * // TODO
@@ -64,7 +64,7 @@ assertTransactionEnvelope.parseError = (error: unknown) =>
   error as assertTransactionEnvelope.ErrorType
 
 /**
- * Asserts a legacy {@link TransactionEnvelope} is valid.
+ * Asserts a legacy {@link Types#TransactionEnvelope} is valid.
  *
  * @example
  * // TODO
@@ -93,7 +93,7 @@ assertTransactionEnvelopeLegacy.parseError = (error: unknown) =>
   error as assertTransactionEnvelopeLegacy.ErrorType
 
 /**
- * Asserts an EIP-2930 {@link TransactionEnvelope} is valid.
+ * Asserts an EIP-2930 {@link Types#TransactionEnvelope} is valid.
  *
  * @example
  * // TODO
@@ -121,7 +121,7 @@ assertTransactionEnvelopeEip2930.parseError = (error: unknown) =>
   error as assertTransactionEnvelopeEip2930.ErrorType
 
 /**
- * Asserts an EIP-1559 {@link TransactionEnvelope} is valid.
+ * Asserts an EIP-1559 {@link Types#TransactionEnvelope} is valid.
  *
  * @example
  * // TODO
@@ -156,7 +156,7 @@ assertTransactionEnvelopeEip1559.parseError = (error: unknown) =>
   error as assertTransactionEnvelopeEip1559.ErrorType
 
 /**
- * Asserts an EIP-4844 {@link TransactionEnvelope} is valid.
+ * Asserts an EIP-4844 {@link Types#TransactionEnvelope} is valid.
  *
  * @example
  * // TODO
@@ -200,7 +200,7 @@ assertTransactionEnvelopeEip4844.parseError = (error: unknown) =>
   error as assertTransactionEnvelopeEip4844.ErrorType
 
 /**
- * Asserts an EIP-7702 {@link TransactionEnvelope} is valid.
+ * Asserts an EIP-7702 {@link Types#TransactionEnvelope} is valid.
  *
  * @example
  * // TODO

@@ -7,6 +7,14 @@ export {
 export { BaseError } from './internal/errors/base.js'
 
 export {
+  BlobSizeTooLargeError,
+  EmptyBlobError,
+  EmptyBlobVersionedHashesError,
+  InvalidVersionedHashSizeError,
+  InvalidVersionedHashVersionError,
+} from './internal/errors/blob.js'
+
+export {
   NegativeOffsetError,
   PositionOutOfBoundsError,
   RecursiveReadLimitExceededError,
@@ -28,6 +36,25 @@ export {
 
 export type { GlobalErrorType } from './internal/errors/error.js'
 
+export {
+  InvalidSerializedSignatureSizeError,
+  InvalidSignatureRError,
+  InvalidSignatureSError,
+  InvalidSignatureVError,
+  InvalidSignatureYParityError,
+  MissingSignaturePropertiesError,
+} from './internal/errors/signature.js'
+
 export { SiweInvalidMessageFieldError } from './internal/errors/siwe.js'
+
+export {
+  CannotInferTransactionTypeError,
+  FeeCapTooHighError,
+  GasPriceTooHighError,
+  InvalidChainIdError,
+  InvalidSerializedTransactionError,
+  TipAboveFeeCapError,
+  TransactionTypeNotImplementedError,
+} from './internal/errors/transactionEnvelope.js'
 
 export { InvalidPrimaryTypeError } from './internal/errors/typedData.js'

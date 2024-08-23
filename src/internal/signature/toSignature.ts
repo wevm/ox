@@ -12,7 +12,7 @@ import { deserializeSignature } from './deserializeSignature.js'
 import { vToYParity } from './vToYParity.js'
 
 /**
- * Instantiates a typed {@link Signature} object from a {@link Signature}, {@link CompactSignature}, {@link LegacySignature}, {@link Types#Bytes}, or {@link Types#Hex}.
+ * Instantiates a typed {@link Types#Signature} object from a {@link Types#Signature}, {@link Types#CompactSignature}, {@link Types#LegacySignature}, {@link Types#Bytes}, or {@link Types#Hex}.
  *
  * @example
  * ```ts

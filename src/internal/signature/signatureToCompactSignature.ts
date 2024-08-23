@@ -4,7 +4,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { CompactSignature, Signature } from '../types/signature.js'
 
 /**
- * Converts a {@link Signature} into an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link CompactSignature}.
+ * Converts a {@link Types#Signature} into an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link Types#CompactSignature}.
  *
  * @example
  * ```ts twoslash

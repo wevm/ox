@@ -65,10 +65,7 @@ export function getSerializedTransactionType<
   throw new TransactionTypeNotImplementedError({ type: serializedType })
 }
 
+/** @internal */
 export declare namespace getSerializedTransactionType {
   type ErrorType = TransactionTypeNotImplementedError | GlobalErrorType
 }
-
-getSerializedTransactionType.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getSerializedTransactionType.ErrorType

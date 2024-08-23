@@ -142,8 +142,10 @@ export type MaybeRequired<T, required extends boolean> = required extends true
  *
  * @internal
  */
-export type Assign<T, U> = Assign_<T, U> & U
-type Assign_<T, U> = {
+export type Assign<T, U> = Assign_inner<T, U> & U
+
+/** @internal */
+export type Assign_inner<T, U> = {
   [K in keyof T as K extends keyof U
     ? U[K] extends void
       ? never

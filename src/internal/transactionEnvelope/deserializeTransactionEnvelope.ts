@@ -38,7 +38,7 @@ import {
 } from './getSerializedTransactionType.js'
 
 /**
- * Deserializes a {@link TransactionEnvelope} from its serialized form.
+ * Deserializes a {@link Types#TransactionEnvelope} from its serialized form.
  *
  * @example
  * ```ts
@@ -107,7 +107,7 @@ deserializeTransactionEnvelope.parseError = (error: unknown) =>
   error as deserializeTransactionEnvelope.ErrorType
 
 /**
- * Deserializes a legacy {@link TransactionEnvelope} from its serialized form.
+ * Deserializes a legacy {@link Types#TransactionEnvelope} from its serialized form.
  *
  * @example
  * ```ts
@@ -199,7 +199,7 @@ deserializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
   error as deserializeTransactionEnvelopeLegacy.ErrorType
 
 /**
- * Deserializes a EIP-2930 {@link TransactionEnvelope} from its serialized form.
+ * Deserializes a EIP-2930 {@link Types#TransactionEnvelope} from its serialized form.
  *
  * @example
  * ```ts
@@ -294,7 +294,7 @@ deserializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
   error as deserializeTransactionEnvelopeEip2930.ErrorType
 
 /**
- * Deserializes a EIP-1559 {@link TransactionEnvelope} from its serialized form.
+ * Deserializes a EIP-1559 {@link Types#TransactionEnvelope} from its serialized form.
  *
  * @example
  * ```ts
@@ -394,7 +394,7 @@ deserializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
   error as deserializeTransactionEnvelopeEip1559.ErrorType
 
 /**
- * Deserializes a EIP-4844 {@link TransactionEnvelope} from its serialized form.
+ * Deserializes a EIP-4844 {@link Types#TransactionEnvelope} from its serialized form.
  *
  * @example
  * // TODO

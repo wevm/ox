@@ -2,8 +2,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 
-type As = 'Hex' | 'Bytes'
-
 /**
  * Transform a list of commitments to their versioned hashes.
  *
@@ -19,7 +17,7 @@ type As = 'Hex' | 'Bytes'
  */
 export function commitmentsToVersionedHashes<
   const commitments extends readonly Bytes[] | readonly Hex[],
-  as extends As =
+  as extends 'Hex' | 'Bytes' =
     | (commitments extends readonly Hex[] ? 'Hex' : never)
     | (commitments extends readonly Bytes[] ? 'Bytes' : never),
 >(
@@ -44,14 +42,14 @@ export function commitmentsToVersionedHashes<
 }
 
 export declare namespace commitmentsToVersionedHashes {
-  type Options<as extends As | undefined = undefined> = {
+  type Options<as extends 'Hex' | 'Bytes' | undefined = undefined> = {
     /** Return type. */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
     /** Version to tag onto the hashes. */
     version?: number | undefined
   }
 
-  type ReturnType<as extends As = As> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
 

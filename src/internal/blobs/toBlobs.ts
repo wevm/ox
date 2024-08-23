@@ -13,8 +13,6 @@ import { bytesToHex } from '../hex/toHex.js'
 import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type As = 'Hex' | 'Bytes'
-
 /**
  * Transforms arbitrary data to {@link Blobs}.
  *
@@ -27,7 +25,7 @@ type As = 'Hex' | 'Bytes'
  */
 export function toBlobs<
   const data extends Hex | Bytes,
-  as extends As =
+  as extends 'Hex' | 'Bytes' =
     | (data extends Hex ? 'Hex' : never)
     | (data extends Bytes ? 'Bytes' : never),
 >(
@@ -85,12 +83,12 @@ export function toBlobs<
 }
 
 export declare namespace toBlobs {
-  type Options<as extends As | undefined = undefined> = {
+  type Options<as extends 'Hex' | 'Bytes' | undefined = undefined> = {
     /** Return type. */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends As = As> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
 

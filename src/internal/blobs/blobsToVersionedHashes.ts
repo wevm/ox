@@ -6,8 +6,6 @@ import type { Compute } from '../types/utils.js'
 import { blobsToCommitments } from './blobsToCommitments.js'
 import { commitmentsToVersionedHashes } from './commitmentsToVersionedHashes.js'
 
-type As = 'Hex' | 'Bytes'
-
 /**
  * Compute commitments from a list of blobs.
  *
@@ -22,7 +20,7 @@ type As = 'Hex' | 'Bytes'
  */
 export function blobsToVersionedHashes<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,
-  as extends As =
+  as extends 'Hex' | 'Bytes' =
     | (blobs extends Blobs<Hex> ? 'Hex' : never)
     | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
@@ -34,14 +32,14 @@ export function blobsToVersionedHashes<
 }
 
 export declare namespace blobsToVersionedHashes {
-  type Options<as extends As = 'Hex'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** KZG implementation. */
     kzg: Pick<Kzg, 'blobToKzgCommitment'>
     /** Return type. */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends As = As> = Compute<
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = Compute<
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
   >

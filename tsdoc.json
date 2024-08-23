@@ -10,6 +10,11 @@
       "allowMultiple": false
     },
     {
+      "tagName": "@default",
+      "syntaxKind": "block",
+      "allowMultiple": false
+    },
+    {
       "tagName": "@since",
       "syntaxKind": "block",
       "allowMultiple": false
@@ -23,6 +28,7 @@
 
   "supportForTags": {
     "@alias": true,
+    "@default": true,
     "@since": true,
     "@docGroup": true
   }

@@ -5,7 +5,7 @@ import type { CompactSignature, Signature } from '../types/signature.js'
 import type { Compute } from '../types/utils.js'
 
 /**
- * Converts an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link CompactSignature} into a {@link Signature}.
+ * Converts an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link Types#CompactSignature} into a {@link Types#Signature}.
  *
  * @example
  * ```ts twoslash

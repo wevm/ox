@@ -63,7 +63,8 @@ export declare namespace hashStruct {
 /* v8 ignore next */
 hashStruct.parseError = (error: unknown) => error as hashStruct.ErrorType
 
-function encodeData(value: {
+/** @internal */
+export function encodeData(value: {
   data: Record<string, unknown>
   primaryType: string
   types: TypedData
@@ -86,7 +87,8 @@ function encodeData(value: {
   return encodeAbiParameters(encodedTypes, encodedValues)
 }
 
-declare namespace encodeData {
+/** @internal */
+export declare namespace encodeData {
   type ErrorType =
     | encodeAbiParameters.ErrorType
     | encodeField.ErrorType
@@ -94,7 +96,8 @@ declare namespace encodeData {
     | GlobalErrorType
 }
 
-function hashType(value: {
+/** @internal */
+export function hashType(value: {
   primaryType: string
   types: TypedData
 }): Hex {
@@ -103,7 +106,8 @@ function hashType(value: {
   return keccak256(encodedHashType)
 }
 
-declare namespace hashType {
+/** @internal */
+export declare namespace hashType {
   type ErrorType =
     | toHex.ErrorType
     | encodeType.ErrorType
@@ -111,7 +115,8 @@ declare namespace hashType {
     | GlobalErrorType
 }
 
-function encodeField(properties: {
+/** @internal */
+export function encodeField(properties: {
   types: TypedData
   name: string
   type: string
@@ -157,7 +162,8 @@ function encodeField(properties: {
   return [{ type }, value]
 }
 
-declare namespace encodeField {
+/** @internal */
+export declare namespace encodeField {
   type ErrorType =
     | keccak256.ErrorType
     | encodeAbiParameters.ErrorType

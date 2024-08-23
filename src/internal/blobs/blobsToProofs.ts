@@ -5,8 +5,6 @@ import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Kzg } from '../types/kzg.js'
 
-type As = 'Hex' | 'Bytes'
-
 /**
  * Compute the proofs for a list of blobs and their commitments.
  *
@@ -23,7 +21,7 @@ type As = 'Hex' | 'Bytes'
 export function blobsToProofs<
   const blobs extends readonly Bytes[] | readonly Hex[],
   const commitments extends readonly Bytes[] | readonly Hex[],
-  as extends As =
+  as extends 'Hex' | 'Bytes' =
     | (blobs extends readonly Hex[] ? 'Hex' : never)
     | (blobs extends readonly Bytes[] ? 'Bytes' : never),
 >(
@@ -61,7 +59,7 @@ export declare namespace blobsToProofs {
     commitments extends readonly Bytes[] | readonly Hex[] =
       | readonly Bytes[]
       | readonly Hex[],
-    as extends As =
+    as extends 'Hex' | 'Bytes' =
       | (blobs extends Blobs<Hex> ? 'Hex' : never)
       | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
   > = {
@@ -73,10 +71,10 @@ export declare namespace blobsToProofs {
     /** KZG implementation. */
     kzg: Pick<Kzg, 'computeBlobKzgProof'>
     /** Return type. */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends As = As> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
 

@@ -4,8 +4,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type As = 'Bytes' | 'Hex'
-
 /**
  * Computes the ECDSA public key from a provided private key.
  *
@@ -15,7 +13,7 @@ type As = 'Bytes' | 'Hex'
  * const publicKey = Secp256k1.getPublicKey({ privateKey: '0x...' })
  * ```
  */
-export function getPublicKey<as extends As = 'Hex'>(
+export function getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   parameters: getPublicKey.Parameters<as>,
 ): getPublicKey.ReturnType<as> {
   const { privateKey, as = 'Hex' } = parameters
@@ -25,14 +23,14 @@ export function getPublicKey<as extends As = 'Hex'>(
 }
 
 export declare namespace getPublicKey {
-  type Parameters<as extends As = 'Hex'> = {
+  type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** Private key to compute the public key from. */
     privateKey: Hex | Bytes
     /** Format of the returned public key. @default 'Hex' */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends As = 'Hex'> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 

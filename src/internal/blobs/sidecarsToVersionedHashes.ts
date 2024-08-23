@@ -3,8 +3,6 @@ import type { BlobSidecars } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 
-type As = 'Hex' | 'Bytes'
-
 /**
  * Transforms a list of sidecars to their versioned hashes.
  *
@@ -19,7 +17,7 @@ type As = 'Hex' | 'Bytes'
  */
 export function sidecarsToVersionedHashes<
   const sidecars extends BlobSidecars,
-  as extends As =
+  as extends 'Hex' | 'Bytes' =
     | (sidecars extends BlobSidecars<Hex> ? 'Hex' : never)
     | (sidecars extends BlobSidecars<Bytes> ? 'Bytes' : never),
 >(
@@ -44,14 +42,14 @@ export function sidecarsToVersionedHashes<
 }
 
 export declare namespace sidecarsToVersionedHashes {
-  type Options<as extends As | undefined = undefined> = {
+  type Options<as extends 'Hex' | 'Bytes' | undefined = undefined> = {
     /** Return type. */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
     /** Version to tag onto the hashes. */
     version?: number | undefined
   }
 
-  type ReturnType<as extends As> =
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
 

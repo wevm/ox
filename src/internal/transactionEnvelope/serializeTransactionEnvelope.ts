@@ -32,7 +32,7 @@ import {
 } from './assertTransactionEnvelope.js'
 
 /**
- * Serializes a {@link TransactionEnvelope}.
+ * Serializes a {@link Types#TransactionEnvelope}.
  *
  * @example
  * ```ts
@@ -94,7 +94,7 @@ serializeTransactionEnvelope.parseError = (error: unknown) =>
   error as serializeTransactionEnvelope.ErrorType
 
 /**
- * Serializes a legacy {@link TransactionEnvelope}.
+ * Serializes a legacy {@link Types#TransactionEnvelope}.
  *
  * @example
  * ```ts
@@ -203,7 +203,7 @@ serializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
   error as serializeTransactionEnvelopeLegacy.ErrorType
 
 /**
- * Serializes an EIP-2930 {@link TransactionEnvelope}.
+ * Serializes an EIP-2930 {@link Types#TransactionEnvelope}.
  *
  * @example
  * ```ts
@@ -273,7 +273,7 @@ serializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
   error as serializeTransactionEnvelopeEip2930.ErrorType
 
 /**
- * Serializes an EIP-1559 {@link TransactionEnvelope}.
+ * Serializes an EIP-1559 {@link Types#TransactionEnvelope}.
  *
  * @example
  * ```ts
@@ -353,7 +353,7 @@ serializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
   error as serializeTransactionEnvelopeEip1559.ErrorType
 
 /**
- * Serializes an EIP-4844 {@link TransactionEnvelope}.
+ * Serializes an EIP-4844 {@link Types#TransactionEnvelope}.
  *
  * @example
  * // TODO

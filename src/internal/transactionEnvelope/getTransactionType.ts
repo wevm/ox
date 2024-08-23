@@ -22,7 +22,8 @@ import type {
   ValueOf,
 } from '../types/utils.js'
 
-type TransactionEnvelopeGeneric = Assign<
+/** @internal */
+export type TransactionEnvelopeGeneric = Assign<
   ExactPartial<TransactionEnvelope>,
   { type?: TransactionType | undefined }
 >
@@ -98,18 +99,16 @@ export function getTransactionType<
   throw new CannotInferTransactionTypeError({ transaction })
 }
 
+/** @internal */
 export declare namespace getTransactionType {
   type ErrorType = CannotInferTransactionTypeError | GlobalErrorType
 }
 
-getTransactionType.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getTransactionType.ErrorType
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Types
 
-type MatchKeys<T extends object, U extends object> = ValueOf<
+/** @internal */
+export type MatchKeys<T extends object, U extends object> = ValueOf<
   Required<{
     [K in keyof U]: K extends keyof T ? K : undefined
   }>
@@ -117,7 +116,8 @@ type MatchKeys<T extends object, U extends object> = ValueOf<
   ? T
   : never
 
-type BaseProperties = {
+/** @internal */
+export type BaseProperties = {
   accessList?: undefined
   authorizationList?: undefined
   blobVersionedHashes?: undefined
@@ -128,9 +128,11 @@ type BaseProperties = {
   sidecars?: undefined
 }
 
-type LegacyProperties = Assign<BaseProperties, FeeValuesLegacy>
+/** @internal */
+export type LegacyProperties = Assign<BaseProperties, FeeValuesLegacy>
 
-type Eip1559Properties = Assign<
+/** @internal */
+export type Eip1559Properties = Assign<
   BaseProperties,
   OneOf<
     | {
@@ -145,14 +147,16 @@ type Eip1559Properties = Assign<
   }
 >
 
-type Eip2930Properties = Assign<
+/** @internal */
+export type Eip2930Properties = Assign<
   BaseProperties,
   ExactPartial<FeeValuesLegacy> & {
     accessList: TransactionEnvelopeEip2930['accessList']
   }
 >
 
-type Eip4844Properties = Assign<
+/** @internal */
+export type Eip4844Properties = Assign<
   BaseProperties,
   ExactPartial<FeeValuesEip4844> &
     OneOf<
@@ -166,7 +170,8 @@ type Eip4844Properties = Assign<
     >
 >
 
-type Eip7702Properties = Assign<
+/** @internal */
+export type Eip7702Properties = Assign<
   BaseProperties,
   ExactPartial<FeeValuesEip1559> & {
     authorizationList: TransactionEnvelopeEip7702['authorizationList']

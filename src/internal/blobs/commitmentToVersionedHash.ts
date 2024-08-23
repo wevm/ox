@@ -3,8 +3,6 @@ import { sha256 } from '../hash/sha256.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type As = 'Hex' | 'Bytes'
-
 /**
  * Transform a commitment to it's versioned hash.
  *
@@ -20,7 +18,7 @@ type As = 'Hex' | 'Bytes'
  */
 export function commitmentToVersionedHash<
   const commitment extends Hex | Bytes,
-  as extends As =
+  as extends 'Hex' | 'Bytes' =
     | (commitment extends Hex ? 'Hex' : never)
     | (commitment extends Bytes ? 'Bytes' : never),
 >(
@@ -38,14 +36,14 @@ export function commitmentToVersionedHash<
 }
 
 export declare namespace commitmentToVersionedHash {
-  type Options<as extends As | undefined = undefined> = {
+  type Options<as extends 'Hex' | 'Bytes' | undefined = undefined> = {
     /** Return type. */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
     /** Version to tag onto the hash. */
     version?: number | undefined
   }
 
-  type ReturnType<as extends As = As> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 

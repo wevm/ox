@@ -5,7 +5,7 @@ import type { Signature, SignatureTuple } from '../types/signature.js'
 import type { Compute } from '../types/utils.js'
 
 /**
- * Converts a {@link Signature} to a serialized {@link SignatureTuple} to be used for signatures in Transaction Envelopes, EIP-7702 Authorization Lists, etc.
+ * Converts a {@link Types#Signature} to a serialized {@link Types#SignatureTuple} to be used for signatures in Transaction Envelopes, EIP-7702 Authorization Lists, etc.
  *
  * @example
  * ```ts

@@ -57,7 +57,8 @@ export declare namespace encodeType {
 /* v8 ignore next */
 encodeType.parseError = (error: unknown) => error as encodeType.ErrorType
 
-function findTypeDependencies(
+/** @internal */
+export function findTypeDependencies(
   value: {
     primaryType: string
     types: TypedData
@@ -77,6 +78,7 @@ function findTypeDependencies(
   return results
 }
 
-declare namespace findTypeDependencies {
+/** @internal */
+export declare namespace findTypeDependencies {
   type ErrorType = GlobalErrorType
 }

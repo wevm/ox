@@ -4,7 +4,7 @@ import type { Compute, ExactPartial, OneOf } from '../types/utils.js'
 import { toSignature } from './toSignature.js'
 
 /**
- * Extracts a {@link Signature} from an arbitrary object that may include signature properties.
+ * Extracts a {@link Types#Signature} from an arbitrary object that may include signature properties.
  *
  * @example
  * // TODO

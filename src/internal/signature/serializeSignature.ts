@@ -6,10 +6,8 @@ import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
 import { signatureToCompactSignature } from './signatureToCompactSignature.js'
 
-type As = 'Bytes' | 'Hex'
-
 /**
- * Serializes a {@link Signature} to {@link Types#Hex} or {@link Types#Bytes}.
+ * Serializes a {@link Types#Signature} to {@link Types#Hex} or {@link Types#Bytes}.
  *
  * @example
  * ```ts
@@ -36,7 +34,7 @@ type As = 'Bytes' | 'Hex'
  * ```
  *
  */
-export function serializeSignature<as extends As = 'Hex'>(
+export function serializeSignature<as extends 'Hex' | 'Bytes' = 'Hex'>(
   signature_: Signature,
   options: serializeSignature.Options<as> = {},
 ): serializeSignature.ReturnType<as> {
@@ -59,12 +57,12 @@ export function serializeSignature<as extends As = 'Hex'>(
 }
 
 export declare namespace serializeSignature {
-  type Options<as extends As = 'Hex'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     compact?: boolean | undefined
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends As = 'Hex'> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
     | (as extends 'Hex' ? Hex : never)
     | (as extends 'Bytes' ? Bytes : never)
 

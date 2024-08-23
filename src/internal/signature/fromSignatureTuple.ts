@@ -1,9 +1,9 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Signature, SignatureTuple } from '../types/signature.js'
+import type { SignatureTuple } from '../types/signature.js'
 import { toSignature } from './toSignature.js'
 
 /**
- * Converts a {@link SignatureTuple} to a {@link Signature}.
+ * Converts a {@link Types#SignatureTuple} to a {@link Types#Signature}.
  *
  * @example
  * ```ts

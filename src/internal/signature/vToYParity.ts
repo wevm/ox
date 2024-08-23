@@ -10,6 +10,7 @@ export function vToYParity(v: number): Signature['yParity'] {
   throw new InvalidSignatureVError({ value: v })
 }
 
+/** @internal */
 export declare namespace vToYParity {
   type ErrorType = InvalidSignatureVError | GlobalErrorType
 }

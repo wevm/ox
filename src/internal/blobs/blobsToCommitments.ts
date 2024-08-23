@@ -6,8 +6,6 @@ import type { Bytes, Hex } from '../types/data.js'
 import type { Kzg } from '../types/kzg.js'
 import type { Compute } from '../types/utils.js'
 
-type As = 'Hex' | 'Bytes'
-
 /**
  * Compute commitments from a list of blobs.
  *
@@ -22,7 +20,7 @@ type As = 'Hex' | 'Bytes'
  */
 export function blobsToCommitments<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,
-  as extends As =
+  as extends 'Hex' | 'Bytes' =
     | (blobs extends Blobs<Hex> ? 'Hex' : never)
     | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
@@ -48,14 +46,14 @@ export function blobsToCommitments<
 }
 
 export declare namespace blobsToCommitments {
-  type Options<as extends As = 'Hex'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** KZG implementation. */
     kzg: Pick<Kzg, 'blobToKzgCommitment'>
     /** Return type. */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends As = As> = Compute<
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = Compute<
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
   >

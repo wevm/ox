@@ -6,8 +6,6 @@ import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
 
-type As = 'Bytes' | 'Hex'
-
 /**
  * Recovers the signing public key from the signed payload and signature.
  *
@@ -23,7 +21,7 @@ type As = 'Bytes' | 'Hex'
  * })
  * ```
  */
-export function recoverPublicKey<as extends As = 'Hex'>(
+export function recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   parameters: recoverPublicKey.Parameters<as>,
 ): recoverPublicKey.ReturnType<as> {
   const { payload, signature, as = 'Hex' } = parameters
@@ -40,16 +38,16 @@ export function recoverPublicKey<as extends As = 'Hex'>(
 }
 
 export declare namespace recoverPublicKey {
-  type Parameters<as extends As = 'Hex'> = {
+  type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */
     signature: Signature
     /** Format of the returned public key. @default 'Hex' */
-    as?: as | As | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends As> =
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
