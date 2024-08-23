@@ -1,7 +1,7 @@
 import * as model from '@microsoft/api-extractor-model'
 import fs from 'fs-extra'
 
-import { handleItem, type Data } from './utils/handleItem.js'
+import { type Data, handleItem } from './utils/handleItem.js'
 import { moduleRegex } from './utils/regex.js'
 import { renderApiFunction } from './utils/renderApiFunction.js'
 
