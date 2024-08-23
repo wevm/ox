@@ -14,13 +14,18 @@ type To = 'hex' | 'bytes'
  * This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) – an audited & minimal JS hashing library.
  *
  * @example
- * import { Hash, Hex } from 'ox'
- *
+ * ```ts twoslash
+ * import { Hash } from 'ox'
  * Hash.keccak256('0xdeadbeef')
  * // '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1'
+ * ```
  *
+ * @example
+ * ```ts twoslash
+ * import { Hash, Hex } from 'ox'
  * Hash.keccak256(Hex.from('hello world'))
  * // '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
+ * ```
  */
 export function keccak256<to extends To = 'hex'>(
   value: Hex | Bytes,

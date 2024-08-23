@@ -17,6 +17,7 @@ import { encodeType } from './encodeType.js'
  * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.hashStruct({
@@ -35,6 +36,7 @@ import { encodeType } from './encodeType.js'
  *   },
  * })
  * // '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
+ * ```
  */
 export function hashStruct(value: hashStruct.Value): hashStruct.ReturnType {
   const { data, primaryType, types } = value

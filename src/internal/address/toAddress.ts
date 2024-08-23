@@ -7,6 +7,7 @@ import { checksumAddress } from './checksumAddress.js'
  * Converts a stringified address to a typed (checksummed) Address.
  *
  * @example
+ * ```ts twoslash
  * import { Address } from 'ox'
  *
  * Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
@@ -17,6 +18,7 @@ import { checksumAddress } from './checksumAddress.js'
  *
  * Address.from('hello')
  * // InvalidAddressError: Address "0xa" is invalid.
+ * ```
  */
 export function toAddress(
   address: string,

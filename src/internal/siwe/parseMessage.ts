@@ -9,6 +9,7 @@ import type { Compute, ExactPartial } from '../types/utils.js'
  * - Spec: https://eips.ethereum.org/EIPS/eip-4361
  *
  * @example
+ * ```ts twoslash
  * import { Siwe } from 'ox'
  *
  * Siwe.parseMessage(`example.com wants you to sign in with your Ethereum account:
@@ -31,6 +32,7 @@ import type { Compute, ExactPartial } from '../types/utils.js'
  * //   uri: 'https://example.com/path',
  * //   version: '1',
  * // }
+ * ```
  */
 export function parseSiweMessage(message: string): parseSiweMessage.ReturnType {
   const { scheme, statement, ...prefix } = (message.match(prefixRegex)

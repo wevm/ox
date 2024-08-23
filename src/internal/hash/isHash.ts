@@ -7,6 +7,7 @@ import type { Hex } from '../types/data.js'
  * Checks if a string is a valid hash value.
  *
  * @example
+ * ```ts twoslash
  * import { Hash } from 'ox'
  *
  * Hash.isHash('0x')
@@ -14,6 +15,7 @@ import type { Hex } from '../types/data.js'
  *
  * Hash.isHash('0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0')
  * // true
+ * ```
  */
 export function isHash(hash: string): hash is Hex {
   return isHex(hash) && size(hash) === 32

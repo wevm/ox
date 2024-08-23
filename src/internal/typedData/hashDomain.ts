@@ -9,6 +9,7 @@ import { hashStruct } from './hashStruct.js'
  * - Docs: https://oxlib.sh/api/typedData/hashDomain
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.hashDomain({
@@ -27,6 +28,7 @@ import { hashStruct } from './hashStruct.js'
  *   },
  * })
  * // '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
+ * ```
  */
 export function hashDomain(value: hashDomain.Value) {
   const { domain, types } = value

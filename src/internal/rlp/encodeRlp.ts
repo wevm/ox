@@ -20,9 +20,11 @@ type Encodable = {
  * - Docs: https://oxlib.sh/api/rlp/encode
  *
  * @example
+ * ```ts twoslash
  * import { Rlp } from 'ox'
  * Rlp.encode('0x68656c6c6f20776f726c64')
  * // 0x8b68656c6c6f20776f726c64
+ * ```
  */
 export function encodeRlp<
   bytes extends RecursiveArray<Bytes> | RecursiveArray<Hex>,

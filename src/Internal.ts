@@ -21,6 +21,10 @@ export type {
   ExactPartial,
   IsNarrowable,
   IsNever,
+  IsUnion,
   KeyofUnion,
+  LastInUnion,
   OneOf,
+  UnionToIntersection,
+  UnionToTuple,
 } from './internal/types/utils.js'

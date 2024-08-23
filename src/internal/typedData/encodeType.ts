@@ -10,6 +10,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-encodetype
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.encodeType({
@@ -23,6 +24,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  *   primaryType: 'Foo',
  * })
  * // 'Foo(address address,string name,string foo)'
+ * ```
  */
 export function encodeType(value: encodeType.Value): encodeType.ReturnType {
   const { primaryType, types } = value

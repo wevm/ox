@@ -10,6 +10,7 @@ import type { TypedDataDefinition } from '../types/typedData.js'
  * - Docs: https://oxlib.sh/api/typedData/serialize
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.serialize({
@@ -34,6 +35,7 @@ import type { TypedDataDefinition } from '../types/typedData.js'
  *   },
  * })
  * // "{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"
+ * ```
  */
 export function serializeTypedData<
   const typedData extends TypedData | Record<string, unknown>,

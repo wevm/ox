@@ -7,6 +7,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  * - Docs: https://oxlib.sh/api/typedData/extractEip712Domain
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.extractEip712Domain({
@@ -16,6 +17,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
  * })
  * // [{ 'name': 'name', 'type': 'string' }, { 'name': 'version', 'type': 'string' }, { 'name': 'chainId', 'type': 'uint256' }, { 'name': 'verifyingContract', 'type': 'address' }]
+ * ```
  */
 export function extractEip712DomainTypes(
   domain: TypedDataDomain | undefined,

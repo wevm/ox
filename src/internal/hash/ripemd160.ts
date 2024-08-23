@@ -14,10 +14,12 @@ type To = 'hex' | 'bytes'
  * This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) – an audited & minimal JS hashing library.
  *
  * @example
+ * ```ts twoslash
  * import { Hash } from 'ox'
  *
  * Hash.ripemd160('0xdeadbeef')
  * // '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
+ * ```
  */
 export function ripemd160<to extends To = 'hex'>(
   value: Hex | Bytes,

@@ -13,12 +13,15 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/
  * Asserts that the given value is a valid address.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Address } from 'ox'
- *
  * Address.assert('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
  * // true
+ * ```
  *
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
  * Address.assert('0xdeadbeef')
  * // InvalidAddressError: Address "0xdeadbeef" is invalid.
  * ```

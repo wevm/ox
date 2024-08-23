@@ -20,6 +20,7 @@ import type { TypedDataDefinition } from '../types/typedData.js'
  * - Docs: https://oxlib.sh/api/typedData/validate
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.validate({
@@ -43,6 +44,7 @@ import type { TypedDataDefinition } from '../types/typedData.js'
  *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *   },
  * })
+ * ```
  */
 export function validateTypedData<
   const typedData extends TypedData | Record<string, unknown>,

@@ -11,6 +11,7 @@ import { isUri } from './isUri.js'
  * - Spec: https://eips.ethereum.org/EIPS/eip-4361
  *
  * @example
+ * ```ts twoslash
  * import { Siwe } from 'ox'
  *
  * Siwe.createMessage({
@@ -30,6 +31,7 @@ import { isUri } from './isUri.js'
  * // Chain ID: 1
  * // Nonce: foobarbaz
  * // Issued At: 2023-02-01T00:00:00.000Z"
+ * ```
  */
 export function createSiweMessage(
   value: createSiweMessage.Value,
