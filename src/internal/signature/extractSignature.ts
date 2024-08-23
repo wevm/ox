@@ -8,6 +8,8 @@ import { toSignature } from './toSignature.js'
  *
  * @example
  * // TODO
+ *
+ * @alias ox!Signature.extractSignature:function(1)
  */
 export function extractSignature(
   value: OneOf<ExactPartial<Signature> | ExactPartial<LegacySignature>>,

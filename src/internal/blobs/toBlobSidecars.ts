@@ -27,6 +27,8 @@ import { blobsToProofs } from './blobsToProofs.js'
  *
  * const sidecars = Blobs.toSidecars(blobs, { commitments, proofs })
  * ```
+ *
+ * @alias ox!Blobs.toBlobSidecars:function(1)
  */
 export function toBlobSidecars<
   const blobs extends readonly Hex[] | readonly Bytes[],

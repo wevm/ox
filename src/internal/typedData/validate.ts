@@ -17,8 +17,6 @@ import type { TypedDataDefinition } from '../types/typedData.js'
 /**
  * Validates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
  *
- * - Docs: https://oxlib.sh/api/typedData/validate
- *
  * @example
  * ```ts twoslash
  * import { TypedData } from 'ox'
@@ -45,6 +43,8 @@ import type { TypedDataDefinition } from '../types/typedData.js'
  *   },
  * })
  * ```
+ *
+ * @alias ox!TypedData.validateTypedData:function(1)
  */
 export function validateTypedData<
   const typedData extends TypedData | Record<string, unknown>,

@@ -22,6 +22,8 @@ import type { Compute } from '../types/utils.js'
  * //   yParity: 0
  * // }
  * ```
+ *
+ * @alias ox!Signature.compactSignatureToSignature:function(1)
  */
 export function compactSignatureToSignature({
   r,

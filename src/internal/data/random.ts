@@ -18,6 +18,8 @@ import type { Bytes, Hex } from '../types/data.js'
  * import { Data } from 'ox'
  * const bytes = Data.randomBytes(32)
  * ```
+ *
+ * @alias ox!Bytes.randomBytes:function(1)
  */
 export function randomBytes(length: number): Bytes {
   return crypto.getRandomValues(new Uint8Array(length))
@@ -46,6 +48,8 @@ randomBytes.parseError = (error: unknown) => error as randomBytes.ErrorType
  * import { Data } from 'ox'
  * const hex = Data.randomHex(32)
  * ```
+ *
+ * @alias ox!Hex.randomHex:function(1)
  */
 export function randomHex(length: number): Hex {
   return bytesToHex(randomBytes(length))

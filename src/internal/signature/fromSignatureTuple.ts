@@ -16,6 +16,8 @@ import { toSignature } from './toSignature.js'
  * //   yParity: 1,
  * // }
  * ```
+ *
+ * @alias ox!Signature.fromSignatureTuple:function(1)
  */
 export function fromSignatureTuple(signatureTuple: SignatureTuple) {
   const [yParity, r, s] = signatureTuple

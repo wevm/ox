@@ -18,6 +18,8 @@ import type { RecursiveArray } from './encodeRlp.js'
  * Rlp.decode('0x8b68656c6c6f20776f726c64')
  * // 0x68656c6c6f20776f726c64
  * ```
+ *
+ * @alias ox!Rlp.decodeRlp:function(1)
  */
 export function decodeRlp<
   value extends Bytes | Hex,
@@ -72,6 +74,8 @@ decodeRlp.parseError = (error: unknown) => error as decodeRlp.ErrorType
  * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
  * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
+ *
+ * @alias ox!Rlp.rlpToBytes:function(1)
  */
 export function rlpToBytes(value: Bytes | Hex): rlpToBytes.ReturnType {
   return decodeRlp(value, 'Bytes')
@@ -96,6 +100,8 @@ rlpToBytes.parseError = (error: unknown) => error as rlpToBytes.ErrorType
  * Rlp.toHex('0x8b68656c6c6f20776f726c64')
  * // 0x68656c6c6f20776f726c64
  * ```
+ *
+ * @alias ox!Rlp.rlpToHex:function(1)
  */
 export function rlpToHex(value: Bytes | Hex): rlpToHex.ReturnType {
   return decodeRlp(value, 'Hex')

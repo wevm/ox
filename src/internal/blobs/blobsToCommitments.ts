@@ -17,6 +17,8 @@ import type { Compute } from '../types/utils.js'
  * const blobs = Blobs.from('0xdeadbeef')
  * const commitments = Blobs.toCommitments(blobs, { kzg })
  * ```
+ *
+ * @alias ox!Blobs.blobsToCommitments:function(1)
  */
 export function blobsToCommitments<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,

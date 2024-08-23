@@ -23,6 +23,8 @@ type Encodable = {
  * Rlp.encode('0x68656c6c6f20776f726c64')
  * // 0x8b68656c6c6f20776f726c64
  * ```
+ *
+ * @alias ox!Rlp.encodeRlp:function(1)
  */
 export function encodeRlp<
   bytes extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
@@ -68,6 +70,8 @@ encodeRlp.parseError = (error: unknown) => error as encodeRlp.ErrorType
  * Rlp.fromBytes(Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]))
  * // Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
+ *
+ * @alias ox!Rlp.bytesToRlp:function(1)
  */
 export function bytesToRlp<to extends 'Hex' | 'Bytes' = 'Bytes'>(
   bytes: RecursiveArray<Bytes>,
@@ -95,6 +99,8 @@ bytesToRlp.parseError = (error: unknown) => error as bytesToRlp.ErrorType
  * Rlp.fromHex('0x68656c6c6f20776f726c64')
  * // 0x8b68656c6c6f20776f726c64
  * ```
+ *
+ * @alias ox!Rlp.hexToRlp:function(1)
  */
 export function hexToRlp<to extends 'Hex' | 'Bytes' = 'Hex'>(
   hex: RecursiveArray<Hex>,

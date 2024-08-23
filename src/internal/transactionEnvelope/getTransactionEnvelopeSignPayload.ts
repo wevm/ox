@@ -23,6 +23,8 @@ import { hashTransactionEnvelope } from './hashTransactionEnvelope.js'
  * const payload = TransactionEnvelope.getSignPayload(envelope)
  * // '0x...'
  * ```
+ *
+ * @alias ox!TransactionEnvelope.getTransactionEnvelopeSignPayload:function(1)
  */
 export function getTransactionEnvelopeSignPayload(
   envelope: TransactionEnvelope,

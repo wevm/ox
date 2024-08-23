@@ -56,6 +56,8 @@ import {
  * //   value: 1000000000000000000n,
  * // }
  * ```
+ *
+ * @alias ox!TransactionEnvelope.deserializeTransactionEnvelope:function(1)
  */
 export function deserializeTransactionEnvelope<
   const serialized extends TransactionEnvelopeSerialized,
@@ -123,6 +125,8 @@ deserializeTransactionEnvelope.parseError = (error: unknown) =>
  * //   value: 1000000000000000000n,
  * // }
  * ```
+ *
+ * @alias ox!TransactionEnvelope.deserializeTransactionEnvelopeLegacy:function(1)
  */
 export function deserializeTransactionEnvelopeLegacy(
   serializedTransaction: TransactionEnvelopeSerializedLegacy,
@@ -216,6 +220,8 @@ deserializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
  * //   value: 1000000000000000000n,
  * // }
  * ```
+ *
+ * @alias ox!TransactionEnvelope.deserializeTransactionEnvelopeEip2930:function(1)
  */
 export function deserializeTransactionEnvelopeEip2930(
   serializedTransaction: TransactionEnvelopeSerializedEip2930,
@@ -312,6 +318,8 @@ deserializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
  * //   value: 1000000000000000000n,
  * // }
  * ```
+ *
+ * @alias ox!TransactionEnvelope.deserializeTransactionEnvelopeEip1559:function(1)
  */
 export function deserializeTransactionEnvelopeEip1559(
   serializedTransaction: TransactionEnvelopeSerializedEip1559,
@@ -398,6 +406,8 @@ deserializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.deserializeTransactionEnvelopeEip4844:function(1)
  */
 export function deserializeTransactionEnvelopeEip4844(
   serializedTransaction: TransactionEnvelopeSerializedEip4844,

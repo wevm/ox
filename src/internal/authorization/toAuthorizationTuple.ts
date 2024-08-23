@@ -14,6 +14,8 @@ import type { Compute } from '../types/utils.js'
  *
  * @example
  * // TODO
+ *
+ * @alias ox!Authorization.toAuthorizationTuple:function(1)
  */
 export function toAuthorizationTuple<const authorization extends Authorization>(
   authorization: authorization,

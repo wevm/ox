@@ -33,6 +33,7 @@ import { signatureToCompactSignature } from './signatureToCompactSignature.js'
  * // '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
  * ```
  *
+ * @alias ox!Signature.serializeSignature:function(1)
  */
 export function serializeSignature<as extends 'Hex' | 'Bytes' = 'Hex'>(
   signature_: Signature,

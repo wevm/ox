@@ -76,6 +76,7 @@ padRight.parseError = (error: unknown) => error as padRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
 export function pad<value extends Bytes | Hex>(
   value: value,
   options: pad.Options = {},
@@ -86,6 +87,7 @@ export function pad<value extends Bytes | Hex>(
   return padBytes(value, { dir, size }) as pad.ReturnType<value>
 }
 
+/** @internal */
 export declare namespace pad {
   type Options = {
     dir?: 'left' | 'right' | undefined
@@ -97,6 +99,7 @@ export declare namespace pad {
   type ErrorType = padHex.ErrorType | padBytes.ErrorType | GlobalErrorType
 }
 
+/** @internal */
 export function padHex(hex_: Hex, options: padHex.Options = {}) {
   const { dir, size = 32 } = options
 
@@ -113,11 +116,13 @@ export function padHex(hex_: Hex, options: padHex.Options = {}) {
   return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex
 }
 
+/** @internal */
 export declare namespace padHex {
   type Options = pad.Options
   type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
 }
 
+/** @internal */
 export function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes
@@ -136,6 +141,7 @@ export function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
   return paddedBytes
 }
 
+/** @internal */
 export declare namespace padBytes {
   type Options = pad.Options
   type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType

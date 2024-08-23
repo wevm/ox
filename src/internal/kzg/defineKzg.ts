@@ -14,6 +14,8 @@ import type { Kzg } from '../types/kzg.js'
  *
  * const kzg = Kzg.from(cKzg)
  * ```
+ *
+ * @alias ox!Kzg.defineKzg:function(1)
  */
 export function defineKzg({
   blobToKzgCommitment,

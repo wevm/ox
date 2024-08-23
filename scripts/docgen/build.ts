@@ -2,20 +2,88 @@ import * as model from '@microsoft/api-extractor-model'
 import * as tsdoc from '@microsoft/tsdoc'
 import fs from 'fs-extra'
 
+// TODO
+// - generate index page for each module
+// - parse inline {@link} tags and link to pages
+// - add range to github source links
+// - error type linking
+// - glossary pages for: constants, errors, and types
+// - filter examples based on module (e.g. `isBytesEqual` @example for `Bytes` module should not show up on `Hex` module)
+// - display multiple aliases when applicable on pages
+// - Validate aliases
+// - Update Vocs to throw if twoslash block has errors
+// - Add generated md files to gitignore
+
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Generating API doc.')
 
-const fileName = 'ox.api.json'
+/// Load API Model
+const fileName = './site/docgen/ox.api.json'
 const pkg = new model.ApiModel().loadPackage(fileName)
 
+/// Construct lookup with updated data
 const lookup: Record<string, Data> = {}
 handleItem(pkg)
 
-const moduleRegex = /^ox!(?<module>.+):namespace$/
-const typeRegex = /^ox!(?<type>.+):type/
+/// Construct vocs sidebar
+const entrypointItem = pkg.members.find(
+  (x) =>
+    x.kind === model.ApiItemKind.EntryPoint &&
+    x.canonicalReference.toString() === 'ox!',
+)
+if (!entrypointItem) throw new Error('Could not find entrypoint item')
 
+const moduleRegex = /^ox!(?<module>[A-Za-z0-9]+):namespace$/
+const namespaceItems = entrypointItem.members.filter(
+  (x) =>
+    x.kind === model.ApiItemKind.Namespace &&
+    moduleRegex.test(x.canonicalReference.toString()) &&
+    !['Caches', 'Constants', 'Errors', 'Internal', 'Types'].includes(
+      x.displayName,
+    ),
+)
+const sidebar = []
+for (const item of namespaceItems) {
+  const baseLink = `/gen/${item.displayName}`
+
+  const items = []
+  for (const member of item.members) {
+    if (member.kind !== model.ApiItemKind.Function) continue
+    const lookupItem = lookup[member.canonicalReference.toString()]
+    if (!lookupItem)
+      throw new Error(
+        `Could not find lookup item for ${member.canonicalReference.toString()}`,
+      )
+    // filter out aliases from appearing in sidebar (e.g. `Hex.toHex` should not appear since `Hex.from` does)
+    if (
+      lookupItem.comment?.aliases?.length &&
+      lookupItem.comment.aliases.includes(member.canonicalReference.toString())
+    )
+      continue
+
+    items.push({
+      text: `.${member.displayName}`,
+      link: `${baseLink}/${member.displayName}`,
+      id: lookupItem.id,
+    })
+  }
+
+  const sidebarItem = {
+    text: item.displayName,
+    collapsed: true,
+    link: baseLink,
+    items,
+  }
+  sidebar.push(sidebarItem)
+}
+const content = `
+export const sidebar = ${JSON.stringify(sidebar, null, 2)}
+`
+fs.writeFileSync('./site/docgen/sidebar.ts', content)
+
+/// Build markdown files
 const pagesDir = './site/pages/gen'
-const ids = ['ox!Bytes.from:function(1)', 'ox!Bytes.to:function(1)']
+const ids = sidebar.flatMap((x) => x.items).map((x) => x.id)
 for (const id of ids) {
   const item = lookup[id]
   if (!item) throw new Error(`Could not find item with id ${id}`)
@@ -37,6 +105,10 @@ for (const id of ids) {
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Done.')
+
+/////////////////////////////////////////////////////////////
+/// Utils
+/////////////////////////////////////////////////////////////
 
 function renderApiFunction(item: Data) {
   const {
@@ -118,6 +190,7 @@ ${returnType.type}
   const errorTypeItem = lookup[errorTypeId]
   const parseErrorItem = lookup[parseErrorId]
 
+  const typeRegex = /^ox!(?<type>.+):type/
   const errorTypeContent = !(errorTypeItem && parseErrorItem)
     ? ''
     : `
@@ -181,6 +254,7 @@ type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
     comment?:
       | {
           alias: string
+          aliases: readonly string[]
           comment: string
           summary: string
           deprecated: string
@@ -269,6 +343,10 @@ function processDocComment(docComment?: tsdoc.DocComment | undefined) {
       ),
       '@alias',
     ),
+    aliases: docComment?.customBlocks
+      .filter((v) => v.blockTag.tagName === '@alias')
+      .map(renderDocNode)
+      .map((example) => cleanDoc(example, '@alias')),
     comment: docComment?.emitAsTsdoc(),
     summary: cleanDoc(renderDocNode(docComment?.summarySection)),
     deprecated: cleanDoc(

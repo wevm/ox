@@ -14,6 +14,8 @@ import { parseValue } from './parseValue.js'
  * Value.fromEther('420')
  * // 420000000000000000000n
  * ```
+ *
+ * @alias ox!Value.parseEther:function(1)
  */
 export function parseEther(
   ether: string,

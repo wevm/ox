@@ -92,6 +92,8 @@ toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
  * const data = Bytes.fromBoolean(true, { size: 32 })
  * // Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
  * ```
+ *
+ * @alias ox!Bytes.booleanToBytes:function(1)
  */
 export function booleanToBytes(
   value: boolean,
@@ -165,6 +167,9 @@ function charCodeToBase16(char: number) {
  * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', { size: 32 })
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
+ *
+ * @alias ox!Bytes.hexToBytes:function(1)
+ * @alias ox!Hex.hexToBytes:function(1)
  */
 export function hexToBytes(hex_: Hex, options: hexToBytes.Options = {}): Bytes {
   const { size } = options
@@ -224,6 +229,8 @@ hexToBytes.parseError = (error: unknown) => error as hexToBytes.ErrorType
  * const data = Bytes.fromNumber(420, { size: 4 })
  * // Uint8Array([0, 0, 1, 164])
  * ```
+ *
+ * @alias ox!Bytes.numberToBytes:function(1)
  */
 export function numberToBytes(
   value: bigint | number,
@@ -264,6 +271,8 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * const data = Bytes.fromString('Hello world!', { size: 32 })
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
+ *
+ * @alias ox!Bytes.stringToBytes:function(1)
  */
 export function stringToBytes(
   value: string,

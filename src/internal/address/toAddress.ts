@@ -19,6 +19,8 @@ import { checksumAddress } from './checksumAddress.js'
  * Address.from('hello')
  * // InvalidAddressError: Address "0xa" is invalid.
  * ```
+ *
+ * @alias ox!Address.toAddress:function(1)
  */
 export function toAddress(
   address: string,

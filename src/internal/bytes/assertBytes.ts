@@ -13,6 +13,8 @@ import type { Bytes } from '../types/data.js'
  * Bytes.assert('abc')
  * // InvalidBytesTypeError: Value \`"abc"\` of type \`string\` is an invalid Bytes value. Bytes values must be of type \`Uint8Array\`.
  * ```
+ *
+ * @alias ox!Bytes.assertBytes:function(1)
  */
 export function assertBytes(value: unknown): asserts value is Bytes {
   if (!value) throw new InvalidBytesTypeError(value)

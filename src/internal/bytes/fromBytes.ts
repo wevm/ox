@@ -32,9 +32,11 @@ import type { Bytes, Hex } from '../types/data.js'
  *
  * @alias ox!Bytes.fromBytes:function(1)
  */
-export function fromBytes<to extends fromBytes.To>(
+export function fromBytes<
+  to extends 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
+>(
   bytes: Bytes,
-  to: to | fromBytes.To,
+  to: to | 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
   options: fromBytes.Options = {},
 ): fromBytes.ReturnType<to> {
   if (to === 'number')
@@ -51,14 +53,14 @@ export function fromBytes<to extends fromBytes.To>(
 }
 
 export declare namespace fromBytes {
-  type To = 'string' | 'Hex' | 'bigint' | 'number' | 'boolean'
-
   type Options = {
     /** Size of the bytes. */
     size?: number | undefined
   }
 
-  type ReturnType<to extends fromBytes.To> =
+  type ReturnType<
+    to extends 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
+  > =
     | (to extends 'string' ? string : never)
     | (to extends 'Hex' ? Hex : never)
     | (to extends 'bigint' ? bigint : never)
@@ -89,6 +91,8 @@ fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
  * Bytes.toBigInt(Bytes.from([1, 164]))
  * // 420n
  * ```
+ *
+ * @alias ox!Bytes.bytesToBigInt:function(1)
  */
 export function bytesToBigInt(
   bytes: Bytes,
@@ -128,6 +132,8 @@ bytesToBigInt.parseError = (error: unknown) => error as bytesToBigInt.ErrorType
  * Bytes.toBoolean(Bytes.from([1]))
  * // true
  * ```
+ *
+ * @alias ox!Bytes.bytesToBoolean:function(1)
  */
 export function bytesToBoolean(
   bytes_: Bytes,
@@ -168,6 +174,8 @@ bytesToBoolean.parseError = (error: unknown) =>
  * Bytes.toNumber(Bytes.from([1, 164]))
  * // 420
  * ```
+ *
+ * @alias ox!Bytes.bytesToNumber:function(1)
  */
 export function bytesToNumber(
   bytes: Bytes,
@@ -204,6 +212,8 @@ const decoder = /*#__PURE__*/ new TextDecoder()
  * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // 'Hello world'
  * ```
+ *
+ * @alias ox!Bytes.bytesToString:function(1)
  */
 export function bytesToString(
   bytes_: Bytes,

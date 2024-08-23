@@ -5,8 +5,6 @@ import { parseValue } from './parseValue.js'
 /**
  * Parses a string representation of Gwei to a `bigint` Value (default: wei).
  *
- * - Docs: https://oxlib.sh/api/value/fromGwei
- *
  * @example
  * ```ts
  * import { Value } from 'ox'
@@ -14,6 +12,8 @@ import { parseValue } from './parseValue.js'
  * Value.fromGwei('420')
  * // 420000000000n
  * ```
+ *
+ * @alias ox!Value.parseGwei:function(1)
  */
 export function parseGwei(ether: string, unit: 'wei' = 'wei') {
   return parseValue(ether, valueExponents.gwei - valueExponents[unit])

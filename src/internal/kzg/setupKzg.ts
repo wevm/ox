@@ -12,6 +12,8 @@ import { defineKzg } from './defineKzg.js'
  *
  * const kzg = Kzg.setup(cKzg, Path.mainnetTrustedSetup)
  * ```
+ *
+ * @alias ox!Kzg.setupKzg:function(1)
  */
 export function setupKzg(
   parameters: setupKzg.Parameters,

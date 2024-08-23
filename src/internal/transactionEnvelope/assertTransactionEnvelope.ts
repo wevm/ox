@@ -31,6 +31,8 @@ import type { PartialBy } from '../types/utils.js'
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.assertTransactionEnvelope:function(1)
  */
 export function assertTransactionEnvelope(envelope: TransactionEnvelope) {
   if (envelope.type === 'legacy') assertTransactionEnvelopeLegacy(envelope)
@@ -68,6 +70,8 @@ assertTransactionEnvelope.parseError = (error: unknown) =>
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.assertTransactionEnvelopeLegacy:function(1)
  */
 export function assertTransactionEnvelopeLegacy(
   envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
@@ -97,6 +101,8 @@ assertTransactionEnvelopeLegacy.parseError = (error: unknown) =>
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.assertTransactionEnvelopeEip2930:function(1)
  */
 export function assertTransactionEnvelopeEip2930(
   envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
@@ -125,6 +131,8 @@ assertTransactionEnvelopeEip2930.parseError = (error: unknown) =>
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.assertTransactionEnvelopeEip1559:function(1)
  */
 export function assertTransactionEnvelopeEip1559(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
@@ -160,6 +168,8 @@ assertTransactionEnvelopeEip1559.parseError = (error: unknown) =>
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.assertTransactionEnvelopeEip4844:function(1)
  */
 export function assertTransactionEnvelopeEip4844(
   envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
@@ -204,6 +214,8 @@ assertTransactionEnvelopeEip4844.parseError = (error: unknown) =>
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.assertTransactionEnvelopeEip7702:function(1)
  */
 export function assertTransactionEnvelopeEip7702(
   envelope: PartialBy<TransactionEnvelopeEip7702, 'type'>,

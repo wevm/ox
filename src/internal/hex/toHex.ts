@@ -35,6 +35,8 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
  * Hex.from('Hello world', { size: 32 })
  * // '0x48656c6c6f20776f726c64210000000000000000000000000000000000000000'
  * ```
+ *
+ * @alias ox!Hex.toHex:function(1)
  */
 export function toHex(
   value: string | number | bigint | boolean | readonly number[] | Bytes,
@@ -97,6 +99,8 @@ toHex.parseError = (error: unknown) => error as toHex.ErrorType
  * Hex.fromBoolean(true, { size: 32 })
  * // '0x0000000000000000000000000000000000000000000000000000000000000001'
  * ```
+ *
+ * @alias ox!Hex.booleanToHex:function(1)
  */
 export function booleanToHex(
   value: boolean,
@@ -147,6 +151,9 @@ booleanToHex.parseError = (error: unknown) => error as booleanToHex.ErrorType
  * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
  * // '0x48656c6c6f20576f726c642100000000000000000000000000000000000000000'
  * ```
+ *
+ * @alias ox!Hex.bytesToHex:function(1)
+ * @alias ox!Bytes.bytesToHex:function(1)
  */
 export function bytesToHex(
   value: Bytes,
@@ -193,6 +200,8 @@ bytesToHex.parseError = (error: unknown) => error as bytesToHex.ErrorType
  * Hex.fromNumber(420, { size: 32 })
  * // '0x00000000000000000000000000000000000000000000000000000000000001a4'
  * ```
+ *
+ * @alias ox!Hex.numberToHex:function(1)
  */
 export function numberToHex(
   value_: number | bigint,
@@ -273,6 +282,8 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * Hex.fromString('Hello World!', { size: 32 })
  * // '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
  * ```
+ *
+ * @alias ox!Hex.stringToHex:function(1)
  */
 export function stringToHex(
   value_: string,

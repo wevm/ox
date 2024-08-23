@@ -24,6 +24,8 @@ import { serializeTransactionEnvelope } from './serializeTransactionEnvelope.js'
  * const hash = TransactionEnvelope.hash(envelope)
  * // '0x...'
  * ```
+ *
+ * @alias ox!TransactionEnvelope.hashTransactionEnvelope:function(1)
  */
 export function hashTransactionEnvelope(
   envelope: TransactionEnvelope,

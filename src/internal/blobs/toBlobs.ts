@@ -21,6 +21,8 @@ import type { Bytes, Hex } from '../types/data.js'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * ```
+ *
+ * @alias ox!Blobs.toBlobs:function(1)
  */
 export function toBlobs<
   const data extends Hex | Bytes,

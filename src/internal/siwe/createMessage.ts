@@ -32,6 +32,8 @@ import { isUri } from './isUri.js'
  * // Nonce: foobarbaz
  * // Issued At: 2023-02-01T00:00:00.000Z"
  * ```
+ *
+ * @alias ox!Siwe.createSiweMessage:function(1)
  */
 export function createSiweMessage(
   value: createSiweMessage.Value,

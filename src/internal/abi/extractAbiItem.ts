@@ -32,8 +32,9 @@ import { getSignatureHash } from './getSignatureHash.js'
  * //   outputs: [{ type: 'uint256' }],
  * //   stateMutability: 'view'
  * // }
- *
  * ```
+ *
+ * @alias ox!Abi.extractAbiItem:function(1)
  */
 export function extractAbiItem<
   const abi extends Abi | readonly unknown[],

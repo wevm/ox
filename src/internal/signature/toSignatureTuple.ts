@@ -18,6 +18,8 @@ import type { Compute } from '../types/utils.js'
  * })
  * // [yParity: '0x01', r: '0x7b', s: '0x1c8']
  * ```
+ *
+ * @alias ox!Signature.toSignatureTuple:function(1)
  */
 export function toSignatureTuple(
   signature: Signature,

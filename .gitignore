@@ -10,6 +10,6 @@ node_modules
 tsconfig.*.tsbuildinfo
 tsconfig.tsbuildinfo
 
+site/docgen
 site/pages/gen
-ox.api.json
 tsdoc-metadata.json

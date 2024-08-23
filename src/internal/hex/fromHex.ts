@@ -32,6 +32,8 @@ import type { Bytes, Hex } from '../types/data.js'
  * })
  * // 'Hello world'
  * ```
+ *
+ * @alias ox!Hex.fromHex:function(1)
  */
 export function fromHex<to extends fromHex.To>(
   hex: Hex,
@@ -96,6 +98,8 @@ fromHex.parseError = (error: unknown) => error as fromHex.ErrorType
  * Hex.toBigInt('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420n
  * ```
+ *
+ * @alias ox!Hex.hexToBigInt:function(1)
  */
 export function hexToBigInt(
   hex: Hex,
@@ -147,6 +151,8 @@ hexToBigInt.parseError = (error: unknown) => error as hexToBigInt.ErrorType
  * Hex.toBoolean('0x0000000000000000000000000000000000000000000000000000000000000001', { size: 32 })
  * // true
  * ```
+ *
+ * @alias ox!Hex.hexToBoolean:function(1)
  */
 export function hexToBoolean(
   hex_: Hex,
@@ -196,6 +202,8 @@ hexToBoolean.parseError = (error: unknown) => error as hexToBoolean.ErrorType
  * Hex.toNumber('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420
  * ```
+ *
+ * @alias ox!Hex.hexToNumber:function(1)
  */
 export function hexToNumber(
   hex: Hex,
@@ -235,6 +243,8 @@ hexToNumber.parseError = (error: unknown) => error as hexToNumber.ErrorType
  * })
  * // 'Hello world'
  * ```
+ *
+ * @alias ox!Hex.hexToString:function(1)
  */
 export function hexToString(
   hex: Hex,

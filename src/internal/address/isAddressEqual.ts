@@ -22,6 +22,8 @@ import { assertAddress } from './assertAddress.js'
  * )
  * // false
  * ```
+ *
+ * @alias ox!Address.isAddressEqual:function(1)
  */
 export function isAddressEqual(a: Address, b: Address): boolean {
   assertAddress(a, { strict: false })

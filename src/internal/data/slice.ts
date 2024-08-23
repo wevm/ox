@@ -66,6 +66,7 @@ slice.parseError = (error: unknown) => error as slice.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
 export function assertStartOffset(
   value: Hex | Bytes,
   start?: number | undefined,
@@ -78,6 +79,7 @@ export function assertStartOffset(
     })
 }
 
+/** @internal */
 export declare namespace assertStartOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError
@@ -85,6 +87,7 @@ export declare namespace assertStartOffset {
     | GlobalErrorType
 }
 
+/** @internal */
 export function assertEndOffset(
   value: Hex | Bytes,
   start?: number | undefined,
@@ -103,6 +106,7 @@ export function assertEndOffset(
   }
 }
 
+/** @internal */
 export declare namespace assertEndOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError
@@ -110,6 +114,7 @@ export declare namespace assertEndOffset {
     | GlobalErrorType
 }
 
+/** @internal */
 export function sliceBytes(
   value_: Bytes,
   start?: number | undefined,
@@ -123,6 +128,7 @@ export function sliceBytes(
   return value
 }
 
+/** @internal */
 export declare namespace sliceBytes {
   type ErrorType =
     | assertStartOffset.ErrorType
@@ -130,6 +136,7 @@ export declare namespace sliceBytes {
     | GlobalErrorType
 }
 
+/** @internal */
 export function sliceHex(
   value_: Hex,
   start?: number | undefined,
@@ -145,6 +152,7 @@ export function sliceHex(
   return value
 }
 
+/** @internal */
 export declare namespace sliceHex {
   type ErrorType =
     | assertStartOffset.ErrorType

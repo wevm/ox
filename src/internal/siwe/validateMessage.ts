@@ -24,6 +24,8 @@ import type { ExactPartial } from '../types/utils.js'
  * })
  * // true
  * ```
+ *
+ * @alias ox!Siwe.validateSiweMessage:function(1)
  */
 export function validateSiweMessage(
   value: validateSiweMessage.Value,

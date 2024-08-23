@@ -16,6 +16,8 @@ import type { Bytes, Hex } from '../types/data.js'
  * const data = Blobs.to(blobs)
  * // '0xdeadbeef'
  * ```
+ *
+ * @alias ox!Blobs.fromBlobs:function(1)
  */
 export function fromBlobs<
   const blobs extends Blobs<Hex> | Blobs<Bytes>,
@@ -91,6 +93,8 @@ fromBlobs.parseError = (error: unknown) => error as fromBlobs.ErrorType
  * const data = Blobs.toHex(blobs)
  * // '0xdeadbeef'
  * ```
+ *
+ * @alias ox!Blobs.blobsToHex:function(1)
  */
 export function blobsToHex(
   blobs: Blobs<Hex> | Blobs<Bytes>,
@@ -118,6 +122,8 @@ blobsToHex.parseError = (error: unknown) => error as blobsToHex.ErrorType
  * const data = Blobs.toBytes(blobs)
  * // Uint8Array [ 13, 174, 190, 239 ]
  * ```
+ *
+ * @alias ox!Blobs.blobsToBytes:function(1)
  */
 export function blobsToBytes(
   blobs: Blobs<Hex> | Blobs<Bytes>,

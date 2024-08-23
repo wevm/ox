@@ -23,6 +23,8 @@ import type { ExactPartial } from '../types/utils.js'
  * })
  * // InvalidSignatureRError: Value `-549...n` is an invalid r value. r must be a positive integer less than 2^256.
  * ```
+ *
+ * @alias ox!Signature.assertSignature:function(1)
  */
 export function assertSignature(
   signature: ExactPartial<Signature>,

@@ -49,6 +49,8 @@ import {
  * const serialized = TransactionEnvelope.serialize(envelope)
  * // '0x...'
  * ```
+ *
+ * @alias ox!TransactionEnvelope.serializeTransactionEnvelope:function(1)
  */
 export function serializeTransactionEnvelope<
   envelope extends TransactionEnvelope,
@@ -108,6 +110,8 @@ serializeTransactionEnvelope.parseError = (error: unknown) =>
  * const serialized = TransactionEnvelope.serializeLegacy(envelope)
  * // '0x...'
  * ```
+ *
+ * @alias ox!TransactionEnvelope.serializeTransactionEnvelopeLegacy:function(1)
  */
 export function serializeTransactionEnvelopeLegacy(
   envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
@@ -218,6 +222,8 @@ serializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
  * const serialized = TransactionEnvelope.serializeEip2930(envelope)
  * // '0x01...'
  * ```
+ *
+ * @alias ox!TransactionEnvelope.serializeTransactionEnvelopeEip2930:function(1)
  */
 export function serializeTransactionEnvelopeEip2930(
   envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
@@ -287,6 +293,8 @@ serializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
  * const serialized = TransactionEnvelope.serializeEip1559(envelope)
  * // '0x02...'
  * ```
+ *
+ * @alias ox!TransactionEnvelope.serializeTransactionEnvelopeEip1559:function(1)
  */
 export function serializeTransactionEnvelopeEip1559(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
@@ -357,6 +365,8 @@ serializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
  *
  * @example
  * // TODO
+ *
+ * @alias ox!TransactionEnvelope.serializeTransactionEnvelopeEip4844:function(1)
  */
 export function serializeTransactionEnvelopeEip4844(
   envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,

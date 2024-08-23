@@ -1,6 +1,6 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-  "mainEntryPointFilePath": "src/_esm/index.d.ts",
+  "mainEntryPointFilePath": "../../src/_esm/index.d.ts",
   "bundledPackages": [],
   "newlineKind": "lf",
   "enumMemberOrder": "preserve",
@@ -17,7 +17,7 @@
 
   "docModel": {
     "enabled": true,
-    "apiJsonFilePath": "<projectFolder>/<unscopedPackageName>.api.json",
+    "apiJsonFilePath": "<projectFolder>/site/docgen/<unscopedPackageName>.api.json",
     "includeForgottenExports": true
   },
 

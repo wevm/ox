@@ -18,6 +18,8 @@ import { hashAuthorization } from './hashAuthorization.js'
  *
  * const payload = Authorization.getSignPayload(authorization)
  * ```
+ *
+ * @alias ox!Authorization.getAuthorizationSignPayload:function(1)
  */
 export function getAuthorizationSignPayload(
   authorization: Authorization,

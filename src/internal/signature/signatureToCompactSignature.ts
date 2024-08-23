@@ -20,6 +20,8 @@ import type { CompactSignature, Signature } from '../types/signature.js'
  * //   yParityAndS: 57228803202727131502949358313456071280488184270258293674242124340113824882788n
  * // }
  * ```
+ *
+ * @alias ox!Signature.signatureToCompactSignature:function(1)
  */
 export function signatureToCompactSignature(
   signature: Signature,

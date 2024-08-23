@@ -11,6 +11,8 @@ import { toAuthorizationTuple } from './toAuthorizationTuple.js'
  *
  * @example
  * // TODO
+ *
+ * @alias ox!Authorization.toAuthorizationTupleList:function(1)
  */
 export function toAuthorizationTupleList<
   const list extends

@@ -58,6 +58,8 @@ import { vToYParity } from './vToYParity.js'
  * //   yParity: 0
  * // }
  * ```
+ *
+ * @alias ox!Signature.toSignature:function(1)
  */
 export function toSignature(
   signature:

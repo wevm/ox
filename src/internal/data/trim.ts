@@ -85,6 +85,7 @@ trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
 export function trim<value extends Bytes | Hex>(
   value: value,
   options: trim.Options = {},
@@ -111,6 +112,7 @@ export function trim<value extends Bytes | Hex>(
   return data as trim.ReturnType<value>
 }
 
+/** @internal */
 export declare namespace trim {
   type Options = {
     dir?: 'left' | 'right' | undefined

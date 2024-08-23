@@ -3,8 +3,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 /**
  * Parses a `string` representation of a Value to `bigint` (multiplied by the given exponent).
  *
- * - Docs: https://oxlib.sh/api/value/from
- *
  * @example
  * ```ts
  * import { Value } from 'ox'
@@ -12,6 +10,8 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Value.from('420', 9)
  * // 420000000000n
  * ```
+ *
+ * @alias ox!Value.parseValue:function(1)
  */
 export function parseValue(value: string, decimals = 0) {
   let [integer = '', fraction = '0'] = value.split('.')

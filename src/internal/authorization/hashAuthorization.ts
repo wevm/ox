@@ -21,6 +21,8 @@ import { toAuthorizationTuple } from './toAuthorizationTuple.js'
  *
  * const hash = Authorization.hash(authorization)
  * ```
+ *
+ * @alias ox!Authorization.hashAuthorization:function(1)
  */
 export function hashAuthorization(
   authorization: Authorization,

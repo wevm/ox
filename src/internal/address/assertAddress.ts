@@ -25,6 +25,8 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/
  * Address.assert('0xdeadbeef')
  * // InvalidAddressError: Address "0xdeadbeef" is invalid.
  * ```
+ *
+ * @alias ox!Address.assertAddress:function(1)
  */
 export function assertAddress(
   address: string,

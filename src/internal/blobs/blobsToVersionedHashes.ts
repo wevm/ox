@@ -17,6 +17,8 @@ import { commitmentsToVersionedHashes } from './commitmentsToVersionedHashes.js'
  * const blobs = Blobs.from('0xdeadbeef')
  * const versionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
  * ```
+ *
+ * @alias ox!Blobs.blobsToVersionedHashes:function(1)
  */
 export function blobsToVersionedHashes<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,

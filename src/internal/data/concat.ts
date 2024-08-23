@@ -41,10 +41,14 @@ export declare namespace concat {
 /* v8 ignore next */
 concat.parseError = (error: unknown) => error as concat.ErrorType
 
-/////////////////////////////////////////////////////////////////////////////////
-// Utilities
-/////////////////////////////////////////////////////////////////////////////////
-
+/**
+ * Concatenates two or more {@link Types#Bytes}.
+ *
+ * @example
+ * TODO
+ *
+ * @alias ox!Bytes.concatBytes:function(1)
+ */
 export function concatBytes(...values: readonly Bytes[]): Bytes {
   let length = 0
   for (const arr of values) {
@@ -63,6 +67,17 @@ export declare namespace concatBytes {
   type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
+concatBytes.parseError = (error: unknown) => error as concatBytes.ErrorType
+
+/**
+ * Concatenates two or more {@link Types#Hex}.
+ *
+ * @example
+ * TODO
+ *
+ * @alias ox!Hex.concatHex:function(1)
+ */
 export function concatHex(...values: readonly Hex[]): Hex {
   return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
 }
@@ -70,3 +85,6 @@ export function concatHex(...values: readonly Hex[]): Hex {
 export declare namespace concatHex {
   type ErrorType = GlobalErrorType
 }
+
+/* v8 ignore next */
+concatBytes.parseError = (error: unknown) => error as concatBytes.ErrorType

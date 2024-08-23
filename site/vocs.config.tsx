@@ -1,5 +1,6 @@
 import { defineConfig } from 'vocs'
 import pkg from '../src/package.json'
+import { sidebar } from './docgen/sidebar'
 
 export default defineConfig({
   baseUrl:
@@ -36,6 +37,10 @@ export default defineConfig({
     { text: 'Imports & Bundle Size', link: '/imports' },
     { text: 'Error Handling', link: '/error-handling' },
     { text: 'Platform Compatibility', link: '/platform-compatibility' },
+    {
+      text: 'API Reference (generated)',
+      items: sidebar,
+    },
     {
       text: 'API Reference',
       items: [

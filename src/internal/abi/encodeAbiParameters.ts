@@ -67,6 +67,8 @@ export type IsomorphicAbiParametersToPrimitiveTypes<
  *   ['wagmi', 420n, true]
  * )
  * ```
+ *
+ * @alias ox!Abi.encodeAbiParameters:function(1)
  */
 export function encodeAbiParameters<
   const parameters extends

@@ -14,7 +14,10 @@ export {
   parseEther as fromEther,
 } from './internal/value/parseEther.js'
 
-export { parseGwei, parseGwei as fromGwei } from './internal/value/parseGwei.js'
+export {
+  parseGwei,
+  parseGwei as fromGwei,
+} from './internal/value/parseGwei.js'
 
 export {
   parseValue,

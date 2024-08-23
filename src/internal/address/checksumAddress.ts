@@ -16,6 +16,8 @@ import { assertAddress } from './assertAddress.js'
  * Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
  * // '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * ```
+ *
+ * @alias ox!Address.checksumAddress:function(1)
  */
 export function checksumAddress(address_: string): Address {
   if (Caches.checksum.has(address_)) return Caches.checksum.get(address_)!

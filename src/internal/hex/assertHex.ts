@@ -13,6 +13,8 @@ import type { Hex } from '../types/data.js'
  * Hex.assert('abc')
  * // InvalidHexValueTypeError: Value `"abc"` of type `string` is an invalid hex type. Hex types must be represented as `"0x\${string}"`.
  * ```
+ *
+ * @alias ox!Hex.assertHex:function(1)
  */
 export function assertHex(
   value: unknown,

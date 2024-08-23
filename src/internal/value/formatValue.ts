@@ -3,8 +3,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 /**
  * Formats a `bigint` Value to its string representation (divided by the given exponent).
  *
- * - Docs: https://oxlib.sh/api/value/format
- *
  * @example
  * ```ts
  * import { Value } from 'ox'
@@ -12,6 +10,11 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Value.format(420_000_000_000n, 9)
  * // '420'
  * ```
+ *
+ * @param value - The `bigint` Value to format.
+ * @param decimals - The exponent to divide the `bigint` Value by.
+ *
+ * @alias ox!Value.formatValue:function(1)
  */
 export function formatValue(value: bigint, decimals = 0) {
   let display = value.toString()

@@ -29,6 +29,8 @@ import type { Compute } from '../types/utils.js'
  *   nonce: 69n,
  * })
  * ```
+ *
+ * @alias ox!Authorization.toAuthorization:function(1)
  */
 export function toAuthorization<
   const authorization extends Authorization,

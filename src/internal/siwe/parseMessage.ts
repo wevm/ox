@@ -33,6 +33,8 @@ import type { Compute, ExactPartial } from '../types/utils.js'
  * //   version: '1',
  * // }
  * ```
+ *
+ * @alias ox!Siwe.parseSiweMessage:function(1)
  */
 export function parseSiweMessage(message: string): parseSiweMessage.ReturnType {
   const { scheme, statement, ...prefix } = (message.match(prefixRegex)

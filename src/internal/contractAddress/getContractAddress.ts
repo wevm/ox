@@ -29,6 +29,8 @@ import { getCreateAddress } from './getCreateAddress.js'
  * })
  * // '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```
+ *
+ * @alias ox!ContractAddress.getContractAddress:function(1)
  */
 export function getContractAddress(opts: getContractAddress.Options) {
   if (opts.opcode === 'CREATE2') return getCreate2Address(opts)

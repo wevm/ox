@@ -56,6 +56,8 @@ import {
  * //   value: 1000000000000000000n,
  * // }
  * ```
+ *
+ * @alias ox!TransactionEnvelope.toTransactionEnvelope:function(1)
  */
 export function toTransactionEnvelope<
   const envelope extends
@@ -124,6 +126,8 @@ toTransactionEnvelope.parseError = (error: unknown) =>
  *   value: Value.fromEther('1'),
  * })
  * ```
+ *
+ * @alias ox!TransactionEnvelope.toTransactionEnvelopeLegacy:function(1)
  */
 export function toTransactionEnvelopeLegacy<
   const envelope extends
@@ -172,6 +176,8 @@ toTransactionEnvelopeLegacy.parseError = (error: unknown) =>
  *   value: Value.fromEther('1'),
  * })
  * ```
+ *
+ * @alias ox!TransactionEnvelope.toTransactionEnvelopeEip1559:function(1)
  */
 export function toTransactionEnvelopeEip1559<
   const envelope extends
@@ -220,6 +226,8 @@ toTransactionEnvelopeEip1559.parseError = (error: unknown) =>
  *   value: Value.fromEther('1'),
  * })
  * ```
+ *
+ * @alias ox!TransactionEnvelope.toTransactionEnvelopeEip2930:function(1)
  */
 export function toTransactionEnvelopeEip2930<
   const envelope extends
@@ -270,6 +278,8 @@ toTransactionEnvelopeEip2930.parseError = (error: unknown) =>
  *   value: Value.fromEther('1'),
  * })
  * ```
+ *
+ * @alias ox!TransactionEnvelope.toTransactionEnvelopeEip4844:function(1)
  */
 export function toTransactionEnvelopeEip4844<
   const envelope extends UnionPartialBy<TransactionEnvelopeEip4844, 'type'>,
@@ -310,6 +320,8 @@ toTransactionEnvelopeEip4844.parseError = (error: unknown) =>
  *   value: Value.fromEther('1'),
  * })
  * ```
+ *
+ * @alias ox!TransactionEnvelope.toTransactionEnvelopeEip7702:function(1)
  */
 export function toTransactionEnvelopeEip7702<
   const envelope extends UnionPartialBy<TransactionEnvelopeEip7702, 'type'>,

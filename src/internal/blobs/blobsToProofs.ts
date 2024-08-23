@@ -17,6 +17,8 @@ import type { Kzg } from '../types/kzg.js'
  * const commitments = Blobs.toCommitments(blobs, { kzg })
  * const proofs = Blobs.toProofs(blobs, { commitments, kzg })
  * ```
+ *
+ * @alias ox!Blobs.blobsToProofs:function(1)
  */
 export function blobsToProofs<
   const blobs extends readonly Bytes[] | readonly Hex[],

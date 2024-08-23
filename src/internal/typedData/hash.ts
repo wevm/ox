@@ -13,8 +13,6 @@ import { validateTypedData } from './validate.js'
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
  *
- * - Docs: https://oxlib.sh/api/typedData/hash
- *
  * @example
  * ```ts twoslash
  * import { TypedData } from 'ox'
@@ -36,6 +34,8 @@ import { validateTypedData } from './validate.js'
  * })
  * // '0x7ef8d6931ed54977c7593289c0feb25c7d7424fb997f4fc20aa3fe51b5141188'
  * ```
+ *
+ * @alias ox!TypedData.hashTypedData:function(1)
  */
 export function hashTypedData<
   const typedData extends TypedData | Record<string, unknown>,
