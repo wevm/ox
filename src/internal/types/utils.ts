@@ -291,6 +291,11 @@ export type OneOf<
   : never
 export type KeyofUnion<type> = type extends type ? keyof type : never
 
+/** @internal */
+export type Undefined<type> = {
+  [key in keyof type]?: undefined
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // Loose types
 

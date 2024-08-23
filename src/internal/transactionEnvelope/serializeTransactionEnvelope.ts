@@ -6,6 +6,7 @@ import { InvalidSignatureVError } from '../errors/signature.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import { toHex } from '../hex/toHex.js'
 import { encodeRlp } from '../rlp/encodeRlp.js'
+import { extractSignature } from '../signature/extractSignature.js'
 import { toSignatureTuple } from '../signature/toSignatureTuple.js'
 import type { BlobSidecars } from '../types/blob.js'
 import type { Hex } from '../types/data.js'
@@ -224,11 +225,12 @@ export function serializeTransactionEnvelopeEip2930(
 ): serializeTransactionEnvelopeEip2930.ReturnType {
   const { chainId, gas, data, input, nonce, to, value, accessList, gasPrice } =
     envelope
-  const { signature } = options
 
   assertTransactionEnvelopeEip2930(envelope)
 
   const serializedAccessList = serializeAccessList(accessList)
+
+  const signature = extractSignature(options.signature || envelope)
 
   const serializedTransaction = [
     toHex(chainId),
@@ -239,7 +241,7 @@ export function serializeTransactionEnvelopeEip2930(
     value ? toHex(value) : '0x',
     data ?? input ?? '0x',
     serializedAccessList,
-    ...toSignatureTuple(signature || envelope),
+    ...(signature ? toSignatureTuple(signature) : []),
   ] as const
 
   return concatHex(
@@ -302,11 +304,12 @@ export function serializeTransactionEnvelopeEip1559(
     data,
     input,
   } = envelope
-  const { signature } = options
 
   assertTransactionEnvelopeEip1559(envelope)
 
   const serializedAccessList = serializeAccessList(accessList)
+
+  const signature = extractSignature(options.signature || envelope)
 
   const serializedTransaction = [
     toHex(chainId),
@@ -318,7 +321,7 @@ export function serializeTransactionEnvelopeEip1559(
     value ? toHex(value) : '0x',
     data ?? input ?? '0x',
     serializedAccessList,
-    ...toSignatureTuple(signature || envelope),
+    ...(signature ? toSignatureTuple(signature) : []),
   ]
 
   return concatHex(
@@ -372,11 +375,12 @@ export function serializeTransactionEnvelopeEip4844(
     accessList,
     data,
   } = envelope
-  const { signature } = options
 
   assertTransactionEnvelopeEip4844(envelope)
 
   const serializedAccessList = serializeAccessList(accessList)
+
+  const signature = extractSignature(options.signature || envelope)
 
   const serializedTransaction = [
     toHex(chainId),
@@ -390,7 +394,7 @@ export function serializeTransactionEnvelopeEip4844(
     serializedAccessList,
     maxFeePerBlobGas ? toHex(maxFeePerBlobGas) : '0x',
     blobVersionedHashes ?? [],
-    ...toSignatureTuple(signature || envelope),
+    ...(signature ? toSignatureTuple(signature) : []),
   ] as const
 
   const sidecars = options.sidecars || envelope.sidecars

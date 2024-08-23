@@ -19,8 +19,8 @@ export type { AbiItem } from './internal/types/abi.js'
 export type {
   AuthorizationList,
   Authorization,
-  AuthorizationListSerialized,
-  AuthorizationSerialized,
+  AuthorizationTuple,
+  AuthorizationTupleList,
 } from './internal/types/authorization.js'
 
 export type { AccessList } from './internal/types/accessList.js'

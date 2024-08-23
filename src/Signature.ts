@@ -24,6 +24,11 @@ export {
 } from './internal/signature/deserializeSignature.js'
 
 export {
+  extractSignature,
+  extractSignature as extract,
+} from './internal/signature/extractSignature.js'
+
+export {
   fromSignatureTuple,
   fromSignatureTuple as fromTuple,
 } from './internal/signature/fromSignatureTuple.js'

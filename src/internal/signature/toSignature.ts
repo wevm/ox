@@ -75,7 +75,11 @@ export function toSignature(
         s: signature.s,
         yParity: vToYParity(signature.v),
       }
-    return signature as Signature
+    return {
+      r: signature.r,
+      s: signature.s,
+      yParity: signature.yParity,
+    }
   })()
   assertSignature(signature_)
   return signature_

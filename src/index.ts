@@ -1,5 +1,6 @@
 export * as Abi from './Abi.js'
 export * as Address from './Address.js'
+export * as Authorization from './Authorization.js'
 export * as Blobs from './Blobs.js'
 export * as Caches from './Caches.js'
 export * as Constants from './Constants.js'

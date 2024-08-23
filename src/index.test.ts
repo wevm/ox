@@ -6,6 +6,7 @@ test('exports', () => {
     [
       "Abi",
       "Address",
+      "Authorization",
       "Blobs",
       "Caches",
       "Constants",

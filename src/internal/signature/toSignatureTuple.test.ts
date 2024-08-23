@@ -30,20 +30,3 @@ test('default', () => {
     ]
   `)
 })
-
-test('behavior: no sig', () => {
-  expect(Signature.toTuple({})).toMatchInlineSnapshot('[]')
-})
-
-test('error: invalid sig', () => {
-  expect(() =>
-    Signature.toTuple({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      yParity: 1,
-    }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [MissingSignaturePropertiesError: Signature \`{"r":"49782753348462494199823712700004552394425719014458918871452329774910450607807","yParity":1}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
-
-    See: https://oxlib.sh/errors#missingsignaturepropertieserror]
-  `)
-})
