@@ -10,7 +10,7 @@ import type { Signature } from '../types/signature.js'
 import type { Compute } from '../types/utils.js'
 
 /**
- * Converts an {@link Authorization} to an {@link AuthorizationTuple}.
+ * Converts an {@link Types#Authorization} to an {@link Types#AuthorizationTuple}.
  *
  * @example
  * // TODO

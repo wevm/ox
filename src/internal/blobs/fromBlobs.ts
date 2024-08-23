@@ -5,10 +5,8 @@ import { bytesToHex } from '../hex/toHex.js'
 import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'Hex' | 'Bytes'
-
 /**
- * Transforms Ox-shaped {@link Blobs} into the originating data.
+ * Transforms Ox-shaped {@link Types#Blobs} into the originating data.
  *
  * @example
  * ```ts
@@ -21,12 +19,12 @@ type To = 'Hex' | 'Bytes'
  */
 export function fromBlobs<
   const blobs extends Blobs<Hex> | Blobs<Bytes>,
-  to extends To =
+  to extends 'Hex' | 'Bytes' =
     | (blobs extends Blobs<Hex> ? 'Hex' : never)
     | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
   blobs_: blobs | Blobs<Hex> | Blobs<Bytes>,
-  to_?: to | To | undefined,
+  to_?: to | 'Hex' | 'Bytes' | undefined,
 ): fromBlobs.ReturnType<to> {
   const to = to_ ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
   const blobs = (
@@ -67,7 +65,7 @@ export function fromBlobs<
 }
 
 export declare namespace fromBlobs {
-  type ReturnType<to extends To = 'Hex'> =
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> =
     | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'Hex' ? Hex : never)
 
@@ -82,7 +80,7 @@ export declare namespace fromBlobs {
 fromBlobs.parseError = (error: unknown) => error as fromBlobs.ErrorType
 
 /**
- * Transforms Ox-shaped {@link Blobs} into the originating data.
+ * Transforms Ox-shaped {@link Types#Blobs} into the originating data.
  *
  * @example
  * ```ts
@@ -109,7 +107,7 @@ export declare namespace blobsToHex {
 blobsToHex.parseError = (error: unknown) => error as blobsToHex.ErrorType
 
 /**
- * Transforms Ox-shaped {@link Blobs} into the originating data.
+ * Transforms Ox-shaped {@link Types#Blobs} into the originating data.
  *
  * @example
  * ```ts

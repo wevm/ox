@@ -7,8 +7,6 @@ import type { Bytes, Hex } from '../types/data.js'
 
 export type RecursiveArray<T> = T | readonly RecursiveArray<T>[]
 
-type To = 'Hex' | 'Bytes'
-
 type Encodable = {
   length: number
   encode(cursor: Cursor): void
@@ -28,8 +26,13 @@ type Encodable = {
  */
 export function encodeRlp<
   bytes extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
-  to extends To = bytes extends RecursiveArray<Bytes> ? 'Bytes' : 'Hex',
->(bytes: bytes, to_?: to | To | undefined): encodeRlp.ReturnType<to> {
+  to extends 'Hex' | 'Bytes' = bytes extends RecursiveArray<Bytes>
+    ? 'Bytes'
+    : 'Hex',
+>(
+  bytes: bytes,
+  to_?: to | 'Hex' | 'Bytes' | undefined,
+): encodeRlp.ReturnType<to> {
   const encodable = getEncodable(bytes)
   const cursor = createCursor(new Uint8Array(encodable.length))
   encodable.encode(cursor)
@@ -40,7 +43,7 @@ export function encodeRlp<
 }
 
 export declare namespace encodeRlp {
-  type ReturnType<to extends To> =
+  type ReturnType<to extends 'Hex' | 'Bytes'> =
     | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'Hex' ? Hex : never)
 
@@ -60,19 +63,21 @@ encodeRlp.parseError = (error: unknown) => error as encodeRlp.ErrorType
  * - Docs: https://oxlib.sh/api/rlp/fromBytes
  *
  * @example
+ * ```ts twoslash
  * import { Rlp } from 'ox'
  * Rlp.fromBytes(Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]))
  * // Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
+ * ```
  */
-export function bytesToRlp<to extends To = 'Bytes'>(
+export function bytesToRlp<to extends 'Hex' | 'Bytes' = 'Bytes'>(
   bytes: RecursiveArray<Bytes>,
-  to: to | To | undefined = 'Bytes',
+  to: to | 'Hex' | 'Bytes' | undefined = 'Bytes',
 ): bytesToRlp.ReturnType<to> {
   return encodeRlp(bytes, to)
 }
 
 export declare namespace bytesToRlp {
-  type ReturnType<to extends To> = encodeRlp.ReturnType<to>
+  type ReturnType<to extends 'Hex' | 'Bytes'> = encodeRlp.ReturnType<to>
   type ErrorType = encodeRlp.ErrorType | GlobalErrorType
 }
 
@@ -85,19 +90,21 @@ bytesToRlp.parseError = (error: unknown) => error as bytesToRlp.ErrorType
  * - Docs: https://oxlib.sh/api/rlp/fromHex
  *
  * @example
+ * ```ts twoslash
  * import { Rlp } from 'ox'
  * Rlp.fromHex('0x68656c6c6f20776f726c64')
  * // 0x8b68656c6c6f20776f726c64
+ * ```
  */
-export function hexToRlp<to extends To = 'Hex'>(
+export function hexToRlp<to extends 'Hex' | 'Bytes' = 'Hex'>(
   hex: RecursiveArray<Hex>,
-  to: to | To | undefined = 'Hex',
+  to: to | 'Hex' | 'Bytes' | undefined = 'Hex',
 ): hexToRlp.ReturnType<to> {
   return encodeRlp(hex, to)
 }
 
 export declare namespace hexToRlp {
-  type ReturnType<to extends To> = encodeRlp.ReturnType<to>
+  type ReturnType<to extends 'Hex' | 'Bytes'> = encodeRlp.ReturnType<to>
   type ErrorType = encodeRlp.ErrorType | GlobalErrorType
 }
 

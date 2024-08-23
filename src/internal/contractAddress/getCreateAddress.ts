@@ -12,12 +12,15 @@ import { encodeRlp } from '../rlp/encodeRlp.js'
  * - Docs: https://oxlib.sh/api/contractAddress/getCreateAddress
  *
  * @example
+ * ```ts twoslash
  * import { ContractAddress } from 'ox'
+ *
  * ContractAddress.getCreateAddress({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
  *   nonce: 0n,
  * })
  * // '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
+ * ```
  */
 export function getCreateAddress(opts: getCreateAddress.Options) {
   const from = toBytes(toAddress(opts.from))

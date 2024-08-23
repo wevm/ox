@@ -4,7 +4,7 @@ import type { Signature } from '../types/signature.js'
 import type { Compute } from '../types/utils.js'
 
 /**
- * Converts an object into a typed {@link Authorization}.
+ * Converts an object into a typed {@link Types#Authorization}.
  *
  * @example
  * ```ts twoslash

@@ -46,10 +46,6 @@ getSignature.parseError = (error: unknown) => error as getSignature.ErrorType
 // Utilities
 ///////////////////////////////////////////////////////////////////////////
 
-export declare namespace normalizeSignature {
-  export type ErrorType = BaseError | GlobalErrorType
-}
-
 /** @internal */
 export function normalizeSignature(signature: string): string {
   let active = true
@@ -105,4 +101,9 @@ export function normalizeSignature(signature: string): string {
   if (!valid) throw new BaseError('Unable to normalize signature.')
 
   return result
+}
+
+/** @internal */
+export declare namespace normalizeSignature {
+  export type ErrorType = BaseError | GlobalErrorType
 }

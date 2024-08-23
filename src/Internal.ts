@@ -1,4 +1,57 @@
+export {
+  type TupleAbiParameter,
+  decodeAddress,
+  decodeArray,
+  decodeBool,
+  decodeBytes,
+  decodeNumber,
+  decodeParameter,
+  decodeString,
+  decodeTuple,
+  hasDynamicChild,
+} from './internal/abi/decodeAbiParameters.js'
+
+export {
+  type IsomorphicAbiParameter,
+  type IsomorphicAbiParametersToPrimitiveTypes,
+  type PreparedParameter,
+  type Tuple,
+  encodeAddress,
+  encodeArray,
+  encodeBoolean,
+  encodeBytes,
+  encodeNumber,
+  encodeParameters,
+  encodeString,
+  encodeTuple,
+  getArrayComponents,
+  prepareParameter,
+  prepareParameters,
+} from './internal/abi/encodeAbiParameters.js'
+
+export {
+  AbiDecodingDataSizeTooSmallError,
+  AbiDecodingZeroDataError,
+  AbiEncodingArrayLengthMismatchError,
+  AbiEncodingBytesSizeMismatchError,
+  AbiEncodingInvalidArrayError,
+  AbiEncodingLengthMismatchError,
+  AbiItemAmbiguityError,
+  InvalidAbiTypeError,
+} from './internal/errors/abi.js'
+
 export { assertSize } from './internal/data/assertSize.js'
+
+export type {
+  EncodePackedValues,
+  PackedAbiType,
+} from './internal/abi/encodePacked.js'
+
+export { normalizeSignature } from './internal/abi/getSignature.js'
+
+export { type Cursor, createCursor } from './internal/cursor.js'
+
+export { LruMap } from './internal/lru.js'
 
 export {
   pad,
@@ -14,6 +67,12 @@ export {
 } from './internal/data/slice.js'
 
 export { trim } from './internal/data/trim.js'
+
+export {
+  decodeRlpCursor,
+  readLength,
+  readList,
+} from './internal/rlp/decodeRlp.js'
 
 export {
   getSerializedTransactionType,
@@ -47,8 +106,13 @@ export {
 export { stringify } from './internal/stringify.js'
 
 export type {
+  AbiItem,
+  AbiItemArgs,
+  AbiItemName,
   ExtractAbiItem,
   ExtractAbiItemNames,
+  ExtractAbiItemForArgs,
+  Widen,
 } from './internal/types/abi.js'
 
 export type {
@@ -66,6 +130,7 @@ export type {
   OneOf,
   PartialBy,
   Undefined,
+  UnionCompute,
   UnionPartialBy,
   UnionToIntersection,
   UnionToTuple,

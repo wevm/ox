@@ -6,8 +6,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'Hex' | 'Bytes'
-
 /**
  * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a Bytes or Hex value.
  *
@@ -21,7 +19,7 @@ type To = 'Hex' | 'Bytes'
  * // '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
  * ```
  */
-export function ripemd160<to extends To = 'Hex'>(
+export function ripemd160<to extends 'Hex' | 'Bytes' = 'Hex'>(
   value: Hex | Bytes,
   to_?: to | undefined,
 ): ripemd160.ReturnType<to> {
@@ -34,7 +32,7 @@ export function ripemd160<to extends To = 'Hex'>(
 }
 
 export declare namespace ripemd160 {
-  type ReturnType<to extends To> =
+  type ReturnType<to extends 'Hex' | 'Bytes'> =
     | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'Hex' ? Hex : never)
 

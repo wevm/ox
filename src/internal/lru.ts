@@ -2,7 +2,7 @@
  * @internal
  *
  * Map with a LRU (Least recently used) policy.
- * @link https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU
+ * @see https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU
  */
 export class LruMap<value = unknown> extends Map<string, value> {
   maxSize: number

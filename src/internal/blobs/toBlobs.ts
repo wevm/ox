@@ -10,11 +10,10 @@ import { size } from '../data/size.js'
 import { BlobSizeTooLargeError, EmptyBlobError } from '../errors/blob.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'
-import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
- * Transforms arbitrary data to {@link Blobs}.
+ * Transforms arbitrary data to {@link Types#Blobs}.
  *
  * @example
  * ```ts

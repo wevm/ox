@@ -7,7 +7,7 @@ import type { Compute, Mutable } from '../types/utils.js'
 import { toAuthorizationTuple } from './toAuthorizationTuple.js'
 
 /**
- * Converts an {@link AuthorizationList} to an {@link AuthorizationTupleList}.
+ * Converts an {@link Types#AuthorizationList} to an {@link Types#AuthorizationTupleList}.
  *
  * @example
  * // TODO

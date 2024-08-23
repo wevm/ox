@@ -6,8 +6,6 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'Hex' | 'Bytes'
-
 /**
  * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a Bytes or Hex value.
  *
@@ -21,7 +19,7 @@ type To = 'Hex' | 'Bytes'
  * // '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953'
  * ```
  */
-export function sha256<to extends To = 'Hex'>(
+export function sha256<to extends 'Hex' | 'Bytes' = 'Hex'>(
   value: Hex | Bytes,
   to_?: to | undefined,
 ): sha256.ReturnType<to> {
@@ -34,7 +32,7 @@ export function sha256<to extends To = 'Hex'>(
 }
 
 export declare namespace sha256 {
-  type ReturnType<to extends To> =
+  type ReturnType<to extends 'Hex' | 'Bytes'> =
     | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'Hex' ? Hex : never)
 

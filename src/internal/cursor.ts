@@ -6,6 +6,7 @@ import {
 import type { GlobalErrorType } from './errors/error.js'
 import type { Bytes } from './types/data.js'
 
+/** @internal */
 export type Cursor = {
   bytes: Bytes
   dataView: DataView
@@ -40,22 +41,6 @@ export type Cursor = {
   setPosition(position: number): () => void
   _touch(): void
 }
-
-type CursorErrorType =
-  | CursorAssertPositionErrorType
-  | CursorDecrementPositionErrorType
-  | CursorIncrementPositionErrorType
-  | GlobalErrorType
-
-type CursorAssertPositionErrorType = PositionOutOfBoundsError | GlobalErrorType
-
-type CursorDecrementPositionErrorType = NegativeOffsetError | GlobalErrorType
-
-type CursorIncrementPositionErrorType = NegativeOffsetError | GlobalErrorType
-
-type StaticCursorErrorType =
-  | NegativeOffsetError
-  | RecursiveReadLimitExceededError
 
 const staticCursor: Cursor = /*#__PURE__*/ {
   bytes: new Uint8Array(),
@@ -216,10 +201,11 @@ const staticCursor: Cursor = /*#__PURE__*/ {
   },
 }
 
+/** @internal */
 export declare namespace createCursor {
   type Config = { recursiveReadLimit?: number | undefined }
 
-  type ErrorType = CursorErrorType | StaticCursorErrorType | GlobalErrorType
+  type ErrorType = GlobalErrorType
 }
 
 /** @internal */

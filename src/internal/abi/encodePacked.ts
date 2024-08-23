@@ -23,7 +23,8 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { booleanToHex, numberToHex, stringToHex } from '../hex/toHex.js'
 import type { Hex } from '../types/data.js'
 
-type PackedAbiType =
+/** @internal */
+export type PackedAbiType =
   | SolidityAddress
   | SolidityBool
   | SolidityBytes
@@ -31,7 +32,8 @@ type PackedAbiType =
   | SolidityString
   | SolidityArrayWithoutTuple
 
-type EncodePackedValues<
+/** @internal */
+export type EncodePackedValues<
   packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
 > = {
   [K in keyof packedAbiTypes]: packedAbiTypes[K] extends AbiType
