@@ -3,7 +3,7 @@ import { sha256 } from '../hash/sha256.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type As = 'hex' | 'bytes'
+type As = 'Hex' | 'Bytes'
 
 /**
  * Transform a commitment to it's versioned hash.
@@ -21,19 +21,19 @@ type As = 'hex' | 'bytes'
 export function commitmentToVersionedHash<
   const commitment extends Hex | Bytes,
   as extends As =
-    | (commitment extends Hex ? 'hex' : never)
-    | (commitment extends Bytes ? 'bytes' : never),
+    | (commitment extends Hex ? 'Hex' : never)
+    | (commitment extends Bytes ? 'Bytes' : never),
 >(
   commitment: commitment | Hex | Bytes,
   options: commitmentToVersionedHash.Options<as> = {},
 ): commitmentToVersionedHash.ReturnType<as> {
   const { version = 1 } = options
-  const as = options.as ?? (typeof commitment === 'string' ? 'hex' : 'bytes')
+  const as = options.as ?? (typeof commitment === 'string' ? 'Hex' : 'Bytes')
 
-  const versionedHash = sha256(commitment, 'bytes')
+  const versionedHash = sha256(commitment, 'Bytes')
   versionedHash.set([version], 0)
   return (
-    as === 'bytes' ? versionedHash : bytesToHex(versionedHash)
+    as === 'Bytes' ? versionedHash : bytesToHex(versionedHash)
   ) as commitmentToVersionedHash.ReturnType<as>
 }
 
@@ -46,8 +46,8 @@ export declare namespace commitmentToVersionedHash {
   }
 
   type ReturnType<as extends As = As> =
-    | (as extends 'bytes' ? Bytes : never)
-    | (as extends 'hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes : never)
+    | (as extends 'Hex' ? Hex : never)
 
   type ErrorType = GlobalErrorType
 }

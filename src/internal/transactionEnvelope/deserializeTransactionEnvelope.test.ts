@@ -183,7 +183,7 @@ describe('legacy', () => {
   describe('errors', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TransactionEnvelope.deserialize(Rlp.encode([], 'hex')),
+        TransactionEnvelope.deserialize(Rlp.encode([], 'Hex')),
       ).toThrowErrorMatchingInlineSnapshot(`
         [InvalidSerializedTransactionError: Invalid serialized transaction of type "legacy" was provided.
 
@@ -371,7 +371,7 @@ describe('eip2930', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
         TransactionEnvelope.deserialize(
-          `0x01${Rlp.encode([], 'hex').slice(2)}`,
+          `0x01${Rlp.encode([], 'Hex').slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip2930" was provided.
@@ -650,7 +650,7 @@ describe('eip1559', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
         TransactionEnvelope.deserialize(
-          `0x02${Rlp.encode([], 'hex').slice(2)}`,
+          `0x02${Rlp.encode([], 'Hex').slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip1559" was provided.
@@ -861,7 +861,7 @@ describe('eip4844', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
         TransactionEnvelope.deserialize(
-          `0x03${Rlp.encode([], 'hex').slice(2)}`,
+          `0x03${Rlp.encode([], 'Hex').slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip4844" was provided.

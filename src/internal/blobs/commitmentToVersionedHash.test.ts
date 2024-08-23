@@ -13,7 +13,7 @@ test('default', () => {
   )
   expect(
     Blobs.commitmentToVersionedHash(commitments[1]!, {
-      as: 'bytes',
+      as: 'Bytes',
     }),
   ).toMatchInlineSnapshot(
     `
@@ -63,7 +63,7 @@ test('default', () => {
   )
   expect(
     Blobs.commitmentToVersionedHash(commitments[1]!, {
-      as: 'bytes',
+      as: 'Bytes',
       version: 69,
     }),
   ).toMatchInlineSnapshot(
@@ -126,7 +126,7 @@ test('args: as', () => {
   expect(
     Blobs.commitmentToVersionedHash(commitments[0]!, {
       version: 69,
-      as: 'bytes',
+      as: 'Bytes',
     }),
   ).toMatchInlineSnapshot(
     `

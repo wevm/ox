@@ -68,22 +68,22 @@ describe('prefix < 0x80', () => {
   })
 
   test('bytes -> hex', () => {
-    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x00'), 'hex'))).toEqual('0x00')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x01'), 'hex'))).toEqual('0x01')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x42'), 'hex'))).toEqual('0x42')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x7f'), 'hex'))).toEqual('0x7f')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromString('!'), 'hex'))).toEqual('0x21')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromString('a'), 'hex'))).toEqual('0x61')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromString('~'), 'hex'))).toEqual('0x7e')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromBoolean(true), 'hex'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x00'), 'Hex'))).toEqual('0x00')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x01'), 'Hex'))).toEqual('0x01')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x42'), 'Hex'))).toEqual('0x42')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromHex('0x7f'), 'Hex'))).toEqual('0x7f')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromString('!'), 'Hex'))).toEqual('0x21')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromString('a'), 'Hex'))).toEqual('0x61')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromString('~'), 'Hex'))).toEqual('0x7e')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromBoolean(true), 'Hex'))).toEqual(
       '0x01',
     )
-    expect(Rlp.decode(Rlp.encode(Bytes.fromBoolean(false), 'hex'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Bytes.fromBoolean(false), 'Hex'))).toEqual(
       '0x00',
     )
-    expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(0), 'hex'))).toEqual('0x00')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(69), 'hex'))).toEqual('0x45')
-    expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(127), 'hex'))).toEqual('0x7f')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(0), 'Hex'))).toEqual('0x00')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(69), 'Hex'))).toEqual('0x45')
+    expect(Rlp.decode(Rlp.encode(Bytes.fromNumber(127), 'Hex'))).toEqual('0x7f')
   })
 
   test('hex -> hex', () => {
@@ -102,40 +102,40 @@ describe('prefix < 0x80', () => {
   })
 
   test('hex -> bytes', () => {
-    expect(Rlp.decode(Rlp.encode('0x00', 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode('0x00', 'Bytes'))).toEqual(
       Bytes.fromHex('0x00'),
     )
-    expect(Rlp.decode(Rlp.encode('0x01', 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode('0x01', 'Bytes'))).toEqual(
       Bytes.fromHex('0x01'),
     )
-    expect(Rlp.decode(Rlp.encode('0x42', 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode('0x42', 'Bytes'))).toEqual(
       Bytes.fromHex('0x42'),
     )
-    expect(Rlp.decode(Rlp.encode('0x7f', 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode('0x7f', 'Bytes'))).toEqual(
       Bytes.fromHex('0x7f'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromString('!'), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromString('!'), 'Bytes'))).toEqual(
       Bytes.fromHex('0x21'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromString('a'), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromString('a'), 'Bytes'))).toEqual(
       Bytes.fromHex('0x61'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromString('~'), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromString('~'), 'Bytes'))).toEqual(
       Bytes.fromHex('0x7e'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromBoolean(true), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromBoolean(true), 'Bytes'))).toEqual(
       Bytes.fromHex('0x01'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromBoolean(false), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromBoolean(false), 'Bytes'))).toEqual(
       Bytes.fromHex('0x00'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromNumber(0), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromNumber(0), 'Bytes'))).toEqual(
       Bytes.fromHex('0x00'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromNumber(69), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromNumber(69), 'Bytes'))).toEqual(
       Bytes.fromHex('0x45'),
     )
-    expect(Rlp.decode(Rlp.encode(Hex.fromNumber(127), 'bytes'))).toEqual(
+    expect(Rlp.decode(Rlp.encode(Hex.fromNumber(127), 'Bytes'))).toEqual(
       Bytes.fromHex('0x7f'),
     )
   })
@@ -189,9 +189,9 @@ describe('list', () => {
     })
 
     test('bytes -> hex', () => {
-      expect(Rlp.toHex(Rlp.encode(['0x00'], 'bytes'))).toEqual(['0x00'])
-      expect(Rlp.toHex(Rlp.encode(['0x80'], 'bytes'))).toEqual(['0x80'])
-      expect(Rlp.toHex(Rlp.encode(generateList(14), 'bytes'))).toEqual(
+      expect(Rlp.toHex(Rlp.encode(['0x00'], 'Bytes'))).toEqual(['0x00'])
+      expect(Rlp.toHex(Rlp.encode(['0x80'], 'Bytes'))).toEqual(['0x80'])
+      expect(Rlp.toHex(Rlp.encode(generateList(14), 'Bytes'))).toEqual(
         generateList(14).map((x) => Hex.fromBytes(x)),
       )
       expect(
@@ -201,7 +201,7 @@ describe('list', () => {
               generateList(4),
               [generateList(8), [generateList(3), generateBytes(1)]],
             ],
-            'bytes',
+            'Bytes',
           ),
         ),
       ).toEqual([
@@ -248,13 +248,13 @@ describe('list', () => {
     })
 
     test('hex -> bytes', () => {
-      expect(Rlp.toBytes(Rlp.encode(['0x00'], 'hex'))).toEqual([
+      expect(Rlp.toBytes(Rlp.encode(['0x00'], 'Hex'))).toEqual([
         Bytes.fromHex('0x00'),
       ])
-      expect(Rlp.toBytes(Rlp.encode(['0x80'], 'hex'))).toEqual([
+      expect(Rlp.toBytes(Rlp.encode(['0x80'], 'Hex'))).toEqual([
         Bytes.fromHex('0x80'),
       ])
-      expect(Rlp.toBytes(Rlp.encode(generateList(14), 'hex'))).toEqual(
+      expect(Rlp.toBytes(Rlp.encode(generateList(14), 'Hex'))).toEqual(
         generateList(14),
       )
       expect(
@@ -264,7 +264,7 @@ describe('list', () => {
               generateList(4),
               [generateList(8), [generateList(3), generateBytes(1)]],
             ],
-            'hex',
+            'Hex',
           ),
         ),
       ).toEqual([

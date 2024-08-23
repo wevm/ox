@@ -23,7 +23,7 @@ test('default', () => {
   )
 })
 
-test('args: to (bytes)', () => {
+test('args: as (bytes)', () => {
   expect(
     Signature.serialize(
       {
@@ -31,7 +31,7 @@ test('args: to (bytes)', () => {
         s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
         yParity: 1,
       },
-      { to: 'bytes' },
+      { as: 'Bytes' },
     ),
   ).toMatchInlineSnapshot(
     `

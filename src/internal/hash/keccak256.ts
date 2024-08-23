@@ -6,7 +6,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'hex' | 'bytes'
+type To = 'Hex' | 'Bytes'
 
 /**
  * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a Bytes or Hex value.
@@ -27,22 +27,22 @@ type To = 'hex' | 'bytes'
  * // '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
  * ```
  */
-export function keccak256<to extends To = 'hex'>(
+export function keccak256<to extends To = 'Hex'>(
   value: Hex | Bytes,
   to_?: to | undefined,
 ): keccak256.ReturnType<to> {
-  const to = to_ || 'hex'
+  const to = to_ || 'Hex'
   const bytes = keccak_256(
     isHex(value, { strict: false }) ? toBytes(value) : value,
   )
-  if (to === 'bytes') return bytes as keccak256.ReturnType<to>
+  if (to === 'Bytes') return bytes as keccak256.ReturnType<to>
   return toHex(bytes) as keccak256.ReturnType<to>
 }
 
 export declare namespace keccak256 {
   type ReturnType<to extends To> =
-    | (to extends 'bytes' ? Bytes : never)
-    | (to extends 'hex' ? Hex : never)
+    | (to extends 'Bytes' ? Bytes : never)
+    | (to extends 'Hex' ? Hex : never)
 
   type ErrorType =
     | toBytes.ErrorType

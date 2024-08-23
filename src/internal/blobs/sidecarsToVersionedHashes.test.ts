@@ -14,7 +14,7 @@ test('default', () => {
   }
 
   {
-    const blobs = Blobs.from('0xdeadbeef', { as: 'bytes' })
+    const blobs = Blobs.from('0xdeadbeef', { as: 'Bytes' })
     const sidecars = Blobs.toSidecars(blobs, { kzg })
     expect(Blobs.sidecarsToVersionedHashes(sidecars)).toMatchInlineSnapshot(`
       [
@@ -63,7 +63,7 @@ test('args: as', () => {
     const sidecars = Blobs.toSidecars(blobs, { kzg })
     expect(
       Blobs.sidecarsToVersionedHashes(sidecars, {
-        as: 'bytes',
+        as: 'Bytes',
       }),
     ).toMatchInlineSnapshot(`
     [
@@ -106,11 +106,11 @@ test('args: as', () => {
   }
 
   {
-    const blobs = Blobs.from('0xdeadbeef', { as: 'bytes' })
+    const blobs = Blobs.from('0xdeadbeef', { as: 'Bytes' })
     const sidecars = Blobs.toSidecars(blobs, { kzg })
     expect(
       Blobs.sidecarsToVersionedHashes(sidecars, {
-        as: 'hex',
+        as: 'Hex',
       }),
     ).toMatchInlineSnapshot(`
       [

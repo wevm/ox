@@ -16,7 +16,7 @@ test('from hex', () => {
   )
 
   expect(
-    Blobs.commitmentsToVersionedHashes(commitments, { as: 'bytes' }),
+    Blobs.commitmentsToVersionedHashes(commitments, { as: 'Bytes' }),
   ).toMatchInlineSnapshot(
     `
     [
@@ -113,7 +113,7 @@ test('args: as', () => {
 
   expect(
     Blobs.commitmentsToVersionedHashes(commitments, {
-      as: 'bytes',
+      as: 'Bytes',
       version: 2,
     }),
   ).toMatchInlineSnapshot(`

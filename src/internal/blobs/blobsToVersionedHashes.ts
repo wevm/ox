@@ -6,7 +6,7 @@ import type { Compute } from '../types/utils.js'
 import { blobsToCommitments } from './blobsToCommitments.js'
 import { commitmentsToVersionedHashes } from './commitmentsToVersionedHashes.js'
 
-type As = 'hex' | 'bytes'
+type As = 'Hex' | 'Bytes'
 
 /**
  * Compute commitments from a list of blobs.
@@ -23,8 +23,8 @@ type As = 'hex' | 'bytes'
 export function blobsToVersionedHashes<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,
   as extends As =
-    | (blobs extends Blobs<Hex> ? 'hex' : never)
-    | (blobs extends Blobs<Bytes> ? 'bytes' : never),
+    | (blobs extends Blobs<Hex> ? 'Hex' : never)
+    | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
   blobs: blobs | Blobs<Bytes> | Blobs<Hex>,
   options: blobsToVersionedHashes.Options<as>,
@@ -34,7 +34,7 @@ export function blobsToVersionedHashes<
 }
 
 export declare namespace blobsToVersionedHashes {
-  type Options<as extends As = 'hex'> = {
+  type Options<as extends As = 'Hex'> = {
     /** KZG implementation. */
     kzg: Pick<Kzg, 'blobToKzgCommitment'>
     /** Return type. */
@@ -42,8 +42,8 @@ export declare namespace blobsToVersionedHashes {
   }
 
   type ReturnType<as extends As = As> = Compute<
-    | (as extends 'bytes' ? readonly Bytes[] : never)
-    | (as extends 'hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex[] : never)
   >
 
   type ErrorType =

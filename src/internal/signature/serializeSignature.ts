@@ -6,7 +6,7 @@ import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
 import { signatureToCompactSignature } from './signatureToCompactSignature.js'
 
-type To = 'bytes' | 'hex'
+type As = 'Bytes' | 'Hex'
 
 /**
  * Serializes a {@link Signature} to {@link Types#Hex} or {@link Types#Bytes}.
@@ -36,11 +36,11 @@ type To = 'bytes' | 'hex'
  * ```
  *
  */
-export function serializeSignature<to extends To = 'hex'>(
+export function serializeSignature<as extends As = 'Hex'>(
   signature_: Signature,
-  options: serializeSignature.Options<to> = {},
-): serializeSignature.ReturnType<to> {
-  const { compact = false, to = 'hex' } = options
+  options: serializeSignature.Options<as> = {},
+): serializeSignature.ReturnType<as> {
+  const { compact = false, as = 'Hex' } = options
 
   const r = signature_.r
   const s = (() => {
@@ -54,19 +54,19 @@ export function serializeSignature<to extends To = 'hex'>(
   if (!compact)
     signature = `${signature}${signature_.yParity === 0 ? '00' : '01'}`
 
-  if (to === 'hex') return signature as serializeSignature.ReturnType<to>
-  return hexToBytes(signature) as serializeSignature.ReturnType<to>
+  if (as === 'Hex') return signature as serializeSignature.ReturnType<as>
+  return hexToBytes(signature) as serializeSignature.ReturnType<as>
 }
 
 export declare namespace serializeSignature {
-  type Options<to extends To = 'hex'> = {
+  type Options<as extends As = 'Hex'> = {
     compact?: boolean | undefined
-    to?: to | To | undefined
+    as?: as | As | undefined
   }
 
-  type ReturnType<to extends To = 'hex'> =
-    | (to extends 'hex' ? Hex : never)
-    | (to extends 'bytes' ? Bytes : never)
+  type ReturnType<as extends As = 'Hex'> =
+    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes : never)
 
   type ErrorType =
     | hexToBytes.ErrorType

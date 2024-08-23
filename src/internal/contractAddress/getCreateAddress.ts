@@ -26,7 +26,7 @@ export function getCreateAddress(opts: getCreateAddress.Options) {
   if (nonce[0] === 0) nonce = new Uint8Array([])
 
   return toAddress(
-    `0x${keccak256(encodeRlp([from, nonce], 'bytes')).slice(26)}` as Address,
+    `0x${keccak256(encodeRlp([from, nonce], 'Bytes')).slice(26)}` as Address,
   )
 }
 

@@ -220,17 +220,17 @@ describe('bytes to string', () => {
 
 describe('bytes to hex', () => {
   test('default', () => {
-    expect(Bytes.to(Bytes.from([97, 98, 99]), 'hex')).toMatchInlineSnapshot(
+    expect(Bytes.to(Bytes.from([97, 98, 99]), 'Hex')).toMatchInlineSnapshot(
       '"0x616263"',
     )
-    expect(Bytes.to(Bytes.from([97]), 'hex')).toMatchInlineSnapshot('"0x61"')
-    expect(Bytes.to(Bytes.from([97, 98, 99]), 'hex')).toMatchInlineSnapshot(
+    expect(Bytes.to(Bytes.from([97]), 'Hex')).toMatchInlineSnapshot('"0x61"')
+    expect(Bytes.to(Bytes.from([97, 98, 99]), 'Hex')).toMatchInlineSnapshot(
       '"0x616263"',
     )
     expect(
       Bytes.to(
         Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
-        'hex',
+        'Hex',
       ),
     ).toMatchInlineSnapshot('"0x48656c6c6f20576f726c6421"')
 
@@ -250,7 +250,7 @@ describe('bytes to hex', () => {
 
   test('args: size', () => {
     expect(
-      Bytes.to(Bytes.from('0x420696', { size: 32 }), 'hex', {
+      Bytes.to(Bytes.from('0x420696', { size: 32 }), 'Hex', {
         size: 32,
       }),
     ).toMatchInlineSnapshot(
@@ -284,7 +284,7 @@ test('error: invalid `to`', () => {
   // @ts-expect-error
   expect(() => Bytes.to(420, 'fake')).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | hex | bigint | number | boolean\`
+    [InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | Hex | bigint | number | boolean\`
 
     See: https://oxlib.sh/errors#invalidtypeerror]
   `,

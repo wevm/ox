@@ -105,7 +105,7 @@ export function padHex(hex_: Hex, options: padHex.Options = {}) {
     throw new SizeExceedsPaddingSizeError({
       size: Math.ceil(hex.length / 2),
       targetSize: size,
-      type: 'hex',
+      type: 'Hex',
     })
 
   return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex
@@ -123,7 +123,7 @@ export function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
     throw new SizeExceedsPaddingSizeError({
       size: bytes.length,
       targetSize: size,
-      type: 'bytes',
+      type: 'Bytes',
     })
   const paddedBytes = new Uint8Array(size)
   for (let i = 0; i < size; i++) {

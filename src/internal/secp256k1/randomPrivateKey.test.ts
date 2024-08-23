@@ -6,7 +6,7 @@ test('default', () => {
   expect(privateKey.length).toBe(66)
 })
 
-test('options: to', () => {
-  const privateKey = Secp256k1.randomPrivateKey({ to: 'bytes' })
+test('options: as', () => {
+  const privateKey = Secp256k1.randomPrivateKey({ as: 'Bytes' })
   expect(privateKey.length).toBe(32)
 })

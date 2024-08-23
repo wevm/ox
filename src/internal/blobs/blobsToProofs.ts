@@ -5,7 +5,7 @@ import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Kzg } from '../types/kzg.js'
 
-type As = 'hex' | 'bytes'
+type As = 'Hex' | 'Bytes'
 
 /**
  * Compute the proofs for a list of blobs and their commitments.
@@ -24,15 +24,15 @@ export function blobsToProofs<
   const blobs extends readonly Bytes[] | readonly Hex[],
   const commitments extends readonly Bytes[] | readonly Hex[],
   as extends As =
-    | (blobs extends readonly Hex[] ? 'hex' : never)
-    | (blobs extends readonly Bytes[] ? 'bytes' : never),
+    | (blobs extends readonly Hex[] ? 'Hex' : never)
+    | (blobs extends readonly Bytes[] ? 'Bytes' : never),
 >(
   blobs_: blobs | Blobs<Bytes> | Blobs<Hex>,
   parameters: blobsToProofs.Parameters<blobs, commitments, as>,
 ): blobsToProofs.ReturnType<as> {
   const { kzg } = parameters
 
-  const as = parameters.as ?? (typeof blobs_[0] === 'string' ? 'hex' : 'bytes')
+  const as = parameters.as ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
 
   const blobs = (
     typeof blobs_[0] === 'string'
@@ -52,7 +52,7 @@ export function blobsToProofs<
     proofs.push(Uint8Array.from(kzg.computeBlobKzgProof(blob, commitment)))
   }
 
-  return (as === 'bytes' ? proofs : proofs.map((x) => bytesToHex(x))) as never
+  return (as === 'Bytes' ? proofs : proofs.map((x) => bytesToHex(x))) as never
 }
 
 export declare namespace blobsToProofs {
@@ -62,8 +62,8 @@ export declare namespace blobsToProofs {
       | readonly Bytes[]
       | readonly Hex[],
     as extends As =
-      | (blobs extends Blobs<Hex> ? 'hex' : never)
-      | (blobs extends Blobs<Bytes> ? 'bytes' : never),
+      | (blobs extends Blobs<Hex> ? 'Hex' : never)
+      | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
   > = {
     /** Commitments for the blobs. */
     commitments: (commitments | readonly Bytes[] | readonly Hex[]) &
@@ -77,8 +77,8 @@ export declare namespace blobsToProofs {
   }
 
   type ReturnType<as extends As = As> =
-    | (as extends 'bytes' ? readonly Bytes[] : never)
-    | (as extends 'hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex[] : never)
 
   type ErrorType = bytesToHex.ErrorType | hexToBytes.ErrorType | GlobalErrorType
 }

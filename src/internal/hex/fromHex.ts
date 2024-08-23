@@ -46,12 +46,12 @@ export function fromHex<to extends fromHex.To>(
     return hexToString(hex, options) as fromHex.ReturnType<to>
   if (to === 'boolean')
     return hexToBoolean(hex, options) as fromHex.ReturnType<to>
-  if (to === 'bytes') return hexToBytes(hex, options) as fromHex.ReturnType<to>
-  throw new InvalidTypeError(to, 'string | bytes | bigint | number | boolean')
+  if (to === 'Bytes') return hexToBytes(hex, options) as fromHex.ReturnType<to>
+  throw new InvalidTypeError(to, 'string | Bytes | bigint | number | boolean')
 }
 
 export declare namespace fromHex {
-  type To = 'string' | 'bytes' | 'bigint' | 'number' | 'boolean'
+  type To = 'string' | 'Bytes' | 'bigint' | 'number' | 'boolean'
 
   type Options = {
     /** Size (in bytes) of the hex value. */
@@ -60,7 +60,7 @@ export declare namespace fromHex {
 
   type ReturnType<to> =
     | (to extends 'string' ? string : never)
-    | (to extends 'bytes' ? Bytes : never)
+    | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'bigint' ? bigint : never)
     | (to extends 'number' ? number : never)
     | (to extends 'boolean' ? boolean : never)

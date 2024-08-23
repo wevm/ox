@@ -95,7 +95,7 @@ test('default', () => {
 test('options: as', () => {
   {
     const blobs = Blobs.from(Hex.from(blobData))
-    const versionedHashes = Blobs.toVersionedHashes(blobs, { as: 'bytes', kzg })
+    const versionedHashes = Blobs.toVersionedHashes(blobs, { as: 'Bytes', kzg })
     expect(versionedHashes).toMatchInlineSnapshot(`
       [
         Uint8Array [
@@ -172,7 +172,7 @@ test('options: as', () => {
 
   {
     const blobs = Blobs.from(Bytes.from(blobData))
-    const versionedHashes = Blobs.toVersionedHashes(blobs, { as: 'hex', kzg })
+    const versionedHashes = Blobs.toVersionedHashes(blobs, { as: 'Hex', kzg })
     expect(versionedHashes).toMatchInlineSnapshot(`
       [
         "0x012580b7683c14cc7540be305587b0eec4e7ec739094213ca080e2526c9237c4",

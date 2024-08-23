@@ -32,9 +32,7 @@ import type { Bytes, Hex } from '../types/data.js'
  *
  * @alias ox!Bytes.fromBytes:function(1)
  */
-export function fromBytes<
-  to extends 'string' | 'hex' | 'bigint' | 'number' | 'boolean',
->(
+export function fromBytes<to extends fromBytes.To>(
   bytes: Bytes,
   to: to | fromBytes.To,
   options: fromBytes.Options = {},
@@ -47,22 +45,22 @@ export function fromBytes<
     return bytesToBoolean(bytes, options) as fromBytes.ReturnType<to>
   if (to === 'string')
     return bytesToString(bytes, options) as fromBytes.ReturnType<to>
-  if (to === 'hex')
+  if (to === 'Hex')
     return bytesToHex(bytes, options) as fromBytes.ReturnType<to>
-  throw new InvalidTypeError(to, 'string | hex | bigint | number | boolean')
+  throw new InvalidTypeError(to, 'string | Hex | bigint | number | boolean')
 }
 
 export declare namespace fromBytes {
-  type To = 'string' | 'hex' | 'bigint' | 'number' | 'boolean'
+  type To = 'string' | 'Hex' | 'bigint' | 'number' | 'boolean'
 
   type Options = {
     /** Size of the bytes. */
     size?: number | undefined
   }
 
-  type ReturnType<to extends To> =
+  type ReturnType<to extends fromBytes.To> =
     | (to extends 'string' ? string : never)
-    | (to extends 'hex' ? Hex : never)
+    | (to extends 'Hex' ? Hex : never)
     | (to extends 'bigint' ? bigint : never)
     | (to extends 'number' ? number : never)
     | (to extends 'boolean' ? boolean : never)

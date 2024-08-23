@@ -177,7 +177,7 @@ export class SizeExceedsPaddingSizeError extends BaseError {
   }: {
     size: number
     targetSize: number
-    type: 'hex' | 'bytes'
+    type: 'Hex' | 'Bytes'
   }) {
     super(
       `${type.charAt(0).toUpperCase()}${type

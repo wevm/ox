@@ -12,7 +12,7 @@ test('default', () => {
     ]
   `)
   expect(
-    Blobs.toProofs(blobs, { commitments, kzg, as: 'bytes' }),
+    Blobs.toProofs(blobs, { commitments, kzg, as: 'Bytes' }),
   ).toMatchInlineSnapshot(`
     [
       Uint8Array [

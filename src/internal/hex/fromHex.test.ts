@@ -229,13 +229,13 @@ describe('hex to string', () => {
 
 describe('hex to bytes', () => {
   test('default', () => {
-    expect(Hex.to('0x', 'bytes')).toMatchInlineSnapshot('Uint8Array []')
-    expect(Hex.to('0x61', 'bytes')).toMatchInlineSnapshot(`
+    expect(Hex.to('0x', 'Bytes')).toMatchInlineSnapshot('Uint8Array []')
+    expect(Hex.to('0x61', 'Bytes')).toMatchInlineSnapshot(`
       Uint8Array [
         97,
       ]
     `)
-    expect(Hex.to('0x616263', 'bytes')).toMatchInlineSnapshot(
+    expect(Hex.to('0x616263', 'Bytes')).toMatchInlineSnapshot(
       `
       Uint8Array [
         97,
@@ -245,7 +245,7 @@ describe('hex to bytes', () => {
     `,
     )
     expect(
-      Hex.to('0x48656c6c6f20576f726c6421', 'bytes'),
+      Hex.to('0x48656c6c6f20576f726c6421', 'Bytes'),
     ).toMatchInlineSnapshot(`
       Uint8Array [
         72,
@@ -266,7 +266,7 @@ describe('hex to bytes', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(Bytes.from([69, 420]), { size: 32 }), 'bytes', {
+      Hex.to(Hex.from(Bytes.from([69, 420]), { size: 32 }), 'Bytes', {
         size: 32,
       }),
     ).toMatchInlineSnapshot(`
@@ -361,7 +361,7 @@ describe('hex to bytes', () => {
 
   test('error: invalid bytes', () => {
     expect(() =>
-      Hex.to('0x420fggf11a', 'bytes'),
+      Hex.to('0x420fggf11a', 'Bytes'),
     ).toThrowErrorMatchingInlineSnapshot(
       `[BaseError: Invalid byte sequence ("gg" in "420fggf11a").]`,
     )
@@ -371,7 +371,7 @@ describe('hex to bytes', () => {
 test('error: invalid `to`', () => {
   // @ts-expect-error
   expect(() => Hex.to(420, 'fake')).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | bytes | bigint | number | boolean\`
+    [InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | Bytes | bigint | number | boolean\`
 
     See: https://oxlib.sh/errors#invalidtypeerror]
   `)

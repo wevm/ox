@@ -36,7 +36,7 @@ export function getCreate2Address(opts: getCreate2Address.Options) {
       if (isBytes(opts.bytecodeHash)) return opts.bytecodeHash
       return toBytes(opts.bytecodeHash)
     }
-    return keccak256(opts.bytecode, 'bytes')
+    return keccak256(opts.bytecode, 'Bytes')
   })()
 
   return toAddress(

@@ -6,7 +6,7 @@ import type { Bytes, Hex } from '../types/data.js'
 import type { Kzg } from '../types/kzg.js'
 import type { Compute } from '../types/utils.js'
 
-type As = 'hex' | 'bytes'
+type As = 'Hex' | 'Bytes'
 
 /**
  * Compute commitments from a list of blobs.
@@ -23,15 +23,15 @@ type As = 'hex' | 'bytes'
 export function blobsToCommitments<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,
   as extends As =
-    | (blobs extends Blobs<Hex> ? 'hex' : never)
-    | (blobs extends Blobs<Bytes> ? 'bytes' : never),
+    | (blobs extends Blobs<Hex> ? 'Hex' : never)
+    | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
   blobs_: blobs | Blobs<Bytes> | Blobs<Hex>,
   options: blobsToCommitments.Options<as>,
 ): blobsToCommitments.ReturnType<as> {
   const { kzg } = options
 
-  const as = options.as ?? (typeof blobs_[0] === 'string' ? 'hex' : 'bytes')
+  const as = options.as ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
   const blobs = (
     typeof blobs_[0] === 'string'
       ? blobs_.map((x) => hexToBytes(x as any))
@@ -43,12 +43,12 @@ export function blobsToCommitments<
     commitments.push(Uint8Array.from(kzg.blobToKzgCommitment(blob)))
 
   return (
-    as === 'bytes' ? commitments : commitments.map((x) => bytesToHex(x))
+    as === 'Bytes' ? commitments : commitments.map((x) => bytesToHex(x))
   ) as never
 }
 
 export declare namespace blobsToCommitments {
-  type Options<as extends As = 'hex'> = {
+  type Options<as extends As = 'Hex'> = {
     /** KZG implementation. */
     kzg: Pick<Kzg, 'blobToKzgCommitment'>
     /** Return type. */
@@ -56,8 +56,8 @@ export declare namespace blobsToCommitments {
   }
 
   type ReturnType<as extends As = As> = Compute<
-    | (as extends 'bytes' ? readonly Bytes[] : never)
-    | (as extends 'hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex[] : never)
   >
 
   type ErrorType = hexToBytes.ErrorType | bytesToHex.ErrorType | GlobalErrorType

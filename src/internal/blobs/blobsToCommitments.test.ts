@@ -15,7 +15,7 @@ test('from hex', () => {
 
 test('to hex', () => {
   const blobs = Blobs.from(Bytes.from(blobData))
-  const commitments = Blobs.toCommitments(blobs, { kzg, as: 'hex' })
+  const commitments = Blobs.toCommitments(blobs, { kzg, as: 'Hex' })
   expect(commitments).toMatchInlineSnapshot(`
     [
       "0x93fd6807e033db6b24db5485814f79a98c7e241432e95c2e327042f821f24f4a59315cf4e881205f472e99835729977a",
@@ -135,7 +135,7 @@ test('from bytes', () => {
 
 test('to bytes', () => {
   const blobs = Blobs.from(Hex.from(blobData))
-  const commitments = Blobs.toCommitments(blobs, { kzg, as: 'bytes' })
+  const commitments = Blobs.toCommitments(blobs, { kzg, as: 'Bytes' })
   expect(commitments).toMatchInlineSnapshot(`
     [
       Uint8Array [
