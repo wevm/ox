@@ -15,6 +15,7 @@ test('exports', () => {
       "Errors",
       "Hash",
       "Hex",
+      "Internal",
       "Kzg",
       "Secp256k1",
       "Signature",
