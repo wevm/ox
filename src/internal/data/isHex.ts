@@ -35,4 +35,5 @@ export declare namespace isHex {
   type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
 isHex.parseError = (error: unknown) => error as isHex.ErrorType

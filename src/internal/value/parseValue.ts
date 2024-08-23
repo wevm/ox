@@ -56,4 +56,5 @@ export declare namespace parseValue {
   type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
 parseValue.parseError = (error: unknown) => error as parseValue.ErrorType

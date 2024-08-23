@@ -61,4 +61,5 @@ export declare namespace hashTransactionEnvelope {
 }
 
 hashTransactionEnvelope.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as hashTransactionEnvelope.ErrorType

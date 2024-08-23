@@ -58,5 +58,6 @@ export declare namespace commitmentsToVersionedHashes {
   type ErrorType = GlobalErrorType
 }
 
-commitmentsToVersionedHashes.errorType = (error: unknown) =>
+commitmentsToVersionedHashes.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as commitmentsToVersionedHashes.ErrorType

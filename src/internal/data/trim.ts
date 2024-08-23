@@ -37,6 +37,7 @@ export declare namespace trimLeft {
   type ErrorType = trim.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
 
 /**
@@ -77,6 +78,7 @@ export declare namespace trimRight {
   export type ErrorType = trim.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////

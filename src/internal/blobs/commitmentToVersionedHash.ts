@@ -53,4 +53,5 @@ export declare namespace commitmentToVersionedHash {
 }
 
 commitmentToVersionedHash.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as commitmentToVersionedHash.ErrorType

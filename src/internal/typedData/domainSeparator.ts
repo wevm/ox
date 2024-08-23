@@ -42,4 +42,5 @@ export declare namespace domainSeparator {
 }
 
 domainSeparator.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as domainSeparator.ErrorType

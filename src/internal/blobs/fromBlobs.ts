@@ -78,6 +78,7 @@ export declare namespace fromBlobs {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 fromBlobs.parseError = (error: unknown) => error as fromBlobs.ErrorType
 
 /**
@@ -104,6 +105,7 @@ export declare namespace blobsToHex {
   type ErrorType = fromBlobs.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 blobsToHex.parseError = (error: unknown) => error as blobsToHex.ErrorType
 
 /**
@@ -130,4 +132,5 @@ export declare namespace blobsToBytes {
   type ErrorType = fromBlobs.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 blobsToBytes.parseError = (error: unknown) => error as blobsToBytes.ErrorType

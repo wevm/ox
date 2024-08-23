@@ -83,4 +83,5 @@ export declare namespace blobsToProofs {
   type ErrorType = bytesToHex.ErrorType | hexToBytes.ErrorType | GlobalErrorType
 }
 
-blobsToProofs.errorType = (error: unknown) => error as blobsToProofs.ErrorType
+/* v8 ignore next */
+blobsToProofs.parseError = (error: unknown) => error as blobsToProofs.ErrorType

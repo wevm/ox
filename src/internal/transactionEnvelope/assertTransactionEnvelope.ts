@@ -60,6 +60,7 @@ export declare namespace assertTransactionEnvelope {
 }
 
 assertTransactionEnvelope.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as assertTransactionEnvelope.ErrorType
 
 /**
@@ -88,6 +89,7 @@ export declare namespace assertTransactionEnvelopeLegacy {
 }
 
 assertTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as assertTransactionEnvelopeLegacy.ErrorType
 
 /**
@@ -115,6 +117,7 @@ export declare namespace assertTransactionEnvelopeEip2930 {
 }
 
 assertTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as assertTransactionEnvelopeEip2930.ErrorType
 
 /**
@@ -149,6 +152,7 @@ export declare namespace assertTransactionEnvelopeEip1559 {
 }
 
 assertTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as assertTransactionEnvelopeEip1559.ErrorType
 
 /**
@@ -192,6 +196,7 @@ export declare namespace assertTransactionEnvelopeEip4844 {
 }
 
 assertTransactionEnvelopeEip4844.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as assertTransactionEnvelopeEip4844.ErrorType
 
 /**
@@ -222,4 +227,5 @@ export declare namespace assertTransactionEnvelopeEip7702 {
 }
 
 assertTransactionEnvelopeEip7702.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as assertTransactionEnvelopeEip7702.ErrorType

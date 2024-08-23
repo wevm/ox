@@ -36,4 +36,5 @@ export declare namespace toAuthorizationTuple {
 }
 
 toAuthorizationTuple.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toAuthorizationTuple.ErrorType

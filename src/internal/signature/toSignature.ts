@@ -94,4 +94,5 @@ export declare namespace toSignature {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 toSignature.parseError = (error: unknown) => error as toSignature.ErrorType

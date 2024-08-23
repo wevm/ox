@@ -121,4 +121,5 @@ export declare namespace validateTypedData {
 }
 
 validateTypedData.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as validateTypedData.ErrorType

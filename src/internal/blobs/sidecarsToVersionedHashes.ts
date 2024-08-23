@@ -1,3 +1,4 @@
+import type { GlobalErrorType } from '../errors/error.js'
 import type { BlobSidecars } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
@@ -53,4 +54,10 @@ export declare namespace sidecarsToVersionedHashes {
   type ReturnType<as extends As> =
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
+
+  type ErrorType = commitmentToVersionedHash.ErrorType | GlobalErrorType
 }
+
+sidecarsToVersionedHashes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as sidecarsToVersionedHashes.ErrorType

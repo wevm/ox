@@ -27,4 +27,5 @@ export declare namespace formatEther {
   type ErrorType = formatValue.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 formatEther.parseError = (error: unknown) => error as formatEther.ErrorType

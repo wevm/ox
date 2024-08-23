@@ -41,4 +41,5 @@ export declare namespace toAddress {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 toAddress.parseError = (error: unknown) => error as toAddress.ErrorType

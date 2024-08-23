@@ -51,6 +51,7 @@ export declare namespace encodeRlp {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 encodeRlp.parseError = (error: unknown) => error as encodeRlp.ErrorType
 
 /**
@@ -75,6 +76,7 @@ export declare namespace bytesToRlp {
   type ErrorType = encodeRlp.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 bytesToRlp.parseError = (error: unknown) => error as bytesToRlp.ErrorType
 
 /**
@@ -99,6 +101,7 @@ export declare namespace hexToRlp {
   type ErrorType = encodeRlp.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 hexToRlp.parseError = (error: unknown) => error as hexToRlp.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////

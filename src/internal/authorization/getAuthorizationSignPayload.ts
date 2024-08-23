@@ -32,4 +32,5 @@ export declare namespace getAuthorizationSignPayload {
 }
 
 getAuthorizationSignPayload.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as getAuthorizationSignPayload.ErrorType

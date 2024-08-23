@@ -39,4 +39,5 @@ export declare namespace recoverAddress {
 }
 
 recoverAddress.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as recoverAddress.ErrorType

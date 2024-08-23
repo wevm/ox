@@ -27,4 +27,5 @@ export declare namespace isBytes {
   export type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
 isBytes.parseError = (error: unknown) => error as isBytes.ErrorType

@@ -79,4 +79,6 @@ export declare namespace toBlobSidecars {
   type ErrorType = GlobalErrorType
 }
 
-toBlobSidecars.errorType = (error: unknown) => error as toBlobSidecars.ErrorType
+toBlobSidecars.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as toBlobSidecars.ErrorType

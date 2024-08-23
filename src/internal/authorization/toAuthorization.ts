@@ -58,4 +58,5 @@ export declare namespace toAuthorization {
 }
 
 toAuthorization.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toAuthorization.ErrorType

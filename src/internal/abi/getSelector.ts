@@ -39,4 +39,5 @@ export declare namespace getSelector {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 getSelector.parseError = (error: unknown) => error as getSelector.ErrorType

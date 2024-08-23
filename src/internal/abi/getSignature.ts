@@ -39,6 +39,7 @@ export declare namespace getSignature {
   type ErrorType = normalizeSignature.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 getSignature.parseError = (error: unknown) => error as getSignature.ErrorType
 
 ///////////////////////////////////////////////////////////////////////////

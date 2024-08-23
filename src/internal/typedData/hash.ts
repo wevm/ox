@@ -96,4 +96,5 @@ export declare namespace hashTypedData {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 hashTypedData.parseError = (error: unknown) => error as hashTypedData.ErrorType

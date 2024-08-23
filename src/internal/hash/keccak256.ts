@@ -51,4 +51,5 @@ export declare namespace keccak256 {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 keccak256.parseError = (error: unknown) => error as keccak256.ErrorType

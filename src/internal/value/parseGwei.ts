@@ -23,4 +23,5 @@ export declare namespace parseGwei {
   type ErrorType = parseValue.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 parseGwei.parseError = (error: unknown) => error as parseGwei.ErrorType

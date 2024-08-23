@@ -107,6 +107,7 @@ export declare namespace toTransactionEnvelope {
 }
 
 toTransactionEnvelope.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toTransactionEnvelope.ErrorType
 
 /**
@@ -153,6 +154,7 @@ export declare namespace toTransactionEnvelopeLegacy {
 }
 
 toTransactionEnvelopeLegacy.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toTransactionEnvelopeLegacy.ErrorType
 
 /**
@@ -200,6 +202,7 @@ export declare namespace toTransactionEnvelopeEip1559 {
 }
 
 toTransactionEnvelopeEip1559.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toTransactionEnvelopeEip1559.ErrorType
 
 /**
@@ -247,6 +250,7 @@ export declare namespace toTransactionEnvelopeEip2930 {
 }
 
 toTransactionEnvelopeEip2930.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toTransactionEnvelopeEip2930.ErrorType
 
 /**
@@ -287,6 +291,7 @@ export declare namespace toTransactionEnvelopeEip4844 {
 }
 
 toTransactionEnvelopeEip4844.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toTransactionEnvelopeEip4844.ErrorType
 
 /**
@@ -326,4 +331,5 @@ export declare namespace toTransactionEnvelopeEip7702 {
 }
 
 toTransactionEnvelopeEip7702.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toTransactionEnvelopeEip7702.ErrorType

@@ -27,6 +27,7 @@ export declare namespace randomBytes {
   type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
 randomBytes.parseError = (error: unknown) => error as randomBytes.ErrorType
 
 /**
@@ -54,4 +55,5 @@ export declare namespace randomHex {
   type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
 randomHex.parseError = (error: unknown) => error as randomHex.ErrorType

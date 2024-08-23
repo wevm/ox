@@ -71,6 +71,7 @@ export declare namespace toBytes {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
 
 /**
@@ -116,6 +117,7 @@ export declare namespace booleanToBytes {
 }
 
 booleanToBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as booleanToBytes.ErrorType
 
 // We use very optimized technique to convert hex string to byte array
@@ -201,6 +203,7 @@ export declare namespace hexToBytes {
   type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 hexToBytes.parseError = (error: unknown) => error as hexToBytes.ErrorType
 
 /**
@@ -238,6 +241,7 @@ export declare namespace numberToBytes {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 numberToBytes.parseError = (error: unknown) => error as numberToBytes.ErrorType
 
 const encoder = /*#__PURE__*/ new TextEncoder()
@@ -284,4 +288,5 @@ export declare namespace stringToBytes {
   type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 stringToBytes.parseError = (error: unknown) => error as stringToBytes.ErrorType

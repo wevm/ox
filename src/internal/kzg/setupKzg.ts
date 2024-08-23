@@ -31,4 +31,5 @@ export declare namespace setupKzg {
   type ErrorType = defineKzg.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 setupKzg.parseError = (error: unknown) => error as setupKzg.ErrorType

@@ -42,4 +42,5 @@ export declare namespace sign {
   type ErrorType = toBytes.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 sign.parseError = (error: unknown) => error as sign.ErrorType

@@ -25,4 +25,5 @@ export declare namespace isHash {
   type ErrorType = isHex.ErrorType | size.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 isHash.parseError = (error: unknown) => error as isHash.ErrorType

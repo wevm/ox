@@ -75,6 +75,7 @@ export declare namespace fromBytes {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
 
 /**
@@ -113,6 +114,7 @@ export declare namespace bytesToBigInt {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 bytesToBigInt.parseError = (error: unknown) => error as bytesToBigInt.ErrorType
 
 /**
@@ -152,6 +154,7 @@ export declare namespace bytesToBoolean {
 }
 
 bytesToBoolean.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as bytesToBoolean.ErrorType
 
 /**
@@ -185,6 +188,7 @@ export declare namespace bytesToNumber {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 bytesToNumber.parseError = (error: unknown) => error as bytesToNumber.ErrorType
 
 const decoder = /*#__PURE__*/ new TextDecoder()
@@ -227,4 +231,5 @@ export declare namespace bytesToString {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 bytesToString.parseError = (error: unknown) => error as bytesToString.ErrorType

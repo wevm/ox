@@ -24,4 +24,5 @@ export declare namespace formatGwei {
   type ErrorType = formatValue.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 formatGwei.parseError = (error: unknown) => error as formatGwei.ErrorType

@@ -44,4 +44,5 @@ export declare namespace getTransactionEnvelopeSignPayload {
 }
 
 getTransactionEnvelopeSignPayload.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as getTransactionEnvelopeSignPayload.ErrorType

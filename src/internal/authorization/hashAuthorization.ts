@@ -41,4 +41,5 @@ export declare namespace hashAuthorization {
 }
 
 hashAuthorization.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as hashAuthorization.ErrorType

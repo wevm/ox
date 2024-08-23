@@ -34,6 +34,7 @@ export declare namespace padLeft {
   type ErrorType = pad.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
 
 /**
@@ -68,6 +69,7 @@ export declare namespace padRight {
   type ErrorType = pad.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 padRight.parseError = (error: unknown) => error as padRight.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////

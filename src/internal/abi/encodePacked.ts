@@ -78,6 +78,7 @@ export declare namespace encodePacked {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 encodePacked.parseError = (error: unknown) => error as encodePacked.ErrorType
 
 declare namespace encode {

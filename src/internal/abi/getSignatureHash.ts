@@ -43,4 +43,5 @@ export declare namespace getSignatureHash {
 }
 
 getSignatureHash.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as getSignatureHash.ErrorType

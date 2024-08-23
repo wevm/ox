@@ -35,4 +35,5 @@ export declare namespace assertHex {
   type ErrorType = InvalidHexTypeError | InvalidHexValueError | GlobalErrorType
 }
 
+/* v8 ignore next */
 assertHex.parseError = (error: unknown) => error as assertHex.ErrorType

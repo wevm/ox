@@ -63,5 +63,6 @@ export declare namespace blobsToCommitments {
   type ErrorType = hexToBytes.ErrorType | bytesToHex.ErrorType | GlobalErrorType
 }
 
-blobsToCommitments.errorType = (error: unknown) =>
+blobsToCommitments.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as blobsToCommitments.ErrorType

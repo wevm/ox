@@ -57,6 +57,7 @@ export declare namespace decodeRlp {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 decodeRlp.parseError = (error: unknown) => error as decodeRlp.ErrorType
 
 /**
@@ -78,6 +79,7 @@ export declare namespace rlpToBytes {
   type ReturnType = decodeRlp.ReturnType<'Bytes'>
 }
 
+/* v8 ignore next */
 rlpToBytes.parseError = (error: unknown) => error as rlpToBytes.ErrorType
 
 /**
@@ -99,6 +101,7 @@ export declare namespace rlpToHex {
   type ReturnType = decodeRlp.ReturnType<'Hex'>
 }
 
+/* v8 ignore next */
 rlpToHex.parseError = (error: unknown) => error as rlpToHex.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////

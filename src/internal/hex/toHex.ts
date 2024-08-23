@@ -69,6 +69,7 @@ export declare namespace toHex {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 toHex.parseError = (error: unknown) => error as toHex.ErrorType
 
 /**
@@ -118,6 +119,7 @@ export declare namespace booleanToHex {
   type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 booleanToHex.parseError = (error: unknown) => error as booleanToHex.ErrorType
 
 /**
@@ -170,6 +172,7 @@ export declare namespace bytesToHex {
   type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 bytesToHex.parseError = (error: unknown) => error as bytesToHex.ErrorType
 
 /**
@@ -247,6 +250,7 @@ export declare namespace numberToHex {
   type ErrorType = IntegerOutOfRangeError | padLeft.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 numberToHex.parseError = (error: unknown) => error as numberToHex.ErrorType
 
 const encoder = /*#__PURE__*/ new TextEncoder()
@@ -287,4 +291,5 @@ export declare namespace stringToHex {
   type ErrorType = bytesToHex.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 stringToHex.parseError = (error: unknown) => error as stringToHex.ErrorType

@@ -35,4 +35,5 @@ export declare namespace formatValue {
   type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
 formatValue.parseError = (error: unknown) => error as formatValue.ErrorType

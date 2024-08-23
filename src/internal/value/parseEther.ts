@@ -26,4 +26,5 @@ export declare namespace parseEther {
   type ErrorType = parseValue.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 parseEther.parseError = (error: unknown) => error as parseEther.ErrorType

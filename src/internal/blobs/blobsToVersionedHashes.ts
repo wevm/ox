@@ -52,5 +52,6 @@ export declare namespace blobsToVersionedHashes {
     | GlobalErrorType
 }
 
-blobsToVersionedHashes.errorType = (error: unknown) =>
+blobsToVersionedHashes.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as blobsToVersionedHashes.ErrorType

@@ -60,6 +60,7 @@ export declare namespace hashStruct {
   type ErrorType = encodeData.ErrorType | keccak256.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 hashStruct.parseError = (error: unknown) => error as hashStruct.ErrorType
 
 function encodeData(value: {

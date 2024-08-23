@@ -34,4 +34,5 @@ export declare namespace publicKeyToAddress {
 }
 
 publicKeyToAddress.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as publicKeyToAddress.ErrorType

@@ -42,4 +42,5 @@ export declare namespace extractEip712DomainTypes {
 }
 
 extractEip712DomainTypes.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as extractEip712DomainTypes.ErrorType

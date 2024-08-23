@@ -54,6 +54,7 @@ export declare namespace encodeType {
   type ErrorType = findTypeDependencies.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 encodeType.parseError = (error: unknown) => error as encodeType.ErrorType
 
 function findTypeDependencies(

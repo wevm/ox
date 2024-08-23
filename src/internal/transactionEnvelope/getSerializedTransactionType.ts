@@ -70,4 +70,5 @@ export declare namespace getSerializedTransactionType {
 }
 
 getSerializedTransactionType.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as getSerializedTransactionType.ErrorType

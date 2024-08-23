@@ -45,4 +45,5 @@ export declare namespace verify {
   type ErrorType = GlobalErrorType
 }
 
+/* v8 ignore next */
 verify.parseError = (error: unknown) => error as verify.ErrorType

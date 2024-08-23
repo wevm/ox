@@ -26,4 +26,5 @@ export declare namespace assertBytes {
   type ErrorType = InvalidBytesTypeError | GlobalErrorType
 }
 
+/* v8 ignore next */
 assertBytes.parseError = (error: unknown) => error as assertBytes.ErrorType

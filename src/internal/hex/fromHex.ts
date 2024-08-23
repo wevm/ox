@@ -75,6 +75,7 @@ export declare namespace fromHex {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 fromHex.parseError = (error: unknown) => error as fromHex.ErrorType
 
 /**
@@ -125,6 +126,7 @@ export declare namespace hexToBigInt {
   type ErrorType = assertSize.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 hexToBigInt.parseError = (error: unknown) => error as hexToBigInt.ErrorType
 
 /**
@@ -173,6 +175,7 @@ export declare namespace hexToBoolean {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 hexToBoolean.parseError = (error: unknown) => error as hexToBoolean.ErrorType
 
 /**
@@ -209,6 +212,7 @@ export declare namespace hexToNumber {
   type ErrorType = hexToBigInt.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 hexToNumber.parseError = (error: unknown) => error as hexToNumber.ErrorType
 
 /**
@@ -259,4 +263,5 @@ export declare namespace hexToString {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 hexToString.parseError = (error: unknown) => error as hexToString.ErrorType

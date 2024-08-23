@@ -57,4 +57,5 @@ export declare namespace recoverPublicKey {
 }
 
 recoverPublicKey.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as recoverPublicKey.ErrorType

@@ -162,6 +162,7 @@ export declare namespace extractAbiItem {
 }
 
 extractAbiItem.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as extractAbiItem.ErrorType
 
 /** @internal */

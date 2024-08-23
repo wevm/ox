@@ -61,4 +61,5 @@ export declare namespace assertAddress {
   export type ErrorType = InvalidAddressError | GlobalErrorType
 }
 
+/* v8 ignore next */
 assertAddress.parseError = (error: unknown) => error as assertAddress.ErrorType

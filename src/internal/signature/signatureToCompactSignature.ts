@@ -42,4 +42,5 @@ export declare namespace signatureToCompactSignature {
 }
 
 signatureToCompactSignature.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as signatureToCompactSignature.ErrorType

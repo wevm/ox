@@ -103,6 +103,7 @@ export declare namespace encodeAbiParameters {
 }
 
 encodeAbiParameters.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as encodeAbiParameters.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////

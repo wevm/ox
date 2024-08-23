@@ -89,4 +89,5 @@ export declare namespace serializeTypedData {
 }
 
 serializeTypedData.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as serializeTypedData.ErrorType

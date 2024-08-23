@@ -69,4 +69,5 @@ export declare namespace getCreate2Address {
 }
 
 getCreate2Address.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as getCreate2Address.ErrorType

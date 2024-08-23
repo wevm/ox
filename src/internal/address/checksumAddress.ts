@@ -49,4 +49,5 @@ export declare namespace checksumAddress {
 }
 
 checksumAddress.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as checksumAddress.ErrorType

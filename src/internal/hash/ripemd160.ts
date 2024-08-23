@@ -45,4 +45,5 @@ export declare namespace ripemd160 {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 ripemd160.parseError = (error: unknown) => error as ripemd160.ErrorType

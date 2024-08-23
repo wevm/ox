@@ -45,4 +45,5 @@ export declare namespace sha256 {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 sha256.parseError = (error: unknown) => error as sha256.ErrorType

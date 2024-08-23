@@ -34,4 +34,5 @@ export declare namespace isAddressEqual {
 }
 
 isAddressEqual.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as isAddressEqual.ErrorType

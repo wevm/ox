@@ -38,6 +38,7 @@ export declare namespace concat {
   type ErrorType = concatBytes.ErrorType | concatHex.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 concat.parseError = (error: unknown) => error as concat.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////

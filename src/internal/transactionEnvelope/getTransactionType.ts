@@ -103,6 +103,7 @@ export declare namespace getTransactionType {
 }
 
 getTransactionType.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as getTransactionType.ErrorType
 
 ////////////////////////////////////////////////////////////////////////////////////////////

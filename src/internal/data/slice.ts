@@ -59,6 +59,7 @@ export declare namespace slice {
     | GlobalErrorType
 }
 
+/* v8 ignore next */
 slice.parseError = (error: unknown) => error as slice.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////

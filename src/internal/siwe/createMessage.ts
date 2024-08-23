@@ -183,6 +183,7 @@ export declare namespace createSiweMessage {
 }
 
 createSiweMessage.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as createSiweMessage.ErrorType
 
 const domainRegex =

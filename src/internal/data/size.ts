@@ -36,4 +36,5 @@ export declare namespace size {
   export type ErrorType = isHex.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 size.parseError = (error: unknown) => error as size.ErrorType

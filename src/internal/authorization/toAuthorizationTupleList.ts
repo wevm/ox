@@ -41,4 +41,5 @@ export declare namespace toAuthorizationTupleList {
 }
 
 toAuthorizationTupleList.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as toAuthorizationTupleList.ErrorType

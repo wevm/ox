@@ -48,4 +48,5 @@ export declare namespace hashDomain {
   type ErrorType = hashStruct.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 hashDomain.parseError = (error: unknown) => error as hashDomain.ErrorType

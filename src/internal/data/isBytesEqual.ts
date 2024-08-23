@@ -35,4 +35,5 @@ export declare namespace isBytesEqual {
   type ErrorType = isHex.ErrorType | toBytes.ErrorType | GlobalErrorType
 }
 
+/* v8 ignore next */
 isBytesEqual.parseError = (error: unknown) => error as isBytesEqual.ErrorType

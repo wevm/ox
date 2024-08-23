@@ -23,4 +23,5 @@ export declare namespace extractSignature {
 }
 
 extractSignature.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as extractSignature.ErrorType

@@ -75,4 +75,5 @@ export declare namespace serializeSignature {
 }
 
 serializeSignature.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as serializeSignature.ErrorType
