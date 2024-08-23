@@ -1,6 +1,6 @@
 import { defineConfig } from 'vocs'
 import pkg from '../src/package.json'
-import { sidebar } from './docgen/sidebar'
+import { sidebar } from './sidebar-generated'
 
 export default defineConfig({
   baseUrl:

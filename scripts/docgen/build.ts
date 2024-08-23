@@ -3,22 +3,22 @@ import * as tsdoc from '@microsoft/tsdoc'
 import fs from 'fs-extra'
 
 // TODO
-// - generate index page for each module
-// - parse inline {@link} tags and link to pages
-// - add range to github source links
-// - error type linking
-// - glossary pages for: constants, errors, and types
-// - filter examples based on module (e.g. `isBytesEqual` @example for `Bytes` module should not show up on `Hex` module)
-// - display multiple aliases when applicable on pages
+// - Parse inline {@link} tags and link to pages
+// - Add range to github source links
+// - Error type linking
+// - Glossary pages for: constants, errors, and types
+// - Filter examples based on module (e.g. `isBytesEqual` @example for `Bytes` module should not show up on `Hex` module)
+// - Display multiple aliases when applicable on pages
 // - Validate aliases
 // - Update Vocs to throw if twoslash block has errors
 // - Add generated md files to gitignore
+// - For generated files, hide or link "Suggest changes to this page" to source code
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Generating API doc.')
 
 /// Load API Model
-const fileName = './site/docgen/ox.api.json'
+const fileName = './scripts/docgen/ox.api.json'
 const pkg = new model.ApiModel().loadPackage(fileName)
 
 /// Construct lookup with updated data
@@ -42,7 +42,9 @@ const namespaceItems = entrypointItem.members.filter(
       x.displayName,
     ),
 )
+
 const sidebar = []
+const pagesDir = './site/pages/gen'
 for (const item of namespaceItems) {
   const baseLink = `/gen/${item.displayName}`
 
@@ -75,14 +77,23 @@ for (const item of namespaceItems) {
     items,
   }
   sidebar.push(sidebarItem)
+
+  const content = `
+# ${item.displayName}
+
+${items.map((x) => `- [\`${x.text}\`](${x.link})`).join('\n')}
+`
+  const dir = `${pagesDir}/${item.displayName}`
+  fs.ensureDirSync(dir)
+  fs.writeFileSync(`${dir}/index.md`, content)
 }
+
 const content = `
 export const sidebar = ${JSON.stringify(sidebar, null, 2)}
 `
-fs.writeFileSync('./site/docgen/sidebar.ts', content)
+fs.writeFileSync('./site/sidebar-generated.ts', content)
 
 /// Build markdown files
-const pagesDir = './site/pages/gen'
 const ids = sidebar.flatMap((x) => x.items).map((x) => x.id)
 for (const id of ids) {
   const item = lookup[id]
@@ -99,7 +110,6 @@ for (const id of ids) {
 
   const module = item.parent?.match(moduleRegex)?.groups?.module
   const dir = `${pagesDir}/${module ? `${module}/` : ''}`
-  fs.ensureDirSync(dir)
   fs.writeFileSync(`${dir}${item.displayName}.md`, content)
 }
 

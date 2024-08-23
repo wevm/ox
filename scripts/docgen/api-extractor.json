@@ -17,7 +17,7 @@
 
   "docModel": {
     "enabled": true,
-    "apiJsonFilePath": "<projectFolder>/site/docgen/<unscopedPackageName>.api.json",
+    "apiJsonFilePath": "<projectFolder>/scripts/docgen/<unscopedPackageName>.api.json",
     "includeForgottenExports": true
   },
 
