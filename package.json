@@ -11,7 +11,7 @@
     "changeset:prepublish": "pnpm version:update && pnpm build && tsx scripts/prepublish.ts",
     "changeset:publish": "pnpm changeset:prepublish && changeset publish",
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
-    "clean": "rimraf src/_esm src/_cjs ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
+    "clean": "rimraf src/_esm src/_cjs ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo site/docgen",
     "deps": "pnpx taze -r",
     "dev": "pnpm preconstruct && pnpm playground",
     "docs:dev": "pnpm --filter site dev",

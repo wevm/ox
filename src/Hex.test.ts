@@ -38,6 +38,7 @@ test('exports', () => {
       "fromString",
       "toHex",
       "from",
+      "randomHex",
       "random",
     ]
   `)

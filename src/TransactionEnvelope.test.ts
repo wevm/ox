@@ -24,6 +24,8 @@ test('exports', () => {
       "deserializeEip1559",
       "deserializeTransactionEnvelopeEip2930",
       "deserializeEip2930",
+      "deserializeTransactionEnvelopeEip4844",
+      "deserializeEip4844",
       "getTransactionEnvelopeSignPayload",
       "getSignPayload",
       "hashTransactionEnvelope",
