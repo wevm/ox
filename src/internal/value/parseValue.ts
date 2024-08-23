@@ -6,10 +6,12 @@ import type { GlobalErrorType } from '../errors/error.js'
  * - Docs: https://oxlib.sh/api/value/from
  *
  * @example
+ * ```ts
  * import { Value } from 'ox'
  *
  * Value.from('420', 9)
  * // 420000000000n
+ * ```
  */
 export function parseValue(value: string, decimals = 0) {
   let [integer = '', fraction = '0'] = value.split('.')

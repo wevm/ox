@@ -2,22 +2,28 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
- * Trims leading zeros from a {@link Bytes} or {@link Hex} value.
+ * Trims leading zeros from a {@link Types#Bytes} or {@link Types#Hex} value.
  *
  * - Docs (Bytes): https://oxlib.sh/api/bytes/trimLeft
  * - Docs (Hex): https://oxlib.sh/api/hex/trimLeft
  *
  * @example
+ * ```ts
  * import { Data } from 'ox'
  * Data.trimLeft('0x00000000deadbeef') // '0xdeadbeef'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.trimLeft('0x00000000deadbeef') // '0xdeadbeef'
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.trimLeft(Bytes.from([0, 0, 0, 0, 1, 2, 3])) // Uint8Array([1, 2, 3])
+ * ```
  */
 export function trimLeft<value extends Bytes | Hex>(
   value: value,
@@ -34,22 +40,28 @@ export declare namespace trimLeft {
 trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
 
 /**
- * Trims trailing zeros from a {@link Bytes} or {@link Hex} value.
+ * Trims trailing zeros from a {@link Types#Bytes} or {@link Types#Hex} value.
  *
  * - Docs (Bytes): https://oxlib.sh/api/bytes/trimRight
  * - Docs (Hex): https://oxlib.sh/api/hex/trimRight
  *
  * @example
+ * ```ts
  * import { Data } from 'ox'
  * Data.trimRight('0xdeadbeef00000000') // '0xdeadbeef'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.trimRight('0xdeadbeef00000000') // '0xdeadbeef'
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.trimRight(Bytes.from([1, 2, 3, 0, 0, 0, 0])) // Uint8Array([1, 2, 3])
+ * ```
  */
 export function trimRight<value extends Bytes | Hex>(
   value: value,
@@ -71,16 +83,7 @@ trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-export declare namespace trim {
-  type Options = {
-    dir?: 'left' | 'right' | undefined
-  }
-
-  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
-
-  type ErrorType = GlobalErrorType
-}
-function trim<value extends Bytes | Hex>(
+export function trim<value extends Bytes | Hex>(
   value: value,
   options: trim.Options = {},
 ): trim.ReturnType<value> {
@@ -104,4 +107,14 @@ function trim<value extends Bytes | Hex>(
     return `0x${data.length % 2 === 1 ? `0${data}` : data}` as trim.ReturnType<value>
   }
   return data as trim.ReturnType<value>
+}
+
+export declare namespace trim {
+  type Options = {
+    dir?: 'left' | 'right' | undefined
+  }
+
+  type ReturnType<value extends Bytes | Hex> = value extends Hex ? Hex : Bytes
+
+  type ErrorType = GlobalErrorType
 }

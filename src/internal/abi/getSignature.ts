@@ -6,11 +6,15 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Computes the stringified signature for a given ABI Item.
  *
  * @example
+ * ```ts twoslash
  * import { Abi } from 'ox'
- *
  * const signature = Abi.getSignature('function ownerOf(uint256 tokenId)')
  * // 'ownerOf(uint256)'
+ * ```
  *
+ * @example
+ * ```ts twoslash
+ * import { Abi } from 'ox'
  * const signature = Abi.getSignature({
  *   name: 'ownerOf',
  *   type: 'function',
@@ -19,6 +23,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  *   stateMutability: 'view',
  * })
  * // 'ownerOf(uint256)'
+ * ```
  */
 export const getSignature = (abiItem: getSignature.Parameters) => {
   const signature = (() => {

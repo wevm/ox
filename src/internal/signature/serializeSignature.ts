@@ -9,7 +9,7 @@ import { signatureToCompactSignature } from './signatureToCompactSignature.js'
 type As = 'Bytes' | 'Hex'
 
 /**
- * Serializes a {@link Signature} to {@link Hex} or {@link Bytes}.
+ * Serializes a {@link Signature} to {@link Types#Hex} or {@link Types#Bytes}.
  *
  * @example
  * ```ts

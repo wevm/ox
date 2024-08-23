@@ -3,20 +3,24 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
- * Pads a {@link Bytes} or {@link Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link Types#Bytes} or {@link Types#Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * - Docs (Bytes): https://oxlib.sh/api/bytes/padLeft
  * - Docs (Hex): https://oxlib.sh/api/hex/padLeft
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.padLeft(Bytes.from([1]), 4)
  * // Uint8Array([0, 0, 0, 1])
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.padLeft('0x1234', 4)
  * // '0x00001234'
+ * ```
  */
 export function padLeft<value extends Bytes | Hex>(
   value: value,
@@ -33,20 +37,24 @@ export declare namespace padLeft {
 padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
 
 /**
- * Pads a {@link Bytes} or {@link Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link Types#Bytes} or {@link Types#Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * - Docs (Bytes): https://oxlib.sh/api/bytes/padRight
  * - Docs (Hex): https://oxlib.sh/api/hex/padRight
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.padRight(Bytes.from([1]), 4)
  * // Uint8Array([1, 0, 0, 0])
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.padRight('0x1234', 4)
  * // '0x12340000'
+ * ```
  */
 export function padRight<value extends Bytes | Hex>(
   value: value,
@@ -66,7 +74,6 @@ padRight.parseError = (error: unknown) => error as padRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @internal */
 export function pad<value extends Bytes | Hex>(
   value: value,
   options: pad.Options = {},
@@ -88,12 +95,7 @@ export declare namespace pad {
   type ErrorType = padHex.ErrorType | padBytes.ErrorType | GlobalErrorType
 }
 
-export declare namespace padHex {
-  type Options = pad.Options
-
-  type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
-}
-function padHex(hex_: Hex, options: padHex.Options = {}) {
+export function padHex(hex_: Hex, options: padHex.Options = {}) {
   const { dir, size = 32 } = options
 
   if (size === 0) return hex_
@@ -109,12 +111,12 @@ function padHex(hex_: Hex, options: padHex.Options = {}) {
   return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex
 }
 
-export declare namespace padBytes {
+export declare namespace padHex {
   type Options = pad.Options
-
   type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
 }
-function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
+
+export function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes
   if (bytes.length > size)
@@ -130,4 +132,9 @@ function padBytes(bytes: Bytes, options: padBytes.Options = {}) {
       bytes[padEnd ? i : bytes.length - i - 1]!
   }
   return paddedBytes
+}
+
+export declare namespace padBytes {
+  type Options = pad.Options
+  type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
 }

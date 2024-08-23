@@ -9,3 +9,7 @@ coverage
 node_modules
 tsconfig.*.tsbuildinfo
 tsconfig.tsbuildinfo
+
+site/pages/gen
+ox.api.json
+tsdoc-metadata.json

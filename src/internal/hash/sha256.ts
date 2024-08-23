@@ -14,10 +14,12 @@ type To = 'Hex' | 'Bytes'
  * This function is a re-export of `sha256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) – an audited & minimal JS hashing library.
  *
  * @example
+ * ```ts twoslash
  * import { Hash } from 'ox'
  *
  * Hash.sha256('0xdeadbeef')
  * // '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953'
+ * ```
  */
 export function sha256<to extends To = 'Hex'>(
   value: Hex | Bytes,

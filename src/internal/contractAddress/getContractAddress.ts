@@ -8,6 +8,7 @@ import { getCreateAddress } from './getCreateAddress.js'
  * - Docs: https://oxlib.sh/api/contractAddress/from
  *
  * @example
+ * ```ts twoslash
  * import { ContractAddress } from 'ox'
  * ContractAddress.from({
  *   opcode: 'CREATE',
@@ -15,8 +16,10 @@ import { getCreateAddress } from './getCreateAddress.js'
  *   nonce: 0n,
  * })
  * // '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
+ * ```
  *
  * @example
+ * ```ts twoslash
  * import { Bytes, ContractAddress, Hex } from 'ox'
  * ContractAddress.from({
  *   opcode: 'CREATE2',
@@ -25,6 +28,7 @@ import { getCreateAddress } from './getCreateAddress.js'
  *   salt: Hex.from('hello world'),
  * })
  * // '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
+ * ```
  */
 export function getContractAddress(opts: getContractAddress.Options) {
   if (opts.opcode === 'CREATE2') return getCreate2Address(opts)

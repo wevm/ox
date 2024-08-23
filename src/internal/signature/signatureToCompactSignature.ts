@@ -7,6 +7,7 @@ import type { CompactSignature, Signature } from '../types/signature.js'
  * Converts a {@link Signature} into an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link CompactSignature}.
  *
  * @example
+ * ```ts twoslash
  * import { Signature } from 'ox'
  *
  * Signature.toCompact({
@@ -18,6 +19,7 @@ import type { CompactSignature, Signature } from '../types/signature.js'
  * //   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
  * //   yParityAndS: 57228803202727131502949358313456071280488184270258293674242124340113824882788n
  * // }
+ * ```
  */
 export function signatureToCompactSignature(
   signature: Signature,

@@ -9,24 +9,33 @@ import { numberToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
- * Encodes an arbitrary value to {@link Bytes}.
- *
- * - Docs: https://oxlib.sh/api/bytes/from
+ * Encodes an arbitrary value to {@link Types#Bytes}.
  *
  * @example
+ * ```ts twoslash
  * import { Bytes } from 'ox'
  * const data = Bytes.from('Hello world')
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * ```
  *
  * @example
+ * ```ts twoslash
  * import { Bytes } from 'ox'
  * const data = Bytes.from(420)
  * // Uint8Array([1, 164])
+ * ```
  *
  * @example
+ * ```ts twoslash
  * import { Bytes } from 'ox'
  * const data = Bytes.from(420, { size: 4 })
  * // Uint8Array([0, 0, 1, 164])
+ * ```
+ *
+ * @param value - An arbitrary value to encode to Bytes.
+ * @param options - Encoding options
+ *
+ * @alias ox!Bytes.toBytes:function(1)
  */
 export function toBytes(
   value: string | bigint | number | boolean | Hex | Bytes | readonly number[],
@@ -65,19 +74,23 @@ export declare namespace toBytes {
 toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
 
 /**
- * Encodes a boolean value into {@link Bytes}.
+ * Encodes a boolean value into {@link Types#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/fromBoolean
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromBoolean(true)
  * // Uint8Array([1])
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromBoolean(true, { size: 32 })
  * // Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+ * ```
  */
 export function booleanToBytes(
   value: boolean,
@@ -126,24 +139,30 @@ function charCodeToBase16(char: number) {
 }
 
 /**
- * Encodes a hex value into {@link Bytes}.
+ * Encodes a hex value into {@link Types#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/fromHex
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * const data = Hex.toBytes('0x48656c6c6f20776f726c6421')
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421')
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', { size: 32 })
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+ * ```
  */
 export function hexToBytes(hex_: Hex, options: hexToBytes.Options = {}): Bytes {
   const { size } = options
@@ -185,19 +204,23 @@ export declare namespace hexToBytes {
 hexToBytes.parseError = (error: unknown) => error as hexToBytes.ErrorType
 
 /**
- * Encodes a number value into {@link Bytes}.
+ * Encodes a number value into {@link Types#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/fromNumber
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromNumber(420)
  * // Uint8Array([1, 164])
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromNumber(420, { size: 4 })
  * // Uint8Array([0, 0, 1, 164])
+ * ```
  */
 export function numberToBytes(
   value: bigint | number,
@@ -225,14 +248,18 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * - Docs: https://oxlib.sh/api/bytes/fromString
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromString('Hello world!')
  * // Uint8Array([72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 33])
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.fromString('Hello world!', { size: 32 })
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+ * ```
  */
 export function stringToBytes(
   value: string,

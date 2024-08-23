@@ -7,11 +7,15 @@ import { getSignature } from './getSignature.js'
  * Computes the signature hash for an ABI Item.
  *
  * @example
+ * ```ts twoslash
  * import { Abi } from 'ox'
- *
  * const hash = Abi.getSignatureHash('event Transfer(address indexed from, address indexed to, uint256 amount)')
  * // '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * ```
  *
+ * @example
+ * ```ts twoslash
+ * import { Abi } from 'ox'
  * const hash = Abi.getSignatureHash({
  *   name: 'Transfer',
  *   type: 'event',
@@ -22,6 +26,7 @@ import { getSignature } from './getSignature.js'
  *   ],
  * })
  * // '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * ```
  */
 export function getSignatureHash(abiItem: getSignatureHash.Parameters) {
   return keccak256(toBytes(getSignature(abiItem)))

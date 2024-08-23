@@ -1,4 +1,8 @@
-// https://ethereum.github.io/yellowpaper/paper.pdf
+/**
+ * @public
+ *
+ * @see https://ethereum.github.io/yellowpaper/paper.pdf
+ */
 export const valueExponents = {
   wei: 0,
   gwei: 9,

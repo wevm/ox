@@ -11,6 +11,7 @@ import type { ExactPartial } from '../types/utils.js'
  * - Spec: https://eips.ethereum.org/EIPS/eip-4361
  *
  * @example
+ * ```ts twoslash
  * import { Siwe } from 'ox'
  *
  * Siwe.validateMessage({
@@ -22,6 +23,7 @@ import type { ExactPartial } from '../types/utils.js'
  *   version: '1',
  * })
  * // true
+ * ```
  */
 export function validateSiweMessage(
   value: validateSiweMessage.Value,

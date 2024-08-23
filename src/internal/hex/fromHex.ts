@@ -5,33 +5,37 @@ import { InvalidHexBooleanError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'string' | 'Bytes' | 'bigint' | 'number' | 'boolean'
-
 /**
- * Decodes a {@link Hex} value into a string, number, bigint, boolean, or {@link Bytes}.
+ * Decodes a {@link Types#Hex} value into a string, number, bigint, boolean, or {@link Types#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/hex/to
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.to('0x1a4', 'number')
  * // 420
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.to('0x48656c6c6f20576f726c6421', 'string')
  * // 'Hello world'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.to('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', 'string', {
  *   size: 32,
  * })
  * // 'Hello world'
+ * ```
  */
-export function fromHex<to extends To>(
+export function fromHex<to extends fromHex.To>(
   hex: Hex,
-  to: to | To,
+  to: to | fromHex.To,
   options: fromHex.Options = {},
 ): fromHex.ReturnType<to> {
   if (to === 'number')
@@ -47,6 +51,8 @@ export function fromHex<to extends To>(
 }
 
 export declare namespace fromHex {
+  type To = 'string' | 'Bytes' | 'bigint' | 'number' | 'boolean'
+
   type Options = {
     /** Size (in bytes) of the hex value. */
     size?: number | undefined
@@ -72,19 +78,23 @@ export declare namespace fromHex {
 fromHex.parseError = (error: unknown) => error as fromHex.ErrorType
 
 /**
- * Decodes a {@link Hex} value into a BigInt.
+ * Decodes a {@link Types#Hex} value into a BigInt.
  *
  * - Docs: https://oxlib.sh/api/hex/toBigInt
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toBigInt('0x1a4')
  * // 420n
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toBigInt('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420n
+ * ```
  */
 export function hexToBigInt(
   hex: Hex,
@@ -118,19 +128,23 @@ export declare namespace hexToBigInt {
 hexToBigInt.parseError = (error: unknown) => error as hexToBigInt.ErrorType
 
 /**
- * Decodes a {@link Hex} value into a boolean.
+ * Decodes a {@link Types#Hex} value into a boolean.
  *
  * - Docs: https://oxlib.sh/api/hex/toBoolean
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toBoolean('0x01')
  * // true
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toBoolean('0x0000000000000000000000000000000000000000000000000000000000000001', { size: 32 })
  * // true
+ * ```
  */
 export function hexToBoolean(
   hex_: Hex,
@@ -162,19 +176,23 @@ export declare namespace hexToBoolean {
 hexToBoolean.parseError = (error: unknown) => error as hexToBoolean.ErrorType
 
 /**
- * Decodes a {@link Hex} value into a number.
+ * Decodes a {@link Types#Hex} value into a number.
  *
  * - Docs: https://oxlib.sh/api/hex/toNumber
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toNumber('0x1a4')
  * // 420
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toNumber('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
  * // 420
+ * ```
  */
 export function hexToNumber(
   hex: Hex,
@@ -194,21 +212,25 @@ export declare namespace hexToNumber {
 hexToNumber.parseError = (error: unknown) => error as hexToNumber.ErrorType
 
 /**
- * Decodes a {@link Hex} value into a UTF-8 string.
+ * Decodes a {@link Types#Hex} value into a UTF-8 string.
  *
  * - Docs: https://oxlib.sh/api/hex/toString
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toString('0x48656c6c6f20576f726c6421')
  * // 'Hello world!'
+ * ```
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.toString('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', {
  *  size: 32,
  * })
  * // 'Hello world'
+ * ```
  */
 export function hexToString(
   hex: Hex,

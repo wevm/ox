@@ -3,14 +3,16 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 /**
- * Checks if the given value is {@link Bytes}.
+ * Checks if the given value is {@link Types#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/isBytes
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.isBytes('0x') // false
  * Bytes.isBytes(Bytes.from([1, 2, 3])) // true
+ * ```
  */
 export function isBytes(value: unknown): value is Bytes {
   try {

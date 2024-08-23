@@ -8,10 +8,12 @@ import { parseValue } from './parseValue.js'
  * - Docs: https://oxlib.sh/api/value/fromGwei
  *
  * @example
+ * ```ts
  * import { Value } from 'ox'
  *
  * Value.fromGwei('420')
  * // 420000000000n
+ * ```
  */
 export function parseGwei(ether: string, unit: 'wei' = 'wei') {
   return parseValue(ether, valueExponents.gwei - valueExponents[unit])

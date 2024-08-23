@@ -16,6 +16,7 @@ import { validateTypedData } from './validate.js'
  * - Docs: https://oxlib.sh/api/typedData/hash
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.hash({
@@ -34,6 +35,7 @@ import { validateTypedData } from './validate.js'
  *   },
  * })
  * // '0x7ef8d6931ed54977c7593289c0feb25c7d7424fb997f4fc20aa3fe51b5141188'
+ * ```
  */
 export function hashTypedData<
   const typedData extends TypedData | Record<string, unknown>,

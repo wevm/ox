@@ -6,31 +6,35 @@ import { hexToBigInt, hexToNumber } from '../hex/fromHex.js'
 import { bytesToHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
-type To = 'string' | 'Hex' | 'bigint' | 'number' | 'boolean'
-
 /**
- * Decodes {@link Bytes} into a UTF-8 string, {@link Hex}, number, bigint or boolean.
- *
- * - Docs: https://oxlib.sh/api/bytes/to
+ * Decodes {@link Types#Bytes} into a UTF-8 string, {@link Types#Hex}, number, bigint or boolean.
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.to(Bytes.from([1, 164]), 'number')
  * // 420
+ * ```
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.to(
  *   Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
  *   'string'
  * )
  * // 'Hello world'
+ * ```
+ *
+ * @param bytes - Bytes to decode.
+ * @param to - Decode Bytes into the specified type.
+ * @param options - Decoding options.
+ *
+ * @alias ox!Bytes.fromBytes:function(1)
  */
-export function fromBytes<
-  to extends 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
->(
+export function fromBytes<to extends fromBytes.To>(
   bytes: Bytes,
-  to: to | To,
+  to: to | fromBytes.To,
   options: fromBytes.Options = {},
 ): fromBytes.ReturnType<to> {
   if (to === 'number')
@@ -47,12 +51,14 @@ export function fromBytes<
 }
 
 export declare namespace fromBytes {
+  type To = 'string' | 'Hex' | 'bigint' | 'number' | 'boolean'
+
   type Options = {
     /** Size of the bytes. */
     size?: number | undefined
   }
 
-  type ReturnType<to extends To> =
+  type ReturnType<to extends fromBytes.To> =
     | (to extends 'string' ? string : never)
     | (to extends 'Hex' ? Hex : never)
     | (to extends 'bigint' ? bigint : never)
@@ -77,9 +83,11 @@ fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
  - Docs: https://oxlib.sh/api/bytes/toBigInt
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.toBigInt(Bytes.from([1, 164]))
  * // 420n
+ * ```
  */
 export function bytesToBigInt(
   bytes: Bytes,
@@ -113,9 +121,11 @@ bytesToBigInt.parseError = (error: unknown) => error as bytesToBigInt.ErrorType
  * - Docs: https://oxlib.sh/api/bytes/toBoolean
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.toBoolean(Bytes.from([1]))
  * // true
+ * ```
  */
 export function bytesToBoolean(
   bytes_: Bytes,
@@ -150,9 +160,11 @@ bytesToBoolean.parseError = (error: unknown) =>
  * - Docs: https://oxlib.sh/api/bytes/toNumber
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * Bytes.toNumber(Bytes.from([1, 164]))
  * // 420
+ * ```
  */
 export function bytesToNumber(
   bytes: Bytes,
@@ -183,9 +195,11 @@ const decoder = /*#__PURE__*/ new TextDecoder()
  * - Docs: https://oxlib.sh/api/bytes/toString
  *
  * @example
+ * ```ts
  * import { Bytes } from 'ox'
  * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // 'Hello world'
+ * ```
  */
 export function bytesToString(
   bytes_: Bytes,

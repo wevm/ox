@@ -6,10 +6,12 @@ import type { GlobalErrorType } from '../errors/error.js'
  * - Docs: https://oxlib.sh/api/value/format
  *
  * @example
+ * ```ts
  * import { Value } from 'ox'
  *
  * Value.format(420_000_000_000n, 9)
  * // '420'
+ * ```
  */
 export function formatValue(value: bigint, decimals = 0) {
   let display = value.toString()

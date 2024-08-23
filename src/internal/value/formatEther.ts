@@ -9,10 +9,12 @@ import { formatValue } from './formatValue.js'
  * - Docs: https://oxlib.sh/api/value/formatEther
  *
  * @example
+ * ```ts
  * import { Value } from 'ox'
  *
  * Value.formatEther(1_000_000_000_000_000_000n)
  * // '1'
+ * ```
  */
 export function formatEther(
   wei: bigint,

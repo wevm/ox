@@ -13,8 +13,10 @@ export declare namespace BaseError {
  * Base error class inherited by all errors thrown by ox.
  *
  * @example
+ * ```ts
  * import { Errors } from 'ox'
  * throw new Errors.BaseError('An error occurred')
+ * ```
  */
 export class BaseError<
   cause extends Error | undefined = undefined,

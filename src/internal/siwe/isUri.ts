@@ -7,10 +7,12 @@
  * - Spec: https://www.rfc-editor.org/rfc/rfc3986
  *
  * @example
+ * ```ts twoslash
  * import { Siwe } from 'ox'
  *
  * Siwe.isUri('https://example.com/foo')
  * // true
+ * ```
  */
 export function isUri(value: string) {
   // check for illegal characters

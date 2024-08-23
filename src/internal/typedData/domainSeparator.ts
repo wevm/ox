@@ -12,6 +12,7 @@ import { hashDomain } from './hashDomain.js'
  * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
  *
  * @example
+ * ```ts twoslash
  * import { TypedData } from 'ox'
  *
  * TypedData.domainSeparator({
@@ -21,6 +22,7 @@ import { hashDomain } from './hashDomain.js'
  *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
  * })
  * // '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
+ * ```
  */
 export function domainSeparator(
   domain: TypedDataDomain,

@@ -1,4 +1,8 @@
-export { InvalidAddressError } from './internal/errors/address.js'
+export {
+  InvalidAddressError,
+  InvalidAddressInputError,
+  InvalidAddressChecksumError,
+} from './internal/errors/address.js'
 
 export { BaseError } from './internal/errors/base.js'
 
@@ -11,8 +15,11 @@ export {
 export {
   IntegerOutOfRangeError,
   InvalidBytesBooleanError,
+  InvalidBytesTypeError,
   InvalidHexBooleanError,
   InvalidHexLengthError,
+  InvalidHexTypeError,
+  InvalidHexValueError,
   InvalidTypeError,
   SizeExceedsPaddingSizeError,
   SizeOverflowError,

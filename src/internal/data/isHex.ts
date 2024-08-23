@@ -3,14 +3,16 @@ import { assertHex } from '../hex/assertHex.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Checks if the given value is {@link Hex}.
+ * Checks if the given value is {@link Types#Hex}.
  *
  * - Docs: https://oxlib.sh/api/hex/isHex
  *
  * @example
+ * ```ts
  * import { Hex } from 'ox'
  * Hex.isHex('0x') // true
  * Hex.isHex(Bytes.from([1, 2, 3])) // false
+ * ```
  */
 export function isHex(
   value: unknown,

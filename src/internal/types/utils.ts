@@ -5,30 +5,24 @@ export type Compute<type> = { [key in keyof type]: type[key] } & unknown
 declare const symbol: unique symbol
 
 /**
- * Creates a branded type of {@link T} with the brand {@link U}.
- *
- * @param T - Type to brand
- * @param U - Label
- * @returns Branded type
+ * Creates a branded type of `T` with the brand `U`.
  *
  * @example
+ * ```ts
  * type Result = Branded<string, 'foo'>
  * //   ^? type Result = string & { [symbol]: 'foo' }
- *
- * @internal
+ * ```
  */
 export type Branded<T, U> = T & { [symbol]: U }
 
 /**
- * Filters out all members of {@link T} that are not {@link P}
- *
- * @param T - Items to filter
- * @param P - Type to filter out
- * @returns Filtered items
+ * Filters out all members of `T` that are not `P`
  *
  * @example
+ * ```ts
  * type Result = Filter<['a', 'b', 'c'], 'b'>
  * //   ^? type Result = ['a', 'c']
+ * ```
  *
  * @internal
  */
@@ -43,14 +37,13 @@ export type Filter<
   : readonly [...Acc]
 
 /**
- * @description Checks if {@link T} can be narrowed further than {@link U}
- * @param T - Type to check
- * @param U - Type to against
+ * Checks if `T` can be narrowed further than `U`
+ *
  * @example
+ * ```ts
  * type Result = IsNarrowable<'foo', string>
  * //   ^? true
- *
- * @internal
+ * ```
  */
 export type IsNarrowable<T, U> = IsNever<
   (T extends U ? true : false) & (U extends T ? false : true)
@@ -59,13 +52,13 @@ export type IsNarrowable<T, U> = IsNever<
   : true
 
 /**
- * @description Checks if {@link T} is `never`
- * @param T - Type to check
+ * Checks if `T` is `never`
+ *
  * @example
+ * ```ts
  * type Result = IsNever<never>
  * //   ^? type Result = true
- *
- * @internal
+ * ```
  */
 export type IsNever<T> = [T] extends [never] ? true : false
 
@@ -79,16 +72,19 @@ export type Mutable<type extends object> = {
 }
 
 /**
- * @description Evaluates boolean "or" condition for {@link T} properties.
- * @param T - Type to check
+ * Evaluates boolean "or" condition for `T` properties.
  *
  * * @example
+ * ```ts
  * type Result = Or<[false, true, false]>
  * //   ^? type Result = true
+ * ```
  *
  * @example
+ * ```ts
  * type Result = Or<[false, false, false]>
  * //   ^? type Result = false
+ * ```
  *
  * @internal
  */
@@ -102,11 +98,13 @@ export type Or<T extends readonly unknown[]> = T extends readonly [
   : false
 
 /**
- * @description Checks if {@link T} is `undefined`
- * @param T - Type to check
+ * Checks if `T` is `undefined`
+ *
  * @example
+ * ```ts
  * type Result = IsUndefined<undefined>
  * //   ^? type Result = true
+ * ```
  *
  * @internal
  */
@@ -116,14 +114,16 @@ export type IsUndefined<T> = [undefined] extends [T] ? true : false
 export type MaybePromise<T> = T | Promise<T>
 
 /**
- * @description Makes attributes on the type T required if required is true.
+ * Makes attributes on the type T required if required is true.
  *
  * @example
+ * ```ts
  * MaybeRequired<{ a: string, b?: number }, true>
- * => { a: string, b: number }
+ * // { a: string, b: number }
  *
  * MaybeRequired<{ a: string, b?: number }, false>
- * => { a: string, b?: number }
+ * // { a: string, b?: number }
+ * ```
  *
  * @internal
  */
@@ -132,11 +132,13 @@ export type MaybeRequired<T, required extends boolean> = required extends true
   : T
 
 /**
- * @description Assigns the properties of U onto T.
+ * Assigns the properties of U onto T.
  *
  * @example
+ * ```ts
  * Assign<{ a: string, b: number }, { a: undefined, c: boolean }>
- * => { a: undefined, b: number, c: boolean }
+ * // { a: undefined, b: number, c: boolean }
+ * ```
  *
  * @internal
  */
@@ -150,11 +152,13 @@ type Assign_<T, U> = {
 }
 
 /**
- * @description Constructs a type by excluding `undefined` from `T`.
+ * Constructs a type by excluding `undefined` from `T`.
  *
  * @example
+ * ```ts
  * NoUndefined<string | undefined>
- * => string
+ * // string
+ * ```
  *
  * @internal
  */
@@ -171,11 +175,13 @@ export type Omit<type, keys extends keyof type> = Pick<
 >
 
 /**
- * @description Creates a type that is a partial of T, but with the required keys K.
+ * Creates a type that is a partial of T, but with the required keys K.
  *
  * @example
+ * ```ts
  * PartialBy<{ a: string, b: number }, 'a'>
- * => { a?: string, b: number }
+ * // { a?: string, b: number }
+ * ```
  *
  * @internal
  */
@@ -183,11 +189,13 @@ export type PartialBy<T, K extends keyof T> = Omit<T, K> &
   ExactPartial<Pick<T, K>>
 
 /**
- * @description Creates a type that is T with the required keys K.
+ * Creates a type that is T with the required keys K.
  *
  * @example
+ * ```ts
  * RequiredBy<{ a?: string, b: number }, 'a'>
- * => { a: string, b: number }
+ * // { a: string, b: number }
+ * ```
  *
  * @internal
  */
@@ -195,11 +203,13 @@ export type RequiredBy<T, K extends keyof T> = Omit<T, K> &
   ExactRequired<Pick<T, K>>
 
 /**
- * @description Returns truthy if `array` contains `value`.
+ * Returns truthy if `array` contains `value`.
  *
  * @example
+ * ```ts
  * Some<[1, 2, 3], 2>
- * => true
+ * // true
+ * ```
  *
  * @internal
  */
@@ -213,28 +223,27 @@ export type Some<
     : false
 
 /**
- * @description Creates a type that extracts the values of T.
+ * Creates a type that extracts the values of T.
  *
  * @example
+ * ```ts
  * ValueOf<{ a: string, b: number }>
- * => string | number
- *
- * @internal
+ * // string | number
+ * ```
  */
 export type ValueOf<T> = T[keyof T]
 
-/** @internal */
 export type UnionToTuple<
   union,
   ///
   last = LastInUnion<union>,
 > = [union] extends [never] ? [] : [...UnionToTuple<Exclude<union, last>>, last]
-type LastInUnion<U> = UnionToIntersection<
+export type LastInUnion<U> = UnionToIntersection<
   U extends unknown ? (x: U) => 0 : never
 > extends (x: infer l) => 0
   ? l
   : never
-type UnionToIntersection<union> = (
+export type UnionToIntersection<union> = (
   union extends unknown
     ? (arg: union) => 0
     : never
@@ -255,17 +264,15 @@ export type MaybePartial<
   enabled extends boolean | undefined,
 > = enabled extends true ? Compute<ExactPartial<type>> : type
 
-/** @internal */
 export type ExactPartial<type> = {
   [key in keyof type]?: type[key] | undefined
 }
 
 /** @internal */
 export type ExactRequired<type> = {
-  [P in keyof type]-?: Exclude<type[P], undefined>
+  [key in keyof type]-?: Exclude<type[key], undefined>
 }
 
-/** @internal */
 export type OneOf<
   union extends object,
   fallback extends object | undefined = undefined,
@@ -282,7 +289,7 @@ export type OneOf<
       }
     >
   : never
-type KeyofUnion<type> = type extends type ? keyof type : never
+export type KeyofUnion<type> = type extends type ? keyof type : never
 
 ///////////////////////////////////////////////////////////////////////////
 // Loose types
@@ -308,10 +315,12 @@ export type UnionLooseOmit<type, keys extends string> = type extends any
   : never
 
 /**
- * @description Construct a type with the properties of union type T except for those in type K.
+ * Construct a type with the properties of union type T except for those in type K.
  * @example
+ * ```ts
  * type Result = UnionOmit<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
- * => { b: number } | { b: undefined, c: number }
+ * // { b: number } | { b: undefined, c: number }
+ * ```
  *
  * @internal
  */
@@ -320,10 +329,12 @@ export type UnionOmit<type, keys extends keyof type> = type extends any
   : never
 
 /**
- * @description Construct a type with the properties of union type T except for those in type K.
+ * Construct a type with the properties of union type T except for those in type K.
  * @example
+ * ```ts
  * type Result = UnionOmit<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
- * => { b: number } | { b: undefined, c: number }
+ * // { b: number } | { b: undefined, c: number }
+ * ```
  *
  * @internal
  */
@@ -332,11 +343,13 @@ export type UnionPick<type, keys extends keyof type> = type extends any
   : never
 
 /**
- * @description Creates a type that is a partial of T, but with the required keys K.
+ * Creates a type that is a partial of T, but with the required keys K.
  *
  * @example
+ * ```ts
  * PartialBy<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
- * => { a?: string, b: number } | { a?: string, b: undefined, c: number }
+ * // { a?: string, b: number } | { a?: string, b: undefined, c: number }
+ * ```
  *
  * @internal
  */
@@ -345,11 +358,13 @@ export type UnionPartialBy<T, K extends keyof T> = T extends any
   : never
 
 /**
- * @description Creates a type that is T with the required keys K.
+ * Creates a type that is T with the required keys K.
  *
  * @example
+ * ```ts
  * RequiredBy<{ a?: string, b: number } | { a?: string, c?: number }, 'a'>
- * => { a: string, b: number } | { a: string, c?: number }
+ * // { a: string, b: number } | { a: string, c?: number }
+ * ```
  *
  * @internal
  */
