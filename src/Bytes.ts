@@ -3,30 +3,30 @@ export {
   assertBytes as assert,
 } from './internal/bytes/assertBytes.js'
 
-export { concatBytes as concat } from './internal/data/concat.js'
+export { concatBytes as concat } from './internal/bytes/concatBytes.js'
 
-export { isBytes } from './internal/data/isBytes.js'
+export { isBytes } from './internal/bytes/isBytes.js'
 
-export { isBytesEqual as isEqual } from './internal/data/isBytesEqual.js'
+export { isBytesEqual as isEqual } from './internal/bytes/isBytesEqual.js'
 
 export {
   padLeft,
   padRight,
-} from './internal/data/pad.js'
+} from './internal/bytes/padBytes.js'
 
-export { slice } from './internal/data/slice.js'
+export { sliceBytes, sliceBytes as slice } from './internal/bytes/sliceBytes.js'
 
-export { size } from './internal/data/size.js'
+export { size } from './internal/bytes/size.js'
 
 export {
   trimLeft,
   trimRight,
-} from './internal/data/trim.js'
+} from './internal/bytes/trimBytes.js'
 
 export {
   randomBytes,
   randomBytes as random,
-} from './internal/data/random.js'
+} from './internal/bytes/randomBytes.js'
 
 export {
   fromBytes,

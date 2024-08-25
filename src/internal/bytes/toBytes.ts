@@ -1,7 +1,9 @@
-import { assertSize } from '../data/assertSize.js'
-import { isBytes } from '../data/isBytes.js'
-import { isHex } from '../data/isHex.js'
-import { padLeft, padRight } from '../data/pad.js'
+import { assertSize as assertSize_bytes } from '../bytes/assertSize.js'
+import { assertSize as assertSize_hex } from '../hex/assertSize.js'
+import { isBytes } from '../bytes/isBytes.js'
+import { isHex } from '../hex/isHex.js'
+import { padBytes } from '../bytes/padBytes.js'
+import { padHex } from '../hex/padHex.js'
 import { BaseError } from '../errors/base.js'
 import { InvalidHexLengthError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
@@ -103,8 +105,8 @@ export function booleanToBytes(
   const bytes = new Uint8Array(1)
   bytes[0] = Number(value)
   if (typeof size === 'number') {
-    assertSize(bytes, size)
-    return padLeft(bytes, size)
+    assertSize_bytes(bytes, size)
+    return padBytes(bytes, { size })
   }
   return bytes
 }
@@ -115,7 +117,10 @@ export declare namespace booleanToBytes {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padLeft.ErrorType | GlobalErrorType
+  type ErrorType =
+    | assertSize_bytes.ErrorType
+    | padBytes.ErrorType
+    | GlobalErrorType
 }
 
 booleanToBytes.parseError = (error: unknown) =>
@@ -178,8 +183,8 @@ export function hexToBytes(hex_: Hex, options: hexToBytes.Options = {}): Bytes {
 
   let hex = hex_
   if (size) {
-    assertSize(hex, size)
-    hex = padRight(hex, size)
+    assertSize_hex(hex, size)
+    hex = padHex(hex, { dir: 'right', size })
   }
 
   const hexString = hex.slice(2) as string
@@ -205,7 +210,7 @@ export declare namespace hexToBytes {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
+  type ErrorType = assertSize_hex.ErrorType | padHex.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -282,8 +287,8 @@ export function stringToBytes(
 
   const bytes = encoder.encode(value)
   if (typeof size === 'number') {
-    assertSize(bytes, size)
-    return padRight(bytes, size)
+    assertSize_bytes(bytes, size)
+    return padBytes(bytes, { dir: 'right', size })
   }
   return bytes
 }
@@ -294,7 +299,10 @@ export declare namespace stringToBytes {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | padRight.ErrorType | GlobalErrorType
+  type ErrorType =
+    | assertSize_bytes.ErrorType
+    | padBytes.ErrorType
+    | GlobalErrorType
 }
 
 /* v8 ignore next */

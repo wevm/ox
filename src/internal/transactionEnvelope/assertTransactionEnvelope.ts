@@ -1,7 +1,7 @@
 import { assertAddress } from '../address/assertAddress.js'
 import { versionedHashVersionKzg } from '../constants/kzg.js'
-import { size } from '../data/size.js'
-import { slice } from '../data/slice.js'
+import { size } from '../hex/size.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import {
   EmptyBlobVersionedHashesError,
   InvalidVersionedHashSizeError,
@@ -180,7 +180,7 @@ export function assertTransactionEnvelopeEip4844(
       throw new EmptyBlobVersionedHashesError()
     for (const hash of blobVersionedHashes) {
       const size_ = size(hash)
-      const version = hexToNumber(slice(hash, 0, 1))
+      const version = hexToNumber(sliceHex(hash, 0, 1))
       if (size_ !== 32)
         throw new InvalidVersionedHashSizeError({ hash, size: size_ })
       if (version !== versionedHashVersionKzg)
@@ -198,7 +198,7 @@ export declare namespace assertTransactionEnvelopeEip4844 {
     | assertTransactionEnvelopeEip1559.ErrorType
     | size.ErrorType
     | hexToNumber.ErrorType
-    | slice.ErrorType
+    | sliceHex.ErrorType
     | EmptyBlobVersionedHashesError
     | InvalidVersionedHashSizeError
     | InvalidVersionedHashVersionError

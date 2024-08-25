@@ -12,7 +12,6 @@ test('exports', () => {
       "Constants",
       "ContractAddress",
       "Bytes",
-      "Data",
       "Errors",
       "Hash",
       "Hex",

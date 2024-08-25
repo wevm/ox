@@ -1,24 +1,24 @@
 export { assertHex, assertHex as assert } from './internal/hex/assertHex.js'
 
-export { concatHex as concat } from './internal/data/concat.js'
+export { concatHex as concat } from './internal/hex/concatHex.js'
 
-export { isHex } from './internal/data/isHex.js'
+export { isHex } from './internal/hex/isHex.js'
 
-export { isBytesEqual as isEqual } from './internal/data/isBytesEqual.js'
+export { isBytesEqual as isEqual } from './internal/bytes/isBytesEqual.js'
 
 export {
   padLeft,
   padRight,
-} from './internal/data/pad.js'
+} from './internal/hex/padHex.js'
 
-export { slice } from './internal/data/slice.js'
+export { sliceHex, sliceHex as slice } from './internal/hex/sliceHex.js'
 
-export { size } from './internal/data/size.js'
+export { size } from './internal/hex/size.js'
 
 export {
   trimLeft,
   trimRight,
-} from './internal/data/trim.js'
+} from './internal/hex/trimHex.js'
 
 export {
   fromHex,
@@ -55,6 +55,6 @@ export {
 export {
   randomHex,
   randomHex as random,
-} from './internal/data/random.js'
+} from './internal/hex/randomHex.js'
 
 export type { Hex } from './internal/types/data.js'

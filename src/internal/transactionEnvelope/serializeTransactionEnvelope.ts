@@ -1,6 +1,6 @@
 import { toAccessTupleList } from '../accessList/toAccessTupleList.js'
-import { concatHex } from '../data/concat.js'
-import { trimLeft } from '../data/trim.js'
+import { concatHex } from '../hex/concatHex.js'
+import { trimLeft } from '../hex/trimHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidSignatureVError } from '../errors/signature.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'

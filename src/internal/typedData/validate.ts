@@ -2,7 +2,7 @@ import type { TypedData, TypedDataParameter } from 'abitype'
 
 import { isAddress } from '../address/isAddress.js'
 import { bytesRegex, integerRegex } from '../constants/regex.js'
-import { size } from '../data/size.js'
+import { size } from '../hex/size.js'
 import {
   InvalidAddressError,
   InvalidAddressInputError,

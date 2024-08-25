@@ -1,5 +1,5 @@
 import { assertAddress } from '../address/assertAddress.js'
-import { trimLeft } from '../data/trim.js'
+import { trimLeft } from '../hex/trimHex.js'
 import { isHash } from '../hash/isHash.js'
 import type { AccessList, AccessTupleList } from '../types/accessList.js'
 import type { Hex } from '../types/data.js'

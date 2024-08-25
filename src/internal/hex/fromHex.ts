@@ -1,6 +1,8 @@
 import { hexToBytes } from '../bytes/toBytes.js'
-import { assertSize } from '../data/assertSize.js'
-import { trimLeft, trimRight } from '../data/trim.js'
+import { assertSize as assertSize_bytes } from '../bytes/assertSize.js'
+import { assertSize as assertSize_hex } from '../hex/assertSize.js'
+import { trimLeft as trimLeft_hex } from '../hex/trimHex.js'
+import { trimRight as trimRight_bytes } from '../bytes/trimBytes.js'
 import { InvalidHexBooleanError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
@@ -107,7 +109,7 @@ export function hexToBigInt(
 ): bigint {
   const { signed } = options
 
-  if (options.size) assertSize(hex, options.size)
+  if (options.size) assertSize_hex(hex, options.size)
 
   const value = BigInt(hex)
   if (!signed) return value
@@ -127,7 +129,7 @@ export declare namespace hexToBigInt {
     size?: number | undefined
   }
 
-  type ErrorType = assertSize.ErrorType | GlobalErrorType
+  type ErrorType = assertSize_hex.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -160,11 +162,11 @@ export function hexToBoolean(
 ): boolean {
   let hex = hex_
   if (options.size) {
-    assertSize(hex, options.size)
-    hex = trimLeft(hex)
+    assertSize_hex(hex, options.size)
+    hex = trimLeft_hex(hex)
   }
-  if (trimLeft(hex) === '0x00') return false
-  if (trimLeft(hex) === '0x01') return true
+  if (trimLeft_hex(hex) === '0x00') return false
+  if (trimLeft_hex(hex) === '0x01') return true
   throw new InvalidHexBooleanError(hex)
 }
 
@@ -175,8 +177,8 @@ export declare namespace hexToBoolean {
   }
 
   type ErrorType =
-    | assertSize.ErrorType
-    | trimLeft.ErrorType
+    | assertSize_hex.ErrorType
+    | trimLeft_hex.ErrorType
     | InvalidHexBooleanError
     | GlobalErrorType
 }
@@ -254,8 +256,8 @@ export function hexToString(
 
   let bytes = hexToBytes(hex)
   if (size) {
-    assertSize(bytes, size)
-    bytes = trimRight(bytes)
+    assertSize_bytes(bytes, size)
+    bytes = trimRight_bytes(bytes)
   }
   return new TextDecoder().decode(bytes)
 }
@@ -267,9 +269,9 @@ export declare namespace hexToString {
   }
 
   type ErrorType =
-    | assertSize.ErrorType
+    | assertSize_bytes.ErrorType
     | hexToBytes.ErrorType
-    | trimRight.ErrorType
+    | trimRight_bytes.ErrorType
     | GlobalErrorType
 }
 

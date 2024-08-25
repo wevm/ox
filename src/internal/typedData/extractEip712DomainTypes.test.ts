@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { padRight } from '../data/pad.js'
+import { padRight } from '../hex/padHex.js'
 import { toHex } from '../hex/toHex.js'
 import { extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 

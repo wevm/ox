@@ -40,7 +40,12 @@ export {
   InvalidAbiTypeError,
 } from './internal/errors/abi.js'
 
-export { assertSize } from './internal/data/assertSize.js'
+export { assertSize as assertSize_bytes } from './internal/bytes/assertSize.js'
+export { assertSize as assertSize_hex } from './internal/hex/assertSize.js'
+
+export { padHex } from './internal/hex/padHex.js'
+
+export { padBytes } from './internal/bytes/padBytes.js'
 
 export type {
   EncodePackedValues,
@@ -54,19 +59,16 @@ export { type Cursor, createCursor } from './internal/cursor.js'
 export { LruMap } from './internal/lru.js'
 
 export {
-  pad,
-  padHex,
-  padBytes,
-} from './internal/data/pad.js'
-
+  assertStartOffset as assertStartOffset_bytes,
+  assertEndOffset as assertEndOffset_bytes,
+} from './internal/bytes/sliceBytes.js'
 export {
-  assertStartOffset,
-  assertEndOffset,
-  sliceBytes,
-  sliceHex,
-} from './internal/data/slice.js'
+  assertStartOffset as assertStartOffset_hex,
+  assertEndOffset as assertEndOffset_hex,
+} from './internal/hex/sliceHex.js'
 
-export { trim } from './internal/data/trim.js'
+export { trimHex } from './internal/hex/trimHex.js'
+export { trimBytes } from './internal/bytes/trimBytes.js'
 
 export {
   decodeRlpCursor,

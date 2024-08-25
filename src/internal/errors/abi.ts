@@ -5,7 +5,7 @@ import {
   formatAbiParameters,
 } from 'abitype'
 import { normalizeSignature } from '../abi/getSignature.js'
-import { size } from '../data/size.js'
+import { size } from '../hex/size.js'
 import type { Hex } from '../types/data.js'
 import { BaseError } from './base.js'
 

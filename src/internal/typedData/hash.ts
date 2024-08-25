@@ -1,6 +1,6 @@
 import type { TypedData } from 'abitype'
 
-import { concat } from '../data/concat.js'
+import { concatHex } from '../hex/concatHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
 import type { Hex } from '../types/data.js'
@@ -77,7 +77,7 @@ export function hashTypedData<
       }),
     )
 
-  return keccak256(concat(...parts))
+  return keccak256(concatHex(...parts))
 }
 
 export declare namespace hashTypedData {

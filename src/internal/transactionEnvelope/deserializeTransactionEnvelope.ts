@@ -1,7 +1,7 @@
 import { fromAccessTupleList } from '../accessList/fromAccessTupleList.js'
 import { toBlobSidecars } from '../blobs/toBlobSidecars.js'
-import { isHex } from '../data/isHex.js'
-import { slice } from '../data/slice.js'
+import { isHex } from '../hex/isHex.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidSignatureVError } from '../errors/signature.js'
 import {
@@ -226,7 +226,7 @@ deserializeTransactionEnvelopeLegacy.parseError = (error: unknown) =>
 export function deserializeTransactionEnvelopeEip2930(
   serializedTransaction: TransactionEnvelopeSerializedEip2930,
 ): deserializeTransactionEnvelopeEip2930.ReturnType {
-  const transactionArray = decodeRlp(slice(serializedTransaction, 1))
+  const transactionArray = decodeRlp(sliceHex(serializedTransaction, 1))
 
   const [
     chainId,
@@ -324,7 +324,7 @@ deserializeTransactionEnvelopeEip2930.parseError = (error: unknown) =>
 export function deserializeTransactionEnvelopeEip1559(
   serializedTransaction: TransactionEnvelopeSerializedEip1559,
 ): deserializeTransactionEnvelopeEip1559.ReturnType {
-  const transactionArray = decodeRlp(slice(serializedTransaction, 1))
+  const transactionArray = decodeRlp(sliceHex(serializedTransaction, 1))
 
   const [
     chainId,
@@ -412,7 +412,9 @@ deserializeTransactionEnvelopeEip1559.parseError = (error: unknown) =>
 export function deserializeTransactionEnvelopeEip4844(
   serializedTransaction: TransactionEnvelopeSerializedEip4844,
 ): deserializeTransactionEnvelopeEip4844.ReturnType {
-  const transactionOrWrapperArray = decodeRlp(slice(serializedTransaction, 1))
+  const transactionOrWrapperArray = decodeRlp(
+    sliceHex(serializedTransaction, 1),
+  )
 
   const hasNetworkWrapper = transactionOrWrapperArray.length === 4
 

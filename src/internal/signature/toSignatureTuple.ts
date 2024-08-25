@@ -1,4 +1,4 @@
-import { trimLeft } from '../data/trim.js'
+import { trimLeft } from '../hex/trimHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { toHex } from '../hex/toHex.js'
 import type { Signature, SignatureTuple } from '../types/signature.js'

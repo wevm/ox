@@ -8,9 +8,9 @@ import {
 } from '../bytes/fromBytes.js'
 import { hexToBytes } from '../bytes/toBytes.js'
 import { type Cursor, createCursor } from '../cursor.js'
-import { size } from '../data/size.js'
-import { slice } from '../data/slice.js'
-import { trimLeft } from '../data/trim.js'
+import { size } from '../bytes/size.js'
+import { sliceBytes } from '../bytes/sliceBytes.js'
+import { trimLeft } from '../bytes/trimBytes.js'
 import {
   AbiDecodingDataSizeTooSmallError,
   AbiDecodingZeroDataError,
@@ -64,11 +64,11 @@ export function decodeAbiParameters<
 
   if (size(bytes) === 0 && parameters.length > 0)
     throw new AbiDecodingZeroDataError()
-  if (size(data) && size(data) < 32)
+  if (size(bytes) && size(bytes) < 32)
     throw new AbiDecodingDataSizeTooSmallError({
       data: typeof data === 'string' ? data : bytesToHex(data),
       parameters: parameters as readonly AbiParameter[],
-      size: size(data),
+      size: size(bytes),
     })
 
   let consumed = 0
@@ -159,12 +159,12 @@ const sizeOfOffset = 32
 /** @internal */
 export function decodeAddress(cursor: Cursor) {
   const value = cursor.readBytes(32)
-  return [bytesToHex(slice(value, -20)), 32]
+  return [bytesToHex(sliceBytes(value, -20)), 32]
 }
 
 /** @internal */
 export declare namespace decodeAddress {
-  type ErrorType = bytesToHex.ErrorType | slice.ErrorType | GlobalErrorType
+  type ErrorType = bytesToHex.ErrorType | sliceBytes.ErrorType | GlobalErrorType
 }
 
 /** @internal */

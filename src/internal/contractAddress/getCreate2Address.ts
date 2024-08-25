@@ -2,10 +2,10 @@ import type { Address } from 'abitype'
 
 import { toAddress } from '../address/toAddress.js'
 import { toBytes } from '../bytes/toBytes.js'
-import { concat } from '../data/concat.js'
-import { isBytes } from '../data/isBytes.js'
-import { pad } from '../data/pad.js'
-import { slice } from '../data/slice.js'
+import { concatBytes } from '../bytes/concatBytes.js'
+import { isBytes } from '../bytes/isBytes.js'
+import { padBytes } from '../bytes/padBytes.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
 import type { Bytes, Hex } from '../types/data.js'
@@ -30,7 +30,7 @@ import type { Bytes, Hex } from '../types/data.js'
  */
 export function getCreate2Address(opts: getCreate2Address.Options) {
   const from = toBytes(toAddress(opts.from))
-  const salt = pad(isBytes(opts.salt) ? opts.salt : toBytes(opts.salt), {
+  const salt = padBytes(isBytes(opts.salt) ? opts.salt : toBytes(opts.salt), {
     size: 32,
   })
 
@@ -43,7 +43,10 @@ export function getCreate2Address(opts: getCreate2Address.Options) {
   })()
 
   return toAddress(
-    slice(keccak256(concat(toBytes('0xff'), from, salt, bytecodeHash)), 12),
+    sliceHex(
+      keccak256(concatBytes(toBytes('0xff'), from, salt, bytecodeHash)),
+      12,
+    ),
   )
 }
 
@@ -61,12 +64,12 @@ export declare namespace getCreate2Address {
       }
 
   type ErrorType =
-    | concat.ErrorType
+    | concatBytes.ErrorType
     | keccak256.ErrorType
     | toAddress.ErrorType
     | isBytes.ErrorType
-    | pad.ErrorType
-    | slice.ErrorType
+    | padBytes.ErrorType
+    | sliceHex.ErrorType
     | toBytes.ErrorType
     | GlobalErrorType
 }

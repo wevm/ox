@@ -12,8 +12,8 @@ import type {
 
 import { assertAddress } from '../address/assertAddress.js'
 import { arrayRegex, bytesRegex, integerRegex } from '../constants/regex.js'
-import { concatHex } from '../data/concat.js'
-import { padLeft, padRight } from '../data/pad.js'
+import { concatHex } from '../hex/concatHex.js'
+import { padLeft, padRight } from '../hex/padHex.js'
 import {
   AbiEncodingBytesSizeMismatchError,
   AbiEncodingLengthMismatchError,

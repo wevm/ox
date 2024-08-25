@@ -1,5 +1,5 @@
-import { assertSize } from '../data/assertSize.js'
-import { trimLeft, trimRight } from '../data/trim.js'
+import { assertSize } from '../bytes/assertSize.js'
+import { trimLeft, trimRight } from '../bytes/trimBytes.js'
 import { InvalidBytesBooleanError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { hexToBigInt, hexToNumber } from '../hex/fromHex.js'

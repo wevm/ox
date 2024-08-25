@@ -1,7 +1,7 @@
 import * as ethjs from '@ethereumjs/util'
 import * as ethers from 'ethers'
 import { bench, describe } from 'vitest'
-import { randomBytes } from './random.js'
+import { randomBytes } from './randomBytes.js'
 
 describe('randomBytes', () => {
   bench('ox', () => {

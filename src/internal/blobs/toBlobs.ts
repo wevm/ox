@@ -6,7 +6,7 @@ import {
   maxBytesPerTransaction,
 } from '../constants/blob.js'
 import { createCursor } from '../cursor.js'
-import { size } from '../data/size.js'
+import { size } from '../bytes/size.js'
 import { BlobSizeTooLargeError, EmptyBlobError } from '../errors/blob.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { bytesToHex } from '../hex/toHex.js'

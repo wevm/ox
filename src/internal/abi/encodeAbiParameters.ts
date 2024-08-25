@@ -8,10 +8,10 @@ import type {
 import { parseAbiParameter } from 'abitype'
 
 import { assertAddress } from '../address/assertAddress.js'
-import { concatHex } from '../data/concat.js'
-import { padLeft, padRight } from '../data/pad.js'
-import { size } from '../data/size.js'
-import { slice } from '../data/slice.js'
+import { concatHex } from '../hex/concatHex.js'
+import { padLeft, padRight } from '../hex/padHex.js'
+import { size } from '../hex/size.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import {
   AbiEncodingArrayLengthMismatchError,
   AbiEncodingBytesSizeMismatchError,
@@ -355,7 +355,7 @@ export declare namespace encodeBytes {
     | padLeft.ErrorType
     | padRight.ErrorType
     | numberToHex.ErrorType
-    | slice.ErrorType
+    | sliceHex.ErrorType
     | GlobalErrorType
 }
 
@@ -398,7 +398,7 @@ export function encodeString(value: string): PreparedParameter {
   const partsLength = Math.ceil(size(hexValue) / 32)
   const parts: Hex[] = []
   for (let i = 0; i < partsLength; i++) {
-    parts.push(padRight(slice(hexValue, i * 32, (i + 1) * 32)))
+    parts.push(padRight(sliceHex(hexValue, i * 32, (i + 1) * 32)))
   }
   return {
     dynamic: true,
@@ -414,7 +414,7 @@ export declare namespace encodeString {
   type ErrorType =
     | numberToHex.ErrorType
     | padRight.ErrorType
-    | slice.ErrorType
+    | sliceHex.ErrorType
     | size.ErrorType
     | GlobalErrorType
 }

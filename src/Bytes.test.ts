@@ -11,6 +11,7 @@ test('exports', () => {
       "isEqual",
       "padLeft",
       "padRight",
+      "sliceBytes",
       "slice",
       "size",
       "trimLeft",

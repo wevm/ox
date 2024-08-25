@@ -1,7 +1,7 @@
 import type { Abi, AbiParameter, Address } from 'abitype'
 
 import { isAddress } from '../address/isAddress.js'
-import { isHex } from '../data/isHex.js'
+import { isHex } from '../hex/isHex.js'
 import { AbiItemAmbiguityError } from '../errors/abi.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type {

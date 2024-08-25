@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 
 import * as typedData from '../../../test/constants/typedData.js'
-import { padRight } from '../data/pad.js'
+import { padRight } from '../hex/padHex.js'
 import { toHex } from '../hex/toHex.js'
 import { hashTypedData } from './hash.js'
 

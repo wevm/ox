@@ -1,4 +1,4 @@
-import { slice } from '../data/slice.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import type { Hex } from '../types/data.js'
@@ -45,7 +45,7 @@ export function getSerializedTransactionType<
 >(
   serializedTransaction: serializedTransaction,
 ): GetSerializedTransactionType<serializedTransaction> {
-  const serializedType = slice(serializedTransaction as Hex, 0, 1)
+  const serializedType = sliceHex(serializedTransaction as Hex, 0, 1)
 
   if (serializedType !== '0x' && Number(serializedType) >= 0xc0)
     return 'legacy' as GetSerializedTransactionType<serializedTransaction>
