@@ -1,10 +1,10 @@
-import { hexToBytes } from '../bytes/toBytes.js'
 import { assertSize as assertSize_bytes } from '../bytes/assertSize.js'
-import { assertSize as assertSize_hex } from '../hex/assertSize.js'
-import { trimLeft as trimLeft_hex } from '../hex/trimHex.js'
+import { hexToBytes } from '../bytes/toBytes.js'
 import { trimRight as trimRight_bytes } from '../bytes/trimBytes.js'
 import { InvalidHexBooleanError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { assertSize as assertSize_hex } from '../hex/assertSize.js'
+import { trimLeft as trimLeft_hex } from '../hex/trimHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**

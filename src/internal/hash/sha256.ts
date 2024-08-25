@@ -1,8 +1,8 @@
 import { sha256 as noble_sha256 } from '@noble/hashes/sha256'
 
 import { toBytes } from '../bytes/toBytes.js'
-import { isHex } from '../hex/isHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { isHex } from '../hex/isHex.js'
 import { toHex } from '../hex/toHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 

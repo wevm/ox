@@ -1,7 +1,5 @@
 import { assertAddress } from '../address/assertAddress.js'
 import { versionedHashVersionKzg } from '../constants/kzg.js'
-import { size } from '../hex/size.js'
-import { sliceHex } from '../hex/sliceHex.js'
 import {
   EmptyBlobVersionedHashesError,
   InvalidVersionedHashSizeError,
@@ -16,6 +14,8 @@ import {
   TransactionTypeNotImplementedError,
 } from '../errors/transactionEnvelope.js'
 import { hexToNumber } from '../hex/fromHex.js'
+import { size } from '../hex/size.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelopeEip1559,

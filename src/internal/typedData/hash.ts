@@ -1,8 +1,8 @@
 import type { TypedData } from 'abitype'
 
-import { concatHex } from '../hex/concatHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
+import { concatHex } from '../hex/concatHex.js'
 import type { Hex } from '../types/data.js'
 import type { TypedDataDefinition } from '../types/typedData.js'
 import { extractEip712DomainTypes } from './extractEip712DomainTypes.js'

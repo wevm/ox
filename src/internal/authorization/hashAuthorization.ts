@@ -1,6 +1,6 @@
-import { concatHex } from '../hex/concatHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
+import { concatHex } from '../hex/concatHex.js'
 import { hexToRlp } from '../rlp/encodeRlp.js'
 import type { Authorization } from '../types/authorization.js'
 import type { Hex } from '../types/data.js'

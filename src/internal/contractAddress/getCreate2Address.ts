@@ -1,13 +1,13 @@
 import type { Address } from 'abitype'
 
 import { toAddress } from '../address/toAddress.js'
-import { toBytes } from '../bytes/toBytes.js'
 import { concatBytes } from '../bytes/concatBytes.js'
 import { isBytes } from '../bytes/isBytes.js'
 import { padBytes } from '../bytes/padBytes.js'
-import { sliceHex } from '../hex/sliceHex.js'
+import { toBytes } from '../bytes/toBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { keccak256 } from '../hash/keccak256.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**

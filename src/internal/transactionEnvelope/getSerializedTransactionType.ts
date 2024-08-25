@@ -1,6 +1,6 @@
-import { sliceHex } from '../hex/sliceHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import type { Hex } from '../types/data.js'
 import type {
   TransactionEnvelopeSerialized,

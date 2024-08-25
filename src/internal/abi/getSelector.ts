@@ -1,7 +1,7 @@
 import type { AbiFunction } from 'abitype'
 
-import { sliceHex } from '../hex/sliceHex.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import { getSignatureHash } from './getSignatureHash.js'
 
 /**

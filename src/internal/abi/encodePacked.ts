@@ -12,14 +12,14 @@ import type {
 
 import { assertAddress } from '../address/assertAddress.js'
 import { arrayRegex, bytesRegex, integerRegex } from '../constants/regex.js'
-import { concatHex } from '../hex/concatHex.js'
-import { padLeft, padRight } from '../hex/padHex.js'
 import {
   AbiEncodingBytesSizeMismatchError,
   AbiEncodingLengthMismatchError,
   InvalidAbiTypeError,
 } from '../errors/abi.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { concatHex } from '../hex/concatHex.js'
+import { padLeft, padRight } from '../hex/padHex.js'
 import { booleanToHex, numberToHex, stringToHex } from '../hex/toHex.js'
 import type { Hex } from '../types/data.js'
 

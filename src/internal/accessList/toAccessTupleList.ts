@@ -1,6 +1,6 @@
 import { assertAddress } from '../address/assertAddress.js'
-import { size } from '../hex/size.js'
 import { InvalidStorageKeySizeError } from '../errors/accessList.js'
+import { size } from '../hex/size.js'
 import type { AccessList, AccessTupleList } from '../types/accessList.js'
 import type { Compute, Mutable } from '../types/utils.js'
 

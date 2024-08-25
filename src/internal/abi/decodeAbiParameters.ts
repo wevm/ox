@@ -6,11 +6,11 @@ import {
   bytesToNumber,
   bytesToString,
 } from '../bytes/fromBytes.js'
-import { hexToBytes } from '../bytes/toBytes.js'
-import { type Cursor, createCursor } from '../cursor.js'
 import { size } from '../bytes/size.js'
 import { sliceBytes } from '../bytes/sliceBytes.js'
+import { hexToBytes } from '../bytes/toBytes.js'
 import { trimLeft } from '../bytes/trimBytes.js'
+import { type Cursor, createCursor } from '../cursor.js'
 import {
   AbiDecodingDataSizeTooSmallError,
   AbiDecodingZeroDataError,

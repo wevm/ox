@@ -1,6 +1,6 @@
+import type { GlobalErrorType } from '../errors/error.js'
 import { isHex } from '../hex/isHex.js'
 import { size } from '../hex/size.js'
-import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**

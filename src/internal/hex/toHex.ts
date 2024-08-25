@@ -1,10 +1,10 @@
-import { assertSize } from '../hex/assertSize.js'
 import { isBytes } from '../bytes/isBytes.js'
-import { isHex } from './isHex.js'
-import { padLeft, padRight } from '../hex/padHex.js'
 import { IntegerOutOfRangeError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { assertSize } from '../hex/assertSize.js'
+import { padLeft, padRight } from '../hex/padHex.js'
 import type { Bytes, Hex } from '../types/data.js'
+import { isHex } from './isHex.js'
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),

@@ -8,10 +8,6 @@ import type {
 import { parseAbiParameter } from 'abitype'
 
 import { assertAddress } from '../address/assertAddress.js'
-import { concatHex } from '../hex/concatHex.js'
-import { padLeft, padRight } from '../hex/padHex.js'
-import { size } from '../hex/size.js'
-import { sliceHex } from '../hex/sliceHex.js'
 import {
   AbiEncodingArrayLengthMismatchError,
   AbiEncodingBytesSizeMismatchError,
@@ -21,6 +17,10 @@ import {
 } from '../errors/abi.js'
 import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { concatHex } from '../hex/concatHex.js'
+import { padLeft, padRight } from '../hex/padHex.js'
+import { size } from '../hex/size.js'
+import { sliceHex } from '../hex/sliceHex.js'
 import { booleanToHex, numberToHex, stringToHex } from '../hex/toHex.js'
 import type { Hex } from '../types/data.js'
 import type { Compute } from '../types/utils.js'

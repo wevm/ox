@@ -2,7 +2,6 @@ import type { TypedData, TypedDataParameter } from 'abitype'
 
 import { isAddress } from '../address/isAddress.js'
 import { bytesRegex, integerRegex } from '../constants/regex.js'
-import { size } from '../hex/size.js'
 import {
   InvalidAddressError,
   InvalidAddressInputError,
@@ -10,6 +9,7 @@ import {
 import { BytesSizeMismatchError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidPrimaryTypeError } from '../errors/typedData.js'
+import { size } from '../hex/size.js'
 import { numberToHex } from '../hex/toHex.js'
 import type { Hex } from '../types/data.js'
 import type { TypedDataDefinition } from '../types/typedData.js'

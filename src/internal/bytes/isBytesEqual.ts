@@ -1,9 +1,9 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 
-import { toBytes } from './toBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes, Hex } from '../types/data.js'
 import { isHex } from '../hex/isHex.js'
+import type { Bytes, Hex } from '../types/data.js'
+import { toBytes } from './toBytes.js'
 
 /**
  * Checks if two {@link Types#Bytes} or {@link Types#Hex} values are equal.
