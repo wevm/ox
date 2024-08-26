@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { InvalidSignatureVError } from '../errors/signature.js'
+import { InvalidSignatureVError } from './errors.js'
 import type { Signature } from './types.js'
 
 /** @internal */

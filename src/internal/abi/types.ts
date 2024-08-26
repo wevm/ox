@@ -6,6 +6,16 @@ import type {
 } from 'abitype'
 import type { IsUnion, UnionToTuple } from '../types.js'
 
+export type {
+  Abi,
+  AbiConstructor,
+  AbiError,
+  AbiEvent,
+  AbiFallback,
+  AbiFunction,
+  AbiParameter,
+} from 'abitype'
+
 export type AbiItem = Abi[number]
 
 /** @internal */

@@ -1,5 +1,20 @@
 export type { Bytes } from './internal/bytes/types.js'
 
+export {
+  BytesSizeMismatchError,
+  IntegerOutOfRangeError,
+  InvalidBytesBooleanError,
+  InvalidBytesTypeError,
+  InvalidHexBooleanError,
+  InvalidHexLengthError,
+  InvalidHexTypeError,
+  InvalidHexValueError,
+  InvalidTypeError,
+  SizeExceedsPaddingSizeError,
+  SizeOverflowError,
+  SliceOffsetOutOfBoundsError,
+} from './internal/errors/data.js'
+
 export { Bytes_assert as assert } from './internal/bytes/assert.js'
 
 export { Bytes_concat as concat } from './internal/bytes/concat.js'

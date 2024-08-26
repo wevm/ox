@@ -1,7 +1,7 @@
 import { Address_assert } from '../address/assert.js'
-import { InvalidStorageKeySizeError } from '../errors/accessList.js'
 import { Hex_size } from '../hex/size.js'
 import type { Compute, Mutable } from '../types.js'
+import { InvalidStorageKeySizeError } from './errors.js'
 import type { AccessList, AccessList_Tuple } from './types.js'
 
 /** @internal */

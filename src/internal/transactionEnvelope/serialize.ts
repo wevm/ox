@@ -1,13 +1,12 @@
 import { AccessList_toTupleList } from '../accessList/toTupleList.js'
 import type { BlobSidecars } from '../blobs/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { InvalidSignatureVError } from '../errors/signature.js'
-import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import { Hex_concat } from '../hex/concat.js'
 import { Hex_from } from '../hex/from.js'
 import { Hex_trimLeft } from '../hex/trim.js'
 import type { Hex } from '../hex/types.js'
 import { Rlp_fromHex } from '../rlp/from.js'
+import { InvalidSignatureVError } from '../signature/errors.js'
 import { Signature_extract } from '../signature/extract.js'
 import { Signature_toTuple } from '../signature/toTuple.js'
 import type { Signature } from '../signature/types.js'
@@ -18,6 +17,7 @@ import {
   TransactionEnvelope_assertEip4844,
   TransactionEnvelope_assertLegacy,
 } from './assert.js'
+import { TransactionTypeNotImplementedError } from './errors.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,

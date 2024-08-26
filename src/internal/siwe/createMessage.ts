@@ -1,6 +1,5 @@
 import { Address_from } from '../address/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { SiweInvalidMessageFieldError } from '../errors/siwe.js'
 import {
   Siwe_domainRegex,
   Siwe_ipRegex,
@@ -8,6 +7,7 @@ import {
   Siwe_nonceRegex,
   Siwe_schemeRegex,
 } from './constants.js'
+import { SiweInvalidMessageFieldError } from './errors.js'
 import { Siwe_isUri } from './isUri.js'
 import type { Siwe_Message } from './types.js'
 

@@ -8,13 +8,6 @@ import type {
 import { parseAbiParameter } from 'abitype'
 
 import { Address_assert } from '../address/assert.js'
-import {
-  AbiEncodingArrayLengthMismatchError,
-  AbiEncodingBytesSizeMismatchError,
-  AbiEncodingInvalidArrayError,
-  AbiEncodingLengthMismatchError,
-  InvalidAbiTypeError,
-} from '../errors/abi.js'
 import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_concat } from '../hex/concat.js'
@@ -25,6 +18,13 @@ import { Hex_slice } from '../hex/slice.js'
 import type { Hex } from '../hex/types.js'
 import type { Compute } from '../types.js'
 import type { TupleAbiParameter } from './decodeParameters.js'
+import {
+  AbiEncodingArrayLengthMismatchError,
+  AbiEncodingBytesSizeMismatchError,
+  AbiEncodingInvalidArrayError,
+  AbiEncodingLengthMismatchError,
+  InvalidAbiTypeError,
+} from './errors.js'
 
 // TODO: These types should be in abitype?
 /** @internal */

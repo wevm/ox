@@ -4,10 +4,10 @@ import {
   formatAbiItem,
   formatAbiParameters,
 } from 'abitype'
-import { normalizeSignature } from '../abi/getSignature.js'
+import { BaseError } from '../errors/base.js'
 import { Hex_size } from '../hex/size.js'
 import type { Hex } from '../hex/types.js'
-import { BaseError } from './base.js'
+import { normalizeSignature } from './getSignature.js'
 
 export class AbiDecodingDataSizeTooSmallError extends BaseError {
   override readonly name = 'AbiDecodingDataSizeTooSmallError'

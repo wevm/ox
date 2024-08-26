@@ -1,8 +1,8 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import { Hex_slice } from '../hex/slice.js'
 import type { Hex } from '../hex/types.js'
 import type { IsNarrowable, IsNever } from '../types.js'
+import { TransactionTypeNotImplementedError } from './errors.js'
 import type {
   TransactionEnvelope_Serialized,
   TransactionEnvelope_SerializedEip1559,

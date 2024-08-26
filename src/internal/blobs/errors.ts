@@ -1,7 +1,7 @@
 import type { Hex } from '../hex/types.js'
 import { Kzg_versionedHashVersion } from '../kzg/constants.js'
 
-import { BaseError } from './base.js'
+import { BaseError } from '../errors/base.js'
 
 export class BlobSizeTooLargeError extends BaseError {
   override readonly name = 'BlobSizeTooLargeError'

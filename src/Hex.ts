@@ -1,5 +1,20 @@
 export type { Hex } from './internal/hex/types.js'
 
+export {
+  BytesSizeMismatchError,
+  IntegerOutOfRangeError,
+  InvalidBytesBooleanError,
+  InvalidBytesTypeError,
+  InvalidHexBooleanError,
+  InvalidHexLengthError,
+  InvalidHexTypeError,
+  InvalidHexValueError,
+  InvalidTypeError,
+  SizeExceedsPaddingSizeError,
+  SizeOverflowError,
+  SliceOffsetOutOfBoundsError,
+} from './internal/errors/data.js'
+
 export { Hex_assert as assert } from './internal/hex/assert.js'
 
 export { Hex_concat as concat } from './internal/hex/concat.js'

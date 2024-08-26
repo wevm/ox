@@ -1,9 +1,9 @@
 import type { Bytes } from '../bytes/types.js'
+import { BaseError } from '../errors/base.js'
 import { Hex_from } from '../hex/from.js'
 import { Hex_size } from '../hex/size.js'
 import type { Hex } from '../hex/types.js'
 import { stringify } from '../stringify.js'
-import { BaseError } from './base.js'
 
 export class InvalidSerializedSignatureSizeError extends BaseError {
   override readonly name = 'InvalidSerializedSignatureSizeError'

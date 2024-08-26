@@ -1,3 +1,5 @@
+export { InvalidPrimaryTypeError } from './internal/typedData/errors.js'
+
 export type {
   TypedData_Definition as Definition,
   TypedData_EIP712DomainDefinition as EIP712DomainDefinition,

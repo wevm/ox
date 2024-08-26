@@ -1,11 +1,11 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { CannotInferTransactionTypeError } from '../errors/transactionEnvelope.js'
 import type {
   FeeValuesEip1559,
   FeeValuesEip4844,
   FeeValuesLegacy,
 } from '../fee/types.js'
 import type { Assign, ExactPartial, IsNever, OneOf, ValueOf } from '../types.js'
+import { CannotInferTransactionTypeError } from './errors.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,

@@ -1,4 +1,4 @@
-import { BaseError } from './base.js'
+import { BaseError } from '../errors/base.js'
 
 export class SiweInvalidMessageFieldError extends BaseError {
   override readonly name = 'SiweInvalidMessageFieldError'

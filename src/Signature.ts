@@ -5,6 +5,15 @@ export type {
   Signature_Tuple as Tuple,
 } from './internal/signature/types.js'
 
+export {
+  InvalidSerializedSignatureSizeError,
+  InvalidSignatureRError,
+  InvalidSignatureSError,
+  InvalidSignatureVError,
+  InvalidSignatureYParityError,
+  MissingSignaturePropertiesError,
+} from './internal/signature/errors.js'
+
 export { Signature_assert as assert } from './internal/signature/assert.js'
 
 export { Signature_fromCompact as fromCompact } from './internal/signature/fromCompact.js'

@@ -2,13 +2,13 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 
 import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import {
-  InvalidSerializedSignatureSizeError,
-  InvalidSignatureYParityError,
-} from '../errors/signature.js'
 import { Hex_from } from '../hex/from.js'
 import type { Hex } from '../hex/types.js'
 import type { Compute } from '../types.js'
+import {
+  InvalidSerializedSignatureSizeError,
+  InvalidSignatureYParityError,
+} from './errors.js'
 import { Signature_fromCompact } from './fromCompact.js'
 import type { Signature } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'

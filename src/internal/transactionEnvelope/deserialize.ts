@@ -1,15 +1,11 @@
 import { AccessList_fromTupleList } from '../accessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../blobs/toSidecars.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { InvalidSignatureVError } from '../errors/signature.js'
-import {
-  InvalidSerializedTransactionError,
-  TransactionTypeNotImplementedError,
-} from '../errors/transactionEnvelope.js'
 import { Hex_isHex } from '../hex/isHex.js'
 import { Hex_slice } from '../hex/slice.js'
 import type { Hex } from '../hex/types.js'
 import { Rlp_toHex } from '../rlp/to.js'
+import { InvalidSignatureVError } from '../signature/errors.js'
 import { Signature_fromTuple } from '../signature/fromTuple.js'
 import type { Compute, IsNarrowable } from '../types.js'
 import {
@@ -18,6 +14,10 @@ import {
   TransactionEnvelope_assertEip4844,
   TransactionEnvelope_assertLegacy,
 } from './assert.js'
+import {
+  InvalidSerializedTransactionError,
+  TransactionTypeNotImplementedError,
+} from './errors.js'
 import {
   type GetSerializedType,
   TransactionEnvelope_getSerializedType,

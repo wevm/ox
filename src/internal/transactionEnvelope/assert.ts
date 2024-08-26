@@ -3,20 +3,20 @@ import {
   EmptyBlobVersionedHashesError,
   InvalidVersionedHashSizeError,
   InvalidVersionedHashVersionError,
-} from '../errors/blob.js'
+} from '../blobs/errors.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { Hex_size } from '../hex/size.js'
+import { Hex_slice } from '../hex/slice.js'
+import { Hex_toNumber } from '../hex/to.js'
+import { Kzg_versionedHashVersion } from '../kzg/constants.js'
+import type { PartialBy } from '../types.js'
 import {
   FeeCapTooHighError,
   GasPriceTooHighError,
   InvalidChainIdError,
   TipAboveFeeCapError,
   TransactionTypeNotImplementedError,
-} from '../errors/transactionEnvelope.js'
-import { Hex_size } from '../hex/size.js'
-import { Hex_slice } from '../hex/slice.js'
-import { Hex_toNumber } from '../hex/to.js'
-import { Kzg_versionedHashVersion } from '../kzg/constants.js'
-import type { PartialBy } from '../types.js'
+} from './errors.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,

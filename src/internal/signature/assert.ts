@@ -1,12 +1,12 @@
 import type { GlobalErrorType } from '../errors/error.js'
+import { Solidity_maxUint256 } from '../solidity/constants.js'
+import type { ExactPartial } from '../types.js'
 import {
   InvalidSignatureRError,
   InvalidSignatureSError,
   InvalidSignatureYParityError,
   MissingSignaturePropertiesError,
-} from '../errors/signature.js'
-import { Solidity_maxUint256 } from '../solidity/constants.js'
-import type { ExactPartial } from '../types.js'
+} from './errors.js'
 import type { Signature } from './types.js'
 
 /**

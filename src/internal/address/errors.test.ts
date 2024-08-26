@@ -3,7 +3,7 @@ import {
   InvalidAddressChecksumError,
   InvalidAddressError,
   InvalidAddressInputError,
-} from './address.js'
+} from './errors.js'
 
 test('InvalidAddressError', () => {
   {

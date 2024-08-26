@@ -1,11 +1,11 @@
 import type { Address } from '../address/types.js'
+import type { GlobalErrorType } from '../errors/error.js'
+import { Address_checksum } from './checksum.js'
 import {
   InvalidAddressChecksumError,
   InvalidAddressError,
   InvalidAddressInputError,
-} from '../errors/address.js'
-import type { GlobalErrorType } from '../errors/error.js'
-import { Address_checksum } from './checksum.js'
+} from './errors.js'
 
 const addressRegex = /^0x[a-fA-F0-9]{40}$/
 

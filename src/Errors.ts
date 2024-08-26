@@ -2,7 +2,7 @@ export {
   InvalidAddressError,
   InvalidAddressInputError,
   InvalidAddressChecksumError,
-} from './internal/errors/address.js'
+} from './internal/address/errors.js'
 
 export { BaseError } from './internal/errors/base.js'
 
@@ -12,7 +12,7 @@ export {
   EmptyBlobVersionedHashesError,
   InvalidVersionedHashSizeError,
   InvalidVersionedHashVersionError,
-} from './internal/errors/blob.js'
+} from './internal/blobs/errors.js'
 
 export {
   NegativeOffsetError,
@@ -43,9 +43,9 @@ export {
   InvalidSignatureVError,
   InvalidSignatureYParityError,
   MissingSignaturePropertiesError,
-} from './internal/errors/signature.js'
+} from './internal/signature/errors.js'
 
-export { SiweInvalidMessageFieldError } from './internal/errors/siwe.js'
+export { SiweInvalidMessageFieldError } from './internal/siwe/errors.js'
 
 export {
   CannotInferTransactionTypeError,
@@ -55,6 +55,6 @@ export {
   InvalidSerializedTransactionError,
   TipAboveFeeCapError,
   TransactionTypeNotImplementedError,
-} from './internal/errors/transactionEnvelope.js'
+} from './internal/transactionEnvelope/errors.js'
 
-export { InvalidPrimaryTypeError } from './internal/errors/typedData.js'
+export { InvalidPrimaryTypeError } from './internal/typedData/errors.js'

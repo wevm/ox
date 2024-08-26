@@ -38,7 +38,7 @@ export {
   AbiEncodingLengthMismatchError,
   AbiItemAmbiguityError,
   InvalidAbiTypeError,
-} from './internal/errors/abi.js'
+} from './internal/abi/errors.js'
 
 export { pad as pad_hex } from './internal/hex/pad.js'
 

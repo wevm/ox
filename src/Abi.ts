@@ -6,7 +6,18 @@ export type {
   AbiFallback as Fallback,
   AbiFunction as Function,
   AbiParameter as Parameter,
-} from 'abitype'
+} from './internal/abi/types.js'
+
+export {
+  AbiDecodingDataSizeTooSmallError,
+  AbiDecodingZeroDataError,
+  AbiEncodingArrayLengthMismatchError,
+  AbiEncodingBytesSizeMismatchError,
+  AbiEncodingInvalidArrayError,
+  AbiEncodingLengthMismatchError,
+  AbiItemAmbiguityError,
+  InvalidAbiTypeError,
+} from './internal/abi/errors.js'
 
 export { Abi_encodeParameters as encodeParameters } from './internal/abi/encodeParameters.js'
 

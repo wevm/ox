@@ -1,3 +1,13 @@
+export {
+  CannotInferTransactionTypeError,
+  FeeCapTooHighError,
+  GasPriceTooHighError,
+  InvalidChainIdError,
+  InvalidSerializedTransactionError,
+  TipAboveFeeCapError,
+  TransactionTypeNotImplementedError,
+} from './internal/transactionEnvelope/errors.js'
+
 export type {
   TransactionEnvelope,
   TransactionEnvelope_Base as Base,

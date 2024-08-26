@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 
 import * as typedData from '../../../test/constants/typedData.js'
-import { InvalidPrimaryTypeError } from './typedData.js'
+import { InvalidPrimaryTypeError } from './errors.js'
 
 test('InvalidPrimaryTypeError', () => {
   expect(

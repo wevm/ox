@@ -5,6 +5,14 @@ export type {
   BlobSidecars,
 } from './internal/blobs/types.js'
 
+export {
+  BlobSizeTooLargeError,
+  EmptyBlobError,
+  EmptyBlobVersionedHashesError,
+  InvalidVersionedHashSizeError,
+  InvalidVersionedHashVersionError,
+} from './internal/blobs/errors.js'
+
 export { Blobs_toCommitments as toCommitments } from './internal/blobs/toCommitments.js'
 
 export { Blobs_toProofs as toProofs } from './internal/blobs/toProofs.js'

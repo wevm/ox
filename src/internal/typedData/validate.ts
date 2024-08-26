@@ -1,13 +1,12 @@
 import type { TypedData, TypedDataParameter } from 'abitype'
 
-import { Address_isAddress } from '../address/isAddress.js'
 import {
   InvalidAddressError,
   InvalidAddressInputError,
-} from '../errors/address.js'
+} from '../address/errors.js'
+import { Address_isAddress } from '../address/isAddress.js'
 import { BytesSizeMismatchError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { InvalidPrimaryTypeError } from '../errors/typedData.js'
 import { Hex_fromNumber } from '../hex/from.js'
 import { Hex_size } from '../hex/size.js'
 import type { Hex } from '../hex/types.js'
@@ -15,6 +14,7 @@ import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
 } from '../solidity/constants.js'
+import { InvalidPrimaryTypeError } from './errors.js'
 import type { TypedData_Definition } from './types.js'
 
 /**

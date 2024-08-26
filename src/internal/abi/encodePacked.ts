@@ -11,11 +11,6 @@ import type {
 
 import { Address_assert } from '../address/assert.js'
 import type { Address } from '../address/types.js'
-import {
-  AbiEncodingBytesSizeMismatchError,
-  AbiEncodingLengthMismatchError,
-  InvalidAbiTypeError,
-} from '../errors/abi.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_concat } from '../hex/concat.js'
 import { Hex_fromBoolean, Hex_fromNumber, Hex_fromString } from '../hex/from.js'
@@ -26,6 +21,11 @@ import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
 } from '../solidity/constants.js'
+import {
+  AbiEncodingBytesSizeMismatchError,
+  AbiEncodingLengthMismatchError,
+  InvalidAbiTypeError,
+} from './errors.js'
 
 /** @internal */
 export type PackedAbiType =

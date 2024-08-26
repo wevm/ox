@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { SiweInvalidMessageFieldError } from './siwe.js'
+import { SiweInvalidMessageFieldError } from './errors.js'
 
 test('SiweInvalidMessageFieldError', () => {
   expect(
