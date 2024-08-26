@@ -1,18 +1,18 @@
+import { Hex, TypedData } from 'ox'
 import { expect, test } from 'vitest'
-import { padRight } from '../hex/padHex.js'
-import { toHex } from '../hex/toHex.js'
-import { extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 
 const FULL_DOMAIN = {
   name: 'example.metamask.io',
   version: '1',
   chainId: 1,
   verifyingContract: '0x0000000000000000000000000000000000000000',
-  salt: padRight(toHex(new Uint8Array([1, 2, 3]))),
+  salt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
 } as const
 
 test('basic', () => {
-  expect(extractEip712DomainTypes(FULL_DOMAIN)).toMatchInlineSnapshot(`
+  expect(
+    TypedData.extractEip712DomainTypes(FULL_DOMAIN),
+  ).toMatchInlineSnapshot(`
     [
       {
         "name": "name",
@@ -40,7 +40,7 @@ test('basic', () => {
 
 test('partial', () => {
   expect(
-    extractEip712DomainTypes({
+    TypedData.extractEip712DomainTypes({
       ...FULL_DOMAIN,
       name: undefined,
       version: undefined,
@@ -64,5 +64,5 @@ test('partial', () => {
 })
 
 test('empty', () => {
-  expect(extractEip712DomainTypes({})).toMatchInlineSnapshot('[]')
+  expect(TypedData.extractEip712DomainTypes({})).toMatchInlineSnapshot('[]')
 })

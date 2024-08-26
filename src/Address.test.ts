@@ -4,16 +4,11 @@ import * as exports from './Address.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "assertAddress",
       "assert",
-      "checksumAddress",
       "checksum",
       "isAddress",
-      "toAddress",
       "from",
-      "publicKeyToAddress",
       "fromPublicKey",
-      "isAddressEqual",
       "isEqual",
     ]
   `)

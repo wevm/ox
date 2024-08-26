@@ -5,14 +5,10 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "createMessage",
-      "createSiweMessage",
       "generateNonce",
-      "generateSiweNonce",
       "isUri",
       "parseMessage",
-      "parseSiweMessage",
       "validateMessage",
-      "validateSiweMessage",
     ]
   `)
 })

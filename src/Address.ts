@@ -1,28 +1,13 @@
 export type { Address } from 'abitype'
 
-export {
-  assertAddress,
-  assertAddress as assert,
-} from './internal/address/assertAddress.js'
+export { Address_assert as assert } from './internal/address/assert.js'
 
-export {
-  checksumAddress,
-  checksumAddress as checksum,
-} from './internal/address/checksumAddress.js'
+export { Address_checksum as checksum } from './internal/address/checksum.js'
 
-export { isAddress } from './internal/address/isAddress.js'
+export { Address_isAddress as isAddress } from './internal/address/isAddress.js'
 
-export {
-  toAddress,
-  toAddress as from,
-} from './internal/address/toAddress.js'
+export { Address_from as from } from './internal/address/from.js'
 
-export {
-  publicKeyToAddress,
-  publicKeyToAddress as fromPublicKey,
-} from './internal/address/publicKeyToAddress.js'
+export { Address_fromPublicKey as fromPublicKey } from './internal/address/fromPublicKey.js'
 
-export {
-  isAddressEqual,
-  isAddressEqual as isEqual,
-} from './internal/address/isAddressEqual.js'
+export { Address_isEqual as isEqual } from './internal/address/isEqual.js'

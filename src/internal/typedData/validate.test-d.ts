@@ -1,6 +1,5 @@
+import { TypedData } from 'ox'
 import { test } from 'vitest'
-
-import { validateTypedData } from './validate.js'
 
 const EIP712Domain = [
   { name: 'name', type: 'string' },
@@ -23,7 +22,7 @@ const domain = {
 } as const
 
 test('type errors', () => {
-  validateTypedData({
+  TypedData.validate({
     // @ts-expect-error address is missing
     domain: {
       ...domain,

@@ -1,9 +1,9 @@
 import type { Address } from 'abitype'
 import type { AccessList } from './accessList.js'
-import type { AuthorizationList } from './authorization.js'
+import type { Authorization_List } from './authorization.js'
 import type { BlobSidecar } from './blob.js'
 import type { Hex } from './data.js'
-import type { LegacySignature, Signature } from './signature.js'
+import type { Signature, Signature_Legacy } from './signature.js'
 import type {
   Branded,
   Compute,
@@ -13,7 +13,7 @@ import type {
   OneOf,
 } from './utils.js'
 
-export type TransactionType =
+export type TransactionEnvelope_Type =
   | 'legacy'
   | 'eip1559'
   | 'eip2930'
@@ -22,15 +22,15 @@ export type TransactionType =
   | (string & {})
 
 export type TransactionEnvelope = OneOf<
-  | TransactionEnvelopeLegacy
-  | TransactionEnvelopeEip1559
-  | TransactionEnvelopeEip2930
-  | TransactionEnvelopeEip4844
-  | TransactionEnvelopeEip7702
+  | TransactionEnvelope_Legacy
+  | TransactionEnvelope_Eip1559
+  | TransactionEnvelope_Eip2930
+  | TransactionEnvelope_Eip4844
+  | TransactionEnvelope_Eip7702
 >
 
-export type TransactionEnvelopeBase<
-  type extends TransactionType = TransactionType,
+export type TransactionEnvelope_Base<
+  type extends TransactionEnvelope_Type = TransactionEnvelope_Type,
 > = {
   /** Contract code or a hashed method call with encoded args */
   data?: Hex | undefined
@@ -52,17 +52,17 @@ export type TransactionEnvelopeBase<
 // Transaction Types
 /////////////////////////////////////////////////////////////////////////
 
-export type TransactionEnvelopeLegacy = Compute<
-  TransactionEnvelopeBase<'legacy'> & {
+export type TransactionEnvelope_Legacy = Compute<
+  TransactionEnvelope_Base<'legacy'> & {
     /** EIP-155 Chain ID. */
     chainId?: number | undefined
     /** Base fee per gas. */
     gasPrice?: bigint | undefined
-  } & ExactPartial<LegacySignature>
+  } & ExactPartial<Signature_Legacy>
 >
 
-export type TransactionEnvelopeEip1559 = Compute<
-  TransactionEnvelopeBase<'eip1559'> & {
+export type TransactionEnvelope_Eip1559 = Compute<
+  TransactionEnvelope_Base<'eip1559'> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
     /** EIP-155 Chain ID. */
@@ -71,22 +71,22 @@ export type TransactionEnvelopeEip1559 = Compute<
     maxFeePerGas?: bigint | undefined
     /** Max priority fee per gas (in wei). */
     maxPriorityFeePerGas?: bigint | undefined
-  } & ExactPartial<Signature | LegacySignature>
+  } & ExactPartial<Signature | Signature_Legacy>
 >
 
-export type TransactionEnvelopeEip2930 = Compute<
-  TransactionEnvelopeBase<'eip2930'> & {
+export type TransactionEnvelope_Eip2930 = Compute<
+  TransactionEnvelope_Base<'eip2930'> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
     /** EIP-155 Chain ID. */
     chainId: number
     /** Base fee per gas. */
     gasPrice?: bigint | undefined
-  } & ExactPartial<Signature | LegacySignature>
+  } & ExactPartial<Signature | Signature_Legacy>
 >
 
-export type TransactionEnvelopeEip4844 = Compute<
-  TransactionEnvelopeBase<'eip4844'> & {
+export type TransactionEnvelope_Eip4844 = Compute<
+  TransactionEnvelope_Base<'eip4844'> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
     /** Versioned hashes of blobs to be included in the transaction. */
@@ -104,12 +104,12 @@ export type TransactionEnvelopeEip4844 = Compute<
   } & ExactPartial<Signature>
 >
 
-export type TransactionEnvelopeEip7702 = Compute<
-  TransactionEnvelopeBase<'eip7702'> & {
+export type TransactionEnvelope_Eip7702 = Compute<
+  TransactionEnvelope_Base<'eip7702'> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
     /** EIP-7702 Authorization List. */
-    authorizationList: AuthorizationList<true>
+    authorizationList: Authorization_List<true>
     /** EIP-155 Chain ID. */
     chainId: number
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
@@ -119,22 +119,22 @@ export type TransactionEnvelopeEip7702 = Compute<
   } & ExactPartial<Signature>
 >
 
-export type TransactionEnvelopeSerializedEip1559 = `0x02${string}`
-export type TransactionEnvelopeSerializedEip2930 = `0x01${string}`
-export type TransactionEnvelopeSerializedEip4844 = `0x03${string}`
-export type TransactionEnvelopeSerializedEip7702 = `0x04${string}`
-export type TransactionEnvelopeSerializedLegacy = Branded<
+export type TransactionEnvelope_SerializedEip1559 = `0x02${string}`
+export type TransactionEnvelope_SerializedEip2930 = `0x01${string}`
+export type TransactionEnvelope_SerializedEip4844 = `0x03${string}`
+export type TransactionEnvelope_SerializedEip7702 = `0x04${string}`
+export type TransactionEnvelope_SerializedLegacy = Branded<
   `0x${string}`,
   'legacy'
 >
-export type TransactionEnvelopeSerialized<
-  type extends TransactionType = TransactionType,
+export type TransactionEnvelope_Serialized<
+  type extends TransactionEnvelope_Type = TransactionEnvelope_Type,
   result =
-    | (type extends 'eip1559' ? TransactionEnvelopeSerializedEip1559 : never)
-    | (type extends 'eip2930' ? TransactionEnvelopeSerializedEip2930 : never)
-    | (type extends 'eip4844' ? TransactionEnvelopeSerializedEip4844 : never)
-    | (type extends 'eip7702' ? TransactionEnvelopeSerializedEip7702 : never)
-    | (type extends 'legacy' ? TransactionEnvelopeSerializedLegacy : never),
+    | (type extends 'eip1559' ? TransactionEnvelope_SerializedEip1559 : never)
+    | (type extends 'eip2930' ? TransactionEnvelope_SerializedEip2930 : never)
+    | (type extends 'eip4844' ? TransactionEnvelope_SerializedEip4844 : never)
+    | (type extends 'eip7702' ? TransactionEnvelope_SerializedEip7702 : never)
+    | (type extends 'legacy' ? TransactionEnvelope_SerializedLegacy : never),
 > = IsNarrowable<type, string> extends true
   ? IsNever<result> extends true
     ? `0x${string}`

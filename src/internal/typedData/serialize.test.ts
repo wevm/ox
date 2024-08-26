@@ -1,10 +1,9 @@
+import { TypedData } from 'ox'
 import { expect, test } from 'vitest'
-
-import { serializeTypedData } from './serialize.js'
 
 test('default', () => {
   expect(
-    serializeTypedData({
+    TypedData.serialize({
       domain: {
         name: 'Ether!',
         version: '1',
@@ -32,7 +31,7 @@ test('default', () => {
 
 test('with domain', () => {
   expect(
-    serializeTypedData({
+    TypedData.serialize({
       domain: {
         name: 'Ether!',
         version: '1',
@@ -68,7 +67,7 @@ test('with domain', () => {
 
 test('domain as primary type', () => {
   expect(
-    serializeTypedData({
+    TypedData.serialize({
       domain: {
         name: 'Ether!',
         version: '1',
@@ -99,7 +98,7 @@ test('domain as primary type', () => {
 
 test('no domain', () => {
   expect(
-    serializeTypedData({
+    TypedData.serialize({
       primaryType: 'Foo',
       types: {
         EIP712Domain: [

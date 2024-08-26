@@ -1,7 +1,7 @@
 import type { TypedData, TypedDataDomain } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
-import { hashStruct } from './hashStruct.js'
+import { TypedData_hashStruct } from './hashStruct.js'
 
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) domain.
@@ -30,23 +30,24 @@ import { hashStruct } from './hashStruct.js'
  * // '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
  * ```
  */
-export function hashDomain(value: hashDomain.Value) {
+export function TypedData_hashDomain(value: TypedData_hashDomain.Value) {
   const { domain, types } = value
-  return hashStruct({
+  return TypedData_hashStruct({
     data: domain,
     primaryType: 'EIP712Domain',
     types,
   })
 }
 
-export declare namespace hashDomain {
+export declare namespace TypedData_hashDomain {
   type Value = {
     domain: TypedDataDomain
     types: TypedData
   }
 
-  type ErrorType = hashStruct.ErrorType | GlobalErrorType
+  type ErrorType = TypedData_hashStruct.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-hashDomain.parseError = (error: unknown) => error as hashDomain.ErrorType
+TypedData_hashDomain.parseError = (error: unknown) =>
+  error as TypedData_hashDomain.ErrorType

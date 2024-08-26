@@ -5,7 +5,7 @@ import type { Address } from 'abitype'
  *
  * @see https://eips.ethereum.org/EIPS/eip-4361
  */
-export type SiweMessage = {
+export type Siwe_Message = {
   /**
    * The Ethereum address performing the signing.
    */

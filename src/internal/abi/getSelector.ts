@@ -1,8 +1,8 @@
 import type { AbiFunction } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
-import { sliceHex } from '../hex/sliceHex.js'
-import { getSignatureHash } from './getSignatureHash.js'
+import { Hex_slice } from '../hex/slice.js'
+import { Abi_getSignatureHash } from './getSignatureHash.js'
 
 /**
  * Computes the selector for an ABI Item.
@@ -27,17 +27,18 @@ import { getSignatureHash } from './getSignatureHash.js'
  * // '0x6352211e'
  * ```
  */
-export const getSelector = (abiItem: string | AbiFunction) =>
-  sliceHex(getSignatureHash(abiItem), 0, 4)
+export const Abi_getSelector = (abiItem: string | AbiFunction) =>
+  Hex_slice(Abi_getSignatureHash(abiItem), 0, 4)
 
-export declare namespace getSelector {
-  type Parameters = getSignatureHash.Parameters
+export declare namespace Abi_getSelector {
+  type Parameters = Abi_getSignatureHash.Parameters
 
   type ErrorType =
-    | getSignatureHash.ErrorType
-    | sliceHex.ErrorType
+    | Abi_getSignatureHash.ErrorType
+    | Hex_slice.ErrorType
     | GlobalErrorType
 }
 
 /* v8 ignore next */
-getSelector.parseError = (error: unknown) => error as getSelector.ErrorType
+Abi_getSelector.parseError = (error: unknown) =>
+  error as Abi_getSelector.ErrorType

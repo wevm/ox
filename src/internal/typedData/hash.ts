@@ -1,14 +1,14 @@
 import type { TypedData } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
-import { keccak256 } from '../hash/keccak256.js'
-import { concatHex } from '../hex/concatHex.js'
+import { Hash_keccak256 } from '../hash/keccak256.js'
+import { Hex_concat } from '../hex/concat.js'
 import type { Hex } from '../types/data.js'
-import type { TypedDataDefinition } from '../types/typedData.js'
-import { extractEip712DomainTypes } from './extractEip712DomainTypes.js'
-import { hashDomain } from './hashDomain.js'
-import { hashStruct } from './hashStruct.js'
-import { validateTypedData } from './validate.js'
+import type { TypedData_Definition } from '../types/typedData.js'
+import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
+import { TypedData_hashDomain } from './hashDomain.js'
+import { TypedData_hashStruct } from './hashStruct.js'
+import { TypedData_validate } from './validate.js'
 
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
@@ -34,25 +34,23 @@ import { validateTypedData } from './validate.js'
  * })
  * // '0x7ef8d6931ed54977c7593289c0feb25c7d7424fb997f4fc20aa3fe51b5141188'
  * ```
- *
- * @alias ox!TypedData.hashTypedData:function(1)
  */
-export function hashTypedData<
+export function TypedData_hash<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
 >(
-  value: hashTypedData.Value<typedData, primaryType>,
-): hashTypedData.ReturnType {
-  const { domain = {}, message, primaryType } = value as hashTypedData.Value
+  value: TypedData_hash.Value<typedData, primaryType>,
+): TypedData_hash.ReturnType {
+  const { domain = {}, message, primaryType } = value as TypedData_hash.Value
 
   const types = {
-    EIP712Domain: extractEip712DomainTypes(domain),
+    EIP712Domain: TypedData_extractEip712DomainTypes(domain),
     ...value.types,
   } as TypedData
 
   // Need to do a runtime validation check on addresses, byte ranges, integer ranges, etc
   // as we can't statically check this with TypeScript.
-  validateTypedData({
+  TypedData_validate({
     domain,
     message,
     primaryType,
@@ -62,7 +60,7 @@ export function hashTypedData<
   const parts: Hex[] = ['0x1901']
   if (domain)
     parts.push(
-      hashDomain({
+      TypedData_hashDomain({
         domain,
         types,
       }),
@@ -70,31 +68,32 @@ export function hashTypedData<
 
   if (primaryType !== 'EIP712Domain')
     parts.push(
-      hashStruct({
+      TypedData_hashStruct({
         data: message,
         primaryType,
         types,
       }),
     )
 
-  return keccak256(concatHex(...parts))
+  return Hash_keccak256(Hex_concat(...parts))
 }
 
-export declare namespace hashTypedData {
+export declare namespace TypedData_hash {
   type Value<
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
-  > = TypedDataDefinition<typedData, primaryType>
+  > = TypedData_Definition<typedData, primaryType>
 
   type ReturnType = Hex
 
   type ErrorType =
-    | extractEip712DomainTypes.ErrorType
-    | hashDomain.ErrorType
-    | hashStruct.ErrorType
-    | validateTypedData.ErrorType
+    | TypedData_extractEip712DomainTypes.ErrorType
+    | TypedData_hashDomain.ErrorType
+    | TypedData_hashStruct.ErrorType
+    | TypedData_validate.ErrorType
     | GlobalErrorType
 }
 
 /* v8 ignore next */
-hashTypedData.parseError = (error: unknown) => error as hashTypedData.ErrorType
+TypedData_hash.parseError = (error: unknown) =>
+  error as TypedData_hash.ErrorType

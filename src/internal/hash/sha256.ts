@@ -1,9 +1,9 @@
 import { sha256 as noble_sha256 } from '@noble/hashes/sha256'
 
-import { toBytes } from '../bytes/toBytes.js'
+import { Bytes_from } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { isHex } from '../hex/isHex.js'
-import { toHex } from '../hex/toHex.js'
+import { Hex_from } from '../hex/from.js'
+import { Hex_isHex } from '../hex/isHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
@@ -19,29 +19,29 @@ import type { Bytes, Hex } from '../types/data.js'
  * // '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953'
  * ```
  */
-export function sha256<to extends 'Hex' | 'Bytes' = 'Hex'>(
+export function Hash_sha256<to extends 'Hex' | 'Bytes' = 'Hex'>(
   value: Hex | Bytes,
   to_?: to | undefined,
-): sha256.ReturnType<to> {
+): Hash_sha256.ReturnType<to> {
   const to = to_ || 'Hex'
   const bytes = noble_sha256(
-    isHex(value, { strict: false }) ? toBytes(value) : value,
+    Hex_isHex(value, { strict: false }) ? Bytes_from(value) : value,
   )
-  if (to === 'Bytes') return bytes as sha256.ReturnType<to>
-  return toHex(bytes) as sha256.ReturnType<to>
+  if (to === 'Bytes') return bytes as never
+  return Hex_from(bytes) as never
 }
 
-export declare namespace sha256 {
-  type ReturnType<to extends 'Hex' | 'Bytes'> =
+export declare namespace Hash_sha256 {
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> =
     | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | toBytes.ErrorType
-    | isHex.ErrorType
-    | toHex.ErrorType
+    | Bytes_from.ErrorType
+    | Hex_isHex.ErrorType
+    | Hex_from.ErrorType
     | GlobalErrorType
 }
 
 /* v8 ignore next */
-sha256.parseError = (error: unknown) => error as sha256.ErrorType
+Hash_sha256.parseError = (error: unknown) => error as Hash_sha256.ErrorType

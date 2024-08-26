@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
-import { toBytes } from '../bytes/toBytes.js'
+import { Bytes_from } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { toHex } from '../hex/toHex.js'
+import { Hex_from } from '../hex/from.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
 
@@ -21,9 +21,9 @@ import type { Signature } from '../types/signature.js'
  * })
  * ```
  */
-export function recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  parameters: recoverPublicKey.Parameters<as>,
-): recoverPublicKey.ReturnType<as> {
+export function Secp256k1_recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  parameters: Secp256k1_recoverPublicKey.Parameters<as>,
+): Secp256k1_recoverPublicKey.ReturnType<as> {
   const { payload, signature, as = 'Hex' } = parameters
   const { r, s, yParity } = signature
   const signature_ = new secp256k1.Signature(
@@ -31,13 +31,13 @@ export function recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
     BigInt(s),
   ).addRecoveryBit(yParity)
   const publicKey = `0x${signature_
-    .recoverPublicKey(toHex(payload).substring(2))
+    .recoverPublicKey(Hex_from(payload).substring(2))
     .toHex(false)}`
-  if (as === 'Bytes') return toBytes(publicKey) as never
+  if (as === 'Bytes') return Bytes_from(publicKey) as never
   return publicKey as never
 }
 
-export declare namespace recoverPublicKey {
+export declare namespace Secp256k1_recoverPublicKey {
   type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** Payload that was signed. */
     payload: Hex | Bytes
@@ -47,13 +47,13 @@ export declare namespace recoverPublicKey {
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
-  type ErrorType = toBytes.ErrorType | toHex.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_from.ErrorType | Hex_from.ErrorType | GlobalErrorType
 }
 
-recoverPublicKey.parseError = (error: unknown) =>
+Secp256k1_recoverPublicKey.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as recoverPublicKey.ErrorType
+  error as Secp256k1_recoverPublicKey.ErrorType

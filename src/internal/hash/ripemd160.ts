@@ -1,9 +1,9 @@
-import { ripemd160 as noble_ripemd160 } from '@noble/hashes/ripemd160'
+import { ripemd160 } from '@noble/hashes/ripemd160'
 
-import { toBytes } from '../bytes/toBytes.js'
+import { Bytes_from } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { isHex } from '../hex/isHex.js'
-import { toHex } from '../hex/toHex.js'
+import { Hex_from } from '../hex/from.js'
+import { Hex_isHex } from '../hex/isHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
@@ -19,29 +19,30 @@ import type { Bytes, Hex } from '../types/data.js'
  * // '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
  * ```
  */
-export function ripemd160<to extends 'Hex' | 'Bytes' = 'Hex'>(
+export function Hash_ripemd160<to extends 'Hex' | 'Bytes' = 'Hex'>(
   value: Hex | Bytes,
   to_?: to | undefined,
-): ripemd160.ReturnType<to> {
+): Hash_ripemd160.ReturnType<to> {
   const to = to_ || 'Hex'
-  const bytes = noble_ripemd160(
-    isHex(value, { strict: false }) ? toBytes(value) : value,
+  const bytes = ripemd160(
+    Hex_isHex(value, { strict: false }) ? Bytes_from(value) : value,
   )
-  if (to === 'Bytes') return bytes as ripemd160.ReturnType<to>
-  return toHex(bytes) as ripemd160.ReturnType<to>
+  if (to === 'Bytes') return bytes as Hash_ripemd160.ReturnType<to>
+  return Hex_from(bytes) as Hash_ripemd160.ReturnType<to>
 }
 
-export declare namespace ripemd160 {
-  type ReturnType<to extends 'Hex' | 'Bytes'> =
+export declare namespace Hash_ripemd160 {
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> =
     | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | toBytes.ErrorType
-    | isHex.ErrorType
-    | toHex.ErrorType
+    | Bytes_from.ErrorType
+    | Hex_isHex.ErrorType
+    | Hex_from.ErrorType
     | GlobalErrorType
 }
 
 /* v8 ignore next */
-ripemd160.parseError = (error: unknown) => error as ripemd160.ErrorType
+Hash_ripemd160.parseError = (error: unknown) =>
+  error as Hash_ripemd160.ErrorType

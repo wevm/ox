@@ -5,7 +5,7 @@ import {
   formatAbiParameters,
 } from 'abitype'
 import { normalizeSignature } from '../abi/getSignature.js'
-import { size } from '../hex/size.js'
+import { Hex_size } from '../hex/size.js'
 import type { Hex } from '../types/data.js'
 import { BaseError } from './base.js'
 
@@ -52,7 +52,7 @@ export class AbiEncodingBytesSizeMismatchError extends BaseError {
   override readonly name = 'AbiEncodingBytesSizeMismatchError'
   constructor({ expectedSize, value }: { expectedSize: number; value: Hex }) {
     super(
-      `Size of bytes "${value}" (bytes${size(
+      `Size of bytes "${value}" (bytes${Hex_size(
         value,
       )}) does not match expected size (bytes${expectedSize}).`,
       {

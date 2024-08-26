@@ -42,7 +42,7 @@ export async function generateRlpVectors() {
     )
     const vector = {
       decoded: bytes,
-      encoded: Rlp.encode(bytes, 'Hex'),
+      encoded: Rlp.from(bytes, 'Hex'),
     }
     writer.write(JSON.stringify(vector, null, 2))
   }
@@ -87,7 +87,7 @@ export async function generateRlpVectors() {
     })()
     const vector = {
       decoded: bytes,
-      encoded: Rlp.encode(bytes, 'Hex'),
+      encoded: Rlp.from(bytes, 'Hex'),
     }
     writer.write(JSON.stringify(vector, null, 2))
   }

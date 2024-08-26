@@ -7,13 +7,9 @@ test('exports', () => {
       "exponents",
       "formatEther",
       "formatGwei",
-      "formatValue",
       "format",
-      "parseEther",
       "fromEther",
-      "parseGwei",
       "fromGwei",
-      "parseValue",
       "from",
     ]
   `)

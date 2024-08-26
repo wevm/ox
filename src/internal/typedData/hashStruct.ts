@@ -1,11 +1,11 @@
 import type { AbiParameter, TypedData } from 'abitype'
 
-import { encodeAbiParameters } from '../abi/encodeAbiParameters.js'
+import { Abi_encodeParameters } from '../abi/encodeParameters.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { keccak256 } from '../hash/keccak256.js'
-import { toHex } from '../hex/toHex.js'
+import { Hash_keccak256 } from '../hash/keccak256.js'
+import { Hex_from } from '../hex/from.js'
 import type { Hex } from '../types/data.js'
-import { encodeType } from './encodeType.js'
+import { TypedData_encodeType } from './encodeType.js'
 
 // TODO: Add error for `primaryType` not in `types`
 // TODO: Add type inference?
@@ -38,17 +38,19 @@ import { encodeType } from './encodeType.js'
  * // '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
  * ```
  */
-export function hashStruct(value: hashStruct.Value): hashStruct.ReturnType {
+export function TypedData_hashStruct(
+  value: TypedData_hashStruct.Value,
+): TypedData_hashStruct.ReturnType {
   const { data, primaryType, types } = value
   const encoded = encodeData({
     data,
     primaryType,
     types,
   })
-  return keccak256(encoded)
+  return Hash_keccak256(encoded)
 }
 
-export declare namespace hashStruct {
+export declare namespace TypedData_hashStruct {
   type Value = {
     data: Record<string, unknown>
     primaryType: string
@@ -57,11 +59,15 @@ export declare namespace hashStruct {
 
   type ReturnType = Hex
 
-  type ErrorType = encodeData.ErrorType | keccak256.ErrorType | GlobalErrorType
+  type ErrorType =
+    | encodeData.ErrorType
+    | Hash_keccak256.ErrorType
+    | GlobalErrorType
 }
 
 /* v8 ignore next */
-hashStruct.parseError = (error: unknown) => error as hashStruct.ErrorType
+TypedData_hashStruct.parseError = (error: unknown) =>
+  error as TypedData_hashStruct.ErrorType
 
 /** @internal */
 export function encodeData(value: {
@@ -84,13 +90,13 @@ export function encodeData(value: {
     encodedValues.push(value)
   }
 
-  return encodeAbiParameters(encodedTypes, encodedValues)
+  return Abi_encodeParameters(encodedTypes, encodedValues)
 }
 
 /** @internal */
 export declare namespace encodeData {
   type ErrorType =
-    | encodeAbiParameters.ErrorType
+    | Abi_encodeParameters.ErrorType
     | encodeField.ErrorType
     | hashType.ErrorType
     | GlobalErrorType
@@ -102,16 +108,16 @@ export function hashType(value: {
   types: TypedData
 }): Hex {
   const { primaryType, types } = value
-  const encodedHashType = toHex(encodeType({ primaryType, types }))
-  return keccak256(encodedHashType)
+  const encodedHashType = Hex_from(TypedData_encodeType({ primaryType, types }))
+  return Hash_keccak256(encodedHashType)
 }
 
 /** @internal */
 export declare namespace hashType {
   type ErrorType =
-    | toHex.ErrorType
-    | encodeType.ErrorType
-    | keccak256.ErrorType
+    | Hex_from.ErrorType
+    | TypedData_encodeType.ErrorType
+    | Hash_keccak256.ErrorType
     | GlobalErrorType
 }
 
@@ -127,16 +133,17 @@ export function encodeField(properties: {
   if (types[type] !== undefined)
     return [
       { type: 'bytes32' },
-      keccak256(encodeData({ data: value, primaryType: type, types })),
+      Hash_keccak256(encodeData({ data: value, primaryType: type, types })),
     ]
 
   if (type === 'bytes') {
     const prepend = value.length % 2 ? '0' : ''
     value = `0x${prepend + value.slice(2)}`
-    return [{ type: 'bytes32' }, keccak256(value)]
+    return [{ type: 'bytes32' }, Hash_keccak256(value)]
   }
 
-  if (type === 'string') return [{ type: 'bytes32' }, keccak256(toHex(value))]
+  if (type === 'string')
+    return [{ type: 'bytes32' }, Hash_keccak256(Hex_from(value))]
 
   if (type.lastIndexOf(']') === type.length - 1) {
     const parsedType = type.slice(0, type.lastIndexOf('['))
@@ -150,8 +157,8 @@ export function encodeField(properties: {
     )
     return [
       { type: 'bytes32' },
-      keccak256(
-        encodeAbiParameters(
+      Hash_keccak256(
+        Abi_encodeParameters(
           typeValuePairs.map(([t]) => t),
           typeValuePairs.map(([, v]) => v),
         ),
@@ -165,8 +172,8 @@ export function encodeField(properties: {
 /** @internal */
 export declare namespace encodeField {
   type ErrorType =
-    | keccak256.ErrorType
-    | encodeAbiParameters.ErrorType
-    | toHex.ErrorType
+    | Hash_keccak256.ErrorType
+    | Abi_encodeParameters.ErrorType
+    | Hex_from.ErrorType
     | GlobalErrorType
 }

@@ -1,5 +1,5 @@
-import { size } from '../hex/size.js'
-import { toHex } from '../hex/toHex.js'
+import { Hex_from } from '../hex/from.js'
+import { Hex_size } from '../hex/size.js'
 import { stringify } from '../stringify.js'
 import type { Bytes, Hex } from '../types/data.js'
 import { BaseError } from './base.js'
@@ -9,7 +9,7 @@ export class InvalidSerializedSignatureSizeError extends BaseError {
 
   constructor({ signature }: { signature: Hex | Bytes }) {
     super(
-      `Value \`${signature}\` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received ${size(toHex(signature))} bytes.`,
+      `Value \`${signature}\` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received ${Hex_size(Hex_from(signature))} bytes.`,
       { docsPath: '/errors#invalidserializedsignaturesizeerror' },
     )
   }

@@ -25,7 +25,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  * // 'ownerOf(uint256)'
  * ```
  */
-export const getSignature = (abiItem: getSignature.Parameters) => {
+export const Abi_getSignature = (abiItem: Abi_getSignature.Parameters) => {
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
     return formatAbiItem(abiItem)
@@ -33,14 +33,15 @@ export const getSignature = (abiItem: getSignature.Parameters) => {
   return normalizeSignature(signature)
 }
 
-export declare namespace getSignature {
+export declare namespace Abi_getSignature {
   type Parameters = string | Abi[number]
 
   type ErrorType = normalizeSignature.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-getSignature.parseError = (error: unknown) => error as getSignature.ErrorType
+Abi_getSignature.parseError = (error: unknown) =>
+  error as Abi_getSignature.ErrorType
 
 ///////////////////////////////////////////////////////////////////////////
 // Utilities

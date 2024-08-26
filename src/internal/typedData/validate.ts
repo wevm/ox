@@ -1,6 +1,6 @@
 import type { TypedData, TypedDataParameter } from 'abitype'
 
-import { isAddress } from '../address/isAddress.js'
+import { Address_isAddress } from '../address/isAddress.js'
 import { bytesRegex, integerRegex } from '../constants/regex.js'
 import {
   InvalidAddressError,
@@ -9,10 +9,10 @@ import {
 import { BytesSizeMismatchError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidPrimaryTypeError } from '../errors/typedData.js'
-import { size } from '../hex/size.js'
-import { numberToHex } from '../hex/toHex.js'
+import { Hex_fromNumber } from '../hex/from.js'
+import { Hex_size } from '../hex/size.js'
 import type { Hex } from '../types/data.js'
-import type { TypedDataDefinition } from '../types/typedData.js'
+import type { TypedData_Definition } from '../types/typedData.js'
 
 /**
  * Validates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
@@ -43,15 +43,13 @@ import type { TypedDataDefinition } from '../types/typedData.js'
  *   },
  * })
  * ```
- *
- * @alias ox!TypedData.validateTypedData:function(1)
  */
-export function validateTypedData<
+export function TypedData_validate<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
->(value: validateTypedData.Value<typedData, primaryType>) {
+>(value: TypedData_validate.Value<typedData, primaryType>) {
   const { domain, message, primaryType, types } =
-    value as unknown as validateTypedData.Value
+    value as unknown as TypedData_validate.Value
 
   const validateData = (
     struct: readonly TypedDataParameter[],
@@ -69,13 +67,17 @@ export function validateTypedData<
         const [, base, size_] = integerMatch
         // If number cannot be cast to a sized hex value, it is out of range
         // and will throw.
-        numberToHex(value, {
+        Hex_fromNumber(value, {
           signed: base === 'int',
           size: Number.parseInt(size_ ?? '') / 8,
         })
       }
 
-      if (type === 'address' && typeof value === 'string' && !isAddress(value))
+      if (
+        type === 'address' &&
+        typeof value === 'string' &&
+        !Address_isAddress(value)
+      )
         throw new InvalidAddressError({
           address: value,
           cause: new InvalidAddressInputError(),
@@ -83,11 +85,11 @@ export function validateTypedData<
 
       const bytesMatch = type.match(bytesRegex)
       if (bytesMatch) {
-        const [, size_] = bytesMatch
-        if (size_ && size(value as Hex) !== Number.parseInt(size_))
+        const [, size] = bytesMatch
+        if (size && Hex_size(value as Hex) !== Number.parseInt(size))
           throw new BytesSizeMismatchError({
-            expectedSize: Number.parseInt(size_),
-            givenSize: size(value as Hex),
+            expectedSize: Number.parseInt(size),
+            givenSize: Hex_size(value as Hex),
           })
       }
 
@@ -106,20 +108,20 @@ export function validateTypedData<
   }
 }
 
-export declare namespace validateTypedData {
+export declare namespace TypedData_validate {
   type Value<
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
-  > = TypedDataDefinition<typedData, primaryType>
+  > = TypedData_Definition<typedData, primaryType>
 
   type ErrorType =
     | InvalidAddressError
     | InvalidPrimaryTypeError
-    | numberToHex.ErrorType
-    | size.ErrorType
+    | Hex_fromNumber.ErrorType
+    | Hex_size.ErrorType
     | GlobalErrorType
 }
 
-validateTypedData.parseError = (error: unknown) =>
+TypedData_validate.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as validateTypedData.ErrorType
+  error as TypedData_validate.ErrorType

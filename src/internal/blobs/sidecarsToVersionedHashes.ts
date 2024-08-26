@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type { BlobSidecars } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
-import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
+import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 
 /**
  * Transforms a list of sidecars to their versioned hashes.
@@ -15,15 +15,15 @@ import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
  * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
  * ```
  */
-export function sidecarsToVersionedHashes<
+export function Blobs_sidecarsToVersionedHashes<
   const sidecars extends BlobSidecars,
   as extends 'Hex' | 'Bytes' =
     | (sidecars extends BlobSidecars<Hex> ? 'Hex' : never)
     | (sidecars extends BlobSidecars<Bytes> ? 'Bytes' : never),
 >(
   sidecars: sidecars | BlobSidecars,
-  options: sidecarsToVersionedHashes.Options<as> = {},
-): sidecarsToVersionedHashes.ReturnType<as> {
+  options: Blobs_sidecarsToVersionedHashes.Options<as> = {},
+): Blobs_sidecarsToVersionedHashes.ReturnType<as> {
   const { version } = options
 
   const as =
@@ -32,7 +32,7 @@ export function sidecarsToVersionedHashes<
   const hashes: Uint8Array[] | Hex[] = []
   for (const { commitment } of sidecars) {
     hashes.push(
-      commitmentToVersionedHash(commitment, {
+      Blobs_commitmentToVersionedHash(commitment, {
         as,
         version,
       }) as any,
@@ -41,7 +41,7 @@ export function sidecarsToVersionedHashes<
   return hashes as any
 }
 
-export declare namespace sidecarsToVersionedHashes {
+export declare namespace Blobs_sidecarsToVersionedHashes {
   type Options<as extends 'Hex' | 'Bytes' | undefined = undefined> = {
     /** Return type. */
     as?: as | 'Hex' | 'Bytes' | undefined
@@ -49,13 +49,13 @@ export declare namespace sidecarsToVersionedHashes {
     version?: number | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? readonly Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
 
-  type ErrorType = commitmentToVersionedHash.ErrorType | GlobalErrorType
+  type ErrorType = Blobs_commitmentToVersionedHash.ErrorType | GlobalErrorType
 }
 
-sidecarsToVersionedHashes.parseError = (error: unknown) =>
+Blobs_sidecarsToVersionedHashes.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as sidecarsToVersionedHashes.ErrorType
+  error as Blobs_sidecarsToVersionedHashes.ErrorType

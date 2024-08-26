@@ -1,34 +1,16 @@
 export type {
   Authorization,
-  AuthorizationList,
-  AuthorizationList as List,
-  AuthorizationTuple,
-  AuthorizationTuple as Tuple,
-  AuthorizationTupleList,
-  AuthorizationTupleList as TupleList,
+  Authorization_List as List,
+  Authorization_Tuple as Tuple,
+  Authorization_TupleList as TupleList,
 } from './internal/types/authorization.js'
 
-export {
-  getAuthorizationSignPayload,
-  getAuthorizationSignPayload as getSignPayload,
-} from './internal/authorization/getAuthorizationSignPayload.js'
+export { Authorization_getSignPayload as getSignPayload } from './internal/authorization/getSignPayload.js'
 
-export {
-  hashAuthorization,
-  hashAuthorization as hash,
-} from './internal/authorization/hashAuthorization.js'
+export { Authorization_hash as hash } from './internal/authorization/hash.js'
 
-export {
-  toAuthorization,
-  toAuthorization as from,
-} from './internal/authorization/toAuthorization.js'
+export { Authorization_from as from } from './internal/authorization/from.js'
 
-export {
-  toAuthorizationTuple,
-  toAuthorizationTuple as toTuple,
-} from './internal/authorization/toAuthorizationTuple.js'
+export { Authorization_toTuple as toTuple } from './internal/authorization/toTuple.js'
 
-export {
-  toAuthorizationTupleList,
-  toAuthorizationTupleList as toTupleList,
-} from './internal/authorization/toAuthorizationTupleList.js'
+export { Authorization_toTupleList as toTupleList } from './internal/authorization/toTupleList.js'

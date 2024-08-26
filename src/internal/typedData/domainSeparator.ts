@@ -2,8 +2,8 @@ import type { TypedDataDomain } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
-import { extractEip712DomainTypes } from './extractEip712DomainTypes.js'
-import { hashDomain } from './hashDomain.js'
+import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
+import { TypedData_hashDomain } from './hashDomain.js'
 
 /**
  * Creates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) domainSeparator for the provided domain.
@@ -24,23 +24,23 @@ import { hashDomain } from './hashDomain.js'
  * // '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
  * ```
  */
-export function domainSeparator(
+export function TypedData_domainSeparator(
   domain: TypedDataDomain,
-): domainSeparator.ReturnType {
-  return hashDomain({
+): TypedData_domainSeparator.ReturnType {
+  return TypedData_hashDomain({
     domain,
     types: {
-      EIP712Domain: extractEip712DomainTypes(domain),
+      EIP712Domain: TypedData_extractEip712DomainTypes(domain),
     },
   })
 }
 
-export declare namespace domainSeparator {
+export declare namespace TypedData_domainSeparator {
   type ReturnType = Hex
 
-  type ErrorType = hashDomain.ErrorType | GlobalErrorType
+  type ErrorType = TypedData_hashDomain.ErrorType | GlobalErrorType
 }
 
-domainSeparator.parseError = (error: unknown) =>
+TypedData_domainSeparator.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as domainSeparator.ErrorType
+  error as TypedData_domainSeparator.ErrorType

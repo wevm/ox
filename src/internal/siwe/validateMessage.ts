@@ -1,7 +1,7 @@
 import type { Address } from 'abitype'
 
-import { isAddressEqual } from '../address/isAddressEqual.js'
-import type { SiweMessage } from '../types/siwe.js'
+import { Address_isEqual } from '../address/isEqual.js'
+import type { Siwe_Message } from '../types/siwe.js'
 import type { ExactPartial } from '../types/utils.js'
 
 /**
@@ -24,12 +24,10 @@ import type { ExactPartial } from '../types/utils.js'
  * })
  * // true
  * ```
- *
- * @alias ox!Siwe.validateSiweMessage:function(1)
  */
-export function validateSiweMessage(
-  value: validateSiweMessage.Value,
-): validateSiweMessage.ReturnType {
+export function Siwe_validateMessage(
+  value: Siwe_validateMessage.Value,
+): Siwe_validateMessage.ReturnType {
   const { address, domain, message, nonce, scheme, time = new Date() } = value
 
   if (domain && message.domain !== domain) return false
@@ -41,7 +39,7 @@ export function validateSiweMessage(
 
   try {
     if (!message.address) return false
-    if (address && !isAddressEqual(message.address, address)) return false
+    if (address && !Address_isEqual(message.address, address)) return false
   } catch {
     return false
   }
@@ -49,7 +47,7 @@ export function validateSiweMessage(
   return true
 }
 
-export declare namespace validateSiweMessage {
+export declare namespace Siwe_validateMessage {
   type Value = {
     /**
      * Ethereum address to check against.
@@ -62,7 +60,7 @@ export declare namespace validateSiweMessage {
     /**
      * EIP-4361 message fields.
      */
-    message: ExactPartial<SiweMessage>
+    message: ExactPartial<Siwe_Message>
     /**
      * Random string to check against.
      */

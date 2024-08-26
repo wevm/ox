@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { isHex } from '../hex/isHex.js'
-import { size } from '../hex/size.js'
+import { Hex_isHex } from '../hex/isHex.js'
+import { Hex_size } from '../hex/size.js'
 import type { Hex } from '../types/data.js'
 
 /**
@@ -17,13 +17,13 @@ import type { Hex } from '../types/data.js'
  * // true
  * ```
  */
-export function isHash(hash: string): hash is Hex {
-  return isHex(hash) && size(hash) === 32
+export function Hash_isHash(hash: string): hash is Hex {
+  return Hex_isHex(hash) && Hex_size(hash) === 32
 }
 
-export declare namespace isHash {
-  type ErrorType = isHex.ErrorType | size.ErrorType | GlobalErrorType
+export declare namespace Hash_isHash {
+  type ErrorType = Hex_isHex.ErrorType | Hex_size.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-isHash.parseError = (error: unknown) => error as isHash.ErrorType
+Hash_isHash.parseError = (error: unknown) => error as Hash_isHash.ErrorType

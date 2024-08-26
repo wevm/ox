@@ -1,13 +1,13 @@
 import type { Address } from 'abitype'
 
-import { toAddress } from '../address/toAddress.js'
-import { concatBytes } from '../bytes/concatBytes.js'
-import { isBytes } from '../bytes/isBytes.js'
-import { padBytes } from '../bytes/padBytes.js'
-import { toBytes } from '../bytes/toBytes.js'
+import { Address_from } from '../address/from.js'
+import { Bytes_concat } from '../bytes/concat.js'
+import { Bytes_from } from '../bytes/from.js'
+import { Bytes_isBytes } from '../bytes/isBytes.js'
+import { Bytes_padLeft } from '../bytes/pad.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { keccak256 } from '../hash/keccak256.js'
-import { sliceHex } from '../hex/sliceHex.js'
+import { Hash_keccak256 } from '../hash/keccak256.js'
+import { Hex_slice } from '../hex/slice.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
@@ -28,29 +28,34 @@ import type { Bytes, Hex } from '../types/data.js'
  * // '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```
  */
-export function getCreate2Address(opts: getCreate2Address.Options) {
-  const from = toBytes(toAddress(opts.from))
-  const salt = padBytes(isBytes(opts.salt) ? opts.salt : toBytes(opts.salt), {
-    size: 32,
-  })
+export function ContractAddress_getCreate2Address(
+  opts: ContractAddress_getCreate2Address.Options,
+) {
+  const from = Bytes_from(Address_from(opts.from))
+  const salt = Bytes_padLeft(
+    Bytes_isBytes(opts.salt) ? opts.salt : Bytes_from(opts.salt),
+    32,
+  )
 
   const bytecodeHash = (() => {
     if ('bytecodeHash' in opts) {
-      if (isBytes(opts.bytecodeHash)) return opts.bytecodeHash
-      return toBytes(opts.bytecodeHash)
+      if (Bytes_isBytes(opts.bytecodeHash)) return opts.bytecodeHash
+      return Bytes_from(opts.bytecodeHash)
     }
-    return keccak256(opts.bytecode, 'Bytes')
+    return Hash_keccak256(opts.bytecode, 'Bytes')
   })()
 
-  return toAddress(
-    sliceHex(
-      keccak256(concatBytes(toBytes('0xff'), from, salt, bytecodeHash)),
+  return Address_from(
+    Hex_slice(
+      Hash_keccak256(
+        Bytes_concat(Bytes_from('0xff'), from, salt, bytecodeHash),
+      ),
       12,
     ),
   )
 }
 
-export declare namespace getCreate2Address {
+export declare namespace ContractAddress_getCreate2Address {
   type Options =
     | {
         bytecode: Bytes | Hex
@@ -64,16 +69,16 @@ export declare namespace getCreate2Address {
       }
 
   type ErrorType =
-    | concatBytes.ErrorType
-    | keccak256.ErrorType
-    | toAddress.ErrorType
-    | isBytes.ErrorType
-    | padBytes.ErrorType
-    | sliceHex.ErrorType
-    | toBytes.ErrorType
+    | Address_from.ErrorType
+    | Bytes_concat.ErrorType
+    | Bytes_isBytes.ErrorType
+    | Bytes_padLeft.ErrorType
+    | Hash_keccak256.ErrorType
+    | Hex_slice.ErrorType
+    | Bytes_from.ErrorType
     | GlobalErrorType
 }
 
-getCreate2Address.parseError = (error: unknown) =>
+ContractAddress_getCreate2Address.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as getCreate2Address.ErrorType
+  error as ContractAddress_getCreate2Address.ErrorType

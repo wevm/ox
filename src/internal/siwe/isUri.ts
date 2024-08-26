@@ -14,7 +14,7 @@
  * // true
  * ```
  */
-export function isUri(value: string) {
+export function Siwe_isUri(value: string) {
   // check for illegal characters
   if (/[^a-z0-9\:\/\?\#\[\]\@\!\$\&\'\(\)\*\+\,\;\=\.\-\_\~\%]/i.test(value))
     return false

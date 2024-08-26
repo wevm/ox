@@ -1,9 +1,8 @@
+import { TypedData } from 'ox'
 import { expect, test } from 'vitest'
 
-import { validateTypedData } from './validate.js'
-
 test('default', () => {
-  validateTypedData({
+  TypedData.validate({
     domain: {
       name: 'Ether!',
       version: '1',
@@ -44,7 +43,7 @@ test('default', () => {
 
 test('negative uint', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       types: {
         EIP712Domain: [],
         Mail: [
@@ -77,7 +76,7 @@ test('negative uint', () => {
 
 test('uint overflow', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       types: {
         EIP712Domain: [],
         Mail: [
@@ -110,7 +109,7 @@ test('uint overflow', () => {
 
 test('int underflow', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       types: {
         EIP712Domain: [],
         Mail: [
@@ -143,7 +142,7 @@ test('int underflow', () => {
 
 test('invalid address', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       types: {
         EIP712Domain: [],
         Mail: [
@@ -177,7 +176,7 @@ test('invalid address', () => {
 
 test('bytes size mismatch', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       types: {
         EIP712Domain: [],
         Mail: [
@@ -210,7 +209,7 @@ test('bytes size mismatch', () => {
 
 test('domain: invalid chainId', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       domain: {
         name: 'Ether!',
         version: '1',
@@ -256,7 +255,7 @@ test('domain: invalid chainId', () => {
 
 test('domain: invalid contract', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       domain: {
         name: 'Ether!',
         version: '1',
@@ -302,7 +301,7 @@ test('domain: invalid contract', () => {
 })
 
 test('EIP712Domain as primaryType', () => {
-  validateTypedData({
+  TypedData.validate({
     domain: {
       name: 'Ether!',
       version: '1',
@@ -332,7 +331,7 @@ test('EIP712Domain as primaryType', () => {
 
 test('primaryType: does not exist in types', () => {
   expect(() =>
-    validateTypedData({
+    TypedData.validate({
       types: {
         EIP712Domain: [],
         Mail: [

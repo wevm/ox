@@ -10,13 +10,13 @@ import type { Hex } from '../types/data.js'
  * Hex.size('0xdeadbeef') // 4
  * ```
  */
-export function size(value: Hex) {
+export function Hex_size(value: Hex) {
   return Math.ceil((value.length - 2) / 2)
 }
 
-export declare namespace size {
+export declare namespace Hex_size {
   export type ErrorType = GlobalErrorType
 }
 
 /* v8 ignore next */
-size.parseError = (error: unknown) => error as size.ErrorType
+Hex_size.parseError = (error: unknown) => error as Hex_size.ErrorType

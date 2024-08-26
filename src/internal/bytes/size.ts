@@ -10,13 +10,13 @@ import type { Bytes } from '../types/data.js'
  * Bytes.size(Bytes.from([1, 2, 3, 4])) // 4
  * ```
  */
-export function size(value: Bytes) {
+export function Bytes_size(value: Bytes) {
   return value.length
 }
 
-export declare namespace size {
+export declare namespace Bytes_size {
   export type ErrorType = GlobalErrorType
 }
 
 /* v8 ignore next */
-size.parseError = (error: unknown) => error as size.ErrorType
+Bytes_size.parseError = (error: unknown) => error as Bytes_size.ErrorType

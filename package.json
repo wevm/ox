@@ -102,14 +102,14 @@
       "import": "*"
     },
     {
+      "name": "import { Address } from 'ox';\n  console.log(Address.from)",
+      "path": "./src/_esm/index.js",
+      "import": "{ Address.from }"
+    },
+    {
       "name": "import { Bytes } from 'ox';\n  console.log(Bytes.from)",
       "path": "./src/_esm/index.js",
       "import": "{ Bytes.from }"
-    },
-    {
-      "name": "import { Data } from 'ox';\n  console.log(Data.concat)",
-      "path": "./src/_esm/index.js",
-      "import": "{ Data.concat }"
     },
     {
       "name": "import { Hex } from 'ox';\n  console.log(Hex.from)",
@@ -117,9 +117,9 @@
       "import": "{ Hex.from }"
     },
     {
-      "name": "import { Rlp } from 'ox';\n  console.log(Rlp.encode)",
+      "name": "import { Rlp } from 'ox';\n  console.log(Rlp.from)",
       "path": "./src/_esm/index.js",
-      "import": "{ Rlp.encode }"
+      "import": "{ Rlp.from }"
     }
   ],
   "pnpm": {

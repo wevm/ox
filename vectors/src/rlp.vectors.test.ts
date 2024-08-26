@@ -9,17 +9,17 @@ import { readGzippedJson } from '../utils.js'
 const vectors = await readGzippedJson(join(import.meta.dir, './rlp.json.gz'))
 
 describe('Rlp.encode', () => {
-  vectors.forEach((v, i) => {
+  vectors.forEach((v: any, i: number) => {
     test(`${i}`, () => {
-      expect(Rlp.encode(v.decoded, 'Hex')).toEqual(v.encoded)
+      expect(Rlp.from(v.decoded, 'Hex')).toEqual(v.encoded)
     })
   })
 })
 
-describe('Rlp.decode', () => {
-  vectors.forEach((v, i) => {
+describe('Rlp.to', () => {
+  vectors.forEach((v: any, i: number) => {
     test(`${i}`, () => {
-      expect(Rlp.decode(v.encoded)).toEqual(v.decoded)
+      expect(Rlp.to(v.encoded, 'Hex')).toEqual(v.decoded)
     })
   })
 })

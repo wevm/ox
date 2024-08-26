@@ -1,11 +1,11 @@
+import { TypedData } from 'ox'
 import { expect, test } from 'vitest'
 
 import * as typedData from '../../../test/constants/typedData.js'
-import { hashDomain } from './hashDomain.js'
 
 test('default', () => {
   expect(
-    hashDomain({
+    TypedData.hashDomain({
       ...typedData.basic,
       domain: typedData.basic.domain,
     }),

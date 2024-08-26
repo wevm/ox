@@ -1,1 +1,4 @@
-export { checksum, clear } from './internal/caches.js'
+export {
+  Caches_checksum as checksum,
+  Caches_clear as clear,
+} from './internal/caches.js'

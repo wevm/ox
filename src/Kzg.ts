@@ -1,5 +1,5 @@
 export type { Kzg } from './internal/types/kzg.js'
 
-export { defineKzg, defineKzg as from } from './internal/kzg/defineKzg.js'
+export { Kzg_from as from } from './internal/kzg/from.js'
 
-export { setupKzg, setupKzg as setup } from './internal/kzg/setupKzg.js'
+export { Kzg_setup as setup } from './internal/kzg/setup.js'

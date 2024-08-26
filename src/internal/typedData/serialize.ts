@@ -2,7 +2,7 @@ import type { TypedData, TypedDataParameter } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
 import { stringify } from '../stringify.js'
-import type { TypedDataDefinition } from '../types/typedData.js'
+import type { TypedData_Definition } from '../types/typedData.js'
 
 /**
  * Serializes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema into string.
@@ -34,21 +34,19 @@ import type { TypedDataDefinition } from '../types/typedData.js'
  * })
  * // "{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"
  * ```
- *
- * @alias ox!TypedData.serializeTypedData:function(1)
  */
-export function serializeTypedData<
+export function TypedData_serialize<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
 >(
-  value: serializeTypedData.Value<typedData, primaryType>,
-): serializeTypedData.ReturnType {
+  value: TypedData_serialize.Value<typedData, primaryType>,
+): TypedData_serialize.ReturnType {
   const {
     domain: domain_,
     message: message_,
     primaryType,
     types,
-  } = value as unknown as serializeTypedData.Value
+  } = value as unknown as TypedData_serialize.Value
 
   const normalizeData = (
     struct: readonly TypedDataParameter[],
@@ -77,17 +75,17 @@ export function serializeTypedData<
   return stringify({ domain, message, primaryType, types })
 }
 
-export declare namespace serializeTypedData {
+export declare namespace TypedData_serialize {
   type Value<
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
-  > = TypedDataDefinition<typedData, primaryType>
+  > = TypedData_Definition<typedData, primaryType>
 
   type ReturnType = string
 
   type ErrorType = stringify.ErrorType | GlobalErrorType
 }
 
-serializeTypedData.parseError = (error: unknown) =>
+TypedData_serialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as serializeTypedData.ErrorType
+  error as TypedData_serialize.ErrorType

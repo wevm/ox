@@ -1,13 +1,11 @@
+import { Hex, TypedData } from 'ox'
 import { expect, test } from 'vitest'
 
 import * as typedData from '../../../test/constants/typedData.js'
-import { padRight } from '../hex/padHex.js'
-import { toHex } from '../hex/toHex.js'
-import { hashTypedData } from './hash.js'
 
 test('default', () => {
   expect(
-    hashTypedData({
+    TypedData.hash({
       ...typedData.basic,
       primaryType: 'Mail',
     }),
@@ -18,7 +16,7 @@ test('default', () => {
 
 test('complex', () => {
   expect(
-    hashTypedData({
+    TypedData.hash({
       ...typedData.complex,
       primaryType: 'Mail',
     }),
@@ -29,7 +27,7 @@ test('complex', () => {
 
 test('no domain', () => {
   expect(
-    hashTypedData({
+    TypedData.hash({
       ...typedData.complex,
       domain: undefined,
       primaryType: 'Mail',
@@ -38,7 +36,7 @@ test('no domain', () => {
     '"0x14ed1dbbfecbe5de3919f7ea47daafdf3a29dfbb60dd88d85509f79773d503a5"',
   )
   expect(
-    hashTypedData({
+    TypedData.hash({
       ...typedData.complex,
       domain: {},
       primaryType: 'Mail',
@@ -50,7 +48,7 @@ test('no domain', () => {
 
 test('domain: empty name', () => {
   expect(
-    hashTypedData({
+    TypedData.hash({
       ...typedData.complex,
       domain: { name: '' },
       primaryType: 'Mail',
@@ -61,7 +59,7 @@ test('domain: empty name', () => {
 })
 
 test('minimal valid typed message', () => {
-  const hash = hashTypedData({
+  const hash = TypedData.hash({
     types: {
       EIP712Domain: [],
     },
@@ -75,7 +73,7 @@ test('minimal valid typed message', () => {
 })
 
 test('typed message with a domain separator that uses all fields.', () => {
-  const hash = hashTypedData({
+  const hash = TypedData.hash({
     types: {
       EIP712Domain: [
         {
@@ -106,7 +104,7 @@ test('typed message with a domain separator that uses all fields.', () => {
       version: '1',
       chainId: 1n,
       verifyingContract: '0x0000000000000000000000000000000000000000',
-      salt: padRight(toHex(new Uint8Array([1, 2, 3]))),
+      salt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
     },
   })
 
@@ -116,7 +114,7 @@ test('typed message with a domain separator that uses all fields.', () => {
 })
 
 test('typed message with only custom domain separator fields', () => {
-  const hash = hashTypedData({
+  const hash = TypedData.hash({
     types: {
       EIP712Domain: [
         {
@@ -151,7 +149,7 @@ test('typed message with only custom domain separator fields', () => {
       customVersion: '1',
       customChainId: 1n,
       customVerifyingContract: '0x0000000000000000000000000000000000000000',
-      customSalt: padRight(toHex(new Uint8Array([1, 2, 3]))),
+      customSalt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
       extraField: 'stuff',
     },
   })
@@ -162,7 +160,7 @@ test('typed message with only custom domain separator fields', () => {
 })
 
 test('typed message with data', () => {
-  const hash = hashTypedData({
+  const hash = TypedData.hash({
     types: {
       EIP712Domain: [
         {
@@ -194,7 +192,7 @@ test('typed message with data', () => {
       version: '1',
       chainId: 1n,
       verifyingContract: '0x0000000000000000000000000000000000000000',
-      salt: padRight(toHex(new Uint8Array([1, 2, 3]))),
+      salt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
     },
     message: {
       data: 'Hello!',

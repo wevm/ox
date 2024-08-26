@@ -1,8 +1,8 @@
 import type { Address } from 'abitype'
 
-import { publicKeyToAddress } from '../address/publicKeyToAddress.js'
+import { Address_fromPublicKey } from '../address/fromPublicKey.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { recoverPublicKey } from './recoverPublicKey.js'
+import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
 
 /**
  * Recovers the signing address from the signed payload and signature.
@@ -19,24 +19,24 @@ import { recoverPublicKey } from './recoverPublicKey.js'
  * })
  * ```
  */
-export function recoverAddress<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  parameters: recoverAddress.Parameters<as>,
-): recoverAddress.ReturnType {
-  return publicKeyToAddress(recoverPublicKey(parameters))
+export function Secp256k1_recoverAddress<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  parameters: Secp256k1_recoverAddress.Parameters<as>,
+): Secp256k1_recoverAddress.ReturnType {
+  return Address_fromPublicKey(Secp256k1_recoverPublicKey(parameters))
 }
 
-export declare namespace recoverAddress {
+export declare namespace Secp256k1_recoverAddress {
   type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    recoverPublicKey.Parameters<as>
+    Secp256k1_recoverPublicKey.Parameters<as>
 
   type ReturnType = Address
 
   type ErrorType =
-    | publicKeyToAddress.ErrorType
-    | recoverPublicKey.ErrorType
+    | Address_fromPublicKey.ErrorType
+    | Secp256k1_recoverPublicKey.ErrorType
     | GlobalErrorType
 }
 
-recoverAddress.parseError = (error: unknown) =>
+Secp256k1_recoverAddress.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as recoverAddress.ErrorType
+  error as Secp256k1_recoverAddress.ErrorType

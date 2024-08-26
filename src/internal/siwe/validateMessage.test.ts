@@ -1,7 +1,7 @@
 import { expect, test, vi } from 'vitest'
 
-import type { SiweMessage } from '../types/siwe.js'
-import { validateSiweMessage } from './validateMessage.js'
+import { Siwe } from 'ox'
+import type { Siwe_Message } from '../types/siwe.js'
 
 const message = {
   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
@@ -10,11 +10,11 @@ const message = {
   nonce: 'foobarbaz',
   uri: 'https://example.com/path',
   version: '1',
-} satisfies SiweMessage
+} satisfies Siwe_Message
 
 test('default', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       message,
     }),
   ).toBeTruthy()
@@ -22,7 +22,7 @@ test('default', () => {
 
 test('behavior: invalid address', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       message: {
         ...message,
         address: undefined,
@@ -33,7 +33,7 @@ test('behavior: invalid address', () => {
 
 test('behavior: address mismatch', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       address: '0xd2135CfB216b74109775236E36d4b433F1DF507B',
       message,
     }),
@@ -42,7 +42,7 @@ test('behavior: address mismatch', () => {
 
 test('behavior: invalid address', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       address: '0xfoobarbaz',
       message,
     }),
@@ -51,7 +51,7 @@ test('behavior: invalid address', () => {
 
 test('behavior: domain mismatch', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       domain: 'viem.sh',
       message,
     }),
@@ -60,7 +60,7 @@ test('behavior: domain mismatch', () => {
 
 test('behavior: nonce mismatch', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       nonce: 'f0obarbaz',
       message,
     }),
@@ -69,7 +69,7 @@ test('behavior: nonce mismatch', () => {
 
 test('behavior: scheme mismatch', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       scheme: 'http',
       message: {
         ...message,
@@ -81,7 +81,7 @@ test('behavior: scheme mismatch', () => {
 
 test('behavior: time is after expirationTime', () => {
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       message: {
         ...message,
         expirationTime: new Date(Date.UTC(2024, 1, 1)),
@@ -96,7 +96,7 @@ test('behavior: time is before notBefore', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    validateSiweMessage({
+    Siwe.validateMessage({
       message: {
         ...message,
         notBefore: new Date(Date.UTC(2024, 1, 1)),

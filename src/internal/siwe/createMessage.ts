@@ -1,8 +1,8 @@
-import { toAddress } from '../address/toAddress.js'
+import { Address_from } from '../address/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { SiweInvalidMessageFieldError } from '../errors/siwe.js'
-import type { SiweMessage } from '../types/siwe.js'
-import { isUri } from './isUri.js'
+import type { Siwe_Message } from '../types/siwe.js'
+import { Siwe_isUri } from './isUri.js'
 
 /**
  * Creates EIP-4361 formatted message.
@@ -32,12 +32,10 @@ import { isUri } from './isUri.js'
  * // Nonce: foobarbaz
  * // Issued At: 2023-02-01T00:00:00.000Z"
  * ```
- *
- * @alias ox!Siwe.createSiweMessage:function(1)
  */
-export function createSiweMessage(
-  value: createSiweMessage.Value,
-): createSiweMessage.ReturnType {
+export function Siwe_createMessage(
+  value: Siwe_Message,
+): Siwe_createMessage.ReturnType {
   const {
     chainId,
     domain,
@@ -91,7 +89,7 @@ export function createSiweMessage(
           `Provided value: ${nonce}`,
         ],
       })
-    if (!isUri(uri))
+    if (!Siwe_isUri(uri))
       throw new SiweInvalidMessageFieldError({
         field: 'uri',
         metaMessages: [
@@ -135,7 +133,7 @@ export function createSiweMessage(
   }
 
   // Construct message
-  const address = toAddress(value.address)
+  const address = Address_from(value.address)
   const origin = (() => {
     if (scheme) return `${scheme}://${domain}`
     return domain
@@ -155,7 +153,7 @@ export function createSiweMessage(
   if (resources) {
     let content = '\nResources:'
     for (const resource of resources) {
-      if (!isUri(resource))
+      if (!Siwe_isUri(resource))
         throw new SiweInvalidMessageFieldError({
           field: 'resources',
           metaMessages: [
@@ -173,20 +171,18 @@ export function createSiweMessage(
   return `${prefix}\n${suffix}`
 }
 
-export declare namespace createSiweMessage {
-  type Value = SiweMessage
-
+export declare namespace Siwe_createMessage {
   type ReturnType = string
 
   type ErrorType =
-    | toAddress.ErrorType
+    | Address_from.ErrorType
     | SiweInvalidMessageFieldError
     | GlobalErrorType
 }
 
-createSiweMessage.parseError = (error: unknown) =>
+Siwe_createMessage.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as createSiweMessage.ErrorType
+  error as Siwe_createMessage.ErrorType
 
 const domainRegex =
   /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:[0-9]{1,5})?$/

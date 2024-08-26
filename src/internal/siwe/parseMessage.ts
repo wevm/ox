@@ -1,5 +1,5 @@
 import type { Address } from 'abitype'
-import type { SiweMessage } from '../types/siwe.js'
+import type { Siwe_Message } from '../types/siwe.js'
 import type { Compute, ExactPartial } from '../types/utils.js'
 
 /**
@@ -33,10 +33,10 @@ import type { Compute, ExactPartial } from '../types/utils.js'
  * //   version: '1',
  * // }
  * ```
- *
- * @alias ox!Siwe.parseSiweMessage:function(1)
  */
-export function parseSiweMessage(message: string): parseSiweMessage.ReturnType {
+export function Siwe_parseMessage(
+  message: string,
+): Siwe_parseMessage.ReturnType {
   const { scheme, statement, ...prefix } = (message.match(prefixRegex)
     ?.groups ?? {}) as {
     address: Address
@@ -70,8 +70,8 @@ export function parseSiweMessage(message: string): parseSiweMessage.ReturnType {
   }
 }
 
-export declare namespace parseSiweMessage {
-  type ReturnType = Compute<ExactPartial<SiweMessage>>
+export declare namespace Siwe_parseMessage {
+  type ReturnType = Compute<ExactPartial<Siwe_Message>>
 }
 
 // https://regexr.com/80gdj

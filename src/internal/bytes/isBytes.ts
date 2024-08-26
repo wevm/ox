@@ -1,6 +1,6 @@
-import { assertBytes } from '../bytes/assertBytes.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
+import { Bytes_assert } from './assert.js'
 
 /**
  * Checks if the given value is {@link Types#Bytes}.
@@ -14,18 +14,18 @@ import type { Bytes } from '../types/data.js'
  * Bytes.isBytes(Bytes.from([1, 2, 3])) // true
  * ```
  */
-export function isBytes(value: unknown): value is Bytes {
+export function Bytes_isBytes(value: unknown): value is Bytes {
   try {
-    assertBytes(value)
+    Bytes_assert(value)
     return true
   } catch {
     return false
   }
 }
 
-export declare namespace isBytes {
+export declare namespace Bytes_isBytes {
   export type ErrorType = GlobalErrorType
 }
 
 /* v8 ignore next */
-isBytes.parseError = (error: unknown) => error as isBytes.ErrorType
+Bytes_isBytes.parseError = (error: unknown) => error as Bytes_isBytes.ErrorType

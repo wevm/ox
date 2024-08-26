@@ -17,13 +17,13 @@ export type Authorization<
     nonce: bigintType
   } & (signed extends true ? Signature : Undefined<Signature>)
 >
-export type AuthorizationList<
+export type Authorization_List<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
 > = readonly Authorization<signed, bigintType, numberType>[]
 
-export type AuthorizationTuple<signed extends boolean = boolean> =
+export type Authorization_Tuple<signed extends boolean = boolean> =
   signed extends true
     ? readonly [
         chainId: Hex,
@@ -34,5 +34,5 @@ export type AuthorizationTuple<signed extends boolean = boolean> =
         s: Hex,
       ]
     : readonly [chainId: Hex, address: Hex, nonce: Hex]
-export type AuthorizationTupleList<signed extends boolean = boolean> =
-  readonly AuthorizationTuple<signed>[]
+export type Authorization_TupleList<signed extends boolean = boolean> =
+  readonly Authorization_Tuple<signed>[]

@@ -1,8 +1,5 @@
-export {
-  getContractAddress as from,
-  getContractAddress,
-} from './internal/contractAddress/getContractAddress.js'
+export { ContractAddress_from as from } from './internal/contractAddress/from.js'
 
-export { getCreateAddress } from './internal/contractAddress/getCreateAddress.js'
+export { ContractAddress_getCreateAddress as getCreateAddress } from './internal/contractAddress/getCreateAddress.js'
 
-export { getCreate2Address } from './internal/contractAddress/getCreate2Address.js'
+export { ContractAddress_getCreate2Address as getCreate2Address } from './internal/contractAddress/getCreate2Address.js'

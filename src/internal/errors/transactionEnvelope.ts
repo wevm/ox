@@ -1,6 +1,6 @@
 import type { Hex } from '../types/data.js'
-import type { TransactionType } from '../types/transactionEnvelope.js'
-import { formatGwei } from '../value/formatGwei.js'
+import type { TransactionEnvelope_Type } from '../types/transactionEnvelope.js'
+import { Value_formatGwei } from '../value/formatGwei.js'
 import { BaseError } from './base.js'
 
 export class CannotInferTransactionTypeError extends BaseError {
@@ -34,7 +34,7 @@ export class FeeCapTooHighError extends BaseError {
   } = {}) {
     super(
       `The fee cap (\`maxFeePerGas\`/\`maxPriorityFeePerGas\`${
-        feeCap ? ` = ${formatGwei(feeCap)} gwei` : ''
+        feeCap ? ` = ${Value_formatGwei(feeCap)} gwei` : ''
       }) cannot be higher than the maximum allowed value (2^256-1).`,
     )
   }
@@ -49,7 +49,7 @@ export class GasPriceTooHighError extends BaseError {
   } = {}) {
     super(
       `The gas price (\`gasPrice\`${
-        gasPrice ? ` = ${formatGwei(gasPrice)} gwei` : ''
+        gasPrice ? ` = ${Value_formatGwei(gasPrice)} gwei` : ''
       }) cannot be higher than the maximum allowed value (2^256-1).`,
     )
   }
@@ -75,7 +75,7 @@ export class InvalidSerializedTransactionError extends BaseError {
   }: {
     attributes: Record<string, unknown>
     serializedTransaction: Hex
-    type: TransactionType
+    type: TransactionEnvelope_Type
   }) {
     const missing = Object.entries(attributes)
       .map(([key, value]) => (typeof value === 'undefined' ? key : undefined))
@@ -109,10 +109,10 @@ export class TipAboveFeeCapError extends BaseError {
       [
         `The provided tip (\`maxPriorityFeePerGas\`${
           maxPriorityFeePerGas
-            ? ` = ${formatGwei(maxPriorityFeePerGas)} gwei`
+            ? ` = ${Value_formatGwei(maxPriorityFeePerGas)} gwei`
             : ''
         }) cannot be higher than the fee cap (\`maxFeePerGas\`${
-          maxFeePerGas ? ` = ${formatGwei(maxFeePerGas)} gwei` : ''
+          maxFeePerGas ? ` = ${Value_formatGwei(maxFeePerGas)} gwei` : ''
         }).`,
       ].join('\n'),
     )

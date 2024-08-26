@@ -1,7 +1,7 @@
+import { Siwe } from 'ox'
 import { expect, test, vi } from 'vitest'
 
-import type { SiweMessage } from '../types/siwe.js'
-import { createSiweMessage } from './createMessage.js'
+import type { Siwe_Message } from '../types/siwe.js'
 
 const message = {
   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
@@ -10,13 +10,13 @@ const message = {
   nonce: 'foobarbaz',
   uri: 'https://example.com/path',
   version: '1',
-} satisfies SiweMessage
+} satisfies Siwe_Message
 
 test('default', () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
-  expect(createSiweMessage(message)).toMatchInlineSnapshot(`
+  expect(Siwe.createMessage(message)).toMatchInlineSnapshot(`
     "example.com wants you to sign in with your Ethereum account:
     0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
 
@@ -36,7 +36,7 @@ test('parameters: domain', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       domain: 'foo.example.com',
     }),
@@ -53,7 +53,7 @@ test('parameters: domain', () => {
   `)
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       domain: 'example.co.uk',
     }),
@@ -77,7 +77,7 @@ test('parameters: scheme', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       scheme: 'https',
     }),
@@ -101,7 +101,7 @@ test('parameters: statement', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       statement:
         'I accept the ExampleOrg Terms of Service: https://example.com/tos',
@@ -124,7 +124,7 @@ test('parameters: statement', () => {
 
 test('parameters: issuedAt', () => {
   const issuedAt = new Date(Date.UTC(2022, 1, 4))
-  expect(createSiweMessage({ ...message, issuedAt })).toMatchInlineSnapshot(`
+  expect(Siwe.createMessage({ ...message, issuedAt })).toMatchInlineSnapshot(`
     "example.com wants you to sign in with your Ethereum account:
     0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
 
@@ -142,7 +142,7 @@ test('parameters: expirationTime', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       expirationTime: new Date(Date.UTC(2022, 1, 4)),
     }),
@@ -167,7 +167,7 @@ test('parameters: notBefore', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       notBefore: new Date(Date.UTC(2022, 1, 4)),
     }),
@@ -192,7 +192,7 @@ test('parameters: requestId', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       requestId: '123e4567-e89b-12d3-a456-426614174000',
     }),
@@ -217,7 +217,7 @@ test('parameters: resources', () => {
   vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
 
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       resources: [
         'https://example.com/foo',
@@ -246,7 +246,7 @@ test('parameters: resources', () => {
 
 test('behavior: invalid address', () => {
   expect(() =>
-    createSiweMessage({ ...message, address: '0xfoobarbaz' }),
+    Siwe.createMessage({ ...message, address: '0xfoobarbaz' }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [InvalidAddressError: Address "0xfoobarbaz" is invalid.
 
@@ -257,7 +257,7 @@ test('behavior: invalid address', () => {
 
 test('behavior: invalid chainId', () => {
   expect(() =>
-    createSiweMessage({ ...message, chainId: 1.1 }),
+    Siwe.createMessage({ ...message, chainId: 1.1 }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "chainId".
 
@@ -272,7 +272,7 @@ test('behavior: invalid chainId', () => {
 
 test('behavior: invalid domain', () => {
   expect(() =>
-    createSiweMessage({ ...message, domain: '#foo' }),
+    Siwe.createMessage({ ...message, domain: '#foo' }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "domain".
 
@@ -287,7 +287,7 @@ test('behavior: invalid domain', () => {
 
 test('behavior: invalid nonce', () => {
   expect(() =>
-    createSiweMessage({ ...message, nonce: '#foo' }),
+    Siwe.createMessage({ ...message, nonce: '#foo' }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "nonce".
 
@@ -302,7 +302,7 @@ test('behavior: invalid nonce', () => {
 
 test('behavior: invalid uri', () => {
   expect(() =>
-    createSiweMessage({ ...message, uri: '#foo' }),
+    Siwe.createMessage({ ...message, uri: '#foo' }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "uri".
 
@@ -318,7 +318,7 @@ test('behavior: invalid uri', () => {
 test('behavior: invalid version', () => {
   expect(() =>
     // @ts-expect-error
-    createSiweMessage({ ...message, version: '2' }),
+    Siwe.createMessage({ ...message, version: '2' }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "version".
 
@@ -332,7 +332,7 @@ test('behavior: invalid version', () => {
 
 test('behavior: invalid scheme', () => {
   expect(() =>
-    createSiweMessage({ ...message, scheme: 'foo_bar' }),
+    Siwe.createMessage({ ...message, scheme: 'foo_bar' }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "scheme".
 
@@ -347,7 +347,7 @@ test('behavior: invalid scheme', () => {
 
 test('behavior: invalid statement', () => {
   expect(() =>
-    createSiweMessage({ ...message, statement: 'foo\nbar' }),
+    Siwe.createMessage({ ...message, statement: 'foo\nbar' }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "statement".
 
@@ -362,7 +362,7 @@ test('behavior: invalid statement', () => {
 
 test('behavior: invalid resources', () => {
   expect(() =>
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       resources: ['https://example.com', 'foo'],
     }),
@@ -387,7 +387,7 @@ test.each([
   '127.0.0.1:3000',
 ])('valid domain `%s`', (domain) => {
   expect(
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       domain,
     }),
@@ -405,7 +405,7 @@ test.each([
   '-example.com',
 ])('invalid domain `%s`', (domain) => {
   expect(() =>
-    createSiweMessage({
+    Siwe.createMessage({
       ...message,
       domain,
     }),

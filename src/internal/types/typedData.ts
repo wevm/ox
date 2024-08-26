@@ -7,16 +7,16 @@ import type {
 import type { Compute } from './utils.js'
 
 // TODO: Make reusable for Viem?
-export type TypedDataDefinition<
+export type TypedData_Definition<
   typedData extends TypedData | Record<string, unknown> = TypedData,
   primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
   ///
   primaryTypes = typedData extends TypedData ? keyof typedData : string,
 > = primaryType extends 'EIP712Domain'
-  ? EIP712DomainDefinition<typedData, primaryType>
-  : MessageDefinition<typedData, primaryType, primaryTypes>
+  ? TypedData_EIP712DomainDefinition<typedData, primaryType>
+  : TypedData_MessageDefinition<typedData, primaryType, primaryTypes>
 
-export type EIP712DomainDefinition<
+export type TypedData_EIP712DomainDefinition<
   typedData extends TypedData | Record<string, unknown> = TypedData,
   primaryType extends 'EIP712Domain' = 'EIP712Domain',
   ///
@@ -35,7 +35,7 @@ export type EIP712DomainDefinition<
   message?: undefined
 }
 
-export type MessageDefinition<
+export type TypedData_MessageDefinition<
   typedData extends TypedData | Record<string, unknown> = TypedData,
   primaryType extends keyof typedData = keyof typedData,
   ///

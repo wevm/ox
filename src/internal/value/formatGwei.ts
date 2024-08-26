@@ -1,7 +1,7 @@
 import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
 
-import { formatValue } from './formatValue.js'
+import { Value_format } from './format.js'
 
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Gwei.
@@ -16,13 +16,14 @@ import { formatValue } from './formatValue.js'
  * // '1'
  * ```
  */
-export function formatGwei(wei: bigint, unit: 'wei' = 'wei') {
-  return formatValue(wei, valueExponents.gwei - valueExponents[unit])
+export function Value_formatGwei(wei: bigint, unit: 'wei' = 'wei') {
+  return Value_format(wei, valueExponents.gwei - valueExponents[unit])
 }
 
-export declare namespace formatGwei {
-  type ErrorType = formatValue.ErrorType | GlobalErrorType
+export declare namespace Value_formatGwei {
+  type ErrorType = Value_format.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-formatGwei.parseError = (error: unknown) => error as formatGwei.ErrorType
+Value_formatGwei.parseError = (error: unknown) =>
+  error as Value_formatGwei.ErrorType

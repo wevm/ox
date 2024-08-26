@@ -26,7 +26,9 @@ import type { GlobalErrorType } from '../errors/error.js'
  * // 'Foo(address address,string name,string foo)'
  * ```
  */
-export function encodeType(value: encodeType.Value): encodeType.ReturnType {
+export function TypedData_encodeType(
+  value: TypedData_encodeType.Value,
+): TypedData_encodeType.ReturnType {
   const { primaryType, types } = value
 
   let result = ''
@@ -43,7 +45,7 @@ export function encodeType(value: encodeType.Value): encodeType.ReturnType {
   return result
 }
 
-export declare namespace encodeType {
+export declare namespace TypedData_encodeType {
   type Value = {
     primaryType: string
     types: TypedData
@@ -55,7 +57,8 @@ export declare namespace encodeType {
 }
 
 /* v8 ignore next */
-encodeType.parseError = (error: unknown) => error as encodeType.ErrorType
+TypedData_encodeType.parseError = (error: unknown) =>
+  error as TypedData_encodeType.ErrorType
 
 /** @internal */
 export function findTypeDependencies(

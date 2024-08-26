@@ -1,11 +1,11 @@
+import { TypedData } from 'ox'
 import { expect, test } from 'vitest'
 
 import * as typedData from '../../../test/constants/typedData.js'
-import { hashStruct } from './hashStruct.js'
 
 test('default', () => {
   expect(
-    hashStruct({
+    TypedData.hashStruct({
       ...typedData.basic,
       primaryType: 'Mail',
       data: typedData.basic.message,

@@ -1,6 +1,5 @@
+import { TypedData } from 'ox'
 import { test } from 'vitest'
-
-import { serializeTypedData } from './serialize.js'
 
 const EIP712Domain = [
   { name: 'name', type: 'string' },
@@ -23,7 +22,7 @@ const domain = {
 } as const
 
 test('default', () => {
-  serializeTypedData({
+  TypedData.serialize({
     domain,
     primaryType: 'Foo',
     types: {
@@ -38,7 +37,7 @@ test('default', () => {
 })
 
 test('with domain', () => {
-  serializeTypedData({
+  TypedData.serialize({
     domain: {
       ...domain,
       address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
@@ -57,7 +56,7 @@ test('with domain', () => {
 })
 
 test('with domain as primary type', () => {
-  serializeTypedData({
+  TypedData.serialize({
     domain: {
       ...domain,
       address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
@@ -71,7 +70,7 @@ test('with domain as primary type', () => {
 })
 
 test('no domain', () => {
-  serializeTypedData({
+  TypedData.serialize({
     primaryType: 'Foo',
     types: {
       EIP712Domain,
@@ -86,7 +85,7 @@ test('no domain', () => {
 })
 
 test('type errors', () => {
-  serializeTypedData({
+  TypedData.serialize({
     // @ts-expect-error address is missing
     domain: {
       ...domain,

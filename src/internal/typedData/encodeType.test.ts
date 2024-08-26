@@ -1,11 +1,11 @@
+import { TypedData } from 'ox'
 import { expect, test } from 'vitest'
 
 import * as typedData from '../../../test/constants/typedData.js'
-import { encodeType } from './encodeType.js'
 
 test('default', () => {
   expect(
-    encodeType({
+    TypedData.encodeType({
       ...typedData.basic,
       primaryType: 'Mail',
     }),

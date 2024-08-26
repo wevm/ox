@@ -1,10 +1,10 @@
 import type { Address } from 'abitype'
 
-import { isAddressEqual } from '../address/isAddressEqual.js'
+import { Address_isEqual } from '../address/isEqual.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
-import { recoverAddress } from './recoverAddress.js'
+import { Secp256k1_recoverAddress } from './recoverAddress.js'
 
 /**
  * Verifies a payload was signed by the provided address.
@@ -22,15 +22,18 @@ import { recoverAddress } from './recoverAddress.js'
  * })
  * ```
  */
-export function verify({
+export function Secp256k1_verify({
   address,
   payload,
   signature,
-}: verify.Parameters): verify.ReturnType {
-  return isAddressEqual(address, recoverAddress({ payload, signature }))
+}: Secp256k1_verify.Parameters): Secp256k1_verify.ReturnType {
+  return Address_isEqual(
+    address,
+    Secp256k1_recoverAddress({ payload, signature }),
+  )
 }
 
-export declare namespace verify {
+export declare namespace Secp256k1_verify {
   type Parameters = {
     /** Address that signed the payload. */
     address: Address
@@ -46,4 +49,5 @@ export declare namespace verify {
 }
 
 /* v8 ignore next */
-verify.parseError = (error: unknown) => error as verify.ErrorType
+Secp256k1_verify.parseError = (error: unknown) =>
+  error as Secp256k1_verify.ErrorType

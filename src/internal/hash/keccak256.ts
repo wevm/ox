@@ -1,9 +1,9 @@
 import { keccak_256 } from '@noble/hashes/sha3'
 
-import { toBytes } from '../bytes/toBytes.js'
+import { Bytes_from } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { isHex } from '../hex/isHex.js'
-import { toHex } from '../hex/toHex.js'
+import { Hex_from } from '../hex/from.js'
+import { Hex_isHex } from '../hex/isHex.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
@@ -25,29 +25,30 @@ import type { Bytes, Hex } from '../types/data.js'
  * // '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
  * ```
  */
-export function keccak256<to extends 'Hex' | 'Bytes' = 'Hex'>(
+export function Hash_keccak256<to extends 'Hex' | 'Bytes' = 'Hex'>(
   value: Hex | Bytes,
   to_?: to | undefined,
-): keccak256.ReturnType<to> {
+): Hash_keccak256.ReturnType<to> {
   const to = to_ || 'Hex'
   const bytes = keccak_256(
-    isHex(value, { strict: false }) ? toBytes(value) : value,
+    Hex_isHex(value, { strict: false }) ? Bytes_from(value) : value,
   )
-  if (to === 'Bytes') return bytes as keccak256.ReturnType<to>
-  return toHex(bytes) as keccak256.ReturnType<to>
+  if (to === 'Bytes') return bytes as Hash_keccak256.ReturnType<to>
+  return Hex_from(bytes) as Hash_keccak256.ReturnType<to>
 }
 
-export declare namespace keccak256 {
-  type ReturnType<to extends 'Hex' | 'Bytes'> =
+export declare namespace Hash_keccak256 {
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> =
     | (to extends 'Bytes' ? Bytes : never)
     | (to extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | toBytes.ErrorType
-    | toHex.ErrorType
-    | isHex.ErrorType
+    | Bytes_from.ErrorType
+    | Hex_from.ErrorType
+    | Hex_isHex.ErrorType
     | GlobalErrorType
 }
 
 /* v8 ignore next */
-keccak256.parseError = (error: unknown) => error as keccak256.ErrorType
+Hash_keccak256.parseError = (error: unknown) =>
+  error as Hash_keccak256.ErrorType

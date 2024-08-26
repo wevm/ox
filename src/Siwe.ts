@@ -1,21 +1,11 @@
-export {
-  createSiweMessage as createMessage,
-  createSiweMessage,
-} from './internal/siwe/createMessage.js'
+export type { Siwe_Message as Message } from './internal/types/siwe.js'
 
-export {
-  generateSiweNonce as generateNonce,
-  generateSiweNonce,
-} from './internal/siwe/generateNonce.js'
+export { Siwe_createMessage as createMessage } from './internal/siwe/createMessage.js'
 
-export { isUri } from './internal/siwe/isUri.js'
+export { Siwe_generateNonce as generateNonce } from './internal/siwe/generateNonce.js'
 
-export {
-  parseSiweMessage as parseMessage,
-  parseSiweMessage,
-} from './internal/siwe/parseMessage.js'
+export { Siwe_isUri as isUri } from './internal/siwe/isUri.js'
 
-export {
-  validateSiweMessage as validateMessage,
-  validateSiweMessage,
-} from './internal/siwe/validateMessage.js'
+export { Siwe_parseMessage as parseMessage } from './internal/siwe/parseMessage.js'
+
+export { Siwe_validateMessage as validateMessage } from './internal/siwe/validateMessage.js'

@@ -10,7 +10,7 @@ import type {
   SolidityString,
 } from 'abitype'
 
-import { assertAddress } from '../address/assertAddress.js'
+import { Address_assert } from '../address/assert.js'
 import { arrayRegex, bytesRegex, integerRegex } from '../constants/regex.js'
 import {
   AbiEncodingBytesSizeMismatchError,
@@ -18,9 +18,9 @@ import {
   InvalidAbiTypeError,
 } from '../errors/abi.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { concatHex } from '../hex/concatHex.js'
-import { padLeft, padRight } from '../hex/padHex.js'
-import { booleanToHex, numberToHex, stringToHex } from '../hex/toHex.js'
+import { Hex_concat } from '../hex/concat.js'
+import { Hex_fromBoolean, Hex_fromNumber, Hex_fromString } from '../hex/from.js'
+import { Hex_padLeft, Hex_padRight } from '../hex/pad.js'
 import type { Hex } from '../types/data.js'
 
 /** @internal */
@@ -55,7 +55,7 @@ export type EncodePackedValues<
  * // '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
  * ```
  */
-export function encodePacked<
+export function Abi_encodePacked<
   const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
 >(types: packedAbiTypes, values: EncodePackedValues<packedAbiTypes>): Hex {
   if (types.length !== values.length)
@@ -70,28 +70,33 @@ export function encodePacked<
     const value = values[i]
     data.push(encode(type, value))
   }
-  return concatHex(...data)
+  return Hex_concat(...data)
 }
 
-export declare namespace encodePacked {
+export declare namespace Abi_encodePacked {
   type ErrorType =
-    | concatHex.ErrorType
+    | Hex_concat.ErrorType
     | AbiEncodingLengthMismatchError
     | GlobalErrorType
 }
 
 /* v8 ignore next */
-encodePacked.parseError = (error: unknown) => error as encodePacked.ErrorType
+Abi_encodePacked.parseError = (error: unknown) =>
+  error as Abi_encodePacked.ErrorType
+
+//////////////////////////////////////////////////////////////////////////////
+// Internal
+//////////////////////////////////////////////////////////////////////////////
 
 declare namespace encode {
   type ErrorType =
-    | assertAddress.ErrorType
-    | concatHex.ErrorType
-    | padLeft.ErrorType
-    | padRight.ErrorType
-    | booleanToHex.ErrorType
-    | numberToHex.ErrorType
-    | stringToHex.ErrorType
+    | Address_assert.ErrorType
+    | Hex_concat.ErrorType
+    | Hex_padLeft.ErrorType
+    | Hex_padRight.ErrorType
+    | Hex_fromBoolean.ErrorType
+    | Hex_fromNumber.ErrorType
+    | Hex_fromString.ErrorType
     | GlobalErrorType
 }
 
@@ -102,19 +107,22 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
 ): Hex {
   if (type === 'address') {
     const address = value as Address
-    assertAddress(address)
-    return padLeft(address.toLowerCase() as Hex, isArray ? 32 : 0) as Address
+    Address_assert(address)
+    return Hex_padLeft(
+      address.toLowerCase() as Hex,
+      isArray ? 32 : 0,
+    ) as Address
   }
-  if (type === 'string') return stringToHex(value as string)
+  if (type === 'string') return Hex_fromString(value as string)
   if (type === 'bytes') return value as Hex
   if (type === 'bool')
-    return padLeft(booleanToHex(value as boolean), isArray ? 32 : 1)
+    return Hex_padLeft(Hex_fromBoolean(value as boolean), isArray ? 32 : 1)
 
   const intMatch = (type as string).match(integerRegex)
   if (intMatch) {
     const [_type, baseType, bits = '256'] = intMatch
     const size = Number.parseInt(bits) / 8
-    return numberToHex(value as number, {
+    return Hex_fromNumber(value as number, {
       size: isArray ? 32 : size,
       signed: baseType === 'int',
     })
@@ -128,7 +136,7 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
         expectedSize: Number.parseInt(size!),
         value: value as Hex,
       })
-    return padRight(value as Hex, isArray ? 32 : 0) as Hex
+    return Hex_padRight(value as Hex, isArray ? 32 : 0) as Hex
   }
 
   const arrayMatch = (type as string).match(arrayRegex)
@@ -139,7 +147,7 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
       data.push(encode(childType, value[i], true))
     }
     if (data.length === 0) return '0x'
-    return concatHex(...data)
+    return Hex_concat(...data)
   }
 
   throw new InvalidAbiTypeError(type as string)

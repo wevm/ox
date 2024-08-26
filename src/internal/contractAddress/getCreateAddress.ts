@@ -1,10 +1,10 @@
 import type { Address } from 'abitype'
 
-import { toAddress } from '../address/toAddress.js'
-import { toBytes } from '../bytes/toBytes.js'
+import { Address_from } from '../address/from.js'
+import { Bytes_from } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import { keccak256 } from '../hash/keccak256.js'
-import { encodeRlp } from '../rlp/encodeRlp.js'
+import { Hash_keccak256 } from '../hash/keccak256.js'
+import { Rlp_fromBytes } from '../rlp/from.js'
 
 /**
  * Generates contract address via [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode.
@@ -22,31 +22,33 @@ import { encodeRlp } from '../rlp/encodeRlp.js'
  * // '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
  * ```
  */
-export function getCreateAddress(opts: getCreateAddress.Options) {
-  const from = toBytes(toAddress(opts.from))
+export function ContractAddress_getCreateAddress(
+  opts: ContractAddress_getCreateAddress.Options,
+) {
+  const from = Bytes_from(Address_from(opts.from))
 
-  let nonce = toBytes(opts.nonce)
+  let nonce = Bytes_from(opts.nonce)
   if (nonce[0] === 0) nonce = new Uint8Array([])
 
-  return toAddress(
-    `0x${keccak256(encodeRlp([from, nonce], 'Bytes')).slice(26)}` as Address,
+  return Address_from(
+    `0x${Hash_keccak256(Rlp_fromBytes([from, nonce])).slice(26)}` as Address,
   )
 }
 
-export declare namespace getCreateAddress {
+export declare namespace ContractAddress_getCreateAddress {
   type Options = {
     from: Address
     nonce: bigint
   }
 
   type ErrorType =
-    | keccak256.ErrorType
-    | toAddress.ErrorType
-    | toBytes.ErrorType
-    | encodeRlp.ErrorType
+    | Hash_keccak256.ErrorType
+    | Address_from.ErrorType
+    | Bytes_from.ErrorType
+    | Rlp_fromBytes.ErrorType
     | GlobalErrorType
 }
 
-getCreateAddress.parseError = (error: unknown) =>
+ContractAddress_getCreateAddress.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as getCreateAddress.ErrorType
+  error as ContractAddress_getCreateAddress.ErrorType

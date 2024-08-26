@@ -1,5 +1,5 @@
 import type { Address } from 'abitype'
-import { assertAddress } from './assertAddress.js'
+import { Address_assert } from './assert.js'
 
 /**
  * Checks if the given address is a valid address.
@@ -15,19 +15,19 @@ import { assertAddress } from './assertAddress.js'
  * // false
  * ```
  */
-export function isAddress(
+export function Address_isAddress(
   address: string,
-  options?: isAddress.Options | undefined,
+  options?: Address_isAddress.Options | undefined,
 ): address is Address {
   const { strict = true } = options ?? {}
   try {
-    assertAddress(address, { strict })
+    Address_assert(address, { strict })
     return true
   } catch {
     return false
   }
 }
 
-export declare namespace isAddress {
-  export type Options = assertAddress.Options
+export declare namespace Address_isAddress {
+  export type Options = Address_assert.Options
 }

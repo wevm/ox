@@ -1,6 +1,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
-import { toBytes } from '../bytes/toBytes.js'
+import { Bytes_from } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
 import type { Signature } from '../types/signature.js'
@@ -16,11 +16,13 @@ import type { Compute } from '../types/utils.js'
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
  * ```
  */
-export function sign(parameters: sign.Parameters): sign.ReturnType {
+export function Secp256k1_sign(
+  parameters: Secp256k1_sign.Parameters,
+): Secp256k1_sign.ReturnType {
   const { payload, privateKey } = parameters
   const { r, s, recovery } = secp256k1.sign(
-    toBytes(payload),
-    toBytes(privateKey),
+    Bytes_from(payload),
+    Bytes_from(privateKey),
   )
   return {
     r,
@@ -29,7 +31,7 @@ export function sign(parameters: sign.Parameters): sign.ReturnType {
   }
 }
 
-export declare namespace sign {
+export declare namespace Secp256k1_sign {
   type Parameters = {
     /** Payload to sign. */
     payload: Hex | Bytes
@@ -39,8 +41,9 @@ export declare namespace sign {
 
   type ReturnType = Compute<Signature>
 
-  type ErrorType = toBytes.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_from.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-sign.parseError = (error: unknown) => error as sign.ErrorType
+Secp256k1_sign.parseError = (error: unknown) =>
+  error as Secp256k1_sign.ErrorType

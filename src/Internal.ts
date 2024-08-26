@@ -9,25 +9,25 @@ export {
   decodeString,
   decodeTuple,
   hasDynamicChild,
-} from './internal/abi/decodeAbiParameters.js'
+} from './internal/abi/decodeParameters.js'
 
 export {
   type IsomorphicAbiParameter,
   type IsomorphicAbiParametersToPrimitiveTypes,
   type PreparedParameter,
   type Tuple,
+  encode,
   encodeAddress,
   encodeArray,
   encodeBoolean,
   encodeBytes,
   encodeNumber,
-  encodeParameters,
   encodeString,
   encodeTuple,
   getArrayComponents,
   prepareParameter,
   prepareParameters,
-} from './internal/abi/encodeAbiParameters.js'
+} from './internal/abi/encodeParameters.js'
 
 export {
   AbiDecodingDataSizeTooSmallError,
@@ -40,12 +40,9 @@ export {
   InvalidAbiTypeError,
 } from './internal/errors/abi.js'
 
-export { assertSize as assertSize_bytes } from './internal/bytes/assertSize.js'
-export { assertSize as assertSize_hex } from './internal/hex/assertSize.js'
+export { pad as pad_hex } from './internal/hex/pad.js'
 
-export { padHex } from './internal/hex/padHex.js'
-
-export { padBytes } from './internal/bytes/padBytes.js'
+export { pad as pad_bytes } from './internal/bytes/pad.js'
 
 export type {
   EncodePackedValues,
@@ -61,28 +58,28 @@ export { LruMap } from './internal/lru.js'
 export {
   assertStartOffset as assertStartOffset_bytes,
   assertEndOffset as assertEndOffset_bytes,
-} from './internal/bytes/sliceBytes.js'
+} from './internal/bytes/slice.js'
 export {
   assertStartOffset as assertStartOffset_hex,
   assertEndOffset as assertEndOffset_hex,
-} from './internal/hex/sliceHex.js'
+} from './internal/hex/slice.js'
 
-export { trimHex } from './internal/hex/trimHex.js'
-export { trimBytes } from './internal/bytes/trimBytes.js'
+export { trim as trim_hex } from './internal/hex/trim.js'
+export { trim as trim_bytes } from './internal/bytes/trim.js'
 
 export {
   decodeRlpCursor,
   readLength,
   readList,
-} from './internal/rlp/decodeRlp.js'
+} from './internal/rlp/to.js'
 
 export {
-  getSerializedTransactionType,
-  type GetSerializedTransactionType,
-} from './internal/transactionEnvelope/getSerializedTransactionType.js'
+  TransactionEnvelope_getSerializedType,
+  type GetSerializedType,
+} from './internal/transactionEnvelope/getSerializedType.js'
 
 export {
-  getTransactionType,
+  TransactionEnvelope_getType,
   type MatchKeys,
   type TransactionEnvelopeGeneric,
   type BaseProperties,
@@ -92,16 +89,15 @@ export {
   type Eip7702Properties,
   type GetTransactionType,
   type LegacyProperties,
-} from './internal/transactionEnvelope/getTransactionType.js'
+} from './internal/transactionEnvelope/getType.js'
 
-export { vToYParity } from './internal/signature/vToYParity.js'
+export { Signature_vToYParity } from './internal/signature/vToYParity.js'
 
 export { findTypeDependencies } from './internal/typedData/encodeType.js'
 
 export {
   encodeData,
   encodeField,
-  hashStruct,
   hashType,
 } from './internal/typedData/hashStruct.js'
 
@@ -138,3 +134,7 @@ export type {
   UnionToTuple,
   ValueOf,
 } from './internal/types/utils.js'
+
+export { Bytes_assertSize } from './internal/bytes/assertSize.js'
+
+export { Hex_assertSize } from './internal/hex/assertSize.js'

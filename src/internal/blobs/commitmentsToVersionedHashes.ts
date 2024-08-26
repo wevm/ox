@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes, Hex } from '../types/data.js'
-import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
+import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 
 /**
  * Transform a list of commitments to their versioned hashes.
@@ -15,15 +15,15 @@ import { commitmentToVersionedHash } from './commitmentToVersionedHash.js'
  * const versionedHashes = Blobs.commitmentsToVersionedHashes(commitments)
  * ```
  */
-export function commitmentsToVersionedHashes<
+export function Blobs_commitmentsToVersionedHashes<
   const commitments extends readonly Bytes[] | readonly Hex[],
   as extends 'Hex' | 'Bytes' =
     | (commitments extends readonly Hex[] ? 'Hex' : never)
     | (commitments extends readonly Bytes[] ? 'Bytes' : never),
 >(
   commitments: commitments | readonly Bytes[] | readonly Hex[],
-  options: commitmentsToVersionedHashes.Options<as> = {},
-): commitmentsToVersionedHashes.ReturnType<as> {
+  options: Blobs_commitmentsToVersionedHashes.Options<as> = {},
+): Blobs_commitmentsToVersionedHashes.ReturnType<as> {
   const { version } = options
 
   const as =
@@ -32,7 +32,7 @@ export function commitmentsToVersionedHashes<
   const hashes: Uint8Array[] | Hex[] = []
   for (const commitment of commitments) {
     hashes.push(
-      commitmentToVersionedHash(commitment, {
+      Blobs_commitmentToVersionedHash(commitment, {
         as,
         version,
       }) as never,
@@ -41,7 +41,7 @@ export function commitmentsToVersionedHashes<
   return hashes as never
 }
 
-export declare namespace commitmentsToVersionedHashes {
+export declare namespace Blobs_commitmentsToVersionedHashes {
   type Options<as extends 'Hex' | 'Bytes' | undefined = undefined> = {
     /** Return type. */
     as?: as | 'Hex' | 'Bytes' | undefined
@@ -56,6 +56,6 @@ export declare namespace commitmentsToVersionedHashes {
   type ErrorType = GlobalErrorType
 }
 
-commitmentsToVersionedHashes.parseError = (error: unknown) =>
+Blobs_commitmentsToVersionedHashes.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as commitmentsToVersionedHashes.ErrorType
+  error as Blobs_commitmentsToVersionedHashes.ErrorType

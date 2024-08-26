@@ -1,7 +1,7 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
 import type { GlobalErrorType } from '../errors/error.js'
-import { toHex } from '../hex/toHex.js'
+import { Hex_from } from '../hex/from.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
@@ -13,16 +13,16 @@ import type { Bytes, Hex } from '../types/data.js'
  * const publicKey = Secp256k1.getPublicKey({ privateKey: '0x...' })
  * ```
  */
-export function getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  parameters: getPublicKey.Parameters<as>,
-): getPublicKey.ReturnType<as> {
+export function Secp256k1_getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  parameters: Secp256k1_getPublicKey.Parameters<as>,
+): Secp256k1_getPublicKey.ReturnType<as> {
   const { privateKey, as = 'Hex' } = parameters
-  const bytes = secp256k1.getPublicKey(toHex(privateKey).slice(2), false)
-  if (as === 'Hex') return toHex(bytes) as never
+  const bytes = secp256k1.getPublicKey(Hex_from(privateKey).slice(2), false)
+  if (as === 'Hex') return Hex_from(bytes) as never
   return bytes as never
 }
 
-export declare namespace getPublicKey {
+export declare namespace Secp256k1_getPublicKey {
   type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** Private key to compute the public key from. */
     privateKey: Hex | Bytes

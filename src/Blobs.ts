@@ -5,39 +5,24 @@ export type {
   BlobSidecars,
 } from './internal/types/blob.js'
 
-export {
-  blobsToCommitments,
-  blobsToCommitments as toCommitments,
-} from './internal/blobs/blobsToCommitments.js'
+export { Blobs_toCommitments as toCommitments } from './internal/blobs/toCommitments.js'
+
+export { Blobs_toProofs as toProofs } from './internal/blobs/toProofs.js'
+
+export { Blobs_toVersionedHashes as toVersionedHashes } from './internal/blobs/toVersionedHashes.js'
+
+export { Blobs_commitmentToVersionedHash as commitmentToVersionedHash } from './internal/blobs/commitmentToVersionedHash.js'
+
+export { Blobs_commitmentsToVersionedHashes as commitmentsToVersionedHashes } from './internal/blobs/commitmentsToVersionedHashes.js'
 
 export {
-  blobsToProofs,
-  blobsToProofs as toProofs,
-} from './internal/blobs/blobsToProofs.js'
+  Blobs_to as to,
+  Blobs_toBytes as toBytes,
+  Blobs_toHex as toHex,
+} from './internal/blobs/to.js'
 
-export {
-  blobsToVersionedHashes,
-  blobsToVersionedHashes as toVersionedHashes,
-} from './internal/blobs/blobsToVersionedHashes.js'
+export { Blobs_sidecarsToVersionedHashes as sidecarsToVersionedHashes } from './internal/blobs/sidecarsToVersionedHashes.js'
 
-export { commitmentToVersionedHash } from './internal/blobs/commitmentToVersionedHash.js'
+export { Blobs_from as from } from './internal/blobs/from.js'
 
-export { commitmentsToVersionedHashes } from './internal/blobs/commitmentsToVersionedHashes.js'
-
-export {
-  fromBlobs,
-  fromBlobs as to,
-  blobsToBytes,
-  blobsToBytes as toBytes,
-  blobsToHex,
-  blobsToHex as toHex,
-} from './internal/blobs/fromBlobs.js'
-
-export { sidecarsToVersionedHashes } from './internal/blobs/sidecarsToVersionedHashes.js'
-
-export { toBlobs, toBlobs as from } from './internal/blobs/toBlobs.js'
-
-export {
-  toBlobSidecars,
-  toBlobSidecars as toSidecars,
-} from './internal/blobs/toBlobSidecars.js'
+export { Blobs_toSidecars as toSidecars } from './internal/blobs/toSidecars.js'

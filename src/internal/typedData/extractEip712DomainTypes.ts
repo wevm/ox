@@ -4,13 +4,13 @@ import type { GlobalErrorType } from '../errors/error.js'
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
  *
- * - Docs: https://oxlib.sh/api/typedData/extractEip712Domain
+ * - Docs: https://oxlib.sh/api/typedData/extractEip712DomainTypes
  *
  * @example
  * ```ts twoslash
  * import { TypedData } from 'ox'
  *
- * TypedData.extractEip712Domain({
+ * TypedData.extractEip712DomainTypes({
  *   name: 'Ether!',
  *   version: '1',
  *   chainId: 1,
@@ -19,7 +19,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  * // [{ 'name': 'name', 'type': 'string' }, { 'name': 'version', 'type': 'string' }, { 'name': 'chainId', 'type': 'uint256' }, { 'name': 'verifyingContract', 'type': 'address' }]
  * ```
  */
-export function extractEip712DomainTypes(
+export function TypedData_extractEip712DomainTypes(
   domain: TypedDataDomain | undefined,
 ): TypedDataParameter[] {
   return [
@@ -37,10 +37,10 @@ export function extractEip712DomainTypes(
   ].filter(Boolean) as TypedDataParameter[]
 }
 
-export declare namespace extractEip712DomainTypes {
+export declare namespace TypedData_extractEip712DomainTypes {
   type ErrorType = GlobalErrorType
 }
 
-extractEip712DomainTypes.parseError = (error: unknown) =>
+TypedData_extractEip712DomainTypes.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as extractEip712DomainTypes.ErrorType
+  error as TypedData_extractEip712DomainTypes.ErrorType

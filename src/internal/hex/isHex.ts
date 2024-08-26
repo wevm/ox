@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
-import { assertHex } from './assertHex.js'
+import { Hex_assert } from './assert.js'
 
 /**
  * Checks if the given value is {@link Types#Hex}.
@@ -14,20 +14,20 @@ import { assertHex } from './assertHex.js'
  * Hex.isHex(Bytes.from([1, 2, 3])) // false
  * ```
  */
-export function isHex(
+export function Hex_isHex(
   value: unknown,
-  options: isHex.Options = {},
+  options: Hex_isHex.Options = {},
 ): value is Hex {
   const { strict = true } = options
   try {
-    assertHex(value, { strict })
+    Hex_assert(value, { strict })
     return true
   } catch {
     return false
   }
 }
 
-export declare namespace isHex {
+export declare namespace Hex_isHex {
   type Options = {
     strict?: boolean | undefined
   }
@@ -36,4 +36,4 @@ export declare namespace isHex {
 }
 
 /* v8 ignore next */
-isHex.parseError = (error: unknown) => error as isHex.ErrorType
+Hex_isHex.parseError = (error: unknown) => error as Hex_isHex.ErrorType

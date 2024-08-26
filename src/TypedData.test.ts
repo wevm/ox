@@ -9,13 +9,10 @@ test('exports', () => {
       "encodeType",
       "extractEip712DomainTypes",
       "hash",
-      "hashTypedData",
       "hashDomain",
       "hashStruct",
       "serialize",
-      "serializeTypedData",
       "validate",
-      "validateTypedData",
     ]
   `)
 })
