@@ -2,8 +2,8 @@ import type { AbiFunction } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_slice } from '../hex/slice.js'
-import { Abi_getSignatureHash } from './getSignatureHash.js'
 import type { Hex } from '../hex/types.js'
+import { Abi_getSignatureHash } from './getSignatureHash.js'
 
 /**
  * Computes the selector for an ABI Item.
