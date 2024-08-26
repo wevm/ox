@@ -97,9 +97,9 @@ ${content}
       : `
 ## Return Type
 
-\`${returnType.type}\`
-
 ${comment?.returns}
+
+\`${returnType.type}\`
 `
 
   const errorTypeId = `${item.canonicalReference.split(':')[0]}.ErrorType:type`

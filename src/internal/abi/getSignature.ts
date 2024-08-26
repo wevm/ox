@@ -8,6 +8,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  * @example
  * ```ts twoslash
  * import { Abi } from 'ox'
+ *
  * const signature = Abi.getSignature('function ownerOf(uint256 tokenId)')
  * // 'ownerOf(uint256)'
  * ```
@@ -15,6 +16,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  * @example
  * ```ts twoslash
  * import { Abi } from 'ox'
+ *
  * const signature = Abi.getSignature({
  *   name: 'ownerOf',
  *   type: 'function',
@@ -24,8 +26,11 @@ import type { GlobalErrorType } from '../errors/error.js'
  * })
  * // 'ownerOf(uint256)'
  * ```
+ *
+ * @param abiItem - The ABI Item to compute the signature for.
+ * @returns The stringified signature of the ABI Item.
  */
-export const Abi_getSignature = (abiItem: Abi_getSignature.Parameters) => {
+export function Abi_getSignature(abiItem: string | Abi[number]): string {
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
     return formatAbiItem(abiItem)
@@ -34,8 +39,6 @@ export const Abi_getSignature = (abiItem: Abi_getSignature.Parameters) => {
 }
 
 export declare namespace Abi_getSignature {
-  type Parameters = string | Abi[number]
-
   type ErrorType = normalizeSignature.ErrorType | GlobalErrorType
 }
 

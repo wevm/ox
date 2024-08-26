@@ -24,8 +24,7 @@ import type {
  * ```ts
  * import { Abi } from 'ox'
  *
- * const abiItem = Abi.extractItem(abi, { name: 'y' })
- *
+ * Abi.extractItem(abi, { name: 'y' })
  * // {
  * //   name: 'y',
  * //   type: 'event',
@@ -34,6 +33,10 @@ import type {
  * //   stateMutability: 'view'
  * // }
  * ```
+ *
+ * @param abi - The contract's ABI.
+ * @param options - The extraction options.
+ * @returns The ABI item.
  */
 export function Abi_extractItem<
   const abi extends Abi | readonly unknown[],

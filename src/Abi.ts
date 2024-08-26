@@ -32,3 +32,6 @@ export { Abi_getSelector as getSelector } from './internal/abi/getSelector.js'
 export { Abi_getSignature as getSignature } from './internal/abi/getSignature.js'
 
 export { Abi_getSignatureHash as getSignatureHash } from './internal/abi/getSignatureHash.js'
+
+// TODO: Bring into Ox
+export { parseAbiParameters as parseParameters } from 'abitype'

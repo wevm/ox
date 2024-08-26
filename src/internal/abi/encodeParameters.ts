@@ -26,47 +26,50 @@ import {
   InvalidAbiTypeError,
 } from './errors.js'
 
-// TODO: These types should be in abitype?
-/** @internal */
-export type IsomorphicAbiParameter = AbiParameter | AbiType | (string & {})
-
-/** @internal */
-export type IsomorphicAbiParametersToPrimitiveTypes<
-  types extends readonly IsomorphicAbiParameter[],
-> = Compute<{
-  [key in keyof types]: types[key] extends AbiParameter
-    ? AbiParameterToPrimitiveType<types[key]>
-    : types[key] extends AbiType
-      ? AbiParameterToPrimitiveType<{ type: types[key] }>
-      : types[key] extends string | readonly string[] | readonly unknown[]
-        ? AbiParameterToPrimitiveType<ParseAbiParameter<types[key]>>
-        : never
-}>
-
 /**
  * Encodes primitive values into ABI encoded data as per the [Application Binary Interface (ABI) Specification](https://docs.soliditylang.org/en/latest/abi-spec).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Abi } from 'ox'
  *
  * const data = Abi.encodeParameters(
  *   ['string', 'uint', 'bool'],
- *   ['wagmi', 420n, true]
+ *   ['wagmi', 420n, true],
  * )
  * ```
  *
- * You can also pass in Human Readable parameters with the `Abi.parseParameters` utility.
+ * @example
+ * Specify structured ABI Parameters as schema:
+ *
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ *
+ * const data = Abi.encodeParameters(
+ *   [
+ *     { type: 'string', name: 'name' },
+ *     { type: 'uint', name: 'age' },
+ *     { type: 'bool', name: 'isOwner' },
+ *   ],
+ *   ['wagmi', 420n, true],
+ * )
+ * ```
  *
  * @example
- * ```ts
+ * You can also pass in Human Readable parameters with the {@link Abi#parseParameters} utility.
+ *
+ * ```ts twoslash
  * import { Abi } from 'ox'
  *
  * const data = Abi.encodeParameters(
  *   Abi.parseParameters('string x, uint y, bool z'),
- *   ['wagmi', 420n, true]
+ *   ['wagmi', 420n, true],
  * )
  * ```
+ *
+ * @param parameters - The set of ABI parameters to encode, in the shape of the `inputs` or `outputs` attribute of an ABI Item. These parameters must include valid [ABI types](https://docs.soliditylang.org/en/latest/types.html).
+ * @param values - The set of primitive values that correspond to the ABI types defined in `parameters`.
+ * @returns ABI encoded data.
  */
 export function Abi_encodeParameters<
   const parameters extends
@@ -77,7 +80,7 @@ export function Abi_encodeParameters<
   values: parameters extends readonly IsomorphicAbiParameter[]
     ? IsomorphicAbiParametersToPrimitiveTypes<parameters>
     : never,
-): Abi_encodeParameters.ReturnType {
+): Hex {
   if (parameters.length !== values.length)
     throw new AbiEncodingLengthMismatchError({
       expectedLength: parameters.length as number,
@@ -94,8 +97,6 @@ export function Abi_encodeParameters<
 }
 
 export declare namespace Abi_encodeParameters {
-  type ReturnType = Hex
-
   type ErrorType =
     | AbiEncodingLengthMismatchError
     | encode.ErrorType
@@ -106,6 +107,23 @@ export declare namespace Abi_encodeParameters {
 Abi_encodeParameters.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Abi_encodeParameters.ErrorType
+
+// TODO: These types should be in abitype?
+/** @internal */
+export type IsomorphicAbiParameter = AbiParameter | AbiType | (string & {})
+
+/** @internal */
+export type IsomorphicAbiParametersToPrimitiveTypes<
+  types extends readonly IsomorphicAbiParameter[],
+> = Compute<{
+  [key in keyof types]: types[key] extends AbiParameter
+    ? AbiParameterToPrimitiveType<types[key]>
+    : types[key] extends AbiType
+      ? AbiParameterToPrimitiveType<{ type: types[key] }>
+      : types[key] extends string | readonly string[] | readonly unknown[]
+        ? AbiParameterToPrimitiveType<ParseAbiParameter<types[key]>>
+        : never
+}>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities

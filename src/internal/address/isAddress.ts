@@ -7,15 +7,17 @@ import type { Address } from './types.js'
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
+ *
  * Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
- * // @log: true
+ * // true
  * ```
  *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
+ *
  * Address.isAddress('0xdeadbeef')
- * // @log: false
+ * // false
  * ```
  *
  * @param address - Value to check if it is a valid address.

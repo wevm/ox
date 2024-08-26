@@ -27,30 +27,12 @@ import {
   InvalidAbiTypeError,
 } from './errors.js'
 
-/** @internal */
-export type PackedAbiType =
-  | SolidityAddress
-  | SolidityBool
-  | SolidityBytes
-  | SolidityInt
-  | SolidityString
-  | SolidityArrayWithoutTuple
-
-/** @internal */
-export type EncodePackedValues<
-  packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
-> = {
-  [K in keyof packedAbiTypes]: packedAbiTypes[K] extends AbiType
-    ? AbiParameterToPrimitiveType<{ type: packedAbiTypes[K] }>
-    : unknown
-}
-
 /**
  * Encodes an array of primitive values to a [packed ABI encoding](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode).
  *
  * @example
- * ```ts
- * import { Abi } from 'viem'
+ * ```ts twoslash
+ * import { Abi } from 'ox'
  *
  * const encoded = Abi.encodePacked(
  *   ['address', 'string'],
@@ -58,6 +40,10 @@ export type EncodePackedValues<
  * )
  * // '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
  * ```
+ *
+ * @param types - Set of ABI types to pack encode.
+ * @param values - The set of primitive values that correspond to the ABI types defined in `types`.
+ * @returns The encoded packed data.
  */
 export function Abi_encodePacked<
   const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
@@ -87,6 +73,24 @@ export declare namespace Abi_encodePacked {
 /* v8 ignore next */
 Abi_encodePacked.parseError = (error: unknown) =>
   error as Abi_encodePacked.ErrorType
+
+/** @internal */
+export type PackedAbiType =
+  | SolidityAddress
+  | SolidityBool
+  | SolidityBytes
+  | SolidityInt
+  | SolidityString
+  | SolidityArrayWithoutTuple
+
+/** @internal */
+export type EncodePackedValues<
+  packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
+> = {
+  [key in keyof packedAbiTypes]: packedAbiTypes[key] extends AbiType
+    ? AbiParameterToPrimitiveType<{ type: packedAbiTypes[key] }>
+    : unknown
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // Internal
