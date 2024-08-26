@@ -1,7 +1,11 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { Hash_keccak256 } from '../hash/keccak256.js'
 import type { Hex } from '../hex/types.js'
-import { TransactionEnvelope_serialize } from './serialize.js'
+import type { OneOf } from '../types.js'
+import { TransactionEnvelopeEip1559_hash } from './eip1559/hash.js'
+import { TransactionEnvelopeEip2930_hash } from './eip2930/hash.js'
+import { TransactionEnvelopeEip4844_hash } from './eip4844/hash.js'
+import { TransactionTypeNotImplementedError } from './errors.js'
+import { TransactionEnvelopeLegacy_hash } from './legacy/hash.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
@@ -29,34 +33,35 @@ export function TransactionEnvelope_hash(
   envelope: TransactionEnvelope,
   options: TransactionEnvelope_hash.Options = {},
 ): TransactionEnvelope_hash.ReturnType {
-  const { presign } = options
-  return Hash_keccak256(
-    TransactionEnvelope_serialize({
-      ...envelope,
-      ...(presign
-        ? {
-            sidecars: undefined,
-            r: undefined,
-            s: undefined,
-            yParity: undefined,
-            v: undefined,
-          }
-        : {}),
-    }),
-  )
+  if (envelope.type === 'legacy')
+    return TransactionEnvelopeLegacy_hash(envelope, options)
+  if (envelope.type === 'eip2930')
+    return TransactionEnvelopeEip2930_hash(envelope, options)
+  if (envelope.type === 'eip1559')
+    return TransactionEnvelopeEip1559_hash(envelope, options)
+  if (envelope.type === 'eip4844')
+    return TransactionEnvelopeEip4844_hash(envelope, options)
+
+  // TODO: EIP-7702
+
+  throw new TransactionTypeNotImplementedError({ type: envelope.type })
 }
 
 export declare namespace TransactionEnvelope_hash {
-  type Options = {
-    /** Whether to hash this transaction for signing. @default false */
-    presign?: boolean
-  }
+  type Options = OneOf<
+    | TransactionEnvelopeLegacy_hash.Options
+    | TransactionEnvelopeEip1559_hash.Options
+    | TransactionEnvelopeEip2930_hash.Options
+    | TransactionEnvelopeEip4844_hash.Options
+  >
 
   type ReturnType = Hex
 
   type ErrorType =
-    | Hash_keccak256.ErrorType
-    | TransactionEnvelope_serialize.ErrorType
+    | TransactionEnvelopeLegacy_hash.ErrorType
+    | TransactionEnvelopeEip1559_hash.ErrorType
+    | TransactionEnvelopeEip2930_hash.ErrorType
+    | TransactionEnvelopeEip4844_hash.ErrorType
     | GlobalErrorType
 }
 

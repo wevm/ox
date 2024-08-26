@@ -1,32 +1,46 @@
 import type { Address } from 'abitype'
-import type { AccessList } from '../accessList/types.js'
-import type { Authorization_List } from '../authorization/types.js'
-import type { BlobSidecar } from '../blobs/types.js'
 import type { Hex } from '../hex/types.js'
-import type { Signature, Signature_Legacy } from '../signature/types.js'
+import type { IsNarrowable, IsNever, OneOf } from '../types.js'
 import type {
-  Branded,
-  Compute,
-  ExactPartial,
-  IsNarrowable,
-  IsNever,
-  OneOf,
-} from '../types.js'
+  TransactionEnvelopeEip1559,
+  TransactionEnvelopeEip1559_Serialized,
+  TransactionEnvelopeEip1559_Type,
+} from './eip1559/types.js'
+import type {
+  TransactionEnvelopeEip2930,
+  TransactionEnvelopeEip2930_Serialized,
+  TransactionEnvelopeEip2930_Type,
+} from './eip2930/types.js'
+import type {
+  TransactionEnvelopeEip4844,
+  TransactionEnvelopeEip4844_Serialized,
+  TransactionEnvelopeEip4844_Type,
+} from './eip4844/types.js'
+import type {
+  TransactionEnvelopeEip7702,
+  TransactionEnvelopeEip7702_Serialized,
+  TransactionEnvelopeEip7702_Type,
+} from './eip7702/types.js'
+import type {
+  TransactionEnvelopeLegacy,
+  TransactionEnvelopeLegacy_Serialized,
+  TransactionEnvelopeLegacy_Type,
+} from './legacy/types.js'
 
 export type TransactionEnvelope_Type =
-  | 'legacy'
-  | 'eip1559'
-  | 'eip2930'
-  | 'eip4844'
-  | 'eip7702'
+  | TransactionEnvelopeLegacy_Type
+  | TransactionEnvelopeEip1559_Type
+  | TransactionEnvelopeEip2930_Type
+  | TransactionEnvelopeEip4844_Type
+  | TransactionEnvelopeEip7702_Type
   | (string & {})
 
 export type TransactionEnvelope = OneOf<
-  | TransactionEnvelope_Legacy
-  | TransactionEnvelope_Eip1559
-  | TransactionEnvelope_Eip2930
-  | TransactionEnvelope_Eip4844
-  | TransactionEnvelope_Eip7702
+  | TransactionEnvelopeLegacy
+  | TransactionEnvelopeEip1559
+  | TransactionEnvelopeEip2930
+  | TransactionEnvelopeEip4844
+  | TransactionEnvelopeEip7702
 >
 
 export type TransactionEnvelope_Base<
@@ -48,93 +62,14 @@ export type TransactionEnvelope_Base<
   value?: bigint | undefined
 }
 
-/////////////////////////////////////////////////////////////////////////
-// Transaction Types
-/////////////////////////////////////////////////////////////////////////
-
-export type TransactionEnvelope_Legacy = Compute<
-  TransactionEnvelope_Base<'legacy'> & {
-    /** EIP-155 Chain ID. */
-    chainId?: number | undefined
-    /** Base fee per gas. */
-    gasPrice?: bigint | undefined
-  } & ExactPartial<Signature_Legacy>
->
-
-export type TransactionEnvelope_Eip1559 = Compute<
-  TransactionEnvelope_Base<'eip1559'> & {
-    /** EIP-2930 Access List. */
-    accessList?: AccessList | undefined
-    /** EIP-155 Chain ID. */
-    chainId: number
-    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
-    maxFeePerGas?: bigint | undefined
-    /** Max priority fee per gas (in wei). */
-    maxPriorityFeePerGas?: bigint | undefined
-  } & ExactPartial<Signature | Signature_Legacy>
->
-
-export type TransactionEnvelope_Eip2930 = Compute<
-  TransactionEnvelope_Base<'eip2930'> & {
-    /** EIP-2930 Access List. */
-    accessList?: AccessList | undefined
-    /** EIP-155 Chain ID. */
-    chainId: number
-    /** Base fee per gas. */
-    gasPrice?: bigint | undefined
-  } & ExactPartial<Signature | Signature_Legacy>
->
-
-export type TransactionEnvelope_Eip4844 = Compute<
-  TransactionEnvelope_Base<'eip4844'> & {
-    /** EIP-2930 Access List. */
-    accessList?: AccessList | undefined
-    /** Versioned hashes of blobs to be included in the transaction. */
-    blobVersionedHashes: readonly Hex[]
-    /** EIP-155 Chain ID. */
-    chainId: number
-    /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
-    maxFeePerBlobGas?: bigint | undefined
-    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
-    maxFeePerGas?: bigint | undefined
-    /** Max priority fee per gas (in wei). */
-    maxPriorityFeePerGas?: bigint | undefined
-    /** The sidecars associated with this transaction. When defined, the envelope is in the "network wrapper" format. */
-    sidecars?: readonly BlobSidecar<Hex>[] | undefined
-  } & ExactPartial<Signature>
->
-
-export type TransactionEnvelope_Eip7702 = Compute<
-  TransactionEnvelope_Base<'eip7702'> & {
-    /** EIP-2930 Access List. */
-    accessList?: AccessList | undefined
-    /** EIP-7702 Authorization List. */
-    authorizationList: Authorization_List<true>
-    /** EIP-155 Chain ID. */
-    chainId: number
-    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
-    maxFeePerGas?: bigint | undefined
-    /** Max priority fee per gas (in wei). */
-    maxPriorityFeePerGas?: bigint | undefined
-  } & ExactPartial<Signature>
->
-
-export type TransactionEnvelope_SerializedEip1559 = `0x02${string}`
-export type TransactionEnvelope_SerializedEip2930 = `0x01${string}`
-export type TransactionEnvelope_SerializedEip4844 = `0x03${string}`
-export type TransactionEnvelope_SerializedEip7702 = `0x04${string}`
-export type TransactionEnvelope_SerializedLegacy = Branded<
-  `0x${string}`,
-  'legacy'
->
 export type TransactionEnvelope_Serialized<
   type extends TransactionEnvelope_Type = TransactionEnvelope_Type,
   result =
-    | (type extends 'eip1559' ? TransactionEnvelope_SerializedEip1559 : never)
-    | (type extends 'eip2930' ? TransactionEnvelope_SerializedEip2930 : never)
-    | (type extends 'eip4844' ? TransactionEnvelope_SerializedEip4844 : never)
-    | (type extends 'eip7702' ? TransactionEnvelope_SerializedEip7702 : never)
-    | (type extends 'legacy' ? TransactionEnvelope_SerializedLegacy : never),
+    | (type extends 'eip1559' ? TransactionEnvelopeEip1559_Serialized : never)
+    | (type extends 'eip2930' ? TransactionEnvelopeEip2930_Serialized : never)
+    | (type extends 'eip4844' ? TransactionEnvelopeEip4844_Serialized : never)
+    | (type extends 'eip7702' ? TransactionEnvelopeEip7702_Serialized : never)
+    | (type extends 'legacy' ? TransactionEnvelopeLegacy_Serialized : never),
 > = IsNarrowable<type, string> extends true
   ? IsNever<result> extends true
     ? `0x${string}`

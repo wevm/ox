@@ -4,6 +4,11 @@ import * as exports from './Blobs.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "BlobSizeTooLargeError",
+      "EmptyBlobError",
+      "EmptyBlobVersionedHashesError",
+      "InvalidVersionedHashSizeError",
+      "InvalidVersionedHashVersionError",
       "toCommitments",
       "toProofs",
       "toVersionedHashes",

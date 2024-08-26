@@ -51,19 +51,34 @@ export type { Siwe_Message } from './internal/siwe/types.js'
 export type {
   TransactionEnvelope,
   TransactionEnvelope_Base,
-  TransactionEnvelope_Eip1559,
-  TransactionEnvelope_Eip2930,
-  TransactionEnvelope_Eip4844,
-  TransactionEnvelope_Eip7702,
-  TransactionEnvelope_Legacy,
   TransactionEnvelope_Serialized,
-  TransactionEnvelope_SerializedEip1559,
-  TransactionEnvelope_SerializedEip2930,
-  TransactionEnvelope_SerializedEip4844,
-  TransactionEnvelope_SerializedEip7702,
-  TransactionEnvelope_SerializedLegacy,
   TransactionEnvelope_Type,
 } from './internal/transactionEnvelope/types.js'
+
+export type {
+  TransactionEnvelopeLegacy,
+  TransactionEnvelopeLegacy_Serialized,
+} from './internal/transactionEnvelope/legacy/types.js'
+
+export type {
+  TransactionEnvelopeEip1559,
+  TransactionEnvelopeEip1559_Serialized,
+} from './internal/transactionEnvelope/eip1559/types.js'
+
+export type {
+  TransactionEnvelopeEip2930,
+  TransactionEnvelopeEip2930_Serialized,
+} from './internal/transactionEnvelope/eip2930/types.js'
+
+export type {
+  TransactionEnvelopeEip4844,
+  TransactionEnvelopeEip4844_Serialized,
+} from './internal/transactionEnvelope/eip4844/types.js'
+
+export type {
+  TransactionEnvelopeEip7702,
+  TransactionEnvelopeEip7702_Serialized,
+} from './internal/transactionEnvelope/eip7702/types.js'
 
 export type {
   TypedData_Definition,

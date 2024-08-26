@@ -74,20 +74,17 @@ export {
 } from './internal/rlp/to.js'
 
 export {
-  TransactionEnvelope_getSerializedType,
-  type GetSerializedType,
-} from './internal/transactionEnvelope/getSerializedType.js'
-
-export {
   TransactionEnvelope_getType,
   type MatchKeys,
-  type TransactionEnvelopeGeneric,
+  type TransactionEnvelope_Generic,
   type BaseProperties,
   type Eip1559Properties,
   type Eip2930Properties,
   type Eip4844Properties,
   type Eip7702Properties,
-  type GetTransactionType,
+  type TransactionEnvelope_GetType,
+  type TransactionEnvelope_GetTypeFromObject,
+  type TransactionEnvelope_GetTypeFromSerialized,
   type LegacyProperties,
 } from './internal/transactionEnvelope/getType.js'
 

@@ -4,6 +4,9 @@ import * as exports from './Address.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "InvalidAddressChecksumError",
+      "InvalidAddressError",
+      "InvalidAddressInputError",
       "assert",
       "checksum",
       "isAddress",

@@ -1,42 +1,95 @@
 import { assertType, describe, expect, test } from 'vitest'
 
+import type { TransactionEnvelopeLegacy } from '../../index.js'
+import type { Hex } from '../hex/types.js'
 import { TransactionEnvelope_getType } from './getType.js'
+import type { TransactionEnvelope_Type } from './types.js'
 
 describe('type', () => {
   test('eip1559', () => {
-    const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip1559' })
-    assertType<'eip1559'>(type)
-    expect(type).toEqual('eip1559')
+    {
+      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip1559' })
+      assertType<'eip1559'>(type)
+      expect(type).toEqual('eip1559')
+    }
+
+    {
+      const type = TransactionEnvelope_getType('0x02abc')
+      assertType<'eip1559'>(type)
+      expect(type).toEqual('eip1559')
+    }
   })
 
   test('eip2930', () => {
-    const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip2930' })
-    assertType<'eip2930'>(type)
-    expect(type).toEqual('eip2930')
+    {
+      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip2930' })
+      assertType<'eip2930'>(type)
+      expect(type).toEqual('eip2930')
+    }
+
+    {
+      const type = TransactionEnvelope_getType('0x01abc')
+      assertType<'eip2930'>(type)
+      expect(type).toEqual('eip2930')
+    }
   })
 
   test('eip4844', () => {
-    const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip4844' })
-    assertType<'eip4844'>(type)
-    expect(type).toEqual('eip4844')
+    {
+      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip4844' })
+      assertType<'eip4844'>(type)
+      expect(type).toEqual('eip4844')
+    }
+
+    {
+      const type = TransactionEnvelope_getType('0x03abc')
+      assertType<'eip4844'>(type)
+      expect(type).toEqual('eip4844')
+    }
   })
 
   test('eip7702', () => {
-    const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip7702' })
-    assertType<'eip7702'>(type)
-    expect(type).toEqual('eip7702')
+    {
+      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip7702' })
+      assertType<'eip7702'>(type)
+      expect(type).toEqual('eip7702')
+    }
+
+    {
+      const type = TransactionEnvelope_getType('0x04abc')
+      assertType<'eip7702'>(type)
+      expect(type).toEqual('eip7702')
+    }
   })
 
   test('legacy', () => {
-    const type = TransactionEnvelope_getType({ type: 'legacy' })
-    assertType<'legacy'>(type)
-    expect(type).toEqual('legacy')
+    {
+      const type = TransactionEnvelope_getType({ type: 'legacy' })
+      assertType<'legacy'>(type)
+      expect(type).toEqual('legacy')
+    }
+
+    {
+      const type = TransactionEnvelope_getType(
+        '0xc7c' as TransactionEnvelopeLegacy.Serialized,
+      )
+      assertType<'legacy'>(type)
+      expect(type).toEqual('legacy')
+    }
   })
 
   test('other', () => {
-    const type = TransactionEnvelope_getType({ type: '0x7e' })
-    assertType<'0x7e'>(type)
-    expect(type).toEqual('0x7e')
+    {
+      const type = TransactionEnvelope_getType({ type: '0x7e' })
+      assertType<'0x7e'>(type)
+      expect(type).toEqual('0x7e')
+    }
+
+    {
+      const type = TransactionEnvelope_getType('0xc7c' as Hex)
+      assertType<TransactionEnvelope_Type>(type)
+      expect(type).toEqual('legacy')
+    }
   })
 })
 
@@ -156,4 +209,10 @@ test('invalid', () => {
     - an EIP-7702 Transaction with \`authorizationList\`, or
     - a Legacy Transaction with \`gasPrice\`]
   `)
+
+  expect(() =>
+    TransactionEnvelope_getType('0x69abc'),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[TransactionTypeNotImplementedError: The provided transaction type `0x69` is not implemented.]',
+  )
 })

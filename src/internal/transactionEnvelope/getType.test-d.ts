@@ -1,4 +1,11 @@
-import type { TransactionEnvelope } from 'ox'
+import type {
+  TransactionEnvelope,
+  TransactionEnvelopeEip1559,
+  TransactionEnvelopeEip2930,
+  TransactionEnvelopeEip4844,
+  TransactionEnvelopeEip7702,
+  TransactionEnvelopeLegacy,
+} from 'ox'
 import { expectTypeOf, test } from 'vitest'
 import { TransactionEnvelope_getType } from './getType.js'
 
@@ -11,19 +18,29 @@ test('opaque', () => {
     TransactionEnvelope_getType({} as TransactionEnvelope.TransactionEnvelope),
   ).toEqualTypeOf<'legacy' | 'eip1559' | 'eip2930' | 'eip4844' | 'eip7702'>()
   expectTypeOf(
-    TransactionEnvelope_getType({} as TransactionEnvelope.Legacy),
+    TransactionEnvelope_getType(
+      {} as TransactionEnvelopeLegacy.TransactionEnvelope,
+    ),
   ).toEqualTypeOf<'legacy'>()
   expectTypeOf(
-    TransactionEnvelope_getType({} as TransactionEnvelope.Eip1559),
+    TransactionEnvelope_getType(
+      {} as TransactionEnvelopeEip1559.TransactionEnvelope,
+    ),
   ).toEqualTypeOf<'eip1559'>()
   expectTypeOf(
-    TransactionEnvelope_getType({} as TransactionEnvelope.Eip2930),
+    TransactionEnvelope_getType(
+      {} as TransactionEnvelopeEip2930.TransactionEnvelope,
+    ),
   ).toEqualTypeOf<'eip2930'>()
   expectTypeOf(
-    TransactionEnvelope_getType({} as TransactionEnvelope.Eip4844),
+    TransactionEnvelope_getType(
+      {} as TransactionEnvelopeEip4844.TransactionEnvelope,
+    ),
   ).toEqualTypeOf<'eip4844'>()
   expectTypeOf(
-    TransactionEnvelope_getType({} as TransactionEnvelope.Eip7702),
+    TransactionEnvelope_getType(
+      {} as TransactionEnvelopeEip7702.TransactionEnvelope,
+    ),
   ).toEqualTypeOf<'eip7702'>()
 })
 

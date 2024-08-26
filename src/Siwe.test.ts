@@ -11,6 +11,7 @@ test('exports', () => {
       "prefixRegex",
       "schemeRegex",
       "suffixRegex",
+      "SiweInvalidMessageFieldError",
       "createMessage",
       "generateNonce",
       "isUri",
