@@ -6,7 +6,7 @@ import { InvalidHexLengthError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
 import type { Hex } from '../hex/types.js'
-import type { RecursiveArray } from './from.js'
+import type { RecursiveArray } from '../types.js'
 
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes#Bytes} or {@link Hex#Hex} value.

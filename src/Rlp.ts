@@ -5,7 +5,6 @@ export {
 } from './internal/rlp/to.js'
 
 export {
-  type RecursiveArray,
   Rlp_from as from,
   Rlp_fromBytes as fromBytes,
   Rlp_fromHex as fromHex,

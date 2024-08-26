@@ -70,3 +70,5 @@ export type {
   TypedData_EIP712DomainDefinition,
   TypedData_MessageDefinition,
 } from './internal/typedData/types.js'
+
+export type { RecursiveArray } from './internal/types.js'

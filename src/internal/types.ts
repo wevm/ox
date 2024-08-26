@@ -190,6 +190,8 @@ export type Omit<type, keys extends keyof type> = Pick<
 export type PartialBy<T, K extends keyof T> = Omit<T, K> &
   ExactPartial<Pick<T, K>>
 
+export type RecursiveArray<T> = T | readonly RecursiveArray<T>[]
+
 /**
  * Creates a type that is T with the required keys K.
  *

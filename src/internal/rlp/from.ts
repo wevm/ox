@@ -5,8 +5,7 @@ import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
 import type { Hex } from '../hex/types.js'
-
-export type RecursiveArray<T> = T | readonly RecursiveArray<T>[]
+import type { RecursiveArray } from '../types.js'
 
 type Encodable = {
   length: number
