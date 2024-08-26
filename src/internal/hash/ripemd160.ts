@@ -1,10 +1,11 @@
 import { ripemd160 } from '@noble/hashes/ripemd160'
 
 import { Bytes_from } from '../bytes/from.js'
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_from } from '../hex/from.js'
 import { Hex_isHex } from '../hex/isHex.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a Bytes or Hex value.

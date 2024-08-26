@@ -1,6 +1,6 @@
 import { SliceOffsetOutOfBoundsError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { Hex_size } from './size.js'
 
 /**

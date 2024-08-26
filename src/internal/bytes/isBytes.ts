@@ -1,5 +1,5 @@
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes } from '../types/data.js'
 import { Bytes_assert } from './assert.js'
 
 /**

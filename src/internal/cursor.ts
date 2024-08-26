@@ -1,10 +1,10 @@
+import type { Bytes } from './bytes/types.js'
 import {
   NegativeOffsetError,
   PositionOutOfBoundsError,
   RecursiveReadLimitExceededError,
 } from './errors/cursor.js'
 import type { GlobalErrorType } from './errors/error.js'
-import type { Bytes } from './types/data.js'
 
 /** @internal */
 export type Cursor = {

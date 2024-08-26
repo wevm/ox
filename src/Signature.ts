@@ -3,7 +3,7 @@ export type {
   Signature_Compact as Compact,
   Signature_Legacy as Legacy,
   Signature_Tuple as Tuple,
-} from './internal/types/signature.js'
+} from './internal/signature/types.js'
 
 export { Signature_assert as assert } from './internal/signature/assert.js'
 

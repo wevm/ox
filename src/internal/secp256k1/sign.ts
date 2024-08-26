@@ -1,10 +1,11 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
 import { Bytes_from } from '../bytes/from.js'
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes, Hex } from '../types/data.js'
-import type { Signature } from '../types/signature.js'
-import type { Compute } from '../types/utils.js'
+import type { Hex } from '../hex/types.js'
+import type { Signature } from '../signature/types.js'
+import type { Compute } from '../types.js'
 
 /**
  * Signs the payload with the provided private key.

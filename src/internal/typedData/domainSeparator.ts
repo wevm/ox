@@ -1,7 +1,7 @@
 import type { TypedDataDomain } from 'abitype'
 
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
 

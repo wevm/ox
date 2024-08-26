@@ -1,10 +1,11 @@
 import { Bytes_fromHex } from '../bytes/from.js'
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
-import type { Blobs } from '../types/blob.js'
-import type { Bytes, Hex } from '../types/data.js'
-import type { Kzg } from '../types/kzg.js'
-import type { Compute } from '../types/utils.js'
+import type { Hex } from '../hex/types.js'
+import type { Kzg } from '../kzg/types.js'
+import type { Compute } from '../types.js'
+import type { Blobs } from './types.js'
 
 /**
  * Compute commitments from a list of blobs.

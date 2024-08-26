@@ -2,7 +2,7 @@ export type {
   TypedData_Definition as Definition,
   TypedData_EIP712DomainDefinition as EIP712DomainDefinition,
   TypedData_MessageDefinition as MessageDefinition,
-} from './internal/types/typedData.js'
+} from './internal/typedData/types.js'
 
 export { TypedData_domainSeparator as domainSeparator } from './internal/typedData/domainSeparator.js'
 

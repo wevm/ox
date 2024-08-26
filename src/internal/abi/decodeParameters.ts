@@ -10,6 +10,7 @@ import {
   Bytes_toString,
 } from '../bytes/to.js'
 import { Bytes_trimLeft } from '../bytes/trim.js'
+import type { Bytes } from '../bytes/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import {
   AbiDecodingDataSizeTooSmallError,
@@ -18,7 +19,7 @@ import {
 } from '../errors/abi.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import {
   type IsomorphicAbiParameter,
   type IsomorphicAbiParametersToPrimitiveTypes,

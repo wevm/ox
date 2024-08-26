@@ -1,7 +1,6 @@
 import type {
   AbiParameterToPrimitiveType,
   AbiType,
-  Address,
   SolidityAddress,
   SolidityArrayWithoutTuple,
   SolidityBool,
@@ -11,6 +10,7 @@ import type {
 } from 'abitype'
 
 import { Address_assert } from '../address/assert.js'
+import type { Address } from '../address/types.js'
 import {
   AbiEncodingBytesSizeMismatchError,
   AbiEncodingLengthMismatchError,
@@ -20,12 +20,12 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_concat } from '../hex/concat.js'
 import { Hex_fromBoolean, Hex_fromNumber, Hex_fromString } from '../hex/from.js'
 import { Hex_padLeft, Hex_padRight } from '../hex/pad.js'
+import type { Hex } from '../hex/types.js'
 import {
   Solidity_arrayRegex,
   Solidity_bytesRegex,
   Solidity_integerRegex,
 } from '../solidity/constants.js'
-import type { Hex } from '../types/data.js'
 
 /** @internal */
 export type PackedAbiType =

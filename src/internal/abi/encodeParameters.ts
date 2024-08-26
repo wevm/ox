@@ -22,8 +22,8 @@ import { Hex_fromBoolean, Hex_fromNumber, Hex_fromString } from '../hex/from.js'
 import { Hex_padLeft, Hex_padRight } from '../hex/pad.js'
 import { Hex_size } from '../hex/size.js'
 import { Hex_slice } from '../hex/slice.js'
-import type { Hex } from '../types/data.js'
-import type { Compute } from '../types/utils.js'
+import type { Hex } from '../hex/types.js'
+import type { Compute } from '../types.js'
 import type { TupleAbiParameter } from './decodeParameters.js'
 
 // TODO: These types should be in abitype?

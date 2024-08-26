@@ -13,7 +13,7 @@ export type {
   TransactionEnvelope_SerializedEip7702 as SerializedEip7702,
   TransactionEnvelope_SerializedLegacy as SerializedLegacy,
   TransactionEnvelope_Type as Type,
-} from './internal/types/transactionEnvelope.js'
+} from './internal/transactionEnvelope/types.js'
 
 export {
   TransactionEnvelope_assert as assert,

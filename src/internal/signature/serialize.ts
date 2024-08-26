@@ -1,10 +1,11 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
 import { Bytes_fromHex } from '../bytes/from.js'
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes, Hex } from '../types/data.js'
-import type { Signature } from '../types/signature.js'
+import type { Hex } from '../hex/types.js'
 import { Signature_toCompact } from './toCompact.js'
+import type { Signature } from './types.js'
 
 /**
  * Serializes a {@link Signature#Signature} to {@link Hex#Hex} or {@link Bytes#Bytes}.

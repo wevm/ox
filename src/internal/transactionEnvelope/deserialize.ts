@@ -8,9 +8,20 @@ import {
 } from '../errors/transactionEnvelope.js'
 import { Hex_isHex } from '../hex/isHex.js'
 import { Hex_slice } from '../hex/slice.js'
+import type { Hex } from '../hex/types.js'
 import { Rlp_toHex } from '../rlp/to.js'
 import { Signature_fromTuple } from '../signature/fromTuple.js'
-import type { Hex } from '../types/data.js'
+import type { Compute, IsNarrowable } from '../types.js'
+import {
+  TransactionEnvelope_assertEip1559,
+  TransactionEnvelope_assertEip2930,
+  TransactionEnvelope_assertEip4844,
+  TransactionEnvelope_assertLegacy,
+} from './assert.js'
+import {
+  type GetSerializedType,
+  TransactionEnvelope_getSerializedType,
+} from './getSerializedType.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,
@@ -24,18 +35,7 @@ import type {
   TransactionEnvelope_SerializedEip4844,
   TransactionEnvelope_SerializedLegacy,
   TransactionEnvelope_Type,
-} from '../types/transactionEnvelope.js'
-import type { Compute, IsNarrowable } from '../types/utils.js'
-import {
-  TransactionEnvelope_assertEip1559,
-  TransactionEnvelope_assertEip2930,
-  TransactionEnvelope_assertEip4844,
-  TransactionEnvelope_assertLegacy,
-} from './assert.js'
-import {
-  type GetSerializedType,
-  TransactionEnvelope_getSerializedType,
-} from './getSerializedType.js'
+} from './types.js'
 
 /**
  * Deserializes a {@link TransactionEnvelope#TransactionEnvelope} from its serialized form.

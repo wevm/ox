@@ -6,7 +6,7 @@ import {
 } from 'abitype'
 import { normalizeSignature } from '../abi/getSignature.js'
 import { Hex_size } from '../hex/size.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { BaseError } from './base.js'
 
 export class AbiDecodingDataSizeTooSmallError extends BaseError {

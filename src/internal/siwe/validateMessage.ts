@@ -1,8 +1,7 @@
-import type { Address } from 'abitype'
-
 import { Address_isEqual } from '../address/isEqual.js'
-import type { Siwe_Message } from '../types/siwe.js'
-import type { ExactPartial } from '../types/utils.js'
+import type { Address } from '../address/types.js'
+import type { ExactPartial } from '../types.js'
+import type { Siwe_Message } from './types.js'
 
 /**
  * Validates EIP-4361 message.

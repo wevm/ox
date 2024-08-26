@@ -4,7 +4,7 @@ import type {
   AbiParametersToPrimitiveTypes,
   ResolvedRegister,
 } from 'abitype'
-import type { IsUnion, UnionToTuple } from './utils.js'
+import type { IsUnion, UnionToTuple } from '../types.js'
 
 export type AbiItem = Abi[number]
 

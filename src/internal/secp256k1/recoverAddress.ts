@@ -1,6 +1,5 @@
-import type { Address } from 'abitype'
-
 import { Address_fromPublicKey } from '../address/fromPublicKey.js'
+import type { Address } from '../address/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
 

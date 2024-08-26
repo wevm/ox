@@ -1,7 +1,8 @@
+import type { Bytes } from '../bytes/types.js'
 import { Hex_from } from '../hex/from.js'
 import { Hex_size } from '../hex/size.js'
+import type { Hex } from '../hex/types.js'
 import { stringify } from '../stringify.js'
-import type { Bytes, Hex } from '../types/data.js'
 import { BaseError } from './base.js'
 
 export class InvalidSerializedSignatureSizeError extends BaseError {

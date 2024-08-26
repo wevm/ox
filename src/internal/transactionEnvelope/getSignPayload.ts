@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
-import type { TransactionEnvelope } from '../types/transactionEnvelope.js'
+import type { Hex } from '../hex/types.js'
 import { TransactionEnvelope_hash } from './hash.js'
+import type { TransactionEnvelope } from './types.js'
 
 /**
  * Returns the payload to sign for a transaction envelope.

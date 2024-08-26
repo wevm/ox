@@ -1,8 +1,9 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_from } from '../hex/from.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Computes the ECDSA public key from a provided private key.

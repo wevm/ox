@@ -1,10 +1,11 @@
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { BlobSidecars, Blobs } from '../types/blob.js'
-import type { Bytes, Hex } from '../types/data.js'
-import type { Kzg } from '../types/kzg.js'
-import type { Mutable, OneOf, UnionCompute } from '../types/utils.js'
+import type { Hex } from '../hex/types.js'
+import type { Kzg } from '../kzg/types.js'
+import type { Mutable, OneOf, UnionCompute } from '../types.js'
 import { Blobs_toCommitments } from './toCommitments.js'
 import { Blobs_toProofs } from './toProofs.js'
+import type { BlobSidecars, Blobs } from './types.js'
 
 /**
  * Transforms arbitrary data (or blobs, commitments, & proofs) into a sidecar array.

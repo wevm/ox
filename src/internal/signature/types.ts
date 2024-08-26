@@ -1,4 +1,4 @@
-import type { Hex } from './data.js'
+import type { Hex } from '../hex/types.js'
 
 /** ECDSA signature. */
 export type Signature<bigintType = bigint> = {

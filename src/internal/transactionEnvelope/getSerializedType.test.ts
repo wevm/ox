@@ -1,8 +1,8 @@
 import { assertType, expect, test } from 'vitest'
 
-import type { Hex } from '../types/data.js'
-import type { TransactionEnvelope_Type } from '../types/transactionEnvelope.js'
+import type { Hex } from '../hex/types.js'
 import { TransactionEnvelope_getSerializedType } from './getSerializedType.js'
+import type { TransactionEnvelope_Type } from './types.js'
 
 test('eip1559', () => {
   const type = TransactionEnvelope_getSerializedType('0x02abc')

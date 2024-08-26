@@ -1,6 +1,6 @@
 import { SizeExceedsPaddingSizeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Pads a {@link Hex#Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).

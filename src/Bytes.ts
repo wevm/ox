@@ -1,4 +1,4 @@
-export type { Bytes } from './internal/types/data.js'
+export type { Bytes } from './internal/bytes/types.js'
 
 export { Bytes_assert as assert } from './internal/bytes/assert.js'
 

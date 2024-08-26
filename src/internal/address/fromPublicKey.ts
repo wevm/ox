@@ -1,10 +1,10 @@
-import type { Address } from 'abitype'
-
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Hex_from } from '../hex/from.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { Address_from } from './from.js'
+import type { Address } from './types.js'
 
 /**
  * Converts an ECDSA public key to an Ethereum address.

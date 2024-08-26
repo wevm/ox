@@ -1,4 +1,4 @@
-import type { Address } from 'abitype'
+import type { Address } from '../address/types.js'
 import {
   InvalidAddressChecksumError,
   InvalidAddressError,

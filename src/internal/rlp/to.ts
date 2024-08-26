@@ -1,10 +1,11 @@
 import { Bytes_fromHex } from '../bytes/from.js'
+import type { Bytes } from '../bytes/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { BaseError } from '../errors/base.js'
 import { InvalidHexLengthError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import type { RecursiveArray } from './from.js'
 
 /**

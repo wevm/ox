@@ -3,7 +3,7 @@ export type {
   Authorization_List as List,
   Authorization_Tuple as Tuple,
   Authorization_TupleList as TupleList,
-} from './internal/types/authorization.js'
+} from './internal/authorization/types.js'
 
 export { Authorization_getSignPayload as getSignPayload } from './internal/authorization/getSignPayload.js'
 

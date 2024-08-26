@@ -2,7 +2,7 @@ import { equalBytes } from '@noble/curves/abstract/utils'
 
 import { Bytes_fromHex } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Checks if two {@link Hex#Hex} values are equal.

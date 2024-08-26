@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Retrieves the size of a {@link Hex#Hex} value (in bytes).

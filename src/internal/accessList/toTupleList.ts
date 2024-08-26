@@ -1,8 +1,8 @@
 import { Address_assert } from '../address/assert.js'
 import { InvalidStorageKeySizeError } from '../errors/accessList.js'
 import { Hex_size } from '../hex/size.js'
-import type { AccessList, AccessList_Tuple } from '../types/accessList.js'
-import type { Compute, Mutable } from '../types/utils.js'
+import type { Compute, Mutable } from '../types.js'
+import type { AccessList, AccessList_Tuple } from './types.js'
 
 /** @internal */
 export function AccessList_toTupleList(

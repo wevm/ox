@@ -1,4 +1,4 @@
-import type { Bytes } from './data.js'
+import type { Bytes } from '../bytes/types.js'
 
 export type Kzg = {
   /**

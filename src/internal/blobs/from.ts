@@ -1,10 +1,11 @@
 import { Bytes_fromHex } from '../bytes/from.js'
 import { Bytes_size } from '../bytes/size.js'
+import type { Bytes } from '../bytes/types.js'
 import { createCursor } from '../cursor.js'
 import { BlobSizeTooLargeError, EmptyBlobError } from '../errors/blob.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import {
   Blobs_bytesPerBlob,
   Blobs_bytesPerFieldElement,

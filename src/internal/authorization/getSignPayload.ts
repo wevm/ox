@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Authorization } from '../types/authorization.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { Authorization_hash } from './hash.js'
+import type { Authorization } from './types.js'
 
 /**
  * Computes the sign payload for an {@link Authorization#Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.

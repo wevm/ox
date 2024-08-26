@@ -4,7 +4,8 @@ import type {
   FeeValuesEip1559,
   FeeValuesEip4844,
   FeeValuesLegacy,
-} from '../types/fee.js'
+} from '../fee/types.js'
+import type { Assign, ExactPartial, IsNever, OneOf, ValueOf } from '../types.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,
@@ -13,14 +14,7 @@ import type {
   TransactionEnvelope_Eip7702,
   TransactionEnvelope_Legacy,
   TransactionEnvelope_Type,
-} from '../types/transactionEnvelope.js'
-import type {
-  Assign,
-  ExactPartial,
-  IsNever,
-  OneOf,
-  ValueOf,
-} from '../types/utils.js'
+} from './types.js'
 
 /** @internal */
 export type TransactionEnvelopeGeneric = Assign<

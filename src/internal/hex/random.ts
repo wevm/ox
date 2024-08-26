@@ -1,6 +1,6 @@
 import { Bytes_random } from '../bytes/random.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { Hex_fromBytes } from './from.js'
 
 /**

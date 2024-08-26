@@ -1,6 +1,6 @@
 import { InvalidHexTypeError, InvalidHexValueError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Asserts if the given value is {@link Hex#Hex}.

@@ -3,11 +3,11 @@ import type { TypedData } from 'abitype'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Hex_concat } from '../hex/concat.js'
-import type { Hex } from '../types/data.js'
-import type { TypedData_Definition } from '../types/typedData.js'
+import type { Hex } from '../hex/types.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
 import { TypedData_hashStruct } from './hashStruct.js'
+import type { TypedData_Definition } from './types.js'
 import { TypedData_validate } from './validate.js'
 
 /**

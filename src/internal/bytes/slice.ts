@@ -1,6 +1,6 @@
+import type { Bytes } from '../bytes/types.js'
 import { SliceOffsetOutOfBoundsError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes } from '../types/data.js'
 import { Bytes_size } from './size.js'
 
 /**

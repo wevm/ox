@@ -1,9 +1,9 @@
 import type { Address } from 'abitype'
-import type { AccessList } from './accessList.js'
-import type { Authorization_List } from './authorization.js'
-import type { BlobSidecar } from './blob.js'
-import type { Hex } from './data.js'
-import type { Signature, Signature_Legacy } from './signature.js'
+import type { AccessList } from '../accessList/types.js'
+import type { Authorization_List } from '../authorization/types.js'
+import type { BlobSidecar } from '../blobs/types.js'
+import type { Hex } from '../hex/types.js'
+import type { Signature, Signature_Legacy } from '../signature/types.js'
 import type {
   Branded,
   Compute,
@@ -11,7 +11,7 @@ import type {
   IsNarrowable,
   IsNever,
   OneOf,
-} from './utils.js'
+} from '../types.js'
 
 export type TransactionEnvelope_Type =
   | 'legacy'

@@ -1,8 +1,8 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
-import type { Hex } from '../types/data.js'
-import type { TransactionEnvelope } from '../types/transactionEnvelope.js'
+import type { Hex } from '../hex/types.js'
 import { TransactionEnvelope_serialize } from './serialize.js'
+import type { TransactionEnvelope } from './types.js'
 
 /**
  * Hashes a transaction envelope for signing.

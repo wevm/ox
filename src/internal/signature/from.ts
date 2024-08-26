@@ -1,14 +1,11 @@
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes, Hex } from '../types/data.js'
-import type {
-  Signature,
-  Signature_Compact,
-  Signature_Legacy,
-} from '../types/signature.js'
-import type { Compute, OneOf } from '../types/utils.js'
+import type { Hex } from '../hex/types.js'
+import type { Compute, OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
 import { Signature_deserialize } from './deserialize.js'
 import { Signature_fromCompact } from './fromCompact.js'
+import type { Signature, Signature_Compact, Signature_Legacy } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**

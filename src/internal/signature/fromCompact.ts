@@ -1,8 +1,8 @@
 import { Bytes_fromNumber } from '../bytes/from.js'
 import { Bytes_toBigInt } from '../bytes/to.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Signature, Signature_Compact } from '../types/signature.js'
-import type { Compute } from '../types/utils.js'
+import type { Compute } from '../types.js'
+import type { Signature, Signature_Compact } from './types.js'
 
 /**
  * Converts an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link Signature#Compact} into a {@link Signature#Signature}.

@@ -1,5 +1,5 @@
 import { Hex_size } from '../hex/size.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { BaseError } from './base.js'
 
 export class InvalidStorageKeySizeError extends BaseError {

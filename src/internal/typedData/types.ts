@@ -4,7 +4,7 @@ import type {
   TypedDataToPrimitiveTypes,
 } from 'abitype'
 
-import type { Compute } from './utils.js'
+import type { Compute } from '../types.js'
 
 // TODO: Make reusable for Viem?
 export type TypedData_Definition<

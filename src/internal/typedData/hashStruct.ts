@@ -4,7 +4,7 @@ import { Abi_encodeParameters } from '../abi/encodeParameters.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Hex_from } from '../hex/from.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { TypedData_encodeType } from './encodeType.js'
 
 // TODO: Add error for `primaryType` not in `types`

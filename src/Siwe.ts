@@ -8,7 +8,7 @@ export {
   Siwe_suffixRegex as suffixRegex,
 } from './internal/siwe/constants.js'
 
-export type { Siwe_Message as Message } from './internal/types/siwe.js'
+export type { Siwe_Message as Message } from './internal/siwe/types.js'
 
 export { Siwe_createMessage as createMessage } from './internal/siwe/createMessage.js'
 

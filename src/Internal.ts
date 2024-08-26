@@ -111,7 +111,7 @@ export type {
   ExtractAbiItemNames,
   ExtractAbiItemForArgs,
   Widen,
-} from './internal/types/abi.js'
+} from './internal/abi/types.js'
 
 export type {
   Assign,
@@ -133,7 +133,7 @@ export type {
   UnionToIntersection,
   UnionToTuple,
   ValueOf,
-} from './internal/types/utils.js'
+} from './internal/types.js'
 
 export { Bytes_assertSize } from './internal/bytes/assertSize.js'
 

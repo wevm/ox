@@ -1,14 +1,14 @@
-import type { Address } from 'abitype'
-
 import { Address_from } from '../address/from.js'
+import type { Address } from '../address/types.js'
 import { Bytes_concat } from '../bytes/concat.js'
 import { Bytes_from } from '../bytes/from.js'
 import { Bytes_isBytes } from '../bytes/isBytes.js'
 import { Bytes_padLeft } from '../bytes/pad.js'
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Hex_slice } from '../hex/slice.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Generates contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.

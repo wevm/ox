@@ -1,8 +1,9 @@
+import type { Bytes } from '../bytes/types.js'
 import { InvalidBytesBooleanError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
 import { Hex_toBigInt, Hex_toNumber } from '../hex/to.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { Bytes_assertSize } from './assertSize.js'
 import { Bytes_trimLeft, Bytes_trimRight } from './trim.js'
 

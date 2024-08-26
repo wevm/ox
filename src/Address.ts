@@ -1,4 +1,4 @@
-export type { Address } from 'abitype'
+export type { Address } from './internal/address/types.js'
 
 export { Address_assert as assert } from './internal/address/assert.js'
 

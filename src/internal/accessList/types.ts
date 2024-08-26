@@ -1,6 +1,6 @@
-import type { Address } from 'abitype'
-import type { Hex } from './data.js'
-import type { Compute } from './utils.js'
+import type { Address } from '../address/types.js'
+import type { Hex } from '../hex/types.js'
+import type { Compute } from '../types.js'
 
 export type AccessList_Item = {
   address: Address

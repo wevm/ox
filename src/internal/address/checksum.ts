@@ -1,10 +1,9 @@
-import type { Address } from 'abitype'
-
 import { Bytes_fromString } from '../bytes/from.js'
 import { Caches_checksum } from '../caches.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Address_assert } from './assert.js'
+import type { Address } from './types.js'
 
 /**
  * Computes the checksum address for the given address.

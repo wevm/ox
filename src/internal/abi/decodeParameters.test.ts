@@ -1,6 +1,6 @@
-import type { Address } from 'abitype'
 import { Abi, Bytes, type Hex } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
+import type { Address } from '../address/types.js'
 
 import {
   multicall3Abi,

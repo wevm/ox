@@ -6,7 +6,7 @@ import type {
   TransactionEnvelope_Eip4844,
   TransactionEnvelope_Eip7702,
   TransactionEnvelope_Legacy,
-} from '../types/transactionEnvelope.js'
+} from './types.js'
 
 test('legacy', () => {
   {

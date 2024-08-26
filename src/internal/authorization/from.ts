@@ -1,10 +1,10 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Authorization } from '../types/authorization.js'
-import type { Signature } from '../types/signature.js'
-import type { Compute } from '../types/utils.js'
+import type { Signature } from '../signature/types.js'
+import type { Compute } from '../types.js'
+import type { Authorization } from './types.js'
 
 /**
- * Converts an object into a typed {@link Types#Authorization}.
+ * Converts an object into a typed {@link Authorization#Authorization}.
  *
  * @example
  * ```ts twoslash

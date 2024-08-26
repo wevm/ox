@@ -1,9 +1,9 @@
 import { Address_assert } from '../address/assert.js'
 import { Hash_isHash } from '../hash/isHash.js'
 import { Hex_trimLeft } from '../hex/trim.js'
-import type { AccessList, AccessList_Tuple } from '../types/accessList.js'
-import type { Hex } from '../types/data.js'
-import type { Mutable } from '../types/utils.js'
+import type { Hex } from '../hex/types.js'
+import type { Mutable } from '../types.js'
+import type { AccessList, AccessList_Tuple } from './types.js'
 
 /** @internal */
 export function AccessList_fromTupleList(

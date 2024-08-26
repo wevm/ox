@@ -1,7 +1,7 @@
-import type { Address } from 'abitype'
-import type { Hex } from './data.js'
-import type { Signature } from './signature.js'
-import type { Compute, Undefined } from './utils.js'
+import type { Address } from '../address/types.js'
+import type { Hex } from '../hex/types.js'
+import type { Signature } from '../signature/types.js'
+import type { Compute, Undefined } from '../types.js'
 
 export type Authorization<
   signed extends boolean = boolean,

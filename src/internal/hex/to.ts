@@ -1,9 +1,10 @@
 import { Bytes_assertSize } from '../bytes/assertSize.js'
 import { Bytes_fromHex } from '../bytes/from.js'
 import { Bytes_trimRight } from '../bytes/trim.js'
+import type { Bytes } from '../bytes/types.js'
 import { InvalidHexBooleanError, InvalidTypeError } from '../errors/data.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { Hex_assertSize } from './assertSize.js'
 import { Hex_trimLeft } from './trim.js'
 

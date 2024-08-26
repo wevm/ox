@@ -1,7 +1,7 @@
-import type { Address } from 'abitype'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Address_assert } from './assert.js'
 import { Address_checksum } from './checksum.js'
+import type { Address } from './types.js'
 
 /**
  * Converts a stringified address to a typed (checksummed) Address.

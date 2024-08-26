@@ -1,18 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Signature } from '../types/signature.js'
-import type {
-  TransactionEnvelope,
-  TransactionEnvelope_Eip1559,
-  TransactionEnvelope_Eip2930,
-  TransactionEnvelope_Eip4844,
-  TransactionEnvelope_Eip7702,
-  TransactionEnvelope_Legacy,
-  TransactionEnvelope_Serialized,
-  TransactionEnvelope_SerializedEip1559,
-  TransactionEnvelope_SerializedEip2930,
-  TransactionEnvelope_SerializedLegacy,
-} from '../types/transactionEnvelope.js'
-import type { Compute, IsNarrowable, UnionPartialBy } from '../types/utils.js'
+import type { Signature } from '../signature/types.js'
+import type { Compute, IsNarrowable, UnionPartialBy } from '../types.js'
 import {
   TransactionEnvelope_assert,
   TransactionEnvelope_assertEip1559,
@@ -31,6 +19,18 @@ import {
   type GetTransactionType,
   TransactionEnvelope_getType,
 } from './getType.js'
+import type {
+  TransactionEnvelope,
+  TransactionEnvelope_Eip1559,
+  TransactionEnvelope_Eip2930,
+  TransactionEnvelope_Eip4844,
+  TransactionEnvelope_Eip7702,
+  TransactionEnvelope_Legacy,
+  TransactionEnvelope_Serialized,
+  TransactionEnvelope_SerializedEip1559,
+  TransactionEnvelope_SerializedEip2930,
+  TransactionEnvelope_SerializedLegacy,
+} from './types.js'
 
 /**
  * Converts an arbitrary transaction object into a typed Transaction Envelope.

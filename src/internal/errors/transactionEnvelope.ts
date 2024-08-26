@@ -1,5 +1,5 @@
-import type { Hex } from '../types/data.js'
-import type { TransactionEnvelope_Type } from '../types/transactionEnvelope.js'
+import type { Hex } from '../hex/types.js'
+import type { TransactionEnvelope_Type } from '../transactionEnvelope/types.js'
 import { Value_formatGwei } from '../value/formatGwei.js'
 import { BaseError } from './base.js'
 

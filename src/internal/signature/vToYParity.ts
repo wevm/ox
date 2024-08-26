@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidSignatureVError } from '../errors/signature.js'
-import type { Signature } from '../types/signature.js'
+import type { Signature } from './types.js'
 
 /** @internal */
 export function Signature_vToYParity(v: number): Signature['yParity'] {

@@ -1,16 +1,23 @@
 import { AccessList_toTupleList } from '../accessList/toTupleList.js'
+import type { BlobSidecars } from '../blobs/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidSignatureVError } from '../errors/signature.js'
 import { TransactionTypeNotImplementedError } from '../errors/transactionEnvelope.js'
 import { Hex_concat } from '../hex/concat.js'
 import { Hex_from } from '../hex/from.js'
 import { Hex_trimLeft } from '../hex/trim.js'
+import type { Hex } from '../hex/types.js'
 import { Rlp_fromHex } from '../rlp/from.js'
 import { Signature_extract } from '../signature/extract.js'
 import { Signature_toTuple } from '../signature/toTuple.js'
-import type { BlobSidecars } from '../types/blob.js'
-import type { Hex } from '../types/data.js'
-import type { Signature } from '../types/signature.js'
+import type { Signature } from '../signature/types.js'
+import type { PartialBy } from '../types.js'
+import {
+  TransactionEnvelope_assertEip1559,
+  TransactionEnvelope_assertEip2930,
+  TransactionEnvelope_assertEip4844,
+  TransactionEnvelope_assertLegacy,
+} from './assert.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,
@@ -22,14 +29,7 @@ import type {
   TransactionEnvelope_SerializedEip2930,
   TransactionEnvelope_SerializedEip4844,
   TransactionEnvelope_SerializedLegacy,
-} from '../types/transactionEnvelope.js'
-import type { PartialBy } from '../types/utils.js'
-import {
-  TransactionEnvelope_assertEip1559,
-  TransactionEnvelope_assertEip2930,
-  TransactionEnvelope_assertEip4844,
-  TransactionEnvelope_assertLegacy,
-} from './assert.js'
+} from './types.js'
 
 /**
  * Serializes a {@link TransactionEnvelope#TransactionEnvelope}.

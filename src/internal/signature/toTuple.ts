@@ -1,8 +1,8 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_from } from '../hex/from.js'
 import { Hex_trimLeft } from '../hex/trim.js'
-import type { Signature, Signature_Tuple } from '../types/signature.js'
-import type { Compute } from '../types/utils.js'
+import type { Compute } from '../types.js'
+import type { Signature, Signature_Tuple } from './types.js'
 
 /**
  * Converts a {@link Signature#Signature} to a serialized {@link Signature#Tuple} to be used for signatures in Transaction Envelopes, EIP-7702 Authorization Lists, etc.

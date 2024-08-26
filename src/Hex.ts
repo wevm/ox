@@ -1,4 +1,4 @@
-export type { Hex } from './internal/types/data.js'
+export type { Hex } from './internal/hex/types.js'
 
 export { Hex_assert as assert } from './internal/hex/assert.js'
 

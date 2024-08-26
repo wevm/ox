@@ -1,5 +1,5 @@
+import type { Hex } from '../hex/types.js'
 import { Kzg_versionedHashVersion } from '../kzg/constants.js'
-import type { Hex } from '../types/data.js'
 
 import { BaseError } from './base.js'
 

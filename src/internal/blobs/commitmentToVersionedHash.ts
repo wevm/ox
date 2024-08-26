@@ -1,7 +1,8 @@
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_sha256 } from '../hash/sha256.js'
 import { Hex_fromBytes } from '../hex/from.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Transform a commitment to it's versioned hash.

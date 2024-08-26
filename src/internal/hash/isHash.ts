@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_isHex } from '../hex/isHex.js'
 import { Hex_size } from '../hex/size.js'
-import type { Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 
 /**
  * Checks if a string is a valid hash value.

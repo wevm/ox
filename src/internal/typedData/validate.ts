@@ -10,12 +10,12 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidPrimaryTypeError } from '../errors/typedData.js'
 import { Hex_fromNumber } from '../hex/from.js'
 import { Hex_size } from '../hex/size.js'
+import type { Hex } from '../hex/types.js'
 import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
 } from '../solidity/constants.js'
-import type { Hex } from '../types/data.js'
-import type { TypedData_Definition } from '../types/typedData.js'
+import type { TypedData_Definition } from './types.js'
 
 /**
  * Validates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).

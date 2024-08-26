@@ -1,7 +1,7 @@
-import type { Address } from 'abitype'
-import type { Siwe_Message } from '../types/siwe.js'
-import type { Compute, ExactPartial } from '../types/utils.js'
+import type { Address } from '../address/types.js'
+import type { Compute, ExactPartial } from '../types.js'
 import { Siwe_prefixRegex, Siwe_suffixRegex } from './constants.js'
+import type { Siwe_Message } from './types.js'
 
 /**
  * EIP-4361 formatted message into message fields object.

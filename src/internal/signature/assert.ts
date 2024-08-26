@@ -6,8 +6,8 @@ import {
   MissingSignaturePropertiesError,
 } from '../errors/signature.js'
 import { Solidity_maxUint256 } from '../solidity/constants.js'
-import type { Signature } from '../types/signature.js'
-import type { ExactPartial } from '../types/utils.js'
+import type { ExactPartial } from '../types.js'
+import type { Signature } from './types.js'
 
 /**
  * Asserts that the signature is valid.

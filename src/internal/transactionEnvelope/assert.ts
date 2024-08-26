@@ -16,6 +16,7 @@ import { Hex_size } from '../hex/size.js'
 import { Hex_slice } from '../hex/slice.js'
 import { Hex_toNumber } from '../hex/to.js'
 import { Kzg_versionedHashVersion } from '../kzg/constants.js'
+import type { PartialBy } from '../types.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,
@@ -23,8 +24,7 @@ import type {
   TransactionEnvelope_Eip4844,
   TransactionEnvelope_Eip7702,
   TransactionEnvelope_Legacy,
-} from '../types/transactionEnvelope.js'
-import type { PartialBy } from '../types/utils.js'
+} from './types.js'
 
 /**
  * Asserts a {@link TransactionEnvelope#TransactionEnvelope} is valid.

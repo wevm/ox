@@ -3,7 +3,7 @@ export type {
   Blob,
   BlobSidecar,
   BlobSidecars,
-} from './internal/types/blob.js'
+} from './internal/blobs/types.js'
 
 export { Blobs_toCommitments as toCommitments } from './internal/blobs/toCommitments.js'
 

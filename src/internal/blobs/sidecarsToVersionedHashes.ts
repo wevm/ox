@@ -1,7 +1,8 @@
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { BlobSidecars } from '../types/blob.js'
-import type { Bytes, Hex } from '../types/data.js'
+import type { Hex } from '../hex/types.js'
 import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
+import type { BlobSidecars } from './types.js'
 
 /**
  * Transforms a list of sidecars to their versioned hashes.

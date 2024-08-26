@@ -1,9 +1,9 @@
-import type { Address } from 'abitype'
-
 import { Address_isEqual } from '../address/isEqual.js'
+import type { Address } from '../address/types.js'
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes, Hex } from '../types/data.js'
-import type { Signature } from '../types/signature.js'
+import type { Hex } from '../hex/types.js'
+import type { Signature } from '../signature/types.js'
 import { Secp256k1_recoverAddress } from './recoverAddress.js'
 
 /**

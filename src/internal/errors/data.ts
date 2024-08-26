@@ -1,4 +1,5 @@
-import type { Bytes, Hex } from '../types/data.js'
+import type { Bytes } from '../bytes/types.js'
+import type { Hex } from '../hex/types.js'
 import { BaseError } from './base.js'
 
 // TODO: Use SizeOverflowError instead?

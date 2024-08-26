@@ -2,12 +2,9 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromNumber } from '../hex/from.js'
 import { Signature_extract } from '../signature/extract.js'
 import { Signature_toTuple } from '../signature/toTuple.js'
-import type {
-  Authorization,
-  Authorization_Tuple,
-} from '../types/authorization.js'
-import type { Signature } from '../types/signature.js'
-import type { Compute } from '../types/utils.js'
+import type { Signature } from '../signature/types.js'
+import type { Compute } from '../types.js'
+import type { Authorization, Authorization_Tuple } from './types.js'
 
 /**
  * Converts an {@link Authorization#Authorization} to an {@link Authorization#Tuple}.

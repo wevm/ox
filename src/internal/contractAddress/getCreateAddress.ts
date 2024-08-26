@@ -1,6 +1,5 @@
-import type { Address } from 'abitype'
-
 import { Address_from } from '../address/from.js'
+import type { Address } from '../address/types.js'
 import { Bytes_from } from '../bytes/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'

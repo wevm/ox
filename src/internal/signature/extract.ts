@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Signature, Signature_Legacy } from '../types/signature.js'
-import type { Compute, ExactPartial, OneOf } from '../types/utils.js'
+import type { Compute, ExactPartial, OneOf } from '../types.js'
 import { Signature_from } from './from.js'
+import type { Signature, Signature_Legacy } from './types.js'
 
 /**
  * Extracts a {@link Signature#Signature} from an arbitrary object that may include signature properties.

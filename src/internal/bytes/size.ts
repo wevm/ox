@@ -1,8 +1,8 @@
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Bytes } from '../types/data.js'
 
 /**
- * Retrieves the size of a {@link Types#Bytes} value.
+ * Retrieves the size of a {@link Bytes#Bytes} value.
  *
  * @example
  * ```ts

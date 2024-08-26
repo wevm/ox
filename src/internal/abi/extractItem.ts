@@ -1,20 +1,21 @@
-import type { Abi, AbiParameter, Address } from 'abitype'
+import type { Abi, AbiParameter } from 'abitype'
 
 import { Address_isAddress } from '../address/isAddress.js'
+import type { Address } from '../address/types.js'
 import { AbiItemAmbiguityError } from '../errors/abi.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_isHex } from '../hex/isHex.js'
+import type { Hex } from '../hex/types.js'
+import type { UnionCompute } from '../types.js'
+import { Abi_getSelector } from './getSelector.js'
+import { Abi_getSignatureHash } from './getSignatureHash.js'
 import type {
   AbiItem,
   AbiItemArgs,
   AbiItemName,
   ExtractAbiItemForArgs,
   Widen,
-} from '../types/abi.js'
-import type { Hex } from '../types/data.js'
-import type { UnionCompute } from '../types/utils.js'
-import { Abi_getSelector } from './getSelector.js'
-import { Abi_getSignatureHash } from './getSignatureHash.js'
+} from './types.js'
 
 /**
  * Extracts an ABI Item from an ABI given a name and optional arguments.

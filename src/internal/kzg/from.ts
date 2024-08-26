@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Kzg } from '../types/kzg.js'
+import type { Kzg } from './types.js'
 
 /**
  * Defines a KZG interface.

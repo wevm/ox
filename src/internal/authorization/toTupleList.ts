@@ -1,10 +1,7 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type {
-  Authorization,
-  Authorization_TupleList,
-} from '../types/authorization.js'
-import type { Compute, Mutable } from '../types/utils.js'
+import type { Compute, Mutable } from '../types.js'
 import { Authorization_toTuple } from './toTuple.js'
+import type { Authorization, Authorization_TupleList } from './types.js'
 
 /**
  * Converts an {@link Authorization#List} to an {@link Authorization#TupleList}.

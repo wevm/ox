@@ -1,10 +1,10 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Hex_concat } from '../hex/concat.js'
+import type { Hex } from '../hex/types.js'
 import { Rlp_fromHex } from '../rlp/from.js'
-import type { Authorization } from '../types/authorization.js'
-import type { Hex } from '../types/data.js'
 import { Authorization_toTuple } from './toTuple.js'
+import type { Authorization } from './types.js'
 
 /**
  * Computes the hash for an {@link Authorization#Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
