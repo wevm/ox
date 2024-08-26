@@ -7,14 +7,10 @@ import { renderApiErrorClass } from './utils/renderApiErrorClass.js'
 import { renderApiFunction } from './utils/renderApiFunction.js'
 
 // TODO
-// - Add errors to module
-// - Add constants to module
-// - Add types to module
+// - Expand properties/types and lookup links
 // - Link errors
 // - Remove underscores
 // - Parse inline {@link} tags and link to pages
-// - Add generated md files to gitignore
-// - Expand child attributes
 
 // Vocs TODO
 // - Throw build if twoslash block has errors

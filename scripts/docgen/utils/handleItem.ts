@@ -15,6 +15,7 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
           comment: string
           summary: string
           deprecated: string
+          default: string
           remarks: string
           returns: string
           since: string
@@ -56,7 +57,9 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
     item instanceof model.ApiMethodSignature ||
     item instanceof model.ApiTypeAlias ||
     item instanceof model.ApiEnum ||
-    item instanceof model.ApiEnumMember
+    item instanceof model.ApiEnumMember ||
+    item instanceof model.ApiVariable ||
+    item instanceof model.ApiNamespace
   ) {
     const parent = item.parent ? getId(item.parent) : null
     const module = parent?.match(moduleRegex)?.groups?.module
@@ -95,7 +98,7 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
         )
         .map((token) => ({
           canonicalReference: token.canonicalReference?.toString(),
-          text: token.text,
+          text: formatType(token.text),
         })),
       releaseTag: model.ReleaseTag[item.releaseTag],
       ...extraData(item),
@@ -144,6 +147,12 @@ function processDocComment(docComment?: tsdoc.DocComment | undefined) {
     ),
     comment: docComment?.emitAsTsdoc(),
     summary: cleanDoc(renderDocNode(docComment?.summarySection)),
+    default: cleanDoc(
+      renderDocNode(
+        docComment.customBlocks.find((v) => v.blockTag.tagName === '@default'),
+      ),
+      '@default',
+    ),
     deprecated: cleanDoc(
       renderDocNode(docComment?.deprecatedBlock),
       '@deprecated',
@@ -271,11 +280,15 @@ type ExtraData = {
   }[]
 }
 
+function formatType(type: string) {
+  return type.replace('_', '.')
+}
+
 function extraData(item: model.ApiItem) {
   const ret: ExtraData = {}
   if (model.ApiParameterListMixin.isBaseClassOf(item)) {
     ret.parameters = item.parameters.map((p) => ({
-      ...extractPrimaryReference(p.parameterTypeExcerpt.text, item),
+      ...extractPrimaryReference(formatType(p.parameterTypeExcerpt.text), item),
       name: p.name,
       optional: p.isOptional,
       comment: renderDocNode(p.tsdocParamBlock?.content.nodes),
@@ -305,11 +318,11 @@ function extraData(item: model.ApiItem) {
     ret,
     item instanceof model.ApiTypeAlias
       ? {
-          type: item.typeExcerpt.text,
+          type: formatType(item.typeExcerpt.text),
         }
       : item instanceof model.ApiPropertyItem
         ? {
-            type: item.propertyTypeExcerpt.text,
+            type: formatType(item.propertyTypeExcerpt.text),
           }
         : item instanceof model.ApiClass
           ? {

@@ -16,14 +16,13 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/
  * ```ts twoslash
  * import { Address } from 'ox'
  * Address.assert('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
- * // true
  * ```
  *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
  * Address.assert('0xdeadbeef')
- * // InvalidAddressError: Address "0xdeadbeef" is invalid.
+ * // @error: InvalidAddressError: Address "0xdeadbeef" is invalid.
  * ```
  *
  * @param value - Value to assert if it is a valid address.
@@ -31,9 +30,9 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/
  */
 export function Address_assert(
   value: string,
-  options?: Address_assert.Options | undefined,
+  options: Address_assert.Options = {},
 ): asserts value is Address {
-  const { strict = true } = options ?? {}
+  const { strict = true } = options
 
   if (!addressRegex.test(value))
     throw new InvalidAddressError({
@@ -52,7 +51,7 @@ export function Address_assert(
 }
 
 export declare namespace Address_assert {
-  export type Options = {
+  interface Options {
     /**
      * Enables strict mode. Whether or not to compare the address against its checksum.
      *
@@ -61,7 +60,7 @@ export declare namespace Address_assert {
     strict?: boolean | undefined
   }
 
-  export type ErrorType = InvalidAddressError | GlobalErrorType
+  type ErrorType = InvalidAddressError | GlobalErrorType
 }
 
 /* v8 ignore next */

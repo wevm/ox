@@ -7,17 +7,15 @@ import type { Address } from './types.js'
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
- *
- * const result = Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
- * // true
+ * Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+ * // @log: true
  * ```
  *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
- *
- * const result = Address.isAddress('0xdeadbeef')
- * // false
+ * Address.isAddress('0xdeadbeef')
+ * // @log: false
  * ```
  *
  * @param address - Value to check if it is a valid address.
@@ -26,7 +24,7 @@ import type { Address } from './types.js'
  */
 export function Address_isAddress(
   address: string,
-  options?: Address_isAddress.Options | undefined,
+  options: Address_isAddress.Options = {},
 ): address is Address {
   const { strict = true } = options ?? {}
   try {
@@ -38,5 +36,12 @@ export function Address_isAddress(
 }
 
 export declare namespace Address_isAddress {
-  export type Options = Address_assert.Options
+  interface Options {
+    /**
+     * Enables strict mode. Whether or not to compare the address against its checksum.
+     *
+     * @default true
+     */
+    strict?: boolean | undefined
+  }
 }

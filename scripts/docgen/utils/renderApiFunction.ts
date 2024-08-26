@@ -39,7 +39,6 @@ import * as ${module} from 'ox/${module}'
 ${comment?.examples.join('\n\n')}
 `
 
-  // TODO: Show/hide child attributes
   const parametersContent =
     parameters.length === 0
       ? ''
@@ -48,17 +47,50 @@ ${comment?.examples.join('\n\n')}
 
 ${parameters
   .map((p) => {
+    let content = ''
+    const id = `ox!${p.type}:interface`
+    const lookupItem = lookup[id]
+    if (lookupItem)
+      for (const child of lookupItem.children) {
+        const childItem = lookup[child]
+        if (!childItem) continue
+        content += `
+#### ${p.name}.${childItem.displayName}
+
+- **Type:** \`${childItem.type}\`
+${childItem.comment?.default ? `- **Default:** \`${childItem.comment.default}\`` : ''}
+
+${childItem.comment?.summary}
+`
+      }
+    // const interfaceReference = p.primaryCanonicalReference?.endsWith(
+    //   ':interface',
+    // )
+    //   ? p.primaryCanonicalReference
+    //   : undefined
+    // if (interfaceReference) console.log(interfaceReference)
+    //
     return `### ${p.name}
 
-- **Type:** \`${p.type.replace('_', '.')}\`
+- **Type:** \`${p.type}\`
+${comment?.default ? `- **Default:** \`${comment.default}\`` : ''}
 
 ${p.comment}
+
+${content}
+
 `
   })
   .join('\n')}
 `
 
-  // TODO: Show child attributes (e.g. options.size)
+  // if (module === 'Address' && displayName === 'fromPublicKey')
+  //   console.log(
+  //     item,
+  //     lookup['ox!Address.fromPublicKey:namespace'],
+  //     lookup['ox!Address.fromPublicKey.ReturnType:type'],
+  //   )
+
   const returnTypeContent =
     !returnType || returnType?.type === 'void'
       ? ''
@@ -83,7 +115,7 @@ ${comment?.returns}
 
 \`${errorTypeItem.canonicalReference.match(typeRegex)?.groups?.type}\`
 
-${errorTypeItem.references.map((r) => `- \`${r.text.replace('_', '.')}\``).join('\n')}
+${errorTypeItem.references.map((r) => `- \`${r.text}\``).join('\n')}
 `
 
   const arrow = false
@@ -91,7 +123,7 @@ ${errorTypeItem.references.map((r) => `- \`${r.text.replace('_', '.')}\``).join(
     .map((p) => {
       let pStr = p.name
       if (p.optional) pStr += '?'
-      pStr += `: ${p.type.replace('_', '.')}`
+      pStr += `: ${p.type}`
       return pStr
     })
     .join(',\n  ')

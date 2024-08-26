@@ -8,23 +8,21 @@ import type { Address } from './types.js'
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
- *
- * const result = Address.isEqual(
+ * Address.isEqual(
  *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
  *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * )
- * // true
+ * // @log: true
  * ```
  *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
- *
- * const result = Address.isEqual(
+ * Address.isEqual(
  *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
  *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251f'
  * )
- * // false
+ * // @log: false
  * ```
  *
  * @param addressA - The first address to compare.

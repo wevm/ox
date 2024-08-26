@@ -11,9 +11,8 @@ import type { Address } from './types.js'
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
- *
- * const result = Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
- * // '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+ * Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+ * // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * ```
  *
  * @param address - The address to compute the checksum for.
@@ -43,7 +42,7 @@ export function Address_checksum(address: string): Address {
 }
 
 export declare namespace Address_checksum {
-  export type ErrorType =
+  type ErrorType =
     | Address_assert.ErrorType
     | Hash_keccak256.ErrorType
     | Bytes_fromString.ErrorType
