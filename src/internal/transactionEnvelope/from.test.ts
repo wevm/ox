@@ -158,6 +158,8 @@ test('default', () => {
         "type": "eip4844",
       }
     `)
+    const serialized = TransactionEnvelope.serialize(envelope)
+    expect(TransactionEnvelope.fromEip4844(serialized)).toEqual(envelope)
   }
 
   {

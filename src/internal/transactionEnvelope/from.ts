@@ -13,6 +13,7 @@ import {
   TransactionEnvelope_deserialize,
   TransactionEnvelope_deserializeEip1559,
   TransactionEnvelope_deserializeEip2930,
+  TransactionEnvelope_deserializeEip4844,
   TransactionEnvelope_deserializeLegacy,
 } from './deserialize.js'
 import {
@@ -29,6 +30,7 @@ import type {
   TransactionEnvelope_Serialized,
   TransactionEnvelope_SerializedEip1559,
   TransactionEnvelope_SerializedEip2930,
+  TransactionEnvelope_SerializedEip4844,
   TransactionEnvelope_SerializedLegacy,
 } from './types.js'
 
@@ -272,11 +274,12 @@ TransactionEnvelope_fromEip2930.parseError = (error: unknown) =>
  * ```
  */
 export function TransactionEnvelope_fromEip4844<
-  const envelope extends UnionPartialBy<TransactionEnvelope_Eip4844, 'type'>,
+  const envelope extends
+    | UnionPartialBy<TransactionEnvelope_Eip4844, 'type'>
+    | TransactionEnvelope_SerializedEip4844,
 >(envelope: envelope): TransactionEnvelope_fromEip4844.ReturnType<envelope> {
-  // TODO:
-  // if (typeof envelope === 'string')
-  //   return deserializeTransactionEnvelopeEip4844(envelope) as never
+  if (typeof envelope === 'string')
+    return TransactionEnvelope_deserializeEip4844(envelope) as never
 
   TransactionEnvelope_assertEip4844(envelope)
   return { ...envelope, type: 'eip4844' } as never
@@ -284,11 +287,16 @@ export function TransactionEnvelope_fromEip4844<
 
 export declare namespace TransactionEnvelope_fromEip4844 {
   type ReturnType<
-    envelope extends UnionPartialBy<
-      TransactionEnvelope_Eip4844,
-      'type'
-    > = UnionPartialBy<TransactionEnvelope_Eip4844, 'type'>,
-  > = Compute<envelope & { readonly type: 'eip4844' }>
+    envelope extends
+      | UnionPartialBy<TransactionEnvelope_Eip4844, 'type'>
+      | TransactionEnvelope_SerializedEip4844 =
+      | UnionPartialBy<TransactionEnvelope_Eip4844, 'type'>
+      | TransactionEnvelope_SerializedEip4844,
+  > = Compute<
+    envelope extends TransactionEnvelope_SerializedEip4844
+      ? TransactionEnvelope_Eip4844
+      : envelope & { readonly type: 'eip4844' }
+  >
 
   type ErrorType = GlobalErrorType
 }
