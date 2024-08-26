@@ -13,14 +13,12 @@ export function renderApiFunction(item: Data, lookup: Record<string, Data>) {
   /// Join data
 
   const moduleImport = item.parent?.match(moduleRegex)?.groups?.module
-  const aliasItem = comment?.alias && lookup[comment.alias]
 
   /// Render
 
   const headerContent = `
 # ${moduleImport ? `${moduleImport}.` : ''}${displayName}
 
-${aliasItem ? `**Alias:** \`${aliasItem.displayName}\`\n` : ''}
 ${comment?.summary}
 `
 
@@ -33,7 +31,6 @@ ${comment?.summary}
 // @noErrors
 import { ${moduleImport} } from 'ox'
 import * as ${moduleImport} from 'ox/${moduleImport}'
-${aliasItem ? `import { ${aliasItem.displayName} } from 'ox/${moduleImport}'` : ''}
 \`\`\`
 `
 

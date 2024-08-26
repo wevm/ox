@@ -7,7 +7,7 @@
     {
       "tagName": "@alias",
       "syntaxKind": "block",
-      "allowMultiple": true
+      "allowMultiple": false
     },
     {
       "tagName": "@default",

@@ -11,8 +11,6 @@ import { renderApiFunction } from './utils/renderApiFunction.js'
 // - Error type linking
 // - Filter examples based on module (e.g. `isBytesEqual` @example for `Bytes` module should not show up on `Hex` module)
 // - Glossary pages for: constants, errors, and types
-// - Display multiple aliases (when applicable `aliases.length > 1`)
-// - Validate aliases
 // - Update Vocs to throw if twoslash block has errors
 // - Add generated md files to gitignore
 // - For generated files, hide or link "Suggest changes to this page" to source code
@@ -58,12 +56,6 @@ for (const item of namespaceItems) {
       throw new Error(
         `Could not find lookup item for ${member.canonicalReference.toString()}`,
       )
-    // filter out aliases from appearing in sidebar (e.g. `Hex.toHex` should not appear since `Hex.from` does)
-    if (
-      lookupItem.comment?.aliases?.length &&
-      lookupItem.comment.aliases.includes(member.canonicalReference.toString())
-    )
-      continue
 
     items.push({
       text: `.${member.displayName}`,
