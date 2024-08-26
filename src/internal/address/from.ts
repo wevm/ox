@@ -10,15 +10,29 @@ import type { Address } from './types.js'
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+ * const result = Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
  * // '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+ * ```
  *
- * Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e', { checksum: false })
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * const result = Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e', { checksum: false })
  * // '0xa0cf798816d4b9b9866b5330eea46a18382f251e'
+ * ```
  *
- * Address.from('hello')
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * const result = Address.from('hello')
  * // InvalidAddressError: Address "0xa" is invalid.
  * ```
+ *
+ * @param address - An address string to convert to a typed Address.
+ * @param options - Conversion options.
+ * @returns The typed Address.
  */
 export function Address_from(
   address: string,
@@ -32,6 +46,11 @@ export function Address_from(
 
 export declare namespace Address_from {
   export type Options = {
+    /**
+     * Whether to checksum the address.
+     *
+     * @default true
+     */
     checksum?: boolean
   }
 

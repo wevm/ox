@@ -25,24 +25,27 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/
  * Address.assert('0xdeadbeef')
  * // InvalidAddressError: Address "0xdeadbeef" is invalid.
  * ```
+ *
+ * @param value - Value to assert if it is a valid address.
+ * @param options - Assertion options.
  */
 export function Address_assert(
-  address: string,
+  value: string,
   options?: Address_assert.Options | undefined,
-): asserts address is Address {
+): asserts value is Address {
   const { strict = true } = options ?? {}
 
-  if (!addressRegex.test(address))
+  if (!addressRegex.test(value))
     throw new InvalidAddressError({
-      address,
+      address: value,
       cause: new InvalidAddressInputError(),
     })
 
   if (strict) {
-    if (address.toLowerCase() === address) return
-    if (Address_checksum(address as Address) !== address)
+    if (value.toLowerCase() === value) return
+    if (Address_checksum(value as Address) !== value)
       throw new InvalidAddressError({
-        address,
+        address: value,
         cause: new InvalidAddressChecksumError(),
       })
   }

@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs'
 import * as model from '@microsoft/api-extractor-model'
 import * as tsdoc from '@microsoft/tsdoc'
+import { moduleRegex } from './regex.js'
 
 export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
   ExtraData & {
@@ -10,7 +12,6 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
     comment?:
       | {
           alias: string
-          aliases: readonly string[]
           comment: string
           summary: string
           deprecated: string
@@ -25,8 +26,13 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
         }
       | undefined
     excerpt: string
-    file: string | undefined
+    file: {
+      lineNumber: number | undefined
+      path: string | undefined
+      url: string | undefined
+    }
     id: string
+    module: string | undefined
     parent: string | null
     references: readonly {
       canonicalReference: string | undefined
@@ -52,6 +58,16 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
     item instanceof model.ApiEnum ||
     item instanceof model.ApiEnumMember
   ) {
+    const parent = item.parent ? getId(item.parent) : null
+    const module = parent?.match(moduleRegex)?.groups?.module
+
+    const sourceFilePath =
+      item.fileUrlPath ??
+      item.sourceLocation.fileUrl?.replace(
+        'https://github.com/wevm/ox/blob/main/',
+        '',
+      )
+
     const data = {
       id,
       ...extractChildren(item),
@@ -59,9 +75,14 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
       comment: processDocComment(item.tsdocComment),
       displayName: item.displayName,
       excerpt: item.excerpt.text,
-      file: item.sourceLocation.fileUrl || item.fileUrlPath,
+      file: {
+        lineNumber: processLocation(sourceFilePath, module, item),
+        path: sourceFilePath,
+        url: item.sourceLocation.fileUrl,
+      },
       kind: item.kind,
-      parent: item.parent ? getId(item.parent) : null,
+      module,
+      parent,
       references: item.excerpt.tokens
         .filter(
           (token, index) =>
@@ -83,6 +104,30 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
   }
 }
 
+function processLocation(
+  sourceFilePath: string | undefined,
+  module: string | undefined,
+  item: model.ApiItem,
+) {
+  if (!sourceFilePath) return
+
+  const content = readFileSync(sourceFilePath, 'utf-8')
+  if (item.kind === model.ApiItemKind.Function) {
+    const functionName = module
+      ? `${module}_${item.displayName}`
+      : item.displayName
+    let lineNumber = 0
+    for (const line of content.split('\n')) {
+      lineNumber++
+      if (!line.includes(functionName)) continue
+      break
+    }
+    return lineNumber
+  }
+
+  return
+}
+
 function getId(item: model.ApiItem) {
   return item.canonicalReference.toString()
 }
@@ -97,10 +142,6 @@ function processDocComment(docComment?: tsdoc.DocComment | undefined) {
       ),
       '@alias',
     ),
-    aliases: docComment?.customBlocks
-      .filter((v) => v.blockTag.tagName === '@alias')
-      .map(renderDocNode)
-      .map((example) => cleanDoc(example, '@alias')),
     comment: docComment?.emitAsTsdoc(),
     summary: cleanDoc(renderDocNode(docComment?.summarySection)),
     deprecated: cleanDoc(
@@ -166,7 +207,12 @@ function renderDocNode(
     for (const childNode of docNode.getChildNodes())
       result += renderDocNode(childNode)
   }
-  return result
+
+  return result.replaceAll(
+    /\{@link ((?<module>\w+)#(?<type>\w+))\}/g,
+    // TODO: Link to correct page and location
+    '[$<module>.$<type>](/gen/$<module>/$<type>)',
+  )
 }
 
 function extractChildren(item: model.ApiItem) {

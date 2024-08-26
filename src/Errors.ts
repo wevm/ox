@@ -1,7 +1,18 @@
 export {
+  AbiDecodingDataSizeTooSmallError,
+  AbiDecodingZeroDataError,
+  AbiEncodingArrayLengthMismatchError,
+  AbiEncodingBytesSizeMismatchError,
+  AbiEncodingInvalidArrayError,
+  AbiEncodingLengthMismatchError,
+  AbiItemAmbiguityError,
+  InvalidAbiTypeError,
+} from './internal/abi/errors.js'
+
+export {
+  InvalidAddressChecksumError,
   InvalidAddressError,
   InvalidAddressInputError,
-  InvalidAddressChecksumError,
 } from './internal/address/errors.js'
 
 export { BaseError } from './internal/errors/base.js'

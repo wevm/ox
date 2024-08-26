@@ -32,6 +32,34 @@ export class AbiDecodingZeroDataError extends BaseError {
   }
 }
 
+/**
+ * ### Why?
+ *
+ * The length of the array value does not match the length specified in the corresponding ABI parameter.
+ *
+ * ### Example
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi } from 'ox'
+ * // ---cut---
+ * Abi.encodeParameters(['uint256[3]'], [[69n, 420n]])
+ * //                             ↑ expected: 3  ↑ ❌ length: 2
+ * // @error: AbiEncodingArrayLengthMismatchError: ABI encoding array length mismatch
+ * // @error: for type `uint256[3]`. Expected: `3`. Given: `2`.
+ * ```
+ *
+ * ### Solution
+ *
+ * Pass an array of the correct length.
+ *
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ * // ---cut---
+ * Abi.encodeParameters(['uint256[3]'], [[69n, 420n, 69n]])
+ * //                           ↑ ✅ length: 3
+ * ```
+ */
 export class AbiEncodingArrayLengthMismatchError extends BaseError {
   override readonly name = 'AbiEncodingArrayLengthMismatchError'
   constructor({
@@ -48,6 +76,34 @@ export class AbiEncodingArrayLengthMismatchError extends BaseError {
   }
 }
 
+/**
+ * ### Why?
+ *
+ * The size of the bytes value does not match the size specified in the corresponding ABI parameter.
+ *
+ * ### Example
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi } from 'ox'
+ * // ---cut---
+ * Abi.encodeParameters(['bytes8'], [['0xdeadbeefdeadbeefdeadbeef']])
+ * //                          ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
+ * // @error: AbiEncodingBytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
+ * // @error: (bytes12) does not match expected size (bytes8).
+ * ```
+ *
+ * ### Solution
+ *
+ * Pass a bytes value of the correct size.
+ *
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ * // ---cut---
+ * Abi.encodeParameters(['bytes8'], ['0xdeadbeefdeadbeef'])
+ * //                        ↑ ✅ size: 8 bytes
+ * ```
+ */
 export class AbiEncodingBytesSizeMismatchError extends BaseError {
   override readonly name = 'AbiEncodingBytesSizeMismatchError'
   constructor({ expectedSize, value }: { expectedSize: number; value: Hex }) {
@@ -62,6 +118,31 @@ export class AbiEncodingBytesSizeMismatchError extends BaseError {
   }
 }
 
+/**
+ * ### Why?
+ *
+ * The length of the values to encode does not match the length of the ABI parameters.
+ *
+ * ### Example
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi } from 'ox'
+ * // ---cut---
+ * Abi.encodeParameters(['string', 'uint256'], ['hello'])
+ * // @error: AbiEncodingLengthMismatchError: ABI encoding params/values length mismatch.
+ * // @error: Expected length (params): 2
+ * // @error: Given length (values): 1
+ * ```
+ *
+ * ### Solution
+ *
+ * Pass the correct number of values to encode.
+ *
+ * ### Solution
+ *
+ * Pass a [valid ABI type](https://docs.soliditylang.org/en/develop/abi-spec.html#types).
+ */
 export class AbiEncodingLengthMismatchError extends BaseError {
   override readonly name = 'AbiEncodingLengthMismatchError'
   constructor({
@@ -81,6 +162,24 @@ export class AbiEncodingLengthMismatchError extends BaseError {
   }
 }
 
+/**
+ * ### Why?
+ *
+ * The value provided is not a valid array as specified in the corresponding ABI parameter.
+ *
+ * ### Example
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi } from 'ox'
+ * // ---cut---
+ * Abi.encodeParameters(['uint256[3]'], [69])
+ * ```
+ *
+ * ### Solution
+ *
+ * Pass an array value.
+ */
 export class AbiEncodingInvalidArrayError extends BaseError {
   override readonly name = 'AbiEncodingInvalidArrayError'
   constructor(value: unknown) {

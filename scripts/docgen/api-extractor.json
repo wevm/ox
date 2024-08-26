@@ -18,7 +18,8 @@
   "docModel": {
     "enabled": true,
     "apiJsonFilePath": "<projectFolder>/scripts/docgen/<unscopedPackageName>.api.json",
-    "includeForgottenExports": true
+    "includeForgottenExports": true,
+    "projectFolderUrl": "https://github.com/wevm/ox/blob/main"
   },
 
   "dtsRollup": {

@@ -5,15 +5,24 @@ import type { Address } from './types.js'
  * Checks if the given address is a valid address.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Address } from 'ox'
  *
- * Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+ * const result = Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
  * // true
+ * ```
  *
- * Address.isAddress('0xdeadbeef')
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * const result = Address.isAddress('0xdeadbeef')
  * // false
  * ```
+ *
+ * @param address - Value to check if it is a valid address.
+ * @param options - Check options.
+ * @returns Whether the address is a valid address.
  */
 export function Address_isAddress(
   address: string,

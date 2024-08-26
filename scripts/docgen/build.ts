@@ -3,17 +3,23 @@ import fs from 'fs-extra'
 
 import { type Data, handleItem } from './utils/handleItem.js'
 import { moduleRegex } from './utils/regex.js'
+import { renderApiErrorClass } from './utils/renderApiErrorClass.js'
 import { renderApiFunction } from './utils/renderApiFunction.js'
 
 // TODO
+// - Add errors to module
+// - Add constants to module
+// - Add types to module
+// - Link errors
+// - Remove underscores
 // - Parse inline {@link} tags and link to pages
-// - Add range to github source links
-// - Error type linking
-// - Filter examples based on module (e.g. `isBytesEqual` @example for `Bytes` module should not show up on `Hex` module)
-// - Glossary pages for: constants, errors, and types
-// - Update Vocs to throw if twoslash block has errors
 // - Add generated md files to gitignore
+// - Expand child attributes
+
+// Vocs TODO
+// - Throw build if twoslash block has errors
 // - For generated files, hide or link "Suggest changes to this page" to source code
+// - Multiline errors (e.g. `// @error: Foo bar baz`)
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Generating API docs.')
@@ -34,7 +40,10 @@ const entrypointItem = pkg.members.find(
 )
 if (!entrypointItem) throw new Error('Could not find entrypoint item')
 
-const namespaceItems = entrypointItem.members.filter(
+const sidebar = []
+const pagesDir = './site/pages/gen'
+
+const moduleItems = entrypointItem.members.filter(
   (x) =>
     x.kind === model.ApiItemKind.Namespace &&
     moduleRegex.test(x.canonicalReference.toString()) &&
@@ -42,10 +51,7 @@ const namespaceItems = entrypointItem.members.filter(
       x.displayName,
     ),
 )
-
-const sidebar = []
-const pagesDir = './site/pages/gen'
-for (const item of namespaceItems) {
+for (const item of moduleItems) {
   const baseLink = `/gen/${item.displayName}`
 
   const items = []
@@ -64,13 +70,12 @@ for (const item of namespaceItems) {
     })
   }
 
-  const sidebarItem = {
-    text: item.displayName,
+  sidebar.push({
     collapsed: true,
-    link: baseLink,
     items,
-  }
-  sidebar.push(sidebarItem)
+    link: baseLink,
+    text: item.displayName,
+  })
 
   const content = `
 # ${item.displayName}
@@ -82,13 +87,50 @@ ${items.map((x) => `- [\`${x.text}\`](${x.link})`).join('\n')}
   fs.writeFileSync(`${dir}/index.md`, content)
 }
 
+{
+  const errorItem = entrypointItem.members.find(
+    (x) =>
+      x.kind === model.ApiItemKind.Namespace &&
+      moduleRegex.test(x.canonicalReference.toString()) &&
+      ['Errors'].includes(x.displayName),
+  )
+  if (!errorItem) throw new Error('Could not find error item')
+  const baseLink = `/gen/${errorItem.displayName}`
+
+  let content = `---
+showOutline: 1
+---
+
+# ${errorItem.displayName} [Glossary of Errors in Ox]
+`
+  for (const member of errorItem.members) {
+    if (member.kind !== model.ApiItemKind.Class) continue
+    const lookupItem = lookup[member.canonicalReference.toString()]
+    if (!lookupItem)
+      throw new Error(
+        `Could not find lookup item for ${member.canonicalReference.toString()}`,
+      )
+
+    content += `\n\n${renderApiErrorClass(lookupItem, lookup)}`
+  }
+
+  sidebar.push({
+    link: baseLink,
+    text: errorItem.displayName,
+  })
+
+  const dir = `${pagesDir}/${errorItem.displayName}`
+  fs.ensureDirSync(dir)
+  fs.writeFileSync(`${dir}/index.md`, content)
+}
+
 const content = `
 export const sidebar = ${JSON.stringify(sidebar, null, 2)}
 `
 fs.writeFileSync('./site/sidebar-generated.ts', content)
 
 /// Build markdown files
-const ids = sidebar.flatMap((x) => x.items).map((x) => x.id)
+const ids = sidebar.flatMap((x) => x.items ?? []).map((x) => x.id)
 for (const id of ids) {
   const item = lookup[id]
   if (!item) throw new Error(`Could not find item with id ${id}`)

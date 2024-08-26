@@ -1,36 +1,32 @@
 import type { Data } from './handleItem.js'
-import { moduleRegex } from './regex.js'
 
 export function renderApiFunction(item: Data, lookup: Record<string, Data>) {
   const {
     comment,
     displayName,
+    module,
     parameters = [],
     returnType,
     typeParameters,
   } = item
 
-  /// Join data
-
-  const moduleImport = item.parent?.match(moduleRegex)?.groups?.module
-
   /// Render
 
   const headerContent = `
-# ${moduleImport ? `${moduleImport}.` : ''}${displayName}
+# ${module ? `${module}.` : ''}${displayName}
 
 ${comment?.summary}
 `
 
-  const importContent = !moduleImport
+  const importContent = !module
     ? ''
     : `
 ## Imports
 
 \`\`\`ts twoslash
 // @noErrors
-import { ${moduleImport} } from 'ox'
-import * as ${moduleImport} from 'ox/${moduleImport}'
+import { ${module} } from 'ox'
+import * as ${module} from 'ox/${module}'
 \`\`\`
 `
 
@@ -54,7 +50,7 @@ ${parameters
   .map((p) => {
     return `### ${p.name}
 
-- **Type:** \`${p.type}\`
+- **Type:** \`${p.type.replace('_', '.')}\`
 
 ${p.comment}
 `
@@ -68,9 +64,10 @@ ${p.comment}
       ? ''
       : `
 ## Return Type
-\`\`\`ts
-${returnType.type}
-\`\`\`
+
+\`${returnType.type}\`
+
+${comment?.returns}
 `
 
   const errorTypeId = `${item.canonicalReference.split(':')[0]}.ErrorType:type`
@@ -84,21 +81,17 @@ ${returnType.type}
     : `
 ## Error Type
 
-\`\`\`ts
-${errorTypeItem.canonicalReference.match(typeRegex)?.groups?.type}
-\`\`\`
+\`${errorTypeItem.canonicalReference.match(typeRegex)?.groups?.type}\`
 
-${errorTypeItem.references.map((r) => `- \`${r.text}\``).join('\n')}
+${errorTypeItem.references.map((r) => `- \`${r.text.replace('_', '.')}\``).join('\n')}
 `
 
   const arrow = false
   let paramSignature = parameters
     .map((p) => {
       let pStr = p.name
-      if (p.optional) {
-        pStr += '?'
-      }
-      pStr += `: ${p.type}`
+      if (p.optional) pStr += '?'
+      pStr += `: ${p.type.replace('_', '.')}`
       return pStr
     })
     .join(',\n  ')
@@ -118,7 +111,7 @@ ${errorTypeItem.references.map((r) => `- \`${r.text}\``).join('\n')}
 ${signature}
 \`\`\`
 
-[(${item.file})](https://github.com/wevm/ox/blob/main/${item.file})
+[${item.file.path}](${item.file.url}${item.file.lineNumber ? `#L${item.file.lineNumber}` : ''})
 `
 
   return `

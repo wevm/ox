@@ -6,26 +6,35 @@ import type { Address } from './types.js'
  * Checks if two addresses are equal.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Address } from 'ox'
  *
- * const isEqual = Address.isEqual(
+ * const result = Address.isEqual(
  *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
  *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * )
  * // true
+ * ```
  *
- * const isEqual = Address.isEqual(
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * const result = Address.isEqual(
  *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
  *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251f'
  * )
  * // false
  * ```
+ *
+ * @param addressA - The first address to compare.
+ * @param addressB - The second address to compare.
+ * @returns Whether the addresses are equal.
  */
-export function Address_isEqual(a: Address, b: Address): boolean {
-  Address_assert(a, { strict: false })
-  Address_assert(b, { strict: false })
-  return a.toLowerCase() === b.toLowerCase()
+export function Address_isEqual(addressA: Address, addressB: Address): boolean {
+  Address_assert(addressA, { strict: false })
+  Address_assert(addressB, { strict: false })
+  return addressA.toLowerCase() === addressB.toLowerCase()
 }
 
 export declare namespace Address_isEqual {
