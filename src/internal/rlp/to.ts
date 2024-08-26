@@ -8,7 +8,7 @@ import type { Bytes, Hex } from '../types/data.js'
 import type { RecursiveArray } from './from.js'
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Types#Bytes} or {@link Types#Hex} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes#Bytes} or {@link Hex#Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -57,7 +57,7 @@ export declare namespace Rlp_to {
 Rlp_to.parseError = (error: unknown) => error as Rlp_to.ErrorType
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Types#Bytes} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes#Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -79,7 +79,7 @@ export declare namespace Rlp_toBytes {
 Rlp_toBytes.parseError = (error: unknown) => error as Rlp_toBytes.ErrorType
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Types#Hex} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Hex#Hex} value.
  *
  * @example
  * ```ts twoslash

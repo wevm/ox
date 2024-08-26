@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Concatenates two or more {@link Types#Hex}.
+ * Concatenates two or more {@link Hex#Hex}.
  *
  * @example
  * TODO

@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Retrieves the size of a {@link Types#Hex} value (in bytes).
+ * Retrieves the size of a {@link Hex#Hex} value (in bytes).
  *
  * @example
  * ```ts

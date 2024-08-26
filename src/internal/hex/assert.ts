@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Asserts if the given value is {@link Types#Hex}.
+ * Asserts if the given value is {@link Hex#Hex}.
  *
  * @example
  * ```ts

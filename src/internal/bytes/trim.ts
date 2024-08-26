@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 /**
- * Trims leading zeros from a {@link Types#Bytes} value.
+ * Trims leading zeros from a {@link Bytes#Bytes} value.
  *
  * @example
  * ```ts
@@ -25,7 +25,7 @@ Bytes_trimLeft.parseError = (error: unknown) =>
   error as Bytes_trimLeft.ErrorType
 
 /**
- * Trims trailing zeros from a {@link Types#Bytes} value.
+ * Trims trailing zeros from a {@link Bytes#Bytes} value.
  *
  * @example
  * ```ts

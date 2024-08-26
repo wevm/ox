@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 /**
- * Asserts if the given value is {@link Types#Bytes}.
+ * Asserts if the given value is {@link Bytes#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/assert
  *

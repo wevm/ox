@@ -1,4 +1,4 @@
-import { versionedHashVersionKzg } from '../constants/kzg.js'
+import { Kzg_versionedHashVersion } from '../kzg/constants.js'
 import type { Hex } from '../types/data.js'
 
 import { BaseError } from './base.js'
@@ -52,7 +52,7 @@ export class InvalidVersionedHashVersionError extends BaseError {
   }) {
     super(`Versioned hash "${hash}" version is invalid.`, {
       metaMessages: [
-        `Expected: ${versionedHashVersionKzg}`,
+        `Expected: ${Kzg_versionedHashVersion}`,
         `Received: ${version}`,
       ],
     })

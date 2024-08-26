@@ -1,7 +1,11 @@
 /// <reference types="@types/bun" />
 
 import { join } from 'node:path'
-import { Abi, Constants, Hex } from '../../src/index.js'
+import { Abi, Hex } from '../../src/index.js'
+import {
+  Solidity_bytesRegex,
+  Solidity_integerRegex,
+} from '../../src/internal/solidity/constants.js'
 import { stringify } from '../../src/internal/stringify.js'
 
 generateAbiVectors()
@@ -71,7 +75,7 @@ function generateValues(parameters: Abi.Parameter[]) {
       continue
     }
     if (parameter.type.startsWith('int') || parameter.type.startsWith('uint')) {
-      const intMatch = parameter.type.match(Constants.integerRegex)
+      const intMatch = parameter.type.match(Solidity_integerRegex)
       if (!intMatch) continue
       const [_, type, size = '256'] = intMatch
       const max =
@@ -93,7 +97,7 @@ function generateValues(parameters: Abi.Parameter[]) {
       continue
     }
     if (parameter.type.startsWith('bytes')) {
-      const bytesMatch = parameter.type.match(Constants.bytesRegex)
+      const bytesMatch = parameter.type.match(Solidity_bytesRegex)
       if (!bytesMatch) continue
       const [_, size = '32'] = bytesMatch
       const value = Hex.from(generateBytes(Number.parseInt(size)))

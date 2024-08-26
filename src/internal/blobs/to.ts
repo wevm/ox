@@ -6,7 +6,7 @@ import type { Blobs } from '../types/blob.js'
 import type { Bytes, Hex } from '../types/data.js'
 
 /**
- * Transforms Ox-shaped {@link Types#Blobs} into the originating data.
+ * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
  *
  * @example
  * ```ts
@@ -80,7 +80,7 @@ export declare namespace Blobs_to {
 Blobs_to.parseError = (error: unknown) => error as Blobs_to.ErrorType
 
 /**
- * Transforms Ox-shaped {@link Types#Blobs} into the originating data.
+ * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
  *
  * @example
  * ```ts
@@ -107,7 +107,7 @@ export declare namespace Blobs_toHex {
 Blobs_toHex.parseError = (error: unknown) => error as Blobs_toHex.ErrorType
 
 /**
- * Transforms Ox-shaped {@link Types#Blobs} into the originating data.
+ * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
  *
  * @example
  * ```ts

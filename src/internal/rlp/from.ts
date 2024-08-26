@@ -13,7 +13,7 @@ type Encodable = {
 }
 
 /**
- * Encodes a {@link Types#Bytes} or {@link Types#Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link Bytes#Bytes} or {@link Hex#Hex} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -51,7 +51,7 @@ export declare namespace Rlp_from {
 Rlp_from.parseError = (error: unknown) => error as Rlp_from.ErrorType
 
 /**
- * Encodes a {@link Types#Bytes} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link Bytes#Bytes} value into a Recursive-Length Prefix (RLP) value.
  *
  * - Docs: https://oxlib.sh/api/rlp/fromBytes
  *
@@ -79,7 +79,7 @@ export declare namespace Rlp_fromBytes {
 Rlp_fromBytes.parseError = (error: unknown) => error as Rlp_fromBytes.ErrorType
 
 /**
- * Encodes a {@link Types#Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link Hex#Hex} value into a Recursive-Length Prefix (RLP) value.
  *
  *
  * @example

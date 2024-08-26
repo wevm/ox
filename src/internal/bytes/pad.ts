@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 /**
- * Pads a {@link Types#Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link Bytes#Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts
@@ -28,7 +28,7 @@ export declare namespace Bytes_padLeft {
 Bytes_padLeft.parseError = (error: unknown) => error as Bytes_padLeft.ErrorType
 
 /**
- * Pads a {@link Types#Bytes} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link Bytes#Bytes} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts

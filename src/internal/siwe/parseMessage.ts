@@ -1,6 +1,7 @@
 import type { Address } from 'abitype'
 import type { Siwe_Message } from '../types/siwe.js'
 import type { Compute, ExactPartial } from '../types/utils.js'
+import { Siwe_prefixRegex, Siwe_suffixRegex } from './constants.js'
 
 /**
  * EIP-4361 formatted message into message fields object.
@@ -37,7 +38,7 @@ import type { Compute, ExactPartial } from '../types/utils.js'
 export function Siwe_parseMessage(
   message: string,
 ): Siwe_parseMessage.ReturnType {
-  const { scheme, statement, ...prefix } = (message.match(prefixRegex)
+  const { scheme, statement, ...prefix } = (message.match(Siwe_prefixRegex)
     ?.groups ?? {}) as {
     address: Address
     domain: string
@@ -45,7 +46,7 @@ export function Siwe_parseMessage(
     statement?: string
   }
   const { chainId, expirationTime, issuedAt, notBefore, requestId, ...suffix } =
-    (message.match(suffixRegex)?.groups ?? {}) as {
+    (message.match(Siwe_suffixRegex)?.groups ?? {}) as {
       chainId: string
       expirationTime?: string
       issuedAt?: string
@@ -73,11 +74,3 @@ export function Siwe_parseMessage(
 export declare namespace Siwe_parseMessage {
   type ReturnType = Compute<ExactPartial<Siwe_Message>>
 }
-
-// https://regexr.com/80gdj
-const prefixRegex =
-  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+-.]*):\/\/)?(?<domain>[a-zA-Z0-9+-.]*(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/
-
-// https://regexr.com/80gf9
-const suffixRegex =
-  /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.+))?/

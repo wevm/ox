@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 /**
- * Concatenates two or more {@link Types#Bytes}.
+ * Concatenates two or more {@link Bytes#Bytes}.
  *
  * @example
  * TODO

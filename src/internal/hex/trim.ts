@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Trims leading zeros from a {@link Types#Hex} value.
+ * Trims leading zeros from a {@link Hex#Hex} value.
  *
  * @example
  * ```ts
@@ -24,7 +24,7 @@ export declare namespace Hex_trimLeft {
 Hex_trimLeft.parseError = (error: unknown) => error as Hex_trimLeft.ErrorType
 
 /**
- * Trims trailing zeros from a {@link Types#Hex} value.
+ * Trims trailing zeros from a {@link Hex#Hex} value.
  *
  * @example
  * ```ts

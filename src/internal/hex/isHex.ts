@@ -3,7 +3,7 @@ import type { Hex } from '../types/data.js'
 import { Hex_assert } from './assert.js'
 
 /**
- * Checks if the given value is {@link Types#Hex}.
+ * Checks if the given value is {@link Hex#Hex}.
  *
  * - Docs: https://oxlib.sh/api/hex/isHex
  *

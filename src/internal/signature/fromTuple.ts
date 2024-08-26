@@ -3,7 +3,7 @@ import type { Signature_Tuple } from '../types/signature.js'
 import { Signature_from } from './from.js'
 
 /**
- * Converts a {@link Types#SignatureTuple} to a {@link Types#Signature}.
+ * Converts a {@link Signature#SignatureTuple} to a {@link Signature#Signature}.
  *
  * @example
  * ```ts

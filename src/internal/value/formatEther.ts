@@ -1,6 +1,6 @@
-import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
 
+import { Value_exponents } from './constants.js'
 import { Value_format } from './format.js'
 
 /**
@@ -20,7 +20,7 @@ export function Value_formatEther(
   wei: bigint,
   unit: 'wei' | 'gwei' | 'szabo' | 'finney' = 'wei',
 ) {
-  return Value_format(wei, valueExponents.ether - valueExponents[unit])
+  return Value_format(wei, Value_exponents.ether - Value_exponents[unit])
 }
 
 export declare namespace Value_formatEther {

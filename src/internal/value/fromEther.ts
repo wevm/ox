@@ -1,5 +1,5 @@
-import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import { Value_exponents } from './constants.js'
 import { Value_from } from './from.js'
 
 /**
@@ -19,7 +19,7 @@ export function Value_fromEther(
   ether: string,
   unit: 'wei' | 'gwei' | 'szabo' | 'finney' = 'wei',
 ) {
-  return Value_from(ether, valueExponents.ether - valueExponents[unit])
+  return Value_from(ether, Value_exponents.ether - Value_exponents[unit])
 }
 
 export declare namespace Value_fromEther {

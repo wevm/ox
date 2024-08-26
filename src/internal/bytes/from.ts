@@ -11,7 +11,7 @@ import { Bytes_isBytes } from './isBytes.js'
 import { Bytes_padLeft, Bytes_padRight } from './pad.js'
 
 /**
- * Encodes an arbitrary value to {@link Types#Bytes}.
+ * Encodes an arbitrary value to {@link Bytes#Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -75,7 +75,7 @@ export declare namespace Bytes_from {
 Bytes_from.parseError = (error: unknown) => error as Bytes_from.ErrorType
 
 /**
- * Encodes a boolean value into {@link Types#Bytes}.
+ * Encodes a boolean value into {@link Bytes#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/fromBoolean
  *
@@ -144,7 +144,7 @@ function charCodeToBase16(char: number) {
 }
 
 /**
- * Encodes a hex value into {@link Types#Bytes}.
+ * Encodes a hex value into {@link Bytes#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/fromHex
  *
@@ -209,7 +209,7 @@ export declare namespace Bytes_fromHex {
 Bytes_fromHex.parseError = (error: unknown) => error as Bytes_fromHex.ErrorType
 
 /**
- * Encodes a number value into {@link Types#Bytes}.
+ * Encodes a number value into {@link Bytes#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/fromNumber
  *

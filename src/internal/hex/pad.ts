@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Pads a {@link Types#Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link Hex#Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts
@@ -28,7 +28,7 @@ export declare namespace Hex_padLeft {
 Hex_padLeft.parseError = (error: unknown) => error as Hex_padLeft.ErrorType
 
 /**
- * Pads a {@link Types#Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link Hex#Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts

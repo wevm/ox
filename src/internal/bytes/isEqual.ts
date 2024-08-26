@@ -4,7 +4,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Bytes } from '../types/data.js'
 
 /**
- * Checks if two {@link Types#Bytes} values are equal.
+ * Checks if two {@link Bytes#Bytes} values are equal.
  *
  * @example
  * ```ts

@@ -12,7 +12,7 @@ import { Signature_fromCompact } from './fromCompact.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
- * Instantiates a typed {@link Types#Signature} object from a {@link Types#Signature}, {@link Types#SignatureCompact}, {@link Types#SignatureLegacy}, {@link Types#Bytes}, or {@link Types#Hex}.
+ * Instantiates a typed {@link Signature#Signature} object from a {@link Signature#Signature}, {@link Signature#Compact}, {@link Signature#Legacy}, {@link Bytes#Bytes}, or {@link Hex#Hex}.
  *
  * @example
  * ```ts

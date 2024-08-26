@@ -2,6 +2,13 @@ import { Address_from } from '../address/from.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { SiweInvalidMessageFieldError } from '../errors/siwe.js'
 import type { Siwe_Message } from '../types/siwe.js'
+import {
+  Siwe_domainRegex,
+  Siwe_ipRegex,
+  Siwe_localhostRegex,
+  Siwe_nonceRegex,
+  Siwe_schemeRegex,
+} from './constants.js'
 import { Siwe_isUri } from './isUri.js'
 
 /**
@@ -65,9 +72,9 @@ export function Siwe_createMessage(
       })
     if (
       !(
-        domainRegex.test(domain) ||
-        ipRegex.test(domain) ||
-        localhostRegex.test(domain)
+        Siwe_domainRegex.test(domain) ||
+        Siwe_ipRegex.test(domain) ||
+        Siwe_localhostRegex.test(domain)
       )
     )
       throw new SiweInvalidMessageFieldError({
@@ -79,7 +86,7 @@ export function Siwe_createMessage(
           `Provided value: ${domain}`,
         ],
       })
-    if (!nonceRegex.test(nonce))
+    if (!Siwe_nonceRegex.test(nonce))
       throw new SiweInvalidMessageFieldError({
         field: 'nonce',
         metaMessages: [
@@ -110,7 +117,7 @@ export function Siwe_createMessage(
       })
 
     // Optional fields
-    if (scheme && !schemeRegex.test(scheme))
+    if (scheme && !Siwe_schemeRegex.test(scheme))
       throw new SiweInvalidMessageFieldError({
         field: 'scheme',
         metaMessages: [
@@ -183,11 +190,3 @@ export declare namespace Siwe_createMessage {
 Siwe_createMessage.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Siwe_createMessage.ErrorType
-
-const domainRegex =
-  /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:[0-9]{1,5})?$/
-const ipRegex =
-  /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]{1,5})?$/
-const localhostRegex = /^localhost(:[0-9]{1,5})?$/
-const nonceRegex = /^[a-zA-Z0-9]{8,}$/
-const schemeRegex = /^([a-zA-Z][a-zA-Z0-9+-.]*)$/

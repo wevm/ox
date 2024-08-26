@@ -4,7 +4,7 @@ import type { Hex } from '../types/data.js'
 import { Hex_size } from './size.js'
 
 /**
- * Returns a section of a {@link Types#Bytes} value given a start/end bytes offset.
+ * Returns a section of a {@link Bytes#Bytes} value given a start/end bytes offset.
  *
  * @example
  * ```ts

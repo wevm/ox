@@ -1,5 +1,4 @@
 import { Address_assert } from '../address/assert.js'
-import { versionedHashVersionKzg } from '../constants/kzg.js'
 import {
   EmptyBlobVersionedHashesError,
   InvalidVersionedHashSizeError,
@@ -16,6 +15,7 @@ import {
 import { Hex_size } from '../hex/size.js'
 import { Hex_slice } from '../hex/slice.js'
 import { Hex_toNumber } from '../hex/to.js'
+import { Kzg_versionedHashVersion } from '../kzg/constants.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Eip1559,
@@ -27,7 +27,7 @@ import type {
 import type { PartialBy } from '../types/utils.js'
 
 /**
- * Asserts a {@link Types#TransactionEnvelope} is valid.
+ * Asserts a {@link TransactionEnvelope#TransactionEnvelope} is valid.
  *
  * @example
  * // TODO
@@ -64,7 +64,7 @@ TransactionEnvelope_assert.parseError = (error: unknown) =>
   error as TransactionEnvelope_assert.ErrorType
 
 /**
- * Asserts a legacy {@link Types#TransactionEnvelope} is valid.
+ * Asserts a {@link TransactionEnvelope#Legacy} is valid.
  *
  * @example
  * // TODO
@@ -93,7 +93,7 @@ TransactionEnvelope_assertLegacy.parseError = (error: unknown) =>
   error as TransactionEnvelope_assertLegacy.ErrorType
 
 /**
- * Asserts an EIP-2930 {@link Types#TransactionEnvelope} is valid.
+ * Asserts a {@link TransactionEnvelope#Eip2930} is valid.
  *
  * @example
  * // TODO
@@ -121,7 +121,7 @@ TransactionEnvelope_assertEip2930.parseError = (error: unknown) =>
   error as TransactionEnvelope_assertEip2930.ErrorType
 
 /**
- * Asserts an EIP-1559 {@link Types#TransactionEnvelope} is valid.
+ * Asserts a {@link TransactionEnvelope#Eip1559} is valid.
  *
  * @example
  * // TODO
@@ -156,7 +156,7 @@ TransactionEnvelope_assertEip1559.parseError = (error: unknown) =>
   error as TransactionEnvelope_assertEip1559.ErrorType
 
 /**
- * Asserts an EIP-4844 {@link Types#TransactionEnvelope} is valid.
+ * Asserts a {@link TransactionEnvelope#Eip4844} is valid.
  *
  * @example
  * // TODO
@@ -172,7 +172,7 @@ export function TransactionEnvelope_assertEip4844(
       const size = Hex_size(hash)
       const version = Hex_toNumber(Hex_slice(hash, 0, 1))
       if (size !== 32) throw new InvalidVersionedHashSizeError({ hash, size })
-      if (version !== versionedHashVersionKzg)
+      if (version !== Kzg_versionedHashVersion)
         throw new InvalidVersionedHashVersionError({
           hash,
           version,
@@ -201,7 +201,7 @@ TransactionEnvelope_assertEip4844.parseError = (error: unknown) =>
   error as TransactionEnvelope_assertEip4844.ErrorType
 
 /**
- * Asserts an EIP-7702 {@link Types#TransactionEnvelope} is valid.
+ * Asserts a {@link TransactionEnvelope#Eip7702} is valid.
  *
  * @example
  * // TODO

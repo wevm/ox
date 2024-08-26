@@ -8,7 +8,7 @@ import { Hex_assertSize } from './assertSize.js'
 import { Hex_trimLeft } from './trim.js'
 
 /**
- * Decodes a {@link Types#Hex} value into a string, number, bigint, boolean, or {@link Types#Bytes}.
+ * Decodes a {@link Hex#Hex} value into a string, number, bigint, boolean, or {@link Bytes#Bytes}.
  *
  * @example
  * ```ts
@@ -75,7 +75,7 @@ export declare namespace Hex_to {
 Hex_to.parseError = (error: unknown) => error as Hex_to.ErrorType
 
 /**
- * Decodes a {@link Types#Hex} value into a BigInt.
+ * Decodes a {@link Hex#Hex} value into a BigInt.
  *
  * @example
  * ```ts
@@ -124,7 +124,7 @@ export declare namespace Hex_toBigInt {
 Hex_toBigInt.parseError = (error: unknown) => error as Hex_toBigInt.ErrorType
 
 /**
- * Decodes a {@link Types#Hex} value into a boolean.
+ * Decodes a {@link Hex#Hex} value into a boolean.
  *
  * @example
  * ```ts
@@ -171,7 +171,7 @@ export declare namespace Hex_toBoolean {
 Hex_toBoolean.parseError = (error: unknown) => error as Hex_toBoolean.ErrorType
 
 /**
- * Decodes a {@link Types#Hex} value into a {@link Types#Bytes}.
+ * Decodes a {@link Hex#Hex} value into a {@link Bytes#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/hex/toBytes
  *
@@ -202,7 +202,7 @@ export declare namespace Hex_toBytes {
 Hex_toBytes.parseError = (error: unknown) => error as Hex_toBytes.ErrorType
 
 /**
- * Decodes a {@link Types#Hex} value into a number.
+ * Decodes a {@link Hex#Hex} value into a number.
  *
  * @example
  * ```ts
@@ -237,7 +237,7 @@ export declare namespace Hex_toNumber {
 Hex_toNumber.parseError = (error: unknown) => error as Hex_toNumber.ErrorType
 
 /**
- * Decodes a {@link Types#Hex} value into a UTF-8 string.
+ * Decodes a {@link Hex#Hex} value into a UTF-8 string.
  *
  * @example
  * ```ts
@@ -255,7 +255,6 @@ Hex_toNumber.parseError = (error: unknown) => error as Hex_toNumber.ErrorType
  * // 'Hello world'
  * ```
  */
-
 export function Hex_toString(
   hex: Hex,
   options: Hex_toString.Options = {},

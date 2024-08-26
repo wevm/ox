@@ -11,7 +11,7 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 )
 
 /**
- * Encodes an arbitrary value into a {@link Types#Hex} value.
+ * Encodes an arbitrary value into a {@link Hex#Hex} value.
  *
  * @example
  * ```ts
@@ -72,7 +72,7 @@ export declare namespace Hex_from {
 Hex_from.parseError = (error: unknown) => error as Hex_from.ErrorType
 
 /**
- * Encodes a boolean into a {@link Types#Hex} value.
+ * Encodes a boolean into a {@link Hex#Hex} value.
  *
  * @example
  * ```ts
@@ -124,7 +124,7 @@ Hex_fromBoolean.parseError = (error: unknown) =>
   error as Hex_fromBoolean.ErrorType
 
 /**
- * Encodes a {@link Types#Bytes} value into a {@link Types#Hex} value.
+ * Encodes a {@link Bytes#Bytes} value into a {@link Hex#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/hex/fromBytes
  *
@@ -173,7 +173,7 @@ export declare namespace Hex_fromBytes {
 Hex_fromBytes.parseError = (error: unknown) => error as Hex_fromBytes.ErrorType
 
 /**
- * Encodes a number or bigint into a {@link Types#Hex} value.
+ * Encodes a number or bigint into a {@link Hex#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/hex/fromNumber
  *

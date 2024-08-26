@@ -7,7 +7,7 @@ import { Bytes_assertSize } from './assertSize.js'
 import { Bytes_trimLeft, Bytes_trimRight } from './trim.js'
 
 /**
- * Decodes {@link Types#Bytes} into a UTF-8 string, {@link Types#Hex}, number, bigint or boolean.
+ * Decodes {@link Bytes#Bytes} into a UTF-8 string, {@link Hex#Hex}, number, bigint or boolean.
  *
  * @example
  * ```ts
@@ -157,7 +157,7 @@ Bytes_toBoolean.parseError = (error: unknown) =>
   error as Bytes_toBoolean.ErrorType
 
 /**
- * Encodes a {@link Types#Bytes} value into a {@link Types#Hex} value.
+ * Encodes a {@link Bytes#Bytes} value into a {@link Hex#Hex} value.
  *
  * - Docs: https://oxlib.sh/api/bytes/toHex
  *

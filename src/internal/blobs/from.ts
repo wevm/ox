@@ -1,19 +1,19 @@
 import { Bytes_fromHex } from '../bytes/from.js'
 import { Bytes_size } from '../bytes/size.js'
-import {
-  bytesPerBlob,
-  bytesPerFieldElement,
-  fieldElementsPerBlob,
-  maxBytesPerTransaction,
-} from '../constants/blob.js'
 import { createCursor } from '../cursor.js'
 import { BlobSizeTooLargeError, EmptyBlobError } from '../errors/blob.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_fromBytes } from '../hex/from.js'
 import type { Bytes, Hex } from '../types/data.js'
+import {
+  Blobs_bytesPerBlob,
+  Blobs_bytesPerFieldElement,
+  Blobs_fieldElementsPerBlob,
+  Blobs_maxBytesPerTransaction,
+} from './constants.js'
 
 /**
- * Transforms arbitrary data to {@link Types#Blobs}.
+ * Transforms arbitrary data to {@link Blobs#Blobs}.
  *
  * @example
  * ```ts
@@ -38,9 +38,9 @@ export function Blobs_from<
 
   const size_ = Bytes_size(data)
   if (!size_) throw new EmptyBlobError()
-  if (size_ > maxBytesPerTransaction)
+  if (size_ > Blobs_maxBytesPerTransaction)
     throw new BlobSizeTooLargeError({
-      maxSize: maxBytesPerTransaction,
+      maxSize: Blobs_maxBytesPerTransaction,
       size: size_,
     })
 
@@ -49,11 +49,14 @@ export function Blobs_from<
   let active = true
   let position = 0
   while (active) {
-    const blob = createCursor(new Uint8Array(bytesPerBlob))
+    const blob = createCursor(new Uint8Array(Blobs_bytesPerBlob))
 
     let size = 0
-    while (size < fieldElementsPerBlob) {
-      const bytes = data.slice(position, position + (bytesPerFieldElement - 1))
+    while (size < Blobs_fieldElementsPerBlob) {
+      const bytes = data.slice(
+        position,
+        position + (Blobs_bytesPerFieldElement - 1),
+      )
 
       // Push a zero byte so the field element doesn't overflow the BLS modulus.
       blob.pushByte(0x00)

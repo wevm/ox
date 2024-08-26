@@ -5,7 +5,7 @@ import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../types/data.js'
 
 /**
- * Checks if two {@link Types#Hex} values are equal.
+ * Checks if two {@link Hex#Hex} values are equal.
  *
  * @example
  * ```ts

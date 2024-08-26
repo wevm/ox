@@ -1,4 +1,4 @@
-export { valueExponents as exponents } from './internal/constants/value.js'
+export { Value_exponents as exponents } from './internal/value/constants.js'
 
 export { Value_formatEther as formatEther } from './internal/value/formatEther.js'
 

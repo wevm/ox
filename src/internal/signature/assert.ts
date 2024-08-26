@@ -1,4 +1,3 @@
-import { maxUint256 } from '../constants/number.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import {
   InvalidSignatureRError,
@@ -6,6 +5,7 @@ import {
   InvalidSignatureYParityError,
   MissingSignaturePropertiesError,
 } from '../errors/signature.js'
+import { Solidity_maxUint256 } from '../solidity/constants.js'
 import type { Signature } from '../types/signature.js'
 import type { ExactPartial } from '../types/utils.js'
 
@@ -33,9 +33,9 @@ export function Signature_assert(
     throw new MissingSignaturePropertiesError({ signature })
   if (typeof signature.yParity === 'undefined')
     throw new MissingSignaturePropertiesError({ signature })
-  if (signature.r < 0n || signature.r > maxUint256)
+  if (signature.r < 0n || signature.r > Solidity_maxUint256)
     throw new InvalidSignatureRError({ value: signature.r })
-  if (signature.s < 0n || signature.s > maxUint256)
+  if (signature.s < 0n || signature.s > Solidity_maxUint256)
     throw new InvalidSignatureSError({ value: signature.s })
   if (signature.yParity !== 0 && signature.yParity !== 1)
     throw new InvalidSignatureYParityError({ value: signature.yParity })

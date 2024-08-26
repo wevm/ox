@@ -3,7 +3,7 @@ import type { Bytes } from '../types/data.js'
 import { Bytes_assert } from './assert.js'
 
 /**
- * Checks if the given value is {@link Types#Bytes}.
+ * Checks if the given value is {@link Bytes#Bytes}.
  *
  * - Docs: https://oxlib.sh/api/bytes/isBytes
  *

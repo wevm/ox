@@ -4,7 +4,7 @@ import type { Bytes } from '../types/data.js'
 import { Bytes_size } from './size.js'
 
 /**
- * Returns a section of a {@link Types#Bytes} value given a start/end bytes offset.
+ * Returns a section of a {@link Bytes#Bytes} value given a start/end bytes offset.
  *
  * @example
  * ```ts

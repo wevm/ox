@@ -1,7 +1,6 @@
 import type { TypedData, TypedDataParameter } from 'abitype'
 
 import { Address_isAddress } from '../address/isAddress.js'
-import { bytesRegex, integerRegex } from '../constants/regex.js'
 import {
   InvalidAddressError,
   InvalidAddressInputError,
@@ -11,6 +10,10 @@ import type { GlobalErrorType } from '../errors/error.js'
 import { InvalidPrimaryTypeError } from '../errors/typedData.js'
 import { Hex_fromNumber } from '../hex/from.js'
 import { Hex_size } from '../hex/size.js'
+import {
+  Solidity_bytesRegex,
+  Solidity_integerRegex,
+} from '../solidity/constants.js'
 import type { Hex } from '../types/data.js'
 import type { TypedData_Definition } from '../types/typedData.js'
 
@@ -59,7 +62,7 @@ export function TypedData_validate<
       const { name, type } = param
       const value = data[name]
 
-      const integerMatch = type.match(integerRegex)
+      const integerMatch = type.match(Solidity_integerRegex)
       if (
         integerMatch &&
         (typeof value === 'number' || typeof value === 'bigint')
@@ -83,7 +86,7 @@ export function TypedData_validate<
           cause: new InvalidAddressInputError(),
         })
 
-      const bytesMatch = type.match(bytesRegex)
+      const bytesMatch = type.match(Solidity_bytesRegex)
       if (bytesMatch) {
         const [, size] = bytesMatch
         if (size && Hex_size(value as Hex) !== Number.parseInt(size))

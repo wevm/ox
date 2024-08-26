@@ -1,6 +1,6 @@
-import { valueExponents } from '../constants/value.js'
 import type { GlobalErrorType } from '../errors/error.js'
 
+import { Value_exponents } from './constants.js'
 import { Value_format } from './format.js'
 
 /**
@@ -17,7 +17,7 @@ import { Value_format } from './format.js'
  * ```
  */
 export function Value_formatGwei(wei: bigint, unit: 'wei' = 'wei') {
-  return Value_format(wei, valueExponents.gwei - valueExponents[unit])
+  return Value_format(wei, Value_exponents.gwei - Value_exponents[unit])
 }
 
 export declare namespace Value_formatGwei {
