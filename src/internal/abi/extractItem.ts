@@ -18,20 +18,45 @@ import type {
 } from './types.js'
 
 /**
- * Extracts an ABI Item from an ABI given a name and optional arguments.
+ * Extracts an {@link Abi#Item} from an {@link Abi#Abi} given a name and optional arguments.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Abi } from 'ox'
  *
- * Abi.extractItem(abi, { name: 'y' })
- * // {
- * //   name: 'y',
- * //   type: 'event',
- * //   inputs: [{ type: 'address' }],
- * //   outputs: [{ type: 'uint256' }],
- * //   stateMutability: 'view'
- * // }
+ * const abi = [
+ *   {
+ *     name: 'x',
+ *     type: 'function',
+ *     inputs: [{ type: 'uint256' }],
+ *     outputs: [],
+ *     stateMutability: 'payable'
+ *   },
+ *   {
+ *     name: 'y',
+ *     type: 'event',
+ *     inputs: [{ type: 'address' }],
+ *     outputs: [{ type: 'uint256' }],
+ *     stateMutability: 'view'
+ *   },
+ *   {
+ *     name: 'z',
+ *     type: 'function',
+ *     inputs: [{ type: 'string' }],
+ *     outputs: [{ type: 'uint256' }],
+ *     stateMutability: 'view'
+ *   }
+ * ] as const
+ *
+ * const item = Abi.extractItem(abi, { name: 'y' }) // [!code focus]
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * ```
  *
  * @param abi - The contract's ABI.

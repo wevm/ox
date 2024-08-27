@@ -38,7 +38,7 @@ import {
  *   ['address', 'string'],
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 'hello world'],
  * )
- * // '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
+ * // @log: '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
  * ```
  *
  * @param types - Set of ABI types to pack encode.

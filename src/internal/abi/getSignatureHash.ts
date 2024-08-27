@@ -6,14 +6,16 @@ import { Abi_getSignature } from './getSignature.js'
 import type { Abi } from './types.js'
 
 /**
- * Computes the signature hash for an ABI Item.
+ * Computes the signature hash for an {@link Abi#Item}.
+ *
+ * Useful for computing Event Topic values.
  *
  * @example
  * ```ts twoslash
  * import { Abi } from 'ox'
  *
  * const hash = Abi.getSignatureHash('event Transfer(address indexed from, address indexed to, uint256 amount)')
- * // '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
  *
  * @example
@@ -29,7 +31,7 @@ import type { Abi } from './types.js'
  *     { name: 'amount', type: 'uint256', indexed: false },
  *   ],
  * })
- * // '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
  *
  * @param abiItem - The ABI Item to compute the signature hash for.

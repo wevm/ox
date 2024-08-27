@@ -3,14 +3,14 @@ import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
 
 /**
- * Computes the stringified signature for a given ABI Item.
+ * Computes the stringified signature for a given {@link Abi#Item}.
  *
  * @example
  * ```ts twoslash
  * import { Abi } from 'ox'
  *
  * const signature = Abi.getSignature('function ownerOf(uint256 tokenId)')
- * // 'ownerOf(uint256)'
+ * // @log: 'ownerOf(uint256)'
  * ```
  *
  * @example
@@ -24,7 +24,7 @@ import type { GlobalErrorType } from '../errors/error.js'
  *   outputs: [],
  *   stateMutability: 'view',
  * })
- * // 'ownerOf(uint256)'
+ * // @log: 'ownerOf(uint256)'
  * ```
  *
  * @param abiItem - The ABI Item to compute the signature for.

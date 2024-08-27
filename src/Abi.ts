@@ -5,6 +5,7 @@ export type {
   AbiEvent as Event,
   AbiFallback as Fallback,
   AbiFunction as Function,
+  AbiItem as Item,
   AbiParameter as Parameter,
 } from './internal/abi/types.js'
 

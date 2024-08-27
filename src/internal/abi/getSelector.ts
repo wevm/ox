@@ -6,14 +6,16 @@ import type { Hex } from '../hex/types.js'
 import { Abi_getSignatureHash } from './getSignatureHash.js'
 
 /**
- * Computes the selector for an ABI Item.
+ * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link Abi#Item}.
+ *
+ * Useful for computing function selectors for calldata.
  *
  * @example
  * ```ts twoslash
  * import { Abi } from 'ox'
  *
  * const selector = Abi.getSelector('function ownerOf(uint256 tokenId)')
- * // '0x6352211e'
+ * // @log: '0x6352211e'
  * ```
  *
  * @example
@@ -27,7 +29,7 @@ import { Abi_getSignatureHash } from './getSignatureHash.js'
  *   stateMutability: 'view',
  *   type: 'function'
  * })
- * // '0x6352211e'
+ * // @log: '0x6352211e'
  * ```
  *
  * @param abiItem - The ABI item to compute the selector for. Can be a signature or an ABI item for an error, event, function, etc.
