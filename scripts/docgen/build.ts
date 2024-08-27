@@ -5,6 +5,7 @@ import { type Data, handleItem } from './utils/handleItem.js'
 import { moduleRegex } from './utils/regex.js'
 import { renderApiErrorClass } from './utils/renderApiErrorClass.js'
 import { renderApiFunction } from './utils/renderApiFunction.js'
+import { extractNamespaceDocComments } from './utils/tsdoc.js'
 
 // TODO
 // - Expand properties/types and lookup links
@@ -47,6 +48,8 @@ const moduleItems = entrypointItem.members.filter(
       x.displayName,
     ),
 )
+const moduleDocComments = extractNamespaceDocComments('./src/index.ts')
+
 for (const item of moduleItems) {
   const baseLink = `/gen/${item.displayName}`
 
@@ -66,6 +69,8 @@ for (const item of moduleItems) {
     })
   }
 
+  const docComment = moduleDocComments[item.displayName]
+
   sidebar.push({
     collapsed: true,
     items,
@@ -75,6 +80,20 @@ for (const item of moduleItems) {
 
   const content = `
 # ${item.displayName}
+
+${docComment?.summary ?? ''}
+
+${
+  docComment?.examples.length === 0
+    ? ''
+    : `
+## Examples
+
+${docComment?.examples.join('\n\n')}
+`
+}
+
+## Functions
 
 ${items.map((x) => `- [\`${x.text}\`](${x.link})`).join('\n')}
 `
