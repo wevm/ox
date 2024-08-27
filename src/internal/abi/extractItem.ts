@@ -10,10 +10,10 @@ import { AbiItemAmbiguityError } from './errors.js'
 import { Abi_getSelector } from './getSelector.js'
 import { Abi_getSignatureHash } from './getSignatureHash.js'
 import type {
+  Abi_ExtractItemForArgs,
   Abi_Item,
   Abi_ItemArgs,
   Abi_ItemName,
-  Abi_ExtractItemForArgs,
   Widen,
 } from './types.js'
 
