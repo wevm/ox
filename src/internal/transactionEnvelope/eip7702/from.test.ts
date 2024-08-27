@@ -14,6 +14,9 @@ test('default', () => {
         "type": "eip7702",
       }
     `)
+    const serialized = TransactionEnvelopeEip7702.serialize(envelope)
+    const envelope2 = TransactionEnvelopeEip7702.from(serialized)
+    expect(envelope2).toEqual(envelope)
   }
 
   {
@@ -34,6 +37,9 @@ test('default', () => {
         "yParity": 0,
       }
     `)
+    const serialized = TransactionEnvelopeEip7702.serialize(envelope)
+    const envelope2 = TransactionEnvelopeEip7702.from(serialized)
+    expect(envelope2).toEqual(envelope)
   }
 })
 
@@ -61,4 +67,7 @@ test('options: signature', () => {
       "yParity": 0,
     }
   `)
+  const serialized = TransactionEnvelopeEip7702.serialize(envelope)
+  const envelope2 = TransactionEnvelopeEip7702.from(serialized)
+  expect(envelope2).toEqual(envelope)
 })

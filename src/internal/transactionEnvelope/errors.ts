@@ -1,7 +1,6 @@
 import { BaseError } from '../errors/base.js'
 import type { Hex } from '../hex/types.js'
 import { Value_formatGwei } from '../value/formatGwei.js'
-import type { TransactionEnvelope_Type } from './types.js'
 
 export class CannotInferTransactionTypeError extends BaseError {
   override readonly name = 'CannotInferTransactionTypeError'
@@ -75,7 +74,7 @@ export class InvalidSerializedTransactionError extends BaseError {
   }: {
     attributes: Record<string, unknown>
     serializedTransaction: Hex
-    type: TransactionEnvelope_Type
+    type: string
   }) {
     const missing = Object.entries(attributes)
       .map(([key, value]) => (typeof value === 'undefined' ? key : undefined))

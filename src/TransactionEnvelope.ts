@@ -8,12 +8,13 @@ export {
   TransactionTypeNotImplementedError,
 } from './internal/transactionEnvelope/errors.js'
 
+export type { TransactionEnvelope_Base as Base } from './internal/transactionEnvelope/types.js'
+
 export type {
   TransactionEnvelope,
-  TransactionEnvelope_Base as Base,
   TransactionEnvelope_Serialized as Serialized,
   TransactionEnvelope_Type as Type,
-} from './internal/transactionEnvelope/types.js'
+} from './internal/transactionEnvelope/isomorphic/types.js'
 
 export type {
   TransactionEnvelopeLegacy as Legacy,
@@ -40,14 +41,14 @@ export type {
   TransactionEnvelopeEip7702_Serialized as Eip7702Serialized,
 } from './internal/transactionEnvelope/eip7702/types.js'
 
-export { TransactionEnvelope_assert as assert } from './internal/transactionEnvelope/assert.js'
+export { TransactionEnvelope_assert as assert } from './internal/transactionEnvelope/isomorphic/assert.js'
 
-export { TransactionEnvelope_deserialize as deserialize } from './internal/transactionEnvelope/deserialize.js'
+export { TransactionEnvelope_deserialize as deserialize } from './internal/transactionEnvelope/isomorphic/deserialize.js'
 
-export { TransactionEnvelope_getSignPayload as getSignPayload } from './internal/transactionEnvelope/getSignPayload.js'
+export { TransactionEnvelope_getSignPayload as getSignPayload } from './internal/transactionEnvelope/isomorphic/getSignPayload.js'
 
-export { TransactionEnvelope_hash as hash } from './internal/transactionEnvelope/hash.js'
+export { TransactionEnvelope_hash as hash } from './internal/transactionEnvelope/isomorphic/hash.js'
 
-export { TransactionEnvelope_serialize as serialize } from './internal/transactionEnvelope/serialize.js'
+export { TransactionEnvelope_serialize as serialize } from './internal/transactionEnvelope/isomorphic/serialize.js'
 
-export { TransactionEnvelope_from as from } from './internal/transactionEnvelope/from.js'
+export { TransactionEnvelope_from as from } from './internal/transactionEnvelope/isomorphic/from.js'

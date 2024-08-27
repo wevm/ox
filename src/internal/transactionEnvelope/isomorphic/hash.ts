@@ -1,11 +1,12 @@
-import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../hex/types.js'
-import type { OneOf } from '../types.js'
-import { TransactionEnvelopeEip1559_hash } from './eip1559/hash.js'
-import { TransactionEnvelopeEip2930_hash } from './eip2930/hash.js'
-import { TransactionEnvelopeEip4844_hash } from './eip4844/hash.js'
-import { TransactionTypeNotImplementedError } from './errors.js'
-import { TransactionEnvelopeLegacy_hash } from './legacy/hash.js'
+import type { GlobalErrorType } from '../../errors/error.js'
+import type { Hex } from '../../hex/types.js'
+import type { OneOf } from '../../types.js'
+import { TransactionEnvelopeEip1559_hash } from '../eip1559/hash.js'
+import { TransactionEnvelopeEip2930_hash } from '../eip2930/hash.js'
+import { TransactionEnvelopeEip4844_hash } from '../eip4844/hash.js'
+import { TransactionEnvelopeEip7702_hash } from '../eip7702/hash.js'
+import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelopeLegacy_hash } from '../legacy/hash.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
@@ -41,10 +42,10 @@ export function TransactionEnvelope_hash(
     return TransactionEnvelopeEip1559_hash(envelope, options)
   if (envelope.type === 'eip4844')
     return TransactionEnvelopeEip4844_hash(envelope, options)
+  if (envelope.type === 'eip7702')
+    return TransactionEnvelopeEip7702_hash(envelope, options)
 
-  // TODO: EIP-7702
-
-  throw new TransactionTypeNotImplementedError({ type: envelope.type })
+  throw new TransactionTypeNotImplementedError({ type: (envelope as any).type })
 }
 
 export declare namespace TransactionEnvelope_hash {
@@ -53,6 +54,7 @@ export declare namespace TransactionEnvelope_hash {
     | TransactionEnvelopeEip1559_hash.Options
     | TransactionEnvelopeEip2930_hash.Options
     | TransactionEnvelopeEip4844_hash.Options
+    | TransactionEnvelopeEip7702_hash.Options
   >
 
   type ReturnType = Hex
@@ -62,6 +64,7 @@ export declare namespace TransactionEnvelope_hash {
     | TransactionEnvelopeEip1559_hash.ErrorType
     | TransactionEnvelopeEip2930_hash.ErrorType
     | TransactionEnvelopeEip4844_hash.ErrorType
+    | TransactionEnvelopeEip7702_hash.ErrorType
     | GlobalErrorType
 }
 

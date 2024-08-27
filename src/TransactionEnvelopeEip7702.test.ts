@@ -5,7 +5,11 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "assert",
+      "deserialize",
       "from",
+      "getSignPayload",
+      "hash",
+      "serialize",
     ]
   `)
 })

@@ -3,7 +3,7 @@ import type { Hex } from '../../hex/types.js'
 import { Signature_from } from '../../signature/from.js'
 import type { Signature } from '../../signature/types.js'
 import type { Assign, Compute, UnionPartialBy } from '../../types.js'
-import type { TransactionEnvelope } from '../types.js'
+import type { TransactionEnvelope } from '../isomorphic/types.js'
 import { TransactionEnvelopeEip1559_assert } from './assert.js'
 import { TransactionEnvelopeEip1559_deserialize } from './deserialize.js'
 import type {
@@ -33,7 +33,10 @@ export function TransactionEnvelopeEip1559_from<
     | TransactionEnvelopeEip1559_Serialized,
   const signature extends Signature | undefined = undefined,
 >(
-  envelope_: envelope,
+  envelope_:
+    | envelope
+    | UnionPartialBy<TransactionEnvelopeEip1559, 'type'>
+    | TransactionEnvelopeEip1559_Serialized,
   options: TransactionEnvelopeEip1559_from.Options<signature> = {},
 ): TransactionEnvelopeEip1559_from.ReturnType<envelope, signature> {
   const { signature } = options

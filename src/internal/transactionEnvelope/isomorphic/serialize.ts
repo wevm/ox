@@ -1,12 +1,13 @@
-import type { BlobSidecars } from '../blobs/types.js'
-import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../hex/types.js'
-import type { Signature } from '../signature/types.js'
-import { TransactionEnvelopeEip1559_serialize } from './eip1559/serialize.js'
-import { TransactionEnvelopeEip2930_serialize } from './eip2930/serialize.js'
-import { TransactionEnvelopeEip4844_serialize } from './eip4844/serialize.js'
-import { TransactionTypeNotImplementedError } from './errors.js'
-import { TransactionEnvelopeLegacy_serialize } from './legacy/serialize.js'
+import type { BlobSidecars } from '../../blobs/types.js'
+import type { GlobalErrorType } from '../../errors/error.js'
+import type { Hex } from '../../hex/types.js'
+import type { Signature } from '../../signature/types.js'
+import { TransactionEnvelopeEip1559_serialize } from '../eip1559/serialize.js'
+import { TransactionEnvelopeEip2930_serialize } from '../eip2930/serialize.js'
+import { TransactionEnvelopeEip4844_serialize } from '../eip4844/serialize.js'
+import { TransactionEnvelopeEip7702_serialize } from '../eip7702/serialize.js'
+import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelopeLegacy_serialize } from '../legacy/serialize.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Serialized,
@@ -45,10 +46,10 @@ export function TransactionEnvelope_serialize<
     return TransactionEnvelopeEip1559_serialize(envelope, options) as never
   if (envelope.type === 'eip4844')
     return TransactionEnvelopeEip4844_serialize(envelope, options) as never
+  if (envelope.type === 'eip7702')
+    return TransactionEnvelopeEip7702_serialize(envelope, options) as never
 
-  // TODO: EIP-7702
-
-  throw new TransactionTypeNotImplementedError({ type: envelope.type })
+  throw new TransactionTypeNotImplementedError({ type: (envelope as any).type })
 }
 
 export declare namespace TransactionEnvelope_serialize {
@@ -67,6 +68,7 @@ export declare namespace TransactionEnvelope_serialize {
     | TransactionEnvelopeEip2930_serialize.ErrorType
     | TransactionEnvelopeEip1559_serialize.ErrorType
     | TransactionEnvelopeEip4844_serialize.ErrorType
+    | TransactionEnvelopeEip7702_serialize.ErrorType
     | TransactionTypeNotImplementedError
     | GlobalErrorType
 }

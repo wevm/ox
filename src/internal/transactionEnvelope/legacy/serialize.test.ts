@@ -1,11 +1,6 @@
 // TODO: Add `eth_sendRawTransaction` tests.
 
-import {
-  Secp256k1,
-  TransactionEnvelope,
-  TransactionEnvelopeLegacy,
-  Value,
-} from 'ox'
+import { Secp256k1, TransactionEnvelopeLegacy, Value } from 'ox'
 import { assertType, expect, test } from 'vitest'
 import { accounts } from '../../../../test/constants/accounts.js'
 
@@ -119,7 +114,7 @@ test('chainId', () => {
 
 test('options: signature', async () => {
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelope.getSignPayload(transaction),
+    payload: TransactionEnvelopeLegacy.getSignPayload(transaction),
     privateKey: accounts[0].privateKey,
   })
   const serialized = TransactionEnvelopeLegacy.serialize(transaction, {
@@ -185,7 +180,7 @@ test('behavior: signature + chainId', async () => {
     chainId: 69,
   })
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelope.getSignPayload(transaction_chainId),
+    payload: TransactionEnvelopeLegacy.getSignPayload(transaction_chainId),
     privateKey: accounts[0].privateKey,
   })
   const serialized = TransactionEnvelopeLegacy.serialize(transaction_chainId, {

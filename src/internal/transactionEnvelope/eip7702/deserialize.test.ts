@@ -1,47 +1,79 @@
-import { Hex, Rlp, Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
+import {
+  Authorization,
+  Hex,
+  Rlp,
+  Secp256k1,
+  TransactionEnvelopeEip7702,
+  Value,
+} from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
+import { wagmiContractConfig } from '../../../../test/constants/abis.js'
 import { accounts } from '../../../../test/constants/accounts.js'
 
-const transaction = TransactionEnvelopeEip1559.from({
-  to: accounts[1].address,
-  nonce: 785n,
-  value: Value.fromEther('1'),
+const authorization_1 = Authorization.from({
   chainId: 1,
+  contractAddress: wagmiContractConfig.address,
+  nonce: 785n,
+})
+const signature_1 = Secp256k1.sign({
+  payload: Authorization.getSignPayload(authorization_1),
+  privateKey: accounts[0].privateKey,
+})
+
+const authorization_2 = Authorization.from({
+  chainId: 10,
+  contractAddress: wagmiContractConfig.address,
+  nonce: 786n,
+})
+const signature_2 = Secp256k1.sign({
+  payload: Authorization.getSignPayload(authorization_2),
+  privateKey: accounts[0].privateKey,
+})
+
+const transaction = TransactionEnvelopeEip7702.from({
+  authorizationList: [
+    Authorization.from(authorization_1, { signature: signature_1 }),
+    Authorization.from(authorization_2, { signature: signature_2 }),
+  ],
+  chainId: 1,
+  nonce: 785n,
+  to: accounts[1].address,
+  value: Value.fromEther('1'),
   maxFeePerGas: Value.fromGwei('2'),
   maxPriorityFeePerGas: Value.fromGwei('2'),
 })
 
 test('default', () => {
-  const serialized = TransactionEnvelopeEip1559.serialize(transaction)
-  const deserialized = TransactionEnvelopeEip1559.deserialize(serialized)
-  assertType<TransactionEnvelopeEip1559.TransactionEnvelope>(deserialized)
+  const serialized = TransactionEnvelopeEip7702.serialize(transaction)
+  const deserialized = TransactionEnvelopeEip7702.deserialize(serialized)
+  assertType<TransactionEnvelopeEip7702.TransactionEnvelope>(deserialized)
   expect(deserialized).toEqual(transaction)
 })
 
 test('minimal', () => {
-  const transaction = TransactionEnvelopeEip1559.from({
+  const transaction = TransactionEnvelopeEip7702.from({
+    authorizationList: [],
     chainId: 1,
-    maxFeePerGas: 1n,
   })
-  const serialized = TransactionEnvelopeEip1559.serialize(transaction)
-  expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual(
+  const serialized = TransactionEnvelopeEip7702.serialize(transaction)
+  expect(TransactionEnvelopeEip7702.deserialize(serialized)).toEqual(
     transaction,
   )
 })
 
 test('gas', () => {
-  const transaction_gas = TransactionEnvelopeEip1559.from({
+  const transaction_gas = TransactionEnvelopeEip7702.from({
     ...transaction,
     gas: 21001n,
   })
-  const serialized = TransactionEnvelopeEip1559.serialize(transaction_gas)
-  expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual(
+  const serialized = TransactionEnvelopeEip7702.serialize(transaction_gas)
+  expect(TransactionEnvelopeEip7702.deserialize(serialized)).toEqual(
     transaction_gas,
   )
 })
 
 test('accessList', () => {
-  const transaction_accessList = TransactionEnvelopeEip1559.from({
+  const transaction_accessList = TransactionEnvelopeEip7702.from({
     ...transaction,
     accessList: [
       {
@@ -53,34 +85,34 @@ test('accessList', () => {
       },
     ],
   })
-  const serialized = TransactionEnvelopeEip1559.serialize(
+  const serialized = TransactionEnvelopeEip7702.serialize(
     transaction_accessList,
   )
-  expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual(
+  expect(TransactionEnvelopeEip7702.deserialize(serialized)).toEqual(
     transaction_accessList,
   )
 })
 
 test('data', () => {
-  const transaction_data = TransactionEnvelopeEip1559.from({
+  const transaction_data = TransactionEnvelopeEip7702.from({
     ...transaction,
     data: '0x1234',
   })
-  const serialized = TransactionEnvelopeEip1559.serialize(transaction_data)
-  expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual(
+  const serialized = TransactionEnvelopeEip7702.serialize(transaction_data)
+  expect(TransactionEnvelopeEip7702.deserialize(serialized)).toEqual(
     transaction_data,
   )
 })
 
 test('signature', () => {
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelopeEip1559.getSignPayload(transaction),
+    payload: TransactionEnvelopeEip7702.getSignPayload(transaction),
     privateKey: accounts[0].privateKey,
   })
-  const serialized = TransactionEnvelopeEip1559.serialize(transaction, {
+  const serialized = TransactionEnvelopeEip7702.serialize(transaction, {
     signature,
   })
-  expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual({
+  expect(TransactionEnvelopeEip7702.deserialize(serialized)).toEqual({
     ...transaction,
     ...signature,
   })
@@ -88,7 +120,7 @@ test('signature', () => {
 
 describe('raw', () => {
   test('default', () => {
-    const serialized = `0x02${Rlp.fromHex([
+    const serialized = `0x04${Rlp.fromHex([
       Hex.from(1), // chainId
       Hex.from(0), // nonce
       Hex.from(1), // maxPriorityFeePerGas
@@ -98,9 +130,10 @@ describe('raw', () => {
       Hex.from(0), // value
       '0x', // data
       '0x', // accessList
+      '0x', // authorizationList
     ]).slice(2)}` as const
     expect(
-      TransactionEnvelopeEip1559.deserialize(serialized),
+      TransactionEnvelopeEip7702.deserialize(serialized),
     ).toMatchInlineSnapshot(`
         {
           "chainId": 1,
@@ -109,14 +142,14 @@ describe('raw', () => {
           "maxPriorityFeePerGas": 1n,
           "nonce": 0n,
           "to": "0x0000000000000000000000000000000000000000",
-          "type": "eip1559",
+          "type": "eip7702",
           "value": 0n,
         }
       `)
   })
 
   test('empty sig', () => {
-    const serialized = `0x02${Rlp.fromHex([
+    const serialized = `0x04${Rlp.fromHex([
       Hex.from(1), // chainId
       Hex.from(0), // nonce
       Hex.from(1), // maxPriorityFeePerGas
@@ -126,12 +159,13 @@ describe('raw', () => {
       Hex.from(0), // value
       '0x', // data
       '0x', // accessList
+      '0x', // authorizationList
       '0x', // r
       '0x', // v
       '0x', // s
     ]).slice(2)}` as const
     expect(
-      TransactionEnvelopeEip1559.deserialize(serialized),
+      TransactionEnvelopeEip7702.deserialize(serialized),
     ).toMatchInlineSnapshot(`
         {
           "chainId": 1,
@@ -142,7 +176,7 @@ describe('raw', () => {
           "r": 0n,
           "s": 0n,
           "to": "0x0000000000000000000000000000000000000000",
-          "type": "eip1559",
+          "type": "eip7702",
           "value": 0n,
           "yParity": 0,
         }
@@ -150,7 +184,7 @@ describe('raw', () => {
   })
 
   test('low sig coords', () => {
-    const serialized = `0x02${Rlp.fromHex([
+    const serialized = `0x04${Rlp.fromHex([
       Hex.from(1), // chainId
       Hex.from(0), // nonce
       Hex.from(1), // maxPriorityFeePerGas
@@ -160,12 +194,13 @@ describe('raw', () => {
       Hex.from(0), // value
       '0x', // data
       '0x', // accessList
+      '0x', // authorizationList
       '0x', // r
       Hex.from(69), // v
       Hex.from(420), // s
     ]).slice(2)}` as const
     expect(
-      TransactionEnvelopeEip1559.deserialize(serialized),
+      TransactionEnvelopeEip7702.deserialize(serialized),
     ).toMatchInlineSnapshot(`
         {
           "chainId": 1,
@@ -176,7 +211,7 @@ describe('raw', () => {
           "r": 69n,
           "s": 420n,
           "to": "0x0000000000000000000000000000000000000000",
-          "type": "eip1559",
+          "type": "eip7702",
           "value": 0n,
           "yParity": 0,
         }
@@ -187,8 +222,8 @@ describe('raw', () => {
 describe('errors', () => {
   test('invalid access list (invalid address)', () => {
     expect(() =>
-      TransactionEnvelopeEip1559.deserialize(
-        `0x02${Rlp.fromHex([
+      TransactionEnvelopeEip7702.deserialize(
+        `0x04${Rlp.fromHex([
           Hex.from(1), // chainId
           Hex.from(0), // nonce
           Hex.from(1), // maxPriorityFeePerGas
@@ -205,6 +240,7 @@ describe('errors', () => {
               ],
             ],
           ], // accessList
+          '0x', // authorizationList
         ]).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -215,8 +251,8 @@ describe('errors', () => {
       `)
 
     expect(() =>
-      TransactionEnvelopeEip1559.deserialize(
-        `0x02${Rlp.fromHex([
+      TransactionEnvelopeEip7702.deserialize(
+        `0x04${Rlp.fromHex([
           Hex.from(1), // chainId
           Hex.from(0), // nonce
           Hex.from(1), // maxPriorityFeePerGas
@@ -226,6 +262,7 @@ describe('errors', () => {
           Hex.from(0), // value
           '0x', // data
           [['0x123456', ['0x0']]], // accessList
+          '0x', // authorizationList
         ]).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -239,32 +276,33 @@ describe('errors', () => {
 
   test('invalid transaction (all missing)', () => {
     expect(() =>
-      TransactionEnvelopeEip1559.deserialize(`0x02${Rlp.fromHex([]).slice(2)}`),
+      TransactionEnvelopeEip7702.deserialize(`0x04${Rlp.fromHex([]).slice(2)}`),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip1559" was provided.
+      [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip7702" was provided.
 
-        Serialized Transaction: "0x02c0"
-        Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
-      `)
+      Serialized Transaction: "0x04c0"
+      Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList]
+    `)
   })
 
   test('invalid transaction (some missing)', () => {
     expect(() =>
-      TransactionEnvelopeEip1559.deserialize(
-        `0x02${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
+      TransactionEnvelopeEip7702.deserialize(
+        `0x04${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip1559" was provided.
+      [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip7702" was provided.
 
-        Serialized Transaction: "0x02c20001"
-        Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
-      `)
+      Serialized Transaction: "0x04c20001"
+      Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, authorizationList]
+    `)
   })
 
   test('invalid transaction (missing signature)', () => {
     expect(() =>
-      TransactionEnvelopeEip1559.deserialize(
-        `0x02${Rlp.fromHex([
+      TransactionEnvelopeEip7702.deserialize(
+        `0x04${Rlp.fromHex([
+          '0x',
           '0x',
           '0x',
           '0x',
@@ -278,10 +316,10 @@ describe('errors', () => {
         ]).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip1559" was provided.
+      [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip7702" was provided.
 
-        Serialized Transaction: "0x02ca80808080808080808080"
-        Missing Attributes: r, s]
-      `)
+      Serialized Transaction: "0x04cb8080808080808080808080"
+      Missing Attributes: r, s]
+    `)
   })
 })

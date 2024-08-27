@@ -1,7 +1,7 @@
 import { assertType, describe, expect, test } from 'vitest'
 
-import type { TransactionEnvelopeLegacy } from '../../index.js'
-import type { Hex } from '../hex/types.js'
+import type { TransactionEnvelopeLegacy } from 'ox'
+import type { Hex } from '../../hex/types.js'
 import { TransactionEnvelope_getType } from './getType.js'
 import type { TransactionEnvelope_Type } from './types.js'
 

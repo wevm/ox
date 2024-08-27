@@ -1,11 +1,4 @@
-import {
-  Blobs,
-  Hex,
-  Secp256k1,
-  TransactionEnvelope,
-  TransactionEnvelopeEip4844,
-  Value,
-} from 'ox'
+import { Blobs, Hex, Secp256k1, TransactionEnvelopeEip4844, Value } from 'ox'
 import { assertType, expect, test } from 'vitest'
 import { accounts } from '../../../../test/constants/accounts.js'
 import { kzg } from '../../../../test/kzg.js'
@@ -89,7 +82,7 @@ test('no blobVersionedHashes', () => {
 
 test('options: signature', async () => {
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelope.getSignPayload(transaction),
+    payload: TransactionEnvelopeEip4844.getSignPayload(transaction),
     privateKey: accounts[0].privateKey,
   })
   const serialized = TransactionEnvelopeEip4844.serialize(transaction, {
@@ -152,7 +145,7 @@ test('options: sidecars', () => {
 
 test('options: signature', async () => {
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelope.getSignPayload(transaction),
+    payload: TransactionEnvelopeEip4844.getSignPayload(transaction),
     privateKey: accounts[0].privateKey,
   })
   const serialized = TransactionEnvelopeEip4844.serialize(transaction, {

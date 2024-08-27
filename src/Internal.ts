@@ -86,7 +86,7 @@ export {
   type TransactionEnvelope_GetTypeFromObject,
   type TransactionEnvelope_GetTypeFromSerialized,
   type LegacyProperties,
-} from './internal/transactionEnvelope/getType.js'
+} from './internal/transactionEnvelope/isomorphic/getType.js'
 
 export { Signature_vToYParity } from './internal/signature/vToYParity.js'
 

@@ -1,20 +1,21 @@
-import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../hex/types.js'
-import type { Compute, IsNarrowable } from '../types.js'
-import { TransactionEnvelopeEip1559_deserialize } from './eip1559/deserialize.js'
-import type { TransactionEnvelopeEip1559 } from './eip1559/types.js'
-import { TransactionEnvelopeEip2930_deserialize } from './eip2930/deserialize.js'
-import type { TransactionEnvelopeEip2930 } from './eip2930/types.js'
-import { TransactionEnvelopeEip4844_deserialize } from './eip4844/deserialize.js'
-import type { TransactionEnvelopeEip4844 } from './eip4844/types.js'
-import type { TransactionEnvelopeEip7702 } from './eip7702/types.js'
-import { TransactionTypeNotImplementedError } from './errors.js'
+import type { GlobalErrorType } from '../../errors/error.js'
+import type { Hex } from '../../hex/types.js'
+import type { Compute, IsNarrowable } from '../../types.js'
+import { TransactionEnvelopeEip1559_deserialize } from '../eip1559/deserialize.js'
+import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
+import { TransactionEnvelopeEip2930_deserialize } from '../eip2930/deserialize.js'
+import type { TransactionEnvelopeEip2930 } from '../eip2930/types.js'
+import { TransactionEnvelopeEip4844_deserialize } from '../eip4844/deserialize.js'
+import type { TransactionEnvelopeEip4844 } from '../eip4844/types.js'
+import { TransactionEnvelopeEip7702_deserialize } from '../eip7702/deserialize.js'
+import type { TransactionEnvelopeEip7702 } from '../eip7702/types.js'
+import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelopeLegacy_deserialize } from '../legacy/deserialize.js'
+import type { TransactionEnvelopeLegacy } from '../legacy/types.js'
 import {
   type TransactionEnvelope_GetType,
   TransactionEnvelope_getType,
 } from './getType.js'
-import { TransactionEnvelopeLegacy_deserialize } from './legacy/deserialize.js'
-import type { TransactionEnvelopeLegacy } from './legacy/types.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Serialized,
@@ -56,8 +57,8 @@ export function TransactionEnvelope_deserialize<
     return TransactionEnvelopeEip1559_deserialize(serialized as any) as never
   if (type === 'eip4844')
     return TransactionEnvelopeEip4844_deserialize(serialized as any) as never
-
-  // TODO: 7702
+  if (type === 'eip7702')
+    return TransactionEnvelopeEip7702_deserialize(serialized as any) as never
 
   throw new TransactionTypeNotImplementedError({ type })
 }
@@ -85,6 +86,7 @@ export declare namespace TransactionEnvelope_deserialize {
     | TransactionEnvelopeEip2930_deserialize.ErrorType
     | TransactionEnvelopeEip1559_deserialize.ErrorType
     | TransactionEnvelopeEip4844_deserialize.ErrorType
+    | TransactionEnvelopeEip7702_deserialize.ErrorType
     | GlobalErrorType
 }
 

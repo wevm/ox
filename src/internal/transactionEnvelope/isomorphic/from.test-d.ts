@@ -1,18 +1,18 @@
-import { TransactionEnvelope } from 'ox'
+import { TransactionEnvelope, Value } from 'ox'
 import { expectTypeOf, test } from 'vitest'
-import type { TransactionEnvelopeEip1559 } from './eip1559/types.js'
-import type { TransactionEnvelopeEip2930 } from './eip2930/types.js'
-import type { TransactionEnvelopeEip4844 } from './eip4844/types.js'
-import type { TransactionEnvelopeEip7702 } from './eip7702/types.js'
+import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
+import type { TransactionEnvelopeEip2930 } from '../eip2930/types.js'
+import type { TransactionEnvelopeEip4844 } from '../eip4844/types.js'
+import type { TransactionEnvelopeEip7702 } from '../eip7702/types.js'
 import type {
   TransactionEnvelopeLegacy,
   TransactionEnvelopeLegacy_Serialized,
-} from './legacy/types.js'
+} from '../legacy/types.js'
 
 test('legacy', () => {
   {
     const envelope = TransactionEnvelope.from({
-      type: 'legacy',
+      gasPrice: 1n,
     })
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
   }
@@ -36,7 +36,7 @@ test('eip1559', () => {
   {
     const envelope = TransactionEnvelope.from({
       chainId: 1,
-      type: 'eip1559',
+      maxFeePerGas: Value.fromGwei('2'),
     })
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559>()
   }
@@ -52,7 +52,6 @@ test('eip2930', () => {
     const envelope = TransactionEnvelope.from({
       accessList: [],
       chainId: 1,
-      type: 'eip2930',
     })
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip2930>()
   }
@@ -68,7 +67,6 @@ test('eip4844', () => {
     const envelope = TransactionEnvelope.from({
       blobVersionedHashes: [],
       chainId: 1,
-      type: 'eip4844',
     })
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip4844>()
   }
@@ -84,7 +82,6 @@ test('eip7702', () => {
     const envelope = TransactionEnvelope.from({
       authorizationList: [],
       chainId: 1,
-      type: 'eip7702',
     })
     expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip7702>()
   }

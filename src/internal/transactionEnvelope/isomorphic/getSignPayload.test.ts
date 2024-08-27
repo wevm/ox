@@ -1,6 +1,7 @@
-import { Secp256k1, TransactionEnvelope } from 'ox'
+import { Authorization, Secp256k1, TransactionEnvelope } from 'ox'
 import { expect, test } from 'vitest'
-import { accounts } from '../../../test/constants/accounts.js'
+import { wagmiContractConfig } from '../../../../test/constants/abis.js'
+import { accounts } from '../../../../test/constants/accounts.js'
 
 test('legacy', () => {
   const envelope = TransactionEnvelope.from({
@@ -146,10 +147,21 @@ test('eip4844', () => {
   }
 })
 
-// TODO
-test.todo('eip7702', () => {
+test('eip7702', () => {
+  const authorization = Authorization.from({
+    chainId: 1,
+    contractAddress: wagmiContractConfig.address,
+    nonce: 785n,
+  })
+  const signature_auth = Secp256k1.sign({
+    payload: Authorization.getSignPayload(authorization),
+    privateKey: accounts[0].privateKey,
+  })
+
   const envelope = TransactionEnvelope.from({
-    authorizationList: [],
+    authorizationList: [
+      Authorization.from(authorization, { signature: signature_auth }),
+    ],
     chainId: 1,
     gas: 21000n,
     maxFeePerGas: 13000000000n,
@@ -161,7 +173,7 @@ test.todo('eip7702', () => {
 
   const hash = TransactionEnvelope.hash(envelope)
   expect(hash).toMatchInlineSnapshot(
-    `"0xd5c811a922a14455151761e77bcc84bf590bb8dbf2d9a79d4c890f561a6dcd39"`,
+    `"0x29e23a79291c348f976a6f4b93b9de92d4e6207a8ceea39c7cf717aaae23a2b8"`,
   )
 
   const signature = Secp256k1.sign({
@@ -174,7 +186,7 @@ test.todo('eip7702', () => {
   {
     const hash = TransactionEnvelope.hash(envelope_signed)
     expect(hash).toMatchInlineSnapshot(
-      `"0xfae853c3fefc9481eb674943ddb34dca24c2959f26d2ce6917d45c8faad684a8"`,
+      `"0xae33fbf010b3f2cd8af1d8a46228eaf8bdd5d4eb4e0e82b6a796a7127cbb5be0"`,
     )
   }
   {

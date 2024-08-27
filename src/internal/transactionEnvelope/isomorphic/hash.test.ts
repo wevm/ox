@@ -110,8 +110,7 @@ test('eip4844', () => {
   )
 })
 
-// TODO
-test.skip('eip7702', () => {
+test('eip7702', () => {
   const envelope = TransactionEnvelope.from({
     authorizationList: [
       {
@@ -146,7 +145,7 @@ test.skip('eip7702', () => {
 
   const hash = TransactionEnvelope.hash(envelope)
   expect(hash).toMatchInlineSnapshot(
-    `"0xf3920f47c878feb9c81f159612c8a324fbd7dbf82ec937bf348e3d42e712a03d"`,
+    `"0x4a9abf64aff5c1d427018902dbf0ba32436cfee5226a97e2618a55e9710d18ae"`,
   )
 })
 

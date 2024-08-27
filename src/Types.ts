@@ -48,12 +48,13 @@ export type {
 
 export type { Siwe_Message } from './internal/siwe/types.js'
 
+export type { TransactionEnvelope_Base } from './internal/transactionEnvelope/types.js'
+
 export type {
   TransactionEnvelope,
-  TransactionEnvelope_Base,
   TransactionEnvelope_Serialized,
   TransactionEnvelope_Type,
-} from './internal/transactionEnvelope/types.js'
+} from './internal/transactionEnvelope/isomorphic/types.js'
 
 export type {
   TransactionEnvelopeLegacy,

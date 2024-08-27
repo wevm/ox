@@ -1,10 +1,4 @@
-import {
-  Rlp,
-  Secp256k1,
-  TransactionEnvelope,
-  TransactionEnvelopeEip2930,
-  Value,
-} from 'ox'
+import { Rlp, Secp256k1, TransactionEnvelopeEip2930, Value } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 import { accounts } from '../../../../test/constants/accounts.js'
 
@@ -85,7 +79,7 @@ test('data', () => {
 
 test('signature', async () => {
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelope.getSignPayload(transaction),
+    payload: TransactionEnvelopeEip2930.getSignPayload(transaction),
     privateKey: accounts[0].privateKey,
   })
   const serialized = TransactionEnvelopeEip2930.serialize(transaction, {

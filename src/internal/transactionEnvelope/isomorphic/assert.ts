@@ -1,10 +1,10 @@
-import type { GlobalErrorType } from '../errors/error.js'
-import { TransactionEnvelopeEip1559_assert } from './eip1559/assert.js'
-import { TransactionEnvelopeEip2930_assert } from './eip2930/assert.js'
-import { TransactionEnvelopeEip4844_assert } from './eip4844/assert.js'
-import { TransactionEnvelopeEip7702_assert } from './eip7702/assert.js'
-import { TransactionTypeNotImplementedError } from './errors.js'
-import { TransactionEnvelopeLegacy_assert } from './legacy/assert.js'
+import type { GlobalErrorType } from '../../errors/error.js'
+import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
+import { TransactionEnvelopeEip2930_assert } from '../eip2930/assert.js'
+import { TransactionEnvelopeEip4844_assert } from '../eip4844/assert.js'
+import { TransactionEnvelopeEip7702_assert } from '../eip7702/assert.js'
+import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelopeLegacy_assert } from '../legacy/assert.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**

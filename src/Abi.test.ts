@@ -19,6 +19,7 @@ test('exports', () => {
       "getSelector",
       "getSignature",
       "getSignatureHash",
+      "parseParameters",
     ]
   `)
 })

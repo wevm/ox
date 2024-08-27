@@ -3,9 +3,13 @@ import type { Hex } from '../../hex/types.js'
 import { Signature_from } from '../../signature/from.js'
 import type { Signature } from '../../signature/types.js'
 import type { Assign, Compute, UnionPartialBy } from '../../types.js'
-import type { TransactionEnvelope } from '../types.js'
+import type { TransactionEnvelope } from '../isomorphic/types.js'
 import { TransactionEnvelopeEip7702_assert } from './assert.js'
-import type { TransactionEnvelopeEip7702 } from './types.js'
+import { TransactionEnvelopeEip7702_deserialize } from './deserialize.js'
+import type {
+  TransactionEnvelopeEip7702,
+  TransactionEnvelopeEip7702_Serialized,
+} from './types.js'
 
 /**
  * Converts an arbitrary transaction object into an EIP-7702 Transaction Envelope.
@@ -27,19 +31,20 @@ import type { TransactionEnvelopeEip7702 } from './types.js'
 export function TransactionEnvelopeEip7702_from<
   const envelope extends
     | UnionPartialBy<TransactionEnvelopeEip7702, 'type'>
-    | Hex,
+    | TransactionEnvelopeEip7702_Serialized,
   const signature extends Signature | undefined = undefined,
 >(
-  envelope_: envelope,
+  envelope_:
+    | envelope
+    | UnionPartialBy<TransactionEnvelopeEip7702, 'type'>
+    | TransactionEnvelopeEip7702_Serialized,
   options: TransactionEnvelopeEip7702_from.Options<signature> = {},
 ): TransactionEnvelopeEip7702_from.ReturnType<envelope, signature> {
   const { signature } = options
 
   const envelope = (
     typeof envelope_ === 'string'
-      ? // TODO
-        // ? TransactionEnvelopeEip7702_deserialize(envelope_)
-        (null as any)
+      ? TransactionEnvelopeEip7702_deserialize(envelope_)
       : envelope_
   ) as TransactionEnvelopeEip7702
 

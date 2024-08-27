@@ -7,6 +7,8 @@ test('exports', () => {
       "getSignPayload",
       "hash",
       "from",
+      "fromTuple",
+      "fromTupleList",
       "toTuple",
       "toTupleList",
     ]

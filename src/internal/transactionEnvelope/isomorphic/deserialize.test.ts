@@ -1,7 +1,7 @@
 import { Blobs, Hex, TransactionEnvelope, Value } from 'ox'
 import { expect, test } from 'vitest'
-import { accounts } from '../../../test/constants/accounts.js'
-import { kzg } from '../../../test/kzg.js'
+import { accounts } from '../../../../test/constants/accounts.js'
+import { kzg } from '../../../../test/kzg.js'
 
 test('legacy', () => {
   const transaction = TransactionEnvelope.from({
@@ -71,8 +71,18 @@ test('eip4844', () => {
   expect(deserialized).toEqual(transaction)
 })
 
-// TODO
-test.todo('7702')
+test('eip7702', () => {
+  const transaction = TransactionEnvelope.from({
+    chainId: 1,
+    authorizationList: [],
+    to: accounts[1].address,
+    nonce: 785n,
+    value: Value.fromEther('1'),
+  })
+  const serialized = TransactionEnvelope.serialize(transaction)
+  const deserialized = TransactionEnvelope.deserialize(serialized)
+  expect(deserialized).toEqual(transaction)
+})
 
 test('error: unknown type', () => {
   expect(() =>

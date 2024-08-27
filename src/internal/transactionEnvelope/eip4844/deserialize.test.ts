@@ -3,7 +3,6 @@ import {
   Hex,
   Rlp,
   Secp256k1,
-  TransactionEnvelope,
   TransactionEnvelopeEip4844,
   Value,
 } from 'ox'
@@ -101,7 +100,7 @@ test('sidecars', () => {
 
 test('signature', async () => {
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelope.getSignPayload(transaction),
+    payload: TransactionEnvelopeEip4844.getSignPayload(transaction),
     privateKey: accounts[0].privateKey,
   })
   const serialized = TransactionEnvelopeEip4844.serialize(transaction, {

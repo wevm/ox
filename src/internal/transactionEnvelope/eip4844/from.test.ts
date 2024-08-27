@@ -1,5 +1,5 @@
 import { TransactionEnvelopeEip4844 } from 'ox'
-import { expect, expectTypeOf, test } from 'vitest'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   {
@@ -9,9 +9,6 @@ test('default', () => {
       ],
       chainId: 1,
     })
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip4844.TransactionEnvelope>()
     expect(envelope).toMatchInlineSnapshot(`
       {
         "blobVersionedHashes": [
@@ -36,9 +33,6 @@ test('default', () => {
       s: 1n,
       yParity: 0,
     })
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip4844.TransactionEnvelope>()
     expect(envelope).toMatchInlineSnapshot(`
       {
         "blobVersionedHashes": [

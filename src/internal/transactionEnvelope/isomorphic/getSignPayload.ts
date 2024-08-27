@@ -1,10 +1,11 @@
-import type { GlobalErrorType } from '../errors/error.js'
-import type { Hex } from '../hex/types.js'
-import { TransactionEnvelopeEip1559_getSignPayload } from './eip1559/getSignPayload.js'
-import { TransactionEnvelopeEip2930_getSignPayload } from './eip2930/getSignPayload.js'
-import { TransactionEnvelopeEip4844_getSignPayload } from './eip4844/getSignPayload.js'
-import { TransactionTypeNotImplementedError } from './errors.js'
-import { TransactionEnvelopeLegacy_getSignPayload } from './legacy/getSignPayload.js'
+import type { GlobalErrorType } from '../../errors/error.js'
+import type { Hex } from '../../hex/types.js'
+import { TransactionEnvelopeEip1559_getSignPayload } from '../eip1559/getSignPayload.js'
+import { TransactionEnvelopeEip2930_getSignPayload } from '../eip2930/getSignPayload.js'
+import { TransactionEnvelopeEip4844_getSignPayload } from '../eip4844/getSignPayload.js'
+import { TransactionEnvelopeEip7702_getSignPayload } from '../eip7702/getSignPayload.js'
+import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelopeLegacy_getSignPayload } from '../legacy/getSignPayload.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
@@ -39,10 +40,10 @@ export function TransactionEnvelope_getSignPayload(
     return TransactionEnvelopeEip1559_getSignPayload(envelope)
   if (envelope.type === 'eip4844')
     return TransactionEnvelopeEip4844_getSignPayload(envelope)
+  if (envelope.type === 'eip7702')
+    return TransactionEnvelopeEip7702_getSignPayload(envelope)
 
-  // TODO: EIP-7702
-
-  throw new TransactionTypeNotImplementedError({ type: envelope.type })
+  throw new TransactionTypeNotImplementedError({ type: (envelope as any).type })
 }
 
 export declare namespace TransactionEnvelope_getSignPayload {
@@ -53,6 +54,7 @@ export declare namespace TransactionEnvelope_getSignPayload {
     | TransactionEnvelopeEip1559_getSignPayload.ErrorType
     | TransactionEnvelopeEip2930_getSignPayload.ErrorType
     | TransactionEnvelopeEip4844_getSignPayload.ErrorType
+    | TransactionEnvelopeEip7702_getSignPayload.ErrorType
     | GlobalErrorType
 }
 

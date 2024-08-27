@@ -1,11 +1,11 @@
-import type { GlobalErrorType } from '../errors/error.js'
+import type { GlobalErrorType } from '../../errors/error.js'
 import type {
   FeeValuesEip1559,
   FeeValuesEip4844,
   FeeValuesLegacy,
-} from '../fee/types.js'
-import { Hex_slice } from '../hex/slice.js'
-import type { Hex } from '../hex/types.js'
+} from '../../fee/types.js'
+import { Hex_slice } from '../../hex/slice.js'
+import type { Hex } from '../../hex/types.js'
 import type {
   Assign,
   ExactPartial,
@@ -13,31 +13,31 @@ import type {
   IsNever,
   OneOf,
   ValueOf,
-} from '../types.js'
+} from '../../types.js'
 import type {
   TransactionEnvelopeEip1559,
   TransactionEnvelopeEip1559_Serialized,
-} from './eip1559/types.js'
+} from '../eip1559/types.js'
 import type {
   TransactionEnvelopeEip2930,
   TransactionEnvelopeEip2930_Serialized,
-} from './eip2930/types.js'
+} from '../eip2930/types.js'
 import type {
   TransactionEnvelopeEip4844,
   TransactionEnvelopeEip4844_Serialized,
-} from './eip4844/types.js'
+} from '../eip4844/types.js'
 import type {
   TransactionEnvelopeEip7702,
   TransactionEnvelopeEip7702_Serialized,
-} from './eip7702/types.js'
+} from '../eip7702/types.js'
 import {
   CannotInferTransactionTypeError,
   TransactionTypeNotImplementedError,
-} from './errors.js'
+} from '../errors.js'
 import type {
   TransactionEnvelopeLegacy,
   TransactionEnvelopeLegacy_Serialized,
-} from './legacy/types.js'
+} from '../legacy/types.js'
 import type {
   TransactionEnvelope,
   TransactionEnvelope_Serialized,
