@@ -53,23 +53,46 @@ const moduleDocComments = extractNamespaceDocComments('./src/index.ts')
 for (const item of moduleItems) {
   const baseLink = `/gen/${item.displayName}`
 
+  const errors: { member: model.ApiItem }[] = []
+  const functions: { member: model.ApiItem; link: string }[] = []
+  const types: { member: model.ApiItem }[] = []
+
   const items = []
   for (const member of item.members) {
-    if (member.kind !== model.ApiItemKind.Function) continue
     const lookupItem = lookup[member.canonicalReference.toString()]
     if (!lookupItem)
       throw new Error(
         `Could not find lookup item for ${member.canonicalReference.toString()}`,
       )
 
-    items.push({
-      text: `.${member.displayName}`,
-      link: `${baseLink}/${member.displayName}`,
-      id: lookupItem.id,
-    })
+    if (member.kind === model.ApiItemKind.Function) {
+      const link = `${baseLink}/${member.displayName}`
+      items.push({
+        text: `.${member.displayName}`,
+        link,
+        id: lookupItem.id,
+      })
+      functions.push({
+        member,
+        link,
+      })
+    }
+
+    if (member.kind === model.ApiItemKind.TypeAlias) {
+      types.push({ member })
+    }
+
+    if (
+      member.kind === model.ApiItemKind.Class &&
+      member.displayName.endsWith('Error')
+    ) {
+      errors.push({ member })
+    }
   }
 
   const docComment = moduleDocComments[item.displayName]
+
+  const { examples = [], summary = '' } = docComment ?? {}
 
   sidebar.push({
     collapsed: true,
@@ -81,21 +104,23 @@ for (const item of moduleItems) {
   const content = `
 # ${item.displayName}
 
-${docComment?.summary ?? ''}
+${summary}
 
-${
-  docComment?.examples.length === 0
-    ? ''
-    : `
-## Examples
+${examples.length ? '## Examples' : ''}
 
-${docComment?.examples.join('\n\n')}
-`
-}
+${examples.join('\n\n')}
 
-## Functions
+${functions.length ? '## Functions' : ''}
 
-${items.map((x) => `- [\`${x.text}\`](${x.link})`).join('\n')}
+${functions.map((x) => `- [\`${item.displayName}.${x.member.displayName}\`](${x.link})`).join('\n')}
+
+${types.length ? '## Types' : ''}
+
+${types.map((x) => `- \`${item.displayName}.${x.member.displayName}\``).join('\n')}
+
+${errors.length ? '## Errors' : ''}
+
+${errors.map((x) => `- \`${item.displayName}.${x.member.displayName}\``).join('\n')}
 `
   const dir = `${pagesDir}/${item.displayName}`
   fs.ensureDirSync(dir)

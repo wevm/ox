@@ -1,14 +1,13 @@
 export type {
   Abi,
-  AbiConstructor,
-  AbiError,
-  AbiEvent,
-  AbiFallback,
-  AbiFunction,
-  AbiParameter,
-} from 'abitype'
-
-export type { AbiItem } from './internal/abi/types.js'
+  Abi_Constructor,
+  Abi_Error,
+  Abi_Event,
+  Abi_Fallback,
+  Abi_Function,
+  Abi_Item,
+  Abi_Parameter,
+} from './internal/abi/types.js'
 
 export type {
   Authorization,

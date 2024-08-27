@@ -1,29 +1,32 @@
 import type {
-  Abi,
-  AbiParameter,
-  AbiParametersToPrimitiveTypes,
-  ResolvedRegister,
-} from 'abitype'
-import type { IsUnion, UnionToTuple } from '../types.js'
-
-export type {
-  Abi,
   AbiConstructor,
   AbiError,
   AbiEvent,
   AbiFallback,
   AbiFunction,
   AbiParameter,
+  AbiParametersToPrimitiveTypes,
+  Abi as Abi_,
+  ResolvedRegister,
 } from 'abitype'
+import type { IsUnion, UnionToTuple } from '../types.js'
 
-export type AbiItem = Abi[number]
+export type Abi = Abi_
+export type Abi_Item = Abi[number]
+
+export type Abi_Constructor = AbiConstructor
+export type Abi_Error = AbiError
+export type Abi_Event = AbiEvent
+export type Abi_Fallback = AbiFallback
+export type Abi_Function = AbiFunction
+export type Abi_Parameter = AbiParameter
 
 /** @internal */
-export type AbiItemArgs<
+export type Abi_ItemArgs<
   abi extends Abi | readonly unknown[] = Abi,
-  name extends AbiItemName<abi> = AbiItemName<abi>,
+  name extends Abi_ItemName<abi> = Abi_ItemName<abi>,
 > = AbiParametersToPrimitiveTypes<
-  ExtractAbiItem<abi extends Abi ? abi : Abi, name>['inputs'],
+  Abi_ExtractItem<abi extends Abi ? abi : Abi, name>['inputs'],
   'inputs'
 > extends infer args
   ? [args] extends [never]
@@ -32,33 +35,34 @@ export type AbiItemArgs<
   : readonly unknown[]
 
 /** @internal */
-export type AbiItemName<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? ExtractAbiItemNames<abi> : string
+export type Abi_ItemName<abi extends Abi | readonly unknown[] = Abi> =
+  abi extends Abi ? Abi_ExtractItemNames<abi> : string
 
 /** @internal */
-export type ExtractAbiItem<
+export type Abi_ExtractItem<
   abi extends Abi,
-  name extends ExtractAbiItemNames<abi>,
+  name extends Abi_ExtractItemNames<abi>,
 > = Extract<abi[number], { name: name }>
 
 /** @internal */
-export type ExtractAbiItemNames<abi extends Abi> = Extract<
+export type Abi_ExtractItemNames<abi extends Abi> = Extract<
   abi[number],
   { name: string }
 >['name']
 
 /** @internal */
-export type ExtractAbiItemForArgs<
+export type Abi_ExtractItemForArgs<
   abi extends Abi,
-  name extends AbiItemName<abi>,
-  args extends AbiItemArgs<abi, name>,
-> = ExtractAbiItem<abi, name> extends infer abiItem extends AbiItem & {
+  name extends Abi_ItemName<abi>,
+  args extends Abi_ItemArgs<abi, name>,
+> = Abi_ExtractItem<abi, name> extends infer abiItem extends Abi_Item & {
   inputs: readonly AbiParameter[]
 }
   ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
-    ? UnionToTuple<abiItem> extends infer abiItems extends readonly (AbiItem & {
-        inputs: readonly AbiParameter[]
-      })[]
+    ? UnionToTuple<abiItem> extends infer abiItems extends
+        readonly (Abi_Item & {
+          inputs: readonly AbiParameter[]
+        })[]
       ? {
           [k in keyof abiItems]: (
             readonly [] extends args

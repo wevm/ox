@@ -10,10 +10,10 @@ import { AbiItemAmbiguityError } from './errors.js'
 import { Abi_getSelector } from './getSelector.js'
 import { Abi_getSignatureHash } from './getSignatureHash.js'
 import type {
-  AbiItem,
-  AbiItemArgs,
-  AbiItemName,
-  ExtractAbiItemForArgs,
+  Abi_Item,
+  Abi_ItemArgs,
+  Abi_ItemName,
+  Abi_ExtractItemForArgs,
   Widen,
 } from './types.js'
 
@@ -65,8 +65,8 @@ import type {
  */
 export function Abi_extractItem<
   const abi extends Abi | readonly unknown[],
-  name extends AbiItemName<abi>,
-  const args extends AbiItemArgs<abi, name> | undefined = undefined,
+  name extends Abi_ItemName<abi>,
+  const args extends Abi_ItemArgs<abi, name> | undefined = undefined,
 >(
   abi: abi,
   options: Abi_extractItem.Options<abi, name, args>,
@@ -89,7 +89,7 @@ export function Abi_extractItem<
   if (abiItems.length === 1)
     return abiItems[0] as Abi_extractItem.ReturnType<abi, name, args>
 
-  let matchedAbiItem: AbiItem | undefined = undefined
+  let matchedAbiItem: Abi_Item | undefined = undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
@@ -142,11 +142,11 @@ export function Abi_extractItem<
 export declare namespace Abi_extractItem {
   type Options<
     abi extends Abi | readonly unknown[] = Abi,
-    name extends AbiItemName<abi> = AbiItemName<abi>,
-    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
+    name extends Abi_ItemName<abi> = Abi_ItemName<abi>,
+    args extends Abi_ItemArgs<abi, name> | undefined = Abi_ItemArgs<abi, name>,
     ///
-    allArgs = AbiItemArgs<abi, name>,
-    allNames = AbiItemName<abi>,
+    allArgs = Abi_ItemArgs<abi, name>,
+    allNames = Abi_ItemName<abi>,
   > = {
     name:
       | allNames // show all options
@@ -175,17 +175,17 @@ export declare namespace Abi_extractItem {
 
   type ReturnType<
     abi extends Abi | readonly unknown[] = Abi,
-    name extends AbiItemName<abi> = AbiItemName<abi>,
-    args extends AbiItemArgs<abi, name> | undefined = AbiItemArgs<abi, name>,
+    name extends Abi_ItemName<abi> = Abi_ItemName<abi>,
+    args extends Abi_ItemArgs<abi, name> | undefined = Abi_ItemArgs<abi, name>,
   > = abi extends Abi
     ? Abi extends abi
-      ? AbiItem | undefined
-      : ExtractAbiItemForArgs<
+      ? Abi_Item | undefined
+      : Abi_ExtractItemForArgs<
           abi,
           name,
-          args extends AbiItemArgs<abi, name> ? args : AbiItemArgs<abi, name>
+          args extends Abi_ItemArgs<abi, name> ? args : Abi_ItemArgs<abi, name>
         >
-    : AbiItem | undefined
+    : Abi_Item | undefined
 
   type ErrorType = GlobalErrorType
 }
@@ -256,7 +256,7 @@ export function isArgOfType(arg: unknown, abiParameter: AbiParameter): boolean {
 export function getAmbiguousTypes(
   sourceParameters: readonly AbiParameter[],
   targetParameters: readonly AbiParameter[],
-  args: AbiItemArgs,
+  args: Abi_ItemArgs,
 ): AbiParameter['type'][] | undefined {
   for (const parameterIndex in sourceParameters) {
     const sourceParameter = sourceParameters[parameterIndex]!

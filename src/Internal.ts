@@ -101,12 +101,11 @@ export {
 export { stringify } from './internal/stringify.js'
 
 export type {
-  AbiItem,
-  AbiItemArgs,
-  AbiItemName,
-  ExtractAbiItem,
-  ExtractAbiItemNames,
-  ExtractAbiItemForArgs,
+  Abi_ItemArgs,
+  Abi_ItemName,
+  Abi_ExtractItem,
+  Abi_ExtractItemNames,
+  Abi_ExtractItemForArgs,
   Widen,
 } from './internal/abi/types.js'
 

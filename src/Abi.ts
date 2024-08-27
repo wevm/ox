@@ -1,12 +1,12 @@
 export type {
   Abi,
-  AbiConstructor as Constructor,
-  AbiError as Error,
-  AbiEvent as Event,
-  AbiFallback as Fallback,
-  AbiFunction as Function,
-  AbiItem as Item,
-  AbiParameter as Parameter,
+  Abi_Constructor as Constructor,
+  Abi_Error as Error,
+  Abi_Event as Event,
+  Abi_Fallback as Fallback,
+  Abi_Function as Function,
+  Abi_Item as Item,
+  Abi_Parameter as Parameter,
 } from './internal/abi/types.js'
 
 export {
