@@ -32,19 +32,6 @@ import * as Rlp from 'ox/Rlp'
 const rlp = Rlp.encode([Hex.from('hello'), Hex.from('world')])
 ```
 
-Alternatively, you can explicitly import the functions:
-
-```ts twoslash
-import { toHex } from 'ox/Hex'
-import { encodeRlp } from 'ox/Rlp'
-
-const rlp = encodeRlp([toHex('hello'), toHex('world')])
-```
-
-:::note
-Ox exports aliases for explicit function imports (ie. `Hex.from` → `toHex`), this is to ensure no naming conflicts arise when importing multiple functions from different modules, and to enhance readability.
-:::
-
 ## Tree Shakability & Bundle Size
 
 Each Module in Ox exports a number of functions (e.g. `Hex` exports `from`, `concat`, `padLeft`, etc). It is important to note that Modules **are not stateful instances with methods** (ie. you cannot instantiate a `Hex` class/object), they are merely a collection of pure stateless functions. This is because function exports are [tree-shakable](https://developer.mozilla.org/en-US/docs/Glossary/Tree_shaking), whereas instance methods are not.
