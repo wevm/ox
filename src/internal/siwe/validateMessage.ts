@@ -13,9 +13,15 @@ import type { Siwe_Message } from './types.js'
  * Siwe.validateMessage({
  *   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
  *   domain: 'example.com',
+ *   message: {
+ *     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+ *     chainId: 1,
+ *     domain: 'example.com',
+ *     nonce: 'foobarbaz',
+ *     uri: 'https://example.com/path',
+ *     version: '1',
+ *   },
  *   nonce: 'foobarbaz',
- *   uri: 'https://example.com/path',
- *   version: '1',
  * })
  * // @log: true
  * ```

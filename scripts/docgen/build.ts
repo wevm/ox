@@ -9,14 +9,14 @@ import { extractNamespaceDocComments } from './utils/tsdoc.js'
 
 // TODO
 // - Expand properties/types and lookup links
-// - Link errors
-// - Remove underscores
-// - Parse inline {@link} tags and link to pages
+// - Show list of references under complex types
+// - Link errors/types
+// - Remove underscores for names
 
 // Vocs TODO
 // - Throw build if twoslash block has errors
+// - Group multiple twoslash logs together (e.g. `// @log:`)
 // - For generated files, hide or link "Suggest changes to this page" to source code
-// - Multiline errors (e.g. `// @error: Foo bar baz`)
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Generating API docs.')
