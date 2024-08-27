@@ -8,8 +8,6 @@ import { Rlp_fromBytes } from '../rlp/from.js'
 /**
  * Generates contract address via [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode.
  *
- * - Docs: https://oxlib.sh/api/contractAddress/getCreateAddress
- *
  * @example
  * ```ts twoslash
  * import { ContractAddress } from 'ox'
@@ -18,8 +16,11 @@ import { Rlp_fromBytes } from '../rlp/from.js'
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
  *   nonce: 0n,
  * })
- * // '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
+ * // @log: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
  * ```
+ *
+ * @param options - Options.
+ * @returns Contract Address.
  */
 export function ContractAddress_getCreateAddress(
   opts: ContractAddress_getCreateAddress.Options,

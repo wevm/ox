@@ -13,7 +13,6 @@ import type { Hex } from '../hex/types.js'
 /**
  * Generates contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
  *
- * - Docs: https://oxlib.sh/api/contractAddress/getCreate2Address
  * - Spec: https://eips.ethereum.org/EIPS/eip-1014
  *
  * @example
@@ -25,24 +24,27 @@ import type { Hex } from '../hex/types.js'
  *   bytecode: Bytes.from('0x6394198df16000526103ff60206004601c335afa6040516060f3'),
  *   salt: Hex.from('hello world'),
  * })
- * // '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
+ * // @log: '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```
+ *
+ * @param options - Options.
+ * @returns Contract Address.
  */
 export function ContractAddress_getCreate2Address(
-  opts: ContractAddress_getCreate2Address.Options,
+  options: ContractAddress_getCreate2Address.Options,
 ) {
-  const from = Bytes_from(Address_from(opts.from))
+  const from = Bytes_from(Address_from(options.from))
   const salt = Bytes_padLeft(
-    Bytes_isBytes(opts.salt) ? opts.salt : Bytes_from(opts.salt),
+    Bytes_isBytes(options.salt) ? options.salt : Bytes_from(options.salt),
     32,
   )
 
   const bytecodeHash = (() => {
-    if ('bytecodeHash' in opts) {
-      if (Bytes_isBytes(opts.bytecodeHash)) return opts.bytecodeHash
-      return Bytes_from(opts.bytecodeHash)
+    if ('bytecodeHash' in options) {
+      if (Bytes_isBytes(options.bytecodeHash)) return options.bytecodeHash
+      return Bytes_from(options.bytecodeHash)
     }
-    return Hash_keccak256(opts.bytecode, 'Bytes')
+    return Hash_keccak256(options.bytecode, 'Bytes')
   })()
 
   return Address_from(

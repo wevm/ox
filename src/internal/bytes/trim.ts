@@ -38,6 +38,7 @@ Bytes_trimLeft.parseError = (error: unknown) =>
  *
  * Bytes.trimRight(Bytes.from([1, 2, 3, 0, 0, 0, 0]))
  * // @log: Uint8Array([1, 2, 3])
+ * ```
  *
  * @param value - {@link Bytes#Bytes} value.
  * @returns Trimmed {@link Bytes#Bytes} value.
