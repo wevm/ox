@@ -11,14 +11,17 @@ import type { Hex } from '../hex/types.js'
  * import { Hash } from 'ox'
  *
  * Hash.isHash('0x')
- * // false
+ * // @log: false
  *
  * Hash.isHash('0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0')
- * // true
+ * // @log: true
  * ```
+ *
+ * @param value - Value to check.
+ * @returns Whether the value is a valid hash.
  */
-export function Hash_isHash(hash: string): hash is Hex {
-  return Hex_isHex(hash) && Hex_size(hash) === 32
+export function Hash_isHash(value: string): value is Hex {
+  return Hex_isHex(value) && Hex_size(value) === 32
 }
 
 export declare namespace Hash_isHash {

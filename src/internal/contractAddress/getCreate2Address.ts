@@ -13,7 +13,7 @@ import type { Hex } from '../hex/types.js'
 /**
  * Generates contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
  *
- * - Spec: https://eips.ethereum.org/EIPS/eip-1014
+ * **Spec**: https://eips.ethereum.org/EIPS/eip-1014
  *
  * @example
  * ```ts twoslash

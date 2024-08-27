@@ -8,7 +8,7 @@ import { Hex_isHex } from '../hex/isHex.js'
 import type { Hex } from '../hex/types.js'
 
 /**
- * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a Bytes or Hex value.
+ * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link Bytes#Bytes} or {@link Hex#Hex} value.
  *
  * This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) – an audited & minimal JS hashing library.
  *
@@ -19,16 +19,20 @@ import type { Hex } from '../hex/types.js'
  * Hash.ripemd160('0xdeadbeef')
  * // '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
  * ```
+ *
+ * @param value - {@link Bytes#Bytes} or {@link Hex#Hex} value.
+ * @param to - The return type.
+ * @returns Ripemd160 hash.
  */
 export function Hash_ripemd160<to extends 'Hex' | 'Bytes' = 'Hex'>(
   value: Hex | Bytes,
-  to_?: to | undefined,
+  to?: to | undefined,
 ): Hash_ripemd160.ReturnType<to> {
-  const to = to_ || 'Hex'
+  const to_ = to || 'Hex'
   const bytes = ripemd160(
     Hex_isHex(value, { strict: false }) ? Bytes_from(value) : value,
   )
-  if (to === 'Bytes') return bytes as Hash_ripemd160.ReturnType<to>
+  if (to_ === 'Bytes') return bytes as Hash_ripemd160.ReturnType<to>
   return Hex_from(bytes) as Hash_ripemd160.ReturnType<to>
 }
 
