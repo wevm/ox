@@ -2,14 +2,14 @@ import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 
 /**
- * Checks if the given address is a valid address.
+ * Checks if the given address is a valid {@link Address#Address}.
  *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
  *
  * Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
- * // true
+ * // @log: true
  * ```
  *
  * @example
@@ -17,7 +17,7 @@ import type { Address } from './types.js'
  * import { Address } from 'ox'
  *
  * Address.isAddress('0xdeadbeef')
- * // false
+ * // @log: false
  * ```
  *
  * @param address - Value to check if it is a valid address.

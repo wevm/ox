@@ -8,16 +8,39 @@ import type { Compute } from '../types.js'
 import type { Blobs } from './types.js'
 
 /**
- * Compute commitments from a list of blobs.
+ * Compute commitments from a list of {@link Blobs#Blobs}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
+ * // @noErrors
  * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const commitments = Blobs.toCommitments(blobs, { kzg })
+ * const commitments = Blobs.toCommitments(blobs, { kzg }) // [!code focus]
  * ```
+ *
+ * @example
+ * ### Configuring Return Type
+ *
+ * It is possible to configure the return type with the `as` option.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const commitments = Blobs.toCommitments(blobs, {
+ *   as: 'Bytes', // [!code focus]
+ *   kzg,
+ * })
+ * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
+ * ```
+ *
+ * @param blobs - The {@link Blobs#Blobs} to transform to commitments.
+ * @param options -
+ * @returns The commitments.
  */
 export function Blobs_toCommitments<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,

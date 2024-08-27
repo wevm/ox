@@ -15,28 +15,38 @@ import { Bytes_padLeft, Bytes_padRight } from './pad.js'
  * Encodes an arbitrary value to {@link Bytes#Bytes}.
  *
  * @example
+ * An example of passing a UTF-8 string:
+ *
  * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.from('Hello world')
  * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * ```
  *
  * @example
+ * An example of passing a number:
+ *
  * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.from(420)
  * // Uint8Array([1, 164])
  * ```
  *
  * @example
+ * An example of passing a number with a specified size:
+ *
  * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.from(420, { size: 4 })
  * // Uint8Array([0, 0, 1, 164])
  * ```
  *
  * @param value - An arbitrary value to encode to Bytes.
  * @param options - Encoding options
+ * @returns Encoded {@link Bytes#Bytes}.
  */
 export function Bytes_from(
   value: string | bigint | number | boolean | Hex | Bytes | readonly number[],
@@ -78,21 +88,25 @@ Bytes_from.parseError = (error: unknown) => error as Bytes_from.ErrorType
 /**
  * Encodes a boolean value into {@link Bytes#Bytes}.
  *
- * - Docs: https://oxlib.sh/api/bytes/fromBoolean
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromBoolean(true)
- * // Uint8Array([1])
+ * // @log: Uint8Array([1])
  * ```
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromBoolean(true, { size: 32 })
- * // Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+ * // @log: Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
  * ```
+ *
+ * @param value - Boolean value to encode.
+ * @param options - Encoding options.
+ * @returns Encoded {@link Bytes#Bytes}.
  */
 export function Bytes_fromBoolean(
   value: boolean,
@@ -145,39 +159,43 @@ function charCodeToBase16(char: number) {
 }
 
 /**
- * Encodes a hex value into {@link Bytes#Bytes}.
- *
- * - Docs: https://oxlib.sh/api/bytes/fromHex
+ * Encodes a {@link Hex#Hex} value into {@link Bytes#Bytes}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421')
- * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * ```
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', { size: 32 })
- * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+ * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
+ *
+ * @param hex - {@link Hex#Hex} value to encode.
+ * @param options - Encoding options.
+ * @returns Encoded {@link Bytes#Bytes}.
  */
 export function Bytes_fromHex(
-  hex_: Hex,
+  hex: Hex,
   options: Bytes_fromHex.Options = {},
 ): Bytes {
   const { size } = options
 
-  if (hex_.length % 2) throw new InvalidHexLengthError(hex_)
+  if (hex.length % 2) throw new InvalidHexLengthError(hex)
 
-  let hex = hex_
+  let hex_ = hex
   if (size) {
     Hex_assertSize(hex, size)
-    hex = Hex_padRight(hex, size)
+    hex_ = Hex_padRight(hex, size)
   }
 
-  const hexString = hex.slice(2) as string
+  const hexString = hex_.slice(2) as string
 
   const length = hexString.length / 2
   const bytes = new Uint8Array(length)
@@ -212,21 +230,25 @@ Bytes_fromHex.parseError = (error: unknown) => error as Bytes_fromHex.ErrorType
 /**
  * Encodes a number value into {@link Bytes#Bytes}.
  *
- * - Docs: https://oxlib.sh/api/bytes/fromNumber
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromNumber(420)
- * // Uint8Array([1, 164])
+ * // @log: Uint8Array([1, 164])
  * ```
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromNumber(420, { size: 4 })
- * // Uint8Array([0, 0, 1, 164])
+ * // @log: Uint8Array([0, 0, 1, 164])
  * ```
+ *
+ * @param value - Number value to encode.
+ * @param options - Encoding options.
+ * @returns Encoded {@link Bytes#Bytes}.
  */
 export function Bytes_fromNumber(
   value: bigint | number,
@@ -252,23 +274,27 @@ Bytes_fromNumber.parseError = (error: unknown) =>
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
- * Encodes a UTF-8 string into a byte array.
- *
- * - Docs: https://oxlib.sh/api/bytes/fromString
+ * Encodes a UTF-8 string into {@link Bytes#Bytes}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromString('Hello world!')
- * // Uint8Array([72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 33])
+ * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 33])
  * ```
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.fromString('Hello world!', { size: 32 })
- * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+ * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
+ *
+ * @param value - UTF-8 string to encode.
+ * @param options - Encoding options.
+ * @returns Encoded {@link Bytes#Bytes}.
  */
 export function Bytes_fromString(
   value: string,

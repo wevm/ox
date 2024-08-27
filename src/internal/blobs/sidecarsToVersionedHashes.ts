@@ -5,16 +5,56 @@ import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 import type { BlobSidecars } from './types.js'
 
 /**
- * Transforms a list of sidecars to their versioned hashes.
+ * Transforms a list of {@link Blobs#BlobSidecars} to their Blob Versioned Hashes.
  *
  * @example
- * ```ts
+ * ```ts twoslash
+ * // @noErrors
  * import { Blobs } from 'ox'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+ * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars) // [!code focus]
  * ```
+ *
+ * @example
+ * ### Configuring Return Type
+ *
+ * It is possible to configure the return type for the Versioned Hashes with the `as` option.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs } from 'viem'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const sidecars = Blobs.toSidecars(blobs, { kzg })
+ * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars, {
+ *   as: 'Bytes', // [!code focus]
+ * })
+ * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
+ * ```
+ *
+ * @example
+ * ### Versioning Hashes
+ *
+ * It is possible to configure the version for the Versioned Hashes with the `version` option.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs } from 'viem'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const sidecars = Blobs.toSidecars(blobs, { kzg })
+ * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars, {
+ *   version: 2, // [!code focus]
+ * })
+ * ```
+ *
+ * @param sidecars - The {@link Blobs#BlobSidecars} to transform to Blob Versioned Hashes.
+ * @param options -
+ * @returns The versioned hashes.
  */
 export function Blobs_sidecarsToVersionedHashes<
   const sidecars extends BlobSidecars,

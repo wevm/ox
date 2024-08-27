@@ -7,23 +7,34 @@ import { Bytes_size } from './size.js'
  * Returns a section of a {@link Bytes#Bytes} value given a start/end bytes offset.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
- * Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1, 4)
- * // Uint8Array([2, 3, 4])
+ *
+ * Bytes.slice(
+ *   Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+ *   1,
+ *   4,
+ * )
+ * // @log: Uint8Array([2, 3, 4])
  * ```
+ *
+ * @param value - The {@link Bytes#Bytes} value.
+ * @param start - Start offset.
+ * @param end - End offset.
+ * @param options -
+ * @returns Sliced {@link Bytes#Bytes} value.
  */
 export function Bytes_slice(
-  value_: Bytes,
+  value: Bytes,
   start?: number | undefined,
   end?: number | undefined,
   options: Bytes_slice.Options = {},
 ): Bytes {
   const { strict } = options
-  assertStartOffset(value_, start)
-  const value = value_.slice(start, end)
-  if (strict) assertEndOffset(value, start, end)
-  return value
+  assertStartOffset(value, start)
+  const value_ = value.slice(start, end)
+  if (strict) assertEndOffset(value_, start, end)
+  return value_
 }
 
 export declare namespace Bytes_slice {

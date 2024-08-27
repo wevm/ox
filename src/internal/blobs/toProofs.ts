@@ -7,17 +7,22 @@ import type { Kzg } from '../kzg/types.js'
 import type { Blobs } from './types.js'
 
 /**
- * Compute the proofs for a list of blobs and their commitments.
+ * Compute the proofs for a list of {@link Blobs#Blobs} and their commitments.
  *
  * @example
- * ```ts
+ * ```ts twoslash
+ * // @noErrors
  * import { Blobs } from 'viem'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const commitments = Blobs.toCommitments(blobs, { kzg })
- * const proofs = Blobs.toProofs(blobs, { commitments, kzg })
+ * const proofs = Blobs.toProofs(blobs, { commitments, kzg }) // [!code focus]
  * ```
+ *
+ * @param blobs - The {@link Blobs#Blobs} to compute proofs for.
+ * @param options -
+ * @returns The Blob proofs.
  */
 export function Blobs_toProofs<
   const blobs extends readonly Bytes[] | readonly Hex[],

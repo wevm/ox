@@ -7,19 +7,19 @@ import { Address_from } from './from.js'
 import type { Address } from './types.js'
 
 /**
- * Converts an ECDSA public key to an Ethereum address.
+ * Converts an ECDSA public key to an {@link Address#Address}.
  *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
  *
  * Address.fromPublicKey('0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
- * // '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ * // @log: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
  * ```
  *
- * @param publicKey - The ECDSA public key to convert to an Ethereum address.
+ * @param publicKey - The ECDSA public key to convert to an {@link Address#Address}.
  * @param options - Conversion options.
- * @returns The Ethereum address.
+ * @returns The {@link Address#Address}.
  */
 export function Address_fromPublicKey(
   publicKey: Hex | Bytes,

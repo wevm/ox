@@ -8,26 +8,37 @@ import { Blobs_toProofs } from './toProofs.js'
 import type { BlobSidecars, Blobs } from './types.js'
 
 /**
- * Transforms arbitrary data (or blobs, commitments, & proofs) into a sidecar array.
+ * Transforms {@link Blobs#Blobs} into a {@link Blobs#BlobSidecars} array.
  *
  * @example
- * ```ts
+ * ```ts twoslash
+ * // @noErrors
  * import { Blobs } from 'ox'
+ * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs)
+ * const sidecars = Blobs.toSidecars(blobs, { kzg }) // [!code focus]
  * ```
  *
  * @example
- * ```ts
+ * You can also provide your own commitments and proofs if you do not want `toSidecars`
+ * to compute them.
+ *
+ * ```ts twoslash
+ * // @noErrors
  * import { Blobs } from 'ox'
+ * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const commitments = Blobs.toCommitments(blobs, { kzg })
  * const proofs = Blobs.toProofs(blobs, { commitments, kzg })
  *
- * const sidecars = Blobs.toSidecars(blobs, { commitments, proofs })
+ * const sidecars = Blobs.toSidecars(blobs, { commitments, kzg, proofs }) // [!code focus]
  * ```
+ *
+ * @param blobs - The {@link Blobs#Blobs} to transform into {@link Blobs#BlobSidecars}.
+ * @param options -
+ * @returns The {@link Blobs#BlobSidecars}.
  */
 export function Blobs_toSidecars<const blobs extends Blobs<Hex> | Blobs<Bytes>>(
   blobs: blobs,

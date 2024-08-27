@@ -11,25 +11,31 @@ import { Bytes_trimLeft, Bytes_trimRight } from './trim.js'
  * Decodes {@link Bytes#Bytes} into a UTF-8 string, {@link Hex#Hex}, number, bigint or boolean.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
- * Bytes.to(Bytes.from([1, 164]), 'number')
- * // 420
+ *
+ * Bytes.to(
+ *   Bytes.from([1, 164]),
+ *   'number'
+ * )
+ * // @log: 420
  * ```
  *
  * @example
  * ```ts
  * import { Bytes } from 'ox'
+ *
  * Bytes.to(
  *   Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
  *   'string'
  * )
- * // 'Hello world'
+ * // @log: 'Hello world'
  * ```
  *
- * @param bytes - Bytes to decode.
- * @param to - Decode Bytes into the specified type.
+ * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param to - Type to decode the {@link Bytes#Bytes} into.
  * @param options - Decoding options.
+ * @returns Decoded value.
  */
 export function Bytes_to<
   to extends 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
@@ -75,16 +81,19 @@ export declare namespace Bytes_to {
 Bytes_to.parseError = (error: unknown) => error as Bytes_to.ErrorType
 
 /**
- * Decodes a byte array into a bigint.
- * 
- - Docs: https://oxlib.sh/api/bytes/toBigInt
+ * Decodes a {@link Bytes#Bytes} into a bigint.
  *
  * @example
  * ```ts
  * import { Bytes } from 'ox'
+ *
  * Bytes.toBigInt(Bytes.from([1, 164]))
- * // 420n
+ * // @log: 420n
  * ```
+ *
+ * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param options - Decoding options.
+ * @returns Decoded bigint.
  */
 export function Bytes_toBigInt(
   bytes: Bytes,
@@ -115,16 +124,19 @@ Bytes_toBigInt.parseError = (error: unknown) =>
   error as Bytes_toBigInt.ErrorType
 
 /**
- * Decodes a byte array into a boolean.
- *
- * - Docs: https://oxlib.sh/api/bytes/toBoolean
+ * Decodes a {@link Bytes#Bytes} into a boolean.
  *
  * @example
  * ```ts
  * import { Bytes } from 'ox'
+ *
  * Bytes.toBoolean(Bytes.from([1]))
- * // true
+ * // @log: true
  * ```
+ *
+ * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param options - Decoding options.
+ * @returns Decoded boolean.
  */
 export function Bytes_toBoolean(
   bytes_: Bytes,
@@ -160,14 +172,17 @@ Bytes_toBoolean.parseError = (error: unknown) =>
 /**
  * Encodes a {@link Bytes#Bytes} value into a {@link Hex#Hex} value.
  *
- * - Docs: https://oxlib.sh/api/bytes/toHex
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * Bytes.toHex(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * // '0x48656c6c6f20576f726c6421'
  * ```
+ *
+ * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param options -
+ * @returns Decoded {@link Hex#Hex} value.
  */
 export function Bytes_toHex(
   value: Bytes,
@@ -189,15 +204,14 @@ export declare namespace Bytes_toHex {
 Bytes_toHex.parseError = (error: unknown) => error as Bytes_toHex.ErrorType
 
 /**
- * Decodes a byte array into a number.
- *
- * - Docs: https://oxlib.sh/api/bytes/toNumber
+ * Decodes a {@link Bytes#Bytes} into a number.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * Bytes.toNumber(Bytes.from([1, 164]))
- * // 420
+ * // @log: 420
  * ```
  */
 export function Bytes_toNumber(
@@ -226,29 +240,32 @@ Bytes_toNumber.parseError = (error: unknown) =>
 const decoder = /*#__PURE__*/ new TextDecoder()
 
 /**
- * Decodes a byte array into a UTF-8 string.
- *
- * - Docs: https://oxlib.sh/api/bytes/toString
+ * Decodes a {@link Bytes#Bytes} into a UTF-8 string.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
- * // 'Hello world'
+ * // @log: 'Hello world'
  * ```
+ *
+ * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param options -
+ * @returns Decoded string.
  */
 export function Bytes_toString(
-  bytes_: Bytes,
+  bytes: Bytes,
   options: Bytes_toString.Options = {},
 ): string {
   const { size } = options
 
-  let bytes = bytes_
+  let bytes_ = bytes
   if (typeof size !== 'undefined') {
-    Bytes_assertSize(bytes, size)
-    bytes = Bytes_trimRight(bytes)
+    Bytes_assertSize(bytes_, size)
+    bytes_ = Bytes_trimRight(bytes_)
   }
-  return decoder.decode(bytes)
+  return decoder.decode(bytes_)
 }
 
 export declare namespace Bytes_toString {

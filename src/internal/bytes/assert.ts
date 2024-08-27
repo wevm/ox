@@ -5,14 +5,17 @@ import type { GlobalErrorType } from '../errors/error.js'
 /**
  * Asserts if the given value is {@link Bytes#Bytes}.
  *
- * - Docs: https://oxlib.sh/api/bytes/assert
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * Bytes.assert('abc')
- * // InvalidBytesTypeError: Value \`"abc"\` of type \`string\` is an invalid Bytes value. Bytes values must be of type \`Uint8Array\`.
+ * // @error: InvalidBytesTypeError:
+ * // @error: Value `"abc"` of type `string` is an invalid Bytes value.
+ * // @error: Bytes values must be of type `Uint8Array`.
  * ```
+ *
+ * @param value - Value to assert.
  */
 export function Bytes_assert(value: unknown): asserts value is Bytes {
   if (!value) throw new InvalidBytesTypeError(value)

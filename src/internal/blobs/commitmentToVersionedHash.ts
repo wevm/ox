@@ -5,17 +5,57 @@ import { Hex_fromBytes } from '../hex/from.js'
 import type { Hex } from '../hex/types.js'
 
 /**
- * Transform a commitment to it's versioned hash.
+ * Transform a Commitment to its Blob Versioned Hash.
  *
  * @example
- * ```ts
+ * ```ts twoslash
+ * // @noErrors
  * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const [commitment] = Blobs.toCommitments(blobs, { kzg })
- * const versionedHash = Blobs.commitmentToVersionedHash(commitment)
+ * const versionedHash = Blobs.commitmentToVersionedHash(commitment) // [!code focus]
  * ```
+ *
+ * @example
+ * ### Configuring Return Type
+ *
+ * It is possible to configure the return type for the Versioned Hash with the `as` option.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs } from 'viem'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const [commitment] = Blobs.toCommitments(blobs, { kzg })
+ * const versionedHashes = Blobs.commitmentToVersionedHash(commitment, {
+ *   as: 'Bytes', // [!code focus]
+ * })
+ * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
+ * ```
+ *
+ * @example
+ * ### Versioning Hashes
+ *
+ * It is possible to configure the version for the Versioned Hash with the `version` option.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs } from 'viem'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const [commitment] = Blobs.toCommitments(blobs, { kzg })
+ * const versionedHashes = Blobs.commitmentToVersionedHash(commitment, {
+ *   version: 2, // [!code focus]
+ * })
+ * ```
+ *
+ * @param commitment - The commitment.
+ * @param as - The return type.
+ * @returns The Blob Versioned Hash.
  */
 export function Blobs_commitmentToVersionedHash<
   const commitment extends Hex | Bytes,

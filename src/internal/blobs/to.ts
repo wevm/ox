@@ -10,13 +10,30 @@ import type { Blobs } from './types.js'
  * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Blobs, Hex } from 'ox'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const data = Blobs.to(blobs)
- * // '0xdeadbeef'
+ * const data = Blobs.to(blobs) // [!code focus]
+ * // @log: '0xdeadbeef'
  * ```
+ *
+ * @example
+ * ### Configuring Return Type
+ *
+ * It is possible to configure the return type with second argument.
+ *
+ * ```ts twoslash
+ * import { Blobs } from 'ox'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const data = Blobs.to(blobs, 'Bytes')
+ * // @log: Uint8Array [ 13, 174, 190, 239 ]
+ * ```
+ *
+ * @param blobs - The {@link Blobs#Blobs} to transform.
+ * @param to - The type to transform to.
+ * @returns The originating data.
  */
 export function Blobs_to<
   const blobs extends Blobs<Hex> | Blobs<Bytes>,
@@ -84,13 +101,12 @@ Blobs_to.parseError = (error: unknown) => error as Blobs_to.ErrorType
  * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Blobs, Hex } from 'ox'
  *
  * const blobs = Blobs.from('0xdeadbeef')
-
- * const data = Blobs.toHex(blobs)
- * // '0xdeadbeef'
+ * const data = Blobs.toHex(blobs) // [!code focus]
+ * // @log: '0xdeadbeef'
  * ```
  */
 export function Blobs_toHex(
@@ -115,9 +131,8 @@ Blobs_toHex.parseError = (error: unknown) => error as Blobs_toHex.ErrorType
  * import { Blobs, Hex } from 'ox'
  *
  * const blobs = Blobs.from('0xdeadbeef')
-
- * const data = Blobs.toBytes(blobs)
- * // Uint8Array [ 13, 174, 190, 239 ]
+ * const data = Blobs.toBytes(blobs) // [!code focus]
+ * // @log: Uint8Array [ 13, 174, 190, 239 ]
  * ```
  */
 export function Blobs_toBytes(

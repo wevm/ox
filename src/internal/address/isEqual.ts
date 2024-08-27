@@ -3,7 +3,7 @@ import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 
 /**
- * Checks if two addresses are equal.
+ * Checks if two {@link Address#Address} are equal.
  *
  * @example
  * ```ts twoslash
@@ -13,7 +13,7 @@ import type { Address } from './types.js'
  *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
  *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * )
- * // true
+ * // @log: true
  * ```
  *
  * @example
@@ -24,7 +24,7 @@ import type { Address } from './types.js'
  *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
  *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251f'
  * )
- * // false
+ * // @log: false
  * ```
  *
  * @param addressA - The first address to compare.

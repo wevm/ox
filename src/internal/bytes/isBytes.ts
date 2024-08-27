@@ -5,14 +5,19 @@ import { Bytes_assert } from './assert.js'
 /**
  * Checks if the given value is {@link Bytes#Bytes}.
  *
- * - Docs: https://oxlib.sh/api/bytes/isBytes
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
- * Bytes.isBytes('0x') // false
- * Bytes.isBytes(Bytes.from([1, 2, 3])) // true
+ *
+ * Bytes.isBytes('0x')
+ * // @log: false
+ *
+ * Bytes.isBytes(Bytes.from([1, 2, 3]))
+ * // @log: true
  * ```
+ *
+ * @param value - Value to check.
+ * @returns `true` if the value is {@link Bytes#Bytes}, otherwise `false`.
  */
 export function Bytes_isBytes(value: unknown): value is Bytes {
   try {

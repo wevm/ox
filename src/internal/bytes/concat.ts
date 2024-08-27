@@ -5,7 +5,19 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Concatenates two or more {@link Bytes#Bytes}.
  *
  * @example
- * TODO
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const bytes = Bytes.concat(
+ *   Bytes.from([1]),
+ *   Bytes.from([69]),
+ *   Bytes.from([420, 69]),
+ * )
+ * // @log: Uint8Array [ 1, 69, 420, 69 ]
+ * ```
+ *
+ * @param values - Values to concatenate.
+ * @returns Concatenated {@link Bytes#Bytes}.
  */
 export function Bytes_concat(...values: readonly Bytes[]): Bytes {
   let length = 0

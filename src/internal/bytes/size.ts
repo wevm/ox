@@ -5,12 +5,17 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Retrieves the size of a {@link Bytes#Bytes} value.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
- * Bytes.size(Bytes.from([1, 2, 3, 4])) // 4
+ *
+ * Bytes.size(Bytes.from([1, 2, 3, 4]))
+ * // @log: 4
  * ```
+ *
+ * @param value - {@link Bytes#Bytes} value.
+ * @returns Size of the {@link Bytes#Bytes} value.
  */
-export function Bytes_size(value: Bytes) {
+export function Bytes_size(value: Bytes): number {
   return value.length
 }
 

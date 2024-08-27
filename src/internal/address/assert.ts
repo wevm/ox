@@ -10,7 +10,7 @@ import {
 const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
 /**
- * Asserts that the given value is a valid address.
+ * Asserts that the given value is a valid {@link Address#Address}.
  *
  * @example
  * ```ts twoslash
@@ -24,7 +24,7 @@ const addressRegex = /^0x[a-fA-F0-9]{40}$/
  * import { Address } from 'ox'
  *
  * Address.assert('0xdeadbeef')
- * // InvalidAddressError: Address "0xdeadbeef" is invalid.
+ * // @error: InvalidAddressError: Address "0xdeadbeef" is invalid.
  * ```
  *
  * @param value - Value to assert if it is a valid address.

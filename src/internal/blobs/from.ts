@@ -17,11 +17,40 @@ import { BlobSizeTooLargeError, EmptyBlobError } from './errors.js'
  * Transforms arbitrary data to {@link Blobs#Blobs}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Blobs } from 'ox'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * ```
+ *
+ * @example
+ * ### Creating Blobs from a UTF-8 String
+ *
+ * An example of creating Blobs from a UTF-8 string using {@link Hex#from}:
+ *
+ * ```ts twoslash
+ * import { Blobs, Hex } from 'ox'
+ *
+ * const blobs = Blobs.from(Hex.from('Hello world!'))
+ * ```
+ *
+ * @example
+ * ### Configuring Return Type
+ *
+ * It is possible to configure the return type for the Blobs with the `as` option.
+ *
+ * ```ts twoslash
+ * import { Blobs } from 'ox'
+ *
+ * const blobs = Blobs.from('0xdeadbeef', { as: 'Bytes' })
+ * //    ^?
+ *
+ *
+ * ```
+ *
+ * @param data - The data to convert to {@link Blobs#Blobs}.
+ * @param options -
+ * @returns The {@link Blobs#Blobs}.
  */
 export function Blobs_from<
   const data extends Hex | Bytes,
@@ -29,15 +58,13 @@ export function Blobs_from<
     | (data extends Hex ? 'Hex' : never)
     | (data extends Bytes ? 'Bytes' : never),
 >(
-  data_: data | Hex | Bytes,
+  data: data | Hex | Bytes,
   options: Blobs_from.Options<as> = {},
 ): Blobs_from.ReturnType<as> {
-  const as = options.as ?? (typeof data_ === 'string' ? 'Hex' : 'Bytes')
-  const data = (
-    typeof data_ === 'string' ? Bytes_fromHex(data_) : data_
-  ) as Bytes
+  const as = options.as ?? (typeof data === 'string' ? 'Hex' : 'Bytes')
+  const data_ = (typeof data === 'string' ? Bytes_fromHex(data) : data) as Bytes
 
-  const size_ = Bytes_size(data)
+  const size_ = Bytes_size(data_)
   if (!size_) throw new EmptyBlobError()
   if (size_ > Blobs_maxBytesPerTransaction)
     throw new BlobSizeTooLargeError({
@@ -54,7 +81,7 @@ export function Blobs_from<
 
     let size = 0
     while (size < Blobs_fieldElementsPerBlob) {
-      const bytes = data.slice(
+      const bytes = data_.slice(
         position,
         position + (Blobs_bytesPerFieldElement - 1),
       )

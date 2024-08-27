@@ -6,11 +6,16 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Pads a {@link Bytes#Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * Bytes.padLeft(Bytes.from([1]), 4)
- * // Uint8Array([0, 0, 0, 1])
+ * // @log: Uint8Array([0, 0, 0, 1])
  * ```
+ *
+ * @param value - {@link Bytes#Bytes} value to pad.
+ * @param size - Size to pad the {@link Bytes#Bytes} value to.
+ * @returns Padded {@link Bytes#Bytes} value.
  */
 export function Bytes_padLeft(
   value: Bytes,
@@ -31,11 +36,16 @@ Bytes_padLeft.parseError = (error: unknown) => error as Bytes_padLeft.ErrorType
  * Pads a {@link Bytes#Bytes} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
+ *
  * Bytes.padRight(Bytes.from([1]), 4)
- * // Uint8Array([1, 0, 0, 0])
+ * // @log: Uint8Array([1, 0, 0, 0])
  * ```
+ *
+ * @param value - {@link Bytes#Bytes} value to pad.
+ * @param size - Size to pad the {@link Bytes#Bytes} value to.
+ * @returns Padded {@link Bytes#Bytes} value.
  */
 export function Bytes_padRight(
   value: Bytes,

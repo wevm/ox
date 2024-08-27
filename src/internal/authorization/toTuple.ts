@@ -10,7 +10,25 @@ import type { Authorization, Authorization_Tuple } from './types.js'
  * Converts an {@link Authorization#Authorization} to an {@link Authorization#Tuple}.
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * import { Authorization } from 'ox'
+ *
+ * const authorization = Authorization.from({
+ *   chainId: 1,
+ *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
+ *   nonce: 69n,
+ * })
+ *
+ * const tuple = Authorization.toTuple(authorization) // [!code focus]
+ * // @log: [
+ * // @log:   chainId: 1,
+ * // @log:   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
+ * // @log:   nonce: 69n,
+ * // @log: ]
+ * ```
+ *
+ * @param authorization - The {@link Authorization#Authorization}.
+ * @returns An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple.
  */
 export function Authorization_toTuple<
   const authorization extends Authorization,

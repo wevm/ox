@@ -7,14 +7,22 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Checks if two {@link Bytes#Bytes} values are equal.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Bytes } from 'ox'
- * Bytes.isEqual(Bytes.from([1]), Bytes.from([1])) // true
- * Bytes.isEqual(Bytes.from([1]), Bytes.from([2])) // false
+ *
+ * Bytes.isEqual(Bytes.from([1]), Bytes.from([1]))
+ * // @log: true
+ *
+ * Bytes.isEqual(Bytes.from([1]), Bytes.from([2]))
+ * // @log: false
  * ```
+ *
+ * @param bytesA - First {@link Bytes#Bytes} value.
+ * @param bytesB - Second {@link Bytes#Bytes} value.
+ * @returns `true` if the two values are equal, otherwise `false`.
  */
-export function Bytes_isEqual(a: Bytes, b: Bytes) {
-  return equalBytes(a, b)
+export function Bytes_isEqual(bytesA: Bytes, bytesB: Bytes) {
+  return equalBytes(bytesA, bytesB)
 }
 
 export declare namespace Bytes_isEqual {

@@ -19,8 +19,11 @@ import type { Authorization } from './types.js'
  *   nonce: 69n,
  * })
  *
- * const hash = Authorization.hash(authorization)
+ * const hash = Authorization.hash(authorization) // [!code focus]
  * ```
+ *
+ * @param authorization - The {@link Authorization#Authorization}.
+ * @returns The hash.
  */
 export function Authorization_hash(
   authorization: Authorization,

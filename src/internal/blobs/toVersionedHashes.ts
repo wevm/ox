@@ -8,16 +8,21 @@ import { Blobs_toCommitments } from './toCommitments.js'
 import type { Blobs } from './types.js'
 
 /**
- * Compute commitments from a list of blobs.
+ * Compute Blob Versioned Hashes from a list of {@link Blobs#Blobs}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
+ * // @noErrors
  * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const versionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const versionedHashes = Blobs.toVersionedHashes(blobs, { kzg }) // [!code focus]
  * ```
+ *
+ * @param blobs - The {@link Blobs#Blobs} to transform into Blob Versioned Hashes.
+ * @param options -
+ * @returns The Blob Versioned Hashes.
  */
 export function Blobs_toVersionedHashes<
   const blobs extends Blobs<Bytes> | Blobs<Hex>,
