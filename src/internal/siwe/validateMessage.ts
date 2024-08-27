@@ -4,10 +4,7 @@ import type { ExactPartial } from '../types.js'
 import type { Siwe_Message } from './types.js'
 
 /**
- * Validates EIP-4361 message.
- *
- * - Docs: https://oxlib.sh/api/siwe/validateMessage
- * - Spec: https://eips.ethereum.org/EIPS/eip-4361
+ * Validates [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message.
  *
  * @example
  * ```ts twoslash
@@ -15,18 +12,20 @@ import type { Siwe_Message } from './types.js'
  *
  * Siwe.validateMessage({
  *   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
- *   chainId: 1,
  *   domain: 'example.com',
  *   nonce: 'foobarbaz',
  *   uri: 'https://example.com/path',
  *   version: '1',
  * })
- * // true
+ * // @log: true
  * ```
+ *
+ * @param value - Values to use when validating EIP-4361 formatted message.
+ * @returns Whether the message is valid.
  */
 export function Siwe_validateMessage(
   value: Siwe_validateMessage.Value,
-): Siwe_validateMessage.ReturnType {
+): boolean {
   const { address, domain, message, nonce, scheme, time = new Date() } = value
 
   if (domain && message.domain !== domain) return false
@@ -47,7 +46,7 @@ export function Siwe_validateMessage(
 }
 
 export declare namespace Siwe_validateMessage {
-  type Value = {
+  interface Value {
     /**
      * Ethereum address to check against.
      */
@@ -75,6 +74,4 @@ export declare namespace Siwe_validateMessage {
      */
     time?: Date | undefined
   }
-
-  type ReturnType = boolean
 }

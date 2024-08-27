@@ -12,10 +12,7 @@ import { Siwe_isUri } from './isUri.js'
 import type { Siwe_Message } from './types.js'
 
 /**
- * Creates EIP-4361 formatted message.
- *
- * - Docs: https://oxlib.sh/api/siwe/createMessage
- * - Spec: https://eips.ethereum.org/EIPS/eip-4361
+ * Creates [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) formatted message.
  *
  * @example
  * ```ts twoslash
@@ -29,20 +26,21 @@ import type { Siwe_Message } from './types.js'
  *   uri: 'https://example.com/path',
  *   version: '1',
  * })
- * // "example.com wants you to sign in with your Ethereum account:
- * // 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
- * //
- * //
- * // URI: https://example.com/path
- * // Version: 1
- * // Chain ID: 1
- * // Nonce: foobarbaz
- * // Issued At: 2023-02-01T00:00:00.000Z"
+ * // @log: "example.com wants you to sign in with your Ethereum account:
+ * // @log: 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+ * // @log:
+ * // @log:
+ * // @log: URI: https://example.com/path
+ * // @log: Version: 1
+ * // @log: Chain ID: 1
+ * // @log: Nonce: foobarbaz
+ * // @log: Issued At: 2023-02-01T00:00:00.000Z"
  * ```
+ *
+ * @param value - Values to use when creating EIP-4361 formatted message.
+ * @returns EIP-4361 formatted message.
  */
-export function Siwe_createMessage(
-  value: Siwe_Message,
-): Siwe_createMessage.ReturnType {
+export function Siwe_createMessage(value: Siwe_Message): string {
   const {
     chainId,
     domain,
@@ -179,8 +177,6 @@ export function Siwe_createMessage(
 }
 
 export declare namespace Siwe_createMessage {
-  type ReturnType = string
-
   type ErrorType =
     | Address_from.ErrorType
     | SiweInvalidMessageFieldError

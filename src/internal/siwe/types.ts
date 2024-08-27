@@ -1,9 +1,7 @@
 import type { Address } from 'abitype'
 
 /**
- * EIP-4361 message fields
- *
- * @see https://eips.ethereum.org/EIPS/eip-4361
+ * [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields
  */
 export type Siwe_Message = {
   /**
