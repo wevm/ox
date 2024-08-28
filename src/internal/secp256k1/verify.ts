@@ -10,23 +10,25 @@ import { Secp256k1_recoverAddress } from './recoverAddress.js'
  * Verifies a payload was signed by the provided address.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
  *
- * const verified = Secp256k1.verify({
- *   address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   payload: '0xdeadbeef',
- *   signature,
- * })
+ * const verified = Secp256k1.verify({ // [!code focus]
+ *   address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
  * ```
+ *
+ * @param parameters -
+ * @returns Whether the payload was signed by the provided address.
  */
-export function Secp256k1_verify({
-  address,
-  payload,
-  signature,
-}: Secp256k1_verify.Parameters): Secp256k1_verify.ReturnType {
+export function Secp256k1_verify(
+  parameters: Secp256k1_verify.Parameters,
+): Secp256k1_verify.ReturnType {
+  const { address, payload, signature } = parameters
   return Address_isEqual(
     address,
     Secp256k1_recoverAddress({ payload, signature }),

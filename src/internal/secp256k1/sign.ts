@@ -11,11 +11,17 @@ import type { Compute } from '../types.js'
  * Signs the payload with the provided private key.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
+ * const signature = Secp256k1.sign({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   privateKey: '0x...' // [!code focus]
+ * }) // [!code focus]
  * ```
+ *
+ * @param parameters -
+ * @returns The ECDSA {@link Signature#Signature}.
  */
 export function Secp256k1_sign(
   parameters: Secp256k1_sign.Parameters,

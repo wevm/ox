@@ -9,10 +9,14 @@ import type { Hex } from '../hex/types.js'
  * Generates a random ECDSA private key on the secp256k1 curve.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Secp256k1 } from 'ox'
+ *
  * const privateKey = Secp256k1.randomPrivateKey()
  * ```
+ *
+ * @param options -
+ * @returns The generated private key.
  */
 export function Secp256k1_randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: Secp256k1_randomPrivateKey.Options<as> = {},

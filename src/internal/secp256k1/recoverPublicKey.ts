@@ -11,16 +11,19 @@ import type { Signature } from '../signature/types.js'
  * Recovers the signing public key from the signed payload and signature.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
  *
- * const publicKey = Secp256k1.recoverPublicKey({
- *   payload: '0xdeadbeef',
- *   signature,
- * })
+ * const publicKey = Secp256k1.recoverPublicKey({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
  * ```
+ *
+ * @param parameters -
+ * @returns The recovered public key.
  */
 export function Secp256k1_recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   parameters: Secp256k1_recoverPublicKey.Parameters<as>,

@@ -6,13 +6,17 @@ import { Hex_from } from '../hex/from.js'
 import type { Hex } from '../hex/types.js'
 
 /**
- * Computes the ECDSA public key from a provided private key.
+ * Computes the secp256k1 ECDSA public key from a provided private key.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Secp256k1 } from 'ox'
+ *
  * const publicKey = Secp256k1.getPublicKey({ privateKey: '0x...' })
  * ```
+ *
+ * @param parameters -
+ * @returns The computed public key.
  */
 export function Secp256k1_getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   parameters: Secp256k1_getPublicKey.Parameters<as>,

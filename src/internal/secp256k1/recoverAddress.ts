@@ -7,16 +7,19 @@ import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
  * Recovers the signing address from the signed payload and signature.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
  *
- * const address = Secp256k1.recoverAddress({
- *   payload: '0xdeadbeef',
- *   signature,
- * })
+ * const address = Secp256k1.recoverAddress({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
  * ```
+ *
+ * @param parameters -
+ * @returns The recovered address.
  */
 export function Secp256k1_recoverAddress<as extends 'Hex' | 'Bytes' = 'Hex'>(
   parameters: Secp256k1_recoverAddress.Parameters<as>,
