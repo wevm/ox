@@ -3,6 +3,7 @@ import { Hex_isHex } from '../../hex/isHex.js'
 import type { Hex } from '../../hex/types.js'
 import { Rlp_toHex } from '../../rlp/to.js'
 import { InvalidSignatureVError } from '../../signature/errors.js'
+import { Signature_vToYParity } from '../../signature/vToYParity.js'
 import type { Compute } from '../../types.js'
 import { InvalidSerializedTransactionError } from '../errors.js'
 import { TransactionEnvelopeLegacy_assert } from './assert.js'
@@ -86,6 +87,7 @@ export function TransactionEnvelopeLegacy_deserialize(
   if (chainId > 0) transaction.chainId = chainId
   else if (v !== 27 && v !== 28) throw new InvalidSignatureVError({ value: v })
 
+  transaction.yParity = Signature_vToYParity(v)
   transaction.v = v
   transaction.s = s === '0x' ? 0n : BigInt(s!)
   transaction.r = r === '0x' ? 0n : BigInt(r!)

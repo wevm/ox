@@ -61,17 +61,18 @@ test('signature', async () => {
     TransactionEnvelopeLegacy.deserialize(serialized),
   ).toMatchInlineSnapshot(
     `
-      {
-        "gasPrice": 2000000000n,
-        "nonce": 785n,
-        "r": 49162359600332107255572924559512453493861388410495780496134469638986269765272n,
-        "s": 23658591060807096482427659898336319664614845702773383989972841251496079269784n,
-        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-        "type": "legacy",
-        "v": 28,
-        "value": 1000000000000000000n,
-      }
-    `,
+    {
+      "gasPrice": 2000000000n,
+      "nonce": 785n,
+      "r": 49162359600332107255572924559512453493861388410495780496134469638986269765272n,
+      "s": 23658591060807096482427659898336319664614845702773383989972841251496079269784n,
+      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "type": "legacy",
+      "v": 28,
+      "value": 1000000000000000000n,
+      "yParity": 1,
+    }
+  `,
   )
 })
 
@@ -88,17 +89,18 @@ test('signature', async () => {
       TransactionEnvelopeLegacy.deserialize(serialized),
     ).toMatchInlineSnapshot(
       `
-    {
-      "gasPrice": 2000000000n,
-      "nonce": 785n,
-      "r": 1n,
-      "s": 0n,
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "legacy",
-      "v": 27,
-      "value": 1000000000000000000n,
-    }
-  `,
+      {
+        "gasPrice": 2000000000n,
+        "nonce": 785n,
+        "r": 1n,
+        "s": 0n,
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "legacy",
+        "v": 27,
+        "value": 1000000000000000000n,
+        "yParity": 0,
+      }
+    `,
     )
   }
 
@@ -123,6 +125,7 @@ test('signature', async () => {
         "type": "legacy",
         "v": 27,
         "value": 1000000000000000000n,
+        "yParity": 0,
       }
     `,
     )
@@ -145,18 +148,19 @@ test('signature + chainId', async () => {
     TransactionEnvelopeLegacy.deserialize(serialized),
   ).toMatchInlineSnapshot(
     `
-      {
-        "chainId": 69,
-        "gasPrice": 2000000000n,
-        "nonce": 785n,
-        "r": 21377422632306986934234848369642217951872212572373694238667569216102361836592n,
-        "s": 46566099151962357110521349825476283164605004096182178307881493582909309068838n,
-        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-        "type": "legacy",
-        "v": 173,
-        "value": 1000000000000000000n,
-      }
-    `,
+    {
+      "chainId": 69,
+      "gasPrice": 2000000000n,
+      "nonce": 785n,
+      "r": 21377422632306986934234848369642217951872212572373694238667569216102361836592n,
+      "s": 46566099151962357110521349825476283164605004096182178307881493582909309068838n,
+      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "type": "legacy",
+      "v": 173,
+      "value": 1000000000000000000n,
+      "yParity": 0,
+    }
+  `,
   )
 })
 
@@ -225,18 +229,19 @@ describe('raw', () => {
     expect(
       TransactionEnvelopeLegacy.deserialize(serialized),
     ).toMatchInlineSnapshot(`
-        {
-          "gas": 1n,
-          "gasPrice": 1n,
-          "nonce": 0n,
-          "r": 69n,
-          "s": 420n,
-          "to": "0x0000000000000000000000000000000000000000",
-          "type": "legacy",
-          "v": 27,
-          "value": 0n,
-        }
-      `)
+      {
+        "gas": 1n,
+        "gasPrice": 1n,
+        "nonce": 0n,
+        "r": 69n,
+        "s": 420n,
+        "to": "0x0000000000000000000000000000000000000000",
+        "type": "legacy",
+        "v": 27,
+        "value": 0n,
+        "yParity": 0,
+      }
+    `)
   })
 })
 

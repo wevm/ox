@@ -50,7 +50,7 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * // @log:   chainId: 1,
  * // @log:   gasPrice: 10000000000n,
  * // @log:   to: '0x0000000000000000000000000000000000000000',
- * // @log:   type: 'legacy',
+ * // @log:   type: 'eip7702',
  * // @log:   value: 1000000000000000000n,
  * // @log:   r: 125...n,
  * // @log:   s: 642...n,
@@ -129,11 +129,11 @@ export declare namespace TransactionEnvelopeLegacy_from {
       : Assign<
           envelope,
           (signature extends Signature
-            ? Readonly<{
-                r: signature['r']
-                s: signature['s']
-                v: signature['yParity'] extends 0 ? 27 : 28
-              }>
+            ? Readonly<
+                signature & {
+                  v: signature['yParity'] extends 0 ? 27 : 28
+                }
+              >
             : {}) & {
             readonly type: 'legacy'
           }

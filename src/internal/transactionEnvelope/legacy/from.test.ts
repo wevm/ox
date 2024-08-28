@@ -34,7 +34,7 @@ test('default', () => {
     })
     const serialized = TransactionEnvelopeLegacy.serialize(envelope)
     const envelope2 = TransactionEnvelopeLegacy.from(serialized)
-    expect(envelope2).toEqual(envelope)
+    expect(envelope2).toEqual({ ...envelope, yParity: 0 })
   }
 })
 
@@ -49,7 +49,7 @@ test('options: signature', () => {
       signature: {
         r: 0n,
         s: 1n,
-        yParity: 0,
+        yParity: 1,
       },
     },
   )
@@ -59,8 +59,9 @@ test('options: signature', () => {
       "s": 1n,
       "to": "0x0000000000000000000000000000000000000000",
       "type": "legacy",
-      "v": 27,
+      "v": 28,
       "value": 69n,
+      "yParity": 1,
     }
   `)
   const serialized = TransactionEnvelopeLegacy.serialize(envelope)
