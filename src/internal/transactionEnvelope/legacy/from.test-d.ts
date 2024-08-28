@@ -68,6 +68,7 @@ test('options: signature', () => {
     readonly r: 0n
     readonly s: 1n
     readonly v: 27
+    readonly yParity: 0
     readonly type: 'legacy'
   }>()
   expectTypeOf(
