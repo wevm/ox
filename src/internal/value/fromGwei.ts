@@ -6,15 +6,19 @@ import { Value_from } from './from.js'
  * Parses a string representation of Gwei to a `bigint` Value (default: wei).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Value } from 'ox'
  *
  * Value.fromGwei('420')
- * // 420000000000n
+ * // @log: 420000000000n
  * ```
+ *
+ * @param gwei - String representation of Gwei.
+ * @param unit - The unit to parse to. @default 'wei'.
+ * @returns A `bigint` Value.
  */
-export function Value_fromGwei(ether: string, unit: 'wei' = 'wei') {
-  return Value_from(ether, Value_exponents.gwei - Value_exponents[unit])
+export function Value_fromGwei(gwei: string, unit: 'wei' = 'wei') {
+  return Value_from(gwei, Value_exponents.gwei - Value_exponents[unit])
 }
 
 export declare namespace Value_fromGwei {

@@ -6,15 +6,17 @@ import { Value_format } from './format.js'
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Gwei.
  *
- * - Docs: https://oxlib.sh/api/value/formatGwei
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Value } from 'ox'
  *
  * Value.formatGwei(1_000_000_000n)
- * // '1'
+ * // @log: '1'
  * ```
+ *
+ * @param wei - The Value to format.
+ * @param unit - The unit to format the Value in. @default 'wei'.
+ * @returns The Gwei string representation of the Value.
  */
 export function Value_formatGwei(wei: bigint, unit: 'wei' = 'wei') {
   return Value_format(wei, Value_exponents.gwei - Value_exponents[unit])

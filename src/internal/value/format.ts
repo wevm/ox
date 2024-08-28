@@ -4,15 +4,16 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Formats a `bigint` Value to its string representation (divided by the given exponent).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Value } from 'ox'
  *
  * Value.format(420_000_000_000n, 9)
- * // '420'
+ * // @log: '420'
  * ```
  *
  * @param value - The `bigint` Value to format.
  * @param decimals - The exponent to divide the `bigint` Value by.
+ * @returns The string representation of the Value.
  */
 export function Value_format(value: bigint, decimals = 0) {
   let display = value.toString()

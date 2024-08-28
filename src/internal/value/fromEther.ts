@@ -5,15 +5,17 @@ import { Value_from } from './from.js'
 /**
  * Parses a string representation of Ether to a `bigint` Value (default: wei).
  *
- * - Docs: https://oxlib.sh/api/value/fromEther
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Value } from 'ox'
  *
  * Value.fromEther('420')
- * // 420000000000000000000n
+ * // @log: 420000000000000000000n
  * ```
+ *
+ * @param ether - String representation of Ether.
+ * @param unit - The unit to parse to. @default 'wei'.
+ * @returns A `bigint` Value.
  */
 export function Value_fromEther(
   ether: string,

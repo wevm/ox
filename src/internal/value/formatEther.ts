@@ -6,15 +6,17 @@ import { Value_format } from './format.js'
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Ether.
  *
- * - Docs: https://oxlib.sh/api/value/formatEther
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Value } from 'ox'
  *
  * Value.formatEther(1_000_000_000_000_000_000n)
- * // '1'
+ * // @log: '1'
  * ```
+ *
+ * @param wei - The Value to format.
+ * @param unit - The unit to format the Value in. @default 'wei'.
+ * @returns The Ether string representation of the Value.
  */
 export function Value_formatEther(
   wei: bigint,

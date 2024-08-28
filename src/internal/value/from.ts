@@ -4,12 +4,16 @@ import type { GlobalErrorType } from '../errors/error.js'
  * Parses a `string` representation of a Value to `bigint` (multiplied by the given exponent).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Value } from 'ox'
  *
  * Value.from('420', 9)
- * // 420000000000n
+ * // @log: 420000000000n
  * ```
+ *
+ * @param value - The string representation of the Value.
+ * @param decimals - The exponent to multiply the Value by.
+ * @returns The `bigint` representation of the Value.
  */
 export function Value_from(value: string, decimals = 0) {
   let [integer = '', fraction = '0'] = value.split('.')
