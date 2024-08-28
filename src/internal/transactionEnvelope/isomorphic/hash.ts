@@ -10,25 +10,28 @@ import { TransactionEnvelopeLegacy_hash } from '../legacy/hash.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
- * Hashes a transaction envelope for signing.
+ * Hashes a {@link TransactionEnvelope#TransactionEnvelope}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { TransactionEnvelope } from 'ox'
  *
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
- *   nonce: 0,
+ *   nonce: 0n,
  *   gasPrice: 1000000000n,
- *   gasLimit: 21000,
+ *   gasLimit: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: 1000000000000000000n,
  *   data: '0x',
  * })
  *
- * const hash = TransactionEnvelope.hash(envelope)
- * // '0x...'
+ * const hash = TransactionEnvelope.hash(envelope) // [!code focus]
  * ```
+ *
+ * @param envelope - The {@link TransactionEnvelope#TransactionEnvelope} to hash.
+ * @param options -
+ * @returns The hash of the transaction envelope.
  */
 export function TransactionEnvelope_hash(
   envelope: TransactionEnvelope,

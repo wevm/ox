@@ -12,22 +12,29 @@ import type { TransactionEnvelope } from './types.js'
  * Returns the payload to sign for a {@link TransactionEnvelope#TransactionEnvelope}.
  *
  * @example
- * ```ts
- * import { TransactionEnvelope } from 'ox'
+ * The example below demonstrates how to compute the sign payload which can be used
+ * with ECDSA signing utilities like {@link Secp256k1#sign}.
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelope } from 'ox'
  *
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
- *   nonce: 0,
+ *   nonce: 0n,
  *   gasPrice: 1000000000n,
  *   gasLimit: 21000,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: 1000000000000000000n,
- *   data: '0x',
  * })
  *
- * const hash = TransactionEnvelope.getSignPayload(envelope)
- * // '0x...'
+ * const payload = TransactionEnvelope.getSignPayload(envelope) // [!code focus]
+ * // @log: '0x...'
+ *
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
  * ```
+ *
+ * @param envelope - The transaction envelope to get the sign payload for.
+ * @returns The sign payload.
  */
 export function TransactionEnvelope_getSignPayload(
   envelope: TransactionEnvelope,

@@ -26,21 +26,24 @@ import type {
  * Deserializes a {@link TransactionEnvelope#TransactionEnvelope} from its serialized form.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { TransactionEnvelope } from 'ox'
  *
  * const envelope = TransactionEnvelope.deserialize('0x02ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
- * // {
- * //   type: 'eip1559',
- * //   chainId: 1,
- * //   nonce: 785n,
- * //   maxFeePerGas: 2000000000n,
- * //   maxPriorityFeePerGas: 2000000000n,
- * //   gas: 1000000n,
- * //   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- * //   value: 1000000000000000000n,
- * // }
+ * // @log: {
+ * // @log:   type: 'eip1559',
+ * // @log:   chainId: 1,
+ * // @log:   nonce: 785n,
+ * // @log:   maxFeePerGas: 2000000000n,
+ * // @log:   maxPriorityFeePerGas: 2000000000n,
+ * // @log:   gas: 1000000n,
+ * // @log:   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
  * ```
+ *
+ * @param serialized - The serialized Transaction Envelope.
+ * @returns Deserialized {@link TransactionEnvelope#TransactionEnvelope}.
  */
 export function TransactionEnvelope_deserialize<
   const serialized extends TransactionEnvelope_Serialized,

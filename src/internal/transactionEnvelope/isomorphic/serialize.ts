@@ -17,8 +17,8 @@ import type {
  * Serializes a {@link TransactionEnvelope#TransactionEnvelope}.
  *
  * @example
- * ```ts
- * import { TransactionEnvelope } from 'ox'
+ * ```ts twoslash
+ * import { TransactionEnvelope, Value } from 'ox'
  *
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
@@ -28,9 +28,11 @@ import type {
  *   value: Value.fromEther('1'),
  * })
  *
- * const serialized = TransactionEnvelope.serialize(envelope)
- * // '0x...'
+ * const serialized = TransactionEnvelope.serialize(envelope) // [!code focus]
  * ```
+ *
+ * @param envelope - The {@link TransactionEnvelope#TransactionEnvelope} to serialize.
+ * @returns The serialized {@link TransactionEnvelope#TransactionEnvelope}.
  */
 export function TransactionEnvelope_serialize<
   envelope extends TransactionEnvelope,

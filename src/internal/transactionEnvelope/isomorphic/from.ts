@@ -18,10 +18,10 @@ import type {
 } from './types.js'
 
 /**
- * Converts an arbitrary transaction object into a typed Transaction Envelope.
+ * Converts an arbitrary transaction object into a typed {@link TransactionEnvelope#TransactionEnvelope}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { TransactionEnvelope, Value } from 'ox'
  *
  * const envelope = TransactionEnvelope.from({
@@ -31,69 +31,92 @@ import type {
  *   to: '0x0000000000000000000000000000000000000000',
  *   value: Value.fromEther('1'),
  * })
- *
- * // {
- * //   chainId: 1,
- * //   maxFeePerGas: 10000000000n,
- * //   maxPriorityFeePerGas: 1000000000n,
- * //   to: '0x0000000000000000000000000000000000000000',
- * //   type: 'eip1559',
- * //   value: 1000000000000000000n,
- * // }
+ * // @log: {
+ * // @log:   chainId: 1,
+ * // @log:   maxFeePerGas: 10000000000n,
+ * // @log:   maxPriorityFeePerGas: 1000000000n,
+ * // @log:   to: '0x0000000000000000000000000000000000000000',
+ * // @log:   type: 'eip1559',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
  * ```
+ *
+ * @example
+ * ### From Serialized
+ *
+ * It is possible to instantiate a {@link TransactionEnvelope#TransactionEnvelope} from a {@link TransactionEnvelope#Serialized} value.
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from('0x02f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * // @log: {
+ * // @log:   chainId: 1,
+ * // @log:   maxFeePerGas: 10000000000n,
+ * // @log:   maxPriorityFeePerGas: 1000000000n,
+ * // @log:   to: '0x0000000000000000000000000000000000000000',
+ * // @log:   type: 'eip1559',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
+ * ```
+ *
+ * @param value - The arbitrary value to instantiate a {@link TransactionEnvelope#TransactionEnvelope} from.
+ * @param options -
+ * @returns A {@link TransactionEnvelope#TransactionEnvelope}.
  */
 export function TransactionEnvelope_from<
-  const envelope extends
+  const value extends
     | UnionPartialBy<TransactionEnvelope, 'type'>
     | TransactionEnvelope_Serialized,
   const signature extends Signature | undefined = undefined,
 >(
-  envelope: envelope,
+  value: value,
   options: TransactionEnvelope_from.Options<signature> = {},
-): TransactionEnvelope_from.ReturnType<envelope, signature> {
-  const type = TransactionEnvelope_getType(envelope)
+): TransactionEnvelope_from.ReturnType<value, signature> {
+  const type = TransactionEnvelope_getType(value)
 
   if (type === 'legacy')
-    return TransactionEnvelopeLegacy_from(envelope as any, options) as never
+    return TransactionEnvelopeLegacy_from(value as any, options) as never
   if (type === 'eip2930')
-    return TransactionEnvelopeEip2930_from(envelope as any, options) as never
+    return TransactionEnvelopeEip2930_from(value as any, options) as never
   if (type === 'eip1559')
-    return TransactionEnvelopeEip1559_from(envelope as any, options) as never
+    return TransactionEnvelopeEip1559_from(value as any, options) as never
   if (type === 'eip4844')
-    return TransactionEnvelopeEip4844_from(envelope as any, options) as never
+    return TransactionEnvelopeEip4844_from(value as any, options) as never
   if (type === 'eip7702')
-    return TransactionEnvelopeEip7702_from(envelope as any, options) as never
+    return TransactionEnvelopeEip7702_from(value as any, options) as never
 
   throw new TransactionTypeNotImplementedError({ type })
 }
 
 export declare namespace TransactionEnvelope_from {
   type Options<signature extends Signature | undefined = undefined> = {
+    /** Signature to attach to the Transaction Envelope. */
     signature?: signature | Signature | undefined
   }
 
   type ReturnType<
-    envelope extends
+    value extends
       | UnionPartialBy<TransactionEnvelope, 'type'>
       | TransactionEnvelope_Serialized =
       | UnionPartialBy<TransactionEnvelope, 'type'>
       | TransactionEnvelope_Serialized,
     signature extends Signature | undefined = undefined,
   > = UnionCompute<
-    | (TransactionEnvelope_GetType<envelope> extends 'legacy'
-        ? TransactionEnvelopeLegacy_from.ReturnType<envelope, signature>
+    | (TransactionEnvelope_GetType<value> extends 'legacy'
+        ? TransactionEnvelopeLegacy_from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<envelope> extends 'eip1559'
-        ? TransactionEnvelopeEip1559_from.ReturnType<envelope, signature>
+    | (TransactionEnvelope_GetType<value> extends 'eip1559'
+        ? TransactionEnvelopeEip1559_from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<envelope> extends 'eip2930'
-        ? TransactionEnvelopeEip2930_from.ReturnType<envelope, signature>
+    | (TransactionEnvelope_GetType<value> extends 'eip2930'
+        ? TransactionEnvelopeEip2930_from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<envelope> extends 'eip4844'
-        ? TransactionEnvelopeEip4844_from.ReturnType<envelope, signature>
+    | (TransactionEnvelope_GetType<value> extends 'eip4844'
+        ? TransactionEnvelopeEip4844_from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<envelope> extends 'eip7702'
-        ? TransactionEnvelopeEip7702_from.ReturnType<envelope, signature>
+    | (TransactionEnvelope_GetType<value> extends 'eip7702'
+        ? TransactionEnvelopeEip7702_from.ReturnType<value, signature>
         : never)
   >
 
