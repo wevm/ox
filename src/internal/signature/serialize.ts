@@ -11,7 +11,7 @@ import type { Signature } from './types.js'
  * Serializes a {@link Signature#Signature} to {@link Hex#Hex} or {@link Bytes#Bytes}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Signature } from 'ox'
  *
  * const signature = Signature.serialize({
@@ -19,19 +19,7 @@ import type { Signature } from './types.js'
  *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
  *   yParity: 1
  * })
- * // '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
- * ```
- *
- * @example
- * ```ts
- * import { Signature } from 'ox'
- *
- * const signature = Signature.serialize({
- *   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
- *   yParityAndS:
- *     57228803202727131502949358313456071280488184270258293674242124340113824882788n,
- * })
- * // '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
+ * // @log: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
  * ```
  */
 export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(

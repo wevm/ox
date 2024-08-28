@@ -8,7 +8,7 @@ import type { Signature, Signature_Tuple } from './types.js'
  * Converts a {@link Signature#Signature} to a serialized {@link Signature#Tuple} to be used for signatures in Transaction Envelopes, EIP-7702 Authorization Lists, etc.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Signature } from 'ox'
  *
  * const signatureTuple = Signature.toTuple({
@@ -16,8 +16,11 @@ import type { Signature, Signature_Tuple } from './types.js'
  *   s: 456n,
  *   yParity: 1,
  * })
- * // [yParity: '0x01', r: '0x7b', s: '0x1c8']
+ * // @log: [yParity: '0x01', r: '0x7b', s: '0x1c8']
  * ```
+ *
+ * @param signature - The {@link Signature#Signature} to convert.
+ * @returns The {@link Signature#Tuple}.
  */
 export function Signature_toTuple(
   signature: Signature,

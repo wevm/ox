@@ -10,10 +10,10 @@ import {
 import type { Signature } from './types.js'
 
 /**
- * Asserts that the signature is valid.
+ * Asserts that a Signature is valid.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Signature } from 'ox'
  *
  * Signature.assert({
@@ -21,8 +21,12 @@ import type { Signature } from './types.js'
  *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
  *   yParity: 1,
  * })
- * // InvalidSignatureRError: Value `-549...n` is an invalid r value. r must be a positive integer less than 2^256.
+ * // @error: InvalidSignatureRError:
+ * // @error: Value `-549...n` is an invalid r value.
+ * // @error: r must be a positive integer less than 2^256.
  * ```
+ *
+ * @param signature - The signature object to assert.
  */
 export function Signature_assert(
   signature: ExactPartial<Signature>,

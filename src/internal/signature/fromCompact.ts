@@ -15,18 +15,20 @@ import type { Signature, Signature_Compact } from './types.js'
  *   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
  *   yParityAndS: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
  * })
- *
- * // {
- * //   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
- * //   s: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
- * //   yParity: 0
- * // }
+ * // @log: {
+ * // @log:   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
+ * // @log:   s: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
+ * // @log:   yParity: 0
+ * // @log: }
  * ```
+ *
+ * @param signature - The {@link Signature#Compact} to instantiate.
+ * @returns The instantiated {@link Signature#Signature}.
  */
-export function Signature_fromCompact({
-  r,
-  yParityAndS,
-}: Signature_Compact): Compute<Signature> {
+export function Signature_fromCompact(
+  signature: Signature_Compact,
+): Compute<Signature> {
+  const { r, yParityAndS } = signature
   const yParityAndS_bytes = Bytes_fromNumber(yParityAndS)
   const yParity = yParityAndS_bytes[0]! & 0x80 ? 1 : 0
   const s = yParityAndS_bytes

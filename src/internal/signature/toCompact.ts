@@ -15,11 +15,14 @@ import type { Signature, Signature_Compact } from './types.js'
  *   s: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
  *   yParity: 0
  * })
- * // {
- * //   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
- * //   yParityAndS: 57228803202727131502949358313456071280488184270258293674242124340113824882788n
- * // }
+ * // @log: {
+ * // @log:   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
+ * // @log:   yParityAndS: 57228803202727131502949358313456071280488184270258293674242124340113824882788n
+ * // @log: }
  * ```
+ *
+ * @param signature - The {@link Signature#Signature} to convert.
+ * @returns The {@link Signature#Compact}.
  */
 export function Signature_toCompact(signature: Signature): Signature_Compact {
   const { r, s, yParity } = signature

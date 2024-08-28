@@ -7,7 +7,27 @@ import type { Signature, Signature_Legacy } from './types.js'
  * Extracts a {@link Signature#Signature} from an arbitrary object that may include signature properties.
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * // @noErrors
+ * import { Signature } from 'ox'
+ *
+ * Signature.extract({
+ *   baz: 'barry',
+ *   foo: 'bar',
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   yParity: 1,
+ *   zebra: 'stripes',
+ * })
+ * // @log: {
+ * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * // @log:   yParity: 1
+ * // @log: }
+ * ```
+ *
+ * @param value - The arbitrary object to extract the signature from.
+ * @returns The extracted {@link Signature#Signature}.
  */
 export function Signature_extract(
   value: OneOf<ExactPartial<Signature> | ExactPartial<Signature_Legacy>>,
