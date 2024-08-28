@@ -5,12 +5,17 @@ import type { Hex } from '../hex/types.js'
  * Retrieves the size of a {@link Hex#Hex} value (in bytes).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
- * Hex.size('0xdeadbeef') // 4
+ *
+ * Hex.size('0xdeadbeef')
+ * // @log: 4
  * ```
+ *
+ * @param value - The {@link Hex#Hex} value to get the size of.
+ * @returns The size of the {@link Hex#Hex} value (in bytes).
  */
-export function Hex_size(value: Hex) {
+export function Hex_size(value: Hex): number {
   return Math.ceil((value.length - 2) / 2)
 }
 

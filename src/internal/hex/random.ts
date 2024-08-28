@@ -4,12 +4,14 @@ import type { Hex } from '../hex/types.js'
 import { Hex_fromBytes } from './from.js'
 
 /**
- * Generates a random Hex value of the specified length.
+ * Generates a random {@link Hex#Hex} value of the specified length.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * const hex = Hex.random(32)
+ * // @log: '0x...'
  * ```
  */
 export function Hex_random(length: number): Hex {

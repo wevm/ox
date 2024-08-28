@@ -15,25 +15,38 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
  * Encodes an arbitrary value into a {@link Hex#Hex} value.
  *
  * @example
- * ```ts
+ * An example of encoding a UTF-8 string into a hex value:
+ *
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.from('Hello world')
- * // '0x48656c6c6f20776f726c6421'
+ * // @log: '0x48656c6c6f20776f726c6421'
  * ```
  *
  * @example
- * ```ts
+ * An example of encoding a number into a hex value:
+ *
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.from(420)
- * // '0x1a4'
+ * // @log: '0x1a4'
  * ```
  *
  * @example
- * ```ts
+ * An example of encoding a UTF-8 string into a hex value with a specified size:
+ *
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.from('Hello world', { size: 32 })
- * // '0x48656c6c6f20776f726c64210000000000000000000000000000000000000000'
+ * // @log: '0x48656c6c6f20776f726c64210000000000000000000000000000000000000000'
  * ```
+ *
+ * @param value - The value to encode.
+ * @param options -
+ * @returns The encoded {@link Hex#Hex} value.
  */
 export function Hex_from(
   value: string | number | bigint | boolean | readonly number[] | Bytes,
@@ -76,25 +89,22 @@ Hex_from.parseError = (error: unknown) => error as Hex_from.ErrorType
  * Encodes a boolean into a {@link Hex#Hex} value.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.fromBoolean(true)
- * // '0x1'
- * ```
+ * // @log: '0x1'
  *
- * @example
- * ```ts
- * import { Hex } from 'ox'
  * Hex.fromBoolean(false)
- * // '0x0'
+ * // @log: '0x0'
+ *
+ * Hex.fromBoolean(true, { size: 32 })
+ * // @log: '0x0000000000000000000000000000000000000000000000000000000000000001'
  * ```
  *
- * @example
- * ```ts
- * import { Hex } from 'ox'
- * Hex.fromBoolean(true, { size: 32 })
- * // '0x0000000000000000000000000000000000000000000000000000000000000001'
- * ```
+ * @param value - The boolean value to encode.
+ * @param options -
+ * @returns The encoded {@link Hex#Hex} value.
  */
 export function Hex_fromBoolean(
   value: boolean,
@@ -127,21 +137,20 @@ Hex_fromBoolean.parseError = (error: unknown) =>
 /**
  * Encodes a {@link Bytes#Bytes} value into a {@link Hex#Hex} value.
  *
- * - Docs: https://oxlib.sh/api/hex/fromBytes
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
- * // '0x48656c6c6f20576f726c6421'
+ * // @log: '0x48656c6c6f20576f726c6421'
+ *
+ * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
+ * // @log: '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
  * ```
  *
- * @example
- * ```ts
- * import { Hex } from 'ox'
- * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
- * // '0x48656c6c6f20576f726c642100000000000000000000000000000000000000000'
- * ```
+ * @param value - The {@link Bytes#Bytes} value to encode.
+ * @param options -
+ * @returns The encoded {@link Hex#Hex} value.
  */
 export function Hex_fromBytes(
   value: Bytes,
@@ -176,53 +185,52 @@ Hex_fromBytes.parseError = (error: unknown) => error as Hex_fromBytes.ErrorType
 /**
  * Encodes a number or bigint into a {@link Hex#Hex} value.
  *
- * - Docs: https://oxlib.sh/api/hex/fromNumber
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.fromNumber(420)
- * // '0x1a4'
+ * // @log: '0x1a4'
+ *
+ * Hex.fromNumber(420, { size: 32 })
+ * // @log: '0x00000000000000000000000000000000000000000000000000000000000001a4'
  * ```
  *
- * @example
- * ```ts
- * import { Hex } from 'ox'
- * Hex.fromNumber(420, { size: 32 })
- * // '0x00000000000000000000000000000000000000000000000000000000000001a4'
- * ```
+ * @param value - The number or bigint value to encode.
+ * @param options -
+ * @returns The encoded {@link Hex#Hex} value.
  */
 export function Hex_fromNumber(
-  value_: number | bigint,
+  value: number | bigint,
   options: Hex_fromNumber.Options = {},
 ): Hex {
   const { signed, size } = options
 
-  const value = BigInt(value_)
+  const value_ = BigInt(value)
 
   let maxValue: bigint | number | undefined
   if (size) {
     if (signed) maxValue = (1n << (BigInt(size) * 8n - 1n)) - 1n
     else maxValue = 2n ** (BigInt(size) * 8n) - 1n
-  } else if (typeof value_ === 'number') {
+  } else if (typeof value === 'number') {
     maxValue = BigInt(Number.MAX_SAFE_INTEGER)
   }
 
   const minValue = typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0
 
-  if ((maxValue && value > maxValue) || value < minValue) {
-    const suffix = typeof value_ === 'bigint' ? 'n' : ''
+  if ((maxValue && value_ > maxValue) || value_ < minValue) {
+    const suffix = typeof value === 'bigint' ? 'n' : ''
     throw new IntegerOutOfRangeError({
       max: maxValue ? `${maxValue}${suffix}` : undefined,
       min: `${minValue}${suffix}`,
       signed,
       size,
-      value: `${value_}${suffix}`,
+      value: `${value}${suffix}`,
     })
   }
 
   const stringValue = (
-    signed && value < 0 ? (1n << BigInt(size * 8)) + BigInt(value) : value
+    signed && value_ < 0 ? (1n << BigInt(size * 8)) + BigInt(value_) : value_
   ).toString(16)
 
   const hex =
@@ -258,30 +266,27 @@ Hex_fromNumber.parseError = (error: unknown) =>
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
- * Encodes a UTF-8 string into a hex string
+ * Encodes a UTF-8 string into a {@link Hex#Hex} value.
  *
- * - Docs: https://oxlib.sh/api/hex/fromString
-
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
  * Hex.fromString('Hello World!')
  * // '0x48656c6c6f20576f726c6421'
- * ```
  *
- * @example
- * ```ts
- * import { Hex } from 'ox'
  * Hex.fromString('Hello World!', { size: 32 })
  * // '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
  * ```
+ *
+ * @param value - The string value to encode.
+ * @param options -
+ * @returns The encoded {@link Hex#Hex} value.
  */
 export function Hex_fromString(
-  value_: string,
+  value: string,
   options: Hex_fromString.Options = {},
 ): Hex {
-  const value = encoder.encode(value_)
-  return Hex_fromBytes(value, options)
+  return Hex_fromBytes(encoder.encode(value), options)
 }
 
 export declare namespace Hex_fromString {

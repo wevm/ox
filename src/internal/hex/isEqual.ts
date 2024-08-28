@@ -8,14 +8,22 @@ import type { Hex } from '../hex/types.js'
  * Checks if two {@link Hex#Hex} values are equal.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
- * Hex.isEqual('0xdeadbeef', '0xdeadbeef') // true
- * Hex.isEqual('0xda', '0xba') // false
+ *
+ * Hex.isEqual('0xdeadbeef', '0xdeadbeef')
+ * // @log: true
+ *
+ * Hex.isEqual('0xda', '0xba')
+ * // @log: false
  * ```
+ *
+ * @param hexA - The first {@link Hex#Hex} value.
+ * @param hexB - The second {@link Hex#Hex} value.
+ * @returns `true` if the two {@link Hex#Hex} values are equal, `false` otherwise.
  */
-export function Hex_isEqual(a: Hex, b: Hex) {
-  return equalBytes(Bytes_fromHex(a), Bytes_fromHex(b))
+export function Hex_isEqual(hexA: Hex, hexB: Hex) {
+  return equalBytes(Bytes_fromHex(hexA), Bytes_fromHex(hexB))
 }
 
 export declare namespace Hex_isEqual {

@@ -5,7 +5,8 @@ import type { Kzg } from './types.js'
  * Defines a KZG interface.
  *
  * @example
- * ```ts
+ * ```ts twoslash
+ * // @noErrors
  * import * as cKzg from 'c-kzg'
  * import { Kzg } from 'ox'
  * import { Path } from 'ox/node'

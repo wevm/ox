@@ -7,10 +7,17 @@ import { Hex_size } from './size.js'
  * Returns a section of a {@link Bytes#Bytes} value given a start/end bytes offset.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
- * Hex.slice('0x0123456789', 1, 4) // '0x234567'
+ *
+ * Hex.slice('0x0123456789', 1, 4)
+ * // @log: '0x234567'
  * ```
+ *
+ * @param value - The {@link Hex#Hex} value to slice.
+ * @param start - The start offset (in bytes).
+ * @param end - The end offset (in bytes).
+ * @returns The sliced {@link Hex#Hex} value.
  */
 export function Hex_slice(
   value_: Hex,

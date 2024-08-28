@@ -5,14 +5,20 @@ import { Hex_assert } from './assert.js'
 /**
  * Checks if the given value is {@link Hex#Hex}.
  *
- * - Docs: https://oxlib.sh/api/hex/isHex
- *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
- * Hex.isHex('0x') // true
- * Hex.isHex(Bytes.from([1, 2, 3])) // false
+ *
+ * Hex.isHex('0x')
+ * // @log: true
+ *
+ * Hex.isHex(Bytes.from([1, 2, 3]))
+ * // @log: false
  * ```
+ *
+ * @param value - The value to check.
+ * @param options -
+ * @returns `true` if the value is a {@link Hex#Hex}, `false` otherwise.
  */
 export function Hex_isHex(
   value: unknown,
@@ -29,6 +35,7 @@ export function Hex_isHex(
 
 export declare namespace Hex_isHex {
   type Options = {
+    /** Checks if the {@link Hex#Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
   }
 

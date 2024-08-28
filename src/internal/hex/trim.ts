@@ -5,10 +5,15 @@ import type { Hex } from '../hex/types.js'
  * Trims leading zeros from a {@link Hex#Hex} value.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
- * Hex.trimLeft('0x00000000deadbeef') // '0xdeadbeef'
+ *
+ * Hex.trimLeft('0x00000000deadbeef')
+ * // @log: '0xdeadbeef'
  * ```
+ *
+ * @param value - The {@link Hex#Hex} value to trim.
+ * @returns The trimmed {@link Hex#Hex} value.
  */
 export function Hex_trimLeft(value: Hex): Hex_trimLeft.ReturnType {
   return trim(value, { dir: 'left' })
@@ -27,10 +32,15 @@ Hex_trimLeft.parseError = (error: unknown) => error as Hex_trimLeft.ErrorType
  * Trims trailing zeros from a {@link Hex#Hex} value.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
- * Hex.trimRight('0xdeadbeef00000000') // '0xdeadbeef'
+ *
+ * Hex.trimRight('0xdeadbeef00000000')
+ * // @log: '0xdeadbeef'
  * ```
+ *
+ * @param value - The {@link Hex#Hex} value to trim.
+ * @returns The trimmed {@link Hex#Hex} value.
  */
 export function Hex_trimRight(value: Hex): Hex_trimRight.ReturnType {
   return trim(value, { dir: 'right' })

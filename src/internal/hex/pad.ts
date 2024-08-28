@@ -6,11 +6,16 @@ import type { Hex } from '../hex/types.js'
  * Pads a {@link Hex#Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.padLeft('0x1234', 4)
- * // '0x00001234'
+ * // @log: '0x00001234'
  * ```
+ *
+ * @param value - The {@link Hex#Hex} value to pad.
+ * @param size - The size (in bytes) of the output hex value.
+ * @returns The padded {@link Hex#Hex} value.
  */
 export function Hex_padLeft(
   value: Hex,
@@ -33,9 +38,14 @@ Hex_padLeft.parseError = (error: unknown) => error as Hex_padLeft.ErrorType
  * @example
  * ```ts
  * import { Hex } from 'ox'
+ *
  * Hex.padRight('0x1234', 4)
- * // '0x12340000'
+ * // @log: '0x12340000'
  * ```
+ *
+ * @param value - The {@link Hex#Hex} value to pad.
+ * @param size - The size (in bytes) of the output hex value.
+ * @returns The padded {@link Hex#Hex} value.
  */
 export function Hex_padRight(
   value: Hex,

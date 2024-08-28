@@ -6,11 +6,17 @@ import type { Hex } from '../hex/types.js'
  * Asserts if the given value is {@link Hex#Hex}.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { Hex } from 'ox'
+ *
  * Hex.assert('abc')
- * // InvalidHexValueTypeError: Value `"abc"` of type `string` is an invalid hex type. Hex types must be represented as `"0x\${string}"`.
+ * // @error: InvalidHexValueTypeError:
+ * // @error: Value `"abc"` of type `string` is an invalid hex type.
+ * // @error: Hex types must be represented as `"0x\${string}"`.
  * ```
+ *
+ * @param value - The value to assert.
+ * @param options -
  */
 export function Hex_assert(
   value: unknown,
@@ -27,6 +33,7 @@ export function Hex_assert(
 
 export declare namespace Hex_assert {
   type Options = {
+    /** Checks if the {@link Hex#Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
   }
 
