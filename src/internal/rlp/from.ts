@@ -17,16 +17,24 @@ type Encodable = {
  *
  * @example
  * ```ts twoslash
- * import { Rlp } from 'ox'
- * Rlp.encode('0x68656c6c6f20776f726c64')
- * // 0x8b68656c6c6f20776f726c64
+ * import { Bytes, Rlp } from 'ox'
+ *
+ * Rlp.from('0x68656c6c6f20776f726c64', 'Hex')
+ * // @log: 0x8b68656c6c6f20776f726c64
+ *
+ * Rlp.from(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]), 'Bytes')
+ * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
+ *
+ * @param value - The {@link Bytes#Bytes} or {@link Hex#Hex} value to encode.
+ * @param to - The type to convert the RLP value to.
+ * @returns The RLP value.
  */
 export function Rlp_from<
-  bytes extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
+  value extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
   to extends 'Hex' | 'Bytes',
->(bytes: bytes, to: to | 'Hex' | 'Bytes'): Rlp_from.ReturnType<to> {
-  const encodable = getEncodable(bytes)
+>(value: value, to: to | 'Hex' | 'Bytes'): Rlp_from.ReturnType<to> {
+  const encodable = getEncodable(value)
   const cursor = createCursor(new Uint8Array(encodable.length))
   encodable.encode(cursor)
 
@@ -53,20 +61,23 @@ Rlp_from.parseError = (error: unknown) => error as Rlp_from.ErrorType
 /**
  * Encodes a {@link Bytes#Bytes} value into a Recursive-Length Prefix (RLP) value.
  *
- * - Docs: https://oxlib.sh/api/rlp/fromBytes
- *
  * @example
  * ```ts twoslash
- * import { Rlp } from 'ox'
- * Rlp.fromBytes(Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]))
- * // Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
+ * import { Bytes, Rlp } from 'ox'
+ *
+ * Rlp.fromBytes(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]))
+ * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
+ *
+ * @param bytes - The {@link Bytes#Bytes} value to encode.
+ * @param to - The type to convert the RLP value to.
+ * @returns The RLP value.
  */
 export function Rlp_fromBytes<to extends 'Hex' | 'Bytes' = 'Bytes'>(
   bytes: RecursiveArray<Bytes>,
-  to_: to | 'Hex' | 'Bytes' | undefined = 'Bytes',
+  to: to | 'Hex' | 'Bytes' | undefined = 'Bytes',
 ): Rlp_fromBytes.ReturnType<to> {
-  return Rlp_from(bytes, to_)
+  return Rlp_from(bytes, to)
 }
 
 export declare namespace Rlp_fromBytes {
@@ -81,13 +92,17 @@ Rlp_fromBytes.parseError = (error: unknown) => error as Rlp_fromBytes.ErrorType
 /**
  * Encodes a {@link Hex#Hex} value into a Recursive-Length Prefix (RLP) value.
  *
- *
  * @example
  * ```ts twoslash
  * import { Rlp } from 'ox'
+ *
  * Rlp.fromHex('0x68656c6c6f20776f726c64')
- * // 0x8b68656c6c6f20776f726c64
+ * // @log: 0x8b68656c6c6f20776f726c64
  * ```
+ *
+ * @param hex - The {@link Hex#Hex} value to encode.
+ * @param to - The type to convert the RLP value to.
+ * @returns The RLP value.
  */
 export function Rlp_fromHex<to extends 'Hex' | 'Bytes' = 'Hex'>(
   hex: RecursiveArray<Hex>,

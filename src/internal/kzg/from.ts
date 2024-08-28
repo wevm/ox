@@ -16,10 +16,8 @@ import type { Kzg } from './types.js'
  * const kzg = Kzg.from(cKzg)
  * ```
  */
-export function Kzg_from({
-  blobToKzgCommitment,
-  computeBlobKzgProof,
-}: Kzg_from.Parameters): Kzg_from.ReturnType {
+export function Kzg_from(parameters: Kzg_from.Parameters): Kzg_from.ReturnType {
+  const { blobToKzgCommitment, computeBlobKzgProof } = parameters
   return {
     blobToKzgCommitment,
     computeBlobKzgProof,

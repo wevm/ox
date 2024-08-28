@@ -13,16 +13,24 @@ import type { RecursiveArray } from '../types.js'
  *
  * @example
  * ```ts twoslash
- * import { Rlp } from 'ox'
+ * import { Bytes, Rlp } from 'ox'
+ *
  * Rlp.to('0x8b68656c6c6f20776f726c64', 'Hex')
- * // 0x68656c6c6f20776f726c64
+ * // @log: 0x68656c6c6f20776f726c64
+ *
+ * Rlp.to(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]), 'Bytes')
+ * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
+ *
+ * @param value - The value to decode.
+ * @param to - The type to convert the RLP value to.
+ * @returns The decoded {@link Bytes#Bytes} or {@link Hex#Hex} value.
  */
 export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
   value: value,
-  to_: to | 'Hex' | 'Bytes',
+  to: to | 'Hex' | 'Bytes',
 ): Rlp_to.ReturnType<to> {
-  const to = to_ ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
+  const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
 
   const bytes = (() => {
     if (typeof value === 'string') {
@@ -36,7 +44,7 @@ export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
   const cursor = createCursor(bytes, {
     recursiveReadLimit: Number.POSITIVE_INFINITY,
   })
-  const result = decodeRlpCursor(cursor, to)
+  const result = decodeRlpCursor(cursor, to_)
 
   return result as Rlp_to.ReturnType<to>
 }
@@ -66,6 +74,9 @@ Rlp_to.parseError = (error: unknown) => error as Rlp_to.ErrorType
  * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
  * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
+ *
+ * @param value - The value to decode.
+ * @returns The decoded {@link Bytes#Bytes} value.
  */
 export function Rlp_toBytes(value: Bytes | Hex): Rlp_toBytes.ReturnType {
   return Rlp_to(value, 'Bytes')
@@ -88,6 +99,9 @@ Rlp_toBytes.parseError = (error: unknown) => error as Rlp_toBytes.ErrorType
  * Rlp.toHex('0x8b68656c6c6f20776f726c64')
  * // 0x68656c6c6f20776f726c64
  * ```
+ *
+ * @param value - The value to decode.
+ * @returns The decoded {@link Hex#Hex} value.
  */
 export function Rlp_toHex(value: Bytes | Hex): Rlp_toHex.ReturnType {
   return Rlp_to(value, 'Hex')
