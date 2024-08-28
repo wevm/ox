@@ -1,5 +1,3 @@
-import type { Abi, AbiParameter } from 'abitype'
-
 import { Address_isAddress } from '../address/isAddress.js'
 import type { Address } from '../address/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
@@ -10,10 +8,12 @@ import { AbiItemAmbiguityError } from './errors.js'
 import { Abi_getSelector } from './getSelector.js'
 import { Abi_getSignatureHash } from './getSignatureHash.js'
 import type {
+  Abi,
   Abi_ExtractItemForArgs,
   Abi_Item,
   Abi_ItemArgs,
   Abi_ItemName,
+  Abi_Parameter,
   Widen,
 } from './types.js'
 
@@ -195,7 +195,10 @@ Abi_extractItem.parseError = (error: unknown) =>
   error as Abi_extractItem.ErrorType
 
 /** @internal */
-export function isArgOfType(arg: unknown, abiParameter: AbiParameter): boolean {
+export function isArgOfType(
+  arg: unknown,
+  abiParameter: Abi_Parameter,
+): boolean {
   const argType = typeof arg
   const abiParameterType = abiParameter.type
   switch (abiParameterType) {
@@ -213,7 +216,7 @@ export function isArgOfType(arg: unknown, abiParameter: AbiParameter): boolean {
           (component, index) => {
             return isArgOfType(
               Object.values(arg as unknown[] | Record<string, unknown>)[index],
-              component as AbiParameter,
+              component as Abi_Parameter,
             )
           },
         )
@@ -242,7 +245,7 @@ export function isArgOfType(arg: unknown, abiParameter: AbiParameter): boolean {
               ...abiParameter,
               // Pop off `[]` or `[M]` from end of type
               type: abiParameterType.replace(/(\[[0-9]{0,}\])$/, ''),
-            } as AbiParameter),
+            } as Abi_Parameter),
           )
         )
       }
@@ -254,10 +257,10 @@ export function isArgOfType(arg: unknown, abiParameter: AbiParameter): boolean {
 
 /** @internal */
 export function getAmbiguousTypes(
-  sourceParameters: readonly AbiParameter[],
-  targetParameters: readonly AbiParameter[],
+  sourceParameters: readonly Abi_Parameter[],
+  targetParameters: readonly Abi_Parameter[],
   args: Abi_ItemArgs,
-): AbiParameter['type'][] | undefined {
+): Abi_Parameter['type'][] | undefined {
   for (const parameterIndex in sourceParameters) {
     const sourceParameter = sourceParameters[parameterIndex]!
     const targetParameter = targetParameters[parameterIndex]!

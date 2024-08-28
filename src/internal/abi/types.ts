@@ -6,12 +6,12 @@ import type {
   AbiFunction,
   AbiParameter,
   AbiParametersToPrimitiveTypes,
-  Abi as Abi_,
   ResolvedRegister,
+  Abi as abitype_Abi,
 } from 'abitype'
 import type { IsUnion, UnionToTuple } from '../types.js'
 
-export type Abi = Abi_
+export type Abi = abitype_Abi
 export type Abi_Item = Abi[number]
 
 export type Abi_Constructor = AbiConstructor

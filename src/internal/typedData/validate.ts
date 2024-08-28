@@ -1,5 +1,3 @@
-import type { TypedData, TypedDataParameter } from 'abitype'
-
 import {
   InvalidAddressError,
   InvalidAddressInputError,
@@ -15,7 +13,11 @@ import {
   Solidity_integerRegex,
 } from '../solidity/constants.js'
 import { InvalidPrimaryTypeError } from './errors.js'
-import type { TypedData_Definition } from './types.js'
+import type {
+  TypedData,
+  TypedData_Definition,
+  TypedData_Parameter,
+} from './types.js'
 
 /**
  * Validates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
@@ -52,12 +54,12 @@ import type { TypedData_Definition } from './types.js'
 export function TypedData_validate<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
->(value: TypedData_validate.Value<typedData, primaryType>) {
+>(value: TypedData_validate.Value<typedData, primaryType>): void {
   const { domain, message, primaryType, types } =
     value as unknown as TypedData_validate.Value
 
   const validateData = (
-    struct: readonly TypedDataParameter[],
+    struct: readonly TypedData_Parameter[],
     data: Record<string, unknown>,
   ) => {
     for (const param of struct) {

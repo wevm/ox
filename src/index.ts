@@ -1,6 +1,28 @@
 /**
  * The **Abi** Module provides a set of utility functions for encoding, decoding,
  * and working with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ *
+ * const data = Abi.encodeParameters(
+ *   ['uint256', 'boolean', 'string'],
+ *   [1n, true, 'hello'],
+ * )
+ * // @log: '0x...'
+
+ * const args = Abi.decodeParameters(['uint256', 'boolean', 'string'], data)
+ * // @log: [1n, true, 'hello']
+ * ```
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ *
+ * const selector = Abi.getSelector('approve(address,uint256)')
+ * // @log: '0x095ea7b3'
+ * ```
  */
 export * as Abi from './Abi.js'
 

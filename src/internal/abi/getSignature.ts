@@ -1,6 +1,8 @@
-import { type Abi, formatAbiItem } from 'abitype'
+import { formatAbiItem } from 'abitype'
+
 import { BaseError } from '../errors/base.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import type { Abi } from './types.js'
 
 /**
  * Computes the stringified signature for a given {@link Abi#Item}.

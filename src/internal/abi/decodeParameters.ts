@@ -1,4 +1,4 @@
-import { type AbiParameter, parseAbiParameter } from 'abitype'
+import { parseAbiParameter } from 'abitype'
 
 import { Bytes_fromHex } from '../bytes/from.js'
 import { Bytes_size } from '../bytes/size.js'
@@ -25,6 +25,7 @@ import {
   AbiDecodingZeroDataError,
   InvalidAbiTypeError,
 } from './errors.js'
+import type { Abi_Parameter } from './types.js'
 
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.
@@ -71,7 +72,7 @@ export function Abi_decodeParameters<
   if (Bytes_size(bytes) && Bytes_size(bytes) < 32)
     throw new AbiDecodingDataSizeTooSmallError({
       data: typeof data === 'string' ? data : Hex_fromBytes(data),
-      parameters: parameters as readonly AbiParameter[],
+      parameters: parameters as readonly Abi_Parameter[],
       size: Bytes_size(bytes),
     })
 
@@ -82,7 +83,7 @@ export function Abi_decodeParameters<
       typeof parameters[i] === 'string'
         ? parseAbiParameter(parameters[i] as string)
         : parameters[i]
-    ) as AbiParameter
+    ) as Abi_Parameter
     cursor.setPosition(consumed)
     const [data, consumed_] = decodeParameter(cursor, param, {
       staticPosition: 0,
@@ -100,7 +101,7 @@ export declare namespace Abi_decodeParameters {
   > = IsomorphicAbiParametersToPrimitiveTypes<
     parameters extends readonly IsomorphicAbiParameter[]
       ? parameters
-      : AbiParameter[]
+      : Abi_Parameter[]
   >
 
   type ErrorType =
@@ -122,7 +123,7 @@ Abi_decodeParameters.parseError = (error: unknown) =>
 /** @internal */
 export function decodeParameter(
   cursor: Cursor,
-  param: AbiParameter,
+  param: Abi_Parameter,
   { staticPosition }: { staticPosition: number },
 ) {
   const arrayComponents = getArrayComponents(param.type)
@@ -181,7 +182,7 @@ export declare namespace decodeAddress {
 /** @internal */
 export function decodeArray(
   cursor: Cursor,
-  param: AbiParameter,
+  param: Abi_Parameter,
   { length, staticPosition }: { length: number | null; staticPosition: number },
 ) {
   // If the length of the array is not known in advance (dynamic array),
@@ -276,7 +277,7 @@ export declare namespace decodeBool {
 /** @internal */
 export function decodeBytes(
   cursor: Cursor,
-  param: AbiParameter,
+  param: Abi_Parameter,
   { staticPosition }: { staticPosition: number },
 ) {
   const [_, size] = param.type.split('bytes')
@@ -316,7 +317,7 @@ export declare namespace decodeBytes {
 }
 
 /** @internal */
-export function decodeNumber(cursor: Cursor, param: AbiParameter) {
+export function decodeNumber(cursor: Cursor, param: Abi_Parameter) {
   const signed = param.type.startsWith('int')
   const size = Number.parseInt(param.type.split('int')[1] || '256')
   const value = cursor.readBytes(32)
@@ -337,8 +338,8 @@ export declare namespace decodeNumber {
 }
 
 /** @internal */
-export type TupleAbiParameter = AbiParameter & {
-  components: readonly AbiParameter[]
+export type TupleAbiParameter = Abi_Parameter & {
+  components: readonly Abi_Parameter[]
 }
 
 /** @internal */
@@ -431,7 +432,7 @@ export function decodeString(
 }
 
 /** @internal */
-export function hasDynamicChild(param: AbiParameter) {
+export function hasDynamicChild(param: Abi_Parameter) {
   const { type } = param
   if (type === 'string') return true
   if (type === 'bytes') return true
@@ -442,7 +443,7 @@ export function hasDynamicChild(param: AbiParameter) {
   const arrayComponents = getArrayComponents(param.type)
   if (
     arrayComponents &&
-    hasDynamicChild({ ...param, type: arrayComponents[1] } as AbiParameter)
+    hasDynamicChild({ ...param, type: arrayComponents[1] } as Abi_Parameter)
   )
     return true
 

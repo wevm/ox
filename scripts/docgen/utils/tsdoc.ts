@@ -118,6 +118,6 @@ export function renderDocNode(
   return result.replaceAll(
     /\{@link ((?<module>\w+)#(?<type>\w+))\}/g,
     // TODO: Link to correct page and location
-    '[$<module>.$<type>](TODO)', // /gen/$<module>/$<type>
+    '[$<module>.$<type>](TODO)', // /api/$<module>/$<type>
   )
 }

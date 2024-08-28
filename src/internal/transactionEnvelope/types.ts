@@ -1,4 +1,4 @@
-import type { Address } from 'abitype'
+import type { Address } from '../address/types.js'
 import type { Hex } from '../hex/types.js'
 
 export type TransactionEnvelope_Base<type extends string = string> = {

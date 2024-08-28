@@ -1,8 +1,10 @@
-import type { TypedData, TypedDataParameter } from 'abitype'
-
 import type { GlobalErrorType } from '../errors/error.js'
 import { stringify } from '../stringify.js'
-import type { TypedData_Definition } from './types.js'
+import type {
+  TypedData,
+  TypedData_Definition,
+  TypedData_Parameter,
+} from './types.js'
 
 /**
  * Serializes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema into string.
@@ -50,7 +52,7 @@ export function TypedData_serialize<
   } = value as unknown as TypedData_serialize.Value
 
   const normalizeData = (
-    struct: readonly TypedDataParameter[],
+    struct: readonly TypedData_Parameter[],
     value: Record<string, unknown>,
   ) => {
     const data = { ...value }

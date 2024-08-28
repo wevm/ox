@@ -1,1 +1,3 @@
-export type { Address } from 'abitype'
+import type { Address as abitype_Address } from 'abitype'
+
+export type Address = abitype_Address

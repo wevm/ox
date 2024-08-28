@@ -61,6 +61,9 @@ importers:
       c-kzg:
         specifier: ^2.1.2
         version: 2.1.2
+      dedent:
+        specifier: ^1.5.3
+        version: 1.5.3
       eslint:
         specifier: ^9.9.0
         version: 9.9.0(jiti@1.21.6)
@@ -2039,6 +2042,7 @@ packages:
 
   bun@1.1.24:
     resolution: {integrity: sha512-vZt5zNVaoNTSlNprdVdQVZInBcGC2QSik6o9ZsMzuYiiUEAEqpRwwMXAYDUN85mt2FNnsGvmk/8xVlUXS7IzEw==}
+    cpu: [arm64, x64]
     os: [darwin, linux, win32]
     hasBin: true
 

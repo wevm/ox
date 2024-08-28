@@ -1,4 +1,5 @@
 import * as model from '@microsoft/api-extractor-model'
+import dedent from 'dedent'
 import fs from 'fs-extra'
 
 import { type Data, handleItem } from './utils/handleItem.js'
@@ -9,9 +10,12 @@ import { extractNamespaceDocComments } from './utils/tsdoc.js'
 
 // TODO
 // - Expand properties/types and lookup links
+// - Show optional properties
+// - Show optional params
 // - Show list of references under complex types
 // - Link errors/types
 // - Remove underscores for names
+// - Add errors and types page for each module
 
 // Vocs TODO
 // - Throw build if twoslash block has errors
@@ -38,7 +42,7 @@ const entrypointItem = pkg.members.find(
 if (!entrypointItem) throw new Error('Could not find entrypoint item')
 
 const sidebar = []
-const pagesDir = './site/pages/gen'
+const pagesDir = './site/pages/api'
 
 const moduleItems = entrypointItem.members.filter(
   (x) =>
@@ -51,11 +55,17 @@ const moduleItems = entrypointItem.members.filter(
 const moduleDocComments = extractNamespaceDocComments('./src/index.ts')
 
 for (const item of moduleItems) {
-  const baseLink = `/gen/${item.displayName}`
+  const baseLink = `/api/${item.displayName}`
 
-  const errors: { member: model.ApiItem }[] = []
-  const functions: { member: model.ApiItem; link: string }[] = []
-  const types: { member: model.ApiItem }[] = []
+  const errors: { description: string; member: model.ApiItem; link: string }[] =
+    []
+  const functions: {
+    description: string
+    member: model.ApiItem
+    link: string
+  }[] = []
+  const types: { description: string; member: model.ApiItem; link: string }[] =
+    []
 
   const items = []
   for (const member of item.members) {
@@ -72,21 +82,24 @@ for (const item of moduleItems) {
         link,
         id: lookupItem.id,
       })
-      functions.push({
-        member,
-        link,
-      })
+      const description =
+        lookupItem.comment?.summary.split('\n')[0]?.trim() ?? 'TODO'
+      functions.push({ description, member, link })
     }
 
     if (member.kind === model.ApiItemKind.TypeAlias) {
-      types.push({ member })
+      const description =
+        lookupItem.comment?.summary.split('\n')[0]?.trim() ?? 'TODO'
+      types.push({ description, member, link: '/TODO' })
     }
 
     if (
       member.kind === model.ApiItemKind.Class &&
       member.displayName.endsWith('Error')
     ) {
-      errors.push({ member })
+      const description =
+        lookupItem.comment?.summary.split('\n')[0]?.trim() ?? 'TODO'
+      errors.push({ description, member, link: '/TODO' })
     }
   }
 
@@ -110,17 +123,47 @@ ${examples.length ? '## Examples' : ''}
 
 ${examples.join('\n\n')}
 
-${functions.length ? '## Functions' : ''}
+${
+  functions.length
+    ? (() => {
+        return dedent`
+## Functions
 
-${functions.map((x) => `- [\`${item.displayName}.${x.member.displayName}\`](${x.link})`).join('\n')}
+| Name | Description |
+| ---- | ----------- |
+${functions.map((x) => `| [\`${item.displayName}.${x.member.displayName}\`](${x.link}) | ${x.description} |`).join('\n')}
+`
+      })()
+    : ''
+}
 
-${types.length ? '## Types' : ''}
+${
+  types.length
+    ? (() => {
+        return dedent`
+## Types
 
-${types.map((x) => `- \`${item.displayName}.${x.member.displayName}\``).join('\n')}
+| Name | Description |
+| ---- | ----------- |
+${types.map((x) => `| [\`${item.displayName}.${x.member.displayName}\`](${x.link}) | ${x.description} |`).join('\n')}
+`
+      })()
+    : ''
+}
 
-${errors.length ? '## Errors' : ''}
+${
+  errors.length
+    ? (() => {
+        return dedent`
+## Errors
 
-${errors.map((x) => `- \`${item.displayName}.${x.member.displayName}\``).join('\n')}
+| Name | Description |
+| ---- | ----------- |
+${errors.map((x) => `| [\`${item.displayName}.${x.member.displayName}\`](${x.link}) | ${x.description} |`).join('\n')}
+`
+      })()
+    : ''
+}
 `
   const dir = `${pagesDir}/${item.displayName}`
   fs.ensureDirSync(dir)
@@ -135,7 +178,7 @@ ${errors.map((x) => `- \`${item.displayName}.${x.member.displayName}\``).join('\
       ['Errors'].includes(x.displayName),
   )
   if (!errorItem) throw new Error('Could not find error item')
-  const baseLink = `/gen/${errorItem.displayName}`
+  const baseLink = `/api/${errorItem.displayName}`
 
   let content = `---
 showOutline: 1

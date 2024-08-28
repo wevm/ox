@@ -1,9 +1,8 @@
-import type { AbiFunction } from 'abitype'
-
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_slice } from '../hex/slice.js'
 import type { Hex } from '../hex/types.js'
 import { Abi_getSignatureHash } from './getSignatureHash.js'
+import type { Abi_Function } from './types.js'
 
 /**
  * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link Abi#Item}.
@@ -35,7 +34,7 @@ import { Abi_getSignatureHash } from './getSignatureHash.js'
  * @param abiItem - The ABI item to compute the selector for. Can be a signature or an ABI item for an error, event, function, etc.
  * @returns The first 4 bytes of the {@link Hash#keccak256} hash of the function signature.
  */
-export function Abi_getSelector(abiItem: string | AbiFunction): Hex {
+export function Abi_getSelector(abiItem: string | Abi_Function): Hex {
   return Hex_slice(Abi_getSignatureHash(abiItem), 0, 4)
 }
 

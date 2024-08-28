@@ -1,4 +1,4 @@
-import type { Address } from 'abitype'
+import type { Address } from '../address/types.js'
 
 /**
  * [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields

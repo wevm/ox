@@ -1,6 +1,5 @@
-import type { TypedData } from 'abitype'
-
 import { BaseError } from '../errors/base.js'
+import type { TypedData } from './types.js'
 
 export class InvalidPrimaryTypeError extends BaseError {
   override readonly name = 'InvalidPrimaryTypeError'

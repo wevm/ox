@@ -33,8 +33,6 @@ export class AbiDecodingZeroDataError extends BaseError {
 }
 
 /**
- * ### Why?
- *
  * The length of the array value does not match the length specified in the corresponding ABI parameter.
  *
  * ### Example
@@ -77,8 +75,6 @@ export class AbiEncodingArrayLengthMismatchError extends BaseError {
 }
 
 /**
- * ### Why?
- *
  * The size of the bytes value does not match the size specified in the corresponding ABI parameter.
  *
  * ### Example
@@ -119,8 +115,6 @@ export class AbiEncodingBytesSizeMismatchError extends BaseError {
 }
 
 /**
- * ### Why?
- *
  * The length of the values to encode does not match the length of the ABI parameters.
  *
  * ### Example
@@ -163,8 +157,6 @@ export class AbiEncodingLengthMismatchError extends BaseError {
 }
 
 /**
- * ### Why?
- *
  * The value provided is not a valid array as specified in the corresponding ABI parameter.
  *
  * ### Example
