@@ -9,8 +9,16 @@ export * as Abi from './Abi.js'
  */
 export * as Address from './Address.js'
 
+/**
+ * The **Authorization** Module provides a set of utility functions for working with
+ * [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization lists & tuples.
+ */
 export * as Authorization from './Authorization.js'
 
+/**
+ * The **Blobs** Module provides a set of utility functions for working with
+ * [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
+ */
 export * as Blobs from './Blobs.js'
 
 /**
@@ -23,6 +31,10 @@ export * as Caches from './Caches.js'
 
 export * as Constants from './Constants.js'
 
+/**
+ * The **ContractAddress** Module provides a set of utility functions for computing
+ * Contract Addresses.
+ */
 export * as ContractAddress from './ContractAddress.js'
 
 export * as Errors from './Errors.js'
@@ -48,6 +60,11 @@ export * as Hex from './Hex.js'
 
 export * as Internal from './Internal.js'
 
+/**
+ * The **Kzg** Module provides a set of utility functions for working with
+ * KZG Commitments.
+ * Mainly for [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
+ */
 export * as Kzg from './Kzg.js'
 
 /**
@@ -76,6 +93,10 @@ export * as Secp256k1 from './Secp256k1.js'
  */
 export * as Signature from './Signature.js'
 
+/**
+ * The **Siwe** Module provides a set of utility functions for working with
+ * [EIP-4361: Sign-In with Ethereum](https://eips.ethereum.org/EIPS/eip-4361).
+ */
 export * as Siwe from './Siwe.js'
 
 /**
@@ -84,16 +105,40 @@ export * as Siwe from './Siwe.js'
  */
 export * as TransactionEnvelope from './TransactionEnvelope.js'
 
+/**
+ * The **TransactionEnvelopeLegacy** Module provides a set of utility functions for working
+ * with **Legacy Transaction Envelopes**.
+ */
 export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
 
+/**
+ * The **TransactionEnvelopeEip1559** Module provides a set of utility functions for working
+ * with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559).
+ */
 export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
 
+/**
+ * The **TransactionEnvelopeEip2930** Module provides a set of utility functions for working
+ * with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930).
+ */
 export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
 
+/**
+ * The **TransactionEnvelopeEip4844** Module provides a set of utility functions for working
+ * with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844).
+ */
 export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
 
+/**
+ * The **TransactionEnvelopeEip7702** Module provides a set of utility functions for working
+ * with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702).
+ */
 export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
 
+/**
+ * The **TypedData** Module provides a set of utility functions for working
+ * with [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).
+ */
 export * as TypedData from './TypedData.js'
 
 export * as Types from './Types.js'
