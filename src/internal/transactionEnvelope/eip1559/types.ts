@@ -1,6 +1,5 @@
 import type { AccessList } from '../../accessList/types.js'
-import type { Signature, Signature_Legacy } from '../../signature/types.js'
-import type { Compute, ExactPartial, OneOf } from '../../types.js'
+import type { Compute } from '../../types.js'
 import type { TransactionEnvelope_Base } from '../types.js'
 
 export type TransactionEnvelopeEip1559_Type = 'eip1559'
@@ -15,7 +14,7 @@ export type TransactionEnvelopeEip1559 = Compute<
     maxFeePerGas?: bigint | undefined
     /** Max priority fee per gas (in wei). */
     maxPriorityFeePerGas?: bigint | undefined
-  } & OneOf<ExactPartial<Signature> | ExactPartial<Signature_Legacy>>
+  }
 >
 
 export type TransactionEnvelopeEip1559_SerializedType = '0x02'

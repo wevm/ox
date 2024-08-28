@@ -17,23 +17,54 @@ import type {
  * Serializes a {@link TransactionEnvelope#Eip2930}.
  *
  * @example
- * ```ts
- * import { TransactionEnvelope } from 'ox'
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TransactionEnvelope.fromEip2930({
- *   accessList: [...],
- *   gasPrice: 1000000n,
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
  * })
  *
- * const serialized = TransactionEnvelope.serializeEip2930(envelope)
- * // '0x01...'
+ * const serialized = TransactionEnvelopeEip2930.serialize(envelope) // [!code focus]
  * ```
+ *
+ * @example
+ * ### Attaching Signatures
+ *
+ * It is possible to attach a `signature` to the serialized Transaction Envelope.
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelopeEip2930, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip2930.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const serialized = TransactionEnvelopeEip2930.serialize(envelope, { // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ *
+ * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
+ * ```
+ *
+ * @param envelope - The Transaction Envelope to serialize.
+ * @param options -
+ * @returns The serialized Transaction Envelope.
  */
 export function TransactionEnvelopeEip2930_serialize(
   envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
   options: TransactionEnvelopeEip2930_serialize.Options = {},
-): TransactionEnvelopeEip2930_serialize.ReturnType {
+): TransactionEnvelopeEip2930_Serialized {
   const { chainId, gas, data, input, nonce, to, value, accessList, gasPrice } =
     envelope
 
@@ -66,8 +97,6 @@ export declare namespace TransactionEnvelopeEip2930_serialize {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
   }
-
-  type ReturnType = TransactionEnvelopeEip2930_Serialized
 
   type ErrorType =
     | TransactionEnvelopeEip2930_assert.ErrorType

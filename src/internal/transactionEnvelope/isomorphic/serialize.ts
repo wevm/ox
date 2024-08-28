@@ -31,8 +31,36 @@ import type {
  * const serialized = TransactionEnvelope.serialize(envelope) // [!code focus]
  * ```
  *
- * @param envelope - The {@link TransactionEnvelope#TransactionEnvelope} to serialize.
- * @returns The serialized {@link TransactionEnvelope#TransactionEnvelope}.
+ * @example
+ * ### Attaching Signatures
+ *
+ * It is possible to attach a `signature` to the serialized Transaction Envelope.
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelope, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelope.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const serialized = TransactionEnvelope.serialize(envelope, { // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ *
+ * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
+ * ```
+ *
+ * @param envelope - The Transaction Envelope to serialize.
+ * @returns The serialized Transaction Envelope.
  */
 export function TransactionEnvelope_serialize<
   envelope extends TransactionEnvelope,

@@ -15,22 +15,56 @@ import type {
  * Serializes a {@link TransactionEnvelope#Legacy}.
  *
  * @example
- * ```ts
- * import { TransactionEnvelope } from 'ox'
+ * ```ts twoslash
+ * // @noErrors
+ * import { TransactionEnvelopeLegacy } from 'ox'
  *
- * const envelope = TransactionEnvelope.fromLegacy({
- *   gasPrice: 1000000n,
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
  * })
  *
- * const serialized = TransactionEnvelope.serializeLegacy(envelope)
- * // '0x...'
+ * const serialized = TransactionEnvelopeLegacy.serialize(envelope) // [!code focus]
  * ```
+ *
+ * @example
+ * ### Attaching Signatures
+ *
+ * It is possible to attach a `signature` to the serialized Transaction Envelope.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Secp256k1, TransactionEnvelopeLegacy, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const serialized = TransactionEnvelopeLegacy.serialize(envelope, { // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ *
+ * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
+ * ```
+ *
+ * @param envelope - The Transaction Envelope to serialize.
+ * @param options -
+ * @returns The serialized Transaction Envelope.
  */
 export function TransactionEnvelopeLegacy_serialize(
   envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
   options: TransactionEnvelopeLegacy_serialize.Options = {},
-): TransactionEnvelopeLegacy_serialize.ReturnType {
+): TransactionEnvelopeLegacy_Serialized {
   const { chainId = 0, gas, data, input, nonce, to, value, gasPrice } = envelope
 
   TransactionEnvelopeLegacy_assert(envelope)
@@ -94,9 +128,7 @@ export function TransactionEnvelopeLegacy_serialize(
       '0x',
     ]
 
-  return Rlp_fromHex(
-    serializedTransaction,
-  ) as TransactionEnvelopeLegacy_Serialized
+  return Rlp_fromHex(serializedTransaction) as never
 }
 
 export declare namespace TransactionEnvelopeLegacy_serialize {
@@ -104,8 +136,6 @@ export declare namespace TransactionEnvelopeLegacy_serialize {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
   }
-
-  type ReturnType = TransactionEnvelopeLegacy_Serialized
 
   type ErrorType =
     | TransactionEnvelopeLegacy_assert.ErrorType

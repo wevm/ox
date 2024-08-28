@@ -42,9 +42,46 @@ import type {
  * ```
  *
  * @example
+ * ### Attaching Signatures
+ *
+ * It is possible to attach a `signature` to the transaction envelope.
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelope, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelope.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const envelope_signed = TransactionEnvelope.from(envelope, { // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * // @log: {
+ * // @log:   chainId: 1,
+ * // @log:   maxFeePerGas: 10000000000n,
+ * // @log:   maxPriorityFeePerGas: 1000000000n,
+ * // @log:   to: '0x0000000000000000000000000000000000000000',
+ * // @log:   type: 'eip1559',
+ * // @log:   value: 1000000000000000000n,
+ * // @log:   r: 125...n,
+ * // @log:   s: 642...n,
+ * // @log:   yParity: 0,
+ * // @log: }
+ * ```
+ *
+ * @example
  * ### From Serialized
  *
- * It is possible to instantiate a {@link TransactionEnvelope#TransactionEnvelope} from a {@link TransactionEnvelope#Serialized} value.
+ * It is possible to instantiate a Transaction Envelope from a {@link TransactionEnvelope#Serialized} value.
  *
  * ```ts twoslash
  * import { TransactionEnvelope } from 'ox'
@@ -59,6 +96,7 @@ import type {
  * // @log:   value: 1000000000000000000n,
  * // @log: }
  * ```
+ *
  *
  * @param value - The arbitrary value to instantiate a {@link TransactionEnvelope#TransactionEnvelope} from.
  * @param options -

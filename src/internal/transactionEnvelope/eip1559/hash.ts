@@ -5,10 +5,27 @@ import { TransactionEnvelopeEip1559_serialize } from './serialize.js'
 import type { TransactionEnvelopeEip1559 } from './types.js'
 
 /**
- * Hashes a {@link TransactionEnvelope#Eip1559} for signing.
+ * Hashes a {@link TransactionEnvelope#Eip1559}. This is the "transaction hash".
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip1559 } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   maxFeePerGas: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const hash = TransactionEnvelopeEip1559.hash(envelope) // [!code focus]
+ * ```
+ *
+ * @param envelope - The EIP-1559 Transaction Envelope to hash.
+ * @param options -
+ * @returns The hash of the transaction envelope.
  */
 export function TransactionEnvelopeEip1559_hash(
   envelope: TransactionEnvelopeEip1559,

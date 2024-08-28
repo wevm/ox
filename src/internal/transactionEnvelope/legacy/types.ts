@@ -1,5 +1,4 @@
-import type { Signature_Legacy } from '../../signature/types.js'
-import type { Branded, Compute, ExactPartial } from '../../types.js'
+import type { Branded, Compute } from '../../types.js'
 import type { TransactionEnvelope_Base } from '../types.js'
 
 export type TransactionEnvelopeLegacy_Type = 'legacy'
@@ -10,7 +9,7 @@ export type TransactionEnvelopeLegacy = Compute<
     chainId?: number | undefined
     /** Base fee per gas. */
     gasPrice?: bigint | undefined
-  } & ExactPartial<Signature_Legacy>
+  }
 >
 
 export type TransactionEnvelopeLegacy_Serialized = Branded<

@@ -16,4 +16,12 @@ export type TransactionEnvelope_Base<type extends string = string> = {
   type: type
   /** Value in wei sent with this transaction */
   value?: bigint | undefined
+  /** ECDSA signature r. */
+  r?: bigint | undefined
+  /** ECDSA signature s. */
+  s?: bigint | undefined
+  /** ECDSA signature yParity. */
+  yParity?: 0 | 1 | undefined
+  /** @deprecated ECDSA signature v (for backwards compatibility). */
+  v?: number | undefined
 }

@@ -10,7 +10,7 @@ import { TransactionEnvelopeLegacy_hash } from '../legacy/hash.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
- * Hashes a {@link TransactionEnvelope#TransactionEnvelope}.
+ * Hashes a {@link TransactionEnvelope#TransactionEnvelope}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash
@@ -20,7 +20,7 @@ import type { TransactionEnvelope } from './types.js'
  *   chainId: 1,
  *   nonce: 0n,
  *   gasPrice: 1000000000n,
- *   gasLimit: 21000n,
+ *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: 1000000000000000000n,
  *   data: '0x',
@@ -29,7 +29,7 @@ import type { TransactionEnvelope } from './types.js'
  * const hash = TransactionEnvelope.hash(envelope) // [!code focus]
  * ```
  *
- * @param envelope - The {@link TransactionEnvelope#TransactionEnvelope} to hash.
+ * @param envelope - The Transaction Envelope to hash.
  * @param options -
  * @returns The hash of the transaction envelope.
  */

@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Compute, ExactPartial, OneOf } from '../types.js'
+import type { Compute } from '../types.js'
 import { Signature_from } from './from.js'
-import type { Signature, Signature_Legacy } from './types.js'
+import type { Signature } from './types.js'
 
 /**
  * Extracts a {@link Signature#Signature} from an arbitrary object that may include signature properties.
@@ -30,7 +30,7 @@ import type { Signature, Signature_Legacy } from './types.js'
  * @returns The extracted {@link Signature#Signature}.
  */
 export function Signature_extract(
-  value: OneOf<ExactPartial<Signature> | ExactPartial<Signature_Legacy>>,
+  value: Signature_extract.Value,
 ): Signature_extract.ReturnType {
   if (typeof value.r === 'undefined') return undefined
   if (typeof value.s === 'undefined') return undefined
@@ -38,6 +38,12 @@ export function Signature_extract(
 }
 
 export declare namespace Signature_extract {
+  type Value = {
+    r?: bigint | undefined
+    s?: bigint | undefined
+    yParity?: 0 | 1 | undefined
+    v?: number | undefined
+  }
   type ReturnType = Compute<Signature> | undefined
   type ErrorType = GlobalErrorType
 }

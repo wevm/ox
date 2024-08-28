@@ -43,6 +43,7 @@ test('options: signature', () => {
     {
       to: '0x0000000000000000000000000000000000000000',
       value: 69n,
+      type: 'legacy',
     },
     {
       signature: {

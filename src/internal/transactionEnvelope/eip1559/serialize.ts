@@ -18,22 +18,56 @@ import type {
  * Serializes a {@link TransactionEnvelope#Eip1559}.
  *
  * @example
- * ```ts
- * import { TransactionEnvelopeEip1559 } from 'ox'
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip1559, Value } from 'ox'
  *
  * const envelope = TransactionEnvelopeEip1559.from({
- *   maxFeePerGas: 1000000n,
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
  * })
  *
- * const serialized = TransactionEnvelopeEip1559.serialize(envelope)
- * // '0x02...'
+ * const serialized = TransactionEnvelopeEip1559.serialize(envelope) // [!code focus]
  * ```
+ *
+ * @example
+ * ### Attaching Signatures
+ *
+ * It is possible to attach a `signature` to the serialized Transaction Envelope.
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const serialized = TransactionEnvelopeEip1559.serialize(envelope, { // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ *
+ * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
+ * ```
+ *
+ * @param envelope - The Transaction Envelope to serialize.
+ * @param options -
+ * @returns The serialized Transaction Envelope.
  */
 export function TransactionEnvelopeEip1559_serialize(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
   options: TransactionEnvelopeEip1559_serialize.Options = {},
-): TransactionEnvelopeEip1559_serialize.ReturnType {
+): TransactionEnvelopeEip1559_Serialized {
   const {
     chainId,
     gas,
@@ -77,8 +111,6 @@ export declare namespace TransactionEnvelopeEip1559_serialize {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
   }
-
-  type ReturnType = TransactionEnvelopeEip1559_Serialized
 
   type ErrorType =
     | TransactionEnvelopeEip1559_assert.ErrorType

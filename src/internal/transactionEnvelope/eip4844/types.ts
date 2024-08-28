@@ -1,8 +1,7 @@
 import type { AccessList } from '../../accessList/types.js'
 import type { BlobSidecar } from '../../blobs/types.js'
 import type { Hex } from '../../hex/types.js'
-import type { Signature, Signature_Legacy } from '../../signature/types.js'
-import type { Compute, ExactPartial } from '../../types.js'
+import type { Compute } from '../../types.js'
 import type { TransactionEnvelope_Base } from '../types.js'
 
 export type TransactionEnvelopeEip4844_Type = 'eip4844'
@@ -23,7 +22,7 @@ export type TransactionEnvelopeEip4844 = Compute<
     maxPriorityFeePerGas?: bigint | undefined
     /** The sidecars associated with this transaction. When defined, the envelope is in the "network wrapper" format. */
     sidecars?: readonly BlobSidecar<Hex>[] | undefined
-  } & ExactPartial<Signature | Signature_Legacy>
+  }
 >
 
 export type TransactionEnvelopeEip4844_SerializedType = '0x03'

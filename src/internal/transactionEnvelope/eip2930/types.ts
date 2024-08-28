@@ -1,6 +1,5 @@
 import type { AccessList } from '../../accessList/types.js'
-import type { Signature, Signature_Legacy } from '../../signature/types.js'
-import type { Compute, ExactPartial, OneOf } from '../../types.js'
+import type { Compute } from '../../types.js'
 import type { TransactionEnvelope_Base } from '../types.js'
 
 export type TransactionEnvelopeEip2930_Type = 'eip2930'
@@ -13,7 +12,7 @@ export type TransactionEnvelopeEip2930 = Compute<
     chainId: number
     /** Base fee per gas. */
     gasPrice?: bigint | undefined
-  } & OneOf<ExactPartial<Signature> | ExactPartial<Signature_Legacy>>
+  }
 >
 
 export type TransactionEnvelopeEip2930_SerializedType = '0x01'

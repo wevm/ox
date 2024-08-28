@@ -18,11 +18,27 @@ import type {
  * Deserializes a {@link TransactionEnvelope#Eip4844} from its serialized form.
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip4844 } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip4844.deserialize('0x03ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * // @log: {
+ * // @log:   blobVersionedHashes: [...],
+ * // @log:   type: 'eip4844',
+ * // @log:   nonce: 785n,
+ * // @log:   maxFeePerGas: 2000000000n,
+ * // @log:   gas: 1000000n,
+ * // @log:   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
+ * ```
+ *
+ * @param serializedTransaction - The serialized transaction.
+ * @returns Deserialized Transaction Envelope.
  */
 export function TransactionEnvelopeEip4844_deserialize(
   serializedTransaction: TransactionEnvelopeEip4844_Serialized,
-): TransactionEnvelopeEip4844_deserialize.ReturnType {
+): Compute<TransactionEnvelopeEip4844> {
   const transactionOrWrapperArray = Rlp_toHex(
     Hex_slice(serializedTransaction, 1),
   )
@@ -118,8 +134,6 @@ export function TransactionEnvelopeEip4844_deserialize(
 }
 
 export declare namespace TransactionEnvelopeEip4844_deserialize {
-  type ReturnType = Compute<TransactionEnvelopeEip4844>
-
   type ErrorType = GlobalErrorType
 }
 

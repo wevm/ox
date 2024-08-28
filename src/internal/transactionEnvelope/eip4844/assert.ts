@@ -17,7 +17,19 @@ import type { TransactionEnvelopeEip4844 } from './types.js'
  * Asserts a {@link TransactionEnvelope#Eip4844} is valid.
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip4844, Value } from 'ox'
+ *
+ * TransactionEnvelopeEip4844.assert({
+ *   blobVersionedHashes: [],
+ *   chainId: 1,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * // @error: EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.
+ * ```
+ *
+ * @param envelope - The transaction envelope to assert.
  */
 export function TransactionEnvelopeEip4844_assert(
   envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,

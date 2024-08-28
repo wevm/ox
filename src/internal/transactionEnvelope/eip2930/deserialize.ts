@@ -5,7 +5,6 @@ import { Hex_slice } from '../../hex/slice.js'
 import type { Hex } from '../../hex/types.js'
 import { Rlp_toHex } from '../../rlp/to.js'
 import { Signature_fromTuple } from '../../signature/fromTuple.js'
-import type { Compute } from '../../types.js'
 import { InvalidSerializedTransactionError } from '../errors.js'
 import { TransactionEnvelopeEip2930_assert } from './assert.js'
 import type {
@@ -17,24 +16,26 @@ import type {
  * Deserializes a {@link TransactionEnvelope#Eip2930} from its serialized form.
  *
  * @example
- * ```ts
+ * ```ts twoslash
  * import { TransactionEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip2930.deserializeEip2930('0x01ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
- * // {
- * //   type: 'eip2930',
- * //   chainId: 1,
- * //   nonce: 785n,
- * //   gasPrice: 2000000000n,
- * //   gas: 1000000n,
- * //   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- * //   value: 1000000000000000000n,
- * // }
+ * const envelope = TransactionEnvelopeEip2930.deserialize('0x01ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * // @log: {
+ * // @log:   type: 'eip2930',
+ * // @log:   nonce: 785n,
+ * // @log:   gasPrice: 2000000000n,
+ * // @log:   gas: 1000000n,
+ * // @log:   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
  * ```
+ *
+ * @param serializedTransaction - The serialized transaction.
+ * @returns Deserialized Transaction Envelope.
  */
 export function TransactionEnvelopeEip2930_deserialize(
   serializedTransaction: TransactionEnvelopeEip2930_Serialized,
-): TransactionEnvelopeEip2930_deserialize.ReturnType {
+): TransactionEnvelopeEip2930 {
   const transactionArray = Rlp_toHex(Hex_slice(serializedTransaction, 1))
 
   const [
@@ -102,8 +103,6 @@ export function TransactionEnvelopeEip2930_deserialize(
 }
 
 export declare namespace TransactionEnvelopeEip2930_deserialize {
-  type ReturnType = Compute<TransactionEnvelopeEip2930>
-
   type ErrorType = GlobalErrorType
 }
 

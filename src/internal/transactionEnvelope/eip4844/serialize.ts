@@ -19,12 +19,71 @@ import type {
  * Serializes a {@link TransactionEnvelope#Eip4844}.
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * // @noErrors
+ * // @noErrors
+ * import { Blobs, TransactionEnvelopeEip4844 } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ *
+ * const envelope = TransactionEnvelopeEip4844.from({
+ *   blobVersionedHashes,
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const serialized = TransactionEnvelopeEip4844.serialize(envelope) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Attaching Signatures
+ *
+ * It is possible to attach a `signature` to the serialized Transaction Envelope.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs, Secp256k1, TransactionEnvelopeEip4844, Value } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const sidecars = Blobs.toSidecars(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(blobs)
+ *
+ * const envelope = TransactionEnvelopeEip4844.from({
+ *   blobVersionedHashes,
+ *   chainId: 1,
+ *   maxFeePerBlobGas: Value.fromGwei('3'),
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip4844.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const serialized = TransactionEnvelopeEip4844.serialize(envelope, { // [!code focus]
+ *   sidecars, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ *
+ * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
+ * ```
+ *
+ * @param envelope - The Transaction Envelope to serialize.
+ * @param options -
+ * @returns The serialized Transaction Envelope.
  */
 export function TransactionEnvelopeEip4844_serialize(
   envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
   options: TransactionEnvelopeEip4844_serialize.Options = {},
-): TransactionEnvelopeEip4844_serialize.ReturnType {
+): TransactionEnvelopeEip4844_Serialized {
   const {
     blobVersionedHashes,
     chainId,
@@ -89,8 +148,6 @@ export declare namespace TransactionEnvelopeEip4844_serialize {
     /** Sidecars to append to the serialized Transaction Envelope. */
     sidecars?: BlobSidecars<Hex> | undefined
   }
-
-  type ReturnType = TransactionEnvelopeEip4844_Serialized
 
   type ErrorType =
     | TransactionEnvelopeEip4844_assert.ErrorType

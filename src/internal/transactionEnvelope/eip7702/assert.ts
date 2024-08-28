@@ -10,7 +10,22 @@ import type { TransactionEnvelopeEip7702 } from './types.js'
  * Asserts a {@link TransactionEnvelope#Eip7702} is valid.
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip7702, Value } from 'ox'
+ *
+ * TransactionEnvelopeEip7702.assert({
+ *   authorizationList: [],
+ *   maxFeePerGas: 2n ** 256n - 1n + 1n,
+ *   chainId: 1,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * // @error: FeeCapTooHighError:
+ * // @error: The fee cap (`masFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913 gwei) cannot be
+ * // @error: higher than the maximum allowed value (2^256-1).
+ * ```
+ *
+ * @param envelope - The transaction envelope to assert.
  */
 export function TransactionEnvelopeEip7702_assert(
   envelope: PartialBy<TransactionEnvelopeEip7702, 'type'>,

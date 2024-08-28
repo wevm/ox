@@ -12,23 +12,26 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * Deserializes a {@link TransactionEnvelopeLegacy#TransactionEnvelopeLegacy} from its serialized form.
  *
  * @example
- * ```ts
- * import { TransactionEnvelope } from 'ox'
+ * ```ts twoslash
+ * import { TransactionEnvelopeLegacy } from 'ox'
  *
  * const envelope = TransactionEnvelopeLegacy.deserialize('0x01ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
- * // {
- * //   type: 'legacy',
- * //   nonce: 785n,
- * //   gasPrice: 2000000000n,
- * //   gas: 1000000n,
- * //   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- * //   value: 1000000000000000000n,
- * // }
+ * // @log: {
+ * // @log:   type: 'legacy',
+ * // @log:   nonce: 785n,
+ * // @log:   gasPrice: 2000000000n,
+ * // @log:   gas: 1000000n,
+ * // @log:   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
  * ```
+ *
+ * @param serializedTransaction - The serialized transaction.
+ * @returns Deserialized Transaction Envelope.
  */
 export function TransactionEnvelopeLegacy_deserialize(
   serializedTransaction: Hex,
-): TransactionEnvelopeLegacy_deserialize.ReturnType {
+): Compute<TransactionEnvelopeLegacy> {
   const tuple = Rlp_toHex(serializedTransaction)
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
@@ -93,8 +96,6 @@ export function TransactionEnvelopeLegacy_deserialize(
 }
 
 export declare namespace TransactionEnvelopeLegacy_deserialize {
-  type ReturnType = Compute<TransactionEnvelopeLegacy>
-
   type ErrorType = GlobalErrorType
 }
 

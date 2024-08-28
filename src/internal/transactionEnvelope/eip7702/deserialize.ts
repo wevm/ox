@@ -18,11 +18,27 @@ import type {
  * Deserializes a {@link TransactionEnvelope#Eip7702} from its serialized form.
  *
  * @example
- * // TODO
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip7702 } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip7702.deserialize('0x04ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * // @log: {
+ * // @log:   authorizationList: [...],
+ * // @log:   type: 'eip7702',
+ * // @log:   nonce: 785n,
+ * // @log:   maxFeePerGas: 2000000000n,
+ * // @log:   gas: 1000000n,
+ * // @log:   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
+ * ```
+ *
+ * @param serializedTransaction - The serialized transaction.
+ * @returns Deserialized Transaction Envelope.
  */
 export function TransactionEnvelopeEip7702_deserialize(
   serializedTransaction: TransactionEnvelopeEip7702_Serialized,
-): TransactionEnvelopeEip7702_deserialize.ReturnType {
+): Compute<TransactionEnvelopeEip7702> {
   const transactionArray = Rlp_toHex(Hex_slice(serializedTransaction, 1))
 
   const [
@@ -100,8 +116,6 @@ export function TransactionEnvelopeEip7702_deserialize(
 }
 
 export declare namespace TransactionEnvelopeEip7702_deserialize {
-  type ReturnType = Compute<TransactionEnvelopeEip7702>
-
   type ErrorType = GlobalErrorType
 }
 
