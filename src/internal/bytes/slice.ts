@@ -21,7 +21,7 @@ import { Bytes_size } from './size.js'
  * @param value - The {@link Bytes#Bytes} value.
  * @param start - Start offset.
  * @param end - End offset.
- * @param options -
+ * @param options - Slice options.
  * @returns Sliced {@link Bytes#Bytes} value.
  */
 export function Bytes_slice(
@@ -39,6 +39,7 @@ export function Bytes_slice(
 
 export declare namespace Bytes_slice {
   type Options = {
+    /** Asserts that the sliced value is the same size as the given start/end offsets. */
     strict?: boolean | undefined
   }
 

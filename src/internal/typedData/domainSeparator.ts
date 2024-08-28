@@ -1,15 +1,11 @@
-import type { TypedDataDomain } from 'abitype'
-
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../hex/types.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
+import type { TypedData_Domain } from './types.js'
 
 /**
- * Creates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) domainSeparator for the provided domain.
- *
- * - Docs: https://oxlib.sh/api/typedData/domainSeparator
- * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
+ * Creates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) [`domainSeparator`](https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator) for the provided domain.
  *
  * @example
  * ```ts twoslash
@@ -21,12 +17,13 @@ import { TypedData_hashDomain } from './hashDomain.js'
  *   chainId: 1,
  *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
  * })
- * // '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
+ * // @log: '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
  * ```
+ *
+ * @param domain - The domain for which to create the domain separator.
+ * @returns The domain separator.
  */
-export function TypedData_domainSeparator(
-  domain: TypedDataDomain,
-): TypedData_domainSeparator.ReturnType {
+export function TypedData_domainSeparator(domain: TypedData_Domain): Hex {
   return TypedData_hashDomain({
     domain,
     types: {
@@ -36,8 +33,6 @@ export function TypedData_domainSeparator(
 }
 
 export declare namespace TypedData_domainSeparator {
-  type ReturnType = Hex
-
   type ErrorType = TypedData_hashDomain.ErrorType | GlobalErrorType
 }
 

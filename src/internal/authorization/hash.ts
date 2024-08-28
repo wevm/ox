@@ -25,17 +25,13 @@ import type { Authorization } from './types.js'
  * @param authorization - The {@link Authorization#Authorization}.
  * @returns The hash.
  */
-export function Authorization_hash(
-  authorization: Authorization,
-): Authorization_hash.ReturnType {
+export function Authorization_hash(authorization: Authorization): Hex {
   return Hash_keccak256(
     Hex_concat('0x05', Rlp_fromHex(Authorization_toTuple(authorization))),
   )
 }
 
 export declare namespace Authorization_hash {
-  type ReturnType = Hex
-
   type ErrorType =
     | Authorization_toTuple.ErrorType
     | Hash_keccak256.ErrorType

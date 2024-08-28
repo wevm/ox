@@ -32,15 +32,16 @@ import type { TypedData_Definition } from './types.js'
  *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *   },
  * })
- * // "{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"
+ * // @log: "{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"
  * ```
+ *
+ * @param value - The Typed Data schema to serialize.
+ * @returns The serialized Typed Data schema. w
  */
 export function TypedData_serialize<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
->(
-  value: TypedData_serialize.Value<typedData, primaryType>,
-): TypedData_serialize.ReturnType {
+>(value: TypedData_serialize.Value<typedData, primaryType>): string {
   const {
     domain: domain_,
     message: message_,
@@ -80,8 +81,6 @@ export declare namespace TypedData_serialize {
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
   > = TypedData_Definition<typedData, primaryType>
-
-  type ReturnType = string
 
   type ErrorType = stringify.ErrorType | GlobalErrorType
 }

@@ -1,10 +1,15 @@
 import type {
-  TypedData,
-  TypedDataDomain,
+  TypedData as abitype_TypedData,
+  TypedDataDomain as abitype_TypedDataDomain,
+  TypedDataParameter as abitype_TypedDataParameter,
   TypedDataToPrimitiveTypes,
 } from 'abitype'
 
 import type { Compute } from '../types.js'
+
+export type TypedData = abitype_TypedData
+export type TypedData_Domain = abitype_TypedDataDomain
+export type TypedData_Parameter = abitype_TypedDataParameter
 
 // TODO: Make reusable for Viem?
 export type TypedData_Definition<
@@ -31,7 +36,7 @@ export type TypedData_EIP712DomainDefinition<
     | (primaryType extends 'EIP712Domain' ? primaryType : never)
   domain: schema extends { EIP712Domain: infer domain }
     ? domain
-    : Compute<TypedDataDomain>
+    : Compute<TypedData_Domain>
   message?: undefined
 }
 
@@ -55,7 +60,7 @@ export type TypedData_MessageDefinition<
   domain?:
     | (schema extends { EIP712Domain: infer domain }
         ? domain
-        : Compute<TypedDataDomain>)
+        : Compute<TypedData_Domain>)
     | undefined
   message: { [_: string]: any } extends message // Check if message was inferred
     ? Record<string, unknown>

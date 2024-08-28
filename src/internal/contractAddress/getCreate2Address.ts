@@ -13,8 +13,6 @@ import type { Hex } from '../hex/types.js'
 /**
  * Generates contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
  *
- * **Spec**: https://eips.ethereum.org/EIPS/eip-1014
- *
  * @example
  * ```ts twoslash
  * import { Bytes, ContractAddress, Hex } from 'ox'
@@ -27,12 +25,12 @@ import type { Hex } from '../hex/types.js'
  * // @log: '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```
  *
- * @param options - Options.
+ * @param options - Options for retrieving address.
  * @returns Contract Address.
  */
 export function ContractAddress_getCreate2Address(
   options: ContractAddress_getCreate2Address.Options,
-) {
+): Address {
   const from = Bytes_from(Address_from(options.from))
   const salt = Bytes_padLeft(
     Bytes_isBytes(options.salt) ? options.salt : Bytes_from(options.salt),

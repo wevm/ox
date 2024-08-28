@@ -4,7 +4,6 @@ import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_from } from '../hex/from.js'
 import type { Hex } from '../hex/types.js'
-import type { Compute } from '../types.js'
 import {
   InvalidSerializedSignatureSizeError,
   InvalidSignatureYParityError,
@@ -27,9 +26,7 @@ import { Signature_vToYParity } from './vToYParity.js'
  * @param serialized - The serialized signature.
  * @returns The deserialized {@link Signature#Signature}.
  */
-export function Signature_deserialize(
-  serialized: Bytes | Hex,
-): Signature_deserialize.ReturnType {
+export function Signature_deserialize(serialized: Bytes | Hex): Signature {
   const hex = typeof serialized === 'string' ? serialized : Hex_from(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)
@@ -63,12 +60,10 @@ export function Signature_deserialize(
     r,
     s,
     yParity,
-  } as Signature_deserialize.ReturnType
+  } as Signature
 }
 
 export declare namespace Signature_deserialize {
-  type ReturnType = Compute<Signature>
-
   type ErrorType =
     | Signature_fromCompact.ErrorType
     | Hex_from.ErrorType

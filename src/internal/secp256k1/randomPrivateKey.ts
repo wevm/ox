@@ -15,7 +15,7 @@ import type { Hex } from '../hex/types.js'
  * const privateKey = Secp256k1.randomPrivateKey()
  * ```
  *
- * @param options -
+ * @param options - The options to generate the private key.
  * @returns The generated private key.
  */
 export function Secp256k1_randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
@@ -28,8 +28,11 @@ export function Secp256k1_randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 }
 
 export declare namespace Secp256k1_randomPrivateKey {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
-    /** Format of the returned private key. @default 'Hex' */
+  interface Options<as extends 'Hex' | 'Bytes' = 'Hex'> {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 

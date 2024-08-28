@@ -1,13 +1,10 @@
-import type { TypedData } from 'abitype'
 import type { GlobalErrorType } from '../errors/error.js'
+import type { TypedData } from './types.js'
 
 // TODO: Add error for `primaryType` not in `types`
 
 /**
  * Encodes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for the provided primaryType.
- *
- * - Docs: https://oxlib.sh/api/typedData/encodeType
- * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-encodetype
  *
  * @example
  * ```ts twoslash
@@ -23,12 +20,15 @@ import type { GlobalErrorType } from '../errors/error.js'
  *   },
  *   primaryType: 'Foo',
  * })
- * // 'Foo(address address,string name,string foo)'
+ * // @log: 'Foo(address address,string name,string foo)'
  * ```
+ *
+ * @param value - The Typed Data schema.
+ * @returns The encoded type.
  */
 export function TypedData_encodeType(
   value: TypedData_encodeType.Value,
-): TypedData_encodeType.ReturnType {
+): string {
   const { primaryType, types } = value
 
   let result = ''
@@ -50,8 +50,6 @@ export declare namespace TypedData_encodeType {
     primaryType: string
     types: TypedData
   }
-
-  type ReturnType = string
 
   type ErrorType = findTypeDependencies.ErrorType | GlobalErrorType
 }

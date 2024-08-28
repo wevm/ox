@@ -15,23 +15,28 @@ import type { Hex } from '../hex/types.js'
  * const publicKey = Secp256k1.getPublicKey({ privateKey: '0x...' })
  * ```
  *
- * @param parameters -
+ * @param options - The options to compute the public key.
  * @returns The computed public key.
  */
 export function Secp256k1_getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  parameters: Secp256k1_getPublicKey.Parameters<as>,
+  options: Secp256k1_getPublicKey.Options<as>,
 ): Secp256k1_getPublicKey.ReturnType<as> {
-  const { privateKey, as = 'Hex' } = parameters
+  const { privateKey, as = 'Hex' } = options
   const bytes = secp256k1.getPublicKey(Hex_from(privateKey).slice(2), false)
   if (as === 'Hex') return Hex_from(bytes) as never
   return bytes as never
 }
 
 export declare namespace Secp256k1_getPublicKey {
-  type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> = {
-    /** Private key to compute the public key from. */
+  interface Options<as extends 'Hex' | 'Bytes' = 'Hex'> {
+    /**
+     * Private key to compute the public key from.
+     */
     privateKey: Hex | Bytes
-    /** Format of the returned public key. @default 'Hex' */
+    /**
+     * Format of the returned public key.
+     * @default 'Hex'
+     */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 

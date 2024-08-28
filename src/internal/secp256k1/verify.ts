@@ -22,13 +22,11 @@ import { Secp256k1_recoverAddress } from './recoverAddress.js'
  * }) // [!code focus]
  * ```
  *
- * @param parameters -
+ * @param options - The verification options.
  * @returns Whether the payload was signed by the provided address.
  */
-export function Secp256k1_verify(
-  parameters: Secp256k1_verify.Parameters,
-): Secp256k1_verify.ReturnType {
-  const { address, payload, signature } = parameters
+export function Secp256k1_verify(options: Secp256k1_verify.Options): boolean {
+  const { address, payload, signature } = options
   return Address_isEqual(
     address,
     Secp256k1_recoverAddress({ payload, signature }),
@@ -36,7 +34,7 @@ export function Secp256k1_verify(
 }
 
 export declare namespace Secp256k1_verify {
-  type Parameters = {
+  type Options = {
     /** Address that signed the payload. */
     address: Address
     /** Payload that was signed. */
@@ -44,8 +42,6 @@ export declare namespace Secp256k1_verify {
     /** Signature of the payload. */
     signature: Signature
   }
-
-  type ReturnType = boolean
 
   type ErrorType = GlobalErrorType
 }

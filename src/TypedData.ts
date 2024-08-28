@@ -1,10 +1,13 @@
-export { InvalidPrimaryTypeError } from './internal/typedData/errors.js'
-
 export type {
+  TypedData,
+  TypedData_Domain as Domain,
+  TypedData_Parameter as Parameter,
   TypedData_Definition as Definition,
   TypedData_EIP712DomainDefinition as EIP712DomainDefinition,
   TypedData_MessageDefinition as MessageDefinition,
 } from './internal/typedData/types.js'
+
+export { InvalidPrimaryTypeError } from './internal/typedData/errors.js'
 
 export { TypedData_domainSeparator as domainSeparator } from './internal/typedData/domainSeparator.js'
 

@@ -1,6 +1,9 @@
 import { Address_fromPublicKey } from '../address/fromPublicKey.js'
 import type { Address } from '../address/types.js'
+import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
+import type { Hex } from '../hex/types.js'
+import type { Signature } from '../signature/types.js'
 import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
 
 /**
@@ -18,18 +21,27 @@ import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
  * }) // [!code focus]
  * ```
  *
- * @param parameters -
+ * @param options - The recovery options.
  * @returns The recovered address.
  */
 export function Secp256k1_recoverAddress<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  parameters: Secp256k1_recoverAddress.Parameters<as>,
+  options: Secp256k1_recoverAddress.Options<as>,
 ): Secp256k1_recoverAddress.ReturnType {
-  return Address_fromPublicKey(Secp256k1_recoverPublicKey(parameters))
+  return Address_fromPublicKey(Secp256k1_recoverPublicKey(options))
 }
 
 export declare namespace Secp256k1_recoverAddress {
-  type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    Secp256k1_recoverPublicKey.Parameters<as>
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** Payload that was signed. */
+    payload: Hex | Bytes
+    /** Signature of the payload. */
+    signature: Signature
+    /**
+     * Format of the returned public key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
 
   type ReturnType = Address
 

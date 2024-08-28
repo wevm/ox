@@ -21,31 +21,42 @@ import type { Signature } from './types.js'
  * })
  * // @log: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
  * ```
+ *
+ * @param signature - The signature to serialize.
+ * @returns The serialized signature.
  */
 export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  signature_: Signature,
+  signature: Signature,
   options: Signature_serialize.Options<as> = {},
 ): Signature_serialize.ReturnType<as> {
   const { compact = false, as = 'Hex' } = options
 
-  const r = signature_.r
+  const r = signature.r
   const s = (() => {
-    if (compact) return Signature_toCompact(signature_ as Signature).yParityAndS
-    return signature_.s
+    if (compact) return Signature_toCompact(signature as Signature).yParityAndS
+    return signature.s
   })()
-  let signature = `0x${new secp256k1.Signature(r, s!).toCompactHex()}` as const
+  let signature_ = `0x${new secp256k1.Signature(r, s!).toCompactHex()}` as const
 
   // If the signature is not compact, add the recovery byte to the signature.
   if (!compact)
-    signature = `${signature}${signature_.yParity === 0 ? '00' : '01'}`
+    signature_ = `${signature_}${signature.yParity === 0 ? '00' : '01'}`
 
-  if (as === 'Hex') return signature as Signature_serialize.ReturnType<as>
-  return Bytes_fromHex(signature) as Signature_serialize.ReturnType<as>
+  if (as === 'Hex') return signature_ as Signature_serialize.ReturnType<as>
+  return Bytes_fromHex(signature_) as Signature_serialize.ReturnType<as>
 }
 
 export declare namespace Signature_serialize {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Whether to serialize the signature as a compact signature.
+     * @default false
+     */
     compact?: boolean | undefined
+    /**
+     * Type to serialize the signature as.
+     * @default 'Hex'
+     */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 

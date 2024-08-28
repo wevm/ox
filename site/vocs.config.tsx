@@ -38,7 +38,7 @@ export default defineConfig({
     { text: 'Error Handling', link: '/error-handling' },
     { text: 'Platform Compatibility', link: '/platform-compatibility' },
     {
-      text: 'API Reference (generated)',
+      text: 'API Reference',
       items: sidebar,
     },
     {

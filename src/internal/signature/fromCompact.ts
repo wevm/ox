@@ -1,7 +1,6 @@
 import { Bytes_fromNumber } from '../bytes/from.js'
 import { Bytes_toBigInt } from '../bytes/to.js'
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Compute } from '../types.js'
 import type { Signature, Signature_Compact } from './types.js'
 
 /**
@@ -25,9 +24,7 @@ import type { Signature, Signature_Compact } from './types.js'
  * @param signature - The {@link Signature#Compact} to instantiate.
  * @returns The instantiated {@link Signature#Signature}.
  */
-export function Signature_fromCompact(
-  signature: Signature_Compact,
-): Compute<Signature> {
+export function Signature_fromCompact(signature: Signature_Compact): Signature {
   const { r, yParityAndS } = signature
   const yParityAndS_bytes = Bytes_fromNumber(yParityAndS)
   const yParity = yParityAndS_bytes[0]! & 0x80 ? 1 : 0

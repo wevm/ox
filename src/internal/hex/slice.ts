@@ -35,7 +35,8 @@ export function Hex_slice(
 }
 
 export declare namespace Hex_slice {
-  type Options = {
+  interface Options {
+    /** Asserts that the sliced value is the same size as the given start/end offsets. */
     strict?: boolean | undefined
   }
 

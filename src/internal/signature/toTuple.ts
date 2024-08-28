@@ -1,7 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hex_from } from '../hex/from.js'
 import { Hex_trimLeft } from '../hex/trim.js'
-import type { Compute } from '../types.js'
 import type { Signature, Signature_Tuple } from './types.js'
 
 /**
@@ -22,9 +21,7 @@ import type { Signature, Signature_Tuple } from './types.js'
  * @param signature - The {@link Signature#Signature} to convert.
  * @returns The {@link Signature#Tuple}.
  */
-export function Signature_toTuple(
-  signature: Signature,
-): Signature_toTuple.ReturnType {
+export function Signature_toTuple(signature: Signature): Signature_Tuple {
   const { r, s, yParity } = signature
 
   return [
@@ -35,7 +32,5 @@ export function Signature_toTuple(
 }
 
 export declare namespace Signature_toTuple {
-  type ReturnType = Compute<Signature_Tuple>
-
   type ErrorType = Hex_trimLeft.ErrorType | Hex_from.ErrorType | GlobalErrorType
 }

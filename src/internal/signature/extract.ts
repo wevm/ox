@@ -1,5 +1,4 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import type { Compute } from '../types.js'
 import { Signature_from } from './from.js'
 import type { Signature } from './types.js'
 
@@ -31,7 +30,7 @@ import type { Signature } from './types.js'
  */
 export function Signature_extract(
   value: Signature_extract.Value,
-): Signature_extract.ReturnType {
+): Signature | undefined {
   if (typeof value.r === 'undefined') return undefined
   if (typeof value.s === 'undefined') return undefined
   return Signature_from(value as any)
@@ -44,7 +43,6 @@ export declare namespace Signature_extract {
     yParity?: 0 | 1 | undefined
     v?: number | undefined
   }
-  type ReturnType = Compute<Signature> | undefined
   type ErrorType = GlobalErrorType
 }
 

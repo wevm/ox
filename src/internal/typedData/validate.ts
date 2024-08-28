@@ -46,6 +46,8 @@ import type { TypedData_Definition } from './types.js'
  *   },
  * })
  * ```
+ *
+ * @param value - The Typed Data to validate.
  */
 export function TypedData_validate<
   const typedData extends TypedData | Record<string, unknown>,

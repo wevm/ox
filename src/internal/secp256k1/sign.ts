@@ -5,7 +5,6 @@ import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../hex/types.js'
 import type { Signature } from '../signature/types.js'
-import type { Compute } from '../types.js'
 
 /**
  * Signs the payload with the provided private key.
@@ -20,13 +19,11 @@ import type { Compute } from '../types.js'
  * }) // [!code focus]
  * ```
  *
- * @param parameters -
+ * @param options - The signing options.
  * @returns The ECDSA {@link Signature#Signature}.
  */
-export function Secp256k1_sign(
-  parameters: Secp256k1_sign.Parameters,
-): Secp256k1_sign.ReturnType {
-  const { payload, privateKey } = parameters
+export function Secp256k1_sign(options: Secp256k1_sign.Options): Signature {
+  const { payload, privateKey } = options
   const { r, s, recovery } = secp256k1.sign(
     Bytes_from(payload),
     Bytes_from(privateKey),
@@ -39,14 +36,12 @@ export function Secp256k1_sign(
 }
 
 export declare namespace Secp256k1_sign {
-  type Parameters = {
+  type Options = {
     /** Payload to sign. */
     payload: Hex | Bytes
     /** ECDSA private key. */
     privateKey: Hex | Bytes
   }
-
-  type ReturnType = Compute<Signature>
 
   type ErrorType = Bytes_from.ErrorType | GlobalErrorType
 }

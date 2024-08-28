@@ -22,13 +22,13 @@ import type { Signature } from '../signature/types.js'
  * }) // [!code focus]
  * ```
  *
- * @param parameters -
+ * @param options - The recovery options.
  * @returns The recovered public key.
  */
 export function Secp256k1_recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  parameters: Secp256k1_recoverPublicKey.Parameters<as>,
+  options: Secp256k1_recoverPublicKey.Options<as>,
 ): Secp256k1_recoverPublicKey.ReturnType<as> {
-  const { payload, signature, as = 'Hex' } = parameters
+  const { payload, signature, as = 'Hex' } = options
   const { r, s, yParity } = signature
   const signature_ = new secp256k1.Signature(
     BigInt(r),
@@ -42,12 +42,15 @@ export function Secp256k1_recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 }
 
 export declare namespace Secp256k1_recoverPublicKey {
-  type Parameters<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */
     signature: Signature
-    /** Format of the returned public key. @default 'Hex' */
+    /**
+     * Format of the returned public key.
+     * @default 'Hex'
+     */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 

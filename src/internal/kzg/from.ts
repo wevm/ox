@@ -15,9 +15,12 @@ import type { Kzg } from './types.js'
  *
  * const kzg = Kzg.from(cKzg)
  * ```
+ *
+ * @param value - The KZG object to convert.
+ * @returns The KZG interface object.
  */
-export function Kzg_from(parameters: Kzg_from.Parameters): Kzg_from.ReturnType {
-  const { blobToKzgCommitment, computeBlobKzgProof } = parameters
+export function Kzg_from(value: Kzg): Kzg {
+  const { blobToKzgCommitment, computeBlobKzgProof } = value
   return {
     blobToKzgCommitment,
     computeBlobKzgProof,
@@ -25,8 +28,6 @@ export function Kzg_from(parameters: Kzg_from.Parameters): Kzg_from.ReturnType {
 }
 
 export declare namespace Kzg_from {
-  type Parameters = Kzg
-  type ReturnType = Kzg
   type ErrorType = GlobalErrorType
 }
 

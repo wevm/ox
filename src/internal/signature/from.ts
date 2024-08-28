@@ -1,7 +1,7 @@
 import type { Bytes } from '../bytes/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Hex } from '../hex/types.js'
-import type { Compute, OneOf } from '../types.js'
+import type { OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
 import { Signature_deserialize } from './deserialize.js'
 import { Signature_fromCompact } from './fromCompact.js'
@@ -84,7 +84,7 @@ export function Signature_from(
     | OneOf<Signature | Signature_Compact | Signature_Legacy>
     | Hex
     | Bytes,
-): Compute<Signature> {
+): Signature {
   const signature_ = (() => {
     if (typeof signature === 'string') return Signature_deserialize(signature)
     if (signature instanceof Uint8Array) return Signature_deserialize(signature)

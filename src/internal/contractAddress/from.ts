@@ -1,3 +1,4 @@
+import type { Address } from '../address/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { ContractAddress_getCreate2Address } from './getCreate2Address.js'
 import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
@@ -7,6 +8,8 @@ import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
  *
  * @example
  * ### CREATE
+ *
+ * Retrieves via the [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode. Shorthand for {@link ContractAddress#getCreateAddress}.
  *
  * ```ts twoslash
  * import { ContractAddress } from 'ox'
@@ -20,6 +23,8 @@ import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
  *
  * @example
  * ### CREATE2
+ *
+ * Retrieves via the [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode. Shorthand for {@link ContractAddress#getCreate2Address}.
  *
  * ```ts twoslash
  * import { Bytes, ContractAddress, Hex } from 'ox'
@@ -35,7 +40,9 @@ import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
  * @param options - Options.
  * @returns Contract Address.
  */
-export function ContractAddress_from(options: ContractAddress_from.Options) {
+export function ContractAddress_from(
+  options: ContractAddress_from.Options,
+): Address {
   if (options.opcode === 'CREATE2')
     return ContractAddress_getCreate2Address(options)
   return ContractAddress_getCreateAddress(options)

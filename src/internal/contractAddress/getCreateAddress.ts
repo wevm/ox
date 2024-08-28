@@ -19,15 +19,15 @@ import { Rlp_fromBytes } from '../rlp/from.js'
  * // @log: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
  * ```
  *
- * @param options - Options.
+ * @param options - Options for retrieving address.
  * @returns Contract Address.
  */
 export function ContractAddress_getCreateAddress(
-  opts: ContractAddress_getCreateAddress.Options,
-) {
-  const from = Bytes_from(Address_from(opts.from))
+  options: ContractAddress_getCreateAddress.Options,
+): Address {
+  const from = Bytes_from(Address_from(options.from))
 
-  let nonce = Bytes_from(opts.nonce)
+  let nonce = Bytes_from(options.nonce)
   if (nonce[0] === 0) nonce = new Uint8Array([])
 
   return Address_from(

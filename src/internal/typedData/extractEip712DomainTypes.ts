@@ -1,10 +1,8 @@
-import type { TypedDataDomain, TypedDataParameter } from 'abitype'
 import type { GlobalErrorType } from '../errors/error.js'
+import type { TypedData_Domain, TypedData_Parameter } from './types.js'
 
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
- *
- * - Docs: https://oxlib.sh/api/typedData/extractEip712DomainTypes
  *
  * @example
  * ```ts twoslash
@@ -16,12 +14,20 @@ import type { GlobalErrorType } from '../errors/error.js'
  *   chainId: 1,
  *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
  * })
- * // [{ 'name': 'name', 'type': 'string' }, { 'name': 'version', 'type': 'string' }, { 'name': 'chainId', 'type': 'uint256' }, { 'name': 'verifyingContract', 'type': 'address' }]
+ * // @log: [
+ * // @log:   { 'name': 'name', 'type': 'string' },
+ * // @log:   { 'name': 'version', 'type': 'string' },
+ * // @log:   { 'name': 'chainId', 'type': 'uint256' },
+ * // @log:   { 'name': 'verifyingContract', 'type': 'address' },
+ * // @log: ]
  * ```
+ *
+ * @param domain - The EIP-712 domain.
+ * @returns The EIP-712 domain schema.
  */
 export function TypedData_extractEip712DomainTypes(
-  domain: TypedDataDomain | undefined,
-): TypedDataParameter[] {
+  domain: TypedData_Domain | undefined,
+): TypedData_Parameter[] {
   return [
     typeof domain?.name === 'string' && { name: 'name', type: 'string' },
     domain?.version && { name: 'version', type: 'string' },
@@ -34,7 +40,7 @@ export function TypedData_extractEip712DomainTypes(
       type: 'address',
     },
     domain?.salt && { name: 'salt', type: 'bytes32' },
-  ].filter(Boolean) as TypedDataParameter[]
+  ].filter(Boolean) as TypedData_Parameter[]
 }
 
 export declare namespace TypedData_extractEip712DomainTypes {

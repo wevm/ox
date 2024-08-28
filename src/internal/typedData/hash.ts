@@ -1,5 +1,3 @@
-import type { TypedData } from 'abitype'
-
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Hex_concat } from '../hex/concat.js'
@@ -7,7 +5,7 @@ import type { Hex } from '../hex/types.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
 import { TypedData_hashStruct } from './hashStruct.js'
-import type { TypedData_Definition } from './types.js'
+import type { TypedData, TypedData_Definition } from './types.js'
 import { TypedData_validate } from './validate.js'
 
 /**
@@ -32,15 +30,16 @@ import { TypedData_validate } from './validate.js'
  *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *   },
  * })
- * // '0x7ef8d6931ed54977c7593289c0feb25c7d7424fb997f4fc20aa3fe51b5141188'
+ * // @log: '0x7ef8d6931ed54977c7593289c0feb25c7d7424fb997f4fc20aa3fe51b5141188'
  * ```
+ *
+ * @param value - The Typed Data to hash. w
+ * @returns The hashed Typed Data.
  */
 export function TypedData_hash<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
->(
-  value: TypedData_hash.Value<typedData, primaryType>,
-): TypedData_hash.ReturnType {
+>(value: TypedData_hash.Value<typedData, primaryType>): Hex {
   const { domain = {}, message, primaryType } = value as TypedData_hash.Value
 
   const types = {
@@ -83,8 +82,6 @@ export declare namespace TypedData_hash {
     typedData extends TypedData | Record<string, unknown> = TypedData,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
   > = TypedData_Definition<typedData, primaryType>
-
-  type ReturnType = Hex
 
   type ErrorType =
     | TypedData_extractEip712DomainTypes.ErrorType

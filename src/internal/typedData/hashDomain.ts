@@ -1,12 +1,10 @@
-import type { TypedData, TypedDataDomain } from 'abitype'
-
 import type { GlobalErrorType } from '../errors/error.js'
+import type { Hex } from '../hex/types.js'
 import { TypedData_hashStruct } from './hashStruct.js'
+import type { TypedData, TypedData_Domain } from './types.js'
 
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) domain.
- *
- * - Docs: https://oxlib.sh/api/typedData/hashDomain
  *
  * @example
  * ```ts twoslash
@@ -27,10 +25,13 @@ import { TypedData_hashStruct } from './hashStruct.js'
  *     ],
  *   },
  * })
- * // '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
+ * // @log: '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
  * ```
+ *
+ * @param value - The Typed Data domain and types.
+ * @returns The hashed domain.
  */
-export function TypedData_hashDomain(value: TypedData_hashDomain.Value) {
+export function TypedData_hashDomain(value: TypedData_hashDomain.Value): Hex {
   const { domain, types } = value
   return TypedData_hashStruct({
     data: domain,
@@ -41,7 +42,9 @@ export function TypedData_hashDomain(value: TypedData_hashDomain.Value) {
 
 export declare namespace TypedData_hashDomain {
   type Value = {
-    domain: TypedDataDomain
+    /** The Typed Data domain. */
+    domain: TypedData_Domain
+    /** The Typed Data types. */
     types: TypedData
   }
 

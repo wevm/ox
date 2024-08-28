@@ -45,7 +45,7 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
  * ```
  *
  * @param value - The value to encode.
- * @param options -
+ * @param options - Encoding options.
  * @returns The encoded {@link Hex#Hex} value.
  */
 export function Hex_from(
@@ -67,7 +67,7 @@ export function Hex_from(
 }
 
 export declare namespace Hex_from {
-  type Options = {
+  interface Options {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }

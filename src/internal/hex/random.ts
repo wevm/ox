@@ -13,6 +13,8 @@ import { Hex_fromBytes } from './from.js'
  * const hex = Hex.random(32)
  * // @log: '0x...'
  * ```
+ *
+ * @returns Random {@link Hex#Hex} value.
  */
 export function Hex_random(length: number): Hex {
   return Hex_fromBytes(Bytes_random(length))

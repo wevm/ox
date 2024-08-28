@@ -1,20 +1,17 @@
-import type { AbiParameter, TypedData } from 'abitype'
-
 import { Abi_encodeParameters } from '../abi/encodeParameters.js'
+import type { Abi_Parameter } from '../abi/types.js'
 import type { GlobalErrorType } from '../errors/error.js'
 import { Hash_keccak256 } from '../hash/keccak256.js'
 import { Hex_from } from '../hex/from.js'
 import type { Hex } from '../hex/types.js'
 import { TypedData_encodeType } from './encodeType.js'
+import type { TypedData } from './types.js'
 
 // TODO: Add error for `primaryType` not in `types`
 // TODO: Add type inference?
 
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) struct.
- *
- * - Docs: https://oxlib.sh/api/typedData/hashStruct
- * - Spec: https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct
  *
  * @example
  * ```ts twoslash
@@ -35,12 +32,13 @@ import { TypedData_encodeType } from './encodeType.js'
  *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *   },
  * })
- * // '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
+ * // @log: '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
  * ```
+ *
+ * @param value - The Typed Data struct to hash.
+ * @returns The hashed Typed Data struct.
  */
-export function TypedData_hashStruct(
-  value: TypedData_hashStruct.Value,
-): TypedData_hashStruct.ReturnType {
+export function TypedData_hashStruct(value: TypedData_hashStruct.Value): Hex {
   const { data, primaryType, types } = value
   const encoded = encodeData({
     data,
@@ -52,12 +50,13 @@ export function TypedData_hashStruct(
 
 export declare namespace TypedData_hashStruct {
   type Value = {
+    /** The Typed Data struct to hash. */
     data: Record<string, unknown>
+    /** The primary type of the Typed Data struct. */
     primaryType: string
+    /** The types of the Typed Data struct. */
     types: TypedData
   }
-
-  type ReturnType = Hex
 
   type ErrorType =
     | encodeData.ErrorType
@@ -76,7 +75,7 @@ export function encodeData(value: {
   types: TypedData
 }): Hex {
   const { data, primaryType, types } = value
-  const encodedTypes: AbiParameter[] = [{ type: 'bytes32' }]
+  const encodedTypes: Abi_Parameter[] = [{ type: 'bytes32' }]
   const encodedValues: unknown[] = [hashType({ primaryType, types })]
 
   for (const field of types[primaryType] ?? []) {
@@ -127,7 +126,7 @@ export function encodeField(properties: {
   name: string
   type: string
   value: any
-}): [type: AbiParameter, value: Hex] {
+}): [type: Abi_Parameter, value: Hex] {
   let { types, name, type, value } = properties
 
   if (types[type] !== undefined)
@@ -147,7 +146,7 @@ export function encodeField(properties: {
 
   if (type.lastIndexOf(']') === type.length - 1) {
     const parsedType = type.slice(0, type.lastIndexOf('['))
-    const typeValuePairs = (value as [AbiParameter, any][]).map((item) =>
+    const typeValuePairs = (value as [Abi_Parameter, any][]).map((item) =>
       encodeField({
         name,
         type: parsedType,

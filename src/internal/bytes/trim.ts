@@ -15,13 +15,11 @@ import type { GlobalErrorType } from '../errors/error.js'
  * @param value - {@link Bytes#Bytes} value.
  * @returns Trimmed {@link Bytes#Bytes} value.
  */
-export function Bytes_trimLeft(value: Bytes): Bytes_trimLeft.ReturnType {
+export function Bytes_trimLeft(value: Bytes): Bytes {
   return trim(value, { dir: 'left' })
 }
 
 export declare namespace Bytes_trimLeft {
-  type ReturnType = Bytes
-
   type ErrorType = trim.ErrorType | GlobalErrorType
 }
 
@@ -43,13 +41,11 @@ Bytes_trimLeft.parseError = (error: unknown) =>
  * @param value - {@link Bytes#Bytes} value.
  * @returns Trimmed {@link Bytes#Bytes} value.
  */
-export function Bytes_trimRight(value: Bytes): Bytes_trimRight.ReturnType {
+export function Bytes_trimRight(value: Bytes): Bytes {
   return trim(value, { dir: 'right' })
 }
 
 export declare namespace Bytes_trimRight {
-  export type ReturnType = Bytes
-
   export type ErrorType = trim.ErrorType | GlobalErrorType
 }
 

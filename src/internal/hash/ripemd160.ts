@@ -10,7 +10,7 @@ import type { Hex } from '../hex/types.js'
 /**
  * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link Bytes#Bytes} or {@link Hex#Hex} value.
  *
- * This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) – an audited & minimal JS hashing library.
+ * This function is a re-export of `ripemd160` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
  *
  * @example
  * ```ts twoslash

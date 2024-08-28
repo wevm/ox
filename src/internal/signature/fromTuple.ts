@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import { Signature_from } from './from.js'
-import type { Signature_Tuple } from './types.js'
+import type { Signature, Signature_Tuple } from './types.js'
 
 /**
  * Converts a {@link Signature#SignatureTuple} to a {@link Signature#Signature}.
@@ -20,7 +20,7 @@ import type { Signature_Tuple } from './types.js'
  * @param tuple - The {@link Signature#SignatureTuple} to convert.
  * @returns The {@link Signature#Signature}.
  */
-export function Signature_fromTuple(tuple: Signature_Tuple) {
+export function Signature_fromTuple(tuple: Signature_Tuple): Signature {
   const [yParity, r, s] = tuple
   return Signature_from({
     r: r === '0x' ? 0n : BigInt(r),

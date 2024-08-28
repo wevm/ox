@@ -66,7 +66,7 @@ export function Hex_to<to extends Hex_to.To>(
 export declare namespace Hex_to {
   type To = 'string' | 'Bytes' | 'bigint' | 'number' | 'boolean'
 
-  type Options = {
+  interface Options {
     /** Size (in bytes) of the hex value. */
     size?: number | undefined
   }
