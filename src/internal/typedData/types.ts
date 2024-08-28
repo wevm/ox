@@ -1,8 +1,8 @@
 import type {
+  TypedDataToPrimitiveTypes,
   TypedData as abitype_TypedData,
   TypedDataDomain as abitype_TypedDataDomain,
   TypedDataParameter as abitype_TypedDataParameter,
-  TypedDataToPrimitiveTypes,
 } from 'abitype'
 
 import type { Compute } from '../types.js'
