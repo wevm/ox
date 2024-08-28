@@ -90,7 +90,7 @@ for (const item of moduleItems) {
     if (member.kind === model.ApiItemKind.TypeAlias) {
       const description =
         lookupItem.comment?.summary.split('\n')[0]?.trim() ?? 'TODO'
-      types.push({ description, member, link: '/TODO' })
+      types.push({ description, member, link: '#TODO' })
     }
 
     if (
@@ -99,7 +99,7 @@ for (const item of moduleItems) {
     ) {
       const description =
         lookupItem.comment?.summary.split('\n')[0]?.trim() ?? 'TODO'
-      errors.push({ description, member, link: '/TODO' })
+      errors.push({ description, member, link: '#TODO' })
     }
   }
 
