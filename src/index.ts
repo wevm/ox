@@ -96,6 +96,12 @@ export * as Internal from './Internal.js'
 export * as Kzg from './Kzg.js'
 
 /**
+ * The **Log** Module provides a set of types & utility functions for working
+ * with Logs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml).
+ */
+export * as Log from './Log.js'
+
+/**
  * The **Rlp** Module provides a set of utility functions for encoding and decoding [Recursive Length Prefix](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) structures.
  *
  * @example
@@ -282,6 +288,12 @@ export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
  * :::
  */
 export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
+
+/**
+ * The **TransactionReceipt** Module provides a set of types & utility functions for working
+ * with **Transaction Receipts** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml).
+ */
+export * as TransactionReceipt from './TransactionReceipt.js'
 
 /**
  * The **TypedData** Module provides a set of utility functions for working
