@@ -15,13 +15,10 @@ import {
 import { extractNamespaceDocComments } from './utils/tsdoc.js'
 
 // TODO
-// - Add errors and types page for each module
-// - Link errors/types
-// - Remove underscores in names
-// - Show optional params
-// - Expand properties/types and lookup links
 // - Show list of references under complex types
-// - Show optional properties
+// - Expand properties/types and lookup links
+// - Link errors/types
+// - Show optional params/properties
 
 // Vocs TODO
 // - Throw build if twoslash block has errors
@@ -198,7 +195,7 @@ for (const id of ids) {
   const content = (() => {
     switch (item.kind) {
       case model.ApiItemKind.Function:
-        return renderApiFunction(item, lookup)
+        return renderApiFunction({ item, lookup })
       default:
         throw new Error(`Unsupported item kind: ${item.kind}`)
     }

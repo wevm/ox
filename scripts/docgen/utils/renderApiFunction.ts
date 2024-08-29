@@ -1,48 +1,92 @@
+import dedent from 'dedent'
 import type { Data } from './handleItem.js'
 
-export function renderApiFunction(item: Data, lookup: Record<string, Data>) {
-  const {
-    comment,
-    displayName,
-    module,
-    parameters = [],
-    returnType,
-    typeParameters,
-  } = item
+export function renderApiFunction(options: {
+  item: Data
+  lookup: Record<string, Data>
+}) {
+  const { item, lookup } = options
+  const { comment, displayName, module } = item
 
-  /// Render
+  // if (module === 'Address' && displayName === 'fromPublicKey')
+  //   console.log(
+  //     item,
+  //     lookup['ox!Address.fromPublicKey:namespace'],
+  //     lookup['ox!Address.fromPublicKey.ReturnType:type'],
+  //   )
 
-  const headerContent = `
+  return `
 # ${module ? `${module}.` : ''}${displayName}
 
 ${comment?.summary}
+
+${renderImports(module)}
+
+${renderExamples(comment?.examples)}
+
+${renderSignature({ item, lookup })}
+
+${renderParameters({ item, lookup })}
+
+${renderReturnType({ item })}
+
+${renderErrorType({ item, lookup })}
 `
+}
 
-  const importContent = !module
-    ? ''
-    : `
-## Imports
+function renderImports(module: string | undefined) {
+  if (!module) return ''
+  return dedent`
+    ## Imports
 
-\`\`\`ts twoslash
-// @noErrors
-import { ${module} } from 'ox'
-import * as ${module} from 'ox/${module}'
-\`\`\`
-`
+    \`\`\`ts twoslash
+    // @noErrors
+    import { ${module} } from 'ox'
+    import * as ${module} from 'ox/${module}'
+    \`\`\`
+  `
+}
 
-  const exampleContent =
-    comment?.examples.length === 0
-      ? ''
-      : `
+function renderExamples(examples: readonly string[] | undefined) {
+  if (!examples || examples.length === 0) return
+  return `
 ## Examples
 
-${comment?.examples.join('\n\n')}
+${examples.join('\n\n')}
 `
+}
 
-  const parametersContent =
-    parameters.length === 0
-      ? ''
-      : `
+function renderParameters(options: {
+  item: Data
+  lookup: Record<string, Data>
+}) {
+  const { item, lookup } = options
+  const { comment, parameters } = item
+  if (!parameters || parameters.length === 0) return ''
+
+  function renderParameter(parameter: NonNullable<Data['parameters']>[number]) {
+    return `
+### ${parameter.name}
+
+- **Type:** \`${parameter.type}\`
+${comment?.default ? `- **Default:** \`${comment.default}\`` : ''}
+
+${parameter.comment}
+`
+  }
+
+  function renderProperty(name: string, data: Data) {
+    return `
+#### ${name}.${data.displayName}
+
+- **Type:** \`${data.type}\`
+${data.comment?.default ? `- **Default:** \`${data.comment.default}\`` : ''}
+
+${data.comment?.summary}
+`
+  }
+
+  return `
 ## Parameters
 
 ${parameters
@@ -54,53 +98,41 @@ ${parameters
       for (const child of lookupItem.children) {
         const childItem = lookup[child]
         if (!childItem) continue
-        content += `
-#### ${p.name}.${childItem.displayName}
-
-- **Type:** \`${childItem.type}\`
-${childItem.comment?.default ? `- **Default:** \`${childItem.comment.default}\`` : ''}
-
-${childItem.comment?.summary}
-`
+        content += renderProperty(p.name, childItem)
       }
-    // const interfaceReference = p.primaryCanonicalReference?.endsWith(
-    //   ':interface',
-    // )
-    //   ? p.primaryCanonicalReference
-    //   : undefined
-    // if (interfaceReference) console.log(interfaceReference)
-    //
-    return `### ${p.name}
 
-- **Type:** \`${p.type}\`
-${comment?.default ? `- **Default:** \`${comment.default}\`` : ''}
+    return `
+      ${renderParameter(p)}
 
-${p.comment}
-
-${content}
-
-`
+      ${content}
+    `
   })
   .join('\n')}
 `
+}
 
-  // if (module === 'Address' && displayName === 'fromPublicKey')
-  //   console.log(
-  //     item,
-  //     lookup['ox!Address.fromPublicKey:namespace'],
-  //     lookup['ox!Address.fromPublicKey.ReturnType:type'],
-  //   )
+function renderReturnType(options: {
+  item: Data
+}) {
+  const { item } = options
+  const { comment, returnType } = item
 
-  const returnTypeContent =
-    !returnType || returnType?.type === 'void'
-      ? ''
-      : `
+  if (!returnType || returnType?.type === 'void') return ''
+
+  return `
 ## Return Type
 
 ${comment?.returns}
 
 \`${returnType.type}\`
 `
+}
+
+function renderErrorType(options: {
+  item: Data
+  lookup: Record<string, Data>
+}) {
+  const { item, lookup } = options
 
   const errorTypeId = `${item.canonicalReference.split(':')[0]}.ErrorType:type`
   const parseErrorId = `${item.canonicalReference.split(':')[0]}.parseError:function(1)`
@@ -108,15 +140,22 @@ ${comment?.returns}
   const parseErrorItem = lookup[parseErrorId]
 
   const typeRegex = /^ox!(?<type>.+):type/
-  const errorTypeContent = !(errorTypeItem && parseErrorItem)
-    ? ''
-    : `
-## Error Type
+  if (!(errorTypeItem && parseErrorItem)) return ''
+  return dedent`
+    ## Error Type
 
-\`${errorTypeItem.canonicalReference.match(typeRegex)?.groups?.type}\`
+    \`${errorTypeItem.canonicalReference.match(typeRegex)?.groups?.type}\`
 
-${errorTypeItem.references.map((r) => `- \`${r.text}\``).join('\n')}
-`
+    ${errorTypeItem.references.map((r) => `- \`${r.text}\``).join('\n')}
+  `
+}
+
+function renderSignature(options: {
+  item: Data
+  lookup: Record<string, Data>
+}) {
+  const { item } = options
+  const { displayName, parameters = [], returnType, typeParameters } = item
 
   const arrow = false
   let paramSignature = parameters
@@ -136,7 +175,8 @@ ${errorTypeItem.references.map((r) => `- \`${r.text}\``).join('\n')}
   }${genericSignature}(${paramSignature})${arrow ? ' =>' : ':'} ${
     returnType?.type
   }`
-  const signatureContent = `
+
+  return `
 ## Signature
 
 \`\`\`ts
@@ -144,16 +184,5 @@ ${signature}
 \`\`\`
 
 [${item.file.path}](${item.file.url}${item.file.lineNumber ? `#L${item.file.lineNumber}` : ''})
-`
-
-  return `
-${headerContent}
-${importContent}
-${exampleContent}
-${signatureContent}
-${parametersContent}
-${returnTypeContent}
-${errorTypeContent}
-
 `
 }

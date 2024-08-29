@@ -30,21 +30,21 @@ import type {
  *     type: 'function',
  *     inputs: [{ type: 'uint256' }],
  *     outputs: [],
- *     stateMutability: 'payable'
+ *     stateMutability: 'payable',
  *   },
  *   {
  *     name: 'y',
  *     type: 'event',
  *     inputs: [{ type: 'address' }],
  *     outputs: [{ type: 'uint256' }],
- *     stateMutability: 'view'
+ *     stateMutability: 'view',
  *   },
  *   {
  *     name: 'z',
  *     type: 'function',
  *     inputs: [{ type: 'string' }],
  *     outputs: [{ type: 'uint256' }],
- *     stateMutability: 'view'
+ *     stateMutability: 'view',
  *   }
  * ] as const
  *

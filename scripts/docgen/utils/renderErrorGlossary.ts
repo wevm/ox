@@ -1,5 +1,4 @@
 import * as model from '@microsoft/api-extractor-model'
-import dedent from 'dedent'
 
 import type { Data } from './handleItem.js'
 
@@ -20,20 +19,19 @@ export function renderErrorGlossary(options: {
         `Could not find lookup item for ${member.canonicalReference.toString()}`,
       )
 
-    content += dedent`\n\n
-      ## \`${lookupItem.displayName}\`
+    content += `\n\n
+## \`${lookupItem.displayName}\`
 
-      ${lookupItem.comment?.summary ?? 'TODO'}
-    `
+${lookupItem.comment?.summary ?? 'TODO'}
+`
   }
 
-  return dedent`
-    ---
-    showOutline: 1
-    ---
+  return `---
+showOutline: 1
+---
 
-    # ${item.displayName} [Glossary of Errors in Ox]
+# ${item.displayName} [Glossary of Errors in Ox]
 
-    ${content}
-  `
+${content}
+`
 }

@@ -244,10 +244,11 @@ function extraData(item: model.ApiItem) {
 }
 
 function extractPrimaryReference(type: string, item: model.ApiItem) {
-  if (!(item instanceof model.ApiDeclaredItem)) return { type }
+  if (!(item instanceof model.ApiDeclaredItem))
+    return { type: formatType(type) }
 
   const ast = parseAst(type)
-  if (!ast) return { type }
+  if (!ast) return { type: formatType(type) }
 
   const primaryReference = skipToPrimaryType(ast)
   const referencedTypeName = primaryReference?.name?.value
@@ -256,7 +257,7 @@ function extractPrimaryReference(type: string, item: model.ApiItem) {
   )
 
   return {
-    type,
+    type: formatType(type),
     primaryCanonicalReference: referencedType?.canonicalReference?.toString(),
     primaryGenericArguments: primaryReference?.generics?.map(
       (g: { unparsed: boolean }) => g.unparsed,

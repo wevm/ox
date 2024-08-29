@@ -26,7 +26,7 @@ export function renderModuleIndex(options: {
   } = options
   const { examples, summary } = docComment
 
-  return dedent`
+  return `
     # ${item.displayName}
 
     ${summary}
@@ -73,7 +73,7 @@ ${renderRows(item, types)}
 `)()
     : ''
 }
-`
+  `
 }
 
 function renderRows(item: model.ApiItem, items: ModuleItem[]) {
@@ -102,21 +102,20 @@ export function renderModuleErrorsIndex(options: {
       )
 
     content += dedent`\n\n
-      ## \`${lookupItem.displayName}\`
+## \`${lookupItem.displayName}\`
 
-      ${lookupItem.comment?.summary ?? 'TODO'}
-    `
+${lookupItem.comment?.summary ?? 'TODO'}
+`
   }
 
-  return dedent`
-    ---
-    showOutline: 1
-    ---
+  return dedent`---
+showOutline: 1
+---
 
-    # ${item.displayName} Errors
+# ${item.displayName} Errors
 
-    ${content}
-  `
+${content}
+`
 }
 
 export function renderModuleTypesIndex(options: {
@@ -135,20 +134,19 @@ export function renderModuleTypesIndex(options: {
         `Could not find lookup item for ${member.canonicalReference.toString()}`,
       )
 
-    content += dedent`\n\n
-      ## \`${lookupItem.displayName}\`
+    content += `\n\n
+## \`${lookupItem.displayName}\`
 
-      ${lookupItem.comment?.summary ?? 'TODO'}
-    `
+${lookupItem.comment?.summary ?? 'TODO'}
+`
   }
 
-  return dedent`
-    ---
-    showOutline: 1
-    ---
+  return `---
+showOutline: 1
+---
 
-    # ${item.displayName} Types
+# ${item.displayName} Types
 
-    ${content}
-  `
+${content}
+`
 }
