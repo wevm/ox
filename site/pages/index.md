@@ -28,7 +28,7 @@ bun i ox
 
 ## Example Usage
 
-Below is an example of using the [`Hex`](/api/hex) and [`Rlp`](/api/rlp) modules of Ox.
+Below is an example of using the [`Hex`](/gen/Hex) and [`Rlp`](/gen/Rlp) modules of Ox.
 
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
@@ -54,25 +54,25 @@ You can also skim the **Module API Reference** to get a quick overview of the av
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Abi](/api/Abi)                                 | Utility functions for encoding, decoding, and working with [ABIs](https://docs.soliditylang.org/en/latest/abi-spec.html)                                                   |
 | [Address](/api/Address)                         | Utility functions for working with Ethereum addresses.                                                                                                                     |
-| [Base58](#TODO)                           |                                                                                                                                                                            |
-| [Base64](#TODO)                           |                                                                                                                                                                            |
-| [Block](#TODO)                             |                                                                                                                                                                            |
+| [Base58](#TODO)                                 |                                                                                                                                                                            |
+| [Base64](#TODO)                                 |                                                                                                                                                                            |
+| [Block](#TODO)                                  |                                                                                                                                                                            |
 | [Bytes](/api/Bytes)                             | Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances. |
-| [Constants](#TODO)                     |                                                                                                                                                                            |
+| [Constants](#TODO)                              |                                                                                                                                                                            |
 | [ContractAddress](/api/ContractAddress)         |                                                                                                                                                                            |
 | [Hash](/api/Hash)                               | Utility functions for hashing.                                                                                                                                             |
 | [Hex](/api/Hex)                                 | Utility functions for working with hexadecimal string values.                                                                                                              |
-| [Json](#TODO)                               |                                                                                                                                                                            |
-| [JsonRpc](#TODO)                         |                                                                                                                                                                            |
+| [Json](#TODO)                                   |                                                                                                                                                                            |
+| [JsonRpc](#TODO)                                |                                                                                                                                                                            |
 | [Kzg](/api/Kzg)                                 |                                                                                                                                                                            |
-| [Log](#TODO)                                 |                                                                                                                                                                            |
+| [Log](#TODO)                                    |                                                                                                                                                                            |
 | [Rlp](/api/Rlp)                                 | Utility functions for encoding and decoding [RLP structures](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/).                                   |
 | [Secp256k1](/api/Secp256k1)                     |                                                                                                                                                                            |
-| [SignedData](#TODO)                   |                                                                                                                                                                            |
+| [SignedData](#TODO)                             |                                                                                                                                                                            |
 | [Signature](/api/Signature)                     | Utility functions for working with ECDSA signatures.                                                                                                                       |
-| [Transaction](#TODO)                 |                                                                                                                                                                            |
+| [Transaction](#TODO)                            |                                                                                                                                                                            |
 | [TransactionEnvelope](/api/TransactionEnvelope) |                                                                                                                                                                            |
-| [TransactionReceipt](#TODO)   |                                                                                                                                                                            |
+| [TransactionReceipt](#TODO)                     |                                                                                                                                                                            |
 | [TypedData](/api/TypedData)                     | Utility functions for [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712).                                                                                        |
 | [Value](/api/Value)                             | Utility functions for displaying and parsing Ethereum Values.                                                                                                              |
-| [WebAuthnP256](#TODO)                   |                                                                                                                                                                            |
+| [WebAuthnP256](#TODO)                           |                                                                                                                                                                            |
