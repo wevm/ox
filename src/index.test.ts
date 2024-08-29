@@ -5,6 +5,7 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "Abi",
+      "AccountProof",
       "Address",
       "Authorization",
       "Blobs",
@@ -24,7 +25,6 @@ test('exports', () => {
       "Secp256k1",
       "Signature",
       "Siwe",
-      "State",
       "Transaction",
       "TransactionLegacy",
       "TransactionEip1559",

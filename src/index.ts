@@ -27,6 +27,12 @@
 export * as Abi from './Abi.js'
 
 /**
+ * The **AccountProof** Module provides a set of types & utility functions for working
+ * with Account Proofs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml).
+ */
+export * as AccountProof from './AccountProof.js'
+
+/**
  * The **Address** Module provides a set of utility functions for working with Ethereum addresses.
  */
 export * as Address from './Address.js'
@@ -139,13 +145,7 @@ export * as Signature from './Signature.js'
  */
 export * as Siwe from './Siwe.js'
 
-/**
- * The **State** Module provides a set of types & utility functions for working
- * with State as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml).
- */
-export * as State from './State.js'
-
-/**
+/**./AccountProof.js
  * The **Transaction** Module provides a set of types & utility functions for working
  * with **Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
  *
