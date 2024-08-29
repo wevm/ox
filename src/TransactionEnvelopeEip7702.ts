@@ -2,6 +2,7 @@ export type {
   TransactionEnvelopeEip7702 as TransactionEnvelope,
   TransactionEnvelopeEip7702_Serialized as Serialized,
   TransactionEnvelopeEip7702_SerializedType as SerializedType,
+  TransactionEnvelopeEip7702_Signed as Signed,
   TransactionEnvelopeEip7702_Type as Type,
 } from './internal/transactionEnvelope/eip7702/types.js'
 

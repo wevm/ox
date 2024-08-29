@@ -1,6 +1,7 @@
 export type {
   TransactionEnvelopeLegacy as TransactionEnvelope,
   TransactionEnvelopeLegacy_Serialized as Serialized,
+  TransactionEnvelopeLegacy_Signed as Signed,
   TransactionEnvelopeLegacy_Type as Type,
 } from './internal/transactionEnvelope/legacy/types.js'
 

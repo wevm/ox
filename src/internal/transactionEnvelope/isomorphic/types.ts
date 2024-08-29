@@ -2,36 +2,33 @@ import type { IsNarrowable, IsNever, OneOf } from '../../types.js'
 import type {
   TransactionEnvelopeEip1559,
   TransactionEnvelopeEip1559_Serialized,
+  TransactionEnvelopeEip1559_Signed,
   TransactionEnvelopeEip1559_Type,
 } from '../eip1559/types.js'
 import type {
   TransactionEnvelopeEip2930,
   TransactionEnvelopeEip2930_Serialized,
+  TransactionEnvelopeEip2930_Signed,
   TransactionEnvelopeEip2930_Type,
 } from '../eip2930/types.js'
 import type {
   TransactionEnvelopeEip4844,
   TransactionEnvelopeEip4844_Serialized,
+  TransactionEnvelopeEip4844_Signed,
   TransactionEnvelopeEip4844_Type,
 } from '../eip4844/types.js'
 import type {
   TransactionEnvelopeEip7702,
   TransactionEnvelopeEip7702_Serialized,
+  TransactionEnvelopeEip7702_Signed,
   TransactionEnvelopeEip7702_Type,
 } from '../eip7702/types.js'
 import type {
   TransactionEnvelopeLegacy,
   TransactionEnvelopeLegacy_Serialized,
+  TransactionEnvelopeLegacy_Signed,
   TransactionEnvelopeLegacy_Type,
 } from '../legacy/types.js'
-
-export type TransactionEnvelope_Type =
-  | TransactionEnvelopeLegacy_Type
-  | TransactionEnvelopeEip1559_Type
-  | TransactionEnvelopeEip2930_Type
-  | TransactionEnvelopeEip4844_Type
-  | TransactionEnvelopeEip7702_Type
-  | (string & {})
 
 export type TransactionEnvelope = OneOf<
   | TransactionEnvelopeLegacy
@@ -54,3 +51,19 @@ export type TransactionEnvelope_Serialized<
     ? `0x${string}`
     : result
   : `0x${string}`
+
+export type TransactionEnvelope_Signed = OneOf<
+  | TransactionEnvelopeLegacy_Signed
+  | TransactionEnvelopeEip1559_Signed
+  | TransactionEnvelopeEip2930_Signed
+  | TransactionEnvelopeEip4844_Signed
+  | TransactionEnvelopeEip7702_Signed
+>
+
+export type TransactionEnvelope_Type =
+  | TransactionEnvelopeLegacy_Type
+  | TransactionEnvelopeEip1559_Type
+  | TransactionEnvelopeEip2930_Type
+  | TransactionEnvelopeEip4844_Type
+  | TransactionEnvelopeEip7702_Type
+  | (string & {})
