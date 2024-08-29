@@ -27,13 +27,13 @@ export function renderModuleIndex(options: {
   const { examples, summary } = docComment
 
   return `
-    # ${item.displayName}
+# ${item.displayName}
 
-    ${summary}
+${summary}
 
-    ${examples.length ? '## Examples' : ''}
+${examples.length ? '## Examples' : ''}
 
-    ${examples.join('\n\n')}
+${examples.join('\n\n')}
 
 ${
   functions.length

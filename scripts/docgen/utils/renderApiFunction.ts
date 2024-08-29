@@ -66,10 +66,11 @@ function renderParameters(options: {
 
   function renderParameter(parameter: NonNullable<Data['parameters']>[number]) {
     return `
-### ${parameter.name}
+### \`${parameter.name}\`
 
 - **Type:** \`${parameter.type}\`
 ${comment?.default ? `- **Default:** \`${comment.default}\`` : ''}
+${!comment?.default && parameter.optional ? '- **Optional**' : ''}
 
 ${parameter.comment}
 `
@@ -77,10 +78,11 @@ ${parameter.comment}
 
   function renderProperty(name: string, data: Data) {
     return `
-#### ${name}.${data.displayName}
+#### \`${name}.${data.displayName}\`
 
 - **Type:** \`${data.type}\`
 ${data.comment?.default ? `- **Default:** \`${data.comment.default}\`` : ''}
+${!data.comment?.default && data.optional ? '- **Optional**' : ''}
 
 ${data.comment?.summary}
 `
