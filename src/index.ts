@@ -68,6 +68,12 @@ export * as ContractAddress from './ContractAddress.js'
 export * as Errors from './Errors.js'
 
 /**
+ * The **Filter** Module provides a set of types & utility functions for working
+ * with Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml).
+ */
+export * as Filter from './Filter.js'
+
+/**
  * The **Hash** Module provides a set of utility functions for hashing.
  *
  * @example
@@ -132,6 +138,12 @@ export * as Signature from './Signature.js'
  * [EIP-4361: Sign-In with Ethereum](https://eips.ethereum.org/EIPS/eip-4361).
  */
 export * as Siwe from './Siwe.js'
+
+/**
+ * The **State** Module provides a set of types & utility functions for working
+ * with State as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml).
+ */
+export * as State from './State.js'
 
 /**
  * The **Transaction** Module provides a set of types & utility functions for working

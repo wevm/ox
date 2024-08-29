@@ -74,6 +74,9 @@ export type Block<
   withdrawalsRoot?: Hex | undefined
 }
 
+/** A Block number. */
+export type Block_Number<bigintType = bigint> = bigintType
+
 /** An RPC Block as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml). */
 export type Block_Rpc<
   includeTransactions extends boolean = boolean,
