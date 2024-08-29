@@ -4,7 +4,7 @@ import type { Hex } from '../hex/types.js'
 export type Signature<bigintType = bigint> = {
   r: bigintType
   s: bigintType
-  yParity: 0 | 1
+  yParity: number
 }
 
 /** [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) compact signature. */

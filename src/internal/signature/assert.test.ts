@@ -27,7 +27,6 @@ test('default', () => {
   `)
 
   expect(() =>
-    // @ts-expect-error
     Signature.assert({ r: 0n, s: 0n, yParity: 69 }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [InvalidSignatureYParityError: Value \`69\` is an invalid y-parity value. Y-parity must be 0 or 1.

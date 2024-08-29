@@ -1,5 +1,6 @@
 export type {
   TransactionEnvelopeEip2930 as TransactionEnvelope,
+  TransactionEnvelopeEip2930_Rpc as Rpc,
   TransactionEnvelopeEip2930_Serialized as Serialized,
   TransactionEnvelopeEip2930_SerializedType as SerializedType,
   TransactionEnvelopeEip2930_Signed as Signed,

@@ -1,5 +1,6 @@
 export type {
   TransactionEnvelopeLegacy as TransactionEnvelope,
+  TransactionEnvelopeLegacy_Rpc as Rpc,
   TransactionEnvelopeLegacy_Serialized as Serialized,
   TransactionEnvelopeLegacy_Signed as Signed,
   TransactionEnvelopeLegacy_Type as Type,

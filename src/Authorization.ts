@@ -1,8 +1,12 @@
 export type {
   Authorization,
   Authorization_List as List,
+  Authorization_ListSigned as ListSigned,
+  Authorization_Signed as Signed,
   Authorization_Tuple as Tuple,
   Authorization_TupleList as TupleList,
+  Authorization_TupleListSigned as TupleListSigned,
+  Authorization_TupleSigned as TupleSigned,
 } from './internal/authorization/types.js'
 
 export { Authorization_getSignPayload as getSignPayload } from './internal/authorization/getSignPayload.js'

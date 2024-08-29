@@ -40,7 +40,7 @@ export declare namespace Signature_extract {
   type Value = {
     r?: bigint | undefined
     s?: bigint | undefined
-    yParity?: 0 | 1 | undefined
+    yParity?: number | undefined
     v?: number | undefined
   }
   type ErrorType = GlobalErrorType

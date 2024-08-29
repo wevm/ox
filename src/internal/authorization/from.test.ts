@@ -80,7 +80,7 @@ test('options: signature', () => {
     readonly nonce: 40n
     readonly r: bigint
     readonly s: bigint
-    readonly yParity: 0 | 1
+    readonly yParity: number
   }>()
   expectTypeOf(authorization_signed).toMatchTypeOf<
     Authorization.Authorization<true>

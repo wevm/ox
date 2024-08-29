@@ -25,7 +25,7 @@ export function Signature_fromTuple(tuple: Signature_Tuple): Signature {
   return Signature_from({
     r: r === '0x' ? 0n : BigInt(r),
     s: s === '0x' ? 0n : BigInt(s),
-    yParity: yParity === '0x' ? 0 : (Number(yParity) as 0 | 1),
+    yParity: yParity === '0x' ? 0 : Number(yParity),
   })
 }
 

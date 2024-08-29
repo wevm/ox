@@ -31,7 +31,7 @@ export function Secp256k1_sign(options: Secp256k1_sign.Options): Signature {
   return {
     r,
     s,
-    yParity: recovery as 0 | 1,
+    yParity: recovery,
   }
 }
 
