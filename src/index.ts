@@ -45,7 +45,7 @@ export * as Blobs from './Blobs.js'
 
 /**
  * The **Block** Module provides a set of types & utility functions for working
- * with Blocks as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
+ * with Blocks as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml).
  */
 export * as Block from './Block.js'
 
@@ -313,6 +313,6 @@ export * as Value from './Value.js'
 
 /**
  * The **Withdrawal** Module provides a set of types & utility functions for working
- * with Withdrawals as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
+ * with Withdrawals as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/withdrawal.yaml).
  */
 export * as Withdrawal from './Withdrawal.js'
