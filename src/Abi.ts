@@ -7,6 +7,7 @@ export type {
   Abi_Function as Function,
   Abi_Item as Item,
   Abi_Parameter as Parameter,
+  Abi_ParameterType as ParameterType,
 } from './internal/abi/types.js'
 
 export {

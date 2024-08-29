@@ -9,13 +9,13 @@ import { renderApiFunction } from './utils/renderApiFunction.js'
 import { extractNamespaceDocComments } from './utils/tsdoc.js'
 
 // TODO
-// - Expand properties/types and lookup links
-// - Show optional properties
-// - Show optional params
-// - Show list of references under complex types
-// - Link errors/types
-// - Remove underscores for names
 // - Add errors and types page for each module
+// - Link errors/types
+// - Remove underscores in names
+// - Show optional params
+// - Expand properties/types and lookup links
+// - Show list of references under complex types
+// - Show optional properties
 
 // Vocs TODO
 // - Throw build if twoslash block has errors

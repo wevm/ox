@@ -6,6 +6,7 @@ import type {
   AbiFunction,
   AbiParameter,
   AbiParametersToPrimitiveTypes,
+  AbiType,
   ResolvedRegister,
   Abi as abitype_Abi,
 } from 'abitype'
@@ -20,6 +21,7 @@ export type Abi_Event = AbiEvent
 export type Abi_Fallback = AbiFallback
 export type Abi_Function = AbiFunction
 export type Abi_Parameter = AbiParameter
+export type Abi_ParameterType = AbiType
 
 /** @internal */
 export type Abi_ItemArgs<

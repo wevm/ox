@@ -192,7 +192,7 @@ type ExtraData = {
 }
 
 function formatType(type: string) {
-  return type.replace('_', '.')
+  return type.replaceAll('_', '.')
 }
 
 function extraData(item: model.ApiItem) {
