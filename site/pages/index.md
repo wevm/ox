@@ -28,7 +28,7 @@ bun i ox
 
 ## Example Usage
 
-Below is an example of using the [`Hex`](/gen/Hex) and [`Rlp`](/gen/Rlp) modules of Ox.
+Below is an example of using the [`Hex`](/api/Hex) and [`Rlp`](/api/Rlp) modules of Ox.
 
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
