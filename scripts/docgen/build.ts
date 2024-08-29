@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 
 import { pagesDir } from './constants.js'
 import { type Data, handleItem } from './utils/handleItem.js'
-import { moduleRegex } from './utils/regex.js'
+import { namespaceRegex } from './utils/regex.js'
 import { renderApiFunction } from './utils/renderApiFunction.js'
 import { renderErrorGlossary } from './utils/renderErrorGlossary.js'
 import {
@@ -17,8 +17,7 @@ import { extractNamespaceDocComments } from './utils/tsdoc.js'
 // TODO
 // - Show list of references under complex types
 // - Expand properties/types and lookup links
-// - Link errors/types
-// - Show optional params/properties
+// - Link types
 
 // Vocs TODO
 // - Throw build if twoslash block has errors
@@ -52,7 +51,7 @@ const hiddenModules = ['Caches', 'Constants', 'Errors', 'Internal', 'Types']
 const moduleItems = entrypointItem.members.filter(
   (x) =>
     x.kind === model.ApiItemKind.Namespace &&
-    moduleRegex.test(x.canonicalReference.toString()) &&
+    namespaceRegex.test(x.canonicalReference.toString()) &&
     !hiddenModules.includes(x.displayName),
 )
 
@@ -152,21 +151,18 @@ const glossarySidebar = []
   const errorItem = entrypointItem.members.find(
     (x) =>
       x.kind === model.ApiItemKind.Namespace &&
-      moduleRegex.test(x.canonicalReference.toString()) &&
+      namespaceRegex.test(x.canonicalReference.toString()) &&
       ['Errors'].includes(x.displayName),
   )
   if (!errorItem) throw new Error('Could not find error item')
 
   glossarySidebar.push({
-    link: '/glossary/errors',
+    link: '/errors',
     text: errorItem.displayName,
   })
 
   const content = renderErrorGlossary({ item: errorItem, lookup })
-
-  const dir = `${pagesDir}/glossary/errors`
-  fs.ensureDirSync(dir)
-  fs.writeFileSync(`${dir}/index.md`, content)
+  fs.writeFileSync(`${pagesDir}/errors.md`, content)
 }
 
 const sidebar = [
@@ -201,7 +197,7 @@ for (const id of ids) {
     }
   })()
 
-  const module = item.parent?.match(moduleRegex)?.groups?.module
+  const module = item.parent?.match(namespaceRegex)?.groups?.module
   const dir = `${pagesDir}/api/${module ? `${module}/` : ''}`
   fs.writeFileSync(`${dir}${item.displayName}.md`, content)
 }

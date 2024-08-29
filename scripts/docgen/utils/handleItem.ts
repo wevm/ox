@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import * as model from '@microsoft/api-extractor-model'
-import { moduleRegex } from './regex.js'
+import { moduleNameRegex, namespaceRegex } from './regex.js'
 import { processDocComment, renderDocNode } from './tsdoc.js'
 
 export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
@@ -62,7 +62,9 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
     item instanceof model.ApiNamespace
   ) {
     const parent = item.parent ? getId(item.parent) : null
-    const module = parent?.match(moduleRegex)?.groups?.module
+    const module = (
+      parent?.match(namespaceRegex) ?? parent?.match(moduleNameRegex)
+    )?.groups?.module
 
     const sourceFilePath =
       item.fileUrlPath ??
@@ -197,16 +199,15 @@ function formatType(type: string) {
 
 function extraData(item: model.ApiItem) {
   const ret: ExtraData = {}
-  if (model.ApiParameterListMixin.isBaseClassOf(item)) {
+  if (model.ApiParameterListMixin.isBaseClassOf(item))
     ret.parameters = item.parameters.map((p) => ({
       ...extractPrimaryReference(formatType(p.parameterTypeExcerpt.text), item),
       name: p.name,
       optional: p.isOptional,
       comment: renderDocNode(p.tsdocParamBlock?.content.nodes),
     }))
-  }
 
-  if (model.ApiTypeParameterListMixin.isBaseClassOf(item)) {
+  if (model.ApiTypeParameterListMixin.isBaseClassOf(item))
     ret.typeParameters = item.typeParameters.map((p) => ({
       name: p.name,
       optional: p.isOptional,
@@ -214,7 +215,6 @@ function extraData(item: model.ApiItem) {
       constraint: p.constraintExcerpt.text,
       comment: renderDocNode(p.tsdocTypeParamBlock?.content.nodes),
     }))
-  }
 
   if (model.ApiReadonlyMixin.isBaseClassOf(item)) ret.readonly = item.isReadonly
   if (model.ApiOptionalMixin.isBaseClassOf(item)) ret.optional = item.isOptional

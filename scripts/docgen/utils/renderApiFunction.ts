@@ -141,14 +141,38 @@ function renderErrorType(options: {
   const errorTypeItem = lookup[errorTypeId]
   const parseErrorItem = lookup[parseErrorId]
 
-  const typeRegex = /^ox!(?<type>.+):type/
   if (!(errorTypeItem && parseErrorItem)) return ''
+
+  const references = errorTypeItem.references.filter(
+    (r) => r.canonicalReference !== 'ox!Errors.GlobalErrorType:type',
+  )
+  if (errorTypeItem.references.length === 0) return ''
+
+  const typeRegex = /^ox!(?<type>.+):type/
+
   return dedent`
     ## Error Type
 
     \`${errorTypeItem.canonicalReference.match(typeRegex)?.groups?.type}\`
 
-    ${errorTypeItem.references.map((r) => `- \`${r.text}\``).join('\n')}
+    ${references
+      .map((r) => {
+        const id = r.canonicalReference?.toString()
+        const referenceItem = id && (lookup[id] ?? lookup[`ox!${r.text}:type`])
+        if (referenceItem) {
+          const parent = referenceItem.parent
+          if (parent) {
+            const functionItem =
+              lookup[parent.replace('namespace', 'function(1)')]
+            if (functionItem)
+              return `- [\`${r.text}\`](/api/${referenceItem.module}/${functionItem.displayName}#error-type)`
+          }
+          if (referenceItem.module && r.text.endsWith('Error'))
+            return `- [\`${r.text}\`](/api/${referenceItem.module}/errors#${r.text.toLowerCase()})`
+        }
+        return `- \`${r.text}\``
+      })
+      .join('\n')}
   `
 }
 
