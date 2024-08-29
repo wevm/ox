@@ -38,10 +38,6 @@ export default defineConfig({
     { text: 'Error Handling', link: '/error-handling' },
     { text: 'Platform Compatibility', link: '/platform-compatibility' },
     {
-      text: 'API Reference',
-      items: sidebar,
-    },
-    {
       text: 'Guides',
       // collapsed: true,
       items: [
@@ -60,6 +56,7 @@ export default defineConfig({
         { text: 'WebAuthn Signatures 🚧', link: '/guides/webauthn' },
       ],
     },
+    ...sidebar,
   ],
   socials: [
     {

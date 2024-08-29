@@ -13,4 +13,5 @@ tsconfig.tsbuildinfo
 ox.api.json
 sidebar-generated.ts
 site/pages/api
+site/pages/glossary
 tsdoc-metadata.json
