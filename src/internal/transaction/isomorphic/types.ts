@@ -1,4 +1,4 @@
-import type { Compute, OneOf, UnionCompute } from '../../types.js'
+import type { OneOf, UnionCompute } from '../../types.js'
 import type {
   Transaction_Eip1559,
   Transaction_Eip1559Rpc,
