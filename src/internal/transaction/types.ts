@@ -2,6 +2,7 @@ import type { Address } from '../address/types.js'
 import type { Hex } from '../hex/types.js'
 import type { Compute } from '../types.js'
 
+/** Base properties of a Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_Base<
   type extends string = string,
   pending extends boolean = boolean,
@@ -42,6 +43,7 @@ export type Transaction_Base<
   v: numberType
 }>
 
+/** Base properties of an RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_BaseRpc<
   type extends string = string,
   pending extends boolean = boolean,

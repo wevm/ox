@@ -3,12 +3,14 @@ import type { Hex } from '../../hex/types.js'
 import type { Compute } from '../../types.js'
 import type { Transaction_Base } from '../types.js'
 
+/** An [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_Eip2930<
   pending extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
+  type extends string = 'eip2930',
 > = Compute<
-  Transaction_Base<'eip2930', pending, numberType, bigintType> & {
+  Transaction_Base<type, pending, numberType, bigintType> & {
     /** EIP-2930 Access List. */
     accessList: AccessList
     /** The gas price willing to be paid by the sender (in wei). */
@@ -16,6 +18,7 @@ export type Transaction_Eip2930<
   }
 >
 
+/** An RPC [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_Eip2930Rpc<pending extends boolean = boolean> = Compute<
-  Transaction_Eip2930<pending, Hex, Hex>
+  Transaction_Eip2930<pending, Hex, Hex, '0x2'>
 >

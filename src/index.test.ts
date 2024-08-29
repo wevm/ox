@@ -8,6 +8,7 @@ test('exports', () => {
       "Address",
       "Authorization",
       "Blobs",
+      "Block",
       "Bytes",
       "Caches",
       "Constants",
@@ -21,6 +22,12 @@ test('exports', () => {
       "Secp256k1",
       "Signature",
       "Siwe",
+      "Transaction",
+      "TransactionLegacy",
+      "TransactionEip1559",
+      "TransactionEip2930",
+      "TransactionEip4844",
+      "TransactionEip7702",
       "TransactionEnvelope",
       "TransactionEnvelopeLegacy",
       "TransactionEnvelopeEip1559",
@@ -30,6 +37,7 @@ test('exports', () => {
       "TypedData",
       "Types",
       "Value",
+      "Withdrawal",
     ]
   `)
 })
