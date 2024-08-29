@@ -7,7 +7,7 @@ export type Transaction_Legacy<
   pending extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  type extends string = 'legacy',
+  type extends string = Transaction_LegacyType,
 > = Compute<
   Transaction_Base<type, pending, numberType, bigintType> & {
     /** The gas price willing to be paid by the sender (in wei). */
@@ -17,5 +17,9 @@ export type Transaction_Legacy<
 
 /** A legacy RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_LegacyRpc<pending extends boolean = boolean> = Compute<
-  Transaction_Legacy<pending, Hex, Hex, '0x0'>
+  Transaction_Legacy<pending, Hex, Hex, Transaction_LegacyType>
 >
+
+export type Transaction_LegacyType = 'legacy'
+
+export type Transaction_LegacyTypeRpc = '0x0'

@@ -8,7 +8,7 @@ export type Transaction_Eip4844<
   pending extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  type extends string = 'eip4844',
+  type extends string = Transaction_Eip4844Type,
 > = Compute<
   Transaction_Base<type, pending, numberType, bigintType> & {
     /** EIP-2930 Access List. */
@@ -24,5 +24,9 @@ export type Transaction_Eip4844<
 
 /** An RPC [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_Eip4844Rpc<pending extends boolean = boolean> = Compute<
-  Transaction_Eip4844<pending, Hex, Hex, '0x3'>
+  Transaction_Eip4844<pending, Hex, Hex, Transaction_Eip4844TypeRpc>
 >
+
+export type Transaction_Eip4844Type = 'eip4844'
+
+export type Transaction_Eip4844TypeRpc = '0x3'

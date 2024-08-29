@@ -8,7 +8,7 @@ export type Transaction_Eip2930<
   pending extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  type extends string = 'eip2930',
+  type extends string = Transaction_Eip2930Type,
 > = Compute<
   Transaction_Base<type, pending, numberType, bigintType> & {
     /** EIP-2930 Access List. */
@@ -20,5 +20,9 @@ export type Transaction_Eip2930<
 
 /** An RPC [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_Eip2930Rpc<pending extends boolean = boolean> = Compute<
-  Transaction_Eip2930<pending, Hex, Hex, '0x2'>
+  Transaction_Eip2930<pending, Hex, Hex, Transaction_Eip2930Type>
 >
+
+export type Transaction_Eip2930Type = 'eip2930'
+
+export type Transaction_Eip2930TypeRpc = '0x2'
