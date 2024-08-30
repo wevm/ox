@@ -74,6 +74,8 @@ export type Block<
   withdrawalsRoot?: Hex | undefined
 }
 
+export type Block_Hash = Hex
+
 /** A Block number. */
 export type Block_Number<bigintType = bigint> = bigintType
 

@@ -12,6 +12,7 @@ export type {
   Transaction_Legacy as Legacy,
   Transaction_LegacyRpc as LegacyRpc,
   Transaction_LegacyType as LegacyType,
+  Transaction_LegacyTypeRpc as LegacyTypeRpc,
 } from './internal/transaction/legacy/types.js'
 
 export type {
@@ -25,6 +26,7 @@ export type {
   Transaction_Eip2930 as Eip2930,
   Transaction_Eip2930Rpc as Eip2930Rpc,
   Transaction_Eip2930Type as Eip2930Type,
+  Transaction_Eip2930TypeRpc as Eip2930TypeRpc,
 } from './internal/transaction/eip2930/types.js'
 
 export type {
@@ -38,4 +40,5 @@ export type {
   Transaction_Eip7702 as Eip7702,
   Transaction_Eip7702Rpc as Eip7702Rpc,
   Transaction_Eip7702Type as Eip7702Type,
+  Transaction_Eip7702TypeRpc as Eip7702TypeRpc,
 } from './internal/transaction/eip7702/types.js'

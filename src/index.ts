@@ -100,6 +100,8 @@ export * as Hex from './Hex.js'
 
 export * as Internal from './Internal.js'
 
+export * as Fee from './Fee.js'
+
 /**
  * The **Kzg** Module provides a set of utility functions for working with
  * KZG Commitments.
@@ -128,6 +130,13 @@ export * as Log from './Log.js'
  * ```
  */
 export * as Rlp from './Rlp.js'
+
+/**
+ * The **JsonRpc** Module provides a set of utility types & functions for working with
+ * [JSON-RPC 2.0](https://www.jsonrpc.org/specification) and Ethereum JSON-RPC methods as
+ * defined on the [Ethereum API specification](https://github.com/ethereum/execution-apis).
+ */
+export * as JsonRpc from './JsonRpc.js'
 
 /**
  * The **Secp256k1** Module provides a set of utility functions for secp256k1 cryptography.

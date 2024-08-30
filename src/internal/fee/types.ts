@@ -1,3 +1,4 @@
+import type { Hex } from '../hex/types.js'
 import type { OneOf } from '../types.js'
 
 export type FeeHistory<bigintType = bigint> = {
@@ -14,10 +15,14 @@ export type FeeHistory<bigintType = bigint> = {
   reward?: bigintType[][] | undefined
 }
 
+export type FeeHistoryRpc = FeeHistory<Hex>
+
 export type FeeValuesLegacy<bigintType = bigint> = {
   /** Base fee per gas. */
   gasPrice: bigintType
 }
+
+export type FeeValuesLegacyRpc = FeeValuesLegacy<Hex>
 
 export type FeeValuesEip1559<bigintType = bigint> = {
   /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
@@ -25,6 +30,8 @@ export type FeeValuesEip1559<bigintType = bigint> = {
   /** Max priority fee per gas (in wei). */
   maxPriorityFeePerGas: bigintType
 }
+
+export type FeeValuesEip1559Rpc = FeeValuesEip1559<Hex>
 
 export type FeeValuesEip4844<bigintType = bigint> = {
   /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
@@ -35,10 +42,16 @@ export type FeeValuesEip4844<bigintType = bigint> = {
   maxPriorityFeePerGas: bigintType
 }
 
+export type FeeValuesEip4844Rpc = FeeValuesEip4844<Hex>
+
 export type FeeValues<bigintType = bigint> = OneOf<
   | FeeValuesLegacy<bigintType>
   | FeeValuesEip1559<bigintType>
   | FeeValuesEip4844<bigintType>
+>
+
+export type FeeValuesRpc = OneOf<
+  FeeValuesLegacyRpc | FeeValuesEip1559Rpc | FeeValuesEip4844Rpc
 >
 
 export type FeeValuesType = 'legacy' | 'eip1559' | 'eip4844'

@@ -23,6 +23,7 @@ export type {
   TransactionEnvelopeLegacy_Rpc as LegacyRpc,
   TransactionEnvelopeLegacy_Signed as LegacySigned,
   TransactionEnvelopeLegacy_Serialized as LegacySerialized,
+  TransactionEnvelopeLegacy_Type as LegacyType,
 } from './internal/transactionEnvelope/legacy/types.js'
 
 export type {
@@ -30,6 +31,8 @@ export type {
   TransactionEnvelopeEip1559_Rpc as Eip1559Rpc,
   TransactionEnvelopeEip1559_Signed as Eip1559Signed,
   TransactionEnvelopeEip1559_Serialized as Eip1559Serialized,
+  TransactionEnvelopeEip1559_Type as Eip1559Type,
+  TransactionEnvelopeEip1559_SerializedType as Eip1559SerializedType,
 } from './internal/transactionEnvelope/eip1559/types.js'
 
 export type {
@@ -37,6 +40,8 @@ export type {
   TransactionEnvelopeEip2930_Rpc as Eip2930Rpc,
   TransactionEnvelopeEip2930_Signed as Eip2930Signed,
   TransactionEnvelopeEip2930_Serialized as Eip2930Serialized,
+  TransactionEnvelopeEip2930_Type as Eip2930Type,
+  TransactionEnvelopeEip2930_SerializedType as Eip2930SerializedType,
 } from './internal/transactionEnvelope/eip2930/types.js'
 
 export type {
@@ -44,6 +49,8 @@ export type {
   TransactionEnvelopeEip4844_Rpc as Eip4844Rpc,
   TransactionEnvelopeEip4844_Signed as Eip4844Signed,
   TransactionEnvelopeEip4844_Serialized as Eip4844Serialized,
+  TransactionEnvelopeEip4844_Type as Eip4844Type,
+  TransactionEnvelopeEip4844_SerializedType as Eip4844SerializedType,
 } from './internal/transactionEnvelope/eip4844/types.js'
 
 export type {
@@ -51,6 +58,8 @@ export type {
   TransactionEnvelopeEip7702_Rpc as Eip7702Rpc,
   TransactionEnvelopeEip7702_Signed as Eip7702Signed,
   TransactionEnvelopeEip7702_Serialized as Eip7702Serialized,
+  TransactionEnvelopeEip7702_Type as Eip7702Type,
+  TransactionEnvelopeEip7702_SerializedType as Eip7702SerializedType,
 } from './internal/transactionEnvelope/eip7702/types.js'
 
 export { TransactionEnvelope_assert as assert } from './internal/transactionEnvelope/isomorphic/assert.js'

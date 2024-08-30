@@ -17,6 +17,8 @@ export type Transaction_Base<
   chainId: numberType
   /** @alias `input` Added for TransactionEnvelope - Transaction compatibility. */
   data: Hex
+  /** Sender of this transaction */
+  from: Address
   /** Hash of this transaction */
   hash: Hex
   /** Contract code or a hashed method call with encoded args */

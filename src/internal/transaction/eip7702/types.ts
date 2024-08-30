@@ -25,7 +25,7 @@ export type Transaction_Eip7702<
 
 /** An RPC [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_Eip7702Rpc<pending extends boolean = boolean> = Compute<
-  Transaction_Eip7702<pending, Hex, Hex, Transaction_Eip7702Type>
+  Transaction_Eip7702<pending, Hex, Hex, Transaction_Eip7702TypeRpc>
 >
 
 export type Transaction_Eip7702Type = 'eip7702'

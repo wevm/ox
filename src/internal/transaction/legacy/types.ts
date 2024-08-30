@@ -17,7 +17,7 @@ export type Transaction_Legacy<
 
 /** A legacy RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_LegacyRpc<pending extends boolean = boolean> = Compute<
-  Transaction_Legacy<pending, Hex, Hex, Transaction_LegacyType>
+  Transaction_Legacy<pending, Hex, Hex, Transaction_LegacyTypeRpc>
 >
 
 export type Transaction_LegacyType = 'legacy'
