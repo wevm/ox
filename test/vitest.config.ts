@@ -22,6 +22,7 @@ export default defineConfig({
       ...(process.env.TYPES ? ['**/*.bench-d.ts'] : []),
       'src/**/*.test.ts',
     ],
+    globalSetup: process.env.TYPES ? [] : [join(__dirname, './globalSetup.ts')],
     passWithNoTests: true,
     setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
   },

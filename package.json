@@ -58,6 +58,7 @@
     "ethers": "^6.13.2",
     "fs-extra": "^11.2.0",
     "knip": "^5.27.2",
+    "prool": "^0.0.16",
     "rimraf": "^5.0.10",
     "sherif": "^0.11.0",
     "simple-git-hooks": "^2.11.1",

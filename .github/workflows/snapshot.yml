@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        uses: wevm/actions/.github/actions/pnpm@main
+        uses: ./.github/actions/install-dependencies
         with: 
           node-version: 22
 
