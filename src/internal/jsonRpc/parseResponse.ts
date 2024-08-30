@@ -65,6 +65,20 @@ import type {
  *
  * ```
  *
+ * :::tip
+ *
+ * If you don't need the return type, you can omit the options entirely.
+ *
+ * ```ts twoslash
+ * import { JsonRpc } from 'ox'
+ *
+ * const block = await fetch('https://cloudflare-eth.com', {})
+ *  .then((res) => res.json())
+ *  .then((res) => JsonRpc.parseResponse(res, { method: 'eth_getBlockByNumber' })) // [!code --]
+ *  .then(JsonRpc.parseResponse) // [!code ++]
+ * ```
+ * :::
+ *
  * @example
  * ### Type-safe Custom Methods
  *
