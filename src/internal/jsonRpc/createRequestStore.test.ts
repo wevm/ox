@@ -1,7 +1,8 @@
 import { JsonRpc } from 'ox'
 import { expect, test } from 'vitest'
+import { anvilMainnet } from '../../../test/anvil.js'
 
-test('default', () => {
+test('default', async () => {
   const store = JsonRpc.createRequestStore()
 
   const requests = [
@@ -61,9 +62,40 @@ test('default', () => {
       },
     ]
   `)
+
+  const responses = await Promise.all(
+    requests.map((request) =>
+      fetch(anvilMainnet.rpcUrl, {
+        body: JSON.stringify(request),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }).then((res) => res.json()),
+    ),
+  )
+  expect(responses).toMatchInlineSnapshot(`
+    [
+      {
+        "id": 0,
+        "jsonrpc": "2.0",
+        "result": "0x12f2974",
+      },
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": "0x",
+      },
+      {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "result": "0x5248",
+      },
+    ]
+  `)
 })
 
-test('options: id', () => {
+test('options: id', async () => {
   const store = JsonRpc.createRequestStore({ id: 10 })
 
   const requests = [
@@ -94,6 +126,37 @@ test('options: id', () => {
         "id": 12,
         "jsonrpc": "2.0",
         "method": "eth_blockNumber",
+      },
+    ]
+  `)
+
+  const responses = await Promise.all(
+    requests.map((request) =>
+      fetch(anvilMainnet.rpcUrl, {
+        body: JSON.stringify(request),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }).then((res) => res.json()),
+    ),
+  )
+  expect(responses).toMatchInlineSnapshot(`
+    [
+      {
+        "id": 10,
+        "jsonrpc": "2.0",
+        "result": "0x12f2974",
+      },
+      {
+        "id": 11,
+        "jsonrpc": "2.0",
+        "result": "0x12f2974",
+      },
+      {
+        "id": 12,
+        "jsonrpc": "2.0",
+        "result": "0x12f2974",
       },
     ]
   `)

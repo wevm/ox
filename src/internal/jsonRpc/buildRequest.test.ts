@@ -1,7 +1,8 @@
 import { JsonRpc } from 'ox'
 import { expect, test } from 'vitest'
+import { anvilMainnet } from '../../../test/anvil.js'
 
-test('default', () => {
+test('default', async () => {
   const request = JsonRpc.buildRequest({
     method: 'eth_blockNumber',
     id: 0,
@@ -11,6 +12,21 @@ test('default', () => {
       "id": 0,
       "jsonrpc": "2.0",
       "method": "eth_blockNumber",
+    }
+  `)
+
+  const response = await fetch(anvilMainnet.rpcUrl, {
+    body: JSON.stringify(request),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  }).then((res) => res.json())
+  expect(response).toMatchInlineSnapshot(`
+    {
+      "id": 0,
+      "jsonrpc": "2.0",
+      "result": "0x12f2974",
     }
   `)
 })

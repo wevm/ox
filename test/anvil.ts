@@ -3,7 +3,7 @@ import { type AnvilParameters, anvil } from 'prool/instances'
 
 export const anvilMainnet = defineAnvil({
   forkUrl: getEnv('VITE_ANVIL_FORK_URL', 'https://cloudflare-eth.com'),
-  // forkBlockNumber: 19868020n,
+  forkBlockNumber: 19868020n,
   // noMining: true,
   port: 8545,
 })
