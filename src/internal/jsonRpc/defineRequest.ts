@@ -10,6 +10,10 @@ import type {
 /**
  * A type-safe interface to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
  *
+ * :::warning
+ * You will likely want to use {@link JsonRpc#createRequestStore} instead as it will also manage `id`s and uses this function internally.
+ * :::
+ *
  * @example
  * ```ts twoslash
  * import { JsonRpc } from 'ox'
