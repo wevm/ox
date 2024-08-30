@@ -1,4 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
+import type { Compute } from '../types.js'
 import {
   JsonRpc_Error,
   type JsonRpc_ErrorType,
@@ -15,12 +16,7 @@ import {
   JsonRpc_TransactionRejectedError,
   JsonRpc_VersionNotSupportedError,
 } from './errors.js'
-import type {
-  JsonRpc_ExtractMethodReturnType,
-  JsonRpc_MethodGeneric,
-  JsonRpc_MethodNameGeneric,
-  JsonRpc_Response,
-} from './types.js'
+import type { JsonRpc_Request, JsonRpc_Response } from './types.js'
 
 /**
  * A type-safe interface to parse a JSON-RPC response object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#response_object), and extract the result.
@@ -33,7 +29,7 @@ import type {
  * const store = JsonRpc.createRequestStore()
  *
  * // 2. Get a request object.
- * const request = store.getRequest({
+ * const request = store.prepare({
  *   method: 'eth_getBlockByNumber',
  *   params: ['0x1', false],
  * })
@@ -46,9 +42,9 @@ import type {
  *   },
  *   method: 'POST',
  * })
- *  .then((res) => res.json())
+ *  .then((response) => response.json())
  *  // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
- *  .then((res) => JsonRpc.parseResponse(res, { method: 'eth_getBlockByNumber' })) // [!code focus]
+ *  .then((response) => JsonRpc.parseResponse(response, { request })) // [!code focus]
  *
  * block // [!code focus]
  * // ^?
@@ -70,33 +66,15 @@ import type {
  * If you don't need the return type, you can omit the options entirely.
  *
  * ```ts twoslash
+ * // @noErrors
  * import { JsonRpc } from 'ox'
  *
  * const block = await fetch('https://cloudflare-eth.com', {})
- *  .then((res) => res.json())
- *  .then((res) => JsonRpc.parseResponse(res, { method: 'eth_getBlockByNumber' })) // [!code --]
+ *  .then((response) => response.json())
+ *  .then((response) => JsonRpc.parseResponse(response, { request })) // [!code --]
  *  .then(JsonRpc.parseResponse) // [!code ++]
  * ```
  * :::
- *
- * @example
- * ### Type-safe Custom Methods
- *
- * It is possible to parse a custom {@link JsonRpc#Method}.
- *
- * ```ts twoslash
- * import { JsonRpc } from 'ox'
- *
- * type Method = JsonRpc.DefineMethod<{ // [!code focus]
- *   method: 'eth_foobar' // [!code focus]
- *   params: [number] // [!code focus]
- *   returnType: string // [!code focus]
- * }> // [!code focus]
- *
- * const response = JsonRpc.parseResponse<Method>({}) // [!code focus]
- * //    ^?
- *
- * ```
  *
  * @example
  * ### Safe Mode
@@ -106,8 +84,14 @@ import type {
  * ```ts twoslash
  * import { JsonRpc } from 'ox'
  *
- * const response = JsonRpc.parseResponse({}, {
+ * const store = JsonRpc.createRequestStore()
+ *
+ * const request = store.prepare({
  *   method: 'eth_blockNumber',
+ * })
+ *
+ * const response = JsonRpc.parseResponse({}, {
+ *   request,
  *   safe: true, // [!code hl]
  * })
  *
@@ -125,13 +109,10 @@ import type {
  * @param options - Parsing options.
  * @returns Typed JSON-RPC result, or response object (if `safe` is `true`).
  */
-export function JsonRpc_parseResponse<
-  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-  safe extends boolean = false,
->(
+export function JsonRpc_parseResponse<returnType, safe extends boolean = false>(
   response: unknown,
-  options: JsonRpc_parseResponse.Options<method, safe> = {},
-): JsonRpc_parseResponse.ReturnType<method, safe> {
+  options: JsonRpc_parseResponse.Options<returnType, safe> = {},
+): JsonRpc_parseResponse.ReturnType<returnType, safe> {
   const { safe = false } = options
   const response_ = response as JsonRpc_Response
   if (safe) return response as never
@@ -168,17 +149,15 @@ export function JsonRpc_parseResponse<
 }
 
 export declare namespace JsonRpc_parseResponse {
-  type Options<
-    method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-    safe extends boolean = false,
-  > = {
+  type Options<returnType, safe extends boolean = false> = {
     /**
      * JSON-RPC Method that was used to make the request. Used for typing the response.
      */
-    method?:
-      | method
-      | JsonRpc_MethodGeneric
-      | JsonRpc_MethodNameGeneric
+    request?:
+      | {
+          _returnType: returnType
+        }
+      | JsonRpc_Request
       | undefined
     /**
      * Enables safe mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
@@ -191,12 +170,9 @@ export declare namespace JsonRpc_parseResponse {
     safe?: safe | boolean | undefined
   }
 
-  type ReturnType<
-    method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-    safe extends boolean = false,
-  > = safe extends true
-    ? JsonRpc_Response<JsonRpc_ExtractMethodReturnType<method>>
-    : JsonRpc_ExtractMethodReturnType<method>
+  type ReturnType<returnType, safe extends boolean = false> = Compute<
+    safe extends true ? JsonRpc_Response<returnType> : returnType
+  >
 
   type ErrorType =
     | JsonRpc_ParseError

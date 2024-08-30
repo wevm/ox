@@ -8,10 +8,10 @@ test('default', async () => {
   expect(store.id).toBe(0)
 
   const requests = [
-    store.getRequest({
+    store.prepare({
       method: 'eth_blockNumber',
     }),
-    store.getRequest({
+    store.prepare({
       method: 'eth_call',
       params: [
         {
@@ -20,7 +20,7 @@ test('default', async () => {
         },
       ],
     }),
-    store.getRequest({
+    store.prepare({
       method: 'eth_estimateGas',
       params: [
         {
@@ -103,13 +103,13 @@ test('options: id', async () => {
   const store = JsonRpc.createRequestStore({ id: 10 })
 
   const requests = [
-    store.getRequest({
+    store.prepare({
       method: 'eth_blockNumber',
     }),
-    store.getRequest({
+    store.prepare({
       method: 'eth_blockNumber',
     }),
-    store.getRequest({
+    store.prepare({
       method: 'eth_blockNumber',
     }),
   ]

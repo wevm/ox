@@ -1,4 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
+import type { IsNever } from '../types.js'
 import type {
   JsonRpc_ExtractMethodParameters,
   JsonRpc_Method,
@@ -94,7 +95,9 @@ export declare namespace JsonRpc_defineRequest {
   > = JsonRpc_Request<
     method extends JsonRpc_MethodGeneric
       ? method
-      : Extract<JsonRpc_Method, { method: method }>
+      : IsNever<Extract<JsonRpc_Method, { method: method }>> extends true
+        ? { method: method; params?: readonly unknown[] | undefined }
+        : Extract<JsonRpc_Method, { method: method }>
   >
 
   type ErrorType = GlobalErrorType

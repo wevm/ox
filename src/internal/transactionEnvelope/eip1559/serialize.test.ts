@@ -1,5 +1,7 @@
-import { Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
+import ky from 'ky'
+import { JsonRpc, Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
 import { assertType, expect, test } from 'vitest'
+import { anvilMainnet } from '../../../../test/anvil.js'
 import { accounts } from '../../../../test/constants/accounts.js'
 
 const transaction = TransactionEnvelopeEip1559.from({
@@ -11,7 +13,9 @@ const transaction = TransactionEnvelopeEip1559.from({
   maxPriorityFeePerGas: Value.fromGwei('2'),
 })
 
-test('default', () => {
+const requestStore = JsonRpc.createRequestStore()
+
+test('default', async () => {
   const serialized = TransactionEnvelopeEip1559.serialize(transaction)
   assertType<TransactionEnvelopeEip1559.Serialized>(serialized)
   expect(serialized).toEqual(
@@ -196,4 +200,85 @@ test('behavior: legacy signature', () => {
     yParity: 0,
   })
   expect(serialized).toEqual(serialized2)
+})
+
+test('behavior: network', async () => {
+  const transaction = TransactionEnvelopeEip1559.from({
+    chainId: 1,
+    nonce: 663n,
+    gas: 21000n,
+    to: accounts[1].address,
+    value: Value.fromEther('1'),
+    maxFeePerGas: Value.fromGwei('20'),
+    maxPriorityFeePerGas: Value.fromGwei('10'),
+  })
+
+  const signature = Secp256k1.sign({
+    payload: TransactionEnvelopeEip1559.getSignPayload(transaction),
+    privateKey: accounts[0].privateKey,
+  })
+
+  const serialized_signed = TransactionEnvelopeEip1559.serialize(transaction, {
+    signature,
+  })
+
+  const request_sendRawTransaction = requestStore.prepare({
+    method: 'eth_sendRawTransaction',
+    params: [serialized_signed],
+  })
+
+  const hash = await ky
+    .post(anvilMainnet.rpcUrl, {
+      json: request_sendRawTransaction,
+    })
+    .json()
+    .then((res) =>
+      JsonRpc.parseResponse(res, { request: request_sendRawTransaction }),
+    )
+
+  expect(hash).toMatchInlineSnapshot(
+    `"0x01622b14f0eb2830d990e71dbac79267a233980df14d632e05e58e451c93bf5c"`,
+  )
+
+  await ky.post(anvilMainnet.rpcUrl, {
+    json: requestStore.prepare({
+      method: 'anvil_mine',
+      params: ['0x1', '0x0'],
+    }),
+  })
+
+  const request_getTransactionReceipt = requestStore.prepare({
+    method: 'eth_getTransactionReceipt',
+    params: [hash],
+  })
+
+  const response = await ky
+    .post(anvilMainnet.rpcUrl, {
+      json: request_getTransactionReceipt,
+    })
+    .json()
+    .then((res) =>
+      JsonRpc.parseResponse(res, { request: request_getTransactionReceipt }),
+    )
+
+  expect(response).toMatchInlineSnapshot(`
+    {
+      "blobGasPrice": "0x1",
+      "blockHash": "0x7b7a9129b1b94f9aa3d52ae696d3005b74bea426844850bb456ae9e3a493a78e",
+      "blockNumber": "0x12f2975",
+      "contractAddress": null,
+      "cumulativeGasUsed": "0x5208",
+      "effectiveGasPrice": "0x45840214c",
+      "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "gasUsed": "0x5208",
+      "logs": [],
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "status": "0x1",
+      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "transactionHash": "0x01622b14f0eb2830d990e71dbac79267a233980df14d632e05e58e451c93bf5c",
+      "transactionIndex": "0x0",
+      "type": "0x2",
+    }
+  `)
 })

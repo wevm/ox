@@ -12,7 +12,7 @@ import type { Hex } from '../hex/types.js'
 import type { Log_Rpc } from '../log/types.js'
 import type { Transaction_Rpc } from '../transaction/isomorphic/types.js'
 import type { TransactionReceipt_Rpc } from '../transactionReceipt/types.js'
-import type { Compute, ExactPartial, IsUnknown, OneOf } from '../types.js'
+import type { Compute, ExactPartial, OneOf } from '../types.js'
 import type { JsonRpc_defineRequest } from './defineRequest.js'
 
 /** JSON-RPC error object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#error_object). */
@@ -40,6 +40,7 @@ export type JsonRpc_Request<
   Omit<method, 'returnType'> & {
     id: number
     jsonrpc: '2.0'
+    _returnType: method['returnType']
   }
 >
 
@@ -47,7 +48,7 @@ export type JsonRpc_Request<
 export type JsonRpc_RequestStore<
   method extends JsonRpc_MethodGeneric | undefined,
 > = Compute<{
-  getRequest: <
+  prepare: <
     method_inferred extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
   >(
     parameters: JsonRpc_ExtractMethodParameters<
@@ -79,12 +80,6 @@ export type JsonRpc_ExtractMethod<
 export type JsonRpc_ExtractMethodParameters<
   method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
 > = Omit<JsonRpc_ExtractMethod<method>, 'returnType'>
-
-export type JsonRpc_ExtractMethodReturnType<
-  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-> = IsUnknown<JsonRpc_ExtractMethod<method>['returnType']> extends true
-  ? unknown
-  : Compute<JsonRpc_ExtractMethod<method>['returnType']>
 
 ////////////////////////////////////////////////////////////////
 // Define Method

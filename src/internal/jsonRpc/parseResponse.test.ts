@@ -77,7 +77,7 @@ test('options: method', async () => {
   }).then((res) => res.json())
 
   const gas = JsonRpc.parseResponse(raw, {
-    method: 'eth_estimateGas',
+    request,
   })
   assertType<Hex.Hex>(gas)
 
@@ -97,7 +97,7 @@ test('options: safe', async () => {
     id: 0,
   })
 
-  const raw = await fetch(anvilMainnet.rpcUrl, {
+  const json = await fetch(anvilMainnet.rpcUrl, {
     body: JSON.stringify(request),
     headers: {
       'Content-Type': 'application/json',
@@ -106,8 +106,8 @@ test('options: safe', async () => {
   }).then((res) => res.json())
 
   {
-    const response = JsonRpc.parseResponse(raw, {
-      method: 'eth_estimateGas',
+    const response = JsonRpc.parseResponse(json, {
+      request,
       safe: true,
     })
     assertType<JsonRpc.Response<Hex.Hex>>(response)
@@ -122,7 +122,7 @@ test('options: safe', async () => {
   }
 
   {
-    const response = JsonRpc.parseResponse(raw, {
+    const response = JsonRpc.parseResponse(json, {
       safe: true,
     })
     assertType<JsonRpc.Response<unknown>>(response)

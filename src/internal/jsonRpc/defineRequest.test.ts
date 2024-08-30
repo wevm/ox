@@ -4,7 +4,7 @@ import { anvilMainnet } from '../../../test/anvil.js'
 
 test('default', async () => {
   const request = JsonRpc.defineRequest({
-    method: 'eth_blockNumber',
+    method: 'etah_blockNumber',
     id: 0,
   })
   expect(request).toMatchInlineSnapshot(`
