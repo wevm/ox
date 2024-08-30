@@ -1,8 +1,8 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type {
+  JsonRpc_ExtractMethodParameters,
   JsonRpc_Method,
   JsonRpc_MethodGeneric,
-  JsonRpc_MethodName,
   JsonRpc_MethodNameGeneric,
   JsonRpc_Request,
 } from './types.js'
@@ -14,17 +14,30 @@ import type {
  * ```ts twoslash
  * import { JsonRpc } from 'ox'
  *
- * const request = JsonRpc.buildRequest({
- *   id: 0,
- *   method: 'eth_estimateGas',
- *   params: [
- *     {
- *       from: '0xd2135CfB216b74109775236E36d4b433F1DF507B',
- *       to: '0x0D44f617435088c947F00B31160f64b074e412B4',
- *       value: '0x69420',
- *     },
- *   ],
+ * // 1. Build a request object.
+ * const request = JsonRpc.buildRequest({ // [!code focus]
+ *   id: 0, // [!code focus]
+ *   method: 'eth_estimateGas', // [!code focus]
+ *   params: [ // [!code focus]
+ *     { // [!code focus]
+ *       from: '0xd2135CfB216b74109775236E36d4b433F1DF507B', // [!code focus]
+ *       to: '0x0D44f617435088c947F00B31160f64b074e412B4', // [!code focus]
+ *       value: '0x69420', // [!code focus]
+ *     }, // [!code focus]
+ *   ], // [!code focus]
+ * }) // [!code focus]
+ *
+ * // 2. Send the JSON-RPC request via HTTP.
+ * const gas = await fetch('https://cloudflare-eth.com', {
+ *   body: JSON.stringify(request),
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *   },
+ *   method: 'POST',
  * })
+ *  .then((res) => res.json())
+ *  // 3. Parse the JSON-RPC response into a type-safe result.
+ *  .then((res) => JsonRpc.parseResponse(res, { method: 'eth_estimateGas' }))
  * ```
  *
  * @example
@@ -70,7 +83,7 @@ export function JsonRpc_buildRequest<
 export declare namespace JsonRpc_buildRequest {
   type Options<
     method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-  > = GetMethod<method> & { id: number }
+  > = JsonRpc_ExtractMethodParameters<method> & { id: number }
 
   type ReturnType<
     method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
@@ -86,22 +99,3 @@ export declare namespace JsonRpc_buildRequest {
 JsonRpc_buildRequest.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as JsonRpc_buildRequest.ErrorType
-
-////////////////////////////////////////////////////////////////////////
-// Internal
-////////////////////////////////////////////////////////////////////////
-
-/** @internal */
-export type GetMethod<
-  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-> = {
-  method: method extends JsonRpc_MethodGeneric
-    ? method['method']
-    : method | JsonRpc_MethodName
-} & (method extends JsonRpc_MethodGeneric
-  ? Omit<method, 'method' | 'returnType'>
-  : {
-      params?: readonly unknown[] | undefined
-    } & (method extends JsonRpc_MethodName
-      ? Omit<Extract<JsonRpc_Method, { method: method }>, 'returnType'>
-      : { method: string }))

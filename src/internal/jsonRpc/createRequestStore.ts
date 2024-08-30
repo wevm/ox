@@ -13,12 +13,12 @@ import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
  *
  * const store = JsonRpc.createRequestStore()
  *
- * const request_1 = store.buildRequest({
+ * const request_1 = store.getRequest({
  *   method: 'eth_blockNumber',
  * })
  * // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }
  *
- * const request_2 = store.buildRequest({
+ * const request_2 = store.getRequest({
  *   method: 'eth_call',
  *   params: [
  *     {
@@ -50,7 +50,7 @@ import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
  *
  * const store = JsonRpc.createRequestStore<Method>() // [!code focus]
  *
- * const request = store.buildRequest({
+ * const request = store.getRequest({
  *   method: 'eth_foobar', // [!code focus]
  *   // ^?
  *   params: [42],
@@ -67,7 +67,7 @@ export function JsonRpc_createRequestStore<
 ): JsonRpc_createRequestStore.ReturnType<method> {
   let id = options.id ?? 0
   return {
-    buildRequest(options) {
+    getRequest(options) {
       return JsonRpc_buildRequest({ id: id++, ...options } as never) as never
     },
     get id() {

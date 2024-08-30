@@ -5,11 +5,13 @@ import { anvilMainnet } from '../../../test/anvil.js'
 test('default', async () => {
   const store = JsonRpc.createRequestStore()
 
+  expect(store.id).toBe(0)
+
   const requests = [
-    store.buildRequest({
+    store.getRequest({
       method: 'eth_blockNumber',
     }),
-    store.buildRequest({
+    store.getRequest({
       method: 'eth_call',
       params: [
         {
@@ -18,7 +20,7 @@ test('default', async () => {
         },
       ],
     }),
-    store.buildRequest({
+    store.getRequest({
       method: 'eth_estimateGas',
       params: [
         {
@@ -29,6 +31,8 @@ test('default', async () => {
       ],
     }),
   ]
+
+  expect(store.id).toBe(3)
 
   expect(requests).toMatchInlineSnapshot(`
     [
@@ -99,13 +103,13 @@ test('options: id', async () => {
   const store = JsonRpc.createRequestStore({ id: 10 })
 
   const requests = [
-    store.buildRequest({
+    store.getRequest({
       method: 'eth_blockNumber',
     }),
-    store.buildRequest({
+    store.getRequest({
       method: 'eth_blockNumber',
     }),
-    store.buildRequest({
+    store.getRequest({
       method: 'eth_blockNumber',
     }),
   ]

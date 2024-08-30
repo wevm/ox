@@ -118,6 +118,7 @@ export type {
   IsNarrowable,
   IsNever,
   IsUnion,
+  IsUnknown,
   KeyofUnion,
   LastInUnion,
   Omit,
@@ -134,5 +135,3 @@ export type {
 export { Bytes_assertSize } from './internal/bytes/assertSize.js'
 
 export { Hex_assertSize } from './internal/hex/assertSize.js'
-
-export type { GetMethod } from './internal/jsonRpc/buildRequest.js'

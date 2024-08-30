@@ -1,7 +1,7 @@
 import type { Hex } from '../hex/types.js'
-import type { OneOf } from '../types.js'
+import type { Compute, OneOf } from '../types.js'
 
-export type FeeHistory<bigintType = bigint> = {
+export type FeeHistory<bigintType = bigint> = Compute<{
   /**
    * An array of block base fees per gas (in wei). This includes the next block after
    * the newest of the returned range, because this value can be derived from the newest block.
@@ -13,7 +13,7 @@ export type FeeHistory<bigintType = bigint> = {
   oldestBlock: bigintType
   /** An array of effective priority fees (in wei) per gas data points from a single block. All zeroes are returned if the block is empty. */
   reward?: bigintType[][] | undefined
-}
+}>
 
 export type FeeHistoryRpc = FeeHistory<Hex>
 

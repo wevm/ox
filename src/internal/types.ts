@@ -110,6 +110,17 @@ export type Or<T extends readonly unknown[]> = T extends readonly [
  */
 export type IsUndefined<T> = [undefined] extends [T] ? true : false
 
+/**
+ * Checks if type `T` is the `unknown` type.
+ *
+ * @internal
+ */
+export type IsUnknown<T> = unknown extends T
+  ? [T] extends [null]
+    ? false
+    : true
+  : false
+
 /** @internal */
 export type MaybePromise<T> = T | Promise<T>
 

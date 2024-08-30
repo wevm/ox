@@ -6,6 +6,7 @@ test('exports', () => {
     [
       "buildRequest",
       "createRequestStore",
+      "parseResponse",
     ]
   `)
 })

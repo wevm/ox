@@ -12,8 +12,26 @@ import type { Hex } from '../hex/types.js'
 import type { Log_Rpc } from '../log/types.js'
 import type { Transaction_Rpc } from '../transaction/isomorphic/types.js'
 import type { TransactionReceipt_Rpc } from '../transactionReceipt/types.js'
-import type { Compute, ExactPartial } from '../types.js'
-import type { GetMethod, JsonRpc_buildRequest } from './buildRequest.js'
+import type { Compute, ExactPartial, IsUnknown, OneOf } from '../types.js'
+import type { JsonRpc_buildRequest } from './buildRequest.js'
+
+/** JSON-RPC error object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#error_object). */
+export type JsonRpc_ErrorObject = {
+  code: number
+  message: string
+  data?: unknown | undefined
+}
+
+/** A JSON-RPC response object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
+export type JsonRpc_Response<
+  result = unknown,
+  error extends JsonRpc_ErrorObject = JsonRpc_ErrorObject,
+> = Compute<
+  {
+    id: number
+    jsonrpc: '2.0'
+  } & OneOf<{ result: result } | { error: error }>
+>
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
 export type JsonRpc_Request<
@@ -29,10 +47,10 @@ export type JsonRpc_Request<
 export type JsonRpc_RequestStore<
   method extends JsonRpc_MethodGeneric | undefined,
 > = Compute<{
-  buildRequest: <
+  getRequest: <
     method_inferred extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
   >(
-    options: GetMethod<
+    parameters: JsonRpc_ExtractMethodParameters<
       method extends JsonRpc_MethodGeneric ? method : method_inferred
     >,
   ) => JsonRpc_buildRequest.ReturnType<
@@ -40,6 +58,33 @@ export type JsonRpc_RequestStore<
   >
   readonly id: number
 }>
+
+/** @internal */
+export type JsonRpc_ExtractMethod<
+  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+> = {
+  method: method extends JsonRpc_MethodGeneric
+    ? method['method']
+    : method | JsonRpc_MethodName
+} & (method extends JsonRpc_MethodGeneric
+  ? method
+  : {
+      params?: readonly unknown[] | undefined
+      returnType: unknown
+    } & (method extends JsonRpc_MethodName
+      ? Extract<JsonRpc_Method, { method: method }>
+      : { method: string }))
+
+/** @internal */
+export type JsonRpc_ExtractMethodParameters<
+  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+> = Omit<JsonRpc_ExtractMethod<method>, 'returnType'>
+
+export type JsonRpc_ExtractMethodReturnType<
+  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+> = IsUnknown<JsonRpc_ExtractMethod<method>['returnType']> extends true
+  ? unknown
+  : Compute<JsonRpc_ExtractMethod<method>['returnType']>
 
 ////////////////////////////////////////////////////////////////
 // Define Method
