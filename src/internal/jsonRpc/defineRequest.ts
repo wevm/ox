@@ -15,7 +15,7 @@ import type {
  * import { JsonRpc } from 'ox'
  *
  * // 1. Build a request object.
- * const request = JsonRpc.buildRequest({ // [!code focus]
+ * const request = JsonRpc.defineRequest({ // [!code focus]
  *   id: 0, // [!code focus]
  *   method: 'eth_estimateGas', // [!code focus]
  *   params: [ // [!code focus]
@@ -58,7 +58,7 @@ import type {
  *   returnType: string // [!code focus]
  * }> // [!code focus]
  *
- * const request = JsonRpc.buildRequest<Method>({ // [!code focus]
+ * const request = JsonRpc.defineRequest<Method>({ // [!code focus]
  *   id: 0,
  *   method: 'eth_foobar', // [!code focus]
  *   // ^?
@@ -69,18 +69,18 @@ import type {
  * @param options - JSON-RPC request options.
  * @returns The fully-formed JSON-RPC request object.
  */
-export function JsonRpc_buildRequest<
+export function JsonRpc_defineRequest<
   method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
 >(
-  options: JsonRpc_buildRequest.Options<method>,
-): JsonRpc_buildRequest.ReturnType<method> {
+  options: JsonRpc_defineRequest.Options<method>,
+): JsonRpc_defineRequest.ReturnType<method> {
   return {
     ...options,
     jsonrpc: '2.0',
   } as never
 }
 
-export declare namespace JsonRpc_buildRequest {
+export declare namespace JsonRpc_defineRequest {
   type Options<
     method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
   > = JsonRpc_ExtractMethodParameters<method> & { id: number }
@@ -96,6 +96,6 @@ export declare namespace JsonRpc_buildRequest {
   type ErrorType = GlobalErrorType
 }
 
-JsonRpc_buildRequest.parseError = (error: unknown) =>
+JsonRpc_defineRequest.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as JsonRpc_buildRequest.ErrorType
+  error as JsonRpc_defineRequest.ErrorType

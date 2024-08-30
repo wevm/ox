@@ -1,11 +1,11 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { JsonRpc_buildRequest } from './buildRequest.js'
+import { JsonRpc_defineRequest } from './defineRequest.js'
 import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
 
 /**
  * Creates a JSON-RPC request store to build requests with an incrementing `id`.
  *
- * Returns a type-safe {@link JsonRpc#buildRequest} function to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
+ * Returns a type-safe {@link JsonRpc#defineRequest} function to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
  *
  * @example
  * ```ts twoslash
@@ -68,7 +68,7 @@ export function JsonRpc_createRequestStore<
   let id = options.id ?? 0
   return {
     getRequest(options) {
-      return JsonRpc_buildRequest({ id: id++, ...options } as never) as never
+      return JsonRpc_defineRequest({ id: id++, ...options } as never) as never
     },
     get id() {
       return id

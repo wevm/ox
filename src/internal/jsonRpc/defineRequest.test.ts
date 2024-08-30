@@ -3,7 +3,7 @@ import { expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 
 test('default', async () => {
-  const request = JsonRpc.buildRequest({
+  const request = JsonRpc.defineRequest({
     method: 'eth_blockNumber',
     id: 0,
   })

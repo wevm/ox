@@ -13,7 +13,7 @@ import type { Log_Rpc } from '../log/types.js'
 import type { Transaction_Rpc } from '../transaction/isomorphic/types.js'
 import type { TransactionReceipt_Rpc } from '../transactionReceipt/types.js'
 import type { Compute, ExactPartial, IsUnknown, OneOf } from '../types.js'
-import type { JsonRpc_buildRequest } from './buildRequest.js'
+import type { JsonRpc_defineRequest } from './defineRequest.js'
 
 /** JSON-RPC error object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#error_object). */
 export type JsonRpc_ErrorObject = {
@@ -53,7 +53,7 @@ export type JsonRpc_RequestStore<
     parameters: JsonRpc_ExtractMethodParameters<
       method extends JsonRpc_MethodGeneric ? method : method_inferred
     >,
-  ) => JsonRpc_buildRequest.ReturnType<
+  ) => JsonRpc_defineRequest.ReturnType<
     method extends JsonRpc_MethodGeneric ? method : method_inferred
   >
   readonly id: number
@@ -91,7 +91,7 @@ export type JsonRpc_ExtractMethodReturnType<
 ////////////////////////////////////////////////////////////////
 
 /**
- * Type to define a custom type-safe JSON-RPC Method to be used with {@link JsonRpc#buildRequest}.
+ * Type to define a custom type-safe JSON-RPC Method to be used with {@link JsonRpc#defineRequest}.
  *
  * @example
  * ```ts twoslash
@@ -102,7 +102,7 @@ export type JsonRpc_ExtractMethodReturnType<
  *   params: [id: number],
  *   returnType: string
  * }>
- * const request = JsonRpc.buildRequest<Eth_Foobar>({
+ * const request = JsonRpc.defineRequest<Eth_Foobar>({
  *   id: 0,
  *   method: 'eth_foobar',
  *   params: [0],

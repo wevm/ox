@@ -1,4 +1,4 @@
-export { JsonRpc_buildRequest as buildRequest } from './internal/jsonRpc/buildRequest.js'
+export { JsonRpc_defineRequest as defineRequest } from './internal/jsonRpc/defineRequest.js'
 
 export { JsonRpc_createRequestStore as createRequestStore } from './internal/jsonRpc/createRequestStore.js'
 

@@ -3,7 +3,7 @@ import { assertType, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 
 test('default', async () => {
-  const request = JsonRpc.buildRequest({
+  const request = JsonRpc.defineRequest({
     method: 'eth_estimateGas',
     params: [
       {
@@ -30,7 +30,7 @@ test('default', async () => {
 })
 
 test('error', async () => {
-  const request = JsonRpc.buildRequest({
+  const request = JsonRpc.defineRequest({
     method: 'eth_sendTransaction',
     params: [
       {
@@ -56,7 +56,7 @@ test('error', async () => {
 })
 
 test('options: method', async () => {
-  const request = JsonRpc.buildRequest({
+  const request = JsonRpc.defineRequest({
     method: 'eth_estimateGas',
     params: [
       {
@@ -85,7 +85,7 @@ test('options: method', async () => {
 })
 
 test('options: safe', async () => {
-  const request = JsonRpc.buildRequest({
+  const request = JsonRpc.defineRequest({
     method: 'eth_estimateGas',
     params: [
       {

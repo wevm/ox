@@ -4,7 +4,7 @@ import * as exports from './JsonRpc.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "buildRequest",
+      "defineRequest",
       "createRequestStore",
       "parseResponse",
     ]
