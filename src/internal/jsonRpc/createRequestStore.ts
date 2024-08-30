@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { JsonRpc_buildRequest, type GetMethod } from './buildRequest.js'
+import { type GetMethod, JsonRpc_buildRequest } from './buildRequest.js'
 import type {
   JsonRpc_MethodGeneric,
   JsonRpc_MethodNameGeneric,

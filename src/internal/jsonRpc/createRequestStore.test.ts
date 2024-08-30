@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { JsonRpc } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   const store = JsonRpc.createRequestStore()
