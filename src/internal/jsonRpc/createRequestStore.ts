@@ -1,9 +1,6 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { type GetMethod, JsonRpc_buildRequest } from './buildRequest.js'
-import type {
-  JsonRpc_MethodGeneric,
-  JsonRpc_MethodNameGeneric,
-} from './types.js'
+import { JsonRpc_buildRequest } from './buildRequest.js'
+import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
 
 /**
  * Creates a JSON-RPC request store to build requests with an incrementing `id`.
@@ -81,21 +78,12 @@ export function JsonRpc_createRequestStore<
 
 export declare namespace JsonRpc_createRequestStore {
   type Options = {
+    /** The initial request ID. */
     id?: number
   }
 
-  type ReturnType<method extends JsonRpc_MethodGeneric | undefined> = {
-    buildRequest: <
-      method_inferred extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-    >(
-      options: GetMethod<
-        method extends JsonRpc_MethodGeneric ? method : method_inferred
-      >,
-    ) => JsonRpc_buildRequest.ReturnType<
-      method extends JsonRpc_MethodGeneric ? method : method_inferred
-    >
-    readonly id: number
-  }
+  type ReturnType<method extends JsonRpc_MethodGeneric | undefined> =
+    JsonRpc_RequestStore<method>
 
   type ErrorType = GlobalErrorType
 }

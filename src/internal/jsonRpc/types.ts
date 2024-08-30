@@ -13,6 +13,7 @@ import type { Log_Rpc } from '../log/types.js'
 import type { Transaction_Rpc } from '../transaction/isomorphic/types.js'
 import type { TransactionReceipt_Rpc } from '../transactionReceipt/types.js'
 import type { Compute, ExactPartial } from '../types.js'
+import type { GetMethod, JsonRpc_buildRequest } from './buildRequest.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
 export type JsonRpc_Request<
@@ -23,6 +24,22 @@ export type JsonRpc_Request<
     jsonrpc: '2.0'
   }
 >
+
+/** JSON-RPC request store type. */
+export type JsonRpc_RequestStore<
+  method extends JsonRpc_MethodGeneric | undefined,
+> = Compute<{
+  buildRequest: <
+    method_inferred extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+  >(
+    options: GetMethod<
+      method extends JsonRpc_MethodGeneric ? method : method_inferred
+    >,
+  ) => JsonRpc_buildRequest.ReturnType<
+    method extends JsonRpc_MethodGeneric ? method : method_inferred
+  >
+  readonly id: number
+}>
 
 ////////////////////////////////////////////////////////////////
 // Define Method

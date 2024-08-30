@@ -13,4 +13,5 @@ export type {
   JsonRpc_Methods as Methods,
   JsonRpc_MethodsEth as MethodsEth,
   JsonRpc_Request as Request,
+  JsonRpc_RequestStore as RequestStore,
 } from './internal/jsonRpc/types.js'
