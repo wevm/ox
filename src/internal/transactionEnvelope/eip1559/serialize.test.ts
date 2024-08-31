@@ -1,8 +1,8 @@
-import ky from 'ky'
 import { JsonRpc, Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
 import { assertType, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../../test/anvil.js'
 import { accounts } from '../../../../test/constants/accounts.js'
+import { request } from '../../../../test/request.js'
 
 const transaction = TransactionEnvelopeEip1559.from({
   chainId: 1,
@@ -227,39 +227,36 @@ test('behavior: network', async () => {
     params: [serialized_signed],
   })
 
-  const hash = await ky
-    .post(anvilMainnet.rpcUrl, {
-      json: request_sendRawTransaction,
-    })
-    .json()
-    .then((res) =>
-      JsonRpc.parseResponse(res, { request: request_sendRawTransaction }),
-    )
+  const hash = await request(
+    anvilMainnet.rpcUrl,
+    request_sendRawTransaction,
+  ).then((res) =>
+    JsonRpc.parseResponse(res, { request: request_sendRawTransaction }),
+  )
 
   expect(hash).toMatchInlineSnapshot(
     `"0x01622b14f0eb2830d990e71dbac79267a233980df14d632e05e58e451c93bf5c"`,
   )
 
-  await ky.post(anvilMainnet.rpcUrl, {
-    json: requestStore.prepare({
+  await request(
+    anvilMainnet.rpcUrl,
+    requestStore.prepare({
       method: 'anvil_mine',
       params: ['0x1', '0x0'],
     }),
-  })
+  )
 
   const request_getTransactionReceipt = requestStore.prepare({
     method: 'eth_getTransactionReceipt',
     params: [hash],
   })
 
-  const response = await ky
-    .post(anvilMainnet.rpcUrl, {
-      json: request_getTransactionReceipt,
-    })
-    .json()
-    .then((res) =>
-      JsonRpc.parseResponse(res, { request: request_getTransactionReceipt }),
-    )
+  const response = await request(
+    anvilMainnet.rpcUrl,
+    request_getTransactionReceipt,
+  ).then((res) =>
+    JsonRpc.parseResponse(res, { request: request_getTransactionReceipt }),
+  )
 
   expect(response).toMatchInlineSnapshot(`
     {

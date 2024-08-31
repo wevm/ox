@@ -82,9 +82,6 @@ importers:
       knip:
         specifier: ^5.27.2
         version: 5.27.2(@types/node@20.14.15)(typescript@5.5.4)
-      ky:
-        specifier: ^1.7.1
-        version: 1.7.1
       prool:
         specifier: ^0.0.16
         version: 0.0.16
@@ -3105,10 +3102,6 @@ packages:
     peerDependencies:
       '@types/node': '>=18'
       typescript: '>=5.0.4'
-
-  ky@1.7.1:
-    resolution: {integrity: sha512-KJ/IXXkFhTDqxcN8wKqMXk1/UoOpc0UnOB6H7QcqlPInh/M2B5Mlj+i9exez1w4RSwJhNFmHiUDPriAYFwb5VA==}
-    engines: {node: '>=18'}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -8035,8 +8028,6 @@ snapshots:
       typescript: 5.5.4
       zod: 3.23.8
       zod-validation-error: 3.3.1(zod@3.23.8)
-
-  ky@1.7.1: {}
 
   levn@0.4.1:
     dependencies:
