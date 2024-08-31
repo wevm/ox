@@ -17,6 +17,15 @@ import type {
   Widen,
 } from './types.js'
 
+export function Abi_extractItem<
+  const abi extends Abi | readonly unknown[],
+  name extends Abi_ItemName<abi>,
+  const args extends Abi_ItemArgs<abi, name> | undefined = undefined,
+>(
+  abi: abi,
+  options: Abi_extractItem.Options<abi, name, args>,
+): Abi_extractItem.ReturnType<abi, name, args>
+
 /**
  * Extracts an {@link Abi#Item} from an {@link Abi#Abi} given a name and optional arguments.
  *
@@ -63,14 +72,20 @@ import type {
  * @param options - The extraction options.
  * @returns The ABI item.
  */
-export function Abi_extractItem<
-  const abi extends Abi | readonly unknown[],
-  name extends Abi_ItemName<abi>,
-  const args extends Abi_ItemArgs<abi, name> | undefined = undefined,
->(
-  abi: abi,
-  options: Abi_extractItem.Options<abi, name, args>,
-): Abi_extractItem.ReturnType<abi, name, args> {
+export function Abi_extractItem(
+  abi: Abi | readonly unknown[],
+  options: {
+    /** Name (or 4byte selector) of the ABI item to extract. */
+    name: string | Hex
+    /** Optional arguments to disambiguate function overrides. */
+    args?: readonly unknown[] | undefined
+  },
+): Abi_Item | undefined
+
+export function Abi_extractItem(
+  abi: Abi | readonly unknown[],
+  options: Abi_extractItem.Options,
+): Abi_Item | undefined {
   const { args = [], name } = options as unknown as Abi_extractItem.Options
 
   const isSelector = Hex_isHex(name, { strict: false })
@@ -84,17 +99,14 @@ export function Abi_extractItem<
     return 'name' in abiItem && abiItem.name === name
   })
 
-  if (abiItems.length === 0)
-    return undefined as Abi_extractItem.ReturnType<abi, name, args>
-  if (abiItems.length === 1)
-    return abiItems[0] as Abi_extractItem.ReturnType<abi, name, args>
+  if (abiItems.length === 0) return undefined
+  if (abiItems.length === 1) return abiItems[0]
 
   let matchedAbiItem: Abi_Item | undefined = undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
-      if (!abiItem.inputs || abiItem.inputs.length === 0)
-        return abiItem as Abi_extractItem.ReturnType<abi, name, args>
+      if (!abiItem.inputs || abiItem.inputs.length === 0) return abiItem
       continue
     }
     if (!abiItem.inputs) continue
@@ -134,9 +146,8 @@ export function Abi_extractItem<
     }
   }
 
-  if (matchedAbiItem)
-    return matchedAbiItem as Abi_extractItem.ReturnType<abi, name, args>
-  return abiItems[0] as Abi_extractItem.ReturnType<abi, name, args>
+  if (matchedAbiItem) return matchedAbiItem
+  return abiItems[0]
 }
 
 export declare namespace Abi_extractItem {

@@ -43,8 +43,9 @@ export function processDocComment(docComment?: tsdoc.DocComment | undefined) {
       ),
       '@alias',
     ),
+    alpha: docComment.modifierTagSet.isAlpha(),
+    beta: docComment.modifierTagSet.isBeta(),
     comment: docComment?.emitAsTsdoc(),
-    summary: cleanDoc(renderDocNode(docComment?.summarySection)),
     default: cleanDoc(
       renderDocNode(
         docComment.customBlocks.find((v) => v.blockTag.tagName === '@default'),
@@ -54,14 +55,6 @@ export function processDocComment(docComment?: tsdoc.DocComment | undefined) {
     deprecated: cleanDoc(
       renderDocNode(docComment?.deprecatedBlock),
       '@deprecated',
-    ),
-    remarks: cleanDoc(renderDocNode(docComment?.remarksBlock), '@remarks'),
-    returns: cleanDoc(renderDocNode(docComment?.returnsBlock), '@returns'),
-    since: cleanDoc(
-      renderDocNode(
-        docComment.customBlocks.find((v) => v.blockTag.tagName === '@since'),
-      ),
-      '@since',
     ),
     docGroup: cleanDoc(
       renderDocNode(
@@ -73,9 +66,20 @@ export function processDocComment(docComment?: tsdoc.DocComment | undefined) {
       .filter((v) => v.blockTag.tagName === '@example')
       .map(renderDocNode)
       .map((example) => cleanDoc(example, '@example')),
-    alpha: docComment.modifierTagSet.isAlpha(),
-    beta: docComment.modifierTagSet.isBeta(),
     experimental: docComment.modifierTagSet.isExperimental(),
+    remarks: cleanDoc(renderDocNode(docComment?.remarksBlock), '@remarks'),
+    returns: cleanDoc(renderDocNode(docComment?.returnsBlock), '@returns'),
+    since: cleanDoc(
+      renderDocNode(
+        docComment.customBlocks.find((v) => v.blockTag.tagName === '@since'),
+      ),
+      '@since',
+    ),
+    summary: cleanDoc(renderDocNode(docComment?.summarySection)),
+    throws: docComment?.customBlocks
+      .filter((v) => v.blockTag.tagName === '@throws')
+      .map(renderDocNode)
+      .map((throws) => cleanDoc(throws, '@throws')),
   }
 }
 

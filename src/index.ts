@@ -340,3 +340,13 @@ export * as Value from './Value.js'
  * with Withdrawals as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/withdrawal.yaml).
  */
 export * as Withdrawal from './Withdrawal.js'
+
+/** Testing */
+export function foo(timestamp: number): Date
+export function foo(m: number, d: number, y: number): Date
+export function foo(mOrTimestamp: number, d?: number, y?: number): Date {
+  if (d !== undefined && y !== undefined) {
+    return new Date(y, mOrTimestamp, d)
+  }
+  return new Date(mOrTimestamp)
+}

@@ -21,11 +21,11 @@ export {
   InvalidAbiTypeError,
 } from './internal/abi/errors.js'
 
+export { Abi_decodeParameters as decodeParameters } from './internal/abi/decodeParameters.js'
+
 export { Abi_encodeParameters as encodeParameters } from './internal/abi/encodeParameters.js'
 
 export { Abi_encodePacked as encodePacked } from './internal/abi/encodePacked.js'
-
-export { Abi_decodeParameters as decodeParameters } from './internal/abi/decodeParameters.js'
 
 export { Abi_extractItem as extractItem } from './internal/abi/extractItem.js'
 

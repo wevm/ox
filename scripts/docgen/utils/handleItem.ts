@@ -12,18 +12,19 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
     comment?:
       | {
           alias: string
+          alpha: boolean
+          beta: boolean
           comment: string
-          summary: string
-          deprecated: string
           default: string
+          deprecated: string
+          docGroup: string
+          examples: readonly string[]
+          experimental: boolean
           remarks: string
           returns: string
           since: string
-          docGroup: string
-          examples: readonly string[]
-          alpha: boolean
-          beta: boolean
-          experimental: boolean
+          summary: string
+          throws: readonly string[]
         }
       | undefined
     excerpt: string
@@ -47,19 +48,19 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
 
   const id = getId(item)
   if (
-    item instanceof model.ApiInterface ||
-    item instanceof model.ApiPropertySignature ||
-    item instanceof model.ApiFunction ||
     item instanceof model.ApiClass ||
-    item instanceof model.ApiMethod ||
-    item instanceof model.ApiProperty ||
     item instanceof model.ApiConstructor ||
-    item instanceof model.ApiMethodSignature ||
-    item instanceof model.ApiTypeAlias ||
     item instanceof model.ApiEnum ||
     item instanceof model.ApiEnumMember ||
-    item instanceof model.ApiVariable ||
-    item instanceof model.ApiNamespace
+    item instanceof model.ApiFunction ||
+    item instanceof model.ApiInterface ||
+    item instanceof model.ApiMethod ||
+    item instanceof model.ApiMethodSignature ||
+    item instanceof model.ApiNamespace ||
+    item instanceof model.ApiProperty ||
+    item instanceof model.ApiPropertySignature ||
+    item instanceof model.ApiTypeAlias ||
+    item instanceof model.ApiVariable
   ) {
     const parent = item.parent ? getId(item.parent) : null
     const module = (
@@ -73,6 +74,7 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
         '',
       )
 
+    // TODO: Get scoped name via item.getScopedNameWithinPackage() to lookup {@link} references
     const data = {
       id,
       ...extractChildren(item),
@@ -199,15 +201,16 @@ function formatType(type: string) {
 
 function extraData(item: model.ApiItem) {
   const ret: ExtraData = {}
-  if (model.ApiParameterListMixin.isBaseClassOf(item))
+  if (model.ApiParameterListMixin.isBaseClassOf(item)) {
     ret.parameters = item.parameters.map((p) => ({
       ...extractPrimaryReference(formatType(p.parameterTypeExcerpt.text), item),
       name: p.name,
       optional: p.isOptional,
-      comment: renderDocNode(p.tsdocParamBlock?.content.nodes),
+      comment: renderDocNode(p.tsdocParamBlock?.content.nodes).trim(),
     }))
+  }
 
-  if (model.ApiTypeParameterListMixin.isBaseClassOf(item))
+  if (model.ApiTypeParameterListMixin.isBaseClassOf(item)) {
     ret.typeParameters = item.typeParameters.map((p) => ({
       name: p.name,
       optional: p.isOptional,
@@ -215,6 +218,7 @@ function extraData(item: model.ApiItem) {
       constraint: p.constraintExcerpt.text,
       comment: renderDocNode(p.tsdocTypeParamBlock?.content.nodes),
     }))
+  }
 
   if (model.ApiReadonlyMixin.isBaseClassOf(item)) ret.readonly = item.isReadonly
   if (model.ApiOptionalMixin.isBaseClassOf(item)) ret.optional = item.isOptional

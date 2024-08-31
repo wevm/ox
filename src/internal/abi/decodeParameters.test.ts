@@ -8,6 +8,9 @@ import {
 } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 
+const error = Abi.decodeParameters.parseError({})
+error.name
+
 describe('static', () => {
   test('blank', () => {
     const result = Abi.decodeParameters([], '0x')

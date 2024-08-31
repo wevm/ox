@@ -40,9 +40,9 @@ export {
   InvalidAbiTypeError,
 } from './internal/abi/errors.js'
 
-export { pad as pad_hex } from './internal/hex/pad.js'
+export { Hex_pad } from './internal/hex/pad.js'
 
-export { pad as pad_bytes } from './internal/bytes/pad.js'
+export { Bytes_pad } from './internal/bytes/pad.js'
 
 export type {
   EncodePackedValues,
@@ -56,12 +56,12 @@ export { type Cursor, createCursor } from './internal/cursor.js'
 export { LruMap } from './internal/lru.js'
 
 export {
-  assertStartOffset as assertStartOffset_bytes,
-  assertEndOffset as assertEndOffset_bytes,
+  Bytes_assertStartOffset,
+  Bytes_assertEndOffset,
 } from './internal/bytes/slice.js'
 export {
-  assertStartOffset as assertStartOffset_hex,
-  assertEndOffset as assertEndOffset_hex,
+  Hex_assertStartOffset,
+  Hex_assertEndOffset,
 } from './internal/hex/slice.js'
 
 export { trim as trim_hex } from './internal/hex/trim.js'

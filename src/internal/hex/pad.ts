@@ -21,12 +21,12 @@ export function Hex_padLeft(
   value: Hex,
   size?: number | undefined,
 ): Hex_padLeft.ReturnType {
-  return pad(value, { dir: 'left', size })
+  return Hex_pad(value, { dir: 'left', size })
 }
 
 export declare namespace Hex_padLeft {
   type ReturnType = Hex
-  type ErrorType = pad.ErrorType | GlobalErrorType
+  type ErrorType = Hex_pad.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -51,12 +51,12 @@ export function Hex_padRight(
   value: Hex,
   size?: number | undefined,
 ): Hex_padRight.ReturnType {
-  return pad(value, { dir: 'right', size })
+  return Hex_pad(value, { dir: 'right', size })
 }
 
 export declare namespace Hex_padRight {
   type ReturnType = Hex
-  type ErrorType = pad.ErrorType | GlobalErrorType
+  type ErrorType = Hex_pad.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -66,8 +66,8 @@ Hex_padRight.parseError = (error: unknown) => error as Hex_padRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @internal */
-export function pad(hex_: Hex, options: pad.Options = {}) {
+/** @public */
+export function Hex_pad(hex_: Hex, options: Hex_pad.Options = {}) {
   const { dir, size = 32 } = options
 
   if (size === 0) return hex_
@@ -83,8 +83,8 @@ export function pad(hex_: Hex, options: pad.Options = {}) {
   return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex
 }
 
-/** @internal */
-export declare namespace pad {
+/** @public */
+export declare namespace Hex_pad {
   type Options = {
     dir?: 'left' | 'right' | undefined
     size?: number | undefined

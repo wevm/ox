@@ -6,12 +6,11 @@ import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { getAmbiguousTypes, isArgOfType } from './extractItem.js'
 
 test('default', () => {
-  expect(
-    Abi.extractItem(wagmiContractConfig.abi, {
-      name: 'balanceOf',
-      args: ['0x0000000000000000000000000000000000000000'],
-    }),
-  ).toMatchInlineSnapshot(`
+  const abiItem = Abi.extractItem(wagmiContractConfig.abi, {
+    name: 'balanceOf',
+    args: ['0x0000000000000000000000000000000000000000'],
+  })
+  expect(abiItem).toMatchInlineSnapshot(`
     {
       "inputs": [
         {
@@ -94,7 +93,6 @@ describe('selector', () => {
 test('no matching name', () => {
   expect(
     Abi.extractItem([], {
-      // @ts-expect-error
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
     }),

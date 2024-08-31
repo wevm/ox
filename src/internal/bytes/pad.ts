@@ -21,12 +21,12 @@ export function Bytes_padLeft(
   value: Bytes,
   size?: number | undefined,
 ): Bytes_padLeft.ReturnType {
-  return pad(value, { dir: 'left', size })
+  return Bytes_pad(value, { dir: 'left', size })
 }
 
 export declare namespace Bytes_padLeft {
-  type ReturnType = pad.ReturnType
-  type ErrorType = pad.ErrorType | GlobalErrorType
+  type ReturnType = Bytes_pad.ReturnType
+  type ErrorType = Bytes_pad.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -51,12 +51,12 @@ export function Bytes_padRight(
   value: Bytes,
   size?: number | undefined,
 ): Bytes_padRight.ReturnType {
-  return pad(value, { dir: 'right', size })
+  return Bytes_pad(value, { dir: 'right', size })
 }
 
 export declare namespace Bytes_padRight {
-  type ReturnType = pad.ReturnType
-  type ErrorType = pad.ErrorType | GlobalErrorType
+  type ReturnType = Bytes_pad.ReturnType
+  type ErrorType = Bytes_pad.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -67,8 +67,8 @@ Bytes_padRight.parseError = (error: unknown) =>
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @internal */
-export function pad(bytes: Bytes, options: pad.Options = {}) {
+/** @public */
+export function Bytes_pad(bytes: Bytes, options: Bytes_pad.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes
   if (bytes.length > size)
@@ -86,8 +86,8 @@ export function pad(bytes: Bytes, options: pad.Options = {}) {
   return paddedBytes
 }
 
-/** @internal */
-export declare namespace pad {
+/** @public */
+export declare namespace Bytes_pad {
   type Options = {
     dir?: 'left' | 'right' | undefined
     size?: number | undefined
