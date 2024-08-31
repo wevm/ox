@@ -1,16 +1,19 @@
 import { JsonRpc } from 'ox'
 
-export async function request<json extends JsonRpc.Request>(
+const requestStore = JsonRpc.createRequestStore()
+
+export async function request<methodName extends JsonRpc.MethodNameGeneric>(
   url: string,
-  json: json | JsonRpc.Request,
-): Promise<JsonRpc.parseResponse.ReturnType<json['_returnType']>> {
+  json: JsonRpc.ExtractMethodParameters<methodName>,
+): Promise<JsonRpc.ExtractMethodReturnType<methodName>> {
+  const request = requestStore.prepare(json)
   return fetch(url, {
-    body: JSON.stringify(json),
+    body: JSON.stringify(request),
     headers: {
       'Content-Type': 'application/json',
     },
     method: 'POST',
   })
     .then((res) => res.json())
-    .then((res) => JsonRpc.parseResponse(res, { request: json })) as never
+    .then((res) => JsonRpc.parseResponse(res))
 }

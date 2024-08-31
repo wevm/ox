@@ -81,6 +81,11 @@ export type JsonRpc_ExtractMethodParameters<
   method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
 > = Omit<JsonRpc_ExtractMethod<method>, 'returnType'>
 
+/** @internal */
+export type JsonRpc_ExtractMethodReturnType<
+  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+> = JsonRpc_ExtractMethod<method>['returnType']
+
 ////////////////////////////////////////////////////////////////
 // Define Method
 ////////////////////////////////////////////////////////////////

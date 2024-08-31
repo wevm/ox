@@ -25,6 +25,7 @@ export type {
   JsonRpc_ErrorObject as ErrorObject,
   JsonRpc_ExtractMethod as ExtractMethod,
   JsonRpc_ExtractMethodParameters as ExtractMethodParameters,
+  JsonRpc_ExtractMethodReturnType as ExtractMethodReturnType,
   JsonRpc_Response as Response,
   JsonRpc_DefineMethod as DefineMethod,
   JsonRpc_Method as Method,
