@@ -201,9 +201,14 @@ test('behavior: legacy signature', () => {
 })
 
 test('behavior: network', async () => {
+  const nonce = await anvilMainnet.request({
+    method: 'eth_getTransactionCount',
+    params: [accounts[0].address, 'pending'],
+  })
+
   const transaction = TransactionEnvelopeEip1559.from({
     chainId: 1,
-    nonce: 663n,
+    nonce: BigInt(nonce),
     gas: 21000n,
     to: accounts[1].address,
     value: Value.fromEther('1'),

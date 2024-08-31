@@ -1,7 +1,14 @@
-import { Authorization, Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
+import {
+  Authorization,
+  Secp256k1,
+  TransactionEnvelope,
+  TransactionEnvelopeEip7702,
+  Value,
+} from 'ox'
 import { assertType, expect, test } from 'vitest'
 import { wagmiContractConfig } from '../../../../test/constants/abis.js'
 import { accounts } from '../../../../test/constants/accounts.js'
+import { anvilMainnet } from '../../../../test/anvil.js'
 
 const authorization_1 = Authorization.from({
   chainId: 1,
@@ -206,4 +213,136 @@ test('options: signature', () => {
   ).toEqual(
     '0x04f8f00182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0f8bcf85c0194fba3912ca04dd458c843e2ee08967fc04f3579c282031101a05f9eab9d5d717098430d03780924a379e350e5cdd38fb7ffe707393d587e4e35a07e28e4c4eadc81dafea5d73c8e5327034306d4ad2dc4dbd94ef829bec57f04dbf85c0a94fba3912ca04dd458c843e2ee08967fc04f3579c282031280a0f4181dd27f6b801404cd3bc24207aa1b07b1ff8991ea847b0af1a6c3e4ba9e99a00fda7db5a05f0c5298339ffa7ec9be2d2a483f5c0af7fe267237b01290bc9582808080',
   )
+})
+
+test('behavior: network', async () => {
+  const authority = accounts[0]
+  const invoker = accounts[1]
+
+  // Deploy delegate contract
+  const contractAddress = await (async () => {
+    const nonce = await anvilMainnet.request({
+      method: 'eth_getTransactionCount',
+      params: [authority.address, 'pending'],
+    })
+
+    const envelope = TransactionEnvelope.from({
+      chainId: 1,
+      nonce: BigInt(nonce),
+      gas: 2_000_000n,
+      data: '0x66365f5f37365fa05f5260076019f3',
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const signature = Secp256k1.sign({
+      payload: TransactionEnvelope.getSignPayload(envelope),
+      privateKey: authority.privateKey,
+    })
+
+    const serialized = TransactionEnvelope.serialize(envelope, {
+      signature,
+    })
+
+    const hash = await anvilMainnet.request({
+      method: 'eth_sendRawTransaction',
+      params: [serialized],
+    })
+
+    const receipt = await anvilMainnet.request({
+      method: 'eth_getTransactionReceipt',
+      params: [hash],
+    })
+    return receipt!.contractAddress
+  })()
+
+  // Authorize injection of delegate contract onto authority
+  const authorization = await (async () => {
+    const nonce = await anvilMainnet.request({
+      method: 'eth_getTransactionCount',
+      params: [authority.address, 'pending'],
+    })
+
+    const authorization = Authorization.from({
+      chainId: 1,
+      contractAddress: contractAddress!,
+      nonce: BigInt(nonce),
+    })
+
+    const signature = Secp256k1.sign({
+      payload: Authorization.getSignPayload(authorization),
+      privateKey: authority.privateKey,
+    })
+
+    return Authorization.from(authorization, { signature })
+  })()
+
+  const nonce = await anvilMainnet.request({
+    method: 'eth_getTransactionCount',
+    params: [invoker.address, 'pending'],
+  })
+
+  const envelope = TransactionEnvelopeEip7702.from({
+    chainId: 1,
+    authorizationList: [authorization],
+    data: '0xdeadbeef',
+    nonce: BigInt(nonce),
+    gas: 1_000_000n,
+    to: authority.address,
+    maxFeePerGas: Value.fromGwei('20'),
+    maxPriorityFeePerGas: Value.fromGwei('10'),
+  })
+
+  const signature = Secp256k1.sign({
+    payload: TransactionEnvelopeEip7702.getSignPayload(envelope),
+    privateKey: invoker.privateKey,
+  })
+
+  const serialized = TransactionEnvelopeEip7702.serialize(envelope, {
+    signature,
+  })
+
+  const hash = await anvilMainnet.request({
+    method: 'eth_sendRawTransaction',
+    params: [serialized],
+  })
+
+  const receipt = await anvilMainnet.request({
+    method: 'eth_getTransactionReceipt',
+    params: [hash],
+  })
+
+  expect(receipt).toMatchInlineSnapshot(`
+    {
+      "blobGasPrice": "0x1",
+      "blockHash": "0x1fcb9a0a9ad3ce4173a9c2dd6fcb17542f2e21816a83131cbcf569cd4782c5e1",
+      "blockNumber": "0x12f2976",
+      "contractAddress": null,
+      "cumulativeGasUsed": "0x4af8",
+      "effectiveGasPrice": "0x417f5cae6",
+      "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "gasUsed": "0x4af8",
+      "logs": [
+        {
+          "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+          "blockHash": "0x1fcb9a0a9ad3ce4173a9c2dd6fcb17542f2e21816a83131cbcf569cd4782c5e1",
+          "blockNumber": "0x12f2976",
+          "blockTimestamp": "0x66434e45",
+          "data": "0xdeadbeef",
+          "logIndex": "0x0",
+          "removed": false,
+          "topics": [],
+          "transactionHash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
+          "transactionIndex": "0x0",
+        },
+      ],
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "status": "0x1",
+      "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "transactionHash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
+      "transactionIndex": "0x0",
+      "type": "0x4",
+    }
+  `)
 })
