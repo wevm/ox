@@ -70,7 +70,7 @@ export type JsonRpc_ExtractMethod<
 } & (method extends JsonRpc_MethodGeneric
   ? method
   : {
-      params?: readonly unknown[] | undefined
+      params?: unknown[] | undefined
       returnType: unknown
     } & (method extends JsonRpc_MethodName
       ? Extract<JsonRpc_Method, { method: method }>

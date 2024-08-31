@@ -227,12 +227,7 @@ test('behavior: network', async () => {
     params: [serialized_signed],
   })
 
-  const hash = await request(
-    anvilMainnet.rpcUrl,
-    request_sendRawTransaction,
-  ).then((res) =>
-    JsonRpc.parseResponse(res, { request: request_sendRawTransaction }),
-  )
+  const hash = await request(anvilMainnet.rpcUrl, request_sendRawTransaction)
 
   expect(hash).toMatchInlineSnapshot(
     `"0x01622b14f0eb2830d990e71dbac79267a233980df14d632e05e58e451c93bf5c"`,
@@ -254,8 +249,6 @@ test('behavior: network', async () => {
   const response = await request(
     anvilMainnet.rpcUrl,
     request_getTransactionReceipt,
-  ).then((res) =>
-    JsonRpc.parseResponse(res, { request: request_getTransactionReceipt }),
   )
 
   expect(response).toMatchInlineSnapshot(`

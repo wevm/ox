@@ -96,7 +96,7 @@ export declare namespace JsonRpc_defineRequest {
     method extends JsonRpc_MethodGeneric
       ? method
       : IsNever<Extract<JsonRpc_Method, { method: method }>> extends true
-        ? { method: method; params?: readonly unknown[] | undefined }
+        ? { method: method; params?: unknown[] | undefined }
         : Extract<JsonRpc_Method, { method: method }>
   >
 
