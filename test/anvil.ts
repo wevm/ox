@@ -1,5 +1,7 @@
 import { createServer } from 'prool'
 import { type AnvilParameters, anvil } from 'prool/instances'
+import type { JsonRpc } from 'ox'
+import { request } from './request.js'
 
 export const anvilMainnet = defineAnvil({
   forkUrl: getEnv('VITE_ANVIL_FORK_URL', 'https://cloudflare-eth.com'),
@@ -27,6 +29,11 @@ function defineAnvil(parameters: AnvilParameters) {
     Number(process.env.VITEST_SHARD_ID ?? 1)
   const rpcUrl = `http://127.0.0.1:${port}/${poolId}`
   return {
+    async request<methodName extends JsonRpc.MethodNameGeneric>(
+      method: JsonRpc.ExtractMethodParameters<methodName>,
+    ) {
+      return await request(rpcUrl, method)
+    },
     async restart() {
       await fetch(`${rpcUrl}/restart`)
     },

@@ -220,7 +220,7 @@ test('behavior: network', async () => {
     signature,
   })
 
-  const hash = await request(anvilMainnet.rpcUrl, {
+  const hash = await anvilMainnet.request({
     method: 'eth_sendRawTransaction',
     params: [serialized_signed],
   })
@@ -229,12 +229,12 @@ test('behavior: network', async () => {
     `"0x01622b14f0eb2830d990e71dbac79267a233980df14d632e05e58e451c93bf5c"`,
   )
 
-  await request(anvilMainnet.rpcUrl, {
+  await anvilMainnet.request({
     method: 'anvil_mine',
     params: ['0x1', '0x0'],
   })
 
-  const response = await request(anvilMainnet.rpcUrl, {
+  const response = await anvilMainnet.request({
     method: 'eth_getTransactionReceipt',
     params: [hash],
   })
