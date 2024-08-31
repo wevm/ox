@@ -1,6 +1,6 @@
+import type { JsonRpc } from 'ox'
 import { createServer } from 'prool'
 import { type AnvilParameters, anvil } from 'prool/instances'
-import type { JsonRpc } from 'ox'
 import { request } from './request.js'
 
 export const anvilMainnet = defineAnvil({
