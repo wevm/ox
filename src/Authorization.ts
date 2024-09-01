@@ -1,8 +1,12 @@
 export type {
   Authorization,
+  Authorization_Rpc as Rpc,
   Authorization_List as List,
+  Authorization_ListRpc as ListRpc,
   Authorization_ListSigned as ListSigned,
+  Authorization_ListSignedRpc as ListSignedRpc,
   Authorization_Signed as Signed,
+  Authorization_SignedRpc as SignedRpc,
   Authorization_Tuple as Tuple,
   Authorization_TupleList as TupleList,
   Authorization_TupleListSigned as TupleListSigned,

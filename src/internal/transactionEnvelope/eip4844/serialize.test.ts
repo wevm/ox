@@ -1,5 +1,6 @@
 import { Blobs, Hex, Secp256k1, TransactionEnvelopeEip4844, Value } from 'ox'
 import { assertType, expect, test } from 'vitest'
+import { anvilMainnet } from '../../../../test/anvil.js'
 import { accounts } from '../../../../test/constants/accounts.js'
 import { kzg } from '../../../../test/kzg.js'
 
@@ -157,4 +158,107 @@ test('options: signature', async () => {
     ...signature,
     sidecars,
   })
+})
+
+test('behavior: network', async () => {
+  const nonce = await anvilMainnet.request({
+    method: 'eth_getTransactionCount',
+    params: [accounts[0].address, 'pending'],
+  })
+
+  const blobs = Blobs.from('0xdeadbeef')
+  const sidecars = Blobs.toSidecars(blobs, { kzg })
+  const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+
+  const transaction = TransactionEnvelopeEip4844.from({
+    blobVersionedHashes,
+    chainId: 1,
+    nonce: BigInt(nonce),
+    gas: 1_000_000n,
+    to: accounts[1].address,
+    value: Value.fromEther('1'),
+    maxFeePerBlobGas: Value.fromGwei('30'),
+    maxFeePerGas: Value.fromGwei('20'),
+    maxPriorityFeePerGas: Value.fromGwei('10'),
+  })
+
+  const signature = Secp256k1.sign({
+    payload: TransactionEnvelopeEip4844.getSignPayload(transaction),
+    privateKey: accounts[0].privateKey,
+  })
+
+  const serialized_signed = TransactionEnvelopeEip4844.serialize(transaction, {
+    sidecars,
+    signature,
+  })
+
+  const hash = await anvilMainnet.request({
+    method: 'eth_sendRawTransaction',
+    params: [serialized_signed],
+  })
+
+  expect(hash).toMatchInlineSnapshot(
+    `"0x8d3abb1bf4ae91f9be05bd3992eeb39f33498acf050d6f2d6231e470dd42221b"`,
+  )
+
+  const tx = await anvilMainnet.request({
+    method: 'eth_getTransactionByHash',
+    params: [hash],
+  })
+
+  expect({ ...tx, blockHash: undefined }).toMatchInlineSnapshot(`
+    {
+      "accessList": [],
+      "blobVersionedHashes": [
+        "0x01a24709d3997e8b217fe5460aef10ee515513ceba0362bf2d02a3ba73d7cb09",
+      ],
+      "blockHash": undefined,
+      "blockNumber": "0x12f2975",
+      "chainId": "0x1",
+      "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "gas": "0xf4240",
+      "gasPrice": "0x45840214c",
+      "hash": "0x8d3abb1bf4ae91f9be05bd3992eeb39f33498acf050d6f2d6231e470dd42221b",
+      "input": "0x",
+      "maxFeePerBlobGas": "0x6fc23ac00",
+      "maxFeePerGas": "0x4a817c800",
+      "maxPriorityFeePerGas": "0x2540be400",
+      "nonce": "0x297",
+      "r": "0xf708bb3c460ae43b380cf8bfe84b3c8ba3824be44a6d9275725ad22ae0abae3f",
+      "s": "0x34dca8d9a70e913ab0bde3a84ab4993d369792a1a55d33bd8682c3c152536ce3",
+      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "transactionIndex": "0x0",
+      "type": "0x3",
+      "v": "0x0",
+      "value": "0xde0b6b3a7640000",
+      "yParity": "0x0",
+    }
+  `)
+
+  const receipt = await anvilMainnet.request({
+    method: 'eth_getTransactionReceipt',
+    params: [hash],
+  })
+
+  expect({ ...receipt, blockHash: undefined }).toMatchInlineSnapshot(`
+    {
+      "blobGasPrice": "0x1",
+      "blobGasUsed": "0x20000",
+      "blockHash": undefined,
+      "blockNumber": "0x12f2975",
+      "contractAddress": null,
+      "cumulativeGasUsed": "0x5208",
+      "effectiveGasPrice": "0x45840214c",
+      "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "gasUsed": "0x5208",
+      "logs": [],
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "status": "0x1",
+      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "transactionHash": "0x8d3abb1bf4ae91f9be05bd3992eeb39f33498acf050d6f2d6231e470dd42221b",
+      "transactionIndex": "0x0",
+      "type": "0x3",
+    }
+  `)
 })

@@ -307,6 +307,46 @@ test('behavior: network', async () => {
     params: [serialized],
   })
 
+  const tx = await anvilMainnet.request({
+    method: 'eth_getTransactionByHash',
+    params: [hash],
+  })
+
+  expect(tx).toMatchInlineSnapshot(`
+    {
+      "accessList": [],
+      "authorizationList": [
+        {
+          "address": "0xbd2fe040d03eb1d1e5a151fbcc19a03333223019",
+          "chainId": "0x1",
+          "nonce": "0x298",
+          "r": "0xb7ba3c862bb67758a231b9f4c031f275fa3eeb436a8fd8312eda06e3b1931deb",
+          "s": "0x482c735314968a46724bcdf464047bb3d0317fc1a9bb22a9581b399090829a8e",
+          "yParity": "0x0",
+        },
+      ],
+      "blockHash": "0x1fcb9a0a9ad3ce4173a9c2dd6fcb17542f2e21816a83131cbcf569cd4782c5e1",
+      "blockNumber": "0x12f2976",
+      "chainId": "0x1",
+      "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "gas": "0xf4240",
+      "gasPrice": "0x417f5cae6",
+      "hash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
+      "input": "0xdeadbeef",
+      "maxFeePerGas": "0x4a817c800",
+      "maxPriorityFeePerGas": "0x2540be400",
+      "nonce": "0x70",
+      "r": "0xfba1d00a6da7a7b1faabf2a3cfdab43c451156c47f4f504b00f8013dcead8312",
+      "s": "0x44dad3618977b47f57f0cf2237c4d16bcf5a509a1d191fbfe0ac6198e5bc6658",
+      "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "transactionIndex": "0x0",
+      "type": "0x4",
+      "v": "0x0",
+      "value": "0x0",
+      "yParity": "0x0",
+    }
+  `)
+
   const receipt = await anvilMainnet.request({
     method: 'eth_getTransactionReceipt',
     params: [hash],
