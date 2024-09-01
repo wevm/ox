@@ -19,7 +19,7 @@ console.log(`${packageJson.name} — ${dirname(packagePath)}`)
 const dir = resolve(dirname(packagePath))
 
 // Empty dist directories
-for (const dirName of ['_cjs', '_esm']) {
+for (const dirName of ['_dist']) {
   const dist = resolve(dir, dirName)
   let files: string[] = []
   try {
@@ -50,7 +50,7 @@ for (const [key, exports] of Object.entries(packageJson.exports ?? {})) {
     type: 'types' | 'default',
     value: string,
   ][]) {
-    const srcDir = resolve(dir, dirname(value).replace(/_types|_esm|_cjs/, ''))
+    const srcDir = resolve(dir, dirname(value).replace(/_dist/, ''))
     const srcFilePath = resolve(srcDir, 'index.ts')
 
     const distDir = resolve(dir, dirname(value))

@@ -5,18 +5,16 @@
   "scripts": {
     "bench": "vitest -c ./test/vitest.config.ts bench",
     "bench:types": "TYPES=true vitest -c ./test/vitest.config.ts src/**/*.bench-d.ts",
-    "build": "pnpm clean && pnpm build:cjs && pnpm build:esm",
-    "build:cjs": "tsc --project ./tsconfig.build.json --module commonjs --outDir ./src/_cjs --removeComments --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\"}' > ./src/_cjs/package.json",
-    "build:esm": "tsc --project ./tsconfig.build.json --module es2020 --outDir ./src/_esm && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./src/_esm/package.json",
+    "build": "pnpm clean && tsc --project ./tsconfig.build.json",
     "changeset:prepublish": "pnpm version:update && pnpm build && tsx scripts/prepublish.ts",
     "changeset:publish": "pnpm changeset:prepublish && changeset publish",
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
-    "clean": "rimraf src/_esm src/_cjs ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
+    "clean": "rimraf src/_dist ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
     "deps": "pnpx taze -r",
     "dev": "pnpm preconstruct && pnpm playground",
     "docs:dev": "pnpm --filter site dev",
     "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json && tsx scripts/docgen/build.ts",
-    "docs:gen": "pnpm clean && pnpm build:esm && pnpm docs:extract",
+    "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "knip": "knip --production",
     "format": "biome format --write",
@@ -102,27 +100,27 @@
   "size-limit": [
     {
       "name": "import * from 'ox'",
-      "path": "./src/_esm/index.js",
+      "path": "./src/_dist/index.js",
       "import": "*"
     },
     {
       "name": "import { Address } from 'ox';\n  console.log(Address.from)",
-      "path": "./src/_esm/index.js",
+      "path": "./src/_dist/index.js",
       "import": "{ Address.from }"
     },
     {
       "name": "import { Bytes } from 'ox';\n  console.log(Bytes.from)",
-      "path": "./src/_esm/index.js",
+      "path": "./src/_dist/index.js",
       "import": "{ Bytes.from }"
     },
     {
       "name": "import { Hex } from 'ox';\n  console.log(Hex.from)",
-      "path": "./src/_esm/index.js",
+      "path": "./src/_dist/index.js",
       "import": "{ Hex.from }"
     },
     {
       "name": "import { Rlp } from 'ox';\n  console.log(Rlp.from)",
-      "path": "./src/_esm/index.js",
+      "path": "./src/_dist/index.js",
       "import": "{ Rlp.from }"
     }
   ],

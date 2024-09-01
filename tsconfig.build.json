@@ -6,7 +6,9 @@
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,
+    "module": "es2020",
     "moduleResolution": "node",
+    "outDir": "./src/_dist",
     "sourceMap": true,
     "rootDir": "./src"
   }

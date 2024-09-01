@@ -2,8 +2,7 @@
 .DS_Store
 .env
 .local
-_esm
-_cjs
+_dist
 dist
 coverage
 node_modules
