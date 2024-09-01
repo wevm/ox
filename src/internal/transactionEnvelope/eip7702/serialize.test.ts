@@ -229,7 +229,7 @@ test('behavior: network', async () => {
     const envelope = TransactionEnvelope.from({
       chainId: 1,
       nonce: BigInt(nonce),
-      gas: 2_000_000n,
+      gas: 3_000_000n,
       data: '0x66365f5f37365fa05f5260076019f3',
       maxFeePerGas: Value.fromGwei('20'),
       maxPriorityFeePerGas: Value.fromGwei('10'),
@@ -247,6 +247,11 @@ test('behavior: network', async () => {
     const hash = await anvilMainnet.request({
       method: 'eth_sendRawTransaction',
       params: [serialized],
+    })
+
+    await anvilMainnet.request({
+      method: 'anvil_mine',
+      params: ['0x1', '0x0'],
     })
 
     const receipt = await anvilMainnet.request({
@@ -325,12 +330,12 @@ test('behavior: network', async () => {
           "yParity": "0x0",
         },
       ],
-      "blockHash": "0x1fcb9a0a9ad3ce4173a9c2dd6fcb17542f2e21816a83131cbcf569cd4782c5e1",
-      "blockNumber": "0x12f2976",
+      "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
+      "blockNumber": "0x12f2977",
       "chainId": "0x1",
       "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
       "gas": "0xf4240",
-      "gasPrice": "0x417f5cae6",
+      "gasPrice": "0x3df788e0a",
       "hash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
       "input": "0xdeadbeef",
       "maxFeePerGas": "0x4a817c800",
@@ -355,19 +360,19 @@ test('behavior: network', async () => {
   expect(receipt).toMatchInlineSnapshot(`
     {
       "blobGasPrice": "0x1",
-      "blockHash": "0x1fcb9a0a9ad3ce4173a9c2dd6fcb17542f2e21816a83131cbcf569cd4782c5e1",
-      "blockNumber": "0x12f2976",
+      "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
+      "blockNumber": "0x12f2977",
       "contractAddress": null,
       "cumulativeGasUsed": "0x4af8",
-      "effectiveGasPrice": "0x417f5cae6",
+      "effectiveGasPrice": "0x3df788e0a",
       "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
       "gasUsed": "0x4af8",
       "logs": [
         {
           "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-          "blockHash": "0x1fcb9a0a9ad3ce4173a9c2dd6fcb17542f2e21816a83131cbcf569cd4782c5e1",
-          "blockNumber": "0x12f2976",
-          "blockTimestamp": "0x66434e45",
+          "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
+          "blockNumber": "0x12f2977",
+          "blockTimestamp": "0x66434e46",
           "data": "0xdeadbeef",
           "logIndex": "0x0",
           "removed": false,
