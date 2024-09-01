@@ -37,6 +37,50 @@ test('behavior: legacy', () => {
   `)
 })
 
+test('behavior: rpc', () => {
+  expect(
+    Signature.from({
+      r: '0x1',
+      s: '0x2',
+      yParity: '0x0',
+    }),
+  ).toMatchInlineSnapshot(`
+    {
+      "r": 1n,
+      "s": 2n,
+      "yParity": 0,
+    }
+  `)
+
+  expect(
+    Signature.from({
+      r: '0x1',
+      s: '0x2',
+      v: '0x0',
+    }),
+  ).toMatchInlineSnapshot(`
+    {
+      "r": 1n,
+      "s": 2n,
+      "yParity": 0,
+    }
+  `)
+
+  expect(
+    Signature.from({
+      r: '0x1',
+      s: '0x2',
+      v: '0x1b',
+    }),
+  ).toMatchInlineSnapshot(`
+    {
+      "r": 1n,
+      "s": 2n,
+      "yParity": 0,
+    }
+  `)
+})
+
 test('error: invalid sig', () => {
   const signature = {
     r: Constants.Solidity_maxUint256 + 1n,

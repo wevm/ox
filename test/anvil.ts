@@ -28,7 +28,14 @@ function defineAnvil(parameters: AnvilParameters) {
     Number(process.env.VITEST_POOL_ID ?? 1) *
     Number(process.env.VITEST_SHARD_ID ?? 1)
   const rpcUrl = `http://127.0.0.1:${port}/${poolId}`
+
+  const config = {
+    ...parameters,
+    hardfork: 'Prague',
+  } as const
+
   return {
+    config,
     async request<methodName extends JsonRpc.MethodNameGeneric>(
       method: JsonRpc.ExtractMethodParameters<methodName>,
     ) {
@@ -40,10 +47,7 @@ function defineAnvil(parameters: AnvilParameters) {
     rpcUrl,
     async start() {
       return await createServer({
-        instance: anvil({
-          ...parameters,
-          hardfork: 'Prague',
-        }),
+        instance: anvil(config),
         port,
       }).start()
     },

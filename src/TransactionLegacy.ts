@@ -1,6 +1,8 @@
 export type {
-  Transaction_Legacy as Transaction,
-  Transaction_LegacyRpc as Rpc,
-  Transaction_LegacyType as Type,
-  Transaction_LegacyTypeRpc as TypeRpc,
+  TransactionLegacy as Transaction,
+  TransactionLegacy_Rpc as Rpc,
+  TransactionLegacy_Type as Type,
+  TransactionLegacy_TypeRpc as TypeRpc,
 } from './internal/transaction/legacy/types.js'
+
+export { TransactionLegacy_fromRpc as fromRpc } from './internal/transaction/legacy/fromRpc.js'

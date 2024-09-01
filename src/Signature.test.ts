@@ -11,13 +11,15 @@ test('exports', () => {
       "InvalidSignatureYParityError",
       "MissingSignaturePropertiesError",
       "assert",
-      "fromCompact",
       "deserialize",
       "extract",
+      "fromCompact",
+      "fromRpc",
       "fromTuple",
       "serialize",
       "toCompact",
       "from",
+      "toRpc",
       "toTuple",
     ]
   `)

@@ -1,4 +1,5 @@
 import type { GlobalErrorType } from '../errors/error.js'
+import type { Hex } from '../hex/types.js'
 import { Signature_from } from './from.js'
 import type { Signature } from './types.js'
 
@@ -38,10 +39,10 @@ export function Signature_extract(
 
 export declare namespace Signature_extract {
   type Value = {
-    r?: bigint | undefined
-    s?: bigint | undefined
-    yParity?: number | undefined
-    v?: number | undefined
+    r?: bigint | Hex | undefined
+    s?: bigint | Hex | undefined
+    yParity?: number | Hex | undefined
+    v?: number | Hex | undefined
   }
   type ErrorType = GlobalErrorType
 }

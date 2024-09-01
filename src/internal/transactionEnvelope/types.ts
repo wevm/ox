@@ -18,7 +18,7 @@ export type TransactionEnvelope_Base<
     /** Unique number identifying this transaction */
     nonce?: bigintType | undefined
     /** Transaction recipient */
-    to?: Address | undefined
+    to?: Address | null | undefined
     /** Transaction type */
     type: type
     /** Value in wei sent with this transaction */

@@ -1,33 +1,33 @@
 import type { OneOf, UnionCompute } from '../../types.js'
 import type {
-  Transaction_Eip1559,
-  Transaction_Eip1559Rpc,
-  Transaction_Eip1559Type,
-  Transaction_Eip1559TypeRpc,
+  TransactionEip1559,
+  TransactionEip1559_Rpc,
+  TransactionEip1559_Type,
+  TransactionEip1559_TypeRpc,
 } from '../eip1559/types.js'
 import type {
-  Transaction_Eip2930,
-  Transaction_Eip2930Rpc,
-  Transaction_Eip2930Type,
-  Transaction_Eip2930TypeRpc,
+  TransactionEip2930,
+  TransactionEip2930_Rpc,
+  TransactionEip2930_Type,
+  TransactionEip2930_TypeRpc,
 } from '../eip2930/types.js'
 import type {
-  Transaction_Eip4844,
-  Transaction_Eip4844Rpc,
-  Transaction_Eip4844Type,
-  Transaction_Eip4844TypeRpc,
+  TransactionEip4844,
+  TransactionEip4844_Rpc,
+  TransactionEip4844_Type,
+  TransactionEip4844_TypeRpc,
 } from '../eip4844/types.js'
 import type {
-  Transaction_Eip7702,
-  Transaction_Eip7702Rpc,
-  Transaction_Eip7702Type,
-  Transaction_Eip7702TypeRpc,
+  TransactionEip7702,
+  TransactionEip7702_Rpc,
+  TransactionEip7702_Type,
+  TransactionEip7702_TypeRpc,
 } from '../eip7702/types.js'
 import type {
-  Transaction_Legacy,
-  Transaction_LegacyRpc,
-  Transaction_LegacyType,
-  Transaction_LegacyTypeRpc,
+  TransactionLegacy,
+  TransactionLegacy_Rpc,
+  TransactionLegacy_Type,
+  TransactionLegacy_TypeRpc,
 } from '../legacy/types.js'
 
 /**
@@ -47,11 +47,11 @@ export type Transaction<
   numberType = number,
 > = UnionCompute<
   OneOf<
-    | Transaction_Legacy<pending, bigintType, numberType>
-    | Transaction_Eip1559<pending, bigintType, numberType>
-    | Transaction_Eip2930<pending, bigintType, numberType>
-    | Transaction_Eip4844<pending, bigintType, numberType>
-    | Transaction_Eip7702<pending, bigintType, numberType>
+    | TransactionLegacy<pending, bigintType, numberType>
+    | TransactionEip1559<pending, bigintType, numberType>
+    | TransactionEip2930<pending, bigintType, numberType>
+    | TransactionEip4844<pending, bigintType, numberType>
+    | TransactionEip7702<pending, bigintType, numberType>
   >
 >
 
@@ -68,11 +68,11 @@ export type Transaction<
  */
 export type Transaction_Rpc<pending extends boolean = boolean> = UnionCompute<
   OneOf<
-    | Transaction_LegacyRpc<pending>
-    | Transaction_Eip1559Rpc<pending>
-    | Transaction_Eip2930Rpc<pending>
-    | Transaction_Eip4844Rpc<pending>
-    | Transaction_Eip7702Rpc<pending>
+    | TransactionLegacy_Rpc<pending>
+    | TransactionEip1559_Rpc<pending>
+    | TransactionEip2930_Rpc<pending>
+    | TransactionEip4844_Rpc<pending>
+    | TransactionEip7702_Rpc<pending>
   >
 >
 
@@ -87,11 +87,11 @@ export type Transaction_Rpc<pending extends boolean = boolean> = UnionCompute<
  * - any other string
  */
 export type Transaction_Type =
-  | Transaction_LegacyType
-  | Transaction_Eip1559Type
-  | Transaction_Eip2930Type
-  | Transaction_Eip4844Type
-  | Transaction_Eip7702Type
+  | TransactionLegacy_Type
+  | TransactionEip1559_Type
+  | TransactionEip2930_Type
+  | TransactionEip4844_Type
+  | TransactionEip7702_Type
 
 /**
  * Union of RPC Transaction types.
@@ -104,8 +104,8 @@ export type Transaction_Type =
  * - any other string
  */
 export type Transaction_TypeRpc =
-  | Transaction_LegacyTypeRpc
-  | Transaction_Eip1559TypeRpc
-  | Transaction_Eip2930TypeRpc
-  | Transaction_Eip4844TypeRpc
-  | Transaction_Eip7702TypeRpc
+  | TransactionLegacy_TypeRpc
+  | TransactionEip1559_TypeRpc
+  | TransactionEip2930_TypeRpc
+  | TransactionEip4844_TypeRpc
+  | TransactionEip7702_TypeRpc

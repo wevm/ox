@@ -5,7 +5,14 @@ import type { OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
 import { Signature_deserialize } from './deserialize.js'
 import { Signature_fromCompact } from './fromCompact.js'
-import type { Signature, Signature_Compact, Signature_Legacy } from './types.js'
+import { Signature_fromRpc } from './fromRpc.js'
+import type {
+  Signature,
+  Signature_Compact,
+  Signature_Legacy,
+  Signature_LegacyRpc,
+  Signature_Rpc,
+} from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
@@ -81,7 +88,13 @@ import { Signature_vToYParity } from './vToYParity.js'
  */
 export function Signature_from(
   signature:
-    | OneOf<Signature | Signature_Compact | Signature_Legacy>
+    | OneOf<
+        | Signature
+        | Signature_Compact
+        | Signature_Legacy
+        | Signature_Rpc
+        | Signature_LegacyRpc
+      >
     | Hex
     | Bytes,
 ): Signature {
@@ -89,6 +102,11 @@ export function Signature_from(
     if (typeof signature === 'string') return Signature_deserialize(signature)
     if (signature instanceof Uint8Array) return Signature_deserialize(signature)
     if (signature.yParityAndS) return Signature_fromCompact(signature)
+    if (
+      typeof signature.v === 'string' ||
+      typeof signature.yParity === 'string'
+    )
+      return Signature_fromRpc(signature)
     if (signature.v)
       return {
         r: signature.r,

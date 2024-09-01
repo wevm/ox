@@ -16,7 +16,7 @@ export type Transaction_Base<
   /** Chain ID that this transaction is valid on. */
   chainId: numberType
   /** @alias `input` Added for TransactionEnvelope - Transaction compatibility. */
-  data: Hex
+  data?: Hex | undefined
   /** Sender of this transaction */
   from: Address
   /** Hash of this transaction */
@@ -42,7 +42,7 @@ export type Transaction_Base<
   /** ECDSA signature yParity. */
   yParity: numberType
   /** @deprecated ECDSA signature v (for backwards compatibility). */
-  v: numberType
+  v?: numberType | undefined
 }>
 
 /** Base properties of an RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */

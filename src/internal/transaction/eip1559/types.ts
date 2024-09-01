@@ -4,13 +4,13 @@ import type { Compute } from '../../types.js'
 import type { Transaction_Base } from '../types.js'
 
 /** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
-export type Transaction_Eip1559<
+export type TransactionEip1559<
   pending extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  type extends string = Transaction_Eip1559Type,
+  type extends string = TransactionEip1559_Type,
 > = Compute<
-  Transaction_Base<type, pending, numberType, bigintType> & {
+  Transaction_Base<type, pending, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList: AccessList
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
@@ -21,10 +21,10 @@ export type Transaction_Eip1559<
 >
 
 /** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
-export type Transaction_Eip1559Rpc<pending extends boolean = boolean> = Compute<
-  Transaction_Eip1559<pending, Hex, Hex, Transaction_Eip1559TypeRpc>
+export type TransactionEip1559_Rpc<pending extends boolean = boolean> = Compute<
+  TransactionEip1559<pending, Hex, Hex, TransactionEip1559_TypeRpc>
 >
 
-export type Transaction_Eip1559Type = 'eip1559'
+export type TransactionEip1559_Type = 'eip1559'
 
-export type Transaction_Eip1559TypeRpc = '0x1'
+export type TransactionEip1559_TypeRpc = '0x2'

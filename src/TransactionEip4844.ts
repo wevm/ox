@@ -1,6 +1,6 @@
 export type {
-  Transaction_Eip4844 as Transaction,
-  Transaction_Eip4844Rpc as Rpc,
-  Transaction_Eip4844Type as Type,
-  Transaction_Eip4844TypeRpc as TypeRpc,
+  TransactionEip4844 as Transaction,
+  TransactionEip4844_Rpc as Rpc,
+  TransactionEip4844_Type as Type,
+  TransactionEip4844_TypeRpc as TypeRpc,
 } from './internal/transaction/eip4844/types.js'

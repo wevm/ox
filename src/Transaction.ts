@@ -9,36 +9,36 @@ export type {
 } from './internal/transaction/isomorphic/types.js'
 
 export type {
-  Transaction_Legacy as Legacy,
-  Transaction_LegacyRpc as LegacyRpc,
-  Transaction_LegacyType as LegacyType,
-  Transaction_LegacyTypeRpc as LegacyTypeRpc,
+  TransactionLegacy as Legacy,
+  TransactionLegacy_Rpc as LegacyRpc,
+  TransactionLegacy_Type as LegacyType,
+  TransactionLegacy_TypeRpc as LegacyTypeRpc,
 } from './internal/transaction/legacy/types.js'
 
 export type {
-  Transaction_Eip1559 as Eip1559,
-  Transaction_Eip1559Rpc as Eip1559Rpc,
-  Transaction_Eip1559Type as Eip1559Type,
-  Transaction_Eip1559TypeRpc as Eip1559TypeRpc,
+  TransactionEip1559 as Eip1559,
+  TransactionEip1559_Rpc as Eip1559Rpc,
+  TransactionEip1559_Type as Eip1559Type,
+  TransactionEip1559_TypeRpc as Eip1559TypeRpc,
 } from './internal/transaction/eip1559/types.js'
 
 export type {
-  Transaction_Eip2930 as Eip2930,
-  Transaction_Eip2930Rpc as Eip2930Rpc,
-  Transaction_Eip2930Type as Eip2930Type,
-  Transaction_Eip2930TypeRpc as Eip2930TypeRpc,
+  TransactionEip2930 as Eip2930,
+  TransactionEip2930_Rpc as Eip2930Rpc,
+  TransactionEip2930_Type as Eip2930Type,
+  TransactionEip2930_TypeRpc as Eip2930TypeRpc,
 } from './internal/transaction/eip2930/types.js'
 
 export type {
-  Transaction_Eip4844 as Eip4844,
-  Transaction_Eip4844Rpc as Eip4844Rpc,
-  Transaction_Eip4844Type as Eip4844Type,
-  Transaction_Eip4844TypeRpc as Eip4844TypeRpc,
+  TransactionEip4844 as Eip4844,
+  TransactionEip4844_Rpc as Eip4844Rpc,
+  TransactionEip4844_Type as Eip4844Type,
+  TransactionEip4844_TypeRpc as Eip4844TypeRpc,
 } from './internal/transaction/eip4844/types.js'
 
 export type {
-  Transaction_Eip7702 as Eip7702,
-  Transaction_Eip7702Rpc as Eip7702Rpc,
-  Transaction_Eip7702Type as Eip7702Type,
-  Transaction_Eip7702TypeRpc as Eip7702TypeRpc,
+  TransactionEip7702 as Eip7702,
+  TransactionEip7702_Rpc as Eip7702Rpc,
+  TransactionEip7702_Type as Eip7702Type,
+  TransactionEip7702_TypeRpc as Eip7702TypeRpc,
 } from './internal/transaction/eip7702/types.js'

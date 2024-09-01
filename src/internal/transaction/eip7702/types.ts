@@ -5,13 +5,13 @@ import type { Compute } from '../../types.js'
 import type { Transaction_Base } from '../types.js'
 
 /** An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
-export type Transaction_Eip7702<
+export type TransactionEip7702<
   pending extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  type extends string = Transaction_Eip7702Type,
+  type extends string = TransactionEip7702_Type,
 > = Compute<
-  Transaction_Base<type, pending, numberType, bigintType> & {
+  Transaction_Base<type, pending, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList: AccessList
     /** EIP-7702 Authorization list for the transaction. */
@@ -24,10 +24,10 @@ export type Transaction_Eip7702<
 >
 
 /** An RPC [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
-export type Transaction_Eip7702Rpc<pending extends boolean = boolean> = Compute<
-  Transaction_Eip7702<pending, Hex, Hex, Transaction_Eip7702TypeRpc>
+export type TransactionEip7702_Rpc<pending extends boolean = boolean> = Compute<
+  TransactionEip7702<pending, Hex, Hex, TransactionEip7702_TypeRpc>
 >
 
-export type Transaction_Eip7702Type = 'eip7702'
+export type TransactionEip7702_Type = 'eip7702'
 
-export type Transaction_Eip7702TypeRpc = '0x4'
+export type TransactionEip7702_TypeRpc = '0x4'
