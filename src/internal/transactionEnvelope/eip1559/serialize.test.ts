@@ -2,7 +2,6 @@ import { Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
 import { assertType, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../../test/anvil.js'
 import { accounts } from '../../../../test/constants/accounts.js'
-import { request } from '../../../../test/request.js'
 
 const transaction = TransactionEnvelopeEip1559.from({
   chainId: 1,
