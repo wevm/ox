@@ -65,6 +65,8 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+        env: 
+          VITE_ANVIL_FORK_URL: ${{ secrets.VITE_ANVIL_FORK_URL }}
 
   vectors:
     name: Vectors
