@@ -168,7 +168,7 @@ function renderErrorType(options: {
               return `- [\`${r.text}\`](/api/${referenceItem.module}/${functionItem.displayName}#error-type)`
           }
           if (referenceItem.module && r.text.endsWith('Error'))
-            return `- [\`${r.text}\`](/api/${referenceItem.module}/errors#${r.text.toLowerCase()})`
+            return `- [\`${r.text}\`](/errors#${r.text.toLowerCase()})`
         }
         return `- \`${r.text}\``
       })
