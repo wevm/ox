@@ -1,7 +1,7 @@
 import { SizeOverflowError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { Hex } from './types.js'
 import { Hex_size } from './size.js'
+import type { Hex } from './types.js'
 
 /** @internal */
 export function Hex_assertSize(hex: Hex, size_: number): void {

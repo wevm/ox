@@ -1,5 +1,5 @@
-import type { Bytes } from './types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Bytes } from './types.js'
 
 /**
  * Concatenates two or more {@link Bytes#Bytes}.

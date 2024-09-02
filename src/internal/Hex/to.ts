@@ -4,9 +4,9 @@ import { Bytes_trimRight } from '../Bytes/trim.js'
 import type { Bytes } from '../Bytes/types.js'
 import { InvalidHexBooleanError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { Hex } from './types.js'
 import { Hex_assertSize } from './assertSize.js'
 import { Hex_trimLeft } from './trim.js'
+import type { Hex } from './types.js'
 
 /**
  * Decodes a {@link Hex#Hex} value into a string, number, bigint, boolean, or {@link Bytes#Bytes}.

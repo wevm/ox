@@ -2,10 +2,10 @@ import { Bytes_isBytes } from '../Bytes/isBytes.js'
 import type { Bytes } from '../Bytes/types.js'
 import { IntegerOutOfRangeError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { Hex } from './types.js'
 import { Hex_assertSize } from './assertSize.js'
 import { Hex_isHex } from './isHex.js'
 import { Hex_padLeft, Hex_padRight } from './pad.js'
+import type { Hex } from './types.js'
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),

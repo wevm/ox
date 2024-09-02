@@ -1,7 +1,7 @@
 import { Bytes_random } from '../Bytes/random.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { Hex } from './types.js'
 import { Hex_fromBytes } from './from.js'
+import type { Hex } from './types.js'
 
 /**
  * Generates a random {@link Hex#Hex} value of the specified length.

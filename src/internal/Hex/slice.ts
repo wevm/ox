@@ -1,7 +1,7 @@
 import { SliceOffsetOutOfBoundsError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { Hex } from './types.js'
 import { Hex_size } from './size.js'
+import type { Hex } from './types.js'
 
 /**
  * Returns a section of a {@link Bytes#Bytes} value given a start/end bytes offset.

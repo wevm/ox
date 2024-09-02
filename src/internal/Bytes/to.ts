@@ -1,4 +1,3 @@
-import type { Bytes } from './types.js'
 import { InvalidBytesBooleanError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/from.js'
@@ -6,6 +5,7 @@ import { Hex_toBigInt, Hex_toNumber } from '../Hex/to.js'
 import type { Hex } from '../Hex/types.js'
 import { Bytes_assertSize } from './assertSize.js'
 import { Bytes_trimLeft, Bytes_trimRight } from './trim.js'
+import type { Bytes } from './types.js'
 
 /**
  * Decodes {@link Bytes#Bytes} into a UTF-8 string, {@link Hex#Hex}, number, bigint or boolean.

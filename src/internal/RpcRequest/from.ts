@@ -1,11 +1,11 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { IsNever } from '../types.js'
 import type {
+  RpcRequest,
   RpcRequest_ExtractMethodParameters,
   RpcRequest_Method,
   RpcRequest_MethodGeneric,
   RpcRequest_MethodNameGeneric,
-  RpcRequest,
 } from './types.js'
 
 /**

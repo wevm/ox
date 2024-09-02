@@ -1,7 +1,7 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 
-import type { Bytes } from './types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Bytes } from './types.js'
 
 /**
  * Checks if two {@link Bytes#Bytes} values are equal.

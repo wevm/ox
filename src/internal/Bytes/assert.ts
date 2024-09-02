@@ -1,6 +1,6 @@
-import type { Bytes } from './types.js'
 import { InvalidBytesTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Bytes } from './types.js'
 
 /**
  * Asserts if the given value is {@link Bytes#Bytes}.

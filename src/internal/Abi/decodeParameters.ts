@@ -11,10 +11,10 @@ import {
 } from '../Bytes/to.js'
 import { Bytes_trimLeft } from '../Bytes/trim.js'
 import type { Bytes } from '../Bytes/types.js'
-import { type Cursor, createCursor } from '../cursor.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
+import { type Cursor, createCursor } from '../cursor.js'
 import {
   type IsomorphicAbiParameter,
   type IsomorphicAbiParametersToPrimitiveTypes,

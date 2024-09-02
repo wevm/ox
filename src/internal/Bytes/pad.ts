@@ -1,6 +1,6 @@
-import type { Bytes } from './types.js'
 import { SizeExceedsPaddingSizeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Bytes } from './types.js'
 
 /**
  * Pads a {@link Bytes#Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).

@@ -1,7 +1,7 @@
-import type { Bytes } from './types.js'
 import { SizeOverflowError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Bytes_size } from './size.js'
+import type { Bytes } from './types.js'
 
 /** @internal */
 export function Bytes_assertSize(bytes: Bytes, size_: number): void {

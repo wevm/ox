@@ -1,7 +1,7 @@
 import { Bytes_fromString } from '../Bytes/from.js'
-import { Caches_checksum } from '../caches.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
+import { Caches_checksum } from '../caches.js'
 import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 

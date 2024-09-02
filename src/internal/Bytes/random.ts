@@ -1,5 +1,5 @@
-import type { Bytes } from './types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Bytes } from './types.js'
 
 /**
  * Generates random {@link Bytes#Bytes} of the specified length.

@@ -1,6 +1,6 @@
-import type { Bytes } from './types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Bytes_assert } from './assert.js'
+import type { Bytes } from './types.js'
 
 /**
  * Checks if the given value is {@link Bytes#Bytes}.

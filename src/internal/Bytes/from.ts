@@ -1,4 +1,3 @@
-import type { Bytes } from './types.js'
 import { BaseError } from '../Errors/base.js'
 import { InvalidHexLengthError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
@@ -10,6 +9,7 @@ import type { Hex } from '../Hex/types.js'
 import { Bytes_assertSize } from './assertSize.js'
 import { Bytes_isBytes } from './isBytes.js'
 import { Bytes_padLeft, Bytes_padRight } from './pad.js'
+import type { Bytes } from './types.js'
 
 /**
  * Encodes an arbitrary value to {@link Bytes#Bytes}.

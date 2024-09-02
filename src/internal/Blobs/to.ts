@@ -1,9 +1,9 @@
 import { Bytes_fromHex } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import { createCursor } from '../cursor.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
+import { createCursor } from '../cursor.js'
 import type { Blobs } from './types.js'
 
 /**

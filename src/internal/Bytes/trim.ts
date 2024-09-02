@@ -1,5 +1,5 @@
-import type { Bytes } from './types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Bytes } from './types.js'
 
 /**
  * Trims leading zeros from a {@link Bytes#Bytes} value.

@@ -1,7 +1,7 @@
-import type { Bytes } from './types.js'
 import { SliceOffsetOutOfBoundsError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Bytes_size } from './size.js'
+import type { Bytes } from './types.js'
 
 /**
  * Returns a section of a {@link Bytes#Bytes} value given a start/end bytes offset.
