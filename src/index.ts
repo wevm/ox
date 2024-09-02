@@ -132,11 +132,17 @@ export * as Log from './Log.js'
 export * as Rlp from './Rlp.js'
 
 /**
- * The **JsonRpc** Module provides a set of utility types & functions for working with
- * [JSON-RPC 2.0](https://www.jsonrpc.org/specification) and Ethereum JSON-RPC methods as
+ * The **RpcRequest** Module provides a set of utility types & functions for working with
+ * [JSON-RPC 2.0 Requests](https://www.jsonrpc.org/specification#request_object) and Ethereum JSON-RPC methods as
  * defined on the [Ethereum API specification](https://github.com/ethereum/execution-apis).
  */
-export * as JsonRpc from './JsonRpc.js'
+export * as RpcRequest from './RpcRequest.js'
+
+/**
+ * The **RpcResponse** Module provides a set of utility types & functions for working with
+ * [JSON-RPC 2.0 Responses](https://www.jsonrpc.org/specification#response_object).
+ */
+export * as RpcResponse from './RpcResponse.js'
 
 /**
  * The **Secp256k1** Module provides a set of utility functions for secp256k1 cryptography.

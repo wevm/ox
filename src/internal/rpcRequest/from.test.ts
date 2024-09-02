@@ -1,9 +1,9 @@
-import { JsonRpc } from 'ox'
+import { RpcRequest } from 'ox'
 import { expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 
 test('default', async () => {
-  const request = JsonRpc.defineRequest({
+  const request = RpcRequest.from({
     method: 'eth_blockNumber',
     id: 0,
   })

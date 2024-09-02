@@ -12,30 +12,12 @@ import type { Hex } from '../hex/types.js'
 import type { Log_Rpc } from '../log/types.js'
 import type { Transaction_Rpc } from '../transaction/isomorphic/types.js'
 import type { TransactionReceipt_Rpc } from '../transactionReceipt/types.js'
-import type { Compute, ExactPartial, OneOf } from '../types.js'
-import type { JsonRpc_defineRequest } from './defineRequest.js'
-
-/** JSON-RPC error object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#error_object). */
-export type JsonRpc_ErrorObject = {
-  code: number
-  message: string
-  data?: unknown | undefined
-}
-
-/** A JSON-RPC response object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
-export type JsonRpc_Response<
-  result = unknown,
-  error extends JsonRpc_ErrorObject = JsonRpc_ErrorObject,
-> = Compute<
-  {
-    id: number
-    jsonrpc: '2.0'
-  } & OneOf<{ result: result } | { error: error }>
->
+import type { Compute, ExactPartial } from '../types.js'
+import type { RpcRequest_from } from './from.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
-export type JsonRpc_Request<
-  method extends JsonRpc_MethodGeneric = JsonRpc_MethodGeneric,
+export type RpcRequest<
+  method extends RpcRequest_MethodGeneric = RpcRequest_MethodGeneric,
 > = Compute<
   Omit<method, 'returnType'> & {
     id: number
@@ -45,46 +27,48 @@ export type JsonRpc_Request<
 >
 
 /** JSON-RPC request store type. */
-export type JsonRpc_RequestStore<
-  method extends JsonRpc_MethodGeneric | undefined,
+export type RpcRequest_Store<
+  method extends RpcRequest_MethodGeneric | undefined,
 > = Compute<{
   prepare: <
-    method_inferred extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+    method_inferred extends
+      | RpcRequest_MethodGeneric
+      | RpcRequest_MethodNameGeneric,
   >(
-    parameters: JsonRpc_ExtractMethodParameters<
-      method extends JsonRpc_MethodGeneric ? method : method_inferred
+    parameters: RpcRequest_ExtractMethodParameters<
+      method extends RpcRequest_MethodGeneric ? method : method_inferred
     >,
-  ) => JsonRpc_defineRequest.ReturnType<
-    method extends JsonRpc_MethodGeneric ? method : method_inferred
+  ) => RpcRequest_from.ReturnType<
+    method extends RpcRequest_MethodGeneric ? method : method_inferred
   >
   readonly id: number
 }>
 
 /** @internal */
-export type JsonRpc_ExtractMethod<
-  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+export type RpcRequest_ExtractMethod<
+  method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
 > = {
-  method: method extends JsonRpc_MethodGeneric
+  method: method extends RpcRequest_MethodGeneric
     ? method['method']
-    : method | JsonRpc_MethodName
-} & (method extends JsonRpc_MethodGeneric
+    : method | RpcRequest_MethodName
+} & (method extends RpcRequest_MethodGeneric
   ? method
   : {
       params?: unknown[] | undefined
       returnType: unknown
-    } & (method extends JsonRpc_MethodName
-      ? Extract<JsonRpc_Method, { method: method }>
+    } & (method extends RpcRequest_MethodName
+      ? Extract<RpcRequest_Method, { method: method }>
       : { method: string }))
 
 /** @internal */
-export type JsonRpc_ExtractMethodParameters<
-  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-> = Omit<JsonRpc_ExtractMethod<method>, 'returnType'>
+export type RpcRequest_ExtractMethodParameters<
+  method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
+> = Omit<RpcRequest_ExtractMethod<method>, 'returnType'>
 
 /** @internal */
-export type JsonRpc_ExtractMethodReturnType<
-  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-> = JsonRpc_ExtractMethod<method>['returnType']
+export type RpcRequest_ExtractMethodReturnType<
+  method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
+> = RpcRequest_ExtractMethod<method>['returnType']
 
 ////////////////////////////////////////////////////////////////
 // Define Method
@@ -109,14 +93,15 @@ export type JsonRpc_ExtractMethodReturnType<
  * })
  * ```
  */
-export type JsonRpc_DefineMethod<method extends JsonRpc_MethodGeneric> = method
+export type RpcRequest_DefineMethod<method extends RpcRequest_MethodGeneric> =
+  method
 
 ////////////////////////////////////////////////////////////////
 // Generic
 ////////////////////////////////////////////////////////////////
 
 /** Generic type to define a JSON-RPC Method. */
-export type JsonRpc_MethodGeneric<
+export type RpcRequest_MethodGeneric<
   name extends string = string,
   params extends unknown[] | undefined = unknown[] | undefined,
 > = {
@@ -126,27 +111,29 @@ export type JsonRpc_MethodGeneric<
 }
 
 /** Generic type to define a JSON-RPC Method Name. */
-export type JsonRpc_MethodNameGeneric = JsonRpc_MethodNameEth | (string & {})
+export type RpcRequest_MethodNameGeneric =
+  | RpcRequest_MethodNameEth
+  | (string & {})
 
 ////////////////////////////////////////////////////////////////
 // All Methods
 ////////////////////////////////////////////////////////////////
 
 /** Type-safe set of all JSON-RPC Methods. */
-export type JsonRpc_Methods = JsonRpc_MethodsEth
+export type RpcRequest_Methods = RpcRequest_MethodsEth
 
 /** Type-safe union of all JSON-RPC Methods. */
-export type JsonRpc_Method = JsonRpc_MethodEth
+export type RpcRequest_Method = RpcRequest_MethodEth
 
 /** Type-safe union of all JSON-RPC Method Names. */
-export type JsonRpc_MethodName = JsonRpc_MethodNameEth
+export type RpcRequest_MethodName = RpcRequest_MethodNameEth
 
 ////////////////////////////////////////////////////////////////
 // eth_ Methods
 ////////////////////////////////////////////////////////////////
 
 /** Set of all JSON-RPC Methods for the `eth_` namespace. */
-export type JsonRpc_MethodsEth = [
+export type RpcRequest_MethodsEth = [
   /**
    * Returns a list of addresses owned by this client
    *
@@ -762,7 +749,7 @@ export type JsonRpc_MethodsEth = [
 ]
 
 /** Union of all JSON-RPC Methods for the `eth_` namespace. */
-export type JsonRpc_MethodEth = JsonRpc_MethodsEth[number]
+export type RpcRequest_MethodEth = RpcRequest_MethodsEth[number]
 
 /** Union of all JSON-RPC Method Names for the `eth_` namespace. */
-export type JsonRpc_MethodNameEth = JsonRpc_MethodEth['method']
+export type RpcRequest_MethodNameEth = RpcRequest_MethodEth['method']

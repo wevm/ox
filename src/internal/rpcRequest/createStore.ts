@@ -1,17 +1,17 @@
 import type { GlobalErrorType } from '../errors/error.js'
-import { JsonRpc_defineRequest } from './defineRequest.js'
-import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
+import { RpcRequest_from } from './from.js'
+import type { RpcRequest_MethodGeneric, RpcRequest_Store } from './types.js'
 
 /**
  * Creates a JSON-RPC request store to build requests with an incrementing `id`.
  *
- * Returns a type-safe {@link JsonRpc#defineRequest} function to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
+ * Returns a type-safe {@link JsonRpc#from} function to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
  *
  * @example
  * ```ts twoslash
- * import { JsonRpc } from 'ox'
+ * import { RpcRequest } from 'ox'
  *
- * const store = JsonRpc.createRequestStore()
+ * const store = RpcRequest.createStore()
  *
  * const request_1 = store.prepare({
  *   method: 'eth_blockNumber',
@@ -36,9 +36,9 @@ import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
  * It is possible to define your own type-safe {@link JsonRpc#Method} by using the {@link JsonRpc#DefineMethod} type.
  *
  * ```ts twoslash
- * import { JsonRpc } from 'ox'
+ * import { RpcRequest } from 'ox'
  *
- * type Method = JsonRpc.DefineMethod<{ // [!code focus]
+ * type Method = RpcRequest.DefineMethod<{ // [!code focus]
  *   method: 'eth_foobar' // [!code focus]
  *   params: [number] // [!code focus]
  *   returnType: string // [!code focus]
@@ -48,7 +48,7 @@ import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
  *   returnType: string // [!code focus]
  * }> // [!code focus]
  *
- * const store = JsonRpc.createRequestStore<Method>() // [!code focus]
+ * const store = RpcRequest.createStore<Method>() // [!code focus]
  *
  * const request = store.prepare({
  *   method: 'eth_foobar', // [!code focus]
@@ -60,15 +60,18 @@ import type { JsonRpc_MethodGeneric, JsonRpc_RequestStore } from './types.js'
  * @param options - Request store options.
  * @returns The request store
  */
-export function JsonRpc_createRequestStore<
-  method extends JsonRpc_MethodGeneric | undefined = undefined,
+export function RpcRequest_createStore<
+  method extends RpcRequest_MethodGeneric | undefined = undefined,
 >(
-  options: JsonRpc_createRequestStore.Options = {},
-): JsonRpc_createRequestStore.ReturnType<method> {
+  options: RpcRequest_createStore.Options = {},
+): RpcRequest_createStore.ReturnType<method> {
   let id = options.id ?? 0
   return {
     prepare(options) {
-      return JsonRpc_defineRequest({ id: id++, ...options } as never) as never
+      return RpcRequest_from({
+        id: id++,
+        ...options,
+      } as never) as never
     },
     get id() {
       return id
@@ -76,18 +79,18 @@ export function JsonRpc_createRequestStore<
   }
 }
 
-export declare namespace JsonRpc_createRequestStore {
+export declare namespace RpcRequest_createStore {
   type Options = {
     /** The initial request ID. */
     id?: number
   }
 
-  type ReturnType<method extends JsonRpc_MethodGeneric | undefined> =
-    JsonRpc_RequestStore<method>
+  type ReturnType<method extends RpcRequest_MethodGeneric | undefined> =
+    RpcRequest_Store<method>
 
   type ErrorType = GlobalErrorType
 }
 
-JsonRpc_createRequestStore.parseError = (error: unknown) =>
+RpcRequest_createStore.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as JsonRpc_createRequestStore.ErrorType
+  error as RpcRequest_createStore.ErrorType

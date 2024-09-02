@@ -1,11 +1,11 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type { IsNever } from '../types.js'
 import type {
-  JsonRpc_ExtractMethodParameters,
-  JsonRpc_Method,
-  JsonRpc_MethodGeneric,
-  JsonRpc_MethodNameGeneric,
-  JsonRpc_Request,
+  RpcRequest_ExtractMethodParameters,
+  RpcRequest_Method,
+  RpcRequest_MethodGeneric,
+  RpcRequest_MethodNameGeneric,
+  RpcRequest,
 } from './types.js'
 
 /**
@@ -17,10 +17,10 @@ import type {
  *
  * @example
  * ```ts twoslash
- * import { JsonRpc } from 'ox'
+ * import { RpcRequest, RpcResponse } from 'ox'
  *
  * // 1. Build a request object.
- * const request = JsonRpc.defineRequest({ // [!code focus]
+ * const request = RpcRequest.from({ // [!code focus]
  *   id: 0, // [!code focus]
  *   method: 'eth_estimateGas', // [!code focus]
  *   params: [ // [!code focus]
@@ -40,9 +40,9 @@ import type {
  *   },
  *   method: 'POST',
  * })
- *  .then((res) => res.json())
+ *  .then((response) => response.json())
  *  // 3. Parse the JSON-RPC response into a type-safe result.
- *  .then((res) => JsonRpc.parseResponse(res, { method: 'eth_estimateGas' }))
+ *  .then((response) => RpcResponse.from(response, { request }))
  * ```
  *
  * @example
@@ -74,35 +74,35 @@ import type {
  * @param options - JSON-RPC request options.
  * @returns The fully-formed JSON-RPC request object.
  */
-export function JsonRpc_defineRequest<
-  method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
+export function RpcRequest_from<
+  method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
 >(
-  options: JsonRpc_defineRequest.Options<method>,
-): JsonRpc_defineRequest.ReturnType<method> {
+  options: RpcRequest_from.Options<method>,
+): RpcRequest_from.ReturnType<method> {
   return {
     ...options,
     jsonrpc: '2.0',
   } as never
 }
 
-export declare namespace JsonRpc_defineRequest {
+export declare namespace RpcRequest_from {
   type Options<
-    method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-  > = JsonRpc_ExtractMethodParameters<method> & { id: number }
+    method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
+  > = RpcRequest_ExtractMethodParameters<method> & { id: number }
 
   type ReturnType<
-    method extends JsonRpc_MethodGeneric | JsonRpc_MethodNameGeneric,
-  > = JsonRpc_Request<
-    method extends JsonRpc_MethodGeneric
+    method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
+  > = RpcRequest<
+    method extends RpcRequest_MethodGeneric
       ? method
-      : IsNever<Extract<JsonRpc_Method, { method: method }>> extends true
+      : IsNever<Extract<RpcRequest_Method, { method: method }>> extends true
         ? { method: method; params?: unknown[] | undefined }
-        : Extract<JsonRpc_Method, { method: method }>
+        : Extract<RpcRequest_Method, { method: method }>
   >
 
   type ErrorType = GlobalErrorType
 }
 
-JsonRpc_defineRequest.parseError = (error: unknown) =>
+RpcRequest_from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as JsonRpc_defineRequest.ErrorType
+  error as RpcRequest_from.ErrorType

@@ -1,9 +1,9 @@
-import { type Hex, JsonRpc } from 'ox'
+import { type Hex, RpcRequest, RpcResponse } from 'ox'
 import { assertType, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 
 test('default', async () => {
-  const request = JsonRpc.defineRequest({
+  const request = RpcRequest.from({
     method: 'eth_estimateGas',
     params: [
       {
@@ -23,14 +23,14 @@ test('default', async () => {
     method: 'POST',
   }).then((res) => res.json())
 
-  const gas = JsonRpc.parseResponse(raw)
+  const gas = RpcResponse.parse(raw)
   assertType<unknown>(gas)
 
   expect(gas).toMatchInlineSnapshot(`"0x5248"`)
 })
 
 test('error', async () => {
-  const request = JsonRpc.defineRequest({
+  const request = RpcRequest.from({
     method: 'eth_sendTransaction',
     params: [
       {
@@ -50,13 +50,13 @@ test('error', async () => {
     method: 'POST',
   }).then((res) => res.json())
 
-  expect(() => JsonRpc.parseResponse(raw)).toThrowErrorMatchingInlineSnapshot(
+  expect(() => RpcResponse.parse(raw)).toThrowErrorMatchingInlineSnapshot(
     '[JsonRpcInvalidParamsError: No Signer available]',
   )
 })
 
-test('options: method', async () => {
-  const request = JsonRpc.defineRequest({
+test('options: request', async () => {
+  const request = RpcRequest.from({
     method: 'eth_estimateGas',
     params: [
       {
@@ -76,7 +76,7 @@ test('options: method', async () => {
     method: 'POST',
   }).then((res) => res.json())
 
-  const gas = JsonRpc.parseResponse(raw, {
+  const gas = RpcResponse.parse(raw, {
     request,
   })
   assertType<Hex.Hex>(gas)
@@ -85,7 +85,7 @@ test('options: method', async () => {
 })
 
 test('options: safe', async () => {
-  const request = JsonRpc.defineRequest({
+  const request = RpcRequest.from({
     method: 'eth_estimateGas',
     params: [
       {
@@ -106,11 +106,11 @@ test('options: safe', async () => {
   }).then((res) => res.json())
 
   {
-    const response = JsonRpc.parseResponse(json, {
+    const response = RpcResponse.parse(json, {
       request,
       safe: true,
     })
-    assertType<JsonRpc.Response<Hex.Hex>>(response)
+    assertType<RpcResponse.RpcResponse<Hex.Hex>>(response)
 
     expect(response).toMatchInlineSnapshot(`
       {
@@ -122,16 +122,16 @@ test('options: safe', async () => {
   }
 
   {
-    const response = JsonRpc.parseResponse(json, {
+    const response = RpcResponse.parse(json, {
       safe: true,
     })
-    assertType<JsonRpc.Response<unknown>>(response)
+    assertType<RpcResponse.RpcResponse<unknown>>(response)
   }
 })
 
 test('behavior: throws JsonRpc.InvalidInputError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -146,7 +146,7 @@ test('behavior: throws JsonRpc.InvalidInputError', () => {
 
 test('behavior: throws JsonRpc.ResourceNotFoundError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -161,7 +161,7 @@ test('behavior: throws JsonRpc.ResourceNotFoundError', () => {
 
 test('behavior: throws JsonRpc.ResourceUnavailableError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -176,7 +176,7 @@ test('behavior: throws JsonRpc.ResourceUnavailableError', () => {
 
 test('behavior: throws JsonRpc.TransactionRejectedError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -191,7 +191,7 @@ test('behavior: throws JsonRpc.TransactionRejectedError', () => {
 
 test('behavior: throws JsonRpc.MethodNotSupportedError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -206,7 +206,7 @@ test('behavior: throws JsonRpc.MethodNotSupportedError', () => {
 
 test('behavior: throws JsonRpc.LimitExceededError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -221,7 +221,7 @@ test('behavior: throws JsonRpc.LimitExceededError', () => {
 
 test('behavior: throws JsonRpc.VersionNotSupportedError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -236,7 +236,7 @@ test('behavior: throws JsonRpc.VersionNotSupportedError', () => {
 
 test('behavior: throws JsonRpc.InvalidRequestError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -251,7 +251,7 @@ test('behavior: throws JsonRpc.InvalidRequestError', () => {
 
 test('behavior: throws JsonRpc.MethodNotFoundError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -266,7 +266,7 @@ test('behavior: throws JsonRpc.MethodNotFoundError', () => {
 
 test('behavior: throws JsonRpc.InvalidParamsError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -281,7 +281,7 @@ test('behavior: throws JsonRpc.InvalidParamsError', () => {
 
 test('behavior: throws JsonRpc.InternalError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -296,7 +296,7 @@ test('behavior: throws JsonRpc.InternalError', () => {
 
 test('behavior: throws JsonRpc.ParseError', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {
@@ -309,7 +309,7 @@ test('behavior: throws JsonRpc.ParseError', () => {
 
 test('behavior: throws JsonRpc.Error', () => {
   expect(() =>
-    JsonRpc.parseResponse({
+    RpcResponse.parse({
       jsonrpc: '2.0',
       id: 0,
       error: {

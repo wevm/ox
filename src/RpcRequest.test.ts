@@ -1,12 +1,11 @@
 import { expect, test } from 'vitest'
-import * as exports from './JsonRpc.js'
+import * as exports from './RpcRequest.js'
 
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "defineRequest",
-      "createRequestStore",
-      "parseResponse",
+      "createStore",
+      "from",
     ]
   `)
 })

@@ -1,4 +1,4 @@
-import type { JsonRpc } from 'ox'
+import type { RpcRequest } from 'ox'
 import { createServer } from 'prool'
 import { type AnvilParameters, anvil } from 'prool/instances'
 import { request } from './request.js'
@@ -36,8 +36,8 @@ function defineAnvil(parameters: AnvilParameters) {
 
   return {
     config,
-    async request<methodName extends JsonRpc.MethodNameGeneric>(
-      method: JsonRpc.ExtractMethodParameters<methodName>,
+    async request<methodName extends RpcRequest.MethodNameGeneric>(
+      method: RpcRequest.ExtractMethodParameters<methodName>,
     ) {
       return await request(rpcUrl, method)
     },

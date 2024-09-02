@@ -1,9 +1,9 @@
-import { JsonRpc } from 'ox'
+import { RpcRequest } from 'ox'
 import { expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 
 test('default', async () => {
-  const store = JsonRpc.createRequestStore()
+  const store = RpcRequest.createStore()
 
   expect(store.id).toBe(0)
 
@@ -100,7 +100,7 @@ test('default', async () => {
 })
 
 test('options: id', async () => {
-  const store = JsonRpc.createRequestStore({ id: 10 })
+  const store = RpcRequest.createStore({ id: 10 })
 
   const requests = [
     store.prepare({
