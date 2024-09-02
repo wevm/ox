@@ -31,6 +31,9 @@
       "default": {
         "logLevel": "warning"
       },
+      "ae-unresolved-link": {
+        "logLevel": "none"
+      },
       "ae-missing-release-tag": {
         "logLevel": "none"
       },

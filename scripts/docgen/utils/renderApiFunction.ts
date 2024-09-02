@@ -72,8 +72,6 @@ function renderExamples(options: { examples: readonly string[] }) {
   const { examples } = options
   const content = ['## Examples']
   for (const example of examples) {
-    // TODO: Typecheck example
-    // TODO: Capture example output
     content.push(example)
   }
   return content.join('\n\n')
@@ -169,7 +167,6 @@ function renderParameters(options: {
         })
       }
     } else if (inlineParameterType) {
-      // TODO: Get descriptions from source
       for (const value of parameter.type
         .slice(1, -1)
         .split(';')
@@ -177,6 +174,7 @@ function renderParameters(options: {
         if (!value) continue
 
         const parts = value.split(': ')
+        // https://github.com/apollographql/apollo-client/blob/main/docs/shared/ApiDoc/ParameterTable.js#L9
         properties.push({
           default: undefined, // TODO
           name: parts[0]?.replace(/\?$/, ''),

@@ -31,7 +31,7 @@ const entrypointItem = pkg.members.find(
 )
 if (!entrypointItem) throw new Error('Could not find entrypoint item')
 
-const testModules = ['Address']
+const testModules = ['Bytes']
 const hiddenModules = ['Caches', 'Constants', 'Errors', 'Internal', 'Types']
 const moduleItems = entrypointItem.members.filter(
   (x) =>
@@ -42,7 +42,6 @@ const moduleItems = entrypointItem.members.filter(
 )
 // const moduleDocComments = extractNamespaceDocComments('./src/index.ts')
 
-// const tsdocLinkRegex = /^{@link ((?<module>.+)#(?<type>.+))}$/
 for (const moduleItem of moduleItems) {
   for (const member of moduleItem.members) {
     const item = lookup[member.canonicalReference.toString()]
@@ -53,27 +52,27 @@ for (const moduleItem of moduleItems) {
 
     switch (member.kind) {
       case model.ApiItemKind.Function: {
-        // Skip overloads without TSDoc attached
         const overloads = member
           .getMergedSiblings()
           .map((x) => x.canonicalReference.toString())
           .filter((x) => !x.endsWith('namespace'))
-        const hasOverloads = overloads.length > 1
-        if (hasOverloads) {
-          const overloadWithDocumentation = overloads.find(
-            (x) => lookup[x]?.comment?.summary,
-          )
-          if (item.id !== overloadWithDocumentation) continue
-        }
 
-        const content = renderApiFunction({
-          item,
-          lookup,
-          overloads: hasOverloads ? overloads : undefined,
-        })
-        if (item.displayName === 'from')
+        // Skip overloads without TSDoc attached
+        if (
+          overloads.length > 1 &&
+          overloads.find((x) => lookup[x]?.comment?.summary) !== item.id
+        )
+          continue
+
+        if (item.displayName === 'from') {
+          const content = renderApiFunction({
+            item,
+            lookup,
+            overloads: overloads.length > 1 ? overloads : undefined,
+          })
           // biome-ignore lint/suspicious/noConsoleLog:
           console.log(content)
+        }
       }
     }
   }

@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs'
 import * as model from '@microsoft/api-extractor-model'
+
 import { moduleNameRegex, namespaceRegex } from './regex.js'
-import { processDocComment, renderDocNode } from './tsdoc.js'
+import {
+  createResolveDeclarationReference,
+  processDocComment,
+  renderDocNode,
+} from './tsdoc.js'
 
 export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
   ExtraData & {
@@ -74,12 +79,14 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
         '',
       )
 
-    // TODO: Get scoped name via item.getScopedNameWithinPackage() to lookup {@link} references
     const data = {
       id,
       ...extractChildren(item),
       canonicalReference: item.canonicalReference.toString(),
-      comment: processDocComment(item.tsdocComment),
+      comment: processDocComment(
+        item.tsdocComment,
+        createResolveDeclarationReference(item),
+      ),
       displayName: item.displayName,
       excerpt: item.excerpt.text,
       file: {
@@ -206,7 +213,10 @@ function extraData(item: model.ApiItem) {
       ...extractPrimaryReference(formatType(p.parameterTypeExcerpt.text), item),
       name: p.name,
       optional: p.isOptional,
-      comment: renderDocNode(p.tsdocParamBlock?.content.nodes).trim(),
+      comment: renderDocNode(
+        p.tsdocParamBlock?.content.nodes,
+        createResolveDeclarationReference(item),
+      ).trim(),
     }))
   }
 
@@ -216,7 +226,10 @@ function extraData(item: model.ApiItem) {
       optional: p.isOptional,
       defaultType: p.defaultTypeExcerpt.text,
       constraint: p.constraintExcerpt.text,
-      comment: renderDocNode(p.tsdocTypeParamBlock?.content.nodes),
+      comment: renderDocNode(
+        p.tsdocTypeParamBlock?.content.nodes,
+        createResolveDeclarationReference(item),
+      ),
     }))
   }
 

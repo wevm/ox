@@ -48,7 +48,7 @@ export function Abi_decodeParameters<
  * // @log: ['wagmi', 420n, true]
  * ```
  *
- * You can also pass in Human Readable parameters with the {@link Abi#parseParameters} utility.
+ * You can also pass in Human Readable parameters with the {@link ox#Abi.parseParameters} utility.
  *
  * @example
  * ```ts twoslash

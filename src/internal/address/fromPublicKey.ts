@@ -7,7 +7,7 @@ import { Address_from } from './from.js'
 import type { Address } from './types.js'
 
 /**
- * Converts an ECDSA public key to an {@link Address#Address}.
+ * Converts an ECDSA public key to an {@link ox#Address.Address}.
  *
  * @example
  * ```ts twoslash
@@ -17,9 +17,9 @@ import type { Address } from './types.js'
  * // @log: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
  * ```
  *
- * @param publicKey - The ECDSA public key to convert to an {@link Address#Address}.
+ * @param publicKey - The ECDSA public key to convert to an {@link ox#Address.Address}.
  * @param options - Conversion options.
- * @returns The {@link Address#Address}.
+ * @returns The {@link ox#Address.Address}.
  */
 export function Address_fromPublicKey(
   publicKey: Hex | Bytes,
