@@ -3,7 +3,6 @@ import type {
   AbiParameterToPrimitiveType,
   AbiType,
   AbiTypeToPrimitiveType,
-  ParseAbiParameter,
 } from 'abitype'
 import { parseAbiParameter } from 'abitype'
 
@@ -16,8 +15,7 @@ import { Hex_padLeft, Hex_padRight } from '../Hex/pad.js'
 import { Hex_size } from '../Hex/size.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
-import type { Compute } from '../types.js'
-import type { TupleAbiParameter } from './decodeParameters.js'
+import type { TupleAbiParameter } from './decode.js'
 import {
   AbiEncodingArrayLengthMismatchError,
   AbiEncodingBytesSizeMismatchError,
@@ -25,15 +23,20 @@ import {
   AbiEncodingLengthMismatchError,
   InvalidAbiTypeError,
 } from './errors.js'
+import type {
+  AbiParameters_Isomorphic,
+  AbiParameters_IsomorphicParameter,
+  AbiParameters_ToPrimitiveTypes,
+} from './types.js'
 
 /**
  * Encodes primitive values into ABI encoded data as per the [Application Binary Interface (ABI) Specification](https://docs.soliditylang.org/en/latest/abi-spec).
  *
  * @example
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  *
- * const data = Abi.encodeParameters(
+ * const data = AbiParameters.encode(
  *   ['string', 'uint', 'bool'],
  *   ['wagmi', 420n, true],
  * )
@@ -43,9 +46,9 @@ import {
  * Specify structured ABI Parameters as schema:
  *
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  *
- * const data = Abi.encodeParameters(
+ * const data = AbiParameters.encode(
  *   [
  *     { type: 'string', name: 'name' },
  *     { type: 'uint', name: 'age' },
@@ -56,13 +59,13 @@ import {
  * ```
  *
  * @example
- * You can also pass in Human Readable parameters with the {@link Abi#parseParameters} utility.
+ * You can also pass in Human Readable parameters with the // TODO utility.
  *
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  *
- * const data = Abi.encodeParameters(
- *   Abi.parseParameters('string x, uint y, bool z'),
+ * const data = AbiParameters.encode(
+ *   AbiParameters.from('string x, uint y, bool z'),
  *   ['wagmi', 420n, true],
  * )
  * ```
@@ -71,14 +74,12 @@ import {
  * @param values - The set of primitive values that correspond to the ABI types defined in `parameters`.
  * @returns ABI encoded data.
  */
-export function Abi_encodeParameters<
-  const parameters extends
-    | readonly IsomorphicAbiParameter[]
-    | readonly unknown[],
+export function AbiParameters_encode<
+  const parameters extends AbiParameters_Isomorphic | readonly unknown[],
 >(
   parameters: parameters,
-  values: parameters extends readonly IsomorphicAbiParameter[]
-    ? IsomorphicAbiParametersToPrimitiveTypes<parameters>
+  values: parameters extends AbiParameters_Isomorphic
+    ? AbiParameters_ToPrimitiveTypes<parameters>
     : never,
 ): Hex {
   if (parameters.length !== values.length)
@@ -96,7 +97,7 @@ export function Abi_encodeParameters<
   return data
 }
 
-export declare namespace Abi_encodeParameters {
+export declare namespace AbiParameters_encode {
   type ErrorType =
     | AbiEncodingLengthMismatchError
     | encode.ErrorType
@@ -104,26 +105,9 @@ export declare namespace Abi_encodeParameters {
     | GlobalErrorType
 }
 
-Abi_encodeParameters.parseError = (error: unknown) =>
+AbiParameters_encode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Abi_encodeParameters.ErrorType
-
-// TODO: These types should be in abitype?
-/** @internal */
-export type IsomorphicAbiParameter = AbiParameter | AbiType | (string & {})
-
-/** @internal */
-export type IsomorphicAbiParametersToPrimitiveTypes<
-  types extends readonly IsomorphicAbiParameter[],
-> = Compute<{
-  [key in keyof types]: types[key] extends AbiParameter
-    ? AbiParameterToPrimitiveType<types[key]>
-    : types[key] extends AbiType
-      ? AbiParameterToPrimitiveType<{ type: types[key] }>
-      : types[key] extends string | readonly string[] | readonly unknown[]
-        ? AbiParameterToPrimitiveType<ParseAbiParameter<types[key]>>
-        : never
-}>
+  error as AbiParameters_encode.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities
@@ -137,14 +121,14 @@ export type Tuple = AbiParameterToPrimitiveType<TupleAbiParameter>
 
 /** @internal */
 export function prepareParameters<
-  const parameters extends readonly IsomorphicAbiParameter[],
+  const parameters extends AbiParameters_Isomorphic,
 >({
   parameters,
   values,
 }: {
   parameters: parameters
-  values: parameters extends readonly IsomorphicAbiParameter[]
-    ? IsomorphicAbiParametersToPrimitiveTypes<parameters>
+  values: parameters extends AbiParameters_Isomorphic
+    ? AbiParameters_ToPrimitiveTypes<parameters>
     : never
 }) {
   const preparedParameters: PreparedParameter[] = []
@@ -163,7 +147,7 @@ export declare namespace prepareParameters {
 
 /** @internal */
 export function prepareParameter<
-  const parameter extends IsomorphicAbiParameter,
+  const parameter extends AbiParameters_IsomorphicParameter,
 >({
   parameter: parameter_,
   value,

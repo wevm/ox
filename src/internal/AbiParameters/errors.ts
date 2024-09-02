@@ -1,13 +1,7 @@
-import {
-  type Abi,
-  type AbiParameter,
-  formatAbiItem,
-  formatAbiParameters,
-} from 'abitype'
+import { type AbiParameter, formatAbiParameters } from 'abitype'
 import { BaseError } from '../Errors/base.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
-import { normalizeSignature } from './getSignature.js'
 
 export class AbiDecodingDataSizeTooSmallError extends BaseError {
   override readonly name = 'AbiDecodingDataSizeTooSmallError'
@@ -177,26 +171,6 @@ export class AbiEncodingInvalidArrayError extends BaseError {
   constructor(value: unknown) {
     super(`Value \`${value}\` is not a valid array.`, {
       docsPath: '/errors#abiencodinginvalidarrayerror',
-    })
-  }
-}
-
-export class AbiItemAmbiguityError extends BaseError {
-  override readonly name = 'AbiItemAmbiguityError'
-  constructor(
-    x: { abiItem: Abi[number]; type: string },
-    y: { abiItem: Abi[number]; type: string },
-  ) {
-    super('Found ambiguous types in overloaded ABI items.', {
-      docsPath: '/errors#abiitemambiguityerror',
-      metaMessages: [
-        // TODO: abitype to add support for signature-formatted ABI items.
-        `\`${x.type}\` in \`${normalizeSignature(formatAbiItem(x.abiItem))}\`, and`,
-        `\`${y.type}\` in \`${normalizeSignature(formatAbiItem(y.abiItem))}\``,
-        '',
-        'These types encode differently and cannot be distinguished at runtime.',
-        'Remove one of the ambiguous items in the ABI.',
-      ],
     })
   }
 }

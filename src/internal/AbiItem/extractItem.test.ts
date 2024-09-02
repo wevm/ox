@@ -1,5 +1,5 @@
 import { type AbiParameter, parseAbi, parseAbiParameters } from 'abitype'
-import { Abi, Bytes } from 'ox'
+import { AbiItem, Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
@@ -7,7 +7,7 @@ import { getAmbiguousTypes, isArgOfType } from './extractItem.js'
 
 test('default', () => {
   expect(
-    Abi.extractItem(wagmiContractConfig.abi, {
+    AbiItem.extract(wagmiContractConfig.abi, {
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
     }),
@@ -35,7 +35,7 @@ test('default', () => {
 describe('selector', () => {
   test('function', () => {
     expect(
-      Abi.extractItem(wagmiContractConfig.abi, {
+      AbiItem.extract(wagmiContractConfig.abi, {
         name: '0x70a08231',
       }),
     ).toMatchInlineSnapshot(`
@@ -61,7 +61,7 @@ describe('selector', () => {
 
   test('event', () => {
     expect(
-      Abi.extractItem(wagmiContractConfig.abi, {
+      AbiItem.extract(wagmiContractConfig.abi, {
         name: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
       }),
     ).toMatchInlineSnapshot(`
@@ -93,7 +93,7 @@ describe('selector', () => {
 
 test('no matching name', () => {
   expect(
-    Abi.extractItem([], {
+    AbiItem.extract([], {
       // @ts-expect-error
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
@@ -103,7 +103,7 @@ test('no matching name', () => {
 
 test('overloads: no inputs', () => {
   expect(
-    Abi.extractItem(
+    AbiItem.extract(
       [
         {
           name: 'balanceOf',
@@ -141,7 +141,7 @@ test('overloads: no inputs', () => {
 
 test('overloads: undefined inputs', () => {
   expect(
-    Abi.extractItem(
+    AbiItem.extract(
       [
         {
           inputs: undefined,
@@ -181,7 +181,7 @@ test('overloads: undefined inputs', () => {
 
 test('overloads: no args', () => {
   expect(
-    Abi.extractItem(
+    AbiItem.extract(
       [
         {
           inputs: [{ name: '', type: 'uint256' }],
@@ -282,26 +282,26 @@ test('overload: different lengths without abi order define effect', () => {
     }
   `
   expect(
-    Abi.extractItem(abis, {
+    AbiItem.extract(abis, {
       name: 'safeTransferFrom',
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
   expect(
-    Abi.extractItem(abis.reverse(), {
+    AbiItem.extract(abis.reverse(), {
       name: 'safeTransferFrom',
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
 
   expect(
-    Abi.extractItem(abis, {
+    AbiItem.extract(abis, {
       name: 'safeTransferFrom',
       args: longArgs,
     }),
   ).toMatchInlineSnapshot(longSnapshot)
   expect(
-    Abi.extractItem(abis.reverse(), {
+    AbiItem.extract(abis.reverse(), {
       name: 'safeTransferFrom',
       args: longArgs,
     }),
@@ -334,7 +334,7 @@ test('overload: different types', () => {
   ]
 
   expect(
-    Abi.extractItem(abi, {
+    AbiItem.extract(abi, {
       name: 'mint',
     }),
   ).toMatchInlineSnapshot(`
@@ -348,7 +348,7 @@ test('overload: different types', () => {
   `)
 
   expect(
-    Abi.extractItem(abi, {
+    AbiItem.extract(abi, {
       name: 'mint',
       args: [420n],
     }),
@@ -368,7 +368,7 @@ test('overload: different types', () => {
   `)
 
   expect(
-    Abi.extractItem(abi, {
+    AbiItem.extract(abi, {
       name: 'mint',
       args: ['foo'],
     }),
@@ -390,7 +390,7 @@ test('overload: different types', () => {
 
 test('overloads: tuple', () => {
   expect(
-    Abi.extractItem(
+    AbiItem.extract(
       [
         {
           inputs: [
@@ -501,7 +501,7 @@ test('overloads: tuple', () => {
 
 test('overloads: ambiguious types', () => {
   expect(() =>
-    Abi.extractItem(
+    AbiItem.extract(
       parseAbi(['function foo(address)', 'function foo(bytes20)']),
       {
         name: 'foo',
@@ -521,7 +521,7 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.extractItem(
+    AbiItem.extract(
       parseAbi([
         'function foo(string)',
         'function foo(uint)',
@@ -545,7 +545,7 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(
-    Abi.extractItem(
+    AbiItem.extract(
       parseAbi([
         'function foo(string)',
         'function foo(uint)',
@@ -572,7 +572,7 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(
-    Abi.extractItem(
+    AbiItem.extract(
       parseAbi([
         'function foo(string)',
         'function foo(uint)',
@@ -599,7 +599,7 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.extractItem(
+    AbiItem.extract(
       parseAbi([
         'function foo(address)',
         'function foo(uint)',
@@ -623,7 +623,7 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.extractItem(
+    AbiItem.extract(
       parseAbi(['function foo((address))', 'function foo((bytes20))']),
       {
         name: 'foo',
@@ -643,7 +643,7 @@ test('overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    Abi.extractItem(
+    AbiItem.extract(
       parseAbi([
         'function foo(string, (address))',
         'function foo(string, (bytes))',

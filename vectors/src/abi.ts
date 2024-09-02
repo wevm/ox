@@ -1,7 +1,7 @@
 /// <reference types="@types/bun" />
 
 import { join } from 'node:path'
-import { Abi, Hex } from '../../src/index.js'
+import { AbiParameters, Hex } from '../../src/index.js'
 import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
@@ -23,7 +23,7 @@ export async function generateAbiVectors() {
     if (i > 0) writer.write(',')
     const parameters = generateParameters(10)
     const values = generateValues(parameters)
-    const encoded = Abi.encodeParameters(parameters, values)
+    const encoded = AbiParameters.encode(parameters, values)
     writer.write(stringify({ parameters, values, encoded }, null, 2))
   }
 
@@ -54,7 +54,7 @@ function generateBigInt(max: bigint) {
   return value % max
 }
 
-function generateValues(parameters: Abi.Parameter[]) {
+function generateValues(parameters: AbiParameters.Parameter[]) {
   const values: any[] = []
   for (const parameter of parameters) {
     if (parameter.type.includes('[')) {
@@ -110,7 +110,9 @@ function generateValues(parameters: Abi.Parameter[]) {
       continue
     }
     if (parameter.type === 'tuple' && 'components' in parameter) {
-      const value = generateValues(parameter.components as Abi.Parameter[])
+      const value = generateValues(
+        parameter.components as AbiParameters.Parameter[],
+      )
       values.push(value)
     }
   }
@@ -120,13 +122,13 @@ function generateValues(parameters: Abi.Parameter[]) {
 function generateParameters(maxLength: number, level = 0) {
   if (level > 10) return []
 
-  const parameters: Abi.Parameter[] = []
+  const parameters: AbiParameters.Parameter[] = []
   const length = Math.floor(Math.random() * maxLength)
   for (let i = 0; i < length; i++) {
     const types = ['int', 'uint', 'bool', 'address', 'bytes', 'string', 'tuple']
     const type = types[Math.floor(Math.random() * types.length)]
 
-    let parameter: Abi.Parameter = { type: 'tuple' }
+    let parameter: AbiParameters.Parameter = { type: 'tuple' }
     if (type === 'int' || type === 'uint') {
       const hasSize = Math.random() > 0.5
       const size = hasSize ? Math.floor(Math.random() * 31) * 8 + 8 : undefined

@@ -2,24 +2,24 @@ import { formatAbiItem } from 'abitype'
 
 import { BaseError } from '../Errors/base.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { Abi } from './types.js'
+import type { AbiItem } from './types.js'
 
 /**
  * Computes the stringified signature for a given {@link Abi#Item}.
  *
  * @example
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiItem } from 'ox'
  *
- * const signature = Abi.getSignature('function ownerOf(uint256 tokenId)')
+ * const signature = AbiItem.getSignature('function ownerOf(uint256 tokenId)')
  * // @log: 'ownerOf(uint256)'
  * ```
  *
  * @example
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiItem } from 'ox'
  *
- * const signature = Abi.getSignature({
+ * const signature = AbiItem.getSignature({
  *   name: 'ownerOf',
  *   type: 'function',
  *   inputs: [{ name: 'tokenId', type: 'uint256' }],
@@ -32,7 +32,7 @@ import type { Abi } from './types.js'
  * @param abiItem - The ABI Item to compute the signature for.
  * @returns The stringified signature of the ABI Item.
  */
-export function Abi_getSignature(abiItem: string | Abi[number]): string {
+export function AbiItem_getSignature(abiItem: string | AbiItem): string {
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
     return formatAbiItem(abiItem)
@@ -40,13 +40,13 @@ export function Abi_getSignature(abiItem: string | Abi[number]): string {
   return normalizeSignature(signature)
 }
 
-export declare namespace Abi_getSignature {
+export declare namespace AbiItem_getSignature {
   type ErrorType = normalizeSignature.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-Abi_getSignature.parseError = (error: unknown) =>
-  error as Abi_getSignature.ErrorType
+AbiItem_getSignature.parseError = (error: unknown) =>
+  error as AbiItem_getSignature.ErrorType
 
 ///////////////////////////////////////////////////////////////////////////
 // Utilities

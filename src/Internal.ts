@@ -9,11 +9,9 @@ export {
   decodeString,
   decodeTuple,
   hasDynamicChild,
-} from './internal/Abi/decodeParameters.js'
+} from './internal/AbiParameters/decode.js'
 
 export {
-  type IsomorphicAbiParameter,
-  type IsomorphicAbiParametersToPrimitiveTypes,
   type PreparedParameter,
   type Tuple,
   encode,
@@ -27,7 +25,9 @@ export {
   getArrayComponents,
   prepareParameter,
   prepareParameters,
-} from './internal/Abi/encodeParameters.js'
+} from './internal/AbiParameters/encode.js'
+
+export { AbiItemAmbiguityError } from './internal/AbiItem/errors.js'
 
 export {
   AbiDecodingDataSizeTooSmallError,
@@ -36,9 +36,8 @@ export {
   AbiEncodingBytesSizeMismatchError,
   AbiEncodingInvalidArrayError,
   AbiEncodingLengthMismatchError,
-  AbiItemAmbiguityError,
   InvalidAbiTypeError,
-} from './internal/Abi/errors.js'
+} from './internal/AbiParameters/errors.js'
 
 export { pad as pad_hex } from './internal/Hex/pad.js'
 
@@ -47,9 +46,11 @@ export { pad as pad_bytes } from './internal/Bytes/pad.js'
 export type {
   EncodePackedValues,
   PackedAbiType,
-} from './internal/Abi/encodePacked.js'
+} from './internal/AbiParameters/encodePacked.js'
 
-export { normalizeSignature } from './internal/Abi/getSignature.js'
+export type { AbiParameters_ToPrimitiveTypes } from './internal/AbiParameters/types.js'
+
+export { normalizeSignature } from './internal/AbiItem/getSignature.js'
 
 export { type Cursor, createCursor } from './internal/cursor.js'
 
@@ -101,13 +102,13 @@ export {
 export { stringify } from './internal/stringify.js'
 
 export type {
-  Abi_ItemArgs,
-  Abi_ItemName,
-  Abi_ExtractItem,
-  Abi_ExtractItemNames,
-  Abi_ExtractItemForArgs,
+  AbiItem_Args,
+  AbiItem_Name,
+  AbiItem_Extract,
+  AbiItem_ExtractNames,
+  AbiItem_ExtractForArgs,
   Widen,
-} from './internal/Abi/types.js'
+} from './internal/AbiItem/types.js'
 
 export type {
   Assign,

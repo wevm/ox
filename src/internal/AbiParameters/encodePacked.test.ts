@@ -1,4 +1,4 @@
-import { Abi } from 'ox'
+import { AbiParameters } from 'ox'
 import { expect, test } from 'vitest'
 import { address } from '../../../test/constants/addresses.js'
 
@@ -210,13 +210,13 @@ test.each([
 ])(
   "encodePacked($types, $values) -> '$expected'",
   ({ types, values, expected }) => {
-    expect(Abi.encodePacked(types, values)).toBe(expected)
+    expect(AbiParameters.encodePacked(types, values)).toBe(expected)
   },
 )
 
 test('error: invalid address', () => {
   expect(() =>
-    Abi.encodePacked(['address'], ['0xdeadbeef']),
+    AbiParameters.encodePacked(['address'], ['0xdeadbeef']),
   ).toThrowErrorMatchingInlineSnapshot(`
     [InvalidAddressError: Address "0xdeadbeef" is invalid.
 
@@ -228,7 +228,7 @@ test('error: invalid address', () => {
 test('error: length mismatch', () => {
   expect(
     // @ts-expect-error
-    () => Abi.encodePacked(['address'], [address.vitalik, '0x']),
+    () => AbiParameters.encodePacked(['address'], [address.vitalik, '0x']),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiEncodingLengthMismatchError: ABI encoding parameters/values length mismatch.
     Expected length (parameters): 1
@@ -240,7 +240,7 @@ test('error: length mismatch', () => {
 
 test('error: bytes size mismatch', () => {
   expect(() =>
-    Abi.encodePacked(['bytes8'], ['0xdeadbeef']),
+    AbiParameters.encodePacked(['bytes8'], ['0xdeadbeef']),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiEncodingBytesSizeMismatchError: Size of bytes "0xdeadbeef" (bytes4) does not match expected size (bytes8).
 
@@ -251,7 +251,7 @@ test('error: bytes size mismatch', () => {
 test('error: unsupported type', () => {
   expect(
     // @ts-expect-error
-    () => Abi.encodePacked(['function'], ['0x']),
+    () => AbiParameters.encodePacked(['function'], ['0x']),
   ).toThrowErrorMatchingInlineSnapshot(`
     [InvalidAbiTypeError: Type \`function\` is not a valid ABI Type.
 

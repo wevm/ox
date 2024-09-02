@@ -4,13 +4,13 @@ import * as exports from './Errors.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "AbiItemAmbiguityError",
       "AbiDecodingDataSizeTooSmallError",
       "AbiDecodingZeroDataError",
       "AbiEncodingArrayLengthMismatchError",
       "AbiEncodingBytesSizeMismatchError",
       "AbiEncodingInvalidArrayError",
       "AbiEncodingLengthMismatchError",
-      "AbiItemAmbiguityError",
       "InvalidAbiTypeError",
       "InvalidAddressChecksumError",
       "InvalidAddressError",

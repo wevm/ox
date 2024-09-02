@@ -1,32 +1,32 @@
-import { Abi } from 'ox'
+import { AbiItem } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 import { normalizeSignature } from './getSignature.js'
 
 test('creates function signature', () => {
-  expect(Abi.getSignature('_compound(uint256,uint256,uint256)')).toEqual(
+  expect(AbiItem.getSignature('_compound(uint256,uint256,uint256)')).toEqual(
     '_compound(uint256,uint256,uint256)',
   )
   expect(
-    Abi.getSignature('function _compound(uint256 a, uint256 b, uint256 c)'),
+    AbiItem.getSignature('function _compound(uint256 a, uint256 b, uint256 c)'),
   ).toEqual('_compound(uint256,uint256,uint256)')
-  expect(Abi.getSignature('function ownerOf(uint256 tokenId)')).toEqual(
+  expect(AbiItem.getSignature('function ownerOf(uint256 tokenId)')).toEqual(
     'ownerOf(uint256)',
   )
-  expect(Abi.getSignature('ownerOf(uint256)')).toEqual('ownerOf(uint256)')
-  expect(Abi.getSignature('processInvestment(address,uint256,bool)')).toEqual(
-    'processInvestment(address,uint256,bool)',
-  )
-  expect(Abi.getSignature('processAccount(uint256 , address)')).toEqual(
+  expect(AbiItem.getSignature('ownerOf(uint256)')).toEqual('ownerOf(uint256)')
+  expect(
+    AbiItem.getSignature('processInvestment(address,uint256,bool)'),
+  ).toEqual('processInvestment(address,uint256,bool)')
+  expect(AbiItem.getSignature('processAccount(uint256 , address)')).toEqual(
     'processAccount(uint256,address)',
   )
-  expect(Abi.getSignature('claimed()')).toEqual('claimed()')
-  expect(Abi.getSignature('function claimed()')).toEqual('claimed()')
+  expect(AbiItem.getSignature('claimed()')).toEqual('claimed()')
+  expect(AbiItem.getSignature('function claimed()')).toEqual('claimed()')
 })
 
 test('creates function signature from `AbiFunction`', () => {
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: '_compound',
       type: 'function',
       inputs: [
@@ -40,7 +40,7 @@ test('creates function signature from `AbiFunction`', () => {
   ).toEqual('_compound(uint256,uint256,uint256)')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'ownerOf',
       type: 'function',
       inputs: [{ name: 'tokenId', type: 'uint256' }],
@@ -50,7 +50,7 @@ test('creates function signature from `AbiFunction`', () => {
   ).toEqual('ownerOf(uint256)')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'ownerOf',
       type: 'function',
       inputs: [{ name: '', type: 'uint256' }],
@@ -60,7 +60,7 @@ test('creates function signature from `AbiFunction`', () => {
   ).toEqual('ownerOf(uint256)')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'processInvestment',
       type: 'function',
       inputs: [
@@ -74,7 +74,7 @@ test('creates function signature from `AbiFunction`', () => {
   ).toEqual('processInvestment(address,uint256,bool)')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'processAccount',
       type: 'function',
       inputs: [
@@ -87,7 +87,7 @@ test('creates function signature from `AbiFunction`', () => {
   ).toEqual('processAccount(uint256,address)')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'claimed',
       type: 'function',
       inputs: [],
@@ -97,7 +97,7 @@ test('creates function signature from `AbiFunction`', () => {
   ).toEqual('claimed()')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       inputs: [
         {
           components: [
@@ -131,7 +131,7 @@ test('creates function signature from `AbiFunction`', () => {
   ).toEqual('forceSimpleCells((uint64,address,uint8,uint8)[])')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       inputs: [
         { name: 'name', type: 'string' },
         { name: 'symbol', type: 'string' },
@@ -179,7 +179,7 @@ test('creates function signature from `AbiFunction`', () => {
   )
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       inputs: [
         {
           name: 't',
@@ -236,7 +236,7 @@ test('creates function signature from `AbiFunction`', () => {
   )
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       inputs: [
         { name: 'payer', type: 'address' },
         { name: 'recipient', type: 'address' },
@@ -258,51 +258,51 @@ test('creates function signature from `AbiFunction`', () => {
 
 test('creates event signature', () => {
   expect(
-    Abi.getSignature('Transfer(address,address,uint256)'),
+    AbiItem.getSignature('Transfer(address,address,uint256)'),
   ).toMatchInlineSnapshot('"Transfer(address,address,uint256)"')
   expect(
-    Abi.getSignature(
+    AbiItem.getSignature(
       'Transfer(address indexed from, address indexed to, uint256 amount)',
     ),
   ).toMatchInlineSnapshot('"Transfer(address,address,uint256)"')
   expect(
-    Abi.getSignature(
+    AbiItem.getSignature(
       'event Transfer(address indexed from, address indexed to, uint256 amount)',
     ),
   ).toMatchInlineSnapshot('"Transfer(address,address,uint256)"')
-  expect(Abi.getSignature('drawNumber()')).toMatchInlineSnapshot(
+  expect(AbiItem.getSignature('drawNumber()')).toMatchInlineSnapshot(
     '"drawNumber()"',
   )
-  expect(Abi.getSignature('drawNumber( )')).toMatchInlineSnapshot(
+  expect(AbiItem.getSignature('drawNumber( )')).toMatchInlineSnapshot(
     '"drawNumber()"',
   )
   expect(
-    Abi.getSignature(
+    AbiItem.getSignature(
       'ProcessedAccountDividendTracker(uint256,uint256,uint256,uint256,bool,uint256,address)',
     ),
   ).toMatchInlineSnapshot(
     '"ProcessedAccountDividendTracker(uint256,uint256,uint256,uint256,bool,uint256,address)"',
   )
   expect(
-    Abi.getSignature(
+    AbiItem.getSignature(
       'ProcessedAccountDividendTracker(uint256 indexed foo, uint256 indexed bar, uint256 baz, uint256 a, bool b, uint256 c, address d)',
     ),
   ).toMatchInlineSnapshot(
     '"ProcessedAccountDividendTracker(uint256,uint256,uint256,uint256,bool,uint256,address)"',
   )
   expect(
-    Abi.getSignature('BlackListMultipleAddresses(address[], bool)'),
+    AbiItem.getSignature('BlackListMultipleAddresses(address[], bool)'),
   ).toMatchInlineSnapshot('"BlackListMultipleAddresses(address[],bool)"')
-  expect(Abi.getSignature('checkBatch(bytes)')).toMatchInlineSnapshot(
+  expect(AbiItem.getSignature('checkBatch(bytes)')).toMatchInlineSnapshot(
     '"checkBatch(bytes)"',
   )
   expect(
-    Abi.getSignature(
+    AbiItem.getSignature(
       'Approval(address indexed owner, address indexed approved, uint256 indexed tokenId)',
     ),
   ).toMatchInlineSnapshot('"Approval(address,address,uint256)"')
   expect(
-    Abi.getSignature(
+    AbiItem.getSignature(
       'ApprovalForAll(address indexed owner, address indexed operator, bool approved)',
     ),
   ).toMatchInlineSnapshot('"ApprovalForAll(address,address,bool)"')
@@ -310,7 +310,7 @@ test('creates event signature', () => {
 
 test('creates event signature for `AbiEvent`', () => {
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'Transfer',
       type: 'event',
       inputs: [
@@ -322,7 +322,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"Transfer(address,address,uint256)"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'Transfer',
       type: 'event',
       inputs: [
@@ -334,7 +334,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"Transfer(address,address,uint256)"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'drawNumber',
       type: 'event',
       inputs: [],
@@ -342,7 +342,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"drawNumber()"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'drawNumber',
       type: 'event',
       inputs: [],
@@ -350,7 +350,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"drawNumber()"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'ProcessedAccountDividendTracker',
       type: 'event',
       inputs: [
@@ -368,7 +368,7 @@ test('creates event signature for `AbiEvent`', () => {
   )
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'ProcessedAccountDividendTracker',
       type: 'event',
       inputs: [
@@ -386,7 +386,7 @@ test('creates event signature for `AbiEvent`', () => {
   )
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'BlackListMultipleAddresses',
       type: 'event',
       inputs: [
@@ -397,7 +397,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"BlackListMultipleAddresses(address[],bool)"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'checkBatch',
       type: 'event',
       inputs: [{ name: '', type: 'bytes', indexed: false }],
@@ -405,7 +405,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"checkBatch(bytes)"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'Approval',
       type: 'event',
       inputs: [
@@ -417,7 +417,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"Approval(address,address,uint256)"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       name: 'ApprovalForAll',
       type: 'event',
       inputs: [
@@ -429,7 +429,7 @@ test('creates event signature for `AbiEvent`', () => {
   ).toMatchInlineSnapshot('"ApprovalForAll(address,address,bool)"')
 
   expect(
-    Abi.getSignature({
+    AbiItem.getSignature({
       anonymous: false,
       inputs: [
         {

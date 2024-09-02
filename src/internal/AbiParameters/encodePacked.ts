@@ -32,9 +32,9 @@ import {
  *
  * @example
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  *
- * const encoded = Abi.encodePacked(
+ * const encoded = AbiParameters.encodePacked(
  *   ['address', 'string'],
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 'hello world'],
  * )
@@ -45,7 +45,7 @@ import {
  * @param values - The set of primitive values that correspond to the ABI types defined in `types`.
  * @returns The encoded packed data.
  */
-export function Abi_encodePacked<
+export function AbiParameters_encodePacked<
   const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
 >(types: packedAbiTypes, values: EncodePackedValues<packedAbiTypes>): Hex {
   if (types.length !== values.length)
@@ -63,7 +63,7 @@ export function Abi_encodePacked<
   return Hex_concat(...data)
 }
 
-export declare namespace Abi_encodePacked {
+export declare namespace AbiParameters_encodePacked {
   type ErrorType =
     | Hex_concat.ErrorType
     | AbiEncodingLengthMismatchError
@@ -71,8 +71,8 @@ export declare namespace Abi_encodePacked {
 }
 
 /* v8 ignore next */
-Abi_encodePacked.parseError = (error: unknown) =>
-  error as Abi_encodePacked.ErrorType
+AbiParameters_encodePacked.parseError = (error: unknown) =>
+  error as AbiParameters_encodePacked.ErrorType
 
 /** @internal */
 export type PackedAbiType =

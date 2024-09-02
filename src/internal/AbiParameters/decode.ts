@@ -15,40 +15,40 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
-import {
-  type IsomorphicAbiParameter,
-  type IsomorphicAbiParametersToPrimitiveTypes,
-  getArrayComponents,
-} from './encodeParameters.js'
+import { getArrayComponents } from './encode.js'
 import {
   AbiDecodingDataSizeTooSmallError,
   AbiDecodingZeroDataError,
   InvalidAbiTypeError,
 } from './errors.js'
-import type { Abi_Parameter } from './types.js'
+import type {
+  AbiParameters_Isomorphic,
+  AbiParameters_Parameter,
+  AbiParameters_ToPrimitiveTypes,
+} from './types.js'
 
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.
  *
  * @example
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  *
- * const data = Abi.decodeParameters(
+ * const data = AbiParameters.decode(
  *   ['string', 'uint', 'bool'],
  *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
  * )
  * // @log: ['wagmi', 420n, true]
  * ```
  *
- * You can also pass in Human Readable parameters with the {@link Abi#parseParameters} utility.
+ * You can also pass in Human Readable parameters with the // TODO utility.
  *
  * @example
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  *
- * const data = Abi.decodeParameters(
- *   Abi.parseParameters('string x, uint y, bool z'),
+ * const data = AbiParameters.decode(
+ *   AbiParameters.from('string x, uint y, bool z'),
  *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
  * )
  * // @log: ['wagmi', 420n, true]
@@ -58,12 +58,12 @@ import type { Abi_Parameter } from './types.js'
  * @param data - ABI encoded data.
  * @returns Array of decoded values.
  */
-export function Abi_decodeParameters<
-  const parameters extends readonly IsomorphicAbiParameter[],
+export function AbiParameters_decode<
+  const parameters extends AbiParameters_Isomorphic,
 >(
   parameters: parameters,
   data: Bytes | Hex,
-): Abi_decodeParameters.ReturnType<parameters> {
+): AbiParameters_decode.ReturnType<parameters> {
   const bytes = typeof data === 'string' ? Bytes_fromHex(data) : data
   const cursor = createCursor(bytes)
 
@@ -72,7 +72,7 @@ export function Abi_decodeParameters<
   if (Bytes_size(bytes) && Bytes_size(bytes) < 32)
     throw new AbiDecodingDataSizeTooSmallError({
       data: typeof data === 'string' ? data : Hex_fromBytes(data),
-      parameters: parameters as readonly Abi_Parameter[],
+      parameters: parameters as readonly AbiParameters_Parameter[],
       size: Bytes_size(bytes),
     })
 
@@ -83,7 +83,7 @@ export function Abi_decodeParameters<
       typeof parameters[i] === 'string'
         ? parseAbiParameter(parameters[i] as string)
         : parameters[i]
-    ) as Abi_Parameter
+    ) as AbiParameters_Parameter
     cursor.setPosition(consumed)
     const [data, consumed_] = decodeParameter(cursor, param, {
       staticPosition: 0,
@@ -91,17 +91,16 @@ export function Abi_decodeParameters<
     consumed += consumed_
     values.push(data)
   }
-  return values as Abi_decodeParameters.ReturnType<parameters>
+  return values as AbiParameters_decode.ReturnType<parameters>
 }
 
-export declare namespace Abi_decodeParameters {
+export declare namespace AbiParameters_decode {
   type ReturnType<
-    parameters extends
-      readonly IsomorphicAbiParameter[] = readonly IsomorphicAbiParameter[],
-  > = IsomorphicAbiParametersToPrimitiveTypes<
-    parameters extends readonly IsomorphicAbiParameter[]
+    parameters extends AbiParameters_Isomorphic = AbiParameters_Isomorphic,
+  > = AbiParameters_ToPrimitiveTypes<
+    parameters extends AbiParameters_Isomorphic
       ? parameters
-      : Abi_Parameter[]
+      : AbiParameters_Parameter[]
   >
 
   type ErrorType =
@@ -112,9 +111,9 @@ export declare namespace Abi_decodeParameters {
     | GlobalErrorType
 }
 
-Abi_decodeParameters.parseError = (error: unknown) =>
+AbiParameters_decode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Abi_decodeParameters.ErrorType
+  error as AbiParameters_decode.ErrorType
 
 //////////////////////////////////////////////////////////////////////////////
 // Internal
@@ -123,7 +122,7 @@ Abi_decodeParameters.parseError = (error: unknown) =>
 /** @internal */
 export function decodeParameter(
   cursor: Cursor,
-  param: Abi_Parameter,
+  param: AbiParameters_Parameter,
   { staticPosition }: { staticPosition: number },
 ) {
   const arrayComponents = getArrayComponents(param.type)
@@ -182,7 +181,7 @@ export declare namespace decodeAddress {
 /** @internal */
 export function decodeArray(
   cursor: Cursor,
-  param: Abi_Parameter,
+  param: AbiParameters_Parameter,
   { length, staticPosition }: { length: number | null; staticPosition: number },
 ) {
   // If the length of the array is not known in advance (dynamic array),
@@ -277,7 +276,7 @@ export declare namespace decodeBool {
 /** @internal */
 export function decodeBytes(
   cursor: Cursor,
-  param: Abi_Parameter,
+  param: AbiParameters_Parameter,
   { staticPosition }: { staticPosition: number },
 ) {
   const [_, size] = param.type.split('bytes')
@@ -317,7 +316,7 @@ export declare namespace decodeBytes {
 }
 
 /** @internal */
-export function decodeNumber(cursor: Cursor, param: Abi_Parameter) {
+export function decodeNumber(cursor: Cursor, param: AbiParameters_Parameter) {
   const signed = param.type.startsWith('int')
   const size = Number.parseInt(param.type.split('int')[1] || '256')
   const value = cursor.readBytes(32)
@@ -338,8 +337,8 @@ export declare namespace decodeNumber {
 }
 
 /** @internal */
-export type TupleAbiParameter = Abi_Parameter & {
-  components: readonly Abi_Parameter[]
+export type TupleAbiParameter = AbiParameters_Parameter & {
+  components: readonly AbiParameters_Parameter[]
 }
 
 /** @internal */
@@ -432,7 +431,7 @@ export function decodeString(
 }
 
 /** @internal */
-export function hasDynamicChild(param: Abi_Parameter) {
+export function hasDynamicChild(param: AbiParameters_Parameter) {
   const { type } = param
   if (type === 'string') return true
   if (type === 'bytes') return true
@@ -443,7 +442,10 @@ export function hasDynamicChild(param: Abi_Parameter) {
   const arrayComponents = getArrayComponents(param.type)
   if (
     arrayComponents &&
-    hasDynamicChild({ ...param, type: arrayComponents[1] } as Abi_Parameter)
+    hasDynamicChild({
+      ...param,
+      type: arrayComponents[1],
+    } as AbiParameters_Parameter)
   )
     return true
 

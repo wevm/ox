@@ -1,3 +1,5 @@
+export { AbiItemAmbiguityError } from './internal/AbiItem/errors.js'
+
 export {
   AbiDecodingDataSizeTooSmallError,
   AbiDecodingZeroDataError,
@@ -5,9 +7,8 @@ export {
   AbiEncodingBytesSizeMismatchError,
   AbiEncodingInvalidArrayError,
   AbiEncodingLengthMismatchError,
-  AbiItemAmbiguityError,
   InvalidAbiTypeError,
-} from './internal/Abi/errors.js'
+} from './internal/AbiParameters/errors.js'
 
 export {
   InvalidAddressChecksumError,
