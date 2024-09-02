@@ -21,7 +21,6 @@ import type {
  * @example
  * ```ts twoslash
  * // @noErrors
- * // @noErrors
  * import { Blobs, TransactionEnvelopeEip4844 } from 'ox'
  * import { kzg } from './kzg'
  *

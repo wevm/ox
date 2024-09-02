@@ -22,7 +22,6 @@ import type { TransactionEnvelope } from './types.js'
  *
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
- *   nonce: 0n,
  *   gas: 21000n,
  *   maxFeePerGas: Value.fromGwei('20'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
