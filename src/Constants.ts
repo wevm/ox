@@ -1,4 +1,4 @@
-export { Kzg_versionedHashVersion } from './internal/kzg/constants.js'
+export { Kzg_versionedHashVersion } from './internal/Kzg/constants.js'
 
 export {
   Solidity_maxInt8,
@@ -97,6 +97,6 @@ export {
   Solidity_minInt240,
   Solidity_minInt248,
   Solidity_minInt256,
-} from './internal/solidity/constants.js'
+} from './internal/Solidity/constants.js'
 
-export { Value_exponents } from './internal/value/constants.js'
+export { Value_exponents } from './internal/Value/constants.js'

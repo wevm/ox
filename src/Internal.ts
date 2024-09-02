@@ -9,7 +9,7 @@ export {
   decodeString,
   decodeTuple,
   hasDynamicChild,
-} from './internal/abi/decodeParameters.js'
+} from './internal/Abi/decodeParameters.js'
 
 export {
   type IsomorphicAbiParameter,
@@ -27,7 +27,7 @@ export {
   getArrayComponents,
   prepareParameter,
   prepareParameters,
-} from './internal/abi/encodeParameters.js'
+} from './internal/Abi/encodeParameters.js'
 
 export {
   AbiDecodingDataSizeTooSmallError,
@@ -38,18 +38,18 @@ export {
   AbiEncodingLengthMismatchError,
   AbiItemAmbiguityError,
   InvalidAbiTypeError,
-} from './internal/abi/errors.js'
+} from './internal/Abi/errors.js'
 
-export { pad as pad_hex } from './internal/hex/pad.js'
+export { pad as pad_hex } from './internal/Hex/pad.js'
 
-export { pad as pad_bytes } from './internal/bytes/pad.js'
+export { pad as pad_bytes } from './internal/Bytes/pad.js'
 
 export type {
   EncodePackedValues,
   PackedAbiType,
-} from './internal/abi/encodePacked.js'
+} from './internal/Abi/encodePacked.js'
 
-export { normalizeSignature } from './internal/abi/getSignature.js'
+export { normalizeSignature } from './internal/Abi/getSignature.js'
 
 export { type Cursor, createCursor } from './internal/cursor.js'
 
@@ -58,20 +58,20 @@ export { LruMap } from './internal/lru.js'
 export {
   assertStartOffset as assertStartOffset_bytes,
   assertEndOffset as assertEndOffset_bytes,
-} from './internal/bytes/slice.js'
+} from './internal/Bytes/slice.js'
 export {
   assertStartOffset as assertStartOffset_hex,
   assertEndOffset as assertEndOffset_hex,
-} from './internal/hex/slice.js'
+} from './internal/Hex/slice.js'
 
-export { trim as trim_hex } from './internal/hex/trim.js'
-export { trim as trim_bytes } from './internal/bytes/trim.js'
+export { trim as trim_hex } from './internal/Hex/trim.js'
+export { trim as trim_bytes } from './internal/Bytes/trim.js'
 
 export {
   decodeRlpCursor,
   readLength,
   readList,
-} from './internal/rlp/to.js'
+} from './internal/Rlp/to.js'
 
 export {
   TransactionEnvelope_getType,
@@ -86,17 +86,17 @@ export {
   type TransactionEnvelope_GetTypeFromObject,
   type TransactionEnvelope_GetTypeFromSerialized,
   type LegacyProperties,
-} from './internal/transactionEnvelope/isomorphic/getType.js'
+} from './internal/TransactionEnvelope/isomorphic/getType.js'
 
-export { Signature_vToYParity } from './internal/signature/vToYParity.js'
+export { Signature_vToYParity } from './internal/Signature/vToYParity.js'
 
-export { findTypeDependencies } from './internal/typedData/encodeType.js'
+export { findTypeDependencies } from './internal/TypedData/encodeType.js'
 
 export {
   encodeData,
   encodeField,
   hashType,
-} from './internal/typedData/hashStruct.js'
+} from './internal/TypedData/hashStruct.js'
 
 export { stringify } from './internal/stringify.js'
 
@@ -107,7 +107,7 @@ export type {
   Abi_ExtractItemNames,
   Abi_ExtractItemForArgs,
   Widen,
-} from './internal/abi/types.js'
+} from './internal/Abi/types.js'
 
 export type {
   Assign,
@@ -132,6 +132,6 @@ export type {
   ValueOf,
 } from './internal/types.js'
 
-export { Bytes_assertSize } from './internal/bytes/assertSize.js'
+export { Bytes_assertSize } from './internal/Bytes/assertSize.js'
 
-export { Hex_assertSize } from './internal/hex/assertSize.js'
+export { Hex_assertSize } from './internal/Hex/assertSize.js'

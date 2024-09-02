@@ -1,4 +1,4 @@
-import type { Address } from './address/types.js'
+import type { Address } from './Address/types.js'
 import { LruMap } from './lru.js'
 
 const caches = {

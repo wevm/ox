@@ -1,4 +1,4 @@
-export type { Hex } from './internal/hex/types.js'
+export type { Hex } from './internal/Hex/types.js'
 
 export {
   BytesSizeMismatchError,
@@ -13,27 +13,27 @@ export {
   SizeExceedsPaddingSizeError,
   SizeOverflowError,
   SliceOffsetOutOfBoundsError,
-} from './internal/errors/data.js'
+} from './internal/Errors/data.js'
 
-export { Hex_assert as assert } from './internal/hex/assert.js'
+export { Hex_assert as assert } from './internal/Hex/assert.js'
 
-export { Hex_concat as concat } from './internal/hex/concat.js'
+export { Hex_concat as concat } from './internal/Hex/concat.js'
 
-export { Hex_isHex as isHex } from './internal/hex/isHex.js'
+export { Hex_isHex as isHex } from './internal/Hex/isHex.js'
 
-export { Hex_isEqual as isEqual } from './internal/hex/isEqual.js'
+export { Hex_isEqual as isEqual } from './internal/Hex/isEqual.js'
 
-export { Hex_padLeft as padLeft } from './internal/hex/pad.js'
+export { Hex_padLeft as padLeft } from './internal/Hex/pad.js'
 
-export { Hex_padRight as padRight } from './internal/hex/pad.js'
+export { Hex_padRight as padRight } from './internal/Hex/pad.js'
 
-export { Hex_slice as slice } from './internal/hex/slice.js'
+export { Hex_slice as slice } from './internal/Hex/slice.js'
 
-export { Hex_size as size } from './internal/hex/size.js'
+export { Hex_size as size } from './internal/Hex/size.js'
 
-export { Hex_trimLeft as trimLeft } from './internal/hex/trim.js'
+export { Hex_trimLeft as trimLeft } from './internal/Hex/trim.js'
 
-export { Hex_trimRight as trimRight } from './internal/hex/trim.js'
+export { Hex_trimRight as trimRight } from './internal/Hex/trim.js'
 
 export {
   Hex_to as to,
@@ -42,7 +42,7 @@ export {
   Hex_toBytes as toBytes,
   Hex_toNumber as toNumber,
   Hex_toString as toString,
-} from './internal/hex/to.js'
+} from './internal/Hex/to.js'
 
 export {
   Hex_from as from,
@@ -50,6 +50,6 @@ export {
   Hex_fromBytes as fromBytes,
   Hex_fromNumber as fromNumber,
   Hex_fromString as fromString,
-} from './internal/hex/from.js'
+} from './internal/Hex/from.js'
 
-export { Hex_random as random } from './internal/hex/random.js'
+export { Hex_random as random } from './internal/Hex/random.js'

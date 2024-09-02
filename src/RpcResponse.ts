@@ -1,4 +1,4 @@
-export { RpcResponse_parse as parse } from './internal/rpcResponse/parse.js'
+export { RpcResponse_parse as parse } from './internal/RpcResponse/parse.js'
 
 export {
   RpcResponse_Error as Error,
@@ -15,9 +15,9 @@ export {
   RpcResponse_ResourceUnavailableError as ResourceUnavailableError,
   RpcResponse_TransactionRejectedError as TransactionRejectedError,
   RpcResponse_VersionNotSupportedError as VersionNotSupportedError,
-} from './internal/rpcResponse/errors.js'
+} from './internal/RpcResponse/errors.js'
 
 export type {
   RpcResponse,
   RpcResponse_ErrorObject as ErrorObject,
-} from './internal/rpcResponse/types.js'
+} from './internal/RpcResponse/types.js'

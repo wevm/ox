@@ -5,7 +5,7 @@ import { Abi, Hex } from '../../src/index.js'
 import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
-} from '../../src/internal/solidity/constants.js'
+} from '../../src/internal/Solidity/constants.js'
 import { stringify } from '../../src/internal/stringify.js'
 
 generateAbiVectors()

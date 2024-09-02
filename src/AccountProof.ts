@@ -3,4 +3,4 @@ export type {
   AccountProof_Rpc as AccountProofRpc,
   StorageProof,
   StorageProof_Rpc as StorageProofRpc,
-} from './internal/accountProof/types.js'
+} from './internal/AccountProof/types.js'

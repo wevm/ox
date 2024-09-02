@@ -7,15 +7,15 @@ export {
   AbiEncodingLengthMismatchError,
   AbiItemAmbiguityError,
   InvalidAbiTypeError,
-} from './internal/abi/errors.js'
+} from './internal/Abi/errors.js'
 
 export {
   InvalidAddressChecksumError,
   InvalidAddressError,
   InvalidAddressInputError,
-} from './internal/address/errors.js'
+} from './internal/Address/errors.js'
 
-export { BaseError } from './internal/errors/base.js'
+export { BaseError } from './internal/Errors/base.js'
 
 export {
   BlobSizeTooLargeError,
@@ -23,13 +23,13 @@ export {
   EmptyBlobVersionedHashesError,
   InvalidVersionedHashSizeError,
   InvalidVersionedHashVersionError,
-} from './internal/blobs/errors.js'
+} from './internal/Blobs/errors.js'
 
 export {
   NegativeOffsetError,
   PositionOutOfBoundsError,
   RecursiveReadLimitExceededError,
-} from './internal/errors/cursor.js'
+} from './internal/Errors/cursor.js'
 
 export {
   IntegerOutOfRangeError,
@@ -43,9 +43,9 @@ export {
   SizeExceedsPaddingSizeError,
   SizeOverflowError,
   SliceOffsetOutOfBoundsError,
-} from './internal/errors/data.js'
+} from './internal/Errors/data.js'
 
-export type { GlobalErrorType } from './internal/errors/error.js'
+export type { GlobalErrorType } from './internal/Errors/error.js'
 
 export {
   InvalidSerializedSignatureSizeError,
@@ -54,9 +54,9 @@ export {
   InvalidSignatureVError,
   InvalidSignatureYParityError,
   MissingSignaturePropertiesError,
-} from './internal/signature/errors.js'
+} from './internal/Signature/errors.js'
 
-export { SiweInvalidMessageFieldError } from './internal/siwe/errors.js'
+export { SiweInvalidMessageFieldError } from './internal/Siwe/errors.js'
 
 export {
   CannotInferTransactionTypeError,
@@ -66,6 +66,6 @@ export {
   InvalidSerializedTransactionError,
   TipAboveFeeCapError,
   TransactionTypeNotImplementedError,
-} from './internal/transactionEnvelope/errors.js'
+} from './internal/TransactionEnvelope/errors.js'
 
-export { InvalidPrimaryTypeError } from './internal/typedData/errors.js'
+export { InvalidPrimaryTypeError } from './internal/TypedData/errors.js'

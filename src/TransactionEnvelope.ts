@@ -6,9 +6,9 @@ export {
   InvalidSerializedTransactionError,
   TipAboveFeeCapError,
   TransactionTypeNotImplementedError,
-} from './internal/transactionEnvelope/errors.js'
+} from './internal/TransactionEnvelope/errors.js'
 
-export type { TransactionEnvelope_Base as Base } from './internal/transactionEnvelope/types.js'
+export type { TransactionEnvelope_Base as Base } from './internal/TransactionEnvelope/types.js'
 
 export type {
   TransactionEnvelope,
@@ -16,7 +16,7 @@ export type {
   TransactionEnvelope_Serialized as Serialized,
   TransactionEnvelope_Signed as Signed,
   TransactionEnvelope_Type as Type,
-} from './internal/transactionEnvelope/isomorphic/types.js'
+} from './internal/TransactionEnvelope/isomorphic/types.js'
 
 export type {
   TransactionEnvelopeLegacy as Legacy,
@@ -24,7 +24,7 @@ export type {
   TransactionEnvelopeLegacy_Signed as LegacySigned,
   TransactionEnvelopeLegacy_Serialized as LegacySerialized,
   TransactionEnvelopeLegacy_Type as LegacyType,
-} from './internal/transactionEnvelope/legacy/types.js'
+} from './internal/TransactionEnvelope/legacy/types.js'
 
 export type {
   TransactionEnvelopeEip1559 as Eip1559,
@@ -33,7 +33,7 @@ export type {
   TransactionEnvelopeEip1559_Serialized as Eip1559Serialized,
   TransactionEnvelopeEip1559_Type as Eip1559Type,
   TransactionEnvelopeEip1559_SerializedType as Eip1559SerializedType,
-} from './internal/transactionEnvelope/eip1559/types.js'
+} from './internal/TransactionEnvelope/eip1559/types.js'
 
 export type {
   TransactionEnvelopeEip2930 as Eip2930,
@@ -42,7 +42,7 @@ export type {
   TransactionEnvelopeEip2930_Serialized as Eip2930Serialized,
   TransactionEnvelopeEip2930_Type as Eip2930Type,
   TransactionEnvelopeEip2930_SerializedType as Eip2930SerializedType,
-} from './internal/transactionEnvelope/eip2930/types.js'
+} from './internal/TransactionEnvelope/eip2930/types.js'
 
 export type {
   TransactionEnvelopeEip4844 as Eip4844,
@@ -51,7 +51,7 @@ export type {
   TransactionEnvelopeEip4844_Serialized as Eip4844Serialized,
   TransactionEnvelopeEip4844_Type as Eip4844Type,
   TransactionEnvelopeEip4844_SerializedType as Eip4844SerializedType,
-} from './internal/transactionEnvelope/eip4844/types.js'
+} from './internal/TransactionEnvelope/eip4844/types.js'
 
 export type {
   TransactionEnvelopeEip7702 as Eip7702,
@@ -60,18 +60,18 @@ export type {
   TransactionEnvelopeEip7702_Serialized as Eip7702Serialized,
   TransactionEnvelopeEip7702_Type as Eip7702Type,
   TransactionEnvelopeEip7702_SerializedType as Eip7702SerializedType,
-} from './internal/transactionEnvelope/eip7702/types.js'
+} from './internal/TransactionEnvelope/eip7702/types.js'
 
-export { TransactionEnvelope_assert as assert } from './internal/transactionEnvelope/isomorphic/assert.js'
+export { TransactionEnvelope_assert as assert } from './internal/TransactionEnvelope/isomorphic/assert.js'
 
-export { TransactionEnvelope_deserialize as deserialize } from './internal/transactionEnvelope/isomorphic/deserialize.js'
+export { TransactionEnvelope_deserialize as deserialize } from './internal/TransactionEnvelope/isomorphic/deserialize.js'
 
-export { TransactionEnvelope_getSignPayload as getSignPayload } from './internal/transactionEnvelope/isomorphic/getSignPayload.js'
+export { TransactionEnvelope_getSignPayload as getSignPayload } from './internal/TransactionEnvelope/isomorphic/getSignPayload.js'
 
-export { TransactionEnvelope_hash as hash } from './internal/transactionEnvelope/isomorphic/hash.js'
+export { TransactionEnvelope_hash as hash } from './internal/TransactionEnvelope/isomorphic/hash.js'
 
-export { TransactionEnvelope_serialize as serialize } from './internal/transactionEnvelope/isomorphic/serialize.js'
+export { TransactionEnvelope_serialize as serialize } from './internal/TransactionEnvelope/isomorphic/serialize.js'
 
-export { TransactionEnvelope_from as from } from './internal/transactionEnvelope/isomorphic/from.js'
+export { TransactionEnvelope_from as from } from './internal/TransactionEnvelope/isomorphic/from.js'
 
-export { TransactionEnvelope_toRpc as toRpc } from './internal/transactionEnvelope/isomorphic/toRpc.js'
+export { TransactionEnvelope_toRpc as toRpc } from './internal/TransactionEnvelope/isomorphic/toRpc.js'

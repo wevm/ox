@@ -10,4 +10,4 @@ export type {
   FeeValuesLegacyRpc,
   FeeValuesRpc,
   FeeValuesType,
-} from './internal/fee/types.js'
+} from './internal/Fee/types.js'

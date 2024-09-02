@@ -1,6 +1,6 @@
-export { RpcRequest_createStore as createStore } from './internal/rpcRequest/createStore.js'
+export { RpcRequest_createStore as createStore } from './internal/RpcRequest/createStore.js'
 
-export { RpcRequest_from as from } from './internal/rpcRequest/from.js'
+export { RpcRequest_from as from } from './internal/RpcRequest/from.js'
 
 export type {
   RpcRequest,
@@ -17,4 +17,4 @@ export type {
   RpcRequest_Methods as Methods,
   RpcRequest_MethodsEth as MethodsEth,
   RpcRequest_Store as Store,
-} from './internal/rpcRequest/types.js'
+} from './internal/RpcRequest/types.js'

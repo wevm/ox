@@ -1,4 +1,4 @@
-export type { Bytes } from './internal/bytes/types.js'
+export type { Bytes } from './internal/Bytes/types.js'
 
 export {
   BytesSizeMismatchError,
@@ -13,31 +13,31 @@ export {
   SizeExceedsPaddingSizeError,
   SizeOverflowError,
   SliceOffsetOutOfBoundsError,
-} from './internal/errors/data.js'
+} from './internal/Errors/data.js'
 
-export { Bytes_assert as assert } from './internal/bytes/assert.js'
+export { Bytes_assert as assert } from './internal/Bytes/assert.js'
 
-export { Bytes_concat as concat } from './internal/bytes/concat.js'
+export { Bytes_concat as concat } from './internal/Bytes/concat.js'
 
-export { Bytes_isBytes as isBytes } from './internal/bytes/isBytes.js'
+export { Bytes_isBytes as isBytes } from './internal/Bytes/isBytes.js'
 
-export { Bytes_isEqual as isEqual } from './internal/bytes/isEqual.js'
+export { Bytes_isEqual as isEqual } from './internal/Bytes/isEqual.js'
 
 export {
   Bytes_padLeft as padLeft,
   Bytes_padRight as padRight,
-} from './internal/bytes/pad.js'
+} from './internal/Bytes/pad.js'
 
-export { Bytes_slice as slice } from './internal/bytes/slice.js'
+export { Bytes_slice as slice } from './internal/Bytes/slice.js'
 
-export { Bytes_size as size } from './internal/bytes/size.js'
+export { Bytes_size as size } from './internal/Bytes/size.js'
 
 export {
   Bytes_trimLeft as trimLeft,
   Bytes_trimRight as trimRight,
-} from './internal/bytes/trim.js'
+} from './internal/Bytes/trim.js'
 
-export { Bytes_random as random } from './internal/bytes/random.js'
+export { Bytes_random as random } from './internal/Bytes/random.js'
 
 export {
   Bytes_to as to,
@@ -46,7 +46,7 @@ export {
   Bytes_toHex as toHex,
   Bytes_toNumber as toNumber,
   Bytes_toString as toString,
-} from './internal/bytes/to.js'
+} from './internal/Bytes/to.js'
 
 export {
   Bytes_from as from,
@@ -54,4 +54,4 @@ export {
   Bytes_fromHex as fromHex,
   Bytes_fromNumber as fromNumber,
   Bytes_fromString as fromString,
-} from './internal/bytes/from.js'
+} from './internal/Bytes/from.js'

@@ -3,7 +3,7 @@ export type {
   Blob,
   BlobSidecar,
   BlobSidecars,
-} from './internal/blobs/types.js'
+} from './internal/Blobs/types.js'
 
 export {
   BlobSizeTooLargeError,
@@ -11,26 +11,26 @@ export {
   EmptyBlobVersionedHashesError,
   InvalidVersionedHashSizeError,
   InvalidVersionedHashVersionError,
-} from './internal/blobs/errors.js'
+} from './internal/Blobs/errors.js'
 
-export { Blobs_toCommitments as toCommitments } from './internal/blobs/toCommitments.js'
+export { Blobs_toCommitments as toCommitments } from './internal/Blobs/toCommitments.js'
 
-export { Blobs_toProofs as toProofs } from './internal/blobs/toProofs.js'
+export { Blobs_toProofs as toProofs } from './internal/Blobs/toProofs.js'
 
-export { Blobs_toVersionedHashes as toVersionedHashes } from './internal/blobs/toVersionedHashes.js'
+export { Blobs_toVersionedHashes as toVersionedHashes } from './internal/Blobs/toVersionedHashes.js'
 
-export { Blobs_commitmentToVersionedHash as commitmentToVersionedHash } from './internal/blobs/commitmentToVersionedHash.js'
+export { Blobs_commitmentToVersionedHash as commitmentToVersionedHash } from './internal/Blobs/commitmentToVersionedHash.js'
 
-export { Blobs_commitmentsToVersionedHashes as commitmentsToVersionedHashes } from './internal/blobs/commitmentsToVersionedHashes.js'
+export { Blobs_commitmentsToVersionedHashes as commitmentsToVersionedHashes } from './internal/Blobs/commitmentsToVersionedHashes.js'
 
 export {
   Blobs_to as to,
   Blobs_toBytes as toBytes,
   Blobs_toHex as toHex,
-} from './internal/blobs/to.js'
+} from './internal/Blobs/to.js'
 
-export { Blobs_sidecarsToVersionedHashes as sidecarsToVersionedHashes } from './internal/blobs/sidecarsToVersionedHashes.js'
+export { Blobs_sidecarsToVersionedHashes as sidecarsToVersionedHashes } from './internal/Blobs/sidecarsToVersionedHashes.js'
 
-export { Blobs_from as from } from './internal/blobs/from.js'
+export { Blobs_from as from } from './internal/Blobs/from.js'
 
-export { Blobs_toSidecars as toSidecars } from './internal/blobs/toSidecars.js'
+export { Blobs_toSidecars as toSidecars } from './internal/Blobs/toSidecars.js'

@@ -1,4 +1,4 @@
 export type {
   Log,
   Log_Rpc as Rpc,
-} from './internal/log/types.js'
+} from './internal/Log/types.js'

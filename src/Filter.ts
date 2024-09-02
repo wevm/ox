@@ -3,4 +3,4 @@ export type {
   Filter_Rpc as Rpc,
   Filter_Topic as Topic,
   Filter_Topics as Topics,
-} from './internal/filter/types.js'
+} from './internal/Filter/types.js'

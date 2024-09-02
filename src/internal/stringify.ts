@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from './errors/error.js'
+import type { GlobalErrorType } from './Errors/error.js'
 
 /**
  * @internal
