@@ -8,13 +8,9 @@ export type TransactionEnvelopeEip4844<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
+  type extends string = TransactionEnvelopeEip4844_Type,
 > = Compute<
-  TransactionEnvelope_Base<
-    TransactionEnvelopeEip4844_Type,
-    signed,
-    bigintType,
-    numberType
-  > & {
+  TransactionEnvelope_Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
     /** Versioned hashes of blobs to be included in the transaction. */
@@ -32,11 +28,8 @@ export type TransactionEnvelopeEip4844<
   }
 >
 
-export type TransactionEnvelopeEip4844_Rpc = TransactionEnvelopeEip4844<
-  true,
-  Hex,
-  Hex
->
+export type TransactionEnvelopeEip4844_Rpc<signed extends boolean = boolean> =
+  TransactionEnvelopeEip4844<signed, Hex, Hex, '0x3'>
 
 export type TransactionEnvelopeEip4844_Serialized =
   `${TransactionEnvelopeEip4844_SerializedType}${string}`

@@ -1,27 +1,31 @@
-import type { Hex } from '../../hex/types.js'
 import type { IsNarrowable, IsNever, OneOf } from '../../types.js'
 import type {
   TransactionEnvelopeEip1559,
+  TransactionEnvelopeEip1559_Rpc,
   TransactionEnvelopeEip1559_Serialized,
   TransactionEnvelopeEip1559_Type,
 } from '../eip1559/types.js'
 import type {
   TransactionEnvelopeEip2930,
+  TransactionEnvelopeEip2930_Rpc,
   TransactionEnvelopeEip2930_Serialized,
   TransactionEnvelopeEip2930_Type,
 } from '../eip2930/types.js'
 import type {
   TransactionEnvelopeEip4844,
+  TransactionEnvelopeEip4844_Rpc,
   TransactionEnvelopeEip4844_Serialized,
   TransactionEnvelopeEip4844_Type,
 } from '../eip4844/types.js'
 import type {
   TransactionEnvelopeEip7702,
+  TransactionEnvelopeEip7702_Rpc,
   TransactionEnvelopeEip7702_Serialized,
   TransactionEnvelopeEip7702_Type,
 } from '../eip7702/types.js'
 import type {
   TransactionEnvelopeLegacy,
+  TransactionEnvelopeLegacy_Rpc,
   TransactionEnvelopeLegacy_Serialized,
   TransactionEnvelopeLegacy_Type,
 } from '../legacy/types.js'
@@ -38,8 +42,13 @@ export type TransactionEnvelope<
   | TransactionEnvelopeEip7702<signed, bigintType, numberType>
 >
 
-export type TransactionEnvelope_Rpc<signed extends boolean = boolean> =
-  TransactionEnvelope<signed, Hex, Hex>
+export type TransactionEnvelope_Rpc<signed extends boolean = boolean> = OneOf<
+  | TransactionEnvelopeLegacy_Rpc<signed>
+  | TransactionEnvelopeEip1559_Rpc<signed>
+  | TransactionEnvelopeEip2930_Rpc<signed>
+  | TransactionEnvelopeEip4844_Rpc<signed>
+  | TransactionEnvelopeEip7702_Rpc<signed>
+>
 
 export type TransactionEnvelope_Serialized<
   type extends TransactionEnvelope_Type = TransactionEnvelope_Type,

@@ -6,13 +6,9 @@ export type TransactionEnvelopeLegacy<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
+  type extends string = TransactionEnvelopeLegacy_Type,
 > = Compute<
-  TransactionEnvelope_Base<
-    TransactionEnvelopeLegacy_Type,
-    signed,
-    bigintType,
-    numberType
-  > & {
+  TransactionEnvelope_Base<type, signed, bigintType, numberType> & {
     /** EIP-155 Chain ID. */
     chainId?: numberType | undefined
     /** Base fee per gas. */
@@ -20,11 +16,8 @@ export type TransactionEnvelopeLegacy<
   }
 >
 
-export type TransactionEnvelopeLegacy_Rpc = TransactionEnvelopeLegacy<
-  true,
-  Hex,
-  Hex
->
+export type TransactionEnvelopeLegacy_Rpc<signed extends boolean = boolean> =
+  TransactionEnvelopeLegacy<signed, Hex, Hex, '0x0'>
 
 export type TransactionEnvelopeLegacy_Serialized = Branded<
   `0x${string}`,

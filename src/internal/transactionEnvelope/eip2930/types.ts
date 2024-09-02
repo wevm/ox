@@ -7,13 +7,9 @@ export type TransactionEnvelopeEip2930<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
+  type extends string = TransactionEnvelopeEip2930_Type,
 > = Compute<
-  TransactionEnvelope_Base<
-    TransactionEnvelopeEip2930_Type,
-    signed,
-    bigintType,
-    numberType
-  > & {
+  TransactionEnvelope_Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
     /** EIP-155 Chain ID. */
@@ -23,11 +19,8 @@ export type TransactionEnvelopeEip2930<
   }
 >
 
-export type TransactionEnvelopeEip2930_Rpc = TransactionEnvelopeEip2930<
-  true,
-  Hex,
-  Hex
->
+export type TransactionEnvelopeEip2930_Rpc<signed extends boolean = boolean> =
+  TransactionEnvelopeEip2930<signed, Hex, Hex, '0x1'>
 
 export type TransactionEnvelopeEip2930_Serialized =
   `${TransactionEnvelopeEip2930_SerializedType}${string}`

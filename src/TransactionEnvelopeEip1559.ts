@@ -23,3 +23,5 @@ export { TransactionEnvelopeEip1559_getSignPayload as getSignPayload } from './i
 export { TransactionEnvelopeEip1559_hash as hash } from './internal/transactionEnvelope/eip1559/hash.js'
 
 export { TransactionEnvelopeEip1559_serialize as serialize } from './internal/transactionEnvelope/eip1559/serialize.js'
+
+export { TransactionEnvelopeEip1559_toRpc as toRpc } from './internal/transactionEnvelope/eip1559/toRpc.js'

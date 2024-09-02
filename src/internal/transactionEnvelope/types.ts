@@ -13,6 +13,8 @@ export type TransactionEnvelope_Base<
     data?: Hex | undefined
     /** @alias `data` – added for TransactionEnvelope - Transaction compatibility. */
     input?: Hex | undefined
+    /** Sender of the transaction. */
+    from?: Address | undefined
     /** Gas provided for transaction execution */
     gas?: bigintType | undefined
     /** Unique number identifying this transaction */

@@ -73,3 +73,5 @@ export { TransactionEnvelope_hash as hash } from './internal/transactionEnvelope
 export { TransactionEnvelope_serialize as serialize } from './internal/transactionEnvelope/isomorphic/serialize.js'
 
 export { TransactionEnvelope_from as from } from './internal/transactionEnvelope/isomorphic/from.js'
+
+export { TransactionEnvelope_toRpc as toRpc } from './internal/transactionEnvelope/isomorphic/toRpc.js'

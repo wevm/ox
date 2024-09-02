@@ -23,3 +23,5 @@ export { TransactionEnvelopeEip4844_getSignPayload as getSignPayload } from './i
 export { TransactionEnvelopeEip4844_hash as hash } from './internal/transactionEnvelope/eip4844/hash.js'
 
 export { TransactionEnvelopeEip4844_serialize as serialize } from './internal/transactionEnvelope/eip4844/serialize.js'
+
+export { TransactionEnvelopeEip4844_toRpc as toRpc } from './internal/transactionEnvelope/eip4844/toRpc.js'

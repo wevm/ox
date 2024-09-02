@@ -12,6 +12,7 @@ test('exports', () => {
       "getSignPayload",
       "hash",
       "serialize",
+      "toRpc",
     ]
   `)
 })

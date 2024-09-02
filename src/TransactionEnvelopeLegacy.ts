@@ -19,3 +19,5 @@ export { TransactionEnvelopeLegacy_getSignPayload as getSignPayload } from './in
 export { TransactionEnvelopeLegacy_hash as hash } from './internal/transactionEnvelope/legacy/hash.js'
 
 export { TransactionEnvelopeLegacy_serialize as serialize } from './internal/transactionEnvelope/legacy/serialize.js'
+
+export { TransactionEnvelopeLegacy_toRpc as toRpc } from './internal/transactionEnvelope/legacy/toRpc.js'
