@@ -44,3 +44,5 @@ export type {
 } from './internal/transaction/eip7702/types.js'
 
 export { Transaction_fromRpc as fromRpc } from './internal/transaction/isomorphic/fromRpc.js'
+
+export { Transaction_toRpc as toRpc } from './internal/transaction/isomorphic/toRpc.js'

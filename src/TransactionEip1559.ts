@@ -11,3 +11,5 @@ export {
 } from './internal/transaction/eip1559/constants.js'
 
 export { TransactionEip1559_fromRpc as fromRpc } from './internal/transaction/eip1559/fromRpc.js'
+
+export { TransactionEip1559_toRpc as toRpc } from './internal/transaction/eip1559/toRpc.js'

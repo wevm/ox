@@ -1,6 +1,5 @@
 import type { GlobalErrorType } from '../../errors/error.js'
 import type { Signature_extract } from '../../signature/extract.js'
-import { TransactionTypeNotImplementedError } from '../../transactionEnvelope/errors.js'
 import { TransactionEip1559_fromRpc } from '../eip1559/fromRpc.js'
 import { TransactionEip2930_fromRpc } from '../eip2930/fromRpc.js'
 import { TransactionEip4844_fromRpc } from '../eip4844/fromRpc.js'
@@ -43,14 +42,11 @@ import type { Transaction, Transaction_Rpc } from './types.js'
  * @returns An instantiated {@link Transaction#Transaction}.
  */
 export function Transaction_fromRpc(transaction: Transaction_Rpc): Transaction {
-  if (transaction.type === '0x0') return TransactionLegacy_fromRpc(transaction)
   if (transaction.type === '0x1') return TransactionEip2930_fromRpc(transaction)
   if (transaction.type === '0x2') return TransactionEip1559_fromRpc(transaction)
   if (transaction.type === '0x3') return TransactionEip4844_fromRpc(transaction)
   if (transaction.type === '0x4') return TransactionEip7702_fromRpc(transaction)
-  throw new TransactionTypeNotImplementedError({
-    type: (transaction as any).type,
-  })
+  return TransactionLegacy_fromRpc(transaction)
 }
 
 export declare namespace Transaction_fromRpc {

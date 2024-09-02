@@ -27,6 +27,7 @@ import type { TransactionEip2930, TransactionEip2930_Rpc } from './types.js'
  *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *   v: '0x1b',
+ *   yParity: '0x0',
  *   chainId: '0x1',
  *   type: '0x1',
  * })

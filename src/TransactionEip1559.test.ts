@@ -7,6 +7,7 @@ test('exports', () => {
       "typeRpc",
       "type",
       "fromRpc",
+      "toRpc",
     ]
   `)
 })

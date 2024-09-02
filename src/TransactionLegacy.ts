@@ -11,3 +11,5 @@ export {
 } from './internal/transaction/legacy/constants.js'
 
 export { TransactionLegacy_fromRpc as fromRpc } from './internal/transaction/legacy/fromRpc.js'
+
+export { TransactionLegacy_toRpc as toRpc } from './internal/transaction/legacy/toRpc.js'
