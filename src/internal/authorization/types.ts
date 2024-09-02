@@ -20,11 +20,7 @@ export type Authorization<
     : Undefined<Signature>)
 >
 
-export type Authorization_Rpc<signed extends boolean = boolean> = Authorization<
-  signed,
-  Hex,
-  Hex
->
+export type Authorization_Rpc = Authorization<true, Hex, Hex>
 
 export type Authorization_List<
   signed extends boolean = boolean,
@@ -32,22 +28,17 @@ export type Authorization_List<
   numberType = number,
 > = Compute<readonly Authorization<signed, bigintType, numberType>[]>
 
-export type Authorization_ListRpc<signed extends boolean = boolean> =
-  Authorization_List<signed, Hex, Hex>
+export type Authorization_ListRpc = Authorization_List<true, Hex, Hex>
 
 export type Authorization_ListSigned<
   bigintType = bigint,
   numberType = number,
 > = Authorization_List<true, bigintType, numberType>
 
-export type Authorization_ListSignedRpc = Authorization_ListRpc<true>
-
 export type Authorization_Signed<
   bigintType = bigint,
   numberType = number,
 > = Authorization<true, bigintType, numberType>
-
-export type Authorization_SignedRpc = Authorization_Rpc<true>
 
 export type Authorization_Tuple<signed extends boolean = boolean> =
   signed extends true

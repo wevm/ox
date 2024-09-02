@@ -7,8 +7,12 @@ test('exports', () => {
       "getSignPayload",
       "hash",
       "from",
+      "fromRpc",
+      "fromRpcList",
       "fromTuple",
       "fromTupleList",
+      "toRpc",
+      "toRpcList",
       "toTuple",
       "toTupleList",
     ]

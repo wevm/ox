@@ -7,6 +7,11 @@ export type {
   TransactionEnvelopeEip1559_Type as Type,
 } from './internal/transactionEnvelope/eip1559/types.js'
 
+export {
+  TransactionEnvelopeEip1559_serializedType as serializedType,
+  TransactionEnvelopeEip1559_type as type,
+} from './internal/transactionEnvelope/eip1559/constants.js'
+
 export { TransactionEnvelopeEip1559_assert as assert } from './internal/transactionEnvelope/eip1559/assert.js'
 
 export { TransactionEnvelopeEip1559_deserialize as deserialize } from './internal/transactionEnvelope/eip1559/deserialize.js'

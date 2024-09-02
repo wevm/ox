@@ -15,6 +15,8 @@ export type TransactionEip4844<
     accessList: AccessList
     /** List of versioned blob hashes associated with the transaction's blobs. */
     blobVersionedHashes: readonly Hex[]
+    /** Total fee per blob gas in wei. */
+    maxFeePerBlobGas: bigintType
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas: bigintType
     /** Max priority fee per gas (in wei). */

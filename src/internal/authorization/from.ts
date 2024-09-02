@@ -1,7 +1,12 @@
 import type { GlobalErrorType } from '../errors/error.js'
 import type { Signature } from '../signature/types.js'
 import type { Compute } from '../types.js'
-import type { Authorization } from './types.js'
+import { Authorization_fromRpc } from './fromRpc.js'
+import type {
+  Authorization,
+  Authorization_Rpc,
+  Authorization_Signed,
+} from './types.js'
 
 /**
  * Converts an [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization object into a typed {@link Authorization#Authorization}.
@@ -47,12 +52,14 @@ import type { Authorization } from './types.js'
  * @returns The {@link Authorization#Authorization}.
  */
 export function Authorization_from<
-  const authorization extends Authorization,
+  const authorization extends Authorization | Authorization_Rpc,
   const signature extends Signature | undefined = undefined,
 >(
   authorization: authorization | Authorization,
   options: Authorization_from.Options<signature> = {},
 ): Authorization_from.ReturnType<authorization, signature> {
+  if (typeof authorization.chainId === 'string')
+    return Authorization_fromRpc(authorization) as never
   return { ...authorization, ...options.signature } as never
 }
 
@@ -65,10 +72,12 @@ export declare namespace Authorization_from {
   }
 
   type ReturnType<
-    authorization extends Authorization = Authorization,
+    authorization extends Authorization | Authorization_Rpc = Authorization,
     signature extends Signature | undefined = Signature | undefined,
   > = Compute<
-    authorization & (signature extends Signature ? Readonly<signature> : {})
+    authorization extends Authorization_Rpc
+      ? Authorization_Signed
+      : authorization & (signature extends Signature ? Readonly<signature> : {})
   >
 
   type ErrorType = GlobalErrorType

@@ -6,6 +6,8 @@ export type {
   TransactionEnvelopeLegacy_Type as Type,
 } from './internal/transactionEnvelope/legacy/types.js'
 
+export { TransactionEnvelopeLegacy_type as type } from './internal/transactionEnvelope/legacy/constants.js'
+
 export { TransactionEnvelopeLegacy_assert as assert } from './internal/transactionEnvelope/legacy/assert.js'
 
 export { TransactionEnvelopeLegacy_deserialize as deserialize } from './internal/transactionEnvelope/legacy/deserialize.js'
