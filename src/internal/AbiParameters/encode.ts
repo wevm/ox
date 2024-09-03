@@ -43,7 +43,9 @@ import type {
  * ```
  *
  * @example
- * Specify structured ABI Parameters as schema:
+ * ### JSON Parameters
+ *
+ * Specify **JSON ABI** Parameters as schema:
  *
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
@@ -59,7 +61,9 @@ import type {
  * ```
  *
  * @example
- * You can also pass in Human Readable parameters with the {@link AbiParameters#from} utility.
+ * ### Human Readable Parameters
+ *
+ * You can pass in **Human Readable ABI** Parameters with the {@link AbiParameters#from} utility:
  *
  * ```ts twoslash
  * import { AbiParameters } from 'ox'

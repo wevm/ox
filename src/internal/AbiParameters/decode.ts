@@ -41,9 +41,30 @@ import type {
  * // @log: ['wagmi', 420n, true]
  * ```
  *
- * You can also pass in Human Readable parameters with the {@link AbiParameters#from} utility.
+ * @example
+ * ### JSON Parameters
+ *
+ * You can pass **JSON ABI** Parameters:
+ *
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * const data = AbiParameters.decode(
+ *   [
+ *     { name: 'x', type: 'string' },
+ *     { name: 'y', type: 'uint' },
+ *     { name: 'z', type: 'bool' },
+ *   ],
+ *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
+ * )
+ * // @log: ['wagmi', 420n, true]
+ * ```
  *
  * @example
+ * ### Human Readable Parameters
+ *
+ * You can pass **Human Readable ABI** Parameters with the {@link AbiParameters#from} utility:
+ *
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
