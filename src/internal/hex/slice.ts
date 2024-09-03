@@ -53,7 +53,6 @@ Hex_slice.parseError = (error: unknown) => error as Hex_slice.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @public */
 export function Hex_assertStartOffset(value: Hex, start?: number | undefined) {
   if (typeof start === 'number' && start > 0 && start > Hex_size(value) - 1)
     throw new SliceOffsetOutOfBoundsError({
@@ -63,7 +62,6 @@ export function Hex_assertStartOffset(value: Hex, start?: number | undefined) {
     })
 }
 
-/** @public */
 export declare namespace Hex_assertStartOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError
@@ -71,7 +69,6 @@ export declare namespace Hex_assertStartOffset {
     | GlobalErrorType
 }
 
-/** @public */
 export function Hex_assertEndOffset(
   value: Hex,
   start?: number | undefined,
@@ -90,7 +87,6 @@ export function Hex_assertEndOffset(
   }
 }
 
-/** @public */
 export declare namespace Hex_assertEndOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError

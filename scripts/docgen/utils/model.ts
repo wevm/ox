@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 import * as model from '@microsoft/api-extractor-model'
 import type { DocDeclarationReference } from '@microsoft/tsdoc'
 
-import { githubSourceUrl } from '../constants.js'
 import { moduleNameRegex, namespaceRegex } from './regex.js'
 import { processDocComment, renderDocNode } from './tsdoc.js'
 
@@ -30,6 +29,7 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
           throws: readonly string[]
         }
       | undefined
+    description: string
     excerpt: string
     file: {
       lineNumber: number | undefined
@@ -67,23 +67,27 @@ export function createDataLookup(apiItem: model.ApiItem) {
     apiItem instanceof model.ApiTypeAlias ||
     apiItem instanceof model.ApiVariable
   ) {
+    const comment = processDocComment(
+      apiItem.tsdocComment,
+      createResolveDeclarationReference(apiItem),
+    )
     const parent = apiItem.parent ? getId(apiItem.parent) : null
     const module = (
       parent?.match(namespaceRegex) ?? parent?.match(moduleNameRegex)
     )?.groups?.module
-
     const sourceFilePath =
       apiItem.fileUrlPath ??
-      apiItem.sourceLocation.fileUrl?.replace(`${githubSourceUrl}/`, '')
+      apiItem.sourceLocation.fileUrl?.replace(
+        'https://github.com/wevm/ox/blob/main/',
+        '',
+      )
 
     const data = {
       id,
       ...extractChildren(apiItem),
       canonicalReference: apiItem.canonicalReference.toString(),
-      comment: processDocComment(
-        apiItem.tsdocComment,
-        createResolveDeclarationReference(apiItem),
-      ),
+      comment,
+      description: comment?.summary.split('\n')[0]?.trim() ?? 'TODO',
       displayName: apiItem.displayName,
       excerpt: apiItem.excerpt.text,
       file: {
@@ -132,7 +136,11 @@ export function createResolveDeclarationReference(
     const item = result.resolvedApiItem
     if (item) {
       const url = getLinkForApiItem(item)
-      return { url, text: item.displayName }
+      const namespaceName = item.parent?.displayName
+      const text = namespaceName
+        ? `${namespaceName}.${item.displayName}`
+        : item.displayName
+      return { url, text }
     }
 
     return

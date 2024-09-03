@@ -27,7 +27,7 @@ export function Abi_extractItem<
 ): Abi_extractItem.ReturnType<abi, name, args>
 
 /**
- * Extracts an {@link Abi#Item} from an {@link Abi#Abi} given a name and optional arguments.
+ * Extracts an {@link ox#Abi.Item} from an {@link ox#Abi.Abi} given a name and optional arguments.
  *
  * @example
  * ```ts twoslash

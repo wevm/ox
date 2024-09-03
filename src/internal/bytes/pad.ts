@@ -67,7 +67,6 @@ Bytes_padRight.parseError = (error: unknown) =>
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @public */
 export function Bytes_pad(bytes: Bytes, options: Bytes_pad.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes
@@ -86,7 +85,6 @@ export function Bytes_pad(bytes: Bytes, options: Bytes_pad.Options = {}) {
   return paddedBytes
 }
 
-/** @public */
 export declare namespace Bytes_pad {
   type Options = {
     dir?: 'left' | 'right' | undefined

@@ -1,7 +1,6 @@
 import * as model from '@microsoft/api-extractor-model'
-import dedent from 'dedent'
 
-import type { Data } from './model.js'
+import type { Data } from '../utils/model.js'
 
 export function renderApiFunction(options: {
   data: Data
@@ -60,15 +59,17 @@ function renderImports(options: {
   module: string
 }) {
   const { module } = options
-  return dedent`
-    ## Imports
-
-    \`\`\`ts twoslash
-    // @noErrors
-    import { ${module} } from 'ox'
-    import * as ${module} from 'ox/${module}'
-    \`\`\`
-  `
+  const content = [
+    '## Imports',
+    [
+      '```ts twoslash',
+      '// @noErrors',
+      `import { ${module} } from 'ox'`,
+      `import * as ${module} from 'ox/${module}'`,
+      '```',
+    ].join('\n'),
+  ]
+  return content.join('\n\n')
 }
 
 function renderExamples(options: { examples: readonly string[] }) {

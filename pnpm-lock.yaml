@@ -31,9 +31,6 @@ importers:
       '@ethereumjs/util':
         specifier: ^9.0.3
         version: 9.0.3
-      '@microsoft/api-documenter':
-        specifier: ^7.25.12
-        version: 7.25.12(@types/node@20.14.15)
       '@microsoft/api-extractor':
         specifier: ^7.47.7
         version: 7.47.7(@types/node@20.14.15)
@@ -43,9 +40,6 @@ importers:
       '@microsoft/tsdoc':
         specifier: ^0.15.0
         version: 0.15.0
-      '@rushstack/node-core-library':
-        specifier: ^5.7.0
-        version: 5.7.0(@types/node@20.14.15)
       '@size-limit/preset-big-lib':
         specifier: ^11.1.4
         version: 11.1.4(size-limit@11.1.4(patch_hash=imbqp73nbgdxtxyjg4sp7amlam))
@@ -67,9 +61,6 @@ importers:
       c-kzg:
         specifier: ^2.1.2
         version: 2.1.2
-      dedent:
-        specifier: ^1.5.3
-        version: 1.5.3
       eslint:
         specifier: ^9.9.0
         version: 9.9.0(jiti@1.21.6)
@@ -934,10 +925,6 @@ packages:
     resolution: {integrity: sha512-j0II91OCm4ld+l5QVgXXMQGxVVcAWIQJakYWi1dv5pefDHASJyCYER2TsdH7Alf958GoFSM7ugukWyvDq/UY4A==}
     peerDependencies:
       rollup: '>=2'
-
-  '@microsoft/api-documenter@7.25.12':
-    resolution: {integrity: sha512-iGucfnoJsbNcMeUZgODvA91sYG9uNy/pnyDiVHjO8++A91Fp1vECAEd1qaqqeCP3ImgJ9HcJuUnwlRvS93QNXw==}
-    hasBin: true
 
   '@microsoft/api-extractor-model@7.29.6':
     resolution: {integrity: sha512-gC0KGtrZvxzf/Rt9oMYD2dHvtN/1KPEYsrQPyMKhLHnlVuO/f4AFN3E4toqZzD2pt4LhkKoYmL2H9tX3yCOyRw==}
@@ -2052,7 +2039,6 @@ packages:
 
   bun@1.1.24:
     resolution: {integrity: sha512-vZt5zNVaoNTSlNprdVdQVZInBcGC2QSik6o9ZsMzuYiiUEAEqpRwwMXAYDUN85mt2FNnsGvmk/8xVlUXS7IzEw==}
-    cpu: [arm64, x64]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -2988,10 +2974,6 @@ packages:
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
-
-  js-yaml@3.13.1:
-    resolution: {integrity: sha512-YfbcO7jXDdyj0DGxYVSlSeQNHbD7XPWvrVWeVUujrQEoZzWJIRrCPoyk6kL6IAjAG2IolMK4T0hNUe0HOUs5Jw==}
-    hasBin: true
 
   js-yaml@3.14.1:
     resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
@@ -5475,18 +5457,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@microsoft/api-documenter@7.25.12(@types/node@20.14.15)':
-    dependencies:
-      '@microsoft/api-extractor-model': 7.29.6(@types/node@20.14.15)
-      '@microsoft/tsdoc': 0.15.0
-      '@rushstack/node-core-library': 5.7.0(@types/node@20.14.15)
-      '@rushstack/terminal': 0.14.0(@types/node@20.14.15)
-      '@rushstack/ts-command-line': 4.22.6(@types/node@20.14.15)
-      js-yaml: 3.13.1
-      resolve: 1.22.8
-    transitivePeerDependencies:
-      - '@types/node'
-
   '@microsoft/api-extractor-model@7.29.6(@types/node@20.14.15)':
     dependencies:
       '@microsoft/tsdoc': 0.15.0
@@ -7835,11 +7805,6 @@ snapshots:
   jju@1.4.0: {}
 
   js-tokens@4.0.0: {}
-
-  js-yaml@3.13.1:
-    dependencies:
-      argparse: 1.0.10
-      esprima: 4.0.1
 
   js-yaml@3.14.1:
     dependencies:

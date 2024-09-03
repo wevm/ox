@@ -130,7 +130,6 @@ Abi_decodeParameters.parseError = (error: unknown) =>
 // Internal
 //////////////////////////////////////////////////////////////////////////////
 
-/** @public */
 export function decodeParameter(
   cursor: Cursor,
   param: Abi_Parameter,
@@ -154,7 +153,6 @@ export function decodeParameter(
   throw new InvalidAbiTypeError(param.type)
 }
 
-/** @public */
 export declare namespace decodeParameter {
   type ErrorType =
     | decodeArray.ErrorType
@@ -175,13 +173,11 @@ export declare namespace decodeParameter {
 const sizeOfLength = 32
 const sizeOfOffset = 32
 
-/** @public */
 export function decodeAddress(cursor: Cursor) {
   const value = cursor.readBytes(32)
   return [Hex_fromBytes(Bytes_slice(value, -20)), 32]
 }
 
-/** @public */
 export declare namespace decodeAddress {
   type ErrorType =
     | Hex_fromBytes.ErrorType
@@ -189,7 +185,6 @@ export declare namespace decodeAddress {
     | GlobalErrorType
 }
 
-/** @public */
 export function decodeArray(
   cursor: Cursor,
   param: Abi_Parameter,
@@ -269,22 +264,18 @@ export function decodeArray(
   return [value, consumed]
 }
 
-/** @public */
 export declare namespace decodeArray {
   type ErrorType = Bytes_toNumber.ErrorType | GlobalErrorType
 }
 
-/** @public */
 export function decodeBool(cursor: Cursor) {
   return [Bytes_toBoolean(cursor.readBytes(32), { size: 32 }), 32]
 }
 
-/** @public */
 export declare namespace decodeBool {
   type ErrorType = Bytes_toBoolean.ErrorType | GlobalErrorType
 }
 
-/** @public */
 export function decodeBytes(
   cursor: Cursor,
   param: Abi_Parameter,
@@ -318,7 +309,6 @@ export function decodeBytes(
   return [value, 32]
 }
 
-/** @public */
 export declare namespace decodeBytes {
   type ErrorType =
     | Hex_fromBytes.ErrorType
@@ -326,7 +316,6 @@ export declare namespace decodeBytes {
     | GlobalErrorType
 }
 
-/** @public */
 export function decodeNumber(cursor: Cursor, param: Abi_Parameter) {
   const signed = param.type.startsWith('int')
   const size = Number.parseInt(param.type.split('int')[1] || '256')
@@ -339,7 +328,6 @@ export function decodeNumber(cursor: Cursor, param: Abi_Parameter) {
   ]
 }
 
-/** @public */
 export declare namespace decodeNumber {
   type ErrorType =
     | Bytes_toNumber.ErrorType
@@ -347,12 +335,10 @@ export declare namespace decodeNumber {
     | GlobalErrorType
 }
 
-/** @public */
 export type TupleAbiParameter = Abi_Parameter & {
   components: readonly Abi_Parameter[]
 }
 
-/** @public */
 export function decodeTuple(
   cursor: Cursor,
   param: TupleAbiParameter,
@@ -407,12 +393,10 @@ export function decodeTuple(
   return [value, consumed]
 }
 
-/** @public */
 export declare namespace decodeTuple {
   type ErrorType = Bytes_toNumber.ErrorType | GlobalErrorType
 }
 
-/** @public */
 export function decodeString(
   cursor: Cursor,
   { staticPosition }: { staticPosition: number },
@@ -441,7 +425,6 @@ export function decodeString(
   return [value, 32]
 }
 
-/** @public */
 export function hasDynamicChild(param: Abi_Parameter) {
   const { type } = param
   if (type === 'string') return true
@@ -460,7 +443,6 @@ export function hasDynamicChild(param: Abi_Parameter) {
   return false
 }
 
-/** @public */
 export declare namespace decodeString {
   type ErrorType =
     | Bytes_toNumber.ErrorType

@@ -66,7 +66,6 @@ Hex_padRight.parseError = (error: unknown) => error as Hex_padRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @public */
 export function Hex_pad(hex_: Hex, options: Hex_pad.Options = {}) {
   const { dir, size = 32 } = options
 
@@ -83,7 +82,6 @@ export function Hex_pad(hex_: Hex, options: Hex_pad.Options = {}) {
   return `0x${hex[dir === 'right' ? 'padEnd' : 'padStart'](size * 2, '0')}` as Hex
 }
 
-/** @public */
 export declare namespace Hex_pad {
   type Options = {
     dir?: 'left' | 'right' | undefined

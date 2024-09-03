@@ -1,6 +1,4 @@
 /**
- * @public
- *
  * @see https://ethereum.github.io/yellowpaper/paper.pdf
  */
 export const Value_exponents = {

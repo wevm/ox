@@ -37,7 +37,6 @@ export function Bytes_slice(
   return value_
 }
 
-/** @public */
 export declare namespace Bytes_slice {
   type Options = {
     /** Asserts that the sliced value is the same size as the given start/end offsets. */
@@ -57,7 +56,6 @@ Bytes_slice.parseError = (error: unknown) => error as Bytes_slice.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
-/** @public */
 export function Bytes_assertStartOffset(
   value: Bytes,
   start?: number | undefined,
@@ -70,7 +68,6 @@ export function Bytes_assertStartOffset(
     })
 }
 
-/** @public */
 export declare namespace Bytes_assertStartOffset {
   export type ErrorType =
     | SliceOffsetOutOfBoundsError
@@ -78,7 +75,6 @@ export declare namespace Bytes_assertStartOffset {
     | GlobalErrorType
 }
 
-/** @public */
 export function Bytes_assertEndOffset(
   value: Bytes,
   start?: number | undefined,
@@ -97,7 +93,6 @@ export function Bytes_assertEndOffset(
   }
 }
 
-/** @public */
 export declare namespace Bytes_assertEndOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError

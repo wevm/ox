@@ -14,5 +14,5 @@ ox.api.json
 lookup.json
 sidebar-generated.ts
 site/pages/api
-site/pages/errors.md
+site/pages/glossary
 tsdoc-metadata.json
