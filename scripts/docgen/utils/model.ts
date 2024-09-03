@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs'
 import * as model from '@microsoft/api-extractor-model'
+import type { DocDeclarationReference } from '@microsoft/tsdoc'
+
 import { moduleNameRegex, namespaceRegex } from './regex.js'
 import { processDocComment, renderDocNode } from './tsdoc.js'
 
@@ -12,20 +14,22 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
     comment?:
       | {
           alias: string
+          alpha: boolean
+          beta: boolean
           comment: string
-          summary: string
-          deprecated: string
           default: string
+          deprecated: string
+          docGroup: string
+          examples: readonly string[]
+          experimental: boolean
           remarks: string
           returns: string
           since: string
-          docGroup: string
-          examples: readonly string[]
-          alpha: boolean
-          beta: boolean
-          experimental: boolean
+          summary: string
+          throws: readonly string[]
         }
       | undefined
+    description: string
     excerpt: string
     file: {
       lineNumber: number | undefined
@@ -42,59 +46,65 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
     releaseTag: string
   }
 
-export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
-  for (const child of item.members) handleItem(child, lookup)
+const dataLookup: Record<string, Data> = {}
 
-  const id = getId(item)
+export function createDataLookup(apiItem: model.ApiItem) {
+  for (const child of apiItem.members) createDataLookup(child)
+
+  const id = getId(apiItem)
   if (
-    item instanceof model.ApiInterface ||
-    item instanceof model.ApiPropertySignature ||
-    item instanceof model.ApiFunction ||
-    item instanceof model.ApiClass ||
-    item instanceof model.ApiMethod ||
-    item instanceof model.ApiProperty ||
-    item instanceof model.ApiConstructor ||
-    item instanceof model.ApiMethodSignature ||
-    item instanceof model.ApiTypeAlias ||
-    item instanceof model.ApiEnum ||
-    item instanceof model.ApiEnumMember ||
-    item instanceof model.ApiVariable ||
-    item instanceof model.ApiNamespace
+    apiItem instanceof model.ApiClass ||
+    apiItem instanceof model.ApiConstructor ||
+    apiItem instanceof model.ApiEnum ||
+    apiItem instanceof model.ApiEnumMember ||
+    apiItem instanceof model.ApiFunction ||
+    apiItem instanceof model.ApiInterface ||
+    apiItem instanceof model.ApiMethod ||
+    apiItem instanceof model.ApiMethodSignature ||
+    apiItem instanceof model.ApiNamespace ||
+    apiItem instanceof model.ApiProperty ||
+    apiItem instanceof model.ApiPropertySignature ||
+    apiItem instanceof model.ApiTypeAlias ||
+    apiItem instanceof model.ApiVariable
   ) {
-    const parent = item.parent ? getId(item.parent) : null
+    const comment = processDocComment(
+      apiItem.tsdocComment,
+      createResolveDeclarationReference(apiItem),
+    )
+    const parent = apiItem.parent ? getId(apiItem.parent) : null
     const module = (
       parent?.match(namespaceRegex) ?? parent?.match(moduleNameRegex)
     )?.groups?.module
-
     const sourceFilePath =
-      item.fileUrlPath ??
-      item.sourceLocation.fileUrl?.replace(
+      apiItem.fileUrlPath ??
+      apiItem.sourceLocation.fileUrl?.replace(
         'https://github.com/wevm/ox/blob/main/',
         '',
       )
 
     const data = {
       id,
-      ...extractChildren(item),
-      canonicalReference: item.canonicalReference.toString(),
-      comment: processDocComment(item.tsdocComment),
-      displayName: item.displayName,
-      excerpt: item.excerpt.text,
+      ...extractChildren(apiItem),
+      canonicalReference: apiItem.canonicalReference.toString(),
+      comment,
+      description: comment?.summary.split('\n')[0]?.trim() ?? 'TODO',
+      displayName: apiItem.displayName,
+      excerpt: apiItem.excerpt.text,
       file: {
-        lineNumber: processLocation(sourceFilePath, module, item),
+        lineNumber: processLocation(sourceFilePath, module, apiItem),
         path: sourceFilePath,
-        url: item.sourceLocation.fileUrl,
+        url: apiItem.sourceLocation.fileUrl,
       },
-      kind: item.kind,
+      kind: apiItem.kind,
       module,
       parent,
-      references: item.excerpt.tokens
+      references: apiItem.excerpt.tokens
         .filter(
           (token, index) =>
             token.kind === 'Reference' &&
             token.canonicalReference &&
             // prevent duplicates
-            item.excerpt.tokens.findIndex(
+            apiItem.excerpt.tokens.findIndex(
               (other) => other.canonicalReference === token.canonicalReference,
             ) === index,
         )
@@ -102,11 +112,60 @@ export function handleItem(item: model.ApiItem, lookup: Record<string, Data>) {
           canonicalReference: token.canonicalReference?.toString(),
           text: formatType(token.text),
         })),
-      releaseTag: model.ReleaseTag[item.releaseTag],
-      ...extraData(item),
+      releaseTag: model.ReleaseTag[apiItem.releaseTag],
+      ...extraData(apiItem),
     } satisfies Data
-    lookup[id] = data
+    dataLookup[id] = data
   }
+
+  return dataLookup
+}
+
+export function createResolveDeclarationReference(
+  contextApiItem: model.ApiItem,
+) {
+  const hierarchy = contextApiItem.getHierarchy()
+  const apiModel = hierarchy[0] as model.ApiModel
+
+  return (declarationReference: DocDeclarationReference) => {
+    const result = apiModel.resolveDeclarationReference(
+      declarationReference,
+      apiModel,
+    )
+
+    const item = result.resolvedApiItem
+    if (item) {
+      const url = getLinkForApiItem(item)
+      const namespaceName = item.parent?.displayName
+      const text = namespaceName
+        ? `${namespaceName}.${item.displayName}`
+        : item.displayName
+      return { url, text }
+    }
+
+    return
+  }
+}
+
+export type ResolveDeclarationReference = ReturnType<
+  typeof createResolveDeclarationReference
+>
+
+function getLinkForApiItem(item: model.ApiItem) {
+  const parent = item.parent
+  if (!parent) throw new Error('Parent not found')
+
+  const baseLink = `/api/${parent.displayName}`
+  if (item.kind === model.ApiItemKind.Function)
+    return `${baseLink}/${item.displayName}`
+  if (item.kind === model.ApiItemKind.TypeAlias)
+    return `${baseLink}/types#${item.displayName.toLowerCase()}`
+  if (
+    item.kind === model.ApiItemKind.Class &&
+    item.displayName.endsWith('Error')
+  )
+    return `${baseLink}/errors#${item.displayName.toLowerCase()}`
+  throw new Error(`Missing URL structure for ${item.kind}`)
 }
 
 function processLocation(
@@ -116,11 +175,11 @@ function processLocation(
 ) {
   if (!sourceFilePath) return
 
-  const content = readFileSync(sourceFilePath, 'utf-8')
   if (item.kind === model.ApiItemKind.Function) {
     const functionName = module
       ? `${module}_${item.displayName}`
       : item.displayName
+    const content = readFileSync(sourceFilePath, 'utf-8')
     let lineNumber = 0
     for (const line of content.split('\n')) {
       lineNumber++
@@ -131,10 +190,6 @@ function processLocation(
   }
 
   return
-}
-
-function getId(item: model.ApiItem) {
-  return item.canonicalReference.toString()
 }
 
 function extractChildren(item: model.ApiItem) {
@@ -193,28 +248,32 @@ type ExtraData = {
   }[]
 }
 
-function formatType(type: string) {
-  return type.replaceAll('_', '.')
-}
-
-function extraData(item: model.ApiItem) {
+function extraData(item: model.ApiItem): ExtraData {
   const ret: ExtraData = {}
-  if (model.ApiParameterListMixin.isBaseClassOf(item))
+  if (model.ApiParameterListMixin.isBaseClassOf(item)) {
     ret.parameters = item.parameters.map((p) => ({
       ...extractPrimaryReference(formatType(p.parameterTypeExcerpt.text), item),
       name: p.name,
       optional: p.isOptional,
-      comment: renderDocNode(p.tsdocParamBlock?.content.nodes),
+      comment: renderDocNode(
+        p.tsdocParamBlock?.content.nodes,
+        createResolveDeclarationReference(item),
+      ).trim(),
     }))
+  }
 
-  if (model.ApiTypeParameterListMixin.isBaseClassOf(item))
+  if (model.ApiTypeParameterListMixin.isBaseClassOf(item)) {
     ret.typeParameters = item.typeParameters.map((p) => ({
       name: p.name,
       optional: p.isOptional,
       defaultType: p.defaultTypeExcerpt.text,
       constraint: p.constraintExcerpt.text,
-      comment: renderDocNode(p.tsdocTypeParamBlock?.content.nodes),
+      comment: renderDocNode(
+        p.tsdocTypeParamBlock?.content.nodes,
+        createResolveDeclarationReference(item),
+      ),
     }))
+  }
 
   if (model.ApiReadonlyMixin.isBaseClassOf(item)) ret.readonly = item.isReadonly
   if (model.ApiOptionalMixin.isBaseClassOf(item)) ret.optional = item.isOptional
@@ -653,4 +712,12 @@ function skipToPrimaryType(ast: AstNode): AstNode | null {
   if (ast.type === 'TypeDeclaration') return skipToPrimaryType(ast.expression)
 
   return ast.type === 'TypeExpression' ? ast : null
+}
+
+export function getId(item: model.ApiItem) {
+  return item.canonicalReference.toString()
+}
+
+function formatType(type: string) {
+  return type.replaceAll('_', '.')
 }

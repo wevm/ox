@@ -12,7 +12,7 @@ import { Bytes_padLeft, Bytes_padRight } from './pad.js'
 import type { Bytes } from './types.js'
 
 /**
- * Encodes an arbitrary value to {@link Bytes#Bytes}.
+ * Encodes an arbitrary value to {@link ox#Bytes.Bytes}.
  *
  * @example
  * An example of passing a UTF-8 string:
@@ -46,7 +46,7 @@ import type { Bytes } from './types.js'
  *
  * @param value - An arbitrary value to encode to Bytes.
  * @param options - Encoding options
- * @returns Encoded {@link Bytes#Bytes}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function Bytes_from(
   value: string | bigint | number | boolean | Hex | Bytes | readonly number[],
@@ -86,7 +86,7 @@ export declare namespace Bytes_from {
 Bytes_from.parseError = (error: unknown) => error as Bytes_from.ErrorType
 
 /**
- * Encodes a boolean value into {@link Bytes#Bytes}.
+ * Encodes a boolean value into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -106,7 +106,7 @@ Bytes_from.parseError = (error: unknown) => error as Bytes_from.ErrorType
  *
  * @param value - Boolean value to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link Bytes#Bytes}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function Bytes_fromBoolean(
   value: boolean,
@@ -159,7 +159,7 @@ function charCodeToBase16(char: number) {
 }
 
 /**
- * Encodes a {@link Hex#Hex} value into {@link Bytes#Bytes}.
+ * Encodes a {@link ox#Hex.Hex} value into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -177,9 +177,9 @@ function charCodeToBase16(char: number) {
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
  *
- * @param hex - {@link Hex#Hex} value to encode.
+ * @param hex - {@link ox#Hex.Hex} value to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link Bytes#Bytes}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function Bytes_fromHex(
   hex: Hex,
@@ -228,7 +228,7 @@ export declare namespace Bytes_fromHex {
 Bytes_fromHex.parseError = (error: unknown) => error as Bytes_fromHex.ErrorType
 
 /**
- * Encodes a number value into {@link Bytes#Bytes}.
+ * Encodes a number value into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -248,7 +248,7 @@ Bytes_fromHex.parseError = (error: unknown) => error as Bytes_fromHex.ErrorType
  *
  * @param value - Number value to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link Bytes#Bytes}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function Bytes_fromNumber(
   value: bigint | number,
@@ -274,7 +274,7 @@ Bytes_fromNumber.parseError = (error: unknown) =>
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
- * Encodes a UTF-8 string into {@link Bytes#Bytes}.
+ * Encodes a UTF-8 string into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -294,7 +294,7 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  *
  * @param value - UTF-8 string to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link Bytes#Bytes}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function Bytes_fromString(
   value: string,

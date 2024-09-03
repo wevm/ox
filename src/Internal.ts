@@ -39,10 +39,6 @@ export {
   InvalidAbiTypeError,
 } from './internal/AbiParameters/errors.js'
 
-export { pad as pad_hex } from './internal/Hex/pad.js'
-
-export { pad as pad_bytes } from './internal/Bytes/pad.js'
-
 export type {
   EncodePackedValues,
   PackedAbiType,
@@ -56,17 +52,21 @@ export { type Cursor, createCursor } from './internal/cursor.js'
 
 export { LruMap } from './internal/lru.js'
 
+export { Bytes_assertSize } from './internal/Bytes/assertSize.js'
+export { Bytes_pad } from './internal/Bytes/pad.js'
 export {
-  assertStartOffset as assertStartOffset_bytes,
-  assertEndOffset as assertEndOffset_bytes,
+  Bytes_assertStartOffset,
+  Bytes_assertEndOffset,
 } from './internal/Bytes/slice.js'
-export {
-  assertStartOffset as assertStartOffset_hex,
-  assertEndOffset as assertEndOffset_hex,
-} from './internal/Hex/slice.js'
-
-export { trim as trim_hex } from './internal/Hex/trim.js'
 export { trim as trim_bytes } from './internal/Bytes/trim.js'
+
+export { Hex_assertSize } from './internal/Hex/assertSize.js'
+export { Hex_pad } from './internal/Hex/pad.js'
+export {
+  Hex_assertStartOffset,
+  Hex_assertEndOffset,
+} from './internal/Hex/slice.js'
+export { trim as trim_hex } from './internal/Hex/trim.js'
 
 export {
   decodeRlpCursor,
@@ -160,7 +160,3 @@ export type {
   UnionToTuple,
   ValueOf,
 } from './internal/types.js'
-
-export { Bytes_assertSize } from './internal/Bytes/assertSize.js'
-
-export { Hex_assertSize } from './internal/Hex/assertSize.js'

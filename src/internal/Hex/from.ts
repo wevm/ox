@@ -72,7 +72,7 @@ export declare namespace Hex_from {
     size?: number | undefined
   }
 
-  type ErrorType =
+  export type ErrorType =
     | Hex_fromBoolean.ErrorType
     | Hex_fromBytes.ErrorType
     | Hex_fromNumber.ErrorType

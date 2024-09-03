@@ -4,7 +4,7 @@ import { Address_checksum } from './checksum.js'
 import type { Address } from './types.js'
 
 /**
- * Converts a stringified address to a typed (checksummed) {@link Address#Address}.
+ * Converts a stringified address to a typed (checksummed) {@link ox#Address.Address}.
  *
  * @example
  * ```ts twoslash
@@ -25,6 +25,9 @@ import type { Address } from './types.js'
  * ```
  *
  * @example
+ *
+ * Do something with {@link ox#Address.Address}.
+ *
  * ```ts twoslash
  * import { Address } from 'ox'
  *

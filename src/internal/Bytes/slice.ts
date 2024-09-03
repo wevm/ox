@@ -31,9 +31,9 @@ export function Bytes_slice(
   options: Bytes_slice.Options = {},
 ): Bytes {
   const { strict } = options
-  assertStartOffset(value, start)
+  Bytes_assertStartOffset(value, start)
   const value_ = value.slice(start, end)
-  if (strict) assertEndOffset(value_, start, end)
+  if (strict) Bytes_assertEndOffset(value_, start, end)
   return value_
 }
 
@@ -43,9 +43,9 @@ export declare namespace Bytes_slice {
     strict?: boolean | undefined
   }
 
-  type ErrorType =
-    | assertStartOffset.ErrorType
-    | assertEndOffset.ErrorType
+  export type ErrorType =
+    | Bytes_assertStartOffset.ErrorType
+    | Bytes_assertEndOffset.ErrorType
     | GlobalErrorType
 }
 
@@ -57,7 +57,10 @@ Bytes_slice.parseError = (error: unknown) => error as Bytes_slice.ErrorType
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export function assertStartOffset(value: Bytes, start?: number | undefined) {
+export function Bytes_assertStartOffset(
+  value: Bytes,
+  start?: number | undefined,
+) {
   if (typeof start === 'number' && start > 0 && start > Bytes_size(value) - 1)
     throw new SliceOffsetOutOfBoundsError({
       offset: start,
@@ -66,16 +69,15 @@ export function assertStartOffset(value: Bytes, start?: number | undefined) {
     })
 }
 
-/** @internal */
-export declare namespace assertStartOffset {
-  type ErrorType =
+export declare namespace Bytes_assertStartOffset {
+  export type ErrorType =
     | SliceOffsetOutOfBoundsError
     | Bytes_size.ErrorType
     | GlobalErrorType
 }
 
 /** @internal */
-export function assertEndOffset(
+export function Bytes_assertEndOffset(
   value: Bytes,
   start?: number | undefined,
   end?: number | undefined,
@@ -93,8 +95,7 @@ export function assertEndOffset(
   }
 }
 
-/** @internal */
-export declare namespace assertEndOffset {
+export declare namespace Bytes_assertEndOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError
     | Bytes_size.ErrorType

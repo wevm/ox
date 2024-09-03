@@ -26,11 +26,11 @@ export function Hex_slice(
   options: Hex_slice.Options = {},
 ): Hex {
   const { strict } = options
-  assertStartOffset(value_, start)
+  Hex_assertStartOffset(value_, start)
   const value = `0x${value_
     .replace('0x', '')
     .slice((start ?? 0) * 2, (end ?? value_.length) * 2)}` as const
-  if (strict) assertEndOffset(value, start, end)
+  if (strict) Hex_assertEndOffset(value, start, end)
   return value
 }
 
@@ -41,8 +41,8 @@ export declare namespace Hex_slice {
   }
 
   type ErrorType =
-    | assertStartOffset.ErrorType
-    | assertEndOffset.ErrorType
+    | Hex_assertStartOffset.ErrorType
+    | Hex_assertEndOffset.ErrorType
     | GlobalErrorType
 }
 
@@ -54,7 +54,7 @@ Hex_slice.parseError = (error: unknown) => error as Hex_slice.ErrorType
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export function assertStartOffset(value: Hex, start?: number | undefined) {
+export function Hex_assertStartOffset(value: Hex, start?: number | undefined) {
   if (typeof start === 'number' && start > 0 && start > Hex_size(value) - 1)
     throw new SliceOffsetOutOfBoundsError({
       offset: start,
@@ -63,8 +63,7 @@ export function assertStartOffset(value: Hex, start?: number | undefined) {
     })
 }
 
-/** @internal */
-export declare namespace assertStartOffset {
+export declare namespace Hex_assertStartOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError
     | Hex_size.ErrorType
@@ -72,7 +71,7 @@ export declare namespace assertStartOffset {
 }
 
 /** @internal */
-export function assertEndOffset(
+export function Hex_assertEndOffset(
   value: Hex,
   start?: number | undefined,
   end?: number | undefined,
@@ -90,8 +89,7 @@ export function assertEndOffset(
   }
 }
 
-/** @internal */
-export declare namespace assertEndOffset {
+export declare namespace Hex_assertEndOffset {
   type ErrorType =
     | SliceOffsetOutOfBoundsError
     | Hex_size.ErrorType

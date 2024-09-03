@@ -6,7 +6,7 @@ import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 
 /**
- * Computes the checksum address for the given {@link Address#Address}.
+ * Computes the checksum address for the given {@link ox#Address.Address}.
  *
  * @example
  * ```ts twoslash

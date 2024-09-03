@@ -1,6 +1,8 @@
 import * as tsdoc from '@microsoft/tsdoc'
 import { Project, ScriptTarget, SyntaxKind } from 'ts-morph'
 
+import type { ResolveDeclarationReference } from './model.js'
+
 export function extractNamespaceDocComments(file: string) {
   const project = new Project({
     compilerOptions: {
@@ -33,49 +35,68 @@ export function extractNamespaceDocComments(file: string) {
   return docComments
 }
 
-export function processDocComment(docComment?: tsdoc.DocComment | undefined) {
+export function processDocComment(
+  docComment?: tsdoc.DocComment | undefined,
+  resolveDeclarationReference?: ResolveDeclarationReference,
+) {
   if (!docComment) return
 
   return {
     alias: cleanDoc(
       renderDocNode(
         docComment.customBlocks.find((v) => v.blockTag.tagName === '@alias'),
+        resolveDeclarationReference,
       ),
       '@alias',
     ),
+    alpha: docComment.modifierTagSet.isAlpha(),
+    beta: docComment.modifierTagSet.isBeta(),
     comment: docComment?.emitAsTsdoc(),
-    summary: cleanDoc(renderDocNode(docComment?.summarySection)),
     default: cleanDoc(
       renderDocNode(
         docComment.customBlocks.find((v) => v.blockTag.tagName === '@default'),
+        resolveDeclarationReference,
       ),
       '@default',
     ),
     deprecated: cleanDoc(
-      renderDocNode(docComment?.deprecatedBlock),
+      renderDocNode(docComment?.deprecatedBlock, resolveDeclarationReference),
       '@deprecated',
-    ),
-    remarks: cleanDoc(renderDocNode(docComment?.remarksBlock), '@remarks'),
-    returns: cleanDoc(renderDocNode(docComment?.returnsBlock), '@returns'),
-    since: cleanDoc(
-      renderDocNode(
-        docComment.customBlocks.find((v) => v.blockTag.tagName === '@since'),
-      ),
-      '@since',
     ),
     docGroup: cleanDoc(
       renderDocNode(
         docComment.customBlocks.find((v) => v.blockTag.tagName === '@docGroup'),
+        resolveDeclarationReference,
       ),
       '@docGroup',
     ),
     examples: docComment?.customBlocks
       .filter((v) => v.blockTag.tagName === '@example')
-      .map(renderDocNode)
+      .map((v) => renderDocNode(v, resolveDeclarationReference))
       .map((example) => cleanDoc(example, '@example')),
-    alpha: docComment.modifierTagSet.isAlpha(),
-    beta: docComment.modifierTagSet.isBeta(),
     experimental: docComment.modifierTagSet.isExperimental(),
+    remarks: cleanDoc(
+      renderDocNode(docComment?.remarksBlock, resolveDeclarationReference),
+      '@remarks',
+    ),
+    returns: cleanDoc(
+      renderDocNode(docComment?.returnsBlock, resolveDeclarationReference),
+      '@returns',
+    ),
+    since: cleanDoc(
+      renderDocNode(
+        docComment.customBlocks.find((v) => v.blockTag.tagName === '@since'),
+        resolveDeclarationReference,
+      ),
+      '@since',
+    ),
+    summary: cleanDoc(
+      renderDocNode(docComment?.summarySection, resolveDeclarationReference),
+    ),
+    throws: docComment?.customBlocks
+      .filter((v) => v.blockTag.tagName === '@throws')
+      .map((v) => renderDocNode(v, resolveDeclarationReference))
+      .map((throws) => cleanDoc(throws, '@throws')),
   }
 }
 
@@ -87,10 +108,13 @@ export function cleanDoc(docString: string, removeTag?: undefined | string) {
 
 export function renderDocNode(
   node?: tsdoc.DocNode | ReadonlyArray<tsdoc.DocNode> | undefined,
+  resolveDeclarationReference?: ResolveDeclarationReference,
 ): string {
   if (!node) return ''
   if (Array.isArray(node))
-    return node.map((node) => renderDocNode(node)).join('')
+    return node
+      .map((node) => renderDocNode(node, resolveDeclarationReference))
+      .join('')
 
   const docNode = node as tsdoc.DocNode
 
@@ -111,13 +135,19 @@ export function renderDocNode(
     if (docNode instanceof tsdoc.DocExcerpt)
       result += docNode.content.toString()
 
+    if (docNode instanceof tsdoc.DocLinkTag) {
+      const destination = docNode.codeDestination
+      if (destination) {
+        const result = resolveDeclarationReference?.(destination)
+        if (result) return `[${result.text}](${result.url})`
+      }
+      // TODO: Render plain {@link}
+      // return `[${docNode.linkText}](${docNode.urlDestination})`
+    }
+
     for (const childNode of docNode.getChildNodes())
-      result += renderDocNode(childNode)
+      result += renderDocNode(childNode, resolveDeclarationReference)
   }
 
-  return result.replaceAll(
-    /\{@link ((?<module>\w+)#(?<type>\w+))\}/g,
-    // TODO: Link to correct page and location
-    '[`$<module>.$<type>`](#TODO)', // /${basePath}/$<module>/$<type>
-  )
+  return result
 }

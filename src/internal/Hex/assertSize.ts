@@ -12,7 +12,6 @@ export function Hex_assertSize(hex: Hex, size_: number): void {
     })
 }
 
-/** @internal */
 export declare namespace Hex_assertSize {
   type ErrorType = Hex_size.ErrorType | SizeOverflowError | GlobalErrorType
 }
