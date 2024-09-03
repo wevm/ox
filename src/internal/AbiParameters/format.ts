@@ -1,8 +1,8 @@
 import {
-  formatAbiParameters,
   type AbiEventParameter,
   type AbiParameter,
   type FormatAbiParameters,
+  formatAbiParameters,
 } from 'abitype'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { AbiParameters } from './types.js'

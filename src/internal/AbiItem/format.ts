@@ -1,4 +1,4 @@
-import { formatAbiItem, type FormatAbiItem } from 'abitype'
+import { type FormatAbiItem, formatAbiItem } from 'abitype'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { AbiItem } from './types.js'
 

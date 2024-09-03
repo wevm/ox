@@ -19,5 +19,7 @@ test('default', () => {
     outputs: [{ type: 'bool' }],
   })
   const formatted = AbiItem.format(abiItem)
-  expect(formatted).toMatchInlineSnapshot(`"function approve(address spender, uint256 amount) returns (bool)"`)
+  expect(formatted).toMatchInlineSnapshot(
+    `"function approve(address spender, uint256 amount) returns (bool)"`,
+  )
 })

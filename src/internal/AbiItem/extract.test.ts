@@ -1,4 +1,4 @@
-import { Abi, AbiParameters, AbiItem, Bytes } from 'ox'
+import { Abi, AbiItem, AbiParameters, Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 import { wagmiContractConfig } from '../../../test/constants/abis.js'

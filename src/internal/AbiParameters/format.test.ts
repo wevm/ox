@@ -13,7 +13,5 @@ test('default', () => {
     },
   ])
   const formatted = AbiParameters.format(parameters)
-  expect(formatted).toMatchInlineSnapshot(
-    `"address spender, uint256 amount"`,
-  )
+  expect(formatted).toMatchInlineSnapshot(`"address spender, uint256 amount"`)
 })
