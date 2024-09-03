@@ -14,6 +14,8 @@ test('exports', () => {
       "decode",
       "encode",
       "encodePacked",
+      "format",
+      "from",
     ]
   `)
 })

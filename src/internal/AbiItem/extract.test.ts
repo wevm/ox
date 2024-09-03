@@ -1,5 +1,4 @@
-import { type AbiParameter, parseAbi, parseAbiParameters } from 'abitype'
-import { AbiItem, Bytes } from 'ox'
+import { Abi, AbiParameters, AbiItem, Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
@@ -505,7 +504,7 @@ test('overloads: tuple', () => {
 test('overloads: ambiguious types', () => {
   expect(() =>
     AbiItem.extract({
-      abi: parseAbi(['function foo(address)', 'function foo(bytes20)']),
+      abi: Abi.from(['function foo(address)', 'function foo(bytes20)']),
       name: 'foo',
       args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
     }),
@@ -523,7 +522,7 @@ test('overloads: ambiguious types', () => {
 
   expect(() =>
     AbiItem.extract({
-      abi: parseAbi([
+      abi: Abi.from([
         'function foo(string)',
         'function foo(uint)',
         'function foo(address)',
@@ -545,7 +544,7 @@ test('overloads: ambiguious types', () => {
 
   expect(
     AbiItem.extract({
-      abi: parseAbi([
+      abi: Abi.from([
         'function foo(string)',
         'function foo(uint)',
         'function foo(address)',
@@ -570,7 +569,7 @@ test('overloads: ambiguious types', () => {
 
   expect(
     AbiItem.extract({
-      abi: parseAbi([
+      abi: Abi.from([
         'function foo(string)',
         'function foo(uint)',
         'function foo(address)',
@@ -595,7 +594,7 @@ test('overloads: ambiguious types', () => {
 
   expect(() =>
     AbiItem.extract({
-      abi: parseAbi([
+      abi: Abi.from([
         'function foo(address)',
         'function foo(uint)',
         'function foo(string)',
@@ -617,7 +616,7 @@ test('overloads: ambiguious types', () => {
 
   expect(() =>
     AbiItem.extract({
-      abi: parseAbi(['function foo((address))', 'function foo((bytes20))']),
+      abi: Abi.from(['function foo((address))', 'function foo((bytes20))']),
       name: 'foo',
       args: [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
     }),
@@ -635,7 +634,7 @@ test('overloads: ambiguious types', () => {
 
   expect(() =>
     AbiItem.extract({
-      abi: parseAbi([
+      abi: Abi.from([
         'function foo(string, (address))',
         'function foo(string, (bytes))',
       ]),
@@ -659,8 +658,8 @@ describe('getAmbiguousTypes', () => {
   test('string/address', () => {
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('string'),
-        parseAbiParameters('address'),
+        AbiParameters.from('string'),
+        AbiParameters.from('address'),
         ['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522'],
       ),
     ).toMatchInlineSnapshot(`
@@ -672,8 +671,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('string'),
-        parseAbiParameters('address'),
+        AbiParameters.from('string'),
+        AbiParameters.from('address'),
         // 21 bytes (invalid address)
         ['0xA0Cf798816D4b9b9866b5330EEa46a18382f252223'],
       ),
@@ -681,8 +680,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('(string)'),
-        parseAbiParameters('(address)'),
+        AbiParameters.from('(string)'),
+        AbiParameters.from('(address)'),
         [['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522']],
       ),
     ).toMatchInlineSnapshot(`
@@ -694,8 +693,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('(address)'),
-        parseAbiParameters('(string)'),
+        AbiParameters.from('(address)'),
+        AbiParameters.from('(string)'),
         [['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522']],
       ),
     ).toMatchInlineSnapshot(`
@@ -707,8 +706,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('uint, (string, (string))'),
-        parseAbiParameters('uint, (string, (address))'),
+        AbiParameters.from('uint, (string, (string))'),
+        AbiParameters.from('uint, (string, (address))'),
         [69420n, ['lol', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522']]],
       ),
     ).toMatchInlineSnapshot(`
@@ -722,8 +721,8 @@ describe('getAmbiguousTypes', () => {
   test('bytes/address', () => {
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('address'),
-        parseAbiParameters('bytes20'),
+        AbiParameters.from('address'),
+        AbiParameters.from('bytes20'),
         ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       ),
     ).toMatchInlineSnapshot(`
@@ -735,8 +734,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('bytes20'),
-        parseAbiParameters('address'),
+        AbiParameters.from('bytes20'),
+        AbiParameters.from('address'),
         ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       ),
     ).toMatchInlineSnapshot(`
@@ -748,8 +747,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('address'),
-        parseAbiParameters('bytes'),
+        AbiParameters.from('address'),
+        AbiParameters.from('bytes'),
         ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       ),
     ).toMatchInlineSnapshot(`
@@ -761,8 +760,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('bytes'),
-        parseAbiParameters('address'),
+        AbiParameters.from('bytes'),
+        AbiParameters.from('address'),
         // 21 bytes (invalid address)
         ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251eee'],
       ),
@@ -770,8 +769,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('bytes'),
-        parseAbiParameters('address'),
+        AbiParameters.from('bytes'),
+        AbiParameters.from('address'),
         ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       ),
     ).toMatchInlineSnapshot(`
@@ -783,8 +782,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('(address)'),
-        parseAbiParameters('(bytes20)'),
+        AbiParameters.from('(address)'),
+        AbiParameters.from('(bytes20)'),
         [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
       ),
     ).toMatchInlineSnapshot(`
@@ -796,8 +795,8 @@ describe('getAmbiguousTypes', () => {
 
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('uint256, (address)'),
-        parseAbiParameters('uint128, (bytes20)'),
+        AbiParameters.from('uint256, (address)'),
+        AbiParameters.from('uint128, (bytes20)'),
         [69420n, ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
       ),
     ).toMatchInlineSnapshot(`
@@ -808,8 +807,8 @@ describe('getAmbiguousTypes', () => {
     `)
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('uint256, (string, (address))'),
-        parseAbiParameters('uint128, (string, (bytes20))'),
+        AbiParameters.from('uint256, (string, (address))'),
+        AbiParameters.from('uint128, (string, (bytes20))'),
         [69420n, ['foo', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']]],
       ),
     ).toMatchInlineSnapshot(`
@@ -820,8 +819,8 @@ describe('getAmbiguousTypes', () => {
     `)
     expect(
       getAmbiguousTypes(
-        parseAbiParameters('uint256, (string, (address, bytes))'),
-        parseAbiParameters('uint128, (string, (bytes20, address))'),
+        AbiParameters.from('uint256, (string, (address, bytes))'),
+        AbiParameters.from('uint128, (string, (bytes20, address))'),
         [
           123n,
           [
@@ -964,11 +963,12 @@ describe.each([
     },
     expected: false,
   },
-] as { arg: unknown; abiParameter: AbiParameter; expected: boolean }[])(
-  'isArgOfType($arg, $abiParameter)',
-  ({ arg, abiParameter, expected }) => {
-    test(`isArgOfType: returns ${expected}`, () => {
-      expect(isArgOfType(arg, abiParameter)).toEqual(expected)
-    })
-  },
-)
+] as {
+  arg: unknown
+  abiParameter: AbiParameters.Parameter
+  expected: boolean
+}[])('isArgOfType($arg, $abiParameter)', ({ arg, abiParameter, expected }) => {
+  test(`isArgOfType: returns ${expected}`, () => {
+    expect(isArgOfType(arg, abiParameter)).toEqual(expected)
+  })
+})

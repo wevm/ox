@@ -9,6 +9,8 @@ test('exports', () => {
       "getSelector",
       "getSignature",
       "getSignatureHash",
+      "format",
+      "from",
     ]
   `)
 })

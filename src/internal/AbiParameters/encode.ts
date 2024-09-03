@@ -59,7 +59,7 @@ import type {
  * ```
  *
  * @example
- * You can also pass in Human Readable parameters with the // TODO utility.
+ * You can also pass in Human Readable parameters with the {@link AbiParameters#from} utility.
  *
  * ```ts twoslash
  * import { AbiParameters } from 'ox'

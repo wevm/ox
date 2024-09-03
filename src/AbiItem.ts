@@ -8,6 +8,10 @@ export { AbiItem_getSignature as getSignature } from './internal/AbiItem/getSign
 
 export { AbiItem_getSignatureHash as getSignatureHash } from './internal/AbiItem/getSignatureHash.js'
 
+export { AbiItem_format as format } from './internal/AbiItem/format.js'
+
+export { AbiItem_from as from } from './internal/AbiItem/from.js'
+
 export type {
   AbiItem,
   AbiItem_Constructor as Constructor,

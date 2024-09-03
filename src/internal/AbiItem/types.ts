@@ -197,7 +197,7 @@ export type IsSignature<type extends string> =
   : false
 
 /** @internal */
-export type Signature<
+export type AbiItem_Signature<
   string1 extends string,
   string2 extends string | unknown = unknown,
 > = IsSignature<string1> extends true
@@ -210,7 +210,7 @@ export type Signature<
 
 /** @internal */
 export type AbiItem_Signatures<signatures extends readonly string[]> = {
-  [key in keyof signatures]: Signature<signatures[key], key>
+  [key in keyof signatures]: AbiItem_Signature<signatures[key], key>
 }
 
 /** @internal */

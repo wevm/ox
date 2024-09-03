@@ -41,7 +41,7 @@ import type {
  * // @log: ['wagmi', 420n, true]
  * ```
  *
- * You can also pass in Human Readable parameters with the // TODO utility.
+ * You can also pass in Human Readable parameters with the {@link AbiParameters#from} utility.
  *
  * @example
  * ```ts twoslash
