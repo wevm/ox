@@ -5,7 +5,8 @@ import { bench, describe } from 'vitest'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { AbiParameters_decode } from './decode.js'
 
-const fulfillAdvancedOrder = AbiItem.extract(seaportContractConfig.abi, {
+const fulfillAdvancedOrder = AbiItem.extract({
+  abi: seaportContractConfig.abi,
   name: 'fulfillAdvancedOrder',
 })
 

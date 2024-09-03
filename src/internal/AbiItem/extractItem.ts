@@ -48,7 +48,7 @@ import type {
  *   }
  * ] as const
  *
- * const item = AbiItem.extract(abi, { name: 'y' }) // [!code focus]
+ * const item = AbiItem.extract({ abi, name: 'y' }) // [!code focus]
  * //    ^?
  *
  *
@@ -59,8 +59,7 @@ import type {
  *
  * ```
  *
- * @param abi - The contract's ABI.
- * @param options - The extraction options.
+ * @param options - Extraction options.
  * @returns The ABI item.
  */
 export function AbiItem_extract<
@@ -68,10 +67,9 @@ export function AbiItem_extract<
   name extends AbiItem_Name<abi>,
   const args extends AbiItem_Args<abi, name> | undefined = undefined,
 >(
-  abi: abi,
   options: AbiItem_extract.Options<abi, name, args>,
 ): AbiItem_extract.ReturnType<abi, name, args> {
-  const { args = [], name } = options as unknown as AbiItem_extract.Options
+  const { abi, args = [], name } = options as unknown as AbiItem_extract.Options
 
   const isSelector = Hex_isHex(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
@@ -149,6 +147,9 @@ export declare namespace AbiItem_extract {
     allArgs = AbiItem_Args<abi, name>,
     allNames = AbiItem_Name<abi>,
   > = {
+    /** ABI to use to extract an ABI Item. */
+    abi: abi | Abi | readonly unknown[]
+    /** Name of the ABI Item to extract. */
     name:
       | allNames // show all options
       | (name extends allNames ? name : never) // infer value
