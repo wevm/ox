@@ -181,88 +181,87 @@ test('no matching data', () => {
   `)
 })
 
-test('overloads: no inputs', () => {
-  expect(
-    AbiItem.extract(
-      [
-        {
-          inputs: [],
-          name: 'balanceOf',
-          outputs: [{ name: 'x', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-        {
-          inputs: [{ name: 'x', type: 'uint256' }],
-          name: 'balanceOf',
-          outputs: [{ name: '', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-      ],
-      {
-        name: 'balanceOf',
-        args: [],
-      },
-    ),
-  ).toMatchInlineSnapshot(`
+test('behavior: overloads', () => {
+  const abi = Abi.from([
+    'function bar()',
+    'function foo(bytes)',
+    'function foo(uint256)',
+  ])
+  const item = AbiItem.extract(abi, {
+    name: 'foo',
+  })
+  expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x722713f7196651d0fe4592d1dc3ef527a8f2d47259e18fa8ec48288f351a83eb",
-      "inputs": [],
-      "name": "balanceOf",
-      "outputs": [
+      "hash": "0x30c8d1da93067416f4fed4bc024d665b120d7271f9d1000c7632a48d39765324",
+      "inputs": [
         {
-          "name": "x",
-          "type": "uint256",
+          "type": "bytes",
         },
       ],
-      "stateMutability": "view",
+      "name": "foo",
+      "outputs": [],
+      "overloads": [
+        {
+          "inputs": [
+            {
+              "type": "uint256",
+            },
+          ],
+          "name": "foo",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+        },
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function",
+    }
+  `)
+})
+
+test('behavior: overloads: no inputs', () => {
+  const abi = Abi.from([
+    'function bar()',
+    'function foo()',
+    'function foo(uint256)',
+  ])
+  const item = AbiItem.extract(abi, {
+    name: 'foo',
+  })
+  expect(item).toMatchInlineSnapshot(`
+    {
+      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
+      "inputs": [],
+      "name": "foo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function",
     }
   `)
 })
 
 test('overloads: no args', () => {
-  expect(
-    AbiItem.extract(
-      [
-        {
-          inputs: [{ name: '', type: 'uint256' }],
-          name: 'balanceOf',
-          outputs: [{ name: '', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-        {
-          inputs: [],
-          name: 'balanceOf',
-          outputs: [{ name: '', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-      ],
-      {
-        name: 'balanceOf',
-      },
-    ),
-  ).toMatchInlineSnapshot(`
+  const abi = Abi.from([
+    'function bar()',
+    'function foo(uint256)',
+    'function foo()',
+  ])
+  const item = AbiItem.extract(abi, {
+    name: 'foo',
+  })
+  expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x722713f7196651d0fe4592d1dc3ef527a8f2d47259e18fa8ec48288f351a83eb",
+      "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
       "inputs": [],
-      "name": "balanceOf",
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256",
-        },
-      ],
-      "stateMutability": "view",
+      "name": "foo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function",
     }
   `)
 })
 
-test('overload: different lengths without abi order define effect', () => {
+test('behavior: overloads: different lengths without abi order define effect', () => {
   const abi = wagmiContractConfig.abi.filter(
     (abi) => abi.type === 'function' && abi.name === 'safeTransferFrom',
   )
@@ -354,36 +353,16 @@ test('overload: different lengths without abi order define effect', () => {
   ).toMatchInlineSnapshot(longSnapshot)
 })
 
-test('overload: different types', () => {
-  const abi = [
-    {
-      inputs: [],
-      name: 'mint',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [{ name: 'tokenId', type: 'uint256' }],
-      name: 'mint',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [{ name: 'tokenId', type: 'string' }],
-      name: 'mint',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-  ]
-
-  expect(
-    AbiItem.extract(abi, {
-      name: 'mint',
-    }),
-  ).toMatchInlineSnapshot(`
+test('behavior: overloads: different types', () => {
+  const abi = Abi.from([
+    'function mint()',
+    'function mint(uint256)',
+    'function mint(string)',
+  ])
+  const item = AbiItem.extract(abi, {
+    name: 'mint',
+  })
+  expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x1249c58b84ff771f36a0d1d2bf0b42e48832b1567c4213f113d3990903cea57d",
       "inputs": [],
@@ -394,17 +373,15 @@ test('overload: different types', () => {
     }
   `)
 
-  expect(
-    AbiItem.extract(abi, {
-      name: 'mint',
-      args: [420n],
-    }),
-  ).toMatchInlineSnapshot(`
+  const item_2 = AbiItem.extract(abi, {
+    name: 'mint',
+    args: [420n],
+  })
+  expect(item_2).toMatchInlineSnapshot(`
     {
       "hash": "0xa0712d680358d64f694230b7cc0b277c73686bdf768385d55cd7c547d0ffd30e",
       "inputs": [
         {
-          "name": "tokenId",
           "type": "uint256",
         },
       ],
@@ -415,17 +392,15 @@ test('overload: different types', () => {
     }
   `)
 
-  expect(
-    AbiItem.extract(abi, {
-      name: 'mint',
-      args: ['foo'],
-    }),
-  ).toMatchInlineSnapshot(`
+  const item_3 = AbiItem.extract(abi, {
+    name: 'mint',
+    args: ['foo'],
+  })
+  expect(item_3).toMatchInlineSnapshot(`
     {
       "hash": "0xd85d3d2718c3cc9b33ff08eede5eea8b009f9d6e830a4fb9f651e3174175a5a1",
       "inputs": [
         {
-          "name": "tokenId",
           "type": "string",
         },
       ],
@@ -437,74 +412,23 @@ test('overload: different types', () => {
   `)
 })
 
-test('overloads: tuple', () => {
-  expect(
-    AbiItem.extract(
-      [
-        {
-          inputs: [
-            { name: 'foo', type: 'uint256' },
-            {
-              name: 'bar',
-              type: 'tuple',
-              components: [
-                { name: 'a', type: 'string' },
-                {
-                  name: 'b',
-                  type: 'tuple',
-                  components: [
-                    { name: 'merp', type: 'string' },
-                    { name: 'meep', type: 'string' },
-                  ],
-                },
-                { name: 'c', type: 'uint256' },
-              ],
-            },
-          ],
-          name: 'foo',
-          outputs: [],
-          stateMutability: 'nonpayable',
-          type: 'function',
-        },
-        {
-          inputs: [
-            { name: 'foo', type: 'uint256' },
-            {
-              name: 'bar',
-              type: 'tuple',
-              components: [
-                { name: 'a', type: 'string' },
-                {
-                  name: 'b',
-                  type: 'tuple',
-                  components: [
-                    { name: 'merp', type: 'string' },
-                    { name: 'meep', type: 'string' },
-                  ],
-                },
-                { name: 'c', type: 'address' },
-              ],
-            },
-          ],
-          name: 'foo',
-          outputs: [],
-          stateMutability: 'nonpayable',
-          type: 'function',
-        },
-      ],
+test('behavior: overloads: tuple', () => {
+  const abi = Abi.from([
+    'function foo(uint256 foo, (string a, string b, uint256 c) bar)',
+    'function foo(uint256 foo, (string a, (string merp, string meep) b, address c) bar)',
+  ])
+  const item = AbiItem.extract(abi, {
+    name: 'foo',
+    args: [
+      420n,
       {
-        name: 'foo',
-        args: [
-          420n,
-          {
-            a: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-            b: { merp: 'test', meep: 'test' },
-            c: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-          },
-        ],
+        a: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+        b: { merp: 'test', meep: 'test' },
+        c: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
       },
-    ),
-  ).toMatchInlineSnapshot(`
+    ],
+  })
+  expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x7994c7de29322475e8941809c4c1405aef16daab07153633b8863148687cb0c5",
       "inputs": [
@@ -549,7 +473,7 @@ test('overloads: tuple', () => {
   `)
 })
 
-test('overloads: ambiguious types', () => {
+test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiItem.extract(
       Abi.from(['function foo(address)', 'function foo(bytes20)']),

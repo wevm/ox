@@ -5,6 +5,7 @@ import { Hex_concat } from '../Hex/concat.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
+import { AbiItem_extract } from './extract.js'
 import { AbiItem_getSelector } from './getSelector.js'
 import type { AbiItem_Function } from './types.js'
 
@@ -49,22 +50,36 @@ export function AbiItem_encodeFunctionInputs<
 >(
   abiItem: abiItem | AbiItem_Function,
   ...args: IsNarrowable<abiItem, AbiItem_Function> extends true
-    ? AbiParametersToPrimitiveTypes<abiItem['inputs']> extends readonly []
-      ? []
-      : [AbiParametersToPrimitiveTypes<abiItem['inputs']>]
+    ?
+        | (AbiParametersToPrimitiveTypes<abiItem['inputs']> extends readonly []
+            ? []
+            : [AbiParametersToPrimitiveTypes<abiItem['inputs']>])
+        | (abiItem['overloads'] extends readonly AbiItem_Function[]
+            ? [
+                AbiParametersToPrimitiveTypes<
+                  abiItem['overloads'][number]['inputs']
+                >,
+              ]
+            : [])
     : readonly unknown[]
 ): Hex {
-  const abiItem_ = abiItem as AbiItem_Function
-  const { hash } = abiItem_
+  const { hash, overloads } = abiItem
+
+  const item = overloads
+    ? (AbiItem_extract([abiItem as AbiItem_Function, ...overloads], {
+        name: abiItem.name,
+        args: (args as any)[0],
+      }) as AbiItem_Function)
+    : abiItem
 
   const selector = (() => {
     if (hash) return Hex_slice(hash, 0, 4)
-    return AbiItem_getSelector(abiItem_)
+    return AbiItem_getSelector(item)
   })()
 
   const data =
     args.length > 0
-      ? AbiParameters_encode(abiItem_.inputs, (args as any)[0])
+      ? AbiParameters_encode(item.inputs, (args as any)[0])
       : undefined
 
   return data ? Hex_concat(selector, data) : selector

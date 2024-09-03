@@ -11,14 +11,33 @@ import type {
 } from 'abitype'
 import type { Abi } from '../Abi/types.js'
 import type { Hex } from '../Hex/types.js'
-import type { IsUnion, TypeErrorMessage, UnionToTuple } from '../types.js'
+import type {
+  Compute,
+  IsNever,
+  IsUnion,
+  TypeErrorMessage,
+  UnionToTuple,
+} from '../types.js'
 
-export type AbiItem = Abi[number] & { hash?: Hex | undefined }
+export type AbiItem = Abi[number]
+
 export type AbiItem_Constructor = AbiConstructor
-export type AbiItem_Error = AbiError & { hash?: Hex | undefined }
-export type AbiItem_Event = AbiEvent & { hash?: Hex | undefined }
+
+export type AbiItem_Error = AbiError & {
+  hash?: Hex | undefined
+}
+
+export type AbiItem_Event = AbiEvent & {
+  hash?: Hex | undefined
+  overloads?: readonly AbiItem[] | undefined
+}
+
 export type AbiItem_Fallback = AbiFallback
-export type AbiItem_Function = AbiFunction & { hash?: Hex | undefined }
+
+export type AbiItem_Function = AbiFunction & {
+  hash?: Hex | undefined
+  overloads?: readonly AbiItem[] | undefined
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal
@@ -68,21 +87,36 @@ export type AbiItem_ExtractForArgs<
           readonly (AbiItem & {
             inputs: readonly AbiParameter[]
           })[]
-        ? {
-            [k in keyof abiItems]: (
-              readonly [] extends args
-                ? readonly [] // fallback to `readonly []` if `args` has no value (e.g. `args` property not provided)
-                : args
-            ) extends AbiParametersToPrimitiveTypes<
-              abiItems[k]['inputs'],
-              'inputs'
+        ? IsNever<TupleToUnion<abiItems, abi, name, args>> extends true
+          ? Compute<
+              abiItems[0] & {
+                readonly overloads: UnionToTuple<
+                  Exclude<abiItems[number], abiItems[0]>
+                >
+              }
             >
-              ? abiItems[k]
-              : never
-          }[number] // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
+          : TupleToUnion<abiItems, abi, name, args> // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
         : never
       : abiItem
     : never
+
+/** @internal */
+export type TupleToUnion<
+  abiItems extends readonly {
+    inputs: readonly AbiParameter[]
+  }[],
+  abi extends Abi,
+  name extends AbiItem_Name<abi>,
+  args extends AbiItem_ExtractArgs<abi, name>,
+> = {
+  [k in keyof abiItems]: (
+    readonly [] extends args
+      ? readonly [] // fallback to `readonly []` if `args` has no value (e.g. `args` property not provided)
+      : args
+  ) extends AbiParametersToPrimitiveTypes<abiItems[k]['inputs'], 'inputs'>
+    ? abiItems[k]
+    : never
+}[number]
 
 /** @internal */
 export type ErrorSignature<

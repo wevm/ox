@@ -210,7 +210,8 @@ export function AbiItem_extract(
 
   const abiItem = (() => {
     if (matchedAbiItem) return matchedAbiItem
-    return abiItems[0]
+    const [abiItem, ...overloads] = abiItems
+    return { ...abiItem!, overloads }
   })()
 
   if (!abiItem) throw new AbiItemNotFoundError(options)
