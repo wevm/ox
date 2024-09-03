@@ -91,7 +91,7 @@ export function AbiItem_extract<
     return 'name' in abiItem && abiItem.name === name
   })
 
-  if (abiItems.length === 0) throw new AbiItemNotFoundError(name)
+  if (abiItems.length === 0) throw new AbiItemNotFoundError(options)
   if (abiItems.length === 1)
     return {
       ...abiItems[0],
@@ -151,7 +151,7 @@ export function AbiItem_extract<
     return abiItems[0]
   })() as AbiItem_extract.ReturnType<abi, name, args>
 
-  if (!abiItem) throw new AbiItemNotFoundError(name)
+  if (!abiItem) throw new AbiItemNotFoundError(options)
   return {
     ...abiItem,
     ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),

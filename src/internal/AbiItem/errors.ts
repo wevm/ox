@@ -1,6 +1,7 @@
 import { type Abi, formatAbiItem } from 'abitype'
 import { normalizeSignature } from '../AbiItem/getSignature.js'
 import { BaseError } from '../Errors/base.js'
+import type { Hex } from '../Hex/types.js'
 
 export class AbiItemAmbiguityError extends BaseError {
   override readonly name = 'AbiItemAmbiguityError'
@@ -24,8 +25,16 @@ export class AbiItemAmbiguityError extends BaseError {
 
 export class AbiItemNotFoundError extends BaseError {
   override readonly name = 'AbiItemNotFoundError'
-  constructor(name: string) {
-    super(`ABI Item "${name}" not found.`, {
+  constructor({
+    name,
+    data,
+  }: { name?: string | undefined; data?: Hex | undefined }) {
+    const selector = (() => {
+      if (name) return ` for name "${name}"`
+      if (data) return ` for data "${data}"`
+      return ''
+    })()
+    super(`ABI Item${selector} not found.`, {
       docsPath: '/errors#abiitemnotfounderror',
     })
   }

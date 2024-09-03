@@ -65,26 +65,32 @@ test('behavior: prepare = false', () => {
 
 describe('behavior: data', () => {
   test('function', () => {
-    const selector = AbiItem.getSelector(
-      AbiItem.extract(seaportContractConfig.abi, {
-        name: 'incrementCounter',
-      }),
-    )
+    const item = AbiItem.extract(wagmiContractConfig.abi, {
+      name: 'approve',
+    })
+    const data = AbiItem.encodeFunctionInputs(item, [
+      '0x0000000000000000000000000000000000000000',
+      1n,
+    ])
     expect(
-      AbiItem.extract(seaportContractConfig.abi, {
-        data: selector,
+      AbiItem.extract(wagmiContractConfig.abi, {
+        data,
       }),
     ).toMatchInlineSnapshot(`
       {
-        "hash": "0x5b34b96640ffc060fd5d99738fe2797d588138844b804de5220f8ce43bf9a4ca",
-        "inputs": [],
-        "name": "incrementCounter",
-        "outputs": [
+        "hash": "0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba",
+        "inputs": [
           {
-            "name": "newCounter",
+            "name": "to",
+            "type": "address",
+          },
+          {
+            "name": "tokenId",
             "type": "uint256",
           },
         ],
+        "name": "approve",
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function",
       }
@@ -156,7 +162,7 @@ test('no matching name', () => {
       args: ['0x0000000000000000000000000000000000000000'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI Item "balanceOf" not found.
+    [AbiItemNotFoundError: ABI Item for name "balanceOf" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -168,7 +174,7 @@ test('no matching data', () => {
       data: '0xdeadbeef',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI Item "0xdeadbeef" not found.
+    [AbiItemNotFoundError: ABI Item for data "0xdeadbeef" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
