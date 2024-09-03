@@ -1,52 +1,55 @@
 import * as model from '@microsoft/api-extractor-model'
 import dedent from 'dedent'
 
-import type { Data } from './handleItem.js'
+import type { Data } from './model.js'
 
 export function renderApiFunction(options: {
-  item: Data
-  lookup: Record<string, Data>
-  overloads: string[] | undefined
+  data: Data
+  dataLookup: Record<string, Data>
+  overloads: string[]
 }) {
-  const { item, lookup, overloads } = options
-
-  const { comment, displayName, module } = item
+  const { data, dataLookup, overloads } = options
+  const { comment, displayName, module } = data
   if (!module) throw new Error('Module not found')
 
   const content = [`# ${module}.${displayName}`]
   if (comment?.summary) content.push(comment.summary)
+
   content.push(renderImports({ module }))
+
   if (comment?.examples)
     content.push(renderExamples({ examples: comment.examples }))
 
-  content.push(renderSignature({ item, lookup, overloads }))
-  if (item.parameters)
+  content.push(renderSignature({ data, dataLookup, overloads }))
+
+  if (data.parameters)
     content.push(
       renderParameters({
-        item,
-        lookup,
-        parameters: item.parameters,
+        data,
+        dataLookup,
+        parameters: data.parameters,
         overloads,
       }),
     )
-  if (item.returnType)
+
+  if (data.returnType)
     content.push(
       renderReturnType({
         comment: comment?.returns,
-        returnType: item.returnType,
+        returnType: data.returnType,
       }),
     )
 
   const errorIds = resolveErrorData({
+    dataLookup,
     id: `ox!${module}.${displayName}.ErrorType:type`,
-    lookup,
   })
   if (errorIds.size)
     content.push(
       renderErrors({
+        data,
+        dataLookup,
         errorIds: Array.from(errorIds).sort((a, b) => (a > b ? 1 : -1)),
-        item,
-        lookup,
       }),
     )
 
@@ -78,13 +81,12 @@ function renderExamples(options: { examples: readonly string[] }) {
 }
 
 function renderSignature(options: {
-  arrow?: boolean | undefined
-  item: Data
-  lookup: Record<string, Data>
-  overloads: string[] | undefined
+  data: Data
+  dataLookup: Record<string, Data>
+  overloads: string[]
 }) {
-  const { arrow = false, item, lookup, overloads } = options
-  const { displayName, parameters = [], returnType, typeParameters = [] } = item
+  const { data, dataLookup, overloads } = options
+  const { displayName, parameters = [], returnType, typeParameters = [] } = data
 
   const content = ['## Signature']
 
@@ -93,8 +95,8 @@ function renderSignature(options: {
       let name = x.name
       if (x.optional) name += '?'
       const type = resolveInlineParameterTypeForOverloads({
+        dataLookup,
         index: i,
-        lookup,
         overloads,
         parameter: x,
       })
@@ -107,30 +109,28 @@ function renderSignature(options: {
     ? `<${typeParameters.map((x) => x.name).join(', ')}>`
     : ''
   const returnTypeSignature = resolveReturnTypeForOverloads({
-    lookup,
+    dataLookup,
     overloads,
     returnType,
   })
-  const signature = `${arrow ? '' : 'function '}${
+  const signature = `function ${
     displayName
-  }${genericSignature}(${paramSignature})${arrow ? ' =>' : ':'} ${
-    returnTypeSignature
-  }`
+  }${genericSignature}(${paramSignature}): ${returnTypeSignature}`
 
   content.push(`\`\`\`ts\n${signature}\n\`\`\``)
   content.push(
-    `Source: [${item.file.path}](${item.file.url}${item.file.lineNumber ? `#L${item.file.lineNumber}` : ''})`,
+    `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
   )
   return content.join('\n\n')
 }
 
 function renderParameters(options: {
-  item: Data
-  lookup: Record<string, Data>
-  overloads: string[] | undefined
+  data: Data
+  dataLookup: Record<string, Data>
+  overloads: string[]
   parameters: NonNullable<Data['parameters']>
 }) {
-  const { lookup, overloads, parameters } = options
+  const { dataLookup, overloads, parameters } = options
 
   const content = ['## Parameters']
 
@@ -142,23 +142,25 @@ function renderParameters(options: {
     // e.g. `{ foo: string; bar: bigint }` -> `Foo.bar.Options`
     const type = resolveInlineParameterTypeForOverloads({
       index: parameterIndex,
-      lookup,
+      dataLookup,
       overloads,
       parameter,
     })
+    parameterIndex += 1
+
     const listContent = [`- **Type:** \`${type}\``]
     if (parameter.optional) listContent.push('- **Optional**')
     content.push(listContent.join('\n'))
 
     if (parameter.comment) content.push(parameter.comment)
 
-    const interfaceItem = lookup[`ox!${parameter.type}:interface`]
+    const interfaceData = dataLookup[`ox!${parameter.type}:interface`]
     const inlineParameterType =
       parameter.type.startsWith('{') && parameter.type.endsWith('}')
     const properties = []
-    if (interfaceItem) {
-      for (const child of interfaceItem.children) {
-        const childItem = lookup[child]
+    if (interfaceData) {
+      for (const child of interfaceData.children) {
+        const childItem = dataLookup[child]
         if (!childItem) continue
         properties.push({
           ...childItem,
@@ -197,8 +199,6 @@ function renderParameters(options: {
 
       if (property.summary) content.push(property.summary)
     }
-
-    parameterIndex += 1
   }
 
   return content.join('\n\n')
@@ -218,33 +218,33 @@ function renderReturnType(options: {
 }
 
 function renderErrors(options: {
-  item: Data
+  data: Data
+  dataLookup: Record<string, Data>
   errorIds: string[]
-  lookup: Record<string, Data>
 }) {
-  const { errorIds, item, lookup } = options
+  const { errorIds, data, dataLookup } = options
 
-  const errorTypeId = `${item.canonicalReference.split(':')[0]}.ErrorType:type`
-  const parseErrorId = `${item.canonicalReference.split(':')[0]}.parseError:function(1)`
-  const errorTypeItem = lookup[errorTypeId]
-  const parseErrorItem = lookup[parseErrorId]
+  const namespaceMemberId = data.canonicalReference.split(':')[0]
+  const errorTypeData = dataLookup[`${namespaceMemberId}.ErrorType:type`]
+  const parseErrorData =
+    dataLookup[`${namespaceMemberId}.parseError:function(1)`]
 
-  if (!(errorTypeItem && parseErrorItem)) return ''
+  if (!(errorTypeData && parseErrorData)) return ''
 
   const content = ['## Error Type']
 
   const typeRegex = /^ox!(?<type>.+):type/
   const errorType =
-    errorTypeItem.canonicalReference.match(typeRegex)?.groups?.type
+    errorTypeData.canonicalReference.match(typeRegex)?.groups?.type
   if (errorType) content.push(`\`${errorType}\``)
 
   if (errorIds.length) {
     const errorsContent = []
-    for (const error of errorIds) {
-      const errorItem = lookup[error]
-      if (!errorItem) continue
+    for (const errorId of errorIds) {
+      const errorData = dataLookup[errorId]
+      if (!errorData) continue
       errorsContent.push(
-        `- [\`${errorItem.displayName}\`](/api/${errorItem.module}/errors#${errorItem.displayName.toLowerCase()})`,
+        `- [\`${errorData.displayName}\`](/api/${errorData.module}/errors#${errorData.displayName.toLowerCase()})`,
       )
     }
     content.push(errorsContent.join('\n'))
@@ -254,22 +254,22 @@ function renderErrors(options: {
 }
 
 function resolveInlineParameterTypeForOverloads(options: {
+  dataLookup: Record<string, Data>
   index: number
-  lookup: Record<string, Data>
-  overloads: string[] | undefined
+  overloads: string[]
   parameter: NonNullable<Data['parameters']>[number]
 }) {
-  const { index, lookup, overloads, parameter } = options
+  const { dataLookup, index, overloads, parameter } = options
 
   const inlineParameterType =
     parameter.type.startsWith('{') && parameter.type.endsWith('}')
-  if (overloads && inlineParameterType) {
+  if (overloads.length && inlineParameterType) {
     const overload = overloads.find(
-      (x) => lookup[x]?.parameters?.[index]?.type !== parameter.type,
+      (x) => dataLookup[x]?.parameters?.[index]?.type !== parameter.type,
     )
     if (overload)
       return (
-        lookup[overload]?.parameters?.[index]?.type.replace(
+        dataLookup[overload]?.parameters?.[index]?.type.replace(
           /(<.*>)$/, // remove type params
           '',
         ) ?? parameter.type
@@ -279,20 +279,20 @@ function resolveInlineParameterTypeForOverloads(options: {
 }
 
 function resolveReturnTypeForOverloads(options: {
-  lookup: Record<string, Data>
-  overloads: string[] | undefined
+  dataLookup: Record<string, Data>
+  overloads: string[]
   returnType: Data['returnType']
 }) {
-  const { lookup, overloads, returnType } = options
+  const { dataLookup, overloads, returnType } = options
 
-  if (overloads && returnType) {
+  if (overloads.length && returnType) {
     const overload = overloads.find(
-      (x) => lookup[x]?.returnType?.type !== returnType.type,
+      (x) => dataLookup[x]?.returnType?.type !== returnType.type,
     )
     if (overload)
       return (
-        lookup[overload]?.returnType?.type.replace(
-          /(<.*>)$/, // remove type params
+        dataLookup[overload]?.returnType?.type.replace(
+          /(<.*>)$/, // remove type params from type
           '',
         ) ?? returnType.type
       )
@@ -301,21 +301,21 @@ function resolveReturnTypeForOverloads(options: {
 }
 
 function resolveErrorData(options: {
+  dataLookup: Record<string, Data>
   id: string
-  lookup: Record<string, Data>
 }) {
-  const { id, lookup } = options
+  const { id, dataLookup } = options
 
-  const errorData = lookup[id]
+  const errorData = dataLookup[id]
   if (!errorData) return new Set([])
   if (errorData.references.length === 0) return new Set([errorData.id])
 
   const errors = new Set<string>()
   for (const reference of errorData.references) {
     const nextErrorData =
-      lookup[`ox!${reference.text}:type`] ??
+      dataLookup[`ox!${reference.text}:type`] ??
       (reference.canonicalReference
-        ? lookup[reference.canonicalReference?.toString()]
+        ? dataLookup[reference.canonicalReference?.toString()]
         : null)
     if (!nextErrorData) continue
 
@@ -325,7 +325,7 @@ function resolveErrorData(options: {
     ) {
       const resolved = resolveErrorData({
         id: nextErrorData.id,
-        lookup,
+        dataLookup,
       })
       for (const resolvedError of resolved) errors.add(resolvedError)
     } else errors.add(nextErrorData.id)

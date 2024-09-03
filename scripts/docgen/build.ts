@@ -1,7 +1,7 @@
 import * as model from '@microsoft/api-extractor-model'
 import fs from 'fs-extra'
 
-import { type Data, handleItem } from './utils/handleItem.js'
+import { createDataLookup, getId } from './utils/model.js'
 // import { extractNamespaceDocComments } from './utils/tsdoc.js'
 import { namespaceRegex } from './utils/regex.js'
 import { renderApiFunction } from './utils/renderApiFunction.js'
@@ -10,66 +10,62 @@ import { renderApiFunction } from './utils/renderApiFunction.js'
 console.log('Generating API docs.')
 
 ////////////////////////////////////////////////////////////
-/// Load API Model
+/// Load API Model and construct lookup
 ////////////////////////////////////////////////////////////
 const fileName = './scripts/docgen/ox.api.json'
-const pkg = new model.ApiModel().loadPackage(fileName)
+const apiPackage = new model.ApiModel().loadPackage(fileName)
+const dataLookup = createDataLookup(apiPackage)
 
-////////////////////////////////////////////////////////////
-/// Construct lookup with updated data
-////////////////////////////////////////////////////////////
-const lookup: Record<string, Data> = {}
-handleItem(pkg, lookup)
-
-const content = JSON.stringify(lookup, null, 2)
+const content = JSON.stringify(dataLookup, null, 2)
 fs.writeFileSync('./scripts/docgen/lookup.json', content)
 
-const entrypointItem = pkg.members.find(
+////////////////////////////////////////////////////////////
+/// Get API entrypoint and namespaces
+////////////////////////////////////////////////////////////
+const apiEntryPoint = apiPackage.members.find(
   (x) =>
     x.kind === model.ApiItemKind.EntryPoint &&
     x.canonicalReference.toString() === 'ox!',
-)
-if (!entrypointItem) throw new Error('Could not find entrypoint item')
+) as model.ApiEntryPoint
+if (!apiEntryPoint) throw new Error('Could not find api entrypoint')
 
-const testModules = ['Bytes']
-const hiddenModules = ['Caches', 'Constants', 'Errors', 'Internal', 'Types']
-const moduleItems = entrypointItem.members.filter(
+const testNamespaces = ['Address']
+const hiddenNamespaces = ['Caches', 'Constants', 'Errors', 'Internal', 'Types']
+const namespaces = apiEntryPoint.members.filter(
   (x) =>
     x.kind === model.ApiItemKind.Namespace &&
-    namespaceRegex.test(x.canonicalReference.toString()) &&
-    !hiddenModules.includes(x.displayName) &&
-    (testModules.length === 0 || testModules.includes(x.displayName)),
-)
+    namespaceRegex.test(getId(x)) &&
+    !hiddenNamespaces.includes(x.displayName) &&
+    (testNamespaces.length === 0 || testNamespaces.includes(x.displayName)),
+) as model.ApiNamespace[]
 // const moduleDocComments = extractNamespaceDocComments('./src/index.ts')
 
-for (const moduleItem of moduleItems) {
-  for (const member of moduleItem.members) {
-    const item = lookup[member.canonicalReference.toString()]
-    if (!item)
-      throw new Error(
-        `Could not find item for ${member.canonicalReference.toString()}`,
-      )
+////////////////////////////////////////////////////////////
+/// Generate Markdown files
+////////////////////////////////////////////////////////////
+for (const namespace of namespaces) {
+  for (const member of namespace.members) {
+    const id = getId(member)
+    const data = dataLookup[id]
+    if (!data) throw new Error(`Could not find data for ${id}`)
 
     switch (member.kind) {
       case model.ApiItemKind.Function: {
+        // Resolve overloads for function
         const overloads = member
           .getMergedSiblings()
-          .map((x) => x.canonicalReference.toString())
+          .map(getId)
           .filter((x) => !x.endsWith('namespace'))
 
         // Skip overloads without TSDoc attached
         if (
           overloads.length > 1 &&
-          overloads.find((x) => lookup[x]?.comment?.summary) !== item.id
+          overloads.find((x) => dataLookup[x]?.comment?.summary) !== data.id
         )
           continue
 
-        if (item.displayName === 'from') {
-          const content = renderApiFunction({
-            item,
-            lookup,
-            overloads: overloads.length > 1 ? overloads : undefined,
-          })
+        if (data.displayName === 'from') {
+          const content = renderApiFunction({ data, dataLookup, overloads })
           // biome-ignore lint/suspicious/noConsoleLog:
           console.log(content)
         }
@@ -78,7 +74,6 @@ for (const moduleItem of moduleItems) {
   }
 }
 
-//
 // ////////////////////////////////////////////////////////////
 // /// Construct Vocs sidebar, module pages, and glossary
 // ////////////////////////////////////////////////////////////

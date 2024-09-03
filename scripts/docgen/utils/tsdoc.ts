@@ -1,6 +1,7 @@
-import * as model from '@microsoft/api-extractor-model'
 import * as tsdoc from '@microsoft/tsdoc'
 import { Project, ScriptTarget, SyntaxKind } from 'ts-morph'
+
+import type { ResolveDeclarationReference } from './model.js'
 
 export function extractNamespaceDocComments(file: string) {
   const project = new Project({
@@ -33,49 +34,6 @@ export function extractNamespaceDocComments(file: string) {
   }
   return docComments
 }
-
-function getLinkForApiItem(item: model.ApiItem) {
-  const parent = item.parent
-  if (!parent) throw new Error('Parent not found')
-
-  const baseLink = `/api/${parent.displayName}`
-  if (item.kind === model.ApiItemKind.Function)
-    return `${baseLink}/${item.displayName}`
-  if (item.kind === model.ApiItemKind.TypeAlias)
-    return `${baseLink}/types#${item.displayName.toLowerCase()}`
-  if (
-    item.kind === model.ApiItemKind.Class &&
-    item.displayName.endsWith('Error')
-  )
-    return `${baseLink}/errors#${item.displayName.toLowerCase()}`
-  throw new Error(`Missing URL structure for ${item.kind}`)
-}
-
-export function createResolveDeclarationReference(
-  contextApiItem: model.ApiItem,
-) {
-  const hierarchy = contextApiItem.getHierarchy()
-  const apiModel = hierarchy[0] as model.ApiModel
-  const apiPackage = hierarchy[1]
-
-  return (declarationReference: tsdoc.DocDeclarationReference) => {
-    const result = apiModel.resolveDeclarationReference(
-      declarationReference,
-      apiPackage,
-    )
-
-    const item = result.resolvedApiItem
-    if (item) {
-      const url = getLinkForApiItem(item)
-      return { url, text: item.displayName }
-    }
-
-    return
-  }
-}
-type ResolveDeclarationReference = ReturnType<
-  typeof createResolveDeclarationReference
->
 
 export function processDocComment(
   docComment?: tsdoc.DocComment | undefined,
@@ -183,6 +141,8 @@ export function renderDocNode(
         const result = resolveDeclarationReference?.(destination)
         if (result) return `[${result.text}](${result.url})`
       }
+      // TODO: Render plain {@link}
+      // return `[${docNode.linkText}](${docNode.urlDestination})`
     }
 
     for (const childNode of docNode.getChildNodes())
@@ -190,28 +150,4 @@ export function renderDocNode(
   }
 
   return result
-}
-
-export function extractFencedBlocks(markdownContent: string) {
-  const regex: RegExp = /^```[\s\S]*?^```/gm
-  const blocks: string[] = []
-
-  let match: RegExpExecArray | null
-  while ((match = regex.exec(markdownContent)) !== null) {
-    const block: string = match[0]
-    const lines: string[] = block.split('\n')
-
-    // Remove the first and last lines (fence syntax)
-    lines.shift()
-    lines.pop()
-
-    // Remove any language identifier or attributes from the first line
-    if (lines.length > 0 && lines[0]?.trim().startsWith('```')) {
-      lines.shift()
-    }
-
-    blocks.push(lines.join('\n').trim())
-  }
-
-  return blocks.join('\n')
 }
