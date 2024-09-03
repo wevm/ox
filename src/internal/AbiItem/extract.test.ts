@@ -13,6 +13,36 @@ test('default', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0x70a08231b98ef4ca268c9cc3f6b4590e4bfec28280db06bb5d45e689f2a360be",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+        },
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+        },
+      ],
+      "stateMutability": "view",
+      "type": "function",
+    }
+  `)
+})
+
+test('prepare = false', () => {
+  expect(
+    AbiItem.extract({
+      abi: wagmiContractConfig.abi,
+      name: 'balanceOf',
+      args: ['0x0000000000000000000000000000000000000000'],
+      prepare: false,
+    }),
+  ).toMatchInlineSnapshot(`
+    {
       "inputs": [
         {
           "name": "owner",
@@ -41,6 +71,7 @@ describe('selector', () => {
       }),
     ).toMatchInlineSnapshot(`
       {
+        "hash": "0x70a08231b98ef4ca268c9cc3f6b4590e4bfec28280db06bb5d45e689f2a360be",
         "inputs": [
           {
             "name": "owner",
@@ -69,6 +100,7 @@ describe('selector', () => {
     ).toMatchInlineSnapshot(`
       {
         "anonymous": false,
+        "hash": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
         "inputs": [
           {
             "indexed": true,
@@ -109,6 +141,7 @@ test('overloads: no inputs', () => {
     AbiItem.extract({
       abi: [
         {
+          inputs: [],
           name: 'balanceOf',
           outputs: [{ name: 'x', type: 'uint256' }],
           stateMutability: 'view',
@@ -123,52 +156,16 @@ test('overloads: no inputs', () => {
         },
       ],
       name: 'balanceOf',
-      args: ['0x0000000000000000000000000000000000000000'],
+      args: [],
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0x722713f7196651d0fe4592d1dc3ef527a8f2d47259e18fa8ec48288f351a83eb",
+      "inputs": [],
       "name": "balanceOf",
       "outputs": [
         {
           "name": "x",
-          "type": "uint256",
-        },
-      ],
-      "stateMutability": "view",
-      "type": "function",
-    }
-  `)
-})
-
-test('overloads: undefined inputs', () => {
-  expect(
-    AbiItem.extract({
-      abi: [
-        {
-          inputs: undefined,
-          name: 'balanceOf',
-          outputs: [{ name: '', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-        {
-          inputs: [],
-          name: 'balanceOf',
-          outputs: [{ name: '', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-      ],
-      name: 'balanceOf',
-      args: ['0x0000000000000000000000000000000000000000'],
-    }),
-  ).toMatchInlineSnapshot(`
-    {
-      "inputs": undefined,
-      "name": "balanceOf",
-      "outputs": [
-        {
-          "name": "",
           "type": "uint256",
         },
       ],
@@ -201,6 +198,7 @@ test('overloads: no args', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0x722713f7196651d0fe4592d1dc3ef527a8f2d47259e18fa8ec48288f351a83eb",
       "inputs": [],
       "name": "balanceOf",
       "outputs": [
@@ -226,6 +224,7 @@ test('overload: different lengths without abi order define effect', () => {
   ] as const
   const shortSnapshot = `
     {
+      "hash": "0x42842e0eb38857a7775b4e7364b2775df7325074d088e7fb39590cd6281184ed",
       "inputs": [
         {
           "name": "from",
@@ -254,6 +253,7 @@ test('overload: different lengths without abi order define effect', () => {
   ] as const
   const longSnapshot = `
     {
+      "hash": "0xb88d4fde60196325a28bb7f99a2582e0b46de55b18761e960c14ad7a32099465",
       "inputs": [
         {
           "name": "from",
@@ -341,6 +341,7 @@ test('overload: different types', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0x1249c58b84ff771f36a0d1d2bf0b42e48832b1567c4213f113d3990903cea57d",
       "inputs": [],
       "name": "mint",
       "outputs": [],
@@ -357,6 +358,7 @@ test('overload: different types', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0xa0712d680358d64f694230b7cc0b277c73686bdf768385d55cd7c547d0ffd30e",
       "inputs": [
         {
           "name": "tokenId",
@@ -378,6 +380,7 @@ test('overload: different types', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0xd85d3d2718c3cc9b33ff08eede5eea8b009f9d6e830a4fb9f651e3174175a5a1",
       "inputs": [
         {
           "name": "tokenId",
@@ -459,6 +462,7 @@ test('overloads: tuple', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0x7994c7de29322475e8941809c4c1405aef16daab07153633b8863148687cb0c5",
       "inputs": [
         {
           "name": "foo",
@@ -555,6 +559,7 @@ test('overloads: ambiguious types', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0xf31a6969fc2f2e0b01964045ad21a28ad3ee38d276e1e6cf5b80124e63ba8190",
       "inputs": [
         {
           "type": "string",
@@ -580,6 +585,7 @@ test('overloads: ambiguious types', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
+      "hash": "0xf31a6969fc2f2e0b01964045ad21a28ad3ee38d276e1e6cf5b80124e63ba8190",
       "inputs": [
         {
           "type": "string",

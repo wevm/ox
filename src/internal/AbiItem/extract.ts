@@ -69,7 +69,12 @@ export function AbiItem_extract<
 >(
   options: AbiItem_extract.Options<abi, name, args>,
 ): AbiItem_extract.ReturnType<abi, name, args> {
-  const { abi, args = [], name } = options as unknown as AbiItem_extract.Options
+  const {
+    abi,
+    args = [],
+    name,
+    prepare = true,
+  } = options as unknown as AbiItem_extract.Options
 
   const isSelector = Hex_isHex(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
@@ -83,17 +88,22 @@ export function AbiItem_extract<
     return 'name' in abiItem && abiItem.name === name
   })
 
-  if (abiItems.length === 0)
-    return undefined as AbiItem_extract.ReturnType<abi, name, args>
+  if (abiItems.length === 0) return undefined as never
   if (abiItems.length === 1)
-    return abiItems[0] as AbiItem_extract.ReturnType<abi, name, args>
+    return {
+      ...abiItems[0],
+      ...(prepare ? { hash: AbiItem_getSignatureHash(abiItems[0]!) } : {}),
+    } as never
 
   let matchedAbiItem: AbiItem | undefined = undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
       if (!abiItem.inputs || abiItem.inputs.length === 0)
-        return abiItem as AbiItem_extract.ReturnType<abi, name, args>
+        return {
+          ...abiItem,
+          ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),
+        } as never
       continue
     }
     if (!abiItem.inputs) continue
@@ -133,9 +143,16 @@ export function AbiItem_extract<
     }
   }
 
-  if (matchedAbiItem)
-    return matchedAbiItem as AbiItem_extract.ReturnType<abi, name, args>
-  return abiItems[0] as AbiItem_extract.ReturnType<abi, name, args>
+  const abiItem = (() => {
+    if (matchedAbiItem) return matchedAbiItem
+    return abiItems[0]
+  })() as AbiItem_extract.ReturnType<abi, name, args>
+
+  if (!abiItem) return undefined as never
+  return {
+    ...abiItem,
+    ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),
+  }
 }
 
 export declare namespace AbiItem_extract {
@@ -154,6 +171,13 @@ export declare namespace AbiItem_extract {
       | allNames // show all options
       | (name extends allNames ? name : never) // infer value
       | Hex // function selector
+    /**
+     * Whether or not to prepare the extracted item (optimization for encoding performance).
+     * When `true`, the `hash` property is computed and included in the returned value.
+     *
+     * @default true
+     */
+    prepare?: boolean | undefined
   } & UnionCompute<
     readonly [] extends allArgs
       ? {

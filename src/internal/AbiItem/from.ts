@@ -5,6 +5,7 @@ import type {
   AbiItem_Signatures,
 } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 
 /**
  * Parses an arbitrary **JSON ABI Item** or **Human Readable ABI Item** into a typed {@link AbiItem#AbiItem}.
@@ -120,13 +121,31 @@ export function AbiItem_from<
           : never)
       | AbiItem
     ),
+  options: AbiItem_from.Options = {},
 ): AbiItem_from.ReturnType<abiItem> {
-  if (Array.isArray(abiItem)) return parseAbiItem(abiItem as never)
-  if (typeof abiItem === 'string') return parseAbiItem(abiItem as never)
-  return abiItem as never
+  const { prepare = true } = options
+  const item = (() => {
+    if (Array.isArray(abiItem)) return parseAbiItem(abiItem)
+    if (typeof abiItem === 'string') return parseAbiItem(abiItem as never)
+    return abiItem
+  })() as AbiItem
+  return {
+    ...item,
+    ...(prepare ? { hash: AbiItem_getSignatureHash(item) } : {}),
+  } as never
 }
 
 export declare namespace AbiItem_from {
+  type Options = {
+    /**
+     * Whether or not to prepare the extracted item (optimization for encoding performance).
+     * When `true`, the `hash` property is computed and included in the returned value.
+     *
+     * @default true
+     */
+    prepare?: boolean | undefined
+  }
+
   type ReturnType<abiItem extends AbiItem | string | readonly string[]> =
     abiItem extends string
       ? ParseAbiItem<abiItem>
