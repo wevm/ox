@@ -25,7 +25,17 @@ export type AbiItem_Function = AbiFunction & { hash?: Hex | undefined }
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type AbiItem_Args<
+export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
+  abi extends Abi ? AbiItem_ExtractNames<abi> : string
+
+/** @internal */
+export type AbiItem_Extract<
+  abi extends Abi,
+  name extends AbiItem_ExtractNames<abi>,
+> = Extract<abi[number], { name: name }>
+
+/** @internal */
+export type AbiItem_ExtractArgs<
   abi extends Abi | readonly unknown[] = Abi,
   name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
 > = AbiParametersToPrimitiveTypes<
@@ -38,16 +48,6 @@ export type AbiItem_Args<
   : readonly unknown[]
 
 /** @internal */
-export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiItem_ExtractNames<abi> : string
-
-/** @internal */
-export type AbiItem_Extract<
-  abi extends Abi,
-  name extends AbiItem_ExtractNames<abi>,
-> = Extract<abi[number], { name: name }>
-
-/** @internal */
 export type AbiItem_ExtractNames<abi extends Abi> = Extract<
   abi[number],
   { name: string }
@@ -57,7 +57,7 @@ export type AbiItem_ExtractNames<abi extends Abi> = Extract<
 export type AbiItem_ExtractForArgs<
   abi extends Abi,
   name extends AbiItem_Name<abi>,
-  args extends AbiItem_Args<abi, name>,
+  args extends AbiItem_ExtractArgs<abi, name>,
 > = AbiItem_Extract<abi, name> extends infer abiItem extends AbiItem & {
   inputs: readonly AbiParameter[]
 }

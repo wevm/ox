@@ -1,5 +1,7 @@
 export { AbiItemAmbiguityError } from './internal/AbiItem/errors.js'
 
+export { AbiItem_encodeFunctionInputs as encodeFunctionInputs } from './internal/AbiItem/encodeFunctionInputs.js'
+
 export { AbiItem_extract as extract } from './internal/AbiItem/extract.js'
 
 export { AbiItem_getSelector as getSelector } from './internal/AbiItem/getSelector.js'

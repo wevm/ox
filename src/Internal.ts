@@ -102,10 +102,10 @@ export {
 export { stringify } from './internal/stringify.js'
 
 export type {
-  AbiItem_Args,
   AbiItem_Name,
   AbiItem_Extract,
   AbiItem_ExtractNames,
+  AbiItem_ExtractArgs,
   AbiItem_ExtractForArgs,
   AbiItem_Signature,
   AbiItem_Signatures,

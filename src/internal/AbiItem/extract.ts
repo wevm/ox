@@ -11,7 +11,7 @@ import { AbiItem_getSelector } from './getSelector.js'
 import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 import type {
   AbiItem,
-  AbiItem_Args,
+  AbiItem_ExtractArgs,
   AbiItem_ExtractForArgs,
   AbiItem_Name,
   Widen,
@@ -48,7 +48,7 @@ import type {
  *   }
  * ] as const
  *
- * const item = AbiItem.extract({ abi, name: 'y' }) // [!code focus]
+ * const item = AbiItem.extract(abi, { name: 'y' }) // [!code focus]
  * //    ^?
  *
  *
@@ -65,12 +65,12 @@ import type {
 export function AbiItem_extract<
   const abi extends Abi | readonly unknown[],
   name extends AbiItem_Name<abi>,
-  const args extends AbiItem_Args<abi, name> | undefined = undefined,
+  const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
 >(
+  abi: abi | Abi | readonly unknown[],
   options: AbiItem_extract.Options<abi, name, args>,
 ): AbiItem_extract.ReturnType<abi, name, args> {
   const {
-    abi,
     args = [],
     name,
     prepare = true,
@@ -159,13 +159,13 @@ export declare namespace AbiItem_extract {
   type Options<
     abi extends Abi | readonly unknown[] = Abi,
     name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
-    args extends AbiItem_Args<abi, name> | undefined = AbiItem_Args<abi, name>,
+    args extends
+      | AbiItem_ExtractArgs<abi, name>
+      | undefined = AbiItem_ExtractArgs<abi, name>,
     ///
-    allArgs = AbiItem_Args<abi, name>,
+    allArgs = AbiItem_ExtractArgs<abi, name>,
     allNames = AbiItem_Name<abi>,
   > = {
-    /** ABI to use to extract an ABI Item. */
-    abi: abi | Abi | readonly unknown[]
     /** Name of the ABI Item to extract. */
     name:
       | allNames // show all options
@@ -202,14 +202,18 @@ export declare namespace AbiItem_extract {
   type ReturnType<
     abi extends Abi | readonly unknown[] = Abi,
     name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
-    args extends AbiItem_Args<abi, name> | undefined = AbiItem_Args<abi, name>,
+    args extends
+      | AbiItem_ExtractArgs<abi, name>
+      | undefined = AbiItem_ExtractArgs<abi, name>,
   > = abi extends Abi
     ? Abi extends abi
       ? AbiItem | undefined
       : AbiItem_ExtractForArgs<
           abi,
           name,
-          args extends AbiItem_Args<abi, name> ? args : AbiItem_Args<abi, name>
+          args extends AbiItem_ExtractArgs<abi, name>
+            ? args
+            : AbiItem_ExtractArgs<abi, name>
         >
     : AbiItem | undefined
 
@@ -285,7 +289,7 @@ export function isArgOfType(
 export function getAmbiguousTypes(
   sourceParameters: readonly AbiParameters_Parameter[],
   targetParameters: readonly AbiParameters_Parameter[],
-  args: AbiItem_Args,
+  args: AbiItem_ExtractArgs,
 ): AbiParameters_Parameter['type'][] | undefined {
   for (const parameterIndex in sourceParameters) {
     const sourceParameter = sourceParameters[parameterIndex]!
