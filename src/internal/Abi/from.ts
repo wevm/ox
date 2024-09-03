@@ -96,5 +96,6 @@ export declare namespace Abi_from {
   type ErrorType = GlobalErrorType
 }
 
-/** v8 ignore next */
-Abi_from.parseError = (error: unknown) => error as Abi_from.ErrorType
+Abi_from.parseError = (error: unknown) =>
+  /** v8 ignore next */
+  error as Abi_from.ErrorType

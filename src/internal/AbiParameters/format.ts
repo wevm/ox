@@ -54,6 +54,6 @@ export declare namespace AbiParameters_format {
   type ErrorType = GlobalErrorType
 }
 
-/** v8 ignore next */
 AbiParameters_format.parseError = (error: unknown) =>
+  /** v8 ignore next */
   error as AbiParameters_format.ErrorType

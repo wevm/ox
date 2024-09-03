@@ -45,6 +45,6 @@ export declare namespace AbiItem_format {
   type ErrorType = GlobalErrorType
 }
 
-/** v8 ignore next */
 AbiItem_format.parseError = (error: unknown) =>
+  /** v8 ignore next */
   error as AbiItem_format.ErrorType
