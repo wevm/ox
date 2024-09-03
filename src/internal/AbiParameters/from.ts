@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { AbiParameters } from './types.js'
 
 /**
- * Parses arbitrary **JSON ABI Parameters** or **Human Readable ABI Parameters** into typed {@link AbiParameters#AbiParameters}.
+ * Parses arbitrary **JSON ABI Parameters** or **Human Readable ABI Parameters** into typed {@link ox#AbiParameters.AbiParameters}.
  *
  * @example
  * ### JSON Parameters
@@ -36,7 +36,7 @@ import type { AbiParameters } from './types.js'
  * @example
  * ### Human Readable Parameters
  *
- * Human Readable ABI Parameters can be parsed into a typed {@link AbiParameters#AbiParameters}:
+ * Human Readable ABI Parameters can be parsed into a typed {@link ox#AbiParameters.AbiParameters}:
  *
  * ```ts twoslash
  * import { AbiParameters } from 'ox'

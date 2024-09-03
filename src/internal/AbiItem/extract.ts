@@ -18,14 +18,14 @@ import type {
   Widen,
 } from './types.js'
 
-export function Abi_extractItem<
+export function AbiItem_extract<
   const abi extends Abi | readonly unknown[],
-  name extends Abi_ItemName<abi>,
-  const args extends Abi_ItemArgs<abi, name> | undefined = undefined,
+  name extends AbiItem_Name<abi>,
+  const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
 >(
-  abi: abi,
-  options: Abi_extractItem.Options<abi, name, args>,
-): Abi_extractItem.ReturnType<abi, name, args>
+  abi: abi | Abi | readonly unknown[],
+  options: AbiItem_extract.Options<abi, name, args>,
+): AbiItem_extract.ReturnType<abi, name, args>
 
 /**
  * Extracts an {@link ox#Abi.Item} from an {@link ox#Abi.Abi} given a name and optional arguments.
@@ -112,14 +112,27 @@ export function Abi_extractItem<
  * @param options - Extraction options.
  * @returns The ABI item.
  */
-export function AbiItem_extract<
-  const abi extends Abi | readonly unknown[],
-  name extends AbiItem_Name<abi>,
-  const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
->(
-  abi: abi | Abi | readonly unknown[],
-  options: AbiItem_extract.Options<abi, name, args>,
-): AbiItem_extract.ReturnType<abi, name, args> {
+export function AbiItem_extract(
+  abi: Abi | readonly unknown[],
+  options: {
+    /** Name (or 4byte selector) of the ABI item to extract. */
+    name: string | Hex
+    /** Optional arguments to disambiguate function overrides. */
+    args?: readonly unknown[] | undefined
+    /**
+     * Whether or not to prepare the extracted item (optimization for encoding performance).
+     * When `true`, the `hash` property is computed and included in the returned value.
+     *
+     * @default true
+     */
+    prepare?: boolean | undefined
+  },
+): AbiItem | undefined
+
+export function AbiItem_extract(
+  abi: Abi | readonly unknown[],
+  options: AbiItem_extract.Options,
+): AbiItem | undefined {
   const {
     args = [],
     data,
@@ -198,7 +211,7 @@ export function AbiItem_extract<
   const abiItem = (() => {
     if (matchedAbiItem) return matchedAbiItem
     return abiItems[0]
-  })() as AbiItem_extract.ReturnType<abi, name, args>
+  })()
 
   if (!abiItem) throw new AbiItemNotFoundError(options)
   return {

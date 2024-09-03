@@ -27,6 +27,13 @@ import type {
   AbiParameters_ToPrimitiveTypes,
 } from './types.js'
 
+export function AbiParameters_decode<
+  const parameters extends AbiParameters_Isomorphic,
+>(
+  parameters: parameters,
+  data: Bytes | Hex,
+): AbiParameters_decode.ReturnType<parameters>
+
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.
  *
@@ -63,7 +70,7 @@ import type {
  * @example
  * ### Human Readable Parameters
  *
- * You can pass **Human Readable ABI** Parameters with the {@link AbiParameters#from} utility:
+ * You can pass **Human Readable ABI** Parameters with the {@link ox#AbiParameters.from} utility:
  *
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
@@ -79,12 +86,15 @@ import type {
  * @param data - ABI encoded data.
  * @returns Array of decoded values.
  */
-export function AbiParameters_decode<
-  const parameters extends AbiParameters_Isomorphic,
->(
-  parameters: parameters,
+export function AbiParameters_decode(
+  parameters: AbiParameters_Isomorphic,
   data: Bytes | Hex,
-): AbiParameters_decode.ReturnType<parameters> {
+): readonly unknown[]
+
+export function AbiParameters_decode(
+  parameters: AbiParameters_Isomorphic,
+  data: Bytes | Hex,
+): readonly unknown[] {
   const bytes = typeof data === 'string' ? Bytes_fromHex(data) : data
   const cursor = createCursor(bytes)
 
@@ -112,7 +122,7 @@ export function AbiParameters_decode<
     consumed += consumed_
     values.push(data)
   }
-  return values as AbiParameters_decode.ReturnType<parameters>
+  return values
 }
 
 export declare namespace AbiParameters_decode {
@@ -140,6 +150,7 @@ AbiParameters_decode.parseError = (error: unknown) =>
 // Internal
 //////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
 export function decodeParameter(
   cursor: Cursor,
   param: AbiParameters_Parameter,
@@ -183,6 +194,7 @@ export declare namespace decodeParameter {
 const sizeOfLength = 32
 const sizeOfOffset = 32
 
+/** @internal */
 export function decodeAddress(cursor: Cursor) {
   const value = cursor.readBytes(32)
   return [Hex_fromBytes(Bytes_slice(value, -20)), 32]
@@ -195,6 +207,7 @@ export declare namespace decodeAddress {
     | GlobalErrorType
 }
 
+/** @internal */
 export function decodeArray(
   cursor: Cursor,
   param: AbiParameters_Parameter,
@@ -278,6 +291,7 @@ export declare namespace decodeArray {
   type ErrorType = Bytes_toNumber.ErrorType | GlobalErrorType
 }
 
+/** @internal */
 export function decodeBool(cursor: Cursor) {
   return [Bytes_toBoolean(cursor.readBytes(32), { size: 32 }), 32]
 }
@@ -286,6 +300,7 @@ export declare namespace decodeBool {
   type ErrorType = Bytes_toBoolean.ErrorType | GlobalErrorType
 }
 
+/** @internal */
 export function decodeBytes(
   cursor: Cursor,
   param: AbiParameters_Parameter,
@@ -351,6 +366,7 @@ export type TupleAbiParameter = AbiParameters_Parameter & {
   components: readonly AbiParameters_Parameter[]
 }
 
+/** @internal */
 export function decodeTuple(
   cursor: Cursor,
   param: TupleAbiParameter,
@@ -409,6 +425,7 @@ export declare namespace decodeTuple {
   type ErrorType = Bytes_toNumber.ErrorType | GlobalErrorType
 }
 
+/** @internal */
 export function decodeString(
   cursor: Cursor,
   { staticPosition }: { staticPosition: number },

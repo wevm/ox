@@ -67,6 +67,7 @@ Bytes_padRight.parseError = (error: unknown) =>
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
 export function Bytes_pad(bytes: Bytes, options: Bytes_pad.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes

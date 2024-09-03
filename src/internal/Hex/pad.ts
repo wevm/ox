@@ -66,6 +66,7 @@ Hex_padRight.parseError = (error: unknown) => error as Hex_padRight.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
 export function Hex_pad(hex_: Hex, options: Hex_pad.Options = {}) {
   const { dir, size = 32 } = options
 

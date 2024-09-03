@@ -3,6 +3,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_size } from './size.js'
 import type { Hex } from './types.js'
 
+/** @internal */
 export function Hex_assertSize(hex: Hex, size_: number): void {
   if (Hex_size(hex) > size_)
     throw new SizeOverflowError({

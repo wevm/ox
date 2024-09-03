@@ -28,18 +28,12 @@
 
   "messages": {
     "extractorMessageReporting": {
-      "default": {
-        "logLevel": "warning"
-      },
-      "ae-unresolved-link": {
-        "logLevel": "none"
-      },
-      "ae-missing-release-tag": {
-        "logLevel": "none"
-      },
-      "ae-incompatible-release-tags": {
-        "logLevel": "none"
-      }
+      "default": { "logLevel": "warning" },
+      "ae-different-release-tags": { "logLevel": "none" },
+      "ae-incompatible-release-tags": { "logLevel": "none" },
+      "ae-internal-mixed-release-tag": { "logLevel": "none" },
+      "ae-missing-release-tag": { "logLevel": "none" },
+      "ae-unresolved-link": { "logLevel": "none" }
     }
   }
 }

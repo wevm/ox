@@ -56,6 +56,7 @@ Bytes_slice.parseError = (error: unknown) => error as Bytes_slice.ErrorType
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
 export function Bytes_assertStartOffset(
   value: Bytes,
   start?: number | undefined,
@@ -75,6 +76,7 @@ export declare namespace Bytes_assertStartOffset {
     | GlobalErrorType
 }
 
+/** @internal */
 export function Bytes_assertEndOffset(
   value: Bytes,
   start?: number | undefined,
