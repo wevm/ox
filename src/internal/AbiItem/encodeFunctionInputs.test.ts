@@ -1,7 +1,7 @@
-import { expect, test } from 'vitest'
 import { AbiItem } from 'ox'
-import { address } from '../../../test/constants/addresses.js'
+import { expect, test } from 'vitest'
 import { erc20Abi } from '../../../test/constants/abis.js'
+import { address } from '../../../test/constants/addresses.js'
 
 test('default', () => {
   const abiItem = AbiItem.extract(erc20Abi, {
