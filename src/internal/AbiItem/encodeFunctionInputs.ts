@@ -4,6 +4,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
+import type { IsNarrowable } from '../types.js'
 import { AbiItem_getSelector } from './getSelector.js'
 import type { AbiItem_Function } from './types.js'
 
@@ -44,14 +45,14 @@ import type { AbiItem_Function } from './types.js'
  * @returns ABI-encoded function name and arguments
  */
 export function AbiItem_encodeFunctionInputs<
-  const abiItem extends AbiItem_Function | unknown,
+  const abiItem extends AbiItem_Function,
 >(
   abiItem: abiItem | AbiItem_Function,
-  ...args: abiItem extends AbiItem_Function
+  ...args: IsNarrowable<abiItem, AbiItem_Function> extends true
     ? AbiParametersToPrimitiveTypes<abiItem['inputs']> extends readonly []
       ? []
       : [AbiParametersToPrimitiveTypes<abiItem['inputs']>]
-    : []
+    : readonly unknown[]
 ): Hex {
   const abiItem_ = abiItem as AbiItem_Function
   const { hash } = abiItem_

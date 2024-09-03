@@ -1,7 +1,10 @@
 import { Abi, AbiItem, AbiParameters, Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
-import { wagmiContractConfig } from '../../../test/constants/abis.js'
+import {
+  seaportContractConfig,
+  wagmiContractConfig,
+} from '../../../test/constants/abis.js'
 import { getAmbiguousTypes, isArgOfType } from './extract.js'
 
 test('default', () => {
@@ -32,7 +35,7 @@ test('default', () => {
   `)
 })
 
-test('prepare = false', () => {
+test('behavior: prepare = false', () => {
   expect(
     AbiItem.extract(wagmiContractConfig.abi, {
       name: 'balanceOf',
@@ -60,75 +63,115 @@ test('prepare = false', () => {
   `)
 })
 
-describe('selector', () => {
+describe('behavior: data', () => {
   test('function', () => {
+    const selector = AbiItem.getSelector(
+      AbiItem.extract(seaportContractConfig.abi, {
+        name: 'incrementCounter',
+      }),
+    )
     expect(
-      AbiItem.extract(wagmiContractConfig.abi, {
-        name: '0x70a08231',
+      AbiItem.extract(seaportContractConfig.abi, {
+        data: selector,
       }),
     ).toMatchInlineSnapshot(`
       {
-        "hash": "0x70a08231b98ef4ca268c9cc3f6b4590e4bfec28280db06bb5d45e689f2a360be",
-        "inputs": [
-          {
-            "name": "owner",
-            "type": "address",
-          },
-        ],
-        "name": "balanceOf",
+        "hash": "0x5b34b96640ffc060fd5d99738fe2797d588138844b804de5220f8ce43bf9a4ca",
+        "inputs": [],
+        "name": "incrementCounter",
         "outputs": [
           {
-            "name": "",
+            "name": "newCounter",
             "type": "uint256",
           },
         ],
-        "stateMutability": "view",
+        "stateMutability": "nonpayable",
         "type": "function",
       }
     `)
   })
 
   test('event', () => {
+    const hash = AbiItem.getSignatureHash(
+      AbiItem.extract(seaportContractConfig.abi, {
+        name: 'CounterIncremented',
+      }),
+    )
     expect(
-      AbiItem.extract(wagmiContractConfig.abi, {
-        name: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      AbiItem.extract(seaportContractConfig.abi, {
+        data: hash,
       }),
     ).toMatchInlineSnapshot(`
       {
         "anonymous": false,
-        "hash": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        "hash": "0x721c20121297512b72821b97f5326877ea8ecf4bb9948fea5bfcb6453074d37f",
         "inputs": [
           {
-            "indexed": true,
-            "name": "from",
-            "type": "address",
-          },
-          {
-            "indexed": true,
-            "name": "to",
-            "type": "address",
-          },
-          {
-            "indexed": true,
-            "name": "tokenId",
+            "indexed": false,
+            "name": "newCounter",
             "type": "uint256",
           },
+          {
+            "indexed": true,
+            "name": "offerer",
+            "type": "address",
+          },
         ],
-        "name": "Transfer",
+        "name": "CounterIncremented",
         "type": "event",
+      }
+    `)
+  })
+
+  test('error', () => {
+    const selector = AbiItem.getSelector(
+      AbiItem.extract(seaportContractConfig.abi, {
+        name: 'BadSignatureV',
+      }),
+    )
+    expect(
+      AbiItem.extract(seaportContractConfig.abi, {
+        data: selector,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "hash": "0xaa52af9ba76161953067fddc6a99eee9de4ef3377363fd1f54a2648771ce7104",
+        "inputs": [
+          {
+            "name": "v",
+            "type": "uint8",
+          },
+        ],
+        "name": "BadSignatureV",
+        "type": "error",
       }
     `)
   })
 })
 
 test('no matching name', () => {
-  expect(
-    AbiItem.extract([], {
-      // @ts-expect-error
+  expect(() =>
+    AbiItem.extract([] as readonly unknown[], {
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
     }),
-  ).toMatchInlineSnapshot('undefined')
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiItemNotFoundError: ABI Item "balanceOf" not found.
+
+    See: https://oxlib.sh/errors#abiitemnotfounderror]
+  `)
+})
+
+test('no matching data', () => {
+  expect(() =>
+    AbiItem.extract([], {
+      data: '0xdeadbeef',
+    }),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiItemNotFoundError: ABI Item "0xdeadbeef" not found.
+
+    See: https://oxlib.sh/errors#abiitemnotfounderror]
+  `)
 })
 
 test('overloads: no inputs', () => {
@@ -509,7 +552,7 @@ test('overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
+    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`bytes20\` in \`foo(bytes20)\`, and
     \`address\` in \`foo(address)\`
@@ -533,7 +576,7 @@ test('overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
+    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`address\` in \`foo(address)\`, and
     \`string\` in \`foo(string)\`
@@ -613,7 +656,7 @@ test('overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
+    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`string\` in \`foo(string)\`, and
     \`address\` in \`foo(address)\`
@@ -633,7 +676,7 @@ test('overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
+    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`bytes20\` in \`foo((bytes20))\`, and
     \`address\` in \`foo((address))\`
@@ -656,7 +699,7 @@ test('overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI items.
+    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`bytes\` in \`foo(string,(bytes))\`, and
     \`address\` in \`foo(string,(address))\`

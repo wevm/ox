@@ -4,9 +4,10 @@ import { Address_isAddress } from '../Address/isAddress.js'
 import type { Address } from '../Address/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_isHex } from '../Hex/isHex.js'
+import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { UnionCompute } from '../types.js'
-import { AbiItemAmbiguityError } from './errors.js'
+import { AbiItemAmbiguityError, AbiItemNotFoundError } from './errors.js'
 import { AbiItem_getSelector } from './getSelector.js'
 import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 import type {
@@ -72,15 +73,17 @@ export function AbiItem_extract<
 ): AbiItem_extract.ReturnType<abi, name, args> {
   const {
     args = [],
-    name,
+    data,
     prepare = true,
   } = options as unknown as AbiItem_extract.Options
+
+  const name = (data ?? options.name)!
 
   const isSelector = Hex_isHex(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
     if (isSelector) {
-      if (abiItem.type === 'function')
-        return AbiItem_getSelector(abiItem) === name
+      if (abiItem.type === 'function' || abiItem.type === 'error')
+        return AbiItem_getSelector(abiItem) === Hex_slice(name, 0, 4)
       if (abiItem.type === 'event')
         return AbiItem_getSignatureHash(abiItem) === name
       return false
@@ -88,7 +91,7 @@ export function AbiItem_extract<
     return 'name' in abiItem && abiItem.name === name
   })
 
-  if (abiItems.length === 0) return undefined as never
+  if (abiItems.length === 0) throw new AbiItemNotFoundError(name)
   if (abiItems.length === 1)
     return {
       ...abiItems[0],
@@ -148,7 +151,7 @@ export function AbiItem_extract<
     return abiItems[0]
   })() as AbiItem_extract.ReturnType<abi, name, args>
 
-  if (!abiItem) return undefined as never
+  if (!abiItem) throw new AbiItemNotFoundError(name)
   return {
     ...abiItem,
     ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),
@@ -165,39 +168,47 @@ export declare namespace AbiItem_extract {
     ///
     allArgs = AbiItem_ExtractArgs<abi, name>,
     allNames = AbiItem_Name<abi>,
-  > = {
-    /** Name of the ABI Item to extract. */
-    name:
-      | allNames // show all options
-      | (name extends allNames ? name : never) // infer value
-      | Hex // function selector
-    /**
-     * Whether or not to prepare the extracted item (optimization for encoding performance).
-     * When `true`, the `hash` property is computed and included in the returned value.
-     *
-     * @default true
-     */
-    prepare?: boolean | undefined
-  } & UnionCompute<
-    readonly [] extends allArgs
-      ? {
-          args?:
-            | allArgs // show all options
-            // infer value, widen inferred value of `args` conditionally to match `allArgs`
-            | (abi extends Abi
-                ? args extends allArgs
-                  ? Widen<args>
-                  : never
-                : never)
-            | undefined
-        }
-      : {
-          args?:
-            | allArgs // show all options
-            | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
-            | undefined
-        }
-  >
+  > =
+    | {
+        args?: undefined
+        name?: undefined
+        /** Selector or hash of the ABI Item to extract. */
+        data: Hex
+        prepare?: undefined
+      }
+    | ({
+        data?: undefined
+        /** Name of the ABI Item to extract. */
+        name:
+          | allNames // show all options
+          | (name extends allNames ? name : never) // infer value
+        /**
+         * Whether or not to prepare the extracted item (optimization for encoding performance).
+         * When `true`, the `hash` property is computed and included in the returned value.
+         *
+         * @default true
+         */
+        prepare?: boolean | undefined
+      } & UnionCompute<
+        readonly [] extends allArgs
+          ? {
+              args?:
+                | allArgs // show all options
+                // infer value, widen inferred value of `args` conditionally to match `allArgs`
+                | (abi extends Abi
+                    ? args extends allArgs
+                      ? Widen<args>
+                      : never
+                    : never)
+                | undefined
+            }
+          : {
+              args?:
+                | allArgs // show all options
+                | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
+                | undefined
+            }
+      >)
 
   type ReturnType<
     abi extends Abi | readonly unknown[] = Abi,
@@ -207,7 +218,7 @@ export declare namespace AbiItem_extract {
       | undefined = AbiItem_ExtractArgs<abi, name>,
   > = abi extends Abi
     ? Abi extends abi
-      ? AbiItem | undefined
+      ? AbiItem
       : AbiItem_ExtractForArgs<
           abi,
           name,
@@ -215,7 +226,7 @@ export declare namespace AbiItem_extract {
             ? args
             : AbiItem_ExtractArgs<abi, name>
         >
-    : AbiItem | undefined
+    : AbiItem
 
   type ErrorType = GlobalErrorType
 }

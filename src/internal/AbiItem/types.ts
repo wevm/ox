@@ -58,28 +58,31 @@ export type AbiItem_ExtractForArgs<
   abi extends Abi,
   name extends AbiItem_Name<abi>,
   args extends AbiItem_ExtractArgs<abi, name>,
-> = AbiItem_Extract<abi, name> extends infer abiItem extends AbiItem & {
-  inputs: readonly AbiParameter[]
-}
-  ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
-    ? UnionToTuple<abiItem> extends infer abiItems extends readonly (AbiItem & {
+> = IsUnion<name> extends true
+  ? AbiItem
+  : AbiItem_Extract<abi, name> extends infer abiItem extends AbiItem & {
         inputs: readonly AbiParameter[]
-      })[]
-      ? {
-          [k in keyof abiItems]: (
-            readonly [] extends args
-              ? readonly [] // fallback to `readonly []` if `args` has no value (e.g. `args` property not provided)
-              : args
-          ) extends AbiParametersToPrimitiveTypes<
-            abiItems[k]['inputs'],
-            'inputs'
-          >
-            ? abiItems[k]
-            : never
-        }[number] // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
-      : never
-    : abiItem
-  : never
+      }
+    ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
+      ? UnionToTuple<abiItem> extends infer abiItems extends
+          readonly (AbiItem & {
+            inputs: readonly AbiParameter[]
+          })[]
+        ? {
+            [k in keyof abiItems]: (
+              readonly [] extends args
+                ? readonly [] // fallback to `readonly []` if `args` has no value (e.g. `args` property not provided)
+                : args
+            ) extends AbiParametersToPrimitiveTypes<
+              abiItems[k]['inputs'],
+              'inputs'
+            >
+              ? abiItems[k]
+              : never
+          }[number] // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
+        : never
+      : abiItem
+    : never
 
 /** @internal */
 export type ErrorSignature<
