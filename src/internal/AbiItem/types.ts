@@ -10,8 +10,8 @@ import type {
   ResolvedRegister,
 } from 'abitype'
 import type { Abi } from '../Abi/types.js'
-import type { IsUnion, TypeErrorMessage, UnionToTuple } from '../types.js'
 import type { Hex } from '../Hex/types.js'
+import type { IsUnion, TypeErrorMessage, UnionToTuple } from '../types.js'
 
 export type AbiItem = Abi[number] & { hash?: Hex | undefined }
 export type AbiItem_Constructor = AbiConstructor
