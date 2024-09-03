@@ -17,6 +17,7 @@ test('exports', () => {
       "hash",
       "serialize",
       "from",
+      "toRpc",
     ]
   `)
 })

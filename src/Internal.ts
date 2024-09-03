@@ -9,11 +9,9 @@ export {
   decodeString,
   decodeTuple,
   hasDynamicChild,
-} from './internal/abi/decodeParameters.js'
+} from './internal/AbiParameters/decode.js'
 
 export {
-  type IsomorphicAbiParameter,
-  type IsomorphicAbiParametersToPrimitiveTypes,
   type PreparedParameter,
   type Tuple,
   encode,
@@ -27,7 +25,9 @@ export {
   getArrayComponents,
   prepareParameter,
   prepareParameters,
-} from './internal/abi/encodeParameters.js'
+} from './internal/AbiParameters/encode.js'
+
+export { AbiItemAmbiguityError } from './internal/AbiItem/errors.js'
 
 export {
   AbiDecodingDataSizeTooSmallError,
@@ -36,42 +36,43 @@ export {
   AbiEncodingBytesSizeMismatchError,
   AbiEncodingInvalidArrayError,
   AbiEncodingLengthMismatchError,
-  AbiItemAmbiguityError,
   InvalidAbiTypeError,
-} from './internal/abi/errors.js'
-
-export { Hex_pad } from './internal/hex/pad.js'
-
-export { Bytes_pad } from './internal/bytes/pad.js'
+} from './internal/AbiParameters/errors.js'
 
 export type {
   EncodePackedValues,
   PackedAbiType,
-} from './internal/abi/encodePacked.js'
+} from './internal/AbiParameters/encodePacked.js'
 
-export { normalizeSignature } from './internal/abi/getSignature.js'
+export type { AbiParameters_ToPrimitiveTypes } from './internal/AbiParameters/types.js'
+
+export { normalizeSignature } from './internal/AbiItem/getSignature.js'
 
 export { type Cursor, createCursor } from './internal/cursor.js'
 
 export { LruMap } from './internal/lru.js'
 
+export { Bytes_assertSize } from './internal/Bytes/assertSize.js'
+export { Bytes_pad } from './internal/Bytes/pad.js'
 export {
   Bytes_assertStartOffset,
   Bytes_assertEndOffset,
-} from './internal/bytes/slice.js'
+} from './internal/Bytes/slice.js'
+export { trim as trim_bytes } from './internal/Bytes/trim.js'
+
+export { Hex_assertSize } from './internal/Hex/assertSize.js'
+export { Hex_pad } from './internal/Hex/pad.js'
 export {
   Hex_assertStartOffset,
   Hex_assertEndOffset,
-} from './internal/hex/slice.js'
-
-export { trim as trim_hex } from './internal/hex/trim.js'
-export { trim as trim_bytes } from './internal/bytes/trim.js'
+} from './internal/Hex/slice.js'
+export { trim as trim_hex } from './internal/Hex/trim.js'
 
 export {
   decodeRlpCursor,
   readLength,
   readList,
-} from './internal/rlp/to.js'
+} from './internal/Rlp/to.js'
 
 export {
   TransactionEnvelope_getType,
@@ -86,28 +87,55 @@ export {
   type TransactionEnvelope_GetTypeFromObject,
   type TransactionEnvelope_GetTypeFromSerialized,
   type LegacyProperties,
-} from './internal/transactionEnvelope/isomorphic/getType.js'
+} from './internal/TransactionEnvelope/isomorphic/getType.js'
 
-export { Signature_vToYParity } from './internal/signature/vToYParity.js'
+export { Signature_vToYParity } from './internal/Signature/vToYParity.js'
 
-export { findTypeDependencies } from './internal/typedData/encodeType.js'
+export { findTypeDependencies } from './internal/TypedData/encodeType.js'
 
 export {
   encodeData,
   encodeField,
   hashType,
-} from './internal/typedData/hashStruct.js'
+} from './internal/TypedData/hashStruct.js'
 
 export { stringify } from './internal/stringify.js'
 
 export type {
-  Abi_ItemArgs,
-  Abi_ItemName,
-  Abi_ExtractItem,
-  Abi_ExtractItemNames,
-  Abi_ExtractItemForArgs,
+  AbiItem_Name,
+  AbiItem_Extract,
+  AbiItem_ExtractNames,
+  AbiItem_ExtractArgs,
+  AbiItem_ExtractForArgs,
+  AbiItem_Signature,
+  AbiItem_Signatures,
   Widen,
-} from './internal/abi/types.js'
+  ConstructorSignature,
+  ErrorSignature,
+  EventSignature,
+  FallbackSignature,
+  FunctionSignature,
+  InvalidFunctionParameters,
+  IsConstructorSignature,
+  IsErrorSignature,
+  IsEventSignature,
+  IsFunctionSignature,
+  IsName,
+  IsSignature,
+  IsSolidityKeyword,
+  IsStructSignature,
+  IsValidCharacter,
+  MangledReturns,
+  ReceiveSignature,
+  Returns,
+  Scope,
+  SolidityKeywords,
+  StructSignature,
+  ValidCharacters,
+  ValidConstructorSignatures,
+  ValidFunctionSignatures,
+  ValidateName,
+} from './internal/AbiItem/types.js'
 
 export type {
   Assign,
@@ -118,11 +146,13 @@ export type {
   IsNarrowable,
   IsNever,
   IsUnion,
+  IsUnknown,
   KeyofUnion,
   LastInUnion,
   Omit,
   OneOf,
   PartialBy,
+  TypeErrorMessage,
   Undefined,
   UnionCompute,
   UnionPartialBy,
@@ -130,7 +160,3 @@ export type {
   UnionToTuple,
   ValueOf,
 } from './internal/types.js'
-
-export { Bytes_assertSize } from './internal/bytes/assertSize.js'
-
-export { Hex_assertSize } from './internal/hex/assertSize.js'

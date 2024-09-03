@@ -1,7 +1,7 @@
 import { join, relative, resolve } from 'node:path'
 import fs from 'fs-extra'
 
-const ignore = ['node_modules', '_esm', '_cjs']
+const ignore = ['node_modules', '_dist']
 
 const packageJsonPath = join(import.meta.dirname, '../src/package.json')
 const packageJson = fs.readJsonSync(packageJsonPath)
@@ -39,14 +39,8 @@ for (const parentEntry of entries) {
       jsrJson.exports[entryName] = entryName
     } else {
       packageJson.exports[entryName] = {
-        import: {
-          types: `./_esm/${name}.d.ts`,
-          default: `./_esm/${name}.js`,
-        },
-        default: {
-          types: `./_cjs/${name}.d.ts`,
-          default: `./_cjs/${name}.js`,
-        },
+        types: `./_dist/${name}.d.ts`,
+        default: `./_dist/${name}.js`,
       }
       jsrJson.exports[entryName] = `./${name}.ts`
 
@@ -61,15 +55,11 @@ for (const parentEntry of entries) {
           type: 'module',
           types: relative(
             resolve(import.meta.dirname, '../src'),
-            `./_esm/${name}.d.ts`,
-          ),
-          module: relative(
-            resolve(import.meta.dirname, '../src'),
-            `./_esm/${name}.js`,
+            `./_dist/${name}.d.ts`,
           ),
           main: relative(
             resolve(import.meta.dirname, '../src'),
-            `./_cjs/${name}.js`,
+            `./_dist/${name}.js`,
           ),
         },
         { spaces: 2 },
@@ -98,14 +88,8 @@ for (const parentEntry of entries) {
     const entryName = `.${parentEntry.name === 'core' ? '' : `/${parentEntry.name}`}${isIndex ? '' : `/${name}`}`
 
     packageJson.exports[entryName] = {
-      import: {
-        types: `./_esm/${parentEntry.name}/${name}.d.ts`,
-        default: `./_esm/${parentEntry.name}/${name}.js`,
-      },
-      default: {
-        types: `./_cjs/${parentEntry.name}/${name}.d.ts`,
-        default: `./_cjs/${parentEntry.name}/${name}.js`,
-      },
+      types: `./_dist/${parentEntry.name}/${name}.d.ts`,
+      default: `./_dist/${parentEntry.name}/${name}.js`,
     }
     jsrJson.exports[entryName] = `./${parentEntry.name}/${name}.ts`
 
@@ -119,15 +103,11 @@ for (const parentEntry of entries) {
           type: 'module',
           types: relative(
             resolve(import.meta.dirname, '../src'),
-            `./_esm/${parentEntry.name}/${name}.d.ts`,
-          ),
-          module: relative(
-            resolve(import.meta.dirname, '../src'),
-            `./_esm/${parentEntry.name}/${name}.js`,
+            `./_dist/${parentEntry.name}/${name}.d.ts`,
           ),
           main: relative(
             resolve(import.meta.dirname, '../src'),
-            `./_cjs/${parentEntry.name}/${name}.js`,
+            `./_dist/${parentEntry.name}/${name}.js`,
           ),
         },
         { spaces: 2 },

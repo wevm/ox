@@ -1,30 +1,40 @@
 /**
- * The **Abi** Module provides a set of utility functions for encoding, decoding,
+ * The **Abi** Module provides a set of types & utility functions for working
+ * with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html).
+ */
+export * as Abi from './Abi.js'
+
+/**
+ * The **AbiItem** Module provides a set of types & utility functions for working with
+ * with [Application Binary Interface (ABI)](https://docs.soliditylang.org/en/latest/abi-spec.html).
+ */
+export * as AbiItem from './AbiItem.js'
+
+/**
+ * The **AbiParameters** Module provides a set of types & utility functions for encoding, decoding,
  * and working with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html).
  *
  * @example
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  *
- * const data = Abi.encodeParameters(
+ * const data = AbiParameters.encode(
  *   ['uint256', 'boolean', 'string'],
  *   [1n, true, 'hello'],
  * )
  * // @log: '0x...'
 
- * const args = Abi.decodeParameters(['uint256', 'boolean', 'string'], data)
+ * const args = AbiParameters.decode(['uint256', 'boolean', 'string'], data)
  * // @log: [1n, true, 'hello']
  * ```
- *
- * @example
- * ```ts twoslash
- * import { Abi } from 'ox'
- *
- * const selector = Abi.getSelector('approve(address,uint256)')
- * // @log: '0x095ea7b3'
- * ```
  */
-export * as Abi from './Abi.js'
+export * as AbiParameters from './AbiParameters.js'
+
+/**
+ * The **AccountProof** Module provides a set of types & utility functions for working
+ * with Account Proofs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml).
+ */
+export * as AccountProof from './AccountProof.js'
 
 /**
  * The **Address** Module provides a set of utility functions for working with Ethereum addresses.
@@ -94,6 +104,8 @@ export * as Hex from './Hex.js'
 
 export * as Internal from './Internal.js'
 
+export * as Fee from './Fee.js'
+
 /**
  * The **Kzg** Module provides a set of utility functions for working with
  * KZG Commitments.
@@ -124,6 +136,19 @@ export * as Log from './Log.js'
 export * as Rlp from './Rlp.js'
 
 /**
+ * The **RpcRequest** Module provides a set of utility types & functions for working with
+ * [JSON-RPC 2.0 Requests](https://www.jsonrpc.org/specification#request_object) and Ethereum JSON-RPC methods as
+ * defined on the [Ethereum API specification](https://github.com/ethereum/execution-apis).
+ */
+export * as RpcRequest from './RpcRequest.js'
+
+/**
+ * The **RpcResponse** Module provides a set of utility types & functions for working with
+ * [JSON-RPC 2.0 Responses](https://www.jsonrpc.org/specification#response_object).
+ */
+export * as RpcResponse from './RpcResponse.js'
+
+/**
  * The **Secp256k1** Module provides a set of utility functions for secp256k1 cryptography.
  */
 export * as Secp256k1 from './Secp256k1.js'
@@ -139,13 +164,7 @@ export * as Signature from './Signature.js'
  */
 export * as Siwe from './Siwe.js'
 
-/**
- * The **State** Module provides a set of types & utility functions for working
- * with State as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml).
- */
-export * as State from './State.js'
-
-/**
+/**./AccountProof.js
  * The **Transaction** Module provides a set of types & utility functions for working
  * with **Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
  *

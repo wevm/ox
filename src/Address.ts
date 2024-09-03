@@ -1,19 +1,19 @@
-export type { Address } from './internal/address/types.js'
+export type { Address } from './internal/Address/types.js'
 
 export {
   InvalidAddressChecksumError,
   InvalidAddressError,
   InvalidAddressInputError,
-} from './internal/address/errors.js'
+} from './internal/Address/errors.js'
 
-export { Address_assert as assert } from './internal/address/assert.js'
+export { Address_assert as assert } from './internal/Address/assert.js'
 
-export { Address_checksum as checksum } from './internal/address/checksum.js'
+export { Address_checksum as checksum } from './internal/Address/checksum.js'
 
-export { Address_isAddress as isAddress } from './internal/address/isAddress.js'
+export { Address_isAddress as isAddress } from './internal/Address/isAddress.js'
 
-export { Address_from as from } from './internal/address/from.js'
+export { Address_from as from } from './internal/Address/from.js'
 
-export { Address_fromPublicKey as fromPublicKey } from './internal/address/fromPublicKey.js'
+export { Address_fromPublicKey as fromPublicKey } from './internal/Address/fromPublicKey.js'
 
-export { Address_isEqual as isEqual } from './internal/address/isEqual.js'
+export { Address_isEqual as isEqual } from './internal/Address/isEqual.js'
