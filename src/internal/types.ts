@@ -238,6 +238,31 @@ export type Some<
     : false
 
 /**
+ * Prints custom error message
+ *
+ * @param messages - Error message
+ * @returns Custom error message
+ *
+ * @example
+ * ```ts
+ * type Result = TypeErrorMessage<'Custom error message'>
+ * //   ^? type Result = ['Error: Custom error message']
+ * ```
+ */
+export type TypeErrorMessage<messages extends string | string[]> =
+  messages extends string
+    ? [
+        // Surrounding with array to prevent `messages` from being widened to `string`
+        `Error: ${messages}`,
+      ]
+    : {
+        [key in keyof messages]: messages[key] extends infer message extends
+          string
+          ? `Error: ${message}`
+          : never
+      }
+
+/**
  * Creates a type that extracts the values of T.
  *
  * @example
