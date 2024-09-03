@@ -22,10 +22,14 @@ import type {
  * Extracts an {@link Abi#Item} from an {@link Abi#Abi} given a name and optional arguments.
  *
  * @example
- * ```ts twoslash
- * import { AbiItem } from 'ox'
+ * ### Extracting by Name
  *
- * const abi = [
+ * ABI Items can be extracted by their name using the `name` option:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
  *   {
  *     name: 'x',
  *     type: 'function',
@@ -37,8 +41,6 @@ import type {
  *     name: 'y',
  *     type: 'event',
  *     inputs: [{ type: 'address' }],
- *     outputs: [{ type: 'uint256' }],
- *     stateMutability: 'view',
  *   },
  *   {
  *     name: 'z',
@@ -47,7 +49,7 @@ import type {
  *     outputs: [{ type: 'uint256' }],
  *     stateMutability: 'view',
  *   }
- * ] as const
+ * ])
  *
  * const item = AbiItem.extract(abi, { name: 'y' }) // [!code focus]
  * //    ^?
@@ -57,8 +59,46 @@ import type {
  *
  *
  *
- *
  * ```
+ *
+ * @example
+ * ### Extracting by Data
+ *
+ * ABI Items can be extract by their function selector or event hash using the `data` option:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   {
+ *     name: 'x',
+ *     type: 'function',
+ *     inputs: [{ type: 'uint256' }],
+ *     outputs: [],
+ *     stateMutability: 'payable',
+ *   },
+ *   {
+ *     name: 'y',
+ *     type: 'event',
+ *     inputs: [{ type: 'address' }],
+ *   },
+ *   {
+ *     name: 'z',
+ *     type: 'function',
+ *     inputs: [{ type: 'string' }],
+ *     outputs: [{ type: 'uint256' }],
+ *     stateMutability: 'view',
+ *   }
+ * ])
+ * const item = AbiItem.extract(abi, { data: '0x095ea7b3' }) // [!code focus]
+ * ```
+ *
+ * :::note
+ *
+ * Using the `data` option is useful when extracting an ABI Item from an `eth_call` RPC response,
+ * a Transaction `input`, or from Event Log `topics`.
+ *
+ * :::
  *
  * @param options - Extraction options.
  * @returns The ABI item.

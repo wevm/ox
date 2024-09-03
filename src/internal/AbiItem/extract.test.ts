@@ -1,6 +1,7 @@
 import { Abi, AbiItem, AbiParameters, Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
+import { anvilMainnet } from '../../../test/anvil.js'
 import {
   seaportContractConfig,
   wagmiContractConfig,
@@ -715,6 +716,29 @@ test('overloads: ambiguious types', () => {
 
     See: https://oxlib.sh/errors#abiitemambiguityerror]
   `)
+})
+
+test('behavior: network', async () => {
+  const abi = Abi.from(wagmiContractConfig.abi)
+
+  const totalSupplyFn = AbiItem.extract(abi, {
+    name: 'totalSupply',
+  })
+
+  const totalSupply = await anvilMainnet.request({
+    method: 'eth_call',
+    params: [
+      {
+        data: AbiItem.encodeFunctionInputs(totalSupplyFn),
+        to: wagmiContractConfig.address,
+      },
+    ],
+  })
+
+  // TODO: use `AbiItem.decodeFunctionOutputs`
+  expect(totalSupply).toEqual(
+    '0x0000000000000000000000000000000000000000000000000000000000000288',
+  )
 })
 
 describe('getAmbiguousTypes', () => {
