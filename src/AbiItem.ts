@@ -6,6 +6,8 @@ export { AbiItem_decodeFunctionOutput as decodeFunctionOutput } from './internal
 
 export { AbiItem_encodeFunctionInput as encodeFunctionInput } from './internal/AbiItem/encodeFunctionInput.js'
 
+export { AbiItem_encodeFunctionOutput as encodeFunctionOutput } from './internal/AbiItem/encodeFunctionOutput.js'
+
 export { AbiItem_extract as extract } from './internal/AbiItem/extract.js'
 
 export { AbiItem_getSelector as getSelector } from './internal/AbiItem/getSelector.js'

@@ -75,7 +75,7 @@ export function AbiItem_encodeFunctionInput<
 }
 
 export declare namespace AbiItem_encodeFunctionInput {
-  type Args<abiItem extends AbiItem_Function> = IsNarrowable<
+  type Args<abiItem extends AbiItem_Function = AbiItem_Function> = IsNarrowable<
     abiItem,
     AbiItem_Function
   > extends true

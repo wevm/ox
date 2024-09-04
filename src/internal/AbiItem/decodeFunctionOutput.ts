@@ -21,7 +21,7 @@ export function AbiItem_decodeFunctionOutput<
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const data = '0x18160ddd000000000000000000000000000000000000000000000000000000000000002a'
+ * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
  *
  * const totalSupply = AbiItem.from('function totalSupply() returns (uint256)')
  *
@@ -36,7 +36,7 @@ export function AbiItem_decodeFunctionOutput<
  * // @noErrors
  * import { Abi, AbiItem } from 'ox'
  *
- * const data = '0x18160ddd000000000000000000000000000000000000000000000000000000000000002a'
+ * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
  *
  * const erc20Abi = Abi.from([...]) // [!code hl]
  * const totalSupply = AbiItem.extract(erc20Abi, { name: 'totalSupply' }) // [!code hl]
@@ -52,7 +52,7 @@ export function AbiItem_decodeFunctionOutput<
  * // @noErrors
  * import { Abi, AbiItem } from 'ox'
  *
- * const data = '0x18160ddd000000000000000000000000000000000000000000000000000000000000002a'
+ * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
  *
  * const erc20Abi = Abi.from([...]) // [!code hl]
  * const fn = AbiItem.extract(erc20Abi, { data }) // [!code hl]
@@ -117,8 +117,8 @@ export declare namespace AbiItem_decodeFunctionOutput {
   }
 
   type ReturnType<
-    abiItem extends AbiItem_Function,
-    as extends 'Object' | 'Array',
+    abiItem extends AbiItem_Function = AbiItem_Function,
+    as extends 'Object' | 'Array' = 'Array',
   > = IsNarrowable<abiItem, AbiItem_Function> extends true
     ? abiItem['outputs'] extends readonly []
       ? undefined

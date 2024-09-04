@@ -80,7 +80,7 @@ test('behavior: abiItem union', () => {
   const abiItem = AbiItem.extract(abi, {
     name: 'totalSupply' as AbiItem.Name<typeof abi>,
   })
-  if ('outputs' in abiItem) {
+  if (abiItem.type === 'function') {
     const result = AbiItem.decodeFunctionOutput(
       abiItem,
       '0x000000000000000000000000000000000000000000000000000000000000000000000001',

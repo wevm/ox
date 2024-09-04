@@ -10,7 +10,15 @@ test('default', () => {
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
   )
-  expect(result).toEqual(args)
+  expect(result).toMatchInlineSnapshot(`
+    [
+      420n,
+      {
+        "x": 420n,
+        "y": "lol",
+      },
+    ]
+  `)
 })
 
 test('behavior: single output parameter', () => {
@@ -20,7 +28,7 @@ test('behavior: single output parameter', () => {
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
   )
-  expect(result).toEqual(args[0])
+  expect(result).toMatchInlineSnapshot('420n')
 })
 
 test('behavior: no output parameter', () => {

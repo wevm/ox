@@ -60,20 +60,18 @@ export function AbiItem_decodeFunctionInput(
 }
 
 export declare namespace AbiItem_decodeFunctionInput {
-  type ReturnType<abiItem extends AbiItem_Function> = IsNarrowable<
-    abiItem,
-    AbiItem_Function
-  > extends true
-    ? abiItem['inputs'] extends readonly []
-      ? undefined
-      :
-          | AbiParameters_ToPrimitiveTypes<abiItem['inputs']>
-          | (abiItem['overloads'] extends readonly AbiItem_Function[]
-              ? AbiParameters_ToPrimitiveTypes<
-                  abiItem['overloads'][number]['inputs']
-                >
-              : never)
-    : unknown
+  type ReturnType<abiItem extends AbiItem_Function = AbiItem_Function> =
+    IsNarrowable<abiItem, AbiItem_Function> extends true
+      ? abiItem['inputs'] extends readonly []
+        ? undefined
+        :
+            | AbiParameters_ToPrimitiveTypes<abiItem['inputs']>
+            | (abiItem['overloads'] extends readonly AbiItem_Function[]
+                ? AbiParameters_ToPrimitiveTypes<
+                    abiItem['overloads'][number]['inputs']
+                  >
+                : never)
+      : unknown
 
   type ErrorType =
     | AbiItem_extract.ErrorType

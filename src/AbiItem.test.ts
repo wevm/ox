@@ -8,6 +8,7 @@ test('exports', () => {
       "decodeFunctionInput",
       "decodeFunctionOutput",
       "encodeFunctionInput",
+      "encodeFunctionOutput",
       "extract",
       "getSelector",
       "getSignature",
