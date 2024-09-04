@@ -63,7 +63,7 @@ export function AbiItem_encodeFunctionInput(
   abiItem: AbiItem_Function,
   ...args: readonly unknown[]
 ): Hex {
-  const { hash, overloads } = abiItem
+  const { overloads } = abiItem
 
   const item = overloads
     ? (AbiItem_extract([abiItem as AbiItem_Function, ...overloads], {
@@ -73,7 +73,7 @@ export function AbiItem_encodeFunctionInput(
     : abiItem
 
   const selector = (() => {
-    if (hash) return Hex_slice(hash, 0, 4)
+    if (item.hash) return Hex_slice(item.hash, 0, 4)
     return AbiItem_getSelector(item)
   })()
 

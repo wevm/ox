@@ -127,5 +127,5 @@ export declare namespace AbiItem_decodeFunctionOutput {
         : AbiParameters_decode.ReturnType<abiItem['outputs'], as>
     : unknown
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = AbiParameters_decode.ErrorType | GlobalErrorType
 }

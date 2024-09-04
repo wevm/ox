@@ -1,4 +1,4 @@
-import { AbiItem, AbiParameters } from 'ox'
+import { Abi, AbiItem, AbiParameters } from 'ox'
 import { expect, test } from 'vitest'
 
 test('default', () => {
