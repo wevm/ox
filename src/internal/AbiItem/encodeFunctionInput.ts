@@ -9,13 +9,6 @@ import { AbiItem_extract } from './extract.js'
 import { AbiItem_getSelector } from './getSelector.js'
 import type { AbiItem_Function } from './types.js'
 
-export function AbiItem_encodeFunctionInput<
-  const abiItem extends AbiItem_Function,
->(
-  abiItem: abiItem | AbiItem_Function,
-  ...args: AbiItem_encodeFunctionInput.Args<abiItem>
-): Hex
-
 /**
  * ABI-encodes the provided function input (`inputs`), prefixed with the 4 byte function selector.
  *
@@ -53,15 +46,11 @@ export function AbiItem_encodeFunctionInput<
  * @param args - Function arguments
  * @returns ABI-encoded function name and arguments
  */
-export function AbiItem_encodeFunctionInput(
-  abiItem: AbiItem_Function,
-  ...args: readonly unknown[]
-): Hex
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function AbiItem_encodeFunctionInput(
-  abiItem: AbiItem_Function,
-  ...args: readonly unknown[]
+export function AbiItem_encodeFunctionInput<
+  const abiItem extends AbiItem_Function,
+>(
+  abiItem: abiItem | AbiItem_Function,
+  ...args: AbiItem_encodeFunctionInput.Args<abiItem>
 ): Hex {
   const { overloads } = abiItem
 

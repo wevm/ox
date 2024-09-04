@@ -46,12 +46,23 @@ test('behavior: data', () => {
   const item_2 = AbiItem.extract(wagmiContractConfig.abi, {
     data,
   })
-  attest(item_2).type.toString.snap(`  | AbiConstructor
-  | AbiError
-  | AbiEvent
-  | AbiFallback
-  | AbiFunction
-  | AbiReceive`)
+  attest(item_2.name).type.toString.snap(`  | "symbol"
+  | "name"
+  | "approve"
+  | "Approval"
+  | "Transfer"
+  | "ApprovalForAll"
+  | "balanceOf"
+  | "totalSupply"
+  | "transferFrom"
+  | "getApproved"
+  | "isApprovedForAll"
+  | "ownerOf"
+  | "safeTransferFrom"
+  | "setApprovalForAll"
+  | "supportsInterface"
+  | "tokenURI"
+  | "mint"`)
 })
 
 test('behavior: overloads', () => {

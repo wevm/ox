@@ -78,7 +78,9 @@ export type AbiItem_ExtractForArgs<
   name extends AbiItem_Name<abi>,
   args extends AbiItem_ExtractArgs<abi, name>,
 > = IsUnion<name> extends true
-  ? AbiItem
+  ? {
+      [key in keyof abi]: abi[key] extends { name: name } ? abi[key] : never
+    }[number]
   : AbiItem_Extract<abi, name> extends infer abiItem extends AbiItem & {
         inputs: readonly AbiParameter[]
       }
