@@ -39,21 +39,14 @@ export type AbiItem_Function = AbiFunction & {
   overloads?: readonly AbiItem[] | undefined
 }
 
-/////////////////////////////////////////////////////////////////////////////////
-// Internal
-/////////////////////////////////////////////////////////////////////////////////
-
-/** @internal */
-export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiItem_ExtractNames<abi> : string
-
-/** @internal */
 export type AbiItem_Extract<
   abi extends Abi,
   name extends AbiItem_ExtractNames<abi>,
 > = Extract<abi[number], { name: name }>
 
-/** @internal */
+export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
+  abi extends Abi ? AbiItem_ExtractNames<abi> : string
+
 export type AbiItem_ExtractArgs<
   abi extends Abi | readonly unknown[] = Abi,
   name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
@@ -66,11 +59,14 @@ export type AbiItem_ExtractArgs<
     : args
   : readonly unknown[]
 
-/** @internal */
 export type AbiItem_ExtractNames<abi extends Abi> = Extract<
   abi[number],
   { name: string }
 >['name']
+
+/////////////////////////////////////////////////////////////////////////////////
+// Internal
+/////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
 export type AbiItem_ExtractForArgs<

@@ -111,3 +111,27 @@ test('behavior: overloads: no inputs or args', () => {
   ]
 }`)
 })
+
+test('behavior: widened name', () => {
+  const abi = Abi.from(wagmiContractConfig.abi)
+  const abiItem = AbiItem.extract(abi, {
+    name: 'totalSupply' as AbiItem.Name<typeof abi>,
+  })
+  attest(abiItem.name).type.toString.snap(`  | "symbol"
+  | "name"
+  | "approve"
+  | "Approval"
+  | "Transfer"
+  | "ApprovalForAll"
+  | "balanceOf"
+  | "totalSupply"
+  | "transferFrom"
+  | "getApproved"
+  | "isApprovedForAll"
+  | "ownerOf"
+  | "safeTransferFrom"
+  | "setApprovalForAll"
+  | "supportsInterface"
+  | "tokenURI"
+  | "mint"`)
+})

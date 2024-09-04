@@ -124,7 +124,16 @@ export declare namespace AbiItem_decodeFunctionOutput {
       ? undefined
       : abiItem['outputs'] extends readonly [infer type extends AbiParameter]
         ? AbiParameterToPrimitiveType<type>
-        : AbiParameters_decode.ReturnType<abiItem['outputs'], as>
+        : AbiParameters_decode.ReturnType<
+              abiItem['outputs'],
+              as
+            > extends infer types
+          ? types extends readonly []
+            ? undefined
+            : types extends readonly [infer type]
+              ? type
+              : types
+          : never
     : unknown
 
   type ErrorType = AbiParameters_decode.ErrorType | GlobalErrorType

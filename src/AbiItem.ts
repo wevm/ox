@@ -25,4 +25,8 @@ export type {
   AbiItem_Event as Event,
   AbiItem_Fallback as Fallback,
   AbiItem_Function as Function,
+  AbiItem_Extract as Extract,
+  AbiItem_ExtractArgs as ExtractArgs,
+  AbiItem_ExtractNames as ExtractNames,
+  AbiItem_Name as Name,
 } from './internal/AbiItem/types.js'

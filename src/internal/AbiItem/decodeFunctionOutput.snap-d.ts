@@ -1,6 +1,7 @@
 import { attest } from '@ark/attest'
-import { AbiItem, AbiParameters } from 'ox'
+import { Abi, AbiItem, AbiParameters } from 'ox'
 import { test } from 'vitest'
+import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
   const abiItem = AbiItem.from(
@@ -72,4 +73,18 @@ test('options: as = Object, behavior: no output parameter', () => {
   const abiItem = AbiItem.from('function test()')
   const result = AbiItem.decodeFunctionOutput(abiItem, '0x', { as: 'Object' })
   attest(result).type.toString.snap('undefined')
+})
+
+test('behavior: abiItem union', () => {
+  const abi = Abi.from(wagmiContractConfig.abi)
+  const abiItem = AbiItem.extract(abi, {
+    name: 'totalSupply' as AbiItem.Name<typeof abi>,
+  })
+  if ('outputs' in abiItem) {
+    const result = AbiItem.decodeFunctionOutput(
+      abiItem,
+      '0x000000000000000000000000000000000000000000000000000000000000000000000001',
+    )
+    attest(result).type.toString.snap('string | bigint | boolean | undefined')
+  }
 })
