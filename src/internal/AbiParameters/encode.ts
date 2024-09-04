@@ -1,11 +1,3 @@
-import type {
-  AbiParameter,
-  AbiParameterToPrimitiveType,
-  AbiType,
-  AbiTypeToPrimitiveType,
-} from 'abitype'
-import { parseAbiParameter } from 'abitype'
-
 import { Address_assert } from '../Address/assert.js'
 import { BaseError } from '../Errors/base.js'
 import type { GlobalErrorType } from '../Errors/error.js'
@@ -24,8 +16,9 @@ import {
   InvalidAbiTypeError,
 } from './errors.js'
 import type {
-  AbiParameters_Isomorphic,
-  AbiParameters_IsomorphicParameter,
+  AbiParameters,
+  AbiParameters_Parameter,
+  AbiParameters_ParameterToPrimitiveType,
   AbiParameters_ToPrimitiveTypes,
 } from './types.js'
 
@@ -79,10 +72,10 @@ import type {
  * @returns ABI encoded data.
  */
 export function AbiParameters_encode<
-  const parameters extends AbiParameters_Isomorphic | readonly unknown[],
+  const parameters extends AbiParameters | readonly unknown[],
 >(
   parameters: parameters,
-  values: parameters extends AbiParameters_Isomorphic
+  values: parameters extends AbiParameters
     ? AbiParameters_ToPrimitiveTypes<parameters>
     : never,
 ): Hex {
@@ -93,7 +86,7 @@ export function AbiParameters_encode<
     })
   // Prepare the parameters to determine dynamic types to encode.
   const preparedParameters = prepareParameters({
-    parameters: parameters as readonly AbiParameter[],
+    parameters: parameters as readonly AbiParameters_Parameter[],
     values: values as any,
   })
   const data = encode(preparedParameters)
@@ -121,17 +114,15 @@ AbiParameters_encode.parseError = (error: unknown) =>
 export type PreparedParameter = { dynamic: boolean; encoded: Hex }
 
 /** @internal */
-export type Tuple = AbiParameterToPrimitiveType<TupleAbiParameter>
+export type Tuple = AbiParameters_ParameterToPrimitiveType<TupleAbiParameter>
 
 /** @internal */
-export function prepareParameters<
-  const parameters extends AbiParameters_Isomorphic,
->({
+export function prepareParameters<const parameters extends AbiParameters>({
   parameters,
   values,
 }: {
   parameters: parameters
-  values: parameters extends AbiParameters_Isomorphic
+  values: parameters extends AbiParameters
     ? AbiParameters_ToPrimitiveTypes<parameters>
     : never
 }) {
@@ -151,23 +142,17 @@ export declare namespace prepareParameters {
 
 /** @internal */
 export function prepareParameter<
-  const parameter extends AbiParameters_IsomorphicParameter,
+  const parameter extends AbiParameters_Parameter,
 >({
   parameter: parameter_,
   value,
 }: {
   parameter: parameter
-  value: parameter extends AbiParameter
-    ? AbiParameterToPrimitiveType<parameter>
-    : parameter extends AbiType
-      ? AbiTypeToPrimitiveType<parameter>
-      : never
+  value: parameter extends AbiParameters_Parameter
+    ? AbiParameters_ParameterToPrimitiveType<parameter>
+    : never
 }): PreparedParameter {
-  const parameter = (
-    typeof parameter_ === 'string'
-      ? parseAbiParameter(parameter_ as string)
-      : parameter_
-  ) as AbiParameter
+  const parameter = parameter_ as AbiParameters_Parameter
 
   const arrayComponents = getArrayComponents(parameter.type)
   if (arrayComponents) {
@@ -175,7 +160,7 @@ export function prepareParameter<
     return encodeArray(value, {
       length,
       parameter: {
-        ...(typeof parameter === 'object' ? parameter : {}),
+        ...parameter,
         type,
       },
     })
@@ -276,8 +261,8 @@ export declare namespace encodeAddress {
 }
 
 /** @internal */
-export function encodeArray<const parameter extends AbiParameter>(
-  value: AbiParameterToPrimitiveType<parameter>,
+export function encodeArray<const parameter extends AbiParameters_Parameter>(
+  value: AbiParameters_ParameterToPrimitiveType<parameter>,
   {
     length,
     parameter,
@@ -436,11 +421,11 @@ export declare namespace encodeString {
 
 /** @internal */
 export function encodeTuple<
-  const parameter extends AbiParameter & {
-    components: readonly AbiParameter[]
+  const parameter extends AbiParameters_Parameter & {
+    components: readonly AbiParameters_Parameter[]
   },
 >(
-  value: AbiParameterToPrimitiveType<parameter>,
+  value: AbiParameters_ParameterToPrimitiveType<parameter>,
   { parameter }: { parameter: parameter },
 ): PreparedParameter {
   let dynamic = false

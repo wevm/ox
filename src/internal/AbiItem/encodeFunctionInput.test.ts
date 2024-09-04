@@ -7,7 +7,7 @@ test('default', () => {
   const abiItem = AbiItem.extract(erc20Abi, {
     name: 'decimals',
   })
-  expect(AbiItem.encodeFunctionInputs(abiItem)).toEqual('0x313ce567')
+  expect(AbiItem.encodeFunctionInput(abiItem)).toEqual('0x313ce567')
 })
 
 test('behavior: abiItem not prepared', () => {
@@ -15,7 +15,7 @@ test('behavior: abiItem not prepared', () => {
     name: 'decimals',
     prepare: false,
   })
-  expect(AbiItem.encodeFunctionInputs(abiItem)).toEqual('0x313ce567')
+  expect(AbiItem.encodeFunctionInput(abiItem)).toEqual('0x313ce567')
 })
 
 test('behavior: with data', () => {
@@ -23,7 +23,7 @@ test('behavior: with data', () => {
     name: 'approve',
     prepare: false,
   })
-  expect(AbiItem.encodeFunctionInputs(abiItem, [address.vitalik, 1n])).toEqual(
+  expect(AbiItem.encodeFunctionInput(abiItem, [address.vitalik, 1n])).toEqual(
     '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001',
   )
 })
@@ -48,10 +48,10 @@ test('behavior: with overloads', () => {
   const abiItem = AbiItem.extract(abi, {
     name: 'balanceOf',
   })
-  expect(AbiItem.encodeFunctionInputs(abiItem, [1n])).toEqual(
+  expect(AbiItem.encodeFunctionInput(abiItem, [1n])).toEqual(
     '0x784153650000000000000000000000000000000000000000000000000000000000000001',
   )
-  expect(AbiItem.encodeFunctionInputs(abiItem, ['0xdeadbeef'])).toEqual(
+  expect(AbiItem.encodeFunctionInput(abiItem, ['0xdeadbeef'])).toEqual(
     '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
   )
 })

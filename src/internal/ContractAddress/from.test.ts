@@ -4,6 +4,7 @@ import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import { Bytes_from } from '../Bytes/from.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { ContractAddress_from } from './from.js'
+import { AbiParameters_from } from '../AbiParameters/from.js'
 
 test('gets contract address (CREATE)', () => {
   expect(
@@ -57,7 +58,7 @@ test('gets contract address (CREATE2)', () => {
       ),
       salt: Hash_keccak256(
         AbiParameters_encode(
-          ['address', 'address', 'uint24'],
+          AbiParameters_from(['address', 'address', 'uint24']),
           [
             '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
             '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',

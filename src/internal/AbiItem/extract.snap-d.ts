@@ -39,7 +39,7 @@ test('behavior: data', () => {
   const item = AbiItem.extract(wagmiContractConfig.abi, {
     name: 'approve',
   })
-  const data = AbiItem.encodeFunctionInputs(item, [
+  const data = AbiItem.encodeFunctionInput(item, [
     '0x0000000000000000000000000000000000000000',
     1n,
   ])

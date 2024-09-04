@@ -5,7 +5,8 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "AbiItemAmbiguityError",
-      "encodeFunctionInputs",
+      "decodeFunctionOutput",
+      "encodeFunctionInput",
       "extract",
       "getSelector",
       "getSignature",

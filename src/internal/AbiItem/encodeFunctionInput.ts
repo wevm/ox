@@ -9,15 +9,15 @@ import { AbiItem_extract } from './extract.js'
 import { AbiItem_getSelector } from './getSelector.js'
 import type { AbiItem_Function } from './types.js'
 
-export function AbiItem_encodeFunctionInputs<
+export function AbiItem_encodeFunctionInput<
   const abiItem extends AbiItem_Function,
 >(
   abiItem: abiItem | AbiItem_Function,
-  ...args: AbiItem_encodeFunctionInputs.Args<abiItem>
+  ...args: AbiItem_encodeFunctionInput.Args<abiItem>
 ): Hex
 
 /**
- * Encodes the function name and parameters into an ABI encoded value (4 byte selector & arguments).
+ * ABI-encodes the provided function input (`inputs`), prefixed with the 4 byte function selector.
  *
  * @example
  * ```ts twoslash
@@ -25,7 +25,7 @@ export function AbiItem_encodeFunctionInputs<
  *
  * const approve = AbiItem.from('function approve(address, uint256)')
  *
- * const data = AbiItem.encodeFunctionInputs( // [!code focus]
+ * const data = AbiItem.encodeFunctionInput( // [!code focus]
  *   approve, // [!code focus]
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n] // [!code focus]
  * ) // [!code focus]
@@ -42,7 +42,7 @@ export function AbiItem_encodeFunctionInputs<
  * const erc20Abi = Abi.from([...]) // [!code hl]
  * const approve = AbiItem.extract(erc20Abi, { name: 'approve' }) // [!code hl]
  *
- * const data = AbiItem.encodeFunctionInputs(
+ * const data = AbiItem.encodeFunctionInput(
  *   approve,
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * )
@@ -52,13 +52,13 @@ export function AbiItem_encodeFunctionInputs<
  * @param args - Function arguments
  * @returns ABI-encoded function name and arguments
  */
-export function AbiItem_encodeFunctionInputs(
+export function AbiItem_encodeFunctionInput(
   abiItem: AbiItem_Function,
   ...args: readonly unknown[]
 ): Hex
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-export function AbiItem_encodeFunctionInputs(
+export function AbiItem_encodeFunctionInput(
   abiItem: AbiItem_Function,
   ...args: readonly unknown[]
 ): Hex {
@@ -84,7 +84,7 @@ export function AbiItem_encodeFunctionInputs(
   return data ? Hex_concat(selector, data) : selector
 }
 
-export declare namespace AbiItem_encodeFunctionInputs {
+export declare namespace AbiItem_encodeFunctionInput {
   type Args<abiItem extends AbiItem_Function> = IsNarrowable<
     abiItem,
     AbiItem_Function
@@ -105,6 +105,6 @@ export declare namespace AbiItem_encodeFunctionInputs {
   type ErrorType = GlobalErrorType
 }
 
-AbiItem_encodeFunctionInputs.parseError = (error: unknown) =>
+AbiItem_encodeFunctionInput.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiItem_encodeFunctionInputs.ErrorType
+  error as AbiItem_encodeFunctionInput.ErrorType

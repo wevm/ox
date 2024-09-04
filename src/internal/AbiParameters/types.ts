@@ -1,30 +1,54 @@
 import type {
   AbiParameter,
+  AbiParameterKind,
   AbiParameterToPrimitiveType,
-  AbiType,
-  ParseAbiParameter,
+  AbiParametersToPrimitiveTypes,
 } from 'abitype'
-import type { Compute } from '../types.js'
+import type { Compute, IsNarrowable, UnionToIntersection } from '../types.js'
 
 export type AbiParameters = readonly AbiParameter[]
 export type AbiParameters_Parameter = AbiParameter
 
-export type AbiParameters_Isomorphic =
-  readonly AbiParameters_IsomorphicParameter[]
-export type AbiParameters_IsomorphicParameter =
-  | AbiParameter
-  | AbiType
-  | (string & {})
+/////////////////////////////////////////////////////////////////////////////////
+// Internal
+/////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
 export type AbiParameters_ToPrimitiveTypes<
-  types extends readonly AbiParameters_IsomorphicParameter[],
-> = Compute<{
-  [key in keyof types]: types[key] extends AbiParameter
-    ? AbiParameterToPrimitiveType<types[key]>
-    : types[key] extends AbiType
-      ? AbiParameterToPrimitiveType<{ type: types[key] }>
-      : types[key] extends string | readonly string[] | readonly unknown[]
-        ? AbiParameterToPrimitiveType<ParseAbiParameter<types[key]>>
-        : never
-}>
+  abiParameters extends readonly AbiParameter[],
+  abiParameterKind extends AbiParameterKind = AbiParameterKind,
+> = AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
+
+/** @internal */
+export type AbiParameters_ParameterToPrimitiveType<
+  abiParameter extends AbiParameter | { name: string; type: unknown },
+  abiParameterKind extends AbiParameterKind = AbiParameterKind,
+> = AbiParameterToPrimitiveType<abiParameter, abiParameterKind>
+
+/** @internal */
+export type AbiParameters_ToObject<
+  parameters extends readonly AbiParameter[],
+  kind extends AbiParameterKind = AbiParameterKind,
+> = IsNarrowable<parameters, AbiParameters> extends true
+  ? Compute<
+      UnionToIntersection<
+        {
+          [index in keyof parameters]: parameters[index] extends {
+            name: infer name extends string
+          }
+            ? {
+                [key in name]: AbiParameterToPrimitiveType<
+                  parameters[index],
+                  kind
+                >
+              }
+            : {
+                [key in index]: AbiParameterToPrimitiveType<
+                  parameters[index],
+                  kind
+                >
+              }
+        }[number]
+      >
+    >
+  : unknown

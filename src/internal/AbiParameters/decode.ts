@@ -1,5 +1,3 @@
-import { parseAbiParameter } from 'abitype'
-
 import { Bytes_fromHex } from '../Bytes/from.js'
 import { Bytes_size } from '../Bytes/size.js'
 import { Bytes_slice } from '../Bytes/slice.js'
@@ -22,17 +20,20 @@ import {
   InvalidAbiTypeError,
 } from './errors.js'
 import type {
-  AbiParameters_Isomorphic,
+  AbiParameters,
   AbiParameters_Parameter,
+  AbiParameters_ToObject,
   AbiParameters_ToPrimitiveTypes,
 } from './types.js'
 
 export function AbiParameters_decode<
-  const parameters extends AbiParameters_Isomorphic,
+  const parameters extends AbiParameters,
+  as extends 'Object' | 'Array' = 'Array',
 >(
   parameters: parameters,
   data: Bytes | Hex,
-): AbiParameters_decode.ReturnType<parameters>
+  options?: AbiParameters_decode.Options<as>,
+): AbiParameters_decode.ReturnType<parameters, as>
 
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.
@@ -84,18 +85,30 @@ export function AbiParameters_decode<
  *
  * @param parameters - The set of ABI parameters to decode, in the shape of the `inputs` or `outputs` attribute of an ABI Item. These parameters must include valid [ABI types](https://docs.soliditylang.org/en/latest/types.html).
  * @param data - ABI encoded data.
+ * @param options - Decoding options.
  * @returns Array of decoded values.
  */
 export function AbiParameters_decode(
-  parameters: AbiParameters_Isomorphic,
+  parameters: AbiParameters,
   data: Bytes | Hex,
-): readonly unknown[]
+  options?: {
+    /**
+     * Whether the decoded values should be returned as an `Object` or `Array`.
+     *
+     * @default "Array"
+     */
+    as?: 'Array' | 'Object' | undefined
+  },
+): readonly unknown[] | Record<string, unknown>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function AbiParameters_decode(
-  parameters: AbiParameters_Isomorphic,
+  parameters: AbiParameters,
   data: Bytes | Hex,
-): readonly unknown[] {
+  options: { as?: 'Array' | 'Object' | undefined } = {},
+): readonly unknown[] | Record<string, unknown> {
+  const { as = 'Array' } = options
+
   const bytes = typeof data === 'string' ? Bytes_fromHex(data) : data
   const cursor = createCursor(bytes)
 
@@ -109,31 +122,40 @@ export function AbiParameters_decode(
     })
 
   let consumed = 0
-  const values = []
+  const values: any = as === 'Array' ? [] : {}
   for (let i = 0; i < parameters.length; ++i) {
-    const param = (
-      typeof parameters[i] === 'string'
-        ? parseAbiParameter(parameters[i] as string)
-        : parameters[i]
-    ) as AbiParameters_Parameter
+    const param = parameters[i] as AbiParameters_Parameter
     cursor.setPosition(consumed)
     const [data, consumed_] = decodeParameter(cursor, param, {
       staticPosition: 0,
     })
     consumed += consumed_
-    values.push(data)
+    if (as === 'Array') values.push(data)
+    else values[param.name ?? i] = data
   }
   return values
 }
 
 export declare namespace AbiParameters_decode {
+  type Options<as extends 'Object' | 'Array'> = {
+    /**
+     * Whether the decoded values should be returned as an `Object` or `Array`.
+     *
+     * @default "Array"
+     */
+    as?: as | 'Object' | 'Array' | undefined
+  }
+
   type ReturnType<
-    parameters extends AbiParameters_Isomorphic = AbiParameters_Isomorphic,
-  > = AbiParameters_ToPrimitiveTypes<
-    parameters extends AbiParameters_Isomorphic
-      ? parameters
-      : AbiParameters_Parameter[]
-  >
+    parameters extends AbiParameters = AbiParameters,
+    as extends 'Object' | 'Array' = 'Array',
+  > = parameters extends readonly []
+    ? as extends 'Object'
+      ? {}
+      : []
+    : as extends 'Object'
+      ? AbiParameters_ToObject<parameters>
+      : AbiParameters_ToPrimitiveTypes<parameters>
 
   type ErrorType =
     | Bytes_fromHex.ErrorType

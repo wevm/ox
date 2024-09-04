@@ -44,7 +44,11 @@ export type {
   PackedAbiType,
 } from './internal/AbiParameters/encodePacked.js'
 
-export type { AbiParameters_ToPrimitiveTypes } from './internal/AbiParameters/types.js'
+export type {
+  AbiParameters_ToPrimitiveTypes,
+  AbiParameters_ToObject,
+  AbiParameters_ParameterToPrimitiveType,
+} from './internal/AbiParameters/types.js'
 
 export { normalizeSignature } from './internal/AbiItem/getSignature.js'
 

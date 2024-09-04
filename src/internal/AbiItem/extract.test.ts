@@ -69,7 +69,7 @@ describe('behavior: data', () => {
     const item = AbiItem.extract(wagmiContractConfig.abi, {
       name: 'approve',
     })
-    const data = AbiItem.encodeFunctionInputs(item, [
+    const data = AbiItem.encodeFunctionInput(item, [
       '0x0000000000000000000000000000000000000000',
       1n,
     ])
@@ -645,24 +645,23 @@ test('behavior: overloads: ambiguious types', () => {
 test('behavior: network', async () => {
   const abi = Abi.from(wagmiContractConfig.abi)
 
-  const totalSupplyFn = AbiItem.extract(abi, {
+  const totalSupplyItem = AbiItem.extract(abi, {
     name: 'totalSupply',
   })
 
-  const totalSupply = await anvilMainnet.request({
-    method: 'eth_call',
-    params: [
-      {
-        data: AbiItem.encodeFunctionInputs(totalSupplyFn),
-        to: wagmiContractConfig.address,
-      },
-    ],
-  })
+  const totalSupply = await anvilMainnet
+    .request({
+      method: 'eth_call',
+      params: [
+        {
+          data: AbiItem.encodeFunctionInput(totalSupplyItem),
+          to: wagmiContractConfig.address,
+        },
+      ],
+    })
+    .then((data) => AbiItem.decodeFunctionOutput(totalSupplyItem, data))
 
-  // TODO: use `AbiItem.decodeFunctionOutputs`
-  expect(totalSupply).toEqual(
-    '0x0000000000000000000000000000000000000000000000000000000000000288',
-  )
+  expect(totalSupply).toEqual(648n)
 })
 
 describe('getAmbiguousTypes', () => {

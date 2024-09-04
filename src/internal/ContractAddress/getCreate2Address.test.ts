@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
+import { AbiParameters_from } from '../AbiParameters/from.js'
 import { Bytes_from } from '../Bytes/from.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Hex_from } from '../Hex/from.js'
@@ -25,7 +26,7 @@ test('default', () => {
       ),
       salt: Hash_keccak256(
         AbiParameters_encode(
-          ['address', 'address', 'uint24'],
+          AbiParameters_from(['address', 'address', 'uint24']),
           [
             '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
             '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -43,7 +44,7 @@ test('default', () => {
         '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54',
       salt: Hash_keccak256(
         AbiParameters_encode(
-          ['address', 'address', 'uint24'],
+          AbiParameters_from(['address', 'address', 'uint24']),
           [
             '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
             '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',

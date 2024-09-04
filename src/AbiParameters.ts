@@ -21,6 +21,4 @@ export { AbiParameters_from as from } from './internal/AbiParameters/from.js'
 export type {
   AbiParameters,
   AbiParameters_Parameter as Parameter,
-  AbiParameters_Isomorphic as Isomorphic,
-  AbiParameters_IsomorphicParameter as IsomorphicParameter,
 } from './internal/AbiParameters/types.js'
