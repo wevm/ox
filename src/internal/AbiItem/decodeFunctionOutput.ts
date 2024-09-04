@@ -42,6 +42,7 @@ export function AbiItem_decodeFunctionOutput<
  * const totalSupply = AbiItem.extract(erc20Abi, { name: 'totalSupply' }) // [!code hl]
  *
  * const output = AbiItem.decodeFunctionOutput(totalSupply, data)
+ * // @log: 42n
  * ```
  *
  * @example
@@ -57,6 +58,7 @@ export function AbiItem_decodeFunctionOutput<
  * const fn = AbiItem.extract(erc20Abi, { data }) // [!code hl]
  *
  * const output = AbiItem.decodeFunctionOutput(fn, data)
+ * // @log: 42n
  * ```
  *
  * :::note

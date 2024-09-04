@@ -46,6 +46,7 @@ export function AbiItem_encodeFunctionInput<
  *   approve,
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * )
+ * // @log: '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
  * ```
  *
  * @param abiItem - ABI Function to encode
