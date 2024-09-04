@@ -19,10 +19,11 @@ export default defineConfig({
       reporter: process.env.CI ? ['lcov'] : ['text', 'json', 'html'],
     },
     include: [
-      ...(process.env.TYPES ? ['**/*.bench-d.ts'] : []),
-      'src/**/*.test.ts',
+      ...(process.env.TYPES ? ['src/**/*.snap-d.ts'] : ['src/**/*.test.ts']),
     ],
-    globalSetup: process.env.TYPES ? [] : [join(__dirname, './globalSetup.ts')],
+    globalSetup: process.env.TYPES
+      ? [join(__dirname, './globalSetup.types.ts')]
+      : [join(__dirname, './globalSetup.ts')],
     passWithNoTests: true,
     setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
   },

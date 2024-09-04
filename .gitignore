@@ -1,5 +1,6 @@
 *.map
 .DS_Store
+.attest
 .env
 .local
 _dist

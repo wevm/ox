@@ -9,6 +9,10 @@
     "changeset:prepublish": "pnpm version:update && pnpm build && tsx scripts/prepublish.ts",
     "changeset:publish": "pnpm changeset:prepublish && changeset publish",
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
+    "check": "biome check . --fix --unsafe",
+    "check:repo": "sherif",
+    "check:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js",
+    "check:types": "tsc --noEmit",
     "clean": "rimraf src/_dist ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
     "deps": "pnpx taze -r",
     "dev": "pnpm preconstruct && pnpm playground",
@@ -18,22 +22,20 @@
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "knip": "knip --production",
     "format": "biome format --write",
-    "lint": "biome check . --fix --unsafe",
-    "lint:repo": "sherif",
-    "lint:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js",
     "postinstall": "pnpm preconstruct",
     "preconstruct": "tsx ./scripts/preconstruct.ts",
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
     "test": "vitest -c ./test/vitest.config.ts",
+    "test:types": "TYPES=true vitest -c ./test/vitest.config.ts",
     "test:cov": "vitest -c ./test/vitest.config.ts --coverage",
-    "typecheck": "tsc --noEmit",
     "vectors": "bun test vectors/**/*.test.ts",
     "vectors:generate": "bun vectors/generate.ts",
     "version:update": "tsx ./scripts/update-version.ts"
   },
   "devDependencies": {
+    "@ark/attest": "^0.16.0",
     "@biomejs/biome": "^1.8.3",
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.7",
@@ -72,7 +74,7 @@
     "node": "22.x"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm lint"
+    "pre-commit": "pnpm check"
   },
   "knip": {
     "ignore": [

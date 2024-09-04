@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
-    name: Lint
+  checks:
+    name: Checks
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -18,11 +18,11 @@ jobs:
         with: 
           node-version: 22
 
-      - name: Lint code
-        run: pnpm lint
+      - name: Check code
+        run: pnpm check
 
-      - name: Lint TSDoc
-        run: pnpm lint:tsdoc
+      - name: Check TSDoc
+        run: pnpm check:tsdoc
       
       - uses: stefanzweifel/git-auto-commit-action@v5
         env:
@@ -32,8 +32,8 @@ jobs:
           commit_user_name: 'github-actions[bot]'
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
 
-  types:
-    name: Types
+  check-types:
+    name: Check Types
     runs-on: ubuntu-latest
 
     steps:
@@ -49,10 +49,10 @@ jobs:
         run: pnpm build
         
       - name: Check types
-        run: pnpm typecheck
+        run: pnpm check:types
 
   test:
-    name: Test
+    name: Test Runtime
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -67,6 +67,21 @@ jobs:
         run: pnpm test
         env: 
           VITE_ANVIL_FORK_URL: ${{ secrets.VITE_ANVIL_FORK_URL }}
+
+  test-types:
+    name: Test Types
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        with: 
+          node-version: 22
+
+      - name: Run tests
+        run: pnpm test:types
 
   vectors:
     name: Vectors
