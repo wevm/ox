@@ -81,6 +81,8 @@ export function AbiItem_decodeFunctionOutput(
     as?: 'Array' | 'Object' | undefined
   },
 ): unknown
+
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function AbiItem_decodeFunctionOutput(
   abiItem: AbiItem_Function,
   data: Hex,
