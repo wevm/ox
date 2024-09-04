@@ -9,6 +9,13 @@ import { AbiItem_extract } from './extract.js'
 import { AbiItem_getSelector } from './getSelector.js'
 import type { AbiItem_Function } from './types.js'
 
+export function AbiItem_encodeFunctionInputs<
+  const abiItem extends AbiItem_Function,
+>(
+  abiItem: abiItem | AbiItem_Function,
+  ...args: AbiItem_encodeFunctionInputs.Args<abiItem>
+): Hex
+
 /**
  * Encodes the function name and parameters into an ABI encoded value (4 byte selector & arguments).
  *
@@ -45,23 +52,15 @@ import type { AbiItem_Function } from './types.js'
  * @param args - Function arguments
  * @returns ABI-encoded function name and arguments
  */
-export function AbiItem_encodeFunctionInputs<
-  const abiItem extends AbiItem_Function,
->(
-  abiItem: abiItem | AbiItem_Function,
-  ...args: IsNarrowable<abiItem, AbiItem_Function> extends true
-    ?
-        | (AbiParametersToPrimitiveTypes<abiItem['inputs']> extends readonly []
-            ? []
-            : [AbiParametersToPrimitiveTypes<abiItem['inputs']>])
-        | (abiItem['overloads'] extends readonly AbiItem_Function[]
-            ? [
-                AbiParametersToPrimitiveTypes<
-                  abiItem['overloads'][number]['inputs']
-                >,
-              ]
-            : [])
-    : readonly unknown[]
+export function AbiItem_encodeFunctionInputs(
+  abiItem: AbiItem_Function,
+  ...args: readonly unknown[]
+): Hex
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function AbiItem_encodeFunctionInputs(
+  abiItem: AbiItem_Function,
+  ...args: readonly unknown[]
 ): Hex {
   const { hash, overloads } = abiItem
 
@@ -86,6 +85,23 @@ export function AbiItem_encodeFunctionInputs<
 }
 
 export declare namespace AbiItem_encodeFunctionInputs {
+  type Args<abiItem extends AbiItem_Function> = IsNarrowable<
+    abiItem,
+    AbiItem_Function
+  > extends true
+    ?
+        | (AbiParametersToPrimitiveTypes<abiItem['inputs']> extends readonly []
+            ? []
+            : [AbiParametersToPrimitiveTypes<abiItem['inputs']>])
+        | (abiItem['overloads'] extends readonly AbiItem_Function[]
+            ? [
+                AbiParametersToPrimitiveTypes<
+                  abiItem['overloads'][number]['inputs']
+                >,
+              ]
+            : [])
+    : readonly unknown[]
+
   type ErrorType = GlobalErrorType
 }
 

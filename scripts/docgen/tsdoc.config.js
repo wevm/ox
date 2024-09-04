@@ -17,7 +17,12 @@ export default {
     tsdoc,
   },
   rules: {
-    'jsdoc/require-jsdoc': ['error', { publicOnly: true }],
+    'jsdoc/require-jsdoc': [
+      'error',
+      {
+        publicOnly: true,
+      },
+    ],
     'jsdoc/require-description': 'error',
     'jsdoc/require-example': 'error',
     'tsdoc/syntax': 'warn',

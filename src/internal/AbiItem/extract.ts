@@ -129,6 +129,7 @@ export function AbiItem_extract(
   },
 ): AbiItem | undefined
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function AbiItem_extract(
   abi: Abi | readonly unknown[],
   options: AbiItem_extract.Options,

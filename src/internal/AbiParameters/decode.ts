@@ -91,6 +91,7 @@ export function AbiParameters_decode(
   data: Bytes | Hex,
 ): readonly unknown[]
 
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function AbiParameters_decode(
   parameters: AbiParameters_Isomorphic,
   data: Bytes | Hex,

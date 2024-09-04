@@ -131,6 +131,7 @@ export type {
   Scope,
   SolidityKeywords,
   StructSignature,
+  TupleToUnion,
   ValidCharacters,
   ValidConstructorSignatures,
   ValidFunctionSignatures,
