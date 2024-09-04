@@ -1,9 +1,9 @@
 import type { AbiParameter, AbiParameterToPrimitiveType } from 'abitype'
+import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
-import type { AbiItem_Function } from './types.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { IsNarrowable } from '../types.js'
+import type { AbiItem_Function } from './types.js'
 
 export function AbiItem_decodeFunctionOutput<
   const abiItem extends AbiItem_Function,

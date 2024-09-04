@@ -1,6 +1,6 @@
-import { test } from 'vitest'
-import { AbiParameters } from 'ox'
 import { attest } from '@ark/attest'
+import { AbiParameters } from 'ox'
+import { test } from 'vitest'
 
 test('default', () => {
   {
