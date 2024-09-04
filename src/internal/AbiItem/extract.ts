@@ -115,8 +115,10 @@ export function AbiItem_extract<
 export function AbiItem_extract(
   abi: Abi | readonly unknown[],
   options: {
+    /** Selector or hash of the ABI Item to extract. */
+    data?: Hex | undefined
     /** Name (or 4byte selector) of the ABI item to extract. */
-    name: string | Hex
+    name?: string | Hex | undefined
     /** Optional arguments to disambiguate function overrides. */
     args?: readonly unknown[] | undefined
     /**
@@ -132,7 +134,12 @@ export function AbiItem_extract(
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function AbiItem_extract(
   abi: Abi | readonly unknown[],
-  options: AbiItem_extract.Options,
+  options: {
+    data?: Hex | undefined
+    name?: string | Hex | undefined
+    args?: readonly unknown[] | undefined
+    prepare?: boolean | undefined
+  },
 ): AbiItem | undefined {
   const {
     args = [],
