@@ -15,7 +15,6 @@ test('default', () => {
         type: 'uint256',
       },
     ],
-    outputs: [{ type: 'bool' }],
   })
   const formatted = AbiError.format(exampleError)
   expect(formatted).toMatchInlineSnapshot(

@@ -10,9 +10,8 @@ import type { AbiError } from './types.js'
  * import { AbiError } from 'ox'
  *
  * const formatted = AbiError.format({
- *   type: 'function',
- *   name: 'approve',
- *   stateMutability: 'nonpayable',
+ *   type: 'error',
+ *   name: 'Example',
  *   inputs: [
  *     {
  *       name: 'spender',
@@ -23,7 +22,6 @@ import type { AbiError } from './types.js'
  *       type: 'uint256',
  *     },
  *   ],
- *   outputs: [{ type: 'bool' }],
  * })
  *
  * formatted

@@ -149,6 +149,12 @@ export type {
 } from './internal/AbiFunction/types.js'
 
 export type {
+  AbiError_IsSignature,
+  AbiError_Signature,
+  AbiError_Signatures,
+} from './internal/AbiError/types.js'
+
+export type {
   Assign,
   Assign_inner,
   Branded,
