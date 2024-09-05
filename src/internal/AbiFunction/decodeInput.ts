@@ -38,8 +38,8 @@ export function AbiFunction_decodeInput<const abiItem extends AbiFunction>(
 
   const item = overloads
     ? AbiFunction_fromAbi([abiFunction, ...overloads], {
-        data,
-      })
+        name: data,
+      } as never)
     : abiFunction
 
   if (Hex_size(data) <= 4) return undefined

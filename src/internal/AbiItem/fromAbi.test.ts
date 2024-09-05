@@ -74,7 +74,7 @@ describe('behavior: data', () => {
     ])
     expect(
       AbiItem.fromAbi(wagmiContractConfig.abi, {
-        data,
+        name: data,
       }),
     ).toMatchInlineSnapshot(`
       {
@@ -105,7 +105,7 @@ describe('behavior: data', () => {
     )
     expect(
       AbiItem.fromAbi(seaportContractConfig.abi, {
-        data: hash,
+        name: hash,
       }),
     ).toMatchInlineSnapshot(`
       {
@@ -137,7 +137,7 @@ describe('behavior: data', () => {
     )
     expect(
       AbiItem.fromAbi(seaportContractConfig.abi, {
-        data: selector,
+        name: selector,
       }),
     ).toMatchInlineSnapshot(`
       {
@@ -162,7 +162,7 @@ test('no matching name', () => {
       args: ['0x0000000000000000000000000000000000000000'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI Item for name "balanceOf" not found.
+    [AbiItemNotFoundError: ABI item with name "balanceOf" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -171,10 +171,10 @@ test('no matching name', () => {
 test('no matching data', () => {
   expect(() =>
     AbiItem.fromAbi([], {
-      data: '0xdeadbeef',
+      name: '0xdeadbeef',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI Item for data "0xdeadbeef" not found.
+    [AbiItemNotFoundError: ABI item with name "0xdeadbeef" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)

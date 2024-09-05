@@ -22,8 +22,6 @@ import type {
  * Extracts an {@link ox#AbiItem.AbiItem} from an {@link ox#Abi.Abi} given a name and optional arguments.
  *
  * @example
- * ### Extracting by Name
- *
  * ABI Items can be extracted by their name using the `name` option:
  *
  * ```ts twoslash
@@ -46,9 +44,9 @@ import type {
  * ```
  *
  * @example
- * ### Extracting by Data
+ * ### Extracting by Selector
  *
- * ABI Items can be extract by their function selector or event hash using the `data` option:
+ * ABI Items can be extract by their selector when {@link Hex.Hex} is provided to `name`.
  *
  * ```ts twoslash
  * import { Abi, AbiItem } from 'ox'
@@ -58,7 +56,7 @@ import type {
  *   'event Transfer(address owner, address to, uint256 tokenId)',
  *   'function bar(string a) returns (uint256 x)',
  * ])
- * const item = AbiItem.fromAbi(abi, { data: '0x095ea7b3' }) // [!code focus]
+ * const item = AbiItem.fromAbi(abi, { name: '0x095ea7b3' }) // [!code focus]
  * //    ^?
  *
  *
@@ -95,11 +93,9 @@ export function AbiItem_fromAbi<
 ): AbiItem_fromAbi.ReturnType<abi, name, args> {
   const {
     args = [],
-    data,
+    name,
     prepare = true,
   } = options as unknown as AbiItem_fromAbi.Options
-
-  const name = (data ?? options.name)!
 
   const isSelector = Hex_isHex(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
@@ -191,47 +187,40 @@ export declare namespace AbiItem_fromAbi {
     ///
     allArgs = AbiItem_ExtractArgs<abi, name>,
     allNames = AbiItem_Name<abi>,
-  > =
-    | {
-        args?: undefined
-        name?: undefined
-        /** Selector or hash of the ABI Item to extract. */
-        data: Hex
-        prepare?: undefined
-      }
-    | ({
-        data?: undefined
-        /** Name of the ABI Item to extract. */
-        name:
-          | allNames // show all options
-          | (name extends allNames ? name : never) // infer value
-        /**
-         * Whether or not to prepare the extracted item (optimization for encoding performance).
-         * When `true`, the `hash` property is computed and included in the returned value.
-         *
-         * @default true
-         */
-        prepare?: boolean | undefined
-      } & UnionCompute<
-        readonly [] extends allArgs
-          ? {
-              args?:
-                | allArgs // show all options
-                // infer value, widen inferred value of `args` conditionally to match `allArgs`
-                | (abi extends Abi
-                    ? args extends allArgs
-                      ? Widen<args>
-                      : never
-                    : never)
-                | undefined
-            }
-          : {
-              args?:
-                | allArgs // show all options
-                | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
-                | undefined
-            }
-      >)
+  > = {
+    data?: undefined
+    /** Name of the ABI Item to extract. */
+    name:
+      | Hex
+      | allNames // show all options
+      | (name extends allNames ? name : never) // infer value
+    /**
+     * Whether or not to prepare the extracted item (optimization for encoding performance).
+     * When `true`, the `hash` property is computed and included in the returned value.
+     *
+     * @default true
+     */
+    prepare?: boolean | undefined
+  } & UnionCompute<
+    readonly [] extends allArgs
+      ? {
+          args?:
+            | allArgs // show all options
+            // infer value, widen inferred value of `args` conditionally to match `allArgs`
+            | (abi extends Abi
+                ? args extends allArgs
+                  ? Widen<args>
+                  : never
+                : never)
+            | undefined
+        }
+      : {
+          args?:
+            | allArgs // show all options
+            | (Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
+            | undefined
+        }
+  >
 
   type ReturnType<
     abi extends Abi | readonly unknown[] = Abi,

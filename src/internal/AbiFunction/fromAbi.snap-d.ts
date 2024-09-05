@@ -42,7 +42,7 @@ test('behavior: data', () => {
     1n,
   ])
   const item_2 = AbiFunction.fromAbi(wagmiContractConfig.abi, {
-    data,
+    name: data,
   })
   attest(item_2.name).type.toString.snap(`  | "symbol"
   | "name"

@@ -16,6 +16,8 @@ import type { AbiFunction } from './types.js'
  *
  * This function is typically used to encode a contract function and its arguments for contract calls (e.g. `data` parameter of an `eth_call` or `eth_sendTransaction`).
  *
+ * See the [End-to-end Example](#end-to-end).
+ *
  * :::
  *
  * @example

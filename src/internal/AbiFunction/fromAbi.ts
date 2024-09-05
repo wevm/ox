@@ -33,9 +33,9 @@ import type { AbiFunction, AbiFunction_Name } from './types.js'
  * ```
  *
  * @example
- * ### Extracting by Data
+ * ### Extracting by Selector
  *
- * ABI Functions can be extract by their function selector using the `data` option:
+ * ABI Functions can be extract by their selector when {@link Hex.Hex} is provided to `name`.
  *
  * ```ts twoslash
  * import { Abi, AbiFunction } from 'ox'
@@ -45,7 +45,7 @@ import type { AbiFunction, AbiFunction_Name } from './types.js'
  *   'event Transfer(address owner, address to, uint256 tokenId)',
  *   'function bar(string a) returns (uint256 x)',
  * ])
- * const item = AbiFunction.fromAbi(abi, { data: '0x095ea7b3' }) // [!code focus]
+ * const item = AbiFunction.fromAbi(abi, { name: '0x095ea7b3' }) // [!code focus]
  * //    ^?
  *
  *

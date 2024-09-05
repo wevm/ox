@@ -70,7 +70,7 @@ test('behavior: data', () => {
   ])
   expect(
     AbiFunction.fromAbi(wagmiContractConfig.abi, {
-      data,
+      name: data,
     }),
   ).toMatchInlineSnapshot(`
       {
@@ -122,10 +122,10 @@ test('error: no matching name', () => {
 test('error: no matching data', () => {
   expect(() =>
     AbiFunction.fromAbi([], {
-      data: '0xdeadbeef',
+      name: '0xdeadbeef',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with data "0xdeadbeef" not found.
+    [AbiItemNotFoundError: ABI item with name "0xdeadbeef" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
