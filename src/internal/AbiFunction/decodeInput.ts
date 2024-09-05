@@ -5,7 +5,7 @@ import { Hex_size } from '../Hex/size.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
-import { AbiFunction_extract } from './extract.js'
+import { AbiFunction_fromAbi } from './fromAbi.js'
 import type { AbiFunction } from './types.js'
 
 /**
@@ -37,7 +37,7 @@ export function AbiFunction_decodeInput<const abiItem extends AbiFunction>(
   const { overloads } = abiFunction
 
   const item = overloads
-    ? AbiFunction_extract([abiFunction, ...overloads], {
+    ? AbiFunction_fromAbi([abiFunction, ...overloads], {
         data,
       })
     : abiFunction
@@ -63,7 +63,7 @@ export declare namespace AbiFunction_decodeInput {
     : unknown
 
   type ErrorType =
-    | AbiFunction_extract.ErrorType
+    | AbiFunction_fromAbi.ErrorType
     | AbiParameters_decode.ErrorType
     | Hex_size.ErrorType
     | Hex_slice.ErrorType

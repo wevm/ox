@@ -1,11 +1,11 @@
 import { attest } from '@ark/attest'
-import { Abi, AbiFunction, AbiItem } from 'ox'
+import { Abi, AbiFunction } from 'ox'
 import { test } from 'vitest'
 
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
-  const item = AbiItem.extract(wagmiContractConfig.abi, {
+  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, {
     name: 'balanceOf',
     args: ['0x0000000000000000000000000000000000000000'],
   })
@@ -23,35 +23,30 @@ test('default', () => {
 })
 
 test('behavior: unknown abi', () => {
-  const item = AbiItem.extract(wagmiContractConfig.abi as readonly unknown[], {
-    name: 'balanceOf',
-    args: ['0x0000000000000000000000000000000000000000'],
-  })
-  attest(item).type.toString.snap(`  | AbiConstructor
-  | AbiError
-  | AbiEvent
-  | AbiFallback
-  | AbiFunction
-  | AbiReceive`)
+  const item = AbiFunction.fromAbi(
+    wagmiContractConfig.abi as readonly unknown[],
+    {
+      name: 'balanceOf',
+      args: ['0x0000000000000000000000000000000000000000'],
+    },
+  )
+  attest(item).type.toString.snap('AbiFunction')
 })
 
 test('behavior: data', () => {
-  const item = AbiFunction.extract(wagmiContractConfig.abi, {
+  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, {
     name: 'approve',
   })
   const data = AbiFunction.encodeInput(item, [
     '0x0000000000000000000000000000000000000000',
     1n,
   ])
-  const item_2 = AbiItem.extract(wagmiContractConfig.abi, {
+  const item_2 = AbiFunction.fromAbi(wagmiContractConfig.abi, {
     data,
   })
   attest(item_2.name).type.toString.snap(`  | "symbol"
   | "name"
   | "approve"
-  | "Approval"
-  | "Transfer"
-  | "ApprovalForAll"
   | "balanceOf"
   | "totalSupply"
   | "transferFrom"
@@ -71,7 +66,7 @@ test('behavior: overloads', () => {
     'function foo()',
     'function foo(uint256)',
   ])
-  const item = AbiItem.extract(abi, {
+  const item = AbiFunction.fromAbi(abi, {
     name: 'foo',
   })
   attest(item).type.toString.snap(`{
@@ -89,7 +84,7 @@ test('behavior: overloads: no inputs or args', () => {
     'function foo(bytes)',
     'function foo(uint256)',
   ])
-  const item = AbiItem.extract(abi, {
+  const item = AbiFunction.fromAbi(abi, {
     name: 'foo',
   })
   attest(item).type.toString.snap(`{
@@ -114,15 +109,12 @@ test('behavior: overloads: no inputs or args', () => {
 
 test('behavior: widened name', () => {
   const abi = Abi.from(wagmiContractConfig.abi)
-  const abiItem = AbiItem.extract(abi, {
-    name: 'totalSupply' as AbiItem.Name<typeof abi>,
+  const abiItem = AbiFunction.fromAbi(abi, {
+    name: 'totalSupply' as AbiFunction.Name<typeof abi>,
   })
   attest(abiItem.name).type.toString.snap(`  | "symbol"
   | "name"
   | "approve"
-  | "Approval"
-  | "Transfer"
-  | "ApprovalForAll"
   | "balanceOf"
   | "totalSupply"
   | "transferFrom"

@@ -4,7 +4,7 @@ import { erc20Abi } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 
 test('default', () => {
-  const abiItem = AbiFunction.extract(erc20Abi, {
+  const abiItem = AbiFunction.fromAbi(erc20Abi, {
     name: 'decimals',
   })
   const data = AbiFunction.encodeInput(abiItem)
@@ -13,7 +13,7 @@ test('default', () => {
 })
 
 test('behavior: with data', () => {
-  const abiItem = AbiFunction.extract(erc20Abi, {
+  const abiItem = AbiFunction.fromAbi(erc20Abi, {
     name: 'approve',
     prepare: false,
   })
@@ -39,7 +39,7 @@ test('behavior: with overloads', () => {
       type: 'function',
     },
   ])
-  const abiItem = AbiFunction.extract(abi, {
+  const abiItem = AbiFunction.fromAbi(abi, {
     name: 'balanceOf',
   })
   expect(

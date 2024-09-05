@@ -35,7 +35,7 @@ import type {
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiItem.extract(abi, { name: 'Transfer' }) // [!code focus]
+ * const item = AbiItem.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
  * //    ^?
  *
  *
@@ -58,7 +58,7 @@ import type {
  *   'event Transfer(address owner, address to, uint256 tokenId)',
  *   'function bar(string a) returns (uint256 x)',
  * ])
- * const item = AbiItem.extract(abi, { data: '0x095ea7b3' }) // [!code focus]
+ * const item = AbiItem.fromAbi(abi, { data: '0x095ea7b3' }) // [!code focus]
  * //    ^?
  *
  *
@@ -85,19 +85,19 @@ import type {
  * @param options - Extraction options.
  * @returns The ABI item.
  */
-export function AbiItem_extract<
+export function AbiItem_fromAbi<
   const abi extends Abi | readonly unknown[],
   name extends AbiItem_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
 >(
   abi: abi | Abi | readonly unknown[],
-  options: AbiItem_extract.Options<abi, name, args>,
-): AbiItem_extract.ReturnType<abi, name, args> {
+  options: AbiItem_fromAbi.Options<abi, name, args>,
+): AbiItem_fromAbi.ReturnType<abi, name, args> {
   const {
     args = [],
     data,
     prepare = true,
-  } = options as unknown as AbiItem_extract.Options
+  } = options as unknown as AbiItem_fromAbi.Options
 
   const name = (data ?? options.name)!
 
@@ -181,7 +181,7 @@ export function AbiItem_extract<
   } as never
 }
 
-export declare namespace AbiItem_extract {
+export declare namespace AbiItem_fromAbi {
   type Options<
     abi extends Abi | readonly unknown[] = Abi,
     name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
@@ -255,9 +255,9 @@ export declare namespace AbiItem_extract {
   type ErrorType = GlobalErrorType
 }
 
-AbiItem_extract.parseError = (error: unknown) =>
+AbiItem_fromAbi.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiItem_extract.ErrorType
+  error as AbiItem_fromAbi.ErrorType
 
 /** @internal */
 export function isArgOfType(

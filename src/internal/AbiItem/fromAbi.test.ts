@@ -1,12 +1,15 @@
-import { Abi, AbiFunction } from 'ox'
-import { expect, test } from 'vitest'
+import { Abi, AbiFunction, AbiItem, AbiParameters, Bytes } from 'ox'
+import { describe, expect, test } from 'vitest'
 
-import { anvilMainnet } from '../../../test/anvil.js'
-import { wagmiContractConfig } from '../../../test/constants/abis.js'
+import {
+  seaportContractConfig,
+  wagmiContractConfig,
+} from '../../../test/constants/abis.js'
+import { getAmbiguousTypes, isArgOfType } from './fromAbi.js'
 
 test('default', () => {
   expect(
-    AbiFunction.extract(wagmiContractConfig.abi, {
+    AbiItem.fromAbi(wagmiContractConfig.abi, {
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
     }),
@@ -34,7 +37,7 @@ test('default', () => {
 
 test('behavior: prepare = false', () => {
   expect(
-    AbiFunction.extract(wagmiContractConfig.abi, {
+    AbiItem.fromAbi(wagmiContractConfig.abi, {
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
       prepare: false,
@@ -60,19 +63,20 @@ test('behavior: prepare = false', () => {
   `)
 })
 
-test('behavior: data', () => {
-  const item = AbiFunction.extract(wagmiContractConfig.abi, {
-    name: 'approve',
-  })
-  const data = AbiFunction.encodeInput(item, [
-    '0x0000000000000000000000000000000000000000',
-    1n,
-  ])
-  expect(
-    AbiFunction.extract(wagmiContractConfig.abi, {
-      data,
-    }),
-  ).toMatchInlineSnapshot(`
+describe('behavior: data', () => {
+  test('function', () => {
+    const item = AbiItem.fromAbi(wagmiContractConfig.abi, {
+      name: 'approve',
+    })
+    const data = AbiFunction.encodeInput(item, [
+      '0x0000000000000000000000000000000000000000',
+      1n,
+    ])
+    expect(
+      AbiItem.fromAbi(wagmiContractConfig.abi, {
+        data,
+      }),
+    ).toMatchInlineSnapshot(`
       {
         "hash": "0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba",
         "inputs": [
@@ -91,41 +95,86 @@ test('behavior: data', () => {
         "type": "function",
       }
     `)
+  })
+
+  test('event', () => {
+    const hash = AbiItem.getSignatureHash(
+      AbiItem.fromAbi(seaportContractConfig.abi, {
+        name: 'CounterIncremented',
+      }),
+    )
+    expect(
+      AbiItem.fromAbi(seaportContractConfig.abi, {
+        data: hash,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "anonymous": false,
+        "hash": "0x721c20121297512b72821b97f5326877ea8ecf4bb9948fea5bfcb6453074d37f",
+        "inputs": [
+          {
+            "indexed": false,
+            "name": "newCounter",
+            "type": "uint256",
+          },
+          {
+            "indexed": true,
+            "name": "offerer",
+            "type": "address",
+          },
+        ],
+        "name": "CounterIncremented",
+        "type": "event",
+      }
+    `)
+  })
+
+  test('error', () => {
+    const selector = AbiItem.getSelector(
+      AbiItem.fromAbi(seaportContractConfig.abi, {
+        name: 'BadSignatureV',
+      }),
+    )
+    expect(
+      AbiItem.fromAbi(seaportContractConfig.abi, {
+        data: selector,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "hash": "0xaa52af9ba76161953067fddc6a99eee9de4ef3377363fd1f54a2648771ce7104",
+        "inputs": [
+          {
+            "name": "v",
+            "type": "uint8",
+          },
+        ],
+        "name": "BadSignatureV",
+        "type": "error",
+      }
+    `)
+  })
 })
 
-test('error: no matching name', () => {
+test('no matching name', () => {
   expect(() =>
-    AbiFunction.extract(wagmiContractConfig.abi, {
-      // @ts-expect-error
-      name: 'Approval',
-    }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI function with name "Approval" not found.
-
-    See: https://oxlib.sh/errors#abiitemnotfounderror]
-  `)
-})
-
-test('error: no matching name', () => {
-  expect(() =>
-    AbiFunction.extract([] as readonly unknown[], {
+    AbiItem.fromAbi([] as readonly unknown[], {
       name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with name "balanceOf" not found.
+    [AbiItemNotFoundError: ABI Item for name "balanceOf" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
 })
 
-test('error: no matching data', () => {
+test('no matching data', () => {
   expect(() =>
-    AbiFunction.extract([], {
+    AbiItem.fromAbi([], {
       data: '0xdeadbeef',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with data "0xdeadbeef" not found.
+    [AbiItemNotFoundError: ABI Item for data "0xdeadbeef" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -137,7 +186,7 @@ test('behavior: overloads', () => {
     'function foo(bytes)',
     'function foo(uint256)',
   ])
-  const item = AbiFunction.extract(abi, {
+  const item = AbiItem.fromAbi(abi, {
     name: 'foo',
   })
   expect(item).toMatchInlineSnapshot(`
@@ -175,7 +224,7 @@ test('behavior: overloads: no inputs', () => {
     'function foo()',
     'function foo(uint256)',
   ])
-  const item = AbiFunction.extract(abi, {
+  const item = AbiItem.fromAbi(abi, {
     name: 'foo',
   })
   expect(item).toMatchInlineSnapshot(`
@@ -196,7 +245,7 @@ test('overloads: no args', () => {
     'function foo(uint256)',
     'function foo()',
   ])
-  const item = AbiFunction.extract(abi, {
+  const item = AbiItem.fromAbi(abi, {
     name: 'foo',
   })
   expect(item).toMatchInlineSnapshot(`
@@ -277,26 +326,26 @@ test('behavior: overloads: different lengths without abi order define effect', (
     }
   `
   expect(
-    AbiFunction.extract(abi, {
+    AbiItem.fromAbi(abi, {
       name: 'safeTransferFrom',
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
   expect(
-    AbiFunction.extract(abi.reverse(), {
+    AbiItem.fromAbi(abi.reverse(), {
       name: 'safeTransferFrom',
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
 
   expect(
-    AbiFunction.extract(abi, {
+    AbiItem.fromAbi(abi, {
       name: 'safeTransferFrom',
       args: longArgs,
     }),
   ).toMatchInlineSnapshot(longSnapshot)
   expect(
-    AbiFunction.extract(abi.reverse(), {
+    AbiItem.fromAbi(abi.reverse(), {
       name: 'safeTransferFrom',
       args: longArgs,
     }),
@@ -309,7 +358,7 @@ test('behavior: overloads: different types', () => {
     'function mint(uint256)',
     'function mint(string)',
   ])
-  const item = AbiFunction.extract(abi, {
+  const item = AbiItem.fromAbi(abi, {
     name: 'mint',
   })
   expect(item).toMatchInlineSnapshot(`
@@ -323,7 +372,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_2 = AbiFunction.extract(abi, {
+  const item_2 = AbiItem.fromAbi(abi, {
     name: 'mint',
     args: [420n],
   })
@@ -342,7 +391,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_3 = AbiFunction.extract(abi, {
+  const item_3 = AbiItem.fromAbi(abi, {
     name: 'mint',
     args: ['foo'],
   })
@@ -367,7 +416,7 @@ test('behavior: overloads: tuple', () => {
     'function foo(uint256 foo, (string a, string b, uint256 c) bar)',
     'function foo(uint256 foo, (string a, (string merp, string meep) b, address c) bar)',
   ])
-  const item = AbiFunction.extract(abi, {
+  const item = AbiItem.fromAbi(abi, {
     name: 'foo',
     args: [
       420n,
@@ -425,7 +474,7 @@ test('behavior: overloads: tuple', () => {
 
 test('behavior: overloads: ambiguious types', () => {
   expect(() =>
-    AbiFunction.extract(
+    AbiItem.fromAbi(
       Abi.from(['function foo(address)', 'function foo(bytes20)']),
       {
         name: 'foo',
@@ -445,7 +494,7 @@ test('behavior: overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    AbiFunction.extract(
+    AbiItem.fromAbi(
       Abi.from([
         'function foo(string)',
         'function foo(uint)',
@@ -469,7 +518,7 @@ test('behavior: overloads: ambiguious types', () => {
   `)
 
   expect(
-    AbiFunction.extract(
+    AbiItem.fromAbi(
       Abi.from([
         'function foo(string)',
         'function foo(uint)',
@@ -497,7 +546,7 @@ test('behavior: overloads: ambiguious types', () => {
   `)
 
   expect(
-    AbiFunction.extract(
+    AbiItem.fromAbi(
       Abi.from([
         'function foo(string)',
         'function foo(uint)',
@@ -525,7 +574,7 @@ test('behavior: overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    AbiFunction.extract(
+    AbiItem.fromAbi(
       Abi.from([
         'function foo(address)',
         'function foo(uint)',
@@ -549,7 +598,7 @@ test('behavior: overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    AbiFunction.extract(
+    AbiItem.fromAbi(
       Abi.from(['function foo((address))', 'function foo((bytes20))']),
       {
         name: 'foo',
@@ -569,7 +618,7 @@ test('behavior: overloads: ambiguious types', () => {
   `)
 
   expect(() =>
-    AbiFunction.extract(
+    AbiItem.fromAbi(
       Abi.from([
         'function foo(string, (address))',
         'function foo(string, (bytes))',
@@ -592,24 +641,321 @@ test('behavior: overloads: ambiguious types', () => {
   `)
 })
 
-test('behavior: network', async () => {
-  const abi = Abi.from(wagmiContractConfig.abi)
+describe('getAmbiguousTypes', () => {
+  test('string/address', () => {
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('string'),
+        AbiParameters.from('address'),
+        ['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522'],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "string",
+        "address",
+      ]
+    `)
 
-  const totalSupplyItem = AbiFunction.extract(abi, {
-    name: 'totalSupply',
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('string'),
+        AbiParameters.from('address'),
+        // 21 bytes (invalid address)
+        ['0xA0Cf798816D4b9b9866b5330EEa46a18382f252223'],
+      ),
+    ).toBeUndefined()
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('(string)'),
+        AbiParameters.from('(address)'),
+        [['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522']],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "string",
+        "address",
+      ]
+    `)
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('(address)'),
+        AbiParameters.from('(string)'),
+        [['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522']],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "address",
+        "string",
+      ]
+    `)
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('uint, (string, (string))'),
+        AbiParameters.from('uint, (string, (address))'),
+        [69420n, ['lol', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f2522']]],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "string",
+        "address",
+      ]
+    `)
   })
 
-  const totalSupply = await anvilMainnet
-    .request({
-      method: 'eth_call',
-      params: [
+  test('bytes/address', () => {
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('address'),
+        AbiParameters.from('bytes20'),
+        ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "address",
+        "bytes20",
+      ]
+    `)
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('bytes20'),
+        AbiParameters.from('address'),
+        ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "bytes20",
+        "address",
+      ]
+    `)
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('address'),
+        AbiParameters.from('bytes'),
+        ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "address",
+        "bytes",
+      ]
+    `)
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('bytes'),
+        AbiParameters.from('address'),
+        // 21 bytes (invalid address)
+        ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251eee'],
+      ),
+    ).toBeUndefined()
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('bytes'),
+        AbiParameters.from('address'),
+        ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "bytes",
+        "address",
+      ]
+    `)
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('(address)'),
+        AbiParameters.from('(bytes20)'),
+        [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "address",
+        "bytes20",
+      ]
+    `)
+
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('uint256, (address)'),
+        AbiParameters.from('uint128, (bytes20)'),
+        [69420n, ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "address",
+        "bytes20",
+      ]
+    `)
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('uint256, (string, (address))'),
+        AbiParameters.from('uint128, (string, (bytes20))'),
+        [69420n, ['foo', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']]],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "address",
+        "bytes20",
+      ]
+    `)
+    expect(
+      getAmbiguousTypes(
+        AbiParameters.from('uint256, (string, (address, bytes))'),
+        AbiParameters.from('uint128, (string, (bytes20, address))'),
+        [
+          123n,
+          [
+            'foo',
+            [
+              '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+              '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+            ],
+          ],
+        ],
+      ),
+    ).toMatchInlineSnapshot(`
+      [
+        "address",
+        "bytes20",
+      ]
+    `)
+  })
+})
+
+describe.each([
+  // array
+  { arg: ['foo'], abiParameter: { type: 'string[]' }, expected: true },
+  { arg: ['foo'], abiParameter: { type: 'string[1]' }, expected: true },
+  { arg: [['foo']], abiParameter: { type: 'string[][]' }, expected: true },
+  { arg: [['foo']], abiParameter: { type: 'string[][1]' }, expected: true },
+  {
+    arg: [1n],
+    abiParameter: { type: 'uint256[]' },
+    expected: true,
+  },
+  {
+    arg: [{ foo: 1n, bar: [{ baz: 1n }] }],
+    abiParameter: {
+      type: 'tuple[]',
+      components: [
+        { name: 'foo', type: 'uint256' },
         {
-          data: AbiFunction.encodeInput(totalSupplyItem),
-          to: wagmiContractConfig.address,
+          name: 'bar',
+          type: 'tuple[]',
+          components: [{ name: 'baz', type: 'uint256' }],
         },
       ],
-    })
-    .then((data) => AbiFunction.decodeOutput(totalSupplyItem, data))
-
-  expect(totalSupply).toEqual(648n)
+    },
+    expected: true,
+  },
+  { arg: ['foo'], abiParameter: { type: 'string[test]' }, expected: false },
+  { arg: [1], abiParameter: { type: 'uint69[]' }, expected: false },
+  // address
+  {
+    arg: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+    abiParameter: { type: 'address' },
+    expected: true,
+  },
+  {
+    arg: 'A0Cf798816D4b9b9866b5330EEa46a18382f251e',
+    abiParameter: { type: 'address' },
+    expected: false,
+  },
+  { arg: 'test', abiParameter: { type: 'address' }, expected: false },
+  // bool
+  { arg: true, abiParameter: { type: 'bool' }, expected: true },
+  { arg: false, abiParameter: { type: 'bool' }, expected: true },
+  { arg: 'true', abiParameter: { type: 'bool' }, expected: false },
+  // bytes
+  { arg: 'foo', abiParameter: { type: 'bytes' }, expected: true },
+  { arg: 'foo', abiParameter: { type: 'bytes32' }, expected: true },
+  {
+    arg: Bytes.from('foo'),
+    abiParameter: { type: 'bytes' },
+    expected: true,
+  },
+  { arg: 1, abiParameter: { type: 'bytes32' }, expected: false },
+  // function
+  { arg: 'foo', abiParameter: { type: 'function' }, expected: true },
+  { arg: 1, abiParameter: { type: 'function' }, expected: false },
+  // int
+  { arg: 1, abiParameter: { type: 'int' }, expected: true },
+  { arg: 1n, abiParameter: { type: 'int' }, expected: true },
+  { arg: 1n, abiParameter: { type: 'int' }, expected: true },
+  { arg: 1, abiParameter: { type: 'uint' }, expected: true },
+  { arg: 1n, abiParameter: { type: 'uint' }, expected: true },
+  { arg: 1n, abiParameter: { type: 'uint' }, expected: true },
+  { arg: 1, abiParameter: { type: 'int256' }, expected: true },
+  { arg: 1, abiParameter: { type: 'uint256' }, expected: true },
+  { arg: 1, abiParameter: { type: 'int69' }, expected: false },
+  { arg: 1, abiParameter: { type: 'uint69' }, expected: false },
+  // string
+  { arg: 'foo', abiParameter: { type: 'string' }, expected: true },
+  { arg: 1, abiParameter: { type: 'string' }, expected: false },
+  // tuple
+  {
+    arg: { bar: 1, baz: 'test' },
+    abiParameter: {
+      name: 'foo',
+      type: 'tuple',
+      components: [
+        { name: 'bar', type: 'uint256' },
+        { name: 'baz', type: 'string' },
+      ],
+    },
+    expected: true,
+  },
+  {
+    arg: [1, 'test'],
+    abiParameter: {
+      name: 'foo',
+      type: 'tuple',
+      components: [
+        { name: 'bar', type: 'uint256' },
+        { name: 'baz', type: 'string' },
+      ],
+    },
+    expected: true,
+  },
+  {
+    arg: { bar: ['test'] },
+    abiParameter: {
+      name: 'foo',
+      type: 'tuple',
+      components: [
+        {
+          name: 'bar',
+          type: 'tuple',
+          components: [{ name: 'baz', type: 'string' }],
+        },
+      ],
+    },
+    expected: true,
+  },
+  {
+    arg: {},
+    abiParameter: {
+      name: 'foo',
+      type: 'tuple',
+      components: [
+        { name: 'bar', type: 'uint256' },
+        { name: 'baz', type: 'uint256' },
+      ],
+    },
+    expected: false,
+  },
+] as {
+  arg: unknown
+  abiParameter: AbiParameters.Parameter
+  expected: boolean
+}[])('isArgOfType($arg, $abiParameter)', ({ arg, abiParameter, expected }) => {
+  test(`isArgOfType: returns ${expected}`, () => {
+    expect(isArgOfType(arg, abiParameter)).toEqual(expected)
+  })
 })

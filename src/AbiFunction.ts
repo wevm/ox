@@ -6,11 +6,11 @@ export { AbiFunction_encodeInput as encodeInput } from './internal/AbiFunction/e
 
 export { AbiFunction_encodeOutput as encodeOutput } from './internal/AbiFunction/encodeOutput.js'
 
-export { AbiFunction_extract as extract } from './internal/AbiFunction/extract.js'
-
 export { AbiFunction_format as format } from './internal/AbiFunction/format.js'
 
 export { AbiFunction_from as from } from './internal/AbiFunction/from.js'
+
+export { AbiFunction_fromAbi as fromAbi } from './internal/AbiFunction/fromAbi.js'
 
 export type {
   AbiFunction,

@@ -27,7 +27,7 @@ import type { AbiFunction } from './types.js'
  * ```
  *
  * @example
- * You can extract an ABI Function from a JSON ABI with {@link ox#AbiFunction.extract}:
+ * You can extract an ABI Function from a JSON ABI with {@link ox#AbiFunction.fromAbi}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -36,7 +36,7 @@ import type { AbiFunction } from './types.js'
  * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
  *
  * const erc20Abi = Abi.from([...]) // [!code hl]
- * const totalSupply = AbiFunction.extract(erc20Abi, { name: 'totalSupply' }) // [!code hl]
+ * const totalSupply = AbiFunction.fromAbi(erc20Abi, { name: 'totalSupply' }) // [!code hl]
  *
  * const output = AbiFunction.decodeOutput(totalSupply, data)
  * // @log: 42n
@@ -63,7 +63,7 @@ import type { AbiFunction } from './types.js'
  *   },
  *   // ...
  * ])
- * const balanceOf = AbiFunction.extract(abi, { name: 'balanceOf' })
+ * const balanceOf = AbiFunction.fromAbi(abi, { name: 'balanceOf' })
  *
  * // 2. Encode the Function Input.
  * const data = AbiFunction.encodeInput(

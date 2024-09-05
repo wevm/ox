@@ -5,7 +5,7 @@ import { Hex_concat } from '../Hex/concat.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
-import { AbiFunction_extract } from './extract.js'
+import { AbiFunction_fromAbi } from './fromAbi.js'
 import { AbiFunction_getSelector } from './getSelector.js'
 import type { AbiFunction } from './types.js'
 
@@ -32,14 +32,14 @@ import type { AbiFunction } from './types.js'
  * ```
  *
  * @example
- * You can extract an ABI Function from a JSON ABI with {@link ox#AbiFunction.extract}:
+ * You can extract an ABI Function from a JSON ABI with {@link ox#AbiFunction.fromAbi}:
  *
  * ```ts twoslash
  * // @noErrors
  * import { Abi, AbiFunction } from 'ox'
  *
  * const erc20Abi = Abi.from([...]) // [!code hl]
- * const approve = AbiFunction.extract(erc20Abi, { name: 'approve' }) // [!code hl]
+ * const approve = AbiFunction.fromAbi(erc20Abi, { name: 'approve' }) // [!code hl]
  *
  * const data = AbiFunction.encodeInput(
  *   approve,
@@ -69,7 +69,7 @@ import type { AbiFunction } from './types.js'
  *   },
  *   // ...
  * ])
- * const balanceOf = AbiFunction.extract(abi, { name: 'balanceOf' })
+ * const balanceOf = AbiFunction.fromAbi(abi, { name: 'balanceOf' })
  *
  * // 2. Encode the Function Input. // [!code focus]
  * const data = AbiFunction.encodeInput( // [!code focus]
@@ -103,7 +103,7 @@ export function AbiFunction_encodeInput<const abiFunction extends AbiFunction>(
   const { overloads } = abiFunction
 
   const item = overloads
-    ? (AbiFunction_extract([abiFunction as AbiFunction, ...overloads], {
+    ? (AbiFunction_fromAbi([abiFunction as AbiFunction, ...overloads], {
         name: abiFunction.name,
         args: (args as any)[0],
       }) as AbiFunction)
