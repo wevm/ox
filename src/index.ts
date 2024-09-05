@@ -5,14 +5,28 @@
 export * as Abi from './Abi.js'
 
 /**
+ * The **AbiFunction** Module provides a set of types & utility functions for working with
+ * with [ABI Functions](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * The `AbiFunction` type is a sub-type of the [`AbiItem` type](/api/AbiItem#types).
+ */
+export * as AbiFunction from './AbiFunction.js'
+
+/**
  * The **AbiItem** Module provides a set of types & utility functions for working with
- * with [Application Binary Interface (ABI)](https://docs.soliditylang.org/en/latest/abi-spec.html).
+ * with [Application Binary Interface (ABI) Items](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * The `AbiItem` type is a super-type of:
+ * - [`AbiConstructor`](#TODO)
+ * - [`AbiFunction`](/api/AbiFunction#types)
+ * - [`AbiEvent`](#TODO)
+ * - [`AbiError`](#TODO)
  */
 export * as AbiItem from './AbiItem.js'
 
 /**
  * The **AbiParameters** Module provides a set of types & utility functions for encoding, decoding,
- * and working with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html).
+ * and working with [ABI Parameters](https://docs.soliditylang.org/en/latest/abi-spec.html#types).
  *
  * @example
  * ```ts twoslash

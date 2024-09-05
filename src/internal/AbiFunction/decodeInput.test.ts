@@ -1,26 +1,25 @@
-import { attest } from '@ark/attest'
-import { Abi, AbiItem } from 'ox'
-import { test } from 'vitest'
+import { Abi, AbiFunction } from 'ox'
+import { expect, test } from 'vitest'
 import { erc20Abi } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 
 test('default', () => {
-  const abiItem = AbiItem.extract(erc20Abi, {
+  const abiItem = AbiFunction.extract(erc20Abi, {
     name: 'decimals',
   })
-  const data = AbiItem.encodeFunctionInput(abiItem)
-  const input = AbiItem.decodeFunctionInput(abiItem, data)
-  attest(input).type.toString.snap('undefined')
+  const data = AbiFunction.encodeInput(abiItem)
+  const input = AbiFunction.decodeInput(abiItem, data)
+  expect(input).toEqual(undefined)
 })
 
 test('behavior: with data', () => {
-  const abiItem = AbiItem.extract(erc20Abi, {
+  const abiItem = AbiFunction.extract(erc20Abi, {
     name: 'approve',
     prepare: false,
   })
-  const data = AbiItem.encodeFunctionInput(abiItem, [address.vitalik, 1n])
-  const input = AbiItem.decodeFunctionInput(abiItem, data)
-  attest(input).type.toString.snap('readonly [`0x${string}`, bigint]')
+  const data = AbiFunction.encodeInput(abiItem, [address.vitalik, 1n])
+  const input = AbiFunction.decodeInput(abiItem, data)
+  expect(input).toEqual([address.vitalik, 1n])
 })
 
 test('behavior: with overloads', () => {
@@ -40,19 +39,19 @@ test('behavior: with overloads', () => {
       type: 'function',
     },
   ])
-  const abiItem = AbiItem.extract(abi, {
+  const abiItem = AbiFunction.extract(abi, {
     name: 'balanceOf',
   })
-  attest(
-    AbiItem.decodeFunctionInput(
+  expect(
+    AbiFunction.decodeInput(
       abiItem,
       '0x9cc7f7080000000000000000000000000000000000000000000000000000000000000001',
     ),
-  ).type.toString.snap('readonly [`0x${string}`] | readonly [bigint]')
-  attest(
-    AbiItem.decodeFunctionInput(
+  ).toEqual([1n])
+  expect(
+    AbiFunction.decodeInput(
       abiItem,
       '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
     ),
-  ).type.toString.snap('readonly [`0x${string}`] | readonly [bigint]')
+  ).toEqual(['0xdeadbeef'])
 })

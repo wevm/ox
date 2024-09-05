@@ -18,17 +18,8 @@ import type {
   Widen,
 } from './types.js'
 
-export function AbiItem_extract<
-  const abi extends Abi | readonly unknown[],
-  name extends AbiItem_Name<abi>,
-  const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
->(
-  abi: abi | Abi | readonly unknown[],
-  options: AbiItem_extract.Options<abi, name, args>,
-): AbiItem_extract.ReturnType<abi, name, args>
-
 /**
- * Extracts an {@link ox#Abi.Item} from an {@link ox#Abi.Abi} given a name and optional arguments.
+ * Extracts an {@link ox#AbiItem.AbiItem} from an {@link ox#Abi.Abi} given a name and optional arguments.
  *
  * @example
  * ### Extracting by Name
@@ -39,28 +30,12 @@ export function AbiItem_extract<
  * import { Abi, AbiItem } from 'ox'
  *
  * const abi = Abi.from([
- *   {
- *     name: 'x',
- *     type: 'function',
- *     inputs: [{ type: 'uint256' }],
- *     outputs: [],
- *     stateMutability: 'payable',
- *   },
- *   {
- *     name: 'y',
- *     type: 'event',
- *     inputs: [{ type: 'address' }],
- *   },
- *   {
- *     name: 'z',
- *     type: 'function',
- *     inputs: [{ type: 'string' }],
- *     outputs: [{ type: 'uint256' }],
- *     stateMutability: 'view',
- *   }
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiItem.extract(abi, { name: 'y' }) // [!code focus]
+ * const item = AbiItem.extract(abi, { name: 'Transfer' }) // [!code focus]
  * //    ^?
  *
  *
@@ -79,27 +54,25 @@ export function AbiItem_extract<
  * import { Abi, AbiItem } from 'ox'
  *
  * const abi = Abi.from([
- *   {
- *     name: 'x',
- *     type: 'function',
- *     inputs: [{ type: 'uint256' }],
- *     outputs: [],
- *     stateMutability: 'payable',
- *   },
- *   {
- *     name: 'y',
- *     type: 'event',
- *     inputs: [{ type: 'address' }],
- *   },
- *   {
- *     name: 'z',
- *     type: 'function',
- *     inputs: [{ type: 'string' }],
- *     outputs: [{ type: 'uint256' }],
- *     stateMutability: 'view',
- *   }
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
  * ])
  * const item = AbiItem.extract(abi, { data: '0x095ea7b3' }) // [!code focus]
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * ```
  *
  * :::note
@@ -112,35 +85,14 @@ export function AbiItem_extract<
  * @param options - Extraction options.
  * @returns The ABI item.
  */
-export function AbiItem_extract(
-  abi: Abi | readonly unknown[],
-  options: {
-    /** Selector or hash of the ABI Item to extract. */
-    data?: Hex | undefined
-    /** Name (or 4byte selector) of the ABI item to extract. */
-    name?: string | Hex | undefined
-    /** Optional arguments to disambiguate function overrides. */
-    args?: readonly unknown[] | undefined
-    /**
-     * Whether or not to prepare the extracted item (optimization for encoding performance).
-     * When `true`, the `hash` property is computed and included in the returned value.
-     *
-     * @default true
-     */
-    prepare?: boolean | undefined
-  },
-): AbiItem | undefined
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function AbiItem_extract(
-  abi: Abi | readonly unknown[],
-  options: {
-    data?: Hex | undefined
-    name?: string | Hex | undefined
-    args?: readonly unknown[] | undefined
-    prepare?: boolean | undefined
-  },
-): AbiItem | undefined {
+export function AbiItem_extract<
+  const abi extends Abi | readonly unknown[],
+  name extends AbiItem_Name<abi>,
+  const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
+>(
+  abi: abi | Abi | readonly unknown[],
+  options: AbiItem_extract.Options<abi, name, args>,
+): AbiItem_extract.ReturnType<abi, name, args> {
   const {
     args = [],
     data,
@@ -226,7 +178,7 @@ export function AbiItem_extract(
   return {
     ...abiItem,
     ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),
-  }
+  } as never
 }
 
 export declare namespace AbiItem_extract {
@@ -287,9 +239,10 @@ export declare namespace AbiItem_extract {
     args extends
       | AbiItem_ExtractArgs<abi, name>
       | undefined = AbiItem_ExtractArgs<abi, name>,
+    fallback = AbiItem,
   > = abi extends Abi
     ? Abi extends abi
-      ? AbiItem
+      ? fallback
       : AbiItem_ExtractForArgs<
           abi,
           name,
@@ -297,7 +250,7 @@ export declare namespace AbiItem_extract {
             ? args
             : AbiItem_ExtractArgs<abi, name>
         >
-    : AbiItem
+    : fallback
 
   type ErrorType = GlobalErrorType
 }

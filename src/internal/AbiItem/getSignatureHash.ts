@@ -6,7 +6,7 @@ import { AbiItem_getSignature } from './getSignature.js'
 import type { AbiItem } from './types.js'
 
 /**
- * Computes the signature hash for an {@link Abi#Item}.
+ * Computes the signature hash for an {@link AbiItem#AbiItem}.
  *
  * Useful for computing Event Topic values.
  *

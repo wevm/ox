@@ -8,7 +8,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 
 /**
- * Parses an arbitrary **JSON ABI Item** or **Human Readable ABI Item** into a typed {@link AbiItem#AbiItem}.
+ * Parses an arbitrary **JSON ABI Item** or **Human Readable ABI Item** into a typed {@link ox#AbiItem.AbiItem}.
  *
  * @example
  * ### JSON ABIs

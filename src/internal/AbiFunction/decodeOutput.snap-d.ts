@@ -1,14 +1,14 @@
 import { attest } from '@ark/attest'
-import { Abi, AbiItem, AbiParameters } from 'ox'
+import { Abi, AbiFunction, AbiParameters } from 'ox'
 import { test } from 'vitest'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
-  const abiItem = AbiItem.from(
+  const abiItem = AbiFunction.from(
     'function test() returns (uint a, (uint x, string y) b)',
   )
   const args = [420n, { x: 420n, y: 'lol' }] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
   )
@@ -18,9 +18,9 @@ test('default', () => {
 })
 
 test('behavior: single output parameter', () => {
-  const abiItem = AbiItem.from('function test() returns (uint a)')
+  const abiItem = AbiFunction.from('function test() returns (uint a)')
   const args = [420n] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
   )
@@ -28,27 +28,27 @@ test('behavior: single output parameter', () => {
 })
 
 test('behavior: no output parameter', () => {
-  const abiItem = AbiItem.from('function test()')
-  const result = AbiItem.decodeFunctionOutput(abiItem, '0x')
+  const abiItem = AbiFunction.from('function test()')
+  const result = AbiFunction.decodeOutput(abiItem, '0x')
   attest(result).type.toString.snap('undefined')
 })
 
 test('behavior: widened', () => {
-  const abiItem = AbiItem.from('function test() returns (uint a)')
+  const abiItem = AbiFunction.from('function test() returns (uint a)')
   const args = [420n] as const
-  const result = AbiItem.decodeFunctionOutput(
-    abiItem as AbiItem.Function,
+  const result = AbiFunction.decodeOutput(
+    abiItem as AbiFunction.AbiFunction,
     AbiParameters.encode(abiItem.outputs, args),
   )
   attest(result).type.toString.snap('unknown')
 })
 
 test('options: as = Object', () => {
-  const abiItem = AbiItem.from(
+  const abiItem = AbiFunction.from(
     'function test() returns (uint a, (uint x, string y) b)',
   )
   const args = [420n, { x: 420n, y: 'lol' }] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
     { as: 'Object' },
@@ -59,9 +59,9 @@ test('options: as = Object', () => {
 })
 
 test('options: as = Object, behavior: single output parameter', () => {
-  const abiItem = AbiItem.from('function test() returns (uint a)')
+  const abiItem = AbiFunction.from('function test() returns (uint a)')
   const args = [420n] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
     { as: 'Object' },
@@ -70,18 +70,18 @@ test('options: as = Object, behavior: single output parameter', () => {
 })
 
 test('options: as = Object, behavior: no output parameter', () => {
-  const abiItem = AbiItem.from('function test()')
-  const result = AbiItem.decodeFunctionOutput(abiItem, '0x', { as: 'Object' })
+  const abiItem = AbiFunction.from('function test()')
+  const result = AbiFunction.decodeOutput(abiItem, '0x', { as: 'Object' })
   attest(result).type.toString.snap('undefined')
 })
 
 test('behavior: abiItem union', () => {
   const abi = Abi.from(wagmiContractConfig.abi)
-  const abiItem = AbiItem.extract(abi, {
-    name: 'totalSupply' as AbiItem.Name<typeof abi>,
+  const abiItem = AbiFunction.extract(abi, {
+    name: 'totalSupply' as AbiFunction.Name<typeof abi>,
   })
   if (abiItem.type === 'function') {
-    const result = AbiItem.decodeFunctionOutput(
+    const result = AbiFunction.decodeOutput(
       abiItem,
       '0x000000000000000000000000000000000000000000000000000000000000000000000001',
     )

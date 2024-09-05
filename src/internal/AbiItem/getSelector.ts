@@ -5,7 +5,7 @@ import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 import type { AbiItem } from './types.js'
 
 /**
- * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link Abi#Item}.
+ * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link AbiItem#AbiItem}.
  *
  * Useful for computing function selectors for calldata.
  *

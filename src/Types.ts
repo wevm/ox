@@ -6,8 +6,9 @@ export type {
   AbiItem_Event,
   AbiItem_Constructor,
   AbiItem_Fallback,
-  AbiItem_Function,
 } from './internal/AbiItem/types.js'
+
+export type { AbiFunction } from './internal/AbiFunction/types.js'
 
 export type {
   AbiParameters,

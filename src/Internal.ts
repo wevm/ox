@@ -143,6 +143,12 @@ export type {
 } from './internal/AbiItem/types.js'
 
 export type {
+  AbiFunction_IsSignature,
+  AbiFunction_Signature,
+  AbiFunction_Signatures,
+} from './internal/AbiFunction/types.js'
+
+export type {
   Assign,
   Assign_inner,
   Branded,

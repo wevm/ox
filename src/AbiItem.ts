@@ -1,13 +1,5 @@
 export { AbiItemAmbiguityError } from './internal/AbiItem/errors.js'
 
-export { AbiItem_decodeFunctionInput as decodeFunctionInput } from './internal/AbiItem/decodeFunctionInput.js'
-
-export { AbiItem_decodeFunctionOutput as decodeFunctionOutput } from './internal/AbiItem/decodeFunctionOutput.js'
-
-export { AbiItem_encodeFunctionInput as encodeFunctionInput } from './internal/AbiItem/encodeFunctionInput.js'
-
-export { AbiItem_encodeFunctionOutput as encodeFunctionOutput } from './internal/AbiItem/encodeFunctionOutput.js'
-
 export { AbiItem_extract as extract } from './internal/AbiItem/extract.js'
 
 export { AbiItem_getSelector as getSelector } from './internal/AbiItem/getSelector.js'
@@ -26,9 +18,9 @@ export type {
   AbiItem_Error as Error,
   AbiItem_Event as Event,
   AbiItem_Fallback as Fallback,
-  AbiItem_Function as Function,
   AbiItem_Extract as Extract,
-  AbiItem_ExtractArgs as ExtractArgs,
   AbiItem_ExtractNames as ExtractNames,
   AbiItem_Name as Name,
 } from './internal/AbiItem/types.js'
+
+export type { AbiFunction as Function } from './internal/AbiFunction/types.js'

@@ -3,7 +3,6 @@ import type {
   AbiError,
   AbiEvent,
   AbiFallback,
-  AbiFunction,
   AbiParameter,
   AbiParametersToPrimitiveTypes,
   AbiStateMutability,
@@ -34,11 +33,6 @@ export type AbiItem_Event = AbiEvent & {
 
 export type AbiItem_Fallback = AbiFallback
 
-export type AbiItem_Function = AbiFunction & {
-  hash?: Hex | undefined
-  overloads?: readonly AbiItem[] | undefined
-}
-
 export type AbiItem_Extract<
   abi extends Abi,
   name extends AbiItem_ExtractNames<abi>,
@@ -47,6 +41,16 @@ export type AbiItem_Extract<
 export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
   abi extends Abi ? AbiItem_ExtractNames<abi> : string
 
+export type AbiItem_ExtractNames<abi extends Abi> = Extract<
+  abi[number],
+  { name: string }
+>['name']
+
+/////////////////////////////////////////////////////////////////////////////////
+// Internal
+/////////////////////////////////////////////////////////////////////////////////
+
+/** @internal */
 export type AbiItem_ExtractArgs<
   abi extends Abi | readonly unknown[] = Abi,
   name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
@@ -58,15 +62,6 @@ export type AbiItem_ExtractArgs<
     ? readonly unknown[]
     : args
   : readonly unknown[]
-
-export type AbiItem_ExtractNames<abi extends Abi> = Extract<
-  abi[number],
-  { name: string }
->['name']
-
-/////////////////////////////////////////////////////////////////////////////////
-// Internal
-/////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
 export type AbiItem_ExtractForArgs<

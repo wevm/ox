@@ -1,12 +1,12 @@
-import { AbiItem, AbiParameters } from 'ox'
+import { AbiFunction, AbiParameters } from 'ox'
 import { expect, test } from 'vitest'
 
 test('default', () => {
-  const abiItem = AbiItem.from(
+  const abiItem = AbiFunction.from(
     'function test() returns (uint a, (uint x, string y) b)',
   )
   const args = [420n, { x: 420n, y: 'lol' }] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
   )
@@ -22,9 +22,9 @@ test('default', () => {
 })
 
 test('behavior: single output parameter', () => {
-  const abiItem = AbiItem.from('function test() returns (uint a)')
+  const abiItem = AbiFunction.from('function test() returns (uint a)')
   const args = [420n] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
   )
@@ -32,17 +32,17 @@ test('behavior: single output parameter', () => {
 })
 
 test('behavior: no output parameter', () => {
-  const abiItem = AbiItem.from('function test()')
-  const result = AbiItem.decodeFunctionOutput(abiItem, '0x')
+  const abiItem = AbiFunction.from('function test()')
+  const result = AbiFunction.decodeOutput(abiItem, '0x')
   expect(result).toEqual(undefined)
 })
 
 test('options: as = Object', () => {
-  const abiItem = AbiItem.from(
+  const abiItem = AbiFunction.from(
     'function test() returns (uint a, (uint x, string y) b)',
   )
   const args = [420n, { x: 420n, y: 'lol' }] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
     { as: 'Object' },
@@ -59,9 +59,9 @@ test('options: as = Object', () => {
 })
 
 test('options: as = Object, behavior: single output parameter', () => {
-  const abiItem = AbiItem.from('function test() returns (uint a)')
+  const abiItem = AbiFunction.from('function test() returns (uint a)')
   const args = [420n] as const
-  const result = AbiItem.decodeFunctionOutput(
+  const result = AbiFunction.decodeOutput(
     abiItem,
     AbiParameters.encode(abiItem.outputs, args),
     { as: 'Object' },
@@ -70,8 +70,8 @@ test('options: as = Object, behavior: single output parameter', () => {
 })
 
 test('options: as = Object, behavior: no output parameter', () => {
-  const abiItem = AbiItem.from('function test()')
-  const result = AbiItem.decodeFunctionOutput(abiItem, '0x', {
+  const abiItem = AbiFunction.from('function test()')
+  const result = AbiFunction.decodeOutput(abiItem, '0x', {
     as: 'Object',
   })
   expect(result).toMatchInlineSnapshot('undefined')

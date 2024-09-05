@@ -28,13 +28,18 @@ export class AbiItemNotFoundError extends BaseError {
   constructor({
     name,
     data,
-  }: { name?: string | undefined; data?: Hex | undefined }) {
+    type = 'item',
+  }: {
+    name?: string | undefined
+    data?: Hex | undefined
+    type?: string | undefined
+  }) {
     const selector = (() => {
-      if (name) return ` for name "${name}"`
-      if (data) return ` for data "${data}"`
+      if (name) return ` with name "${name}"`
+      if (data) return ` with data "${data}"`
       return ''
     })()
-    super(`ABI Item${selector} not found.`, {
+    super(`ABI ${type}${selector} not found.`, {
       docsPath: '/errors#abiitemnotfounderror',
     })
   }
