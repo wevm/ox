@@ -10,14 +10,10 @@ test('default', () => {
   })
   attest(item).type.toString.snap(`{
   readonly inputs: readonly [
-    { readonly name: "owner"; readonly type: "address" }
+    { readonly name: "v"; readonly type: "uint8" }
   ]
-  readonly name: "balanceOf"
-  readonly outputs: readonly [
-    { readonly name: ""; readonly type: "uint256" }
-  ]
-  readonly stateMutability: "view"
-  readonly type: "function"
+  readonly name: "BadSignatureV"
+  readonly type: "error"
 }`)
 })
 
@@ -39,7 +35,49 @@ test('behavior: data', () => {
   const item_2 = AbiError.fromAbi(seaportContractConfig.abi, {
     name: selector,
   })
-  attest(item_2.name).type.toString.snap()
+  attest(item_2.name).type.toString.snap(`  | "BadSignatureV"
+  | "BadContractSignature"
+  | "BadFraction"
+  | "BadReturnValueFromERC20OnTransfer"
+  | "ConsiderationCriteriaResolverOutOfRange"
+  | "ConsiderationNotMet"
+  | "CriteriaNotEnabledForItem"
+  | "ERC1155BatchTransferGenericFailure"
+  | "EtherTransferGenericFailure"
+  | "InexactFraction"
+  | "InsufficientEtherSupplied"
+  | "Invalid1155BatchTransferEncoding"
+  | "InvalidBasicOrderParameterEncoding"
+  | "InvalidCallToConduit"
+  | "InvalidCanceller"
+  | "InvalidConduit"
+  | "InvalidERC721TransferAmount"
+  | "InvalidFulfillmentComponentData"
+  | "InvalidMsgValue"
+  | "InvalidNativeOfferItem"
+  | "InvalidProof"
+  | "InvalidRestrictedOrder"
+  | "InvalidSignature"
+  | "InvalidSigner"
+  | "InvalidTime"
+  | "MismatchedFulfillmentOfferAndConsiderationComponents"
+  | "MissingFulfillmentComponentOnAggregation"
+  | "MissingItemAmount"
+  | "MissingOriginalConsiderationItems"
+  | "NoContract"
+  | "NoReentrantCalls"
+  | "NoSpecifiedOrdersAvailable"
+  | "OfferAndConsiderationRequiredOnFulfillment"
+  | "OfferCriteriaResolverOutOfRange"
+  | "OrderAlreadyFilled"
+  | "OrderCriteriaResolverOutOfRange"
+  | "OrderIsCancelled"
+  | "OrderPartiallyFilled"
+  | "PartialFillsNotEnabledForOrder"
+  | "TokenTransferGenericFailure"
+  | "UnresolvedConsiderationCriteria"
+  | "UnresolvedOfferCriteria"
+  | "UnusedItemParameters"`)
 })
 
 test('behavior: overloads', () => {
@@ -47,7 +85,11 @@ test('behavior: overloads', () => {
   const item = AbiError.fromAbi(abi, {
     name: 'Foo',
   })
-  attest(item).type.toString.snap()
+  attest(item).type.toString.snap(`{
+  readonly name: "Foo"
+  readonly type: "error"
+  readonly inputs: readonly []
+}`)
 })
 
 test('behavior: overloads with args', () => {
@@ -56,7 +98,11 @@ test('behavior: overloads with args', () => {
     name: 'Foo',
     args: [1n],
   })
-  attest(item).type.toString.snap()
+  attest(item).type.toString.snap(`{
+  readonly name: "Foo"
+  readonly type: "error"
+  readonly inputs: readonly [{ readonly type: "uint256" }]
+}`)
 })
 
 test('behavior: overloads: no inputs or args', () => {
@@ -68,7 +114,20 @@ test('behavior: overloads: no inputs or args', () => {
   const item = AbiError.fromAbi(abi, {
     name: 'Foo',
   })
-  attest(item).type.toString.snap()
+  attest(item).type.toString.snap(`{
+  readonly name: "Foo"
+  readonly type: "error"
+  readonly inputs: readonly [{ readonly type: "bytes" }]
+  readonly overloads: [
+    {
+      readonly name: "Foo"
+      readonly type: "error"
+      readonly inputs: readonly [
+        { readonly type: "uint256" }
+      ]
+    }
+  ]
+}`)
 })
 
 test('behavior: widened name', () => {
@@ -76,5 +135,47 @@ test('behavior: widened name', () => {
   const abiItem = AbiError.fromAbi(abi, {
     name: 'BadContractSignature' as AbiError.Name<typeof abi>,
   })
-  attest(abiItem.name).type.toString.snap()
+  attest(abiItem.name).type.toString.snap(`  | "BadSignatureV"
+  | "BadContractSignature"
+  | "BadFraction"
+  | "BadReturnValueFromERC20OnTransfer"
+  | "ConsiderationCriteriaResolverOutOfRange"
+  | "ConsiderationNotMet"
+  | "CriteriaNotEnabledForItem"
+  | "ERC1155BatchTransferGenericFailure"
+  | "EtherTransferGenericFailure"
+  | "InexactFraction"
+  | "InsufficientEtherSupplied"
+  | "Invalid1155BatchTransferEncoding"
+  | "InvalidBasicOrderParameterEncoding"
+  | "InvalidCallToConduit"
+  | "InvalidCanceller"
+  | "InvalidConduit"
+  | "InvalidERC721TransferAmount"
+  | "InvalidFulfillmentComponentData"
+  | "InvalidMsgValue"
+  | "InvalidNativeOfferItem"
+  | "InvalidProof"
+  | "InvalidRestrictedOrder"
+  | "InvalidSignature"
+  | "InvalidSigner"
+  | "InvalidTime"
+  | "MismatchedFulfillmentOfferAndConsiderationComponents"
+  | "MissingFulfillmentComponentOnAggregation"
+  | "MissingItemAmount"
+  | "MissingOriginalConsiderationItems"
+  | "NoContract"
+  | "NoReentrantCalls"
+  | "NoSpecifiedOrdersAvailable"
+  | "OfferAndConsiderationRequiredOnFulfillment"
+  | "OfferCriteriaResolverOutOfRange"
+  | "OrderAlreadyFilled"
+  | "OrderCriteriaResolverOutOfRange"
+  | "OrderIsCancelled"
+  | "OrderPartiallyFilled"
+  | "PartialFillsNotEnabledForOrder"
+  | "TokenTransferGenericFailure"
+  | "UnresolvedConsiderationCriteria"
+  | "UnresolvedOfferCriteria"
+  | "UnusedItemParameters"`)
 })

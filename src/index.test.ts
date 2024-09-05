@@ -5,6 +5,7 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "Abi",
+      "AbiError",
       "AbiFunction",
       "AbiItem",
       "AbiParameters",

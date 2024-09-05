@@ -4,10 +4,10 @@ import * as exports from './AbiFunction.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "AbiItemAmbiguityError",
-      "getSelector",
-      "getSignature",
-      "getSignatureHash",
+      "decodeInput",
+      "decodeOutput",
+      "encodeInput",
+      "encodeOutput",
       "format",
       "from",
       "fromAbi",

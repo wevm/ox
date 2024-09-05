@@ -10,7 +10,7 @@ test('default', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
-      "hash": "0xaa52af9ba76161953067fddc6a99eee9de4ef3377363fd1f54a2648771ce7104",
+      "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
       "inputs": [
         {
           "name": "v",
@@ -54,7 +54,7 @@ test('behavior: selector as name', () => {
     }),
   ).toMatchInlineSnapshot(`
     {
-      "hash": "0xaa52af9ba76161953067fddc6a99eee9de4ef3377363fd1f54a2648771ce7104",
+      "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
       "inputs": [
         {
           "name": "v",
@@ -116,7 +116,7 @@ test('behavior: overloads', () => {
   })
   expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x83f034b8fbb90b149a989013c8445bbdc827e19a70ca29f1581ce2d7e736e494",
+      "hash": "0xefc9afd358f1472682cf8cc82e1d3ae36be2538ed858a4a604119399d6f22b48",
       "inputs": [
         {
           "type": "bytes",
@@ -146,7 +146,7 @@ test('behavior: overloads: no inputs', () => {
   })
   expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x86c07da3d144b633d2c7c53a4441b60f01a2defe3b85756267a1379e7611d9b7",
+      "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
       "inputs": [],
       "name": "Foo",
       "type": "error",
@@ -161,7 +161,7 @@ test('overloads: no args', () => {
   })
   expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x86c07da3d144b633d2c7c53a4441b60f01a2defe3b85756267a1379e7611d9b7",
+      "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
       "inputs": [],
       "name": "Foo",
       "type": "error",
@@ -180,7 +180,7 @@ test('behavior: overloads: different types', () => {
   })
   expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x036e3b5270e8a6ff025d5daca1aa3e9d88c84ea3d8fd0e14000f18180d77291d",
+      "hash": "0x34c73884fbbb790762253ae313e57da96c00670344647f0cb8d41ee92b9f1971",
       "inputs": [],
       "name": "Mint",
       "type": "error",
@@ -193,7 +193,7 @@ test('behavior: overloads: different types', () => {
   })
   expect(item_2).toMatchInlineSnapshot(`
     {
-      "hash": "0x7ee7d9f5fb8ccf9ecc8233240dd511f88985f308a021b2157404fc0ae4d35d42",
+      "hash": "0x07883703ed0e86588a40d76551c92f8a4b329e3bf19765e0e6749473c1a84665",
       "inputs": [
         {
           "type": "uint256",
@@ -210,7 +210,7 @@ test('behavior: overloads: different types', () => {
   })
   expect(item_3).toMatchInlineSnapshot(`
     {
-      "hash": "0x11301b3e5d82fb0c73ddbc18c4520e7a24f559526f9ed6bfbc230b629ece03fb",
+      "hash": "0xc5e1d731c47dbd6a8c38e6ee9137792904eae9d20174034d1dc9a5781a0f855b",
       "inputs": [
         {
           "type": "string",
@@ -240,7 +240,7 @@ test('behavior: overloads: tuple', () => {
   })
   expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0xfe7998e6d8a3f1d36a6a46320d8846d4516983f37ea3003b72fd8ee72eb38e03",
+      "hash": "0x3cfe2f5f5794a704453504eac86b65a35f5912de763230232d0d593c5127e517",
       "inputs": [
         {
           "name": "foo",
@@ -290,8 +290,8 @@ test('behavior: overloads: ambiguious types', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
-    \`bytes20\` in \`error Foo(bytes20)\`, and
-    \`address\` in \`error Foo(address)\`
+    \`bytes20\` in \`Foo(bytes20)\`, and
+    \`address\` in \`Foo(address)\`
 
     These types encode differently and cannot be distinguished at runtime.
     Remove one of the ambiguous items in the ABI.
@@ -310,8 +310,8 @@ test('behavior: overloads: ambiguious types', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
-    \`address\` in \`error Foo(address)\`, and
-    \`string\` in \`error Foo(string)\`
+    \`address\` in \`Foo(address)\`, and
+    \`string\` in \`Foo(string)\`
 
     These types encode differently and cannot be distinguished at runtime.
     Remove one of the ambiguous items in the ABI.
@@ -330,7 +330,7 @@ test('behavior: overloads: ambiguious types', () => {
     ),
   ).toMatchInlineSnapshot(`
     {
-      "hash": "0x46150564e631d8e04393beeebc059a3831bb18dcae9e0eed6c9903bf18d635bc",
+      "hash": "0x9f0b7f1630bdb7d474466e2dfef0fb9dff65f7a50eec83935b68f77d0808f08a",
       "inputs": [
         {
           "type": "string",
@@ -352,7 +352,7 @@ test('behavior: overloads: ambiguious types', () => {
     ),
   ).toMatchInlineSnapshot(`
     {
-      "hash": "0x46150564e631d8e04393beeebc059a3831bb18dcae9e0eed6c9903bf18d635bc",
+      "hash": "0x9f0b7f1630bdb7d474466e2dfef0fb9dff65f7a50eec83935b68f77d0808f08a",
       "inputs": [
         {
           "type": "string",
@@ -374,8 +374,8 @@ test('behavior: overloads: ambiguious types', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
-    \`string\` in \`error Foo(string)\`, and
-    \`address\` in \`error Foo(address)\`
+    \`string\` in \`Foo(string)\`, and
+    \`address\` in \`Foo(address)\`
 
     These types encode differently and cannot be distinguished at runtime.
     Remove one of the ambiguous items in the ABI.
@@ -394,8 +394,8 @@ test('behavior: overloads: ambiguious types', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
-    \`bytes20\` in \`error Foo((bytes20))\`, and
-    \`address\` in \`error Foo((address))\`
+    \`bytes20\` in \`Foo((bytes20))\`, and
+    \`address\` in \`Foo((address))\`
 
     These types encode differently and cannot be distinguished at runtime.
     Remove one of the ambiguous items in the ABI.
@@ -414,8 +414,8 @@ test('behavior: overloads: ambiguious types', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
 
-    \`bytes\` in \`error Foo(string,(bytes))\`, and
-    \`address\` in \`error Foo(string,(address))\`
+    \`bytes\` in \`Foo(string,(bytes))\`, and
+    \`address\` in \`Foo(string,(address))\`
 
     These types encode differently and cannot be distinguished at runtime.
     Remove one of the ambiguous items in the ABI.

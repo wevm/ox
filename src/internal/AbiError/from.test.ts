@@ -10,7 +10,7 @@ test('default', () => {
     })
     expect(abiItem).toMatchInlineSnapshot(`
       {
-        "hash": "0xaa52af9ba76161953067fddc6a99eee9de4ef3377363fd1f54a2648771ce7104",
+        "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
         "inputs": [
           {
             "name": "v",
@@ -27,7 +27,7 @@ test('default', () => {
     const abiItem = AbiError.from('error BadSignatureV(uint8 v)')
     expect(abiItem).toMatchInlineSnapshot(`
       {
-        "hash": "0xaa52af9ba76161953067fddc6a99eee9de4ef3377363fd1f54a2648771ce7104",
+        "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
         "inputs": [
           {
             "name": "v",
@@ -47,7 +47,7 @@ test('default', () => {
     ])
     expect(abiItem).toMatchInlineSnapshot(`
       {
-        "hash": "0x20b3153f3727f1104adc249fb4f7c79cba94baf5cfb70c4178a3893946445f3f",
+        "hash": "0xfced1c858d7f2bfb0878dcc1cb75305474698643ad13e7d8e5e1b96283a8c7c2",
         "inputs": [
           {
             "components": [

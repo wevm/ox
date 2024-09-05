@@ -141,7 +141,7 @@ describe('behavior: data', () => {
       }),
     ).toMatchInlineSnapshot(`
       {
-        "hash": "0xaa52af9ba76161953067fddc6a99eee9de4ef3377363fd1f54a2648771ce7104",
+        "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
         "inputs": [
           {
             "name": "v",

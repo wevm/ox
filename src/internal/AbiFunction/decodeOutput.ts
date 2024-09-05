@@ -99,7 +99,7 @@ export function AbiFunction_decodeOutput<
 >(
   abiFunction: abiFunction | AbiFunction,
   data: Hex,
-  options?: AbiFunction_decodeOutput.Options<as>,
+  options: AbiFunction_decodeOutput.Options<as> = {},
 ): AbiFunction_decodeOutput.ReturnType<abiFunction, as> {
   const values = AbiParameters_decode(abiFunction.outputs, data, options)
   if (values && Object.keys(values).length === 0) return undefined

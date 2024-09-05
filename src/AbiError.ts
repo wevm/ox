@@ -1,3 +1,5 @@
+export { AbiError_decode as decode } from './internal/AbiError/decode.js'
+
 export { AbiError_format as format } from './internal/AbiError/format.js'
 
 export { AbiError_from as from } from './internal/AbiError/from.js'
