@@ -12,6 +12,8 @@ export { AbiFunction_from as from } from './internal/AbiFunction/from.js'
 
 export { AbiFunction_fromAbi as fromAbi } from './internal/AbiFunction/fromAbi.js'
 
+export { AbiFunction_getSelector as getSelector } from './internal/AbiFunction/getSelector.js'
+
 export type {
   AbiFunction,
   AbiFunction_Extract as Extract,
