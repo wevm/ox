@@ -1,7 +1,7 @@
-import { bench, describe } from 'vitest'
-import { AbiFunction } from 'ox'
-import { Web3 } from 'web3'
 import { Interface } from 'ethers'
+import { AbiFunction } from 'ox'
+import { bench, describe } from 'vitest'
+import { Web3 } from 'web3'
 import { AbiFunction_encodeInput } from './encodeInput.js'
 
 const fn = AbiFunction.from(

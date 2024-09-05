@@ -1,8 +1,8 @@
 import { AbiCoder } from 'ethers'
 import { bench, describe } from 'vitest'
+import { Web3 } from 'web3'
 import { address } from '../../../test/constants/addresses.js'
 import { AbiParameters_encode } from './encode.js'
-import { Web3 } from 'web3'
 
 const web3 = new Web3()
 
