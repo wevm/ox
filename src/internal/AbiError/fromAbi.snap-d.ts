@@ -35,7 +35,10 @@ test('behavior: data', () => {
   const item_2 = AbiError.fromAbi(seaportContractConfig.abi, {
     name: selector,
   })
-  attest(item_2.name).type.toString.snap(`  | "BadSignatureV"
+  attest(item_2.name).type.toString.snap(`  | "Error"
+  | "Panic"
+  | "InvalidSignature"
+  | "BadSignatureV"
   | "BadContractSignature"
   | "BadFraction"
   | "BadReturnValueFromERC20OnTransfer"
@@ -57,7 +60,6 @@ test('behavior: data', () => {
   | "InvalidNativeOfferItem"
   | "InvalidProof"
   | "InvalidRestrictedOrder"
-  | "InvalidSignature"
   | "InvalidSigner"
   | "InvalidTime"
   | "MismatchedFulfillmentOfferAndConsiderationComponents"
@@ -78,6 +80,34 @@ test('behavior: data', () => {
   | "UnresolvedConsiderationCriteria"
   | "UnresolvedOfferCriteria"
   | "UnusedItemParameters"`)
+})
+
+test('behavior: able to extract solidity Error', () => {
+  const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
+  const item = AbiError.fromAbi(abi, {
+    name: 'Error',
+  })
+  attest(item).type.toString.snap(`{
+  readonly inputs: readonly [
+    { readonly name: "message"; readonly type: "string" }
+  ]
+  readonly name: "Error"
+  readonly type: "error"
+}`)
+})
+
+test('behavior: able to extract solidity Panic', () => {
+  const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
+  const item = AbiError.fromAbi(abi, {
+    name: 'Panic',
+  })
+  attest(item).type.toString.snap(`{
+  readonly inputs: readonly [
+    { readonly name: "reason"; readonly type: "uint256" }
+  ]
+  readonly name: "Panic"
+  readonly type: "error"
+}`)
 })
 
 test('behavior: overloads', () => {
@@ -135,7 +165,10 @@ test('behavior: widened name', () => {
   const abiItem = AbiError.fromAbi(abi, {
     name: 'BadContractSignature' as AbiError.Name<typeof abi>,
   })
-  attest(abiItem.name).type.toString.snap(`  | "BadSignatureV"
+  attest(abiItem.name).type.toString.snap(`  | "Error"
+  | "Panic"
+  | "InvalidSignature"
+  | "BadSignatureV"
   | "BadContractSignature"
   | "BadFraction"
   | "BadReturnValueFromERC20OnTransfer"
@@ -157,7 +190,6 @@ test('behavior: widened name', () => {
   | "InvalidNativeOfferItem"
   | "InvalidProof"
   | "InvalidRestrictedOrder"
-  | "InvalidSignature"
   | "InvalidSigner"
   | "InvalidTime"
   | "MismatchedFulfillmentOfferAndConsiderationComponents"

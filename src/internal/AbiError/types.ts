@@ -21,7 +21,10 @@ export type AbiError_Extract<
 export type AbiError_Name<abi extends Abi | readonly unknown[] = Abi> =
   abi extends Abi ? AbiError_ExtractNames<abi> : string
 
-export type AbiError_ExtractNames<abi extends Abi> = ExtractAbiErrorNames<abi>
+export type AbiError_ExtractNames<abi extends Abi> =
+  | ExtractAbiErrorNames<abi>
+  | 'Panic'
+  | 'Error'
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal

@@ -48,11 +48,11 @@ test('behavior: with overloads', () => {
       abiItem,
       '0x9cc7f7080000000000000000000000000000000000000000000000000000000000000001',
     ),
-  ).type.toString.snap('readonly [`0x${string}`] | readonly [bigint]')
+  ).type.toString.snap('readonly [bigint] | readonly [`0x${string}`]')
   attest(
     AbiFunction.decodeInput(
       abiItem,
       '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
     ),
-  ).type.toString.snap('readonly [`0x${string}`] | readonly [bigint]')
+  ).type.toString.snap('readonly [bigint] | readonly [`0x${string}`]')
 })

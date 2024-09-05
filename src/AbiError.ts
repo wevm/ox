@@ -1,4 +1,14 @@
+export {
+  AbiError_panicReasons as panicReasons,
+  AbiError_solidityError as solidityError,
+  AbiError_solidityErrorSelector as solidityErrorSelector,
+  AbiError_solidityPanic as solidityPanic,
+  AbiError_solidityPanicSelector as solidityPanicSelector,
+} from './internal/AbiError/constants.js'
+
 export { AbiError_decode as decode } from './internal/AbiError/decode.js'
+
+export { AbiError_encode as encode } from './internal/AbiError/encode.js'
 
 export { AbiError_format as format } from './internal/AbiError/format.js'
 

@@ -8,6 +8,109 @@ import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiError } from './types.js'
 
+/**
+ * ABI-decodes the provided error input (`inputs`).
+ *
+ * :::tip
+ *
+ * This function is typically used to decode contract function reverts (e.g. a JSON-RPC error response).
+ *
+ * See the [End-to-end Example](#end-to-end).
+ *
+ * :::
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiError } from 'ox'
+ *
+ * const error = AbiError.from('error InvalidSignature(uint r, uint s, uint8 yParity)')
+ *
+ * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001')
+ * // @log: [420n, 69n, 1]
+ * ```
+ *
+ * @example
+ * You can extract an ABI Error from a JSON ABI with {@link ox#AbiError.fromAbi}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([...]) // [!code hl]
+ * const error = AbiError.fromAbi(abi, { name: 'InvalidSignature' }) // [!code hl]
+ *
+ * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001')
+ * // @log: [420n, 69n, 1]
+ * ```
+ *
+ * @example
+ * You can pass the error `data` to the `name` property of {@link ox#AbiError.fromAbi} to extract and infer the error by its 4-byte selector:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const data = '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ *
+ * const abi = Abi.from([...])
+ * const error = AbiError.fromAbi(abi, { name: data }) // [!code hl]
+ *
+ * const value = AbiError.decode(error, data)
+ * // @log: [420n, 69n, 1]
+ * ```
+ *
+ * @example
+ * ### End-to-end
+ *
+ * Below is an end-to-end example of using `AbiError.decode` to decode the revert error of an `approve` contract call on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiError, AbiFunction } from 'ox'
+ *
+ * // 1. Extract the Function from the Contract's ABI.
+ * const abi = Abi.from([
+ *   // ...
+ *   {
+ *     inputs: [
+ *       { name: 'to', type: 'address' },
+ *       { name: 'tokenId', type: 'uint256' },
+ *     ],
+ *     name: 'approve',
+ *     outputs: [],
+ *     stateMutability: 'nonpayable',
+ *     type: 'function',
+ *   },
+ *   // ...
+ * ])
+ * const approve = AbiFunction.fromAbi(abi, { name: 'approve' })
+ *
+ * // 2. Encode the Function Input.
+ * const data = AbiFunction.encodeInput(
+ *   approve,
+ *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * )
+ *
+ * try {
+ *   // 3. Attempt to perform the the Contract Call.
+ *   await window.ethereum.request({
+ *     method: 'eth_call',
+ *     params: [
+ *       {
+ *         data,
+ *         to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+ *       },
+ *     ],
+ *   })
+ * } catch (e) { // [!code focus]
+ *   // 4. Extract and decode the Error. // [!code focus]
+ *   const error = AbiError.fromAbi(abi, { name: e.data }) // [!code focus]
+ *   const value = AbiError.decode(error, e.data) // [!code focus]
+ *   console.error(`${error.name}(${value})`) // [!code focus]
+ * // @error:   Error(ERC721: approve caller is not owner nor approved for all)
+ * } // [!code focus]
+ * ```
+ */
 export function AbiError_decode<
   const abiError extends AbiError,
   as extends 'Object' | 'Array' = 'Array',

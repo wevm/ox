@@ -67,6 +67,86 @@ test('behavior: selector as name', () => {
   `)
 })
 
+test('behavior: able to extract solidity Error', () => {
+  const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
+  const item = AbiError.fromAbi(abi, {
+    name: 'Error',
+  })
+  expect(item).toMatchInlineSnapshot(`
+    {
+      "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
+      "inputs": [
+        {
+          "name": "message",
+          "type": "string",
+        },
+      ],
+      "name": "Error",
+      "type": "error",
+    }
+  `)
+})
+
+test('behavior: able to extract solidity Error (selector)', () => {
+  const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
+  const item = AbiError.fromAbi(abi, {
+    name: AbiError.solidityErrorSelector,
+  })
+  expect(item).toMatchInlineSnapshot(`
+    {
+      "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
+      "inputs": [
+        {
+          "name": "message",
+          "type": "string",
+        },
+      ],
+      "name": "Error",
+      "type": "error",
+    }
+  `)
+})
+
+test('behavior: able to extract solidity Panic', () => {
+  const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
+  const item = AbiError.fromAbi(abi, {
+    name: 'Panic',
+  })
+  expect(item).toMatchInlineSnapshot(`
+    {
+      "hash": "0x4e487b71539e0164c9d29506cc725e49342bcac15e0927282bf30fedfe1c7268",
+      "inputs": [
+        {
+          "name": "reason",
+          "type": "uint256",
+        },
+      ],
+      "name": "Panic",
+      "type": "error",
+    }
+  `)
+})
+
+test('behavior: able to extract solidity Panic (selector)', () => {
+  const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
+  const item = AbiError.fromAbi(abi, {
+    name: AbiError.solidityPanicSelector,
+  })
+  expect(item).toMatchInlineSnapshot(`
+    {
+      "hash": "0x4e487b71539e0164c9d29506cc725e49342bcac15e0927282bf30fedfe1c7268",
+      "inputs": [
+        {
+          "name": "reason",
+          "type": "uint256",
+        },
+      ],
+      "name": "Panic",
+      "type": "error",
+    }
+  `)
+})
+
 test('error: no matching name', () => {
   expect(() =>
     AbiError.fromAbi(seaportContractConfig.abi, {

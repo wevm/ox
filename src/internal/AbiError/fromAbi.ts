@@ -3,6 +3,15 @@ import { AbiItemNotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Hex_isHex } from '../Hex/isHex.js'
+import { Hex_slice } from '../Hex/slice.js'
+import type { IsNarrowable, IsNever } from '../types.js'
+import {
+  AbiError_solidityError,
+  AbiError_solidityErrorSelector,
+  AbiError_solidityPanic,
+  AbiError_solidityPanicSelector,
+} from './constants.js'
 import type { AbiError, AbiError_Name } from './types.js'
 
 /**
@@ -80,7 +89,19 @@ export function AbiError_fromAbi<
     AbiItem_ExtractArgs<abi, name>,
     AbiError_Name<abi>
   >,
-): AbiItem_fromAbi.ReturnType<abi, name, args, AbiError> {
+): AbiError_fromAbi.ReturnType<abi, name, args> {
+  const { name } = options
+
+  if (name === 'Error') return AbiError_solidityError as never
+  if (name === 'Panic') return AbiError_solidityPanic as never
+  if (Hex_isHex(name, { strict: false })) {
+    const selector = Hex_slice(name, 0, 4)
+    if (selector === AbiError_solidityErrorSelector)
+      return AbiError_solidityError as never
+    if (selector === AbiError_solidityPanicSelector)
+      return AbiError_solidityPanic as never
+  }
+
   const item = AbiItem_fromAbi(abi, options as any)
   if (item.type !== 'error')
     throw new AbiItemNotFoundError({ ...options, type: 'error' })
@@ -88,6 +109,27 @@ export function AbiError_fromAbi<
 }
 
 export declare namespace AbiError_fromAbi {
+  type ReturnType<
+    abi extends Abi | readonly unknown[] = Abi,
+    name extends AbiError_Name<abi> = AbiError_Name<abi>,
+    args extends
+      | AbiItem_ExtractArgs<abi, name>
+      | undefined = AbiItem_ExtractArgs<abi, name>,
+  > = IsNarrowable<name, AbiError_Name<abi>> extends true
+    ?
+        | (name extends 'Error' ? typeof AbiError_solidityError : never)
+        | (name extends 'Panic'
+            ? typeof AbiError_solidityPanic
+            : never) extends infer result
+      ? IsNever<result> extends true
+        ? AbiItem_fromAbi.ReturnType<abi, name, args, AbiError>
+        : result
+      : never
+    :
+        | AbiItem_fromAbi.ReturnType<abi, name, args, AbiError>
+        | typeof AbiError_solidityError
+        | typeof AbiError_solidityPanic
+
   type ErrorType = AbiItem_fromAbi.ErrorType | GlobalErrorType
 }
 
