@@ -75,7 +75,7 @@ import type {
  *
  * :::note
  *
- * Using the `data` option is useful when extracting an ABI Item from an `eth_call` RPC response,
+ * Extracting via a hex selector is useful when extracting an ABI Item from an `eth_call` RPC response,
  * a Transaction `input`, or from Event Log `topics`.
  *
  * :::

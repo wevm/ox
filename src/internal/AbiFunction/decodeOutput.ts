@@ -12,6 +12,8 @@ import type { AbiFunction } from './types.js'
  *
  * This function is typically used to decode contract function return values (e.g. the response of an `eth_call` or the `input` property of a Transaction).
  *
+ * See the [End-to-end Example](#end-to-end).
+ *
  * :::
  *
  * @example

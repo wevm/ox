@@ -5,6 +5,14 @@
 export * as Abi from './Abi.js'
 
 /**
+ * The **AbiError** Module provides a set of types & utility functions for working with
+ * with [ABI Errors](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * The `AbiError` type is a sub-type of the [`AbiItem` type](/api/AbiItem#types).
+ */
+export * as AbiError from './AbiError.js'
+
+/**
  * The **AbiFunction** Module provides a set of types & utility functions for working with
  * with [ABI Functions](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
  *
@@ -20,7 +28,7 @@ export * as AbiFunction from './AbiFunction.js'
  * - [`AbiConstructor`](#TODO)
  * - [`AbiFunction`](/api/AbiFunction#types)
  * - [`AbiEvent`](#TODO)
- * - [`AbiError`](#TODO)
+ * - [`AbiError`](/api/AbiError#types)
  */
 export * as AbiItem from './AbiItem.js'
 

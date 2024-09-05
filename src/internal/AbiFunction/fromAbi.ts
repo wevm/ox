@@ -60,7 +60,7 @@ import type { AbiFunction, AbiFunction_Name } from './types.js'
  *
  * :::note
  *
- * Using the `data` option is useful when extracting an ABI Function from an `eth_call` RPC response or
+ * Extracting via a hex selector is useful when extracting an ABI Function from an `eth_call` RPC response or
  * from a Transaction `input`.
  *
  * :::

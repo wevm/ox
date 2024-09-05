@@ -75,7 +75,7 @@ export function normalizeSignature(signature: string): string {
 
     // If level === 0, we are at the definition level.
     if (level === 0) {
-      if (char === ' ' && ['event', 'function', ''].includes(result))
+      if (char === ' ' && ['event', 'function', 'error', ''].includes(result))
         result = ''
       else {
         result += char
