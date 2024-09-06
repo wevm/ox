@@ -1,5 +1,5 @@
-import { resolve } from 'node:path'
 import { appendFile, glob, readFile, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 const out = resolve(import.meta.dirname, '../generated.ts')
 await writeFile(out, '')
