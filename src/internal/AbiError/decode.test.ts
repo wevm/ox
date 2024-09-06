@@ -1,7 +1,8 @@
 import { Abi, AbiError, AbiFunction } from 'ox'
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
+import { Errors } from '../../../contracts/generated.js'
 
 test('behavior: no args', () => {
   const error = AbiError.from('error InvalidSignature()')
@@ -73,46 +74,201 @@ test('error: invalid data', () => {
   `)
 })
 
-test('behavior: network', async () => {
-  const abi = Abi.from(wagmiContractConfig.abi)
-
-  const approve = AbiFunction.fromAbi(abi, {
-    name: 'approve',
-  })
-
-  const result = await anvilMainnet
-    .request({
-      method: 'eth_call',
-      params: [
-        {
-          data: AbiFunction.encodeInput(approve, [
-            '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
-            69420n,
-          ]),
-          to: wagmiContractConfig.address,
-        },
-      ],
-    })
-    .catch((error) => {
-      const errorItem = AbiError.fromAbi(abi, { name: error.data })
-      const value = AbiError.decode(errorItem, error.data)
-      return [errorItem, value]
-    })
-
-  expect(result).toMatchInlineSnapshot(`
-    [
+describe('behavior: network', async () => {
+  const hash = await anvilMainnet.request({
+    method: 'eth_sendTransaction',
+    params: [
       {
-        "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
-        "inputs": [
+        data: Errors.bytecode.object,
+      },
+    ],
+  })
+  const { contractAddress } = (await anvilMainnet.request({
+    method: 'eth_getTransactionReceipt',
+    params: [hash],
+  }))!
+
+  const abi = Abi.from(Errors.abi)
+
+  test('solidity `Error`', async () => {
+    const result = await anvilMainnet
+      .request({
+        method: 'eth_call',
+        params: [
           {
-            "name": "message",
-            "type": "string",
+            data: AbiFunction.encodeInput(
+              AbiFunction.fromAbi(abi, { name: 'revertRead' }),
+            ),
+            to: contractAddress,
           },
         ],
-        "name": "Error",
-        "type": "error",
-      },
-      "ERC721: approve caller is not owner nor approved for all",
-    ]
-  `)
+      })
+      .catch((error) => {
+        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const value = AbiError.decode(errorItem, error.data)
+        return [errorItem, value]
+      })
+
+    expect(result).toMatchInlineSnapshot(`
+      [
+        {
+          "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
+          "inputs": [
+            {
+              "name": "message",
+              "type": "string",
+            },
+          ],
+          "name": "Error",
+          "type": "error",
+        },
+        "This is a revert message",
+      ]
+    `)
+  })
+
+  test('solidity `Panic` (assert)', async () => {
+    const result = await anvilMainnet
+      .request({
+        method: 'eth_call',
+        params: [
+          {
+            data: AbiFunction.encodeInput(
+              AbiFunction.fromAbi(abi, { name: 'assertRead' }),
+            ),
+            to: contractAddress,
+          },
+        ],
+      })
+      .catch((error) => {
+        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const value = AbiError.decode(errorItem, error.data)
+        if (typeof value !== 'number') return
+        return [errorItem, value, AbiError.panicReasons[value]]
+      })
+
+    expect(result).toMatchInlineSnapshot(`
+      [
+        {
+          "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
+          "inputs": [
+            {
+              "name": "reason",
+              "type": "uint8",
+            },
+          ],
+          "name": "Panic",
+          "type": "error",
+        },
+        1,
+        "An \`assert\` condition failed.",
+      ]
+    `)
+  })
+
+  test('solidity `Panic` (overflow)', async () => {
+    const result = await anvilMainnet
+      .request({
+        method: 'eth_call',
+        params: [
+          {
+            data: AbiFunction.encodeInput(
+              AbiFunction.fromAbi(abi, { name: 'overflowRead' }),
+            ),
+            to: contractAddress,
+          },
+        ],
+      })
+      .catch((error) => {
+        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const value = AbiError.decode(errorItem, error.data)
+        if (typeof value !== 'number') return
+        return [errorItem, value, AbiError.panicReasons[value]]
+      })
+
+    expect(result).toMatchInlineSnapshot(`
+      [
+        {
+          "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
+          "inputs": [
+            {
+              "name": "reason",
+              "type": "uint8",
+            },
+          ],
+          "name": "Panic",
+          "type": "error",
+        },
+        17,
+        "Arithmetic operation resulted in underflow or overflow.",
+      ]
+    `)
+  })
+
+  test('custom error', async () => {
+    const result = await anvilMainnet
+      .request({
+        method: 'eth_call',
+        params: [
+          {
+            data: AbiFunction.encodeInput(
+              AbiFunction.fromAbi(abi, { name: 'complexCustomWrite' }),
+            ),
+            to: contractAddress,
+          },
+        ],
+      })
+      .catch((error) => {
+        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const value = AbiError.decode(errorItem, error.data)
+        return [errorItem, value]
+      })
+
+    expect(result).toMatchInlineSnapshot(`
+      [
+        {
+          "hash": "0xdb731cf434b2ed4535c45e759ac81849e63af37b1fec522c9145652b5caee860",
+          "inputs": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "sender",
+                  "type": "address",
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "bar",
+                  "type": "uint256",
+                },
+              ],
+              "internalType": "struct Errors.Foo",
+              "name": "foo",
+              "type": "tuple",
+            },
+            {
+              "internalType": "string",
+              "name": "message",
+              "type": "string",
+            },
+            {
+              "internalType": "uint256",
+              "name": "number",
+              "type": "uint256",
+            },
+          ],
+          "name": "ComplexError",
+          "type": "error",
+        },
+        [
+          {
+            "bar": 69n,
+            "sender": "0x0000000000000000000000000000000000000000",
+          },
+          "bugger",
+          69n,
+        ],
+      ]
+    `)
+  })
 })

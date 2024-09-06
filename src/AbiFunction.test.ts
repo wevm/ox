@@ -11,6 +11,7 @@ test('exports', () => {
       "format",
       "from",
       "fromAbi",
+      "getSelector",
     ]
   `)
 })

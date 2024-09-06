@@ -114,11 +114,11 @@ test('behavior: able to extract solidity Panic', () => {
   })
   expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x4e487b71539e0164c9d29506cc725e49342bcac15e0927282bf30fedfe1c7268",
+      "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
       "inputs": [
         {
           "name": "reason",
-          "type": "uint256",
+          "type": "uint8",
         },
       ],
       "name": "Panic",
@@ -134,11 +134,11 @@ test('behavior: able to extract solidity Panic (selector)', () => {
   })
   expect(item).toMatchInlineSnapshot(`
     {
-      "hash": "0x4e487b71539e0164c9d29506cc725e49342bcac15e0927282bf30fedfe1c7268",
+      "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
       "inputs": [
         {
           "name": "reason",
-          "type": "uint256",
+          "type": "uint8",
         },
       ],
       "name": "Panic",

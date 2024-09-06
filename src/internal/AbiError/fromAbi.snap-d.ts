@@ -37,11 +37,10 @@ test('behavior: data', () => {
   })
   attest(item_2.name).type.toString.snap(`  | "Error"
   | "Panic"
-  | "InvalidSignature"
-  | "BadSignatureV"
   | "BadContractSignature"
   | "BadFraction"
   | "BadReturnValueFromERC20OnTransfer"
+  | "BadSignatureV"
   | "ConsiderationCriteriaResolverOutOfRange"
   | "ConsiderationNotMet"
   | "CriteriaNotEnabledForItem"
@@ -60,6 +59,7 @@ test('behavior: data', () => {
   | "InvalidNativeOfferItem"
   | "InvalidProof"
   | "InvalidRestrictedOrder"
+  | "InvalidSignature"
   | "InvalidSigner"
   | "InvalidTime"
   | "MismatchedFulfillmentOfferAndConsiderationComponents"
@@ -103,7 +103,7 @@ test('behavior: able to extract solidity Panic', () => {
   })
   attest(item).type.toString.snap(`{
   readonly inputs: readonly [
-    { readonly name: "reason"; readonly type: "uint256" }
+    { readonly name: "reason"; readonly type: "uint8" }
   ]
   readonly name: "Panic"
   readonly type: "error"
@@ -167,11 +167,10 @@ test('behavior: widened name', () => {
   })
   attest(abiItem.name).type.toString.snap(`  | "Error"
   | "Panic"
-  | "InvalidSignature"
-  | "BadSignatureV"
   | "BadContractSignature"
   | "BadFraction"
   | "BadReturnValueFromERC20OnTransfer"
+  | "BadSignatureV"
   | "ConsiderationCriteriaResolverOutOfRange"
   | "ConsiderationNotMet"
   | "CriteriaNotEnabledForItem"
@@ -190,6 +189,7 @@ test('behavior: widened name', () => {
   | "InvalidNativeOfferItem"
   | "InvalidProof"
   | "InvalidRestrictedOrder"
+  | "InvalidSignature"
   | "InvalidSigner"
   | "InvalidTime"
   | "MismatchedFulfillmentOfferAndConsiderationComponents"

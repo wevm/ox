@@ -11,7 +11,7 @@ export const AbiError_panicReasons = {
   50: 'Array index is out of bounds.',
   65: 'Allocated too much memory or created an array which is too large.',
   81: 'Attempted to call a zero-initialized variable of internal function type.',
-} as const
+} as Record<number, string>
 
 export const AbiError_solidityError = /*#__PURE__*/ AbiError_from({
   inputs: [
@@ -30,7 +30,7 @@ export const AbiError_solidityPanic = /*#__PURE__*/ AbiError_from({
   inputs: [
     {
       name: 'reason',
-      type: 'uint256',
+      type: 'uint8',
     },
   ],
   name: 'Panic',

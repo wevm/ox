@@ -47,10 +47,10 @@ test('behavior: data', () => {
     name: data,
   })
   attest(item_2.name).type.toString.snap(`  | "symbol"
+  | "Transfer"
   | "name"
   | "approve"
   | "Approval"
-  | "Transfer"
   | "ApprovalForAll"
   | "balanceOf"
   | "totalSupply"
@@ -118,10 +118,10 @@ test('behavior: widened name', () => {
     name: 'totalSupply' as AbiItem.Name<typeof abi>,
   })
   attest(abiItem.name).type.toString.snap(`  | "symbol"
+  | "Transfer"
   | "name"
   | "approve"
   | "Approval"
-  | "Transfer"
   | "ApprovalForAll"
   | "balanceOf"
   | "totalSupply"
