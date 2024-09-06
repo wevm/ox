@@ -13,6 +13,14 @@ export * as Abi from './Abi.js'
 export * as AbiError from './AbiError.js'
 
 /**
+ * The **AbiEvent** Module provides a set of types & utility functions for working with
+ * with [ABI Events](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * The `AbiEvent` type is a sub-type of the [`AbiItem` type](/api/AbiItem#types).
+ */
+export * as AbiEvent from './AbiEvent.js'
+
+/**
  * The **AbiFunction** Module provides a set of types & utility functions for working with
  * with [ABI Functions](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
  *

@@ -6,6 +6,7 @@ test('exports', () => {
     [
       "Abi",
       "AbiError",
+      "AbiEvent",
       "AbiFunction",
       "AbiItem",
       "AbiParameters",

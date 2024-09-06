@@ -2,7 +2,6 @@ import { Abi, AbiError, AbiFunction } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { Errors } from '../../../contracts/generated.js'
 import { anvilMainnet } from '../../../test/anvil.js'
-import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('behavior: no args', () => {
   const error = AbiError.from('error InvalidSignature()')

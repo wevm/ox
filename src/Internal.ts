@@ -143,6 +143,12 @@ export type {
 } from './internal/AbiItem/types.js'
 
 export type {
+  AbiEvent_IsSignature,
+  AbiEvent_Signature,
+  AbiEvent_Signatures,
+} from './internal/AbiEvent/types.js'
+
+export type {
   AbiFunction_IsSignature,
   AbiFunction_Signature,
   AbiFunction_Signatures,
