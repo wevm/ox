@@ -1,3 +1,5 @@
+export { AbiEvent_encode as encode } from './internal/AbiEvent/encode.js'
+
 export { AbiEvent_format as format } from './internal/AbiEvent/format.js'
 
 export { AbiEvent_from as from } from './internal/AbiEvent/from.js'

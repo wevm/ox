@@ -146,6 +146,12 @@ export type {
   AbiEvent_IsSignature,
   AbiEvent_Signature,
   AbiEvent_Signatures,
+  AbiEvent_ParameterToPrimitiveType,
+  AbiEvent_ParametersToPrimitiveTypes,
+  DefaultEventParameterOptions,
+  EventParameterOptions,
+  HasNamedAbiParameter,
+  TopicType,
 } from './internal/AbiEvent/types.js'
 
 export type {
@@ -172,6 +178,9 @@ export type {
   IsUnknown,
   KeyofUnion,
   LastInUnion,
+  MaybeRequired,
+  Filter,
+  ExactRequired,
   Omit,
   OneOf,
   PartialBy,
