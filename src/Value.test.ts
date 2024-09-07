@@ -4,6 +4,7 @@ import * as exports from './Value.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "InvalidDecimalNumberError",
       "exponents",
       "formatEther",
       "formatGwei",

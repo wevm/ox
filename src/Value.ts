@@ -1,3 +1,5 @@
+export { InvalidDecimalNumberError } from './internal/Value/errors.js'
+
 export { Value_exponents as exponents } from './internal/Value/constants.js'
 
 export { Value_formatEther as formatEther } from './internal/Value/formatEther.js'
