@@ -9,7 +9,5 @@ test('default', () => {
     type: 'constructor',
   })
   const formatted = AbiConstructor.format(approve)
-  expect(formatted).toMatchInlineSnapshot(
-    `"constructor(address owner)"`,
-  )
+  expect(formatted).toMatchInlineSnapshot(`"constructor(address owner)"`)
 })
