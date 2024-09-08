@@ -1,4 +1,4 @@
-import { Hex, Value } from 'ox'
+import { Value } from 'ox'
 import { expect, test } from 'vitest'
 
 test('converts number to unit of a given length', () => {

@@ -1,15 +1,10 @@
 import type {
-  AbiConstructor,
-  AbiError,
-  AbiEvent,
-  AbiFallback,
   AbiParameter,
   AbiParametersToPrimitiveTypes,
   AbiStateMutability,
   ResolvedRegister,
 } from 'abitype'
 import type { Abi } from '../Abi/types.js'
-import type { Hex } from '../Hex/types.js'
 import type {
   Compute,
   IsNever,
@@ -19,19 +14,6 @@ import type {
 } from '../types.js'
 
 export type AbiItem = Abi[number]
-
-export type AbiItem_Constructor = AbiConstructor
-
-export type AbiItem_Error = AbiError & {
-  hash?: Hex | undefined
-}
-
-export type AbiItem_Event = AbiEvent & {
-  hash?: Hex | undefined
-  overloads?: readonly AbiItem[] | undefined
-}
-
-export type AbiItem_Fallback = AbiFallback
 
 export type AbiItem_Extract<
   abi extends Abi,
