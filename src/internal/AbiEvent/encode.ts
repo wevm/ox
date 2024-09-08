@@ -20,7 +20,7 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
- * const topics = AbiEvent.encode(transfer)
+ * const { topics } = AbiEvent.encode(transfer)
  * // @log: ['0x406dade31f7ae4b5dbc276258c28dde5ae6d5c2773c5745802c493a2360e55e0']
  * ```
  *
@@ -40,7 +40,7 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
- * const topics = AbiEvent.encode(transfer, {
+ * const { topics } = AbiEvent.encode(transfer, {
  *   from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code hl]
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' // [!code hl]
  * })
@@ -66,7 +66,7 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  * )
  *
  * // 2. Encode the ABI Event into Event Topics.
- * const topics = AbiEvent.encode(transfer)
+ * const { topics } = AbiEvent.encode(transfer)
  *
  * // 3. Query for events matching the encoded Topics.
  * const logs = await window.ethereum.request({
@@ -134,7 +134,7 @@ export function AbiEvent_encode<const abiEvent extends AbiEvent>(
     return AbiEvent_getSelector(abiEvent)
   })()
 
-  return [selector, ...topics]
+  return { topics: [selector, ...topics] }
 }
 
 export declare namespace AbiEvent_encode {
@@ -153,7 +153,9 @@ export declare namespace AbiEvent_encode {
         : []
     : [readonly unknown[] | Record<string, unknown>] | []
 
-  type ReturnType = Compute<[selector: Hex, ...(Hex | readonly Hex[] | null)[]]>
+  type ReturnType = {
+    topics: Compute<[selector: Hex, ...(Hex | readonly Hex[] | null)[]]>
+  }
 
   type ErrorType =
     | AbiParameters_encode.ErrorType

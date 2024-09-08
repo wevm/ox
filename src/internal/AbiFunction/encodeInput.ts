@@ -2,7 +2,6 @@ import type { AbiParametersToPrimitiveTypes } from 'abitype'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
-import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
 import { AbiFunction_fromAbi } from './fromAbi.js'
@@ -111,10 +110,7 @@ export function AbiFunction_encodeInput<const abiFunction extends AbiFunction>(
       }) as AbiFunction)
     : abiFunction
 
-  const selector = (() => {
-    if (item.hash) return Hex_slice(item.hash, 0, 4)
-    return AbiFunction_getSelector(item)
-  })()
+  const selector = AbiFunction_getSelector(item)
 
   const data =
     args.length > 0

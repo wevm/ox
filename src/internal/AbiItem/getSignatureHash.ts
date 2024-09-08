@@ -38,6 +38,8 @@ import type { AbiItem } from './types.js'
  * @returns The {@link Hash#keccak256} hash of the ABI item's signature.
  */
 export function AbiItem_getSignatureHash(abiItem: string | AbiItem): Hex {
+  if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
+    return abiItem.hash as Hex
   return Hash_keccak256(Bytes_from(AbiItem_getSignature(abiItem)))
 }
 

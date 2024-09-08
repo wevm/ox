@@ -100,14 +100,20 @@ export type AbiEvent_ParametersToPrimitiveTypes<
                 name: infer name extends string
               }
                 ? {
-                    [key in name]?: AbiEvent_ParameterToPrimitiveType<
-                      Filtered[index]
-                    >
+                    [key in name]?:
+                      | AbiEvent_ParameterToPrimitiveType<
+                          Filtered[index],
+                          _options
+                        >
+                      | undefined
                   }
                 : {
-                    [key in index]?: AbiEvent_ParameterToPrimitiveType<
-                      Filtered[index]
-                    >
+                    [key in index]?:
+                      | AbiEvent_ParameterToPrimitiveType<
+                          Filtered[index],
+                          _options
+                        >
+                      | undefined
                   }
             }[number]
           > extends infer Mapped

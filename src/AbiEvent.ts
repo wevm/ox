@@ -1,8 +1,12 @@
+export { AbiEvent_decode as decode } from './internal/AbiEvent/decode.js'
+
 export { AbiEvent_encode as encode } from './internal/AbiEvent/encode.js'
 
 export { AbiEvent_format as format } from './internal/AbiEvent/format.js'
 
 export { AbiEvent_from as from } from './internal/AbiEvent/from.js'
+
+export { AbiEvent_fromAbi as fromAbi } from './internal/AbiEvent/fromAbi.js'
 
 export { AbiEvent_getSelector as getSelector } from './internal/AbiEvent/getSelector.js'
 
