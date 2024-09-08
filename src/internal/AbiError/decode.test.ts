@@ -82,6 +82,10 @@ describe('behavior: network', async () => {
       },
     ],
   })
+  await anvilMainnet.request({
+    method: 'anvil_mine',
+    params: ['0x1', '0x0'],
+  })
   const { contractAddress } = (await anvilMainnet.request({
     method: 'eth_getTransactionReceipt',
     params: [hash],
