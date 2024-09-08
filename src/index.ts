@@ -57,12 +57,15 @@ export * as AbiItem from './AbiItem.js'
  * import { AbiParameters } from 'ox'
  *
  * const data = AbiParameters.encode(
- *   ['uint256', 'boolean', 'string'],
+ *   AbiParameters.from('uint256, boolean, string'),
  *   [1n, true, 'hello'],
  * )
  * // @log: '0x...'
 
- * const args = AbiParameters.decode(['uint256', 'boolean', 'string'], data)
+ * const args = AbiParameters.decode(
+ *   AbiParameters.from('uint256, boolean, string'),
+ *   data,
+ * )
  * // @log: [1n, true, 'hello']
  * ```
  */

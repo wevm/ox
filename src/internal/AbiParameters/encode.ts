@@ -30,7 +30,7 @@ import type {
  * import { AbiParameters } from 'ox'
  *
  * const data = AbiParameters.encode(
- *   ['string', 'uint', 'bool'],
+ *   AbiParameters.from('string, uint, bool'),
  *   ['wagmi', 420n, true],
  * )
  * ```
@@ -49,20 +49,6 @@ import type {
  *     { type: 'uint', name: 'age' },
  *     { type: 'bool', name: 'isOwner' },
  *   ],
- *   ['wagmi', 420n, true],
- * )
- * ```
- *
- * @example
- * ### Human Readable Parameters
- *
- * You can pass in **Human Readable ABI** Parameters with the {@link AbiParameters#from} utility:
- *
- * ```ts twoslash
- * import { AbiParameters } from 'ox'
- *
- * const data = AbiParameters.encode(
- *   AbiParameters.from('string x, uint y, bool z'),
  *   ['wagmi', 420n, true],
  * )
  * ```

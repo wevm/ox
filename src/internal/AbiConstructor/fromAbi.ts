@@ -36,17 +36,20 @@ import type { AbiConstructor } from './types.js'
  */
 export function AbiConstructor_fromAbi<
   const abi extends Abi | readonly unknown[],
->(
-  abi: abi | Abi | readonly unknown[],
-): IsNarrowable<abi, Abi> extends true
-  ? Extract<abi[number], { type: 'constructor' }>
-  : AbiConstructor {
+>(abi: abi | Abi | readonly unknown[]): AbiConstructor_fromAbi.ReturnType<abi> {
   const item = (abi as Abi).find((item) => item.type === 'constructor')
   if (!item) throw new AbiItemNotFoundError({ name: 'constructor' })
   return item
 }
 
 export declare namespace AbiConstructor_fromAbi {
+  type ReturnType<abi extends Abi | readonly unknown[]> = IsNarrowable<
+    abi,
+    Abi
+  > extends true
+    ? Extract<abi[number], { type: 'constructor' }>
+    : AbiConstructor
+
   type ErrorType = AbiItemNotFoundError | GlobalErrorType
 }
 

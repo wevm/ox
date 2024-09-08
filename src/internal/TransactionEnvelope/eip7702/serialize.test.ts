@@ -330,7 +330,7 @@ test('behavior: network', async () => {
           "yParity": "0x0",
         },
       ],
-      "blockHash": "0xb3b81ea379ed58f0c26dc7358409db8074f2969a1c335695cbf14d1488b634e9",
+      "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
       "blockNumber": "0x12f2977",
       "chainId": "0x1",
       "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
@@ -360,7 +360,7 @@ test('behavior: network', async () => {
   expect(receipt).toMatchInlineSnapshot(`
     {
       "blobGasPrice": "0x1",
-      "blockHash": "0xb3b81ea379ed58f0c26dc7358409db8074f2969a1c335695cbf14d1488b634e9",
+      "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
       "blockNumber": "0x12f2977",
       "contractAddress": null,
       "cumulativeGasUsed": "0x4af8",
@@ -370,9 +370,9 @@ test('behavior: network', async () => {
       "logs": [
         {
           "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-          "blockHash": "0xb3b81ea379ed58f0c26dc7358409db8074f2969a1c335695cbf14d1488b634e9",
+          "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
           "blockNumber": "0x12f2977",
-          "blockTimestamp": "0x66434e51",
+          "blockTimestamp": "0x66434e46",
           "data": "0xdeadbeef",
           "logIndex": "0x0",
           "removed": false,

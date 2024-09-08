@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { AbiConstructor } from './types.js'
 
 /**
- * Formats an {@link AbiConstructor#AbiConstructor} into a **Human Readable ABI Function**.
+ * Formats an {@link ox#AbiConstructor.AbiConstructor} into a **Human Readable ABI Function**.
  *
  * @example
  * ```ts twoslash
