@@ -60,10 +60,11 @@ export function AbiConstructor_encode<
   options: AbiConstructor_encode.Options<abiConstructor>,
 ): Hex {
   const { bytecode, args } = options
-  if (!abiConstructor.inputs || abiConstructor.inputs.length === 0) return '0x'
   return Hex_concat(
     bytecode,
-    AbiParameters_encode(abiConstructor.inputs, args as readonly unknown[]),
+    abiConstructor.inputs?.length && args?.length
+      ? AbiParameters_encode(abiConstructor.inputs, args as readonly unknown[])
+      : '0x',
   )
 }
 
