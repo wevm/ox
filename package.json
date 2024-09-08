@@ -29,8 +29,9 @@
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
     "test": "vitest -c ./test/vitest.config.ts",
-    "test:types": "TYPES=true vitest -c ./test/vitest.config.ts",
+    "test:ci": "CI=true vitest -c ./test/vitest.config.ts --coverage --retry=3 --bail=1",
     "test:cov": "vitest -c ./test/vitest.config.ts --coverage",
+    "test:types": "TYPES=true vitest -c ./test/vitest.config.ts",
     "vectors": "bun test vectors/**/*.test.ts",
     "vectors:generate": "bun vectors/generate.ts",
     "version:update": "tsx ./scripts/update-version.ts"
