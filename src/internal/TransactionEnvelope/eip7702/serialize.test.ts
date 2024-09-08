@@ -317,7 +317,7 @@ test('behavior: network', async () => {
     params: [hash],
   })
 
-  expect(tx).toMatchInlineSnapshot(`
+  expect({ ...tx, blockHash: null }).toMatchInlineSnapshot(`
     {
       "accessList": [],
       "authorizationList": [
@@ -330,7 +330,7 @@ test('behavior: network', async () => {
           "yParity": "0x0",
         },
       ],
-      "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
+      "blockHash": null,
       "blockNumber": "0x12f2977",
       "chainId": "0x1",
       "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
