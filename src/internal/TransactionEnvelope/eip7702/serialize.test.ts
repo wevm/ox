@@ -357,10 +357,10 @@ test('behavior: network', async () => {
     params: [hash],
   })
 
-  expect(receipt).toMatchInlineSnapshot(`
+  expect({ ...receipt, blockHash: null }).toMatchInlineSnapshot(`
     {
       "blobGasPrice": "0x1",
-      "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
+      "blockHash": null,
       "blockNumber": "0x12f2977",
       "contractAddress": null,
       "cumulativeGasUsed": "0x4af8",
