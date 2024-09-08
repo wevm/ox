@@ -1,6 +1,7 @@
 import { type Abi, formatAbiItem } from 'abitype'
 import { normalizeSignature } from '../AbiItem/getSignature.js'
 import { BaseError } from '../Errors/base.js'
+import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 
 export class AbiItemAmbiguityError extends BaseError {
@@ -28,14 +29,31 @@ export class AbiItemNotFoundError extends BaseError {
   constructor({
     name,
     data,
-  }: { name?: string | undefined; data?: Hex | undefined }) {
+    type = 'item',
+  }: {
+    name?: string | undefined
+    data?: Hex | undefined
+    type?: string | undefined
+  }) {
     const selector = (() => {
-      if (name) return ` for name "${name}"`
-      if (data) return ` for data "${data}"`
+      if (name) return ` with name "${name}"`
+      if (data) return ` with data "${data}"`
       return ''
     })()
-    super(`ABI Item${selector} not found.`, {
+    super(`ABI ${type}${selector} not found.`, {
       docsPath: '/errors#abiitemnotfounderror',
     })
+  }
+}
+
+export class InvalidSelectorSizeError extends BaseError {
+  override readonly name = 'InvalidSelectorSizeError'
+  constructor({ data }: { data: Hex }) {
+    super(
+      `Selector size is invalid. Expected 4 bytes. Received ${Hex_size(data)} bytes ("${data}").`,
+      {
+        docsPath: '/errors#invalidselectorsizeerror',
+      },
+    )
   }
 }

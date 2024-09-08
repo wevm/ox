@@ -1,4 +1,4 @@
-import { AbiItem } from 'ox'
+import { AbiEvent, AbiItem, type Hex } from 'ox'
 import { expect, test } from 'vitest'
 
 test('hashes functions', () => {
@@ -197,5 +197,14 @@ test('hashes `AbiEvent`', () => {
     }),
   ).toEqual(
     '0x170cd84eddb1952bf41adcce9be0e44b66ff38f07cddda1cf64d32708742bd2d',
+  )
+})
+
+test('behavior: abi item contains hash', () => {
+  const event = AbiEvent.from(
+    'event Transfer(address indexed from, address indexed to, uint256 amount)',
+  )
+  expect(AbiItem.getSignatureHash(event)).toEqual(
+    (event as unknown as { hash: Hex.Hex }).hash,
   )
 })

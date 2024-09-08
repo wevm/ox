@@ -1555,7 +1555,7 @@ const orderComponents = [
 
 describe('seaport', () => {
   test('cancel', () => {
-    const cancel = AbiItem.extract(seaportContractConfig.abi, {
+    const cancel = AbiItem.fromAbi(seaportContractConfig.abi, {
       name: 'cancel',
     })
     const data = AbiParameters.encode(cancel.inputs, [orderComponents])
@@ -1578,7 +1578,7 @@ describe('seaport', () => {
       zoneHash,
     } = orderComponents[0]
 
-    const fulfillAdvancedOrder = AbiItem.extract(seaportContractConfig.abi, {
+    const fulfillAdvancedOrder = AbiItem.fromAbi(seaportContractConfig.abi, {
       name: 'fulfillAdvancedOrder',
     })
     const data = AbiParameters.encode(fulfillAdvancedOrder.inputs, [
@@ -1634,7 +1634,7 @@ describe('seaport', () => {
       zoneHash,
     } = orderComponents[0]
 
-    const fulfillAdvancedOrder = AbiItem.extract(seaportContractConfig.abi, {
+    const fulfillAdvancedOrder = AbiItem.fromAbi(seaportContractConfig.abi, {
       name: 'fulfillAvailableAdvancedOrders',
     })
     const data = AbiParameters.encode(fulfillAdvancedOrder.inputs, [
@@ -1682,7 +1682,7 @@ describe('seaport', () => {
   })
 
   test('getCounter', () => {
-    const getCounter = AbiItem.extract(seaportContractConfig.abi, {
+    const getCounter = AbiItem.fromAbi(seaportContractConfig.abi, {
       name: 'getCounter',
     })
     const data = AbiParameters.encode(getCounter.inputs, [address.vitalik])
@@ -1705,7 +1705,7 @@ describe('seaport', () => {
       zoneHash,
     } = orderComponents[0]
 
-    const fulfillAdvancedOrder = AbiItem.extract(seaportContractConfig.abi, {
+    const fulfillAdvancedOrder = AbiItem.fromAbi(seaportContractConfig.abi, {
       name: 'validate',
     })
     const data = AbiParameters.encode(fulfillAdvancedOrder.inputs, [

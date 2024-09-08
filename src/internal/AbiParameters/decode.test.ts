@@ -1181,7 +1181,7 @@ test('options: as = Object', () => {
 
 describe('seaport', () => {
   test('cancel', () => {
-    const cancel = AbiItem.extract(seaportContractConfig.abi, {
+    const cancel = AbiItem.fromAbi(seaportContractConfig.abi, {
       name: 'cancel',
     })
     const data = AbiParameters.decode(
@@ -1303,7 +1303,7 @@ describe('seaport', () => {
   })
 
   test('fulfillAdvancedOrder', () => {
-    const fulfillAdvancedOrder = AbiItem.extract(seaportContractConfig.abi, {
+    const fulfillAdvancedOrder = AbiItem.fromAbi(seaportContractConfig.abi, {
       name: 'fulfillAdvancedOrder',
     })
     const data = AbiParameters.decode(

@@ -5,26 +5,67 @@
 export * as Abi from './Abi.js'
 
 /**
+ * The **AbiConstructor** Module provides a set of types & utility functions for working with
+ * with [ABI Constructors](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * `AbiConstructor` is a sub-type of [`AbiItem`](/api/AbiItem).
+ */
+export * as AbiConstructor from './AbiConstructor.js'
+
+/**
+ * The **AbiError** Module provides a set of types & utility functions for working with
+ * with [ABI Errors](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * `AbiError` is a sub-type of [`AbiItem`](/api/AbiItem).
+ */
+export * as AbiError from './AbiError.js'
+
+/**
+ * The **AbiEvent** Module provides a set of types & utility functions for working with
+ * with [ABI Events](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * `AbiEvent` is a sub-type of [`AbiItem`](/api/AbiItem).
+ */
+export * as AbiEvent from './AbiEvent.js'
+
+/**
+ * The **AbiFunction** Module provides a set of types & utility functions for working with
+ * with [ABI Functions](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * `AbiFunction` is a sub-type of [`AbiItem`](/api/AbiItem).
+ */
+export * as AbiFunction from './AbiFunction.js'
+
+/**
  * The **AbiItem** Module provides a set of types & utility functions for working with
- * with [Application Binary Interface (ABI)](https://docs.soliditylang.org/en/latest/abi-spec.html).
+ * with [Application Binary Interface (ABI) Items](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * The `AbiItem` type is a super-type of:
+ * - [`AbiConstructor`](/api/AbiConstructor)
+ * - [`AbiFunction`](/api/AbiFunction)
+ * - [`AbiEvent`](/api/AbiEvent)
+ * - [`AbiError`](/api/AbiError)
  */
 export * as AbiItem from './AbiItem.js'
 
 /**
  * The **AbiParameters** Module provides a set of types & utility functions for encoding, decoding,
- * and working with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html).
+ * and working with [ABI Parameters](https://docs.soliditylang.org/en/latest/abi-spec.html#types).
  *
  * @example
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
  * const data = AbiParameters.encode(
- *   ['uint256', 'boolean', 'string'],
+ *   AbiParameters.from('uint256, boolean, string'),
  *   [1n, true, 'hello'],
  * )
  * // @log: '0x...'
 
- * const args = AbiParameters.decode(['uint256', 'boolean', 'string'], data)
+ * const args = AbiParameters.decode(
+ *   AbiParameters.from('uint256, boolean, string'),
+ *   data,
+ * )
  * // @log: [1n, true, 'hello']
  * ```
  */

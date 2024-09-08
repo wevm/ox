@@ -1,4 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
+import { InvalidDecimalNumberError } from './errors.js'
 
 /**
  * Parses a `string` representation of a Value to `bigint` (multiplied by the given exponent).
@@ -16,6 +17,9 @@ import type { GlobalErrorType } from '../Errors/error.js'
  * @returns The `bigint` representation of the Value.
  */
 export function Value_from(value: string, decimals = 0) {
+  if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
+    throw new InvalidDecimalNumberError({ value })
+
   let [integer = '', fraction = '0'] = value.split('.')
 
   const negative = integer.startsWith('-')

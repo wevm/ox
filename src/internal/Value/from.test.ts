@@ -34,7 +34,7 @@ test('converts number to unit of a given length', () => {
   )
 })
 
-test('decimals === 0', () => {
+test('behavior: decimals === 0', () => {
   expect(
     Value.from('69.2352112312312451512412341231', 0),
   ).toMatchInlineSnapshot('69n')
@@ -55,7 +55,7 @@ test('decimals === 0', () => {
   )
 })
 
-test('decimals < fraction length', () => {
+test('behavior: decimals < fraction length', () => {
   expect(Value.from('69.23521', 0)).toMatchInlineSnapshot('69n')
   expect(Value.from('69.56789', 0)).toMatchInlineSnapshot('70n')
   expect(Value.from('69.23521', 1)).toMatchInlineSnapshot('692n')
@@ -99,4 +99,19 @@ test('decimals < fraction length', () => {
   expect(Value.from('69.00000000059', 9)).toMatchInlineSnapshot('69000000001n')
   expect(Value.from('69.59000000059', 9)).toMatchInlineSnapshot('69590000001n')
   expect(Value.from('69.59000002359', 9)).toMatchInlineSnapshot('69590000024n')
+})
+
+test('error: invalid decimal number', () => {
+  expect(() => Value.from('123.456.789', 9)).toThrowErrorMatchingInlineSnapshot(
+    '[InvalidDecimalNumberError: Value `123.456.789` is not a valid decimal number.]',
+  )
+  expect(() => Value.from('100e2', 9)).toThrowErrorMatchingInlineSnapshot(
+    '[InvalidDecimalNumberError: Value `100e2` is not a valid decimal number.]',
+  )
+  expect(() => Value.from('0x50', 9)).toThrowErrorMatchingInlineSnapshot(
+    '[InvalidDecimalNumberError: Value `0x50` is not a valid decimal number.]',
+  )
+  expect(() => Value.from('0o50', 9)).toThrowErrorMatchingInlineSnapshot(
+    '[InvalidDecimalNumberError: Value `0o50` is not a valid decimal number.]',
+  )
 })

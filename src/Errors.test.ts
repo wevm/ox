@@ -4,7 +4,9 @@ import * as exports from './Errors.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "AbiItemNotFoundError",
       "AbiItemAmbiguityError",
+      "InvalidSelectorSizeError",
       "AbiDecodingDataSizeTooSmallError",
       "AbiDecodingZeroDataError",
       "AbiEncodingArrayLengthMismatchError",

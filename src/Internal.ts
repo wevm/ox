@@ -143,6 +143,36 @@ export type {
 } from './internal/AbiItem/types.js'
 
 export type {
+  AbiEvent_IsSignature,
+  AbiEvent_Signature,
+  AbiEvent_Signatures,
+  AbiEvent_ParameterToPrimitiveType,
+  AbiEvent_ParametersToPrimitiveTypes,
+  DefaultEventParameterOptions,
+  EventParameterOptions,
+  HasNamedAbiParameter,
+  TopicType,
+} from './internal/AbiEvent/types.js'
+
+export type {
+  AbiFunction_IsSignature,
+  AbiFunction_Signature,
+  AbiFunction_Signatures,
+} from './internal/AbiFunction/types.js'
+
+export type {
+  AbiError_IsSignature,
+  AbiError_Signature,
+  AbiError_Signatures,
+} from './internal/AbiError/types.js'
+
+export type {
+  AbiConstructor_IsSignature,
+  AbiConstructor_Signature,
+  AbiConstructor_Signatures,
+} from './internal/AbiConstructor/types.js'
+
+export type {
   Assign,
   Assign_inner,
   Branded,
@@ -154,6 +184,9 @@ export type {
   IsUnknown,
   KeyofUnion,
   LastInUnion,
+  MaybeRequired,
+  Filter,
+  ExactRequired,
   Omit,
   OneOf,
   PartialBy,
