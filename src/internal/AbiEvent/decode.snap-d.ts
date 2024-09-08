@@ -1,6 +1,6 @@
-import { test } from 'vitest'
-import { AbiEvent } from 'ox'
 import { attest } from '@ark/attest'
+import { AbiEvent } from 'ox'
+import { test } from 'vitest'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 
 test('behavior: named', () => {

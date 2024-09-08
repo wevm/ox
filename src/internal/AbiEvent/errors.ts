@@ -1,9 +1,9 @@
 import type { AbiParameter } from 'abitype'
+import { AbiParameters_format } from '../AbiParameters/format.js'
 import { BaseError } from '../Errors/base.js'
 import type { Hex } from '../Hex/types.js'
-import type { AbiEvent } from './types.js'
 import { AbiEvent_format } from './format.js'
-import { AbiParameters_format } from '../AbiParameters/format.js'
+import type { AbiEvent } from './types.js'
 
 export class DecodeLogDataMismatchError extends BaseError {
   override readonly name = 'DecodeLogDataMismatchError'

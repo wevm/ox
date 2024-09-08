@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { AbiEvent } from 'ox'
+import { expect, test } from 'vitest'
 
 test('behavior: named', () => {
   const transfer = AbiEvent.from(
