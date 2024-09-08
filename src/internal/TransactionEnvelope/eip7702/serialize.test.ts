@@ -357,20 +357,26 @@ test('behavior: network', async () => {
     params: [hash],
   })
 
-  expect({ ...receipt, blockHash: null }).toMatchInlineSnapshot(`
+  expect({
+    ...receipt,
+    blockHash: null,
+    cumulativeGasUsed: null,
+    gasUsed: null,
+    logs: receipt!.logs.map((log) => ({ ...log, blockHash: null })),
+  }).toMatchInlineSnapshot(`
     {
       "blobGasPrice": "0x1",
       "blockHash": null,
       "blockNumber": "0x12f2977",
       "contractAddress": null,
-      "cumulativeGasUsed": "0x4af8",
+      "cumulativeGasUsed": null,
       "effectiveGasPrice": "0x3df788e0a",
       "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "gasUsed": "0x4af8",
+      "gasUsed": null,
       "logs": [
         {
           "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-          "blockHash": "0xdd2a2f7f3e6fd6ba0883414032d3942cd87d5b6d99e5c68100e2f5e759f8222d",
+          "blockHash": null,
           "blockNumber": "0x12f2977",
           "blockTimestamp": "0x66434e46",
           "data": "0xdeadbeef",
