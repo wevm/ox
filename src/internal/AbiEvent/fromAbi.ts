@@ -22,7 +22,7 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiEvent.fromAbi(abi, { name: 'foo' }) // [!code focus]
+ * const item = AbiEvent.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
  * //    ^?
  *
  *

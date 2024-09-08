@@ -167,6 +167,12 @@ export type {
 } from './internal/AbiError/types.js'
 
 export type {
+  AbiConstructor_IsSignature,
+  AbiConstructor_Signature,
+  AbiConstructor_Signatures,
+} from './internal/AbiConstructor/types.js'
+
+export type {
   Assign,
   Assign_inner,
   Branded,

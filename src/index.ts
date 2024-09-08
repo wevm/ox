@@ -5,10 +5,18 @@
 export * as Abi from './Abi.js'
 
 /**
+ * The **AbiConstructor** Module provides a set of types & utility functions for working with
+ * with [ABI Constructors](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
+ *
+ * `AbiConstructor` is a sub-type of [`AbiItem`](/api/AbiItem).
+ */
+export * as AbiConstructor from './AbiConstructor.js'
+
+/**
  * The **AbiError** Module provides a set of types & utility functions for working with
  * with [ABI Errors](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
  *
- * The `AbiError` type is a sub-type of the [`AbiItem` type](/api/AbiItem#types).
+ * `AbiError` is a sub-type of [`AbiItem`](/api/AbiItem).
  */
 export * as AbiError from './AbiError.js'
 
@@ -16,7 +24,7 @@ export * as AbiError from './AbiError.js'
  * The **AbiEvent** Module provides a set of types & utility functions for working with
  * with [ABI Events](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
  *
- * The `AbiEvent` type is a sub-type of the [`AbiItem` type](/api/AbiItem#types).
+ * `AbiEvent` is a sub-type of [`AbiItem`](/api/AbiItem).
  */
 export * as AbiEvent from './AbiEvent.js'
 
@@ -24,7 +32,7 @@ export * as AbiEvent from './AbiEvent.js'
  * The **AbiFunction** Module provides a set of types & utility functions for working with
  * with [ABI Functions](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
  *
- * The `AbiFunction` type is a sub-type of the [`AbiItem` type](/api/AbiItem#types).
+ * `AbiFunction` is a sub-type of [`AbiItem`](/api/AbiItem).
  */
 export * as AbiFunction from './AbiFunction.js'
 
@@ -33,10 +41,10 @@ export * as AbiFunction from './AbiFunction.js'
  * with [Application Binary Interface (ABI) Items](https://docs.soliditylang.org/en/latest/abi-spec.html#json).
  *
  * The `AbiItem` type is a super-type of:
- * - [`AbiConstructor`](#TODO)
- * - [`AbiFunction`](/api/AbiFunction#types)
- * - [`AbiEvent`](#TODO)
- * - [`AbiError`](/api/AbiError#types)
+ * - [`AbiConstructor`](/api/AbiConstructor)
+ * - [`AbiFunction`](/api/AbiFunction)
+ * - [`AbiEvent`](/api/AbiEvent)
+ * - [`AbiError`](/api/AbiError)
  */
 export * as AbiItem from './AbiItem.js'
 
