@@ -1,4 +1,11 @@
 export {
+  EventDataMismatchError,
+  EventSelectorTopicMismatchError,
+  EventTopicsMismatchError,
+  FilterTypeNotSupportedError,
+} from './internal/AbiEvent/errors.js'
+
+export {
   AbiItemNotFoundError,
   AbiItemAmbiguityError,
   InvalidSelectorSizeError,

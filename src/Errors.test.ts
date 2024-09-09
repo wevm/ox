@@ -4,6 +4,10 @@ import * as exports from './Errors.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "EventDataMismatchError",
+      "EventSelectorTopicMismatchError",
+      "EventTopicsMismatchError",
+      "FilterTypeNotSupportedError",
       "AbiItemNotFoundError",
       "AbiItemAmbiguityError",
       "InvalidSelectorSizeError",
