@@ -12,6 +12,14 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
 /**
  * ABI-encodes the provided event input (`inputs`) into an array of [Event Topics](https://info.etherscan.com/what-is-event-logs/).
  *
+ * :::tip
+ *
+ * This function is typically used to encode event arguments into [Event Topics](https://info.etherscan.com/what-is-event-logs/).
+ *
+ * See the [End-to-end Example](#end-to-end).
+ *
+ * :::
+ *
  * @example
  * ```ts twoslash
  * import { AbiEvent } from 'ox'

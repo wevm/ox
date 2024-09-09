@@ -15,6 +15,14 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
 /**
  * ABI-Decodes the provided [Log Topics and Data](https://info.etherscan.com/what-is-event-logs/) according to the ABI Event's parameter types (`input`).
  *
+ * :::tip
+ *
+ * This function is typically used to decode an [Event Log](https://info.etherscan.com/what-is-event-logs/) that may be returned from a Log Query (e.g. `eth_getLogs`) or Transaction Receipt.
+ *
+ * See the [End-to-end Example](#end-to-end).
+ *
+ * :::
+ *
  * @example
  * ```ts twoslash
  * import { AbiEvent } from 'ox'

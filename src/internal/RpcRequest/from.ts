@@ -12,7 +12,9 @@ import type {
  * A type-safe interface to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
  *
  * :::warning
- * You will likely want to use {@link JsonRpc#createRequestStore} instead as it will also manage `id`s and uses this function internally.
+ *
+ * You will likely want to use {@link RpcRequest#createStore} instead as it will also manage `id`s and uses this function internally.
+ *
  * :::
  *
  * @example
@@ -42,7 +44,7 @@ import type {
  * })
  *  .then((response) => response.json())
  *  // 3. Parse the JSON-RPC response into a type-safe result.
- *  .then((response) => RpcResponse.from(response, { request }))
+ *  .then((response) => RpcResponse.parse(response, { request }))
  * ```
  *
  * @example
@@ -51,9 +53,9 @@ import type {
  * It is possible to define your own type-safe {@link JsonRpc#Method} by using the {@link JsonRpc#DefineMethod} type.
  *
  * ```ts twoslash
- * import { JsonRpc } from 'ox'
+ * import { RpcRequest } from 'ox'
  *
- * type Method = JsonRpc.DefineMethod<{ // [!code focus]
+ * type Method = RpcRequest.DefineMethod<{ // [!code focus]
  *   method: 'eth_foobar' // [!code focus]
  *   params: [number] // [!code focus]
  *   returnType: string // [!code focus]
@@ -63,7 +65,7 @@ import type {
  *   returnType: string // [!code focus]
  * }> // [!code focus]
  *
- * const request = JsonRpc.defineRequest<Method>({ // [!code focus]
+ * const request = RpcRequest.from<Method>({ // [!code focus]
  *   id: 0,
  *   method: 'eth_foobar', // [!code focus]
  *   // ^?
