@@ -34,9 +34,13 @@ import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'
  * @param transaction - The Legacy RPC transaction to convert.
  * @returns An instantiated {@link ox#Transaction.Legacy}.
  */
-export function TransactionLegacy_fromRpc(
-  transaction: TransactionLegacy_Rpc,
-): TransactionLegacy {
+export function TransactionLegacy_fromRpc<
+  const transaction extends TransactionLegacy_Rpc | null,
+>(
+  transaction: transaction | TransactionLegacy_Rpc | null,
+): transaction extends TransactionLegacy_Rpc ? TransactionLegacy : null {
+  if (!transaction) return null as never
+
   const signature = Signature_extract(transaction)!
 
   return {
@@ -60,7 +64,7 @@ export function TransactionLegacy_fromRpc(
     value: BigInt(transaction.value ?? 0n),
     v: signature.yParity === 0 ? 27 : 28,
     ...signature,
-  }
+  } as never
 }
 
 export declare namespace TransactionLegacy_fromRpc {

@@ -1,4 +1,10 @@
-import { Hex, Secp256k1, TransactionEip1559, TransactionEnvelope } from 'ox'
+import {
+  Hex,
+  Secp256k1,
+  Transaction,
+  TransactionEip1559,
+  TransactionEnvelope,
+} from 'ox'
 import { expect, test } from 'vitest'
 import { anvilMainnet } from '../../../../test/anvil.js'
 import { accounts } from '../../../../test/constants/accounts.js'
@@ -161,16 +167,15 @@ test('behavior: pending', () => {
 })
 
 test('behavior: network', async () => {
-  const transaction_rpc = (await anvilMainnet.request({
-    method: 'eth_getTransactionByBlockNumberAndIndex',
-    params: [
-      Hex.from((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
-      '0x2',
-    ],
-  }))!
-  if (transaction_rpc.type !== '0x2') throw new Error('invalid tx type')
-
-  const transaction = TransactionEip1559.fromRpc(transaction_rpc!)
+  const transaction = await anvilMainnet
+    .request({
+      method: 'eth_getTransactionByBlockNumberAndIndex',
+      params: [
+        Hex.from((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
+        '0x2',
+      ],
+    })
+    .then(Transaction.fromRpc)
   expect(transaction).toMatchInlineSnapshot(`
     {
       "accessList": [],
@@ -198,18 +203,17 @@ test('behavior: network', async () => {
 })
 
 test('behavior: tx replay', async () => {
-  const transaction_rpc = (await anvilMainnet.request({
-    method: 'eth_getTransactionByBlockNumberAndIndex',
-    params: [
-      Hex.from((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
-      '0x2',
-    ],
-  }))!
-  if (transaction_rpc.type !== '0x2') throw new Error('invalid tx type')
+  const transaction_rpc = await anvilMainnet
+    .request({
+      method: 'eth_getTransactionByBlockNumberAndIndex',
+      params: [
+        Hex.from((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
+        '0x2',
+      ],
+    })
+    .then(Transaction.fromRpc)
 
-  const envelope = TransactionEnvelope.from(
-    TransactionEip1559.fromRpc(transaction_rpc),
-  )
+  const envelope = TransactionEnvelope.from(transaction_rpc!)
 
   const signature = Secp256k1.sign({
     payload: TransactionEnvelope.getSignPayload(envelope),

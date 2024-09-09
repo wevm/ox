@@ -147,14 +147,10 @@ test('behavior: pending', () => {
 })
 
 test('behavior: network', async () => {
-  const transaction_rpc = (await request(process.env.VITE_ANVIL_FORK_URL!, {
+  const transaction = await request(process.env.VITE_ANVIL_FORK_URL!, {
     method: 'eth_getTransactionByBlockNumberAndIndex',
     params: ['0x10f2dd', '0x0'],
-  }))!
-  if (transaction_rpc.type !== '0x0')
-    throw new Error('Invalid transaction type')
-
-  const transaction = TransactionLegacy.fromRpc(transaction_rpc)
+  }).then(Transaction.fromRpc)
   expect(transaction).toMatchInlineSnapshot(`
     {
       "blockHash": "0x8299a290ae51a8958965987e2caf178a09b8ecde01b737b5f9a8badbacb407cb",
@@ -180,15 +176,13 @@ test('behavior: network', async () => {
 })
 
 test('behavior: tx replay', async () => {
-  const transaction_rpc = (await request(process.env.VITE_ANVIL_FORK_URL!, {
+  const transaction_rpc = await request(process.env.VITE_ANVIL_FORK_URL!, {
     method: 'eth_getTransactionByBlockNumberAndIndex',
     params: ['0x10f2dd', '0x0'],
-  }))!
-  if (transaction_rpc.type !== '0x0')
-    throw new Error('Invalid transaction type')
+  }).then(Transaction.fromRpc)
 
   const envelope = TransactionEnvelope.from({
-    ...TransactionLegacy.fromRpc(transaction_rpc),
+    ...transaction_rpc!,
     nonce: 69420n,
   })
 

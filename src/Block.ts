@@ -1,3 +1,5 @@
+export { Block_fromRpc as fromRpc } from './internal/Block/fromRpc.js'
+
 export type {
   Block,
   Block_Hash as Hash,

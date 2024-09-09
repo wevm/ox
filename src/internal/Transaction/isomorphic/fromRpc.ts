@@ -41,12 +41,21 @@ import type { Transaction, Transaction_Rpc } from './types.js'
  * @param transaction - The RPC transaction to convert.
  * @returns An instantiated {@link ox#Transaction.Transaction}.
  */
-export function Transaction_fromRpc(transaction: Transaction_Rpc): Transaction {
-  if (transaction.type === '0x1') return TransactionEip2930_fromRpc(transaction)
-  if (transaction.type === '0x2') return TransactionEip1559_fromRpc(transaction)
-  if (transaction.type === '0x3') return TransactionEip4844_fromRpc(transaction)
-  if (transaction.type === '0x4') return TransactionEip7702_fromRpc(transaction)
-  return TransactionLegacy_fromRpc(transaction)
+export function Transaction_fromRpc<
+  const transaction extends Transaction_Rpc | null,
+>(
+  transaction: transaction | Transaction_Rpc | null,
+): transaction extends Transaction_Rpc ? Transaction : null {
+  if (!transaction) return null as never
+  if (transaction.type === '0x1')
+    return TransactionEip2930_fromRpc(transaction) as never
+  if (transaction.type === '0x2')
+    return TransactionEip1559_fromRpc(transaction) as never
+  if (transaction.type === '0x3')
+    return TransactionEip4844_fromRpc(transaction) as never
+  if (transaction.type === '0x4')
+    return TransactionEip7702_fromRpc(transaction) as never
+  return TransactionLegacy_fromRpc(transaction) as never
 }
 
 export declare namespace Transaction_fromRpc {

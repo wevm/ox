@@ -36,9 +36,13 @@ import type { TransactionEip1559, TransactionEip1559_Rpc } from './types.js'
  * @param transaction - The EIP-1559 RPC transaction to convert.
  * @returns An instantiated {@link ox#Transaction.Eip1559}.
  */
-export function TransactionEip1559_fromRpc(
-  transaction: TransactionEip1559_Rpc,
-): TransactionEip1559 {
+export function TransactionEip1559_fromRpc<
+  const transaction extends TransactionEip1559_Rpc | null,
+>(
+  transaction: transaction | TransactionEip1559_Rpc | null,
+): transaction extends TransactionEip1559_Rpc ? TransactionEip1559 : null {
+  if (!transaction) return null as never
+
   const signature = Signature_extract(transaction)!
 
   return {
@@ -64,7 +68,7 @@ export function TransactionEip1559_fromRpc(
     value: BigInt(transaction.value ?? 0n),
     v: signature.yParity === 0 ? 27 : 28,
     ...signature,
-  }
+  } as never
 }
 
 export declare namespace TransactionEip1559_fromRpc {

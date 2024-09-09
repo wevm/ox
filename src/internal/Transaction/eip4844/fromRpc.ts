@@ -38,9 +38,13 @@ import type { TransactionEip4844, TransactionEip4844_Rpc } from './types.js'
  * @param transaction - The EIP-4844 RPC transaction to convert.
  * @returns An instantiated {@link ox#Transaction.Eip4844}.
  */
-export function TransactionEip4844_fromRpc(
-  transaction: TransactionEip4844_Rpc,
-): TransactionEip4844 {
+export function TransactionEip4844_fromRpc<
+  const transaction extends TransactionEip4844_Rpc | null,
+>(
+  transaction: transaction | TransactionEip4844_Rpc | null,
+): transaction extends TransactionEip4844_Rpc ? TransactionEip4844 : null {
+  if (!transaction) return null as never
+
   const signature = Signature_extract(transaction)!
 
   return {
@@ -67,7 +71,7 @@ export function TransactionEip4844_fromRpc(
     type: 'eip4844',
     value: BigInt(transaction.value ?? 0n),
     ...signature,
-  }
+  } as never
 }
 
 export declare namespace TransactionEip4844_fromRpc {

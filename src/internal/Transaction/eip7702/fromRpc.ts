@@ -45,9 +45,13 @@ import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
  * @param transaction - The EIP-1559 RPC transaction to convert.
  * @returns An instantiated {@link ox#Transaction.Eip7702}.
  */
-export function TransactionEip7702_fromRpc(
-  transaction: TransactionEip7702_Rpc,
-): TransactionEip7702 {
+export function TransactionEip7702_fromRpc<
+  const transaction extends TransactionEip7702_Rpc | null,
+>(
+  transaction: transaction | TransactionEip7702_Rpc | null,
+): transaction extends TransactionEip7702_Rpc ? TransactionEip7702 : null {
+  if (!transaction) return null as never
+
   const authorizationList = Authorization_fromRpcList(
     transaction.authorizationList ?? [],
   )
@@ -76,7 +80,7 @@ export function TransactionEip7702_fromRpc(
     type: 'eip7702',
     value: BigInt(transaction.value ?? 0n),
     ...signature,
-  }
+  } as never
 }
 
 export declare namespace TransactionEip7702_fromRpc {

@@ -5,6 +5,7 @@ import type {
   Transaction_Rpc,
 } from '../Transaction/isomorphic/types.js'
 import type { Withdrawal } from '../Withdrawal/types.js'
+import type { Compute } from '../types.js'
 
 /** A Block as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml). */
 export type Block<
@@ -17,7 +18,7 @@ export type Block<
     bigintType,
     numberType
   >,
-> = {
+> = Compute<{
   /** Base fee per gas */
   baseFeePerGas?: bigintType | undefined
   /** Total used blob gas by all transactions in this block */
@@ -72,7 +73,7 @@ export type Block<
   withdrawals?: readonly Withdrawal<bigintType, numberType>[] | undefined
   /** Root of the this block’s withdrawals trie */
   withdrawalsRoot?: Hex | undefined
-}
+}>
 
 export type Block_Hash = Hex
 
