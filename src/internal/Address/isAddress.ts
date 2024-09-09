@@ -2,7 +2,7 @@ import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 
 /**
- * Checks if the given address is a valid {@link Address#Address}.
+ * Checks if the given address is a valid {@link ox#Address.Address}.
  *
  * @example
  * ```ts twoslash

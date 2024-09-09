@@ -3,7 +3,7 @@ import { Hex_fromNumber } from '../Hex/from.js'
 import type { Signature, Signature_Rpc } from './types.js'
 
 /**
- * Converts a {@link Signature#Signature} into a {@link Signature#Rpc}.
+ * Converts a {@link ox#Signature.Signature} into a {@link ox#Signature.Rpc}.
  *
  * @example
  * ```ts twoslash
@@ -16,8 +16,8 @@ import type { Signature, Signature_Rpc } from './types.js'
  * })
  * ```
  *
- * @param signature - The {@link Signature#Signature} to convert.
- * @returns The converted {@link Signature#Rpc}.
+ * @param signature - The {@link ox#Signature.Signature} to convert.
+ * @returns The converted {@link ox#Signature.Rpc}.
  */
 export function Signature_toRpc(signature: Signature): Signature_Rpc {
   const { r, s, yParity } = signature

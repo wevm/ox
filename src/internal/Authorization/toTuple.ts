@@ -7,7 +7,7 @@ import type { Compute } from '../types.js'
 import type { Authorization, Authorization_Tuple } from './types.js'
 
 /**
- * Converts an {@link Authorization#Authorization} to an {@link Authorization#Tuple}.
+ * Converts an {@link ox#Authorization.Authorization} to an {@link ox#Authorization.Tuple}.
  *
  * @example
  * ```ts twoslash
@@ -27,7 +27,7 @@ import type { Authorization, Authorization_Tuple } from './types.js'
  * // @log: ]
  * ```
  *
- * @param authorization - The {@link Authorization#Authorization}.
+ * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple.
  */
 export function Authorization_toTuple<

@@ -4,7 +4,7 @@ import { Hex_trimLeft } from '../Hex/trim.js'
 import type { Signature, Signature_Tuple } from './types.js'
 
 /**
- * Converts a {@link Signature#Signature} to a serialized {@link Signature#Tuple} to be used for signatures in Transaction Envelopes, EIP-7702 Authorization Lists, etc.
+ * Converts a {@link ox#Signature.Signature} to a serialized {@link ox#Signature.Tuple} to be used for signatures in Transaction Envelopes, EIP-7702 Authorization Lists, etc.
  *
  * @example
  * ```ts twoslash
@@ -18,8 +18,8 @@ import type { Signature, Signature_Tuple } from './types.js'
  * // @log: [yParity: '0x01', r: '0x7b', s: '0x1c8']
  * ```
  *
- * @param signature - The {@link Signature#Signature} to convert.
- * @returns The {@link Signature#Tuple}.
+ * @param signature - The {@link ox#Signature.Signature} to convert.
+ * @returns The {@link ox#Signature.Tuple}.
  */
 export function Signature_toTuple(signature: Signature): Signature_Tuple {
   const { r, s, yParity } = signature

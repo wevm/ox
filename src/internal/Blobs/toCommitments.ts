@@ -8,7 +8,7 @@ import type { Compute } from '../types.js'
 import type { Blobs } from './types.js'
 
 /**
- * Compute commitments from a list of {@link Blobs#Blobs}.
+ * Compute commitments from a list of {@link ox#Blobs.Blobs}.
  *
  * @example
  * ```ts twoslash
@@ -38,7 +38,7 @@ import type { Blobs } from './types.js'
  * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
  * ```
  *
- * @param blobs - The {@link Blobs#Blobs} to transform to commitments.
+ * @param blobs - The {@link ox#Blobs.Blobs} to transform to commitments.
  * @param options -
  * @returns The commitments.
  */

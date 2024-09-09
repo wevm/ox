@@ -18,7 +18,7 @@ import type {
 } from './types.js'
 
 /**
- * Converts an arbitrary transaction object into a typed {@link TransactionEnvelope#TransactionEnvelope}.
+ * Converts an arbitrary transaction object into a typed {@link ox#TransactionEnvelope.TransactionEnvelope}.
  *
  * @example
  * ```ts twoslash
@@ -81,7 +81,7 @@ import type {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate a Transaction Envelope from a {@link TransactionEnvelope#Serialized} value.
+ * It is possible to instantiate a Transaction Envelope from a {@link ox#TransactionEnvelope.Serialized} value.
  *
  * ```ts twoslash
  * import { TransactionEnvelope } from 'ox'
@@ -98,9 +98,9 @@ import type {
  * ```
  *
  *
- * @param value - The arbitrary value to instantiate a {@link TransactionEnvelope#TransactionEnvelope} from.
+ * @param value - The arbitrary value to instantiate a {@link ox#TransactionEnvelope.TransactionEnvelope} from.
  * @param options -
- * @returns A {@link TransactionEnvelope#TransactionEnvelope}.
+ * @returns A {@link ox#TransactionEnvelope.TransactionEnvelope}.
  */
 export function TransactionEnvelope_from<
   const value extends

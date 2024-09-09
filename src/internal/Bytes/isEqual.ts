@@ -4,7 +4,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Bytes } from './types.js'
 
 /**
- * Checks if two {@link Bytes#Bytes} values are equal.
+ * Checks if two {@link ox#Bytes.Bytes} values are equal.
  *
  * @example
  * ```ts twoslash
@@ -17,8 +17,8 @@ import type { Bytes } from './types.js'
  * // @log: false
  * ```
  *
- * @param bytesA - First {@link Bytes#Bytes} value.
- * @param bytesB - Second {@link Bytes#Bytes} value.
+ * @param bytesA - First {@link ox#Bytes.Bytes} value.
+ * @param bytesB - Second {@link ox#Bytes.Bytes} value.
  * @returns `true` if the two values are equal, otherwise `false`.
  */
 export function Bytes_isEqual(bytesA: Bytes, bytesB: Bytes) {

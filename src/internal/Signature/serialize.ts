@@ -8,7 +8,7 @@ import { Signature_toCompact } from './toCompact.js'
 import type { Signature } from './types.js'
 
 /**
- * Serializes a {@link Signature#Signature} to {@link Hex#Hex} or {@link Bytes#Bytes}.
+ * Serializes a {@link ox#Signature.Signature} to {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash

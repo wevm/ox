@@ -6,7 +6,7 @@ import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
 
 /**
- * Converts an {@link Transaction#Eip7702} to an {@link Transaction#Eip7702Rpc}.
+ * Converts an {@link ox#Transaction.Eip7702} to an {@link ox#Transaction.Eip7702Rpc}.
  *
  * @example
  * ```ts twoslash

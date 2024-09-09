@@ -14,7 +14,7 @@ import type { TransactionEnvelope_GetType } from './getType.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
- * Converts an {@link TransactionEnvelope#TransactionEnvelope} to an {@link TransactionEnvelope#Rpc}.
+ * Converts an {@link ox#TransactionEnvelope.TransactionEnvelope} to an {@link ox#TransactionEnvelope.Rpc}.
  *
  * @example
  * ```ts twoslash

@@ -8,7 +8,7 @@ import { Blobs_toCommitments } from './toCommitments.js'
 import type { Blobs } from './types.js'
 
 /**
- * Compute Blob Versioned Hashes from a list of {@link Blobs#Blobs}.
+ * Compute Blob Versioned Hashes from a list of {@link ox#Blobs.Blobs}.
  *
  * @example
  * ```ts twoslash
@@ -20,7 +20,7 @@ import type { Blobs } from './types.js'
  * const versionedHashes = Blobs.toVersionedHashes(blobs, { kzg }) // [!code focus]
  * ```
  *
- * @param blobs - The {@link Blobs#Blobs} to transform into Blob Versioned Hashes.
+ * @param blobs - The {@link ox#Blobs.Blobs} to transform into Blob Versioned Hashes.
  * @param options -
  * @returns The Blob Versioned Hashes.
  */

@@ -5,7 +5,7 @@ import type { Signature } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
- * Converts a {@link Signature#Rpc} into a {@link Signature#Signature}.
+ * Converts a {@link ox#Signature.Rpc} into a {@link ox#Signature.Signature}.
  *
  * @example
  * ```ts twoslash
@@ -18,8 +18,8 @@ import { Signature_vToYParity } from './vToYParity.js'
  * })
  * ```
  *
- * @param signature - The {@link Signature#Rpc} to convert.
- * @returns The converted {@link Signature#Signature}.
+ * @param signature - The {@link ox#Signature.Rpc} to convert.
+ * @returns The converted {@link ox#Signature.Signature}.
  */
 export function Signature_fromRpc(signature: {
   r: Hex

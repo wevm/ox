@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from './types.js'
 
 /**
- * Trims leading zeros from a {@link Hex#Hex} value.
+ * Trims leading zeros from a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -12,8 +12,8 @@ import type { Hex } from './types.js'
  * // @log: '0xdeadbeef'
  * ```
  *
- * @param value - The {@link Hex#Hex} value to trim.
- * @returns The trimmed {@link Hex#Hex} value.
+ * @param value - The {@link ox#Hex.Hex} value to trim.
+ * @returns The trimmed {@link ox#Hex.Hex} value.
  */
 export function Hex_trimLeft(value: Hex): Hex_trimLeft.ReturnType {
   return trim(value, { dir: 'left' })
@@ -29,7 +29,7 @@ export declare namespace Hex_trimLeft {
 Hex_trimLeft.parseError = (error: unknown) => error as Hex_trimLeft.ErrorType
 
 /**
- * Trims trailing zeros from a {@link Hex#Hex} value.
+ * Trims trailing zeros from a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -39,8 +39,8 @@ Hex_trimLeft.parseError = (error: unknown) => error as Hex_trimLeft.ErrorType
  * // @log: '0xdeadbeef'
  * ```
  *
- * @param value - The {@link Hex#Hex} value to trim.
- * @returns The trimmed {@link Hex#Hex} value.
+ * @param value - The {@link ox#Hex.Hex} value to trim.
+ * @returns The trimmed {@link ox#Hex.Hex} value.
  */
 export function Hex_trimRight(value: Hex): Hex_trimRight.ReturnType {
   return trim(value, { dir: 'right' })

@@ -8,7 +8,7 @@ import { Hex_isHex } from '../Hex/isHex.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
- * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link Bytes#Bytes} or {@link Hex#Hex} value.
+ * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
  * This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
  *
@@ -40,7 +40,7 @@ import type { Hex } from '../Hex/types.js'
  * // @log: Uint8Array [...]
  * ```
  *
- * @param value - {@link Bytes#Bytes} or {@link Hex#Hex} value.
+ * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  * @param to - The return type.
  * @returns Keccak256 hash.
  */

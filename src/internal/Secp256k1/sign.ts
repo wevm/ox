@@ -20,7 +20,7 @@ import type { Signature } from '../Signature/types.js'
  * ```
  *
  * @param options - The signing options.
- * @returns The ECDSA {@link Signature#Signature}.
+ * @returns The ECDSA {@link ox#Signature.Signature}.
  */
 export function Secp256k1_sign(options: Secp256k1_sign.Options): Signature {
   const { payload, privateKey } = options

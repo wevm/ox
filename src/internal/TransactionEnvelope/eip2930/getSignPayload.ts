@@ -4,11 +4,11 @@ import { TransactionEnvelopeEip2930_hash } from './hash.js'
 import type { TransactionEnvelopeEip2930 } from './types.js'
 
 /**
- * Returns the payload to sign for a {@link TransactionEnvelope#Eip2930}.
+ * Returns the payload to sign for a {@link ox#TransactionEnvelope.Eip2930}.
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
- * with ECDSA signing utilities like {@link Secp256k1#sign}.
+ * with ECDSA signing utilities like {@link ox#Secp256k1.sign}.
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip2930 } from 'ox'

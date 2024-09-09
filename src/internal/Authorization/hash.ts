@@ -7,7 +7,7 @@ import { Authorization_toTuple } from './toTuple.js'
 import type { Authorization } from './types.js'
 
 /**
- * Computes the hash for an {@link Authorization#Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
+ * Computes the hash for an {@link ox#Authorization.Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
  *
  * @example
  * ```ts twoslash
@@ -22,7 +22,7 @@ import type { Authorization } from './types.js'
  * const hash = Authorization.hash(authorization) // [!code focus]
  * ```
  *
- * @param authorization - The {@link Authorization#Authorization}.
+ * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns The hash.
  */
 export function Authorization_hash(authorization: Authorization): Hex {

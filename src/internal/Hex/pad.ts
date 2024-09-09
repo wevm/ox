@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from './types.js'
 
 /**
- * Pads a {@link Hex#Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link ox#Hex.Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts twoslash
@@ -13,9 +13,9 @@ import type { Hex } from './types.js'
  * // @log: '0x00001234'
  * ```
  *
- * @param value - The {@link Hex#Hex} value to pad.
+ * @param value - The {@link ox#Hex.Hex} value to pad.
  * @param size - The size (in bytes) of the output hex value.
- * @returns The padded {@link Hex#Hex} value.
+ * @returns The padded {@link ox#Hex.Hex} value.
  */
 export function Hex_padLeft(
   value: Hex,
@@ -33,7 +33,7 @@ export declare namespace Hex_padLeft {
 Hex_padLeft.parseError = (error: unknown) => error as Hex_padLeft.ErrorType
 
 /**
- * Pads a {@link Hex#Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link ox#Hex.Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts
@@ -43,9 +43,9 @@ Hex_padLeft.parseError = (error: unknown) => error as Hex_padLeft.ErrorType
  * // @log: '0x12340000'
  * ```
  *
- * @param value - The {@link Hex#Hex} value to pad.
+ * @param value - The {@link ox#Hex.Hex} value to pad.
  * @param size - The size (in bytes) of the output hex value.
- * @returns The padded {@link Hex#Hex} value.
+ * @returns The padded {@link ox#Hex.Hex} value.
  */
 export function Hex_padRight(
   value: Hex,

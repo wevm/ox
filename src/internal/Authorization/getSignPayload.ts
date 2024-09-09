@@ -4,11 +4,11 @@ import { Authorization_hash } from './hash.js'
 import type { Authorization } from './types.js'
 
 /**
- * Computes the sign payload for an {@link Authorization#Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
+ * Computes the sign payload for an {@link ox#Authorization.Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
  *
  * @example
- * The example below demonstrates computing the sign payload for an {@link Authorization#Authorization}. This payload
- * can then be passed to signing functions like {@link Secp256k1#sign}.
+ * The example below demonstrates computing the sign payload for an {@link ox#Authorization.Authorization}. This payload
+ * can then be passed to signing functions like {@link ox#Secp256k1.sign}.
  *
  * ```ts twoslash
  * import { Authorization, Secp256k1 } from 'ox'
@@ -27,7 +27,7 @@ import type { Authorization } from './types.js'
  * })
  * ```
  *
- * @param authorization - The {@link Authorization#Authorization}.
+ * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns The sign payload.
  */
 export function Authorization_getSignPayload(

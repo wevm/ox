@@ -10,7 +10,7 @@ import type { Address } from './types.js'
 const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
 /**
- * Asserts that the given value is a valid {@link Address#Address}.
+ * Asserts that the given value is a valid {@link ox#Address.Address}.
  *
  * @example
  * ```ts twoslash

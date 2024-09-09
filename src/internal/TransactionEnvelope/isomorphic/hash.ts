@@ -10,7 +10,7 @@ import { TransactionEnvelopeLegacy_hash } from '../legacy/hash.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
- * Hashes a {@link TransactionEnvelope#TransactionEnvelope}. This is the "transaction hash".
+ * Hashes a {@link ox#TransactionEnvelope.TransactionEnvelope}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash

@@ -5,7 +5,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from './types.js'
 
 /**
- * Checks if two {@link Hex#Hex} values are equal.
+ * Checks if two {@link ox#Hex.Hex} values are equal.
  *
  * @example
  * ```ts twoslash
@@ -18,9 +18,9 @@ import type { Hex } from './types.js'
  * // @log: false
  * ```
  *
- * @param hexA - The first {@link Hex#Hex} value.
- * @param hexB - The second {@link Hex#Hex} value.
- * @returns `true` if the two {@link Hex#Hex} values are equal, `false` otherwise.
+ * @param hexA - The first {@link ox#Hex.Hex} value.
+ * @param hexB - The second {@link ox#Hex.Hex} value.
+ * @returns `true` if the two {@link ox#Hex.Hex} values are equal, `false` otherwise.
  */
 export function Hex_isEqual(hexA: Hex, hexB: Hex) {
   return equalBytes(Bytes_fromHex(hexA), Bytes_fromHex(hexB))

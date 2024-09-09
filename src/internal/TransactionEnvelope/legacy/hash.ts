@@ -5,7 +5,7 @@ import { TransactionEnvelopeLegacy_serialize } from './serialize.js'
 import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
- * Hashes a {@link TransactionEnvelopeLegacy#TransactionEnvelopeLegacy}. This is the "transaction hash".
+ * Hashes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash

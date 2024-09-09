@@ -6,7 +6,7 @@ import { AbiItem_getSignature } from './getSignature.js'
 import type { AbiItem } from './types.js'
 
 /**
- * Computes the signature hash for an {@link AbiItem#AbiItem}.
+ * Computes the signature hash for an {@link ox#AbiItem.AbiItem}.
  *
  * Useful for computing Event Topic values.
  *
@@ -35,7 +35,7 @@ import type { AbiItem } from './types.js'
  * ```
  *
  * @param abiItem - The ABI Item to compute the signature hash for.
- * @returns The {@link Hash#keccak256} hash of the ABI item's signature.
+ * @returns The {@link ox#Hash.keccak256} hash of the ABI item's signature.
  */
 export function AbiItem_getSignatureHash(abiItem: string | AbiItem): Hex {
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)

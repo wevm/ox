@@ -9,7 +9,7 @@ import type {
 } from './types.js'
 
 /**
- * Converts an [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization object into a typed {@link Authorization#Authorization}.
+ * Converts an [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization object into a typed {@link ox#Authorization.Authorization}.
  *
  * @example
  * An Authorization can be instantiated from an [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple in object format.
@@ -27,8 +27,8 @@ import type {
  * @example
  * ### Attaching Signatures
  *
- * A {@link Signature#Signature} can be attached with the `signature` option. The example below demonstrates signing
- * an Authorization with {@link Secp256k1#sign}.
+ * A {@link ox#Signature.Signature} can be attached with the `signature` option. The example below demonstrates signing
+ * an Authorization with {@link ox#Secp256k1.sign}.
  *
  * ```ts twoslash
  * import { Authorization, Secp256k1 } from 'ox'
@@ -49,7 +49,7 @@ import type {
  *
  * @param authorization - An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple in object format.
  * @param options - Authorization options.
- * @returns The {@link Authorization#Authorization}.
+ * @returns The {@link ox#Authorization.Authorization}.
  */
 export function Authorization_from<
   const authorization extends Authorization | Authorization_Rpc,
@@ -67,7 +67,7 @@ export declare namespace Authorization_from {
   interface Options<
     signature extends Signature | undefined = Signature | undefined,
   > {
-    /** The {@link Signature#Signature} to attach to the Authorization. */
+    /** The {@link ox#Signature.Signature} to attach to the Authorization. */
     signature?: signature | Signature | undefined
   }
 

@@ -1,14 +1,10 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import { Signature_toRpc } from '../Signature/toRpc.js'
-import type {
-  Authorization,
-  Authorization_Rpc,
-  Authorization_Signed,
-} from './types.js'
+import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 
 /**
- * Converts an {@link Authorization#Authorization} to an {@link Authorization#Rpc}.
+ * Converts an {@link ox#Authorization.Authorization} to an {@link ox#Authorization.Rpc}.
  *
  * @example
  * ```ts twoslash

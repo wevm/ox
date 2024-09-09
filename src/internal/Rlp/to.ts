@@ -9,7 +9,7 @@ import { type Cursor, createCursor } from '../cursor.js'
 import type { RecursiveArray } from '../types.js'
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes#Bytes} or {@link Hex#Hex} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -24,7 +24,7 @@ import type { RecursiveArray } from '../types.js'
  *
  * @param value - The value to decode.
  * @param to - The type to convert the RLP value to.
- * @returns The decoded {@link Bytes#Bytes} or {@link Hex#Hex} value.
+ * @returns The decoded {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  */
 export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
   value: value,
@@ -66,7 +66,7 @@ export declare namespace Rlp_to {
 Rlp_to.parseError = (error: unknown) => error as Rlp_to.ErrorType
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Bytes#Bytes} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -76,7 +76,7 @@ Rlp_to.parseError = (error: unknown) => error as Rlp_to.ErrorType
  * ```
  *
  * @param value - The value to decode.
- * @returns The decoded {@link Bytes#Bytes} value.
+ * @returns The decoded {@link ox#Bytes.Bytes} value.
  */
 export function Rlp_toBytes(value: Bytes | Hex): Rlp_toBytes.ReturnType {
   return Rlp_to(value, 'Bytes')
@@ -91,7 +91,7 @@ export declare namespace Rlp_toBytes {
 Rlp_toBytes.parseError = (error: unknown) => error as Rlp_toBytes.ErrorType
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link Hex#Hex} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -101,7 +101,7 @@ Rlp_toBytes.parseError = (error: unknown) => error as Rlp_toBytes.ErrorType
  * ```
  *
  * @param value - The value to decode.
- * @returns The decoded {@link Hex#Hex} value.
+ * @returns The decoded {@link ox#Hex.Hex} value.
  */
 export function Rlp_toHex(value: Bytes | Hex): Rlp_toHex.ReturnType {
   return Rlp_to(value, 'Hex')

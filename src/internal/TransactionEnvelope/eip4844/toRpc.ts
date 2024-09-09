@@ -8,7 +8,7 @@ import type {
 } from './types.js'
 
 /**
- * Converts an {@link TransactionEnvelope#Eip4844} to an {@link TransactionEnvelope#Eip4844Rpc}.
+ * Converts an {@link ox#TransactionEnvelope.Eip4844} to an {@link ox#TransactionEnvelope.Eip4844Rpc}.
  *
  * @example
  * ```ts twoslash

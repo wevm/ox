@@ -66,7 +66,7 @@ import type {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an EIP-2930 Transaction Envelope from a {@link TransactionEnvelope#Serialized} value.
+ * It is possible to instantiate an EIP-2930 Transaction Envelope from a {@link ox#TransactionEnvelope.Serialized} value.
  *
  * ```ts twoslash
  * import { TransactionEnvelopeEip2930 } from 'ox'
@@ -83,7 +83,7 @@ import type {
  *
  * @param envelope - The transaction object to convert.
  * @param options -
- * @returns A {@link TransactionEnvelopeEip2930#TransactionEnvelope}
+ * @returns A {@link ox#TransactionEnvelopeEip2930.TransactionEnvelope}
  */
 export function TransactionEnvelopeEip2930_from<
   const envelope extends

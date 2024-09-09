@@ -13,7 +13,7 @@ import type { Signature } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
- * Deserializes a {@link Bytes#Bytes} or {@link Hex#Hex} signature into a structured {@link Signature#Signature}.
+ * Deserializes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} signature into a structured {@link ox#Signature.Signature}.
  *
  * @example
  * ```ts twoslash
@@ -24,7 +24,7 @@ import { Signature_vToYParity } from './vToYParity.js'
  * ```
  *
  * @param serialized - The serialized signature.
- * @returns The deserialized {@link Signature#Signature}.
+ * @returns The deserialized {@link ox#Signature.Signature}.
  */
 export function Signature_deserialize(serialized: Bytes | Hex): Signature {
   const hex = typeof serialized === 'string' ? serialized : Hex_from(serialized)

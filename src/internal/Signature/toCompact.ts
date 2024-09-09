@@ -4,7 +4,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Signature, Signature_Compact } from './types.js'
 
 /**
- * Converts a {@link Signature#Signature} into an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link Signature#Compact}.
+ * Converts a {@link ox#Signature.Signature} into an [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) {@link ox#Signature.Compact}.
  *
  * @example
  * ```ts twoslash
@@ -21,8 +21,8 @@ import type { Signature, Signature_Compact } from './types.js'
  * // @log: }
  * ```
  *
- * @param signature - The {@link Signature#Signature} to convert.
- * @returns The {@link Signature#Compact}.
+ * @param signature - The {@link ox#Signature.Signature} to convert.
+ * @returns The {@link ox#Signature.Compact}.
  */
 export function Signature_toCompact(signature: Signature): Signature_Compact {
   const { r, s, yParity } = signature

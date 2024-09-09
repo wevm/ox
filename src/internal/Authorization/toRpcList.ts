@@ -1,13 +1,12 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Authorization_toRpc } from './toRpc.js'
 import type {
-  Authorization,
   Authorization_ListRpc,
   Authorization_ListSigned,
 } from './types.js'
 
 /**
- * Converts an {@link Authorization#List} to an {@link Authorization#ListRpc}.
+ * Converts an {@link ox#Authorization.List} to an {@link ox#Authorization.ListRpc}.
  *
  * @example
  * ```ts twoslash

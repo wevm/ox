@@ -7,7 +7,7 @@ import type {
 } from './types.js'
 
 /**
- * Parses an arbitrary **JSON ABI Function** or **Human Readable ABI Function** into a typed {@link AbiFunction#AbiFunction}.
+ * Parses an arbitrary **JSON ABI Function** or **Human Readable ABI Function** into a typed {@link ox#AbiFunction.AbiFunction}.
  *
  * @example
  * ### JSON ABIs

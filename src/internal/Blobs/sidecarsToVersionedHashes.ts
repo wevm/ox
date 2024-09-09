@@ -5,7 +5,7 @@ import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 import type { BlobSidecars } from './types.js'
 
 /**
- * Transforms a list of {@link Blobs#BlobSidecars} to their Blob Versioned Hashes.
+ * Transforms a list of {@link ox#Blobs.Blobsidecars} to their Blob Versioned Hashes.
  *
  * @example
  * ```ts twoslash
@@ -52,7 +52,7 @@ import type { BlobSidecars } from './types.js'
  * })
  * ```
  *
- * @param sidecars - The {@link Blobs#BlobSidecars} to transform to Blob Versioned Hashes.
+ * @param sidecars - The {@link ox#Blobs.Blobsidecars} to transform to Blob Versioned Hashes.
  * @param options -
  * @returns The versioned hashes.
  */

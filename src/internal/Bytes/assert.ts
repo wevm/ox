@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Bytes } from './types.js'
 
 /**
- * Asserts if the given value is {@link Bytes#Bytes}.
+ * Asserts if the given value is {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash

@@ -4,7 +4,7 @@ import { Signature_extract } from '../../Signature/extract.js'
 import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
 
 /**
- * Converts an {@link Transaction#Eip7702Rpc} to an {@link Transaction#Eip7702}.
+ * Converts an {@link ox#Transaction.Eip7702Rpc} to an {@link ox#Transaction.Eip7702}.
  *
  * @example
  * ```ts twoslash
@@ -43,7 +43,7 @@ import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
  * ```
  *
  * @param transaction - The EIP-1559 RPC transaction to convert.
- * @returns An instantiated {@link Transaction#Eip7702}.
+ * @returns An instantiated {@link ox#Transaction.Eip7702}.
  */
 export function TransactionEip7702_fromRpc(
   transaction: TransactionEip7702_Rpc,

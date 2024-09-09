@@ -9,11 +9,11 @@ import { TransactionEnvelopeLegacy_getSignPayload } from '../legacy/getSignPaylo
 import type { TransactionEnvelope } from './types.js'
 
 /**
- * Returns the payload to sign for a {@link TransactionEnvelope#TransactionEnvelope}.
+ * Returns the payload to sign for a {@link ox#TransactionEnvelope.TransactionEnvelope}.
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
- * with ECDSA signing utilities like {@link Secp256k1#sign}.
+ * with ECDSA signing utilities like {@link ox#Secp256k1.sign}.
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelope } from 'ox'

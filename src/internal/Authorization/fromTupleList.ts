@@ -1,14 +1,10 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Compute, Mutable } from '../types.js'
 import { Authorization_fromTuple } from './fromTuple.js'
-import type {
-  Authorization,
-  Authorization_List,
-  Authorization_TupleList,
-} from './types.js'
+import type { Authorization_List, Authorization_TupleList } from './types.js'
 
 /**
- * Converts an {@link Authorization#TupleList} to an {@link Authorization#List}.
+ * Converts an {@link ox#Authorization.TupleList} to an {@link ox#Authorization.List}.
  *
  * @example
  * ```ts twoslash
@@ -63,7 +59,7 @@ import type {
  * ```
  *
  * @param tupleList - The [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple list.
- * @returns An {@link Authorization#List}.
+ * @returns An {@link ox#Authorization.List}.
  */
 export function Authorization_fromTupleList<
   const tupleList extends Authorization_TupleList,

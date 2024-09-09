@@ -3,7 +3,7 @@ import { Hex_assert } from './assert.js'
 import type { Hex } from './types.js'
 
 /**
- * Checks if the given value is {@link Hex#Hex}.
+ * Checks if the given value is {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
@@ -18,7 +18,7 @@ import type { Hex } from './types.js'
  *
  * @param value - The value to check.
  * @param options -
- * @returns `true` if the value is a {@link Hex#Hex}, `false` otherwise.
+ * @returns `true` if the value is a {@link ox#Hex.Hex}, `false` otherwise.
  */
 export function Hex_isHex(
   value: unknown,
@@ -35,7 +35,7 @@ export function Hex_isHex(
 
 export declare namespace Hex_isHex {
   type Options = {
-    /** Checks if the {@link Hex#Hex} value contains invalid hexadecimal characters. @default true */
+    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
   }
 

@@ -8,7 +8,7 @@ import { Hex_isHex } from '../Hex/isHex.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
- * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link Bytes#Bytes} or {@link Hex#Hex} value.
+ * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
  * This function is a re-export of `ripemd160` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
  *
@@ -20,7 +20,7 @@ import type { Hex } from '../Hex/types.js'
  * // '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
  * ```
  *
- * @param value - {@link Bytes#Bytes} or {@link Hex#Hex} value.
+ * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  * @param to - The return type.
  * @returns Ripemd160 hash.
  */

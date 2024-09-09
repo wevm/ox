@@ -3,7 +3,7 @@ import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 
 /**
- * Checks if two {@link Address#Address} are equal.
+ * Checks if two {@link ox#Address.Address} are equal.
  *
  * @example
  * ```ts twoslash

@@ -205,7 +205,7 @@ export * as Signature from './Signature.js'
  */
 export * as Siwe from './Siwe.js'
 
-/**./AccountProof.js
+/**
  * The **Transaction** Module provides a set of types & utility functions for working
  * with **Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
  *

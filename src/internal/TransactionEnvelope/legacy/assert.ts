@@ -5,7 +5,7 @@ import { GasPriceTooHighError, InvalidChainIdError } from '../errors.js'
 import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
- * Asserts a {@link TransactionEnvelopeLegacy#TransactionEnvelopeLegacy} is valid.
+ * Asserts a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy} is valid.
  *
  * @example
  * ```ts twoslash

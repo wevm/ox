@@ -7,7 +7,7 @@ import { createCursor } from '../cursor.js'
 import type { Blobs } from './types.js'
 
 /**
- * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
+ * Transforms Ox-shaped {@link ox#Blobs.Blobs} into the originating data.
  *
  * @example
  * ```ts twoslash
@@ -31,7 +31,7 @@ import type { Blobs } from './types.js'
  * // @log: Uint8Array [ 13, 174, 190, 239 ]
  * ```
  *
- * @param blobs - The {@link Blobs#Blobs} to transform.
+ * @param blobs - The {@link ox#Blobs.Blobs} to transform.
  * @param to - The type to transform to.
  * @returns The originating data.
  */
@@ -98,7 +98,7 @@ export declare namespace Blobs_to {
 Blobs_to.parseError = (error: unknown) => error as Blobs_to.ErrorType
 
 /**
- * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
+ * Transforms Ox-shaped {@link ox#Blobs.Blobs} into the originating data.
  *
  * @example
  * ```ts twoslash
@@ -124,7 +124,7 @@ export declare namespace Blobs_toHex {
 Blobs_toHex.parseError = (error: unknown) => error as Blobs_toHex.ErrorType
 
 /**
- * Transforms Ox-shaped {@link Blobs#Blobs} into the originating data.
+ * Transforms Ox-shaped {@link ox#Blobs.Blobs} into the originating data.
  *
  * @example
  * ```ts

@@ -2,7 +2,7 @@ import { type Abi, type FormatAbi, formatAbi } from 'abitype'
 import type { GlobalErrorType } from '../Errors/error.js'
 
 /**
- * Formats an {@link Abi#Abi} into a **Human Readable ABI**.
+ * Formats an {@link ox#Abi.Abi} into a **Human Readable ABI**.
  *
  * @example
  * ```ts twoslash

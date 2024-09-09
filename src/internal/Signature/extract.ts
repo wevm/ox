@@ -4,7 +4,7 @@ import { Signature_from } from './from.js'
 import type { Signature } from './types.js'
 
 /**
- * Extracts a {@link Signature#Signature} from an arbitrary object that may include signature properties.
+ * Extracts a {@link ox#Signature.Signature} from an arbitrary object that may include signature properties.
  *
  * @example
  * ```ts twoslash
@@ -27,7 +27,7 @@ import type { Signature } from './types.js'
  * ```
  *
  * @param value - The arbitrary object to extract the signature from.
- * @returns The extracted {@link Signature#Signature}.
+ * @returns The extracted {@link ox#Signature.Signature}.
  */
 export function Signature_extract(
   value: Signature_extract.Value,

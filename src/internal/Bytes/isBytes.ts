@@ -3,7 +3,7 @@ import { Bytes_assert } from './assert.js'
 import type { Bytes } from './types.js'
 
 /**
- * Checks if the given value is {@link Bytes#Bytes}.
+ * Checks if the given value is {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -17,7 +17,7 @@ import type { Bytes } from './types.js'
  * ```
  *
  * @param value - Value to check.
- * @returns `true` if the value is {@link Bytes#Bytes}, otherwise `false`.
+ * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
 export function Bytes_isBytes(value: unknown): value is Bytes {
   try {

@@ -12,7 +12,7 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 )
 
 /**
- * Encodes an arbitrary value into a {@link Hex#Hex} value.
+ * Encodes an arbitrary value into a {@link ox#Hex.Hex} value.
  *
  * @example
  * An example of encoding a UTF-8 string into a hex value:
@@ -46,7 +46,7 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
  *
  * @param value - The value to encode.
  * @param options - Encoding options.
- * @returns The encoded {@link Hex#Hex} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_from(
   value: string | number | bigint | boolean | readonly number[] | Bytes,
@@ -86,7 +86,7 @@ export declare namespace Hex_from {
 Hex_from.parseError = (error: unknown) => error as Hex_from.ErrorType
 
 /**
- * Encodes a boolean into a {@link Hex#Hex} value.
+ * Encodes a boolean into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -104,7 +104,7 @@ Hex_from.parseError = (error: unknown) => error as Hex_from.ErrorType
  *
  * @param value - The boolean value to encode.
  * @param options -
- * @returns The encoded {@link Hex#Hex} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_fromBoolean(
   value: boolean,
@@ -135,7 +135,7 @@ Hex_fromBoolean.parseError = (error: unknown) =>
   error as Hex_fromBoolean.ErrorType
 
 /**
- * Encodes a {@link Bytes#Bytes} value into a {@link Hex#Hex} value.
+ * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -148,9 +148,9 @@ Hex_fromBoolean.parseError = (error: unknown) =>
  * // @log: '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
  * ```
  *
- * @param value - The {@link Bytes#Bytes} value to encode.
+ * @param value - The {@link ox#Bytes.Bytes} value to encode.
  * @param options -
- * @returns The encoded {@link Hex#Hex} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_fromBytes(
   value: Bytes,
@@ -183,7 +183,7 @@ export declare namespace Hex_fromBytes {
 Hex_fromBytes.parseError = (error: unknown) => error as Hex_fromBytes.ErrorType
 
 /**
- * Encodes a number or bigint into a {@link Hex#Hex} value.
+ * Encodes a number or bigint into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -198,7 +198,7 @@ Hex_fromBytes.parseError = (error: unknown) => error as Hex_fromBytes.ErrorType
  *
  * @param value - The number or bigint value to encode.
  * @param options -
- * @returns The encoded {@link Hex#Hex} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_fromNumber(
   value: number | bigint,
@@ -266,7 +266,7 @@ Hex_fromNumber.parseError = (error: unknown) =>
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
- * Encodes a UTF-8 string into a {@link Hex#Hex} value.
+ * Encodes a UTF-8 string into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -280,7 +280,7 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  *
  * @param value - The string value to encode.
  * @param options -
- * @returns The encoded {@link Hex#Hex} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_fromString(
   value: string,

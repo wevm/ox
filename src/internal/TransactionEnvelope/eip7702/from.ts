@@ -84,7 +84,7 @@ import type {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an EIP-7702 Transaction Envelope from a {@link TransactionEnvelope#Serialized} value.
+ * It is possible to instantiate an EIP-7702 Transaction Envelope from a {@link ox#TransactionEnvelope.Serialized} value.
  *
  * ```ts twoslash
  * import { TransactionEnvelopeEip7702 } from 'ox'

@@ -9,7 +9,7 @@ import { Hex_trimLeft } from './trim.js'
 import type { Hex } from './types.js'
 
 /**
- * Decodes a {@link Hex#Hex} value into a string, number, bigint, boolean, or {@link Bytes#Bytes}.
+ * Decodes a {@link ox#Hex.Hex} value into a string, number, bigint, boolean, or {@link ox#Bytes.Bytes}.
  *
  * @example
  * Decode a Hex value into a **number**.
@@ -45,8 +45,8 @@ import type { Hex } from './types.js'
  * // @log: 'Hello world'
  * ```
  *
- * @param hex - The {@link Hex#Hex} value to decode.
- * @param to - The type to decode the {@link Hex#Hex} value into.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
+ * @param to - The type to decode the {@link ox#Hex.Hex} value into.
  * @param options -
  * @returns The decoded value.
  */
@@ -92,7 +92,7 @@ export declare namespace Hex_to {
 Hex_to.parseError = (error: unknown) => error as Hex_to.ErrorType
 
 /**
- * Decodes a {@link Hex#Hex} value into a BigInt.
+ * Decodes a {@link ox#Hex.Hex} value into a BigInt.
  *
  * @example
  * ```ts twoslash
@@ -105,7 +105,7 @@ Hex_to.parseError = (error: unknown) => error as Hex_to.ErrorType
  * // @log: 420n
  * ```
  *
- * @param hex - The {@link Hex#Hex} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options -
  * @returns The decoded BigInt.
  */
@@ -142,7 +142,7 @@ export declare namespace Hex_toBigInt {
 Hex_toBigInt.parseError = (error: unknown) => error as Hex_toBigInt.ErrorType
 
 /**
- * Decodes a {@link Hex#Hex} value into a boolean.
+ * Decodes a {@link ox#Hex.Hex} value into a boolean.
  *
  * @example
  * ```ts twoslash
@@ -155,7 +155,7 @@ Hex_toBigInt.parseError = (error: unknown) => error as Hex_toBigInt.ErrorType
  * // @log: true
  * ```
  *
- * @param hex - The {@link Hex#Hex} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options -
  * @returns The decoded boolean.
  */
@@ -190,7 +190,7 @@ export declare namespace Hex_toBoolean {
 Hex_toBoolean.parseError = (error: unknown) => error as Hex_toBoolean.ErrorType
 
 /**
- * Decodes a {@link Hex#Hex} value into a {@link Bytes#Bytes}.
+ * Decodes a {@link ox#Hex.Hex} value into a {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -200,9 +200,9 @@ Hex_toBoolean.parseError = (error: unknown) => error as Hex_toBoolean.ErrorType
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * ```
  *
- * @param hex - The {@link Hex#Hex} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options -
- * @returns The decoded {@link Bytes#Bytes}.
+ * @returns The decoded {@link ox#Bytes.Bytes}.
  */
 export function Hex_toBytes(
   hex: Hex,
@@ -224,7 +224,7 @@ export declare namespace Hex_toBytes {
 Hex_toBytes.parseError = (error: unknown) => error as Hex_toBytes.ErrorType
 
 /**
- * Decodes a {@link Hex#Hex} value into a number.
+ * Decodes a {@link ox#Hex.Hex} value into a number.
  *
  * @example
  * ```ts twoslash
@@ -237,7 +237,7 @@ Hex_toBytes.parseError = (error: unknown) => error as Hex_toBytes.ErrorType
  * // @log: 420
  * ```
  *
- * @param hex - The {@link Hex#Hex} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options -
  * @returns The decoded number.
  */
@@ -260,7 +260,7 @@ export declare namespace Hex_toNumber {
 Hex_toNumber.parseError = (error: unknown) => error as Hex_toNumber.ErrorType
 
 /**
- * Decodes a {@link Hex#Hex} value into a UTF-8 string.
+ * Decodes a {@link ox#Hex.Hex} value into a UTF-8 string.
  *
  * @example
  * ```ts twoslash
@@ -275,7 +275,7 @@ Hex_toNumber.parseError = (error: unknown) => error as Hex_toNumber.ErrorType
  * // @log: 'Hello world'
  * ```
  *
- * @param hex - The {@link Hex#Hex} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options -
  * @returns The decoded UTF-8 string.
  */

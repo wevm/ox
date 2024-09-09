@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Bytes } from './types.js'
 
 /**
- * Trims leading zeros from a {@link Bytes#Bytes} value.
+ * Trims leading zeros from a {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -12,8 +12,8 @@ import type { Bytes } from './types.js'
  * // @log: Uint8Array([1, 2, 3])
  * ```
  *
- * @param value - {@link Bytes#Bytes} value.
- * @returns Trimmed {@link Bytes#Bytes} value.
+ * @param value - {@link ox#Bytes.Bytes} value.
+ * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
 export function Bytes_trimLeft(value: Bytes): Bytes {
   return trim(value, { dir: 'left' })
@@ -28,7 +28,7 @@ Bytes_trimLeft.parseError = (error: unknown) =>
   error as Bytes_trimLeft.ErrorType
 
 /**
- * Trims trailing zeros from a {@link Bytes#Bytes} value.
+ * Trims trailing zeros from a {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -38,8 +38,8 @@ Bytes_trimLeft.parseError = (error: unknown) =>
  * // @log: Uint8Array([1, 2, 3])
  * ```
  *
- * @param value - {@link Bytes#Bytes} value.
- * @returns Trimmed {@link Bytes#Bytes} value.
+ * @param value - {@link ox#Bytes.Bytes} value.
+ * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
 export function Bytes_trimRight(value: Bytes): Bytes {
   return trim(value, { dir: 'right' })

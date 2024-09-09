@@ -3,7 +3,7 @@ import type { AbiItem_Signatures } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 
 /**
- * Parses an arbitrary **JSON ABI** or **Human Readable ABI** into a typed {@link Abi#Abi}.
+ * Parses an arbitrary **JSON ABI** or **Human Readable ABI** into a typed {@link ox#Abi.Abi}.
  *
  * @example
  * ### JSON ABIs

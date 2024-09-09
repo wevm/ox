@@ -4,7 +4,7 @@ import { Bytes_size } from './size.js'
 import type { Bytes } from './types.js'
 
 /**
- * Returns a section of a {@link Bytes#Bytes} value given a start/end bytes offset.
+ * Returns a section of a {@link ox#Bytes.Bytes} value given a start/end bytes offset.
  *
  * @example
  * ```ts twoslash
@@ -18,11 +18,11 @@ import type { Bytes } from './types.js'
  * // @log: Uint8Array([2, 3, 4])
  * ```
  *
- * @param value - The {@link Bytes#Bytes} value.
+ * @param value - The {@link ox#Bytes.Bytes} value.
  * @param start - Start offset.
  * @param end - End offset.
  * @param options - Slice options.
- * @returns Sliced {@link Bytes#Bytes} value.
+ * @returns Sliced {@link ox#Bytes.Bytes} value.
  */
 export function Bytes_slice(
   value: Bytes,

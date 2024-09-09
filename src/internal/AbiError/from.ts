@@ -7,7 +7,7 @@ import type {
 } from './types.js'
 
 /**
- * Parses an arbitrary **JSON ABI Error** or **Human Readable ABI Error** into a typed {@link AbiError#AbiError}.
+ * Parses an arbitrary **JSON ABI Error** or **Human Readable ABI Error** into a typed {@link ox#AbiError.AbiError}.
  *
  * @example
  * ### JSON ABIs

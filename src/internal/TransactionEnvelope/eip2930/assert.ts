@@ -5,7 +5,7 @@ import { GasPriceTooHighError, InvalidChainIdError } from '../errors.js'
 import type { TransactionEnvelopeEip2930 } from './types.js'
 
 /**
- * Asserts a {@link TransactionEnvelope#Eip2930} is valid.
+ * Asserts a {@link ox#TransactionEnvelope.Eip2930} is valid.
  *
  * @example
  * ```ts twoslash

@@ -23,7 +23,7 @@ import type {
 } from './types.js'
 
 /**
- * Deserializes a {@link TransactionEnvelope#TransactionEnvelope} from its serialized form.
+ * Deserializes a {@link ox#TransactionEnvelope.TransactionEnvelope} from its serialized form.
  *
  * @example
  * ```ts twoslash
@@ -43,7 +43,7 @@ import type {
  * ```
  *
  * @param serialized - The serialized Transaction Envelope.
- * @returns Deserialized {@link TransactionEnvelope#TransactionEnvelope}.
+ * @returns Deserialized {@link ox#TransactionEnvelope.TransactionEnvelope}.
  */
 export function TransactionEnvelope_deserialize<
   const serialized extends TransactionEnvelope_Serialized,

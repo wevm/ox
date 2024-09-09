@@ -61,7 +61,7 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an legacy Transaction Envelope from a {@link TransactionEnvelope#Serialized} value.
+ * It is possible to instantiate an legacy Transaction Envelope from a {@link ox#TransactionEnvelope.Serialized} value.
  *
  * ```ts twoslash
  * import { TransactionEnvelopeLegacy } from 'ox'

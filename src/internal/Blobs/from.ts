@@ -14,7 +14,7 @@ import {
 import { BlobSizeTooLargeError, EmptyBlobError } from './errors.js'
 
 /**
- * Transforms arbitrary data to {@link Blobs#Blobs}.
+ * Transforms arbitrary data to {@link ox#Blobs.Blobs}.
  *
  * @example
  * ```ts twoslash
@@ -26,7 +26,7 @@ import { BlobSizeTooLargeError, EmptyBlobError } from './errors.js'
  * @example
  * ### Creating Blobs from a UTF-8 String
  *
- * An example of creating Blobs from a UTF-8 string using {@link Hex#from}:
+ * An example of creating Blobs from a UTF-8 string using {@link ox#Hex.from}:
  *
  * ```ts twoslash
  * import { Blobs, Hex } from 'ox'
@@ -48,9 +48,9 @@ import { BlobSizeTooLargeError, EmptyBlobError } from './errors.js'
  *
  * ```
  *
- * @param data - The data to convert to {@link Blobs#Blobs}.
+ * @param data - The data to convert to {@link ox#Blobs.Blobs}.
  * @param options -
- * @returns The {@link Blobs#Blobs}.
+ * @returns The {@link ox#Blobs.Blobs}.
  */
 export function Blobs_from<
   const data extends Hex | Bytes,

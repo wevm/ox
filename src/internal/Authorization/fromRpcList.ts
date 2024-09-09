@@ -1,13 +1,12 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Authorization_fromRpc } from './fromRpc.js'
 import type {
-  Authorization,
   Authorization_ListRpc,
   Authorization_ListSigned,
 } from './types.js'
 
 /**
- * Converts an {@link Authorization#RpcList} to an {@link Authorization#List}.
+ * Converts an {@link ox#Authorization.RpcList} to an {@link ox#Authorization.List}.
  *
  * @example
  * ```ts twoslash
@@ -24,7 +23,7 @@ import type {
  * ```
  *
  * @param authorizationList - The RPC-formatted Authorization list.
- * @returns An {@link Authorization#List}.
+ * @returns An {@link ox#Authorization.List}.
  */
 export function Authorization_fromRpcList(
   authorizationList: Authorization_ListRpc,

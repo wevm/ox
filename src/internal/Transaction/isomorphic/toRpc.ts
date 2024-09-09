@@ -9,7 +9,7 @@ import { TransactionLegacy_toRpc } from '../legacy/toRpc.js'
 import type { Transaction, Transaction_Rpc } from './types.js'
 
 /**
- * Converts an {@link Transaction#Transaction} to an {@link Transaction#Rpc}.
+ * Converts an {@link ox#Transaction.Transaction} to an {@link ox#Transaction.Rpc}.
  *
  * @example
  * ```ts twoslash

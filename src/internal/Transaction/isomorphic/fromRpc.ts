@@ -8,7 +8,7 @@ import { TransactionLegacy_fromRpc } from '../legacy/fromRpc.js'
 import type { Transaction, Transaction_Rpc } from './types.js'
 
 /**
- * Converts an {@link Transaction#Rpc} to an {@link Transaction#Transaction}.
+ * Converts an {@link ox#Transaction.Rpc} to an {@link ox#Transaction.Transaction}.
  *
  * @example
  * ```ts twoslash
@@ -39,7 +39,7 @@ import type { Transaction, Transaction_Rpc } from './types.js'
  * ```
  *
  * @param transaction - The RPC transaction to convert.
- * @returns An instantiated {@link Transaction#Transaction}.
+ * @returns An instantiated {@link ox#Transaction.Transaction}.
  */
 export function Transaction_fromRpc(transaction: Transaction_Rpc): Transaction {
   if (transaction.type === '0x1') return TransactionEip2930_fromRpc(transaction)

@@ -4,7 +4,7 @@ import type { Hex } from '../Hex/types.js'
 import type { AbiFunction } from './types.js'
 
 /**
- * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link AbiFunction#AbiFunction}.
+ * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link ox#AbiFunction.AbiFunction}.
  *
  * Useful for computing function selectors for calldata.
  *
@@ -31,7 +31,7 @@ import type { AbiFunction } from './types.js'
  * ```
  *
  * @param abiItem - The ABI item to compute the selector for.
- * @returns The first 4 bytes of the {@link Hash#keccak256} hash of the function signature.
+ * @returns The first 4 bytes of the {@link ox#Hash.keccak256} hash of the function signature.
  */
 export function AbiFunction_getSelector(abiItem: string | AbiFunction): Hex {
   return AbiItem_getSelector(abiItem)

@@ -5,10 +5,9 @@ import {
   formatAbiParameters,
 } from 'abitype'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { AbiParameters } from './types.js'
 
 /**
- * Formats {@link AbiParameters#AbiParameters} into **Human Readable ABI Parameters**.
+ * Formats {@link ox#AbiParameters.AbiParameters} into **Human Readable ABI Parameters**.
  *
  * @example
  * ```ts twoslash

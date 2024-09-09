@@ -3,7 +3,7 @@ import { Signature_from } from './from.js'
 import type { Signature, Signature_Tuple } from './types.js'
 
 /**
- * Converts a {@link Signature#SignatureTuple} to a {@link Signature#Signature}.
+ * Converts a {@link ox#Signature.Tuple} to a {@link ox#Signature.Signature}.
  *
  * @example
  * ```ts twoslash
@@ -17,8 +17,8 @@ import type { Signature, Signature_Tuple } from './types.js'
  * // @log: }
  * ```
  *
- * @param tuple - The {@link Signature#SignatureTuple} to convert.
- * @returns The {@link Signature#Signature}.
+ * @param tuple - The {@link ox#Signature.Tuple} to convert.
+ * @returns The {@link ox#Signature.Signature}.
  */
 export function Signature_fromTuple(tuple: Signature_Tuple): Signature {
   const [yParity, r, s] = tuple

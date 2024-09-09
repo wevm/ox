@@ -7,7 +7,7 @@ import type { Kzg } from '../Kzg/types.js'
 import type { Blobs } from './types.js'
 
 /**
- * Compute the proofs for a list of {@link Blobs#Blobs} and their commitments.
+ * Compute the proofs for a list of {@link ox#Blobs.Blobs} and their commitments.
  *
  * @example
  * ```ts twoslash
@@ -20,7 +20,7 @@ import type { Blobs } from './types.js'
  * const proofs = Blobs.toProofs(blobs, { commitments, kzg }) // [!code focus]
  * ```
  *
- * @param blobs - The {@link Blobs#Blobs} to compute proofs for.
+ * @param blobs - The {@link ox#Blobs.Blobs} to compute proofs for.
  * @param options -
  * @returns The Blob proofs.
  */

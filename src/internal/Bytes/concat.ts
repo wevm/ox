@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Bytes } from './types.js'
 
 /**
- * Concatenates two or more {@link Bytes#Bytes}.
+ * Concatenates two or more {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -17,7 +17,7 @@ import type { Bytes } from './types.js'
  * ```
  *
  * @param values - Values to concatenate.
- * @returns Concatenated {@link Bytes#Bytes}.
+ * @returns Concatenated {@link ox#Bytes.Bytes}.
  */
 export function Bytes_concat(...values: readonly Bytes[]): Bytes {
   let length = 0

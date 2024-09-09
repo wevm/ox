@@ -3,7 +3,7 @@ import { Signature_extract } from '../../Signature/extract.js'
 import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'
 
 /**
- * Converts an {@link Transaction#LegacyRpc} to an {@link Transaction#Legacy}.
+ * Converts an {@link ox#Transaction.LegacyRpc} to an {@link ox#Transaction.Legacy}.
  *
  * @example
  * ```ts twoslash
@@ -32,7 +32,7 @@ import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'
  * ```
  *
  * @param transaction - The Legacy RPC transaction to convert.
- * @returns An instantiated {@link Transaction#Legacy}.
+ * @returns An instantiated {@link ox#Transaction.Legacy}.
  */
 export function TransactionLegacy_fromRpc(
   transaction: TransactionLegacy_Rpc,

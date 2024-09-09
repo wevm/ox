@@ -1,13 +1,9 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Signature_extract } from '../Signature/extract.js'
-import type {
-  Authorization,
-  Authorization_Rpc,
-  Authorization_Signed,
-} from './types.js'
+import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 
 /**
- * Converts an {@link Authorization#Rpc} to an {@link Authorization#Authorization}.
+ * Converts an {@link ox#Authorization.Rpc} to an {@link ox#Authorization.Authorization}.
  *
  * @example
  * ```ts twoslash
@@ -24,7 +20,7 @@ import type {
  * ```
  *
  * @param authorization - The RPC-formatted Authorization.
- * @returns An {@link Authorization#Authorization}.
+ * @returns An {@link ox#Authorization.Authorization}.
  */
 export function Authorization_fromRpc(
   authorization: Authorization_Rpc,

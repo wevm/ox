@@ -14,7 +14,7 @@ import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
 import type { TransactionEnvelopeEip4844 } from './types.js'
 
 /**
- * Asserts a {@link TransactionEnvelope#Eip4844} is valid.
+ * Asserts a {@link ox#TransactionEnvelope.Eip4844} is valid.
  *
  * @example
  * ```ts twoslash

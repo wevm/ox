@@ -8,7 +8,7 @@ import { Bytes_trimLeft, Bytes_trimRight } from './trim.js'
 import type { Bytes } from './types.js'
 
 /**
- * Decodes {@link Bytes#Bytes} into a UTF-8 string, {@link Hex#Hex}, number, bigint or boolean.
+ * Decodes {@link ox#Bytes.Bytes} into a UTF-8 string, {@link ox#Hex.Hex}, number, bigint or boolean.
  *
  * @example
  * ```ts twoslash
@@ -32,8 +32,8 @@ import type { Bytes } from './types.js'
  * // @log: 'Hello world'
  * ```
  *
- * @param bytes - The {@link Bytes#Bytes} to decode.
- * @param to - Type to decode the {@link Bytes#Bytes} into.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
+ * @param to - Type to decode the {@link ox#Bytes.Bytes} into.
  * @param options - Decoding options.
  * @returns Decoded value.
  */
@@ -81,7 +81,7 @@ export declare namespace Bytes_to {
 Bytes_to.parseError = (error: unknown) => error as Bytes_to.ErrorType
 
 /**
- * Decodes a {@link Bytes#Bytes} into a bigint.
+ * Decodes a {@link ox#Bytes.Bytes} into a bigint.
  *
  * @example
  * ```ts
@@ -91,7 +91,7 @@ Bytes_to.parseError = (error: unknown) => error as Bytes_to.ErrorType
  * // @log: 420n
  * ```
  *
- * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
  * @param options - Decoding options.
  * @returns Decoded bigint.
  */
@@ -124,7 +124,7 @@ Bytes_toBigInt.parseError = (error: unknown) =>
   error as Bytes_toBigInt.ErrorType
 
 /**
- * Decodes a {@link Bytes#Bytes} into a boolean.
+ * Decodes a {@link ox#Bytes.Bytes} into a boolean.
  *
  * @example
  * ```ts
@@ -134,7 +134,7 @@ Bytes_toBigInt.parseError = (error: unknown) =>
  * // @log: true
  * ```
  *
- * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
  * @param options - Decoding options.
  * @returns Decoded boolean.
  */
@@ -170,7 +170,7 @@ Bytes_toBoolean.parseError = (error: unknown) =>
   error as Bytes_toBoolean.ErrorType
 
 /**
- * Encodes a {@link Bytes#Bytes} value into a {@link Hex#Hex} value.
+ * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -180,9 +180,9 @@ Bytes_toBoolean.parseError = (error: unknown) =>
  * // '0x48656c6c6f20576f726c6421'
  * ```
  *
- * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
  * @param options -
- * @returns Decoded {@link Hex#Hex} value.
+ * @returns Decoded {@link ox#Hex.Hex} value.
  */
 export function Bytes_toHex(
   value: Bytes,
@@ -204,7 +204,7 @@ export declare namespace Bytes_toHex {
 Bytes_toHex.parseError = (error: unknown) => error as Bytes_toHex.ErrorType
 
 /**
- * Decodes a {@link Bytes#Bytes} into a number.
+ * Decodes a {@link ox#Bytes.Bytes} into a number.
  *
  * @example
  * ```ts twoslash
@@ -240,7 +240,7 @@ Bytes_toNumber.parseError = (error: unknown) =>
 const decoder = /*#__PURE__*/ new TextDecoder()
 
 /**
- * Decodes a {@link Bytes#Bytes} into a UTF-8 string.
+ * Decodes a {@link ox#Bytes.Bytes} into a UTF-8 string.
  *
  * @example
  * ```ts twoslash
@@ -250,7 +250,7 @@ const decoder = /*#__PURE__*/ new TextDecoder()
  * // @log: 'Hello world'
  * ```
  *
- * @param bytes - The {@link Bytes#Bytes} to decode.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
  * @param options -
  * @returns Decoded string.
  */

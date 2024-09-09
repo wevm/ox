@@ -13,7 +13,7 @@ type Encodable = {
 }
 
 /**
- * Encodes a {@link Bytes#Bytes} or {@link Hex#Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -26,7 +26,7 @@ type Encodable = {
  * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
  *
- * @param value - The {@link Bytes#Bytes} or {@link Hex#Hex} value to encode.
+ * @param value - The {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to encode.
  * @param to - The type to convert the RLP value to.
  * @returns The RLP value.
  */
@@ -59,7 +59,7 @@ export declare namespace Rlp_from {
 Rlp_from.parseError = (error: unknown) => error as Rlp_from.ErrorType
 
 /**
- * Encodes a {@link Bytes#Bytes} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link ox#Bytes.Bytes} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -69,7 +69,7 @@ Rlp_from.parseError = (error: unknown) => error as Rlp_from.ErrorType
  * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
  *
- * @param bytes - The {@link Bytes#Bytes} value to encode.
+ * @param bytes - The {@link ox#Bytes.Bytes} value to encode.
  * @param to - The type to convert the RLP value to.
  * @returns The RLP value.
  */
@@ -90,7 +90,7 @@ export declare namespace Rlp_fromBytes {
 Rlp_fromBytes.parseError = (error: unknown) => error as Rlp_fromBytes.ErrorType
 
 /**
- * Encodes a {@link Hex#Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -100,7 +100,7 @@ Rlp_fromBytes.parseError = (error: unknown) => error as Rlp_fromBytes.ErrorType
  * // @log: 0x8b68656c6c6f20776f726c64
  * ```
  *
- * @param hex - The {@link Hex#Hex} value to encode.
+ * @param hex - The {@link ox#Hex.Hex} value to encode.
  * @param to - The type to convert the RLP value to.
  * @returns The RLP value.
  */

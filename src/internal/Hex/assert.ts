@@ -3,7 +3,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from './types.js'
 
 /**
- * Asserts if the given value is {@link Hex#Hex}.
+ * Asserts if the given value is {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
@@ -33,7 +33,7 @@ export function Hex_assert(
 
 export declare namespace Hex_assert {
   type Options = {
-    /** Checks if the {@link Hex#Hex} value contains invalid hexadecimal characters. @default true */
+    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
   }
 

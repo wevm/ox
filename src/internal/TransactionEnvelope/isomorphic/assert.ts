@@ -8,7 +8,7 @@ import { TransactionEnvelopeLegacy_assert } from '../legacy/assert.js'
 import type { TransactionEnvelope } from './types.js'
 
 /**
- * Asserts a {@link TransactionEnvelope#TransactionEnvelope} is valid.
+ * Asserts a {@link ox#TransactionEnvelope.TransactionEnvelope} is valid.
  *
  * @example
  * ```ts twoslash

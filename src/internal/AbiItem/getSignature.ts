@@ -5,7 +5,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { AbiItem } from './types.js'
 
 /**
- * Computes the stringified signature for a given {@link AbiItem#AbiItem}.
+ * Computes the stringified signature for a given {@link ox#AbiItem.AbiItem}.
  *
  * @example
  * ```ts twoslash
