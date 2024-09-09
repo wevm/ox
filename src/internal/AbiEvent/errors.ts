@@ -5,8 +5,8 @@ import type { Hex } from '../Hex/types.js'
 import { AbiEvent_format } from './format.js'
 import type { AbiEvent } from './types.js'
 
-export class DecodeLogDataMismatchError extends BaseError {
-  override readonly name = 'DecodeLogDataMismatchError'
+export class EventDataMismatchError extends BaseError {
+  override readonly name = 'EventDataMismatchError'
 
   abiEvent: AbiEvent
   data: Hex
@@ -43,8 +43,8 @@ export class DecodeLogDataMismatchError extends BaseError {
   }
 }
 
-export class DecodeLogTopicsMismatchError extends BaseError {
-  override readonly name = 'DecodeLogTopicsMismatchError'
+export class EventTopicsMismatchError extends BaseError {
+  override readonly name = 'EventTopicsMismatchError'
 
   abiEvent: AbiEvent
 
@@ -64,6 +64,30 @@ export class DecodeLogTopicsMismatchError extends BaseError {
     )
 
     this.abiEvent = abiEvent
+  }
+}
+
+export class EventSelectorTopicMismatchError extends BaseError {
+  override readonly name = 'EventSelectorTopicMismatchError'
+
+  constructor({
+    abiEvent,
+    actual,
+    expected,
+  }: {
+    abiEvent: AbiEvent
+    actual: Hex | undefined
+    expected: Hex
+  }) {
+    super(
+      `topics[0]="${actual}" does not match the expected topics[0]="${expected}".`,
+      {
+        metaMessages: [
+          `Event: ${AbiEvent_format(abiEvent)}`,
+          `Selector: ${expected}`,
+        ],
+      },
+    )
   }
 }
 

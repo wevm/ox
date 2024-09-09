@@ -7,9 +7,11 @@ import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
 import {
-  DecodeLogDataMismatchError,
-  DecodeLogTopicsMismatchError,
+  EventDataMismatchError,
+  EventSelectorTopicMismatchError,
+  EventTopicsMismatchError,
 } from './errors.js'
+import { AbiEvent_getSelector } from './getSelector.js'
 import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
 
 /**
@@ -98,7 +100,15 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
 ): AbiEvent_decode.ReturnType<abiEvent> {
   const { data, topics } = log
 
-  const [, ...argTopics] = topics
+  const [selector_, ...argTopics] = topics
+
+  const selector = AbiEvent_getSelector(abiEvent)
+  if (selector_ !== selector)
+    throw new EventSelectorTopicMismatchError({
+      abiEvent,
+      actual: selector_,
+      expected: selector,
+    })
 
   const { inputs } = abiEvent
   const isUnnamed = inputs?.every((x) => !('name' in x && x.name))
@@ -111,7 +121,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
     const param = indexedInputs[i]!
     const topic = argTopics[i]
     if (!topic)
-      throw new DecodeLogTopicsMismatchError({
+      throw new EventTopicsMismatchError({
         abiEvent,
         param: param as AbiParameter & { indexed: boolean },
       })
@@ -148,7 +158,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
           err instanceof AbiDecodingDataSizeTooSmallError ||
           err instanceof PositionOutOfBoundsError
         )
-          throw new DecodeLogDataMismatchError({
+          throw new EventDataMismatchError({
             abiEvent,
             data: data,
             parameters: nonIndexedInputs,
@@ -157,7 +167,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
         throw err
       }
     } else {
-      throw new DecodeLogDataMismatchError({
+      throw new EventDataMismatchError({
         abiEvent,
         data: '0x',
         parameters: nonIndexedInputs,
@@ -187,7 +197,13 @@ export declare namespace AbiEvent_decode {
         >
     : unknown
 
-  type ErrorType = GlobalErrorType
+  type ErrorType =
+    | AbiParameters_decode.ErrorType
+    | AbiEvent_getSelector.ErrorType
+    | EventDataMismatchError
+    | EventSelectorTopicMismatchError
+    | EventTopicsMismatchError
+    | GlobalErrorType
 }
 
 AbiEvent_decode.parseError = (error: unknown) =>

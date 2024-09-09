@@ -92,7 +92,7 @@ test('behavior: named + unnamed', () => {
   const decoded = AbiEvent.decode(transfer, {
     data: '0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001',
     topics: [
-      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      '0x9ed053bb818ff08b8353cd46f78db1f0799f31c9e4458fdb425c10eccd2efc44',
       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
     ],
@@ -112,7 +112,7 @@ test('behavior: string inputs', () => {
 
   const decoded = AbiEvent.decode(transfer, {
     topics: [
-      '0x89525573e05dbc5f7f7f72e98f8145459e8b183e54c819fa7029f09a04115d89',
+      '0x7cebee4ee226a36ff8751d9d69bb8265f5138c825f8c25d7ebdd60d972ffe5be',
       '0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8',
     ],
   })
@@ -137,7 +137,7 @@ test('error: topics mismatch, named', () => {
       ],
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[DecodeLogTopicsMismatchError: Expected a topic for indexed event parameter "value" for "event Transfer(address indexed from, address to, uint256 indexed value)".]`,
+    `[EventTopicsMismatchError: Expected a topic for indexed event parameter "value" for "event Transfer(address indexed from, address to, uint256 indexed value)".]`,
   )
 })
 
@@ -154,7 +154,7 @@ test('error: topics mismatch, unnamed', () => {
       ],
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[DecodeLogTopicsMismatchError: Expected a topic for indexed event parameter for "event Transfer(address indexed, address, uint256 indexed)".]`,
+    `[EventTopicsMismatchError: Expected a topic for indexed event parameter for "event Transfer(address indexed, address, uint256 indexed)".]`,
   )
 })
 
@@ -174,7 +174,7 @@ test('error: data mismatch', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [DecodeLogDataMismatchError: Data size of 32 bytes is too small for non-indexed event parameters.
+    [EventDataMismatchError: Data size of 32 bytes is too small for non-indexed event parameters.
 
     Non-indexed Parameters: (address to, uint256 value)
     Data:   0x0000000000000000000000000000000000000000000000000000000023c34600 (32 bytes)]
@@ -197,7 +197,7 @@ test('error: data mismatch', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [DecodeLogDataMismatchError: Data size of 0 bytes is too small for non-indexed event parameters.
+    [EventDataMismatchError: Data size of 0 bytes is too small for non-indexed event parameters.
 
     Non-indexed Parameters: (address to, uint256 value)
     Data:   0x (0 bytes)]
@@ -221,7 +221,7 @@ test('error: invalid data size', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [DecodeLogDataMismatchError: Data size of 1 bytes is too small for non-indexed event parameters.
+    [EventDataMismatchError: Data size of 1 bytes is too small for non-indexed event parameters.
 
     Non-indexed Parameters: (uint256 value)
     Data:   0x01 (1 bytes)]
@@ -238,7 +238,7 @@ test('error: invalid boolean', () => {
     AbiEvent.decode(transfer, {
       data: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
       topics: [
-        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        '0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f',
         '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
         '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
       ],
@@ -250,6 +250,29 @@ test('error: invalid boolean', () => {
     The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
     See: https://oxlib.sh/errors#invalidbytesbooleanerror]
+  `,
+  )
+})
+
+test('error: event selector topic mismatch', () => {
+  const transfer = AbiEvent.from(
+    'event Transfer(address indexed from, address indexed to, bool sender)',
+  )
+
+  expect(() =>
+    AbiEvent.decode(transfer, {
+      topics: [
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
+        '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      ],
+    }),
+  ).toThrowErrorMatchingInlineSnapshot(
+    `
+    [EventSelectorTopicMismatchError: topics[0]="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" does not match the expected topics[0]="0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f".
+
+    Event: event Transfer(address indexed from, address indexed to, bool sender)
+    Selector: 0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f]
   `,
   )
 })
