@@ -84,7 +84,7 @@ test('behavior: named + unnamed', () => {
   const decoded = AbiEvent.decode(transfer, {
     data: '0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001',
     topics: [
-      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      '0x9ed053bb818ff08b8353cd46f78db1f0799f31c9e4458fdb425c10eccd2efc44',
       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
     ],
@@ -102,7 +102,7 @@ test('behavior: string inputs', () => {
 
   const decoded = AbiEvent.decode(transfer, {
     topics: [
-      '0x89525573e05dbc5f7f7f72e98f8145459e8b183e54c819fa7029f09a04115d89',
+      '0x7cebee4ee226a36ff8751d9d69bb8265f5138c825f8c25d7ebdd60d972ffe5be',
       '0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8',
     ],
   })
@@ -115,7 +115,7 @@ test('behavior: widened event', () => {
 
   const decoded = AbiEvent.decode(transfer as AbiEvent.AbiEvent, {
     topics: [
-      '0x89525573e05dbc5f7f7f72e98f8145459e8b183e54c819fa7029f09a04115d89',
+      '0x7cebee4ee226a36ff8751d9d69bb8265f5138c825f8c25d7ebdd60d972ffe5be',
       '0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8',
     ],
   })
@@ -133,7 +133,7 @@ test('behavior: union event', () => {
   const decoded = AbiEvent.decode(transfer, {
     data: '0x0000000000000000000000000000000000000000000000000000000000000000',
     topics: [
-      '0x89525573e05dbc5f7f7f72e98f8145459e8b183e54c819fa7029f09a04115d89',
+      '0x721c20121297512b72821b97f5326877ea8ecf4bb9948fea5bfcb6453074d37f',
       '0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8',
     ],
   })
