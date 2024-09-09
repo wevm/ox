@@ -78,6 +78,11 @@ test('default', () => {
   `)
 })
 
+test('behavior: null block', () => {
+  const block = Block.fromRpc(null)
+  expect(block).toBeNull()
+})
+
 test('behavior: nullish values', () => {
   // @ts-expect-error
   const block = Block.fromRpc({

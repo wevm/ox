@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Withdrawal, Withdrawal_Rpc } from './types.js'
 
 /**
- * Converts an {@link ox#Withdrawal.Rpc} to an {@link ox#Withdrawal.Withdrawal}.
+ * Converts a {@link ox#Withdrawal.Rpc} to an {@link ox#Withdrawal.Withdrawal}.
  *
  * @example
  * ```ts twoslash
