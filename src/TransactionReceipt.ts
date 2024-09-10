@@ -7,6 +7,8 @@ export {
 
 export { TransactionReceipt_fromRpc as fromRpc } from './internal/TransactionReceipt/fromRpc.js'
 
+export { TransactionReceipt_toRpc as toRpc } from './internal/TransactionReceipt/toRpc.js'
+
 export type {
   TransactionReceipt,
   TransactionReceipt_Rpc as Rpc,

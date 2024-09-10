@@ -127,7 +127,7 @@ export function TransactionReceipt_fromRpc<
 }
 
 export declare namespace TransactionReceipt_fromRpc {
-  export type ErrorType = GlobalErrorType
+  export type ErrorType = Log_fromRpc.ErrorType | GlobalErrorType
 }
 
 TransactionReceipt_fromRpc.parseError = (error: unknown) =>
