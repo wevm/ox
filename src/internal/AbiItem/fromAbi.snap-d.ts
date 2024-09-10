@@ -7,7 +7,6 @@ import { wagmiContractConfig } from '../../../test/constants/abis.js'
 test('default', () => {
   const item = AbiItem.fromAbi(wagmiContractConfig.abi, {
     name: 'balanceOf',
-    args: ['0x0000000000000000000000000000000000000000'],
   })
   attest(item).type.toString.snap(`{
   readonly inputs: readonly [

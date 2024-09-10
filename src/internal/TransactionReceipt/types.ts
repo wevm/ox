@@ -5,7 +5,7 @@ import type { Compute } from '../types.js'
 
 /** An Transaction Receipt as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
 export type TransactionReceipt<
-  status = 'success' | 'reverted',
+  status = TransactionReceipt_Status,
   type = TransactionReceipt_Type,
   bigintType = bigint,
   numberType = number,
@@ -48,11 +48,27 @@ export type TransactionReceipt<
 
 /** An RPC Transaction Receipt as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
 export type TransactionReceipt_Rpc = TransactionReceipt<
-  '0x0' | '0x1',
+  TransactionReceipt_StatusRpc,
   TransactionReceipt_TypeRpc,
   Hex,
   Hex
 >
+
+/**
+ * Union of Transaction Receipt statuses.
+ *
+ * - `success`
+ * - `reverted`
+ */
+export type TransactionReceipt_Status = 'success' | 'reverted'
+
+/**
+ * Union of RPC Transaction Receipt statuses.
+ *
+ * - `0x0`
+ * - `0x1`
+ */
+export type TransactionReceipt_StatusRpc = '0x0' | '0x1'
 
 /**
  * Union of Transaction Receipt types.
