@@ -28,6 +28,7 @@ test('exports', () => {
       "Fee",
       "Kzg",
       "Log",
+      "Provider",
       "Rlp",
       "RpcRequest",
       "RpcResponse",
