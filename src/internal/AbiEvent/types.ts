@@ -81,14 +81,13 @@ export type AbiEvent_Signatures<signatures extends readonly string[]> = {
 /** @internal */
 export type AbiEvent_ParametersToPrimitiveTypes<
   abiParameters extends readonly AbiParameter[],
-  //
-  _options extends EventParameterOptions = DefaultEventParameterOptions,
+  options extends EventParameterOptions = DefaultEventParameterOptions,
   // Remove non-indexed parameters based on `Options['IndexedOnly']`
 > = abiParameters extends readonly []
   ? readonly []
   : Filter<
         abiParameters,
-        _options['IndexedOnly'] extends true ? { indexed: true } : object
+        options['IndexedOnly'] extends true ? { indexed: true } : object
       > extends infer Filtered extends readonly AbiParameter[]
     ? Filtered extends readonly []
       ? readonly []
@@ -103,7 +102,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
                     [key in name]?:
                       | AbiEvent_ParameterToPrimitiveType<
                           Filtered[index],
-                          _options
+                          options
                         >
                       | undefined
                   }
@@ -111,7 +110,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
                     [key in index]?:
                       | AbiEvent_ParameterToPrimitiveType<
                           Filtered[index],
-                          _options
+                          options
                         >
                       | undefined
                   }
@@ -120,8 +119,8 @@ export type AbiEvent_ParametersToPrimitiveTypes<
           ? Compute<
               MaybeRequired<
                 Mapped,
-                _options['Required'] extends boolean
-                  ? _options['Required']
+                options['Required'] extends boolean
+                  ? options['Required']
                   : false
               >
             >
@@ -131,12 +130,12 @@ export type AbiEvent_ParametersToPrimitiveTypes<
                 ...{
                   [K in keyof Filtered]: AbiEvent_ParameterToPrimitiveType<
                     Filtered[K],
-                    _options
+                    options
                   >
                 },
               ]
             // Distribute over tuple to represent optional parameters
-            | (_options['Required'] extends true
+            | (options['Required'] extends true
                 ? never
                 : // Distribute over tuple to represent optional parameters
                   Filtered extends readonly [
@@ -147,7 +146,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
                       readonly [
                         ...{ [K in keyof Head]: Omit<Head[K], 'name'> },
                       ],
-                      _options
+                      options
                     >
                   : never)
     : never
@@ -156,9 +155,9 @@ export type AbiEvent_ParametersToPrimitiveTypes<
 export type AbiEvent_ParameterToPrimitiveType<
   abiParameter extends AbiParameter,
   //
-  _options extends EventParameterOptions = DefaultEventParameterOptions,
+  options extends EventParameterOptions = DefaultEventParameterOptions,
   _type = AbiParameterToPrimitiveType<abiParameter>,
-> = _options['EnableUnion'] extends true ? TopicType<_type> : _type
+> = options['EnableUnion'] extends true ? TopicType<_type> : _type
 
 /** @internal */
 export type TopicType<

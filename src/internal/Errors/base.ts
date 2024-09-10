@@ -5,7 +5,7 @@ export declare namespace BaseError {
     cause?: cause | undefined
     details?: string | undefined
     docsPath?: string | undefined
-    metaMessages?: string[] | undefined
+    metaMessages?: (string | undefined)[] | undefined
   }
 }
 

@@ -5,6 +5,20 @@ import type { Hex } from '../Hex/types.js'
 import { AbiEvent_format } from './format.js'
 import type { AbiEvent } from './types.js'
 
+export class AbiEventInputNotFoundError extends BaseError {
+  override readonly name = 'AbiEventInputNotFoundError'
+
+  constructor({
+    abiEvent,
+    name,
+  }: {
+    abiEvent: AbiEvent
+    name: string
+  }) {
+    super(`Parameter "${name}" not found on \`${AbiEvent_format(abiEvent)}\`.`)
+  }
+}
+
 export class EventDataMismatchError extends BaseError {
   override readonly name = 'EventDataMismatchError'
 

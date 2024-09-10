@@ -3,7 +3,8 @@ import { afterAll, beforeAll, beforeEach, vi } from 'vitest'
 import * as instances from './anvil.js'
 
 beforeAll(() => {
-  vi.mock('../src/internal/Errors/utils.ts', () => ({
+  vi.mock('../src/internal/Errors/utils.ts', async () => ({
+    ...(await vi.importActual('../src/internal/Errors/utils.ts')),
     getVersion: vi.fn().mockReturnValue('x.y.z'),
   }))
 })
