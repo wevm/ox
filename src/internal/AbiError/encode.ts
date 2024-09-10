@@ -18,7 +18,7 @@ import type { AbiError } from './types.js'
  *   'error InvalidSignature(uint r, uint s, uint8 yParity)'
  * )
  *
- * const data = AbiError.encodeInput( // [!code focus]
+ * const data = AbiError.encode( // [!code focus]
  *   error, // [!code focus]
  *   [1n, 2n, 0] // [!code focus]
  * ) // [!code focus]
@@ -47,7 +47,7 @@ import type { AbiError } from './types.js'
  * ]) // [!code hl]
  * const error = AbiError.fromAbi(abi, { name: 'InvalidSignature' }) // [!code hl]
  *
- * const data = AbiError.encodeInput(
+ * const data = AbiError.encode(
  *   error,
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * )

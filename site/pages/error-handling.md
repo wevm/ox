@@ -9,16 +9,15 @@ Every function namespace in Ox exports an accompanying error type (`ErrorType`) 
 Unfortunately, [TypeScript doesn't have an abstraction for typed exceptions](https://github.com/microsoft/TypeScript/issues/13219), so the most pragmatic & vanilla approach would be to explicitly cast error types in the `catch` statement with the function's `.ErrorType` property.
 
 ```ts twoslash
-// @noErrors
-import { Abi, Errors, Hex } from 'ox'
+import { AbiParameters, Errors, Hex } from 'ox'
 
 try {
-  Abi.encodeParameters(
-    ['address'], 
+  AbiParameters.encode(
+    AbiParameters.from('address'), 
     ['0xc961145a54c96e3ae9baa048c4f4d6b04c13916b']
   )
 } catch (err) {
-  const error = err as Abi.encodeParameters.ErrorType
+  const error = err as AbiParameters.encode.ErrorType
   error.name
   //    ^? 
 
@@ -47,15 +46,15 @@ You can utilize Ox's `parseError` property into custom type-safe error handling 
 
 ```ts twoslash
 // @noErrors
-import { Abi } from 'ox'
+import { AbiParameters } from 'ox'
 import { fromThrowable } from 'neverthrow';
 
-const safeEncodeAbiParameters = fromThrowable( // [!code hl]
-  Abi.encodeParameters, // [!code hl]
-  Abi.encodeParameters.parseError // [!code hl]
+const encode = fromThrowable( // [!code hl]
+  AbiParameters.encode, // [!code hl]
+  AbiParameters.encode.parseError // [!code hl]
 ) // [!code hl]
 
-const result = safeEncodeAbiParameters(['bytes'], ['0xdeadbeef'])
+const result = encode(AbiParameters.from('bytes'), ['0xdeadbeef'])
 
 if (result.isErr()) // [!code hl]
 	result.error.name // [!code hl]

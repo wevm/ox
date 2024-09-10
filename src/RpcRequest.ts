@@ -9,12 +9,15 @@ export type {
   RpcRequest_ExtractMethodParameters as ExtractMethodParameters,
   RpcRequest_ExtractMethodReturnType as ExtractMethodReturnType,
   RpcRequest_Method as Method,
-  RpcRequest_MethodEth as MethodEth,
   RpcRequest_MethodGeneric as MethodGeneric,
   RpcRequest_MethodName as MethodName,
-  RpcRequest_MethodNameEth as MethodNameEth,
   RpcRequest_MethodNameGeneric as MethodNameGeneric,
   RpcRequest_Methods as Methods,
-  RpcRequest_MethodsEth as MethodsEth,
   RpcRequest_Store as Store,
 } from './internal/RpcRequest/types.js'
+
+export type {
+  RpcRequest_MethodsEth as MethodsEth,
+  RpcRequest_MethodEth as MethodEth,
+  RpcRequest_MethodNameEth as MethodNameEth,
+} from './internal/RpcRequest/namespaces/eth.js'

@@ -7,10 +7,11 @@ import type {
 } from '../RpcRequest/types.js'
 import type { Compute } from '../types.js'
 
-type Provider_Options = {
+export type Provider_Options = {
   includeEvents: boolean
 }
-type Provider_OptionsDefault = {
+
+export type Provider_OptionsDefault = {
   includeEvents: true
 }
 
