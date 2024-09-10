@@ -165,9 +165,9 @@ test('default', () => {
     Bytes.slice(new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), 10),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SliceOffsetOutOfBoundsError: Slice starting at offset \`10\` is out-of-bounds (size: \`10\`).
+    [Bytes.SliceOffsetOutOfBoundsError: Slice starting at offset \`10\` is out-of-bounds (size: \`10\`).
 
-    See: https://oxlib.sh/errors#sliceoffsetoutofboundserror]
+    See: https://oxlib.sh/errors#bytessliceoffsetoutofboundserror]
   `,
   )
 
@@ -177,9 +177,9 @@ test('default', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SliceOffsetOutOfBoundsError: Slice ending at offset \`11\` is out-of-bounds (size: \`10\`).
+    [Bytes.SliceOffsetOutOfBoundsError: Slice ending at offset \`11\` is out-of-bounds (size: \`10\`).
 
-    See: https://oxlib.sh/errors#sliceoffsetoutofboundserror]
+    See: https://oxlib.sh/errors#bytessliceoffsetoutofboundserror]
   `,
   )
   expect(() =>
@@ -188,9 +188,9 @@ test('default', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SliceOffsetOutOfBoundsError: Slice ending at offset \`15\` is out-of-bounds (size: \`5\`).
+    [Bytes.SliceOffsetOutOfBoundsError: Slice ending at offset \`15\` is out-of-bounds (size: \`5\`).
 
-    See: https://oxlib.sh/errors#sliceoffsetoutofboundserror]
+    See: https://oxlib.sh/errors#bytessliceoffsetoutofboundserror]
   `,
   )
 })

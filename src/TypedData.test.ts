@@ -5,6 +5,7 @@ import * as exports from './TypedData.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "BytesSizeMismatchError",
       "InvalidPrimaryTypeError",
       "domainSeparator",
       "encodeType",

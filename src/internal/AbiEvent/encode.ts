@@ -5,7 +5,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import type { Compute, IsNarrowable } from '../types.js'
-import { FilterTypeNotSupportedError } from './errors.js'
+import { AbiEvent_FilterTypeNotSupportedError } from './errors.js'
 import { AbiEvent_getSelector } from './getSelector.js'
 import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
 
@@ -129,7 +129,7 @@ export function AbiEvent_encode<const abiEvent extends AbiEvent>(
         if (param.type === 'string' || param.type === 'bytes')
           return Hash_keccak256(Bytes_from(value as string))
         if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
-          throw new FilterTypeNotSupportedError(param.type)
+          throw new AbiEvent_FilterTypeNotSupportedError(param.type)
         return AbiParameters_encode([param], [value])
       }
 

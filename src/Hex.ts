@@ -1,19 +1,15 @@
 export type { Hex } from './internal/Hex/types.js'
 
 export {
-  BytesSizeMismatchError,
-  IntegerOutOfRangeError,
-  InvalidBytesBooleanError,
-  InvalidBytesTypeError,
-  InvalidHexBooleanError,
-  InvalidHexLengthError,
-  InvalidHexTypeError,
-  InvalidHexValueError,
-  InvalidTypeError,
-  SizeExceedsPaddingSizeError,
-  SizeOverflowError,
-  SliceOffsetOutOfBoundsError,
-} from './internal/Errors/data.js'
+  Hex_IntegerOutOfRangeError as IntegerOutOfRangeError,
+  Hex_InvalidHexBooleanError as InvalidHexBooleanError,
+  Hex_InvalidHexTypeError as InvalidHexTypeError,
+  Hex_InvalidHexValueError as InvalidHexValueError,
+  Hex_InvalidTypeError as InvalidTypeError,
+  Hex_SizeExceedsPaddingSizeError as SizeExceedsPaddingSizeError,
+  Hex_SizeOverflowError as SizeOverflowError,
+  Hex_SliceOffsetOutOfBoundsError as SliceOffsetOutOfBoundsError,
+} from './internal/Hex/errors.js'
 
 export { Hex_assert as assert } from './internal/Hex/assert.js'
 

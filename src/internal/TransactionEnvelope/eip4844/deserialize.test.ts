@@ -140,11 +140,11 @@ describe('errors', () => {
         ]).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidAddressError: Address "0x" is invalid.
+      [Address.InvalidAddressError: Address "0x" is invalid.
 
-        Details: Address is not a 20 byte (40 hexadecimal character) value.
-        See: https://oxlib.sh/errors#invalidaddresserror]
-      `)
+      Details: Address is not a 20 byte (40 hexadecimal character) value.
+      See: https://oxlib.sh/errors#invalidaddresserror]
+    `)
 
     expect(() =>
       TransactionEnvelopeEip4844.deserialize(
@@ -163,23 +163,23 @@ describe('errors', () => {
         ]).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidHexLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
+      [Hex.InvalidLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
 
-        It must be an even length.
+      It must be an even length.
 
-        See: https://oxlib.sh/errors#invalidhexlengtherror]
-      `)
+      See: https://oxlib.sh/errors#bytesinvalidhexlengtherror]
+    `)
   })
 
   test('invalid transaction (all missing)', () => {
     expect(() =>
       TransactionEnvelopeEip4844.deserialize(`0x03${Rlp.fromHex([]).slice(2)}`),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip4844" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
-        Serialized Transaction: "0x03c0"
-        Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
-      `)
+      Serialized Transaction: "0x03c0"
+      Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+    `)
   })
 
   test('invalid transaction (some missing)', () => {
@@ -188,11 +188,11 @@ describe('errors', () => {
         `0x03${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip4844" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
-        Serialized Transaction: "0x03c20001"
-        Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
-      `)
+      Serialized Transaction: "0x03c20001"
+      Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+    `)
   })
 
   test('invalid transaction (missing signature)', () => {
@@ -214,10 +214,10 @@ describe('errors', () => {
         ]).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip4844" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
-        Serialized Transaction: "0x03cc808080808080808080808080"
-        Missing Attributes: r, s]
-      `)
+      Serialized Transaction: "0x03cc808080808080808080808080"
+      Missing Attributes: r, s]
+    `)
   })
 })

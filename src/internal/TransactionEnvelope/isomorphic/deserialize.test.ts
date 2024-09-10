@@ -91,6 +91,6 @@ test('error: unknown type', () => {
       '0x05f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261',
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `0x05` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `0x05` is not implemented.]',
   )
 })

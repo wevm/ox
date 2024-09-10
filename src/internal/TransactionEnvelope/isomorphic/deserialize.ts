@@ -9,7 +9,7 @@ import { TransactionEnvelopeEip4844_deserialize } from '../eip4844/deserialize.j
 import type { TransactionEnvelopeEip4844 } from '../eip4844/types.js'
 import { TransactionEnvelopeEip7702_deserialize } from '../eip7702/deserialize.js'
 import type { TransactionEnvelopeEip7702 } from '../eip7702/types.js'
-import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_deserialize } from '../legacy/deserialize.js'
 import type { TransactionEnvelopeLegacy } from '../legacy/types.js'
 import {
@@ -63,7 +63,7 @@ export function TransactionEnvelope_deserialize<
   if (type === 'eip7702')
     return TransactionEnvelopeEip7702_deserialize(serialized as any) as never
 
-  throw new TransactionTypeNotImplementedError({ type })
+  throw new TransactionEnvelope_TypeNotImplementedError({ type })
 }
 
 export declare namespace TransactionEnvelope_deserialize {

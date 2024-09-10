@@ -7,7 +7,7 @@ import { Hex_isHex } from '../Hex/isHex.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { UnionCompute } from '../types.js'
-import { AbiItemAmbiguityError, AbiItemNotFoundError } from './errors.js'
+import { AbiItem_AmbiguityError, AbiItem_NotFoundError } from './errors.js'
 import { AbiItem_getSelector } from './getSelector.js'
 import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 import type {
@@ -109,7 +109,7 @@ export function AbiItem_fromAbi<
     return 'name' in abiItem && abiItem.name === name
   })
 
-  if (abiItems.length === 0) throw new AbiItemNotFoundError(options)
+  if (abiItems.length === 0) throw new AbiItem_NotFoundError(options)
   if (abiItems.length === 1)
     return {
       ...abiItems[0],
@@ -148,7 +148,7 @@ export function AbiItem_fromAbi<
           args as readonly unknown[],
         )
         if (ambiguousTypes)
-          throw new AbiItemAmbiguityError(
+          throw new AbiItem_AmbiguityError(
             {
               abiItem,
               type: ambiguousTypes[0]!,
@@ -170,7 +170,7 @@ export function AbiItem_fromAbi<
     return { ...abiItem!, overloads }
   })()
 
-  if (!abiItem) throw new AbiItemNotFoundError(options)
+  if (!abiItem) throw new AbiItem_NotFoundError(options)
   return {
     ...abiItem,
     ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),

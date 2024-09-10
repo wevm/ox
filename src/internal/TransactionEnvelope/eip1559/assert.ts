@@ -2,9 +2,9 @@ import { Address_assert } from '../../Address/assert.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
 import {
-  FeeCapTooHighError,
-  InvalidChainIdError,
-  TipAboveFeeCapError,
+  TransactionEnvelope_FeeCapTooHighError,
+  TransactionEnvelope_InvalidChainIdError,
+  TransactionEnvelope_TipAboveFeeCapError,
 } from '../errors.js'
 import type { TransactionEnvelopeEip1559 } from './types.js'
 
@@ -32,24 +32,28 @@ export function TransactionEnvelopeEip1559_assert(
   envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
 ) {
   const { chainId, maxPriorityFeePerGas, maxFeePerGas, to } = envelope
-  if (chainId <= 0) throw new InvalidChainIdError({ chainId })
+  if (chainId <= 0)
+    throw new TransactionEnvelope_InvalidChainIdError({ chainId })
   if (to) Address_assert(to, { strict: false })
   if (maxFeePerGas && BigInt(maxFeePerGas) > 2n ** 256n - 1n)
-    throw new FeeCapTooHighError({ feeCap: maxFeePerGas })
+    throw new TransactionEnvelope_FeeCapTooHighError({ feeCap: maxFeePerGas })
   if (
     maxPriorityFeePerGas &&
     maxFeePerGas &&
     maxPriorityFeePerGas > maxFeePerGas
   )
-    throw new TipAboveFeeCapError({ maxFeePerGas, maxPriorityFeePerGas })
+    throw new TransactionEnvelope_TipAboveFeeCapError({
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+    })
 }
 
 export declare namespace TransactionEnvelopeEip1559_assert {
   type ErrorType =
     | Address_assert.ErrorType
-    | InvalidChainIdError
-    | FeeCapTooHighError
-    | TipAboveFeeCapError
+    | TransactionEnvelope_InvalidChainIdError
+    | TransactionEnvelope_FeeCapTooHighError
+    | TransactionEnvelope_TipAboveFeeCapError
     | GlobalErrorType
 }
 

@@ -3,8 +3,8 @@ import { BaseError } from '../Errors/base.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 
-export class AbiDecodingDataSizeTooSmallError extends BaseError {
-  override readonly name = 'AbiDecodingDataSizeTooSmallError'
+export class AbiParameters_DataSizeTooSmallError extends BaseError {
+  override readonly name = 'AbiParameters.DataSizeTooSmallError'
   constructor({
     data,
     parameters,
@@ -19,8 +19,8 @@ export class AbiDecodingDataSizeTooSmallError extends BaseError {
   }
 }
 
-export class AbiDecodingZeroDataError extends BaseError {
-  override readonly name = 'AbiDecodingZeroDataError'
+export class AbiParameters_ZeroDataError extends BaseError {
+  override readonly name = 'AbiParameters.ZeroDataError'
   constructor() {
     super('Cannot decode zero data ("0x") with ABI parameters.')
   }
@@ -35,9 +35,9 @@ export class AbiDecodingZeroDataError extends BaseError {
  * // @noErrors
  * import { Abi } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(['uint256[3]'], [[69n, 420n]])
- * //                             ↑ expected: 3  ↑ ❌ length: 2
- * // @error: AbiEncodingArrayLengthMismatchError: ABI encoding array length mismatch
+ * Abi.encodeParameters(AbiParameters.from('uint256[3]'), [[69n, 420n]])
+ * //                                               ↑ expected: 3  ↑ ❌ length: 2
+ * // @error: AbiParameters_ArrayLengthMismatchError: ABI encoding array length mismatch
  * // @error: for type `uint256[3]`. Expected: `3`. Given: `2`.
  * ```
  *
@@ -52,17 +52,17 @@ export class AbiDecodingZeroDataError extends BaseError {
  * //                           ↑ ✅ length: 3
  * ```
  */
-export class AbiEncodingArrayLengthMismatchError extends BaseError {
-  override readonly name = 'AbiEncodingArrayLengthMismatchError'
+export class AbiParameters_ArrayLengthMismatchError extends BaseError {
+  override readonly name = 'AbiParameters.ArrayLengthMismatchError'
   constructor({
     expectedLength,
     givenLength,
     type,
   }: { expectedLength: number; givenLength: number; type: string }) {
     super(
-      `ABI encoding array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`,
+      `Array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`,
       {
-        docsPath: '/errors#abiencodingarraylengthmismatcherror',
+        docsPath: '/errors#abiparametersarraylengthmismatcherror',
       },
     )
   }
@@ -77,9 +77,9 @@ export class AbiEncodingArrayLengthMismatchError extends BaseError {
  * // @noErrors
  * import { Abi } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(['bytes8'], [['0xdeadbeefdeadbeefdeadbeef']])
- * //                          ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
- * // @error: AbiEncodingBytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
+ * Abi.encodeParameters(AbiParameters.from('bytes8'), [['0xdeadbeefdeadbeefdeadbeef']])
+ * //                                            ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
+ * // @error: AbiParameters_BytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
  * // @error: (bytes12) does not match expected size (bytes8).
  * ```
  *
@@ -94,15 +94,15 @@ export class AbiEncodingArrayLengthMismatchError extends BaseError {
  * //                        ↑ ✅ size: 8 bytes
  * ```
  */
-export class AbiEncodingBytesSizeMismatchError extends BaseError {
-  override readonly name = 'AbiEncodingBytesSizeMismatchError'
+export class AbiParameters_BytesSizeMismatchError extends BaseError {
+  override readonly name = 'AbiParameters.BytesSizeMismatchError'
   constructor({ expectedSize, value }: { expectedSize: number; value: Hex }) {
     super(
       `Size of bytes "${value}" (bytes${Hex_size(
         value,
       )}) does not match expected size (bytes${expectedSize}).`,
       {
-        docsPath: '/errors#abiencodingbytessizemismatcherror',
+        docsPath: '/errors#abiparametersbytessizemismatcherror',
       },
     )
   }
@@ -118,7 +118,7 @@ export class AbiEncodingBytesSizeMismatchError extends BaseError {
  * import { Abi } from 'ox'
  * // ---cut---
  * Abi.encodeParameters(['string', 'uint256'], ['hello'])
- * // @error: AbiEncodingLengthMismatchError: ABI encoding params/values length mismatch.
+ * // @error: AbiParameters_LengthMismatchError: ABI encoding params/values length mismatch.
  * // @error: Expected length (params): 2
  * // @error: Given length (values): 1
  * ```
@@ -131,8 +131,8 @@ export class AbiEncodingBytesSizeMismatchError extends BaseError {
  *
  * Pass a [valid ABI type](https://docs.soliditylang.org/en/develop/abi-spec.html#types).
  */
-export class AbiEncodingLengthMismatchError extends BaseError {
-  override readonly name = 'AbiEncodingLengthMismatchError'
+export class AbiParameters_LengthMismatchError extends BaseError {
+  override readonly name = 'AbiParameters.LengthMismatchError'
   constructor({
     expectedLength,
     givenLength,
@@ -144,7 +144,7 @@ export class AbiEncodingLengthMismatchError extends BaseError {
         `Given length (values): ${givenLength}`,
       ].join('\n'),
       {
-        docsPath: '/errors#abiencodinglengthmismatcherror',
+        docsPath: '/errors#abiparameterslengthmismatcherror',
       },
     )
   }
@@ -166,20 +166,20 @@ export class AbiEncodingLengthMismatchError extends BaseError {
  *
  * Pass an array value.
  */
-export class AbiEncodingInvalidArrayError extends BaseError {
-  override readonly name = 'AbiEncodingInvalidArrayError'
+export class AbiParameters_InvalidArrayError extends BaseError {
+  override readonly name = 'AbiParameters.InvalidArrayError'
   constructor(value: unknown) {
     super(`Value \`${value}\` is not a valid array.`, {
-      docsPath: '/errors#abiencodinginvalidarrayerror',
+      docsPath: '/errors#abiparametersinvalidarrayerror',
     })
   }
 }
 
-export class InvalidAbiTypeError extends BaseError {
-  override readonly name = 'InvalidAbiTypeError'
+export class AbiParameters_InvalidTypeError extends BaseError {
+  override readonly name = 'AbiParameters.InvalidTypeError'
   constructor(type: string) {
     super(`Type \`${type}\` is not a valid ABI Type.`, {
-      docsPath: '/errors#invalidabitypeerror',
+      docsPath: '/errors#abiparametersinvalidtypeerror',
     })
   }
 }

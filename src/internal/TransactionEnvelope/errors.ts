@@ -3,8 +3,8 @@ import { prettyPrint } from '../Errors/utils.js'
 import type { Hex } from '../Hex/types.js'
 import { Value_formatGwei } from '../Value/formatGwei.js'
 
-export class CannotInferTransactionTypeError extends BaseError {
-  override readonly name = 'CannotInferTransactionTypeError'
+export class TransactionEnvelope_CannotInferTypeError extends BaseError {
+  override readonly name = 'TransactionEnvelope.CannotInferTypeError'
   constructor({ transaction }: { transaction: Record<string, unknown> }) {
     super('Cannot infer a transaction type from provided transaction.', {
       metaMessages: [
@@ -25,8 +25,8 @@ export class CannotInferTransactionTypeError extends BaseError {
   }
 }
 
-export class FeeCapTooHighError extends BaseError {
-  override readonly name = 'FeeCapTooHighError'
+export class TransactionEnvelope_FeeCapTooHighError extends BaseError {
+  override readonly name = 'TransactionEnvelope.FeeCapTooHighError'
   constructor({
     feeCap,
   }: {
@@ -40,8 +40,8 @@ export class FeeCapTooHighError extends BaseError {
   }
 }
 
-export class GasPriceTooHighError extends BaseError {
-  override readonly name = 'GasPriceTooHighError'
+export class TransactionEnvelope_GasPriceTooHighError extends BaseError {
+  override readonly name = 'TransactionEnvelope.GasPriceTooHighError'
   constructor({
     gasPrice,
   }: {
@@ -55,8 +55,8 @@ export class GasPriceTooHighError extends BaseError {
   }
 }
 
-export class InvalidChainIdError extends BaseError {
-  override readonly name = 'InvalidChainIdError'
+export class TransactionEnvelope_InvalidChainIdError extends BaseError {
+  override readonly name = 'TransactionEnvelope.InvalidChainIdError'
   constructor({ chainId }: { chainId?: number | undefined }) {
     super(
       typeof chainId !== 'undefined'
@@ -66,8 +66,8 @@ export class InvalidChainIdError extends BaseError {
   }
 }
 
-export class InvalidSerializedTransactionError extends BaseError {
-  override readonly name = 'InvalidSerializedTransactionError'
+export class TransactionEnvelope_InvalidSerializedError extends BaseError {
+  override readonly name = 'TransactionEnvelope.InvalidSerializedError'
   constructor({
     attributes,
     serializedTransaction,
@@ -89,15 +89,15 @@ export class InvalidSerializedTransactionError extends BaseError {
   }
 }
 
-export class TransactionTypeNotImplementedError extends BaseError {
-  override readonly name = 'TransactionTypeNotImplementedError'
+export class TransactionEnvelope_TypeNotImplementedError extends BaseError {
+  override readonly name = 'TransactionEnvelope.TypeNotImplementedError'
   constructor({ type }: { type: string }) {
     super(`The provided transaction type \`${type}\` is not implemented.`)
   }
 }
 
-export class TipAboveFeeCapError extends BaseError {
-  override readonly name = 'TipAboveFeeCapError'
+export class TransactionEnvelope_TipAboveFeeCapError extends BaseError {
+  override readonly name = 'TransactionEnvelope.TipAboveFeeCapError'
   constructor({
     maxPriorityFeePerGas,
     maxFeePerGas,

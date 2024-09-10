@@ -1,9 +1,8 @@
 import {
-  InvalidAddressError,
-  InvalidAddressInputError,
+  Address_InvalidAddressError,
+  Address_InvalidInputError,
 } from '../Address/errors.js'
 import { Address_isAddress } from '../Address/isAddress.js'
-import { BytesSizeMismatchError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromNumber } from '../Hex/from.js'
 import { Hex_size } from '../Hex/size.js'
@@ -12,7 +11,10 @@ import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
 } from '../Solidity/constants.js'
-import { InvalidPrimaryTypeError } from './errors.js'
+import {
+  TypedData_BytesSizeMismatchError,
+  TypedData_InvalidPrimaryTypeError,
+} from './errors.js'
 import type {
   TypedData,
   TypedData_Definition,
@@ -85,16 +87,16 @@ export function TypedData_validate<
         typeof value === 'string' &&
         !Address_isAddress(value)
       )
-        throw new InvalidAddressError({
+        throw new Address_InvalidAddressError({
           address: value,
-          cause: new InvalidAddressInputError(),
+          cause: new Address_InvalidInputError(),
         })
 
       const bytesMatch = type.match(Solidity_bytesRegex)
       if (bytesMatch) {
         const [, size] = bytesMatch
         if (size && Hex_size(value as Hex) !== Number.parseInt(size))
-          throw new BytesSizeMismatchError({
+          throw new TypedData_BytesSizeMismatchError({
             expectedSize: Number.parseInt(size),
             givenSize: Hex_size(value as Hex),
           })
@@ -111,7 +113,7 @@ export function TypedData_validate<
   // Validate message types.
   if (primaryType !== 'EIP712Domain') {
     if (types[primaryType]) validateData(types[primaryType], message)
-    else throw new InvalidPrimaryTypeError({ primaryType, types })
+    else throw new TypedData_InvalidPrimaryTypeError({ primaryType, types })
   }
 }
 
@@ -122,8 +124,9 @@ export declare namespace TypedData_validate {
   > = TypedData_Definition<typedData, primaryType>
 
   type ErrorType =
-    | InvalidAddressError
-    | InvalidPrimaryTypeError
+    | Address_InvalidAddressError
+    | TypedData_BytesSizeMismatchError
+    | TypedData_InvalidPrimaryTypeError
     | Hex_fromNumber.ErrorType
     | Hex_size.ErrorType
     | GlobalErrorType

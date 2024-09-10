@@ -4,7 +4,9 @@ import * as exports from './AbiItem.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "AbiItemAmbiguityError",
+      "AmbiguityError",
+      "InvalidSelectorSizeError",
+      "NotFoundError",
       "getSelector",
       "getSignature",
       "getSignatureHash",

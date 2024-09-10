@@ -346,9 +346,9 @@ describe('static', () => {
         ),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [AbiEncodingBytesSizeMismatchError: Size of bytes "0x0000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef" (bytes44) does not match expected size (bytes8).
+        [AbiParameters.BytesSizeMismatchError: Size of bytes "0x0000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef" (bytes44) does not match expected size (bytes8).
 
-        See: https://oxlib.sh/errors#abiencodingbytessizemismatcherror]
+        See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
       `,
       )
     })
@@ -386,9 +386,9 @@ describe('static', () => {
         ),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [AbiEncodingBytesSizeMismatchError: Size of bytes "0x000000000000000000000000000000000000000000000000000000000000000420" (bytes33) does not match expected size (bytes16).
+        [AbiParameters.BytesSizeMismatchError: Size of bytes "0x000000000000000000000000000000000000000000000000000000000000000420" (bytes33) does not match expected size (bytes16).
 
-        See: https://oxlib.sh/errors#abiencodingbytessizemismatcherror]
+        See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
       `,
       )
     })
@@ -1739,9 +1739,9 @@ test('invalid type', () => {
     AbiParameters.encode([{ name: 'x', type: 'lol' }], [69]),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidAbiTypeError: Type \`lol\` is not a valid ABI Type.
+    [AbiParameters.InvalidTypeError: Type \`lol\` is not a valid ABI Type.
 
-    See: https://oxlib.sh/errors#invalidabitypeerror]
+    See: https://oxlib.sh/errors#abiparametersinvalidtypeerror]
   `,
   )
 })
@@ -1754,11 +1754,11 @@ test('invalid params/values lengths', () => {
       [69, 420],
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEncodingLengthMismatchError: ABI encoding parameters/values length mismatch.
+    [AbiParameters.LengthMismatchError: ABI encoding parameters/values length mismatch.
     Expected length (parameters): 1
     Given length (values): 2
 
-    See: https://oxlib.sh/errors#abiencodinglengthmismatcherror]
+    See: https://oxlib.sh/errors#abiparameterslengthmismatcherror]
   `)
 })
 
@@ -1766,7 +1766,7 @@ test('invalid address', () => {
   expect(() =>
     AbiParameters.encode([{ name: 'x', type: 'address' }], ['0x111']),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidAddressError: Address "0x111" is invalid.
+    [Address.InvalidAddressError: Address "0x111" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.
     See: https://oxlib.sh/errors#invalidaddresserror]
@@ -1782,9 +1782,9 @@ test('invalid array', () => {
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [AbiEncodingInvalidArrayError: Value \`69\` is not a valid array.
+    [AbiParameters.InvalidArrayError: Value \`69\` is not a valid array.
 
-    See: https://oxlib.sh/errors#abiencodinginvalidarrayerror]
+    See: https://oxlib.sh/errors#abiparametersinvalidarrayerror]
   `,
   )
 })
@@ -1798,9 +1798,9 @@ test('invalid array lengths', () => {
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [AbiEncodingArrayLengthMismatchError: ABI encoding array length mismatch for type \`uint256[3]\`. Expected: \`3\`. Given: \`2\`.
+    [AbiParameters.ArrayLengthMismatchError: Array length mismatch for type \`uint256[3]\`. Expected: \`3\`. Given: \`2\`.
 
-    See: https://oxlib.sh/errors#abiencodingarraylengthmismatcherror]
+    See: https://oxlib.sh/errors#abiparametersarraylengthmismatcherror]
   `,
   )
 })
@@ -1810,9 +1810,9 @@ test('invalid bytes', () => {
     AbiParameters.encode([{ name: 'x', type: 'bytes8' }], ['0x111']),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [AbiEncodingBytesSizeMismatchError: Size of bytes "0x111" (bytes2) does not match expected size (bytes8).
+    [AbiParameters.BytesSizeMismatchError: Size of bytes "0x111" (bytes2) does not match expected size (bytes8).
 
-    See: https://oxlib.sh/errors#abiencodingbytessizemismatcherror]
+    See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
   `,
   )
 })

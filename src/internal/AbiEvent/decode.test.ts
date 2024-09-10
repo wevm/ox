@@ -137,7 +137,7 @@ test('error: topics mismatch, named', () => {
       ],
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[EventTopicsMismatchError: Expected a topic for indexed event parameter "value" for "event Transfer(address indexed from, address to, uint256 indexed value)".]`,
+    `[AbiEvent.TopicsMismatchError: Expected a topic for indexed event parameter "value" for "event Transfer(address indexed from, address to, uint256 indexed value)".]`,
   )
 })
 
@@ -154,7 +154,7 @@ test('error: topics mismatch, unnamed', () => {
       ],
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[EventTopicsMismatchError: Expected a topic for indexed event parameter for "event Transfer(address indexed, address, uint256 indexed)".]`,
+    `[AbiEvent.TopicsMismatchError: Expected a topic for indexed event parameter for "event Transfer(address indexed, address, uint256 indexed)".]`,
   )
 })
 
@@ -174,7 +174,7 @@ test('error: data mismatch', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [EventDataMismatchError: Data size of 32 bytes is too small for non-indexed event parameters.
+    [AbiEvent.DataMismatchError: Data size of 32 bytes is too small for non-indexed event parameters.
 
     Non-indexed Parameters: (address to, uint256 value)
     Data:   0x0000000000000000000000000000000000000000000000000000000023c34600 (32 bytes)]
@@ -197,7 +197,7 @@ test('error: data mismatch', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [EventDataMismatchError: Data size of 0 bytes is too small for non-indexed event parameters.
+    [AbiEvent.DataMismatchError: Data size of 0 bytes is too small for non-indexed event parameters.
 
     Non-indexed Parameters: (address to, uint256 value)
     Data:   0x (0 bytes)]
@@ -221,7 +221,7 @@ test('error: invalid data size', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [EventDataMismatchError: Data size of 1 bytes is too small for non-indexed event parameters.
+    [AbiEvent.DataMismatchError: Data size of 1 bytes is too small for non-indexed event parameters.
 
     Non-indexed Parameters: (uint256 value)
     Data:   0x01 (1 bytes)]
@@ -245,11 +245,11 @@ test('error: invalid boolean', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidBytesBooleanError: Bytes value \`221,242,82,173,27,226,200,155,105,194,176,104,252,55,141,170,149,43,167,241,99,196,161,22,40,245,90,77,245,35,179,239\` is not a valid boolean.
+    [Bytes.InvalidBytesBooleanError: Bytes value \`221,242,82,173,27,226,200,155,105,194,176,104,252,55,141,170,149,43,167,241,99,196,161,22,40,245,90,77,245,35,179,239\` is not a valid boolean.
 
     The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
-    See: https://oxlib.sh/errors#invalidbytesbooleanerror]
+    See: https://oxlib.sh/errors#bytesinvalidbytesbooleanerror]
   `,
   )
 })
@@ -269,7 +269,7 @@ test('error: event selector topic mismatch', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [EventSelectorTopicMismatchError: topics[0]="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" does not match the expected topics[0]="0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f".
+    [AbiEvent.SelectorTopicMismatchError: topics[0]="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" does not match the expected topics[0]="0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f".
 
     Event: event Transfer(address indexed from, address indexed to, bool sender)
     Selector: 0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f]

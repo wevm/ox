@@ -77,7 +77,10 @@ export function renderNamespaceErrors(options: {
     const data = dataLookup[id]
     if (!data) throw new Error(`Could not find error data for ${id}`)
 
-    content.push(`## \`${data.displayName}\``)
+    const name = apiItem.parent?.displayName
+      ? `${apiItem.parent.displayName}.${data.displayName}`
+      : data.displayName
+    content.push(`## \`${name}\``)
     content.push(data.comment?.summary ?? 'TODO')
   }
 

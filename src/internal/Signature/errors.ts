@@ -5,8 +5,8 @@ import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import { stringify } from '../stringify.js'
 
-export class InvalidSerializedSignatureSizeError extends BaseError {
-  override readonly name = 'InvalidSerializedSignatureSizeError'
+export class Signature_InvalidSerializedSizeError extends BaseError {
+  override readonly name = 'Signature.InvalidSerializedSizeError'
 
   constructor({ signature }: { signature: Hex | Bytes }) {
     super(
@@ -16,8 +16,8 @@ export class InvalidSerializedSignatureSizeError extends BaseError {
   }
 }
 
-export class MissingSignaturePropertiesError extends BaseError {
-  override readonly name = 'MissingSignaturePropertiesError'
+export class Signature_MissingPropertiesError extends BaseError {
+  override readonly name = 'Signature.MissingPropertiesError'
 
   constructor({ signature }: { signature: unknown }) {
     super(
@@ -29,8 +29,8 @@ export class MissingSignaturePropertiesError extends BaseError {
   }
 }
 
-export class InvalidSignatureRError extends BaseError {
-  override readonly name = 'InvalidSignatureRError'
+export class Signature_InvalidRError extends BaseError {
+  override readonly name = 'Signature.InvalidRError'
 
   constructor({ value }: { value: unknown }) {
     super(
@@ -39,8 +39,8 @@ export class InvalidSignatureRError extends BaseError {
   }
 }
 
-export class InvalidSignatureSError extends BaseError {
-  override readonly name = 'InvalidSignatureSError'
+export class Signature_InvalidSError extends BaseError {
+  override readonly name = 'Signature.InvalidSError'
 
   constructor({ value }: { value: unknown }) {
     super(
@@ -49,8 +49,8 @@ export class InvalidSignatureSError extends BaseError {
   }
 }
 
-export class InvalidSignatureYParityError extends BaseError {
-  override readonly name = 'InvalidSignatureYParityError'
+export class Signature_InvalidYParityError extends BaseError {
+  override readonly name = 'Signature.InvalidYParityError'
 
   constructor({ value }: { value: unknown }) {
     super(
@@ -62,8 +62,8 @@ export class InvalidSignatureYParityError extends BaseError {
   }
 }
 
-export class InvalidSignatureVError extends BaseError {
-  override readonly name = 'InvalidSignatureVError'
+export class Signature_InvalidVError extends BaseError {
+  override readonly name = 'Signature.InvalidVError'
 
   constructor({ value }: { value: number }) {
     super(

@@ -4,8 +4,8 @@ import { BaseError } from '../Errors/base.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 
-export class AbiItemAmbiguityError extends BaseError {
-  override readonly name = 'AbiItemAmbiguityError'
+export class AbiItem_AmbiguityError extends BaseError {
+  override readonly name = 'AbiItem.AmbiguityError'
   constructor(
     x: { abiItem: Abi[number]; type: string },
     y: { abiItem: Abi[number]; type: string },
@@ -24,8 +24,8 @@ export class AbiItemAmbiguityError extends BaseError {
   }
 }
 
-export class AbiItemNotFoundError extends BaseError {
-  override readonly name = 'AbiItemNotFoundError'
+export class AbiItem_NotFoundError extends BaseError {
+  override readonly name = 'AbiItem.NotFoundError'
   constructor({
     name,
     data,
@@ -46,13 +46,13 @@ export class AbiItemNotFoundError extends BaseError {
   }
 }
 
-export class InvalidSelectorSizeError extends BaseError {
-  override readonly name = 'InvalidSelectorSizeError'
+export class AbiItem_InvalidSelectorSizeError extends BaseError {
+  override readonly name = 'AbiItem.InvalidSelectorSizeError'
   constructor({ data }: { data: Hex }) {
     super(
       `Selector size is invalid. Expected 4 bytes. Received ${Hex_size(data)} bytes ("${data}").`,
       {
-        docsPath: '/errors#invalidselectorsizeerror',
+        docsPath: '/errors#abiiteminvalidselectorsizeerror',
       },
     )
   }

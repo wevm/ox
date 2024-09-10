@@ -49,9 +49,9 @@ describe('numbers to bytes', () => {
 
     expect(() => Bytes.from(-69)).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`-69\` is not in safe integer range (\`0\` to \`9007199254740991\`)
+      [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe integer range (\`0\` to \`9007199254740991\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
   })
@@ -117,27 +117,27 @@ describe('numbers to bytes', () => {
       Bytes.fromNumber(-7, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`-7\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
+      [Hex.IntegerOutOfRangeError: Number \`-7\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() =>
       Bytes.fromNumber(256, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
+      [Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() =>
       Bytes.fromNumber(65536, { size: 2 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`65536\` is not in safe 16-bit unsigned integer range (\`0\` to \`65535\`)
+      [Hex.IntegerOutOfRangeError: Number \`65536\` is not in safe 16-bit unsigned integer range (\`0\` to \`65535\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
   })
@@ -214,18 +214,18 @@ describe('numbers to bytes', () => {
       Bytes.fromNumber(32768, { size: 2, signed: true }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`32768\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
+      [Hex.IntegerOutOfRangeError: Number \`32768\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() =>
       Bytes.fromNumber(-32769, { size: 2, signed: true }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`-32769\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
+      [Hex.IntegerOutOfRangeError: Number \`-32769\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
   })
@@ -389,36 +389,36 @@ describe('bigints to bytes', () => {
       Bytes.fromNumber(-7n, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`-7n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
+      [Hex.IntegerOutOfRangeError: Number \`-7n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() =>
       Bytes.fromNumber(256n, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`256n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
+      [Hex.IntegerOutOfRangeError: Number \`256n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() =>
       Bytes.fromNumber(65536n, { size: 2 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`65536n\` is not in safe 16-bit unsigned integer range (\`0n\` to \`65535n\`)
+      [Hex.IntegerOutOfRangeError: Number \`65536n\` is not in safe 16-bit unsigned integer range (\`0n\` to \`65535n\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() =>
       Bytes.fromNumber(18446744073709551616n, { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`18446744073709551616n\` is not in safe 64-bit unsigned integer range (\`0n\` to \`18446744073709551615n\`)
+      [Hex.IntegerOutOfRangeError: Number \`18446744073709551616n\` is not in safe 64-bit unsigned integer range (\`0n\` to \`18446744073709551615n\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
   })
@@ -581,9 +581,9 @@ describe('bigints to bytes', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`170141183460469231731687303715884105728n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
+      [Hex.IntegerOutOfRangeError: Number \`170141183460469231731687303715884105728n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() =>
@@ -593,9 +593,9 @@ describe('bigints to bytes', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [IntegerOutOfRangeError: Number \`-170141183460469231731687303715884105729n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
+      [Hex.IntegerOutOfRangeError: Number \`-170141183460469231731687303715884105729n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
 
-      See: https://oxlib.sh/errors#integeroutofrangeerror]
+      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
   })
@@ -754,17 +754,17 @@ describe('boolean to bytes', () => {
       Bytes.from(true, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `,
     )
     expect(() =>
       Bytes.fromBoolean(false, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `)
   })
 })
@@ -967,16 +967,16 @@ describe('hex to bytes', () => {
     expect(() =>
       Bytes.from('0x48656c6c6f20576f726c6421', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
+      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#hexsizeoverflowerror]
     `)
     expect(() =>
       Bytes.fromHex('0x48656c6c6f20576f726c6421', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
+      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#hexsizeoverflowerror]
     `)
   })
 
@@ -991,11 +991,11 @@ describe('hex to bytes', () => {
   test('error: invalid length', () => {
     expect(() => Bytes.fromHex('0xabcde')).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidHexLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
+      [Hex.InvalidLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
 
       It must be an even length.
 
-      See: https://oxlib.sh/errors#invalidhexlengtherror]
+      See: https://oxlib.sh/errors#bytesinvalidhexlengtherror]
     `,
     )
   })
@@ -1199,16 +1199,16 @@ describe('string to bytes', () => {
     expect(() =>
       Bytes.from('Hello World!', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `)
     expect(() =>
       Bytes.fromString('Hello World!', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
-      [SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `)
   })
 })
@@ -1244,8 +1244,8 @@ describe('number array to bytes', () => {
 test('error: invalid type', () => {
   // @ts-expect-error
   expect(() => Bytes.from(new Date())).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidTypeError: Type \`object\` is invalid. Expected: \`string | bigint | number | boolean | Bytes | Hex | readonly number[]\`
+    [Bytes.InvalidTypeError: Type \`object\` is invalid. Expected: \`string | bigint | number | boolean | Bytes | Hex | readonly number[]\`
 
-    See: https://oxlib.sh/errors#invalidtypeerror]
+    See: https://oxlib.sh/errors#bytesinvalidtypeerror]
   `)
 })

@@ -31,9 +31,9 @@ test('default', () => {
 
   expect(() => Hex.slice('0x0123456789', 5)).toThrowErrorMatchingInlineSnapshot(
     `
-    [SliceOffsetOutOfBoundsError: Slice starting at offset \`5\` is out-of-bounds (size: \`5\`).
+    [Hex.SliceOffsetOutOfBoundsError: Slice starting at offset \`5\` is out-of-bounds (size: \`5\`).
 
-    See: https://oxlib.sh/errors#sliceoffsetoutofboundserror]
+    See: https://oxlib.sh/errors#hexsliceoffsetoutofboundserror]
   `,
   )
 
@@ -41,18 +41,18 @@ test('default', () => {
     Hex.slice('0x0123456789', 0, 6, { strict: true }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SliceOffsetOutOfBoundsError: Slice ending at offset \`6\` is out-of-bounds (size: \`5\`).
+    [Hex.SliceOffsetOutOfBoundsError: Slice ending at offset \`6\` is out-of-bounds (size: \`5\`).
 
-    See: https://oxlib.sh/errors#sliceoffsetoutofboundserror]
+    See: https://oxlib.sh/errors#hexsliceoffsetoutofboundserror]
   `,
   )
   expect(() =>
     Hex.slice('0x0123456789', 0, 10, { strict: true }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SliceOffsetOutOfBoundsError: Slice ending at offset \`10\` is out-of-bounds (size: \`5\`).
+    [Hex.SliceOffsetOutOfBoundsError: Slice ending at offset \`10\` is out-of-bounds (size: \`5\`).
 
-    See: https://oxlib.sh/errors#sliceoffsetoutofboundserror]
+    See: https://oxlib.sh/errors#hexsliceoffsetoutofboundserror]
   `,
   )
 })

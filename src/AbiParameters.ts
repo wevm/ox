@@ -1,11 +1,11 @@
 export {
-  AbiDecodingDataSizeTooSmallError,
-  AbiDecodingZeroDataError,
-  AbiEncodingArrayLengthMismatchError,
-  AbiEncodingBytesSizeMismatchError,
-  AbiEncodingInvalidArrayError,
-  AbiEncodingLengthMismatchError,
-  InvalidAbiTypeError,
+  AbiParameters_ArrayLengthMismatchError as ArrayLengthMismatchError,
+  AbiParameters_BytesSizeMismatchError as BytesSizeMismatchError,
+  AbiParameters_DataSizeTooSmallError as DataSizeTooSmallError,
+  AbiParameters_InvalidArrayError as InvalidArrayError,
+  AbiParameters_InvalidTypeError as InvalidTypeError,
+  AbiParameters_LengthMismatchError as LengthMismatchError,
+  AbiParameters_ZeroDataError as ZeroDataError,
 } from './internal/AbiParameters/errors.js'
 
 export { AbiParameters_decode as decode } from './internal/AbiParameters/decode.js'

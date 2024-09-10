@@ -340,7 +340,7 @@ test('error: tuple input', () => {
       a: ['hello'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[FilterTypeNotSupportedError: Filter type "tuple" is not supported.]`,
+    `[AbiEvent.FilterTypeNotSupportedError: Filter type "tuple" is not supported.]`,
   )
 })
 
@@ -354,6 +354,6 @@ test('error: array input', () => {
       a: [1n],
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[FilterTypeNotSupportedError: Filter type "uint256[]" is not supported.]`,
+    `[AbiEvent.FilterTypeNotSupportedError: Filter type "uint256[]" is not supported.]`,
   )
 })

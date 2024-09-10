@@ -1,8 +1,8 @@
 import { Bytes_fromHex } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import { InvalidHexLengthError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Hex_InvalidLengthError } from '../Hex/errors.js'
 import { Hex_fromBytes } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
@@ -35,7 +35,7 @@ export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
   const bytes = (() => {
     if (typeof value === 'string') {
       if (value.length > 3 && value.length % 2 !== 0)
-        throw new InvalidHexLengthError(value)
+        throw new Hex_InvalidLengthError(value)
       return Bytes_fromHex(value)
     }
     return value as Bytes
@@ -58,7 +58,7 @@ export declare namespace Rlp_to {
     | Bytes_fromHex.ErrorType
     | decodeRlpCursor.ErrorType
     | createCursor.ErrorType
-    | InvalidHexLengthError
+    | Hex_InvalidLengthError
     | GlobalErrorType
 }
 

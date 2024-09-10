@@ -103,15 +103,15 @@ test('behavior: decimals < fraction length', () => {
 
 test('error: invalid decimal number', () => {
   expect(() => Value.from('123.456.789', 9)).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidDecimalNumberError: Value `123.456.789` is not a valid decimal number.]',
+    '[Value.InvalidDecimalNumberError: Value `123.456.789` is not a valid decimal number.]',
   )
   expect(() => Value.from('100e2', 9)).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidDecimalNumberError: Value `100e2` is not a valid decimal number.]',
+    '[Value.InvalidDecimalNumberError: Value `100e2` is not a valid decimal number.]',
   )
   expect(() => Value.from('0x50', 9)).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidDecimalNumberError: Value `0x50` is not a valid decimal number.]',
+    '[Value.InvalidDecimalNumberError: Value `0x50` is not a valid decimal number.]',
   )
   expect(() => Value.from('0o50', 9)).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidDecimalNumberError: Value `0o50` is not a valid decimal number.]',
+    '[Value.InvalidDecimalNumberError: Value `0o50` is not a valid decimal number.]',
   )
 })

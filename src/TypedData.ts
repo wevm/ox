@@ -7,7 +7,10 @@ export type {
   TypedData_MessageDefinition as MessageDefinition,
 } from './internal/TypedData/types.js'
 
-export { InvalidPrimaryTypeError } from './internal/TypedData/errors.js'
+export {
+  TypedData_BytesSizeMismatchError as BytesSizeMismatchError,
+  TypedData_InvalidPrimaryTypeError as InvalidPrimaryTypeError,
+} from './internal/TypedData/errors.js'
 
 export { TypedData_domainSeparator as domainSeparator } from './internal/TypedData/domainSeparator.js'
 

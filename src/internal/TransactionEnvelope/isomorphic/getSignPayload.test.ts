@@ -202,6 +202,6 @@ test('error: not implemented', () => {
       type: 'unknown',
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `unknown` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `unknown` is not implemented.]',
   )
 })

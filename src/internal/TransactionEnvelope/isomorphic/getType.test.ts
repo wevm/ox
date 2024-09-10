@@ -194,7 +194,7 @@ test('invalid', () => {
   expect(() =>
     TransactionEnvelope_getType({ chainId: 1 }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [CannotInferTransactionTypeError: Cannot infer a transaction type from provided transaction.
+    [TransactionEnvelope.CannotInferTypeError: Cannot infer a transaction type from provided transaction.
 
     Provided Transaction:
     {
@@ -213,6 +213,6 @@ test('invalid', () => {
   expect(() =>
     TransactionEnvelope_getType('0x69abc'),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `0x69` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `0x69` is not implemented.]',
   )
 })

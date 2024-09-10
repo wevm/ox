@@ -250,22 +250,22 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeLegacy.deserialize(Rlp.fromHex([])),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "legacy" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
-        Serialized Transaction: "0xc0"
-        Missing Attributes: nonce, gasPrice, gas, to, value, data]
-      `)
+      Serialized Transaction: "0xc0"
+      Missing Attributes: nonce, gasPrice, gas, to, value, data]
+    `)
   })
 
   test('invalid transaction (some missing)', () => {
     expect(() =>
       TransactionEnvelopeLegacy.deserialize(Rlp.fromHex(['0x00', '0x01'])),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "legacy" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
-        Serialized Transaction: "0xc20001"
-        Missing Attributes: gas, to, value, data]
-      `)
+      Serialized Transaction: "0xc20001"
+      Missing Attributes: gas, to, value, data]
+    `)
   })
 
   test('invalid transaction (missing signature)', () => {
@@ -274,11 +274,11 @@ describe('errors', () => {
         Rlp.fromHex(['0x', '0x', '0x', '0x', '0x', '0x', '0x']),
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "legacy" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
-        Serialized Transaction: "0xc780808080808080"
-        Missing Attributes: r, s]
-      `)
+      Serialized Transaction: "0xc780808080808080"
+      Missing Attributes: r, s]
+    `)
   })
 
   test('invalid transaction (attribute overload)', () => {
@@ -298,10 +298,10 @@ describe('errors', () => {
         ]),
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "legacy" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
-        Serialized Transaction: "0xca80808080808080808080"]
-      `)
+      Serialized Transaction: "0xca80808080808080808080"]
+    `)
   })
 
   test('invalid v', () => {
@@ -320,10 +320,10 @@ describe('errors', () => {
         ]),
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSignatureVError: Value \`0\` is an invalid v value. v must be 27, 28 or >=35.
+      [Signature.InvalidVError: Value \`0\` is an invalid v value. v must be 27, 28 or >=35.
 
-        See: https://oxlib.sh/errors#invalidsignatureverror]
-      `)
+      See: https://oxlib.sh/errors#invalidsignatureverror]
+    `)
 
     expect(() =>
       TransactionEnvelopeLegacy.deserialize(
@@ -340,9 +340,9 @@ describe('errors', () => {
         ]),
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSignatureVError: Value \`35\` is an invalid v value. v must be 27, 28 or >=35.
+      [Signature.InvalidVError: Value \`35\` is an invalid v value. v must be 27, 28 or >=35.
 
-        See: https://oxlib.sh/errors#invalidsignatureverror]
-      `)
+      See: https://oxlib.sh/errors#invalidsignatureverror]
+    `)
   })
 })

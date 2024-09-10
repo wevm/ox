@@ -1,7 +1,10 @@
 import { Address_assert } from '../../Address/assert.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
-import { GasPriceTooHighError, InvalidChainIdError } from '../errors.js'
+import {
+  TransactionEnvelope_GasPriceTooHighError,
+  TransactionEnvelope_InvalidChainIdError,
+} from '../errors.js'
 import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
@@ -30,16 +33,16 @@ export function TransactionEnvelopeLegacy_assert(
   const { chainId, gasPrice, to } = envelope
   if (to) Address_assert(to, { strict: false })
   if (typeof chainId !== 'undefined' && chainId <= 0)
-    throw new InvalidChainIdError({ chainId })
+    throw new TransactionEnvelope_InvalidChainIdError({ chainId })
   if (gasPrice && BigInt(gasPrice) > 2n ** 256n - 1n)
-    throw new GasPriceTooHighError({ gasPrice })
+    throw new TransactionEnvelope_GasPriceTooHighError({ gasPrice })
 }
 
 export declare namespace TransactionEnvelopeLegacy_assert {
   type ErrorType =
     | Address_assert.ErrorType
-    | InvalidChainIdError
-    | GasPriceTooHighError
+    | TransactionEnvelope_InvalidChainIdError
+    | TransactionEnvelope_GasPriceTooHighError
     | GlobalErrorType
 }
 

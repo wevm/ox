@@ -5,7 +5,7 @@ import { TransactionEnvelopeEip1559_hash } from '../eip1559/hash.js'
 import { TransactionEnvelopeEip2930_hash } from '../eip2930/hash.js'
 import { TransactionEnvelopeEip4844_hash } from '../eip4844/hash.js'
 import { TransactionEnvelopeEip7702_hash } from '../eip7702/hash.js'
-import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_hash } from '../legacy/hash.js'
 import type { TransactionEnvelope } from './types.js'
 
@@ -48,7 +48,9 @@ export function TransactionEnvelope_hash(
   if (envelope.type === 'eip7702')
     return TransactionEnvelopeEip7702_hash(envelope, options)
 
-  throw new TransactionTypeNotImplementedError({ type: (envelope as any).type })
+  throw new TransactionEnvelope_TypeNotImplementedError({
+    type: (envelope as any).type,
+  })
 }
 
 export declare namespace TransactionEnvelope_hash {

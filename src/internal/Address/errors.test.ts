@@ -1,15 +1,15 @@
 import { expect, test } from 'vitest'
 import {
-  InvalidAddressChecksumError,
-  InvalidAddressError,
-  InvalidAddressInputError,
+  Address_InvalidAddressError,
+  Address_InvalidChecksumError,
+  Address_InvalidInputError,
 } from './errors.js'
 
 test('InvalidAddressError', () => {
   {
-    const error = new InvalidAddressError({
+    const error = new Address_InvalidAddressError({
       address: '0x1234567890123456789012345678901234567890',
-      cause: new InvalidAddressChecksumError(),
+      cause: new Address_InvalidChecksumError(),
     })
     expect(error.message).toMatchInlineSnapshot(
       `
@@ -22,9 +22,9 @@ test('InvalidAddressError', () => {
   }
 
   {
-    const error = new InvalidAddressError({
+    const error = new Address_InvalidAddressError({
       address: '0x1234567890123456789012345678901234567890',
-      cause: new InvalidAddressInputError(),
+      cause: new Address_InvalidInputError(),
     })
     expect(error.message).toMatchInlineSnapshot(
       `

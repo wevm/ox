@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
-import { InvalidSignatureYParityError } from './errors.js'
+import { Signature_InvalidYParityError } from './errors.js'
 import type { Signature } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
@@ -33,7 +33,7 @@ export function Signature_fromRpc(signature: {
     if (typeof v === 'number' && typeof yParity !== 'number')
       yParity = Signature_vToYParity(v)
     if (typeof yParity !== 'number')
-      throw new InvalidSignatureYParityError({ value: signature.yParity })
+      throw new Signature_InvalidYParityError({ value: signature.yParity })
     return yParity
   })()
 

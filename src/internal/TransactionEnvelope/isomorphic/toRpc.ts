@@ -7,7 +7,7 @@ import { TransactionEnvelopeEip2930_toRpc } from '../eip2930/toRpc.js'
 import type { TransactionEnvelopeEip2930_Rpc } from '../eip2930/types.js'
 import { TransactionEnvelopeEip4844_toRpc } from '../eip4844/toRpc.js'
 import type { TransactionEnvelopeEip4844_Rpc } from '../eip4844/types.js'
-import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_toRpc } from '../legacy/toRpc.js'
 import type { TransactionEnvelopeLegacy_Rpc } from '../legacy/types.js'
 import type { TransactionEnvelope_GetType } from './getType.js'
@@ -51,7 +51,7 @@ export function TransactionEnvelope_toRpc<envelope extends TransactionEnvelope>(
     return TransactionEnvelopeEip1559_toRpc(envelope) as never
   if (envelope.type === 'eip4844')
     return TransactionEnvelopeEip4844_toRpc(envelope) as never
-  throw new TransactionTypeNotImplementedError({
+  throw new TransactionEnvelope_TypeNotImplementedError({
     type: (envelope as any).type,
   })
 }

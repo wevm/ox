@@ -78,6 +78,7 @@ for (const namespace of namespaces) {
     if (!data) throw new Error(`Could not find data for ${id}`)
 
     const { description, displayName } = data
+    const displayNameWithNamespace = `${name}.${displayName}`
 
     if (member.kind === model.ApiItemKind.Function) {
       // Resolve overloads for function
@@ -103,14 +104,14 @@ for (const namespace of namespaces) {
         errors.push({
           apiItem: member,
           description,
-          link: `${baseLink}/errors#${displayName.toLowerCase()}`,
+          link: `${baseLink}/errors#${displayNameWithNamespace.toLowerCase().replace('.', '')}`,
         })
       else throw new Error(`Unsupported class: ${displayName}`)
     } else if (member.kind === model.ApiItemKind.TypeAlias) {
       types.push({
         apiItem: member,
         description,
-        link: `${baseLink}/types#${displayName.toLowerCase()}`,
+        link: `${baseLink}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`,
       })
     }
   }

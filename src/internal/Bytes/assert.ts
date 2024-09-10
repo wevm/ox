@@ -1,5 +1,5 @@
-import { InvalidBytesTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Bytes_InvalidBytesTypeError } from './errors.js'
 import type { Bytes } from './types.js'
 
 /**
@@ -10,7 +10,7 @@ import type { Bytes } from './types.js'
  * import { Bytes } from 'ox'
  *
  * Bytes.assert('abc')
- * // @error: InvalidBytesTypeError:
+ * // @error: Bytes_InvalidBytesTypeError:
  * // @error: Value `"abc"` of type `string` is an invalid Bytes value.
  * // @error: Bytes values must be of type `Uint8Array`.
  * ```
@@ -18,15 +18,16 @@ import type { Bytes } from './types.js'
  * @param value - Value to assert.
  */
 export function Bytes_assert(value: unknown): asserts value is Bytes {
-  if (!value) throw new InvalidBytesTypeError(value)
-  if (typeof value !== 'object') throw new InvalidBytesTypeError(value)
-  if (!('BYTES_PER_ELEMENT' in value)) throw new InvalidBytesTypeError(value)
+  if (!value) throw new Bytes_InvalidBytesTypeError(value)
+  if (typeof value !== 'object') throw new Bytes_InvalidBytesTypeError(value)
+  if (!('BYTES_PER_ELEMENT' in value))
+    throw new Bytes_InvalidBytesTypeError(value)
   if (value.BYTES_PER_ELEMENT !== 1 || value.constructor.name !== 'Uint8Array')
-    throw new InvalidBytesTypeError(value)
+    throw new Bytes_InvalidBytesTypeError(value)
 }
 
 export declare namespace Bytes_assert {
-  type ErrorType = InvalidBytesTypeError | GlobalErrorType
+  type ErrorType = Bytes_InvalidBytesTypeError | GlobalErrorType
 }
 
 /* v8 ignore next */

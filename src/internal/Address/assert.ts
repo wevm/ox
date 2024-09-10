@@ -1,9 +1,9 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Address_checksum } from './checksum.js'
 import {
-  InvalidAddressChecksumError,
-  InvalidAddressError,
-  InvalidAddressInputError,
+  Address_InvalidAddressError,
+  Address_InvalidChecksumError,
+  Address_InvalidInputError,
 } from './errors.js'
 import type { Address } from './types.js'
 
@@ -37,17 +37,17 @@ export function Address_assert(
   const { strict = true } = options
 
   if (!addressRegex.test(value))
-    throw new InvalidAddressError({
+    throw new Address_InvalidAddressError({
       address: value,
-      cause: new InvalidAddressInputError(),
+      cause: new Address_InvalidInputError(),
     })
 
   if (strict) {
     if (value.toLowerCase() === value) return
     if (Address_checksum(value as Address) !== value)
-      throw new InvalidAddressError({
+      throw new Address_InvalidAddressError({
         address: value,
-        cause: new InvalidAddressChecksumError(),
+        cause: new Address_InvalidChecksumError(),
       })
   }
 }
@@ -62,7 +62,7 @@ export declare namespace Address_assert {
     strict?: boolean | undefined
   }
 
-  type ErrorType = InvalidAddressError | GlobalErrorType
+  type ErrorType = Address_InvalidAddressError | GlobalErrorType
 }
 
 /* v8 ignore next */

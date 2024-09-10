@@ -332,6 +332,6 @@ test('error: invalid transaction', () => {
       type: 'lol',
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `lol` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `lol` is not implemented.]',
   )
 })

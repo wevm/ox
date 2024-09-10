@@ -5,7 +5,7 @@ import { TransactionEnvelopeEip1559_from } from '../eip1559/from.js'
 import { TransactionEnvelopeEip2930_from } from '../eip2930/from.js'
 import { TransactionEnvelopeEip4844_from } from '../eip4844/from.js'
 import { TransactionEnvelopeEip7702_from } from '../eip7702/from.js'
-import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_from } from '../legacy/from.js'
 import type { TransactionEnvelope_deserialize } from './deserialize.js'
 import {
@@ -124,7 +124,7 @@ export function TransactionEnvelope_from<
   if (type === 'eip7702')
     return TransactionEnvelopeEip7702_from(value as any, options) as never
 
-  throw new TransactionTypeNotImplementedError({ type })
+  throw new TransactionEnvelope_TypeNotImplementedError({ type })
 }
 
 export declare namespace TransactionEnvelope_from {

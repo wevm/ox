@@ -28,9 +28,9 @@ test('default', () => {
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SizeExceedsPaddingSizeError: Hex size (\`43\`) exceeds padding size (\`32\`).
+    [Hex.SizeExceedsPaddingSizeError: Hex size (\`43\`) exceeds padding size (\`32\`).
 
-    See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
+    See: https://oxlib.sh/errors#hexsizeexceedspaddingsizeerror]
   `,
   )
 })
@@ -46,9 +46,9 @@ test('args: size', () => {
     Hex.padLeft('0x1a4e12a45', 4),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SizeExceedsPaddingSizeError: Hex size (\`5\`) exceeds padding size (\`4\`).
+    [Hex.SizeExceedsPaddingSizeError: Hex size (\`5\`) exceeds padding size (\`4\`).
 
-    See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
+    See: https://oxlib.sh/errors#hexsizeexceedspaddingsizeerror]
   `,
   )
 })

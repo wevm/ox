@@ -223,7 +223,7 @@ test('error: invalid property', () => {
   expect(() =>
     TransactionEnvelope.from({ to: '0xz', type: 'legacy' }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidAddressError: Address "0xz" is invalid.
+    [Address.InvalidAddressError: Address "0xz" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.
     See: https://oxlib.sh/errors#invalidaddresserror]
@@ -234,7 +234,7 @@ test('error: cannot infer transaction type', () => {
   expect(() =>
     TransactionEnvelope.from({ chainId: 1 }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [CannotInferTransactionTypeError: Cannot infer a transaction type from provided transaction.
+    [TransactionEnvelope.CannotInferTypeError: Cannot infer a transaction type from provided transaction.
 
     Provided Transaction:
     {
@@ -258,6 +258,6 @@ test('error: not implemented', () => {
       type: 'unknown',
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `unknown` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `unknown` is not implemented.]',
   )
 })

@@ -1,4 +1,4 @@
-import { InvalidSelectorSizeError } from '../AbiItem/errors.js'
+import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { AbiParameters_ToPrimitiveTypes } from '../AbiParameters/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
@@ -37,7 +37,7 @@ export function AbiFunction_decodeInput<const abiItem extends AbiFunction>(
 ): AbiFunction_decodeInput.ReturnType<abiItem> {
   const { overloads } = abiFunction
 
-  if (Hex_size(data) < 4) throw new InvalidSelectorSizeError({ data })
+  if (Hex_size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
   if (abiFunction.inputs.length === 0) return undefined
 
   const item = overloads

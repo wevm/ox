@@ -1,12 +1,13 @@
 import { BaseError } from '../Errors/base.js'
-import { InvalidHexLengthError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_assertSize } from '../Hex/assertSize.js'
+import { Hex_InvalidLengthError } from '../Hex/errors.js'
 import { Hex_fromNumber } from '../Hex/from.js'
 import { Hex_isHex } from '../Hex/isHex.js'
 import { Hex_padRight } from '../Hex/pad.js'
 import type { Hex } from '../Hex/types.js'
 import { Bytes_assertSize } from './assertSize.js'
+import { Bytes_InvalidTypeError } from './errors.js'
 import { Bytes_isBytes } from './isBytes.js'
 import { Bytes_padLeft, Bytes_padRight } from './pad.js'
 import type { Bytes } from './types.js'
@@ -59,7 +60,7 @@ export function Bytes_from(
   if (typeof value === 'string') return Bytes_fromString(value, options)
   if (typeof value === 'number' || typeof value === 'bigint')
     return Bytes_fromNumber(value, options)
-  throw new InvalidTypeError(
+  throw new Bytes_InvalidTypeError(
     typeof value,
     'string | bigint | number | boolean | Bytes | Hex | readonly number[]',
   )
@@ -78,7 +79,7 @@ export declare namespace Bytes_from {
     | Bytes_fromString.ErrorType
     | Bytes_isBytes.ErrorType
     | Hex_isHex.ErrorType
-    | InvalidTypeError
+    | Bytes_InvalidTypeError
     | GlobalErrorType
 }
 
@@ -187,7 +188,7 @@ export function Bytes_fromHex(
 ): Bytes {
   const { size } = options
 
-  if (hex.length % 2) throw new InvalidHexLengthError(hex)
+  if (hex.length % 2) throw new Hex_InvalidLengthError(hex)
 
   let hex_ = hex
   if (size) {
@@ -221,6 +222,7 @@ export declare namespace Bytes_fromHex {
   type ErrorType =
     | Hex_assertSize.ErrorType
     | Hex_padRight.ErrorType
+    | Hex_InvalidLengthError
     | GlobalErrorType
 }
 

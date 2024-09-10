@@ -1,8 +1,8 @@
 import { Bytes_isBytes } from '../Bytes/isBytes.js'
 import type { Bytes } from '../Bytes/types.js'
-import { IntegerOutOfRangeError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_assertSize } from './assertSize.js'
+import { Hex_IntegerOutOfRangeError, Hex_InvalidTypeError } from './errors.js'
 import { Hex_isHex } from './isHex.js'
 import { Hex_padLeft, Hex_padRight } from './pad.js'
 import type { Hex } from './types.js'
@@ -60,7 +60,7 @@ export function Hex_from(
     return Hex_fromNumber(value, options)
   if (typeof value === 'string') return Hex_fromString(value, options)
   if (typeof value === 'boolean') return Hex_fromBoolean(value, options)
-  throw new InvalidTypeError(
+  throw new Hex_InvalidTypeError(
     typeof value,
     'string | number | bigint | boolean | Bytes | readonly number[]',
   )
@@ -78,7 +78,7 @@ export declare namespace Hex_from {
     | Hex_fromNumber.ErrorType
     | Hex_fromString.ErrorType
     | Hex_isHex.ErrorType
-    | InvalidTypeError
+    | Hex_InvalidTypeError
     | GlobalErrorType
 }
 
@@ -220,7 +220,7 @@ export function Hex_fromNumber(
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''
-    throw new IntegerOutOfRangeError({
+    throw new Hex_IntegerOutOfRangeError({
       max: maxValue ? `${maxValue}${suffix}` : undefined,
       min: `${minValue}${suffix}`,
       signed,
@@ -254,7 +254,7 @@ export declare namespace Hex_fromNumber {
       }
 
   type ErrorType =
-    | IntegerOutOfRangeError
+    | Hex_IntegerOutOfRangeError
     | Hex_padLeft.ErrorType
     | GlobalErrorType
 }

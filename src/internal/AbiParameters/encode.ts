@@ -9,11 +9,11 @@ import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { TupleAbiParameter } from './decode.js'
 import {
-  AbiEncodingArrayLengthMismatchError,
-  AbiEncodingBytesSizeMismatchError,
-  AbiEncodingInvalidArrayError,
-  AbiEncodingLengthMismatchError,
-  InvalidAbiTypeError,
+  AbiParameters_ArrayLengthMismatchError,
+  AbiParameters_BytesSizeMismatchError,
+  AbiParameters_InvalidArrayError,
+  AbiParameters_InvalidTypeError,
+  AbiParameters_LengthMismatchError,
 } from './errors.js'
 import type {
   AbiParameters,
@@ -66,7 +66,7 @@ export function AbiParameters_encode<
     : never,
 ): Hex {
   if (parameters.length !== values.length)
-    throw new AbiEncodingLengthMismatchError({
+    throw new AbiParameters_LengthMismatchError({
       expectedLength: parameters.length as number,
       givenLength: values.length as any,
     })
@@ -82,7 +82,7 @@ export function AbiParameters_encode<
 
 export declare namespace AbiParameters_encode {
   type ErrorType =
-    | AbiEncodingLengthMismatchError
+    | AbiParameters_LengthMismatchError
     | encode.ErrorType
     | prepareParameters.ErrorType
     | GlobalErrorType
@@ -172,7 +172,7 @@ export function prepareParameter<
   if (parameter.type === 'string') {
     return encodeString(value as unknown as string)
   }
-  throw new InvalidAbiTypeError(parameter.type)
+  throw new AbiParameters_InvalidTypeError(parameter.type)
 }
 
 /** @internal */
@@ -184,7 +184,7 @@ export declare namespace prepareParameter {
     | encodeBoolean.ErrorType
     | encodeBytes.ErrorType
     | encodeString.ErrorType
-    | InvalidAbiTypeError
+    | AbiParameters_InvalidTypeError
     | GlobalErrorType
 }
 
@@ -259,9 +259,9 @@ export function encodeArray<const parameter extends AbiParameters_Parameter>(
 ): PreparedParameter {
   const dynamic = length === null
 
-  if (!Array.isArray(value)) throw new AbiEncodingInvalidArrayError(value)
+  if (!Array.isArray(value)) throw new AbiParameters_InvalidArrayError(value)
   if (!dynamic && value.length !== length)
-    throw new AbiEncodingArrayLengthMismatchError({
+    throw new AbiParameters_ArrayLengthMismatchError({
       expectedLength: length!,
       givenLength: value.length,
       type: `${parameter.type}[${length}]`,
@@ -296,8 +296,8 @@ export function encodeArray<const parameter extends AbiParameters_Parameter>(
 /** @internal */
 export declare namespace encodeArray {
   type ErrorType =
-    | AbiEncodingInvalidArrayError
-    | AbiEncodingArrayLengthMismatchError
+    | AbiParameters_InvalidArrayError
+    | AbiParameters_ArrayLengthMismatchError
     | Hex_concat.ErrorType
     | Hex_fromNumber.ErrorType
     | GlobalErrorType
@@ -325,7 +325,7 @@ export function encodeBytes(
     }
   }
   if (bytesSize !== Number.parseInt(parametersize))
-    throw new AbiEncodingBytesSizeMismatchError({
+    throw new AbiParameters_BytesSizeMismatchError({
       expectedSize: Number.parseInt(parametersize),
       value,
     })

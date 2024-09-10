@@ -31,8 +31,8 @@ import type {
   TransactionEnvelopeEip7702_Serialized,
 } from '../eip7702/types.js'
 import {
-  CannotInferTransactionTypeError,
-  TransactionTypeNotImplementedError,
+  TransactionEnvelope_CannotInferTypeError,
+  TransactionEnvelope_TypeNotImplementedError,
 } from '../errors.js'
 import type {
   TransactionEnvelopeLegacy,
@@ -69,7 +69,9 @@ export function TransactionEnvelope_getType<
     if (serializedType === '0x02') return 'eip1559' as never
     if (serializedType === '0x03') return 'eip4844' as never
     if (serializedType === '0x04') return 'eip7702' as never
-    throw new TransactionTypeNotImplementedError({ type: serializedType })
+    throw new TransactionEnvelope_TypeNotImplementedError({
+      type: serializedType,
+    })
   }
 
   if (transaction.type)
@@ -97,12 +99,12 @@ export function TransactionEnvelope_getType<
     return 'legacy' as never
   }
 
-  throw new CannotInferTransactionTypeError({ transaction })
+  throw new TransactionEnvelope_CannotInferTypeError({ transaction })
 }
 
 /** @internal */
 export declare namespace TransactionEnvelope_getType {
-  type ErrorType = CannotInferTransactionTypeError | GlobalErrorType
+  type ErrorType = TransactionEnvelope_CannotInferTypeError | GlobalErrorType
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

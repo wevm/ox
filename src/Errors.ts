@@ -1,83 +1,98 @@
 export {
-  EventDataMismatchError,
-  EventSelectorTopicMismatchError,
-  EventTopicsMismatchError,
-  FilterTypeNotSupportedError,
+  AbiEvent_DataMismatchError,
+  AbiEvent_FilterTypeNotSupportedError,
+  AbiEvent_InputNotFoundError,
+  AbiEvent_SelectorTopicMismatchError,
+  AbiEvent_TopicsMismatchError,
 } from './internal/AbiEvent/errors.js'
 
 export {
-  AbiItemNotFoundError,
-  AbiItemAmbiguityError,
-  InvalidSelectorSizeError,
+  AbiItem_AmbiguityError,
+  AbiItem_InvalidSelectorSizeError,
+  AbiItem_NotFoundError,
 } from './internal/AbiItem/errors.js'
 
 export {
-  AbiDecodingDataSizeTooSmallError,
-  AbiDecodingZeroDataError,
-  AbiEncodingArrayLengthMismatchError,
-  AbiEncodingBytesSizeMismatchError,
-  AbiEncodingInvalidArrayError,
-  AbiEncodingLengthMismatchError,
-  InvalidAbiTypeError,
+  AbiParameters_ArrayLengthMismatchError,
+  AbiParameters_BytesSizeMismatchError,
+  AbiParameters_DataSizeTooSmallError,
+  AbiParameters_InvalidArrayError,
+  AbiParameters_InvalidTypeError,
+  AbiParameters_LengthMismatchError,
+  AbiParameters_ZeroDataError,
 } from './internal/AbiParameters/errors.js'
 
 export {
-  InvalidAddressChecksumError,
-  InvalidAddressError,
-  InvalidAddressInputError,
+  Address_InvalidChecksumError,
+  Address_InvalidAddressError,
+  Address_InvalidInputError,
 } from './internal/Address/errors.js'
 
 export { BaseError } from './internal/Errors/base.js'
 
 export {
-  BlobSizeTooLargeError,
-  EmptyBlobError,
-  EmptyBlobVersionedHashesError,
-  InvalidVersionedHashSizeError,
-  InvalidVersionedHashVersionError,
+  Blobs_BlobSizeTooLargeError,
+  Blobs_EmptyBlobError,
+  Blobs_EmptyBlobVersionedHashesError,
+  Blobs_InvalidVersionedHashSizeError,
+  Blobs_InvalidVersionedHashVersionError,
 } from './internal/Blobs/errors.js'
 
 export {
-  NegativeOffsetError,
-  PositionOutOfBoundsError,
-  RecursiveReadLimitExceededError,
-} from './internal/Errors/cursor.js'
+  Bytes_InvalidBytesBooleanError,
+  Bytes_InvalidBytesTypeError,
+  Bytes_InvalidTypeError,
+  Bytes_SizeExceedsPaddingSizeError,
+  Bytes_SizeOverflowError,
+  Bytes_SliceOffsetOutOfBoundsError,
+} from './internal/Bytes/errors.js'
 
 export {
-  IntegerOutOfRangeError,
-  InvalidBytesBooleanError,
-  InvalidBytesTypeError,
-  InvalidHexBooleanError,
-  InvalidHexLengthError,
-  InvalidHexTypeError,
-  InvalidHexValueError,
-  InvalidTypeError,
-  SizeExceedsPaddingSizeError,
-  SizeOverflowError,
-  SliceOffsetOutOfBoundsError,
-} from './internal/Errors/data.js'
+  Cursor_NegativeOffsetError,
+  Cursor_PositionOutOfBoundsError,
+  Cursor_RecursiveReadLimitExceededError,
+} from './internal/cursor.js'
 
 export type { GlobalErrorType } from './internal/Errors/error.js'
 
 export {
-  InvalidSerializedSignatureSizeError,
-  InvalidSignatureRError,
-  InvalidSignatureSError,
-  InvalidSignatureVError,
-  InvalidSignatureYParityError,
-  MissingSignaturePropertiesError,
-} from './internal/Signature/errors.js'
+  Hex_IntegerOutOfRangeError,
+  Hex_InvalidHexBooleanError,
+  Hex_InvalidHexTypeError,
+  Hex_InvalidHexValueError,
+  Hex_InvalidTypeError,
+  Hex_InvalidLengthError,
+  Hex_SizeExceedsPaddingSizeError,
+  Hex_SizeOverflowError,
+  Hex_SliceOffsetOutOfBoundsError,
+} from './internal/Hex/errors.js'
 
-export { SiweInvalidMessageFieldError } from './internal/Siwe/errors.js'
+export { Log_ArgsMismatchError } from './internal/Log/errors.js'
 
 export {
-  CannotInferTransactionTypeError,
-  FeeCapTooHighError,
-  GasPriceTooHighError,
-  InvalidChainIdError,
-  InvalidSerializedTransactionError,
-  TipAboveFeeCapError,
-  TransactionTypeNotImplementedError,
+  Signature_InvalidRError,
+  Signature_InvalidSError,
+  Signature_InvalidSerializedSizeError,
+  Signature_InvalidVError,
+  Signature_InvalidYParityError,
+  Signature_MissingPropertiesError,
+} from './internal/Signature/errors.js'
+
+export { Siwe_InvalidMessageFieldError } from './internal/Siwe/errors.js'
+
+export {
+  TransactionEnvelope_CannotInferTypeError as CannotInferTypeError,
+  TransactionEnvelope_FeeCapTooHighError as FeeCapTooHighError,
+  TransactionEnvelope_GasPriceTooHighError as GasPriceTooHighError,
+  TransactionEnvelope_InvalidChainIdError as InvalidChainIdError,
+  TransactionEnvelope_InvalidSerializedError as InvalidSerializedError,
+  TransactionEnvelope_TipAboveFeeCapError as TipAboveFeeCapError,
+  TransactionEnvelope_TypeNotImplementedError as TypeNotImplementedError,
 } from './internal/TransactionEnvelope/errors.js'
 
-export { InvalidPrimaryTypeError } from './internal/TypedData/errors.js'
+export {
+  TypedData_BytesSizeMismatchError,
+  TypedData_InvalidPrimaryTypeError,
+} from './internal/TypedData/errors.js'
+
+export { Value_InvalidDecimalNumberError } from './internal/Value/errors.js'

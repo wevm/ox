@@ -20,7 +20,7 @@ test('default', () => {
 
 test('error: no constructor', () => {
   expect(() => AbiConstructor.fromAbi([])).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with name "constructor" not found.
+    [AbiItem.NotFoundError: ABI item with name "constructor" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)

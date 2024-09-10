@@ -96,11 +96,11 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeEip2930.deserialize(`0x01${Rlp.fromHex([]).slice(2)}`),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip2930" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip2930" was provided.
 
-        Serialized Transaction: "0x01c0"
-        Missing Attributes: chainId, nonce, gasPrice, gas, to, value, data, accessList]
-      `)
+      Serialized Transaction: "0x01c0"
+      Missing Attributes: chainId, nonce, gasPrice, gas, to, value, data, accessList]
+    `)
   })
 
   test('invalid transaction (some missing)', () => {
@@ -109,11 +109,11 @@ describe('errors', () => {
         `0x01${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip2930" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip2930" was provided.
 
-        Serialized Transaction: "0x01c20001"
-        Missing Attributes: gasPrice, gas, to, value, data, accessList]
-      `)
+      Serialized Transaction: "0x01c20001"
+      Missing Attributes: gasPrice, gas, to, value, data, accessList]
+    `)
   })
 
   test('invalid transaction (missing signature)', () => {
@@ -132,10 +132,10 @@ describe('errors', () => {
         ]).slice(2)}`,
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
-        [InvalidSerializedTransactionError: Invalid serialized transaction of type "eip2930" was provided.
+      [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip2930" was provided.
 
-        Serialized Transaction: "0x01c9808080808080808080"
-        Missing Attributes: r, s]
-      `)
+      Serialized Transaction: "0x01c9808080808080808080"
+      Missing Attributes: r, s]
+    `)
   })
 })

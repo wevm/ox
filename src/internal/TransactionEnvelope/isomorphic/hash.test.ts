@@ -154,6 +154,6 @@ test('error: unknown type', () => {
     // @ts-ignore
     TransactionEnvelope.hash({ type: 'wat' }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `wat` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `wat` is not implemented.]',
   )
 })

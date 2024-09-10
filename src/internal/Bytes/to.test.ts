@@ -34,9 +34,9 @@ describe('bytes to number', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `,
     )
   })
@@ -94,9 +94,9 @@ describe('bytes to bigint', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `,
     )
   })
@@ -131,9 +131,9 @@ describe('bytes to boolean', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `,
     )
   })
@@ -143,22 +143,22 @@ describe('bytes to boolean', () => {
       Bytes.toBoolean(Bytes.from([69])),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidBytesBooleanError: Bytes value \`69\` is not a valid boolean.
+      [Bytes.InvalidBytesBooleanError: Bytes value \`69\` is not a valid boolean.
 
       The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
-      See: https://oxlib.sh/errors#invalidbytesbooleanerror]
+      See: https://oxlib.sh/errors#bytesinvalidbytesbooleanerror]
     `,
     )
     expect(() =>
       Bytes.toBoolean(Bytes.from([1, 2])),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [InvalidBytesBooleanError: Bytes value \`1,2\` is not a valid boolean.
+      [Bytes.InvalidBytesBooleanError: Bytes value \`1,2\` is not a valid boolean.
 
       The bytes array must contain a single byte of either a \`0\` or \`1\` value.
 
-      See: https://oxlib.sh/errors#invalidbytesbooleanerror]
+      See: https://oxlib.sh/errors#bytesinvalidbytesbooleanerror]
     `,
     )
   })
@@ -210,9 +210,9 @@ describe('bytes to string', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
+      [Bytes.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#bytessizeoverflowerror]
     `,
     )
   })
@@ -272,9 +272,9 @@ describe('bytes to hex', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
+      [Hex.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
-      See: https://oxlib.sh/errors#sizeoverflowerror]
+      See: https://oxlib.sh/errors#hexsizeoverflowerror]
     `,
     )
   })
@@ -284,9 +284,9 @@ test('error: invalid `to`', () => {
   // @ts-expect-error
   expect(() => Bytes.to(420, 'fake')).toThrowErrorMatchingInlineSnapshot(
     `
-    [InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | Hex | bigint | number | boolean\`
+    [Bytes.InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | Hex | bigint | number | boolean\`
 
-    See: https://oxlib.sh/errors#invalidtypeerror]
+    See: https://oxlib.sh/errors#bytesinvalidtypeerror]
   `,
   )
 })

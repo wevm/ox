@@ -174,9 +174,9 @@ test('default', () => {
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SizeExceedsPaddingSizeError: Bytes size (\`44\`) exceeds padding size (\`32\`).
+    [Bytes.SizeExceedsPaddingSizeError: Bytes size (\`44\`) exceeds padding size (\`32\`).
 
-    See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
+    See: https://oxlib.sh/errors#bytessizeexceedspaddingsizeerror]
   `,
   )
 })
@@ -225,9 +225,9 @@ test('args: size', () => {
     Bytes.padLeft(new Uint8Array([1, 122, 51, 123, 11]), 4),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [SizeExceedsPaddingSizeError: Bytes size (\`5\`) exceeds padding size (\`4\`).
+    [Bytes.SizeExceedsPaddingSizeError: Bytes size (\`5\`) exceeds padding size (\`4\`).
 
-    See: https://oxlib.sh/errors#sizeexceedspaddingsizeerror]
+    See: https://oxlib.sh/errors#bytessizeexceedspaddingsizeerror]
   `,
   )
 })

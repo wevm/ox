@@ -22,9 +22,9 @@ import {
   Solidity_integerRegex,
 } from '../Solidity/constants.js'
 import {
-  AbiEncodingBytesSizeMismatchError,
-  AbiEncodingLengthMismatchError,
-  InvalidAbiTypeError,
+  AbiParameters_BytesSizeMismatchError,
+  AbiParameters_InvalidTypeError,
+  AbiParameters_LengthMismatchError,
 } from './errors.js'
 
 /**
@@ -49,7 +49,7 @@ export function AbiParameters_encodePacked<
   const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
 >(types: packedAbiTypes, values: EncodePackedValues<packedAbiTypes>): Hex {
   if (types.length !== values.length)
-    throw new AbiEncodingLengthMismatchError({
+    throw new AbiParameters_LengthMismatchError({
       expectedLength: types.length as number,
       givenLength: values.length as number,
     })
@@ -66,7 +66,7 @@ export function AbiParameters_encodePacked<
 export declare namespace AbiParameters_encodePacked {
   type ErrorType =
     | Hex_concat.ErrorType
-    | AbiEncodingLengthMismatchError
+    | AbiParameters_LengthMismatchError
     | GlobalErrorType
 }
 
@@ -140,7 +140,7 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   if (bytesMatch) {
     const [_type, size] = bytesMatch
     if (Number.parseInt(size!) !== ((value as Hex).length - 2) / 2)
-      throw new AbiEncodingBytesSizeMismatchError({
+      throw new AbiParameters_BytesSizeMismatchError({
         expectedSize: Number.parseInt(size!),
         value: value as Hex,
       })
@@ -158,5 +158,5 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
     return Hex_concat(...data)
   }
 
-  throw new InvalidAbiTypeError(type as string)
+  throw new AbiParameters_InvalidTypeError(type as string)
 }

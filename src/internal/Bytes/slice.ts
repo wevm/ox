@@ -1,5 +1,5 @@
-import { SliceOffsetOutOfBoundsError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Bytes_SliceOffsetOutOfBoundsError } from './errors.js'
 import { Bytes_size } from './size.js'
 import type { Bytes } from './types.js'
 
@@ -62,7 +62,7 @@ export function Bytes_assertStartOffset(
   start?: number | undefined,
 ) {
   if (typeof start === 'number' && start > 0 && start > Bytes_size(value) - 1)
-    throw new SliceOffsetOutOfBoundsError({
+    throw new Bytes_SliceOffsetOutOfBoundsError({
       offset: start,
       position: 'start',
       size: Bytes_size(value),
@@ -71,7 +71,7 @@ export function Bytes_assertStartOffset(
 
 export declare namespace Bytes_assertStartOffset {
   export type ErrorType =
-    | SliceOffsetOutOfBoundsError
+    | Bytes_SliceOffsetOutOfBoundsError
     | Bytes_size.ErrorType
     | GlobalErrorType
 }
@@ -87,7 +87,7 @@ export function Bytes_assertEndOffset(
     typeof end === 'number' &&
     Bytes_size(value) !== end - start
   ) {
-    throw new SliceOffsetOutOfBoundsError({
+    throw new Bytes_SliceOffsetOutOfBoundsError({
       offset: end,
       position: 'end',
       size: Bytes_size(value),
@@ -97,7 +97,7 @@ export function Bytes_assertEndOffset(
 
 export declare namespace Bytes_assertEndOffset {
   type ErrorType =
-    | SliceOffsetOutOfBoundsError
+    | Bytes_SliceOffsetOutOfBoundsError
     | Bytes_size.ErrorType
     | GlobalErrorType
 }

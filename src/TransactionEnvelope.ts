@@ -1,11 +1,11 @@
 export {
-  CannotInferTransactionTypeError,
-  FeeCapTooHighError,
-  GasPriceTooHighError,
-  InvalidChainIdError,
-  InvalidSerializedTransactionError,
-  TipAboveFeeCapError,
-  TransactionTypeNotImplementedError,
+  TransactionEnvelope_CannotInferTypeError as CannotInferTypeError,
+  TransactionEnvelope_FeeCapTooHighError as FeeCapTooHighError,
+  TransactionEnvelope_GasPriceTooHighError as GasPriceTooHighError,
+  TransactionEnvelope_InvalidChainIdError as InvalidChainIdError,
+  TransactionEnvelope_InvalidSerializedError as InvalidSerializedError,
+  TransactionEnvelope_TipAboveFeeCapError as TipAboveFeeCapError,
+  TransactionEnvelope_TypeNotImplementedError as TypeNotImplementedError,
 } from './internal/TransactionEnvelope/errors.js'
 
 export type { TransactionEnvelope_Base as Base } from './internal/TransactionEnvelope/types.js'

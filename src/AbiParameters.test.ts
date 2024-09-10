@@ -4,13 +4,13 @@ import * as exports from './AbiParameters.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "AbiDecodingDataSizeTooSmallError",
-      "AbiDecodingZeroDataError",
-      "AbiEncodingArrayLengthMismatchError",
-      "AbiEncodingBytesSizeMismatchError",
-      "AbiEncodingInvalidArrayError",
-      "AbiEncodingLengthMismatchError",
-      "InvalidAbiTypeError",
+      "ArrayLengthMismatchError",
+      "BytesSizeMismatchError",
+      "DataSizeTooSmallError",
+      "InvalidArrayError",
+      "InvalidTypeError",
+      "LengthMismatchError",
+      "ZeroDataError",
       "decode",
       "encode",
       "encodePacked",

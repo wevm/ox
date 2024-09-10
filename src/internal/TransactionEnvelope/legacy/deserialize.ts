@@ -2,10 +2,10 @@ import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_isHex } from '../../Hex/isHex.js'
 import type { Hex } from '../../Hex/types.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
-import { InvalidSignatureVError } from '../../Signature/errors.js'
+import { Signature_InvalidVError } from '../../Signature/errors.js'
 import { Signature_vToYParity } from '../../Signature/vToYParity.js'
 import type { Compute } from '../../types.js'
-import { InvalidSerializedTransactionError } from '../errors.js'
+import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_assert } from './assert.js'
 import type { TransactionEnvelopeLegacy } from './types.js'
 
@@ -39,7 +39,7 @@ export function TransactionEnvelopeLegacy_deserialize(
     tuple as readonly Hex[]
 
   if (!(tuple.length === 6 || tuple.length === 9))
-    throw new InvalidSerializedTransactionError({
+    throw new TransactionEnvelope_InvalidSerializedError({
       attributes: {
         nonce,
         gasPrice,
@@ -85,7 +85,7 @@ export function TransactionEnvelopeLegacy_deserialize(
   const v = chainIdOrV
   const chainId: number | undefined = Math.floor((v - 35) / 2)
   if (chainId > 0) transaction.chainId = chainId
-  else if (v !== 27 && v !== 28) throw new InvalidSignatureVError({ value: v })
+  else if (v !== 27 && v !== 28) throw new Signature_InvalidVError({ value: v })
 
   transaction.yParity = Signature_vToYParity(v)
   transaction.v = v

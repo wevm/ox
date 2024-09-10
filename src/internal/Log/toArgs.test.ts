@@ -260,7 +260,7 @@ test('error: args mismatch, named', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [ParseLogArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
+    [Log.ArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
 
     Event: event Transfer(address indexed from, address indexed to, uint256 value)
     Decoded Arguments: 
@@ -295,7 +295,7 @@ test('error: args mismatch, unnamed', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [ParseLogArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
+    [Log.ArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
 
     Event: event Transfer(address indexed, address indexed, uint256)
     Decoded Arguments: 
@@ -326,7 +326,7 @@ test('error: args mismatch, string', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [ParseLogArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
+    [Log.ArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
 
     Event: event Transfer(string indexed a)
     Decoded Arguments: 
@@ -363,7 +363,7 @@ test('error: input not found, named', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[AbiEventInputNotFoundError: Parameter "a" not found on \`event Transfer(address indexed from, address indexed to, uint256 value)\`.]`,
+    `[AbiEvent.InputNotFoundError: Parameter "a" not found on \`event Transfer(address indexed from, address indexed to, uint256 value)\`.]`,
   )
 })
 
@@ -394,7 +394,7 @@ test('error: input not found, unnamed', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[AbiEventInputNotFoundError: Parameter "3" not found on \`event Transfer(address indexed, address indexed, uint256)\`.]`,
+    `[AbiEvent.InputNotFoundError: Parameter "3" not found on \`event Transfer(address indexed, address indexed, uint256)\`.]`,
   )
 })
 
@@ -419,7 +419,7 @@ test('error: provided args, but no actual event args', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [ParseLogArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
+    [Log.ArgsMismatchError: Provided arguments to not match the arguments decoded from the log.
 
     Event: event Transfer()
     Decoded Arguments: None

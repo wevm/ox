@@ -28,7 +28,9 @@ try {
 
 
 
-  if (error.name === 'InvalidAddressError') 
+
+
+  if (error.name === 'Address.InvalidAddressError') 
     error.cause.name
     //          ^? 
 }

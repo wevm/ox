@@ -1,6 +1,6 @@
 import type { AbiEventParameter } from 'abitype'
 import { AbiEvent_decode } from '../AbiEvent/decode.js'
-import { AbiEventInputNotFoundError } from '../AbiEvent/errors.js'
+import { AbiEvent_InputNotFoundError } from '../AbiEvent/errors.js'
 import type {
   AbiEvent,
   AbiEvent_ParametersToPrimitiveTypes,
@@ -12,7 +12,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
-import { ParseLogArgsMismatchError } from './errors.js'
+import { Log_ArgsMismatchError } from './errors.js'
 
 /**
  * Decodes the provided log `topics` + `data` into arguments, and asserts that any provided arguments (`matchArgs`) match the decoded arguments.
@@ -170,7 +170,7 @@ function assertArgs(parameters: {
   const { abiEvent, args, matchArgs } = parameters
 
   if (!args)
-    throw new ParseLogArgsMismatchError({
+    throw new Log_ArgsMismatchError({
       abiEvent,
       expected: args,
       given: matchArgs,
@@ -189,7 +189,7 @@ function assertArgs(parameters: {
       if (!value) continue
       const input = abiEvent.inputs[index]
       if (!input)
-        throw new AbiEventInputNotFoundError({
+        throw new AbiEvent_InputNotFoundError({
           abiEvent,
           name: `${index}`,
         })
@@ -199,7 +199,7 @@ function assertArgs(parameters: {
         if (isEqual(input, value, args[index])) equal = true
       }
       if (!equal)
-        throw new ParseLogArgsMismatchError({
+        throw new Log_ArgsMismatchError({
           abiEvent,
           expected: args,
           given: matchArgs,
@@ -216,7 +216,7 @@ function assertArgs(parameters: {
     for (const [key, value] of Object.entries(matchArgs)) {
       if (!value) continue
       const input = abiEvent.inputs.find((input) => input.name === key)
-      if (!input) throw new AbiEventInputNotFoundError({ abiEvent, name: key })
+      if (!input) throw new AbiEvent_InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
       for (const value of value_) {
@@ -224,7 +224,7 @@ function assertArgs(parameters: {
           equal = true
       }
       if (!equal)
-        throw new ParseLogArgsMismatchError({
+        throw new Log_ArgsMismatchError({
           abiEvent,
           expected: args,
           given: matchArgs,

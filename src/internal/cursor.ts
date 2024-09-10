@@ -1,9 +1,5 @@
+import { BaseError } from '../Errors.js'
 import type { Bytes } from './Bytes/types.js'
-import {
-  NegativeOffsetError,
-  PositionOutOfBoundsError,
-  RecursiveReadLimitExceededError,
-} from './Errors/cursor.js'
 import type { GlobalErrorType } from './Errors/error.js'
 
 /** @internal */
@@ -51,20 +47,20 @@ const staticCursor: Cursor = /*#__PURE__*/ {
   recursiveReadLimit: Number.POSITIVE_INFINITY,
   assertReadLimit() {
     if (this.recursiveReadCount >= this.recursiveReadLimit)
-      throw new RecursiveReadLimitExceededError({
+      throw new Cursor_RecursiveReadLimitExceededError({
         count: this.recursiveReadCount + 1,
         limit: this.recursiveReadLimit,
       })
   },
   assertPosition(position) {
     if (position < 0 || position > this.bytes.length - 1)
-      throw new PositionOutOfBoundsError({
+      throw new Cursor_PositionOutOfBoundsError({
         length: this.bytes.length,
         position,
       })
   },
   decrementPosition(offset) {
-    if (offset < 0) throw new NegativeOffsetError({ offset })
+    if (offset < 0) throw new Cursor_NegativeOffsetError({ offset })
     const position = this.position - offset
     this.assertPosition(position)
     this.position = position
@@ -73,7 +69,7 @@ const staticCursor: Cursor = /*#__PURE__*/ {
     return this.positionReadCount.get(position || this.position) || 0
   },
   incrementPosition(offset) {
-    if (offset < 0) throw new NegativeOffsetError({ offset })
+    if (offset < 0) throw new Cursor_NegativeOffsetError({ offset })
     const position = this.position + offset
     this.assertPosition(position)
     this.position = position
@@ -223,4 +219,32 @@ export function createCursor(
   cursor.positionReadCount = new Map()
   cursor.recursiveReadLimit = recursiveReadLimit
   return cursor
+}
+
+export class Cursor_NegativeOffsetError extends BaseError {
+  override readonly name = 'Cursor.NegativeOffsetError'
+
+  constructor({ offset }: { offset: number }) {
+    super(`Offset \`${offset}\` cannot be negative.`)
+  }
+}
+
+export class Cursor_PositionOutOfBoundsError extends BaseError {
+  override readonly name = 'Cursor.PositionOutOfBoundsError'
+
+  constructor({ length, position }: { length: number; position: number }) {
+    super(
+      `Position \`${position}\` is out of bounds (\`0 < position < ${length}\`).`,
+    )
+  }
+}
+
+export class Cursor_RecursiveReadLimitExceededError extends BaseError {
+  override readonly name = 'Cursor.RecursiveReadLimitExceededError'
+
+  constructor({ count, limit }: { count: number; limit: number }) {
+    super(
+      `Recursive read limit of \`${limit}\` exceeded (recursive read count: \`${count}\`).`,
+    )
+  }
 }

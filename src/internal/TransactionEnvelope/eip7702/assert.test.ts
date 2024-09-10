@@ -17,7 +17,7 @@ test('invalid chainId', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[InvalidChainIdError: Chain ID "0" is invalid.]`,
+    `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
   )
 })
 
@@ -37,7 +37,7 @@ test('invalid address', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[InvalidChainIdError: Chain ID "0" is invalid.]`,
+    `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
   )
 })
 
@@ -58,6 +58,6 @@ test('fee cap too high', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[FeeCapTooHighError: The fee cap (`maxFeePerGas`/`maxPriorityFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).]',
+    '[TransactionEnvelope.FeeCapTooHighError: The fee cap (`maxFeePerGas`/`maxPriorityFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).]',
   )
 })

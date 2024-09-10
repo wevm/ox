@@ -125,6 +125,6 @@ test('error: not implemented', () => {
       }),
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `eip7702` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `eip7702` is not implemented.]',
   )
 })

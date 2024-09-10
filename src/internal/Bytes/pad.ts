@@ -1,5 +1,5 @@
-import { SizeExceedsPaddingSizeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Bytes_SizeExceedsPaddingSizeError } from './errors.js'
 import type { Bytes } from './types.js'
 
 /**
@@ -72,7 +72,7 @@ export function Bytes_pad(bytes: Bytes, options: Bytes_pad.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes
   if (bytes.length > size)
-    throw new SizeExceedsPaddingSizeError({
+    throw new Bytes_SizeExceedsPaddingSizeError({
       size: bytes.length,
       targetSize: size,
       type: 'Bytes',
@@ -94,5 +94,5 @@ export declare namespace Bytes_pad {
 
   type ReturnType = Bytes
 
-  type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
+  type ErrorType = Bytes_SizeExceedsPaddingSizeError | GlobalErrorType
 }

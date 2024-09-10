@@ -2,10 +2,10 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Solidity_maxUint256 } from '../Solidity/constants.js'
 import type { ExactPartial } from '../types.js'
 import {
-  InvalidSignatureRError,
-  InvalidSignatureSError,
-  InvalidSignatureYParityError,
-  MissingSignaturePropertiesError,
+  Signature_InvalidRError,
+  Signature_InvalidSError,
+  Signature_InvalidYParityError,
+  Signature_MissingPropertiesError,
 } from './errors.js'
 import type { Signature } from './types.js'
 
@@ -32,24 +32,24 @@ export function Signature_assert(
   signature: ExactPartial<Signature>,
 ): asserts signature is Signature {
   if (typeof signature.r === 'undefined')
-    throw new MissingSignaturePropertiesError({ signature })
+    throw new Signature_MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
-    throw new MissingSignaturePropertiesError({ signature })
+    throw new Signature_MissingPropertiesError({ signature })
   if (typeof signature.yParity === 'undefined')
-    throw new MissingSignaturePropertiesError({ signature })
+    throw new Signature_MissingPropertiesError({ signature })
   if (signature.r < 0n || signature.r > Solidity_maxUint256)
-    throw new InvalidSignatureRError({ value: signature.r })
+    throw new Signature_InvalidRError({ value: signature.r })
   if (signature.s < 0n || signature.s > Solidity_maxUint256)
-    throw new InvalidSignatureSError({ value: signature.s })
+    throw new Signature_InvalidSError({ value: signature.s })
   if (signature.yParity !== 0 && signature.yParity !== 1)
-    throw new InvalidSignatureYParityError({ value: signature.yParity })
+    throw new Signature_InvalidYParityError({ value: signature.yParity })
 }
 
 export declare namespace Signature_assert {
   type ErrorType =
-    | MissingSignaturePropertiesError
-    | InvalidSignatureRError
-    | InvalidSignatureSError
-    | InvalidSignatureYParityError
+    | Signature_MissingPropertiesError
+    | Signature_InvalidRError
+    | Signature_InvalidSError
+    | Signature_InvalidYParityError
     | GlobalErrorType
 }

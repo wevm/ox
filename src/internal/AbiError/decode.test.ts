@@ -67,9 +67,9 @@ test('error: invalid data', () => {
   expect(() =>
     AbiError.decode(error, '0xaaa'),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidSelectorSizeError: Selector size is invalid. Expected 4 bytes. Received 2 bytes ("0xaaa").
+    [AbiItem.InvalidSelectorSizeError: Selector size is invalid. Expected 4 bytes. Received 2 bytes ("0xaaa").
 
-    See: https://oxlib.sh/errors#invalidselectorsizeerror]
+    See: https://oxlib.sh/errors#abiiteminvalidselectorsizeerror]
   `)
 })
 

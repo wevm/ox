@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_from } from '../../Hex/from.js'
 import { Hex_trimLeft } from '../../Hex/trim.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
-import { InvalidSignatureVError } from '../../Signature/errors.js'
+import { Signature_InvalidVError } from '../../Signature/errors.js'
 import type { Signature } from '../../Signature/types.js'
 import type { PartialBy } from '../../types.js'
 import { TransactionEnvelopeLegacy_assert } from './assert.js'
@@ -110,7 +110,7 @@ export function TransactionEnvelopeLegacy_serialize(
       // Pre-EIP-155 (no chainId)
       const v = 27 + (signature.v === 27 ? 0 : 1)
       if (signature.v !== v)
-        throw new InvalidSignatureVError({ value: signature.v })
+        throw new Signature_InvalidVError({ value: signature.v })
       return v
     })()
 
@@ -142,7 +142,7 @@ export declare namespace TransactionEnvelopeLegacy_serialize {
     | Hex_from.ErrorType
     | Hex_trimLeft.ErrorType
     | Rlp_fromHex.ErrorType
-    | InvalidSignatureVError
+    | Signature_InvalidVError
     | GlobalErrorType
 }
 

@@ -1,4 +1,4 @@
-export { InvalidDecimalNumberError } from './internal/Value/errors.js'
+export { Value_InvalidDecimalNumberError as InvalidDecimalNumberError } from './internal/Value/errors.js'
 
 export { Value_exponents as exponents } from './internal/Value/constants.js'
 

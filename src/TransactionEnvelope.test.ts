@@ -4,13 +4,13 @@ import * as exports from './TransactionEnvelope.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "CannotInferTransactionTypeError",
+      "CannotInferTypeError",
       "FeeCapTooHighError",
       "GasPriceTooHighError",
       "InvalidChainIdError",
-      "InvalidSerializedTransactionError",
+      "InvalidSerializedError",
       "TipAboveFeeCapError",
-      "TransactionTypeNotImplementedError",
+      "TypeNotImplementedError",
       "assert",
       "deserialize",
       "getSignPayload",

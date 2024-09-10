@@ -51,7 +51,7 @@ test('error', async () => {
   }).then((res) => res.json())
 
   expect(() => RpcResponse.parse(raw)).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcInvalidParamsError: No Signer available]',
+    '[RpcResponse.InvalidParamsError: No Signer available]',
   )
 })
 
@@ -140,7 +140,7 @@ test('behavior: throws JsonRpc.InvalidInputError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcInvalidInputError: Internal error]',
+    '[RpcResponse.InvalidInputError: Internal error]',
   )
 })
 
@@ -155,7 +155,7 @@ test('behavior: throws JsonRpc.ResourceNotFoundError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcResourceNotFoundError: Resource not found]',
+    '[RpcResponse.ResourceNotFoundError: Resource not found]',
   )
 })
 
@@ -170,7 +170,7 @@ test('behavior: throws JsonRpc.ResourceUnavailableError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcResourceUnavailableError: Resource unavailable]',
+    '[RpcResponse.ResourceUnavailableError: Resource unavailable]',
   )
 })
 
@@ -185,7 +185,7 @@ test('behavior: throws JsonRpc.TransactionRejectedError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcTransactionRejectedError: Transaction rejected]',
+    '[RpcResponse.TransactionRejectedError: Transaction rejected]',
   )
 })
 
@@ -200,7 +200,7 @@ test('behavior: throws JsonRpc.MethodNotSupportedError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcMethodNotSupportedError: Method not supported]',
+    '[RpcResponse.MethodNotSupportedError: Method not supported]',
   )
 })
 
@@ -215,7 +215,7 @@ test('behavior: throws JsonRpc.LimitExceededError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcLimitExceededError: Limit exceeded]',
+    '[RpcResponse.LimitExceededError: Limit exceeded]',
   )
 })
 
@@ -230,7 +230,7 @@ test('behavior: throws JsonRpc.VersionNotSupportedError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcVersionNotSupportedError: Version not supported]',
+    '[RpcResponse.VersionNotSupportedError: Version not supported]',
   )
 })
 
@@ -245,7 +245,7 @@ test('behavior: throws JsonRpc.InvalidRequestError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcInvalidRequestError: Invalid Request]',
+    '[RpcResponse.InvalidRequestError: Invalid Request]',
   )
 })
 
@@ -260,7 +260,7 @@ test('behavior: throws JsonRpc.MethodNotFoundError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcMethodNotFoundError: Method not found]',
+    '[RpcResponse.MethodNotFoundError: Method not found]',
   )
 })
 
@@ -275,7 +275,7 @@ test('behavior: throws JsonRpc.InvalidParamsError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcInvalidParamsError: Method not found]',
+    '[RpcResponse.InvalidParamsError: Method not found]',
   )
 })
 
@@ -290,7 +290,7 @@ test('behavior: throws JsonRpc.InternalError', () => {
       },
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[JsonRpcInternalErrorError: Method not found]',
+    '[RpcResponse.InternalErrorError: Method not found]',
   )
 })
 
@@ -304,7 +304,9 @@ test('behavior: throws JsonRpc.ParseError', () => {
         message: 'Method not found',
       },
     }),
-  ).toThrowErrorMatchingInlineSnapshot('[JsonRpcParseError: Method not found]')
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[RpcResponse.ParseError: Method not found]',
+  )
 })
 
 test('behavior: throws JsonRpc.Error', () => {
@@ -317,5 +319,5 @@ test('behavior: throws JsonRpc.Error', () => {
         message: 'oh no',
       },
     }),
-  ).toThrowErrorMatchingInlineSnapshot('[JsonRpcError: oh no]')
+  ).toThrowErrorMatchingInlineSnapshot('[RpcResponse_Error: oh no]')
 })

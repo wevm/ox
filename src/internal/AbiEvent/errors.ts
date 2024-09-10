@@ -5,8 +5,8 @@ import type { Hex } from '../Hex/types.js'
 import { AbiEvent_format } from './format.js'
 import type { AbiEvent } from './types.js'
 
-export class AbiEventInputNotFoundError extends BaseError {
-  override readonly name = 'AbiEventInputNotFoundError'
+export class AbiEvent_InputNotFoundError extends BaseError {
+  override readonly name = 'AbiEvent.InputNotFoundError'
 
   constructor({
     abiEvent,
@@ -19,8 +19,8 @@ export class AbiEventInputNotFoundError extends BaseError {
   }
 }
 
-export class EventDataMismatchError extends BaseError {
-  override readonly name = 'EventDataMismatchError'
+export class AbiEvent_DataMismatchError extends BaseError {
+  override readonly name = 'AbiEvent.DataMismatchError'
 
   abiEvent: AbiEvent
   data: Hex
@@ -57,8 +57,8 @@ export class EventDataMismatchError extends BaseError {
   }
 }
 
-export class EventTopicsMismatchError extends BaseError {
-  override readonly name = 'EventTopicsMismatchError'
+export class AbiEvent_TopicsMismatchError extends BaseError {
+  override readonly name = 'AbiEvent.TopicsMismatchError'
 
   abiEvent: AbiEvent
 
@@ -81,8 +81,8 @@ export class EventTopicsMismatchError extends BaseError {
   }
 }
 
-export class EventSelectorTopicMismatchError extends BaseError {
-  override readonly name = 'EventSelectorTopicMismatchError'
+export class AbiEvent_SelectorTopicMismatchError extends BaseError {
+  override readonly name = 'AbiEvent.SelectorTopicMismatchError'
 
   constructor({
     abiEvent,
@@ -105,8 +105,8 @@ export class EventSelectorTopicMismatchError extends BaseError {
   }
 }
 
-export class FilterTypeNotSupportedError extends BaseError {
-  override readonly name = 'FilterTypeNotSupportedError'
+export class AbiEvent_FilterTypeNotSupportedError extends BaseError {
+  override readonly name = 'AbiEvent.FilterTypeNotSupportedError'
   constructor(type: string) {
     super(`Filter type "${type}" is not supported.`)
   }

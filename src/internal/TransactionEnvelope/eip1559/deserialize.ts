@@ -6,7 +6,7 @@ import type { Hex } from '../../Hex/types.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_fromTuple } from '../../Signature/fromTuple.js'
 import type { Compute } from '../../types.js'
-import { InvalidSerializedTransactionError } from '../errors.js'
+import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
 import { TransactionEnvelopeEip1559_assert } from './assert.js'
 import type {
   TransactionEnvelopeEip1559,
@@ -55,7 +55,7 @@ export function TransactionEnvelopeEip1559_deserialize(
   ] = transactionArray as readonly Hex[]
 
   if (!(transactionArray.length === 9 || transactionArray.length === 12))
-    throw new InvalidSerializedTransactionError({
+    throw new TransactionEnvelope_InvalidSerializedError({
       attributes: {
         chainId,
         nonce,

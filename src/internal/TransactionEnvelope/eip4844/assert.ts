@@ -1,7 +1,7 @@
 import {
-  EmptyBlobVersionedHashesError,
-  InvalidVersionedHashSizeError,
-  InvalidVersionedHashVersionError,
+  Blobs_EmptyBlobVersionedHashesError,
+  Blobs_InvalidVersionedHashSizeError,
+  Blobs_InvalidVersionedHashVersionError,
 } from '../../Blobs/errors.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_size } from '../../Hex/size.js'
@@ -37,13 +37,14 @@ export function TransactionEnvelopeEip4844_assert(
   const { blobVersionedHashes } = envelope
   if (blobVersionedHashes) {
     if (blobVersionedHashes.length === 0)
-      throw new EmptyBlobVersionedHashesError()
+      throw new Blobs_EmptyBlobVersionedHashesError()
     for (const hash of blobVersionedHashes) {
       const size = Hex_size(hash)
       const version = Hex_toNumber(Hex_slice(hash, 0, 1))
-      if (size !== 32) throw new InvalidVersionedHashSizeError({ hash, size })
+      if (size !== 32)
+        throw new Blobs_InvalidVersionedHashSizeError({ hash, size })
       if (version !== Kzg_versionedHashVersion)
-        throw new InvalidVersionedHashVersionError({
+        throw new Blobs_InvalidVersionedHashVersionError({
           hash,
           version,
         })
@@ -60,9 +61,9 @@ export declare namespace TransactionEnvelopeEip4844_assert {
     | Hex_size.ErrorType
     | Hex_toNumber.ErrorType
     | Hex_slice.ErrorType
-    | EmptyBlobVersionedHashesError
-    | InvalidVersionedHashSizeError
-    | InvalidVersionedHashVersionError
+    | Blobs_EmptyBlobVersionedHashesError
+    | Blobs_InvalidVersionedHashSizeError
+    | Blobs_InvalidVersionedHashVersionError
     | GlobalErrorType
 }
 

@@ -6,11 +6,11 @@ export type {
 } from './internal/Blobs/types.js'
 
 export {
-  BlobSizeTooLargeError,
-  EmptyBlobError,
-  EmptyBlobVersionedHashesError,
-  InvalidVersionedHashSizeError,
-  InvalidVersionedHashVersionError,
+  Blobs_BlobSizeTooLargeError as BlobSizeTooLargeError,
+  Blobs_EmptyBlobError as EmptyBlobError,
+  Blobs_EmptyBlobVersionedHashesError as EmptyBlobVersionedHashesError,
+  Blobs_InvalidVersionedHashSizeError as InvalidVersionedHashSizeError,
+  Blobs_InvalidVersionedHashVersionError as InvalidVersionedHashVersionError,
 } from './internal/Blobs/errors.js'
 
 export { Blobs_toCommitments as toCommitments } from './internal/Blobs/toCommitments.js'

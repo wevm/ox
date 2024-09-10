@@ -1,8 +1,9 @@
 export {
-  EventDataMismatchError,
-  EventSelectorTopicMismatchError,
-  EventTopicsMismatchError,
-  FilterTypeNotSupportedError,
+  AbiEvent_DataMismatchError as DataMismatchError,
+  AbiEvent_FilterTypeNotSupportedError as FilterTypeNotSupportedError,
+  AbiEvent_InputNotFoundError as InputNotFoundError,
+  AbiEvent_SelectorTopicMismatchError as SelectorTopicMismatchError,
+  AbiEvent_TopicsMismatchError as TopicsMismatchError,
 } from './internal/AbiEvent/errors.js'
 
 export { AbiEvent_decode as decode } from './internal/AbiEvent/decode.js'

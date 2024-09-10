@@ -1,10 +1,10 @@
 import { expect, test } from 'vitest'
 
-import { SiweInvalidMessageFieldError } from './errors.js'
+import { Siwe_InvalidMessageFieldError } from './errors.js'
 
-test('SiweInvalidMessageFieldError', () => {
+test('InvalidMessageFieldError', () => {
   expect(
-    new SiweInvalidMessageFieldError({
+    new Siwe_InvalidMessageFieldError({
       field: 'nonce',
       metaMessages: [
         '- Nonce must be at least 8 characters.',
@@ -14,7 +14,7 @@ test('SiweInvalidMessageFieldError', () => {
       ],
     }),
   ).toMatchInlineSnapshot(`
-    [SiweInvalidMessageFieldError: Invalid Sign-In with Ethereum message field "nonce".
+    [Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "nonce".
 
     - Nonce must be at least 8 characters.
     - Nonce must be alphanumeric.

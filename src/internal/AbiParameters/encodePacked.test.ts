@@ -218,7 +218,7 @@ test('error: invalid address', () => {
   expect(() =>
     AbiParameters.encodePacked(['address'], ['0xdeadbeef']),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidAddressError: Address "0xdeadbeef" is invalid.
+    [Address.InvalidAddressError: Address "0xdeadbeef" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.
     See: https://oxlib.sh/errors#invalidaddresserror]
@@ -230,11 +230,11 @@ test('error: length mismatch', () => {
     // @ts-expect-error
     () => AbiParameters.encodePacked(['address'], [address.vitalik, '0x']),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEncodingLengthMismatchError: ABI encoding parameters/values length mismatch.
+    [AbiParameters.LengthMismatchError: ABI encoding parameters/values length mismatch.
     Expected length (parameters): 1
     Given length (values): 2
 
-    See: https://oxlib.sh/errors#abiencodinglengthmismatcherror]
+    See: https://oxlib.sh/errors#abiparameterslengthmismatcherror]
   `)
 })
 
@@ -242,9 +242,9 @@ test('error: bytes size mismatch', () => {
   expect(() =>
     AbiParameters.encodePacked(['bytes8'], ['0xdeadbeef']),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEncodingBytesSizeMismatchError: Size of bytes "0xdeadbeef" (bytes4) does not match expected size (bytes8).
+    [AbiParameters.BytesSizeMismatchError: Size of bytes "0xdeadbeef" (bytes4) does not match expected size (bytes8).
 
-    See: https://oxlib.sh/errors#abiencodingbytessizemismatcherror]
+    See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
   `)
 })
 
@@ -253,8 +253,8 @@ test('error: unsupported type', () => {
     // @ts-expect-error
     () => AbiParameters.encodePacked(['function'], ['0x']),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidAbiTypeError: Type \`function\` is not a valid ABI Type.
+    [AbiParameters.InvalidTypeError: Type \`function\` is not a valid ABI Type.
 
-    See: https://oxlib.sh/errors#invalidabitypeerror]
+    See: https://oxlib.sh/errors#abiparametersinvalidtypeerror]
   `)
 })

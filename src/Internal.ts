@@ -27,18 +27,6 @@ export {
   prepareParameters,
 } from './internal/AbiParameters/encode.js'
 
-export { AbiItemAmbiguityError } from './internal/AbiItem/errors.js'
-
-export {
-  AbiDecodingDataSizeTooSmallError,
-  AbiDecodingZeroDataError,
-  AbiEncodingArrayLengthMismatchError,
-  AbiEncodingBytesSizeMismatchError,
-  AbiEncodingInvalidArrayError,
-  AbiEncodingLengthMismatchError,
-  InvalidAbiTypeError,
-} from './internal/AbiParameters/errors.js'
-
 export type {
   EncodePackedValues,
   PackedAbiType,

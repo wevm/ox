@@ -1,9 +1,9 @@
 export type { Address } from './internal/Address/types.js'
 
 export {
-  InvalidAddressChecksumError,
-  InvalidAddressError,
-  InvalidAddressInputError,
+  Address_InvalidChecksumError as InvalidChecksumError,
+  Address_InvalidAddressError as InvalidAddressError,
+  Address_InvalidInputError as InvalidInputError,
 } from './internal/Address/errors.js'
 
 export { Address_assert as assert } from './internal/Address/assert.js'

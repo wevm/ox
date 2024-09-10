@@ -7,7 +7,7 @@ import {
   Siwe_nonceRegex,
   Siwe_schemeRegex,
 } from './constants.js'
-import { SiweInvalidMessageFieldError } from './errors.js'
+import { Siwe_InvalidMessageFieldError } from './errors.js'
 import { Siwe_isUri } from './isUri.js'
 import type { Siwe_Message } from './types.js'
 
@@ -59,7 +59,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
   {
     // Required fields
     if (chainId !== Math.floor(chainId))
-      throw new SiweInvalidMessageFieldError({
+      throw new Siwe_InvalidMessageFieldError({
         field: 'chainId',
         metaMessages: [
           '- Chain ID must be a EIP-155 chain ID.',
@@ -75,7 +75,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
         Siwe_localhostRegex.test(domain)
       )
     )
-      throw new SiweInvalidMessageFieldError({
+      throw new Siwe_InvalidMessageFieldError({
         field: 'domain',
         metaMessages: [
           '- Domain must be an RFC 3986 authority.',
@@ -85,7 +85,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
         ],
       })
     if (!Siwe_nonceRegex.test(nonce))
-      throw new SiweInvalidMessageFieldError({
+      throw new Siwe_InvalidMessageFieldError({
         field: 'nonce',
         metaMessages: [
           '- Nonce must be at least 8 characters.',
@@ -95,7 +95,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
         ],
       })
     if (!Siwe_isUri(uri))
-      throw new SiweInvalidMessageFieldError({
+      throw new Siwe_InvalidMessageFieldError({
         field: 'uri',
         metaMessages: [
           '- URI must be a RFC 3986 URI referring to the resource that is the subject of the signing.',
@@ -105,7 +105,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
         ],
       })
     if (version !== '1')
-      throw new SiweInvalidMessageFieldError({
+      throw new Siwe_InvalidMessageFieldError({
         field: 'version',
         metaMessages: [
           "- Version must be '1'.",
@@ -116,7 +116,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
 
     // Optional fields
     if (scheme && !Siwe_schemeRegex.test(scheme))
-      throw new SiweInvalidMessageFieldError({
+      throw new Siwe_InvalidMessageFieldError({
         field: 'scheme',
         metaMessages: [
           '- Scheme must be an RFC 3986 URI scheme.',
@@ -127,7 +127,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
       })
     const statement = value.statement
     if (statement?.includes('\n'))
-      throw new SiweInvalidMessageFieldError({
+      throw new Siwe_InvalidMessageFieldError({
         field: 'statement',
         metaMessages: [
           "- Statement must not include '\\n'.",
@@ -159,7 +159,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
     let content = '\nResources:'
     for (const resource of resources) {
       if (!Siwe_isUri(resource))
-        throw new SiweInvalidMessageFieldError({
+        throw new Siwe_InvalidMessageFieldError({
           field: 'resources',
           metaMessages: [
             '- Every resource must be a RFC 3986 URI.',
@@ -179,7 +179,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
 export declare namespace Siwe_createMessage {
   type ErrorType =
     | Address_from.ErrorType
-    | SiweInvalidMessageFieldError
+    | Siwe_InvalidMessageFieldError
     | GlobalErrorType
 }
 

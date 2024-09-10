@@ -9,12 +9,12 @@ export type {
 } from './internal/Signature/types.js'
 
 export {
-  InvalidSerializedSignatureSizeError,
-  InvalidSignatureRError,
-  InvalidSignatureSError,
-  InvalidSignatureVError,
-  InvalidSignatureYParityError,
-  MissingSignaturePropertiesError,
+  Signature_InvalidRError as InvalidRError,
+  Signature_InvalidSError as InvalidSError,
+  Signature_InvalidSerializedSizeError as InvalidSerializedSizeError,
+  Signature_InvalidVError as InvalidVError,
+  Signature_InvalidYParityError as InvalidYParityError,
+  Signature_MissingPropertiesError as MissingPropertiesError,
 } from './internal/Signature/errors.js'
 
 export { Signature_assert as assert } from './internal/Signature/assert.js'

@@ -8,7 +8,7 @@ test('empty blobs', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.]',
+    '[Blobs.EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.]',
   )
 })
 
@@ -19,11 +19,11 @@ test('invalid blob length', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-      [InvalidVersionedHashSizeError: Versioned hash "0xcafebabe" size is invalid.
+    [Blobs.InvalidVersionedHashSizeError: Versioned hash "0xcafebabe" size is invalid.
 
-      Expected: 32
-      Received: 4]
-    `)
+    Expected: 32
+    Received: 4]
+  `)
 })
 
 test('invalid blob version', () => {
@@ -35,11 +35,11 @@ test('invalid blob version', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-      [InvalidVersionedHashVersionError: Versioned hash "0xcafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe" version is invalid.
+    [Blobs.InvalidVersionedHashVersionError: Versioned hash "0xcafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe" version is invalid.
 
-      Expected: 1
-      Received: 202]
-    `)
+    Expected: 1
+    Received: 202]
+  `)
 })
 
 test('fee cap too high', () => {
@@ -52,6 +52,6 @@ test('fee cap too high', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[FeeCapTooHighError: The fee cap (`maxFeePerGas`/`maxPriorityFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).]',
+    '[TransactionEnvelope.FeeCapTooHighError: The fee cap (`maxFeePerGas`/`maxPriorityFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).]',
   )
 })

@@ -1,5 +1,5 @@
-import { SizeExceedsPaddingSizeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Hex_SizeExceedsPaddingSizeError } from './errors.js'
 import type { Hex } from './types.js'
 
 /**
@@ -74,7 +74,7 @@ export function Hex_pad(hex_: Hex, options: Hex_pad.Options = {}) {
 
   const hex = hex_.replace('0x', '')
   if (hex.length > size * 2)
-    throw new SizeExceedsPaddingSizeError({
+    throw new Hex_SizeExceedsPaddingSizeError({
       size: Math.ceil(hex.length / 2),
       targetSize: size,
       type: 'Hex',
@@ -88,5 +88,5 @@ export declare namespace Hex_pad {
     dir?: 'left' | 'right' | undefined
     size?: number | undefined
   }
-  type ErrorType = SizeExceedsPaddingSizeError | GlobalErrorType
+  type ErrorType = Hex_SizeExceedsPaddingSizeError | GlobalErrorType
 }

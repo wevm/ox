@@ -10,11 +10,11 @@ test('when accessList contains in invalid Address', () => {
   expect(() =>
     AccessList_toTupleList([{ address: '0x123', storageKeys: [] }]),
   ).toThrowErrorMatchingInlineSnapshot(`
-      [InvalidAddressError: Address "0x123" is invalid.
+    [Address.InvalidAddressError: Address "0x123" is invalid.
 
-      Details: Address is not a 20 byte (40 hexadecimal character) value.
-      See: https://oxlib.sh/errors#invalidaddresserror]
-    `)
+    Details: Address is not a 20 byte (40 hexadecimal character) value.
+    See: https://oxlib.sh/errors#invalidaddresserror]
+  `)
 })
 
 test('when accessList contains in invalid Storage Key', () => {
@@ -30,7 +30,7 @@ test('when accessList contains in invalid Storage Key', () => {
       },
     ]),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[InvalidStorageKeySizeError: Size for storage key "0xI like cheese" is invalid. Expected 32 bytes. Got 7 bytes.]`,
+    `[AccessList.InvalidStorageKeySizeError: Size for storage key "0xI like cheese" is invalid. Expected 32 bytes. Got 7 bytes.]`,
   )
 })
 

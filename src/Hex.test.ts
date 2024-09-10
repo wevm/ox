@@ -4,12 +4,8 @@ import * as exports from './Hex.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "BytesSizeMismatchError",
       "IntegerOutOfRangeError",
-      "InvalidBytesBooleanError",
-      "InvalidBytesTypeError",
       "InvalidHexBooleanError",
-      "InvalidHexLengthError",
       "InvalidHexTypeError",
       "InvalidHexValueError",
       "InvalidTypeError",

@@ -1,5 +1,5 @@
 import type { Abi } from '../Abi/types.js'
-import { AbiItemNotFoundError } from '../AbiItem/errors.js'
+import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiConstructor } from './types.js'
@@ -38,7 +38,7 @@ export function AbiConstructor_fromAbi<
   const abi extends Abi | readonly unknown[],
 >(abi: abi | Abi | readonly unknown[]): AbiConstructor_fromAbi.ReturnType<abi> {
   const item = (abi as Abi).find((item) => item.type === 'constructor')
-  if (!item) throw new AbiItemNotFoundError({ name: 'constructor' })
+  if (!item) throw new AbiItem_NotFoundError({ name: 'constructor' })
   return item
 }
 
@@ -50,7 +50,7 @@ export declare namespace AbiConstructor_fromAbi {
     ? Extract<abi[number], { type: 'constructor' }>
     : AbiConstructor
 
-  type ErrorType = AbiItemNotFoundError | GlobalErrorType
+  type ErrorType = AbiItem_NotFoundError | GlobalErrorType
 }
 
 AbiConstructor_fromAbi.parseError = (error: unknown) =>

@@ -162,7 +162,7 @@ test('no matching name', () => {
       args: ['0x0000000000000000000000000000000000000000'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with name "balanceOf" not found.
+    [AbiItem.NotFoundError: ABI item with name "balanceOf" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -174,7 +174,7 @@ test('no matching data', () => {
       name: '0xdeadbeef',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with name "0xdeadbeef" not found.
+    [AbiItem.NotFoundError: ABI item with name "0xdeadbeef" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -482,7 +482,7 @@ test('behavior: overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`bytes20\` in \`foo(bytes20)\`, and
     \`address\` in \`foo(address)\`
@@ -506,7 +506,7 @@ test('behavior: overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`address\` in \`foo(address)\`, and
     \`string\` in \`foo(string)\`
@@ -586,7 +586,7 @@ test('behavior: overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`string\` in \`foo(string)\`, and
     \`address\` in \`foo(address)\`
@@ -606,7 +606,7 @@ test('behavior: overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`bytes20\` in \`foo((bytes20))\`, and
     \`address\` in \`foo((address))\`
@@ -629,7 +629,7 @@ test('behavior: overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`bytes\` in \`foo(string,(bytes))\`, and
     \`address\` in \`foo(string,(address))\`

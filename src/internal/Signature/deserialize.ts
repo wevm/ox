@@ -5,8 +5,8 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import {
-  InvalidSerializedSignatureSizeError,
-  InvalidSignatureYParityError,
+  Signature_InvalidSerializedSizeError,
+  Signature_InvalidYParityError,
 } from './errors.js'
 import { Signature_fromCompact } from './fromCompact.js'
 import type { Signature } from './types.js'
@@ -30,7 +30,7 @@ export function Signature_deserialize(serialized: Bytes | Hex): Signature {
   const hex = typeof serialized === 'string' ? serialized : Hex_from(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)
-    throw new InvalidSerializedSignatureSizeError({ signature: hex })
+    throw new Signature_InvalidSerializedSizeError({ signature: hex })
 
   const { r, ...signature } = secp256k1.Signature.fromCompact(hex.slice(2, 130))
 
@@ -47,7 +47,7 @@ export function Signature_deserialize(serialized: Bytes | Hex): Signature {
       try {
         yParity = Signature_vToYParity(yParity)
       } catch {
-        throw new InvalidSignatureYParityError({ value: yParity })
+        throw new Signature_InvalidYParityError({ value: yParity })
       }
     }
     return {
@@ -67,8 +67,8 @@ export declare namespace Signature_deserialize {
   type ErrorType =
     | Signature_fromCompact.ErrorType
     | Hex_from.ErrorType
-    | InvalidSerializedSignatureSizeError
-    | InvalidSignatureYParityError
+    | Signature_InvalidSerializedSizeError
+    | Signature_InvalidYParityError
     | GlobalErrorType
 }
 

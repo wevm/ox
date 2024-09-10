@@ -109,7 +109,7 @@ test('error: no matching name', () => {
       name: 'approve',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI event with name "approve" not found.
+    [AbiItem.NotFoundError: ABI event with name "approve" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -121,7 +121,7 @@ test('error: no matching name', () => {
       name: 'Approved',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with name "Approved" not found.
+    [AbiItem.NotFoundError: ABI item with name "Approved" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -133,7 +133,7 @@ test('error: no matching data', () => {
       name: '0xdeadbeef',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemNotFoundError: ABI item with name "0xdeadbeef" not found.
+    [AbiItem.NotFoundError: ABI item with name "0xdeadbeef" not found.
 
     See: https://oxlib.sh/errors#abiitemnotfounderror]
   `)
@@ -265,7 +265,7 @@ test('behavior: overloads: ambiguious types', () => {
       args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`bytes20\` in \`Foo(bytes20)\`, and
     \`address\` in \`Foo(address)\`
@@ -285,7 +285,7 @@ test('behavior: overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`address\` in \`Foo(address)\`, and
     \`string\` in \`Foo(string)\`
@@ -349,7 +349,7 @@ test('behavior: overloads: ambiguious types', () => {
       },
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItemAmbiguityError: Found ambiguous types in overloaded ABI Items.
+    [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
     \`string\` in \`Foo(string)\`, and
     \`address\` in \`Foo(address)\`

@@ -2,9 +2,9 @@ import { Bytes_assertSize } from '../Bytes/assertSize.js'
 import { Bytes_fromHex } from '../Bytes/from.js'
 import { Bytes_trimRight } from '../Bytes/trim.js'
 import type { Bytes } from '../Bytes/types.js'
-import { InvalidHexBooleanError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_assertSize } from './assertSize.js'
+import { Hex_InvalidHexBooleanError, Hex_InvalidTypeError } from './errors.js'
 import { Hex_trimLeft } from './trim.js'
 import type { Hex } from './types.js'
 
@@ -60,7 +60,10 @@ export function Hex_to<to extends Hex_to.To>(
   if (to === 'string') return Hex_toString(hex, options) as never
   if (to === 'boolean') return Hex_toBoolean(hex, options) as never
   if (to === 'Bytes') return Hex_toBytes(hex, options) as never
-  throw new InvalidTypeError(to, 'string | Bytes | bigint | number | boolean')
+  throw new Hex_InvalidTypeError(
+    to,
+    'string | Bytes | bigint | number | boolean',
+  )
 }
 
 export declare namespace Hex_to {
@@ -84,7 +87,7 @@ export declare namespace Hex_to {
     | Hex_toBoolean.ErrorType
     | Hex_toString.ErrorType
     | Hex_toBytes.ErrorType
-    | InvalidTypeError
+    | Hex_InvalidTypeError
     | GlobalErrorType
 }
 
@@ -170,7 +173,7 @@ export function Hex_toBoolean(
   }
   if (Hex_trimLeft(hex_) === '0x00') return false
   if (Hex_trimLeft(hex_) === '0x01') return true
-  throw new InvalidHexBooleanError(hex_)
+  throw new Hex_InvalidHexBooleanError(hex_)
 }
 
 export declare namespace Hex_toBoolean {
@@ -182,7 +185,7 @@ export declare namespace Hex_toBoolean {
   type ErrorType =
     | Hex_assertSize.ErrorType
     | Hex_trimLeft.ErrorType
-    | InvalidHexBooleanError
+    | Hex_InvalidHexBooleanError
     | GlobalErrorType
 }
 

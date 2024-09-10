@@ -52,7 +52,7 @@ test('error: missing yParity and v', () => {
       s: '0x2',
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidSignatureYParityError: Value \`undefined\` is an invalid y-parity value. Y-parity must be 0 or 1.
+    [Signature.InvalidYParityError: Value \`undefined\` is an invalid y-parity value. Y-parity must be 0 or 1.
 
     See: https://oxlib.sh/errors#invalidsignatureyparityerror]
   `)

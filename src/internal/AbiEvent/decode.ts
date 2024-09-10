@@ -1,15 +1,15 @@
 import type { AbiParameter } from 'abitype'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import { AbiDecodingDataSizeTooSmallError } from '../AbiParameters/errors.js'
-import { PositionOutOfBoundsError } from '../Errors/cursor.js'
+import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
+import { Cursor_PositionOutOfBoundsError } from '../cursor.js'
 import type { IsNarrowable } from '../types.js'
 import {
-  EventDataMismatchError,
-  EventSelectorTopicMismatchError,
-  EventTopicsMismatchError,
+  AbiEvent_DataMismatchError,
+  AbiEvent_SelectorTopicMismatchError,
+  AbiEvent_TopicsMismatchError,
 } from './errors.js'
 import { AbiEvent_getSelector } from './getSelector.js'
 import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
@@ -111,7 +111,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
 
   const selector = AbiEvent_getSelector(abiEvent)
   if (selector_ !== selector)
-    throw new EventSelectorTopicMismatchError({
+    throw new AbiEvent_SelectorTopicMismatchError({
       abiEvent,
       actual: selector_,
       expected: selector,
@@ -128,7 +128,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
     const param = indexedInputs[i]!
     const topic = argTopics[i]
     if (!topic)
-      throw new EventTopicsMismatchError({
+      throw new AbiEvent_TopicsMismatchError({
         abiEvent,
         param: param as AbiParameter & { indexed: boolean },
       })
@@ -162,10 +162,10 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
         }
       } catch (err) {
         if (
-          err instanceof AbiDecodingDataSizeTooSmallError ||
-          err instanceof PositionOutOfBoundsError
+          err instanceof AbiParameters_DataSizeTooSmallError ||
+          err instanceof Cursor_PositionOutOfBoundsError
         )
-          throw new EventDataMismatchError({
+          throw new AbiEvent_DataMismatchError({
             abiEvent,
             data: data,
             parameters: nonIndexedInputs,
@@ -174,7 +174,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
         throw err
       }
     } else {
-      throw new EventDataMismatchError({
+      throw new AbiEvent_DataMismatchError({
         abiEvent,
         data: '0x',
         parameters: nonIndexedInputs,
@@ -207,9 +207,9 @@ export declare namespace AbiEvent_decode {
   type ErrorType =
     | AbiParameters_decode.ErrorType
     | AbiEvent_getSelector.ErrorType
-    | EventDataMismatchError
-    | EventSelectorTopicMismatchError
-    | EventTopicsMismatchError
+    | AbiEvent_DataMismatchError
+    | AbiEvent_SelectorTopicMismatchError
+    | AbiEvent_TopicsMismatchError
     | GlobalErrorType
 }
 

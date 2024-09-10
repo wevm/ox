@@ -4,7 +4,7 @@ import { TransactionEnvelopeEip1559_getSignPayload } from '../eip1559/getSignPay
 import { TransactionEnvelopeEip2930_getSignPayload } from '../eip2930/getSignPayload.js'
 import { TransactionEnvelopeEip4844_getSignPayload } from '../eip4844/getSignPayload.js'
 import { TransactionEnvelopeEip7702_getSignPayload } from '../eip7702/getSignPayload.js'
-import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_getSignPayload } from '../legacy/getSignPayload.js'
 import type { TransactionEnvelope } from './types.js'
 
@@ -50,7 +50,9 @@ export function TransactionEnvelope_getSignPayload(
   if (envelope.type === 'eip7702')
     return TransactionEnvelopeEip7702_getSignPayload(envelope)
 
-  throw new TransactionTypeNotImplementedError({ type: (envelope as any).type })
+  throw new TransactionEnvelope_TypeNotImplementedError({
+    type: (envelope as any).type,
+  })
 }
 
 export declare namespace TransactionEnvelope_getSignPayload {

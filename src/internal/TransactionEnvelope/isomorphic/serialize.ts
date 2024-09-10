@@ -6,7 +6,7 @@ import { TransactionEnvelopeEip1559_serialize } from '../eip1559/serialize.js'
 import { TransactionEnvelopeEip2930_serialize } from '../eip2930/serialize.js'
 import { TransactionEnvelopeEip4844_serialize } from '../eip4844/serialize.js'
 import { TransactionEnvelopeEip7702_serialize } from '../eip7702/serialize.js'
-import { TransactionTypeNotImplementedError } from '../errors.js'
+import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_serialize } from '../legacy/serialize.js'
 import type {
   TransactionEnvelope,
@@ -79,7 +79,9 @@ export function TransactionEnvelope_serialize<
   if (envelope.type === 'eip7702')
     return TransactionEnvelopeEip7702_serialize(envelope, options) as never
 
-  throw new TransactionTypeNotImplementedError({ type: (envelope as any).type })
+  throw new TransactionEnvelope_TypeNotImplementedError({
+    type: (envelope as any).type,
+  })
 }
 
 export declare namespace TransactionEnvelope_serialize {
@@ -99,7 +101,7 @@ export declare namespace TransactionEnvelope_serialize {
     | TransactionEnvelopeEip1559_serialize.ErrorType
     | TransactionEnvelopeEip4844_serialize.ErrorType
     | TransactionEnvelopeEip7702_serialize.ErrorType
-    | TransactionTypeNotImplementedError
+    | TransactionEnvelope_TypeNotImplementedError
     | GlobalErrorType
 }
 

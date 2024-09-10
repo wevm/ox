@@ -4,10 +4,11 @@ import * as exports from './AbiEvent.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "EventDataMismatchError",
-      "EventSelectorTopicMismatchError",
-      "EventTopicsMismatchError",
+      "DataMismatchError",
       "FilterTypeNotSupportedError",
+      "InputNotFoundError",
+      "SelectorTopicMismatchError",
+      "TopicsMismatchError",
       "decode",
       "encode",
       "format",

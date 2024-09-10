@@ -15,9 +15,9 @@ import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { getArrayComponents } from './encode.js'
 import {
-  AbiDecodingDataSizeTooSmallError,
-  AbiDecodingZeroDataError,
-  InvalidAbiTypeError,
+  AbiParameters_DataSizeTooSmallError,
+  AbiParameters_InvalidTypeError,
+  AbiParameters_ZeroDataError,
 } from './errors.js'
 import type {
   AbiParameters,
@@ -98,9 +98,9 @@ export function AbiParameters_decode(
   const cursor = createCursor(bytes)
 
   if (Bytes_size(bytes) === 0 && parameters.length > 0)
-    throw new AbiDecodingZeroDataError()
+    throw new AbiParameters_ZeroDataError()
   if (Bytes_size(bytes) && Bytes_size(bytes) < 32)
-    throw new AbiDecodingDataSizeTooSmallError({
+    throw new AbiParameters_DataSizeTooSmallError({
       data: typeof data === 'string' ? data : Hex_fromBytes(data),
       parameters: parameters as readonly AbiParameters_Parameter[],
       size: Bytes_size(bytes),
@@ -145,8 +145,8 @@ export declare namespace AbiParameters_decode {
   type ErrorType =
     | Bytes_fromHex.ErrorType
     | decodeParameter.ErrorType
-    | AbiDecodingZeroDataError
-    | AbiDecodingDataSizeTooSmallError
+    | AbiParameters_ZeroDataError
+    | AbiParameters_DataSizeTooSmallError
     | GlobalErrorType
 }
 
@@ -179,7 +179,7 @@ export function decodeParameter(
   if (param.type.startsWith('uint') || param.type.startsWith('int'))
     return decodeNumber(cursor, param)
   if (param.type === 'string') return decodeString(cursor, { staticPosition })
-  throw new InvalidAbiTypeError(param.type)
+  throw new AbiParameters_InvalidTypeError(param.type)
 }
 
 export declare namespace decodeParameter {
@@ -191,7 +191,7 @@ export declare namespace decodeParameter {
     | decodeBytes.ErrorType
     | decodeNumber.ErrorType
     | decodeString.ErrorType
-    | InvalidAbiTypeError
+    | AbiParameters_InvalidTypeError
     | GlobalErrorType
 }
 

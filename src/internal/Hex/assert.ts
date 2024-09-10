@@ -1,5 +1,5 @@
-import { InvalidHexTypeError, InvalidHexValueError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Hex_InvalidHexTypeError, Hex_InvalidHexValueError } from './errors.js'
 import type { Hex } from './types.js'
 
 /**
@@ -23,12 +23,13 @@ export function Hex_assert(
   options: Hex_assert.Options = {},
 ): asserts value is Hex {
   const { strict = true } = options
-  if (!value) throw new InvalidHexTypeError(value)
-  if (typeof value !== 'string') throw new InvalidHexTypeError(value)
+  if (!value) throw new Hex_InvalidHexTypeError(value)
+  if (typeof value !== 'string') throw new Hex_InvalidHexTypeError(value)
   if (strict) {
-    if (!/^0x[0-9a-fA-F]*$/.test(value)) throw new InvalidHexValueError(value)
+    if (!/^0x[0-9a-fA-F]*$/.test(value))
+      throw new Hex_InvalidHexValueError(value)
   }
-  if (!value.startsWith('0x')) throw new InvalidHexValueError(value)
+  if (!value.startsWith('0x')) throw new Hex_InvalidHexValueError(value)
 }
 
 export declare namespace Hex_assert {
@@ -37,7 +38,10 @@ export declare namespace Hex_assert {
     strict?: boolean | undefined
   }
 
-  type ErrorType = InvalidHexTypeError | InvalidHexValueError | GlobalErrorType
+  type ErrorType =
+    | Hex_InvalidHexTypeError
+    | Hex_InvalidHexValueError
+    | GlobalErrorType
 }
 
 /* v8 ignore next */

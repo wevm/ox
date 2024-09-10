@@ -1,7 +1,7 @@
 import { BaseError } from '../Errors/base.js'
 
-export class SiweInvalidMessageFieldError extends BaseError {
-  override readonly name = 'SiweInvalidMessageFieldError'
+export class Siwe_InvalidMessageFieldError extends BaseError {
+  override readonly name = 'Siwe.InvalidMessageFieldError'
 
   constructor(parameters: {
     field: string

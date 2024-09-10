@@ -1,4 +1,8 @@
-export { AbiItemAmbiguityError } from './internal/AbiItem/errors.js'
+export {
+  AbiItem_AmbiguityError as AmbiguityError,
+  AbiItem_InvalidSelectorSizeError as InvalidSelectorSizeError,
+  AbiItem_NotFoundError as NotFoundError,
+} from './internal/AbiItem/errors.js'
 
 export { AbiItem_getSelector as getSelector } from './internal/AbiItem/getSelector.js'
 

@@ -8,7 +8,7 @@ export {
   Siwe_suffixRegex as suffixRegex,
 } from './internal/Siwe/constants.js'
 
-export { SiweInvalidMessageFieldError } from './internal/Siwe/errors.js'
+export { Siwe_InvalidMessageFieldError as InvalidMessageFieldError } from './internal/Siwe/errors.js'
 
 export type { Siwe_Message as Message } from './internal/Siwe/types.js'
 

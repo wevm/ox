@@ -1,9 +1,12 @@
-import { InvalidBytesBooleanError, InvalidTypeError } from '../Errors/data.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/from.js'
 import { Hex_toBigInt, Hex_toNumber } from '../Hex/to.js'
 import type { Hex } from '../Hex/types.js'
 import { Bytes_assertSize } from './assertSize.js'
+import {
+  Bytes_InvalidBytesBooleanError,
+  Bytes_InvalidTypeError,
+} from './errors.js'
 import { Bytes_trimLeft, Bytes_trimRight } from './trim.js'
 import type { Bytes } from './types.js'
 
@@ -49,7 +52,10 @@ export function Bytes_to<
   if (to === 'boolean') return Bytes_toBoolean(bytes, options) as never
   if (to === 'string') return Bytes_toString(bytes, options) as never
   if (to === 'Hex') return Bytes_toHex(bytes, options) as never
-  throw new InvalidTypeError(to, 'string | Hex | bigint | number | boolean')
+  throw new Bytes_InvalidTypeError(
+    to,
+    'string | Hex | bigint | number | boolean',
+  )
 }
 
 export declare namespace Bytes_to {
@@ -73,7 +79,7 @@ export declare namespace Bytes_to {
     | Bytes_toNumber.ErrorType
     | Bytes_toString.ErrorType
     | Hex_fromBytes.ErrorType
-    | InvalidTypeError
+    | Bytes_InvalidTypeError
     | GlobalErrorType
 }
 
@@ -149,7 +155,7 @@ export function Bytes_toBoolean(
     bytes = Bytes_trimLeft(bytes)
   }
   if (bytes.length > 1 || bytes[0]! > 1)
-    throw new InvalidBytesBooleanError(bytes)
+    throw new Bytes_InvalidBytesBooleanError(bytes)
   return Boolean(bytes[0])
 }
 

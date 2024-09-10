@@ -1,5 +1,5 @@
 import type { Abi } from '../Abi/types.js'
-import { AbiItemNotFoundError } from '../AbiItem/errors.js'
+import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
@@ -83,7 +83,7 @@ export function AbiEvent_fromAbi<
 ): AbiItem_fromAbi.ReturnType<abi, name, args, AbiEvent> {
   const item = AbiItem_fromAbi(abi, options as any)
   if (item.type !== 'event')
-    throw new AbiItemNotFoundError({ ...options, type: 'event' })
+    throw new AbiItem_NotFoundError({ ...options, type: 'event' })
   return item as never
 }
 

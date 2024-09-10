@@ -1,19 +1,13 @@
 export type { Bytes } from './internal/Bytes/types.js'
 
 export {
-  BytesSizeMismatchError,
-  IntegerOutOfRangeError,
-  InvalidBytesBooleanError,
-  InvalidBytesTypeError,
-  InvalidHexBooleanError,
-  InvalidHexLengthError,
-  InvalidHexTypeError,
-  InvalidHexValueError,
-  InvalidTypeError,
-  SizeExceedsPaddingSizeError,
-  SizeOverflowError,
-  SliceOffsetOutOfBoundsError,
-} from './internal/Errors/data.js'
+  Bytes_InvalidBytesBooleanError as InvalidBytesBooleanError,
+  Bytes_InvalidBytesTypeError as InvalidBytesTypeError,
+  Bytes_InvalidTypeError as InvalidTypeError,
+  Bytes_SizeExceedsPaddingSizeError as SizeExceedsPaddingSizeError,
+  Bytes_SizeOverflowError as SizeOverflowError,
+  Bytes_SliceOffsetOutOfBoundsError as SliceOffsetOutOfBoundsError,
+} from './internal/Bytes/errors.js'
 
 export { Bytes_assert as assert } from './internal/Bytes/assert.js'
 

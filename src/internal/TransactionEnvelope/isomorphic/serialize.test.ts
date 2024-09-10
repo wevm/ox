@@ -8,6 +8,6 @@ test('error: unimplemented type', () => {
     // @ts-expect-error
     TransactionEnvelope.serialize({ type: '0x05' }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `0x05` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `0x05` is not implemented.]',
   )
 })

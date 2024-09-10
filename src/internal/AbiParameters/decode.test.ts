@@ -1491,7 +1491,7 @@ test('data size too small', () => {
       '0x0000000000000000000000000000000000000000000000000000000000010f',
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiDecodingDataSizeTooSmallError: Data size of 31 bytes is too small for given parameters.
+    [AbiParameters.DataSizeTooSmallError: Data size of 31 bytes is too small for given parameters.
 
     Params: (uint256)
     Data:   0x0000000000000000000000000000000000000000000000000000000000010f (31 bytes)]
@@ -1505,7 +1505,7 @@ test('data size too small', () => {
       ),
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiDecodingDataSizeTooSmallError: Data size of 31 bytes is too small for given parameters.
+    [AbiParameters.DataSizeTooSmallError: Data size of 31 bytes is too small for given parameters.
 
     Params: (uint256)
     Data:   0x0000000000000000000000000000000000000000000000000000000000010f (31 bytes)]
@@ -1517,7 +1517,7 @@ test('data size too small', () => {
       '0x0000000000000000000000000000000000000000000000000000000000010f2c',
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `32` is out of bounds (`0 < position < 32`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `32` is out of bounds (`0 < position < 32`).]',
   )
 })
 
@@ -1528,9 +1528,9 @@ test('invalid type', () => {
       '0x0000000000000000000000000000000000000000000000000000000000000000',
     ),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [InvalidAbiTypeError: Type \`lol\` is not a valid ABI Type.
+    [AbiParameters.InvalidTypeError: Type \`lol\` is not a valid ABI Type.
 
-    See: https://oxlib.sh/errors#invalidabitypeerror]
+    See: https://oxlib.sh/errors#abiparametersinvalidtypeerror]
   `)
 })
 
@@ -1554,7 +1554,7 @@ test('error: zero data', () => {
       '0x',
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[AbiDecodingZeroDataError: Cannot decode zero data ("0x") with ABI parameters.]`,
+    `[AbiParameters.ZeroDataError: Cannot decode zero data ("0x") with ABI parameters.]`,
   )
 })
 
@@ -1568,7 +1568,7 @@ test('error: recursive decode array', () => {
       `0x${payload}`,
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
+    '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
 })
 
@@ -1579,12 +1579,12 @@ test('zst', () => {
   expect(() =>
     AbiParameters.decode([{ type: 'uint256[0][4294967295]' }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode([{ type: 'uint32[0][4294967295]' }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode(
@@ -1592,27 +1592,27 @@ test('zst', () => {
       payload,
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `95` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `95` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode([{ type: 'uint32[4294967295][4294967295]' }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `95` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `95` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode([{ type: 'uint256[0][]' }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode([{ type: 'uint256[0][]' }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode([{ type: 'tuple[]', components: [] }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode(
@@ -1620,7 +1620,7 @@ test('zst', () => {
       payload,
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode(
@@ -1628,7 +1628,7 @@ test('zst', () => {
       payload,
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
   expect(() =>
     AbiParameters.decode(
@@ -1641,7 +1641,7 @@ test('zst', () => {
       payload,
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `64` is out of bounds (`0 < position < 64`).]',
   )
 })
 
@@ -1683,7 +1683,7 @@ test('recursive', () => {
   expect(() =>
     AbiParameters.decode(AbiParameters.from(arr10), payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
+    '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
 
   const ptrArr = AbiParameters.from('uint256[]')
@@ -1694,17 +1694,17 @@ test('recursive', () => {
   expect(() =>
     AbiParameters.decode(AbiParameters.from(arr10), p2),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[PositionOutOfBoundsError: Position `327744` is out of bounds (`0 < position < 327744`).]',
+    '[Cursor.PositionOutOfBoundsError: Position `327744` is out of bounds (`0 < position < 327744`).]',
   )
   expect(() =>
     AbiParameters.decode(AbiParameters.from(arr4), p2),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
+    '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
   expect(() =>
     AbiParameters.decode(AbiParameters.from(arr2), p2),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
+    '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
 })
 
@@ -1718,6 +1718,6 @@ test('recursive 2', () => {
   expect(() =>
     AbiParameters.decode(arr10, `0x${mainPtr.slice(2).repeat(10 + 1)}`),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
+    '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
 })

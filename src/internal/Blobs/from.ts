@@ -11,7 +11,7 @@ import {
   Blobs_fieldElementsPerBlob,
   Blobs_maxBytesPerTransaction,
 } from './constants.js'
-import { BlobSizeTooLargeError, EmptyBlobError } from './errors.js'
+import { Blobs_BlobSizeTooLargeError, Blobs_EmptyBlobError } from './errors.js'
 
 /**
  * Transforms arbitrary data to {@link ox#Blobs.Blobs}.
@@ -65,9 +65,9 @@ export function Blobs_from<
   const data_ = (typeof data === 'string' ? Bytes_fromHex(data) : data) as Bytes
 
   const size_ = Bytes_size(data_)
-  if (!size_) throw new EmptyBlobError()
+  if (!size_) throw new Blobs_EmptyBlobError()
   if (size_ > Blobs_maxBytesPerTransaction)
-    throw new BlobSizeTooLargeError({
+    throw new Blobs_BlobSizeTooLargeError({
       maxSize: Blobs_maxBytesPerTransaction,
       size: size_,
     })
@@ -125,8 +125,8 @@ export declare namespace Blobs_from {
     | (as extends 'Hex' ? readonly Hex[] : never)
 
   type ErrorType =
-    | BlobSizeTooLargeError
-    | EmptyBlobError
+    | Blobs_BlobSizeTooLargeError
+    | Blobs_EmptyBlobError
     | Bytes_fromHex.ErrorType
     | Hex_fromBytes.ErrorType
     | createCursor.ErrorType

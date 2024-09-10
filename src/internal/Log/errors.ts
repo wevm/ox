@@ -3,8 +3,8 @@ import type { AbiEvent } from '../AbiEvent/types.js'
 import { BaseError } from '../Errors/base.js'
 import { prettyPrint } from '../Errors/utils.js'
 
-export class ParseLogArgsMismatchError extends BaseError {
-  override readonly name = 'ParseLogArgsMismatchError'
+export class Log_ArgsMismatchError extends BaseError {
+  override readonly name = 'Log.ArgsMismatchError'
 
   constructor({
     abiEvent,

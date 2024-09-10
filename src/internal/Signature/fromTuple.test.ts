@@ -33,6 +33,6 @@ test('error: invalid sig', () => {
       '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
     ]),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[InvalidSignatureRError: Value `12744384857206398515154870451201165412972984067701483231091796422377075355598728` is an invalid r value. r must be a positive integer less than 2^256.]',
+    '[Signature.InvalidRError: Value `12744384857206398515154870451201165412972984067701483231091796422377075355598728` is an invalid r value. r must be a positive integer less than 2^256.]',
   )
 })

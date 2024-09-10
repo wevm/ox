@@ -9,11 +9,11 @@ test('legacy', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-      [InvalidAddressError: Address "0xz" is invalid.
+    [Address.InvalidAddressError: Address "0xz" is invalid.
 
-      Details: Address is not a 20 byte (40 hexadecimal character) value.
-      See: https://oxlib.sh/errors#invalidaddresserror]
-    `,
+    Details: Address is not a 20 byte (40 hexadecimal character) value.
+    See: https://oxlib.sh/errors#invalidaddresserror]
+  `,
   )
 })
 
@@ -25,7 +25,7 @@ test('eip2930', () => {
       type: 'eip2930',
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[GasPriceTooHighError: The gas price (`gasPrice` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).]',
+    '[TransactionEnvelope.GasPriceTooHighError: The gas price (`gasPrice` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).]',
   )
 })
 
@@ -38,7 +38,7 @@ test('eip1559', () => {
       type: 'eip1559',
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TipAboveFeeCapError: The provided tip (`maxPriorityFeePerGas` = 11 gwei) cannot be higher than the fee cap (`maxFeePerGas` = 10 gwei).]',
+    '[TransactionEnvelope.TipAboveFeeCapError: The provided tip (`maxPriorityFeePerGas` = 11 gwei) cannot be higher than the fee cap (`maxFeePerGas` = 10 gwei).]',
   )
 })
 
@@ -53,11 +53,11 @@ test('eip4844', () => {
     }),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-      [InvalidVersionedHashVersionError: Versioned hash "0xcafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe" version is invalid.
+    [Blobs.InvalidVersionedHashVersionError: Versioned hash "0xcafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe" version is invalid.
 
-      Expected: 1
-      Received: 202]
-    `,
+    Expected: 1
+    Received: 202]
+  `,
   )
 })
 
@@ -78,7 +78,7 @@ test('eip7702', () => {
       type: 'eip7702',
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[InvalidChainIdError: Chain ID "0" is invalid.]`,
+    `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
   )
 })
 
@@ -87,6 +87,6 @@ test('error: invalid transaction type', () => {
     // @ts-expect-error
     TransactionEnvelope.assert({ type: 'foo' }),
   ).toThrowErrorMatchingInlineSnapshot(
-    '[TransactionTypeNotImplementedError: The provided transaction type `foo` is not implemented.]',
+    '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `foo` is not implemented.]',
   )
 })

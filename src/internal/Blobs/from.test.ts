@@ -19,7 +19,7 @@ test('default', () => {
 
 test('error: empty blob data', () => {
   expect(() => Blobs.from(Hex.from(''))).toThrowErrorMatchingInlineSnapshot(
-    '[EmptyBlobError: Blob data must not be empty.]',
+    '[Blobs.EmptyBlobError: Blob data must not be empty.]',
   )
 })
 
@@ -27,7 +27,7 @@ test('error: blob data too big', () => {
   expect(() =>
     Blobs.from(Hex.from('we are all gonna make it'.repeat(100000))),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [BlobSizeTooLargeError: Blob size is too large.
+    [Blobs.BlobSizeTooLargeError: Blob size is too large.
 
     Max: 761855 bytes
     Given: 2400000 bytes]

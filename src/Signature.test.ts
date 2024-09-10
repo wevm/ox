@@ -4,12 +4,12 @@ import * as exports from './Signature.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "InvalidSerializedSignatureSizeError",
-      "InvalidSignatureRError",
-      "InvalidSignatureSError",
-      "InvalidSignatureVError",
-      "InvalidSignatureYParityError",
-      "MissingSignaturePropertiesError",
+      "InvalidRError",
+      "InvalidSError",
+      "InvalidSerializedSizeError",
+      "InvalidVError",
+      "InvalidYParityError",
+      "MissingPropertiesError",
       "assert",
       "deserialize",
       "extract",
