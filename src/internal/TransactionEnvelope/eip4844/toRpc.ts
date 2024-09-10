@@ -13,7 +13,7 @@ import type {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, JsonRpc, TransactionEnvelopeEip4844, Value } from 'ox'
+ * import { Blobs, RpcRequest, TransactionEnvelopeEip4844, Value } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -31,7 +31,7 @@ import type {
  *
  * const envelope_rpc = TransactionEnvelopeEip4844.toRpc(envelope) // [!code focus]
  *
- * const request = JsonRpc.defineRequest({
+ * const request = RpcRequest.from({
  *   id: 0,
  *   method: 'eth_sendTransaction',
  *   params: [envelope_rpc],

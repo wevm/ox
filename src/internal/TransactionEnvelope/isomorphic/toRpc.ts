@@ -18,7 +18,7 @@ import type { TransactionEnvelope } from './types.js'
  *
  * @example
  * ```ts twoslash
- * import { JsonRpc, TransactionEnvelope, Value } from 'ox'
+ * import { RpcRequest, TransactionEnvelope, Value } from 'ox'
  *
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
@@ -30,7 +30,7 @@ import type { TransactionEnvelope } from './types.js'
  *
  * const envelope_rpc = TransactionEnvelope.toRpc(envelope) // [!code focus]
  *
- * const request = JsonRpc.defineRequest({
+ * const request = RpcRequest.from({
  *   id: 0,
  *   method: 'eth_sendTransaction',
  *   params: [envelope_rpc],

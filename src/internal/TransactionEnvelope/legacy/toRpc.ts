@@ -12,7 +12,7 @@ import type {
  *
  * @example
  * ```ts twoslash
- * import { JsonRpc, TransactionEnvelopeLegacy, Value } from 'ox'
+ * import { RpcRequest, TransactionEnvelopeLegacy, Value } from 'ox'
  *
  * const envelope = TransactionEnvelopeLegacy.from({
  *   chainId: 1,
@@ -24,7 +24,7 @@ import type {
  *
  * const envelope_rpc = TransactionEnvelopeLegacy.toRpc(envelope) // [!code focus]
  *
- * const request = JsonRpc.defineRequest({
+ * const request = RpcRequest.from({
  *   id: 0,
  *   method: 'eth_sendTransaction',
  *   params: [envelope_rpc],

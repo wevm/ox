@@ -5,7 +5,7 @@ import type { RpcRequest_MethodGeneric, RpcRequest_Store } from './types.js'
 /**
  * Creates a JSON-RPC request store to build requests with an incrementing `id`.
  *
- * Returns a type-safe {@link JsonRpc#from} function to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
+ * Returns a type-safe `prepare` function to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
  *
  * @example
  * ```ts twoslash
@@ -33,7 +33,7 @@ import type { RpcRequest_MethodGeneric, RpcRequest_Store } from './types.js'
  * @example
  * ### Type-safe Custom Methods
  *
- * It is possible to define your own type-safe {@link JsonRpc#Method} by using the {@link JsonRpc#DefineMethod} type.
+ * It is possible to define your own type-safe {@link ox#RpcRequest.Method} by using the {@link ox#RpcRequest.DefineMethod} type.
  *
  * ```ts twoslash
  * import { RpcRequest } from 'ox'

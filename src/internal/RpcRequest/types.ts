@@ -63,18 +63,18 @@ export type RpcRequest_ExtractMethodReturnType<
 ////////////////////////////////////////////////////////////////
 
 /**
- * Type to define a custom type-safe JSON-RPC Method to be used with {@link JsonRpc#defineRequest}.
+ * Type to define a custom type-safe JSON-RPC Method to be used with {@link ox#RpcRequest.defineRequest}.
  *
  * @example
  * ```ts twoslash
- * import { JsonRpc } from 'ox'
+ * import { RpcRequest } from 'ox'
  *
- * const Eth_Foobar = JsonRpc.DefineMethod<{
+ * const Eth_Foobar = RpcRequest.DefineMethod<{
  *   method: 'eth_foobar',
  *   params: [id: number],
  *   returnType: string
  * }>
- * const request = JsonRpc.defineRequest<Eth_Foobar>({
+ * const request = RpcRequest.defineRequest<Eth_Foobar>({
  *   id: 0,
  *   method: 'eth_foobar',
  *   params: [0],

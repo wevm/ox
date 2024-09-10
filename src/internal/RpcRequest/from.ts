@@ -50,7 +50,7 @@ import type {
  * @example
  * ### Type-safe Custom Methods
  *
- * It is possible to define your own type-safe {@link JsonRpc#Method} by using the {@link JsonRpc#DefineMethod} type.
+ * It is possible to define your own type-safe {@link ox#RpcRequest.Method} by using the {@link ox#RpcRequest.DefineMethod} type.
  *
  * ```ts twoslash
  * import { RpcRequest } from 'ox'
