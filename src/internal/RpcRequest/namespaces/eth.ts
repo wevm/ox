@@ -1,10 +1,10 @@
 import type { AccountProof_Rpc } from '../../AccountProof/types.js'
 import type { Address } from '../../Address/types.js'
 import type {
-  Block_Number,
-  Block_Tag,
   Block_Hash,
+  Block_Number,
   Block_Rpc,
+  Block_Tag,
 } from '../../Block/types.js'
 import type { FeeHistoryRpc } from '../../Fee/types.js'
 import type { Filter_Rpc } from '../../Filter/types.js'
