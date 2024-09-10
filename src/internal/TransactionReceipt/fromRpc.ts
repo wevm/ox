@@ -61,10 +61,10 @@ import type { TransactionReceipt, TransactionReceipt_Rpc } from './types.js'
  * Below is an example of how to use the `TransactionReceipt.fromRpc` method to convert an RPC transaction receipt to a {@link ox#TransactionReceipt.TransactionReceipt} object.
  *
  * ```ts twoslash
- * // @noErrors
+ * import 'ox/window'
  * import { TransactionReceipt } from 'ox'
  *
- * const receipt = await window.ethereum
+ * const receipt = await window.ethereum!
  *   .request({
  *     method: 'eth_getTransactionReceipt',
  *     params: [
@@ -92,6 +92,13 @@ import type { TransactionReceipt, TransactionReceipt_Rpc } from './types.js'
  * // @log:   type: "eip1559",
  * // @log: }
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
  *
  * @param receipt - The RPC receipt to convert.
  * @returns An instantiated {@link ox#TransactionReceipt.TransactionReceipt}.

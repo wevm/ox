@@ -44,7 +44,6 @@ export type RpcRequest_Store<
   readonly id: number
 }>
 
-/** @internal */
 export type RpcRequest_ExtractMethod<
   method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
 > = {
@@ -60,12 +59,10 @@ export type RpcRequest_ExtractMethod<
       ? Extract<RpcRequest_Method, { method: method }>
       : { method: string }))
 
-/** @internal */
 export type RpcRequest_ExtractMethodParameters<
   method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
 > = Omit<RpcRequest_ExtractMethod<method>, 'returnType'>
 
-/** @internal */
 export type RpcRequest_ExtractMethodReturnType<
   method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
 > = RpcRequest_ExtractMethod<method>['returnType']

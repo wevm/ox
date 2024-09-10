@@ -27,7 +27,7 @@ import type { AbiConstructor } from './types.js'
  * Below is an end-to-end example of using `AbiConstructor.encode` to encode the constructor of a contract and deploy it.
  *
  * ```ts twoslash
- * // @noErrors
+ * import 'ox/window'
  * import { AbiConstructor, Hex } from 'ox'
  *
  * // 1. Instantiate the ABI Constructor.
@@ -40,14 +40,20 @@ import type { AbiConstructor } from './types.js'
  *   bytecode: '0x...',
  *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
  * })
- * ])
  *
  * // 3. Deploy the contract.
- * const hash = await window.ethereum.request({
+ * const hash = await window.ethereum!.request({
  *   method: 'eth_sendTransaction',
  *   params: [{ data }],
  * })
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
  *
  * @param abiConstructor - The ABI Constructor to encode.
  * @param options - Encoding options.

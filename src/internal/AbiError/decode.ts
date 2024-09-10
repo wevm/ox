@@ -66,6 +66,7 @@ import type { AbiError } from './types.js'
  *
  * ```ts twoslash
  * // @noErrors
+ * import 'ox/window'
  * import { Abi, AbiError, AbiFunction } from 'ox'
  *
  * // 1. Extract the Function from the Contract's ABI.
@@ -93,7 +94,7 @@ import type { AbiError } from './types.js'
  *
  * try {
  *   // 3. Attempt to perform the the Contract Call.
- *   await window.ethereum.request({
+ *   await window.ethereum!.request({
  *     method: 'eth_call',
  *     params: [
  *       {
@@ -110,6 +111,18 @@ import type { AbiError } from './types.js'
  * // @error:   Error(ERC721: approve caller is not owner nor approved for all)
  * } // [!code focus]
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
+ *
+ * @param abiError - The ABI Error to decode.
+ * @param data - The error data.
+ * @param options - Decoding options.
+ * @returns The decoded error.
  */
 export function AbiError_decode<
   const abiError extends AbiError,

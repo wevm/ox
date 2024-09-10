@@ -50,15 +50,15 @@ import { ParseLogArgsMismatchError } from './errors.js'
  * decoded event arguments (`args`), event name (`event`), and a {@link ox#Log.Log}.
  *
  * ```ts twoslash
- * // @noErrors
- * import { AbiEvent, Log } from 'ox'
+ * import 'ox/window'
+ * import { Abi, AbiEvent, Hex, Log } from 'ox'
  *
  * const abi = Abi.from([
  *   'event Transfer(address indexed from, address indexed to, uint256 value)',
  *   'event Approval(address indexed owner, address indexed spender, uint256 value)',
  * ])
  *
- * const rpcLogs = await window.ethereum.request({
+ * const rpcLogs = await window.ethereum!.request({
  *   method: 'eth_getLogs',
  *   params: [
  *     {
@@ -105,6 +105,13 @@ import { ParseLogArgsMismatchError } from './errors.js'
  * // @log:   // ...
  * // @log: ]
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
  *
  * @param log - The log to decode.
  * @param options - Decoding options.

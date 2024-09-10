@@ -35,10 +35,10 @@ import type { Block, Block_Rpc } from './types.js'
  * Below is an end-to-end example of using `Block.fromRpc` to fetch a block from the network and convert it to an {@link ox#Block.Block}.
  *
  * ```ts twoslash
- * // @noErrors
+ * import 'ox/window'
  * import { Block } from 'ox'
  *
- * const block = await window.ethereum
+ * const block = await window.ethereum!
  *   .request({
  *     method: 'eth_getBlockByNumber',
  *     params: ['latest', false],
@@ -53,6 +53,13 @@ import type { Block, Block_Rpc } from './types.js'
  * // @log:   // ...
  * // @log: }
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
  *
  * @param block - The RPC block to convert.
  * @returns An instantiated {@link ox#Block.Block}.

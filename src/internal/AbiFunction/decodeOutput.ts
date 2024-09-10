@@ -50,7 +50,7 @@ import type { AbiFunction } from './types.js'
  * Below is an end-to-end example of using `AbiFunction.decodeOutput` to decode the result of a `balanceOf` contract call on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
  *
  * ```ts twoslash
- * // @noErrors
+ * import 'ox/window'
  * import { Abi, AbiFunction } from 'ox'
  *
  * // 1. Extract the Function from the Contract's ABI.
@@ -74,7 +74,7 @@ import type { AbiFunction } from './types.js'
  * )
  *
  * // 3. Perform the Contract Call.
- * const response = await window.ethereum.request({
+ * const response = await window.ethereum!.request({
  *   method: 'eth_call',
  *   params: [
  *     {
@@ -88,6 +88,13 @@ import type { AbiFunction } from './types.js'
  * const balance = AbiFunction.decodeOutput(balanceOf, response) // [!code focus]
  * // @log: 42n
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
  *
  * @param abiItem - ABI Function to decode
  * @param data - ABI-encoded function output

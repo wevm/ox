@@ -50,8 +50,8 @@ import type { Log, Log_Rpc } from './types.js'
  * Below is an example of how to use `Log.fromRpc` to instantiate a {@link ox#Log.Log} from an RPC log.
  *
  * ```ts twoslash
- * // @noErrors
- * import { AbiEvent, Log } from 'ox'
+ * import 'ox/window'
+ * import { AbiEvent, Hex, Log } from 'ox'
  *
  * const transfer = AbiEvent.from(
  *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)',
@@ -59,7 +59,7 @@ import type { Log, Log_Rpc } from './types.js'
  *
  * const { topics } = AbiEvent.encode(transfer)
  *
- * const logs = await window.ethereum.request({
+ * const logs = await window.ethereum!.request({
  *   method: 'eth_getLogs',
  *   params: [
  *     {
@@ -89,6 +89,13 @@ import type { Log, Log_Rpc } from './types.js'
  * // @log:   transactionIndex: 145,
  * // @log: }
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
  *
  * @param log - The RPC log to convert.
  * @returns An instantiated {@link ox#Log.Log}.

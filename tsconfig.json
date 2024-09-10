@@ -8,7 +8,8 @@
     "paths": {
       "~test/*": ["./test/*"],
       "ox": ["src/index.ts"],
-      "ox/node": ["src/node/index.ts"]
+      "ox/node": ["src/node/index.ts"],
+      "ox/window": ["src/window/index.ts"]
     }
   }
 }

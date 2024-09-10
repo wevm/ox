@@ -65,7 +65,7 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  * Below is an end-to-end example of using `AbiEvent.encode` to encode the topics of a `Transfer` event and query for events matching the encoded topics on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
  *
  * ```ts twoslash
- * // @noErrors
+ * import 'ox/window'
  * import { AbiEvent, Hex } from 'ox'
  *
  * // 1. Instantiate the `Transfer` ABI Event.
@@ -77,7 +77,7 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  * const { topics } = AbiEvent.encode(transfer)
  *
  * // 3. Query for events matching the encoded Topics.
- * const logs = await window.ethereum.request({
+ * const logs = await window.ethereum!.request({
  *   method: 'eth_getLogs',
  *   params: [
  *     {
@@ -95,6 +95,13 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  * // @log:   "0x000000000000000000000000000000000000000000000000000000000000025b",
  * // @log: ]
  * ```
+ *
+ * :::note
+ *
+ * For simplicity, the above example uses `window.ethereum.request`, but you can use any
+ * type of JSON-RPC interface.
+ *
+ * :::
  *
  * @param abiEvent - The event to encode.
  * @param args - The arguments to encode.
