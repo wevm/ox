@@ -36,7 +36,7 @@ import type { RpcResponse } from './types.js'
  * })
  *
  * // 3. Send the JSON-RPC request via HTTP.
- * const block = await fetch('https://cloudflare-eth.com', {
+ * const block = await fetch('https://1.rpc.thirdweb.com', {
  *   body: JSON.stringify(request),
  *   headers: {
  *     'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ import type { RpcResponse } from './types.js'
  * // @noErrors
  * import { RpcResponse } from 'ox'
  *
- * const block = await fetch('https://cloudflare-eth.com', {})
+ * const block = await fetch('https://1.rpc.thirdweb.com', {})
  *  .then((response) => response.json())
  *  .then((response) => RpcResponse.parse(response, { request })) // [!code --]
  *  .then(RpcResponse.parse) // [!code ++]

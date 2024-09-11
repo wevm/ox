@@ -35,7 +35,7 @@ import type {
  * }) // [!code focus]
  *
  * // 2. Send the JSON-RPC request via HTTP.
- * const gas = await fetch('https://cloudflare-eth.com', {
+ * const gas = await fetch('https://1.rpc.thirdweb.com', {
  *   body: JSON.stringify(request),
  *   headers: {
  *     'Content-Type': 'application/json',
