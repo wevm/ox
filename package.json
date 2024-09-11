@@ -101,33 +101,6 @@
       }
     }
   },
-  "size-limit": [
-    {
-      "name": "import * from 'ox'",
-      "path": "./src/_dist/index.js",
-      "import": "*"
-    },
-    {
-      "name": "import { Address } from 'ox';\n  console.log(Address.from)",
-      "path": "./src/_dist/index.js",
-      "import": "{ Address.from }"
-    },
-    {
-      "name": "import { Bytes } from 'ox';\n  console.log(Bytes.from)",
-      "path": "./src/_dist/index.js",
-      "import": "{ Bytes.from }"
-    },
-    {
-      "name": "import { Hex } from 'ox';\n  console.log(Hex.from)",
-      "path": "./src/_dist/index.js",
-      "import": "{ Hex.from }"
-    },
-    {
-      "name": "import { Rlp } from 'ox';\n  console.log(Rlp.from)",
-      "path": "./src/_dist/index.js",
-      "import": "{ Rlp.from }"
-    }
-  ],
   "pnpm": {
     "overrides": {
       "@microsoft/api-extractor>typescript": "^5.5.4"
@@ -135,5 +108,152 @@
     "patchedDependencies": {
       "size-limit@11.1.4": "patches/size-limit@11.1.4.patch"
     }
-  }
+  },
+  "size-limit": [
+    {
+      "name": "import * from 'ox'",
+      "path": "./src/_dist/index.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Abi from 'ox/Abi';",
+      "path": "./src/_dist/Abi.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as AbiConstructor from 'ox/AbiConstructor';",
+      "path": "./src/_dist/AbiConstructor.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as AbiError from 'ox/AbiError';",
+      "path": "./src/_dist/AbiError.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as AbiEvent from 'ox/AbiEvent';",
+      "path": "./src/_dist/AbiEvent.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as AbiFunction from 'ox/AbiFunction';",
+      "path": "./src/_dist/AbiFunction.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as AbiItem from 'ox/AbiItem';",
+      "path": "./src/_dist/AbiItem.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as AbiParameters from 'ox/AbiParameters';",
+      "path": "./src/_dist/AbiParameters.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Address from 'ox/Address';",
+      "path": "./src/_dist/Address.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Block from 'ox/Block';",
+      "path": "./src/_dist/Block.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Bytes from 'ox/Bytes';",
+      "path": "./src/_dist/Bytes.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as ContractAddress from 'ox/ContractAddress';",
+      "path": "./src/_dist/ContractAddress.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Errors from 'ox/Errors';",
+      "path": "./src/_dist/Errors.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Hex from 'ox/Hex';",
+      "path": "./src/_dist/Hex.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Kzg from 'ox/Kzg';",
+      "path": "./src/_dist/Kzg.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Log from 'ox/Log';",
+      "path": "./src/_dist/Log.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as PersonalMessage from 'ox/PersonalMessage';",
+      "path": "./src/_dist/PersonalMessage.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Provider from 'ox/Provider';",
+      "path": "./src/_dist/Provider.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Rlp from 'ox/Rlp';",
+      "path": "./src/_dist/Rlp.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as RpcRequest from 'ox/RpcRequest';",
+      "path": "./src/_dist/RpcRequest.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as RpcResponse from 'ox/RpcResponse';",
+      "path": "./src/_dist/RpcResponse.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Secp256k1 from 'ox/Secp256k1';",
+      "path": "./src/_dist/Secp256k1.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Signature from 'ox/Signature';",
+      "path": "./src/_dist/Signature.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Siwe from 'ox/Siwe';",
+      "path": "./src/_dist/Siwe.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Transaction from 'ox/Transaction';",
+      "path": "./src/_dist/Transaction.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as TransactionEnvelope from 'ox/TransactionEnvelope';",
+      "path": "./src/_dist/TransactionEnvelope.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as TransactionReceipt from 'ox/TransactionReceipt';",
+      "path": "./src/_dist/TransactionReceipt.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as TypedData from 'ox/TypedData';",
+      "path": "./src/_dist/TypedData.js",
+      "import": "*"
+    },
+    {
+      "name": "import * as Value from 'ox/Value';",
+      "path": "./src/_dist/Value.js",
+      "import": "*"
+    }
+  ]
 }
