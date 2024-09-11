@@ -47,6 +47,7 @@ test('exports', () => {
       "Hex_SizeOverflowError",
       "Hex_SliceOffsetOutOfBoundsError",
       "Log_ArgsMismatchError",
+      "Provider_IsUndefinedError",
       "Signature_InvalidRError",
       "Signature_InvalidSError",
       "Signature_InvalidSerializedSizeError",

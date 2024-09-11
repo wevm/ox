@@ -69,6 +69,8 @@ export {
 
 export { Log_ArgsMismatchError } from './internal/Log/errors.js'
 
+export { Provider_IsUndefinedError } from './internal/Provider/errors.js'
+
 export {
   Signature_InvalidRError,
   Signature_InvalidSError,

@@ -1,3 +1,7 @@
+export { Provider_IsUndefinedError as IsUndefinedError } from './internal/Provider/errors.js'
+
+export { Provider_from as from } from './internal/Provider/from.js'
+
 export type {
   Provider,
   ProviderRpcError as RpcError,
