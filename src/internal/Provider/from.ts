@@ -7,10 +7,10 @@ import type { Provider } from './types.js'
  * from an arbitrary [EIP-1193 Provider](https://eips.ethereum.org/EIPS/eip-1193) interface.
  *
  * @example
- * ### Instantiating with `window.ethereum`
+ * ### Instantiating with Existing Providers
  *
- * The example below demonstrates how we can instantiate a typed EIP-1193 Provider from a
- * global `window.ethereum` object.
+ * The example below demonstrates how we can instantiate a typed EIP-1193 Provider from an
+ * existing EIP-1193 Provider like `window.ethereum`.
  *
  * ```ts twoslash
  * import 'ox/window'
@@ -20,6 +20,22 @@ import type { Provider } from './types.js'
  *
  * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
  * ```
+ *
+ * :::tip
+ *
+ * There are also libraries that distribute EIP-1193 Provider objects that you can use with `Provider.from`:
+ *
+ * - [`@walletconnect/ethereum-provider`](https://www.npmjs.com/package/\@walletconnect/ethereum-provider)
+ *
+ * - [`@coinbase/wallet-sdk`](https://www.npmjs.com/package/\@coinbase/wallet-sdk)
+ *
+ * - [`@metamask/detect-provider`](https://www.npmjs.com/package/\@metamask/detect-provider)
+ *
+ * - [`@safe-global/safe-apps-provider`](https://github.com/safe-global/safe-apps-sdk/tree/main/packages/safe-apps-provider)
+ *
+ * - [`mipd`](https://github.com/wevm/mipd): EIP-6963 Multi Injected Providers
+ *
+ * :::
  *
  * @example
  * ### Instantiating a Custom Provider
@@ -53,7 +69,37 @@ import type { Provider } from './types.js'
  * @example
  * ### Instantiating a Provider with Events
  *
- * TODO
+ * The example below demonstrates how to instantiate a Provider with your own EIP-1193 flavored event emitter.
+ *
+ * This example is useful for Wallets that distribute an EIP-1193 Provider (e.g. webpage injection via `window.ethereum`).
+ *
+ * ```ts twoslash
+ * import { Provider, RpcRequest, RpcResponse } from 'ox'
+ *
+ * // 1. Instantiate a Provider Emitter.
+ * const emitter = Provider.createEmitter() // [!code ++]
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const provider = Provider.from({
+ *   // 2. Pass the Emitter to the Provider.
+ *   ...emitter, // [!code ++]
+ *   async request(args) {
+ *     return await fetch('https://1.rpc.thirdweb.com', {
+ *       body: JSON.stringify(store.prepare(args)),
+ *       method: 'POST',
+ *       headers: {
+ *         'Content-Type': 'application/json',
+ *       },
+ *     })
+ *       .then((res) => res.json())
+ *       .then(RpcResponse.parse)
+ *   },
+ * })
+ *
+ * // 3. Emit Provider Events.
+ * emitter.emit('accountsChanged', ['0x...']) // [!code ++]
+ * ```
  *
  * @param provider - The EIP-1193 provider to convert.
  * @returns An typed EIP-1193 Provider.
@@ -68,3 +114,6 @@ export function Provider_from<provider extends Provider | unknown>(
 export declare namespace Provider_from {
   type ErrorType = Provider_IsUndefinedError | GlobalErrorType
 }
+
+/* v8 ignore next */
+Provider_from.parseError = (error: unknown) => error as Provider_from.ErrorType

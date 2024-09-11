@@ -1,3 +1,4 @@
+import type { EventEmitter } from 'eventemitter3'
 import type { Address } from '../Address/types.js'
 import type {
   RpcRequest_ExtractMethodParameters,
@@ -27,6 +28,8 @@ export type Provider<
       }
     : {})
 >
+
+export type Provider_Emitter = Compute<EventEmitter<Provider_EventMap>>
 
 export type Provider_RequestFn = <
   method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
@@ -66,9 +69,9 @@ export class ProviderRpcError extends Error {
 }
 
 export type Provider_EventMap = {
-  accountsChanged(accounts: Address[]): void
-  chainChanged(chainId: string): void
-  connect(connectInfo: Provider_ConnectInfo): void
-  disconnect(error: ProviderRpcError): void
-  message(message: Provider_Message): void
+  accountsChanged: (accounts: Address[]) => void
+  chainChanged: (chainId: string) => void
+  connect: (connectInfo: Provider_ConnectInfo) => void
+  disconnect: (error: ProviderRpcError) => void
+  message: (message: Provider_Message) => void
 }
