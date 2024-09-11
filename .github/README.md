@@ -3,7 +3,7 @@
 <p align="center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/wevm/ox/blob/main/.github/ox-dark.svg">
-      <img alt="ox logo" src="https://github.com/wevm/ox/blob/main/.github/ox-light.svg" width="auto" height="100">
+      <img alt="ox logo" src="https://github.com/wevm/ox/blob/main/.github/ox-light.svg" width="auto" height="200">
     </picture>
 </p>
 
