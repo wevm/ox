@@ -2,6 +2,40 @@ import { EventEmitter } from 'eventemitter3'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Provider_Emitter, Provider_EventMap } from './types.js'
 
+/**
+ * Creates an EIP-1193 flavored event emitter to be injected onto a Provider.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Provider, RpcRequest, RpcResponse } from 'ox' // [!code focus]
+ *
+ * // 1. Instantiate a Provider Emitter. // [!code focus]
+ * const emitter = Provider.createEmitter() // [!code focus]
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const provider = Provider.from({
+ *   // 2. Pass the Emitter to the Provider. // [!code focus]
+ *   ...emitter, // [!code focus]
+ *   async request(args) {
+ *     return await fetch('https://1.rpc.thirdweb.com', {
+ *       body: JSON.stringify(store.prepare(args)),
+ *       method: 'POST',
+ *       headers: {
+ *         'Content-Type': 'application/json',
+ *       },
+ *     })
+ *       .then((res) => res.json())
+ *       .then(RpcResponse.parse)
+ *   },
+ * })
+ *
+ * // 3. Emit Provider Events. // [!code focus]
+ * emitter.emit('accountsChanged', ['0x...']) // [!code focus]
+ * ```
+ *
+ * @returns An event emitter.
+ */
 export function Provider_createEmitter(): Provider_Emitter {
   const emitter = new EventEmitter<Provider_EventMap>()
 

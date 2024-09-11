@@ -47,11 +47,11 @@ for (const member of apiEntryPoint.members) {
   if (member.kind !== model.ApiItemKind.Namespace) continue
   if (!namespaceRegex.test(getId(member))) continue
   if (['Caches', 'Constants', 'Internal'].includes(member.displayName)) continue
-  if (['Errors', 'Types'].includes(member.displayName))
-    glossaryNamespaces.push(member)
   if (testNamespaces.length && !testNamespaces.includes(member.displayName))
     continue
-  namespaces.push(member)
+  if (['Errors', 'Types'].includes(member.displayName))
+    glossaryNamespaces.push(member)
+  else namespaces.push(member)
 }
 
 ////////////////////////////////////////////////////////////
