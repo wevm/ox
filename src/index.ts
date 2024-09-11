@@ -161,6 +161,12 @@ export * as Kzg from './Kzg.js'
 export * as Log from './Log.js'
 
 /**
+ * The **PersonalMessage** Module provides a set of types & utility functions for working
+ * with [EIP-191 Personal Messages](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e).
+ */
+export * as PersonalMessage from './PersonalMessage.js'
+
+/**
  * The **Provider** Module provides a set of types & utility functions for working
  * with [EIP-1193 Providers](https://eips.ethereum.org/EIPS/eip-1193).
  */
