@@ -10,6 +10,6 @@ test('default', () => {
       domain: typedData.basic.domain,
     }),
   ).toMatchInlineSnapshot(
-    `"0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1"`,
+    `"0x2fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413"`,
   )
 })

@@ -26,9 +26,6 @@ import type { TypedData_Domain } from './types.js'
 export function TypedData_domainSeparator(domain: TypedData_Domain): Hex {
   return TypedData_hashDomain({
     domain,
-    types: {
-      EIP712Domain: TypedData_extractEip712DomainTypes(domain),
-    },
   })
 }
 

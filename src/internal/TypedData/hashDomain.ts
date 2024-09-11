@@ -1,7 +1,8 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
+import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashStruct } from './hashStruct.js'
-import type { TypedData, TypedData_Domain } from './types.js'
+import type { TypedData_Domain, TypedData_Parameter } from './types.js'
 
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) domain.
@@ -17,13 +18,6 @@ import type { TypedData, TypedData_Domain } from './types.js'
  *     chainId: 1,
  *     verifyingContract: '0x0000000000000000000000000000000000000000',
  *   },
- *   types: {
- *     Foo: [
- *       { name: 'address', type: 'address' },
- *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
- *   },
  * })
  * // @log: '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
  * ```
@@ -36,7 +30,11 @@ export function TypedData_hashDomain(value: TypedData_hashDomain.Value): Hex {
   return TypedData_hashStruct({
     data: domain,
     primaryType: 'EIP712Domain',
-    types,
+    types: {
+      ...types,
+      EIP712Domain:
+        types?.EIP712Domain || TypedData_extractEip712DomainTypes(domain),
+    },
   })
 }
 
@@ -45,7 +43,12 @@ export declare namespace TypedData_hashDomain {
     /** The Typed Data domain. */
     domain: TypedData_Domain
     /** The Typed Data types. */
-    types: TypedData
+    types?:
+      | {
+          EIP712Domain?: readonly TypedData_Parameter[] | undefined
+          [key: string]: readonly TypedData_Parameter[] | undefined
+        }
+      | undefined
   }
 
   type ErrorType = TypedData_hashStruct.ErrorType | GlobalErrorType
