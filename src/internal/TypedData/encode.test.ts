@@ -5,61 +5,61 @@ import * as typedData from '../../../test/constants/typedData.js'
 
 test('default', () => {
   expect(
-    TypedData.hash({
+    TypedData.encode({
       ...typedData.basic,
       primaryType: 'Mail',
     }),
   ).toMatchInlineSnapshot(
-    '"0x448f54762ef8ecccdc4d19bb7d467161383cd4b271617a8cee05c790eb745d74"',
+    `"0x19012fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413c52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e"`,
   )
 })
 
 test('complex', () => {
   expect(
-    TypedData.hash({
+    TypedData.encode({
       ...typedData.complex,
       primaryType: 'Mail',
     }),
   ).toMatchInlineSnapshot(
-    '"0x9a74cb859ad30835ffb2da406423233c212cf6dd78e6c2c98b0c9289568954ae"',
+    `"0x19011788ede5301fb0c4b95dda42eabe811ba83dc3cde96087b00c9b72a4d26a379ac2972c4c4323c6d7ee73e319350f290c6549b6eb516b5e535412841334233215"`,
   )
 })
 
 test('no domain', () => {
   expect(
-    TypedData.hash({
+    TypedData.encode({
       ...typedData.complex,
       domain: undefined,
       primaryType: 'Mail',
     }),
   ).toMatchInlineSnapshot(
-    '"0x14ed1dbbfecbe5de3919f7ea47daafdf3a29dfbb60dd88d85509f79773d503a5"',
+    `"0x19016192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1c2972c4c4323c6d7ee73e319350f290c6549b6eb516b5e535412841334233215"`,
   )
   expect(
-    TypedData.hash({
+    TypedData.encode({
       ...typedData.complex,
       domain: {},
       primaryType: 'Mail',
     }),
   ).toMatchInlineSnapshot(
-    '"0x14ed1dbbfecbe5de3919f7ea47daafdf3a29dfbb60dd88d85509f79773d503a5"',
+    `"0x19016192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1c2972c4c4323c6d7ee73e319350f290c6549b6eb516b5e535412841334233215"`,
   )
 })
 
 test('domain: empty name', () => {
   expect(
-    TypedData.hash({
+    TypedData.encode({
       ...typedData.complex,
       domain: { name: '' },
       primaryType: 'Mail',
     }),
   ).toMatchInlineSnapshot(
-    '"0xc3f4f9ebd774352940f60aebbc83fcee20d0b17eb42bd1b20c91a748001ecb53"',
+    `"0x190196d6b4b58ef5c06dfaf375adc42ff615f90c055921386f4140a4c91caa786a91c2972c4c4323c6d7ee73e319350f290c6549b6eb516b5e535412841334233215"`,
   )
 })
 
 test('minimal valid typed message', () => {
-  const hash = TypedData.hash({
+  const encoded = TypedData.encode({
     types: {
       EIP712Domain: [],
     },
@@ -67,13 +67,13 @@ test('minimal valid typed message', () => {
     domain: {},
   })
 
-  expect(hash).toMatchInlineSnapshot(
-    '"0x8d4a3f4082945b7879e2b55f181c31a77c8c0a464b70669458abbaaf99de4c38"',
+  expect(encoded).toMatchInlineSnapshot(
+    `"0x19016192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1"`,
   )
 })
 
 test('typed message with a domain separator that uses all fields.', () => {
-  const hash = TypedData.hash({
+  const encoded = TypedData.encode({
     types: {
       EIP712Domain: [
         {
@@ -108,13 +108,13 @@ test('typed message with a domain separator that uses all fields.', () => {
     },
   })
 
-  expect(hash).toMatchInlineSnapshot(
-    '"0x54ffed5209a17ac210ef3823740b3852ee9cd518b84ee39f0a3fa7f2f9b4205b"',
+  expect(encoded).toMatchInlineSnapshot(
+    `"0x190162d1d3234124be639f11bfcb3c421b50cc645b88e2aca76f3a6ddf860a94e5b1"`,
   )
 })
 
 test('typed message with only custom domain separator fields', () => {
-  const hash = TypedData.hash({
+  const encoded = TypedData.encode({
     types: {
       EIP712Domain: [
         {
@@ -154,13 +154,13 @@ test('typed message with only custom domain separator fields', () => {
     },
   })
 
-  expect(hash).toMatchInlineSnapshot(
-    '"0x3efa3ef0305f56ba5bba62000500e29fe82c5314bca2f958c64e31b2498560f8"',
+  expect(encoded).toMatchInlineSnapshot(
+    `"0x1901e4e2a795578f2e89fbd7a0b67e17df4b7791a6c47054b423ea27f1076f56bd4a"`,
   )
 })
 
 test('typed message with data', () => {
-  const hash = TypedData.hash({
+  const encoded = TypedData.encode({
     types: {
       EIP712Domain: [
         {
@@ -199,7 +199,7 @@ test('typed message with data', () => {
     },
   })
 
-  expect(hash).toMatchInlineSnapshot(
-    '"0xd2669f23b7849020ad41bcbff5b51372793f91320e0f901641945568ed7322be"',
+  expect(encoded).toMatchInlineSnapshot(
+    `"0x190162d1d3234124be639f11bfcb3c421b50cc645b88e2aca76f3a6ddf860a94e5b115d2c54cdaa22a6a3a8dbd89086b2ffcf0853857db9bcf1541765a8f769a63ba"`,
   )
 })

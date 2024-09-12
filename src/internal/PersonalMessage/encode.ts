@@ -23,7 +23,7 @@ import type { Hex } from '../Hex/types.js'
 export function PersonalMessage_encode(data: Hex | Bytes): Hex {
   const message = Hex_from(data)
   return Hex_concat(
-    // https://eips.ethereum.org/EIPS/eip-191#version-0x45-e
+    // Personal Sign Format: `0x19 ‖ "Ethereum Signed Message:\n" ‖ message.length ‖ message`
     Hex_from(0x19),
     Hex_from('Ethereum Signed Message:\n' + Hex_size(message)),
     message,
