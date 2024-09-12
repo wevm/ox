@@ -142,6 +142,9 @@ importers:
 
   src:
     dependencies:
+      '@adraffy/ens-normalize':
+        specifier: ^1.10.1
+        version: 1.10.1
       '@noble/curves':
         specifier: ^1.5.0
         version: 1.5.0
@@ -2115,6 +2118,7 @@ packages:
 
   bun@1.1.24:
     resolution: {integrity: sha512-vZt5zNVaoNTSlNprdVdQVZInBcGC2QSik6o9ZsMzuYiiUEAEqpRwwMXAYDUN85mt2FNnsGvmk/8xVlUXS7IzEw==}
+    cpu: [arm64, x64]
     os: [darwin, linux, win32]
     hasBin: true
 
