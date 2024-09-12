@@ -1,14 +1,28 @@
 import type { Hex } from '../Hex/types.js'
+import type { Compute, RequiredBy } from '../types.js'
 
 /** ECDSA signature. */
-export type Signature<bigintType = bigint, numberType = number> = {
-  r: bigintType
-  s: bigintType
-  yParity: numberType
-}
+export type Signature<
+  recovered extends boolean = true,
+  bigintType = bigint,
+  numberType = number,
+> = Compute<
+  RequiredBy<
+    {
+      r: bigintType
+      s: bigintType
+      yParity?: numberType | undefined
+    },
+    recovered extends true ? 'yParity' : never
+  >
+>
 
 /** RPC-formatted ECDSA signature. */
-export type Signature_Rpc = Signature<Hex, Hex>
+export type Signature_Rpc<recovered extends boolean = true> = Signature<
+  recovered,
+  Hex,
+  Hex
+>
 
 /** [EIP-2098](https://eips.ethereum.org/EIPS/eip-2098) compact signature. */
 export type Signature_Compact<bigintType = bigint> = {
