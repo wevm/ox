@@ -5,7 +5,8 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Ens_encodeLabelhash } from './encodeLabelhash.js'
 import { Ens_labelhash } from './labelhash.js'
 
-/*
+/**
+ * @internal
  * Encodes a [DNS packet](https://docs.ens.domains/resolution/names#dns) into a ByteArray containing a UDP payload.
  */
 export function Ens_packetToBytes(packet: string): Bytes {

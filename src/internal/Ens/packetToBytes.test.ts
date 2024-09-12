@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 
-import { Ens_packetToBytes } from './packetToBytes.js'
 import { Hex_from } from '../Hex/from.js'
+import { Ens_packetToBytes } from './packetToBytes.js'
 
 test.each([
   { packet: 'awkweb.eth', expected: '0x0661776b7765620365746800' },

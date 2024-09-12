@@ -1,6 +1,7 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 
+/** @internal */
 export function Ens_encodeLabelhash(hash: Hex): `[${string}]` {
   return `[${hash.slice(2)}]`
 }
