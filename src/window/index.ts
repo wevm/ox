@@ -8,15 +8,15 @@ declare global {
     ethereum?: Provider | undefined
   }
   interface WindowEventMap {
-    'eip6963:requestProvider': Event & {type: 'eip6963:requestProvider'}
+    'eip6963:requestProvider': Event & { type: 'eip6963:requestProvider' }
     'eip6963:announceProvider': CustomEvent<{
-      info:   {
+      info: {
         icon: `data:image/${string}`
         name: string
         rdns: string
         uuid: string
       }
       provider: EIP1193Provider
-    }> & {type: 'eip6963:announceProvider'}
+    }> & { type: 'eip6963:announceProvider' }
   }
 }
