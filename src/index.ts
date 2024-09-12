@@ -89,6 +89,18 @@ export * as Address from './Address.js'
 export * as Authorization from './Authorization.js'
 
 /**
+ * The **Base64** Module provides a set of utility functions for working with
+ * [RFC-4648](https://datatracker.ietf.org/doc/html/rfc4648) Base64.
+ *
+ * :::info
+ *
+ * The `Base64` module is a friendly wrapper over [`@scure/base`](https://github.com/paulmillr/scure-base), an **audited** implementation of [RFC-4648](https://datatracker.ietf.org/doc/html/rfc4648).
+ *
+ * :::
+ */
+export * as Base64 from './Base64.js'
+
+/**
  * The **Blobs** Module provides a set of utility functions for working with
  * [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
  */
