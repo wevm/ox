@@ -21,6 +21,7 @@ test('exports', () => {
       "Caches",
       "Constants",
       "ContractAddress",
+      "Ens",
       "Errors",
       "Filter",
       "Hash",
