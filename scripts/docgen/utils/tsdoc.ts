@@ -1,4 +1,6 @@
+import { resolve } from 'node:path'
 import * as tsdoc from '@microsoft/tsdoc'
+import { TSDocConfigFile } from '@microsoft/tsdoc-config'
 import { Project, ScriptTarget, SyntaxKind } from 'ts-morph'
 
 import type { ResolveDeclarationReference } from './model.js'
@@ -11,7 +13,15 @@ export function extractNamespaceDocComments(file: string) {
   })
   const entrypointAst = project.addSourceFileAtPath(file)
 
-  const tsdocParser: tsdoc.TSDocParser = new tsdoc.TSDocParser()
+  const configFile = TSDocConfigFile.loadFile(
+    resolve(import.meta.dirname, '../../../tsdoc.json'),
+  )
+
+  const tsdocConfiguration = new tsdoc.TSDocConfiguration()
+  configFile.configureParser(tsdocConfiguration)
+  const tsdocParser: tsdoc.TSDocParser = new tsdoc.TSDocParser(
+    tsdocConfiguration,
+  )
 
   const nodes = entrypointAst.getDescendantsOfKind(SyntaxKind.ExportDeclaration)
 
@@ -51,6 +61,13 @@ export function processDocComment(
     ),
     alpha: docComment.modifierTagSet.isAlpha(),
     beta: docComment.modifierTagSet.isBeta(),
+    category: cleanDoc(
+      renderDocNode(
+        docComment.customBlocks.find((v) => v.blockTag.tagName === '@category'),
+        resolveDeclarationReference,
+      ),
+      '@category',
+    ),
     comment: docComment?.emitAsTsdoc(),
     default: cleanDoc(
       renderDocNode(

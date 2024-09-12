@@ -59,7 +59,7 @@ for (const member of apiEntryPoint.members) {
 ////////////////////////////////////////////////////////////
 
 const pagesDir = './site/pages'
-const apiReferenceSidebar = []
+const namespaceSidebarMap = new Map<string, unknown[]>()
 
 for (const namespace of namespaces) {
   const name = namespace.displayName
@@ -128,12 +128,22 @@ for (const namespace of namespaces) {
     fs.writeFileSync(`${dir}/types.md`, content)
   }
 
-  apiReferenceSidebar.push({
+  const category = moduleDocComments[name]?.category
+  if (!category)
+    throw new Error(
+      `Could not find sidebar category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
+    )
+
+  const sidebarItem = {
     collapsed: true,
     items,
     link: baseLink,
     text: name,
-  })
+  }
+
+  if (namespaceSidebarMap.has(category))
+    namespaceSidebarMap.get(category)?.push(sidebarItem)
+  else namespaceSidebarMap.set(category, [sidebarItem])
 
   const content = renderNamespace({
     apiItem: namespace,
@@ -150,7 +160,7 @@ const glossarySidebar = []
 for (const namespace of glossaryNamespaces) {
   const name = namespace.displayName
   glossarySidebar.push({
-    link: `/glossary/${name}`,
+    link: `/api/glossary/${name}`,
     text: name,
   })
 
@@ -159,16 +169,25 @@ for (const namespace of glossaryNamespaces) {
     dataLookup,
     type: name as 'Errors' | 'Types',
   })
-  const dir = `${pagesDir}/glossary`
+  const dir = `${pagesDir}/api/glossary`
   fs.ensureDirSync(dir)
   fs.writeFileSync(`${dir}/${name}.md`, content)
 }
 
+const alphabetizedNamespaceSidebarMap = new Map(
+  [...namespaceSidebarMap].sort(([categoryA], [categoryB]) =>
+    categoryA.localeCompare(categoryB),
+  ),
+)
+const namespaceSidebarItems = []
+for (const [category, items] of alphabetizedNamespaceSidebarMap)
+  namespaceSidebarItems.push({
+    text: category,
+    items,
+  })
+
 const sidebar = [
-  {
-    text: 'API Reference',
-    items: apiReferenceSidebar,
-  },
+  ...namespaceSidebarItems,
   {
     text: 'Glossary',
     items: glossarySidebar,

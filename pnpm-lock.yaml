@@ -43,6 +43,9 @@ importers:
       '@microsoft/tsdoc':
         specifier: ^0.15.0
         version: 0.15.0
+      '@microsoft/tsdoc-config':
+        specifier: ^0.17.0
+        version: 0.17.0
       '@size-limit/preset-big-lib':
         specifier: ^11.1.4
         version: 11.1.4(size-limit@11.1.4(patch_hash=imbqp73nbgdxtxyjg4sp7amlam))

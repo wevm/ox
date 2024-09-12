@@ -245,7 +245,7 @@ function renderErrors(options: {
       const errorData = dataLookup[errorId]
       if (!errorData) continue
       errorsContent.push(
-        `- [\`${errorData.displayName.replace('_', '.')}\`](/glossary/Errors#${errorData.displayName.toLowerCase().replace('_', '')})`,
+        `- [\`${errorData.displayName.replace('_', '.')}\`](/api/glossary/Errors#${errorData.displayName.toLowerCase().replace('_', '')})`,
       )
     }
     content.push(errorsContent.join('\n'))

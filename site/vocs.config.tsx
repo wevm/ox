@@ -31,33 +31,40 @@ export default defineConfig({
   iconUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   logoUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   rootDir: '.',
-  sidebar: [
-    { text: 'Introduction', link: '/' },
-    { text: 'Installation', link: '/installation' },
-    { text: 'Imports & Bundle Size', link: '/imports' },
-    { text: 'Error Handling', link: '/error-handling' },
-    { text: 'Platform Compatibility', link: '/platform-compatibility' },
-    {
-      text: 'Guides',
-      // collapsed: true,
-      items: [
-        { text: 'Applications of ABIs 🚧', link: '/guides/abis' },
-        { text: 'Applications of RLP 🚧', link: '/guides/rlp' },
-        { text: 'Bytes & Hex Manipulation 🚧', link: '/guides/bytes-hex' },
-        {
-          text: 'Constructing EIP-4844 Blobs 🚧',
-          link: '/guides/eip-4844-blobs',
-        },
-        { text: 'Secp256k1 Signatures 🚧', link: '/guides/secp256k1' },
-        {
-          text: 'Serializing Transactions 🚧',
-          link: '/guides/transaction-envelopes',
-        },
-        { text: 'WebAuthn Signatures 🚧', link: '/guides/webauthn' },
-      ],
-    },
-    ...sidebar,
-  ],
+  sidebar: {
+    '/': [
+      { text: 'Introduction', link: '/' },
+      { text: 'Installation', link: '/installation' },
+      { text: 'Imports & Bundle Size', link: '/imports' },
+      { text: 'Error Handling', link: '/error-handling' },
+      { text: 'Platform Compatibility', link: '/platform-compatibility' },
+      {
+        text: 'Guides',
+        // collapsed: true,
+        items: [
+          { text: 'Applications of ABIs 🚧', link: '/guides/abis' },
+          { text: 'Applications of RLP 🚧', link: '/guides/rlp' },
+          { text: 'Bytes & Hex Manipulation 🚧', link: '/guides/bytes-hex' },
+          {
+            text: 'Constructing EIP-4844 Blobs 🚧',
+            link: '/guides/eip-4844-blobs',
+          },
+          { text: 'Secp256k1 Signatures 🚧', link: '/guides/secp256k1' },
+          {
+            text: 'Serializing Transactions 🚧',
+            link: '/guides/transaction-envelopes',
+          },
+          { text: 'WebAuthn Signatures 🚧', link: '/guides/webauthn' },
+        ],
+      },
+      {
+        text: 'API Reference',
+        link: '/api',
+        items: [],
+      },
+    ],
+    '/api': { backLink: true, items: sidebar },
+  },
   socials: [
     {
       icon: 'github',
@@ -262,6 +269,10 @@ export default defineConfig({
     },
   },
   topNav: [
+    {
+      text: 'API Reference',
+      link: '/api',
+    },
     {
       text: pkg.version,
       items: [
