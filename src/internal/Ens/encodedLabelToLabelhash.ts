@@ -14,7 +14,3 @@ export function Ens_encodedLabelToLabelhash(label: string): Hex | null {
 export declare namespace Ens_encodedLabelToLabelhash {
   type ErrorType = Hex_isHex.ErrorType | GlobalErrorType
 }
-
-Ens_encodedLabelToLabelhash.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as Ens_encodedLabelToLabelhash.ErrorType

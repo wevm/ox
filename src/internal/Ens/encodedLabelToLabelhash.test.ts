@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+
 import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
 
 test.each([

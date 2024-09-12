@@ -122,6 +122,11 @@ export * as Constants from './Constants.js'
  */
 export * as ContractAddress from './ContractAddress.js'
 
+/**
+ * The **Ens** Module provides a set of utility functions for working with ENS names.
+ */
+export * as Ens from './Ens.js'
+
 export * as Errors from './Errors.js'
 
 /**

@@ -149,7 +149,10 @@ export {
   hashType,
 } from './internal/TypedData/hashStruct.js'
 
+export { Ens_encodeLabelhash } from './internal/Ens/encodeLabelhash.js'
 export { Ens_encodedLabelToLabelhash } from './internal/Ens/encodedLabelToLabelhash.js'
+export { Ens_labelhash } from './internal/Ens/labelhash.js'
+export { Ens_packetToBytes } from './internal/Ens/packetToBytes.js'
 
 export { type Cursor, createCursor } from './internal/cursor.js'
 
