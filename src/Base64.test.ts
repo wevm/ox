@@ -5,6 +5,13 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "from",
+      "fromBytes",
+      "fromHex",
+      "fromString",
+      "to",
+      "toBytes",
+      "toHex",
+      "toString",
     ]
   `)
 })
