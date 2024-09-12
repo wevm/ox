@@ -203,6 +203,12 @@ export * as RpcResponse from './RpcResponse.js'
 
 /**
  * The **Secp256k1** Module provides a set of utility functions for secp256k1 cryptography.
+ *
+ * :::info
+ *
+ * The `Secp256k1` module is a friendly wrapper over [`@noble/curves/secp256k1`](https://github.com/paulmillr/noble-curves), an **audited** implementation of [secp256k1](https://www.secg.org/sec2-v2.pdf).
+ *
+ * :::
  */
 export * as Secp256k1 from './Secp256k1.js'
 
