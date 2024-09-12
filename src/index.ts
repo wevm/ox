@@ -388,6 +388,12 @@ export * as TypedData from './TypedData.js'
 export * as Types from './Types.js'
 
 /**
+ * The **ValidatorData** Module provides a set of types & utility functions for working
+ * with [EIP-191 Validator Data](https://eips.ethereum.org/EIPS/eip-191#0x00).
+ */
+export * as ValidatorData from './ValidatorData.js'
+
+/**
  * The **Value** Module provides a set of utility functions for displaying and parsing Ethereum Values as defined under **2.1. Value** in the [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).
  *
  * @example

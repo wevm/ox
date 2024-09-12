@@ -51,6 +51,7 @@ test('exports', () => {
       "TransactionReceipt",
       "TypedData",
       "Types",
+      "ValidatorData",
       "Value",
       "Withdrawal",
     ]
