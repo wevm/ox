@@ -268,7 +268,7 @@ export * as RpcRequest from './RpcRequest.js'
 export * as RpcResponse from './RpcResponse.js'
 
 /**
- * The **Secp256k1** Module provides a set of utility functions for secp256k1 cryptography.
+ * The **Secp256k1** Module provides a set of utility functions for [secp256k1](https://www.secg.org/sec2-v2.pdf) ECDSA cryptography.
  *
  * :::info
  *
@@ -279,6 +279,19 @@ export * as RpcResponse from './RpcResponse.js'
  * @category Crypto
  */
 export * as Secp256k1 from './Secp256k1.js'
+
+/**
+ * The **P256** Module provides a set of utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography.
+ *
+ * :::info
+ *
+ * The `P256` module is a friendly wrapper over [`@noble/curves/p256`](https://github.com/paulmillr/noble-curves), an **audited** implementation of [P256](https://www.secg.org/sec2-v2.pdf).
+ *
+ * :::
+ *
+ * @category Crypto
+ */
+export * as P256 from './P256.js'
 
 /**
  * The **Signature** Module provides a set of utility functions for working with ECDSA signatures.

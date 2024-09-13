@@ -178,6 +178,7 @@ export type {
   Omit,
   OneOf,
   PartialBy,
+  RequiredBy,
   TypeErrorMessage,
   Undefined,
   UnionCompute,

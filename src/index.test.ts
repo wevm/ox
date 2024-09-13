@@ -36,6 +36,7 @@ test('exports', () => {
       "RpcRequest",
       "RpcResponse",
       "Secp256k1",
+      "P256",
       "Signature",
       "Siwe",
       "Transaction",
