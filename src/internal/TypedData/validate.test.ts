@@ -203,7 +203,7 @@ test('bytes size mismatch', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [TypedData.BytesSizeMismatchError: Expected bytes32, got bytes20.
 
-    See: https://oxlib.sh/errors#typeddatabytessizemismatcherror]
+    See: https://oxlib.sh/api/glossary/Errors#typeddatabytessizemismatcherror]
   `)
 })
 
@@ -361,6 +361,6 @@ test('primaryType: does not exist in types', () => {
 
     Check that the primary type is a key in \`types\`.
 
-    See: https://oxlib.sh/errors#typeddatainvalidprimarytypeerror]
+    See: https://oxlib.sh/api/glossary/Errors#typeddatainvalidprimarytypeerror]
   `)
 })

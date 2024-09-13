@@ -14,6 +14,6 @@ test('InvalidPrimaryTypeError', () => {
 
     Check that the primary type is a key in \`types\`.
 
-    See: https://oxlib.sh/errors#typeddatainvalidprimarytypeerror]
+    See: https://oxlib.sh/api/glossary/Errors#typeddatainvalidprimarytypeerror]
   `)
 })
