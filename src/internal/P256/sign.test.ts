@@ -3,6 +3,7 @@ import { expect, test } from 'vitest'
 
 const privateKey =
   '0xdde57ae9b9ed6f76fa5358c24d5ca2057ebc1ece18b7273121450a29c96ec8e5'
+const publicKey = P256.getPublicKey({ privateKey })
 
 test('default', async () => {
   {
@@ -20,14 +21,21 @@ test('default', async () => {
       }
     `,
     )
-    // expect(
-    //   Secp256k1.verify({
-    //     address: accounts[0].address,
-    //     payload:
-    //       '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
-    //     signature,
-    //   }),
-    // ).toBe(true)
+    expect(
+      P256.verify({
+        publicKey,
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        signature,
+      }),
+    ).toBe(true)
+    expect(
+      P256.verify({
+        publicKey,
+        payload: '0xbeef',
+        signature,
+      }),
+    ).toBe(false)
   }
 
   {
@@ -46,13 +54,19 @@ test('default', async () => {
       }
     `,
     )
-    // expect(
-    //   Secp256k1.verify({
-    //     address: accounts[0].address,
-    //     payload:
-    //       '0x9a74cb859ad30835ffb2da406423233c212cf6dd78e6c2c98b0c9289568954ae',
-    //     signature,
-    //   }),
-    // ).toBe(true)
+    expect(
+      P256.verify({
+        publicKey,
+        payload: '0xdeadbeef1aaaa22111231241220000123aaaaabbccababab2211',
+        signature,
+      }),
+    ).toBe(true)
+    expect(
+      P256.verify({
+        publicKey,
+        payload: '0xbeef',
+        signature,
+      }),
+    ).toBe(false)
   }
 })
