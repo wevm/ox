@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { Siwe } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   expect(Siwe.isUri('https://example.com/foo')).toMatchInlineSnapshot(

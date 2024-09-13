@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { Ens } from 'ox'
+import { expect, test } from 'vitest'
 
 test.each([
   { name: 'awkweb.eth', expected: 'awkweb.eth' },

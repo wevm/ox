@@ -1,5 +1,5 @@
-import { expect, test, vi } from 'vitest'
 import { Siwe } from 'ox'
+import { expect, test, vi } from 'vitest'
 
 const message = {
   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',

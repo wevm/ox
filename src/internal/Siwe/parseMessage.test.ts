@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { Siwe } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   const message = `example.com wants you to sign in with your Ethereum account:
