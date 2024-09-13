@@ -9,7 +9,7 @@ export class TypedData_BytesSizeMismatchError extends BaseError {
     givenSize,
   }: { expectedSize: number; givenSize: number }) {
     super(`Expected bytes${expectedSize}, got bytes${givenSize}.`, {
-      docsPath: '/errors#typeddatabytessizemismatcherror',
+      docsPath: '/api/glossary/Errors#typeddatabytessizemismatcherror',
     })
   }
 }
@@ -24,7 +24,7 @@ export class TypedData_InvalidPrimaryTypeError extends BaseError {
     super(
       `Invalid primary type \`${primaryType}\` must be one of \`${JSON.stringify(Object.keys(types))}\`.`,
       {
-        docsPath: '/errors#typeddatainvalidprimarytypeerror',
+        docsPath: '/api/glossary/Errors#typeddatainvalidprimarytypeerror',
         metaMessages: ['Check that the primary type is a key in `types`.'],
       },
     )

@@ -1,7 +1,5 @@
 import { expect, test } from 'vitest'
-
-import { Ens_namehash } from './namehash.js'
-import { Ens_normalize } from './normalize.js'
+import { Ens } from 'ox'
 
 test.each([
   {
@@ -30,7 +28,7 @@ test.each([
       '0x52d0f5fbf348925621be297a61b88ec492ebbbdfa9477d82892e2786020ad61c',
   },
   {
-    name: Ens_normalize('awkw𝝣b.eth'),
+    name: Ens.normalize('awkw𝝣b.eth'),
     expected:
       '0x4e372358e2e47fdbba39e5ca56d412e6dc4216a260a733b1b5d8df0001d28202',
   },
@@ -67,5 +65,5 @@ test.each([
       '0xeb4f647bea6caa36333c816d7b46fdcb05f9466ecacc140ea8c66faf15b3d9f1',
   },
 ])("namehash('$name') -> '$expected'", ({ name, expected }) => {
-  expect(Ens_namehash(name)).toBe(expected)
+  expect(Ens.namehash(name)).toBe(expected)
 })

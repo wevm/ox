@@ -1,7 +1,5 @@
 import { expect, test } from 'vitest'
-
-import { Ens_labelhash } from './labelhash.js'
-import { Ens_normalize } from './normalize.js'
+import { Ens } from 'ox'
 
 test.each([
   {
@@ -20,7 +18,7 @@ test.each([
       '0x7aaad03ddcacc63166440f59c14a1a2c97ee381014b59c58f55b49ab05f31a38',
   },
   {
-    label: Ens_normalize('awkw𝝣b'),
+    label: Ens.normalize('awkw𝝣b'),
     expected:
       '0x064cfb20fc5f10bd727bd17232b9b0c8021cec89e596b1c966ff1c611420c72f',
   },
@@ -57,5 +55,5 @@ test.each([
       '0x9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658',
   },
 ])("labelhash('$label') -> '$expected'", ({ label, expected }) => {
-  expect(Ens_labelhash(label)).toBe(expected)
+  expect(Ens.labelhash(label)).toBe(expected)
 })

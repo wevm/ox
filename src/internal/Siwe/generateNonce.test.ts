@@ -1,5 +1,4 @@
 import { expect, test } from 'vitest'
-
 import { Siwe } from 'ox'
 
 test('default', () => {
