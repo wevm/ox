@@ -55,19 +55,17 @@ test('default', () => {
     s: 22310885159939283473640002814069314990500333570711854513358211093549688653897n,
     yParity: 1,
   })
-})
 
-test('behavior: compact', () => {
-  const signature = {
-    r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-    s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
-    yParity: 1,
-  } as const
-  const compact = Signature.serialize(signature, {
-    compact: true,
-  })
-
-  expect(Signature.deserialize(compact)).toEqual(signature)
+  expect(
+    Signature.deserialize(
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+    ),
+  ).toMatchInlineSnapshot(`
+    {
+      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+    }
+  `)
 })
 
 test('error: invalid signature', async () => {
@@ -76,6 +74,32 @@ test('error: invalid signature', async () => {
   ).toThrowErrorMatchingInlineSnapshot(
     `
     [Signature.InvalidSerializedSizeError: Value \`0xdeadbeef\` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received 4 bytes.
+
+    See: https://oxlib.sh/errors#invalidserializedsignaturesizeerror]
+  `,
+  )
+
+  expect(() =>
+    Signature.deserialize(
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+      { compact: false },
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    `
+    [Signature.InvalidSerializedSizeError: Value \`0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8\` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received 64 bytes.
+
+    See: https://oxlib.sh/errors#invalidserializedsignaturesizeerror]
+  `,
+  )
+
+  expect(() =>
+    Signature.deserialize(
+      '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db800',
+      { compact: true },
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    `
+    [Signature.InvalidSerializedSizeError: Value \`0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db800\` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received 65 bytes.
 
     See: https://oxlib.sh/errors#invalidserializedsignaturesizeerror]
   `,

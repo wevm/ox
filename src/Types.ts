@@ -46,7 +46,6 @@ export type {
 
 export type {
   Signature,
-  Signature_Compact,
   Signature_Legacy,
   Signature_Tuple,
 } from './internal/Signature/types.js'

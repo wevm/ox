@@ -28,7 +28,7 @@ import type { Signature } from '../Signature/types.js'
 export function P256_recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: P256_recoverPublicKey.Options<as>,
 ): P256_recoverPublicKey.ReturnType<as> {
-  const { payload, signature, as = 'Hex' } = options
+  const { payload, signature, as = 'Hex', compressed = false } = options
   const { r, s, yParity } = signature
   const signature_ = new secp256r1.Signature(
     BigInt(r),
@@ -36,13 +36,15 @@ export function P256_recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   ).addRecoveryBit(yParity)
   const publicKey = `0x${signature_
     .recoverPublicKey(Hex_from(payload).substring(2))
-    .toHex(false)}`
+    .toHex(compressed)}`
   if (as === 'Bytes') return Bytes_from(publicKey) as never
   return publicKey as never
 }
 
 export declare namespace P256_recoverPublicKey {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** Whether to compress the public key. */
+    compressed?: boolean | undefined
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */

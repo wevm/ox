@@ -4,11 +4,9 @@ import type { Hex } from '../Hex/types.js'
 import type { OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
 import { Signature_deserialize } from './deserialize.js'
-import { Signature_fromCompact } from './fromCompact.js'
 import { Signature_fromRpc } from './fromRpc.js'
 import type {
   Signature,
-  Signature_Compact,
   Signature_Legacy,
   Signature_LegacyRpc,
   Signature_Rpc,
@@ -49,23 +47,6 @@ import { Signature_vToYParity } from './vToYParity.js'
  * ```
  *
  * @example
- * ### From Compact
- *
- * ```ts twoslash
- * import { Signature } from 'ox'
- *
- * Signature.from({
- *   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
- *   yParityAndS: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
- * })
- * // @log: {
- * // @log:   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
- * // @log:   s: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
- * // @log:   yParity: 0
- * // @log: }
- * ```
- *
- * @example
  * ### From Legacy
  *
  * ```ts twoslash
@@ -88,20 +69,13 @@ import { Signature_vToYParity } from './vToYParity.js'
  */
 export function Signature_from(
   signature:
-    | OneOf<
-        | Signature
-        | Signature_Compact
-        | Signature_Legacy
-        | Signature_Rpc
-        | Signature_LegacyRpc
-      >
+    | OneOf<Signature | Signature_Legacy | Signature_Rpc | Signature_LegacyRpc>
     | Hex
     | Bytes,
 ): Signature {
   const signature_ = (() => {
     if (typeof signature === 'string') return Signature_deserialize(signature)
     if (signature instanceof Uint8Array) return Signature_deserialize(signature)
-    if (signature.yParityAndS) return Signature_fromCompact(signature)
     if (
       typeof signature.v === 'string' ||
       typeof signature.yParity === 'string'
@@ -127,7 +101,6 @@ export declare namespace Signature_from {
   type ErrorType =
     | Signature_assert.ErrorType
     | Signature_deserialize.ErrorType
-    | Signature_fromCompact.ErrorType
     | Signature_vToYParity.ErrorType
     | GlobalErrorType
 }

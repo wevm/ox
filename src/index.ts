@@ -537,6 +537,13 @@ export * as ValidatorData from './ValidatorData.js'
 export * as Value from './Value.js'
 
 /**
+ * The **WebCryptoP256** Module provides a set of utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
+ *
+ * @category Crypto
+ */
+export * as WebCryptoP256 from './WebCryptoP256.js'
+
+/**
  * The **Withdrawal** Module provides a set of types & utility functions for working
  * with Withdrawals as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/withdrawal.yaml).
  *

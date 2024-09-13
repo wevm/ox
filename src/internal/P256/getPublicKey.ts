@@ -21,14 +21,21 @@ import type { Hex } from '../Hex/types.js'
 export function P256_getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: P256_getPublicKey.Options<as>,
 ): P256_getPublicKey.ReturnType<as> {
-  const { privateKey, as = 'Hex' } = options
-  const bytes = secp256r1.getPublicKey(Hex_from(privateKey).slice(2), false)
+  const { privateKey, as = 'Hex', compressed = false } = options
+  const bytes = secp256r1.getPublicKey(
+    Hex_from(privateKey).slice(2),
+    compressed,
+  )
   if (as === 'Hex') return Hex_from(bytes) as never
   return bytes as never
 }
 
 export declare namespace P256_getPublicKey {
   interface Options<as extends 'Hex' | 'Bytes' = 'Hex'> {
+    /**
+     * Whether to compress the public key.
+     */
+    compressed?: boolean | undefined
     /**
      * Private key to compute the public key from.
      */

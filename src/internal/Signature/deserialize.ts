@@ -8,7 +8,6 @@ import {
   Signature_InvalidSerializedSizeError,
   Signature_InvalidYParityError,
 } from './errors.js'
-import { Signature_fromCompact } from './fromCompact.js'
 import type { Signature } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
@@ -26,49 +25,54 @@ import { Signature_vToYParity } from './vToYParity.js'
  * @param serialized - The serialized signature.
  * @returns The deserialized {@link ox#Signature.Signature}.
  */
-export function Signature_deserialize(serialized: Bytes | Hex): Signature {
+export function Signature_deserialize<compact extends boolean = boolean>(
+  serialized: Bytes | Hex,
+  options: Signature_deserialize.Options<compact> = {},
+): Signature<compact extends true ? false : true> {
+  const { compact } = options
+
   const hex = typeof serialized === 'string' ? serialized : Hex_from(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)
     throw new Signature_InvalidSerializedSizeError({ signature: hex })
+  if (compact === true && hex.length !== 130)
+    throw new Signature_InvalidSerializedSizeError({ signature: hex })
+  if (compact === false && hex.length !== 132)
+    throw new Signature_InvalidSerializedSizeError({ signature: hex })
 
-  const { r, ...signature } = secp256k1.Signature.fromCompact(hex.slice(2, 130))
+  const { r, s } = secp256k1.Signature.fromCompact(hex.slice(2, 130))
 
-  const { s, yParity } = (() => {
-    // If the signature is a compact signature, normalize it to a full signature.
-    if (hex.length === 130)
-      return Signature_fromCompact({
-        r,
-        yParityAndS: signature.s,
-      })
-
-    let yParity = Number(`0x${hex.slice(130)}`)
-    if (yParity !== 0 && yParity !== 1) {
-      try {
-        yParity = Signature_vToYParity(yParity)
-      } catch {
-        throw new Signature_InvalidYParityError({ value: yParity })
-      }
-    }
-    return {
-      s: signature.s,
-      yParity,
+  const yParity = (() => {
+    const yParity = Number(`0x${hex.slice(130)}`)
+    if (Number.isNaN(yParity)) return undefined
+    try {
+      return Signature_vToYParity(yParity)
+    } catch {
+      throw new Signature_InvalidYParityError({ value: yParity })
     }
   })()
 
+  if (typeof yParity === 'undefined')
+    return {
+      r,
+      s,
+    } as never
   return {
     r,
     s,
     yParity,
-  } as Signature
+  } as never
 }
 
 export declare namespace Signature_deserialize {
+  type Options<compact extends boolean = boolean> = {
+    /** Whether or not the signature being deserialized is compact. */
+    compact?: compact | boolean | undefined
+  }
+
   type ErrorType =
-    | Signature_fromCompact.ErrorType
     | Hex_from.ErrorType
     | Signature_InvalidSerializedSizeError
-    | Signature_InvalidYParityError
     | GlobalErrorType
 }
 

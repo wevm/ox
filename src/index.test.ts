@@ -56,6 +56,7 @@ test('exports', () => {
       "Types",
       "ValidatorData",
       "Value",
+      "WebCryptoP256",
       "Withdrawal",
     ]
   `)

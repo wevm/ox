@@ -6,7 +6,7 @@ import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
 
 /**
- * Verifies a payload was signed by the provided address.
+ * Verifies a payload was signed by the provided public key.
  *
  * @example
  *
@@ -25,7 +25,7 @@ import type { Signature } from '../Signature/types.js'
  * ```
  *
  * @param options - The verification options.
- * @returns Whether the payload was signed by the provided address.
+ * @returns Whether the payload was signed by the provided public key.
  */
 export function P256_verify(options: P256_verify.Options): boolean {
   const { payload, publicKey, signature } = options
