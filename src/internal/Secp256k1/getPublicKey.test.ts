@@ -30,6 +30,17 @@ test('default', () => {
   }
 })
 
+test('args: compressed', () => {
+  const publicKey = Secp256k1.getPublicKey({
+    privateKey: accounts[0].privateKey,
+    compressed: true,
+  })
+
+  expect(publicKey).toMatchInlineSnapshot(
+    `"0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75"`,
+  )
+})
+
 test('args: as', () => {
   const publicKey = Secp256k1.getPublicKey({
     privateKey: accounts[0].privateKey,

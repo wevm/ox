@@ -64,6 +64,6 @@ export declare namespace WebCryptoP256_verify {
   type ErrorType = GlobalErrorType
 }
 
-/* v8 ignore next */
 WebCryptoP256_verify.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as WebCryptoP256_verify.ErrorType

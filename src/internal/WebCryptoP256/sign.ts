@@ -60,6 +60,6 @@ export declare namespace WebCryptoP256_sign {
   type ErrorType = Bytes_from.ErrorType | GlobalErrorType
 }
 
-/* v8 ignore next */
 WebCryptoP256_sign.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as WebCryptoP256_sign.ErrorType

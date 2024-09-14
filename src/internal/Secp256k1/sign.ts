@@ -46,6 +46,6 @@ export declare namespace Secp256k1_sign {
   type ErrorType = Bytes_from.ErrorType | GlobalErrorType
 }
 
-/* v8 ignore next */
 Secp256k1_sign.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Secp256k1_sign.ErrorType

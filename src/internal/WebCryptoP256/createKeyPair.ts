@@ -29,7 +29,7 @@ export async function WebCryptoP256_createKeyPair<
 >(
   options: WebCryptoP256_createKeyPair.Options<as> = {},
 ): Promise<WebCryptoP256_createKeyPair.ReturnType<as>> {
-  const { as = 'Hex', compressed = false, extractable = false } = options
+  const { as = 'Hex', extractable = false } = options
   const keypair = await globalThis.crypto.subtle.generateKey(
     {
       name: 'ECDSA',
@@ -42,8 +42,7 @@ export async function WebCryptoP256_createKeyPair<
     'raw',
     keypair.publicKey,
   )
-  let publicKey = new Uint8Array(publicKey_raw)
-  if (compressed) publicKey = publicKey.slice(1)
+  const publicKey = new Uint8Array(publicKey_raw)
   return {
     privateKey: keypair.privateKey,
     publicKey: as === 'Hex' ? Hex_from(publicKey) : publicKey,
@@ -54,8 +53,6 @@ export declare namespace WebCryptoP256_createKeyPair {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** Format of the public key. @default 'Hex'*/
     as?: as | 'Hex' | 'Bytes' | undefined
-    /** Whether to compress the public key. */
-    compressed?: boolean | undefined
     /** A boolean value indicating whether it will be possible to export the private key using `globalThis.crypto.subtle.exportKey()`. */
     extractable?: boolean | undefined
   }

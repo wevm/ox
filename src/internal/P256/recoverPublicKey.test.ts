@@ -18,3 +18,11 @@ test('args: as', () => {
     P256.recoverPublicKey({ payload, signature, as: 'Bytes' }),
   ).toStrictEqual(P256.getPublicKey({ privateKey, as: 'Bytes' }))
 })
+
+test('args: compressed', () => {
+  const payload = '0xdeadbeef'
+  const signature = P256.sign({ payload, privateKey })
+  expect(P256.recoverPublicKey({ payload, signature, compressed: true })).toBe(
+    P256.getPublicKey({ privateKey, compressed: true }),
+  )
+})

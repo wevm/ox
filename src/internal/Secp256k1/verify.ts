@@ -83,6 +83,6 @@ export declare namespace Secp256k1_verify {
   type ErrorType = GlobalErrorType
 }
 
-/* v8 ignore next */
 Secp256k1_verify.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Secp256k1_verify.ErrorType

@@ -27,6 +27,17 @@ test('default', () => {
   }
 })
 
+test('args: compressed', () => {
+  const publicKey = P256.getPublicKey({
+    compressed: true,
+    privateKey,
+  })
+
+  expect(publicKey).toMatchInlineSnapshot(
+    `"0x021753ed8e23fd6e17922ebdeed8ebe8043e34cd10118271cf2acdee88c1d58307"`,
+  )
+})
+
 test('args: as', () => {
   const publicKey = P256.getPublicKey({
     privateKey,
