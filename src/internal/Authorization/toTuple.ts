@@ -40,7 +40,7 @@ export function Authorization_toTuple<
   return [
     Hex_fromNumber(chainId),
     contractAddress,
-    Hex_fromNumber(nonce),
+    nonce ? Hex_fromNumber(nonce) : '0x',
     ...(signature ? Signature_toTuple(signature) : []),
   ] as never
 }
