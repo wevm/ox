@@ -167,6 +167,11 @@
       "import": "*"
     },
     {
+      "name": "import * as Bloom from 'ox/Bloom'",
+      "path": "./src/_dist/Bloom.js",
+      "import": "*"
+    },
+    {
       "name": "import * as Bytes from 'ox/Bytes'",
       "path": "./src/_dist/Bytes.js",
       "import": "*"
