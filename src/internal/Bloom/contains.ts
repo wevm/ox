@@ -1,13 +1,13 @@
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
+import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
  * Checks if an input is matched in the bloom filter.
  *
- *  * @example
+ * @example
  * ```ts twoslash
  * import { Bloom } from 'ox'
  *
