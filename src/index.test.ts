@@ -17,6 +17,7 @@ test('exports', () => {
       "Base64",
       "Blobs",
       "Block",
+      "Bloom",
       "Bytes",
       "Caches",
       "Constants",
