@@ -1,7 +1,7 @@
-import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_from } from '../Hex/from.js'
-import type { Hex } from '../Hex/types.js'
+import { PublicKey_from } from '../PublicKey/from.js'
+import type { PublicKey } from '../PublicKey/types.js'
+import type { Compute } from '../types.js'
 
 /**
  * Generates an ECDSA P256 key pair that includes:
@@ -17,19 +17,21 @@ import type { Hex } from '../Hex/types.js'
  * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
  * // @log: {
  * // @log:   privateKey: CryptoKey {},
- * // @log:   publicKey: '0x0401188da8012335df6d36c9c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9ba3e3f1f0c854cd1b17a81a538327af927da3eaaba2223114314141dead'
+ * // @log:   publicKey: {
+ * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:     prefix: 4,
+ * // @log:   },
  * // @log: }
  * ```
  *
  * @param options - Options for creating the key pair.
  * @returns The key pair.
  */
-export async function WebCryptoP256_createKeyPair<
-  as extends 'Hex' | 'Bytes' = 'Hex',
->(
-  options: WebCryptoP256_createKeyPair.Options<as> = {},
-): Promise<WebCryptoP256_createKeyPair.ReturnType<as>> {
-  const { as = 'Hex', extractable = false } = options
+export async function WebCryptoP256_createKeyPair(
+  options: WebCryptoP256_createKeyPair.Options = {},
+): Promise<WebCryptoP256_createKeyPair.ReturnType> {
+  const { extractable = false } = options
   const keypair = await globalThis.crypto.subtle.generateKey(
     {
       name: 'ECDSA',
@@ -42,25 +44,23 @@ export async function WebCryptoP256_createKeyPair<
     'raw',
     keypair.publicKey,
   )
-  const publicKey = new Uint8Array(publicKey_raw)
+  const publicKey = PublicKey_from(new Uint8Array(publicKey_raw))
   return {
     privateKey: keypair.privateKey,
-    publicKey: as === 'Hex' ? Hex_from(publicKey) : publicKey,
-  } as never
+    publicKey,
+  }
 }
 
 export declare namespace WebCryptoP256_createKeyPair {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
-    /** Format of the public key. @default 'Hex'*/
-    as?: as | 'Hex' | 'Bytes' | undefined
+  type Options = {
     /** A boolean value indicating whether it will be possible to export the private key using `globalThis.crypto.subtle.exportKey()`. */
     extractable?: boolean | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+  type ReturnType = Compute<{
     privateKey: CryptoKey
-    publicKey: as extends 'Hex' ? Hex : Bytes
-  }
+    publicKey: PublicKey
+  }>
 
   type ErrorType = GlobalErrorType
 }

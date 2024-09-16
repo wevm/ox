@@ -3,6 +3,8 @@ import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
+import { PublicKey_serialize } from '../PublicKey/serialize.js'
+import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
 
 /**
@@ -34,7 +36,7 @@ export async function WebCryptoP256_verify(
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
-    Bytes_from(options.publicKey),
+    PublicKey_serialize(options.publicKey, { as: 'Bytes' }),
     { name: 'ECDSA', namedCurve: 'P-256' },
     true,
     ['verify'],
@@ -54,7 +56,7 @@ export async function WebCryptoP256_verify(
 export declare namespace WebCryptoP256_verify {
   type Options = {
     /** Public key that signed the payload. */
-    publicKey: Hex | Bytes
+    publicKey: PublicKey<boolean>
     /** Signature of the payload. */
     signature: Signature<false>
     /** Payload that was signed. */

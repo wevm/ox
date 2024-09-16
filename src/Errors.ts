@@ -72,6 +72,14 @@ export { Log_ArgsMismatchError } from './internal/Log/errors.js'
 export { Provider_IsUndefinedError } from './internal/Provider/errors.js'
 
 export {
+  PublicKey_InvalidCompressedPrefixError,
+  PublicKey_InvalidError,
+  PublicKey_InvalidPrefixError,
+  PublicKey_InvalidSerializedSizeError,
+  PublicKey_InvalidUncompressedPrefixError,
+} from './internal/PublicKey/errors.js'
+
+export {
   Signature_InvalidRError,
   Signature_InvalidSError,
   Signature_InvalidSerializedSizeError,

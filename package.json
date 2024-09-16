@@ -212,6 +212,11 @@
       "import": "*"
     },
     {
+      "name": "import * as PublicKey from 'ox/PublicKey'",
+      "path": "./src/_dist/PublicKey.js",
+      "import": "*"
+    },
+    {
       "name": "import * as Rlp from 'ox/Rlp'",
       "path": "./src/_dist/Rlp.js",
       "import": "*"

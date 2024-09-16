@@ -1,4 +1,4 @@
-import { P256 } from 'ox'
+import { Bytes, P256 } from 'ox'
 import { expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -9,4 +9,17 @@ test('default', () => {
   const { r, s } = P256.sign({ payload, privateKey })
   const publicKey = P256.getPublicKey({ privateKey })
   expect(P256.verify({ publicKey, payload, signature: { r, s } })).toBe(true)
+})
+
+test('behavior: bytes payload', () => {
+  const payload = '0xdeadbeef'
+  const { r, s } = P256.sign({ payload, privateKey })
+  const publicKey = P256.getPublicKey({ privateKey })
+  expect(
+    P256.verify({
+      publicKey,
+      payload: Bytes.from(payload),
+      signature: { r, s },
+    }),
+  ).toBe(true)
 })

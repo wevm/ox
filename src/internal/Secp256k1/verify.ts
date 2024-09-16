@@ -5,6 +5,8 @@ import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
+import { PublicKey_serialize } from '../PublicKey/serialize.js'
+import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
 import type { OneOf } from '../types.js'
 import { Secp256k1_recoverAddress } from './recoverAddress.js'
@@ -56,8 +58,8 @@ export function Secp256k1_verify(options: Secp256k1_verify.Options): boolean {
     )
   return secp256k1.verify(
     signature,
-    Hex_from(payload).substring(2),
-    Hex_from(publicKey).substring(2),
+    typeof payload === 'string' ? payload.substring(2) : Hex_from(payload),
+    PublicKey_serialize(publicKey).substring(2),
   )
 }
 
@@ -74,7 +76,7 @@ export declare namespace Secp256k1_verify {
       }
     | {
         /** Public key that signed the payload. */
-        publicKey: Hex | Bytes
+        publicKey: PublicKey<boolean>
         /** Signature of the payload. */
         signature: Signature<false>
       }

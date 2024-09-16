@@ -24,23 +24,18 @@ import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
  * @param options - The recovery options.
  * @returns The recovered address.
  */
-export function Secp256k1_recoverAddress<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  options: Secp256k1_recoverAddress.Options<as>,
+export function Secp256k1_recoverAddress(
+  options: Secp256k1_recoverAddress.Options,
 ): Secp256k1_recoverAddress.ReturnType {
   return Address_fromPublicKey(Secp256k1_recoverPublicKey(options))
 }
 
 export declare namespace Secp256k1_recoverAddress {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+  type Options = {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */
     signature: Signature
-    /**
-     * Format of the returned public key.
-     * @default 'Hex'
-     */
-    as?: as | 'Hex' | 'Bytes' | undefined
   }
 
   type ReturnType = Address

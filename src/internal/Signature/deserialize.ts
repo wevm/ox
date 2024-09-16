@@ -1,8 +1,7 @@
-import { secp256k1 } from '@noble/curves/secp256k1'
-
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
+import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import {
   Signature_InvalidSerializedSizeError,
@@ -31,7 +30,8 @@ export function Signature_deserialize(serialized: Bytes | Hex): Signature {
   if (hex.length !== 130 && hex.length !== 132)
     throw new Signature_InvalidSerializedSizeError({ signature: hex })
 
-  const { r, s } = secp256k1.Signature.fromCompact(hex.slice(2, 130))
+  const r = BigInt(Hex_slice(hex, 0, 32))
+  const s = BigInt(Hex_slice(hex, 32, 64))
 
   const yParity = (() => {
     const yParity = Number(`0x${hex.slice(130)}`)

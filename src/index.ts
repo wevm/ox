@@ -239,6 +239,13 @@ export * as PersonalMessage from './PersonalMessage.js'
 export * as Provider from './Provider.js'
 
 /**
+ * The **PublicKey** Module provides a set of utility functions for working with ECDSA public keys.
+ *
+ * @category Crypto
+ */
+export * as PublicKey from './PublicKey.js'
+
+/**
  * The **Rlp** Module provides a set of utility functions for encoding and decoding [Recursive Length Prefix](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) structures.
  *
  * @example

@@ -1,4 +1,4 @@
-import { Secp256k1 } from 'ox'
+import { Bytes, PublicKey, Secp256k1 } from 'ox'
 import { expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -11,6 +11,14 @@ test('behavior: verify w/ address', () => {
   expect(Secp256k1.verify({ address, payload, signature })).toBe(true)
 })
 
+test('behavior: bytes payload', () => {
+  const payload = '0xdeadbeef'
+  const signature = Secp256k1.sign({ payload, privateKey })
+  expect(
+    Secp256k1.verify({ address, payload: Bytes.from(payload), signature }),
+  ).toBe(true)
+})
+
 test('behavior: verify w/ publicKey', () => {
   const payload = '0xdeadbeef'
   const { r, s } = Secp256k1.sign({ payload, privateKey })
@@ -18,4 +26,14 @@ test('behavior: verify w/ publicKey', () => {
   expect(Secp256k1.verify({ publicKey, payload, signature: { r, s } })).toBe(
     true,
   )
+})
+
+test('behavior: verify w/ compressed publicKey', () => {
+  const payload = '0xdeadbeef'
+  const { r, s } = Secp256k1.sign({ payload, privateKey })
+  const publicKey = Secp256k1.getPublicKey({ privateKey })
+  const compressed = PublicKey.compress(publicKey)
+  expect(
+    Secp256k1.verify({ publicKey: compressed, payload, signature: { r, s } }),
+  ).toBe(true)
 })

@@ -33,6 +33,7 @@ test('exports', () => {
       "Log",
       "PersonalMessage",
       "Provider",
+      "PublicKey",
       "Rlp",
       "RpcRequest",
       "RpcResponse",

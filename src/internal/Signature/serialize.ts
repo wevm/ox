@@ -1,9 +1,10 @@
-import { secp256k1 } from '@noble/curves/secp256k1'
-
 import { Bytes_fromHex } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Hex_concat } from '../Hex/concat.js'
+import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
+import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'
 
 /**
@@ -30,13 +31,19 @@ export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): Signature_serialize.ReturnType<as> {
   const { as = 'Hex' } = options
 
+  Signature_assert(signature)
+
   const r = signature.r
   const s = signature.s
-  let signature_ = `0x${new secp256k1.Signature(r, s!).toCompactHex()}` as const
 
-  // If the signature is not compact, add the recovery byte to the signature.
-  if (typeof signature.yParity === 'number')
-    signature_ = `${signature_}${signature.yParity === 0 ? '00' : '01'}`
+  const signature_ = Hex_concat(
+    Hex_from(r, { size: 32 }),
+    Hex_from(s, { size: 32 }),
+    // If the signature is recovered, add the recovery byte to the signature.
+    typeof signature.yParity === 'number'
+      ? Hex_from(signature.yParity, { size: 1 })
+      : '0x',
+  )
 
   if (as === 'Hex') return signature_ as Signature_serialize.ReturnType<as>
   return Bytes_fromHex(signature_) as Signature_serialize.ReturnType<as>

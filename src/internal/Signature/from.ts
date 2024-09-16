@@ -1,7 +1,7 @@
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
-import type { IsNarrowable, OneOf } from '../types.js'
+import type { OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
 import { Signature_deserialize } from './deserialize.js'
 import { Signature_fromRpc } from './fromRpc.js'

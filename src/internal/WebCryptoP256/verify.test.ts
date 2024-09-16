@@ -1,4 +1,4 @@
-import { Bytes, WebCryptoP256 } from 'ox'
+import { WebCryptoP256 } from 'ox'
 import { expect, test } from 'vitest'
 
 const keyPair = await WebCryptoP256.createKeyPair()
@@ -9,17 +9,5 @@ test('default', async () => {
   const { r, s } = await WebCryptoP256.sign({ payload, privateKey })
   expect(
     await WebCryptoP256.verify({ publicKey, payload, signature: { r, s } }),
-  ).toBe(true)
-})
-
-test('behavior: bytes publicKey', async () => {
-  const payload = '0xdeadbeef'
-  const { r, s } = await WebCryptoP256.sign({ payload, privateKey })
-  expect(
-    await WebCryptoP256.verify({
-      publicKey: Bytes.from(publicKey),
-      payload,
-      signature: { r, s },
-    }),
   ).toBe(true)
 })

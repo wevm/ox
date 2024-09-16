@@ -6,23 +6,7 @@ const privateKey = P256.randomPrivateKey()
 test('default', () => {
   const payload = '0xdeadbeef'
   const signature = P256.sign({ payload, privateKey })
-  expect(P256.recoverPublicKey({ payload, signature })).toBe(
+  expect(P256.recoverPublicKey({ payload, signature })).toStrictEqual(
     P256.getPublicKey({ privateKey }),
-  )
-})
-
-test('args: as', () => {
-  const payload = '0xdeadbeef'
-  const signature = P256.sign({ payload, privateKey })
-  expect(
-    P256.recoverPublicKey({ payload, signature, as: 'Bytes' }),
-  ).toStrictEqual(P256.getPublicKey({ privateKey, as: 'Bytes' }))
-})
-
-test('args: compressed', () => {
-  const payload = '0xdeadbeef'
-  const signature = P256.sign({ payload, privateKey })
-  expect(P256.recoverPublicKey({ payload, signature, compressed: true })).toBe(
-    P256.getPublicKey({ privateKey, compressed: true }),
   )
 })

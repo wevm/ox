@@ -187,3 +187,8 @@ export type {
   UnionToTuple,
   ValueOf,
 } from './internal/types.js'
+
+export type {
+  CompressedPublicKey,
+  UncompressedPublicKey,
+} from './internal/PublicKey/from.js'

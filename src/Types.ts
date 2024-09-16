@@ -44,6 +44,8 @@ export type {
   FeeValuesType,
 } from './internal/Fee/types.js'
 
+export type { PublicKey } from './internal/PublicKey/types.js'
+
 export type {
   Signature,
   Signature_Legacy,

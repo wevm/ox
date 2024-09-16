@@ -73,7 +73,10 @@ test('error: invalid signature', async () => {
     Signature.deserialize('0xdeadbeef'),
   ).toThrowErrorMatchingInlineSnapshot(
     `
-    [Signature.InvalidSerializedSizeError: Value \`0xdeadbeef\` is an invalid signature size. Expected: 64 bytes or 65 bytes. Received 4 bytes.
+    [Signature.InvalidSerializedSizeError: Value \`0xdeadbeef\` is an invalid signature size.
+
+    Expected: 64 bytes or 65 bytes.
+    Received 4 bytes.
 
     See: https://oxlib.sh/errors#invalidserializedsignaturesizeerror]
   `,

@@ -1,8 +1,7 @@
-import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_from } from '../Hex/from.js'
-import type { Hex } from '../Hex/types.js'
+import { PublicKey_serialize } from '../PublicKey/serialize.js'
+import type { PublicKey } from '../PublicKey/types.js'
 import { Address_from } from './from.js'
 import type { Address } from './types.js'
 
@@ -22,12 +21,12 @@ import type { Address } from './types.js'
  * @returns The {@link ox#Address.Address}.
  */
 export function Address_fromPublicKey(
-  publicKey: Hex | Bytes,
+  publicKey: PublicKey<false>,
   options: Address_fromPublicKey.Options = {},
 ): Address {
-  const address = Hash_keccak256(`0x${Hex_from(publicKey).slice(4)}`).substring(
-    26,
-  )
+  const address = Hash_keccak256(
+    `0x${PublicKey_serialize(publicKey).slice(4)}`,
+  ).substring(26)
   return Address_from(`0x${address}`, options)
 }
 
@@ -43,7 +42,7 @@ export declare namespace Address_fromPublicKey {
 
   type ErrorType =
     | Hash_keccak256.ErrorType
-    | Hex_from.ErrorType
+    | PublicKey_serialize.ErrorType
     | GlobalErrorType
 }
 

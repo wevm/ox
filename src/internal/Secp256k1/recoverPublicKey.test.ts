@@ -7,23 +7,7 @@ const privateKey = accounts[0].privateKey
 test('default', () => {
   const payload = '0xdeadbeef'
   const signature = Secp256k1.sign({ payload, privateKey })
-  expect(Secp256k1.recoverPublicKey({ payload, signature })).toBe(
+  expect(Secp256k1.recoverPublicKey({ payload, signature })).toStrictEqual(
     Secp256k1.getPublicKey({ privateKey }),
   )
-})
-
-test('args: as', () => {
-  const payload = '0xdeadbeef'
-  const signature = Secp256k1.sign({ payload, privateKey })
-  expect(
-    Secp256k1.recoverPublicKey({ payload, signature, as: 'Bytes' }),
-  ).toStrictEqual(Secp256k1.getPublicKey({ privateKey, as: 'Bytes' }))
-})
-
-test('args: compressed', () => {
-  const payload = '0xdeadbeef'
-  const signature = Secp256k1.sign({ payload, privateKey })
-  expect(
-    Secp256k1.recoverPublicKey({ payload, signature, compressed: true }),
-  ).toBe(Secp256k1.getPublicKey({ privateKey, compressed: true }))
 })

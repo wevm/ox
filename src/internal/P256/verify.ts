@@ -3,6 +3,8 @@ import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
+import { PublicKey_serialize } from '../PublicKey/serialize.js'
+import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
 
 /**
@@ -31,8 +33,10 @@ export function P256_verify(options: P256_verify.Options): boolean {
   const { payload, publicKey, signature } = options
   return secp256r1.verify(
     signature,
-    Hex_from(payload).substring(2),
-    Hex_from(publicKey).substring(2),
+    typeof payload === 'string'
+      ? payload.substring(2)
+      : Hex_from(payload).substring(2),
+    PublicKey_serialize(publicKey).substring(2),
   )
 }
 
@@ -41,7 +45,7 @@ export declare namespace P256_verify {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Public key that signed the payload. */
-    publicKey: Hex | Bytes
+    publicKey: PublicKey<boolean>
     /** Signature of the payload. */
     signature: Signature<boolean>
   }
