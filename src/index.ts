@@ -133,6 +133,12 @@ export * as Blobs from './Blobs.js'
 export * as Block from './Block.js'
 
 /**
+ * The **Bloom** Module provides a set of utility functions for working with
+ * Bloom Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml)
+ */
+export * as Bloom from './Bloom.js'
+
+/**
  * The **Bytes** Module provides a set of Ethereum-related utility functions for
  * working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances.
  *
