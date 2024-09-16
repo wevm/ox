@@ -186,7 +186,7 @@ function assertArgs(parameters: {
 
   if (Array.isArray(args) && Array.isArray(matchArgs)) {
     for (const [index, value] of matchArgs.entries()) {
-      if (!value) continue
+      if (value === null) continue
       const input = abiEvent.inputs[index]
       if (!input)
         throw new AbiEvent_InputNotFoundError({
@@ -214,7 +214,7 @@ function assertArgs(parameters: {
     !Array.isArray(matchArgs)
   )
     for (const [key, value] of Object.entries(matchArgs)) {
-      if (!value) continue
+      if (value === null) continue
       const input = abiEvent.inputs.find((input) => input.name === key)
       if (!input) throw new AbiEvent_InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
