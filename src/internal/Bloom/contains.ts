@@ -42,6 +42,6 @@ export declare namespace Bloom_contains {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Bloom_contains.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Bloom_contains.ErrorType
