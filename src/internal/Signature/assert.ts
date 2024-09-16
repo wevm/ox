@@ -30,22 +30,33 @@ import type { Signature } from './types.js'
  */
 export function Signature_assert(
   signature: ExactPartial<Signature>,
+  options: Signature_assert.Options = {},
 ): asserts signature is Signature {
+  const { recovered } = options
   if (typeof signature.r === 'undefined')
     throw new Signature_MissingPropertiesError({ signature })
   if (typeof signature.s === 'undefined')
     throw new Signature_MissingPropertiesError({ signature })
-  if (typeof signature.yParity === 'undefined')
+  if (recovered && typeof signature.yParity === 'undefined')
     throw new Signature_MissingPropertiesError({ signature })
   if (signature.r < 0n || signature.r > Solidity_maxUint256)
     throw new Signature_InvalidRError({ value: signature.r })
   if (signature.s < 0n || signature.s > Solidity_maxUint256)
     throw new Signature_InvalidSError({ value: signature.s })
-  if (signature.yParity !== 0 && signature.yParity !== 1)
+  if (
+    typeof signature.yParity === 'number' &&
+    signature.yParity !== 0 &&
+    signature.yParity !== 1
+  )
     throw new Signature_InvalidYParityError({ value: signature.yParity })
 }
 
 export declare namespace Signature_assert {
+  type Options = {
+    /** Whether or not the signature should be recovered (contain `yParity`). */
+    recovered?: boolean
+  }
+
   type ErrorType =
     | Signature_MissingPropertiesError
     | Signature_InvalidRError

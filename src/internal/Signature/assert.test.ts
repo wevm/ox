@@ -19,19 +19,19 @@ test('default', () => {
   `)
 
   expect(() =>
-    Signature.assert({ r: 0n, s: 0n, yParity: undefined }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.MissingPropertiesError: Signature \`{"r":"0","s":"0"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
-
-    See: https://oxlib.sh/errors#missingsignaturepropertieserror]
-  `)
-
-  expect(() =>
     Signature.assert({ r: 0n, s: 0n, yParity: 69 }),
   ).toThrowErrorMatchingInlineSnapshot(`
     [Signature.InvalidYParityError: Value \`69\` is an invalid y-parity value. Y-parity must be 0 or 1.
 
     See: https://oxlib.sh/errors#invalidsignatureyparityerror]
+  `)
+
+  expect(() =>
+    Signature.assert({ r: 0n, s: 0n }, { recovered: true }),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [Signature.MissingPropertiesError: Signature \`{"r":"0","s":"0"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
+
+    See: https://oxlib.sh/errors#missingsignaturepropertieserror]
   `)
 
   expect(() =>

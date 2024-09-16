@@ -3,11 +3,11 @@ import type { Compute } from '../types.js'
 
 /** ECDSA signature. */
 export type Signature<
-  recovery extends boolean = true,
+  recovered extends boolean = true,
   bigintType = bigint,
   numberType = number,
 > = Compute<
-  recovery extends true
+  recovered extends true
     ? {
         r: bigintType
         s: bigintType
@@ -16,13 +16,13 @@ export type Signature<
     : {
         r: bigintType
         s: bigintType
-        yParity?: numberType
+        yParity?: undefined
       }
 >
 
 /** RPC-formatted ECDSA signature. */
-export type Signature_Rpc<recovery extends boolean = true> = Signature<
-  recovery,
+export type Signature_Rpc<recovered extends boolean = true> = Signature<
+  recovered,
   Hex,
   Hex
 >

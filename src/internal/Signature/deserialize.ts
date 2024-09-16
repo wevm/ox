@@ -25,19 +25,10 @@ import { Signature_vToYParity } from './vToYParity.js'
  * @param serialized - The serialized signature.
  * @returns The deserialized {@link ox#Signature.Signature}.
  */
-export function Signature_deserialize<compact extends boolean = boolean>(
-  serialized: Bytes | Hex,
-  options: Signature_deserialize.Options<compact> = {},
-): Signature<compact extends true ? false : true> {
-  const { compact } = options
-
+export function Signature_deserialize(serialized: Bytes | Hex): Signature {
   const hex = typeof serialized === 'string' ? serialized : Hex_from(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)
-    throw new Signature_InvalidSerializedSizeError({ signature: hex })
-  if (compact === true && hex.length !== 130)
-    throw new Signature_InvalidSerializedSizeError({ signature: hex })
-  if (compact === false && hex.length !== 132)
     throw new Signature_InvalidSerializedSizeError({ signature: hex })
 
   const { r, s } = secp256k1.Signature.fromCompact(hex.slice(2, 130))
@@ -65,11 +56,6 @@ export function Signature_deserialize<compact extends boolean = boolean>(
 }
 
 export declare namespace Signature_deserialize {
-  type Options<compact extends boolean = boolean> = {
-    /** Whether or not the signature being deserialized is compact. */
-    compact?: compact | boolean | undefined
-  }
-
   type ErrorType =
     | Hex_from.ErrorType
     | Signature_InvalidSerializedSizeError

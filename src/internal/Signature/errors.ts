@@ -10,7 +10,7 @@ export class Signature_InvalidSerializedSizeError extends BaseError {
 
   constructor({ signature }: { signature: Hex | Bytes }) {
     super(
-      `Value \`${signature}\` is an invalid signature size. Expected: 64 (compact) or 65 bytes. Received ${Hex_size(Hex_from(signature))} bytes.`,
+      `Value \`${signature}\` is an invalid signature size. Expected: 64 bytes or 65 bytes. Received ${Hex_size(Hex_from(signature))} bytes.`,
       { docsPath: '/errors#invalidserializedsignaturesizeerror' },
     )
   }

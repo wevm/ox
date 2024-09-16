@@ -43,7 +43,7 @@ export declare namespace P256_verify {
     /** Public key that signed the payload. */
     publicKey: Hex | Bytes
     /** Signature of the payload. */
-    signature: Signature<false>
+    signature: Signature<boolean>
   }
 
   type ErrorType = GlobalErrorType

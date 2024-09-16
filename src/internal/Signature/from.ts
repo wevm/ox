@@ -1,7 +1,7 @@
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
-import type { OneOf } from '../types.js'
+import type { IsNarrowable, OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
 import { Signature_deserialize } from './deserialize.js'
 import { Signature_fromRpc } from './fromRpc.js'
@@ -14,7 +14,7 @@ import type {
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
- * Instantiates a typed {@link ox#Signature.Signature} object from a {@link ox#Signature.Signature}, {@link ox#Signature.Compact}, {@link ox#Signature.Legacy}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
+ * Instantiates a typed {@link ox#Signature.Signature} object from a {@link ox#Signature.Signature}, {@link ox#Signature.Legacy}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
@@ -67,12 +67,28 @@ import { Signature_vToYParity } from './vToYParity.js'
  * @param signature - The signature value to instantiate.
  * @returns The instantiated {@link ox#Signature.Signature}.
  */
-export function Signature_from(
-  signature:
-    | OneOf<Signature | Signature_Legacy | Signature_Rpc | Signature_LegacyRpc>
+export function Signature_from<
+  const signature extends
+    | OneOf<
+        | Signature<boolean>
+        | Signature_Legacy
+        | Signature_Rpc
+        | Signature_LegacyRpc
+      >
     | Hex
     | Bytes,
-): Signature {
+>(
+  signature:
+    | signature
+    | OneOf<
+        | Signature<boolean>
+        | Signature_Legacy
+        | Signature_Rpc
+        | Signature_LegacyRpc
+      >
+    | Hex
+    | Bytes,
+): Signature_from.ReturnType<signature> {
   const signature_ = (() => {
     if (typeof signature === 'string') return Signature_deserialize(signature)
     if (signature instanceof Uint8Array) return Signature_deserialize(signature)
@@ -90,14 +106,30 @@ export function Signature_from(
     return {
       r: signature.r,
       s: signature.s,
-      yParity: signature.yParity,
+      ...(typeof signature.yParity !== 'undefined'
+        ? { yParity: signature.yParity }
+        : {}),
     }
   })()
   Signature_assert(signature_)
-  return signature_
+  return signature_ as never
 }
 
 export declare namespace Signature_from {
+  type ReturnType<
+    signature extends
+      | OneOf<
+          | Signature<boolean>
+          | Signature_Legacy
+          | Signature_Rpc
+          | Signature_LegacyRpc
+        >
+      | Hex
+      | Bytes,
+  > = signature extends Signature<boolean> & { v?: undefined }
+    ? signature
+    : Signature
+
   type ErrorType =
     | Signature_assert.ErrorType
     | Signature_deserialize.ErrorType
@@ -105,6 +137,6 @@ export declare namespace Signature_from {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Signature_from.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Signature_from.ErrorType

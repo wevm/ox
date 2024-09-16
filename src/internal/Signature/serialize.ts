@@ -28,14 +28,14 @@ export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   signature: Signature<boolean>,
   options: Signature_serialize.Options<as> = {},
 ): Signature_serialize.ReturnType<as> {
-  const { compact = false, as = 'Hex' } = options
+  const { as = 'Hex' } = options
 
   const r = signature.r
   const s = signature.s
   let signature_ = `0x${new secp256k1.Signature(r, s!).toCompactHex()}` as const
 
   // If the signature is not compact, add the recovery byte to the signature.
-  if (!compact && typeof signature.yParity === 'number')
+  if (typeof signature.yParity === 'number')
     signature_ = `${signature_}${signature.yParity === 0 ? '00' : '01'}`
 
   if (as === 'Hex') return signature_ as Signature_serialize.ReturnType<as>
@@ -44,11 +44,6 @@ export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
 
 export declare namespace Signature_serialize {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
-    /**
-     * Whether to serialize the signature as a compact signature (without the recovery byte suffix).
-     * @default false
-     */
-    compact?: boolean | undefined
     /**
      * Type to serialize the signature as.
      * @default 'Hex'
