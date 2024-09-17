@@ -1,5 +1,5 @@
-import fs from 'fs-extra'
 import { basename, dirname, resolve } from 'node:path'
+import fs from 'fs-extra'
 import { getExports } from './utils/exports.js'
 
 // biome-ignore lint/suspicious/noConsoleLog:

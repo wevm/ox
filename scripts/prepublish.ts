@@ -8,9 +8,6 @@ const packageJson = fs.readJsonSync(packageJsonPath)
 const jsrJsonPath = join(import.meta.dirname, '../src/jsr.json')
 const jsrJson = fs.readJsonSync(jsrJsonPath)
 
-// We don't want to publish the type field.
-delete packageJson.type
-
 const exports = getExports({
   onEntry: ({ entryName, name, parentEntryName }) => {
     const distBasePath = parentEntryName
