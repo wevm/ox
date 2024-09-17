@@ -1,8 +1,8 @@
-import { sha256 } from '@noble/hashes/sha256'
 import { Base64_toBytes } from '../Base64/to.js'
 import { Bytes_concat } from '../Bytes/concat.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Hash_sha256 } from '../Hash/sha256.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { P256_verify } from '../P256/verify.js'
@@ -84,8 +84,8 @@ export function WebAuthnP256_verify(
   const [_, challenge_extracted] = match
   if (Hex_from(Base64_toBytes(challenge_extracted!)) !== challenge) return false
 
-  const clientDataJSONHash = sha256(Bytes_from(clientDataJSON))
-  const payload = sha256(
+  const clientDataJSONHash = Hash_sha256(Bytes_from(clientDataJSON), 'Bytes')
+  const payload = Hash_sha256(
     Bytes_concat(authenticatorDataBytes, clientDataJSONHash),
   )
 
