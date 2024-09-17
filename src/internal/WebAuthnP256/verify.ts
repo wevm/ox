@@ -2,6 +2,7 @@ import { sha256 } from '@noble/hashes/sha256'
 import { Base64_toBytes } from '../Base64/to.js'
 import { Bytes_concat } from '../Bytes/concat.js'
 import { Bytes_from } from '../Bytes/from.js'
+import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { P256_verify } from '../P256/verify.js'
@@ -100,4 +101,11 @@ export declare namespace WebAuthnP256_verify {
     signature: Signature<false>
     metadata: SignatureMetadata
   }
+
+  type ErrorType =
+    | Base64_toBytes.ErrorType
+    | Bytes_concat.ErrorType
+    | Bytes_from.ErrorType
+    | P256_verify.ErrorType
+    | GlobalErrorType
 }
