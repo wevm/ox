@@ -16,7 +16,7 @@ export type Signature<
     : {
         r: bigintType
         s: bigintType
-        yParity?: undefined
+        yParity?: numberType | undefined
       }
 >
 
