@@ -11,7 +11,7 @@
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
     "check": "biome check . --fix --unsafe",
     "check:repo": "sherif",
-    "check:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js",
+    "check:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js --ignore-pattern 'src/_dist/**/*.js'",
     "check:types": "tsc --noEmit",
     "clean": "rimraf src/_dist ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
     "contracts:build": "forge build --config-path ./contracts/foundry.toml && tsx contracts/scripts/generate-typed-artifacts.ts",
