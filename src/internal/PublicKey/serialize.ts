@@ -34,10 +34,10 @@ export function PublicKey_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   PublicKey_assert(publicKey)
 
   const { prefix, x, y } = publicKey
-  const { as = 'Hex' } = options
+  const { as = 'Hex', includePrefix = true } = options
 
   const publicKey_ = Hex_concat(
-    Hex_from(prefix, { size: 1 }),
+    includePrefix ? Hex_from(prefix, { size: 1 }) : '0x',
     Hex_from(x, { size: 32 }),
     // If the public key is not compressed, add the y coordinate.
     typeof y === 'bigint' ? Hex_from(y, { size: 32 }) : '0x',
@@ -54,6 +54,11 @@ export declare namespace PublicKey_serialize {
      * @default 'Hex'
      */
     as?: as | 'Hex' | 'Bytes' | undefined
+    /**
+     * Whether to include the prefix in the serialized public key.
+     * @default true
+     */
+    includePrefix?: boolean | undefined
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =

@@ -35,6 +35,17 @@ test('behavior: compressed', () => {
   )
 })
 
+test('option: includePrefix', () => {
+  const publicKey = PublicKey.from({
+    x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+    y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+  })
+  const serialized = PublicKey.serialize(publicKey, { includePrefix: false })
+  expect(serialized).toMatchInlineSnapshot(
+    `"0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5"`,
+  )
+})
+
 test('option: as', () => {
   const publicKey = PublicKey.from({
     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
