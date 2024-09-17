@@ -52,7 +52,7 @@ test('default', async () => {
         },
       } as any)
     },
-    payload:
+    challenge:
       '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
   })
 
@@ -375,7 +375,7 @@ test('error: null credential', async () => {
       getFn() {
         return Promise.resolve(null)
       },
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
     }),
   ).rejects.toMatchInlineSnapshot(`
@@ -391,7 +391,7 @@ test('error: thrown', async () => {
       getFn() {
         return Promise.reject(new Error('foo'))
       },
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
     }),
   ).rejects.toMatchInlineSnapshot(`

@@ -49,21 +49,21 @@ export function App() {
           onSubmit={async (e) => {
             e.preventDefault()
             const formData = new FormData(e.target as HTMLFormElement)
-            const payload = formData.get('payload') as Hex.Hex
+            const challenge = formData.get('challenge') as Hex.Hex
 
             const response = await WebAuthnP256.sign({
               credentialId: credential?.id,
-              payload,
+              challenge,
             })
             setSignResponse(response)
           }}
         >
-          <strong>Payload:</strong>
+          <strong>Challenge:</strong>
           <br />
           <input
             defaultValue="0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf"
-            name="payload"
-            placeholder="Payload"
+            name="challenge"
+            placeholder="Challenge"
             style={{ width: 500 }}
           />
           <button type="submit">Sign</button>
@@ -92,14 +92,14 @@ export function App() {
                 setVerified(undefined)
 
                 const formData = new FormData(e.target as HTMLFormElement)
-                const payload = formData.get('payload') as Hex.Hex
+                const challenge = formData.get('challenge') as Hex.Hex
                 const signature = JSON.parse(
                   formData.get('signature') as string,
                 )
                 const metadata = JSON.parse(formData.get('webauthn') as string)
 
                 const verified = WebAuthnP256.verify({
-                  payload,
+                  challenge,
                   publicKey: credential.publicKey,
                   signature: {
                     r: BigInt(signature.r),
@@ -111,12 +111,12 @@ export function App() {
                 setVerified(verified)
               }}
             >
-              <strong>Payload:</strong>
+              <strong>Challenge:</strong>
               <div>
                 <input
                   defaultValue="0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf"
-                  name="payload"
-                  placeholder="Payload"
+                  name="challenge"
+                  placeholder="Challenge"
                   style={{ width: 500 }}
                 />
               </div>

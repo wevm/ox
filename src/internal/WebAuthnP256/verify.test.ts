@@ -24,7 +24,7 @@ test('default', async () => {
   expect(
     WebAuthnP256.verify({
       metadata,
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -54,7 +54,7 @@ test('default', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -85,7 +85,7 @@ test('behavior: invalid hash', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xa631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -116,7 +116,7 @@ test('behavior: invalid signature', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xa631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -147,7 +147,7 @@ test('behavior: authenticator data too short', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xa631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -179,7 +179,7 @@ test('behavior: invalid flag', async () => {
   expect(
     WebAuthnP256.verify({
       metadata,
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -209,7 +209,7 @@ test('behavior: invalid flag', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -240,7 +240,7 @@ test('behavior: invalid flag', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -271,7 +271,7 @@ test('behavior: invalid type index', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -302,7 +302,7 @@ test('behavior: invalid challenge', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,
@@ -333,7 +333,7 @@ test('behavior: invalid challenge match', async () => {
 
   expect(
     WebAuthnP256.verify({
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       publicKey,
       signature,

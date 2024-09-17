@@ -27,7 +27,7 @@ import type {
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   credentialId: credential.id,
- *   payload: '0xdeadbeef',
+ *   challenge: '0xdeadbeef',
  * })
  * ```
  *

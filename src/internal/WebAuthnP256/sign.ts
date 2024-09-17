@@ -11,7 +11,7 @@ import type {
 } from './types.js'
 
 /**
- * Signs a payload using a stored WebAuthn P256 Credential. If no Credential is provided,
+ * Signs a challenge using a stored WebAuthn P256 Credential. If no Credential is provided,
  * a prompt will be displayed for the user to select an existing Credential
  * that was previously registered.
  *
@@ -25,7 +25,7 @@ import type {
  *
  * const { metadata, signature } = await WebAuthnP256.sign({ // [!code focus]
  *   credentialId: credential.id, // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
+ *   challenge: '0xdeadbeef', // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   metadata: {

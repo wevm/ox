@@ -11,7 +11,7 @@ import type { Signature } from '../Signature/types.js'
 import type { SignatureMetadata } from './types.js'
 
 /**
- * Verifies a signature using the Credential's public key and the payload which was signed.
+ * Verifies a signature using the Credential's public key and the challenge which was signed.
  *
  * @example
  * ```ts twoslash
@@ -23,12 +23,12 @@ import type { SignatureMetadata } from './types.js'
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   credentialId: credential.id,
- *   payload: '0xdeadbeef',
+ *   challenge: '0xdeadbeef',
  * })
  *
  * const result = await WebAuthnP256.verify({ // [!code focus]
  *   metadata, // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
+ *   challenge: '0xdeadbeef', // [!code focus]
  *   publicKey: credential.publicKey, // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
@@ -41,7 +41,7 @@ import type { SignatureMetadata } from './types.js'
 export function WebAuthnP256_verify(
   options: WebAuthnP256_verify.Options,
 ): boolean {
-  const { metadata, payload, publicKey, signature } = options
+  const { challenge, metadata, publicKey, signature } = options
   const {
     authenticatorData,
     challengeIndex,
@@ -81,14 +81,16 @@ export function WebAuthnP256_verify(
   if (!match) return false
 
   // Validate the challenge in the clientDataJSON.
-  const [_, challenge] = match
-  if (Hex_from(Base64_toBytes(challenge!)) !== payload) return false
+  const [_, challenge_extracted] = match
+  if (Hex_from(Base64_toBytes(challenge_extracted!)) !== challenge) return false
 
   const clientDataJSONHash = sha256(Bytes_from(clientDataJSON))
-  const hash = sha256(Bytes_concat(authenticatorDataBytes, clientDataJSONHash))
+  const payload = sha256(
+    Bytes_concat(authenticatorDataBytes, clientDataJSONHash),
+  )
 
   return P256_verify({
-    payload: hash,
+    payload,
     publicKey,
     signature,
   })
@@ -96,7 +98,7 @@ export function WebAuthnP256_verify(
 
 export declare namespace WebAuthnP256_verify {
   type Options = {
-    payload: Hex
+    challenge: Hex
     publicKey: PublicKey
     signature: Signature<false>
     metadata: SignatureMetadata

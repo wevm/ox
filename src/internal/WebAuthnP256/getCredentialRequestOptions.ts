@@ -8,14 +8,14 @@ import type {
 } from './types.js'
 
 /**
- * Returns the request options to sign a payload with the Web Authentication API.
+ * Returns the request options to sign a challenge with the Web Authentication API.
  *
  * @example
  * ```ts twoslash
  * import { WebAuthnP256 } from 'ox'
  *
  * const options = WebAuthnP256.getCredentialRequestOptions({
- *   payload: '0xdeadbeef',
+ *   challenge: '0xdeadbeef',
  * })
  *
  * const credential = await window.navigator.credentials.get(options)
@@ -29,11 +29,10 @@ export function WebAuthnP256_getCredentialRequestOptions(
 ): CredentialRequestOptions {
   const {
     credentialId,
-    payload,
+    challenge,
     rpId = window.location.hostname,
     userVerification = 'required',
   } = options
-  const challenge = Bytes_from(payload)
   return {
     publicKey: {
       ...(credentialId
@@ -46,7 +45,7 @@ export function WebAuthnP256_getCredentialRequestOptions(
             ],
           }
         : {}),
-      challenge,
+      challenge: Bytes_from(challenge),
       rpId,
       userVerification,
     },
@@ -56,7 +55,7 @@ export function WebAuthnP256_getCredentialRequestOptions(
 export declare namespace WebAuthnP256_getCredentialRequestOptions {
   type Options = {
     credentialId?: string | undefined
-    payload: Hex
+    challenge: Hex
     /**
      * The relying party identifier to use.
      */

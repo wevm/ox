@@ -4,7 +4,7 @@ import { expect, test } from 'vitest'
 test('default', () => {
   expect(
     WebAuthnP256.getCredentialRequestOptions({
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       rpId: 'foo',
     }),
@@ -56,7 +56,7 @@ test('options: credentialId', () => {
   expect(
     WebAuthnP256.getCredentialRequestOptions({
       credentialId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
-      payload:
+      challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       rpId: 'foo',
     }),
