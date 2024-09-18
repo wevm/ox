@@ -49,7 +49,7 @@ describe('numbers to bytes', () => {
 
     expect(() => Bytes.from(-69)).toThrowErrorMatchingInlineSnapshot(
       `
-      [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe integer range (\`0\` to \`9007199254740991\`)
+      [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)
 
       See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
@@ -66,6 +66,14 @@ describe('numbers to bytes', () => {
       Uint8Array [
         0,
         10,
+      ]
+    `)
+    expect(Bytes.fromNumber(0, { size: 4 })).toMatchInlineSnapshot(`
+      Uint8Array [
+        0,
+        0,
+        0,
+        0,
       ]
     `)
     expect(Bytes.fromNumber(69420, { size: 4 })).toMatchInlineSnapshot(`

@@ -61,7 +61,6 @@ export function WebAuthnP256_getSignPayload(
     crossOrigin,
     extraClientData,
     flag,
-    hash,
     origin,
     rpId,
     signCount,

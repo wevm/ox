@@ -124,10 +124,12 @@ export function Hex_toBigInt(
   if (!signed) return value
 
   const size = (hex.length - 2) / 2
-  const max = (1n << (BigInt(size) * 8n - 1n)) - 1n
-  if (value <= max) return value
 
-  return value - BigInt(`0x${'f'.padStart(size * 2, 'f')}`) - 1n
+  const max_unsigned = (1n << (BigInt(size) * 8n)) - 1n
+  const max_signed = max_unsigned >> 1n
+
+  if (value <= max_signed) return value
+  return value - max_unsigned - 1n
 }
 
 export declare namespace Hex_toBigInt {

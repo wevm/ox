@@ -19,9 +19,9 @@ export class Hex_IntegerOutOfRangeError extends BaseError {
     value: string
   }) {
     super(
-      `Number \`${value}\` is not in safe ${
-        size ? `${size * 8}-bit ${signed ? 'signed' : 'unsigned'} ` : ''
-      }integer range ${max ? `(\`${min}\` to \`${max}\`)` : `(above \`${min}\`)`}`,
+      `Number \`${value}\` is not in safe${
+        size ? ` ${size * 8}-bit` : ''
+      }${signed ? ' signed' : ' unsigned'} integer range ${max ? `(\`${min}\` to \`${max}\`)` : `(above \`${min}\`)`}`,
       {
         docsPath: '/errors#hexintegeroutofrangeerror',
       },

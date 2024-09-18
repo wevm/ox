@@ -18,14 +18,14 @@ describe('numbers to hex', () => {
       Hex.fromNumber(420182738912731283712937129),
     ).toThrowErrorMatchingInlineSnapshot(
       `
-      [Hex.IntegerOutOfRangeError: Number \`4.2018273891273126e+26\` is not in safe integer range (\`0\` to \`9007199254740991\`)
+      [Hex.IntegerOutOfRangeError: Number \`4.2018273891273126e+26\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)
 
       See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
     )
     expect(() => Hex.fromNumber(-69)).toThrowErrorMatchingInlineSnapshot(
       `
-      [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe integer range (\`0\` to \`9007199254740991\`)
+      [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)
 
       See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
@@ -129,7 +129,7 @@ describe('bigints to hex', () => {
 
     expect(() => Hex.fromNumber(-69n)).toThrowErrorMatchingInlineSnapshot(
       `
-      [Hex.IntegerOutOfRangeError: Number \`-69n\` is not in safe integer range (above \`0n\`)
+      [Hex.IntegerOutOfRangeError: Number \`-69n\` is not in safe unsigned integer range (above \`0n\`)
 
       See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
     `,
