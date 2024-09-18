@@ -133,6 +133,13 @@ export function createResolveDeclarationReference(
       apiModel,
     )
 
+    if (result.errorMessage?.includes('ambiguous'))
+      throw new Error(
+        'ambiguous declaration reference for ' +
+          declarationReference.emitAsTsdoc() +
+          '. See: https://github.com/microsoft/tsdoc/blob/0362e09e0a3f6652475b33fbb9ccb4f861323dd0/spec/code-snippets/DeclarationReferences.ts',
+      )
+
     const item = result.resolvedApiItem
     if (item) {
       const url = getLinkForApiItem(item)

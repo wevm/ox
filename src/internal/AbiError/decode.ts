@@ -30,7 +30,7 @@ import type { AbiError } from './types.js'
  * ```
  *
  * @example
- * You can extract an ABI Error from a JSON ABI with {@link ox#AbiError.fromAbi}:
+ * You can extract an ABI Error from a JSON ABI with {@link ox#AbiError.(fromAbi:function)}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -44,7 +44,7 @@ import type { AbiError } from './types.js'
  * ```
  *
  * @example
- * You can pass the error `data` to the `name` property of {@link ox#AbiError.fromAbi} to extract and infer the error by its 4-byte selector:
+ * You can pass the error `data` to the `name` property of {@link ox#AbiError.(fromAbi:function)} to extract and infer the error by its 4-byte selector:
  *
  * ```ts twoslash
  * // @noErrors

@@ -8,7 +8,7 @@ import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
 /**
  * Hashes ENS name.
  *
- * Since ENS names prohibit certain forbidden characters (e.g. underscore) and have other validation rules, you likely want to [normalize ENS names](https://docs.ens.domains/contract-api-reference/name-processing#normalising-names) with [UTS-46 normalization](https://unicode.org/reports/tr46) before passing them to `namehash`. You can use the built-in {@link ox#Ens.normalize} function for this.
+ * Since ENS names prohibit certain forbidden characters (e.g. underscore) and have other validation rules, you likely want to [normalize ENS names](https://docs.ens.domains/contract-api-reference/name-processing#normalising-names) with [UTS-46 normalization](https://unicode.org/reports/tr46) before passing them to `namehash`. You can use the built-in {@link ox#Ens.(normalize:function)} function for this.
  *
  * @example
  * ```ts twoslash

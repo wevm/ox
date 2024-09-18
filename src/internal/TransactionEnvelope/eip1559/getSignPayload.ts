@@ -8,7 +8,7 @@ import type { TransactionEnvelopeEip1559 } from './types.js'
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
- * with ECDSA signing utilities like {@link ox#Secp256k1.sign}.
+ * with ECDSA signing utilities like {@link ox#Secp256k1.(sign:function)}.
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip1559 } from 'ox'

@@ -33,7 +33,7 @@ import type { AbiFunction } from './types.js'
  * ```
  *
  * @example
- * You can extract an ABI Function from a JSON ABI with {@link ox#AbiFunction.fromAbi}:
+ * You can extract an ABI Function from a JSON ABI with {@link ox#AbiFunction.(fromAbi:function)}:
  *
  * ```ts twoslash
  * // @noErrors

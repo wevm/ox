@@ -8,7 +8,7 @@ import type { Authorization } from './types.js'
  *
  * @example
  * The example below demonstrates computing the sign payload for an {@link ox#Authorization.Authorization}. This payload
- * can then be passed to signing functions like {@link ox#Secp256k1.sign}.
+ * can then be passed to signing functions like {@link ox#Secp256k1.(sign:function)}.
  *
  * ```ts twoslash
  * import { Authorization, Secp256k1 } from 'ox'

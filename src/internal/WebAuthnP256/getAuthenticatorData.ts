@@ -13,7 +13,7 @@ import type { Hex } from '../Hex/types.js'
  * This function is mainly for testing purposes or for manually constructing
  * autenticator data. In most cases you will not need this function.
  * `authenticatorData` is typically returned as part of the
- * {@link ox#WebAuthnP256.sign} response (ie. an authenticator response).
+ * {@link ox#WebAuthnP256.(sign:function)} response (ie. an authenticator response).
  *
  * :::
  *

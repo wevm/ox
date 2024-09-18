@@ -31,7 +31,7 @@ import type { AbiEvent } from './types.js'
  * ```
  *
  * @param abiItem - The ABI event to compute the selector for.
- * @returns The {@link ox#Hash.keccak256} hash of the event signature.
+ * @returns The {@link ox#Hash.(keccak256:function)} hash of the event signature.
  */
 export function AbiEvent_getSelector(abiItem: string | AbiEvent): Hex {
   return AbiItem_getSignatureHash(abiItem)

@@ -13,14 +13,14 @@ import type {
 /**
  * Constructs the final digest that was signed and computed by the authenticator. This payload includes
  * the cryptographic `challenge`, as well as authenticator metadata (`authenticatorData` + `clientDataJSON`).
- * This value can be also used with raw P256 verification (such as {@link ox#P256.verify} or
- * {@link ox#WebCryptoP256.verify}).
+ * This value can be also used with raw P256 verification (such as {@link ox#P256.(verify:function)} or
+ * {@link ox#WebCryptoP256.(verify:function)}).
  *
  * :::warning
  *
  * This function is mainly for testing purposes or for manually constructing
  * signing payloads. In most cases you will not need this function and
- * instead use {@link ox#WebAuthnP256.sign}.
+ * instead use {@link ox#WebAuthnP256.(sign:function)}.
  *
  * :::
  *

@@ -32,7 +32,7 @@ import type { AbiItem } from './types.js'
  * ```
  *
  * @param abiItem - The ABI item to compute the selector for. Can be a signature or an ABI item for an error, event, function, etc.
- * @returns The first 4 bytes of the {@link ox#Hash.keccak256} hash of the function signature.
+ * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the function signature.
  */
 export function AbiItem_getSelector(abiItem: string | AbiItem): Hex {
   return Hex_slice(AbiItem_getSignatureHash(abiItem), 0, 4)

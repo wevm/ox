@@ -28,7 +28,7 @@ import type {
  * ### Attaching Signatures
  *
  * A {@link ox#Signature.Signature} can be attached with the `signature` option. The example below demonstrates signing
- * an Authorization with {@link ox#Secp256k1.sign}.
+ * an Authorization with {@link ox#Secp256k1.(sign:function)}.
  *
  * ```ts twoslash
  * import { Authorization, Secp256k1 } from 'ox'

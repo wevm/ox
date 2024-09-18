@@ -27,7 +27,7 @@ import type { AbiError } from './types.js'
  * ```
  *
  * @param abiItem - The ABI item to compute the selector for.
- * @returns The first 4 bytes of the {@link ox#Hash.keccak256} hash of the error signature.
+ * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the error signature.
  */
 export function AbiError_getSelector(abiItem: string | AbiError): Hex {
   return AbiItem_getSelector(abiItem)

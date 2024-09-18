@@ -4,14 +4,14 @@ import type { Hex } from '../Hex/types.js'
 
 /**
  * Constructs the Client Data in stringified JSON format which represents client data that
- * was passed to `credentials.get()` in {@link ox#WebAuthnP256.sign}.
+ * was passed to `credentials.get()` in {@link ox#WebAuthnP256.(sign:function)}.
  *
  * :::warning
  *
  * This function is mainly for testing purposes or for manually constructing
  * client data. In most cases you will not need this function.
  * `clientDataJSON` is typically returned as part of the
- * {@link ox#WebAuthnP256.sign} response (ie. an authenticator response).
+ * {@link ox#WebAuthnP256.(sign:function)} response (ie. an authenticator response).
  *
  * :::
  *

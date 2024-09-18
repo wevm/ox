@@ -9,7 +9,7 @@ import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
  * @example
  * ### CREATE
  *
- * Retrieves via the [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode. Shorthand for {@link ox#ContractAddress.getCreateAddress}.
+ * Retrieves via the [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode. Shorthand for {@link ox#ContractAddress.(getCreateAddress:function)}.
  *
  * ```ts twoslash
  * import { ContractAddress } from 'ox'
@@ -24,7 +24,7 @@ import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
  * @example
  * ### CREATE2
  *
- * Retrieves via the [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode. Shorthand for {@link ox#ContractAddress.getCreate2Address}.
+ * Retrieves via the [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode. Shorthand for {@link ox#ContractAddress.(getCreate2Address:function)}.
  *
  * ```ts twoslash
  * import { Bytes, ContractAddress, Hex } from 'ox'

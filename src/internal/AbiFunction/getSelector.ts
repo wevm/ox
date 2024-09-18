@@ -31,7 +31,7 @@ import type { AbiFunction } from './types.js'
  * ```
  *
  * @param abiItem - The ABI item to compute the selector for.
- * @returns The first 4 bytes of the {@link ox#Hash.keccak256} hash of the function signature.
+ * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the function signature.
  */
 export function AbiFunction_getSelector(abiItem: string | AbiFunction): Hex {
   return AbiItem_getSelector(abiItem)
