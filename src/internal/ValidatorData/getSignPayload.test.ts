@@ -5,7 +5,7 @@ import { accounts } from '../../../test/constants/accounts.js'
 test('default', () => {
   expect(
     ValidatorData.getSignPayload({
-      data: Hex.from('hello world'),
+      data: Hex.fromString('hello world'),
       validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
     }),
   ).toMatchInlineSnapshot(
@@ -15,7 +15,7 @@ test('default', () => {
 
 test('behavior: signature', () => {
   const payload = ValidatorData.getSignPayload({
-    data: Hex.from('hello world'),
+    data: Hex.fromString('hello world'),
     validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
   })
 

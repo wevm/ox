@@ -104,7 +104,7 @@ test('typed message with a domain separator that uses all fields.', () => {
       version: '1',
       chainId: 1n,
       verifyingContract: '0x0000000000000000000000000000000000000000',
-      salt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
+      salt: Hex.padRight(Hex.fromBytes(new Uint8Array([1, 2, 3]))),
     },
   })
 
@@ -149,7 +149,7 @@ test('typed message with only custom domain separator fields', () => {
       customVersion: '1',
       customChainId: 1n,
       customVerifyingContract: '0x0000000000000000000000000000000000000000',
-      customSalt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
+      customSalt: Hex.padRight(Hex.fromBytes(new Uint8Array([1, 2, 3]))),
       extraField: 'stuff',
     },
   })
@@ -192,7 +192,7 @@ test('typed message with data', () => {
       version: '1',
       chainId: 1n,
       verifyingContract: '0x0000000000000000000000000000000000000000',
-      salt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
+      salt: Hex.padRight(Hex.fromBytes(new Uint8Array([1, 2, 3]))),
     },
     message: {
       data: 'Hello!',

@@ -2,7 +2,7 @@ import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromString } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_encodeType } from './encodeType.js'
 import type { TypedData } from './types.js'
@@ -107,14 +107,16 @@ export function hashType(value: {
   types: TypedData
 }): Hex {
   const { primaryType, types } = value
-  const encodedHashType = Hex_from(TypedData_encodeType({ primaryType, types }))
+  const encodedHashType = Hex_fromString(
+    TypedData_encodeType({ primaryType, types }),
+  )
   return Hash_keccak256(encodedHashType)
 }
 
 /** @internal */
 export declare namespace hashType {
   type ErrorType =
-    | Hex_from.ErrorType
+    | Hex_fromString.ErrorType
     | TypedData_encodeType.ErrorType
     | Hash_keccak256.ErrorType
     | GlobalErrorType
@@ -141,8 +143,7 @@ export function encodeField(properties: {
     return [{ type: 'bytes32' }, Hash_keccak256(value)]
   }
 
-  if (type === 'string')
-    return [{ type: 'bytes32' }, Hash_keccak256(Hex_from(value))]
+  if (type === 'string') return [{ type: 'bytes32' }, Hash_keccak256(value)]
 
   if (type.lastIndexOf(']') === type.length - 1) {
     const parsedType = type.slice(0, type.lastIndexOf('['))
@@ -174,6 +175,5 @@ export declare namespace encodeField {
   type ErrorType =
     | Hash_keccak256.ErrorType
     | AbiParameters_encode.ErrorType
-    | Hex_from.ErrorType
     | GlobalErrorType
 }

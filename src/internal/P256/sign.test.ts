@@ -40,7 +40,7 @@ test('default', async () => {
 
   {
     const signature = P256.sign({
-      payload: Bytes.from(
+      payload: Bytes.fromHex(
         '0xdeadbeef1aaaa22111231241220000123aaaaabbccababab2211',
       ),
       privateKey,

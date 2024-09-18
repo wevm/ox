@@ -121,13 +121,13 @@ test('signature', () => {
 describe('raw', () => {
   test('default', () => {
     const serialized = `0x04${Rlp.fromHex([
-      Hex.from(1), // chainId
-      Hex.from(0), // nonce
-      Hex.from(1), // maxPriorityFeePerGas
-      Hex.from(1), // maxFeePerGas
-      Hex.from(1), // gas
+      Hex.fromNumber(1), // chainId
+      Hex.fromNumber(0), // nonce
+      Hex.fromNumber(1), // maxPriorityFeePerGas
+      Hex.fromNumber(1), // maxFeePerGas
+      Hex.fromNumber(1), // gas
       '0x0000000000000000000000000000000000000000', // to
-      Hex.from(0), // value
+      Hex.fromNumber(0), // value
       '0x', // data
       '0x', // accessList
       '0x', // authorizationList
@@ -150,13 +150,13 @@ describe('raw', () => {
 
   test('empty sig', () => {
     const serialized = `0x04${Rlp.fromHex([
-      Hex.from(1), // chainId
-      Hex.from(0), // nonce
-      Hex.from(1), // maxPriorityFeePerGas
-      Hex.from(1), // maxFeePerGas
-      Hex.from(1), // gas
+      Hex.fromNumber(1), // chainId
+      Hex.fromNumber(0), // nonce
+      Hex.fromNumber(1), // maxPriorityFeePerGas
+      Hex.fromNumber(1), // maxFeePerGas
+      Hex.fromNumber(1), // gas
       '0x0000000000000000000000000000000000000000', // to
-      Hex.from(0), // value
+      Hex.fromNumber(0), // value
       '0x', // data
       '0x', // accessList
       '0x', // authorizationList
@@ -185,19 +185,19 @@ describe('raw', () => {
 
   test('low sig coords', () => {
     const serialized = `0x04${Rlp.fromHex([
-      Hex.from(1), // chainId
-      Hex.from(0), // nonce
-      Hex.from(1), // maxPriorityFeePerGas
-      Hex.from(1), // maxFeePerGas
-      Hex.from(1), // gas
+      Hex.fromNumber(1), // chainId
+      Hex.fromNumber(0), // nonce
+      Hex.fromNumber(1), // maxPriorityFeePerGas
+      Hex.fromNumber(1), // maxFeePerGas
+      Hex.fromNumber(1), // gas
       '0x0000000000000000000000000000000000000000', // to
-      Hex.from(0), // value
+      Hex.fromNumber(0), // value
       '0x', // data
       '0x', // accessList
       '0x', // authorizationList
       '0x', // r
-      Hex.from(69), // v
-      Hex.from(420), // s
+      Hex.fromNumber(69), // v
+      Hex.fromNumber(420), // s
     ]).slice(2)}` as const
     expect(
       TransactionEnvelopeEip7702.deserialize(serialized),
@@ -224,13 +224,13 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeEip7702.deserialize(
         `0x04${Rlp.fromHex([
-          Hex.from(1), // chainId
-          Hex.from(0), // nonce
-          Hex.from(1), // maxPriorityFeePerGas
-          Hex.from(1), // maxFeePerGas
-          Hex.from(1), // gas
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
           '0x0000000000000000000000000000000000000000', // to
-          Hex.from(0), // value
+          Hex.fromNumber(0), // value
           '0x', // data
           [
             [
@@ -253,13 +253,13 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeEip7702.deserialize(
         `0x04${Rlp.fromHex([
-          Hex.from(1), // chainId
-          Hex.from(0), // nonce
-          Hex.from(1), // maxPriorityFeePerGas
-          Hex.from(1), // maxFeePerGas
-          Hex.from(1), // gas
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
           '0x0000000000000000000000000000000000000000', // to
-          Hex.from(0), // value
+          Hex.fromNumber(0), // value
           '0x', // data
           [['0x123456', ['0x0']]], // accessList
           '0x', // authorizationList

@@ -4,95 +4,9 @@ import { Bytes_trimRight } from '../Bytes/trim.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_assertSize } from './assertSize.js'
-import { Hex_InvalidHexBooleanError, Hex_InvalidTypeError } from './errors.js'
+import { Hex_InvalidHexBooleanError } from './errors.js'
 import { Hex_trimLeft } from './trim.js'
 import type { Hex } from './types.js'
-
-/**
- * Decodes a {@link ox#Hex.Hex} value into a string, number, bigint, boolean, or {@link ox#Bytes.Bytes}.
- *
- * @example
- * Decode a Hex value into a **number**.
- *
- * ```ts twoslash
- * import { Hex } from 'ox'
- *
- * Hex.to('0x1a4', 'number')
- * // @log: 420
- * ```
- *
- * @example
- * Decode a Hex value into a **UTF-8 string**.
- *
- * ```ts twoslash
- * import { Hex } from 'ox'
- *
- * Hex.to('0x48656c6c6f20576f726c6421', 'string')
- * // @log: 'Hello world'
- * ```
- *
- * @example
- * Decode a Hex value into a **UTF-8 string** with a size of 32 bytes.
- *
- * ```ts twoslash
- * import { Hex } from 'ox'
- *
- * Hex.to(
- *   '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000',
- *   'string',
- *   { size: 32 },
- * )
- * // @log: 'Hello world'
- * ```
- *
- * @param hex - The {@link ox#Hex.Hex} value to decode.
- * @param to - The type to decode the {@link ox#Hex.Hex} value into.
- * @param options -
- * @returns The decoded value.
- */
-export function Hex_to<to extends Hex_to.To>(
-  hex: Hex,
-  to: to | Hex_to.To,
-  options: Hex_to.Options = {},
-): Hex_to.ReturnType<to> {
-  if (to === 'number') return Hex_toNumber(hex, options) as never
-  if (to === 'bigint') return Hex_toBigInt(hex, options) as never
-  if (to === 'string') return Hex_toString(hex, options) as never
-  if (to === 'boolean') return Hex_toBoolean(hex, options) as never
-  if (to === 'Bytes') return Hex_toBytes(hex, options) as never
-  throw new Hex_InvalidTypeError(
-    to,
-    'string | Bytes | bigint | number | boolean',
-  )
-}
-
-export declare namespace Hex_to {
-  type To = 'string' | 'Bytes' | 'bigint' | 'number' | 'boolean'
-
-  interface Options {
-    /** Size (in bytes) of the hex value. */
-    size?: number | undefined
-  }
-
-  type ReturnType<to> =
-    | (to extends 'string' ? string : never)
-    | (to extends 'Bytes' ? Bytes : never)
-    | (to extends 'bigint' ? bigint : never)
-    | (to extends 'number' ? number : never)
-    | (to extends 'boolean' ? boolean : never)
-
-  type ErrorType =
-    | Hex_toNumber.ErrorType
-    | Hex_toBigInt.ErrorType
-    | Hex_toBoolean.ErrorType
-    | Hex_toString.ErrorType
-    | Hex_toBytes.ErrorType
-    | Hex_InvalidTypeError
-    | GlobalErrorType
-}
-
-/* v8 ignore next */
-Hex_to.parseError = (error: unknown) => error as Hex_to.ErrorType
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a BigInt.

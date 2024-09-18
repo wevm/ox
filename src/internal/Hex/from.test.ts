@@ -1,13 +1,13 @@
 import { Hex } from 'ox'
 import { describe, expect, test } from 'vitest'
 
+test('default', () => {
+  expect(Hex.from(new Uint8Array([251, 151, 22, 33]))).toBe('0xfb971621')
+  expect(Hex.from('0xdeadbeef')).toBe('0xdeadbeef')
+})
+
 describe('numbers to hex', () => {
   test('default', () => {
-    expect(Hex.from(0)).toMatchInlineSnapshot(`"0x00"`)
-    expect(Hex.from(7)).toMatchInlineSnapshot(`"0x07"`)
-    expect(Hex.from(69)).toMatchInlineSnapshot('"0x45"')
-    expect(Hex.from(420)).toMatchInlineSnapshot(`"0x01a4"`)
-
     expect(Hex.fromNumber(0)).toMatchInlineSnapshot(`"0x00"`)
     expect(Hex.fromNumber(7)).toMatchInlineSnapshot(`"0x07"`)
     expect(Hex.fromNumber(69)).toMatchInlineSnapshot('"0x45"')
@@ -111,14 +111,6 @@ describe('numbers to hex', () => {
 
 describe('bigints to hex', () => {
   test('default', () => {
-    expect(Hex.from(0)).toMatchInlineSnapshot(`"0x00"`)
-    expect(Hex.from(7n)).toMatchInlineSnapshot(`"0x07"`)
-    expect(Hex.from(69n)).toMatchInlineSnapshot('"0x45"')
-    expect(Hex.from(420n)).toMatchInlineSnapshot(`"0x01a4"`)
-    expect(
-      Hex.from(4206942069420694206942069420694206942069n),
-    ).toMatchInlineSnapshot(`"0x0c5cf39211876fb5e5884327fa56fc0b75"`)
-
     expect(Hex.fromNumber(0)).toMatchInlineSnapshot(`"0x00"`)
     expect(Hex.fromNumber(7n)).toMatchInlineSnapshot(`"0x07"`)
     expect(Hex.fromNumber(69n)).toMatchInlineSnapshot('"0x45"')
@@ -238,20 +230,11 @@ describe('bigints to hex', () => {
 
 describe('boolean to hex', () => {
   test('default', () => {
-    expect(Hex.from(true)).toMatchInlineSnapshot(`"0x01"`)
-    expect(Hex.from(false)).toMatchInlineSnapshot(`"0x00"`)
-
     expect(Hex.fromBoolean(true)).toMatchInlineSnapshot(`"0x01"`)
     expect(Hex.fromBoolean(false)).toMatchInlineSnapshot(`"0x00"`)
   })
 
   test('args: size', () => {
-    expect(Hex.from(true, { size: 16 })).toMatchInlineSnapshot(
-      '"0x00000000000000000000000000000001"',
-    )
-    expect(Hex.from(true, { size: 32 })).toMatchInlineSnapshot(
-      '"0x0000000000000000000000000000000000000000000000000000000000000001"',
-    )
     expect(Hex.fromBoolean(false, { size: 16 })).toMatchInlineSnapshot(
       '"0x00000000000000000000000000000000"',
     )
@@ -261,15 +244,6 @@ describe('boolean to hex', () => {
   })
 
   test('error: size overflow', () => {
-    expect(() =>
-      Hex.from(true, { size: 0 }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `,
-    )
     expect(() =>
       Hex.fromBoolean(false, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -282,13 +256,6 @@ describe('boolean to hex', () => {
 
 describe('string to hex', () => {
   test('default', () => {
-    expect(Hex.from('')).toMatchInlineSnapshot('"0x"')
-    expect(Hex.from('a')).toMatchInlineSnapshot('"0x61"')
-    expect(Hex.from('abc')).toMatchInlineSnapshot('"0x616263"')
-    expect(Hex.from('Hello World!')).toMatchInlineSnapshot(
-      '"0x48656c6c6f20576f726c6421"',
-    )
-
     expect(Hex.fromString('')).toMatchInlineSnapshot('"0x"')
     expect(Hex.fromString('a')).toMatchInlineSnapshot('"0x61"')
     expect(Hex.fromString('abc')).toMatchInlineSnapshot('"0x616263"')
@@ -298,12 +265,6 @@ describe('string to hex', () => {
   })
 
   test('args: size', () => {
-    expect(Hex.from('Hello World!', { size: 16 })).toMatchInlineSnapshot(
-      '"0x48656c6c6f20576f726c642100000000"',
-    )
-    expect(Hex.from('Hello World!', { size: 32 })).toMatchInlineSnapshot(
-      '"0x48656c6c6f20576f726c64210000000000000000000000000000000000000000"',
-    )
     expect(Hex.fromString('Hello World!', { size: 16 })).toMatchInlineSnapshot(
       '"0x48656c6c6f20576f726c642100000000"',
     )
@@ -313,13 +274,6 @@ describe('string to hex', () => {
   })
 
   test('error: size overflow', () => {
-    expect(() =>
-      Hex.from('Hello World!', { size: 8 }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `)
     expect(() =>
       Hex.fromString('Hello World!', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -332,19 +286,6 @@ describe('string to hex', () => {
 
 describe('bytes to hex', () => {
   test('default', () => {
-    expect(Hex.from(new Uint8Array([]))).toMatchInlineSnapshot('"0x"')
-    expect(Hex.from(new Uint8Array([97]))).toMatchInlineSnapshot('"0x61"')
-    expect(Hex.from(new Uint8Array([97, 98, 99]))).toMatchInlineSnapshot(
-      '"0x616263"',
-    )
-    expect(
-      Hex.from(
-        new Uint8Array([
-          72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
-        ]),
-      ),
-    ).toMatchInlineSnapshot('"0x48656c6c6f20576f726c6421"')
-
     expect(Hex.fromBytes(new Uint8Array([]))).toMatchInlineSnapshot('"0x"')
     expect(Hex.fromBytes(new Uint8Array([97]))).toMatchInlineSnapshot('"0x61"')
     expect(Hex.fromBytes(new Uint8Array([97, 98, 99]))).toMatchInlineSnapshot(
@@ -361,16 +302,6 @@ describe('bytes to hex', () => {
 
   test('args: size', () => {
     expect(
-      Hex.from(
-        new Uint8Array([
-          72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
-        ]),
-        {
-          size: 16,
-        },
-      ),
-    ).toMatchInlineSnapshot('"0x48656c6c6f20576f726c642100000000"')
-    expect(
       Hex.fromBytes(
         new Uint8Array([
           72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
@@ -380,18 +311,6 @@ describe('bytes to hex', () => {
         },
       ),
     ).toMatchInlineSnapshot('"0x48656c6c6f20576f726c642100000000"')
-    expect(
-      Hex.from(
-        new Uint8Array([
-          72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
-        ]),
-        {
-          size: 32,
-        },
-      ),
-    ).toMatchInlineSnapshot(
-      '"0x48656c6c6f20576f726c64210000000000000000000000000000000000000000"',
-    )
     expect(
       Hex.fromBytes(
         new Uint8Array([
@@ -408,20 +327,6 @@ describe('bytes to hex', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Hex.from(
-        new Uint8Array([
-          72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
-        ]),
-        {
-          size: 8,
-        },
-      ),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `)
-    expect(() =>
       Hex.fromBytes(
         new Uint8Array([
           72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
@@ -436,21 +341,4 @@ describe('bytes to hex', () => {
       See: https://oxlib.sh/errors#hexsizeoverflowerror]
     `)
   })
-})
-
-describe('hex to hex', () => {
-  test('default', () => {
-    expect(Hex.from('0xdeadbeef')).toMatchInlineSnapshot(`"0xdeadbeef"`)
-  })
-})
-
-test('error: invalid type', () => {
-  // @ts-expect-error
-  expect(() => Hex.from(new Date())).toThrowErrorMatchingInlineSnapshot(
-    `
-    [Hex.InvalidTypeError: Type \`object\` is invalid. Expected: \`string | number | bigint | boolean | Bytes | readonly number[]\`
-
-    See: https://oxlib.sh/errors#hexinvalidtypeerror]
-  `,
-  )
 })

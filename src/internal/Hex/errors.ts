@@ -83,16 +83,6 @@ export class Hex_InvalidLengthError extends BaseError {
   }
 }
 
-export class Hex_InvalidTypeError extends BaseError {
-  override readonly name = 'Hex.InvalidTypeError'
-
-  constructor(type: string, expected: string) {
-    super(`Type \`${type}\` is invalid. Expected: \`${expected}\``, {
-      docsPath: '/errors#hexinvalidtypeerror',
-    })
-  }
-}
-
 export class Hex_SizeOverflowError extends BaseError {
   override readonly name = 'Hex.SizeOverflowError'
 

@@ -27,8 +27,8 @@ export function ValidatorData_encode(value: ValidatorData_encode.Value): Hex {
   const { data, validator } = value
   return Hex_concat(
     // Validator Data Format: `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`
-    Hex_from(0x19),
-    Hex_from(0x00),
+    '0x19',
+    '0x00',
     validator,
     Hex_from(data),
   )

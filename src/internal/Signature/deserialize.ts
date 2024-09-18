@@ -25,7 +25,7 @@ import { Signature_vToYParity } from './vToYParity.js'
  * @returns The deserialized {@link ox#Signature.Signature}.
  */
 export function Signature_deserialize(serialized: Bytes | Hex): Signature {
-  const hex = typeof serialized === 'string' ? serialized : Hex_from(serialized)
+  const hex = Hex_from(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)
     throw new Signature_InvalidSerializedSizeError({ signature: hex })

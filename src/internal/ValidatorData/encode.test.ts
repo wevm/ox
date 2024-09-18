@@ -4,7 +4,7 @@ import { expect, test } from 'vitest'
 test('default', () => {
   expect(
     ValidatorData.encode({
-      data: Hex.from('hello world'),
+      data: Hex.fromString('hello world'),
       validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
     }),
   ).toMatchInlineSnapshot(
@@ -12,7 +12,7 @@ test('default', () => {
   )
   expect(
     ValidatorData.encode({
-      data: Bytes.from('hello world'),
+      data: Bytes.fromString('hello world'),
       validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
     }),
   ).toMatchInlineSnapshot(

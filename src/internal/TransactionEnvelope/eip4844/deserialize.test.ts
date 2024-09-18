@@ -11,7 +11,7 @@ import { assertType, describe, expect, test } from 'vitest'
 import { accounts } from '../../../../test/constants/accounts.js'
 import { kzg } from '../../../../test/kzg.js'
 
-const blobs = Blobs.from(Hex.from('abcd'))
+const blobs = Blobs.from(Hex.fromString('abcd'))
 const sidecars = Blobs.toSidecars(blobs, { kzg })
 const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
 const transaction = TransactionEnvelopeEip4844.from({
@@ -119,13 +119,13 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeEip4844.deserialize(
         `0x03${Rlp.fromHex([
-          Hex.from(1), // chainId
-          Hex.from(0), // nonce
-          Hex.from(1), // maxPriorityFeePerGas
-          Hex.from(1), // maxFeePerGas
-          Hex.from(1), // gas
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
           '0x0000000000000000000000000000000000000000', // to
-          Hex.from(0), // value
+          Hex.fromNumber(0), // value
           '0x', // data
           [
             [
@@ -149,13 +149,13 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeEip4844.deserialize(
         `0x03${Rlp.fromHex([
-          Hex.from(1), // chainId
-          Hex.from(0), // nonce
-          Hex.from(1), // maxPriorityFeePerGas
-          Hex.from(1), // maxFeePerGas
-          Hex.from(1), // gas
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
           '0x0000000000000000000000000000000000000000', // to
-          Hex.from(0), // value
+          Hex.fromNumber(0), // value
           '0x', // data
           [['0x123456', ['0x0']]], // accessList
           '0x', // maxFeePerBlobGas,

@@ -876,7 +876,7 @@ describe.each([
   { arg: 'foo', abiParameter: { type: 'bytes' }, expected: true },
   { arg: 'foo', abiParameter: { type: 'bytes32' }, expected: true },
   {
-    arg: Bytes.from('foo'),
+    arg: Bytes.fromString('foo'),
     abiParameter: { type: 'bytes' },
     expected: true,
   },

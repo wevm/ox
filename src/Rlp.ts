@@ -1,5 +1,4 @@
 export {
-  Rlp_to as to,
   Rlp_toBytes as toBytes,
   Rlp_toHex as toHex,
 } from './internal/Rlp/to.js'

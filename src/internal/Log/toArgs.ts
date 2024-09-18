@@ -7,7 +7,7 @@ import type {
 } from '../AbiEvent/types.js'
 import { Address_isEqual } from '../Address/isEqual.js'
 import type { Address } from '../Address/types.js'
-import { Bytes_from } from '../Bytes/from.js'
+import { Bytes_fromString } from '../Bytes/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
@@ -179,8 +179,9 @@ function assertArgs(parameters: {
   function isEqual(input: AbiEventParameter, value: unknown, arg: unknown) {
     if (input.type === 'address')
       return Address_isEqual(value as Address, arg as Address)
-    if (input.type === 'string' || input.type === 'bytes')
-      return Hash_keccak256(Bytes_from(value as string)) === arg
+    if (input.type === 'string')
+      return Hash_keccak256(Bytes_fromString(value as string)) === arg
+    if (input.type === 'bytes') return Hash_keccak256(value as Hex) === arg
     return value === arg
   }
 

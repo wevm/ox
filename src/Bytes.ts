@@ -3,7 +3,6 @@ export type { Bytes } from './internal/Bytes/types.js'
 export {
   Bytes_InvalidBytesBooleanError as InvalidBytesBooleanError,
   Bytes_InvalidBytesTypeError as InvalidBytesTypeError,
-  Bytes_InvalidTypeError as InvalidTypeError,
   Bytes_SizeExceedsPaddingSizeError as SizeExceedsPaddingSizeError,
   Bytes_SizeOverflowError as SizeOverflowError,
   Bytes_SliceOffsetOutOfBoundsError as SliceOffsetOutOfBoundsError,
@@ -34,7 +33,6 @@ export {
 export { Bytes_random as random } from './internal/Bytes/random.js'
 
 export {
-  Bytes_to as to,
   Bytes_toBigInt as toBigInt,
   Bytes_toBoolean as toBoolean,
   Bytes_toHex as toHex,
@@ -44,6 +42,7 @@ export {
 
 export {
   Bytes_from as from,
+  Bytes_fromArray as fromArray,
   Bytes_fromBoolean as fromBoolean,
   Bytes_fromHex as fromHex,
   Bytes_fromNumber as fromNumber,

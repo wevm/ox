@@ -1,9 +1,7 @@
-import { Bytes_isBytes } from '../Bytes/isBytes.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_assertSize } from './assertSize.js'
-import { Hex_IntegerOutOfRangeError, Hex_InvalidTypeError } from './errors.js'
-import { Hex_isHex } from './isHex.js'
+import { Hex_IntegerOutOfRangeError } from './errors.js'
 import { Hex_padLeft, Hex_padRight } from './pad.js'
 import type { Hex } from './types.js'
 
@@ -12,74 +10,47 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 )
 
 /**
- * Encodes an arbitrary value into a {@link ox#Hex.Hex} value.
+ * Instantiates a {@link ox#Hex.Hex} value from a hex string or {@link ox#Bytes.Bytes} value.
+ *
+ * :::tip
+ *
+ * To instantiate from a **Boolean**, **UTF-8 String**, or **Number**, use one of the following:
+ *
+ * - `Hex.fromBoolean`
+ *
+ * - `Hex.fromString`
+ *
+ * - `Hex.fromNumber`
+ *
+ * :::
  *
  * @example
- * An example of encoding a UTF-8 string into a hex value:
- *
  * ```ts twoslash
- * import { Hex } from 'ox'
+ * import { Bytes, Hex } from 'ox'
  *
- * Hex.from('Hello world')
- * // @log: '0x48656c6c6f20776f726c6421'
+ * Hex.from('0x48656c6c6f20576f726c6421')
+ * // @log: '0x48656c6c6f20576f726c6421'
+ *
+ * Hex.from(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
+ * // @log: '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
  * ```
  *
- * @example
- * An example of encoding a number into a hex value:
- *
- * ```ts twoslash
- * import { Hex } from 'ox'
- *
- * Hex.from(420)
- * // @log: '0x1a4'
- * ```
- *
- * @example
- * An example of encoding a UTF-8 string into a hex value with a specified size:
- *
- * ```ts twoslash
- * import { Hex } from 'ox'
- *
- * Hex.from('Hello world', { size: 32 })
- * // @log: '0x48656c6c6f20776f726c64210000000000000000000000000000000000000000'
- * ```
- *
- * @param value - The value to encode.
- * @param options - Encoding options.
+ * @param value - The {@link ox#Bytes.Bytes} value to encode.
+ * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function Hex_from(
-  value: string | number | bigint | boolean | readonly number[] | Bytes,
-  options: Hex_from.Options = {},
-): Hex {
-  if (Hex_isHex(value)) return value
-  if (Bytes_isBytes(value)) return Hex_fromBytes(value, options)
-  if (Array.isArray(value))
-    return Hex_fromBytes(Uint8Array.from(value), options)
-  if (typeof value === 'number' || typeof value === 'bigint')
-    return Hex_fromNumber(value, options)
-  if (typeof value === 'string') return Hex_fromString(value, options)
-  if (typeof value === 'boolean') return Hex_fromBoolean(value, options)
-  throw new Hex_InvalidTypeError(
-    typeof value,
-    'string | number | bigint | boolean | Bytes | readonly number[]',
-  )
+export function Hex_from(value: Hex | Bytes): Hex {
+  if (value instanceof Uint8Array) return Hex_fromBytes(value)
+  return value
 }
 
 export declare namespace Hex_from {
-  interface Options {
+  type Options = {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }
 
-  export type ErrorType =
-    | Hex_fromBoolean.ErrorType
-    | Hex_fromBytes.ErrorType
-    | Hex_fromNumber.ErrorType
-    | Hex_fromString.ErrorType
-    | Hex_isHex.ErrorType
-    | Hex_InvalidTypeError
-    | GlobalErrorType
+  type ErrorType = Hex_fromBytes.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -130,8 +101,8 @@ export declare namespace Hex_fromBoolean {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Hex_fromBoolean.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Hex_fromBoolean.ErrorType
 
 /**
@@ -259,8 +230,8 @@ export declare namespace Hex_fromNumber {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Hex_fromNumber.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Hex_fromNumber.ErrorType
 
 const encoder = /*#__PURE__*/ new TextEncoder()
@@ -298,6 +269,6 @@ export declare namespace Hex_fromString {
   type ErrorType = Hex_fromBytes.ErrorType | GlobalErrorType
 }
 
-/* v8 ignore next */
 Hex_fromString.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Hex_fromString.ErrorType

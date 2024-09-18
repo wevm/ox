@@ -42,13 +42,13 @@ test('behavior: legacy', () => {
 
 test('behavior: rpc', () => {
   const signature = Signature.from({
-    r: Hex.from(
+    r: Hex.fromNumber(
       49782753348462494199823712700004552394425719014458918871452329774910450607807n,
     ),
-    s: Hex.from(
+    s: Hex.fromNumber(
       33726695977844476214676913201140481102225469284307016937915595756355928419768n,
     ),
-    yParity: Hex.from(1),
+    yParity: Hex.fromNumber(1),
   })
 
   attest(signature).type.toString.snap(
@@ -58,13 +58,13 @@ test('behavior: rpc', () => {
 
 test('behavior: rpc legacy', () => {
   const signature = Signature.from({
-    r: Hex.from(
+    r: Hex.fromNumber(
       49782753348462494199823712700004552394425719014458918871452329774910450607807n,
     ),
-    s: Hex.from(
+    s: Hex.fromNumber(
       33726695977844476214676913201140481102225469284307016937915595756355928419768n,
     ),
-    v: Hex.from(27),
+    v: Hex.fromNumber(27),
   })
 
   attest(signature).type.toString.snap(

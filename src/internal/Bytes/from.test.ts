@@ -1,30 +1,43 @@
 import { Bytes } from 'ox'
 import { describe, expect, test } from 'vitest'
 
+test('default', () => {
+  expect(Bytes.from([51, 12, 41, 55])).toMatchInlineSnapshot(
+    `
+    Uint8Array [
+      51,
+      12,
+      41,
+      55,
+    ]
+  `,
+  )
+
+  expect(Bytes.from(new Uint8Array([51, 12, 41, 55]))).toMatchInlineSnapshot(
+    `
+    Uint8Array [
+      51,
+      12,
+      41,
+      55,
+    ]
+  `,
+  )
+
+  expect(Bytes.from('0xdeadbeef')).toMatchInlineSnapshot(
+    `
+    Uint8Array [
+      222,
+      173,
+      190,
+      239,
+    ]
+  `,
+  )
+})
+
 describe('numbers to bytes', () => {
   test('default', () => {
-    expect(Bytes.from(0)).toMatchInlineSnapshot(`
-      Uint8Array [
-        0,
-      ]
-    `)
-    expect(Bytes.from(7)).toMatchInlineSnapshot(`
-      Uint8Array [
-        7,
-      ]
-    `)
-    expect(Bytes.from(69)).toMatchInlineSnapshot(`
-      Uint8Array [
-        69,
-      ]
-    `)
-    expect(Bytes.from(420)).toMatchInlineSnapshot(`
-      Uint8Array [
-        1,
-        164,
-      ]
-    `)
-
     expect(Bytes.fromNumber(0)).toMatchInlineSnapshot(`
       Uint8Array [
         0,
@@ -47,7 +60,7 @@ describe('numbers to bytes', () => {
       ]
     `)
 
-    expect(() => Bytes.from(-69)).toThrowErrorMatchingInlineSnapshot(
+    expect(() => Bytes.fromNumber(-69)).toThrowErrorMatchingInlineSnapshot(
       `
       [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)
 
@@ -241,51 +254,6 @@ describe('numbers to bytes', () => {
 
 describe('bigints to bytes', () => {
   test('default', () => {
-    expect(Bytes.from(0n)).toMatchInlineSnapshot(`
-      Uint8Array [
-        0,
-      ]
-    `)
-    expect(Bytes.from(7n)).toMatchInlineSnapshot(`
-      Uint8Array [
-        7,
-      ]
-    `)
-    expect(Bytes.from(69n)).toMatchInlineSnapshot(`
-      Uint8Array [
-        69,
-      ]
-    `)
-    expect(Bytes.from(420n)).toMatchInlineSnapshot(`
-      Uint8Array [
-        1,
-        164,
-      ]
-    `)
-    expect(
-      Bytes.from(4206942069420694206942069420694206942069n),
-    ).toMatchInlineSnapshot(`
-        Uint8Array [
-          12,
-          92,
-          243,
-          146,
-          17,
-          135,
-          111,
-          181,
-          229,
-          136,
-          67,
-          39,
-          250,
-          86,
-          252,
-          11,
-          117,
-        ]
-      `)
-
     expect(Bytes.fromNumber(0)).toMatchInlineSnapshot(`
       Uint8Array [
         0,
@@ -611,17 +579,6 @@ describe('bigints to bytes', () => {
 
 describe('boolean to bytes', () => {
   test('default', () => {
-    expect(Bytes.from(true)).toMatchInlineSnapshot(`
-      Uint8Array [
-        1,
-      ]
-    `)
-    expect(Bytes.from(false)).toMatchInlineSnapshot(`
-      Uint8Array [
-        0,
-      ]
-    `)
-
     expect(Bytes.fromBoolean(true)).toMatchInlineSnapshot(`
       Uint8Array [
         1,
@@ -635,66 +592,6 @@ describe('boolean to bytes', () => {
   })
 
   test('args: size', () => {
-    expect(Bytes.from(true, { size: 16 })).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1,
-      ]
-    `,
-    )
-    expect(Bytes.from(true, { size: 32 })).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1,
-      ]
-    `,
-    )
     expect(Bytes.fromBoolean(false, { size: 16 })).toMatchInlineSnapshot(
       `
       Uint8Array [
@@ -759,15 +656,6 @@ describe('boolean to bytes', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Bytes.from(true, { size: 0 }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Bytes.SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
-
-      See: https://oxlib.sh/errors#bytessizeoverflowerror]
-    `,
-    )
-    expect(() =>
       Bytes.fromBoolean(false, { size: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(`
       [Bytes.SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
@@ -779,38 +667,6 @@ describe('boolean to bytes', () => {
 
 describe('hex to bytes', () => {
   test('default', () => {
-    expect(Bytes.from('0x')).toMatchInlineSnapshot('Uint8Array []')
-    expect(Bytes.from('0x61')).toMatchInlineSnapshot(`
-      Uint8Array [
-        97,
-      ]
-    `)
-    expect(Bytes.from('0x616263')).toMatchInlineSnapshot(`
-      Uint8Array [
-        97,
-        98,
-        99,
-      ]
-    `)
-    expect(Bytes.from('0x48656c6c6f20576f726c6421')).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        72,
-        101,
-        108,
-        108,
-        111,
-        32,
-        87,
-        111,
-        114,
-        108,
-        100,
-        33,
-      ]
-    `,
-    )
-
     expect(Bytes.fromHex('0x')).toMatchInlineSnapshot('Uint8Array []')
     expect(Bytes.fromHex('0x61')).toMatchInlineSnapshot(`
         Uint8Array [
@@ -846,28 +702,6 @@ describe('hex to bytes', () => {
 
   test('args: size', () => {
     expect(
-      Bytes.from('0x48656c6c6f20576f726c6421', { size: 16 }),
-    ).toMatchInlineSnapshot(`
-      Uint8Array [
-        72,
-        101,
-        108,
-        108,
-        111,
-        32,
-        87,
-        111,
-        114,
-        108,
-        100,
-        33,
-        0,
-        0,
-        0,
-        0,
-      ]
-    `)
-    expect(
       Bytes.fromHex('0x48656c6c6f20576f726c6421', { size: 16 }),
     ).toMatchInlineSnapshot(`
       Uint8Array [
@@ -889,46 +723,6 @@ describe('hex to bytes', () => {
         0,
       ]
     `)
-    expect(
-      Bytes.from('0x48656c6c6f20576f726c6421', { size: 32 }),
-    ).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        72,
-        101,
-        108,
-        108,
-        111,
-        32,
-        87,
-        111,
-        114,
-        108,
-        100,
-        33,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-      ]
-    `,
-    )
     expect(
       Bytes.fromHex('0x48656c6c6f20576f726c6421', { size: 32 }),
     ).toMatchInlineSnapshot(
@@ -973,13 +767,6 @@ describe('hex to bytes', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Bytes.from('0x48656c6c6f20576f726c6421', { size: 8 }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `)
-    expect(() =>
       Bytes.fromHex('0x48656c6c6f20576f726c6421', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
       [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
@@ -1011,38 +798,6 @@ describe('hex to bytes', () => {
 
 describe('string to bytes', () => {
   test('default', () => {
-    expect(Bytes.from('')).toMatchInlineSnapshot('Uint8Array []')
-    expect(Bytes.from('a')).toMatchInlineSnapshot(`
-      Uint8Array [
-        97,
-      ]
-    `)
-    expect(Bytes.from('abc')).toMatchInlineSnapshot(`
-      Uint8Array [
-        97,
-        98,
-        99,
-      ]
-    `)
-    expect(Bytes.from('Hello World!')).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        72,
-        101,
-        108,
-        108,
-        111,
-        32,
-        87,
-        111,
-        114,
-        108,
-        100,
-        33,
-      ]
-    `,
-    )
-
     expect(Bytes.fromString('')).toMatchInlineSnapshot('Uint8Array []')
     expect(Bytes.fromString('a')).toMatchInlineSnapshot(`
       Uint8Array [
@@ -1077,66 +832,6 @@ describe('string to bytes', () => {
   })
 
   test('args: size', () => {
-    expect(Bytes.from('Hello World!', { size: 16 })).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        72,
-        101,
-        108,
-        108,
-        111,
-        32,
-        87,
-        111,
-        114,
-        108,
-        100,
-        33,
-        0,
-        0,
-        0,
-        0,
-      ]
-    `,
-    )
-    expect(Bytes.from('Hello World!', { size: 32 })).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        72,
-        101,
-        108,
-        108,
-        111,
-        32,
-        87,
-        111,
-        114,
-        108,
-        100,
-        33,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-      ]
-    `,
-    )
     expect(
       Bytes.fromString('Hello World!', { size: 16 }),
     ).toMatchInlineSnapshot(
@@ -1205,13 +900,6 @@ describe('string to bytes', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Bytes.from('Hello World!', { size: 8 }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Bytes.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
-
-      See: https://oxlib.sh/errors#bytessizeoverflowerror]
-    `)
-    expect(() =>
       Bytes.fromString('Hello World!', { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(`
       [Bytes.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
@@ -1221,39 +909,16 @@ describe('string to bytes', () => {
   })
 })
 
-describe('bytes to bytes', () => {
+describe('array to bytes', () => {
   test('default', () => {
-    expect(Bytes.from(Uint8Array.from([1, 2, 3]))).toMatchInlineSnapshot(
-      `
+    expect(Bytes.fromArray([])).toMatchInlineSnapshot('Uint8Array []')
+    expect(Bytes.fromArray([1, 2, 3, 4])).toMatchInlineSnapshot(`
       Uint8Array [
         1,
         2,
         3,
+        4,
       ]
-    `,
-    )
+    `)
   })
-})
-
-describe('number array to bytes', () => {
-  test('default', () => {
-    expect(Bytes.from([1, 2, 3])).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        1,
-        2,
-        3,
-      ]
-    `,
-    )
-  })
-})
-
-test('error: invalid type', () => {
-  // @ts-expect-error
-  expect(() => Bytes.from(new Date())).toThrowErrorMatchingInlineSnapshot(`
-    [Bytes.InvalidTypeError: Type \`object\` is invalid. Expected: \`string | bigint | number | boolean | Bytes | Hex | readonly number[]\`
-
-    See: https://oxlib.sh/errors#bytesinvalidtypeerror]
-  `)
 })

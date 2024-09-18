@@ -6,7 +6,7 @@ import { Hex_fromBytes } from '../Hex/from.js'
 import { Bytes_toBigInt, Bytes_toNumber, Bytes_toString } from './to.js'
 
 describe('Bytes to Hex', () => {
-  bench('ox: `Bytes.fromBytes`', () => {
+  bench('ox: `Hex.fromBytes`', () => {
     Hex_fromBytes(
       new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
     )

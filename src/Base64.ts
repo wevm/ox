@@ -6,7 +6,6 @@ export {
 } from './internal/Base64/from.js'
 
 export {
-  Base64_to as to,
   Base64_toBytes as toBytes,
   Base64_toHex as toHex,
   Base64_toString as toString,

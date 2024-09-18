@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromNumber } from '../Hex/from.js'
 import { Transaction_toRpc } from '../Transaction/isomorphic/toRpc.js'
 import { Withdrawal_toRpc } from '../Withdrawal/toRpc.js'
 import type { Block, Block_Rpc } from './types.js'
@@ -41,40 +41,41 @@ export function Block_toRpc(block: Block): Block_Rpc {
   return {
     baseFeePerGas:
       typeof block.baseFeePerGas === 'bigint'
-        ? Hex_from(block.baseFeePerGas)
+        ? Hex_fromNumber(block.baseFeePerGas)
         : undefined,
     blobGasUsed:
       typeof block.blobGasUsed === 'bigint'
-        ? Hex_from(block.blobGasUsed)
+        ? Hex_fromNumber(block.blobGasUsed)
         : undefined,
     excessBlobGas:
       typeof block.excessBlobGas === 'bigint'
-        ? Hex_from(block.excessBlobGas)
+        ? Hex_fromNumber(block.excessBlobGas)
         : undefined,
     extraData: block.extraData,
     difficulty:
       typeof block.difficulty === 'bigint'
-        ? Hex_from(block.difficulty)
+        ? Hex_fromNumber(block.difficulty)
         : undefined,
-    gasLimit: Hex_from(block.gasLimit),
-    gasUsed: Hex_from(block.gasUsed),
+    gasLimit: Hex_fromNumber(block.gasLimit),
+    gasUsed: Hex_fromNumber(block.gasUsed),
     hash: block.hash,
     logsBloom: block.logsBloom,
     miner: block.miner,
     mixHash: block.mixHash,
     nonce: block.nonce,
-    number: typeof block.number === 'bigint' ? Hex_from(block.number) : null,
+    number:
+      typeof block.number === 'bigint' ? Hex_fromNumber(block.number) : null,
     parentBeaconBlockRoot: block.parentBeaconBlockRoot,
     parentHash: block.parentHash,
     receiptsRoot: block.receiptsRoot,
     sealFields: block.sealFields,
     sha3Uncles: block.sha3Uncles,
-    size: Hex_from(block.size),
+    size: Hex_fromNumber(block.size),
     stateRoot: block.stateRoot,
-    timestamp: Hex_from(block.timestamp),
+    timestamp: Hex_fromNumber(block.timestamp),
     totalDifficulty:
       typeof block.totalDifficulty === 'bigint'
-        ? Hex_from(block.totalDifficulty)
+        ? Hex_fromNumber(block.totalDifficulty)
         : undefined,
     transactions,
     transactionsRoot: block.transactionsRoot,

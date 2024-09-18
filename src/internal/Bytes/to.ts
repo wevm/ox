@@ -3,88 +3,9 @@ import { Hex_fromBytes } from '../Hex/from.js'
 import { Hex_toBigInt, Hex_toNumber } from '../Hex/to.js'
 import type { Hex } from '../Hex/types.js'
 import { Bytes_assertSize } from './assertSize.js'
-import {
-  Bytes_InvalidBytesBooleanError,
-  Bytes_InvalidTypeError,
-} from './errors.js'
+import { Bytes_InvalidBytesBooleanError } from './errors.js'
 import { Bytes_trimLeft, Bytes_trimRight } from './trim.js'
 import type { Bytes } from './types.js'
-
-/**
- * Decodes {@link ox#Bytes.Bytes} into a UTF-8 string, {@link ox#Hex.Hex}, number, bigint or boolean.
- *
- * @example
- * ```ts twoslash
- * import { Bytes } from 'ox'
- *
- * Bytes.to(
- *   Bytes.from([1, 164]),
- *   'number'
- * )
- * // @log: 420
- * ```
- *
- * @example
- * ```ts
- * import { Bytes } from 'ox'
- *
- * Bytes.to(
- *   Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
- *   'string'
- * )
- * // @log: 'Hello world'
- * ```
- *
- * @param bytes - The {@link ox#Bytes.Bytes} to decode.
- * @param to - Type to decode the {@link ox#Bytes.Bytes} into.
- * @param options - Decoding options.
- * @returns Decoded value.
- */
-export function Bytes_to<
-  to extends 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
->(
-  bytes: Bytes,
-  to: to | 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
-  options: Bytes_to.Options = {},
-): Bytes_to.ReturnType<to> {
-  if (to === 'number') return Bytes_toNumber(bytes, options) as never
-  if (to === 'bigint') return Bytes_toBigInt(bytes, options) as never
-  if (to === 'boolean') return Bytes_toBoolean(bytes, options) as never
-  if (to === 'string') return Bytes_toString(bytes, options) as never
-  if (to === 'Hex') return Bytes_toHex(bytes, options) as never
-  throw new Bytes_InvalidTypeError(
-    to,
-    'string | Hex | bigint | number | boolean',
-  )
-}
-
-export declare namespace Bytes_to {
-  type Options = {
-    /** Size of the bytes. */
-    size?: number | undefined
-  }
-
-  type ReturnType<
-    to extends 'string' | 'Hex' | 'bigint' | 'number' | 'boolean',
-  > =
-    | (to extends 'string' ? string : never)
-    | (to extends 'Hex' ? Hex : never)
-    | (to extends 'bigint' ? bigint : never)
-    | (to extends 'number' ? number : never)
-    | (to extends 'boolean' ? boolean : never)
-
-  type ErrorType =
-    | Bytes_toBigInt.ErrorType
-    | Bytes_toBoolean.ErrorType
-    | Bytes_toNumber.ErrorType
-    | Bytes_toString.ErrorType
-    | Hex_fromBytes.ErrorType
-    | Bytes_InvalidTypeError
-    | GlobalErrorType
-}
-
-/* v8 ignore next */
-Bytes_to.parseError = (error: unknown) => error as Bytes_to.ErrorType
 
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a bigint.
@@ -125,8 +46,8 @@ export declare namespace Bytes_toBigInt {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Bytes_toBigInt.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Bytes_toBigInt.ErrorType
 
 /**
@@ -239,8 +160,8 @@ export declare namespace Bytes_toNumber {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Bytes_toNumber.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Bytes_toNumber.ErrorType
 
 const decoder = /*#__PURE__*/ new TextDecoder()
@@ -286,6 +207,6 @@ export declare namespace Bytes_toString {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Bytes_toString.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Bytes_toString.ErrorType

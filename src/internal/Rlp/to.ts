@@ -9,23 +9,62 @@ import { type Cursor, createCursor } from '../cursor.js'
 import type { RecursiveArray } from '../types.js'
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
- * import { Bytes, Rlp } from 'ox'
- *
- * Rlp.to('0x8b68656c6c6f20776f726c64', 'Hex')
- * // @log: 0x68656c6c6f20776f726c64
- *
- * Rlp.to(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]), 'Bytes')
- * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
+ * import { Rlp } from 'ox'
+ * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
+ * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
  *
  * @param value - The value to decode.
- * @param to - The type to convert the RLP value to.
- * @returns The decoded {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ * @returns The decoded {@link ox#Bytes.Bytes} value.
  */
+export function Rlp_toBytes(value: Bytes | Hex): Rlp_toBytes.ReturnType {
+  return Rlp_to(value, 'Bytes')
+}
+
+export declare namespace Rlp_toBytes {
+  type ErrorType = Rlp_to.ErrorType
+  type ReturnType = Rlp_to.ReturnType<'Bytes'>
+}
+
+Rlp_toBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Rlp_toBytes.ErrorType
+
+/**
+ * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Hex.Hex} value.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Rlp } from 'ox'
+ * Rlp.toHex('0x8b68656c6c6f20776f726c64')
+ * // 0x68656c6c6f20776f726c64
+ * ```
+ *
+ * @param value - The value to decode.
+ * @returns The decoded {@link ox#Hex.Hex} value.
+ */
+export function Rlp_toHex(value: Bytes | Hex): Rlp_toHex.ReturnType {
+  return Rlp_to(value, 'Hex')
+}
+
+export declare namespace Rlp_toHex {
+  type ErrorType = Rlp_to.ErrorType
+  type ReturnType = Rlp_to.ReturnType<'Hex'>
+}
+
+Rlp_toHex.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Rlp_toHex.ErrorType
+
+/////////////////////////////////////////////////////////////////////////////////
+// Internal
+/////////////////////////////////////////////////////////////////////////////////
+
+/** @internal */
 export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
   value: value,
   to: to | 'Hex' | 'Bytes',
@@ -49,6 +88,7 @@ export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
   return result as Rlp_to.ReturnType<to>
 }
 
+/** @internal */
 export declare namespace Rlp_to {
   type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
     | (to extends 'Bytes' ? RecursiveArray<Bytes> : never)
@@ -62,62 +102,10 @@ export declare namespace Rlp_to {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
-Rlp_to.parseError = (error: unknown) => error as Rlp_to.ErrorType
-
-/**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link ox#Bytes.Bytes} value.
- *
- * @example
- * ```ts twoslash
- * import { Rlp } from 'ox'
- * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
- * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
- * ```
- *
- * @param value - The value to decode.
- * @returns The decoded {@link ox#Bytes.Bytes} value.
- */
-export function Rlp_toBytes(value: Bytes | Hex): Rlp_toBytes.ReturnType {
-  return Rlp_to(value, 'Bytes')
-}
-
-export declare namespace Rlp_toBytes {
-  type ErrorType = Rlp_to.ErrorType
-  type ReturnType = Rlp_to.ReturnType<'Bytes'>
-}
-
-/* v8 ignore next */
-Rlp_toBytes.parseError = (error: unknown) => error as Rlp_toBytes.ErrorType
-
-/**
- * Decodes a Recursive-Length Prefix (RLP) value into a decoded {@link ox#Hex.Hex} value.
- *
- * @example
- * ```ts twoslash
- * import { Rlp } from 'ox'
- * Rlp.toHex('0x8b68656c6c6f20776f726c64')
- * // 0x68656c6c6f20776f726c64
- * ```
- *
- * @param value - The value to decode.
- * @returns The decoded {@link ox#Hex.Hex} value.
- */
-export function Rlp_toHex(value: Bytes | Hex): Rlp_toHex.ReturnType {
-  return Rlp_to(value, 'Hex')
-}
-
-export declare namespace Rlp_toHex {
-  type ErrorType = Rlp_to.ErrorType
-  type ReturnType = Rlp_to.ReturnType<'Hex'>
-}
-
-/* v8 ignore next */
-Rlp_toHex.parseError = (error: unknown) => error as Rlp_toHex.ErrorType
-
-/////////////////////////////////////////////////////////////////////////////////
-// Internal
-/////////////////////////////////////////////////////////////////////////////////
+/** @internal */
+Rlp_to.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Rlp_to.ErrorType
 
 /** @internal */
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(

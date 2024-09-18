@@ -4,14 +4,14 @@ import { accounts } from '../../../test/constants/accounts.js'
 
 test('default', () => {
   expect(
-    PersonalMessage.getSignPayload(Hex.from('hello world')),
+    PersonalMessage.getSignPayload(Hex.fromString('hello world')),
   ).toMatchInlineSnapshot(
     `"0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68"`,
   )
 })
 
 test('behavior: signature', () => {
-  const payload = PersonalMessage.getSignPayload(Hex.from('hello world'))
+  const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world'))
 
   const signature = Secp256k1.sign({
     payload,

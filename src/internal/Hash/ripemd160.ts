@@ -1,9 +1,9 @@
 import { ripemd160 } from '@noble/hashes/ripemd160'
 
-import { Bytes_from } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromBytes } from '../Hex/from.js'
 import { Hex_isHex } from '../Hex/isHex.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -30,10 +30,10 @@ export function Hash_ripemd160<to extends 'Hex' | 'Bytes' = 'Hex'>(
 ): Hash_ripemd160.ReturnType<to> {
   const to_ = to || 'Hex'
   const bytes = ripemd160(
-    Hex_isHex(value, { strict: false }) ? Bytes_from(value) : value,
+    Hex_isHex(value, { strict: false }) ? Bytes_fromHex(value) : value,
   )
   if (to_ === 'Bytes') return bytes as Hash_ripemd160.ReturnType<to>
-  return Hex_from(bytes) as Hash_ripemd160.ReturnType<to>
+  return Hex_fromBytes(bytes) as Hash_ripemd160.ReturnType<to>
 }
 
 export declare namespace Hash_ripemd160 {
@@ -42,9 +42,9 @@ export declare namespace Hash_ripemd160 {
     | (to extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | Bytes_from.ErrorType
+    | Bytes_fromHex.ErrorType
     | Hex_isHex.ErrorType
-    | Hex_from.ErrorType
+    | Hex_fromBytes.ErrorType
     | GlobalErrorType
 }
 

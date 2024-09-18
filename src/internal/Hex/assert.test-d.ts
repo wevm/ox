@@ -9,7 +9,7 @@ test('asserts', () => {
   }
 
   {
-    const hex = Bytes.from('0x0123456789abcdefABCDEF')
+    const hex = Bytes.fromHex('0x0123456789abcdefABCDEF')
     Hex.assert(hex)
     expectTypeOf(hex).toMatchTypeOf<Hex.Hex>()
   }

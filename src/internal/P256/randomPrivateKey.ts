@@ -2,7 +2,7 @@ import { secp256r1 } from '@noble/curves/p256'
 
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromBytes } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
@@ -23,7 +23,7 @@ export function P256_randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): P256_randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
   const bytes = secp256r1.utils.randomPrivateKey()
-  if (as === 'Hex') return Hex_from(bytes) as never
+  if (as === 'Hex') return Hex_fromBytes(bytes) as never
   return bytes as never
 }
 
@@ -40,5 +40,5 @@ export declare namespace P256_randomPrivateKey {
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
-  type ErrorType = Hex_from.ErrorType | GlobalErrorType
+  type ErrorType = Hex_fromBytes.ErrorType | GlobalErrorType
 }

@@ -13,7 +13,7 @@ const generateBytes = (length: number) => {
 const generateList = (length: number) => {
   const bytes: `0x${string}`[] = []
   for (let i = 0; i < length; i++)
-    bytes.push(Hex.from(generateBytes(Math.floor(Math.random() * 128))))
+    bytes.push(Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))))
   return bytes
 }
 
@@ -29,7 +29,7 @@ export async function generateRlpVectors() {
   // bytes
   for (let i = 0; i < 512 + 1024 + 2048; i++) {
     if (i > 0) writer.write(',')
-    const bytes = Hex.from(
+    const bytes = Hex.fromBytes(
       generateBytes(
         Math.floor(
           (() => {
@@ -53,25 +53,31 @@ export async function generateRlpVectors() {
     const bytes = (() => {
       if (i < 24)
         return [
-          Hex.from(generateBytes(Math.floor(Math.random() * 128))),
-          Hex.from(generateBytes(Math.floor(Math.random() * 128))),
+          Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
+          Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
           [
-            Hex.from(generateBytes(Math.floor(Math.random() * 128))),
-            Hex.from(generateBytes(Math.floor(Math.random() * 128))),
+            Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
+            Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
             [
-              Hex.from(generateBytes(Math.floor(Math.random() * 128))),
+              Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
               [
-                Hex.from(generateBytes(Math.floor(Math.random() * 128))),
+                Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
                 [
                   [[[], []], []],
-                  [[Hex.from(generateBytes(Math.floor(Math.random() * 128)))]],
+                  [
+                    [
+                      Hex.fromBytes(
+                        generateBytes(Math.floor(Math.random() * 128)),
+                      ),
+                    ],
+                  ],
                 ],
-                Hex.from(generateBytes(Math.floor(Math.random() * 128))),
+                Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
               ],
-              Hex.from(generateBytes(Math.floor(Math.random() * 128))),
+              Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128))),
             ],
             [],
-            [Hex.from(generateBytes(Math.floor(Math.random() * 128)))],
+            [Hex.fromBytes(generateBytes(Math.floor(Math.random() * 128)))],
           ],
         ]
       return generateList(

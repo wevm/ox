@@ -4,7 +4,7 @@ import { anvilMainnet } from '../../../../test/anvil.js'
 import { accounts } from '../../../../test/constants/accounts.js'
 import { kzg } from '../../../../test/kzg.js'
 
-const blobs = Blobs.from(Hex.from('abcd'))
+const blobs = Blobs.from(Hex.fromString('abcd'))
 const sidecars = Blobs.toSidecars(blobs, { kzg })
 const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
 const transaction = TransactionEnvelopeEip4844.from({

@@ -167,11 +167,11 @@ test('signature + chainId', async () => {
 describe('raw', () => {
   test('default', () => {
     const serialized = Rlp.fromHex([
-      Hex.from(0), // nonce
-      Hex.from(1), // gasPrice
-      Hex.from(1), // gas
+      Hex.fromNumber(0), // nonce
+      Hex.fromNumber(1), // gasPrice
+      Hex.fromNumber(1), // gas
       '0x0000000000000000000000000000000000000000', // to
-      Hex.from(0), // value
+      Hex.fromNumber(0), // value
       '0x', // data
     ])
     expect(
@@ -190,11 +190,11 @@ describe('raw', () => {
 
   test('empty sig', () => {
     const serialized = Rlp.fromHex([
-      Hex.from(0), // nonce
-      Hex.from(1), // gasPrice
-      Hex.from(1), // gas
+      Hex.fromNumber(0), // nonce
+      Hex.fromNumber(1), // gasPrice
+      Hex.fromNumber(1), // gas
       '0x0000000000000000000000000000000000000000', // to
-      Hex.from(0), // value
+      Hex.fromNumber(0), // value
       '0x', // data
       '0x', // v
       '0x', // r
@@ -216,15 +216,15 @@ describe('raw', () => {
 
   test('low sig coords', () => {
     const serialized = Rlp.fromHex([
-      Hex.from(0), // nonce
-      Hex.from(1), // gasPrice
-      Hex.from(1), // gas
+      Hex.fromNumber(0), // nonce
+      Hex.fromNumber(1), // gasPrice
+      Hex.fromNumber(1), // gas
       '0x0000000000000000000000000000000000000000', // to
-      Hex.from(0), // value
+      Hex.fromNumber(0), // value
       '0x', // data
       '0x1b', // v
-      Hex.from(69), // r
-      Hex.from(420), // s
+      Hex.fromNumber(69), // r
+      Hex.fromNumber(420), // s
     ])
     expect(
       TransactionEnvelopeLegacy.deserialize(serialized),
@@ -308,15 +308,15 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeLegacy.deserialize(
         Rlp.fromHex([
-          Hex.from(0), // nonce
-          Hex.from(1), // gasPrice
-          Hex.from(1), // gas
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // gasPrice
+          Hex.fromNumber(1), // gas
           '0x0000000000000000000000000000000000000000', // to
-          Hex.from(0), // value
+          Hex.fromNumber(0), // value
           '0x', // data
           '0x', // v
-          Hex.from(69), // r
-          Hex.from(420), // s
+          Hex.fromNumber(69), // r
+          Hex.fromNumber(420), // s
         ]),
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -328,15 +328,15 @@ describe('errors', () => {
     expect(() =>
       TransactionEnvelopeLegacy.deserialize(
         Rlp.fromHex([
-          Hex.from(0), // nonce
-          Hex.from(1), // gasPrice
-          Hex.from(1), // gas
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // gasPrice
+          Hex.fromNumber(1), // gas
           '0x0000000000000000000000000000000000000000', // to
-          Hex.from(0), // value
+          Hex.fromNumber(0), // value
           '0x', // data
-          Hex.from(35), // v
-          Hex.from(69), // r
-          Hex.from(420), // s
+          Hex.fromNumber(35), // v
+          Hex.fromNumber(69), // r
+          Hex.fromNumber(420), // s
         ]),
       ),
     ).toThrowErrorMatchingInlineSnapshot(`

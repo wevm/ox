@@ -2,7 +2,7 @@ import { Bytes_fromHex } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromNumber } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'
@@ -37,11 +37,11 @@ export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const s = signature.s
 
   const signature_ = Hex_concat(
-    Hex_from(r, { size: 32 }),
-    Hex_from(s, { size: 32 }),
+    Hex_fromNumber(r, { size: 32 }),
+    Hex_fromNumber(s, { size: 32 }),
     // If the signature is recovered, add the recovery byte to the signature.
     typeof signature.yParity === 'number'
-      ? Hex_from(signature.yParity, { size: 1 })
+      ? Hex_fromNumber(signature.yParity, { size: 1 })
       : '0x',
   )
 

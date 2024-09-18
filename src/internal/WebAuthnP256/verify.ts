@@ -1,9 +1,9 @@
 import { Base64_toBytes } from '../Base64/to.js'
 import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_from } from '../Bytes/from.js'
+import { Bytes_fromHex, Bytes_fromString } from '../Bytes/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromBytes } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { P256_verify } from '../P256/verify.js'
 import type { PublicKey } from '../PublicKey/types.js'
@@ -50,7 +50,7 @@ export function WebAuthnP256_verify(
     userVerificationRequired,
   } = metadata
 
-  const authenticatorDataBytes = Bytes_from(authenticatorData)
+  const authenticatorDataBytes = Bytes_fromHex(authenticatorData)
 
   // Check length of `authenticatorData`.
   if (authenticatorDataBytes.length < 37) return false
@@ -82,9 +82,13 @@ export function WebAuthnP256_verify(
 
   // Validate the challenge in the clientDataJSON.
   const [_, challenge_extracted] = match
-  if (Hex_from(Base64_toBytes(challenge_extracted!)) !== challenge) return false
+  if (Hex_fromBytes(Base64_toBytes(challenge_extracted!)) !== challenge)
+    return false
 
-  const clientDataJSONHash = Hash_sha256(Bytes_from(clientDataJSON), 'Bytes')
+  const clientDataJSONHash = Hash_sha256(
+    Bytes_fromString(clientDataJSON),
+    'Bytes',
+  )
   const payload = Bytes_concat(authenticatorDataBytes, clientDataJSONHash)
 
   return P256_verify({
@@ -112,7 +116,7 @@ export declare namespace WebAuthnP256_verify {
   type ErrorType =
     | Base64_toBytes.ErrorType
     | Bytes_concat.ErrorType
-    | Bytes_from.ErrorType
+    | Bytes_fromHex.ErrorType
     | P256_verify.ErrorType
     | GlobalErrorType
 }

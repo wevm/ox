@@ -15,7 +15,7 @@ test('behavior: bytes payload', () => {
   const payload = '0xdeadbeef'
   const signature = Secp256k1.sign({ payload, privateKey })
   expect(
-    Secp256k1.verify({ address, payload: Bytes.from(payload), signature }),
+    Secp256k1.verify({ address, payload: Bytes.fromHex(payload), signature }),
   ).toBe(true)
 })
 

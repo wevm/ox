@@ -36,7 +36,7 @@ export async function generateAbiVectors() {
 
 function generateAddress() {
   const bytes = generateBytes(20)
-  return Hex.from(bytes)
+  return Hex.fromBytes(bytes)
 }
 
 function generateBytes(length: number) {
@@ -100,7 +100,7 @@ function generateValues(parameters: AbiParameters.Parameter[]) {
       const bytesMatch = parameter.type.match(Solidity_bytesRegex)
       if (!bytesMatch) continue
       const [_, size = '32'] = bytesMatch
-      const value = Hex.from(generateBytes(Number.parseInt(size)))
+      const value = Hex.fromBytes(generateBytes(Number.parseInt(size)))
       values.push(value)
       continue
     }

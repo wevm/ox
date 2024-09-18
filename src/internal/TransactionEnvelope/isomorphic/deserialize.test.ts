@@ -53,7 +53,7 @@ test('eip2930', () => {
 })
 
 test('eip4844', () => {
-  const blobs = Blobs.from(Hex.from('abcd'))
+  const blobs = Blobs.from(Hex.fromString('abcd'))
   const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
   const transaction = TransactionEnvelope.from({
     to: accounts[1].address,

@@ -221,3 +221,5 @@ export type {
   WebAuthnP256_P256Credential,
   WebAuthnP256_SignMetadata,
 } from './internal/WebAuthnP256/types.js'
+
+export { Rlp_to } from './internal/Rlp/to.js'

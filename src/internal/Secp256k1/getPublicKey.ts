@@ -25,9 +25,7 @@ export function Secp256k1_getPublicKey(
 ): PublicKey {
   const { privateKey } = options
   const point = secp256k1.ProjectivePoint.fromPrivateKey(
-    typeof privateKey === 'string'
-      ? privateKey.slice(2)
-      : Hex_from(privateKey).slice(2),
+    Hex_from(privateKey).slice(2),
   )
   return PublicKey_from(point)
 }
@@ -40,5 +38,8 @@ export declare namespace Secp256k1_getPublicKey {
     privateKey: Hex | Bytes
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType =
+    | Hex_from.ErrorType
+    | PublicKey_from.ErrorType
+    | GlobalErrorType
 }

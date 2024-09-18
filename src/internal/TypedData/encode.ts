@@ -1,6 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
-import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
@@ -76,7 +75,7 @@ export function TypedData_encode<
   })
 
   // Typed Data Format: `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`
-  const parts: Hex[] = [Hex_from(0x19), Hex_from(0x01)]
+  const parts: Hex[] = ['0x19', '0x01']
   if (domain)
     parts.push(
       TypedData_hashDomain({

@@ -1,5 +1,5 @@
 import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_from } from '../Bytes/from.js'
+import { Bytes_from, Bytes_fromNumber } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
@@ -48,7 +48,7 @@ export async function WebCryptoP256_verify(
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes_concat(Bytes_from(signature.r), Bytes_from(signature.s)),
+    Bytes_concat(Bytes_fromNumber(signature.r), Bytes_fromNumber(signature.s)),
     Bytes_from(payload),
   )
 }

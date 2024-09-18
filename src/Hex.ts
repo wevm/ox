@@ -5,7 +5,6 @@ export {
   Hex_InvalidHexBooleanError as InvalidHexBooleanError,
   Hex_InvalidHexTypeError as InvalidHexTypeError,
   Hex_InvalidHexValueError as InvalidHexValueError,
-  Hex_InvalidTypeError as InvalidTypeError,
   Hex_SizeExceedsPaddingSizeError as SizeExceedsPaddingSizeError,
   Hex_SizeOverflowError as SizeOverflowError,
   Hex_SliceOffsetOutOfBoundsError as SliceOffsetOutOfBoundsError,
@@ -32,7 +31,6 @@ export { Hex_trimLeft as trimLeft } from './internal/Hex/trim.js'
 export { Hex_trimRight as trimRight } from './internal/Hex/trim.js'
 
 export {
-  Hex_to as to,
   Hex_toBigInt as toBigInt,
   Hex_toBoolean as toBoolean,
   Hex_toBytes as toBytes,

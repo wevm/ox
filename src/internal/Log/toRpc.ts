@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromNumber } from '../Hex/from.js'
 import type { Log, Log_Rpc } from './types.js'
 
 /**
@@ -54,14 +54,17 @@ export function Log_toRpc(log: Log): Log_Rpc {
     address: log.address,
     blockHash: log.blockHash,
     blockNumber:
-      typeof log.blockNumber === 'bigint' ? Hex_from(log.blockNumber) : null,
+      typeof log.blockNumber === 'bigint'
+        ? Hex_fromNumber(log.blockNumber)
+        : null,
     data: log.data,
-    logIndex: typeof log.logIndex === 'number' ? Hex_from(log.logIndex) : null,
+    logIndex:
+      typeof log.logIndex === 'number' ? Hex_fromNumber(log.logIndex) : null,
     topics: log.topics,
     transactionHash: log.transactionHash,
     transactionIndex:
       typeof log.transactionIndex === 'number'
-        ? Hex_from(log.transactionIndex)
+        ? Hex_fromNumber(log.transactionIndex)
         : null,
     removed: log.removed,
   }

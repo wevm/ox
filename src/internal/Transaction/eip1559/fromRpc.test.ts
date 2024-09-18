@@ -171,7 +171,7 @@ test('behavior: network', async () => {
     .request({
       method: 'eth_getTransactionByBlockNumberAndIndex',
       params: [
-        Hex.from((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
+        Hex.fromNumber((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
         '0x2',
       ],
     })
@@ -207,7 +207,7 @@ test('behavior: tx replay', async () => {
     .request({
       method: 'eth_getTransactionByBlockNumberAndIndex',
       params: [
-        Hex.from((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
+        Hex.fromNumber((anvilMainnet.config.forkBlockNumber! as bigint) - 5n),
         '0x2',
       ],
     })
@@ -234,8 +234,7 @@ test('behavior: tx replay', async () => {
       method: 'eth_getTransactionByHash',
       params: [hash],
     })
-    // TODO: replace w/ Transaction.fromRpc
-    .then(TransactionEip1559.fromRpc as any)
+    .then(Transaction.fromRpc)
 
   expect(transaction).toMatchInlineSnapshot(`
     {

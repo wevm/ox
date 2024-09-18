@@ -4,7 +4,7 @@ import { blobData, kzg } from '../../../test/kzg.js'
 
 test('default', () => {
   {
-    const data = Hex.from(blobData)
+    const data = Hex.fromString(blobData)
     const blobs = Blobs.from(data)
     const sidecars = Blobs.toSidecars(blobs, {
       kzg,
@@ -14,7 +14,7 @@ test('default', () => {
   }
 
   {
-    const data = Bytes.from(blobData)
+    const data = Bytes.fromString(blobData)
     const blobs = Blobs.from(data)
     const sidecars = Blobs.toSidecars(blobs, {
       kzg,
@@ -25,7 +25,7 @@ test('default', () => {
 })
 
 test('args: blobs, commitments, proofs', () => {
-  const data = Hex.from(blobData)
+  const data = Hex.fromString(blobData)
   const blobs = Blobs.from(data)
   const commitments = Blobs.toCommitments(blobs, { kzg })
   const proofs = Blobs.toProofs(blobs, { commitments, kzg })

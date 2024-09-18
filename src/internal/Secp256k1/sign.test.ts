@@ -30,7 +30,7 @@ test('default', async () => {
 
   {
     const signature = Secp256k1.sign({
-      payload: Bytes.from(
+      payload: Bytes.fromHex(
         '0x9a74cb859ad30835ffb2da406423233c212cf6dd78e6c2c98b0c9289568954ae',
       ),
       privateKey: accounts[0].privateKey,

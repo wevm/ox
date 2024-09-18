@@ -3,16 +3,16 @@ import { expect, test } from 'vitest'
 import { blobData } from '../../../test/kzg.js'
 
 test('default', () => {
-  const data = Hex.from('we are all gonna make it'.repeat(5))
+  const data = Hex.fromString('we are all gonna make it'.repeat(5))
   const blobs = Blobs.from(data)
   expect(Blobs.to(blobs)).toEqual(data)
   expect(Blobs.toHex(blobs)).toEqual(data)
-  expect(Blobs.toBytes(blobs)).toEqual(Bytes.from(data))
+  expect(Blobs.toBytes(blobs)).toEqual(Bytes.fromHex(data))
 })
 
 test('large', () => {
-  const blobs = Blobs.from(Hex.from(blobData))
-  expect(Blobs.to(blobs, 'Hex')).toEqual(Hex.from(blobData))
+  const blobs = Blobs.from(Hex.fromString(blobData))
+  expect(Blobs.to(blobs, 'Hex')).toEqual(Hex.fromString(blobData))
 })
 
 test('https://github.com/wevm/viem/issues/1986', () => {

@@ -6,7 +6,7 @@ const FULL_DOMAIN = {
   version: '1',
   chainId: 1,
   verifyingContract: '0x0000000000000000000000000000000000000000',
-  salt: Hex.padRight(Hex.from(new Uint8Array([1, 2, 3]))),
+  salt: Hex.padRight(Hex.fromBytes(new Uint8Array([1, 2, 3]))),
 } as const
 
 test('basic', () => {

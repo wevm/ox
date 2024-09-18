@@ -3,7 +3,7 @@ import { expect, test } from 'vitest'
 import { blobData, kzg } from '../../../test/kzg.js'
 
 test('default', () => {
-  const blobs = Blobs.from(Hex.from(blobData))
+  const blobs = Blobs.from(Hex.fromString(blobData))
   const commitments = Blobs.toCommitments(blobs, { kzg })
   expect(Blobs.toProofs(blobs, { commitments, kzg })).toMatchInlineSnapshot(`
     [
@@ -120,7 +120,7 @@ test('default', () => {
 })
 
 test('behavior: blobs as bytes', () => {
-  const blobs = Blobs.from(Bytes.from(blobData))
+  const blobs = Blobs.from(Bytes.fromString(blobData))
   const commitments = Blobs.toCommitments(blobs, { kzg })
   expect(Blobs.toProofs(blobs, { commitments, kzg })).toMatchInlineSnapshot(`
     [
@@ -229,7 +229,7 @@ test('behavior: blobs as bytes', () => {
 })
 
 test('options: commitments (bytes)', () => {
-  const blobs = Blobs.from(Bytes.from(blobData))
+  const blobs = Blobs.from(Bytes.fromString(blobData))
   const commitments = Blobs.toCommitments(blobs, { kzg })
   expect(Blobs.toProofs(blobs, { commitments, kzg })).toMatchInlineSnapshot(`
     [

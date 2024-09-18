@@ -27,26 +27,26 @@ type Encodable = {
  * ```
  *
  * @param value - The {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to encode.
- * @param to - The type to convert the RLP value to.
+ * @param as - The type to convert the RLP value to.
  * @returns The RLP value.
  */
 export function Rlp_from<
   value extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
-  to extends 'Hex' | 'Bytes',
->(value: value, to: to | 'Hex' | 'Bytes'): Rlp_from.ReturnType<to> {
+  as extends 'Hex' | 'Bytes',
+>(value: value, as: as | 'Hex' | 'Bytes'): Rlp_from.ReturnType<as> {
   const encodable = getEncodable(value)
   const cursor = createCursor(new Uint8Array(encodable.length))
   encodable.encode(cursor)
 
-  if (to === 'Hex')
-    return Hex_fromBytes(cursor.bytes) as Rlp_from.ReturnType<to>
-  return cursor.bytes as Rlp_from.ReturnType<to>
+  if (as === 'Hex')
+    return Hex_fromBytes(cursor.bytes) as Rlp_from.ReturnType<as>
+  return cursor.bytes as Rlp_from.ReturnType<as>
 }
 
 export declare namespace Rlp_from {
-  type ReturnType<to extends 'Hex' | 'Bytes'> =
-    | (to extends 'Bytes' ? Bytes : never)
-    | (to extends 'Hex' ? Hex : never)
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes : never)
+    | (as extends 'Hex' ? Hex : never)
 
   type ErrorType =
     | createCursor.ErrorType
@@ -55,8 +55,9 @@ export declare namespace Rlp_from {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
-Rlp_from.parseError = (error: unknown) => error as Rlp_from.ErrorType
+Rlp_from.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Rlp_from.ErrorType
 
 /**
  * Encodes a {@link ox#Bytes.Bytes} value into a Recursive-Length Prefix (RLP) value.
@@ -70,24 +71,25 @@ Rlp_from.parseError = (error: unknown) => error as Rlp_from.ErrorType
  * ```
  *
  * @param bytes - The {@link ox#Bytes.Bytes} value to encode.
- * @param to - The type to convert the RLP value to.
+ * @param as - The type to convert the RLP value to.
  * @returns The RLP value.
  */
-export function Rlp_fromBytes<to extends 'Hex' | 'Bytes' = 'Bytes'>(
+export function Rlp_fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
   bytes: RecursiveArray<Bytes>,
-  to: to | 'Hex' | 'Bytes' | undefined = 'Bytes',
-): Rlp_fromBytes.ReturnType<to> {
-  return Rlp_from(bytes, to)
+  as: as | 'Hex' | 'Bytes' | undefined = 'Bytes',
+): Rlp_fromBytes.ReturnType<as> {
+  return Rlp_from(bytes, as)
 }
 
 export declare namespace Rlp_fromBytes {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Bytes'> =
-    Rlp_from.ReturnType<to>
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> =
+    Rlp_from.ReturnType<as>
   type ErrorType = Rlp_from.ErrorType | GlobalErrorType
 }
 
-/* v8 ignore next */
-Rlp_fromBytes.parseError = (error: unknown) => error as Rlp_fromBytes.ErrorType
+Rlp_fromBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Rlp_fromBytes.ErrorType
 
 /**
  * Encodes a {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
@@ -104,20 +106,21 @@ Rlp_fromBytes.parseError = (error: unknown) => error as Rlp_fromBytes.ErrorType
  * @param to - The type to convert the RLP value to.
  * @returns The RLP value.
  */
-export function Rlp_fromHex<to extends 'Hex' | 'Bytes' = 'Hex'>(
+export function Rlp_fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
   hex: RecursiveArray<Hex>,
-  to: to | 'Hex' | 'Bytes' | undefined = 'Hex',
-): Rlp_fromHex.ReturnType<to> {
-  return Rlp_from(hex, to)
+  as: as | 'Hex' | 'Bytes' | undefined = 'Hex',
+): Rlp_fromHex.ReturnType<as> {
+  return Rlp_from(hex, as)
 }
 
 export declare namespace Rlp_fromHex {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> = Rlp_from.ReturnType<to>
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = Rlp_from.ReturnType<as>
   type ErrorType = Rlp_from.ErrorType | GlobalErrorType
 }
 
-/* v8 ignore next */
-Rlp_fromHex.parseError = (error: unknown) => error as Rlp_fromHex.ErrorType
+Rlp_fromHex.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Rlp_fromHex.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal

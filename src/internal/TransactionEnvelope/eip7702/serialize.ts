@@ -2,7 +2,7 @@ import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import { Authorization_toTupleList } from '../../Authorization/toTupleList.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_concat } from '../../Hex/concat.js'
-import { Hex_from } from '../../Hex/from.js'
+import { Hex_fromNumber } from '../../Hex/from.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toTuple } from '../../Signature/toTuple.js'
@@ -106,13 +106,13 @@ export function TransactionEnvelopeEip7702_serialize(
   const signature = Signature_extract(options.signature || envelope)
 
   const serializedTransaction = [
-    Hex_from(chainId),
-    nonce ? Hex_from(nonce) : '0x',
-    maxPriorityFeePerGas ? Hex_from(maxPriorityFeePerGas) : '0x',
-    maxFeePerGas ? Hex_from(maxFeePerGas) : '0x',
-    gas ? Hex_from(gas) : '0x',
+    Hex_fromNumber(chainId),
+    nonce ? Hex_fromNumber(nonce) : '0x',
+    maxPriorityFeePerGas ? Hex_fromNumber(maxPriorityFeePerGas) : '0x',
+    maxFeePerGas ? Hex_fromNumber(maxFeePerGas) : '0x',
+    gas ? Hex_fromNumber(gas) : '0x',
     to ?? '0x',
-    value ? Hex_from(value) : '0x',
+    value ? Hex_fromNumber(value) : '0x',
     data ?? input ?? '0x',
     accessTupleList,
     authorizationTupleList,
@@ -133,7 +133,7 @@ export declare namespace TransactionEnvelopeEip7702_serialize {
 
   type ErrorType =
     | TransactionEnvelopeEip7702_assert.ErrorType
-    | Hex_from.ErrorType
+    | Hex_fromNumber.ErrorType
     | Signature_toTuple.ErrorType
     | Hex_concat.ErrorType
     | Rlp_fromHex.ErrorType

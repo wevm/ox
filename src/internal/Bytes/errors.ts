@@ -29,16 +29,6 @@ export class Bytes_InvalidBytesTypeError extends BaseError {
   }
 }
 
-export class Bytes_InvalidTypeError extends BaseError {
-  override readonly name = 'Bytes.InvalidTypeError'
-
-  constructor(type: string, expected: string) {
-    super(`Type \`${type}\` is invalid. Expected: \`${expected}\``, {
-      docsPath: '/errors#bytesinvalidtypeerror',
-    })
-  }
-}
-
 export class Bytes_SizeOverflowError extends BaseError {
   override readonly name = 'Bytes.SizeOverflowError'
 

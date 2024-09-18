@@ -1,6 +1,6 @@
 import { Authorization_toRpcList } from '../../Authorization/toRpcList.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hex_from } from '../../Hex/from.js'
+import { Hex_fromNumber } from '../../Hex/from.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
@@ -62,23 +62,25 @@ export function TransactionEip7702_toRpc(
     blockHash: transaction.blockHash ?? null,
     blockNumber:
       typeof transaction.blockNumber === 'bigint'
-        ? Hex_from(transaction.blockNumber)
+        ? Hex_fromNumber(transaction.blockNumber)
         : null,
-    chainId: Hex_from(transaction.chainId),
+    chainId: Hex_fromNumber(transaction.chainId),
     data: transaction.input,
     from: transaction.from,
-    gas: Hex_from(transaction.gas ?? 0n),
+    gas: Hex_fromNumber(transaction.gas ?? 0n),
     hash: transaction.hash,
     input: transaction.input,
-    maxFeePerGas: Hex_from(transaction.maxFeePerGas ?? 0n),
-    maxPriorityFeePerGas: Hex_from(transaction.maxPriorityFeePerGas ?? 0n),
-    nonce: Hex_from(transaction.nonce ?? 0n),
+    maxFeePerGas: Hex_fromNumber(transaction.maxFeePerGas ?? 0n),
+    maxPriorityFeePerGas: Hex_fromNumber(
+      transaction.maxPriorityFeePerGas ?? 0n,
+    ),
+    nonce: Hex_fromNumber(transaction.nonce ?? 0n),
     to: transaction.to,
     transactionIndex: transaction.transactionIndex
-      ? Hex_from(transaction.transactionIndex)
+      ? Hex_fromNumber(transaction.transactionIndex)
       : null,
     type: '0x4',
-    value: Hex_from(transaction.value ?? 0n),
+    value: Hex_fromNumber(transaction.value ?? 0n),
     ...Signature_toRpc(signature),
   }
 }

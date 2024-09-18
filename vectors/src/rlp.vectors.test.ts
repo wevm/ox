@@ -11,7 +11,7 @@ const vectors = await readGzippedJson(join(import.meta.dir, './rlp.json.gz'))
 describe('Rlp.from', () => {
   vectors.forEach((v: any, i: number) => {
     test(`${i}`, () => {
-      expect(Rlp.from(v.decoded, 'Hex')).toEqual(v.encoded)
+      expect(Rlp.fromHex(v.decoded)).toEqual(v.encoded)
     })
   })
 })
@@ -19,7 +19,7 @@ describe('Rlp.from', () => {
 describe('Rlp.to', () => {
   vectors.forEach((v: any, i: number) => {
     test(`${i}`, () => {
-      expect(Rlp.to(v.encoded, 'Hex')).toEqual(v.decoded)
+      expect(Rlp.toHex(v.encoded)).toEqual(v.decoded)
     })
   })
 })

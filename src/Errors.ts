@@ -41,7 +41,6 @@ export {
 export {
   Bytes_InvalidBytesBooleanError,
   Bytes_InvalidBytesTypeError,
-  Bytes_InvalidTypeError,
   Bytes_SizeExceedsPaddingSizeError,
   Bytes_SizeOverflowError,
   Bytes_SliceOffsetOutOfBoundsError,
@@ -60,7 +59,6 @@ export {
   Hex_InvalidHexBooleanError,
   Hex_InvalidHexTypeError,
   Hex_InvalidHexValueError,
-  Hex_InvalidTypeError,
   Hex_InvalidLengthError,
   Hex_SizeExceedsPaddingSizeError,
   Hex_SizeOverflowError,

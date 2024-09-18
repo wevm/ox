@@ -1,6 +1,6 @@
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromBytes } from '../Hex/from.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import { PublicKey_InvalidSerializedSizeError } from './errors.js'
@@ -38,7 +38,8 @@ import type { PublicKey } from './types.js'
  * @returns The deserialized public key.
  */
 export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
-  const hex = typeof publicKey === 'string' ? publicKey : Hex_from(publicKey)
+  const hex =
+    typeof publicKey === 'string' ? publicKey : Hex_fromBytes(publicKey)
 
   if (hex.length !== 132 && hex.length !== 130 && hex.length !== 68)
     throw new PublicKey_InvalidSerializedSizeError({ publicKey })
@@ -73,7 +74,7 @@ export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
 }
 
 export declare namespace PublicKey_deserialize {
-  type ErrorType = Hex_from.ErrorType | GlobalErrorType
+  type ErrorType = Hex_fromBytes.ErrorType | GlobalErrorType
 }
 
 PublicKey_deserialize.parseError = (error: unknown) =>

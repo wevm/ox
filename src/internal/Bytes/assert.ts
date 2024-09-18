@@ -18,6 +18,7 @@ import type { Bytes } from './types.js'
  * @param value - Value to assert.
  */
 export function Bytes_assert(value: unknown): asserts value is Bytes {
+  if (value instanceof Uint8Array) return
   if (!value) throw new Bytes_InvalidBytesTypeError(value)
   if (typeof value !== 'object') throw new Bytes_InvalidBytesTypeError(value)
   if (!('BYTES_PER_ELEMENT' in value))

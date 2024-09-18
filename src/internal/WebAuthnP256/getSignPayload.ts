@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 import { Hex_concat } from '../Hex/concat.js'
-import { Hex_from } from '../Hex/from.js'
+import { Hex_fromString } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { WebAuthnP256_getAuthenticatorData } from './getAuthenticatorData.js'
 import { WebAuthnP256_getClientDataJSON } from './getClientDataJSON.js'
@@ -78,7 +78,7 @@ export function WebAuthnP256_getSignPayload(
     extraClientData,
     origin,
   })
-  const clientDataJSONHash = Hash_sha256(Hex_from(clientDataJSON))
+  const clientDataJSONHash = Hash_sha256(Hex_fromString(clientDataJSON))
 
   const challengeIndex = clientDataJSON.indexOf('"challenge"')
   const typeIndex = clientDataJSON.indexOf('"type"')
@@ -128,7 +128,7 @@ export declare namespace WebAuthnP256_getSignPayload {
   type ErrorType =
     | Hash_sha256.ErrorType
     | Hex_concat.ErrorType
-    | Hex_from.ErrorType
+    | Hex_fromString.ErrorType
     | WebAuthnP256_getAuthenticatorData.ErrorType
     | WebAuthnP256_getClientDataJSON.ErrorType
     | GlobalErrorType

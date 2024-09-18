@@ -18,7 +18,7 @@ test('behavior: bytes payload', () => {
   expect(
     P256.verify({
       publicKey,
-      payload: Bytes.from(payload),
+      payload: Bytes.fromHex(payload),
       signature: { r, s },
     }),
   ).toBe(true)

@@ -34,7 +34,7 @@ test('default', () => {
 
   expect(
     Signature.deserialize(
-      Bytes.from(
+      Bytes.fromHex(
         '0xa461f509887bd19e312c0c58467ce8ff8e300d3c1a90b608a760c5b80318eaf15fe57c96f9175d6cd4daad4663763baa7e78836e067d0163e9a2ccf2ff753f5b00',
       ),
     ),
@@ -46,7 +46,7 @@ test('default', () => {
 
   expect(
     Signature.deserialize(
-      Bytes.from(
+      Bytes.fromHex(
         '0xc4d8bcda762d35ea79d9542b23200f46c2c1899db15bf929bbacaf609581db0831538374a01206517edd934e474212a0f1e2d62e9a01cd64f1cf94ea2e09884901',
       ),
     ),

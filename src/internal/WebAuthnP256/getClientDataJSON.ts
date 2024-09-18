@@ -1,4 +1,4 @@
-import { Base64_from } from '../Base64/from.js'
+import { Base64_fromHex } from '../Base64/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -41,7 +41,7 @@ export function WebAuthnP256_getClientDataJSON(
 
   return JSON.stringify({
     type: 'webauthn.get',
-    challenge: Base64_from(challenge, { url: true, pad: false }),
+    challenge: Base64_fromHex(challenge, { url: true, pad: false }),
     origin,
     crossOrigin,
     ...extraClientData,

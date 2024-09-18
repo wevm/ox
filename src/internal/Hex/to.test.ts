@@ -3,11 +3,6 @@ import { describe, expect, test } from 'vitest'
 
 describe('hex to number', () => {
   test('default', () => {
-    expect(Hex.to('0x0', 'number')).toMatchInlineSnapshot('0')
-    expect(Hex.to('0x7', 'number')).toMatchInlineSnapshot('7')
-    expect(Hex.to('0x45', 'number')).toMatchInlineSnapshot('69')
-    expect(Hex.to('0x1a4', 'number')).toMatchInlineSnapshot('420')
-
     expect(Hex.toNumber('0x0')).toMatchInlineSnapshot('0')
     expect(Hex.toNumber('0x7')).toMatchInlineSnapshot('7')
     expect(Hex.toNumber('0x45')).toMatchInlineSnapshot('69')
@@ -41,12 +36,7 @@ describe('hex to number', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(69420, { size: 32 }), 'number', {
-        size: 32,
-      }),
-    ).toEqual(69420)
-    expect(
-      Hex.toNumber(Hex.from(69420, { size: 32 }), {
+      Hex.toNumber(Hex.fromNumber(69420, { size: 32 }), {
         size: 32,
       }),
     ).toEqual(69420)
@@ -54,7 +44,7 @@ describe('hex to number', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Hex.toNumber(Hex.from(69420, { size: 64 }), {
+      Hex.toNumber(Hex.fromNumber(69420, { size: 64 }), {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -67,14 +57,6 @@ describe('hex to number', () => {
 
 describe('hex to bigint', () => {
   test('default', () => {
-    expect(Hex.to('0x0', 'bigint')).toMatchInlineSnapshot('0n')
-    expect(Hex.to('0x7', 'bigint')).toMatchInlineSnapshot('7n')
-    expect(Hex.to('0x45', 'bigint')).toMatchInlineSnapshot('69n')
-    expect(Hex.to('0x1a4', 'bigint')).toMatchInlineSnapshot('420n')
-    expect(
-      Hex.to('0xc5cf39211876fb5e5884327fa56fc0b75', 'bigint'),
-    ).toMatchInlineSnapshot('4206942069420694206942069420694206942069n')
-
     expect(Hex.toBigInt('0x0')).toMatchInlineSnapshot('0n')
     expect(Hex.toBigInt('0x7')).toMatchInlineSnapshot('7n')
     expect(Hex.toBigInt('0x45')).toMatchInlineSnapshot('69n')
@@ -117,12 +99,7 @@ describe('hex to bigint', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(69420n, { size: 32 }), 'bigint', {
-        size: 32,
-      }),
-    ).toEqual(69420n)
-    expect(
-      Hex.toBigInt(Hex.from(69420n, { size: 32 }), {
+      Hex.toBigInt(Hex.fromNumber(69420n, { size: 32 }), {
         size: 32,
       }),
     ).toEqual(69420n)
@@ -130,7 +107,7 @@ describe('hex to bigint', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Hex.toBigInt(Hex.from(69420, { size: 64 }), {
+      Hex.toBigInt(Hex.fromNumber(69420, { size: 64 }), {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -143,27 +120,19 @@ describe('hex to bigint', () => {
 
 describe('hex to boolean', () => {
   test('default', () => {
-    expect(Hex.to('0x0', 'boolean')).toMatchInlineSnapshot('false')
-    expect(Hex.to('0x1', 'boolean')).toMatchInlineSnapshot('true')
-
     expect(Hex.toBoolean('0x0')).toMatchInlineSnapshot('false')
     expect(Hex.toBoolean('0x1')).toMatchInlineSnapshot('true')
   })
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(true, { size: 32 }), 'boolean', {
-        size: 32,
-      }),
+      Hex.toBoolean(Hex.fromBoolean(true, { size: 32 }), { size: 32 }),
     ).toEqual(true)
-    expect(Hex.toBoolean(Hex.from(true, { size: 32 }), { size: 32 })).toEqual(
-      true,
-    )
   })
 
   test('error: size overflow', () => {
     expect(() =>
-      Hex.toBoolean(Hex.from(true, { size: 64 }), { size: 32 }),
+      Hex.toBoolean(Hex.fromBoolean(true, { size: 64 }), { size: 32 }),
     ).toThrowErrorMatchingInlineSnapshot(`
       [Hex.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
 
@@ -186,13 +155,6 @@ describe('hex to boolean', () => {
 
 describe('hex to string', () => {
   test('default', () => {
-    expect(Hex.to('0x', 'string')).toMatchInlineSnapshot(`""`)
-    expect(Hex.to('0x61', 'string')).toMatchInlineSnapshot(`"a"`)
-    expect(Hex.to('0x616263', 'string')).toMatchInlineSnapshot(`"abc"`)
-    expect(
-      Hex.to('0x48656c6c6f20576f726c6421', 'string'),
-    ).toMatchInlineSnapshot(`"Hello World!"`)
-
     expect(Hex.toString('0x')).toMatchInlineSnapshot(`""`)
     expect(Hex.toString('0x61')).toMatchInlineSnapshot(`"a"`)
     expect(Hex.toString('0x616263')).toMatchInlineSnapshot(`"abc"`)
@@ -203,12 +165,7 @@ describe('hex to string', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from('wagmi', { size: 32 }), 'string', {
-        size: 32,
-      }),
-    ).toEqual('wagmi')
-    expect(
-      Hex.toString(Hex.from('wagmi', { size: 32 }), {
+      Hex.toString(Hex.fromString('wagmi', { size: 32 }), {
         size: 32,
       }),
     ).toEqual('wagmi')
@@ -216,7 +173,7 @@ describe('hex to string', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Hex.toString(Hex.from('wagmi', { size: 64 }), {
+      Hex.toString(Hex.fromString('wagmi', { size: 64 }), {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -229,13 +186,13 @@ describe('hex to string', () => {
 
 describe('hex to bytes', () => {
   test('default', () => {
-    expect(Hex.to('0x', 'Bytes')).toMatchInlineSnapshot('Uint8Array []')
-    expect(Hex.to('0x61', 'Bytes')).toMatchInlineSnapshot(`
+    expect(Hex.toBytes('0x')).toMatchInlineSnapshot('Uint8Array []')
+    expect(Hex.toBytes('0x61')).toMatchInlineSnapshot(`
       Uint8Array [
         97,
       ]
     `)
-    expect(Hex.to('0x616263', 'Bytes')).toMatchInlineSnapshot(
+    expect(Hex.toBytes('0x616263')).toMatchInlineSnapshot(
       `
       Uint8Array [
         97,
@@ -244,9 +201,7 @@ describe('hex to bytes', () => {
       ]
     `,
     )
-    expect(
-      Hex.to('0x48656c6c6f20576f726c6421', 'Bytes'),
-    ).toMatchInlineSnapshot(`
+    expect(Hex.toBytes('0x48656c6c6f20576f726c6421')).toMatchInlineSnapshot(`
       Uint8Array [
         72,
         101,
@@ -266,7 +221,7 @@ describe('hex to bytes', () => {
 
   test('args: size', () => {
     expect(
-      Hex.to(Hex.from(Bytes.from([69, 420]), { size: 32 }), 'Bytes', {
+      Hex.toBytes(Hex.fromBytes(Bytes.fromArray([69, 420]), { size: 32 }), {
         size: 32,
       }),
     ).toMatchInlineSnapshot(`
@@ -306,7 +261,7 @@ describe('hex to bytes', () => {
       ]
     `)
     expect(
-      Hex.toBytes(Hex.from(Bytes.from([69, 420]), { size: 32 }), {
+      Hex.toBytes(Hex.fromBytes(Bytes.fromArray([69, 420]), { size: 32 }), {
         size: 32,
       }),
     ).toMatchInlineSnapshot(`
@@ -349,7 +304,7 @@ describe('hex to bytes', () => {
 
   test('error: size overflow', () => {
     expect(() =>
-      Hex.toString(Hex.from(Bytes.from([69, 420]), { size: 64 }), {
+      Hex.toString(Hex.fromBytes(Bytes.fromArray([69, 420]), { size: 64 }), {
         size: 32,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -361,18 +316,9 @@ describe('hex to bytes', () => {
 
   test('error: invalid bytes', () => {
     expect(() =>
-      Hex.to('0x420fggf11a', 'Bytes'),
+      Hex.toBytes('0x420fggf11a'),
     ).toThrowErrorMatchingInlineSnapshot(
       `[BaseError: Invalid byte sequence ("gg" in "420fggf11a").]`,
     )
   })
-})
-
-test('error: invalid `to`', () => {
-  // @ts-expect-error
-  expect(() => Hex.to(420, 'fake')).toThrowErrorMatchingInlineSnapshot(`
-    [Hex.InvalidTypeError: Type \`fake\` is invalid. Expected: \`string | Bytes | bigint | number | boolean\`
-
-    See: https://oxlib.sh/errors#hexinvalidtypeerror]
-  `)
 })

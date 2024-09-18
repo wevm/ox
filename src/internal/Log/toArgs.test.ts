@@ -38,10 +38,10 @@ test('behavior: filter logs, network', async () => {
     method: 'eth_getLogs',
     params: [
       {
-        fromBlock: Hex.from(
+        fromBlock: Hex.fromNumber(
           (anvilMainnet.config.forkBlockNumber as bigint) - 5n,
         ),
-        toBlock: Hex.from(anvilMainnet.config.forkBlockNumber!),
+        toBlock: Hex.fromNumber(anvilMainnet.config.forkBlockNumber!),
       },
     ],
   })

@@ -3,88 +3,83 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_assertSize } from '../Hex/assertSize.js'
 import { Hex_InvalidLengthError } from '../Hex/errors.js'
 import { Hex_fromNumber } from '../Hex/from.js'
-import { Hex_isHex } from '../Hex/isHex.js'
 import { Hex_padRight } from '../Hex/pad.js'
 import type { Hex } from '../Hex/types.js'
 import { Bytes_assertSize } from './assertSize.js'
-import { Bytes_InvalidTypeError } from './errors.js'
-import { Bytes_isBytes } from './isBytes.js'
 import { Bytes_padLeft, Bytes_padRight } from './pad.js'
 import type { Bytes } from './types.js'
 
 /**
- * Encodes an arbitrary value to {@link ox#Bytes.Bytes}.
+ * Instantiates a {@link ox#Bytes.Bytes} value from a `Uint8Array`, a hex string, or an array of unsigned 8-bit integers.
+ *
+ * :::tip
+ *
+ * To instantiate from a **Boolean**, **UTF-8 String**, or **Number**, use one of the following:
+ *
+ * - `Bytes.fromBoolean`
+ *
+ * - `Bytes.fromString`
+ *
+ * - `Bytes.fromNumber`
+ *
+ * :::
  *
  * @example
- * An example of passing a UTF-8 string:
- *
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * const data = Bytes.from('Hello world')
- * // Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * const data = Bytes.from([255, 124, 5, 4])
+ * // @log: Uint8Array([255, 124, 5, 4])
+ *
+ * const data = Bytes.from('0xdeadbeef')
+ * // @log: Uint8Array([222, 173, 190, 239])
  * ```
  *
- * @example
- * An example of passing a number:
- *
- * ```ts twoslash
- * import { Bytes } from 'ox'
- *
- * const data = Bytes.from(420)
- * // Uint8Array([1, 164])
- * ```
- *
- * @example
- * An example of passing a number with a specified size:
- *
- * ```ts twoslash
- * import { Bytes } from 'ox'
- *
- * const data = Bytes.from(420, { size: 4 })
- * // Uint8Array([0, 0, 1, 164])
- * ```
- *
- * @param value - An arbitrary value to encode to Bytes.
- * @param options - Encoding options
- * @returns Encoded {@link ox#Bytes.Bytes}.
+ * @param value - Value to convert.
+ * @returns A {@link ox#Bytes.Bytes} instance.
  */
-export function Bytes_from(
-  value: string | bigint | number | boolean | Hex | Bytes | readonly number[],
-  options: Bytes_from.Options = {},
-): Bytes {
-  if (Bytes_isBytes(value)) return value
-  if (Array.isArray(value)) return Uint8Array.from(value)
-  if (Hex_isHex(value)) return Bytes_fromHex(value, options)
-  if (typeof value === 'boolean') return Bytes_fromBoolean(value, options)
-  if (typeof value === 'string') return Bytes_fromString(value, options)
-  if (typeof value === 'number' || typeof value === 'bigint')
-    return Bytes_fromNumber(value, options)
-  throw new Bytes_InvalidTypeError(
-    typeof value,
-    'string | bigint | number | boolean | Bytes | Hex | readonly number[]',
-  )
+export function Bytes_from(value: Hex | Bytes | readonly number[]): Bytes {
+  if (value instanceof Uint8Array) return value
+  if (typeof value === 'string') return Bytes_fromHex(value)
+  return Bytes_fromArray(value)
 }
 
 export declare namespace Bytes_from {
-  export type Options = {
-    /** Size of the output bytes. */
-    size?: number | undefined
-  }
+  type ErrorType = GlobalErrorType
+}
 
-  export type ErrorType =
-    | Bytes_fromNumber.ErrorType
-    | Bytes_fromBoolean.ErrorType
-    | Bytes_fromHex.ErrorType
-    | Bytes_fromString.ErrorType
-    | Bytes_isBytes.ErrorType
-    | Hex_isHex.ErrorType
-    | Bytes_InvalidTypeError
+Bytes_from.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Bytes_fromBoolean.ErrorType
+
+/**
+ * Converts an array of unsigned 8-bit integers into {@link ox#Bytes.Bytes}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const data = Bytes.fromArray([255, 124, 5, 4])
+ * // @log: Uint8Array([255, 124, 5, 4])
+ * ```
+ *
+ * @param value - Value to convert.
+ * @returns A {@link ox#Bytes.Bytes} instance.
+ */
+export function Bytes_fromArray(value: readonly number[] | Uint8Array): Bytes {
+  return value instanceof Uint8Array ? value : new Uint8Array(value)
+}
+
+export declare namespace Bytes_fromArray {
+  type ErrorType =
+    | Bytes_assertSize.ErrorType
+    | Bytes_padLeft.ErrorType
     | GlobalErrorType
 }
 
-/* v8 ignore next */
-Bytes_from.parseError = (error: unknown) => error as Bytes_from.ErrorType
+Bytes_fromArray.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as Bytes_fromBoolean.ErrorType
 
 /**
  * Encodes a boolean value into {@link ox#Bytes.Bytes}.
@@ -183,20 +178,20 @@ function charCodeToBase16(char: number) {
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function Bytes_fromHex(
-  hex: Hex,
+  value: Hex,
   options: Bytes_fromHex.Options = {},
 ): Bytes {
   const { size } = options
 
-  if (hex.length % 2) throw new Hex_InvalidLengthError(hex)
+  if (value.length % 2) throw new Hex_InvalidLengthError(value)
 
-  let hex_ = hex
+  let hex = value
   if (size) {
-    Hex_assertSize(hex, size)
-    hex_ = Hex_padRight(hex, size)
+    Hex_assertSize(value, size)
+    hex = Hex_padRight(value, size)
   }
 
-  const hexString = hex_.slice(2) as string
+  const hexString = hex.slice(2) as string
 
   const length = hexString.length / 2
   const bytes = new Uint8Array(length)
@@ -269,8 +264,8 @@ export declare namespace Bytes_fromNumber {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Bytes_fromNumber.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Bytes_fromNumber.ErrorType
 
 const encoder = /*#__PURE__*/ new TextEncoder()
@@ -324,6 +319,6 @@ export declare namespace Bytes_fromString {
     | GlobalErrorType
 }
 
-/* v8 ignore next */
 Bytes_fromString.parseError = (error: unknown) =>
+  /* v8 ignore next */
   error as Bytes_fromString.ErrorType

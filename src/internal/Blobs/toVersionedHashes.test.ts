@@ -4,7 +4,7 @@ import { blobData, kzg } from '../../../test/kzg.js'
 
 test('default', () => {
   {
-    const blobs = Blobs.from(Hex.from(blobData))
+    const blobs = Blobs.from(Hex.fromString(blobData))
     const versionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
     expect(versionedHashes).toMatchInlineSnapshot(`
     [
@@ -15,7 +15,7 @@ test('default', () => {
   }
 
   {
-    const blobs = Blobs.from(Bytes.from(blobData))
+    const blobs = Blobs.from(Bytes.fromString(blobData))
     const versionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
     expect(versionedHashes).toMatchInlineSnapshot(`
       [
@@ -94,7 +94,7 @@ test('default', () => {
 
 test('options: as', () => {
   {
-    const blobs = Blobs.from(Hex.from(blobData))
+    const blobs = Blobs.from(Hex.fromString(blobData))
     const versionedHashes = Blobs.toVersionedHashes(blobs, { as: 'Bytes', kzg })
     expect(versionedHashes).toMatchInlineSnapshot(`
       [
@@ -171,7 +171,7 @@ test('options: as', () => {
   }
 
   {
-    const blobs = Blobs.from(Bytes.from(blobData))
+    const blobs = Blobs.from(Bytes.fromString(blobData))
     const versionedHashes = Blobs.toVersionedHashes(blobs, { as: 'Hex', kzg })
     expect(versionedHashes).toMatchInlineSnapshot(`
       [

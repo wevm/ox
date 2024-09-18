@@ -17,24 +17,20 @@ const lookup = /*#__PURE__*/ {
 } as Record<number, number>
 
 /**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a string, {@link ox#Hex.Hex}, or {@link ox#Bytes.Bytes}.
+ * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
- * import { Base64 } from 'ox'
+ * import { Base64, Bytes } from 'ox'
  *
- * const value = Base64.to('aGVsbG8gd29ybGQ=', 'string')
- * // @log: 'hello world'
+ * const value = Base64.toBytes('aGVsbG8gd29ybGQ=')
+ * // @log: Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
  * ```
  *
  * @param value - The string, hex value, or byte array to encode.
- * @param to - The type to decode to.
- * @returns The Base64 decoded string.
+ * @returns The Base64 decoded {@link ox#Bytes.Bytes}.
  */
-export function Base64_to<to extends 'string' | 'Hex' | 'Bytes'>(
-  value: string,
-  to: to | 'string' | 'Hex' | 'Bytes',
-): Base64_to.ReturnType<to> {
+export function Base64_toBytes(value: string): Bytes {
   const base64 = value.replace(/=+$/, '')
 
   const size = base64.length
@@ -54,27 +50,16 @@ export function Base64_to<to extends 'string' | 'Hex' | 'Bytes'>(
   }
 
   const decodedSize = (size >> 2) * 3 + (size % 4 && (size % 4) - 1)
-  const bytes = new Uint8Array(decoded.buffer, 0, decodedSize)
-  if (to === 'string') return Bytes_toString(bytes) as never
-  if (to === 'Hex') return Hex_fromBytes(bytes) as never
-  return bytes as never
+  return new Uint8Array(decoded.buffer, 0, decodedSize)
 }
 
-export declare namespace Base64_to {
-  type ReturnType<to extends 'string' | 'Hex' | 'Bytes'> =
-    | (to extends 'string' ? string : never)
-    | (to extends 'Hex' ? Hex : never)
-    | (to extends 'Bytes' ? Bytes : never)
-
-  type ErrorType =
-    | Bytes_toString.ErrorType
-    | Hex_fromBytes.ErrorType
-    | GlobalErrorType
+export declare namespace Base64_toBytes {
+  type ErrorType = GlobalErrorType
 }
 
-Base64_to.parseError = (error: unknown) =>
+Base64_toBytes.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Base64_to.ErrorType
+  error as Base64_toBytes.ErrorType
 
 /**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a string.
@@ -91,42 +76,16 @@ Base64_to.parseError = (error: unknown) =>
  * @returns The Base64 decoded string.
  */
 export function Base64_toString(value: string): string {
-  return Base64_to(value, 'string')
+  return Bytes_toString(Base64_toBytes(value))
 }
 
 export declare namespace Base64_toString {
-  type ErrorType = Base64_to.ErrorType | GlobalErrorType
+  type ErrorType = Base64_toBytes.ErrorType | GlobalErrorType
 }
 
 Base64_toString.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Base64_toString.ErrorType
-
-/**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Bytes.Bytes}.
- *
- * @example
- * ```ts twoslash
- * import { Base64, Bytes } from 'ox'
- *
- * const value = Base64.toBytes('aGVsbG8gd29ybGQ=')
- * // @log: Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
- * ```
- *
- * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded {@link ox#Bytes.Bytes}.
- */
-export function Base64_toBytes(value: string): Bytes {
-  return Base64_to(value, 'Bytes')
-}
-
-export declare namespace Base64_toBytes {
-  type ErrorType = Base64_to.ErrorType | GlobalErrorType
-}
-
-Base64_toBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as Base64_toBytes.ErrorType
 
 /**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Hex.Hex}.
@@ -143,11 +102,11 @@ Base64_toBytes.parseError = (error: unknown) =>
  * @returns The Base64 decoded {@link ox#Hex.Hex}.
  */
 export function Base64_toHex(value: string): Hex {
-  return Base64_to(value, 'Hex')
+  return Hex_fromBytes(Base64_toBytes(value))
 }
 
 export declare namespace Base64_toHex {
-  type ErrorType = Base64_to.ErrorType | GlobalErrorType
+  type ErrorType = Base64_toBytes.ErrorType | GlobalErrorType
 }
 
 Base64_toHex.parseError = (error: unknown) =>

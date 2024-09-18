@@ -1,7 +1,7 @@
 import { Address_from } from '../Address/from.js'
 import type { Address } from '../Address/types.js'
 import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_from } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/from.js'
 import { Bytes_isBytes } from '../Bytes/isBytes.js'
 import { Bytes_padLeft } from '../Bytes/pad.js'
 import type { Bytes } from '../Bytes/types.js'
@@ -31,16 +31,16 @@ import type { Hex } from '../Hex/types.js'
 export function ContractAddress_getCreate2Address(
   options: ContractAddress_getCreate2Address.Options,
 ): Address {
-  const from = Bytes_from(Address_from(options.from))
+  const from = Bytes_fromHex(Address_from(options.from))
   const salt = Bytes_padLeft(
-    Bytes_isBytes(options.salt) ? options.salt : Bytes_from(options.salt),
+    Bytes_isBytes(options.salt) ? options.salt : Bytes_fromHex(options.salt),
     32,
   )
 
   const bytecodeHash = (() => {
     if ('bytecodeHash' in options) {
       if (Bytes_isBytes(options.bytecodeHash)) return options.bytecodeHash
-      return Bytes_from(options.bytecodeHash)
+      return Bytes_fromHex(options.bytecodeHash)
     }
     return Hash_keccak256(options.bytecode, 'Bytes')
   })()
@@ -48,7 +48,7 @@ export function ContractAddress_getCreate2Address(
   return Address_from(
     Hex_slice(
       Hash_keccak256(
-        Bytes_concat(Bytes_from('0xff'), from, salt, bytecodeHash),
+        Bytes_concat(Bytes_fromHex('0xff'), from, salt, bytecodeHash),
       ),
       12,
     ),
@@ -75,7 +75,7 @@ export declare namespace ContractAddress_getCreate2Address {
     | Bytes_padLeft.ErrorType
     | Hash_keccak256.ErrorType
     | Hex_slice.ErrorType
-    | Bytes_from.ErrorType
+    | Bytes_fromHex.ErrorType
     | GlobalErrorType
 }
 

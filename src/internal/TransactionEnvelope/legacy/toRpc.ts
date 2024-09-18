@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hex_from } from '../../Hex/from.js'
+import { Hex_fromNumber } from '../../Hex/from.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type {
@@ -43,21 +43,21 @@ export function TransactionEnvelopeLegacy_toRpc(
     ...envelope,
     chainId:
       typeof envelope.chainId === 'number'
-        ? Hex_from(envelope.chainId)
+        ? Hex_fromNumber(envelope.chainId)
         : undefined,
     data: envelope.data ?? envelope.input,
     type: '0x0',
     ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex_from(envelope.gas) }
+      ? { gas: Hex_fromNumber(envelope.gas) }
       : {}),
     ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex_from(envelope.nonce) }
+      ? { nonce: Hex_fromNumber(envelope.nonce) }
       : {}),
     ...(typeof envelope.value === 'bigint'
-      ? { value: Hex_from(envelope.value) }
+      ? { value: Hex_fromNumber(envelope.value) }
       : {}),
     ...(typeof envelope.gasPrice === 'bigint'
-      ? { gasPrice: Hex_from(envelope.gasPrice) }
+      ? { gasPrice: Hex_fromNumber(envelope.gasPrice) }
       : {}),
     ...(signature
       ? {

@@ -24,7 +24,7 @@ test('default', () => {
 
   {
     const publicKey = P256.getPublicKey({
-      privateKey: Bytes.from(accounts[0].privateKey),
+      privateKey: Bytes.fromHex(accounts[0].privateKey),
     })
 
     expect(publicKey).toMatchInlineSnapshot(
