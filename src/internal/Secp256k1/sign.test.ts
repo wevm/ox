@@ -54,3 +54,35 @@ test('default', async () => {
     ).toBe(true)
   }
 })
+
+test('options: hash', () => {
+  const signature = Secp256k1.sign({
+    hash: true,
+    payload:
+      '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+    privateKey: accounts[0].privateKey,
+  })
+  expect(signature).toMatchInlineSnapshot(
+    `
+    {
+      "r": 42395289763960325836777315020270385161624044426039905118158393530872007515822n,
+      "s": 30406628000207299947338207254203930276142590474479134670945489721527570429874n,
+      "yParity": 1,
+    }
+  `,
+  )
+
+  const publicKey = Secp256k1.getPublicKey({
+    privateKey: accounts[0].privateKey,
+  })
+
+  expect(
+    Secp256k1.verify({
+      publicKey,
+      hash: true,
+      payload:
+        '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+      signature,
+    }),
+  ).toBe(true)
+})

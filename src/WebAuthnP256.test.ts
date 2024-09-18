@@ -7,8 +7,11 @@ test('exports', () => {
       "CredentialCreationFailedError",
       "CredentialRequestFailedError",
       "createCredential",
+      "getAuthenticatorData",
+      "getClientDataJSON",
       "getCredentialCreationOptions",
       "getCredentialRequestOptions",
+      "getSignPayload",
       "sign",
       "verify",
     ]

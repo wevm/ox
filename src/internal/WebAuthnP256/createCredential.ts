@@ -7,8 +7,8 @@ import { WebAuthnP256_getCredentialCreationOptions } from './getCredentialCreati
 import type {
   Credential,
   CredentialCreationOptions,
-  P256Credential,
   PublicKeyCredential,
+  WebAuthnP256_P256Credential,
 } from './types.js'
 
 /**
@@ -36,7 +36,7 @@ import type {
  */
 export async function WebAuthnP256_createCredential(
   options: WebAuthnP256_createCredential.Options,
-): Promise<P256Credential> {
+): Promise<WebAuthnP256_P256Credential> {
   const {
     createFn = window.navigator.credentials.create.bind(
       window.navigator.credentials,

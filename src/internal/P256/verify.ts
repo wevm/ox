@@ -30,18 +30,21 @@ import type { Signature } from '../Signature/types.js'
  * @returns Whether the payload was signed by the provided public key.
  */
 export function P256_verify(options: P256_verify.Options): boolean {
-  const { payload, publicKey, signature } = options
+  const { hash, payload, publicKey, signature } = options
   return secp256r1.verify(
     signature,
     typeof payload === 'string'
       ? payload.substring(2)
       : Hex_from(payload).substring(2),
     PublicKey_serialize(publicKey).substring(2),
+    ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
 }
 
 export declare namespace P256_verify {
   type Options = {
+    /** If set to `true`, the payload will be hashed (sha256) before being verified. */
+    hash?: boolean | undefined
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Public key that signed the payload. */

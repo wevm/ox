@@ -206,7 +206,6 @@ export type {
   CredentialMediationRequirement,
   CredentialRequestOptions,
   LargeBlobSupport,
-  P256Credential,
   PrfExtension,
   PublicKeyCredential,
   PublicKeyCredentialCreationOptions,
@@ -218,6 +217,7 @@ export type {
   PublicKeyCredentialType,
   PublicKeyCredentialUserEntity,
   ResidentKeyRequirement,
-  SignatureMetadata,
   UserVerificationRequirement,
+  WebAuthnP256_P256Credential,
+  WebAuthnP256_SignMetadata,
 } from './internal/WebAuthnP256/types.js'

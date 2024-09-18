@@ -8,7 +8,7 @@ import type { Hex } from '../Hex/types.js'
 import { P256_verify } from '../P256/verify.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
-import type { SignatureMetadata } from './types.js'
+import type { WebAuthnP256_SignMetadata } from './types.js'
 
 /**
  * Verifies a signature using the Credential's public key and the challenge which was signed.
@@ -41,7 +41,7 @@ import type { SignatureMetadata } from './types.js'
 export function WebAuthnP256_verify(
   options: WebAuthnP256_verify.Options,
 ): boolean {
-  const { challenge, metadata, publicKey, signature } = options
+  const { challenge, hash = true, metadata, publicKey, signature } = options
   const {
     authenticatorData,
     challengeIndex,
@@ -85,11 +85,10 @@ export function WebAuthnP256_verify(
   if (Hex_from(Base64_toBytes(challenge_extracted!)) !== challenge) return false
 
   const clientDataJSONHash = Hash_sha256(Bytes_from(clientDataJSON), 'Bytes')
-  const payload = Hash_sha256(
-    Bytes_concat(authenticatorDataBytes, clientDataJSONHash),
-  )
+  const payload = Bytes_concat(authenticatorDataBytes, clientDataJSONHash)
 
   return P256_verify({
+    hash,
     payload,
     publicKey,
     signature,
@@ -98,10 +97,16 @@ export function WebAuthnP256_verify(
 
 export declare namespace WebAuthnP256_verify {
   type Options = {
+    /** The challenge to verify. */
     challenge: Hex
+    /** If set to `true`, the payload will be hashed (sha256) before being verified. */
+    hash?: boolean | undefined
+    /** The public key to verify the signature with. */
     publicKey: PublicKey
+    /** The signature to verify. */
     signature: Signature<false>
-    metadata: SignatureMetadata
+    /** The metadata to verify the signature with. */
+    metadata: WebAuthnP256_SignMetadata
   }
 
   type ErrorType =
@@ -111,3 +116,7 @@ export declare namespace WebAuthnP256_verify {
     | P256_verify.ErrorType
     | GlobalErrorType
 }
+
+WebAuthnP256_verify.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as WebAuthnP256_verify.ErrorType

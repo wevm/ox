@@ -23,3 +23,12 @@ test('behavior: bytes payload', () => {
     }),
   ).toBe(true)
 })
+
+test('options: hash', () => {
+  const payload = '0xdeadbeef'
+  const { r, s } = P256.sign({ hash: true, payload, privateKey })
+  const publicKey = P256.getPublicKey({ privateKey })
+  expect(
+    P256.verify({ hash: true, publicKey, payload, signature: { r, s } }),
+  ).toBe(true)
+})

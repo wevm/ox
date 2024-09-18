@@ -7,7 +7,7 @@ import { WebAuthnP256_getCredentialRequestOptions } from './getCredentialRequest
 import type {
   Credential,
   CredentialRequestOptions,
-  SignatureMetadata,
+  WebAuthnP256_SignMetadata,
 } from './types.js'
 
 /**
@@ -98,7 +98,7 @@ export declare namespace WebAuthnP256_sign {
   }
 
   type ReturnType = {
-    metadata: SignatureMetadata
+    metadata: WebAuthnP256_SignMetadata
     raw: PublicKeyCredential
     signature: Signature<false>
   }
@@ -108,6 +108,10 @@ export declare namespace WebAuthnP256_sign {
     | WebAuthnP256_getCredentialRequestOptions.ErrorType
     | GlobalErrorType
 }
+
+WebAuthnP256_sign.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as WebAuthnP256_sign.ErrorType
 
 /**
  * Parses an ASN.1 signature into a r and s value.

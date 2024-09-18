@@ -54,12 +54,13 @@ export function WebAuthnP256_getCredentialRequestOptions(
 
 export declare namespace WebAuthnP256_getCredentialRequestOptions {
   type Options = {
+    /** The credential ID to use. */
     credentialId?: string | undefined
+    /** The challenge to sign. */
     challenge: Hex
-    /**
-     * The relying party identifier to use.
-     */
+    /** The relying party identifier to use. */
     rpId?: PublicKeyCredentialRequestOptions['rpId'] | undefined
+    /** The user verification requirement. */
     userVerification?:
       | PublicKeyCredentialRequestOptions['userVerification']
       | undefined

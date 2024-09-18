@@ -144,3 +144,7 @@ export declare namespace WebAuthnP256_getCredentialCreationOptions {
     | Bytes_from.ErrorType
     | GlobalErrorType
 }
+
+WebAuthnP256_getCredentialCreationOptions.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as WebAuthnP256_getCredentialCreationOptions.ErrorType

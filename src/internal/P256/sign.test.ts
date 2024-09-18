@@ -70,3 +70,38 @@ test('default', async () => {
     ).toBe(false)
   }
 })
+
+test('options: hash', () => {
+  const signature = P256.sign({
+    hash: true,
+    payload:
+      '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+    privateKey,
+  })
+  expect(signature).toMatchInlineSnapshot(
+    `
+    {
+      "r": 38589374264307162948518251922729143918445204519165784874036137623135009958234n,
+      "s": 201259577542353941908945259470130875727678910646252042669727980758229302244n,
+      "yParity": 0,
+    }
+  `,
+  )
+  expect(
+    P256.verify({
+      hash: true,
+      publicKey,
+      payload:
+        '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+      signature,
+    }),
+  ).toBe(true)
+  expect(
+    P256.verify({
+      hash: true,
+      publicKey,
+      payload: '0xbeef',
+      signature,
+    }),
+  ).toBe(false)
+})

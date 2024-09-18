@@ -50,7 +50,7 @@ import { Secp256k1_recoverAddress } from './recoverAddress.js'
  * @returns Whether the payload was signed by the provided address.
  */
 export function Secp256k1_verify(options: Secp256k1_verify.Options): boolean {
-  const { address, payload, publicKey, signature } = options
+  const { address, hash, payload, publicKey, signature } = options
   if (address)
     return Address_isEqual(
       address,
@@ -60,11 +60,14 @@ export function Secp256k1_verify(options: Secp256k1_verify.Options): boolean {
     signature,
     typeof payload === 'string' ? payload.substring(2) : Hex_from(payload),
     PublicKey_serialize(publicKey).substring(2),
+    ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
 }
 
 export declare namespace Secp256k1_verify {
   type Options = {
+    /** If set to `true`, the payload will be hashed (sha256) before being verified. */
+    hash?: boolean | undefined
     /** Payload that was signed. */
     payload: Hex | Bytes
   } & OneOf<

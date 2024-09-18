@@ -23,10 +23,11 @@ import type { Signature } from '../Signature/types.js'
  * @returns The ECDSA {@link ox#Signature.Signature}.
  */
 export function Secp256k1_sign(options: Secp256k1_sign.Options): Signature {
-  const { payload, privateKey } = options
+  const { hash, payload, privateKey } = options
   const { r, s, recovery } = secp256k1.sign(
     Bytes_from(payload),
     Bytes_from(privateKey),
+    ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
   return {
     r,
@@ -37,6 +38,8 @@ export function Secp256k1_sign(options: Secp256k1_sign.Options): Signature {
 
 export declare namespace Secp256k1_sign {
   type Options = {
+    /** If set to `true`, the payload will be hashed (sha256) before being signed. */
+    hash?: boolean | undefined
     /** Payload to sign. */
     payload: Hex | Bytes
     /** ECDSA private key. */

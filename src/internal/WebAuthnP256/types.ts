@@ -2,13 +2,13 @@ import type { Hex } from '../Hex/types.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Compute } from '../types.js'
 
-export type P256Credential = {
+export type WebAuthnP256_P256Credential = {
   id: string
   publicKey: PublicKey
   raw: PublicKeyCredential
 }
 
-export type SignatureMetadata = Compute<{
+export type WebAuthnP256_SignMetadata = Compute<{
   authenticatorData: Hex
   challengeIndex: number
   clientDataJSON: string

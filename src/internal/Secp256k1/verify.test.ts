@@ -37,3 +37,12 @@ test('behavior: verify w/ compressed publicKey', () => {
     Secp256k1.verify({ publicKey: compressed, payload, signature: { r, s } }),
   ).toBe(true)
 })
+
+test('options: hash', () => {
+  const payload = '0xdeadbeef'
+  const { r, s } = Secp256k1.sign({ hash: true, payload, privateKey })
+  const publicKey = Secp256k1.getPublicKey({ privateKey })
+  expect(
+    Secp256k1.verify({ hash: true, publicKey, payload, signature: { r, s } }),
+  ).toBe(true)
+})
