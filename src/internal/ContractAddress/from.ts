@@ -32,7 +32,7 @@ import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
  *   opcode: 'CREATE2',
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
  *   bytecode: Bytes.from('0x6394198df16000526103ff60206004601c335afa6040516060f3'),
- *   salt: Hex.from('hello world'),
+ *   salt: Hex.fromString('hello world'),
  * })
  * // @log: '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```

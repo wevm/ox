@@ -156,7 +156,7 @@ export function renderDocNode(
       const destination = docNode.codeDestination
       if (destination) {
         const result = resolveDeclarationReference?.(destination)
-        if (result) return `[${result.text}](${result.url})`
+        if (result) return `[\`${result.text}\`](${result.url})`
       }
       // TODO: Render plain {@link}
       // return `[${docNode.linkText}](${docNode.urlDestination})`

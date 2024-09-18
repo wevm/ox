@@ -62,8 +62,8 @@ import { Log_ArgsMismatchError } from './errors.js'
  *   method: 'eth_getLogs',
  *   params: [
  *     {
- *       fromBlock: Hex.from(6942069n),
- *       toBlock: Hex.from(6943069n),
+ *       fromBlock: Hex.fromNumber(6942069n),
+ *       toBlock: Hex.fromNumber(6943069n),
  *     },
  *   ],
  * })

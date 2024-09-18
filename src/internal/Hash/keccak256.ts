@@ -26,7 +26,7 @@ import type { Hex } from '../Hex/types.js'
  * ```ts twoslash
  * import { Hash, Hex } from 'ox'
  *
- * Hash.keccak256(Hex.from('hello world'))
+ * Hash.keccak256(Hex.fromString('hello world'))
  * // @log: '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
  * ```
  *

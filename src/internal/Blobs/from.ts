@@ -31,7 +31,7 @@ import { Blobs_BlobSizeTooLargeError, Blobs_EmptyBlobError } from './errors.js'
  * ```ts twoslash
  * import { Blobs, Hex } from 'ox'
  *
- * const blobs = Blobs.from(Hex.from('Hello world!'))
+ * const blobs = Blobs.from(Hex.fromString('Hello world!'))
  * ```
  *
  * @example

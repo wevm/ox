@@ -26,7 +26,7 @@ import type { AbiError } from './types.js'
  * ```
  *
  * @example
- * You can extract an ABI Error from a JSON ABI with {@link ox#AbiError.fromAbi}:
+ * You can extract an ABI Error from a JSON ABI with {@link ox#AbiError.(fromAbi:function)}:
  *
  * ```ts twoslash
  * // @noErrors

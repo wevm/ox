@@ -254,11 +254,11 @@ export * as PublicKey from './PublicKey.js'
  * ```ts twoslash
  * import { Hex, Rlp } from 'ox'
  *
- * const data = Rlp.fromHex([Hex.from('hello'), Hex.from('world')])
+ * const data = Rlp.fromHex([Hex.fromString('hello'), Hex.fromString('world')])
  * // @log: '0xcc8568656c6c6f85776f726c64'
  *
  * const values = Rlp.toHex(data)
- * // @log: [Hex.from('hello'), Hex.from('world')]
+ * // @log: [Hex.fromString('hello'), Hex.fromString('world')]
  * ```
  *
  * @category Encoding

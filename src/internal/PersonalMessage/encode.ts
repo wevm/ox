@@ -12,7 +12,7 @@ import type { Hex } from '../Hex/types.js'
  * ```ts twoslash
  * import { Hex, PersonalMessage } from 'ox'
  *
- * const data = PersonalMessage.encode(Hex.from('hello world'))
+ * const data = PersonalMessage.encode(Hex.fromString('hello world'))
  * // @log: '0x19457468657265756d205369676e6564204d6573736167653a0a313168656c6c6f20776f726c64'
  * // @log: (0x19 ‖ 'Ethereum Signed Message:\n11' ‖ 'hello world')
  * ```

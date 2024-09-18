@@ -13,7 +13,7 @@ import type { Hex } from '../Hex/types.js'
  * import { Hex, ValidatorData } from 'ox'
  *
  * const encoded = ValidatorData.encode({
- *   data: Hex.from('hello world'),
+ *   data: Hex.fromString('hello world'),
  *   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
  * })
  * // @log: '0x1900d8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'

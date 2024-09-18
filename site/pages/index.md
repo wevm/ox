@@ -33,7 +33,7 @@ Below is an example of using the [`Hex`](/api/Hex) and [`Rlp`](/api/Rlp) modules
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
 
-const rlp = Rlp.fromHex([Hex.from('hello'), Hex.from('world')])
+const rlp = Rlp.fromHex([Hex.fromString('hello'), Hex.fromString('world')])
 ```
 
 :::tip

@@ -74,8 +74,8 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  *   params: [
  *     {
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *       fromBlock: Hex.from(19760235n),
- *       toBlock: Hex.from(19760240n),
+ *       fromBlock: Hex.fromNumber(19760235n),
+ *       toBlock: Hex.fromNumber(19760240n),
  *       topics,
  *     },
  *   ],

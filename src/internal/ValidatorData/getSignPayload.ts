@@ -13,7 +13,7 @@ import { ValidatorData_encode } from './encode.js'
  * import { Hex, Secp256k1, ValidatorData } from 'ox'
  *
  * const payload = ValidatorData.getSignPayload({ // [!code focus]
- *   data: Hex.from('hello world'), // [!code focus]
+ *   data: Hex.fromString('hello world'), // [!code focus]
  *   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045', // [!code focus]
  * }) // [!code focus]
  *

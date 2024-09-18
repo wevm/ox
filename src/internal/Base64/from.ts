@@ -17,7 +17,7 @@ const lookup = /*#__PURE__*/ Object.fromEntries(
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.from(Hex.from('hello world'))
+ * const value = Base64.from(Hex.fromString('hello world'))
  * // @log: 'aGVsbG8gd29ybGQ='
  * ```
  *
@@ -29,7 +29,7 @@ const lookup = /*#__PURE__*/ Object.fromEntries(
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.from(Hex.from('hello world'), { pad: false })
+ * const value = Base64.from(Hex.fromString('hello world'), { pad: false })
  * // @log: 'aGVsbG8gd29ybGQ'
  * ```
  *
@@ -40,7 +40,7 @@ const lookup = /*#__PURE__*/ Object.fromEntries(
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.from(Hex.from('hello wod'), { url: true })
+ * const value = Base64.from(Hex.fromString('hello wod'), { url: true })
  * // @log: 'aGVsbG8gd29_77-9ZA=='
  * ```
  *
@@ -86,7 +86,7 @@ Base64_from.parseError = (error: unknown) =>
  * ```ts twoslash
  * import { Base64, Bytes } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.from('hello world'))
+ * const value = Base64.fromBytes(Bytes.fromString('hello world'))
  * // @log: 'aGVsbG8gd29ybGQ='
  * ```
  *
@@ -98,7 +98,7 @@ Base64_from.parseError = (error: unknown) =>
  * ```ts twoslash
  * import { Base64, Bytes } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.from('hello world'), { pad: false })
+ * const value = Base64.fromBytes(Bytes.fromString('hello world'), { pad: false })
  * // @log: 'aGVsbG8gd29ybGQ'
  * ```
  *
@@ -109,7 +109,7 @@ Base64_from.parseError = (error: unknown) =>
  * ```ts twoslash
  * import { Base64, Bytes } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.from('hello wod'), { url: true })
+ * const value = Base64.fromBytes(Bytes.fromString('hello wod'), { url: true })
  * // @log: 'aGVsbG8gd29_77-9ZA=='
  * ```
  *
@@ -240,7 +240,7 @@ Base64_fromString.parseError = (error: unknown) =>
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.fromHex(Hex.from('hello world'))
+ * const value = Base64.fromHex(Hex.fromString('hello world'))
  * // @log: 'aGVsbG8gd29ybGQ='
  * ```
  *
@@ -252,7 +252,7 @@ Base64_fromString.parseError = (error: unknown) =>
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.fromHex(Hex.from('hello world'), { pad: false })
+ * const value = Base64.fromHex(Hex.fromString('hello world'), { pad: false })
  * // @log: 'aGVsbG8gd29ybGQ'
  * ```
  *
@@ -263,7 +263,7 @@ Base64_fromString.parseError = (error: unknown) =>
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.fromHex(Hex.from('hello wod'), { url: true })
+ * const value = Base64.fromHex(Hex.fromString('hello wod'), { url: true })
  * // @log: 'aGVsbG8gd29_77-9ZA=='
  * ```
  *

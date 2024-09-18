@@ -11,7 +11,7 @@ import { PersonalMessage_encode } from './encode.js'
  * ```ts twoslash
  * import { Hex, PersonalMessage, Secp256k1 } from 'ox'
  *
- * const payload = PersonalMessage.getSignPayload(Hex.from('hello world')) // [!code focus]
+ * const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world')) // [!code focus]
  *
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
  * ```
