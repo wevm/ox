@@ -55,6 +55,12 @@ export default defineConfig({
             link: '/guides/transaction-envelopes',
           },
           { text: 'WebAuthn Signatures 🚧', link: '/guides/webauthn' },
+          { text: 'Using with Effect 🚧', link: '/guides/effect' },
+          { text: 'Using with NeverThrow 🚧', link: '/guides/neverthrow' },
+          {
+            text: 'Using with Validators 🚧',
+            link: '/guides/validators',
+          },
         ],
       },
       {
