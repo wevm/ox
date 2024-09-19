@@ -7,6 +7,9 @@ test('exports', () => {
       "fromBytes",
       "fromHex",
       "fromString",
+      "toBytes",
+      "toHex",
+      "toString",
     ]
   `)
 })
