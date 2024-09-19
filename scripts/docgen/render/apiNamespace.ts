@@ -25,13 +25,22 @@ export function renderNamespace(options: {
   } = options
   const { examples, summary } = docComment
 
+  const headings = [...examples]
+    .map((x) => {
+      if (!x.includes('###')) return
+      const header = x.split('\n')[0]!.replaceAll('#', '').trim()
+      return { header, slug: header.toLowerCase().replaceAll(' ', '-') }
+    })
+    .filter(Boolean)
+
   const content = [`# ${apiItem.displayName}`, summary]
   if (examples.length)
     content.push(
       '## Examples',
       ...(examples.length > 1
         ? [
-            `Below are some examples demonstrating common usages of the \`${apiItem.displayName}\` module.`,
+            `Below are some examples demonstrating common usages of the \`${apiItem.displayName}\` module:`,
+            ...headings.map((x) => `- [${x!.header}](#${x!.slug})`),
             ...examples,
           ]
         : [...examples]),
