@@ -196,6 +196,69 @@ export * as AbiConstructor from './AbiConstructor.js'
  *
  * `AbiError` is a sub-type of [`AbiItem`](/api/AbiItem).
  *
+ * @example
+ * ### Instantiating via JSON ABI
+ *
+ * An `AbiError` can be instantiated from a JSON ABI by using {@link ox#AbiError.(fromAbi:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'error BadSignatureV(uint8 v)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiError.fromAbi(abi, { name: 'BadSignatureV' }) // [!code focus]
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Instantiating via Human-Readable ABI
+ *
+ * An `AbiError` can be instantiated from a human-readable ABI by using {@link ox#AbiError.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiError } from 'ox'
+ *
+ * const error = AbiError.from('error BadSignatureV(uint8 v)')
+ *
+ * error
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Decoding Error Data
+ *
+ * Error data can be ABI-decoded using the {@link ox#AbiError.(decode:function)} function.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ * const error = AbiError.fromAbi(abi, { name: 'InvalidSignature' })
+ *
+ * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001') // [!code focus]
+ * // @log: [420n, 69n, 1]
+ * ```
+ *
  * @category ABI
  */
 export * as AbiError from './AbiError.js'
@@ -204,6 +267,112 @@ export * as AbiError from './AbiError.js'
  * Utilities & types for working with [Events](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.
  *
  * `AbiEvent` is a sub-type of [`AbiItem`](/api/AbiItem).
+ *
+ * @example
+ * ### Instantiating via JSON ABI
+ *
+ * An `AbiEvent` can be instantiated from a JSON ABI by using {@link ox#AbiEvent.(fromAbi:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiEvent.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Instantiating via Human-Readable ABI
+ *
+ * An `AbiEvent` can be instantiated from a human-readable ABI by using {@link ox#AbiEvent.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)' // [!code hl]
+ * )
+ *
+ * transfer
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Encoding to Event Topics
+ *
+ * Encode an `AbiEvent` into topics using {@link ox#AbiEvent.(encode:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * )
+ *
+ * const { topics } = AbiEvent.encode(transfer, {
+ *   from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code hl]
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' // [!code hl]
+ * })
+ * // @log: [
+ * // @log:   '0x406dade31f7ae4b5dbc276258c28dde5ae6d5c2773c5745802c493a2360e55e0',
+ * // @log:   '0x00000000000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+ * // @log:   '0x0000000000000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8'
+ * // @log: ]
+ * ```
+ *
+ * @example
+ * ### Decoding Event Topics and Data
+ *
+ * Event topics and data can be decoded using {@link ox#AbiEvent.(decode:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * )
+ *
+ * const log = {
+ *   // ...
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *   ],
+ * } as const
+ *
+ * const decoded = AbiEvent.decode(transfer, log)
+ * // @log: {
+ * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   value: 1n
+ * // @log: }
+ * ```
  *
  * @category ABI
  */
