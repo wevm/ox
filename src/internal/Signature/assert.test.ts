@@ -5,7 +5,7 @@ test('default', () => {
   expect(() =>
     Signature.assert({ r: undefined, s: 0n, yParity: 0 }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.MissingPropertiesError: Signature \`{"s":"0","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
+    [Signature.MissingPropertiesError: Signature \`{"s":0n,"yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
 
     See: https://oxlib.sh/errors#missingsignaturepropertieserror]
   `)
@@ -13,7 +13,7 @@ test('default', () => {
   expect(() =>
     Signature.assert({ r: 0n, s: undefined, yParity: 0 }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.MissingPropertiesError: Signature \`{"r":"0","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
+    [Signature.MissingPropertiesError: Signature \`{"r":0n,"yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
 
     See: https://oxlib.sh/errors#missingsignaturepropertieserror]
   `)
@@ -29,7 +29,7 @@ test('default', () => {
   expect(() =>
     Signature.assert({ r: 0n, s: 0n }, { recovered: true }),
   ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.MissingPropertiesError: Signature \`{"r":"0","s":"0"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
+    [Signature.MissingPropertiesError: Signature \`{"r":0n,"s":0n}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
 
     See: https://oxlib.sh/errors#missingsignaturepropertieserror]
   `)

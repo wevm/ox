@@ -92,18 +92,15 @@ export function App() {
 
                 const formData = new FormData(e.target as HTMLFormElement)
                 const challenge = formData.get('challenge') as Hex.Hex
-                const signature = JSON.parse(
+                const signature = Json.parse(
                   formData.get('signature') as string,
                 )
-                const metadata = JSON.parse(formData.get('webauthn') as string)
+                const metadata = Json.parse(formData.get('webauthn') as string)
 
                 const verified = WebAuthnP256.verify({
                   challenge,
                   publicKey: credential.publicKey,
-                  signature: {
-                    r: BigInt(signature.r),
-                    s: BigInt(signature.s),
-                  },
+                  signature,
                   metadata,
                 })
 

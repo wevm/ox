@@ -2,14 +2,19 @@ import { Json } from 'ox'
 import { expect, test } from 'vitest'
 
 test('default', () => {
-  expect(
-    Json.stringify({
-      foo: 'bar',
-      baz: {
-        value: 69n,
-      },
-    }),
-  ).toEqual('{"foo":"bar","baz":{"value":"69"}}')
+  const value = {
+    foo: 'bar',
+    baz: {
+      value1: 69n,
+      value2: 14124912949129519293629939492394239492349523949321n,
+      value3: 420,
+    },
+  }
+  const string = Json.stringify(value)
+  expect(string).toEqual(
+    '{"foo":"bar","baz":{"value1":69n,"value2":14124912949129519293629939492394239492349523949321n,"value3":420}}',
+  )
+  expect(Json.parse(string)).toEqual(value)
 })
 
 test('args: replacer', () => {
@@ -47,7 +52,7 @@ test('args: space', () => {
     "{
       "foo": "bar",
       "baz": {
-        "value": "69"
+        "value": 69n
       }
     }"
   `)

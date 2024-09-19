@@ -111,15 +111,19 @@ test('no domain', () => {
           { name: 'address', type: 'address' },
           { name: 'name', type: 'string' },
           { name: 'foo', type: 'string' },
+          { name: 'a', type: 'uint32' },
+          { name: 'b', type: 'uint256' },
         ],
       },
       message: {
         address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
         name: 'jxom',
         foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+        a: 1,
+        b: 420420420420420420420420420420420420420420n,
       },
     }),
   ).toMatchInlineSnapshot(
-    `"{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint32"},{"name":"verifyingContract","type":"address"}],"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"`,
+    `"{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9","a":1,"b":"420420420420420420420420420420420420420420"},"primaryType":"Foo","types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint32"},{"name":"verifyingContract","type":"address"}],"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"},{"name":"a","type":"uint32"},{"name":"b","type":"uint256"}]}}"`,
   )
 })

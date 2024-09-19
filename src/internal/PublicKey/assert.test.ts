@@ -50,7 +50,7 @@ test('uncompressed', () => {
 test('unknown', () => {
   expect(() => PublicKey.assert({ y: 1n })).toThrowErrorMatchingInlineSnapshot(
     `
-    [PublicKey.InvalidError: Value \`{"y":"1"}\` is not a valid public key.
+    [PublicKey.InvalidError: Value \`{"y":1n}\` is not a valid public key.
 
     Public key must contain:
     - an \`x\` and \`prefix\` value (compressed)

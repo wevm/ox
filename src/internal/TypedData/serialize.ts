@@ -75,7 +75,10 @@ export function TypedData_serialize<
     return normalizeData(types[primaryType], message_)
   })()
 
-  return Json_stringify({ domain, message, primaryType, types })
+  return Json_stringify({ domain, message, primaryType, types }, (_, value) => {
+    if (typeof value === 'bigint') return value.toString()
+    return value
+  })
 }
 
 export declare namespace TypedData_serialize {

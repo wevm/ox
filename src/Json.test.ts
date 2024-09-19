@@ -4,6 +4,7 @@ import * as exports from './Json.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "parse",
       "stringify",
     ]
   `)

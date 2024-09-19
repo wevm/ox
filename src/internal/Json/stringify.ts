@@ -1,7 +1,18 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 
+const bigIntRegex = /"(-?\d+)#__ox_bi__"/g
+const bigIntSuffix = '#__ox_bi__'
+
 /**
- * Stringifies a value to its JSON representation with support for `bigint`.
+ * Stringifies a value to its JSON representation, with support for `bigint`.
+ *
+ * :::warning
+ *
+ * This function will output a **non-standard JSON string** if it contains `bigint` values (ie. it is incompatible with `JSON.parse`).
+ *
+ * To parse the output of `Json.stringify`, you can use {@link ox#Json.(parse:function)}
+ *
+ * :::
  *
  * @example
  * ```ts twoslash
@@ -9,9 +20,9 @@ import type { GlobalErrorType } from '../Errors/error.js'
  *
  * const json = Json.stringify({
  *   foo: 'bar',
- *   baz: 69n,
+ *   baz: 69420694206942069420694206942069420694206942069420n,
  * })
- * // @log: '{"foo":"bar","baz":"69"}'
+ * // @log: '{"foo":"bar","baz":69420694206942069420694206942069420694206942069420}'
  * ```
  *
  * @param value - The value to stringify.
@@ -24,14 +35,16 @@ export function Json_stringify(
   replacer?: ((this: any, key: string, value: any) => any) | null | undefined,
   space?: string | number | undefined,
 ) {
-  return JSON.stringify(
+  const string = JSON.stringify(
     value,
-    (key, value_) => {
-      const value = typeof value_ === 'bigint' ? value_.toString() : value_
-      return typeof replacer === 'function' ? replacer(key, value) : value
+    (key, value) => {
+      if (typeof replacer === 'function') return replacer(key, value)
+      if (typeof value === 'bigint') return value.toString() + bigIntSuffix
+      return value
     },
     space,
   )
+  return string.replace(bigIntRegex, '$1n')
 }
 
 export declare namespace Json_stringify {
