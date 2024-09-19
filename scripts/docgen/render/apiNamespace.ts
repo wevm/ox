@@ -26,7 +26,16 @@ export function renderNamespace(options: {
   const { examples, summary } = docComment
 
   const content = [`# ${apiItem.displayName}`, summary]
-  if (examples.length) content.push('## Examples', ...examples)
+  if (examples.length)
+    content.push(
+      '## Examples',
+      ...(examples.length > 1
+        ? [
+            `Below are some examples demonstrating common usages of the \`${apiItem.displayName}\` module.`,
+            ...examples,
+          ]
+        : [...examples]),
+    )
 
   const tableHeader = [
     '| Name                | Description                         |',

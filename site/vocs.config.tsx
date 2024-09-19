@@ -270,8 +270,8 @@ export default defineConfig({
   ],
   theme: {
     accentColor: {
-      light: '#ff9318',
-      dark: '#ffc517',
+      light: '#3873ad',
+      dark: '#d2991d',
     },
   },
   topNav: [

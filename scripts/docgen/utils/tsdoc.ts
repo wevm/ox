@@ -1,11 +1,18 @@
 import { resolve } from 'node:path'
+import type * as model from '@microsoft/api-extractor-model'
 import * as tsdoc from '@microsoft/tsdoc'
 import { TSDocConfigFile } from '@microsoft/tsdoc-config'
 import { Project, ScriptTarget, SyntaxKind } from 'ts-morph'
 
-import type { ResolveDeclarationReference } from './model.js'
+import {
+  type ResolveDeclarationReference,
+  createResolveDeclarationReference,
+} from './model.js'
 
-export function extractNamespaceDocComments(file: string) {
+export function extractNamespaceDocComments(
+  file: string,
+  apiItem: model.ApiItem,
+) {
   const project = new Project({
     compilerOptions: {
       target: ScriptTarget.ESNext,
@@ -37,7 +44,10 @@ export function extractNamespaceDocComments(file: string) {
     if (!tsDoc) continue
 
     const parserContext: tsdoc.ParserContext = tsdocParser.parseString(tsDoc)
-    const docComment = processDocComment(parserContext.docComment)
+    const docComment = processDocComment(
+      parserContext.docComment,
+      createResolveDeclarationReference(apiItem),
+    )
     if (!docComment) continue
 
     docComments[namespace] = docComment

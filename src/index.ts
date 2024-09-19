@@ -1,6 +1,116 @@
 /**
  * Utilities & types for working with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html)
  *
+ * :::note
+ *
+ * If you are looking for ABI parameter **encoding** & **decoding** functions, see {@link ox#AbiParameters.(encode:function)} & {@link ox#AbiParameters.(decode:function)}.
+ *
+ * :::
+ *
+ * @example
+ * ### Instantiating JSON ABIs
+ *
+ * An {@link ox#Abi.Abi} can be instantiated from a JSON ABI by using {@link ox#Abi.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ *
+ * const abi = Abi.from([{
+ *   type: 'function',
+ *   name: 'approve',
+ *   stateMutability: 'nonpayable',
+ *   inputs: [
+ *     {
+ *       name: 'spender',
+ *       type: 'address',
+ *     },
+ *     {
+ *       name: 'amount',
+ *       type: 'uint256',
+ *     },
+ *   ],
+ *   outputs: [{ type: 'bool' }],
+ * }])
+ *
+ * abi
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Instantiating Human Readable ABIs
+ *
+ * An {@link ox#Abi.Abi} can be instantiated from a human-readable ABI by using {@link ox#Abi.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function approve(address spender, uint256 amount) returns (bool)',
+ * ])
+ *
+ * abi
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Formatting ABIs
+ *
+ * An {@link ox#Abi.Abi} can be formatted into a human-readable ABI by using {@link ox#Abi.(format:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi } from 'ox'
+ * const abi = Abi.from([{
+ *   type: 'function',
+ *   name: 'approve',
+ *   stateMutability: 'nonpayable',
+ *   inputs: [
+ *     {
+ *       name: 'spender',
+ *       type: 'address',
+ *     },
+ *     {
+ *       name: 'amount',
+ *       type: 'uint256',
+ *     },
+ *   ],
+ *   outputs: [{ type: 'bool' }],
+ * }])
+ * //---cut---
+ * const formatted = Abi.format(abi)
+ *
+ * formatted
+ * //    ^?
+ *
+ *
+ * ```
+ *
  * @category ABI
  */
 export * as Abi from './Abi.js'

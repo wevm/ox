@@ -41,7 +41,10 @@ const apiEntryPoint = apiPackage.members.find(
 ) as model.ApiEntryPoint
 if (!apiEntryPoint) throw new Error('Could not find api entrypoint')
 
-const moduleDocComments = extractNamespaceDocComments('./src/index.ts')
+const moduleDocComments = extractNamespaceDocComments(
+  './src/index.ts',
+  apiPackage,
+)
 
 const testNamespaces: string[] = []
 const namespaces = []
