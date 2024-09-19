@@ -6,7 +6,7 @@ import type {
 } from './types.js'
 
 /**
- * Converts an {@link ox#Authorization.RpcList} to an {@link ox#Authorization.List}.
+ * Converts an {@link ox#Authorization.ListRpc} to an {@link ox#Authorization.List}.
  *
  * @example
  * ```ts twoslash

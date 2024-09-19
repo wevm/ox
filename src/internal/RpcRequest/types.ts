@@ -63,7 +63,7 @@ export type RpcRequest_ExtractMethodReturnType<
 ////////////////////////////////////////////////////////////////
 
 /**
- * Type to define a custom type-safe JSON-RPC Method to be used with {@link ox#RpcRequest.defineRequest}.
+ * Type to define a custom type-safe JSON-RPC Method to be used with {@link ox#RpcRequest.(from:function)}.
  *
  * @example
  * ```ts twoslash

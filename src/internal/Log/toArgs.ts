@@ -1,3 +1,5 @@
+// TODO: maybe nuke this and add `AbiEvent.assertArgs`.
+
 import type { AbiEventParameter } from 'abitype'
 import { AbiEvent_decode } from '../AbiEvent/decode.js'
 import { AbiEvent_InputNotFoundError } from '../AbiEvent/errors.js'

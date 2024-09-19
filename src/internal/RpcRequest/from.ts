@@ -13,7 +13,7 @@ import type {
  *
  * :::warning
  *
- * You will likely want to use {@link RpcRequest#createStore} instead as it will also manage `id`s and uses this function internally.
+ * You will likely want to use {@link ox#RpcRequest.(createStore:function)} instead as it will also manage `id`s and uses this function internally.
  *
  * :::
  *

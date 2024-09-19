@@ -8,7 +8,7 @@ import { Blobs_toProofs } from './toProofs.js'
 import type { BlobSidecars, Blobs } from './types.js'
 
 /**
- * Transforms {@link ox#Blobs.Blobs} into a {@link ox#Blobs.Blobsidecars} array.
+ * Transforms {@link ox#Blobs.Blobs} into a {@link ox#Blobs.BlobSidecars} array.
  *
  * @example
  * ```ts twoslash
@@ -36,9 +36,9 @@ import type { BlobSidecars, Blobs } from './types.js'
  * const sidecars = Blobs.toSidecars(blobs, { commitments, kzg, proofs }) // [!code focus]
  * ```
  *
- * @param blobs - The {@link ox#Blobs.Blobs} to transform into {@link ox#Blobs.Blobsidecars}.
+ * @param blobs - The {@link ox#Blobs.Blobs} to transform into {@link ox#Blobs.BlobSidecars}.
  * @param options -
- * @returns The {@link ox#Blobs.Blobsidecars}.
+ * @returns The {@link ox#Blobs.BlobSidecars}.
  */
 export function Blobs_toSidecars<const blobs extends Blobs<Hex> | Blobs<Bytes>>(
   blobs: blobs,

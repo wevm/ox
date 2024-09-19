@@ -10,7 +10,7 @@ import { TransactionEnvelopeLegacy_assert } from './assert.js'
 import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
- * Deserializes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy} from its serialized form.
+ * Deserializes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelope} from its serialized form.
  *
  * @example
  * ```ts twoslash
