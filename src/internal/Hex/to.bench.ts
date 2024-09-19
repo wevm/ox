@@ -1,6 +1,8 @@
 import { getBytes, toBigInt, toUtf8String } from 'ethers'
 import { bench, describe } from 'vitest'
-import { Hex_toBigInt, Hex_toBytes, Hex_toNumber } from './to.js'
+import { Hex_toBigInt } from './toBigInt.js'
+import { Hex_toBytes } from './toBytes.js'
+import { Hex_toNumber } from './toNumber.js'
 
 describe('Hex to BigInt', () => {
   bench('ox: `Hex.toBigInt`', () => {

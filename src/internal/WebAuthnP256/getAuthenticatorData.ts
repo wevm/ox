@@ -1,7 +1,8 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 import { Hex_concat } from '../Hex/concat.js'
-import { Hex_fromNumber, Hex_fromString } from '../Hex/from.js'
+import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
 
 /**

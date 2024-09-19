@@ -1,8 +1,9 @@
 import { p256 } from '@noble/curves/p256'
 
-import { Bytes_from, Bytes_fromArray } from '../Bytes/from.js'
+import { Bytes_from } from '../Bytes/from.js'
+import { Bytes_fromArray } from '../Bytes/fromArray.js'
 import { Bytes_slice } from '../Bytes/slice.js'
-import { Bytes_toBigInt } from '../Bytes/to.js'
+import { Bytes_toBigInt } from '../Bytes/toBigInt.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'

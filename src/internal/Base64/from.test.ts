@@ -25,37 +25,3 @@ test('options: url: true', () => {
     'aGVsbG8gd29_77-9ZA==',
   )
 })
-
-test('fromString', () => {
-  expect(Base64.fromString('hello wo�d')).toBe('aGVsbG8gd29/77+9ZA==')
-  expect(Base64.fromString('hello wo�d', { url: true })).toBe(
-    'aGVsbG8gd29_77-9ZA==',
-  )
-  expect(Base64.fromString('hello wo�d', { pad: false })).toBe(
-    'aGVsbG8gd29/77+9ZA',
-  )
-})
-
-test('fromHex', () => {
-  expect(Base64.fromHex(Hex.fromString('hello wo�d'))).toBe(
-    'aGVsbG8gd29/77+9ZA==',
-  )
-  expect(Base64.fromHex(Hex.fromString('hello wo�d'), { url: true })).toBe(
-    'aGVsbG8gd29_77-9ZA==',
-  )
-  expect(Base64.fromHex(Hex.fromString('hello wo�d'), { pad: false })).toBe(
-    'aGVsbG8gd29/77+9ZA',
-  )
-})
-
-test('fromBytes', () => {
-  expect(Base64.fromBytes(Bytes.fromString('hello wo�d'))).toBe(
-    'aGVsbG8gd29/77+9ZA==',
-  )
-  expect(Base64.fromBytes(Bytes.fromString('hello wo�d'), { url: true })).toBe(
-    'aGVsbG8gd29_77-9ZA==',
-  )
-  expect(Base64.fromBytes(Bytes.fromString('hello wo�d'), { pad: false })).toBe(
-    'aGVsbG8gd29/77+9ZA',
-  )
-})

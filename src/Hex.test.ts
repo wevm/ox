@@ -21,17 +21,17 @@ test('exports', () => {
       "size",
       "trimLeft",
       "trimRight",
-      "toBigInt",
-      "toBoolean",
-      "toBytes",
-      "toNumber",
-      "toString",
       "from",
       "fromBoolean",
       "fromBytes",
       "fromNumber",
       "fromString",
       "random",
+      "toBigInt",
+      "toBoolean",
+      "toBytes",
+      "toNumber",
+      "toString",
     ]
   `)
 })

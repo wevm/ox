@@ -2,7 +2,8 @@ import { expect, test } from 'vitest'
 
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import { AbiParameters_from } from '../AbiParameters/from.js'
-import { Bytes_fromHex, Bytes_fromString } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { ContractAddress_from } from './from.js'
 

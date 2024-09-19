@@ -1,5 +1,5 @@
 // Adapted from https://github.com/mafintosh/dns-packet
-import { Bytes_fromString } from '../Bytes/from.js'
+import { Bytes_fromString } from '../Bytes/fromString.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Ens_encodeLabelhash } from './encodeLabelhash.js'

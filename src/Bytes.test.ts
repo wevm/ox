@@ -11,6 +11,12 @@ test('exports', () => {
       "SliceOffsetOutOfBoundsError",
       "assert",
       "concat",
+      "from",
+      "fromArray",
+      "fromBoolean",
+      "fromHex",
+      "fromNumber",
+      "fromString",
       "isBytes",
       "isEqual",
       "padLeft",
@@ -25,12 +31,6 @@ test('exports', () => {
       "toHex",
       "toNumber",
       "toString",
-      "from",
-      "fromArray",
-      "fromBoolean",
-      "fromHex",
-      "fromNumber",
-      "fromString",
     ]
   `)
 })

@@ -1,4 +1,4 @@
-import { Base64_fromHex } from '../Base64/from.js'
+import { Base64_fromHex } from '../Base64/fromHex.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 

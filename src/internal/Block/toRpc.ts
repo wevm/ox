@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromNumber } from '../Hex/from.js'
+import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Transaction_toRpc } from '../Transaction/isomorphic/toRpc.js'
 import { Withdrawal_toRpc } from '../Withdrawal/toRpc.js'
 import type { Block, Block_Rpc } from './types.js'

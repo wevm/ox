@@ -1,9 +1,9 @@
 import { sha256 as noble_sha256 } from '@noble/hashes/sha256'
 
-import { Bytes_fromHex } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromBytes } from '../Hex/from.js'
+import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Hex_isHex } from '../Hex/isHex.js'
 import type { Hex } from '../Hex/types.js'
 

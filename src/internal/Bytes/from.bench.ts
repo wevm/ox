@@ -8,7 +8,9 @@ import {
   stringToBytes,
 } from 'viem'
 import { bench, describe } from 'vitest'
-import { Bytes_fromHex, Bytes_fromNumber, Bytes_fromString } from './from.js'
+import { Bytes_fromHex } from './fromHex.js'
+import { Bytes_fromNumber } from './fromNumber.js'
+import { Bytes_fromString } from './fromString.js'
 
 describe('Bytes from Hex', () => {
   const hex = Bytes.toHex(Bytes.random(1024))

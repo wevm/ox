@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 import { Hex_concat } from '../Hex/concat.js'
-import { Hex_fromString } from '../Hex/from.js'
+import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
 import { WebAuthnP256_getAuthenticatorData } from './getAuthenticatorData.js'
 import { WebAuthnP256_getClientDataJSON } from './getClientDataJSON.js'

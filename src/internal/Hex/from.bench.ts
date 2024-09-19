@@ -2,7 +2,9 @@ import { bytesToHex as bytesToHex_ethjs } from '@ethereumjs/util'
 import { hexlify, toBeHex, toUtf8Bytes } from 'ethers'
 import { Bytes } from 'ox'
 import { bench, describe } from 'vitest'
-import { Hex_fromBytes, Hex_fromNumber, Hex_fromString } from './from.js'
+import { Hex_fromBytes } from './fromBytes.js'
+import { Hex_fromNumber } from './fromNumber.js'
+import { Hex_fromString } from './fromString.js'
 
 describe('Number to Hex', () => {
   bench('ox: `Hex.fromNumber`', () => {

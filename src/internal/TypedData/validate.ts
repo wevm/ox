@@ -4,7 +4,7 @@ import {
 } from '../Address/errors.js'
 import { Address_isAddress } from '../Address/isAddress.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromNumber } from '../Hex/from.js'
+import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import {

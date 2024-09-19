@@ -1,7 +1,7 @@
-import { Bytes_fromString } from '../Bytes/from.js'
+import { Bytes_fromString } from '../Bytes/fromString.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_fromBytes } from '../Hex/from.js'
+import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
 
 /**

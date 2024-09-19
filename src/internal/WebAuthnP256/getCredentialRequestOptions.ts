@@ -1,5 +1,5 @@
-import { Base64_toBytes } from '../Base64/to.js'
-import { Bytes_fromHex } from '../Bytes/from.js'
+import { Base64_toBytes } from '../Base64/toBytes.js'
+import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type {

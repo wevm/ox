@@ -1,6 +1,7 @@
 import { Address_from } from '../Address/from.js'
 import type { Address } from '../Address/types.js'
-import { Bytes_fromHex, Bytes_fromNumber } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { Bytes_fromNumber } from '../Bytes/fromNumber.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Rlp_fromBytes } from '../Rlp/from.js'

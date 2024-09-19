@@ -1,6 +1,6 @@
 import { Authorization_toRpcList } from '../../Authorization/toRpcList.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hex_fromNumber } from '../../Hex/from.js'
+import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'

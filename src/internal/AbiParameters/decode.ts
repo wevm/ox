@@ -1,16 +1,14 @@
-import { Bytes_fromHex } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_size } from '../Bytes/size.js'
 import { Bytes_slice } from '../Bytes/slice.js'
-import {
-  Bytes_toBigInt,
-  Bytes_toBoolean,
-  Bytes_toNumber,
-  Bytes_toString,
-} from '../Bytes/to.js'
+import { Bytes_toBigInt } from '../Bytes/toBigInt.js'
+import { Bytes_toBoolean } from '../Bytes/toBoolean.js'
+import { Bytes_toNumber } from '../Bytes/toNumber.js'
+import { Bytes_toString } from '../Bytes/toString.js'
 import { Bytes_trimLeft } from '../Bytes/trim.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromBytes } from '../Hex/from.js'
+import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { getArrayComponents } from './encode.js'

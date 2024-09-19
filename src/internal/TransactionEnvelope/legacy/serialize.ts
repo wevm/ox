@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hex_fromNumber } from '../../Hex/from.js'
+import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Hex_trimLeft } from '../../Hex/trim.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
 import { Signature_InvalidVError } from '../../Signature/errors.js'

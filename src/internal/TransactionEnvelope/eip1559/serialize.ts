@@ -1,7 +1,7 @@
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_concat } from '../../Hex/concat.js'
-import { Hex_fromNumber } from '../../Hex/from.js'
+import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toTuple } from '../../Signature/toTuple.js'

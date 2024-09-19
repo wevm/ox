@@ -1,8 +1,5 @@
-import { Bytes_toString } from '../Bytes/to.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromBytes } from '../Hex/from.js'
-import type { Hex } from '../Hex/types.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()
 const lookup = /*#__PURE__*/ {
@@ -60,55 +57,3 @@ export declare namespace Base64_toBytes {
 Base64_toBytes.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Base64_toBytes.ErrorType
-
-/**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a string.
- *
- * @example
- * ```ts twoslash
- * import { Base64 } from 'ox'
- *
- * const value = Base64.toString('aGVsbG8gd29ybGQ=')
- * // @log: 'hello world'
- * ```
- *
- * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded string.
- */
-export function Base64_toString(value: string): string {
-  return Bytes_toString(Base64_toBytes(value))
-}
-
-export declare namespace Base64_toString {
-  type ErrorType = Base64_toBytes.ErrorType | GlobalErrorType
-}
-
-Base64_toString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as Base64_toString.ErrorType
-
-/**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Hex.Hex}.
- *
- * @example
- * ```ts twoslash
- * import { Base64, Hex } from 'ox'
- *
- * const value = Base64.toHex('aGVsbG8gd29ybGQ=')
- * // @log: 0x68656c6c6f20776f726c64
- * ```
- *
- * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded {@link ox#Hex.Hex}.
- */
-export function Base64_toHex(value: string): Hex {
-  return Hex_fromBytes(Base64_toBytes(value))
-}
-
-export declare namespace Base64_toHex {
-  type ErrorType = Base64_toBytes.ErrorType | GlobalErrorType
-}
-
-Base64_toHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as Base64_toHex.ErrorType

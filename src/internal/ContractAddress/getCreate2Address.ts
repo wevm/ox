@@ -1,7 +1,7 @@
 import { Address_from } from '../Address/from.js'
 import type { Address } from '../Address/types.js'
 import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_fromHex } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_isBytes } from '../Bytes/isBytes.js'
 import { Bytes_padLeft } from '../Bytes/pad.js'
 import type { Bytes } from '../Bytes/types.js'

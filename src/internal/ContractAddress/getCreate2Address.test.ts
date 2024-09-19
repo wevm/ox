@@ -2,9 +2,9 @@ import { expect, test } from 'vitest'
 
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import { AbiParameters_from } from '../AbiParameters/from.js'
-import { Bytes_fromHex } from '../Bytes/from.js'
+import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_fromString } from '../Hex/from.js'
+import { Hex_fromString } from '../Hex/fromString.js'
 import { ContractAddress_getCreate2Address } from './getCreate2Address.js'
 
 test('default', () => {

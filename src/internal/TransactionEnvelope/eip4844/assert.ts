@@ -6,7 +6,7 @@ import {
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_size } from '../../Hex/size.js'
 import { Hex_slice } from '../../Hex/slice.js'
-import { Hex_toNumber } from '../../Hex/to.js'
+import { Hex_toNumber } from '../../Hex/toNumber.js'
 import { Kzg_versionedHashVersion } from '../../Kzg/constants.js'
 import type { PartialBy } from '../../types.js'
 import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'

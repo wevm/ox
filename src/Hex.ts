@@ -30,20 +30,24 @@ export { Hex_trimLeft as trimLeft } from './internal/Hex/trim.js'
 
 export { Hex_trimRight as trimRight } from './internal/Hex/trim.js'
 
-export {
-  Hex_toBigInt as toBigInt,
-  Hex_toBoolean as toBoolean,
-  Hex_toBytes as toBytes,
-  Hex_toNumber as toNumber,
-  Hex_toString as toString,
-} from './internal/Hex/to.js'
+export { Hex_from as from } from './internal/Hex/from.js'
 
-export {
-  Hex_from as from,
-  Hex_fromBoolean as fromBoolean,
-  Hex_fromBytes as fromBytes,
-  Hex_fromNumber as fromNumber,
-  Hex_fromString as fromString,
-} from './internal/Hex/from.js'
+export { Hex_fromBoolean as fromBoolean } from './internal/Hex/fromBoolean.js'
+
+export { Hex_fromBytes as fromBytes } from './internal/Hex/fromBytes.js'
+
+export { Hex_fromNumber as fromNumber } from './internal/Hex/fromNumber.js'
+
+export { Hex_fromString as fromString } from './internal/Hex/fromString.js'
 
 export { Hex_random as random } from './internal/Hex/random.js'
+
+export { Hex_toBigInt as toBigInt } from './internal/Hex/toBigInt.js'
+
+export { Hex_toBoolean as toBoolean } from './internal/Hex/toBoolean.js'
+
+export { Hex_toBytes as toBytes } from './internal/Hex/toBytes.js'
+
+export { Hex_toNumber as toNumber } from './internal/Hex/toNumber.js'
+
+export { Hex_toString as toString } from './internal/Hex/toString.js'

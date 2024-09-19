@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromNumber } from '../Hex/from.js'
+import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Log_toRpc } from '../Log/toRpc.js'
 import { TransactionReceipt_statusRpc } from './constants.js'
 import type { TransactionReceipt, TransactionReceipt_Rpc } from './types.js'

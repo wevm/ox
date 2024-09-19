@@ -1,7 +1,8 @@
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
-import { Hex_from, Hex_fromString } from '../Hex/from.js'
+import { Hex_from } from '../Hex/from.js'
+import { Hex_fromString } from '../Hex/fromString.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 

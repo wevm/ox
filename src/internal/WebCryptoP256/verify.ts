@@ -1,5 +1,6 @@
 import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_from, Bytes_fromNumber } from '../Bytes/from.js'
+import { Bytes_from } from '../Bytes/from.js'
+import { Bytes_fromNumber } from '../Bytes/fromNumber.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
