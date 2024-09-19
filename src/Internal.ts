@@ -158,8 +158,6 @@ export { type Cursor, createCursor } from './internal/cursor.js'
 
 export { LruMap } from './internal/lru.js'
 
-export { stringify } from './internal/stringify.js'
-
 export type {
   Assign,
   Assign_inner,

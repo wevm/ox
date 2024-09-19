@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { stringify } from '../stringify.js'
+import { Json_stringify } from '../Json/stringify.js'
 import type {
   TypedData,
   TypedData_Definition,
@@ -75,7 +75,7 @@ export function TypedData_serialize<
     return normalizeData(types[primaryType], message_)
   })()
 
-  return stringify({ domain, message, primaryType, types })
+  return Json_stringify({ domain, message, primaryType, types })
 }
 
 export declare namespace TypedData_serialize {
@@ -84,7 +84,7 @@ export declare namespace TypedData_serialize {
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
   > = TypedData_Definition<typedData, primaryType>
 
-  type ErrorType = stringify.ErrorType | GlobalErrorType
+  type ErrorType = Json_stringify.ErrorType | GlobalErrorType
 }
 
 TypedData_serialize.parseError = (error: unknown) =>

@@ -1,5 +1,4 @@
-import { type Hex, PublicKey, WebAuthnP256 } from 'ox'
-import { stringify } from 'ox/Internal'
+import { type Hex, Json, PublicKey, WebAuthnP256 } from 'ox'
 import { useState } from 'react'
 
 export function App() {
@@ -35,7 +34,7 @@ export function App() {
           <br />
           <strong>Public Key: </strong>
           <br />
-          <pre>{stringify(credential.publicKey, null, 2)}</pre>
+          <pre>{Json.stringify(credential.publicKey, null, 2)}</pre>
           <strong>Public Key (serialized): </strong>
           <br />
           <pre>{PublicKey.serialize(credential.publicKey)}</pre>
@@ -73,11 +72,11 @@ export function App() {
           <div>
             <strong>Signature:</strong>
             <br />
-            <pre>{stringify(signResponse.signature, null, 2)}</pre>
+            <pre>{Json.stringify(signResponse.signature, null, 2)}</pre>
             <br />
             <strong>Metadata:</strong>
             <br />
-            <pre>{stringify(signResponse.metadata, null, 2)}</pre>
+            <pre>{Json.stringify(signResponse.metadata, null, 2)}</pre>
           </div>
         )}
         {signResponse && credential && (

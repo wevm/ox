@@ -1,6 +1,6 @@
 import { BaseError } from '../Errors/base.js'
 import type { Hex } from '../Hex/types.js'
-import { stringify } from '../stringify.js'
+import { Json_stringify } from '../Json/stringify.js'
 
 export class Hex_IntegerOutOfRangeError extends BaseError {
   override readonly name = 'Hex.IntegerOutOfRangeError'
@@ -47,7 +47,7 @@ export class Hex_InvalidHexTypeError extends BaseError {
 
   constructor(value: unknown) {
     super(
-      `Value \`${typeof value === 'object' ? stringify(value) : value}\` of type \`${typeof value}\` is an invalid hex type.`,
+      `Value \`${typeof value === 'object' ? Json_stringify(value) : value}\` of type \`${typeof value}\` is an invalid hex type.`,
       {
         docsPath: '/errors#hexinvalidhextypeerror',
         metaMessages: ['Hex types must be represented as `"0x${string}"`.'],

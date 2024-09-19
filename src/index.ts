@@ -191,6 +191,13 @@ export * as Internal from './Internal.js'
 export * as Fee from './Fee.js'
 
 /**
+ * Utility functions for working with JSON (with support for `bigint`).
+ *
+ * @category JSON
+ */
+export * as Json from './Json.js'
+
+/**
  * Utility functions for working with KZG Commitments.
  *
  * Mainly for [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.

@@ -3,13 +3,13 @@ import { BaseError } from '../Errors/base.js'
 import { Hex_from } from '../Hex/from.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
-import { stringify } from '../stringify.js'
+import { Json_stringify } from '../Json/stringify.js'
 
 export class PublicKey_InvalidError extends BaseError {
   override readonly name = 'PublicKey.InvalidError'
 
   constructor({ publicKey }: { publicKey: unknown }) {
-    super(`Value \`${stringify(publicKey)}\` is not a valid public key.`, {
+    super(`Value \`${Json_stringify(publicKey)}\` is not a valid public key.`, {
       metaMessages: [
         'Public key must contain:',
         '- an `x` and `prefix` value (compressed)',

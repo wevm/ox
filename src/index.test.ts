@@ -29,6 +29,7 @@ test('exports', () => {
       "Hex",
       "Internal",
       "Fee",
+      "Json",
       "Kzg",
       "Log",
       "PersonalMessage",

@@ -3,7 +3,7 @@ import { BaseError } from '../Errors/base.js'
 import { Hex_from } from '../Hex/from.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
-import { stringify } from '../stringify.js'
+import { Json_stringify } from '../Json/stringify.js'
 
 export class Signature_InvalidSerializedSizeError extends BaseError {
   override readonly name = 'Signature.InvalidSerializedSizeError'
@@ -24,7 +24,7 @@ export class Signature_MissingPropertiesError extends BaseError {
 
   constructor({ signature }: { signature: unknown }) {
     super(
-      `Signature \`${stringify(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`,
+      `Signature \`${Json_stringify(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`,
       {
         docsPath: '/errors#missingsignaturepropertieserror',
       },

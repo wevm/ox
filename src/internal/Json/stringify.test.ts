@@ -1,10 +1,9 @@
 import { expect, test } from 'vitest'
-
-import { stringify } from './stringify.js'
+import { Json } from 'ox'
 
 test('default', () => {
   expect(
-    stringify({
+    Json.stringify({
       foo: 'bar',
       baz: {
         value: 69n,
@@ -15,7 +14,7 @@ test('default', () => {
 
 test('args: replacer', () => {
   expect(
-    stringify(
+    Json.stringify(
       {
         foo: 'bar',
         baz: {
@@ -34,7 +33,7 @@ test('args: replacer', () => {
 
 test('args: space', () => {
   expect(
-    stringify(
+    Json.stringify(
       {
         foo: 'bar',
         baz: {

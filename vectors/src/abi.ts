@@ -1,12 +1,11 @@
 /// <reference types="@types/bun" />
 
 import { join } from 'node:path'
-import { AbiParameters, Hex } from '../../src/index.js'
+import { AbiParameters, Hex, Json } from '../../src/index.js'
 import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
 } from '../../src/internal/Solidity/constants.js'
-import { stringify } from '../../src/internal/stringify.js'
 
 generateAbiVectors()
 
@@ -24,7 +23,7 @@ export async function generateAbiVectors() {
     const parameters = generateParameters(10)
     const values = generateValues(parameters)
     const encoded = AbiParameters.encode(parameters, values)
-    writer.write(stringify({ parameters, values, encoded }, null, 2))
+    writer.write(Json.stringify({ parameters, values, encoded }, null, 2))
   }
 
   writer.write(']\n')

@@ -1,6 +1,6 @@
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import { stringify } from '../stringify.js'
+import { Json_stringify } from '../Json/stringify.js'
 
 export class Bytes_InvalidBytesBooleanError extends BaseError {
   override readonly name = 'Bytes.InvalidBytesBooleanError'
@@ -20,7 +20,7 @@ export class Bytes_InvalidBytesTypeError extends BaseError {
 
   constructor(value: unknown) {
     super(
-      `Value \`${typeof value === 'object' ? stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`,
+      `Value \`${typeof value === 'object' ? Json_stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`,
       {
         docsPath: '/errors#bytesinvalidbytestypeerror',
         metaMessages: ['Bytes values must be of type `Bytes`.'],
