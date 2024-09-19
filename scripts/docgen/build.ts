@@ -11,7 +11,10 @@ import {
 } from './render/apiNamespace.js'
 import { createDataLookup, getId } from './utils/model.js'
 import { namespaceRegex } from './utils/regex.js'
-import { extractNamespaceDocComments } from './utils/tsdoc.js'
+import {
+  extractNamespaceDocComments,
+  type processDocComment,
+} from './utils/tsdoc.js'
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Generating API docs.')
@@ -59,7 +62,20 @@ for (const member of apiEntryPoint.members) {
 ////////////////////////////////////////////////////////////
 
 const pagesDir = './site/pages'
-const namespaceSidebarMap = new Map<string, unknown[]>()
+const namespaceMap = new Map<
+  string,
+  {
+    baseLink: string
+    category: string
+    docComment: ReturnType<typeof processDocComment>
+    name: string
+    sidebarItem: {
+      items: { text: string; link: string }[]
+      link: string
+      text: string
+    }
+  }[]
+>()
 
 for (const namespace of namespaces) {
   const name = namespace.displayName
@@ -134,16 +150,16 @@ for (const namespace of namespaces) {
       `Could not find sidebar category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
     )
 
-  const sidebarItem = {
-    collapsed: true,
-    items,
-    link: baseLink,
-    text: name,
+  const item = {
+    baseLink,
+    category,
+    docComment: moduleDocComments[name],
+    name,
+    sidebarItem: { collapsed: true, items, link: baseLink, text: name },
   }
 
-  if (namespaceSidebarMap.has(category))
-    namespaceSidebarMap.get(category)?.push(sidebarItem)
-  else namespaceSidebarMap.set(category, [sidebarItem])
+  if (namespaceMap.has(category)) namespaceMap.get(category)?.push(item)
+  else namespaceMap.set(category, [item])
 
   const content = renderNamespace({
     apiItem: namespace,
@@ -155,7 +171,7 @@ for (const namespace of namespaces) {
   fs.writeFileSync(`${dir}/index.md`, content)
 }
 
-// Errory glossary
+// Error glossary
 const glossarySidebar = []
 for (const namespace of glossaryNamespaces) {
   const name = namespace.displayName
@@ -174,19 +190,24 @@ for (const namespace of glossaryNamespaces) {
   fs.writeFileSync(`${dir}/${name}.md`, content)
 }
 
-const alphabetizedNamespaceSidebarMap = new Map(
-  [...namespaceSidebarMap].sort(([categoryA], [categoryB]) =>
+const alphabetizedNamespaceMap = new Map(
+  [...namespaceMap].sort(([categoryA], [categoryB]) =>
     categoryA.localeCompare(categoryB),
   ),
 )
+
 const namespaceSidebarItems = []
-for (const [category, items] of alphabetizedNamespaceSidebarMap)
+for (const [category, items] of alphabetizedNamespaceMap)
   namespaceSidebarItems.push({
     text: category,
-    items,
+    items: items.map((item) => item.sidebarItem),
   })
 
 const sidebar = [
+  {
+    text: 'Overview',
+    link: '/api',
+  },
   ...namespaceSidebarItems,
   {
     text: 'Glossary',
@@ -197,6 +218,31 @@ fs.writeFileSync(
   './site/sidebar-generated.ts',
   `export const sidebar = ${JSON.stringify(sidebar, null, 2)}`,
 )
+
+////////////////////////////////////////////////////////////
+/// Generate "API Reference" page
+////////////////////////////////////////////////////////////
+
+let content = '# API Reference\n\n'
+
+content += '<table className="vocs_Table">\n'
+content +=
+  '<thead><tr><th className="vocs_TableHeader">Name</th><th className="vocs_TableHeader">Description</th></tr></thead>\n'
+content += '<tbody>\n'
+
+for (const [category, items] of alphabetizedNamespaceMap) {
+  content += `<tr><td className="vocs_TableCell" colSpan="2" style={{ backgroundColor: 'var(--vocs-color_background2)' }}>**${category}**</td></tr>\n`
+  for (const item of items) {
+    const description = item.docComment?.summary
+      .split('\n\n')[0]
+      ?.replace('\n', ' ')
+    content += `<tr><td className="vocs_TableCell"><a className="vocs_Anchor vocs_Link vocs_Link_accent_underlined" href="/api/${item.name}">${item.name}</a></td><td className="vocs_TableCell">${description}</td></tr>\n`
+  }
+}
+content += '</tbody>\n'
+content += '</table>\n'
+
+fs.writeFileSync(`${pagesDir}/api/index.mdx`, content)
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Done.')
