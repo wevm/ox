@@ -120,6 +120,73 @@ export * as Abi from './Abi.js'
  *
  * `AbiConstructor` is a sub-type of [`AbiItem`](/api/AbiItem).
  *
+ * @example
+ * ### Instantiating via JSON ABI
+ *
+ * An `AbiConstructor` can be instantiated from a JSON ABI by using {@link ox#AbiConstructor.(fromAbi:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiConstructor } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'constructor(address owner)',
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiConstructor.fromAbi(abi) // [!code focus]
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Instantiating via Human-Readable ABI
+ *
+ * An `AbiConstructor` can be instantiated from a human-readable ABI by using {@link ox#AbiConstructor.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiConstructor } from 'ox'
+ *
+ * const constructor = AbiConstructor.from('constructor(address owner)')
+ *
+ * constructor
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Encoding to Deploy Data
+ *
+ * Constructor arguments can be ABI-encoded using {@link ox#AbiConstructor.(encode:function)} (with bytecode) into deploy data. This data can then be passed to a transaction to deploy a contract.
+ *
+ * ```ts twoslash
+ * import { AbiConstructor } from 'ox'
+ *
+ * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ *
+ * const data = AbiConstructor.encode(constructor, { // [!code focus]
+ *   bytecode: '0x...', // [!code focus]
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n], // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
  * @category ABI
  */
 export * as AbiConstructor from './AbiConstructor.js'
