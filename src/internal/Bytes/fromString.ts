@@ -6,7 +6,7 @@ import type { Bytes } from './types.js'
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
- * Encodes a UTF-8 string into {@link ox#Bytes.Bytes}.
+ * Encodes a string into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -24,7 +24,7 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
  *
- * @param value - UTF-8 string to encode.
+ * @param value - String to encode.
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */

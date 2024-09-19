@@ -5,7 +5,7 @@ import type { Hex } from './types.js'
 const encoder = /*#__PURE__*/ new TextEncoder()
 
 /**
- * Encodes a UTF-8 string into a {@link ox#Hex.Hex} value.
+ * Encodes a string into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash

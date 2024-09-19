@@ -21,7 +21,7 @@ import type { Hex } from '../Hex/types.js'
  * ```
  *
  * @example
- * ### Calculate Hash of UTF-8 String
+ * ### Calculate Hash of a String
  *
  * ```ts twoslash
  * import { Hash, Hex } from 'ox'

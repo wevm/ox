@@ -221,3 +221,5 @@ export type {
 } from './internal/WebAuthnP256/types.js'
 
 export { Rlp_to } from './internal/Rlp/to.js'
+
+export { Base58_from } from './internal/Base58/from.js'

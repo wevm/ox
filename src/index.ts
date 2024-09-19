@@ -100,6 +100,13 @@ export * as Address from './Address.js'
 export * as Authorization from './Authorization.js'
 
 /**
+ * Utility functions for working with [Base58](https://digitalbazaar.github.io/base58-spec/) values.
+ *
+ * @category Encoding
+ */
+export * as Base58 from './Base58.js'
+
+/**
  * Utility functions for working with [RFC-4648](https://datatracker.ietf.org/doc/html/rfc4648) Base64.
  *
  * @category Encoding

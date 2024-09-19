@@ -6,7 +6,7 @@ import type { Bytes } from './types.js'
 const decoder = /*#__PURE__*/ new TextDecoder()
 
 /**
- * Decodes a {@link ox#Bytes.Bytes} into a UTF-8 string.
+ * Decodes a {@link ox#Bytes.Bytes} into a string.
  *
  * @example
  * ```ts twoslash

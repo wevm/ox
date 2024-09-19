@@ -24,9 +24,9 @@ import { Blobs_BlobSizeTooLargeError, Blobs_EmptyBlobError } from './errors.js'
  * ```
  *
  * @example
- * ### Creating Blobs from a UTF-8 String
+ * ### Creating Blobs from a String
  *
- * An example of creating Blobs from a UTF-8 string using {@link ox#Hex.(from:function)}:
+ * An example of creating Blobs from a string using {@link ox#Hex.(from:function)}:
  *
  * ```ts twoslash
  * import { Blobs, Hex } from 'ox'

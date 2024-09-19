@@ -14,6 +14,7 @@ test('exports', () => {
       "AccountProof",
       "Address",
       "Authorization",
+      "Base58",
       "Base64",
       "Blobs",
       "Block",

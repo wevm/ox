@@ -8,7 +8,7 @@ import type { Hex } from './types.js'
  *
  * :::tip
  *
- * To instantiate from a **Boolean**, **UTF-8 String**, or **Number**, use one of the following:
+ * To instantiate from a **Boolean**, **String**, or **Number**, use one of the following:
  *
  * - `Hex.fromBoolean`
  *

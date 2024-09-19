@@ -1,5 +1,3 @@
-export { Base64_from as from } from './internal/Base64/from.js'
-
 export { Base64_fromBytes as fromBytes } from './internal/Base64/fromBytes.js'
 
 export { Base64_fromHex as fromHex } from './internal/Base64/fromHex.js'

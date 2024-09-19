@@ -5,7 +5,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from './types.js'
 
 /**
- * Decodes a {@link ox#Hex.Hex} value into a UTF-8 string.
+ * Decodes a {@link ox#Hex.Hex} value into a string.
  *
  * @example
  * ```ts twoslash
@@ -22,7 +22,7 @@ import type { Hex } from './types.js'
  *
  * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options -
- * @returns The decoded UTF-8 string.
+ * @returns The decoded string.
  */
 export function Hex_toString(
   hex: Hex,
