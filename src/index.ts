@@ -149,7 +149,7 @@ export * as Abi from './Abi.js'
  * ```
  *
  * @example
- * ### Instantiating via Human-Readable ABI
+ * ### Instantiating via Human-Readable ABI Item
  *
  * An `AbiConstructor` can be instantiated from a human-readable ABI by using {@link ox#AbiConstructor.(from:function)}:
  *
@@ -221,7 +221,7 @@ export * as AbiConstructor from './AbiConstructor.js'
  * ```
  *
  * @example
- * ### Instantiating via Human-Readable ABI
+ * ### Instantiating via Human-Readable ABI Item
  *
  * An `AbiError` can be instantiated from a human-readable ABI by using {@link ox#AbiError.(from:function)}:
  *
@@ -293,7 +293,7 @@ export * as AbiError from './AbiError.js'
  * ```
  *
  * @example
- * ### Instantiating via Human-Readable ABI
+ * ### Instantiating via Human-Readable ABI Item
  *
  * An `AbiEvent` can be instantiated from a human-readable ABI by using {@link ox#AbiEvent.(from:function)}:
  *
@@ -383,6 +383,91 @@ export * as AbiEvent from './AbiEvent.js'
  *
  * `AbiFunction` is a sub-type of [`AbiItem`](/api/AbiItem).
  *
+ * @example
+ * ### Instantiating via JSON ABI
+ *
+ * An `AbiFunction` can be instantiated from a JSON ABI by using {@link ox#AbiFunction.(fromAbi:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiFunction.fromAbi(abi, { name: 'bar' }) // [!code focus]
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Instantiating via Human-Readable ABI Item
+ *
+ * An `AbiFunction` can be instantiated from a human-readable ABI by using {@link ox#AbiFunction.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiFunction } from 'ox'
+ *
+ * const bar = AbiFunction.from('function bar(string a) returns (uint256 x)')
+ *
+ * bar
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Encoding to Function Calldata
+ *
+ * A Function and its arguments can be ABI-encoded into calldata using the {@link ox#AbiFunction.(encodeInput:function)} function. The output of this function can then be passed to `eth_sendTransaction` or `eth_call` as the `data` parameter.
+ *
+ * ```ts twoslash
+ * import { AbiFunction } from 'ox'
+ *
+ * const approve = AbiFunction.from('function approve(address, uint256)')
+ *
+ * const data = AbiFunction.encodeInput( // [!code focus]
+ *   approve, // [!code focus]
+ *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n] // [!code focus]
+ * ) // [!code focus]
+ * // @log: '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
+ * ```
+ *
+ * @example
+ * ### Decoding a Function's Return Value
+ *
+ * A Function's return value can be ABI-decoded using the {@link ox#AbiFunction.(decodeOutput:function)} function.
+ *
+ * ```ts twoslash
+ * import { AbiFunction } from 'ox'
+ *
+ * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * //    ↑ Example data that could be returned from a contract call via `eth_call`.
+ *
+ * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
+ *
+ * const output = AbiFunction.decodeOutput(totalSupply, data) // [!code focus]
+ * // @log: 42n
+ * ```
+ *
  * @category ABI
  */
 export * as AbiFunction from './AbiFunction.js'
@@ -396,6 +481,71 @@ export * as AbiFunction from './AbiFunction.js'
  * - [`AbiEvent`](/api/AbiEvent)
  * - [`AbiError`](/api/AbiError)
  *
+ * @example
+ * ### Instantiating via JSON ABI
+ *
+ * An `AbiItem` can be instantiated from a JSON ABI by using {@link ox#AbiItem.(fromAbi:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiItem.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Instantiating via Human-Readable ABI Item
+ *
+ * A Human Readable ABI can be parsed into a typed ABI object:
+ *
+ * ```ts twoslash
+ * import { AbiItem } from 'ox'
+ *
+ * const abiItem = AbiItem.from('function approve(address spender, uint256 amount) returns (bool)')
+ *
+ * abiItem
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Formatting ABI Items
+ *
+ * An `AbiItem` can be formatted into a human-readable ABI Item by using {@link ox#AbiItem.(format:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiItem } from 'ox'
+ *
+ * const abiItem = AbiItem.from('function approve(address spender, uint256 amount) returns (bool)')
+ *
+ * const formatted = AbiItem.format(abiItem)
+ * // @log: 'function approve(address spender, uint256 amount) returns (bool)'
+ * ```
+ *
  * @category ABI
  */
 export * as AbiItem from './AbiItem.js'
@@ -404,22 +554,102 @@ export * as AbiItem from './AbiItem.js'
  * Utilities & types for encoding, decoding, and working with [ABI Parameters](https://docs.soliditylang.org/en/latest/abi-spec.html#types)
  *
  * @example
+ * ### Encoding ABI Parameters
+ *
+ * ABI Parameters can be ABI-encoded as per the [Application Binary Interface (ABI) Specification](https://docs.soliditylang.org/en/latest/abi-spec) using {@link ox#AbiParameters.(encode:function)}:
+ *
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
  * const data = AbiParameters.encode(
- *   AbiParameters.from('uint256, boolean, string'),
- *   [1n, true, 'hello'],
+ *   AbiParameters.from('string, uint, bool'),
+ *   ['wagmi', 420n, true],
  * )
- * // @log: '0x...'
-
- * const args = AbiParameters.decode(
- *   AbiParameters.from('uint256, boolean, string'),
- *   data,
- * )
- * // @log: [1n, true, 'hello']
  * ```
- * 
+ *
+ * :::tip
+ *
+ * The example above uses {@link ox#AbiParameters.(from:function)} to specify human-readable ABI Parameters.
+ *
+ * However, you can also pass JSON-ABI Parameters:
+ *
+ * ```ts
+ * import { AbiParameters } from 'ox'
+ *
+ * const data = AbiParameters.encode(
+ *   [{ type: 'string' }, { type: 'uint' }, { type: 'bool' }],
+ *   ['wagmi', 420n, true],
+ * )
+ * ```
+ *
+ * :::
+ *
+ * @example
+ * ### Decoding ABI Parameters
+ *
+ * ABI-encoded data can be decoded using {@link ox#AbiParameters.(decode:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * const data = AbiParameters.decode(
+ *   AbiParameters.from('string, uint, bool'),
+ *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
+ * )
+ * // @log: ['wagmi', 420n, true]
+ * ```
+ *
+ * @example
+ * ### JSON-ABI Parameters
+ *
+ * JSON-ABI Parameters can be instantiated using {@link ox#AbiParameters.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * const parameters = AbiParameters.from([
+ *   {
+ *     name: 'spender',
+ *     type: 'address',
+ *   },
+ *   {
+ *     name: 'amount',
+ *     type: 'uint256',
+ *   },
+ * ])
+ *
+ * parameters
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Human Readable ABI Parameters
+ *
+ * Human Readable ABI Parameters can be instantiated using {@link ox#AbiParameters.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * const parameters = AbiParameters.from('address spender, uint256 amount')
+ *
+ * parameters
+ * //^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
  * @category ABI
  */
 export * as AbiParameters from './AbiParameters.js'
