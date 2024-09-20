@@ -13,6 +13,7 @@ test('exports', () => {
       "AbiParameters",
       "AccountProof",
       "Address",
+      "AesGcm",
       "Authorization",
       "Base58",
       "Base64",

@@ -717,6 +717,43 @@ export * as AccountProof from './AccountProof.js'
 export * as Address from './Address.js'
 
 /**
+ * Utilities & types for working with AES-GCM encryption. Internally uses the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
+ *
+ * @example
+ * ### Encrypting Data
+ *
+ * Data can be encrypted using {@link ox#AesGcm.(encrypt:function)}:
+ *
+ * ```ts twoslash
+ * import { AesGcm, Bytes } from 'ox'
+ *
+ * const key = await AesGcm.getKey({ password: 'qwerty' })
+ * const secret = Bytes.fromString('i am a secret message')
+ *
+ * const encrypted = await AesGcm.encrypt(secret, key) // [!code focus]
+ * // @log: Uint8Array [123, 79, 183, 167, 163, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166]
+ * ```
+ *
+ * @example
+ * ### Decrypting Data
+ *
+ * Data can be decrypted using {@link ox#AesGcm.(decrypt:function)}:
+ *
+ * ```ts twoslash
+ * import { AesGcm, Bytes } from 'ox'
+ *
+ * const key = await AesGcm.getKey({ password: 'qwerty' })
+ * const encrypted = Bytes.from([123, 79, 183, 167, 163, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166])
+ *
+ * const decrypted = await AesGcm.decrypt(encrypted, key) // [!code focus]
+ * // @log: Bytes.fromString('i am a secret message')
+ * ```
+ *
+ * @category Crypto
+ */
+export * as AesGcm from './AesGcm.js'
+
+/**
  * Utility functions for working with [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization lists & tuples.
  *
  * @example
