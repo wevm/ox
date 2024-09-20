@@ -664,12 +664,127 @@ export * as AccountProof from './AccountProof.js'
 /**
  * Utility functions for working with Ethereum addresses.
  *
+ * @example
+ * ### Instantiating Addresses
+ *
+ * An {@link ox#Address.Address} can be instantiated from a hex string using {@link ox#Address.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * const address = Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+ * // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+ * ```
+ *
+ * @example
+ * ### Validating Addresses
+ *
+ * The {@link ox#Address.(isAddress:function)} function will return `true` if the address is valid, and `false` otherwise:
+ *
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * const valid = Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+ * // @log: true
+ * ```
+ *
+ * The {@link ox#Address.(assert:function)} function will throw an error if the address is invalid:
+ *
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * Address.assert('0xdeadbeef')
+ * // @error: InvalidAddressError: Address "0xdeadbeef" is invalid.
+ * ```
+ *
+ * @example
+ * ### Addresses from ECDSA Public Keys
+ *
+ * An {@link ox#Address.Address} can be computed from an ECDSA public key using {@link ox#Address.(fromPublicKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Address, Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const publicKey = Secp256k1.getPublicKey({ privateKey })
+ *
+ * const address = Address.fromPublicKey(publicKey)
+ * // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+ * ```
+ *
  * @category Addresses
  */
 export * as Address from './Address.js'
 
 /**
  * Utility functions for working with [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization lists & tuples.
+ *
+ * @example
+ * ### Instantiating Authorizations
+ *
+ * An Authorization can be instantiated using {@link ox#Authorization.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { Authorization } from 'ox'
+ *
+ * const authorization = Authorization.from({
+ *   chainId: 1,
+ *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
+ *   nonce: 69n,
+ * })
+ * ```
+ *
+ * @example
+ * ### Computing Sign Payload
+ *
+ * A signing payload can be computed using {@link ox#Authorization.(getSignPayload:function)}. The result can then be passed to signing functions like {@link ox#Secp256k1.(sign:function)}.
+ *
+ * ```ts twoslash
+ * import { Authorization, Secp256k1 } from 'ox'
+ *
+ * const authorization = Authorization.from({
+ *   chainId: 1,
+ *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
+ *   nonce: 69n,
+ * })
+ *
+ * const payload = Authorization.getSignPayload(authorization) // [!code focus]
+ *
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...',
+ * })
+ * ```
+ *
+ * @example
+ * ### Attaching Signatures to Authorizations
+ *
+ * A signature can be attached to an Authorization using {@link ox#Authorization.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { Authorization, Secp256k1, TransactionEnvelope, Value } from 'ox'
+ *
+ * const authorization = Authorization.from({
+ *   contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 1,
+ *   nonce: 40n,
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: Authorization.getSignPayload(authorization),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const authorization_signed = Authorization.from(authorization, { signature }) // [!code focus]
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   authorizationList: [authorization_signed],
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * ```
  *
  * @category Authorization (EIP-7702)
  */
