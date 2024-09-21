@@ -15,7 +15,7 @@ import type { Signature } from '../Signature/types.js'
  * ```ts twoslash
  * import { P256 } from 'ox'
  *
- * const privateKey = '0x...'
+ * const privateKey = P256.randomPrivateKey()
  * const publicKey = P256.getPublicKey({ privateKey })
  * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
  *

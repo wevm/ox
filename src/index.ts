@@ -1055,6 +1055,66 @@ export * as Secp256k1 from './Secp256k1.js'
  *
  * :::
  *
+ * @example
+ * ### Computing a Random Private Key
+ *
+ * A random private key can be computed using {@link ox#P256.(randomPrivateKey:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ * // @log: '0x...'
+ * ```
+ *
+ * @example
+ * ### Getting a Public Key
+ *
+ * A public key can be derived from a private key using {@link ox#P256.(getPublicKey:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ *
+ * const publicKey = P256.getPublicKey({ privateKey }) // [!code focus]
+ * // @log: { x: 3251...5152n, y: 1251...5152n }
+ * ```
+ *
+ * @example
+ * ### Signing a Payload
+ *
+ * A payload can be signed using {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ *
+ * const signature = P256.sign({ payload: '0xdeadbeef', privateKey }) // [!code focus]
+ * // @log: { r: 1251...5152n, s: 1251...5152n, yParity: 1 }
+ * ```
+ *
+ * @example
+ * ### Verifying a Signature
+ *
+ * A signature can be verified using {@link ox#P256.(verify:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ * const publicKey = P256.getPublicKey({ privateKey })
+ * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const isValid = P256.verify({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   publicKey, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * // @log: true
+ * ```
+ *
  * @category Crypto
  */
 export * as P256 from './P256.js'
