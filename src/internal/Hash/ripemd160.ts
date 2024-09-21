@@ -24,22 +24,27 @@ import type { Hex } from '../Hex/types.js'
  * @param to - The return type.
  * @returns Ripemd160 hash.
  */
-export function Hash_ripemd160<to extends 'Hex' | 'Bytes' = 'Hex'>(
+export function Hash_ripemd160<as extends 'Hex' | 'Bytes' = 'Hex'>(
   value: Hex | Bytes,
-  to?: to | undefined,
-): Hash_ripemd160.ReturnType<to> {
-  const to_ = to || 'Hex'
+  options: Hash_ripemd160.Options<as> = {},
+): Hash_ripemd160.ReturnType<as> {
+  const { as = 'Hex' } = options
   const bytes = ripemd160(
     Hex_isHex(value, { strict: false }) ? Bytes_fromHex(value) : value,
   )
-  if (to_ === 'Bytes') return bytes as Hash_ripemd160.ReturnType<to>
-  return Hex_fromBytes(bytes) as Hash_ripemd160.ReturnType<to>
+  if (as === 'Bytes') return bytes as never
+  return Hex_fromBytes(bytes) as never
 }
 
 export declare namespace Hash_ripemd160 {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (to extends 'Bytes' ? Bytes : never)
-    | (to extends 'Hex' ? Hex : never)
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** The return type. @default 'Hex' */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
+    | (as extends 'Bytes' ? Bytes : never)
+    | (as extends 'Hex' ? Hex : never)
 
   type ErrorType =
     | Bytes_fromHex.ErrorType
