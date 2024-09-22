@@ -71,7 +71,7 @@ export function WebAuthnP256_getCredentialCreationOptions(
       ],
       rp,
       user: {
-        id: user?.id ?? Hash_keccak256(Bytes_fromString(name), 'Bytes'),
+        id: user?.id ?? Hash_keccak256(Bytes_fromString(name), { as: 'Bytes' }),
         name,
         displayName: user?.displayName ?? name,
       },

@@ -86,10 +86,9 @@ export function WebAuthnP256_verify(
   if (Hex_fromBytes(Base64_toBytes(challenge_extracted!)) !== challenge)
     return false
 
-  const clientDataJSONHash = Hash_sha256(
-    Bytes_fromString(clientDataJSON),
-    'Bytes',
-  )
+  const clientDataJSONHash = Hash_sha256(Bytes_fromString(clientDataJSON), {
+    as: 'Bytes',
+  })
   const payload = Bytes_concat(authenticatorDataBytes, clientDataJSONHash)
 
   return P256_verify({

@@ -69,7 +69,7 @@ export function Blobs_commitmentToVersionedHash<
   const { version = 1 } = options
   const as = options.as ?? (typeof commitment === 'string' ? 'Hex' : 'Bytes')
 
-  const versionedHash = Hash_sha256(commitment, 'Bytes')
+  const versionedHash = Hash_sha256(commitment, { as: 'Bytes' })
   versionedHash.set([version], 0)
   return (
     as === 'Bytes' ? versionedHash : Hex_fromBytes(versionedHash)

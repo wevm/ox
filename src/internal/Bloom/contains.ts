@@ -24,7 +24,7 @@ import type { Hex } from '../Hex/types.js'
  */
 export function Bloom_contains(bloom: Hex, input: Hex | Bytes): boolean {
   const filter = Bytes_fromHex(bloom)
-  const hash = Hash_keccak256(input, 'Bytes')
+  const hash = Hash_keccak256(input, { as: 'Bytes' })
 
   for (const i of [0, 2, 4]) {
     const bit = (hash[i + 1]! + (hash[i]! << 8)) & 0x7ff

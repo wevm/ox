@@ -42,7 +42,7 @@ export function ContractAddress_getCreate2Address(
       if (Bytes_isBytes(options.bytecodeHash)) return options.bytecodeHash
       return Bytes_fromHex(options.bytecodeHash)
     }
-    return Hash_keccak256(options.bytecode, 'Bytes')
+    return Hash_keccak256(options.bytecode, { as: 'Bytes' })
   })()
 
   return Address_from(

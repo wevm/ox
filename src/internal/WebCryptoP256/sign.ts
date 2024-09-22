@@ -46,7 +46,7 @@ export async function WebCryptoP256_sign(
   const signature_bytes = Bytes_fromArray(new Uint8Array(signature))
   const r = Bytes_toBigInt(Bytes_slice(signature_bytes, 0, 32))
   let s = Bytes_toBigInt(Bytes_slice(signature_bytes, 32, 64))
-  if (s > p256.CURVE.n / BigInt(2)) s = p256.CURVE.n - s
+  if (s > p256.CURVE.n / 2n) s = p256.CURVE.n - s
   return { r, s }
 }
 

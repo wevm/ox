@@ -25,7 +25,7 @@ export function Address_checksum(address: string): Address {
   Address_assert(address, { strict: false })
 
   const hexAddress = address.substring(2).toLowerCase()
-  const hash = Hash_keccak256(Bytes_fromString(hexAddress), 'Bytes')
+  const hash = Hash_keccak256(Bytes_fromString(hexAddress), { as: 'Bytes' })
 
   const characters = hexAddress.split('')
   for (let i = 0; i < 40; i += 2) {

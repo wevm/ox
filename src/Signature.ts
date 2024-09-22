@@ -29,6 +29,10 @@ export { Signature_serialize as serialize } from './internal/Signature/serialize
 
 export { Signature_from as from } from './internal/Signature/from.js'
 
+export { Signature_fromDER as fromDER } from './internal/Signature/fromDER.js'
+
+export { Signature_toDER as toDER } from './internal/Signature/toDER.js'
+
 export { Signature_toRpc as toRpc } from './internal/Signature/toRpc.js'
 
 export { Signature_toTuple as toTuple } from './internal/Signature/toTuple.js'

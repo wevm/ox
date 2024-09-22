@@ -17,6 +17,8 @@ test('exports', () => {
       "fromTuple",
       "serialize",
       "from",
+      "fromDER",
+      "toDER",
       "toRpc",
       "toTuple",
     ]

@@ -31,8 +31,8 @@ export function Ens_namehash(name: string) {
     const hashFromEncodedLabel = Ens_encodedLabelToLabelhash(labels[i]!)
     const hashed = hashFromEncodedLabel
       ? Bytes_fromHex(hashFromEncodedLabel)
-      : Hash_keccak256(Bytes_fromString(labels[i]!), 'Bytes')
-    result = Hash_keccak256(Bytes_concat(result, hashed), 'Bytes')
+      : Hash_keccak256(Bytes_fromString(labels[i]!), { as: 'Bytes' })
+    result = Hash_keccak256(Bytes_concat(result, hashed), { as: 'Bytes' })
   }
 
   return Hex_fromBytes(result)
