@@ -4,6 +4,31 @@ import { BaseError } from '../Errors/base.js'
 import type { Hex } from '../Hex/types.js'
 import { AbiEvent_format } from './format.js'
 import type { AbiEvent } from './types.js'
+import { prettyPrint } from '../Errors/utils.js'
+
+export class AbiEvent_ArgsMismatchError extends BaseError {
+  override readonly name = 'AbiEvent.ArgsMismatchError'
+
+  constructor({
+    abiEvent,
+    expected,
+    given,
+  }: {
+    abiEvent: AbiEvent
+    expected: unknown
+    given: unknown
+  }) {
+    super('Given arguments do not match the expected arguments.', {
+      metaMessages: [
+        `Event: ${AbiEvent_format(abiEvent)}`,
+        `Expected Arguments: ${!expected ? 'None' : ''}`,
+        expected ? prettyPrint(expected) : undefined,
+        `Given Arguments: ${!given ? 'None' : ''}`,
+        given ? prettyPrint(given) : undefined,
+      ],
+    })
+  }
+}
 
 export class AbiEvent_InputNotFoundError extends BaseError {
   override readonly name = 'AbiEvent.InputNotFoundError'

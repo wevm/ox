@@ -107,5 +107,5 @@ export declare namespace AbiEvent_from {
 }
 
 AbiEvent_from.parseEvent = (Event: unknown) =>
-  /** v8 ignore next */
+  /* v8 ignore next */
   Event as AbiEvent_from.ErrorType

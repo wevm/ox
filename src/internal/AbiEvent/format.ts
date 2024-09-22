@@ -39,5 +39,5 @@ export declare namespace AbiEvent_format {
 }
 
 AbiEvent_format.parseError = (error: unknown) =>
-  /** v8 ignore next */
+  /* v8 ignore next */
   error as AbiEvent_format.ErrorType

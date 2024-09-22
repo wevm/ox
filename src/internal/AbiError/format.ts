@@ -44,5 +44,5 @@ export declare namespace AbiError_format {
 }
 
 AbiError_format.parseError = (error: unknown) =>
-  /** v8 ignore next */
+  /* v8 ignore next */
   error as AbiError_format.ErrorType

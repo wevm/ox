@@ -5,7 +5,6 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "fromRpc",
-      "toArgs",
       "toRpc",
     ]
   `)

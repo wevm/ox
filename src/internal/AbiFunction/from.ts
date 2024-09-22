@@ -146,5 +146,5 @@ export declare namespace AbiFunction_from {
 }
 
 AbiFunction_from.parseError = (error: unknown) =>
-  /** v8 ignore next */
+  /* v8 ignore next */
   error as AbiFunction_from.ErrorType

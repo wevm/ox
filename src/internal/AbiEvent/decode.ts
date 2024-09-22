@@ -214,5 +214,5 @@ export declare namespace AbiEvent_decode {
 }
 
 AbiEvent_decode.parseError = (error: unknown) =>
-  /** v8 ignore next */
+  /* v8 ignore next */
   error as AbiEvent_decode.ErrorType

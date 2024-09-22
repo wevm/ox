@@ -111,5 +111,5 @@ export declare namespace AbiParameters_from {
 }
 
 AbiParameters_from.parseError = (error: unknown) =>
-  /** v8 ignore next */
+  /* v8 ignore next */
   error as AbiParameters_from.ErrorType

@@ -46,5 +46,5 @@ export declare namespace AbiFunction_format {
 }
 
 AbiFunction_format.parseError = (error: unknown) =>
-  /** v8 ignore next */
+  /* v8 ignore next */
   error as AbiFunction_format.ErrorType
