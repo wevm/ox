@@ -1,9 +1,9 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
+import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import type { Signature } from './types.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
 
 /**
  * Converts a DER-encoded signature to a {@link ox#Signature.Signature}.

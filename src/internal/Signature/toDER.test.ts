@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { Signature } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   const signature = Signature.from({
