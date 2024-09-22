@@ -31,13 +31,15 @@ import type { TransactionEnvelope } from './types.js'
  * // @log: '0x...'
  *
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ *
+ * const envelope_signed = TransactionEnvelope.from(envelope, { signature })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
  * @returns The sign payload.
  */
 export function TransactionEnvelope_getSignPayload(
-  envelope: TransactionEnvelope,
+  envelope: TransactionEnvelope<false>,
 ): TransactionEnvelope_getSignPayload.ReturnType {
   if (envelope.type === 'legacy')
     return TransactionEnvelopeLegacy_getSignPayload(envelope)

@@ -14,7 +14,7 @@ test('default', () => {
     type: 'eip1559',
   })
 
-  const hash = TransactionEnvelopeEip1559.hash(envelope)
+  const hash = TransactionEnvelopeEip1559.hash(envelope, { presign: true })
   expect(hash).toMatchInlineSnapshot(
     `"0x1d099d1f25465b53e1e56e715e35d5daaaef6a9e9883ba21652eea7f411fffc7"`,
   )

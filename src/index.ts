@@ -1375,12 +1375,77 @@ export * as Kzg from './Kzg.js'
 /**
  * Utilities & types for working with Logs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml)
  *
+ * :::tip
+ *
+ * Utilities for Log encoding & decoding can be found on the {@link ox#AbiEvent} module.
+ *
+ * :::
+ *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Logs can be converted from their RPC format using {@link ox#Log.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { AbiEvent, Hex, Log } from 'ox'
+ *
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)',
+ * )
+ *
+ * const { topics } = AbiEvent.encode(transfer)
+ *
+ * const logs = await window.ethereum!.request({
+ *   method: 'eth_getLogs',
+ *   params: [
+ *     {
+ *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+ *       fromBlock: Hex.fromNumber(19760235n),
+ *       toBlock: Hex.fromNumber(19760240n),
+ *       topics,
+ *     },
+ *   ],
+ * })
+ *
+ * const log = Log.fromRpc(logs[0]) // [!code focus]
+ * // @log: {
+ * // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+ * // @log:   blockHash: '0xabe69134e80a12f6a93d0aa18215b5b86c2fb338bae911790ca374a8716e01a4',
+ * // @log:   blockNumber: 19760236n,
+ * // @log:   data: '0x',
+ * // @log:   logIndex: 271,
+ * // @log:   removed: false,
+ * // @log:   topics: [
+ * // @log:     "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+ * // @log:     "0x0000000000000000000000000000000000000000000000000000000000000000",
+ * // @log:     "0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1",
+ * // @log:     "0x000000000000000000000000000000000000000000000000000000000000025b",
+ * // @log:   transactionHash:
+ * // @log:     '0xcfa52db0bc2cb5bdcb2c5bd8816df7a2f018a0e3964ab1ef4d794cf327966e93',
+ * // @log:   transactionIndex: 145,
+ * // @log: }
+ * ```
+ *
  * @category Execution API
  */
 export * as Log from './Log.js'
 
 /**
  * Utilities & types for working with [EIP-191 Personal Messages](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e)
+ *
+ * @example
+ * ### Computing Sign Payload
+ *
+ * An EIP-191 personal sign payload can be computed using {@link ox#PersonalMessage.(getSignPayload:function)}:
+ *
+ * ```ts twoslash
+ * import { Hex, PersonalMessage, Secp256k1 } from 'ox'
+ *
+ * const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world')) // [!code focus]
+ *
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * ```
  *
  * @category Signed & Typed Data
  */
@@ -1389,12 +1454,95 @@ export * as PersonalMessage from './PersonalMessage.js'
 /**
  * Utilities & types for working with [EIP-1193 Providers](https://eips.ethereum.org/EIPS/eip-1193)
  *
+ * @example
+ * ### Instantiating with Existing Providers
+ *
+ * EIP-1193 Providers can be instantiated with {@link ox#Provider.(from:function)}:
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Provider } from 'ox'
+ *
+ * const provider = Provider.from(window.ethereum)
+ *
+ * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * ```
+ *
+ * @example
+ * ### Instantiating a Provider with Events
+ *
+ * Event emitters for EIP-1193 Providers can be created using {@link ox#Provider.(createEmitter:function)}:
+ *
+ * Useful for Wallets that distribute an EIP-1193 Provider (e.g. webpage injection via `window.ethereum`).
+ *
+ * ```ts twoslash
+ * import { Provider, RpcRequest, RpcResponse } from 'ox'
+ *
+ * // 1. Instantiate a Provider Emitter.
+ * const emitter = Provider.createEmitter() // [!code ++]
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const provider = Provider.from({
+ *   // 2. Pass the Emitter to the Provider.
+ *   ...emitter, // [!code ++]
+ *   async request(args) {
+ *     return await fetch('https://1.rpc.thirdweb.com', {
+ *       body: JSON.stringify(store.prepare(args)),
+ *       method: 'POST',
+ *       headers: {
+ *         'Content-Type': 'application/json',
+ *       },
+ *     })
+ *       .then((res) => res.json())
+ *       .then(RpcResponse.parse)
+ *   },
+ * })
+ *
+ * // 3. Emit Provider Events.
+ * emitter.emit('accountsChanged', ['0x...']) // [!code ++]
+ * ```
+ *
  * @category Providers (EIP-1193)
  */
 export * as Provider from './Provider.js'
 
 /**
  * Utility functions for working with ECDSA public keys.
+ *
+ * @example
+ * ### Serializing Public Keys
+ *
+ * Public Keys can be serialized to Hex or Bytes using {@link ox#PublicKey.(serialize:function)}:
+ *
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.from({
+ *   prefix: 4,
+ *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * })
+ *
+ * const serialized = PublicKey.serialize(publicKey) // [!code focus]
+ * // @log: '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
+ * ```
+ *
+ * @example
+ * ### Deserializing Public Keys
+ *
+ * Public Keys can be deserialized from Hex or Bytes using {@link ox#PublicKey.(deserialize:function)}:
+ *
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.deserialize('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * // @log: {
+ * // @log:   prefix: 4,
+ * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log: }
+ * ```
  *
  * @category Crypto
  */
@@ -1422,12 +1570,83 @@ export * as Rlp from './Rlp.js'
  * Utility types & functions for working with [JSON-RPC 2.0 Requests](https://www.jsonrpc.org/specification#request_object) and Ethereum JSON-RPC methods as
  * defined on the [Ethereum API specification](https://github.com/ethereum/execution-apis)
  *
+ * @example
+ * ### Instantiating a Request Store
+ *
+ * A Request Store can be instantiated using {@link ox#RpcRequest.(createStore:function)}:
+ *
+ * ```ts twoslash
+ * import { RpcRequest } from 'ox'
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const request_1 = store.prepare({
+ *   method: 'eth_blockNumber',
+ * })
+ * // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }
+ *
+ * const request_2 = store.prepare({
+ *   method: 'eth_call',
+ *   params: [
+ *     {
+ *       to: '0x0000000000000000000000000000000000000000',
+ *       data: '0xdeadbeef',
+ *     },
+ *   ],
+ * })
+ * // @log: { id: 1, jsonrpc: '2.0', method: 'eth_call', params: [{ to: '0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }] }
+ * ```
+ *
  * @category JSON-RPC
  */
 export * as RpcRequest from './RpcRequest.js'
 
 /**
  * Utility types & functions for working with [JSON-RPC 2.0 Responses](https://www.jsonrpc.org/specification#response_object)
+ *
+ * @example
+ * ### Parsing an RPC Response
+ *
+ * RPC Responses can be parsed using {@link ox#RpcResponse.(parse:function)}:
+ *
+ * ```ts twoslash
+ * import { RpcRequest, RpcResponse } from 'ox'
+ *
+ * // 1. Create a request store.
+ * const store = RpcRequest.createStore()
+ *
+ * // 2. Get a request object.
+ * const request = store.prepare({
+ *   method: 'eth_getBlockByNumber',
+ *   params: ['0x1', false],
+ * })
+ *
+ * // 3. Send the JSON-RPC request via HTTP.
+ * const block = await fetch('https://1.rpc.thirdweb.com', {
+ *   body: JSON.stringify(request),
+ *   headers: {
+ *     'Content-Type': 'application/json',
+ *   },
+ *   method: 'POST',
+ * })
+ *  .then((response) => response.json())
+ *  // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
+ *  .then((response) => RpcResponse.parse(response, { request })) // [!code focus]
+ *
+ * block // [!code focus]
+ * // ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
  *
  * @category JSON-RPC
  */
@@ -1582,6 +1801,34 @@ export * as P256 from './P256.js'
 /**
  * Utility functions for working with ECDSA signatures.
  *
+ * @example
+ * ### Serializing a Signature
+ *
+ * Signatures can be serialized to Hex or Bytes using {@link ox#Signature.(serialize:function)}:
+ *
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const signature = Signature.serialize({
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   yParity: 1
+ * })
+ * // @log: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
+ * ```
+ *
+ * @example
+ * ### Deserializing a Signature
+ *
+ * Signatures can be deserialized from Hex or Bytes using {@link ox#Signature.(deserialize:function)}:
+ *
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * Signature.deserialize('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
+ * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
+ * ```
+ *
  * @category Crypto
  */
 export * as Signature from './Signature.js'
@@ -1589,6 +1836,99 @@ export * as Signature from './Signature.js'
 /**
  * Utility functions for working with
  * [EIP-4361: Sign-In with Ethereum](https://eips.ethereum.org/EIPS/eip-4361)
+ *
+ * @example
+ * ### Creating a SIWE Message
+ *
+ * SIWE messages can be created using {@link ox#Siwe.(createMessage:function)}:
+ *
+ * ```ts twoslash
+ * import { Siwe } from 'ox'
+ *
+ * Siwe.createMessage({
+ *   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+ *   chainId: 1,
+ *   domain: 'example.com',
+ *   nonce: 'foobarbaz',
+ *   uri: 'https://example.com/path',
+ *   version: '1',
+ * })
+ * // @log: "example.com wants you to sign in with your Ethereum account:
+ * // @log: 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+ * // @log:
+ * // @log:
+ * // @log: URI: https://example.com/path
+ * // @log: Version: 1
+ * // @log: Chain ID: 1
+ * // @log: Nonce: foobarbaz
+ * // @log: Issued At: 2023-02-01T00:00:00.000Z"
+ * ```
+ *
+ * @example
+ * ### Generating SIWE Nonces
+ *
+ * SIWE nonces can be generated using {@link ox#Siwe.(generateNonce:function)}:
+ *
+ * ```ts twoslash
+ * import { Siwe } from 'ox'
+ *
+ * Siwe.generateNonce()
+ * // @log: '65ed4681d4efe0270b923ff5f4b097b1c95974dc33aeebecd5724c42fd86dfd25dc70b27ef836b2aa22e68f19ebcccc1'
+ * ```
+ *
+ * @example
+ * ### Parsing a SIWE Message
+ *
+ * SIWE messages can be parsed using {@link ox#Siwe.(parseMessage:function)}:
+ *
+ * ```ts twoslash
+ * import { Siwe } from 'ox'
+ *
+ * Siwe.parseMessage(`example.com wants you to sign in with your Ethereum account:
+ * 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+ *
+ * I accept the ExampleOrg Terms of Service: https://example.com/tos
+ *
+ * URI: https://example.com/path
+ * Version: 1
+ * Chain ID: 1
+ * Nonce: foobarbaz
+ * Issued At: 2023-02-01T00:00:00.000Z`)
+ * // @log: {
+ * // @log:   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+ * // @log:   chainId: 1,
+ * // @log:   domain: 'example.com',
+ * // @log:   issuedAt: '2023-02-01T00:00:00.000Z',
+ * // @log:   nonce: 'foobarbaz',
+ * // @log:   statement: 'I accept the ExampleOrg Terms of Service: https://example.com/tos',
+ * // @log:   uri: 'https://example.com/path',
+ * // @log:   version: '1',
+ * // @log: }
+ * ```
+ *
+ * @example
+ * ### Validating a SIWE Message
+ *
+ * SIWE messages can be validated using {@link ox#Siwe.(validateMessage:function)}:
+ *
+ * ```ts twoslash
+ * import { Siwe } from 'ox'
+ *
+ * Siwe.validateMessage({
+ *   address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+ *   domain: 'example.com',
+ *   message: {
+ *     address: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+ *     chainId: 1,
+ *     domain: 'example.com',
+ *     nonce: 'foobarbaz',
+ *     uri: 'https://example.com/path',
+ *     version: '1',
+ *   },
+ *   nonce: 'foobarbaz',
+ * })
+ * // @log: true
+ * ```
  *
  * @category Sign-In with Ethereum (EIP-4361)
  */
@@ -1604,6 +1944,38 @@ export * as Siwe from './Siwe.js'
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelope](/api/TransactionEnvelope) Module.
  * :::
  *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Transactions can be converted from RPC format using {@link ox#Transaction.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import { Transaction } from 'ox'
+ *
+ * const transaction = Transaction.fromRpc({
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   nonce: '0x357',
+ *   blockHash:
+ *     '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: '0x12f296f',
+ *   transactionIndex: '0x2',
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   value: '0x9b6e64a8ec60000',
+ *   gas: '0x43f5d',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   input:
+ *     '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006643504700000000000000000000000000000000000000000000000000000000000000040b080604000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec600000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec60000000000000000000000000000000000000000000000000000019124bb5ae978c000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b80000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8000000000000000000000000000000fee13a103a10d593b9ae06b3e05f2e7e1c00000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000190240001b9872b',
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   yParity: '0x0',
+ *   chainId: '0x1',
+ *   accessList: [],
+ *   type: '0x2',
+ * })
+ * ```
+ *
  * @category Execution API
  */
 export * as Transaction from './Transaction.js'
@@ -1617,6 +1989,36 @@ export * as Transaction from './Transaction.js'
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **TransactionLegacy** Module.
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeLegacy](/api/TransactionEnvelopeLegacy) Module.
  * :::
+ *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Transactions can be converted from RPC format using {@link ox#TransactionLegacy.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionLegacy } from 'ox'
+ *
+ * const transaction = TransactionLegacy.fromRpc({
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   nonce: '0x357',
+ *   blockHash:
+ *     '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: '0x12f296f',
+ *   transactionIndex: '0x2',
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   value: '0x9b6e64a8ec60000',
+ *   gas: '0x43f5d',
+ *   gasPrice: '0x2ca6ae494',
+ *   input:
+ *     '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006643504700000000000000000000000000000000000000000000000000000000000000040b080604000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec600000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec60000000000000000000000000000000000000000000000000000019124bb5ae978c000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b80000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8000000000000000000000000000000fee13a103a10d593b9ae06b3e05f2e7e1c00000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000190240001b9872b',
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   v: '0x1b',
+ *   chainId: '0x1',
+ *   type: '0x0',
+ * })
+ * ```
  *
  * @category Execution API
  */
@@ -1632,6 +2034,38 @@ export * as TransactionLegacy from './TransactionLegacy.js'
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip1559](/api/TransactionEnvelopeEip1559) Module.
  * :::
  *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Transactions can be converted from RPC format using {@link ox#TransactionEip1559.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEip1559 } from 'ox'
+ *
+ * const transaction = TransactionEip1559.fromRpc({
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   nonce: '0x357',
+ *   blockHash:
+ *     '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: '0x12f296f',
+ *   transactionIndex: '0x2',
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   value: '0x9b6e64a8ec60000',
+ *   gas: '0x43f5d',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   input:
+ *     '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006643504700000000000000000000000000000000000000000000000000000000000000040b080604000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec600000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec60000000000000000000000000000000000000000000000000000019124bb5ae978c000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b80000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8000000000000000000000000000000fee13a103a10d593b9ae06b3e05f2e7e1c00000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000190240001b9872b',
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   yParity: '0x0',
+ *   chainId: '0x1',
+ *   accessList: [],
+ *   type: '0x2',
+ * })
+ * ```
+ *
  * @category Execution API
  */
 export * as TransactionEip1559 from './TransactionEip1559.js'
@@ -1645,6 +2079,38 @@ export * as TransactionEip1559 from './TransactionEip1559.js'
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **TransactionEip2930** Module.
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip2930](/api/TransactionEnvelopeEip2930) Module.
  * :::
+ *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Transactions can be converted from RPC format using {@link ox#TransactionEip2930.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEip2930 } from 'ox'
+ *
+ * const transaction = TransactionEip2930.fromRpc({
+ *   accessList: [],
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   nonce: '0x357',
+ *   blockHash:
+ *     '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: '0x12f296f',
+ *   transactionIndex: '0x2',
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   value: '0x9b6e64a8ec60000',
+ *   gas: '0x43f5d',
+ *   gasPrice: '0x2ca6ae494',
+ *   input:
+ *     '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006643504700000000000000000000000000000000000000000000000000000000000000040b080604000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec600000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec60000000000000000000000000000000000000000000000000000019124bb5ae978c000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b80000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8000000000000000000000000000000fee13a103a10d593b9ae06b3e05f2e7e1c00000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000190240001b9872b',
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   v: '0x1b',
+ *   yParity: '0x0',
+ *   chainId: '0x1',
+ *   type: '0x1',
+ * })
+ * ```
  *
  * @category Execution API
  */
@@ -1660,6 +2126,40 @@ export * as TransactionEip2930 from './TransactionEip2930.js'
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip4844](/api/TransactionEnvelopeEip4844) Module.
  * :::
  *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Blob Transactions can be converted from RPC format using {@link ox#TransactionEip4844.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEip4844 } from 'ox'
+ *
+ * const transaction = TransactionEip4844.fromRpc({
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   nonce: '0x357',
+ *   blobVersionedHashes: ['0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe'],
+ *   blockHash:
+ *     '0xc350d807505fb835650f0013632c5548442987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: '0x12f296f',
+ *   transactionIndex: '0x2',
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   value: '0x9b6e64a8ec60000',
+ *   gas: '0x43f5d',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   maxFeePerBlobGas: '0x2ca6ae494',
+ *   input:
+ *     '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006643504700000000000000000000000000000000000000000000000000000000000000040b080604000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec600000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec60000000000000000000000000000000000000000000000000000019124bb5ae978c000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b80000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8000000000000000000000000000000fee13a103a10d593b9ae06b3e05f2e7e1c00000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000190240001b9872b',
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   yParity: '0x0',
+ *   chainId: '0x1',
+ *   accessList: [],
+ *   type: '0x3',
+ * })
+ * ```
+ *
  * @category Execution API
  */
 export * as TransactionEip4844 from './TransactionEip4844.js'
@@ -1674,6 +2174,46 @@ export * as TransactionEip4844 from './TransactionEip4844.js'
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip7702](/api/TransactionEnvelopeEip7702) Module.
  * :::
  *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Transactions can be converted from RPC format using {@link ox#TransactionEip7702.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEip7702 } from 'ox'
+ *
+ * const transaction = TransactionEip7702.fromRpc({
+ *   authorizationList: [{
+ *     chainId: '0x1',
+ *     contractAddress: '0x0000000000000000000000000000000000000000',
+ *     nonce: '0x1',
+ *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *     yParity: '0x0',
+ *   }],
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   nonce: '0x357',
+ *   blockHash:
+ *     '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: '0x12f296f',
+ *   transactionIndex: '0x2',
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   value: '0x9b6e64a8ec60000',
+ *   gas: '0x43f5d',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   input:
+ *     '0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006643504700000000000000000000000000000000000000000000000000000000000000040b080604000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec600000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000009b6e64a8ec60000000000000000000000000000000000000000000000000000019124bb5ae978c000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b80000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b8000000000000000000000000000000fee13a103a10d593b9ae06b3e05f2e7e1c00000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000000000060000000000000000000000000c56c7a0eaa804f854b536a5f3d5f49d2ec4b12b800000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000190240001b9872b',
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   yParity: '0x0',
+ *   chainId: '0x1',
+ *   accessList: [],
+ *   type: '0x4',
+ * })
+ * ```
+ *
  * @category Execution API
  */
 export * as TransactionEip7702 from './TransactionEip7702.js'
@@ -1687,6 +2227,103 @@ export * as TransactionEip7702 from './TransactionEip7702.js'
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelope** Module.
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [Transaction](/api/Transaction) Module.
  * :::
+ *
+ * @example
+ * ### Instantiating Transaction Envelopes
+ *
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelope.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelope, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * // @log: {
+ * // @log:   chainId: 1,
+ * // @log:   maxFeePerGas: 10000000000n,
+ * // @log:   maxPriorityFeePerGas: 1000000000n,
+ * // @log:   to: '0x0000000000000000000000000000000000000000',
+ * // @log:   type: 'eip1559',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
+ * ```
+ *
+ * @example
+ * ### Signing Transaction Envelopes
+ *
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelope.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const signature = Secp256k1.sign({ // [!code focus]
+ *   payload: TransactionEnvelope.getSignPayload(envelope), // [!code focus]
+ *   privateKey: '0x...' // [!code focus]
+ * }) // [!code focus]
+ *
+ * const envelope_signed = TransactionEnvelope.from(envelope, { signature })
+ * ```
+ *
+ * @example
+ * ### Serializing Transaction Envelopes
+ *
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelope.(serialize:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelope, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const serialized = TransactionEnvelope.serialize(envelope) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Computing Transaction Hashes
+ *
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelope.(hash:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelope } from 'ox'
+ *
+ * const envelope = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ *   data: '0x',
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelope.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelope.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelope.hash(envelope_signed) // [!code focus]
+ * ```
  *
  * @category Transaction Envelopes
  */
@@ -1703,6 +2340,92 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionLegacy](/api/TransactionLegacy) Module.
  * :::
  *
+ * @example
+ * ### Instantiating Transaction Envelopes
+ *
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeLegacy.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelopeLegacy, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   gasPrice: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * ```
+ *
+ * * @example
+ * ### Signing Transaction Envelopes
+ *
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeLegacy.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const signature = Secp256k1.sign({ // [!code focus]
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope), // [!code focus]
+ *   privateKey: '0x...' // [!code focus]
+ * }) // [!code focus]
+ *
+ * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
+ * ```
+ *
+ * @example
+ * ### Serializing Transaction Envelopes
+ *
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeLegacy.(serialize:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelopeLegacy, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const serialized = TransactionEnvelopeLegacy.serialize(envelope) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Computing Transaction Hashes
+ *
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeLegacy.(hash:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ *   data: '0x',
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelopeLegacy.hash(envelope_signed) // [!code focus]
+ * ```
+ *
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
@@ -1716,6 +2439,105 @@ export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelopeEip1559** Module.
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip1559](/api/TransactionEip1559) Module.
  * :::
+ *
+ *  @example
+ * ### Instantiating Transaction Envelopes
+ *
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip1559.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip1559, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * // @log: {
+ * // @log:   chainId: 1,
+ * // @log:   maxFeePerGas: 10000000000n,
+ * // @log:   maxPriorityFeePerGas: 1000000000n,
+ * // @log:   to: '0x0000000000000000000000000000000000000000',
+ * // @log:   type: 'eip1559',
+ * // @log:   value: 1000000000000000000n,
+ * // @log: }
+ * ```
+ *
+ * @example
+ * ### Signing Transaction Envelopes
+ *
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip1559.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const signature = Secp256k1.sign({ // [!code focus]
+ *   payload: TransactionEnvelopeEip1559.getSignPayload(envelope), // [!code focus]
+ *   privateKey: '0x...' // [!code focus]
+ * }) // [!code focus]
+ *
+ * const envelope_signed = TransactionEnvelopeEip1559.from(envelope, { signature })
+ * ```
+ *
+ * @example
+ * ### Serializing Transaction Envelopes
+ *
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip1559.(serialize:function)}:
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip1559, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const serialized = TransactionEnvelopeEip1559.serialize(envelope) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Computing Transaction Hashes
+ *
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip1559.(hash:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ *   data: '0x',
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeEip1559.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelopeEip1559.hash(envelope_signed) // [!code focus]
+ * ```
  *
  * @category Transaction Envelopes
  */
@@ -1731,6 +2553,95 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip2930](/api/TransactionEip1559) Module.
  * :::
  *
+ * @example
+ * ### Instantiating Transaction Envelopes
+ *
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip2930.(from:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { TransactionEnvelopeEip2930, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   chainId: 1,
+ *   accessList: [...],
+ *   gasPrice: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * ```
+ *
+ * @example
+ * ### Signing Transaction Envelopes
+ *
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip2930.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelopeEip2930 } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const payload = TransactionEnvelopeEip2930.getSignPayload(envelope) // [!code focus]
+ * // @log: '0x...'
+ *
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * ```
+ *
+ * @example
+ * ### Serializing Transaction Envelopes
+ *
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip2930.(serialize:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip2930, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const serialized = TransactionEnvelopeEip2930.serialize(envelope) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Computing Transaction Hashes
+ *
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip2930.(hash:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip2930 } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ *   data: '0x',
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip2930.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeEip2930.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelopeEip2930.hash(envelope_signed) // [!code focus]
+ * ```
+ *
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
@@ -1744,6 +2655,127 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelopeEip4844** Module.
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip4844](/api/TransactionEip4844) Module.
  * :::
+ *
+ * @example
+ * ### Instantiating Blobs
+ *
+ * Blobs can be instantiated using {@link ox#Blobs.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { Blobs, Hex } from 'ox'
+ *
+ * const blobs = Blobs.from(Hex.fromString('Hello World!'))
+ * ```
+ *
+ * @example
+ * ### Instantiating Transaction Envelopes
+ *
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip4844.(from:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs, Hex, TransactionEnvelopeEip4844, Value } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from(Hex.fromString('Hello World!'))
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ *
+ * const envelope = TransactionEnvelopeEip4844.from({
+ *   chainId: 1,
+ *   blobVersionedHashes,
+ *   maxFeePerBlobGas: Value.fromGwei('3'),
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * ```
+ *
+ * @example
+ * ### Signing Transaction Envelopes
+ *
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip4844.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs, Secp256k1, TransactionEnvelopeEip4844 } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ *
+ * const envelope = TransactionEnvelopeEip4844.from({
+ *   blobVersionedHashes,
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   maxFeePerGas: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const signature = Secp256k1.sign({ // [!code focus]
+ *   payload: TransactionEnvelopeEip4844.getSignPayload(envelope), // [!code focus]
+ *   privateKey: '0x...' // [!code focus]
+ * }) // [!code focus]
+ *
+ * const envelope_signed = TransactionEnvelopeEip4844.from(envelope, { signature })
+ * ```
+ *
+ * @example
+ * ### Serializing Transaction Envelopes
+ *
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip4844.(serialize:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs, TransactionEnvelopeEip4844 } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ *
+ * const envelope = TransactionEnvelopeEip4844.from({
+ *   blobVersionedHashes,
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const serialized = TransactionEnvelopeEip4844.serialize(envelope) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Computing Transaction Hashes
+ *
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip4844.(hash:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs, Secp256k1, TransactionEnvelopeEip4844, Value } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ *
+ * const envelope = TransactionEnvelopeEip4844.from({
+ *   blobVersionedHashes,
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip4844.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeEip4844.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelopeEip4844.hash(envelope_signed) // [!code focus]
+ * ```
  *
  * @category Transaction Envelopes
  */
@@ -1759,6 +2791,81 @@ export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
  * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip7702](/api/TransactionEip7702) Module.
  * :::
  *
+ * @example
+ * ### Instantiating Transaction Envelopes
+ *
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip7702.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { Authorization, Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
+ *
+ * const authorization = Authorization.from({
+ *   chainId: 1,
+ *   contractAddress: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   nonce: 0n,
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: Authorization.getSignPayload(authorization),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const authorizationList = [Authorization.from(authorization, { signature })]
+ *
+ * const envelope = TransactionEnvelopeEip7702.from({ // [!code focus]
+ *   authorizationList, // [!code focus]
+ *   chainId: 1, // [!code focus]
+ *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
+ *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
+ *   to: '0x0000000000000000000000000000000000000000', // [!code focus]
+ *   value: Value.fromEther('1'), // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * :::tip
+ *
+ * See {@link ox#Authorization} for more details on instantiating and signing EIP-7702 Authorizations.
+ *
+ * :::
+ *
+ * @example
+ * ### Signing Transaction Envelopes
+ *
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip7702.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { Authorization, Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
+ *
+ * const authorization = Authorization.from({
+ *   chainId: 1,
+ *   contractAddress: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   nonce: 0n,
+ * })
+ *
+ * const signature_auth = Secp256k1.sign({
+ *   payload: Authorization.getSignPayload(authorization),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const authorizationList = [Authorization.from(authorization, { signature: signature_auth })]
+ *
+ * const envelope = TransactionEnvelopeEip7702.from({
+ *   authorizationList,
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const signature = Secp256k1.sign({ // [!code focus]
+ *   payload: TransactionEnvelopeEip7702.getSignPayload(envelope), // [!code focus]
+ *   privateKey: '0x...', // [!code focus]
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeEip7702.from(envelope, { signature })
+ * ```
+ *
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
@@ -1766,12 +2873,93 @@ export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
 /**
  * Utilities & types for working with **Transaction Receipts** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml)
  *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Receipts can be converted from RPC format using {@link ox#TransactionReceipt.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { TransactionReceipt } from 'ox'
+ *
+ * const receipt = await window.ethereum!
+ *   .request({
+ *     method: 'eth_getTransactionReceipt',
+ *     params: [
+ *       '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *     ],
+ *   })
+ *   .then(TransactionReceipt.fromRpc) // [!code hl]
+ * // @log: {
+ * // @log:   blobGasPrice: 270441n,
+ * // @log:   blobGasUsed: 4919n,
+ * // @log:   blockHash: "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
+ * // @log:   blockNumber: 19868015n,
+ * // @log:   contractAddress: null,
+ * // @log:   cumulativeGasUsed: 533781n,
+ * // @log:   effectiveGasPrice: 9062804489n,
+ * // @log:   from: "0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6",
+ * // @log:   gasUsed: 175034n,
+ * // @log:   logs: [],
+ * // @log:   logsBloom: "0x00200000000000000000008080000000000000000040000000000000000000000000000000000000000000000000000022000000080000000000000000000000000000080000000000000008000000200000000000000000000200008020400000000000000000280000000000100000000000000000000000000010000000000000000000020000000000000020000000000001000000080000004000000000000000000000000000000000000000000000400000000000001000000000000000000002000000000000000020000000000000000000001000000000000000000000200000000000000000000000000000001000000000c00000000000000000",
+ * // @log:   root: undefined,
+ * // @log:   status: "success",
+ * // @log:   to: "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
+ * // @log:   transactionHash: "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
+ * // @log:   transactionIndex: 2,
+ * // @log:   type: "eip1559",
+ * // @log: }
+ * ```
+ *
  * @category Execution API
  */
 export * as TransactionReceipt from './TransactionReceipt.js'
 
 /**
  * Utility functions for working with [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712)
+ *
+ * @example
+ * ### Getting Sign Payloads
+ *
+ * Typed Data can be converted to a sign payload using {@link ox#TypedData.(getSignPayload:function)}:
+ *
+ * ```ts twoslash
+ * import { TypedData, Hash } from 'ox'
+ *
+ * const payload = TypedData.getSignPayload({ // [!code focus:99]
+ *   domain: {
+ *     name: 'Ether Mail',
+ *     version: '1',
+ *     chainId: 1,
+ *     verifyingContract: '0x0000000000000000000000000000000000000000',
+ *   },
+ *   types: {
+ *     Person: [
+ *       { name: 'name', type: 'string' },
+ *       { name: 'wallet', type: 'address' },
+ *     ],
+ *     Mail: [
+ *       { name: 'from', type: 'Person' },
+ *       { name: 'to', type: 'Person' },
+ *       { name: 'contents', type: 'string' },
+ *     ],
+ *   },
+ *   primaryType: 'Mail',
+ *   message: {
+ *     from: {
+ *       name: 'Cow',
+ *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+ *     },
+ *     to: {
+ *       name: 'Bob',
+ *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+ *     },
+ *     contents: 'Hello, Bob!',
+ *   },
+ * })
+ *
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * ```
  *
  * @category Signed & Typed Data
  */
@@ -1811,12 +2999,145 @@ export * as Value from './Value.js'
 /**
  * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
  *
+ * @example
+ * ### Creating Credentials
+ *
+ * Credentials can be created using {@link ox#WebAuthnP256.(createCredential:function)}:
+ *
+ * ```ts twoslash
+ * import { WebAuthnP256 } from 'ox'
+ *
+ * const credential = await WebAuthnP256.createCredential({ name: 'Example' }) // [!code focus]
+ * // @log: {
+ * // @log:   id: 'oZ48...',
+ * // @log:   publicKey: { x: 51421...5123n, y: 12345...6789n },
+ * // @log:   raw: PublicKeyCredential {},
+ * // @log: }
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   credentialId: credential.id,
+ *   challenge: '0xdeadbeef',
+ * })
+ * ```
+ *
+ * @example
+ * ### Signing Payloads
+ *
+ * Payloads can be signed using {@link ox#WebAuthnP256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { WebAuthnP256 } from 'ox'
+ *
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example',
+ * })
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({ // [!code focus]
+ *   credentialId: credential.id, // [!code focus]
+ *   challenge: '0xdeadbeef', // [!code focus]
+ * }) // [!code focus]
+ * // @log: {
+ * // @log:   metadata: {
+ * // @log:     authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+ * // @log:     clientDataJSON: '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+ * // @log:     challengeIndex: 23,
+ * // @log:     typeIndex: 1,
+ * // @log:     userVerificationRequired: true,
+ * // @log:   },
+ * // @log:   signature: { r: 51231...4215n, s: 12345...6789n },
+ * // @log: }
+ * ```
+ *
+ * @example
+ * ### Verifying Signatures
+ *
+ * Signatures can be verified using {@link ox#WebAuthnP256.(verify:function)}:
+ *
+ * ```ts twoslash
+ * import { WebAuthnP256 } from 'ox'
+ *
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example',
+ * })
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   credentialId: credential.id,
+ *   challenge: '0xdeadbeef',
+ * })
+ *
+ * const result = await WebAuthnP256.verify({ // [!code focus]
+ *   metadata, // [!code focus]
+ *   challenge: '0xdeadbeef', // [!code focus]
+ *   publicKey: credential.publicKey, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * // @log: true
+ * ```
+ *
  * @category Crypto
  */
 export * as WebAuthnP256 from './WebAuthnP256.js'
 
 /**
  * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
+ *
+ * @example
+ * ### Creating Key Pairs
+ *
+ * Key pairs can be created using {@link ox#WebCryptoP256.(createKeyPair:function)}:
+ *
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * // @log: {
+ * // @log:   privateKey: CryptoKey {},
+ * // @log:   publicKey: {
+ * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:     prefix: 4,
+ * // @log:   },
+ * // @log: }
+ * ```
+ *
+ * @example
+ * ### Signing Payloads
+ *
+ * Payloads can be signed using {@link ox#WebCryptoP256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { privateKey } = await WebCryptoP256.createKeyPair()
+ *
+ * const signature = await WebCryptoP256.sign({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   privateKey, // [!code focus]
+ * }) // [!code focus]
+ * // @log: {
+ * // @log:   r: 151231...4423n,
+ * // @log:   s: 516123...5512n,
+ * // @log: }
+ * ```
+ *
+ * @example
+ * ### Verifying Signatures
+ *
+ * Signatures can be verified using {@link ox#WebCryptoP256.(verify:function)}:
+ *
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const verified = await WebCryptoP256.verify({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   publicKey, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * // @log: true
+ * ```
  *
  * @category Crypto
  */

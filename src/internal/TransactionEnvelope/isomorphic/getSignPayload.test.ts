@@ -14,7 +14,7 @@ test('legacy', () => {
     type: 'legacy',
   })
 
-  const hash = TransactionEnvelope.hash(envelope)
+  const hash = TransactionEnvelope.hash(envelope, { presign: true })
   expect(hash).toMatchInlineSnapshot(
     `"0x4c1dec0d90aa1a17cb0aa735b5550e43a1bd27cd1cacb8987522576fa6220e46"`,
   )
@@ -50,7 +50,7 @@ test('eip1559', () => {
     type: 'eip1559',
   })
 
-  const hash = TransactionEnvelope.hash(envelope)
+  const hash = TransactionEnvelope.hash(envelope as any)
   expect(hash).toMatchInlineSnapshot(
     `"0x1d099d1f25465b53e1e56e715e35d5daaaef6a9e9883ba21652eea7f411fffc7"`,
   )
@@ -123,7 +123,7 @@ test('eip4844', () => {
     type: 'eip4844',
   })
 
-  const hash = TransactionEnvelope.hash(envelope)
+  const hash = TransactionEnvelope.hash(envelope as any)
   expect(hash).toMatchInlineSnapshot(
     `"0xd5c811a922a14455151761e77bcc84bf590bb8dbf2d9a79d4c890f561a6dcd39"`,
   )
@@ -171,7 +171,7 @@ test('eip7702', () => {
     type: 'eip7702',
   })
 
-  const hash = TransactionEnvelope.hash(envelope)
+  const hash = TransactionEnvelope.hash(envelope as any)
   expect(hash).toMatchInlineSnapshot(
     `"0x29e23a79291c348f976a6f4b93b9de92d4e6207a8ceea39c7cf717aaae23a2b8"`,
   )

@@ -32,7 +32,7 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * @returns The sign payload.
  */
 export function TransactionEnvelopeLegacy_getSignPayload(
-  envelope: TransactionEnvelopeLegacy,
+  envelope: TransactionEnvelopeLegacy<false>,
 ): TransactionEnvelopeLegacy_getSignPayload.ReturnType {
   return TransactionEnvelopeLegacy_hash(envelope, { presign: true })
 }

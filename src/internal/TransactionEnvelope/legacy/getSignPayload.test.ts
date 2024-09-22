@@ -13,7 +13,7 @@ test('default', () => {
     type: 'legacy',
   })
 
-  const hash = TransactionEnvelopeLegacy.hash(envelope)
+  const hash = TransactionEnvelopeLegacy.hash(envelope, { presign: true })
   expect(hash).toMatchInlineSnapshot(
     `"0x4c1dec0d90aa1a17cb0aa735b5550e43a1bd27cd1cacb8987522576fa6220e46"`,
   )

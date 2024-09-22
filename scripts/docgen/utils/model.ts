@@ -165,6 +165,7 @@ function getLinkForApiItem(item: model.ApiItem) {
   if (!parent) throw new Error('Parent not found')
 
   const baseLink = `/api/${parent.displayName}`
+  if (item.kind === model.ApiItemKind.Namespace) return baseLink
   if (item.kind === model.ApiItemKind.Function)
     return `${baseLink}/${item.displayName}`
   if (item.kind === model.ApiItemKind.TypeAlias)

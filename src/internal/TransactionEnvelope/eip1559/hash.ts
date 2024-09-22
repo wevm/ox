@@ -27,9 +27,11 @@ import type { TransactionEnvelopeEip1559 } from './types.js'
  * @param options -
  * @returns The hash of the transaction envelope.
  */
-export function TransactionEnvelopeEip1559_hash(
-  envelope: TransactionEnvelopeEip1559,
-  options: TransactionEnvelopeEip1559_hash.Options = {},
+export function TransactionEnvelopeEip1559_hash<
+  presign extends boolean = false,
+>(
+  envelope: TransactionEnvelopeEip1559<presign extends true ? false : true>,
+  options: TransactionEnvelopeEip1559_hash.Options<presign> = {},
 ): TransactionEnvelopeEip1559_hash.ReturnType {
   const { presign } = options
   return Hash_keccak256(
@@ -48,9 +50,9 @@ export function TransactionEnvelopeEip1559_hash(
 }
 
 export declare namespace TransactionEnvelopeEip1559_hash {
-  type Options = {
+  type Options<presign extends boolean = false> = {
     /** Whether to hash this transaction for signing. @default false */
-    presign?: boolean
+    presign?: presign | boolean | undefined
   }
 
   type ReturnType = Hex

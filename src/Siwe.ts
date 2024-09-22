@@ -1,3 +1,5 @@
+// TODO: `getSignPayload`
+
 export {
   Siwe_domainRegex as domainRegex,
   Siwe_ipRegex as ipRegex,

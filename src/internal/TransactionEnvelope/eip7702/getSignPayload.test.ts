@@ -25,7 +25,7 @@ test('default', () => {
     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   })
 
-  const hash = TransactionEnvelopeEip7702.hash(envelope)
+  const hash = TransactionEnvelopeEip7702.hash(envelope, { presign: true })
   expect(hash).toMatchInlineSnapshot(
     `"0x6458c62f981287bcbf1c85861e69de9c7344793116dc9388d90274ab153da8d8"`,
   )
