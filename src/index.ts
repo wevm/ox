@@ -830,12 +830,107 @@ export * as Authorization from './Authorization.js'
 /**
  * Utility functions for working with [Base58](https://digitalbazaar.github.io/base58-spec/) values.
  *
+ * @example
+ * ### Encoding to Base58
+ *
+ * Values can be encoded to Base58 with:
+ *
+ * - {@link ox#Base58.(fromString:function)}, or
+ *
+ * - {@link ox#Base58.(fromBytes:function)}, or
+ *
+ * - {@link ox#Base58.(fromHex:function)}
+ *
+ * ```ts twoslash
+ * import { Base58 } from 'ox'
+ *
+ * const value_string = Base58.fromString('Hello World!')
+ * // @log: '2NEpo7TZRRrLZSi2U'
+ *
+ * const value_bytes = Base58.fromBytes(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * // @log: '2NEpo7TZRRrLZSi2U'
+ *
+ * const value_hex = Base58.fromHex('0x48656c6c6f20576f726c6421')
+ * // @log: '2NEpo7TZRRrLZSi2U'
+ * ```
+ *
+ * @example
+ * ### Decoding Base58
+ *
+ * Values can be decoded from Base58 with:
+ *
+ * - {@link ox#Base58.(toString:function)}, or
+ *
+ * - {@link ox#Base58.(toBytes:function)}, or
+ *
+ * - {@link ox#Base58.(toHex:function)}
+ *
+ * ```ts twoslash
+ * import { Base58 } from 'ox'
+ *
+ * const value_string = Base58.toString('2NEpo7TZRRrLZSi2U')
+ * // @log: 'Hello World!'
+ *
+ * const value_bytes = Base58.toBytes('2NEpo7TZRRrLZSi2U')
+ * // @log: Uint8Array [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]
+ *
+ * const value_hex = Base58.toHex('2NEpo7TZRRrLZSi2U')
+ * // @log: '0x48656c6c6f20576f726c6421'
+ * ```
+ *
  * @category Encoding
  */
 export * as Base58 from './Base58.js'
 
 /**
  * Utility functions for working with [RFC-4648](https://datatracker.ietf.org/doc/html/rfc4648) Base64.
+ *
+ * @example
+ * ### Encoding to Base64
+ *
+ * Values can be encoded to Base64 with:
+ *
+ * - {@link ox#Base64.(fromString:function)}, or
+ *
+ * - {@link ox#Base64.(fromBytes:function)}, or
+ *
+ * - {@link ox#Base64.(fromHex:function)}
+ *
+ * ```ts twoslash
+ * import { Base64 } from 'ox'
+ *
+ * const value_string = Base64.fromString('Hello World!')
+ * // @log: 'SGVsbG8gV29ybGQh=='
+ *
+ * const value_bytes = Base64.fromBytes(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * // @log: 'SGVsbG8gV29ybGQh=='
+ *
+ * const value_hex = Base64.fromHex('0x48656c6c6f20576f726c6421')
+ * // @log: 'SGVsbG8gV29ybGQh=='
+ * ```
+ *
+ * ### Decoding Base64
+ *
+ * Values can be decoded from Base64 with:
+ *
+ * - {@link ox#Base64.(toString:function)}, or
+ *
+ * - {@link ox#Base64.(toBytes:function)}, or
+ *
+ * - {@link ox#Base64.(toHex:function)}
+ *
+ * ```ts twoslash
+ * import { Base64 } from 'ox'
+ *
+ * const value_string = Base64.toString('SGVsbG8gV29ybGQh==')
+ * // @log: 'Hello World!'
+ *
+ * const value_bytes = Base64.toBytes('SGVsbG8gV29ybGQh==')
+ * // @log: Uint8Array [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]
+ *
+ * const value_hex = Base64.toHex('SGVsbG8gV29ybGQh==')
+ * // @log: '0x48656c6c6f20576f726c6421'
+ * ```
  *
  * @category Encoding
  */
@@ -844,12 +939,37 @@ export * as Base64 from './Base64.js'
 /**
  * Utility functions for working with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
  *
- * @category Blobs
+ * @category Blobs (EIP-4844)
  */
 export * as Blobs from './Blobs.js'
 
 /**
  * Utilities & types for working with Blocks as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml)
+ *
+ * @example
+ * ### Converting from RPC Format
+ *
+ * Blocks can be converted from RPC format to internal format using {@link ox#Block.(fromRpc:function)}:
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Block } from 'ox'
+ *
+ * const block = await window.ethereum!
+ *   .request({
+ *     method: 'eth_getBlockByNumber',
+ *     params: ['latest', false],
+ *   })
+ *   .then(Block.fromRpc) // [!code hl]
+ * // @log: {
+ * // @log:   // ...
+ * // @log:   hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+ * // @log:   number: 19868020n,
+ * // @log:   size: 520n,
+ * // @log:   timestamp: 1662222222n,
+ * // @log:   // ...
+ * // @log: }
+ * ```
  *
  * @category Execution API
  */
@@ -864,6 +984,127 @@ export * as Bloom from './Bloom.js'
 
 /**
  * A set of Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances.
+ *
+ * @example
+ * ### Instantiating Bytes
+ *
+ * Values can be instantiated as {@link ox#Bytes.Bytes} using:
+ *
+ * - {@link ox#Bytes.(fromArray:function)}
+ *
+ * - {@link ox#Bytes.(fromBoolean:function)}
+ *
+ * - {@link ox#Bytes.(fromHex:function)}
+ *
+ * - {@link ox#Bytes.(fromNumber:function)}
+ *
+ * - {@link ox#Bytes.(fromString:function)}
+ *
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const value_array = Bytes.from([1, 2, 3, 4, 5])
+ * // @log: Uint8Array [1, 2, 3, 4, 5]
+ *
+ * const value_boolean = Bytes.fromBoolean(true)
+ * // @log: Uint8Array [1]
+ *
+ * const value_hex = Bytes.fromHex('0x1234567890abcdef')
+ * // @log: Uint8Array [18, 52, 86, 120, 144, 175, 207, 15]
+ *
+ * const value_number = Bytes.fromNumber(1234567890)
+ * // @log: Uint8Array [4, 160, 216]
+ *
+ * const value_string = Bytes.fromString('Hello World!')
+ * // @log: Uint8Array [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]
+ * ```
+ *
+ * @example
+ * ### Converting from Bytes
+ *
+ * Values can be converted from {@link ox#Bytes.Bytes} using:
+ *
+ * - {@link ox#Bytes.(toBigInt:function)}
+ *
+ * - {@link ox#Bytes.(toBoolean:function)}
+ *
+ * - {@link ox#Bytes.(toHex:function)}
+ *
+ * - {@link ox#Bytes.(toNumber:function)}
+ *
+ * - {@link ox#Bytes.(toString:function)}
+ *
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const value_bigint = Bytes.toBigInt(Bytes.from([4, 160, 216]))
+ * // @log: 1234567890n
+ *
+ * const value_boolean = Bytes.toBoolean(Bytes.from([1]))
+ * // @log: true
+ *
+ * const value_hex = Bytes.toHex(Bytes.from([222, 173, 190, 239]))
+ * // @log: '0xdeadbeef'
+ *
+ * const value_number = Bytes.toNumber(Bytes.from([4, 160, 216]))
+ * // @log: 1234567890
+ *
+ * const value_string = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * // @log: 'Hello World!'
+ * ```
+ *
+ * @example
+ * ### Concatenating Bytes
+ *
+ * Values can be concatenated using {@link ox#Bytes.(concat:function)}:
+ *
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const a = Bytes.from([1, 2, 3])
+ * const b = Bytes.from([4, 5, 6])
+ * const c = Bytes.concat(a, b)
+ * // @log: Uint8Array [1, 2, 3, 4, 5, 6]
+ * ```
+ *
+ * @example
+ * ### Slicing Bytes
+ *
+ * Values can be sliced using {@link ox#Bytes.(slice:function)}:
+ *
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const value = Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6]), 2, 4)
+ * // @log: Uint8Array [3, 4]
+ * ```
+ *
+ * @example
+ * ### Padding Bytes
+ *
+ * Values can be padded with zeroes using {@link ox#Bytes.(padLeft:function)} or {@link ox#Bytes.(padRight:function)}:
+ *
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const value_1 = Bytes.padLeft(Bytes.from([1, 2, 3]), 5)
+ * // @log: Uint8Array [0, 0, 1, 2, 3]
+ *
+ * const value_2 = Bytes.padRight(Bytes.from([1, 2, 3]), 5)
+ * // @log: Uint8Array [1, 2, 3, 0, 0]
+ * ```
+ *
+ * @example
+ * ### Trimming Bytes
+ *
+ * Zeroes in values can be trimmed using {@link ox#Bytes.(trimLeft:function)} or {@link ox#Bytes.(trimRight:function)}:
+ *
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * const value = Bytes.trimLeft(Bytes.from([0, 0, 1, 2, 3]))
+ * // @log: Uint8Array [1, 2, 3]
+ * ```
  *
  * @category Encoding
  */
@@ -914,6 +1155,30 @@ export * as ContractAddress from './ContractAddress.js'
 /**
  * Utility functions for working with ENS names.
  *
+ * @example
+ * ### Normalizing ENS Names
+ *
+ * ENS names can be normalized using {@link ox#Ens.(normalize:function)}:
+ *
+ * ```ts twoslash
+ * import { Ens } from 'ox'
+ *
+ * const name = Ens.normalize('w𝝣vm.eth')
+ * // @log: 'wξvm.eth'
+ * ```
+ *
+ * @example
+ * ### Namehashing ENS Names
+ *
+ * ENS names can be namehashed using {@link ox#Ens.(namehash:function)}:
+ *
+ * ```ts twoslash
+ * import { Ens } from 'ox'
+ *
+ * const name = Ens.namehash('alice.eth')
+ * // @log: '0x787192fc5378cc32aa956ddfdedbf26b24e8d78e40109add0eea2c1a012c3dec'
+ * ```
+ *
  * @category ENS
  */
 export * as Ens from './Ens.js'
@@ -945,6 +1210,114 @@ export * as Hash from './Hash.js'
 /**
  * A set of Ethereum-related utility functions for working with hexadecimal string values (e.g. `"0xdeadbeef"`).
  *
+ * @example
+ * ### Instantiating Hex
+ *
+ * Values can be instantiated as {@link ox#Hex.Hex} using:
+ *
+ * - {@link ox#Hex.(fromBoolean:function)}
+ *
+ * - {@link ox#Hex.(fromBytes:function)}
+ *
+ * - {@link ox#Hex.(fromNumber:function)}
+ *
+ * - {@link ox#Hex.(fromString:function)}
+ *
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * const value_boolean = Hex.fromBoolean(true)
+ * // @log: '0x1'
+ *
+ * const value_bytes = Hex.fromBytes(Bytes.from([1, 2, 3]))
+ * // @log: '0x010203'
+ *
+ * const value_number = Hex.fromNumber(1234567890)
+ * // @log: '0x499602d2'
+ *
+ * const value_string = Hex.fromString('Hello World!')
+ * // @log: '0x48656c6c6f20576f726c6421'
+ * ```
+ *
+ * @example
+ * ### Converting from Hex
+ *
+ * Values can be converted from {@link ox#Hex.Hex} using:
+ *
+ * - {@link ox#Hex.(toBoolean:function)}
+ *
+ * - {@link ox#Hex.(toBytes:function)}
+ *
+ * - {@link ox#Hex.(toNumber:function)}
+ *
+ * - {@link ox#Hex.(toString:function)}
+ *
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * const value_boolean = Hex.toBoolean('0x1')
+ * // @log: true
+ *
+ * const value_bytes = Hex.toBytes('0x010203')
+ * // @log: Uint8Array [1, 2, 3]
+ *
+ * const value_number = Hex.toNumber('0x499602d2')
+ * // @log: 1234567890
+ *
+ * const value_string = Hex.toString('0x48656c6c6f20576f726c6421')
+ * // @log: 'Hello World!'
+ * ```
+ *
+ * @example
+ * ### Concatenating Hex
+ *
+ * Hex values can be concatenated using {@link ox#Hex.(concat:function)}:
+ *
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * const a = Hex.fromString('0x1234567890abcdef')
+ * const b = Hex.fromString('0xdeadbeef')
+ * const c = Hex.concat(a, b)
+ * // @log: '0x1234567890abcdefdeadbeef'
+ * ```
+ *
+ * @example
+ * ### Slicing Hex
+ *
+ * Hex values can be sliced using {@link ox#Hex.(slice:function)}:
+ *
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * const value = Hex.slice('0x1234567890abcdefdeadbeef', 2, 8)
+ * // @log: '0x34567890'
+ * ```
+ *
+ * @example
+ * ### Padding Hex
+ *
+ * Hex values can be padded with zeroes using {@link ox#Hex.(padLeft:function)} or {@link ox#Hex.(padRight:function)}:
+ *
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * const value = Hex.padLeft('0x1234567890abcdef', 16)
+ * // @log: '0x00000000000000001234567890abcdef'
+ * ```
+ *
+ * @example
+ * ### Trimming Hex
+ *
+ * Hex values can be trimmed of zeroes using {@link ox#Hex.(trimLeft:function)} or {@link ox#Hex.(trimRight:function)}:
+ *
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * const value = Hex.trimLeft('0x00000000000000001234567890abcdef')
+ * // @log: '0x1234567890abcdef'
+ * ```
+ *
  * @category Encoding
  */
 export * as Hex from './Hex.js'
@@ -959,6 +1332,33 @@ export * as Fee from './Fee.js'
 /**
  * Utility functions for working with JSON (with support for `bigint`).
  *
+ * @example
+ * ### Stringifying JSON
+ *
+ * JSON values can be stringified (with `bigint` support) using {@link ox#Json.(stringify:function)}:
+ *
+ * ```ts twoslash
+ * import { Json } from 'ox'
+ *
+ * const json = Json.stringify({
+ *   foo: 'bar',
+ *   baz: 69420694206942069420694206942069420694206942069420n,
+ * })
+ * // @log: '{"foo":"bar","baz":69420694206942069420694206942069420694206942069420}'
+ * ```
+ *
+ * @example
+ * ### Parsing JSON
+ *
+ * JSON values can be parsed (with `bigint` support) using {@link ox#Json.(parse:function)}:
+ *
+ * ```ts twoslash
+ * import { Json } from 'ox'
+ *
+ * const value = Json.parse('{"foo":"bar","baz":69420694206942069420694206942069420694206942069420}')
+ * // @log: { foo: 'bar', baz: 69420694206942069420694206942069420694206942069420n }
+ * ```
+ *
  * @category JSON
  */
 export * as Json from './Json.js'
@@ -968,7 +1368,7 @@ export * as Json from './Json.js'
  *
  * Mainly for [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
  *
- * @category Blobs
+ * @category Blobs (EIP-4844)
  */
 export * as Kzg from './Kzg.js'
 
@@ -1041,6 +1441,66 @@ export * as RpcResponse from './RpcResponse.js'
  * The `Secp256k1` module is a friendly wrapper over [`@noble/curves/secp256k1`](https://github.com/paulmillr/noble-curves), an **audited** implementation of [secp256k1](https://www.secg.org/sec2-v2.pdf)
  *
  * :::
+ *
+ * @example
+ * ### Computing a Random Private Key
+ *
+ * A random private key can be computed using {@link ox#Secp256k1.(randomPrivateKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * // @log: '0x...'
+ * ```
+ *
+ * @example
+ * ### Getting a Public Key
+ *
+ * A public key can be derived from a private key using {@link ox#Secp256k1.(getPublicKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ *
+ * const publicKey = Secp256k1.getPublicKey({ privateKey }) // [!code focus]
+ * // @log: { x: 3251...5152n, y: 1251...5152n }
+ * ```
+ *
+ * @example
+ * ### Signing a Payload
+ *
+ * A payload can be signed using {@link ox#Secp256k1.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ *
+ * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey }) // [!code focus]
+ * // @log: { r: 1251...5152n, s: 1251...5152n, yParity: 1 }
+ * ```
+ *
+ * @example
+ * ### Verifying a Signature
+ *
+ * A signature can be verified using {@link ox#Secp256k1.(verify:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const publicKey = Secp256k1.getPublicKey({ privateKey })
+ * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const isValid = Secp256k1.verify({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   publicKey, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * // @log: true
+ * ```
  *
  * @category Crypto
  */
