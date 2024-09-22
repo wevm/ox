@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { AbiEvent } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   const abiEvent = AbiEvent.from(

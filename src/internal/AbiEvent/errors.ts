@@ -1,10 +1,10 @@
 import type { AbiParameter } from 'abitype'
 import { AbiParameters_format } from '../AbiParameters/format.js'
 import { BaseError } from '../Errors/base.js'
+import { prettyPrint } from '../Errors/utils.js'
 import type { Hex } from '../Hex/types.js'
 import { AbiEvent_format } from './format.js'
 import type { AbiEvent } from './types.js'
-import { prettyPrint } from '../Errors/utils.js'
 
 export class AbiEvent_ArgsMismatchError extends BaseError {
   override readonly name = 'AbiEvent.ArgsMismatchError'
