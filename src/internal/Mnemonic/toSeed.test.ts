@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { Mnemonic } from 'ox'
+import { expect, test } from 'vitest'
 
 const mnemonic =
   'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
@@ -76,7 +76,9 @@ test('default', () => {
 })
 
 test('options: as', () => {
-  expect(Mnemonic.toSeed(mnemonic, { as: 'Hex' })).toMatchInlineSnapshot(`"0x08934519ed12353caf484f8a17e4c3ab676a5fc5fcb047ec1ff918f83ae58a2947c6814d95f92eb687d9c43a71ad8126bc7cc1e552f8adf96d78704050c710de"`)
+  expect(Mnemonic.toSeed(mnemonic, { as: 'Hex' })).toMatchInlineSnapshot(
+    `"0x08934519ed12353caf484f8a17e4c3ab676a5fc5fcb047ec1ff918f83ae58a2947c6814d95f92eb687d9c43a71ad8126bc7cc1e552f8adf96d78704050c710de"`,
+  )
 })
 
 test('options: passphrase', () => {

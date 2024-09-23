@@ -1,8 +1,8 @@
 import { mnemonicToSeedSync } from '@scure/bip39'
+import { Bytes_toHex } from '../Bytes/toHex.js'
+import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Bytes_toHex } from '../Bytes/toHex.js'
 
 /**
  * Converts a mnemonic to a master seed.
