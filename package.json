@@ -88,8 +88,7 @@
       "test/**",
       "vectors/**",
       "src/package.json",
-      "tsdoc.config.js",
-      "src/node/internal/paths/trustedSetups_cjs.ts"
+      "tsdoc.config.js"
     ],
     "ignoreBinaries": ["dev", "forge", "only-allow", "printf"],
     "ignoreDependencies": ["@size-limit/preset-big-lib"],

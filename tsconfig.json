@@ -8,7 +8,7 @@
     "paths": {
       "~test/*": ["./test/*"],
       "ox": ["src/index.ts"],
-      "ox/node": ["src/node/index.ts"],
+      "ox/trusted-setups": ["src/trusted-setups/index.ts"],
       "ox/window": ["src/window/index.ts"]
     }
   }

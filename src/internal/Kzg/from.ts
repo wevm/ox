@@ -9,9 +9,9 @@ import type { Kzg } from './types.js'
  * // @noErrors
  * import * as cKzg from 'c-kzg'
  * import { Kzg } from 'ox'
- * import { Path } from 'ox/node'
+ * import { Path } from 'ox/trusted-setups'
  *
- * cKzg.loadTrustedSetup(Path.mainnetTrustedSetup)
+ * cKzg.loadTrustedSetup(Path.mainnet)
  *
  * const kzg = Kzg.from(cKzg)
  * ```
