@@ -12,8 +12,8 @@ import type { GlobalErrorType } from '../Errors/error.js'
  * // @log: 'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
  * ```
  *
- * @param wordlist The wordlist to use.
- * @param options Generation options.
+ * @param wordlist - The wordlist to use.
+ * @param options - Generation options.
  * @returns The mnemonic.
  */
 export function Mnemonic_random(

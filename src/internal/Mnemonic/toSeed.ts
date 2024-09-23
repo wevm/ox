@@ -16,8 +16,8 @@ import type { Hex } from '../Hex/types.js'
  * // @log: Uint8Array [...64 bytes]
  * ```
  *
- * @param mnemonic The mnemonic to convert.
- * @param options Conversion options.
+ * @param mnemonic - The mnemonic to convert.
+ * @param options - Conversion options.
  * @returns The master seed.
  */
 export function Mnemonic_toSeed<as extends 'Bytes' | 'Hex' = 'Bytes'>(
