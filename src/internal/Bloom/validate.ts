@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_validate } from '../Hex/validate.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
+import { Hex_validate } from '../Hex/validate.js'
 
 /**
  * Checks if a string is a valid bloom filter value.

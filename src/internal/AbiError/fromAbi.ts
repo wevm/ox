@@ -3,8 +3,8 @@ import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_validate } from '../Hex/validate.js'
 import { Hex_slice } from '../Hex/slice.js'
+import { Hex_validate } from '../Hex/validate.js'
 import type { IsNarrowable, IsNever } from '../types.js'
 import {
   AbiError_solidityError,

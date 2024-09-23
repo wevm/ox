@@ -1,11 +1,11 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
+import { TypedData_assert } from './assert.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
 import { TypedData_hashStruct } from './hashStruct.js'
 import type { TypedData, TypedData_Definition } from './types.js'
-import { TypedData_assert } from './assert.js'
 
 /**
  * Encodes typed data in [EIP-712 format](https://eips.ethereum.org/EIPS/eip-712): `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`.

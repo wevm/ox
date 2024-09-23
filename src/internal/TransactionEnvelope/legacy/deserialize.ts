@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hex_validate } from '../../Hex/validate.js'
 import type { Hex } from '../../Hex/types.js'
+import { Hex_validate } from '../../Hex/validate.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_InvalidVError } from '../../Signature/errors.js'
 import { Signature_vToYParity } from '../../Signature/vToYParity.js'

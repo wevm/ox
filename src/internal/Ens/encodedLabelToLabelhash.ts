@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_validate } from '../Hex/validate.js'
 import type { Hex } from '../Hex/types.js'
+import { Hex_validate } from '../Hex/validate.js'
 
 /** @internal */
 export function Ens_encodedLabelToLabelhash(label: string): Hex | null {

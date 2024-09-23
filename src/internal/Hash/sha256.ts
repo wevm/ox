@@ -4,8 +4,8 @@ import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import { Hex_validate } from '../Hex/validate.js'
 import type { Hex } from '../Hex/types.js'
+import { Hex_validate } from '../Hex/validate.js'
 
 /**
  * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
