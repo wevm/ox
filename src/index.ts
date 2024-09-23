@@ -1432,6 +1432,38 @@ export * as Kzg from './Kzg.js'
 export * as Log from './Log.js'
 
 /**
+ * Utility functions for generating and validating [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics.
+ *
+ * @example
+ * ### Generating a Random Mnemonic
+ *
+ * Random mnemonics can be generated using {@link ox#Mnemonic.(random:function)}:
+ *
+ * ```ts twoslash
+ * import { Mnemonic } from 'ox'
+ *
+ * const mnemonic = Mnemonic.random(Mnemonic.english)
+ * // @log: 'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+ * ```
+ *
+ * @example
+ * ### Converting to Seed
+ *
+ * Mnemonics can be converted to a master seed using {@link ox#Mnemonic.(toSeed:function)}:
+ *
+ * ```ts twoslash
+ * import { Mnemonic } from 'ox'
+ *
+ * const mnemonic = 'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+ * const seed = Mnemonic.toSeed(mnemonic)
+ * // @log: Uint8Array [...64 bytes]
+ * ```
+ *
+ * @category Crypto
+ */
+export * as Mnemonic from './Mnemonic.js'
+
+/**
  * Utilities & types for working with [EIP-191 Personal Messages](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e)
  *
  * @example

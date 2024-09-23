@@ -34,6 +34,7 @@ test('exports', () => {
       "Json",
       "Kzg",
       "Log",
+      "Mnemonic",
       "PersonalMessage",
       "Provider",
       "PublicKey",
