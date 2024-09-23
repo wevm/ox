@@ -6,6 +6,7 @@ test('exports', () => {
     [
       "random",
       "toSeed",
+      "validate",
       "czech",
       "english",
       "french",

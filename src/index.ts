@@ -1432,7 +1432,7 @@ export * as Kzg from './Kzg.js'
 export * as Log from './Log.js'
 
 /**
- * Utility functions for generating and validating [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics.
+ * Utility functions for generating and working with [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics.
  *
  * @example
  * ### Generating a Random Mnemonic

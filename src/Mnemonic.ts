@@ -4,6 +4,8 @@ export { Mnemonic_random as random } from './internal/Mnemonic/random.js'
 
 export { Mnemonic_toSeed as toSeed } from './internal/Mnemonic/toSeed.js'
 
+export { Mnemonic_validate as validate } from './internal/Mnemonic/validate.js'
+
 export {
   Mnemonic_czech as czech,
   Mnemonic_english as english,
