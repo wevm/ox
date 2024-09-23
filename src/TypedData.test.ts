@@ -7,6 +7,7 @@ test('exports', () => {
     [
       "BytesSizeMismatchError",
       "InvalidPrimaryTypeError",
+      "assert",
       "domainSeparator",
       "encodeType",
       "extractEip712DomainTypes",

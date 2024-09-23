@@ -3,7 +3,7 @@ import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_isHex } from '../Hex/isHex.js'
+import { Hex_validate } from '../Hex/validate.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { IsNarrowable, IsNever } from '../types.js'
 import {
@@ -94,7 +94,7 @@ export function AbiError_fromAbi<
 
   if (name === 'Error') return AbiError_solidityError as never
   if (name === 'Panic') return AbiError_solidityPanic as never
-  if (Hex_isHex(name, { strict: false })) {
+  if (Hex_validate(name, { strict: false })) {
     const selector = Hex_slice(name, 0, 4)
     if (selector === AbiError_solidityErrorSelector)
       return AbiError_solidityError as never

@@ -8,7 +8,7 @@ import type { Address } from './types.js'
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+ * Address.validate('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
  * // @log: true
  * ```
  *
@@ -16,7 +16,7 @@ import type { Address } from './types.js'
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * Address.isAddress('0xdeadbeef')
+ * Address.validate('0xdeadbeef')
  * // @log: false
  * ```
  *
@@ -24,9 +24,9 @@ import type { Address } from './types.js'
  * @param options - Check options.
  * @returns Whether the address is a valid address.
  */
-export function Address_isAddress(
+export function Address_validate(
   address: string,
-  options: Address_isAddress.Options = {},
+  options: Address_validate.Options = {},
 ): address is Address {
   const { strict = true } = options ?? {}
   try {
@@ -37,7 +37,7 @@ export function Address_isAddress(
   }
 }
 
-export declare namespace Address_isAddress {
+export declare namespace Address_validate {
   interface Options {
     /**
      * Enables strict mode. Whether or not to compare the address against its checksum.

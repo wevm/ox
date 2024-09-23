@@ -1,5 +1,5 @@
 import { Address_assert } from '../Address/assert.js'
-import { Hash_isHash } from '../Hash/isHash.js'
+import { Hash_validate } from '../Hash/validate.js'
 import { Hex_trimLeft } from '../Hex/trim.js'
 import type { Hex } from '../Hex/types.js'
 import type { Mutable } from '../types.js'
@@ -18,7 +18,7 @@ export function AccessList_fromTupleList(
     accessList.push({
       address: address,
       storageKeys: storageKeys.map((key) =>
-        Hash_isHash(key) ? key : Hex_trimLeft(key),
+        Hash_validate(key) ? key : Hex_trimLeft(key),
       ),
     })
   }

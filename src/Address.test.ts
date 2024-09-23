@@ -9,10 +9,10 @@ test('exports', () => {
       "InvalidInputError",
       "assert",
       "checksum",
-      "isAddress",
       "from",
       "fromPublicKey",
       "isEqual",
+      "validate",
     ]
   `)
 })

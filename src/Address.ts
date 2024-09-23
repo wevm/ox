@@ -10,10 +10,10 @@ export { Address_assert as assert } from './internal/Address/assert.js'
 
 export { Address_checksum as checksum } from './internal/Address/checksum.js'
 
-export { Address_isAddress as isAddress } from './internal/Address/isAddress.js'
-
 export { Address_from as from } from './internal/Address/from.js'
 
 export { Address_fromPublicKey as fromPublicKey } from './internal/Address/fromPublicKey.js'
 
 export { Address_isEqual as isEqual } from './internal/Address/isEqual.js'
+
+export { Address_validate as validate } from './internal/Address/validate.js'

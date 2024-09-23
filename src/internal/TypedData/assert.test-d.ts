@@ -22,7 +22,7 @@ const domain = {
 } as const
 
 test('type errors', () => {
-  TypedData.validate({
+  TypedData.assert({
     // @ts-expect-error address is missing
     domain: {
       ...domain,

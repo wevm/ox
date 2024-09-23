@@ -1,7 +1,7 @@
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../../Blobs/toSidecars.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hex_isHex } from '../../Hex/isHex.js'
+import { Hex_validate } from '../../Hex/validate.js'
 import { Hex_slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
@@ -99,16 +99,16 @@ export function TransactionEnvelopeEip4844_deserialize(
     chainId: Number(chainId),
     type: 'eip4844',
   } as TransactionEnvelopeEip4844
-  if (Hex_isHex(to) && to !== '0x') transaction.to = to
-  if (Hex_isHex(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex_isHex(data) && data !== '0x') transaction.data = data
-  if (Hex_isHex(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
-  if (Hex_isHex(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex_isHex(maxFeePerBlobGas) && maxFeePerBlobGas !== '0x')
+  if (Hex_validate(to) && to !== '0x') transaction.to = to
+  if (Hex_validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
+  if (Hex_validate(data) && data !== '0x') transaction.data = data
+  if (Hex_validate(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
+  if (Hex_validate(value) && value !== '0x') transaction.value = BigInt(value)
+  if (Hex_validate(maxFeePerBlobGas) && maxFeePerBlobGas !== '0x')
     transaction.maxFeePerBlobGas = BigInt(maxFeePerBlobGas)
-  if (Hex_isHex(maxFeePerGas) && maxFeePerGas !== '0x')
+  if (Hex_validate(maxFeePerGas) && maxFeePerGas !== '0x')
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex_isHex(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
+  if (Hex_validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList?.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList_fromTupleList(accessList as any)

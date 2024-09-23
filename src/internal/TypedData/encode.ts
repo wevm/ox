@@ -5,7 +5,7 @@ import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.j
 import { TypedData_hashDomain } from './hashDomain.js'
 import { TypedData_hashStruct } from './hashStruct.js'
 import type { TypedData, TypedData_Definition } from './types.js'
-import { TypedData_validate } from './validate.js'
+import { TypedData_assert } from './assert.js'
 
 /**
  * Encodes typed data in [EIP-712 format](https://eips.ethereum.org/EIPS/eip-712): `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`.
@@ -67,7 +67,7 @@ export function TypedData_encode<
 
   // Need to do a runtime validation check on addresses, byte ranges, integer ranges, etc
   // as we can't statically check this with TypeScript.
-  TypedData_validate({
+  TypedData_assert({
     domain,
     message,
     primaryType,
@@ -105,7 +105,7 @@ export declare namespace TypedData_encode {
     | TypedData_extractEip712DomainTypes.ErrorType
     | TypedData_hashDomain.ErrorType
     | TypedData_hashStruct.ErrorType
-    | TypedData_validate.ErrorType
+    | TypedData_assert.ErrorType
     | GlobalErrorType
 }
 

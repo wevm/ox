@@ -1,7 +1,7 @@
-import { Bytes_isBytes } from '../Bytes/isBytes.js'
+import { Bytes_validate } from '../Bytes/validate.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_isHex } from '../Hex/isHex.js'
+import { Hex_validate } from '../Hex/validate.js'
 import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
 import { PublicKey_assert } from './assert.js'
@@ -62,8 +62,8 @@ export function PublicKey_from<
   value: PublicKey_from.Value<publicKey>,
 ): PublicKey_from.ReturnType<publicKey> {
   const publicKey = (() => {
-    if (Hex_isHex(value)) return PublicKey_deserialize(value)
-    if (Bytes_isBytes(value)) return PublicKey_deserialize(value)
+    if (Hex_validate(value)) return PublicKey_deserialize(value)
+    if (Bytes_validate(value)) return PublicKey_deserialize(value)
 
     const { prefix, x, y } = value
     if (typeof x === 'bigint' && typeof y === 'bigint')

@@ -24,8 +24,6 @@ export { Bytes_fromNumber as fromNumber } from './internal/Bytes/fromNumber.js'
 
 export { Bytes_fromString as fromString } from './internal/Bytes/fromString.js'
 
-export { Bytes_isBytes as isBytes } from './internal/Bytes/isBytes.js'
-
 export { Bytes_isEqual as isEqual } from './internal/Bytes/isEqual.js'
 
 export {
@@ -53,3 +51,5 @@ export { Bytes_toHex as toHex } from './internal/Bytes/toHex.js'
 export { Bytes_toNumber as toNumber } from './internal/Bytes/toNumber.js'
 
 export { Bytes_toString as toString } from './internal/Bytes/toString.js'
+
+export { Bytes_validate as validate } from './internal/Bytes/validate.js'

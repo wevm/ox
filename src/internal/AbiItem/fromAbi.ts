@@ -1,9 +1,9 @@
 import type { Abi } from '../Abi/types.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
-import { Address_isAddress } from '../Address/isAddress.js'
+import { Address_validate } from '../Address/validate.js'
 import type { Address } from '../Address/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_isHex } from '../Hex/isHex.js'
+import { Hex_validate } from '../Hex/validate.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import type { UnionCompute } from '../types.js'
@@ -97,7 +97,7 @@ export function AbiItem_fromAbi<
     prepare = true,
   } = options as unknown as AbiItem_fromAbi.Options
 
-  const isSelector = Hex_isHex(name, { strict: false })
+  const isSelector = Hex_validate(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
     if (isSelector) {
       if (abiItem.type === 'function' || abiItem.type === 'error')
@@ -257,7 +257,7 @@ export function isArgOfType(
   const abiParameterType = abiParameter.type
   switch (abiParameterType) {
     case 'address':
-      return Address_isAddress(arg as Address, { strict: false })
+      return Address_validate(arg as Address, { strict: false })
     case 'bool':
       return argType === 'boolean'
     case 'function':
@@ -336,11 +336,11 @@ export function getAmbiguousTypes(
     const ambiguous = (() => {
       if (types.includes('address') && types.includes('bytes20')) return true
       if (types.includes('address') && types.includes('string'))
-        return Address_isAddress(args[parameterIndex] as Address, {
+        return Address_validate(args[parameterIndex] as Address, {
           strict: false,
         })
       if (types.includes('address') && types.includes('bytes'))
-        return Address_isAddress(args[parameterIndex] as Address, {
+        return Address_validate(args[parameterIndex] as Address, {
           strict: false,
         })
       return false

@@ -14,8 +14,6 @@ export { Hex_assert as assert } from './internal/Hex/assert.js'
 
 export { Hex_concat as concat } from './internal/Hex/concat.js'
 
-export { Hex_isHex as isHex } from './internal/Hex/isHex.js'
-
 export { Hex_isEqual as isEqual } from './internal/Hex/isEqual.js'
 
 export { Hex_padLeft as padLeft } from './internal/Hex/pad.js'
@@ -51,3 +49,5 @@ export { Hex_toBytes as toBytes } from './internal/Hex/toBytes.js'
 export { Hex_toNumber as toNumber } from './internal/Hex/toNumber.js'
 
 export { Hex_toString as toString } from './internal/Hex/toString.js'
+
+export { Hex_validate as validate } from './internal/Hex/validate.js'

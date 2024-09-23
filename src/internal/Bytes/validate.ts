@@ -9,17 +9,17 @@ import type { Bytes } from './types.js'
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * Bytes.isBytes('0x')
+ * Bytes.validate('0x')
  * // @log: false
  *
- * Bytes.isBytes(Bytes.from([1, 2, 3]))
+ * Bytes.validate(Bytes.from([1, 2, 3]))
  * // @log: true
  * ```
  *
  * @param value - Value to check.
  * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
-export function Bytes_isBytes(value: unknown): value is Bytes {
+export function Bytes_validate(value: unknown): value is Bytes {
   try {
     Bytes_assert(value)
     return true
@@ -28,9 +28,10 @@ export function Bytes_isBytes(value: unknown): value is Bytes {
   }
 }
 
-export declare namespace Bytes_isBytes {
+export declare namespace Bytes_validate {
   export type ErrorType = GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_isBytes.parseError = (error: unknown) => error as Bytes_isBytes.ErrorType
+Bytes_validate.parseError = (error: unknown) =>
+  error as Bytes_validate.ErrorType

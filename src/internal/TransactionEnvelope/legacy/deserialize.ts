@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hex_isHex } from '../../Hex/isHex.js'
+import { Hex_validate } from '../../Hex/validate.js'
 import type { Hex } from '../../Hex/types.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_InvalidVError } from '../../Signature/errors.js'
@@ -62,18 +62,18 @@ export function TransactionEnvelopeLegacy_deserialize(
   const transaction = {
     type: 'legacy',
   } as TransactionEnvelopeLegacy
-  if (Hex_isHex(to) && to !== '0x') transaction.to = to
-  if (Hex_isHex(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex_isHex(data) && data !== '0x') transaction.data = data
-  if (Hex_isHex(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
-  if (Hex_isHex(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex_isHex(gasPrice) && gasPrice !== '0x')
+  if (Hex_validate(to) && to !== '0x') transaction.to = to
+  if (Hex_validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
+  if (Hex_validate(data) && data !== '0x') transaction.data = data
+  if (Hex_validate(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
+  if (Hex_validate(value) && value !== '0x') transaction.value = BigInt(value)
+  if (Hex_validate(gasPrice) && gasPrice !== '0x')
     transaction.gasPrice = BigInt(gasPrice)
 
   if (tuple.length === 6) return transaction
 
   const chainIdOrV =
-    Hex_isHex(chainIdOrV_) && chainIdOrV_ !== '0x'
+    Hex_validate(chainIdOrV_) && chainIdOrV_ !== '0x'
       ? Number(chainIdOrV_ as Hex)
       : 0
 

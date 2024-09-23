@@ -17,7 +17,6 @@ test('exports', () => {
       "fromHex",
       "fromNumber",
       "fromString",
-      "isBytes",
       "isEqual",
       "padLeft",
       "padRight",
@@ -31,6 +30,7 @@ test('exports', () => {
       "toHex",
       "toNumber",
       "toString",
+      "validate",
     ]
   `)
 })

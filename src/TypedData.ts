@@ -12,6 +12,8 @@ export {
   TypedData_InvalidPrimaryTypeError as InvalidPrimaryTypeError,
 } from './internal/TypedData/errors.js'
 
+export { TypedData_assert as assert } from './internal/TypedData/assert.js'
+
 export { TypedData_domainSeparator as domainSeparator } from './internal/TypedData/domainSeparator.js'
 
 export { TypedData_encodeType as encodeType } from './internal/TypedData/encodeType.js'

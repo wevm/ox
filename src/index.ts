@@ -679,12 +679,12 @@ export * as AccountProof from './AccountProof.js'
  * @example
  * ### Validating Addresses
  *
- * The {@link ox#Address.(isAddress:function)} function will return `true` if the address is valid, and `false` otherwise:
+ * The {@link ox#Address.(validate:function)} function will return `true` if the address is valid, and `false` otherwise:
  *
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * const valid = Address.isAddress('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+ * const valid = Address.validate('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
  * // @log: true
  * ```
  *

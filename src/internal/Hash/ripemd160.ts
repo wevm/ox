@@ -4,7 +4,7 @@ import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import { Hex_isHex } from '../Hex/isHex.js'
+import { Hex_validate } from '../Hex/validate.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
@@ -30,7 +30,7 @@ export function Hash_ripemd160<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): Hash_ripemd160.ReturnType<as> {
   const { as = 'Hex' } = options
   const bytes = ripemd160(
-    Hex_isHex(value, { strict: false }) ? Bytes_fromHex(value) : value,
+    Hex_validate(value, { strict: false }) ? Bytes_fromHex(value) : value,
   )
   if (as === 'Bytes') return bytes as never
   return Hex_fromBytes(bytes) as never
@@ -48,7 +48,7 @@ export declare namespace Hash_ripemd160 {
 
   type ErrorType =
     | Bytes_fromHex.ErrorType
-    | Hex_isHex.ErrorType
+    | Hex_validate.ErrorType
     | Hex_fromBytes.ErrorType
     | GlobalErrorType
 }
