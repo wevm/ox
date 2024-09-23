@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as cKzg from 'c-kzg'
 import { Hex, Kzg } from 'ox'
-import { Path } from 'ox/trusted-setups'
+import { Paths } from 'ox/trusted-setups'
 import { describe, expect, test } from 'vitest'
 
 const blobToKzgCommitmentCases = JSON.parse(
@@ -23,7 +23,7 @@ let kzg: Kzg.Kzg
 test('defineKzg', () => {
   kzg = Kzg.from(cKzg)
   try {
-    cKzg.loadTrustedSetup(Path.mainnet)
+    cKzg.loadTrustedSetup(Paths.mainnet)
   } catch {}
 
   expect(kzg).toMatchInlineSnapshot(`

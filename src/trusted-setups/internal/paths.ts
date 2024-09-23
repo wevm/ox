@@ -1,8 +1,7 @@
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const Path_mainnet = path('mainnet')
-export const Path_minimal = path('minimal')
+export const Paths_mainnet = path('mainnet')
 
 function path(name: string) {
   const __filename = fileURLToPath(

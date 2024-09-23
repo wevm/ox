@@ -4163,6 +4163,7 @@ const g2 = `024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac
 12838a761053437883c3e01ba616670cea843754548ef84bcc397de2369adcca2ab54cd73c55dc68d87aec3fc2fe4f10,12dcc5a1c8c3e1b28b1524e3dd6dbecd63017c9201da9dbe077f1b82adc08c50169f56fc7b5a3b28ec6b89254de3e2fd 01ae6000d8e795efa3e96b939df6861db9f6bcff35b4694605ad5fdaf950fec9ae3e9c7e28da965024ed859c18db9c73,056e7a04ea62222711a986e4f4f38ba4909ea2f4cb8abe56fec9fe9bcfadbcea5fb660bc4b1032ed359261d74d2ba725`
 
 export const setup = {
-  g1_lagrange: g1.split('\n').map((l) => '0x' + l),
-  g2_monomial: g2.split('\n').map((l) => '0x' + l),
-}
+  encoding: 'fast_v1',
+  g1_lagrange: g1.split('\n'),
+  g2_monomial: g2.split('\n'),
+} as const

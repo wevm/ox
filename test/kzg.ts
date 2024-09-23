@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as cKzg from 'c-kzg'
 import { Kzg } from 'ox'
-import { Path } from 'ox/trusted-setups'
+import { Paths } from 'ox/trusted-setups'
 
-cKzg.loadTrustedSetup(Path.mainnet)
+cKzg.loadTrustedSetup(Paths.mainnet)
 
 export const kzg = Kzg.from(cKzg)
 
