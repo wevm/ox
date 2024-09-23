@@ -16,7 +16,7 @@ test('default', () => {
       ),
       salt: Hex_fromString('hello world'),
     }),
-  ).toMatchInlineSnapshot('"0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB"')
+  ).toMatchInlineSnapshot(`"0x59fbb593abe27cb193b6ee5c5dc7bbde312290ab"`)
 
   expect(
     ContractAddress_getCreate2Address({
@@ -35,7 +35,7 @@ test('default', () => {
         ),
       ),
     }),
-  ).toMatchInlineSnapshot('"0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640"')
+  ).toMatchInlineSnapshot(`"0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"`)
 
   expect(
     ContractAddress_getCreate2Address({
@@ -53,5 +53,5 @@ test('default', () => {
         ),
       ),
     }),
-  ).toMatchInlineSnapshot('"0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640"')
+  ).toMatchInlineSnapshot(`"0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"`)
 })

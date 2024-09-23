@@ -43,7 +43,7 @@ export function Address_from(
   address: string,
   options: Address_from.Options = {},
 ): Address {
-  const { checksum = true } = options
+  const { checksum = false } = options
   Address_assert(address)
   if (checksum) return Address_checksum(address)
   return address as Address
@@ -54,7 +54,7 @@ export declare namespace Address_from {
     /**
      * Whether to checksum the address.
      *
-     * @default true
+     * @default false
      */
     checksum?: boolean | undefined
   }

@@ -1,6 +1,10 @@
-// TODO: `toHdKey`
+export { HdKey_path as path } from './internal/HdKey/path.js'
 
 export { Mnemonic_random as random } from './internal/Mnemonic/random.js'
+
+export { Mnemonic_toHdKey as toHdKey } from './internal/Mnemonic/toHdKey.js'
+
+export { Mnemonic_toPrivateKey as toPrivateKey } from './internal/Mnemonic/toPrivateKey.js'
 
 export { Mnemonic_toSeed as toSeed } from './internal/Mnemonic/toSeed.js'
 

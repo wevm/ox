@@ -1208,6 +1208,20 @@ export * as Filter from './Filter.js'
 export * as Hash from './Hash.js'
 
 /**
+ * Utility functions for generating and working with [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD Wallets.
+ *
+ * :::info
+ *
+ * The `HdKey` module is a friendly wrapper over [`@scure/bip32`](https://github.com/paulmillr/scure-bip32), an **audited** implementation of [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD Wallets.
+ *
+ * :::
+ *
+ *
+ * @category Crypto
+ */
+export * as HdKey from './HdKey.js'
+
+/**
  * A set of Ethereum-related utility functions for working with hexadecimal string values (e.g. `"0xdeadbeef"`).
  *
  * @example
@@ -1434,6 +1448,12 @@ export * as Log from './Log.js'
 /**
  * Utility functions for generating and working with [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics.
  *
+ * :::info
+ *
+ * The `Mnemonic` module is a friendly wrapper over [`@scure/bip39`](https://github.com/paulmillr/scure-bip39), an **audited** implementation of [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
+ *
+ * :::
+ *
  * @example
  * ### Generating a Random Mnemonic
  *
@@ -1444,6 +1464,29 @@ export * as Log from './Log.js'
  *
  * const mnemonic = Mnemonic.random(Mnemonic.english)
  * // @log: 'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+ * ```
+ *
+ * @example
+ * ### Converting to Private Key
+ *
+ * Mnemonics can be converted to a private key using {@link ox#Mnemonic.(toPrivateKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Mnemonic } from 'ox'
+ *
+ * const privateKey = Mnemonic.toPrivateKey('buyer zoo end danger ice capable shrug naive twist relief mass bonus')
+ * // @log: '0x...'
+ * ```
+ *
+ * @example
+ * ### Converting to HD Key
+ *
+ * Mnemonics can be converted to a HD Key using {@link ox#Mnemonic.(toHdKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Mnemonic } from 'ox'
+ *
+ * const hdKey = Mnemonic.toHdKey('buyer zoo end danger ice capable shrug naive twist relief mass bonus')
  * ```
  *
  * @example

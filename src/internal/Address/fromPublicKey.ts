@@ -35,7 +35,7 @@ export declare namespace Address_fromPublicKey {
     /**
      * Whether to checksum the address.
      *
-     * @default true
+     * @default false
      */
     checksum?: boolean | undefined
   }

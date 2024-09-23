@@ -28,6 +28,7 @@ test('exports', () => {
       "Errors",
       "Filter",
       "Hash",
+      "HdKey",
       "Hex",
       "Internal",
       "Fee",

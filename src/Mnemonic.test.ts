@@ -4,7 +4,10 @@ import * as exports from './Mnemonic.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "path",
       "random",
+      "toHdKey",
+      "toPrivateKey",
       "toSeed",
       "validate",
       "czech",

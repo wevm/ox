@@ -5,7 +5,7 @@ test('default', () => {
   const address = Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
   expectTypeOf(address).toEqualTypeOf<Address.Address>()
   expect(address).toMatchInlineSnapshot(
-    `"0xA0Cf798816D4b9b9866b5330EEa46a18382f251e"`,
+    `"0xa0cf798816d4b9b9866b5330eea46a18382f251e"`,
   )
 })
 
