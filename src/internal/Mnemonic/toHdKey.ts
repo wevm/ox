@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Mnemonic_toSeed } from './toSeed.js'
 import { HdKey_fromSeed } from '../HdKey/fromSeed.js'
 import type { HdKey } from '../HdKey/types.js'
+import { Mnemonic_toSeed } from './toSeed.js'
 
 /**
  * Converts a mnemonic to a HD Key.

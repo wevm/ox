@@ -1,11 +1,11 @@
 import { HDKey, type Versions } from '@scure/bip32'
 
-import type { GlobalErrorType } from '../Errors/error.js'
-import type { HdKey } from './types.js'
-import type { Hex } from '../Hex/types.js'
-import type { Bytes } from '../Bytes/types.js'
 import { Bytes_from } from '../Bytes/from.js'
+import type { Bytes } from '../Bytes/types.js'
+import type { GlobalErrorType } from '../Errors/error.js'
+import type { Hex } from '../Hex/types.js'
 import { HdKey_fromScure } from './fromScure.js'
+import type { HdKey } from './types.js'
 
 /**
  * Creates a HD Key from a master seed.

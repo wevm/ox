@@ -1,8 +1,8 @@
 import { HDKey } from '@scure/bip32'
 
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { HdKey } from './types.js'
 import { HdKey_fromScure } from './fromScure.js'
+import type { HdKey } from './types.js'
 
 /**
  * Creates a HD Key from an extended private key.

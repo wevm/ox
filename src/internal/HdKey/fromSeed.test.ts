@@ -1,5 +1,5 @@
+import { Address, HdKey, Mnemonic } from 'ox'
 import { expect, test } from 'vitest'
-import { HdKey, Mnemonic, Address } from 'ox'
 import { accounts } from '../../../test/constants/accounts.js'
 
 const seed = Mnemonic.toSeed(

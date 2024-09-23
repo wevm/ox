@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { HdKey } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   const path = HdKey.path()
