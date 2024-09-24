@@ -1,4 +1,4 @@
-import type { HDKey, Versions } from '@scure/bip32'
+import type { Versions } from '@scure/bip32'
 import type { Hex } from '../Hex/types.js'
 import type { PublicKey } from '../PublicKey/types.js'
 
