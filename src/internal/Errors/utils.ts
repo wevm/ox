@@ -1,6 +1,11 @@
 import { version } from '../../version.js'
 
 /** @internal */
+export function getUrl(url: string) {
+  return url
+}
+
+/** @internal */
 export function getVersion() {
   return version
 }

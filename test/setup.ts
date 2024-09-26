@@ -6,6 +6,7 @@ beforeAll(() => {
   vi.mock('../src/internal/Errors/utils.ts', async () => ({
     ...(await vi.importActual('../src/internal/Errors/utils.ts')),
     getVersion: vi.fn().mockReturnValue('x.y.z'),
+    getUrl: vi.fn().mockReturnValue('https://oxlib.sh/rpc'),
   }))
 })
 

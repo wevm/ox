@@ -223,3 +223,9 @@ export type {
 export { Rlp_to } from './internal/Rlp/to.js'
 
 export { Base58_from } from './internal/Base58/from.js'
+
+export { HdKey_fromScure } from './internal/HdKey/fromScure.js'
+
+export { Promise_TimeoutError } from './internal/Promise/errors.js'
+
+export { Promise_withTimeout } from './internal/Promise/withTimeout.js'

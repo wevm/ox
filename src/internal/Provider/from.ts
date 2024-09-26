@@ -7,10 +7,23 @@ import type { Provider } from './types.js'
  * from an arbitrary [EIP-1193 Provider](https://eips.ethereum.org/EIPS/eip-1193) interface.
  *
  * @example
- * ### Instantiating with Existing Providers
+ * ### Instantiating with RPC Transport
+ *
+ * The example below demonstrates how we can instantiate a typed HTTP EIP-1193 Provider from an
+ * RPC Transport such as {@link ox#RpcTransport.(fromHttp:function)}.
+ *
+ * ```ts twoslash
+ * import { Provider, RpcTransport } from 'ox'
+ *
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const provider = Provider.from(transport)
+ * ```
+ *
+ * @example
+ * ### Instantiating with External Providers
  *
  * The example below demonstrates how we can instantiate a typed EIP-1193 Provider from an
- * existing EIP-1193 Provider like `window.ethereum`.
+ * external EIP-1193 Provider like `window.ethereum`.
  *
  * ```ts twoslash
  * import 'ox/window'

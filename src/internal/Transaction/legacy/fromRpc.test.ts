@@ -7,7 +7,6 @@ import {
 import { expect, test } from 'vitest'
 import { anvilMainnet } from '../../../../test/anvil.js'
 import { accounts } from '../../../../test/constants/accounts.js'
-import { request } from '../../../../test/request.js'
 
 test('default', () => {
   expect(
@@ -147,10 +146,12 @@ test('behavior: pending', () => {
 })
 
 test('behavior: network', async () => {
-  const transaction = await request(process.env.VITE_ANVIL_FORK_URL!, {
-    method: 'eth_getTransactionByBlockNumberAndIndex',
-    params: ['0x10f2dd', '0x0'],
-  }).then(Transaction.fromRpc)
+  const transaction = await anvilMainnet
+    .request({
+      method: 'eth_getTransactionByBlockNumberAndIndex',
+      params: ['0x10f2dd', '0x0'],
+    })
+    .then(Transaction.fromRpc)
   expect(transaction).toMatchInlineSnapshot(`
     {
       "blockHash": "0x8299a290ae51a8958965987e2caf178a09b8ecde01b737b5f9a8badbacb407cb",
@@ -176,10 +177,12 @@ test('behavior: network', async () => {
 })
 
 test('behavior: tx replay', async () => {
-  const transaction_rpc = await request(process.env.VITE_ANVIL_FORK_URL!, {
-    method: 'eth_getTransactionByBlockNumberAndIndex',
-    params: ['0x10f2dd', '0x0'],
-  }).then(Transaction.fromRpc)
+  const transaction_rpc = await anvilMainnet
+    .request({
+      method: 'eth_getTransactionByBlockNumberAndIndex',
+      params: ['0x10f2dd', '0x0'],
+    })
+    .then(Transaction.fromRpc)
 
   const envelope = TransactionEnvelope.from({
     ...transaction_rpc!,

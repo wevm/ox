@@ -1,7 +1,6 @@
-import type { RpcRequest } from 'ox'
+import { RpcTransport, type RpcRequest } from 'ox'
 import { createServer } from 'prool'
 import { type AnvilParameters, anvil } from 'prool/instances'
-import { request } from './request.js'
 
 export const anvilMainnet = defineAnvil({
   forkUrl: getEnv('VITE_ANVIL_FORK_URL', 'https://1.rpc.thirdweb.com'),
@@ -34,12 +33,14 @@ function defineAnvil(parameters: AnvilParameters) {
     hardfork: 'Prague',
   } as const
 
+  const transport = RpcTransport.fromHttp(rpcUrl)
+
   return {
     config,
     async request<methodName extends RpcRequest.MethodNameGeneric>(
       method: RpcRequest.ExtractMethodParameters<methodName>,
     ) {
-      return await request(rpcUrl, method)
+      return await transport.request(method)
     },
     async restart() {
       await fetch(`${rpcUrl}/restart`)

@@ -1530,9 +1530,9 @@ export * as PersonalMessage from './PersonalMessage.js'
  * Utilities & types for working with [EIP-1193 Providers](https://eips.ethereum.org/EIPS/eip-1193)
  *
  * @example
- * ### Instantiating with Existing Providers
+ * ### Instantiating External Providers
  *
- * EIP-1193 Providers can be instantiated with {@link ox#Provider.(from:function)}:
+ * External EIP-1193 Providers can be instantiated with {@link ox#Provider.(from:function)}:
  *
  * ```ts twoslash
  * import 'ox/window'
@@ -1541,6 +1541,18 @@ export * as PersonalMessage from './PersonalMessage.js'
  * const provider = Provider.from(window.ethereum)
  *
  * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * ```
+ *
+ * @example
+ * ### Instantiating with an RPC Transport
+ *
+ * HTTP EIP-1193 Providers can be instantiated with {@link ox#Provider.(from:function)} and {@link ox#RpcTransport.(fromHttp:function)}:
+ *
+ * ```ts twoslash
+ * import { Provider, RpcTransport } from 'ox'
+ *
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const provider = Provider.from(transport)
  * ```
  *
  * @example
@@ -1726,6 +1738,25 @@ export * as RpcRequest from './RpcRequest.js'
  * @category JSON-RPC
  */
 export * as RpcResponse from './RpcResponse.js'
+
+/**
+ * Utility functions for working with JSON-RPC Transports.
+ *
+ * @example
+ * ### HTTP Instantiation
+ *
+ * ```ts twoslash
+ * import { RpcTransport } from 'ox'
+ *
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ *
+ * const blockNumber = await transport.request({ method: 'eth_blockNumber' })
+ * // @log: '0x1a2b3c'
+ * ```
+ *
+ * @category JSON-RPC
+ */
+export * as RpcTransport from './RpcTransport.js'
 
 /**
  * Utility functions for [secp256k1](https://www.secg.org/sec2-v2.pdf) ECDSA cryptography.
