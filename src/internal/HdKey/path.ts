@@ -3,6 +3,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 /**
  * Creates an Ethereum-based BIP-44 HD path.
  *
+ * @example
  * ```ts twoslash
  * import { HdKey } from 'ox'
  *
