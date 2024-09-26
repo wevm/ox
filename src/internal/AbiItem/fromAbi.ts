@@ -33,7 +33,7 @@ import type {
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiItem.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
+ * const item = AbiItem.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
  *
  *
@@ -56,7 +56,7 @@ import type {
  *   'event Transfer(address owner, address to, uint256 tokenId)',
  *   'function bar(string a) returns (uint256 x)',
  * ])
- * const item = AbiItem.fromAbi(abi, { name: '0x095ea7b3' }) // [!code focus]
+ * const item = AbiItem.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
  *
  *
@@ -80,6 +80,8 @@ import type {
  *
  * :::
  *
+ * @param abi - The ABI to extract from.
+ * @param name - The name (or selector) of the ABI item to extract.
  * @param options - Extraction options.
  * @returns The ABI item.
  */
@@ -87,15 +89,15 @@ export function AbiItem_fromAbi<
   const abi extends Abi | readonly unknown[],
   name extends AbiItem_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
+  //
+  allNames = AbiItem_Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
-  options: AbiItem_fromAbi.Options<abi, name, args>,
+  name: Hex | (name extends allNames ? name : never),
+  options?: AbiItem_fromAbi.Options<abi, name, args>,
 ): AbiItem_fromAbi.ReturnType<abi, name, args> {
-  const {
-    args = [],
-    name,
-    prepare = true,
-  } = options as unknown as AbiItem_fromAbi.Options
+  const { args = [], prepare = true } = (options ??
+    {}) as unknown as AbiItem_fromAbi.Options
 
   const isSelector = Hex_validate(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
@@ -109,7 +111,8 @@ export function AbiItem_fromAbi<
     return 'name' in abiItem && abiItem.name === name
   })
 
-  if (abiItems.length === 0) throw new AbiItem_NotFoundError(options)
+  if (abiItems.length === 0)
+    throw new AbiItem_NotFoundError({ name: name as string })
   if (abiItems.length === 1)
     return {
       ...abiItems[0],
@@ -170,7 +173,7 @@ export function AbiItem_fromAbi<
     return { ...abiItem!, overloads }
   })()
 
-  if (!abiItem) throw new AbiItem_NotFoundError(options)
+  if (!abiItem) throw new AbiItem_NotFoundError({ name: name as string })
   return {
     ...abiItem,
     ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),
@@ -186,14 +189,7 @@ export declare namespace AbiItem_fromAbi {
       | undefined = AbiItem_ExtractArgs<abi, name>,
     ///
     allArgs = AbiItem_ExtractArgs<abi, name>,
-    allNames = AbiItem_Name<abi>,
   > = {
-    data?: undefined
-    /** Name of the ABI Item to extract. */
-    name:
-      | Hex
-      | allNames // show all options
-      | (name extends allNames ? name : never) // infer value
     /**
      * Whether or not to prepare the extracted item (optimization for encoding performance).
      * When `true`, the `hash` property is computed and included in the returned value.

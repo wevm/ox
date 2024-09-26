@@ -41,9 +41,7 @@ export function AbiFunction_decodeInput<const abiItem extends AbiFunction>(
   if (abiFunction.inputs.length === 0) return undefined
 
   const item = overloads
-    ? AbiFunction_fromAbi([abiFunction, ...overloads], {
-        name: data,
-      } as never)
+    ? AbiFunction_fromAbi([abiFunction, ...overloads], data as never)
     : abiFunction
 
   if (Hex_size(data) <= 4) return undefined

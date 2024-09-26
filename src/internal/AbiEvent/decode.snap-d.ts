@@ -124,11 +124,10 @@ test('behavior: widened event', () => {
 })
 
 test('behavior: union event', () => {
-  const transfer = AbiEvent.fromAbi(seaportContractConfig.abi, {
-    name: 'CounterIncremented' as AbiEvent.Name<
-      typeof seaportContractConfig.abi
-    >,
-  })
+  const transfer = AbiEvent.fromAbi(
+    seaportContractConfig.abi,
+    'CounterIncremented' as AbiEvent.Name<typeof seaportContractConfig.abi>,
+  )
 
   const decoded = AbiEvent.decode(transfer, {
     data: '0x0000000000000000000000000000000000000000000000000000000000000000',

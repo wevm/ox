@@ -3,6 +3,7 @@ import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Hex } from '../Hex/types.js'
 import type { AbiEvent, AbiEvent_Name } from './types.js'
 
 /**
@@ -22,7 +23,7 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiEvent.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
+ * const item = AbiEvent.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
  *
  *
@@ -45,7 +46,7 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
  *   'event Transfer(address owner, address to, uint256 tokenId)',
  *   'function bar(string a) returns (uint256 x)',
  * ])
- * const item = AbiEvent.fromAbi(abi, { name: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' }) // [!code focus]
+ * const item = AbiEvent.fromAbi(abi, '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') // [!code focus]
  * //    ^?
  *
  *
@@ -64,6 +65,8 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
  *
  * :::
  *
+ * @param abi - The ABI to extract from.
+ * @param name - The name (or selector) of the ABI item to extract.
  * @param options - Extraction options.
  * @returns The ABI item.
  */
@@ -71,19 +74,21 @@ export function AbiEvent_fromAbi<
   const abi extends Abi | readonly unknown[],
   name extends AbiEvent_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
+  //
+  allNames = AbiEvent_Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
-  options: AbiItem_fromAbi.Options<
+  name: Hex | (name extends allNames ? name : never),
+  options?: AbiItem_fromAbi.Options<
     abi,
     name,
     args,
-    AbiItem_ExtractArgs<abi, name>,
-    AbiEvent_Name<abi>
+    AbiItem_ExtractArgs<abi, name>
   >,
 ): AbiItem_fromAbi.ReturnType<abi, name, args, AbiEvent> {
-  const item = AbiItem_fromAbi(abi, options as any)
+  const item = AbiItem_fromAbi(abi, name, options as any)
   if (item.type !== 'event')
-    throw new AbiItem_NotFoundError({ ...options, type: 'event' })
+    throw new AbiItem_NotFoundError({ name, type: 'event' })
   return item as never
 }
 

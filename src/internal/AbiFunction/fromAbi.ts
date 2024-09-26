@@ -3,6 +3,7 @@ import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
+import type { Hex } from '../Hex/types.js'
 import type { AbiFunction, AbiFunction_Name } from './types.js'
 
 /**
@@ -22,7 +23,7 @@ import type { AbiFunction, AbiFunction_Name } from './types.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiFunction.fromAbi(abi, { name: 'foo' }) // [!code focus]
+ * const item = AbiFunction.fromAbi(abi, 'foo') // [!code focus]
  * //    ^?
  *
  *
@@ -45,7 +46,7 @@ import type { AbiFunction, AbiFunction_Name } from './types.js'
  *   'event Transfer(address owner, address to, uint256 tokenId)',
  *   'function bar(string a) returns (uint256 x)',
  * ])
- * const item = AbiFunction.fromAbi(abi, { name: '0x095ea7b3' }) // [!code focus]
+ * const item = AbiFunction.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
  *
  *
@@ -65,6 +66,8 @@ import type { AbiFunction, AbiFunction_Name } from './types.js'
  *
  * :::
  *
+ * @param abi - The ABI to extract from.
+ * @param name - The name (or selector) of the ABI item to extract.
  * @param options - Extraction options.
  * @returns The ABI item.
  */
@@ -72,19 +75,21 @@ export function AbiFunction_fromAbi<
   const abi extends Abi | readonly unknown[],
   name extends AbiFunction_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
+  //
+  allNames = AbiFunction_Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
-  options: AbiItem_fromAbi.Options<
+  name: Hex | (name extends allNames ? name : never),
+  options?: AbiItem_fromAbi.Options<
     abi,
     name,
     args,
-    AbiItem_ExtractArgs<abi, name>,
-    AbiFunction_Name<abi>
+    AbiItem_ExtractArgs<abi, name>
   >,
 ): AbiItem_fromAbi.ReturnType<abi, name, args, AbiFunction> {
-  const item = AbiItem_fromAbi(abi, options as any)
+  const item = AbiItem_fromAbi(abi, name, options as any)
   if (item.type !== 'function')
-    throw new AbiItem_NotFoundError({ ...options, type: 'function' })
+    throw new AbiItem_NotFoundError({ name, type: 'function' })
   return item as never
 }
 

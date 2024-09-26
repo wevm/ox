@@ -4,6 +4,7 @@ import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_slice } from '../Hex/slice.js'
+import type { Hex } from '../Hex/types.js'
 import { Hex_validate } from '../Hex/validate.js'
 import type { IsNarrowable, IsNever } from '../types.js'
 import {
@@ -31,7 +32,7 @@ import type { AbiError, AbiError_Name } from './types.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiError.fromAbi(abi, { name: 'BadSignatureV' }) // [!code focus]
+ * const item = AbiError.fromAbi(abi, 'BadSignatureV') // [!code focus]
  * //    ^?
  *
  *
@@ -54,7 +55,7 @@ import type { AbiError, AbiError_Name } from './types.js'
  *   'error BadSignatureV(uint8 v)',
  *   'function bar(string a) returns (uint256 x)',
  * ])
- * const item = AbiError.fromAbi(abi, { name: '0x095ea7b3' }) // [!code focus]
+ * const item = AbiError.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
  *
  *
@@ -73,6 +74,8 @@ import type { AbiError, AbiError_Name } from './types.js'
  *
  * :::
  *
+ * @param abi - The ABI to extract from.
+ * @param name - The name (or selector) of the ABI item to extract.
  * @param options - Extraction options.
  * @returns The ABI item.
  */
@@ -80,18 +83,18 @@ export function AbiError_fromAbi<
   const abi extends Abi | readonly unknown[],
   name extends AbiError_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
+  //
+  allNames = AbiError_Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
-  options: AbiItem_fromAbi.Options<
+  name: Hex | (name extends allNames ? name : never),
+  options?: AbiItem_fromAbi.Options<
     abi,
     name,
     args,
-    AbiItem_ExtractArgs<abi, name>,
-    AbiError_Name<abi>
+    AbiItem_ExtractArgs<abi, name>
   >,
 ): AbiError_fromAbi.ReturnType<abi, name, args> {
-  const { name } = options
-
   if (name === 'Error') return AbiError_solidityError as never
   if (name === 'Panic') return AbiError_solidityPanic as never
   if (Hex_validate(name, { strict: false })) {
@@ -102,9 +105,9 @@ export function AbiError_fromAbi<
       return AbiError_solidityPanic as never
   }
 
-  const item = AbiItem_fromAbi(abi, options as any)
+  const item = AbiItem_fromAbi(abi, name, options as any)
   if (item.type !== 'error')
-    throw new AbiItem_NotFoundError({ ...options, type: 'error' })
+    throw new AbiItem_NotFoundError({ name, type: 'error' })
   return item as never
 }
 

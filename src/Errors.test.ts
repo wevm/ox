@@ -68,6 +68,8 @@ test('exports', () => {
       "TypedData_BytesSizeMismatchError",
       "TypedData_InvalidPrimaryTypeError",
       "Value_InvalidDecimalNumberError",
+      "WebAuthnP256_CredentialCreationFailedError",
+      "WebAuthnP256_CredentialRequestFailedError",
     ]
   `)
 })

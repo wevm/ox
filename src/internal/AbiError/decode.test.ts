@@ -100,14 +100,14 @@ describe('behavior: network', async () => {
         params: [
           {
             data: AbiFunction.encodeInput(
-              AbiFunction.fromAbi(abi, { name: 'revertRead' }),
+              AbiFunction.fromAbi(abi, 'revertRead'),
             ),
             to: contractAddress,
           },
         ],
       })
       .catch((error) => {
-        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const errorItem = AbiError.fromAbi(abi, error.data)
         const value = AbiError.decode(errorItem, error.data)
         return [errorItem, value]
       })
@@ -137,14 +137,14 @@ describe('behavior: network', async () => {
         params: [
           {
             data: AbiFunction.encodeInput(
-              AbiFunction.fromAbi(abi, { name: 'assertRead' }),
+              AbiFunction.fromAbi(abi, 'assertRead'),
             ),
             to: contractAddress,
           },
         ],
       })
       .catch((error) => {
-        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const errorItem = AbiError.fromAbi(abi, error.data)
         const value = AbiError.decode(errorItem, error.data)
         if (typeof value !== 'number') return
         return [errorItem, value, AbiError.panicReasons[value]]
@@ -176,14 +176,14 @@ describe('behavior: network', async () => {
         params: [
           {
             data: AbiFunction.encodeInput(
-              AbiFunction.fromAbi(abi, { name: 'overflowRead' }),
+              AbiFunction.fromAbi(abi, 'overflowRead'),
             ),
             to: contractAddress,
           },
         ],
       })
       .catch((error) => {
-        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const errorItem = AbiError.fromAbi(abi, error.data)
         const value = AbiError.decode(errorItem, error.data)
         if (typeof value !== 'number') return
         return [errorItem, value, AbiError.panicReasons[value]]
@@ -215,14 +215,14 @@ describe('behavior: network', async () => {
         params: [
           {
             data: AbiFunction.encodeInput(
-              AbiFunction.fromAbi(abi, { name: 'complexCustomWrite' }),
+              AbiFunction.fromAbi(abi, 'complexCustomWrite'),
             ),
             to: contractAddress,
           },
         ],
       })
       .catch((error) => {
-        const errorItem = AbiError.fromAbi(abi, { name: error.data })
+        const errorItem = AbiError.fromAbi(abi, error.data)
         const value = AbiError.decode(errorItem, error.data)
         return [errorItem, value]
       })

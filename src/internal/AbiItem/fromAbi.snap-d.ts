@@ -5,9 +5,7 @@ import { test } from 'vitest'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
-  const item = AbiItem.fromAbi(wagmiContractConfig.abi, {
-    name: 'balanceOf',
-  })
+  const item = AbiItem.fromAbi(wagmiContractConfig.abi, 'balanceOf')
   attest(item).type.toString.snap(`{
   readonly inputs: readonly [
     { readonly name: "owner"; readonly type: "address" }
@@ -22,10 +20,13 @@ test('default', () => {
 })
 
 test('behavior: unknown abi', () => {
-  const item = AbiItem.fromAbi(wagmiContractConfig.abi as readonly unknown[], {
-    name: 'balanceOf',
-    args: ['0x0000000000000000000000000000000000000000'],
-  })
+  const item = AbiItem.fromAbi(
+    wagmiContractConfig.abi as readonly unknown[],
+    'balanceOf',
+    {
+      args: ['0x0000000000000000000000000000000000000000'],
+    },
+  )
   attest(item).type.toString.snap(`  | AbiConstructor
   | AbiError
   | AbiEvent
@@ -35,16 +36,11 @@ test('behavior: unknown abi', () => {
 })
 
 test('behavior: data', () => {
-  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, {
-    name: 'approve',
-  })
-  const data = AbiFunction.encodeInput(item, [
-    '0x0000000000000000000000000000000000000000',
-    1n,
-  ])
-  const item_2 = AbiItem.fromAbi(wagmiContractConfig.abi, {
-    name: data,
-  })
+  const data = AbiFunction.encodeInput(
+    AbiFunction.fromAbi(wagmiContractConfig.abi, 'approve'),
+    ['0x0000000000000000000000000000000000000000', 1n],
+  )
+  const item_2 = AbiItem.fromAbi(wagmiContractConfig.abi, data)
   attest(item_2.name).type.toString.snap(`  | "symbol"
   | "Transfer"
   | "name"
@@ -70,9 +66,7 @@ test('behavior: overloads', () => {
     'function foo()',
     'function foo(uint256)',
   ])
-  const item = AbiItem.fromAbi(abi, {
-    name: 'foo',
-  })
+  const item = AbiItem.fromAbi(abi, 'foo')
   attest(item).type.toString.snap(`{
   readonly name: "foo"
   readonly type: "function"
@@ -88,9 +82,7 @@ test('behavior: overloads: no inputs or args', () => {
     'function foo(bytes)',
     'function foo(uint256)',
   ])
-  const item = AbiItem.fromAbi(abi, {
-    name: 'foo',
-  })
+  const item = AbiItem.fromAbi(abi, 'foo')
   attest(item).type.toString.snap(`{
   readonly name: "foo"
   readonly type: "function"
@@ -113,9 +105,10 @@ test('behavior: overloads: no inputs or args', () => {
 
 test('behavior: widened name', () => {
   const abi = Abi.from(wagmiContractConfig.abi)
-  const abiItem = AbiItem.fromAbi(abi, {
-    name: 'totalSupply' as AbiItem.Name<typeof abi>,
-  })
+  const abiItem = AbiItem.fromAbi(
+    abi,
+    'totalSupply' as AbiItem.Name<typeof abi>,
+  )
   attest(abiItem.name).type.toString.snap(`  | "symbol"
   | "Transfer"
   | "name"

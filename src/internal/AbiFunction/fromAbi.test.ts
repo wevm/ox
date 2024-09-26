@@ -6,10 +6,7 @@ import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
   expect(
-    AbiFunction.fromAbi(wagmiContractConfig.abi, {
-      name: 'balanceOf',
-      args: ['0x0000000000000000000000000000000000000000'],
-    }),
+    AbiFunction.fromAbi(wagmiContractConfig.abi, 'balanceOf'),
   ).toMatchInlineSnapshot(`
     {
       "hash": "0x70a08231b98ef4ca268c9cc3f6b4590e4bfec28280db06bb5d45e689f2a360be",
@@ -34,8 +31,7 @@ test('default', () => {
 
 test('behavior: prepare = false', () => {
   expect(
-    AbiFunction.fromAbi(wagmiContractConfig.abi, {
-      name: 'balanceOf',
+    AbiFunction.fromAbi(wagmiContractConfig.abi, 'balanceOf', {
       args: ['0x0000000000000000000000000000000000000000'],
       prepare: false,
     }),
@@ -61,17 +57,13 @@ test('behavior: prepare = false', () => {
 })
 
 test('behavior: data', () => {
-  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, {
-    name: 'approve',
-  })
+  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, 'approve')
   const data = AbiFunction.encodeInput(item, [
     '0x0000000000000000000000000000000000000000',
     1n,
   ])
   expect(
-    AbiFunction.fromAbi(wagmiContractConfig.abi, {
-      name: data,
-    }),
+    AbiFunction.fromAbi(wagmiContractConfig.abi, data),
   ).toMatchInlineSnapshot(`
       {
         "hash": "0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba",
@@ -95,10 +87,8 @@ test('behavior: data', () => {
 
 test('error: no matching name', () => {
   expect(() =>
-    AbiFunction.fromAbi(wagmiContractConfig.abi, {
-      // @ts-expect-error
-      name: 'Approval',
-    }),
+    // @ts-expect-error
+    AbiFunction.fromAbi(wagmiContractConfig.abi, 'Approval'),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.NotFoundError: ABI function with name "Approval" not found.
 
@@ -108,8 +98,7 @@ test('error: no matching name', () => {
 
 test('error: no matching name', () => {
   expect(() =>
-    AbiFunction.fromAbi([] as readonly unknown[], {
-      name: 'balanceOf',
+    AbiFunction.fromAbi([] as readonly unknown[], 'balanceOf', {
       args: ['0x0000000000000000000000000000000000000000'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
@@ -121,9 +110,7 @@ test('error: no matching name', () => {
 
 test('error: no matching data', () => {
   expect(() =>
-    AbiFunction.fromAbi([], {
-      name: '0xdeadbeef',
-    }),
+    AbiFunction.fromAbi([], '0xdeadbeef'),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.NotFoundError: ABI item with name "0xdeadbeef" not found.
 
@@ -137,9 +124,7 @@ test('behavior: overloads', () => {
     'function foo(bytes)',
     'function foo(uint256)',
   ])
-  const item = AbiFunction.fromAbi(abi, {
-    name: 'foo',
-  })
+  const item = AbiFunction.fromAbi(abi, 'foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x30c8d1da93067416f4fed4bc024d665b120d7271f9d1000c7632a48d39765324",
@@ -175,9 +160,7 @@ test('behavior: overloads: no inputs', () => {
     'function foo()',
     'function foo(uint256)',
   ])
-  const item = AbiFunction.fromAbi(abi, {
-    name: 'foo',
-  })
+  const item = AbiFunction.fromAbi(abi, 'foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
@@ -196,9 +179,7 @@ test('overloads: no args', () => {
     'function foo(uint256)',
     'function foo()',
   ])
-  const item = AbiFunction.fromAbi(abi, {
-    name: 'foo',
-  })
+  const item = AbiFunction.fromAbi(abi, 'foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xc2985578b8f3b75f7dc66a767be2a4ef7d7c2224896a1c86e92ccf30bae678b7",
@@ -277,27 +258,23 @@ test('behavior: overloads: different lengths without abi order define effect', (
     }
   `
   expect(
-    AbiFunction.fromAbi(abi, {
-      name: 'safeTransferFrom',
+    AbiFunction.fromAbi(abi, 'safeTransferFrom', {
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
   expect(
-    AbiFunction.fromAbi(abi.reverse(), {
-      name: 'safeTransferFrom',
+    AbiFunction.fromAbi(abi.reverse(), 'safeTransferFrom', {
       args: shortArgs,
     }),
   ).toMatchInlineSnapshot(shortSnapshot)
 
   expect(
-    AbiFunction.fromAbi(abi, {
-      name: 'safeTransferFrom',
+    AbiFunction.fromAbi(abi, 'safeTransferFrom', {
       args: longArgs,
     }),
   ).toMatchInlineSnapshot(longSnapshot)
   expect(
-    AbiFunction.fromAbi(abi.reverse(), {
-      name: 'safeTransferFrom',
+    AbiFunction.fromAbi(abi.reverse(), 'safeTransferFrom', {
       args: longArgs,
     }),
   ).toMatchInlineSnapshot(longSnapshot)
@@ -309,9 +286,7 @@ test('behavior: overloads: different types', () => {
     'function mint(uint256)',
     'function mint(string)',
   ])
-  const item = AbiFunction.fromAbi(abi, {
-    name: 'mint',
-  })
+  const item = AbiFunction.fromAbi(abi, 'mint')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x1249c58b84ff771f36a0d1d2bf0b42e48832b1567c4213f113d3990903cea57d",
@@ -323,8 +298,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_2 = AbiFunction.fromAbi(abi, {
-    name: 'mint',
+  const item_2 = AbiFunction.fromAbi(abi, 'mint', {
     args: [420n],
   })
   expect(item_2).toMatchInlineSnapshot(`
@@ -342,8 +316,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_3 = AbiFunction.fromAbi(abi, {
-    name: 'mint',
+  const item_3 = AbiFunction.fromAbi(abi, 'mint', {
     args: ['foo'],
   })
   expect(item_3).toMatchInlineSnapshot(`
@@ -367,8 +340,7 @@ test('behavior: overloads: tuple', () => {
     'function foo(uint256 foo, (string a, string b, uint256 c) bar)',
     'function foo(uint256 foo, (string a, (string merp, string meep) b, address c) bar)',
   ])
-  const item = AbiFunction.fromAbi(abi, {
-    name: 'foo',
+  const item = AbiFunction.fromAbi(abi, 'foo', {
     args: [
       420n,
       {
@@ -427,8 +399,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiFunction.fromAbi(
       Abi.from(['function foo(address)', 'function foo(bytes20)']),
+      'foo',
       {
-        name: 'foo',
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       },
     ),
@@ -451,8 +423,8 @@ test('behavior: overloads: ambiguious types', () => {
         'function foo(uint)',
         'function foo(address)',
       ]),
+      'foo',
       {
-        name: 'foo',
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       },
     ),
@@ -475,8 +447,8 @@ test('behavior: overloads: ambiguious types', () => {
         'function foo(uint)',
         'function foo(address)',
       ]),
+      'foo',
       {
-        name: 'foo',
         // 21 bytes (invalid address)
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251eee'],
       },
@@ -503,8 +475,8 @@ test('behavior: overloads: ambiguious types', () => {
         'function foo(uint)',
         'function foo(address)',
       ]),
+      'foo',
       {
-        name: 'foo',
         // non-hex (invalid address)
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251z'],
       },
@@ -531,8 +503,8 @@ test('behavior: overloads: ambiguious types', () => {
         'function foo(uint)',
         'function foo(string)',
       ]),
+      'foo',
       {
-        name: 'foo',
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       },
     ),
@@ -551,8 +523,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiFunction.fromAbi(
       Abi.from(['function foo((address))', 'function foo((bytes20))']),
+      'foo',
       {
-        name: 'foo',
         args: [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
       },
     ),
@@ -574,8 +546,8 @@ test('behavior: overloads: ambiguious types', () => {
         'function foo(string, (address))',
         'function foo(string, (bytes))',
       ]),
+      'foo',
       {
-        name: 'foo',
         args: ['foo', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
       },
     ),
@@ -595,9 +567,7 @@ test('behavior: overloads: ambiguious types', () => {
 test('behavior: network', async () => {
   const abi = Abi.from(wagmiContractConfig.abi)
 
-  const totalSupplyItem = AbiFunction.fromAbi(abi, {
-    name: 'totalSupply',
-  })
+  const totalSupplyItem = AbiFunction.fromAbi(abi, 'totalSupply')
 
   const totalSupply = await anvilMainnet
     .request({

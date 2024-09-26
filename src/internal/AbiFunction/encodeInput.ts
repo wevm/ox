@@ -40,7 +40,7 @@ import type { AbiFunction } from './types.js'
  * import { Abi, AbiFunction } from 'ox'
  *
  * const erc20Abi = Abi.from([...]) // [!code hl]
- * const approve = AbiFunction.fromAbi(erc20Abi, { name: 'approve' }) // [!code hl]
+ * const approve = AbiFunction.fromAbi(erc20Abi, 'approve') // [!code hl]
  *
  * const data = AbiFunction.encodeInput(
  *   approve,
@@ -70,7 +70,7 @@ import type { AbiFunction } from './types.js'
  *   },
  *   // ...
  * ])
- * const balanceOf = AbiFunction.fromAbi(abi, { name: 'balanceOf' })
+ * const balanceOf = AbiFunction.fromAbi(abi, 'balanceOf')
  *
  * // 2. Encode the Function Input. // [!code focus]
  * const data = AbiFunction.encodeInput( // [!code focus]
@@ -111,10 +111,13 @@ export function AbiFunction_encodeInput<const abiFunction extends AbiFunction>(
   const { overloads } = abiFunction
 
   const item = overloads
-    ? (AbiFunction_fromAbi([abiFunction as AbiFunction, ...overloads], {
-        name: abiFunction.name,
-        args: (args as any)[0],
-      }) as AbiFunction)
+    ? (AbiFunction_fromAbi(
+        [abiFunction as AbiFunction, ...overloads],
+        abiFunction.name,
+        {
+          args: (args as any)[0],
+        },
+      ) as AbiFunction)
     : abiFunction
 
   const selector = AbiFunction_getSelector(item)

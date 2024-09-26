@@ -5,9 +5,7 @@ import { test } from 'vitest'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
-  const item = AbiError.fromAbi(seaportContractConfig.abi, {
-    name: 'BadSignatureV',
-  })
+  const item = AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV')
   attest(item).type.toString.snap(`{
   readonly inputs: readonly [
     { readonly name: "v"; readonly type: "uint8" }
@@ -20,28 +18,21 @@ test('default', () => {
 test('behavior: unknown abi', () => {
   const item = AbiError.fromAbi(
     seaportContractConfig.abi as readonly unknown[],
-    {
-      name: 'BadSignatureV',
-    },
+    'BadSignatureV',
   )
   attest(item).type.toString.snap('AbiError')
 })
 
 test('behavior: data', () => {
-  const item = AbiError.fromAbi(seaportContractConfig.abi, {
-    name: 'BadSignatureV',
-  })
+  const item = AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV')
   const selector = AbiItem.getSelector(item)
-  const item_2 = AbiError.fromAbi(seaportContractConfig.abi, {
-    name: selector,
-  })
+  const item_2 = AbiError.fromAbi(seaportContractConfig.abi, selector)
   attest(item_2.name).type.toString.snap(`  | "Error"
   | "Panic"
-  | "InvalidSignature"
-  | "BadSignatureV"
   | "BadContractSignature"
   | "BadFraction"
   | "BadReturnValueFromERC20OnTransfer"
+  | "BadSignatureV"
   | "ConsiderationCriteriaResolverOutOfRange"
   | "ConsiderationNotMet"
   | "CriteriaNotEnabledForItem"
@@ -60,6 +51,7 @@ test('behavior: data', () => {
   | "InvalidNativeOfferItem"
   | "InvalidProof"
   | "InvalidRestrictedOrder"
+  | "InvalidSignature"
   | "InvalidSigner"
   | "InvalidTime"
   | "MismatchedFulfillmentOfferAndConsiderationComponents"
@@ -84,9 +76,7 @@ test('behavior: data', () => {
 
 test('behavior: able to extract solidity Error', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Error',
-  })
+  const item = AbiError.fromAbi(abi, 'Error')
   attest(item).type.toString.snap(`{
   readonly inputs: readonly [
     { readonly name: "message"; readonly type: "string" }
@@ -98,9 +88,7 @@ test('behavior: able to extract solidity Error', () => {
 
 test('behavior: able to extract solidity Panic', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Panic',
-  })
+  const item = AbiError.fromAbi(abi, 'Panic')
   attest(item).type.toString.snap(`{
   readonly inputs: readonly [
     { readonly name: "reason"; readonly type: "uint8" }
@@ -112,9 +100,7 @@ test('behavior: able to extract solidity Panic', () => {
 
 test('behavior: overloads', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiError.fromAbi(abi, 'Foo')
   attest(item).type.toString.snap(`{
   readonly name: "Foo"
   readonly type: "error"
@@ -124,8 +110,7 @@ test('behavior: overloads', () => {
 
 test('behavior: overloads with args', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Foo',
+  const item = AbiError.fromAbi(abi, 'Foo', {
     args: [1n],
   })
   attest(item).type.toString.snap(`{
@@ -141,9 +126,7 @@ test('behavior: overloads: no inputs or args', () => {
     'error Foo(bytes)',
     'error Foo(uint256)',
   ])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiError.fromAbi(abi, 'Foo')
   attest(item).type.toString.snap(`{
   readonly name: "Foo"
   readonly type: "error"
@@ -162,16 +145,16 @@ test('behavior: overloads: no inputs or args', () => {
 
 test('behavior: widened name', () => {
   const abi = Abi.from(seaportContractConfig.abi)
-  const abiItem = AbiError.fromAbi(abi, {
-    name: 'BadContractSignature' as AbiError.Name<typeof abi>,
-  })
+  const abiItem = AbiError.fromAbi(
+    abi,
+    'BadContractSignature' as AbiError.Name<typeof abi>,
+  )
   attest(abiItem.name).type.toString.snap(`  | "Error"
   | "Panic"
-  | "InvalidSignature"
-  | "BadSignatureV"
   | "BadContractSignature"
   | "BadFraction"
   | "BadReturnValueFromERC20OnTransfer"
+  | "BadSignatureV"
   | "ConsiderationCriteriaResolverOutOfRange"
   | "ConsiderationNotMet"
   | "CriteriaNotEnabledForItem"
@@ -190,6 +173,7 @@ test('behavior: widened name', () => {
   | "InvalidNativeOfferItem"
   | "InvalidProof"
   | "InvalidRestrictedOrder"
+  | "InvalidSignature"
   | "InvalidSigner"
   | "InvalidTime"
   | "MismatchedFulfillmentOfferAndConsiderationComponents"

@@ -5,9 +5,10 @@ import { bench, describe } from 'vitest'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { AbiParameters_decode } from './decode.js'
 
-const fulfillAdvancedOrder = AbiItem.fromAbi(seaportContractConfig.abi, {
-  name: 'fulfillAdvancedOrder',
-})
+const fulfillAdvancedOrder = AbiItem.fromAbi(
+  seaportContractConfig.abi,
+  'fulfillAdvancedOrder',
+)
 
 describe('ABI Decode (static struct)', () => {
   bench('ox: `Abi.decodeParameters`', () => {

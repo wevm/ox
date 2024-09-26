@@ -5,9 +5,7 @@ import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
   expect(
-    AbiEvent.fromAbi(wagmiContractConfig.abi, {
-      name: 'Approval',
-    }),
+    AbiEvent.fromAbi(wagmiContractConfig.abi, 'Approval'),
   ).toMatchInlineSnapshot(`
     {
       "anonymous": false,
@@ -37,8 +35,7 @@ test('default', () => {
 
 test('behavior: prepare = false', () => {
   expect(
-    AbiEvent.fromAbi(wagmiContractConfig.abi, {
-      name: 'Approval',
+    AbiEvent.fromAbi(wagmiContractConfig.abi, 'Approval', {
       prepare: false,
     }),
   ).toMatchInlineSnapshot(`
@@ -68,13 +65,9 @@ test('behavior: prepare = false', () => {
 })
 
 test('behavior: name (hash)', () => {
-  const item = AbiEvent.fromAbi(wagmiContractConfig.abi, {
-    name: 'Approval',
-  })
+  const item = AbiEvent.fromAbi(wagmiContractConfig.abi, 'Approval')
   expect(
-    AbiEvent.fromAbi(wagmiContractConfig.abi, {
-      name: AbiEvent.getSelector(item),
-    }),
+    AbiEvent.fromAbi(wagmiContractConfig.abi, AbiEvent.getSelector(item)),
   ).toMatchInlineSnapshot(`
     {
       "anonymous": false,
@@ -104,10 +97,8 @@ test('behavior: name (hash)', () => {
 
 test('error: no matching name', () => {
   expect(() =>
-    AbiEvent.fromAbi(wagmiContractConfig.abi, {
-      // @ts-expect-error
-      name: 'approve',
-    }),
+    // @ts-expect-error
+    AbiEvent.fromAbi(wagmiContractConfig.abi, 'approve'),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.NotFoundError: ABI event with name "approve" not found.
 
@@ -117,9 +108,7 @@ test('error: no matching name', () => {
 
 test('error: no matching name', () => {
   expect(() =>
-    AbiEvent.fromAbi([] as readonly unknown[], {
-      name: 'Approved',
-    }),
+    AbiEvent.fromAbi([] as readonly unknown[], 'Approved'),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.NotFoundError: ABI item with name "Approved" not found.
 
@@ -129,9 +118,7 @@ test('error: no matching name', () => {
 
 test('error: no matching data', () => {
   expect(() =>
-    AbiEvent.fromAbi([], {
-      name: '0xdeadbeef',
-    }),
+    AbiEvent.fromAbi([], '0xdeadbeef'),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.NotFoundError: ABI item with name "0xdeadbeef" not found.
 
@@ -145,9 +132,7 @@ test('behavior: overloads', () => {
     'event Foo(address indexed)',
     'event Foo(uint256 indexed)',
   ])
-  const item = AbiEvent.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiEvent.fromAbi(abi, 'Foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xe773a60b784586770a963a70fa6ba2bdf31c462939b6ba36852ed45f5f722358",
@@ -177,9 +162,7 @@ test('behavior: overloads', () => {
 
 test('behavior: overloads: no inputs', () => {
   const abi = Abi.from(['event Bar()', 'event Foo()', 'event Foo(uint256)'])
-  const item = AbiEvent.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiEvent.fromAbi(abi, 'Foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
@@ -192,9 +175,7 @@ test('behavior: overloads: no inputs', () => {
 
 test('overloads: no args', () => {
   const abi = Abi.from(['event Bar()', 'event Foo(uint256)', 'event Foo()'])
-  const item = AbiEvent.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiEvent.fromAbi(abi, 'Foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
@@ -211,9 +192,7 @@ test('behavior: overloads: different types', () => {
     'event Mint(uint256)',
     'event Mint(string)',
   ])
-  const item = AbiEvent.fromAbi(abi, {
-    name: 'Mint',
-  })
+  const item = AbiEvent.fromAbi(abi, 'Mint')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x34c73884fbbb790762253ae313e57da96c00670344647f0cb8d41ee92b9f1971",
@@ -223,8 +202,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_2 = AbiEvent.fromAbi(abi, {
-    name: 'Mint',
+  const item_2 = AbiEvent.fromAbi(abi, 'Mint', {
     args: [420n],
   })
   expect(item_2).toMatchInlineSnapshot(`
@@ -240,8 +218,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_3 = AbiEvent.fromAbi(abi, {
-    name: 'Mint',
+  const item_3 = AbiEvent.fromAbi(abi, 'Mint', {
     args: ['foo'],
   })
   expect(item_3).toMatchInlineSnapshot(`
@@ -260,10 +237,13 @@ test('behavior: overloads: different types', () => {
 
 test('behavior: overloads: ambiguious types', () => {
   expect(() =>
-    AbiEvent.fromAbi(Abi.from(['event Foo(address)', 'event Foo(bytes20)']), {
-      name: 'Foo',
-      args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
-    }),
+    AbiEvent.fromAbi(
+      Abi.from(['event Foo(address)', 'event Foo(bytes20)']),
+      'Foo',
+      {
+        args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      },
+    ),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
@@ -279,8 +259,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiEvent.fromAbi(
       Abi.from(['event Foo(string)', 'event Foo(uint)', 'event Foo(address)']),
+      'Foo',
       {
-        name: 'Foo',
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       },
     ),
@@ -299,8 +279,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(
     AbiEvent.fromAbi(
       Abi.from(['event Foo(string)', 'event Foo(uint)', 'event Foo(address)']),
+      'Foo',
       {
-        name: 'Foo',
         // 21 bytes (invalid address)
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251eee'],
       },
@@ -321,8 +301,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(
     AbiEvent.fromAbi(
       Abi.from(['event Foo(string)', 'event Foo(uint)', 'event Foo(address)']),
+      'Foo',
       {
-        name: 'Foo',
         // non-hex (invalid address)
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251z'],
       },
@@ -343,8 +323,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiEvent.fromAbi(
       Abi.from(['event Foo(address)', 'event Foo(uint)', 'event Foo(string)']),
+      'Foo',
       {
-        name: 'Foo',
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       },
     ),

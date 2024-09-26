@@ -37,7 +37,7 @@ import type { AbiError } from './types.js'
  * import { Abi, AbiError } from 'ox'
  *
  * const abi = Abi.from([...]) // [!code hl]
- * const error = AbiError.fromAbi(abi, { name: 'InvalidSignature' }) // [!code hl]
+ * const error = AbiError.fromAbi(abi, 'InvalidSignature') // [!code hl]
  *
  * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001')
  * // @log: [420n, 69n, 1]
@@ -53,7 +53,7 @@ import type { AbiError } from './types.js'
  * const data = '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
  *
  * const abi = Abi.from([...])
- * const error = AbiError.fromAbi(abi, { name: data }) // [!code hl]
+ * const error = AbiError.fromAbi(abi, data) // [!code hl]
  *
  * const value = AbiError.decode(error, data)
  * // @log: [420n, 69n, 1]
@@ -84,7 +84,7 @@ import type { AbiError } from './types.js'
  *   },
  *   // ...
  * ])
- * const approve = AbiFunction.fromAbi(abi, { name: 'approve' })
+ * const approve = AbiFunction.fromAbi(abi, 'approve')
  *
  * // 2. Encode the Function Input.
  * const data = AbiFunction.encodeInput(
@@ -105,7 +105,7 @@ import type { AbiError } from './types.js'
  *   })
  * } catch (e) { // [!code focus]
  *   // 4. Extract and decode the Error. // [!code focus]
- *   const error = AbiError.fromAbi(abi, { name: e.data }) // [!code focus]
+ *   const error = AbiError.fromAbi(abi, e.data) // [!code focus]
  *   const value = AbiError.decode(error, e.data) // [!code focus]
  *   console.error(`${error.name}(${value})`) // [!code focus]
  * // @error:   Error(ERC721: approve caller is not owner nor approved for all)

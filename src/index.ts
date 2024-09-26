@@ -210,7 +210,7 @@ export * as AbiConstructor from './AbiConstructor.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiError.fromAbi(abi, { name: 'BadSignatureV' }) // [!code focus]
+ * const item = AbiError.fromAbi(abi, 'BadSignatureV') // [!code focus]
  * //    ^?
  *
  *
@@ -253,7 +253,7 @@ export * as AbiConstructor from './AbiConstructor.js'
  * import { Abi, AbiError } from 'ox'
  *
  * const abi = Abi.from([...])
- * const error = AbiError.fromAbi(abi, { name: 'InvalidSignature' })
+ * const error = AbiError.fromAbi(abi, 'InvalidSignature')
  *
  * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001') // [!code focus]
  * // @log: [420n, 69n, 1]
@@ -282,7 +282,7 @@ export * as AbiError from './AbiError.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiEvent.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
+ * const item = AbiEvent.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
  *
  *
@@ -397,7 +397,7 @@ export * as AbiEvent from './AbiEvent.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiFunction.fromAbi(abi, { name: 'bar' }) // [!code focus]
+ * const item = AbiFunction.fromAbi(abi, 'bar') // [!code focus]
  * //    ^?
  *
  *
@@ -495,7 +495,7 @@ export * as AbiFunction from './AbiFunction.js'
  *   'function bar(string a) returns (uint256 x)',
  * ])
  *
- * const item = AbiItem.fromAbi(abi, { name: 'Transfer' }) // [!code focus]
+ * const item = AbiItem.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
  *
  *

@@ -77,9 +77,10 @@ test('options: as = Object, behavior: no output parameter', () => {
 
 test('behavior: abiItem union', () => {
   const abi = Abi.from(wagmiContractConfig.abi)
-  const abiItem = AbiFunction.fromAbi(abi, {
-    name: 'totalSupply' as AbiFunction.Name<typeof abi>,
-  })
+  const abiItem = AbiFunction.fromAbi(
+    abi,
+    'totalSupply' as AbiFunction.Name<typeof abi>,
+  )
   if (abiItem.type === 'function') {
     const result = AbiFunction.decodeOutput(
       abiItem,

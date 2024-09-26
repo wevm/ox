@@ -104,3 +104,8 @@ export {
 } from './internal/TypedData/errors.js'
 
 export { Value_InvalidDecimalNumberError } from './internal/Value/errors.js'
+
+export {
+  WebAuthnP256_CredentialCreationFailedError,
+  WebAuthnP256_CredentialRequestFailedError,
+} from './internal/WebAuthnP256/errors.js'

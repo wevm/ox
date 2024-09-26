@@ -5,9 +5,7 @@ import { seaportContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
   expect(
-    AbiError.fromAbi(seaportContractConfig.abi, {
-      name: 'BadSignatureV',
-    }),
+    AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV'),
   ).toMatchInlineSnapshot(`
     {
       "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
@@ -25,8 +23,7 @@ test('default', () => {
 
 test('behavior: prepare = false', () => {
   expect(
-    AbiError.fromAbi(seaportContractConfig.abi, {
-      name: 'BadSignatureV',
+    AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV', {
       prepare: false,
     }),
   ).toMatchInlineSnapshot(`
@@ -44,14 +41,10 @@ test('behavior: prepare = false', () => {
 })
 
 test('behavior: selector as name', () => {
-  const item = AbiError.fromAbi(seaportContractConfig.abi, {
-    name: 'BadSignatureV',
-  })
+  const item = AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV')
   const selector = AbiItem.getSelector(item)
   expect(
-    AbiError.fromAbi(seaportContractConfig.abi, {
-      name: selector,
-    }),
+    AbiError.fromAbi(seaportContractConfig.abi, selector),
   ).toMatchInlineSnapshot(`
     {
       "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
@@ -69,9 +62,7 @@ test('behavior: selector as name', () => {
 
 test('behavior: able to extract solidity Error', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Error',
-  })
+  const item = AbiError.fromAbi(abi, 'Error')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
@@ -89,9 +80,7 @@ test('behavior: able to extract solidity Error', () => {
 
 test('behavior: able to extract solidity Error (selector)', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: AbiError.solidityErrorSelector,
-  })
+  const item = AbiError.fromAbi(abi, AbiError.solidityErrorSelector)
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
@@ -109,9 +98,7 @@ test('behavior: able to extract solidity Error (selector)', () => {
 
 test('behavior: able to extract solidity Panic', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Panic',
-  })
+  const item = AbiError.fromAbi(abi, 'Panic')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
@@ -129,9 +116,7 @@ test('behavior: able to extract solidity Panic', () => {
 
 test('behavior: able to extract solidity Panic (selector)', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: AbiError.solidityPanicSelector,
-  })
+  const item = AbiError.fromAbi(abi, AbiError.solidityPanicSelector)
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
@@ -149,10 +134,8 @@ test('behavior: able to extract solidity Panic (selector)', () => {
 
 test('error: no matching name', () => {
   expect(() =>
-    AbiError.fromAbi(seaportContractConfig.abi, {
-      // @ts-expect-error
-      name: 'cancel',
-    }),
+    // @ts-expect-error
+    AbiError.fromAbi(seaportContractConfig.abi, 'cancel'),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.NotFoundError: ABI error with name "cancel" not found.
 
@@ -162,8 +145,7 @@ test('error: no matching name', () => {
 
 test('error: no matching name', () => {
   expect(() =>
-    AbiError.fromAbi([] as readonly unknown[], {
-      name: 'balanceOf',
+    AbiError.fromAbi([] as readonly unknown[], 'balanceOf', {
       args: ['0x0000000000000000000000000000000000000000'],
     }),
   ).toThrowErrorMatchingInlineSnapshot(`
@@ -175,9 +157,7 @@ test('error: no matching name', () => {
 
 test('error: no matching data', () => {
   expect(() =>
-    AbiError.fromAbi([], {
-      name: '0xdeadbeef',
-    }),
+    AbiError.fromAbi([], '0xdeadbeef'),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.NotFoundError: ABI item with name "0xdeadbeef" not found.
 
@@ -191,9 +171,7 @@ test('behavior: overloads', () => {
     'error Foo(bytes)',
     'error Foo(uint256)',
   ])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiError.fromAbi(abi, 'Foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xefc9afd358f1472682cf8cc82e1d3ae36be2538ed858a4a604119399d6f22b48",
@@ -221,9 +199,7 @@ test('behavior: overloads', () => {
 
 test('behavior: overloads: no inputs', () => {
   const abi = Abi.from(['error Bar()', 'error Foo()', 'error Foo(uint256)'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiError.fromAbi(abi, 'Foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
@@ -236,9 +212,7 @@ test('behavior: overloads: no inputs', () => {
 
 test('overloads: no args', () => {
   const abi = Abi.from(['error Bar()', 'error Foo(uint256)', 'error Foo()'])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Foo',
-  })
+  const item = AbiError.fromAbi(abi, 'Foo')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0xbfb4ebcfff8f360b39de1de85df1edc256d63337b743120bf6e2e2144b973d38",
@@ -255,9 +229,7 @@ test('behavior: overloads: different types', () => {
     'error Mint(uint256)',
     'error Mint(string)',
   ])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Mint',
-  })
+  const item = AbiError.fromAbi(abi, 'Mint')
   expect(item).toMatchInlineSnapshot(`
     {
       "hash": "0x34c73884fbbb790762253ae313e57da96c00670344647f0cb8d41ee92b9f1971",
@@ -267,8 +239,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_2 = AbiError.fromAbi(abi, {
-    name: 'Mint',
+  const item_2 = AbiError.fromAbi(abi, 'Mint', {
     args: [420n],
   })
   expect(item_2).toMatchInlineSnapshot(`
@@ -284,8 +255,7 @@ test('behavior: overloads: different types', () => {
     }
   `)
 
-  const item_3 = AbiError.fromAbi(abi, {
-    name: 'Mint',
+  const item_3 = AbiError.fromAbi(abi, 'Mint', {
     args: ['foo'],
   })
   expect(item_3).toMatchInlineSnapshot(`
@@ -307,8 +277,7 @@ test('behavior: overloads: tuple', () => {
     'error Example(uint256 foo, (string a, string b, uint256 c) bar)',
     'error Example(uint256 foo, (string a, (string merp, string meep) b, address c) bar)',
   ])
-  const item = AbiError.fromAbi(abi, {
-    name: 'Example',
+  const item = AbiError.fromAbi(abi, 'Example', {
     args: [
       420n,
       {
@@ -363,10 +332,13 @@ test('behavior: overloads: tuple', () => {
 
 test('behavior: overloads: ambiguious types', () => {
   expect(() =>
-    AbiError.fromAbi(Abi.from(['error Foo(address)', 'error Foo(bytes20)']), {
-      name: 'Foo',
-      args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
-    }),
+    AbiError.fromAbi(
+      Abi.from(['error Foo(address)', 'error Foo(bytes20)']),
+      'Foo',
+      {
+        args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+      },
+    ),
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
 
@@ -382,8 +354,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiError.fromAbi(
       Abi.from(['error Foo(string)', 'error Foo(uint)', 'error Foo(address)']),
+      'Foo',
       {
-        name: 'Foo',
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       },
     ),
@@ -402,8 +374,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(
     AbiError.fromAbi(
       Abi.from(['error Foo(string)', 'error Foo(uint)', 'error Foo(address)']),
+      'Foo',
       {
-        name: 'Foo',
         // 21 bytes (invalid address)
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251eee'],
       },
@@ -424,8 +396,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(
     AbiError.fromAbi(
       Abi.from(['error Foo(string)', 'error Foo(uint)', 'error Foo(address)']),
+      'Foo',
       {
-        name: 'Foo',
         // non-hex (invalid address)
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251z'],
       },
@@ -446,8 +418,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiError.fromAbi(
       Abi.from(['error Foo(address)', 'error Foo(uint)', 'error Foo(string)']),
+      'Foo',
       {
-        name: 'Foo',
         args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
       },
     ),
@@ -466,8 +438,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiError.fromAbi(
       Abi.from(['error Foo((address))', 'error Foo((bytes20))']),
+      'Foo',
       {
-        name: 'Foo',
         args: [['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
       },
     ),
@@ -486,8 +458,8 @@ test('behavior: overloads: ambiguious types', () => {
   expect(() =>
     AbiError.fromAbi(
       Abi.from(['error Foo(string, (address))', 'error Foo(string, (bytes))']),
+      'Foo',
       {
-        name: 'Foo',
         args: ['foo', ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']],
       },
     ),

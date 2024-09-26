@@ -45,7 +45,7 @@ import type { AbiError } from './types.js'
  *   }, // [!code hl]
  *   // ... // [!code hl]
  * ]) // [!code hl]
- * const error = AbiError.fromAbi(abi, { name: 'InvalidSignature' }) // [!code hl]
+ * const error = AbiError.fromAbi(abi, 'InvalidSignature') // [!code hl]
  *
  * const data = AbiError.encode(
  *   error,

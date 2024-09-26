@@ -38,7 +38,7 @@ import type { AbiFunction } from './types.js'
  * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
  *
  * const erc20Abi = Abi.from([...]) // [!code hl]
- * const totalSupply = AbiFunction.fromAbi(erc20Abi, { name: 'totalSupply' }) // [!code hl]
+ * const totalSupply = AbiFunction.fromAbi(erc20Abi, 'totalSupply') // [!code hl]
  *
  * const output = AbiFunction.decodeOutput(totalSupply, data)
  * // @log: 42n
@@ -65,7 +65,7 @@ import type { AbiFunction } from './types.js'
  *   },
  *   // ...
  * ])
- * const balanceOf = AbiFunction.fromAbi(abi, { name: 'balanceOf' })
+ * const balanceOf = AbiFunction.fromAbi(abi, 'balanceOf')
  *
  * // 2. Encode the Function Input.
  * const data = AbiFunction.encodeInput(

@@ -5,8 +5,7 @@ import { test } from 'vitest'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
-  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, {
-    name: 'balanceOf',
+  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, 'balanceOf', {
     args: ['0x0000000000000000000000000000000000000000'],
   })
   attest(item).type.toString.snap(`{
@@ -25,8 +24,8 @@ test('default', () => {
 test('behavior: unknown abi', () => {
   const item = AbiFunction.fromAbi(
     wagmiContractConfig.abi as readonly unknown[],
+    'balanceOf',
     {
-      name: 'balanceOf',
       args: ['0x0000000000000000000000000000000000000000'],
     },
   )
@@ -34,16 +33,12 @@ test('behavior: unknown abi', () => {
 })
 
 test('behavior: data', () => {
-  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, {
-    name: 'approve',
-  })
+  const item = AbiFunction.fromAbi(wagmiContractConfig.abi, 'approve')
   const data = AbiFunction.encodeInput(item, [
     '0x0000000000000000000000000000000000000000',
     1n,
   ])
-  const item_2 = AbiFunction.fromAbi(wagmiContractConfig.abi, {
-    name: data,
-  })
+  const item_2 = AbiFunction.fromAbi(wagmiContractConfig.abi, data)
   attest(item_2.name).type.toString.snap(`  | "symbol"
   | "name"
   | "approve"
@@ -66,9 +61,7 @@ test('behavior: overloads', () => {
     'function foo()',
     'function foo(uint256)',
   ])
-  const item = AbiFunction.fromAbi(abi, {
-    name: 'foo',
-  })
+  const item = AbiFunction.fromAbi(abi, 'foo')
   attest(item).type.toString.snap(`{
   readonly name: "foo"
   readonly type: "function"
@@ -84,9 +77,7 @@ test('behavior: overloads: no inputs or args', () => {
     'function foo(bytes)',
     'function foo(uint256)',
   ])
-  const item = AbiFunction.fromAbi(abi, {
-    name: 'foo',
-  })
+  const item = AbiFunction.fromAbi(abi, 'foo')
   attest(item).type.toString.snap(`{
   readonly name: "foo"
   readonly type: "function"
@@ -109,9 +100,10 @@ test('behavior: overloads: no inputs or args', () => {
 
 test('behavior: widened name', () => {
   const abi = Abi.from(wagmiContractConfig.abi)
-  const abiItem = AbiFunction.fromAbi(abi, {
-    name: 'totalSupply' as AbiFunction.Name<typeof abi>,
-  })
+  const abiItem = AbiFunction.fromAbi(
+    abi,
+    'totalSupply' as AbiFunction.Name<typeof abi>,
+  )
   attest(abiItem.name).type.toString.snap(`  | "symbol"
   | "name"
   | "approve"
