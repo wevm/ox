@@ -89,7 +89,7 @@ function renderSignature(options: {
   const { data, dataLookup, overloads } = options
   const { displayName, parameters = [], returnType, typeParameters = [] } = data
 
-  const content = ['## Signature']
+  const content = ['## Definition']
 
   let paramSignature = parameters
     .map((x, i) => {

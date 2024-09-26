@@ -100,6 +100,9 @@ export function renderNamespaceErrors(options: {
       : data.displayName
     content.push(`## \`${name}\``)
     content.push(data.comment?.summary ?? 'TODO')
+    content.push(
+      `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
+    )
   }
 
   return content.join('\n\n')
@@ -124,6 +127,9 @@ export function renderNamespaceTypes(options: {
       : data.displayName
     content.push(`## \`${name}\``)
     content.push(data.comment?.summary ?? 'TODO')
+    content.push(
+      `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
+    )
   }
 
   return content.join('\n\n')

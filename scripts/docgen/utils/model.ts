@@ -185,15 +185,20 @@ function processLocation(
 ) {
   if (!sourceFilePath) return
 
-  if (item.kind === model.ApiItemKind.Function) {
-    const functionName = module
-      ? `${module}_${item.displayName}`
-      : item.displayName
+  if (
+    item.kind === model.ApiItemKind.Class ||
+    item.kind === model.ApiItemKind.Function ||
+    item.kind === model.ApiItemKind.TypeAlias
+  ) {
+    const functionName =
+      module && module !== item.displayName
+        ? `${module}_${item.displayName}`
+        : item.displayName
     const content = readFileSync(sourceFilePath, 'utf-8')
     let lineNumber = 0
     for (const line of content.split('\n')) {
       lineNumber++
-      if (!line.includes(functionName)) continue
+      if (line.includes(' as ') || !line.includes(` ${functionName}`)) continue
       break
     }
     return lineNumber

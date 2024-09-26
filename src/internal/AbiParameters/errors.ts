@@ -37,7 +37,7 @@ export class AbiParameters_ZeroDataError extends BaseError {
  * // ---cut---
  * Abi.encodeParameters(AbiParameters.from('uint256[3]'), [[69n, 420n]])
  * //                                               ↑ expected: 3  ↑ ❌ length: 2
- * // @error: AbiParameters_ArrayLengthMismatchError: ABI encoding array length mismatch
+ * // @error: AbiParameters.ArrayLengthMismatchError: ABI encoding array length mismatch
  * // @error: for type `uint256[3]`. Expected: `3`. Given: `2`.
  * ```
  *
