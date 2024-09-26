@@ -33,9 +33,9 @@ export class AbiParameters_ZeroDataError extends BaseError {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(AbiParameters.from('uint256[3]'), [[69n, 420n]])
+ * AbiParameters.encode(AbiParameters.from('uint256[3]'), [[69n, 420n]])
  * //                                               ↑ expected: 3  ↑ ❌ length: 2
  * // @error: AbiParameters.ArrayLengthMismatchError: ABI encoding array length mismatch
  * // @error: for type `uint256[3]`. Expected: `3`. Given: `2`.
@@ -46,10 +46,10 @@ export class AbiParameters_ZeroDataError extends BaseError {
  * Pass an array of the correct length.
  *
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(['uint256[3]'], [[69n, 420n, 69n]])
- * //                           ↑ ✅ length: 3
+ * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [[69n, 420n, 69n]])
+ * //                                   ↑ ✅ length: 3
  * ```
  */
 export class AbiParameters_ArrayLengthMismatchError extends BaseError {
@@ -75,9 +75,9 @@ export class AbiParameters_ArrayLengthMismatchError extends BaseError {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(AbiParameters.from('bytes8'), [['0xdeadbeefdeadbeefdeadbeef']])
+ * AbiParameters.encode(AbiParameters.from('bytes8'), [['0xdeadbeefdeadbeefdeadbeef']])
  * //                                            ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
  * // @error: AbiParameters_BytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
  * // @error: (bytes12) does not match expected size (bytes8).
@@ -88,10 +88,10 @@ export class AbiParameters_ArrayLengthMismatchError extends BaseError {
  * Pass a bytes value of the correct size.
  *
  * ```ts twoslash
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(['bytes8'], ['0xdeadbeefdeadbeef'])
- * //                        ↑ ✅ size: 8 bytes
+ * AbiParameters.encode(AbiParameters.from(['bytes8']), ['0xdeadbeefdeadbeef'])
+ * //                                                       ↑ ✅ size: 8 bytes
  * ```
  */
 export class AbiParameters_BytesSizeMismatchError extends BaseError {
@@ -115,9 +115,9 @@ export class AbiParameters_BytesSizeMismatchError extends BaseError {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(['string', 'uint256'], ['hello'])
+ * AbiParameters.encode(AbiParameters.from(['string', 'uint256']), ['hello'])
  * // @error: AbiParameters_LengthMismatchError: ABI encoding params/values length mismatch.
  * // @error: Expected length (params): 2
  * // @error: Given length (values): 1
@@ -157,9 +157,9 @@ export class AbiParameters_LengthMismatchError extends BaseError {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Abi } from 'ox'
+ * import { AbiParameters } from 'ox'
  * // ---cut---
- * Abi.encodeParameters(['uint256[3]'], [69])
+ * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [69])
  * ```
  *
  * ### Solution

@@ -18,7 +18,7 @@ import type {
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip2930 } from 'ox'
+ * import { TransactionEnvelopeEip2930, Value } from 'ox'
  *
  * const envelope = TransactionEnvelopeEip2930.from({
  *   chainId: 1,

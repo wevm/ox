@@ -9,7 +9,7 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeLegacy } from 'ox'
+ * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
  *
  * const envelope = TransactionEnvelopeLegacy.from({
  *   chainId: 1,
@@ -20,7 +20,14 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  *   value: 1000000000000000000n,
  * })
  *
- * const hash = TransactionEnvelopeLegacy.hash(envelope) // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelopeLegacy.hash(envelope_signed) // [!code focus]
  * ```
  *
  * @param envelope - The Legacy Transaction Envelope to hash.

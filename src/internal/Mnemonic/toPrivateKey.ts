@@ -27,7 +27,7 @@ import { Mnemonic_toHdKey } from './toHdKey.js'
  *
  * const mnemonic = Mnemonic.random(Mnemonic.english)
  * const privateKey = Mnemonic.toPrivateKey(mnemonic, {
- *   path: Mnemonic.getPath({ index: 1 }) // 'm/44'/60'/0'/0/1' // [!code focus]
+ *   path: Mnemonic.path({ index: 1 }) // 'm/44'/60'/0'/0/1' // [!code focus]
  * })
  * // @log: '0x...'
  * ```

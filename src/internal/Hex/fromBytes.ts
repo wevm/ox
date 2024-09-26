@@ -13,13 +13,10 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
  *
  * @example
  * ```ts twoslash
- * import { Hex } from 'ox'
+ * import { Bytes, Hex } from 'ox'
  *
- * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // @log: '0x48656c6c6f20576f726c6421'
- *
- * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]), { size: 32 })
- * // @log: '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000'
  * ```
  *
  * @param value - The {@link ox#Bytes.Bytes} value to encode.

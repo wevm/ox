@@ -9,7 +9,7 @@ import { TypedData_encode } from './encode.js'
  *
  * @example
  * ```ts twoslash
- * import { TypedData, Hash } from 'ox'
+ * import { Secp256k1, TypedData, Hash } from 'ox'
  *
  * const payload = TypedData.getSignPayload({ // [!code focus:99]
  *   domain: {

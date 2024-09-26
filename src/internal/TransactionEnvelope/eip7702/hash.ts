@@ -9,7 +9,8 @@ import type { TransactionEnvelopeEip7702 } from './types.js'
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip7702 } from 'ox'
+ * // @noErrors
+ * import { Secp256k1, TransactionEnvelopeEip7702 } from 'ox'
  *
  * const envelope = TransactionEnvelopeEip7702.from({
  *   authorizationList: [...],
@@ -21,7 +22,14 @@ import type { TransactionEnvelopeEip7702 } from './types.js'
  *   value: 1000000000000000000n,
  * })
  *
- * const hash = TransactionEnvelopeEip7702.hash(envelope) // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip7702.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeEip7702.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelopeEip7702.hash(envelope_signed) // [!code focus]
  * ```
  *
  * @param envelope - The EIP-7702 Transaction Envelope to hash.

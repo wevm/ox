@@ -21,6 +21,7 @@ import type { Bytes } from './types.js'
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Bytes } from 'ox'
  *
  * const data = Bytes.from([255, 124, 5, 4])

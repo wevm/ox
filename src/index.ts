@@ -1238,7 +1238,7 @@ export * as HdKey from './HdKey.js'
  * - {@link ox#Hex.(fromString:function)}
  *
  * ```ts twoslash
- * import { Hex } from 'ox'
+ * import { Bytes, Hex } from 'ox'
  *
  * const value_boolean = Hex.fromBoolean(true)
  * // @log: '0x1'
@@ -2706,7 +2706,7 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip2930.(serialize:function)}:
  *
  * ```ts twoslash
- * import { TransactionEnvelopeEip2930, Value } from 'ox'
+ * import { Secp256k1, TransactionEnvelopeEip2930, Value } from 'ox'
  *
  * const envelope = TransactionEnvelopeEip2930.from({
  *   chainId: 1,
@@ -2726,7 +2726,7 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip2930.(hash:function)}:
  *
  * ```ts twoslash
- * import { TransactionEnvelopeEip2930 } from 'ox'
+ * import { Secp256k1, TransactionEnvelopeEip2930 } from 'ox'
  *
  * const envelope = TransactionEnvelopeEip2930.from({
  *   chainId: 1,
@@ -3030,7 +3030,7 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * Typed Data can be converted to a sign payload using {@link ox#TypedData.(getSignPayload:function)}:
  *
  * ```ts twoslash
- * import { TypedData, Hash } from 'ox'
+ * import { Secp256k1, TypedData, Hash } from 'ox'
  *
  * const payload = TypedData.getSignPayload({ // [!code focus:99]
  *   domain: {

@@ -7,7 +7,7 @@ import type { Hex } from './types.js'
  *
  * @example
  * ```ts twoslash
- * import { Hex } from 'ox'
+ * import { Bytes, Hex } from 'ox'
  *
  * Hex.validate('0xdeadbeef')
  * // @log: true

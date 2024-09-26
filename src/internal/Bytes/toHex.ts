@@ -10,7 +10,7 @@ import type { Bytes } from './types.js'
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * Bytes.toHex(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
+ * Bytes.toHex(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // '0x48656c6c6f20576f726c6421'
  * ```
  *

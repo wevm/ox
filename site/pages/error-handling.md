@@ -2,8 +2,6 @@
 
 Every function namespace in Ox exports an accompanying error type (`ErrorType`) and parser (`parseError`) that you can use to strongly type your `catch` statements, or inject into a custom type-safe error handling library (e.g. [`neverthrow`](https://github.com/supermacro/neverthrow), [`Effect`](https://effect.website/), etc.).
 
-<!-- These types come in the form of `{function}.ErrorType`. For example, the `Abi.encodeParameters` action exports a `Abi.encodeParameters.ErrorType` type. -->
-
 ## Usage with Vanilla TypeScript
 
 Unfortunately, [TypeScript doesn't have an abstraction for typed exceptions](https://github.com/microsoft/TypeScript/issues/13219), so the most pragmatic & vanilla approach would be to explicitly cast error types in the `catch` statement with the function's `.ErrorType` property.

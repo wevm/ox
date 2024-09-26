@@ -14,7 +14,7 @@ import type { TransactionEnvelope } from './types.js'
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelope } from 'ox'
+ * import { Secp256k1, TransactionEnvelope } from 'ox'
  *
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
