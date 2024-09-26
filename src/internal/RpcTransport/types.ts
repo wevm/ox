@@ -4,8 +4,8 @@ import type {
   RpcRequest_MethodGeneric,
   RpcRequest_MethodNameGeneric,
 } from '../RpcRequest/types.js'
-import type { Compute } from '../types.js'
 import type { RpcResponse } from '../RpcResponse/types.js'
+import type { Compute } from '../types.js'
 
 export type RpcTransport<
   safe extends boolean = false,

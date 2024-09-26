@@ -1,6 +1,6 @@
+import { setTimeout } from 'node:timers/promises'
 import { RpcTransport } from 'ox'
 import { expect, test } from 'vitest'
-import { setTimeout } from 'node:timers/promises'
 import { anvilMainnet } from '../../../test/anvil.js'
 import { createHttpServer } from '../../../test/http.js'
 

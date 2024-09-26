@@ -4,7 +4,7 @@ import type { RpcRequest } from '../RpcRequest/types.js'
 import { RpcResponse_parse } from '../RpcResponse/parse.js'
 import type { RpcResponse } from '../RpcResponse/types.js'
 import type { Compute } from '../types.js'
-import type { RpcTransport_Options, RpcTransport } from './types.js'
+import type { RpcTransport, RpcTransport_Options } from './types.js'
 
 /** @internal */
 export function RpcTransport_create<

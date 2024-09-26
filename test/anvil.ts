@@ -1,4 +1,4 @@
-import { RpcTransport, type RpcRequest } from 'ox'
+import { type RpcRequest, RpcTransport } from 'ox'
 import { createServer } from 'prool'
 import { type AnvilParameters, anvil } from 'prool/instances'
 

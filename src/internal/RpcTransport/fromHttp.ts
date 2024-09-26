@@ -1,15 +1,15 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Promise_withTimeout } from '../Promise/withTimeout.js'
-import type {
-  RpcTransport_Options,
-  RpcTransport_Http,
-  RpcTransport_HttpOptions,
-} from './types.js'
+import { RpcTransport_create } from './create.js'
 import {
   RpcTransport_HttpError,
   RpcTransport_MalformedResponseError,
 } from './errors.js'
-import { RpcTransport_create } from './create.js'
+import type {
+  RpcTransport_Http,
+  RpcTransport_HttpOptions,
+  RpcTransport_Options,
+} from './types.js'
 
 /**
  * Creates a HTTP JSON-RPC Transport from a URL.

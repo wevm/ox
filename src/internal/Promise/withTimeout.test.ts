@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { setTimeout } from 'node:timers/promises'
+import { expect, test } from 'vitest'
 
 import { createHttpServer } from '../../../test/http.js'
 import { Promise_withTimeout } from './withTimeout.js'
