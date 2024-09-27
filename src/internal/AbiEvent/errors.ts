@@ -42,6 +42,36 @@ import type { AbiEvent } from './types.js'
  * // @error:   to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
  * // @error:   value:  1
  * ```
+ *
+ * ### Solution
+ *
+ * The provided arguments need to match the expected arguments.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { AbiEvent } from 'ox'
+ *
+ * const abiEvent = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ * )
+ *
+ * const args = AbiEvent.decode(abiEvent, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+ *   ],
+ * })
+ *
+ * AbiEvent.assertArgs(abiEvent, args, {
+ *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad', // [!code --]
+ *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac', // [!code ++]
+ *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac', // [!code --]
+ *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad', // [!code ++]
+ *   value: 1n,
+ * })
+ * ```
  */
 export class AbiEvent_ArgsMismatchError extends BaseError {
   override readonly name = 'AbiEvent.ArgsMismatchError'
@@ -72,6 +102,7 @@ export class AbiEvent_ArgsMismatchError extends BaseError {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
@@ -88,13 +119,41 @@ export class AbiEvent_ArgsMismatchError extends BaseError {
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
- *   // @ts-expect-error
  *   a: 'b',
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
  *   value: 1n,
  * })
  * // @error: AbiEvent.InputNotFoundError: Parameter "a" not found on `event Transfer(address indexed from, address indexed to, uint256 value)`.
+ * ```
+ *
+ * ### Solution
+ *
+ * Ensure the arguments match the event signature.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { AbiEvent } from 'ox'
+ *
+ * const abiEvent = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ * )
+ *
+ * const args = AbiEvent.decode(abiEvent, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+ *   ],
+ * })
+ *
+ * AbiEvent.assertArgs(abiEvent, args, {
+ *   a: 'b', // [!code --]
+ *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+ *   value: 1n,
+ * })
  * ```
  */
 export class AbiEvent_InputNotFoundError extends BaseError {
@@ -134,6 +193,28 @@ export class AbiEvent_InputNotFoundError extends BaseError {
  * // @error: AbiEvent.DataMismatchError: Data size of 32 bytes is too small for non-indexed event parameters.
  * // @error: Non-indexed Parameters: (address to, uint256 value)
  * // @error: Data:   0x0000000000000000000000000000000000000000000000000000000023c34600 (32 bytes)
+ * ```
+ *
+ * ### Solution
+ *
+ * Ensure that the data size matches the expected size.
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const abiEvent = AbiEvent.from(
+ *   'event Transfer(address indexed from, address to, uint256 value)',
+ *   //                                    ↑ 32 bytes + ↑ 32 bytes = 64 bytes
+ * )
+ *
+ * const args = AbiEvent.decode(abiEvent, {
+ *   data: '0x0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb922660000000000000000000000000000000000000000000000000000000023c34600',
+ *   //       ↑ 64 bytes ✅
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+ *   ],
+ * })
  * ```
  */
 export class AbiEvent_DataMismatchError extends BaseError {
@@ -194,6 +275,28 @@ export class AbiEvent_DataMismatchError extends BaseError {
  * })
  * // @error: AbiEvent.TopicsMismatchError: Expected a topic for indexed event parameter "to" for "event Transfer(address indexed from, address indexed to, uint256 value)".
  * ```
+ *
+ * ### Solution
+ *
+ * Ensure that the topics match the expected number of topics.
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const abiEvent = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ * )
+ *
+ * const args = AbiEvent.decode(abiEvent, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code ++]
+ *   ],
+ * })
+ * ```
+ *
  */
 export class AbiEvent_TopicsMismatchError extends BaseError {
   override readonly name = 'AbiEvent.TopicsMismatchError'
@@ -241,6 +344,27 @@ export class AbiEvent_TopicsMismatchError extends BaseError {
  * // @error: Event: event Transfer(address indexed from, address indexed to, bool sender)
  * // @error: Selector: 0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f
  * ```
+ *
+ * ### Solution
+ *
+ * Ensure that the provided selector matches the selector of the event signature.
+ *
+ * ```ts twoslash
+ * import { AbiEvent } from 'ox'
+ *
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, bool sender)',
+ * )
+ *
+ * AbiEvent.decode(transfer, {
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // [!code --]
+ *     '0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f', // [!code ++]
+ *     '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+ *   ],
+ * })
+ * ```
  */
 export class AbiEvent_SelectorTopicMismatchError extends BaseError {
   override readonly name = 'AbiEvent.SelectorTopicMismatchError'
@@ -280,6 +404,20 @@ export class AbiEvent_SelectorTopicMismatchError extends BaseError {
  * })
  * // @error: AbiEvent.FilterTypeNotSupportedError: Filter type "tuple" is not supported.
  * ```
+ *
+ * ### Solution
+ *
+ * Provide a valid event input type.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { AbiEvent } from 'ox'
+ *
+ * const transfer = AbiEvent.from('event Transfer((string) indexed a, string b)') // [!code --]
+ * const transfer = AbiEvent.from('event Transfer(string indexed a, string b)') // [!code ++]
+ * ```
+ *
+ *
  */
 export class AbiEvent_FilterTypeNotSupportedError extends BaseError {
   override readonly name = 'AbiEvent.FilterTypeNotSupportedError'

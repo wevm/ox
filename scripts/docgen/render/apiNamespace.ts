@@ -100,6 +100,12 @@ export function renderNamespaceErrors(options: {
       : data.displayName
     content.push(`## \`${name}\``)
     content.push(data.comment?.summary ?? 'TODO')
+    if (data.comment?.examples?.length) {
+      content.push('### Examples')
+      for (const example of data.comment?.examples ?? []) {
+        content.push(example)
+      }
+    }
     content.push(
       `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
     )
@@ -173,6 +179,12 @@ export function renderNamespaceGlossary(options: {
 
     content.push(`## \`${data.displayName.replaceAll('_', '.')}\``)
     content.push(data.comment?.summary ?? 'TODO')
+    if (data.comment?.examples?.length) {
+      content.push('### Examples')
+      for (const example of data.comment?.examples ?? []) {
+        content.push(example)
+      }
+    }
   }
 
   return content.join('\n\n')

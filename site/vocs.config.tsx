@@ -30,6 +30,14 @@ export default defineConfig({
   // },
   iconUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   logoUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
+  markdown: {
+    code: {
+      themes: {
+        light: 'vitesse-light',
+        dark: 'vitesse-dark',
+      },
+    },
+  },
   rootDir: '.',
   sidebar: {
     '/': [
