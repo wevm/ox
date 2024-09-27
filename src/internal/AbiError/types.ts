@@ -33,6 +33,9 @@ export type AbiError = abitype_AbiError & {
  *
  *
  *
+ *
+ *
+ *
  * ```
  */
 export type AbiError_Extract<

@@ -34,6 +34,11 @@ export type AbiItem = Abi[number]
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
  * ```
  */
 export type AbiItem_Extract<

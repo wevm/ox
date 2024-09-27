@@ -41,6 +41,10 @@ export type AbiEvent = abitype_AbiEvent & {
  *
  *
  *
+ *
+ *
+ *
+ *
  * ```
  */
 export type AbiEvent_Extract<

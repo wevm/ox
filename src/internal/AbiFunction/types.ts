@@ -37,6 +37,9 @@ export type AbiFunction = abitype_AbiFunction & {
  *
  *
  *
+ *
+ *
+ *
  * ```
  */
 export type AbiFunction_Extract<
