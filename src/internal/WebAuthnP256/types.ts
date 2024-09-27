@@ -2,12 +2,14 @@ import type { Hex } from '../Hex/types.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Compute } from '../types.js'
 
+/** A WebAuthn-flavored P256 credential. */
 export type WebAuthnP256_P256Credential = {
   id: string
   publicKey: PublicKey
   raw: PublicKeyCredential
 }
 
+/** Metadata for a WebAuthn P256 signature. */
 export type WebAuthnP256_SignMetadata = Compute<{
   authenticatorData: Hex
   challengeIndex: number

@@ -2,6 +2,7 @@ import type { Address } from '../Address/types.js'
 import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
 
+/** Base type for a Transaction Envelope. Transaction Envelopes inherit this type. */
 export type TransactionEnvelope_Base<
   type extends string = string,
   signed extends boolean = boolean,
@@ -36,10 +37,12 @@ export type TransactionEnvelope_Base<
   } & (signed extends true ? { r: bigintType; s: bigintType } : {})
 >
 
+/** RPC representation of a {@link ox#TransactionEnvelope.Base}. */
 export type TransactionEnvelope_BaseRpc<
   type extends string = string,
   signed extends boolean = boolean,
 > = TransactionEnvelope_Base<type, signed, Hex, Hex>
 
+/** Signed representation of a {@link ox#TransactionEnvelope.Base}. */
 export type TransactionEnvelope_BaseSigned<type extends string = string> =
   TransactionEnvelope_Base<type, true>

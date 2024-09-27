@@ -1,7 +1,7 @@
 import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
 
-/** ECDSA signature. */
+/** Root type for an ECDSA signature. */
 export type Signature<
   recovered extends boolean = true,
   bigintType = bigint,

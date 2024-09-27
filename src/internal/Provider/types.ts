@@ -8,14 +8,17 @@ import type {
 } from '../RpcRequest/types.js'
 import type { Compute } from '../types.js'
 
+/** Options for a {@link ox#Provider.Provider}. */
 export type Provider_Options = {
   includeEvents: boolean
 }
 
+/** Default options for a {@link ox#Provider.Provider}. */
 export type Provider_OptionsDefault = {
   includeEvents: true
 }
 
+/** Root type for an EIP-1193 Provider. */
 export type Provider<
   options extends Provider_Options = Provider_OptionsDefault,
 > = Compute<
@@ -29,14 +32,17 @@ export type Provider<
     : {})
 >
 
+/** Type for an EIP-1193 Provider's event emitter. */
 export type Provider_Emitter = Compute<EventEmitter<Provider_EventMap>>
 
+/** EIP-1193 Provider's `request` function. */
 export type Provider_RequestFn = <
   method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
 >(
   method: RpcRequest_ExtractMethodParameters<method>,
 ) => Promise<RpcRequest_ExtractMethodReturnType<method>>
 
+/** Type for an EIP-1193 Provider's event listener functions (`on`, `removeListener`, etc). */
 export type Provider_EventListenerFn = <event extends keyof Provider_EventMap>(
   event: event,
   listener: Provider_EventMap[event],

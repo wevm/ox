@@ -14,6 +14,7 @@ export type Filter<bigintType = bigint> = {
   topics?: Filter_Topics | undefined
 }
 
+/** RPC representation of a {@link ox#Filter.Filter}. */
 export type Filter_Rpc = Filter<Hex>
 
 /** Set of Filter topics. */

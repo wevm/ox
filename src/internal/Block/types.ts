@@ -75,6 +75,7 @@ export type Block<
   withdrawalsRoot?: Hex | undefined
 }>
 
+/** A Block hash. */
 export type Block_Hash = Hex
 
 /** A Block number. */

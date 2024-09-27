@@ -1,8 +1,6 @@
 import type { Address } from '../Address/types.js'
 
-/**
- * [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields
- */
+/** [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message fields. */
 export type Siwe_Message = {
   /**
    * The Ethereum address performing the signing.

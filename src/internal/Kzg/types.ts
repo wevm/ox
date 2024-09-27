@@ -1,5 +1,6 @@
 import type { Bytes } from '../Bytes/types.js'
 
+/** Root type for a KZG interface. */
 export type Kzg = {
   /**
    * Convert a blob to a KZG commitment.

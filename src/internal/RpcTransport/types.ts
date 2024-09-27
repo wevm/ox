@@ -7,6 +7,7 @@ import type {
 import type { RpcResponse } from '../RpcResponse/types.js'
 import type { Compute } from '../types.js'
 
+/** Root type for an RPC Transport. */
 export type RpcTransport<
   safe extends boolean = false,
   options extends Record<string, unknown> = {},
@@ -14,6 +15,7 @@ export type RpcTransport<
   request: RpcTransport_RequestFn<safe, options>
 }>
 
+/** HTTP-based RPC Transport. */
 export type RpcTransport_Http<safe extends boolean = false> = RpcTransport<
   safe,
   RpcTransport_HttpOptions
