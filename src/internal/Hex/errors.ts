@@ -2,6 +2,17 @@ import { BaseError } from '../Errors/base.js'
 import type { Hex } from '../Hex/types.js'
 import { Json_stringify } from '../Json/stringify.js'
 
+/**
+ * Thrown when the provided integer is out of range, and cannot be represented as a hex value.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * Hex.fromNumber(420182738912731283712937129)
+ * // @error: Hex.IntegerOutOfRangeError: Number \`4.2018273891273126e+26\` is not in safe unsigned integer range (`0` to `9007199254740991`)
+ * ```
+ */
 export class Hex_IntegerOutOfRangeError extends BaseError {
   override readonly name = 'Hex.IntegerOutOfRangeError'
 
@@ -29,6 +40,18 @@ export class Hex_IntegerOutOfRangeError extends BaseError {
   }
 }
 
+/**
+ * Thrown when the provided hex value cannot be represented as a boolean.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * Hex.toBoolean('0xa')
+ * // @error: Hex.InvalidHexBooleanError: Hex value `"0xa"` is not a valid boolean.
+ * // @error: The hex value must be `"0x0"` (false) or `"0x1"` (true).
+ * ```
+ */
 export class Hex_InvalidHexBooleanError extends BaseError {
   override readonly name = 'Hex.InvalidHexBooleanError'
 
@@ -42,6 +65,17 @@ export class Hex_InvalidHexBooleanError extends BaseError {
   }
 }
 
+/**
+ * Thrown when the provided value is not a valid hex type.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * Hex.assert(1)
+ * // @error: Hex.InvalidHexTypeError: Value `1` of type `number` is an invalid hex type.
+ * ```
+ */
 export class Hex_InvalidHexTypeError extends BaseError {
   override readonly name = 'Hex.InvalidHexTypeError'
 
@@ -56,6 +90,18 @@ export class Hex_InvalidHexTypeError extends BaseError {
   }
 }
 
+/**
+ * Thrown when the provided hex value is invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * Hex.assert('0x0123456789abcdefg')
+ * // @error: Hex.InvalidHexValueError: Value `0x0123456789abcdefg` is an invalid hex value.
+ * // @error: Hex values must start with `"0x"` and contain only hexadecimal characters (0-9, a-f, A-F).
+ * ```
+ */
 export class Hex_InvalidHexValueError extends BaseError {
   override readonly name = 'Hex.InvalidHexValueError'
 
@@ -69,6 +115,17 @@ export class Hex_InvalidHexValueError extends BaseError {
   }
 }
 
+/**
+ * Thrown when the provided hex value is an odd length.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * Bytes.fromHex('0xabcde')
+ * // @error: Hex.InvalidLengthError: Hex value `"0xabcde"` is an odd length (5 nibbles).
+ * ```
+ */
 export class Hex_InvalidLengthError extends BaseError {
   override readonly name = 'Hex.InvalidLengthError'
 
@@ -83,6 +140,17 @@ export class Hex_InvalidLengthError extends BaseError {
   }
 }
 
+/**
+ * Thrown when the size of the value exceeds the expected max size.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * Hex.fromString('Hello World!', { size: 8 })
+ * // @error: Hex.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.
+ * ```
+ */
 export class Hex_SizeOverflowError extends BaseError {
   override readonly name = 'Hex.SizeOverflowError'
 
@@ -96,6 +164,17 @@ export class Hex_SizeOverflowError extends BaseError {
   }
 }
 
+/**
+ * Thrown when the slice offset exceeds the bounds of the value.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * Hex.slice('0x0123456789', 6)
+ * // @error: Hex.SliceOffsetOutOfBoundsError: Slice starting at offset `6` is out-of-bounds (size: `5`).
+ * ```
+ */
 export class Hex_SliceOffsetOutOfBoundsError extends BaseError {
   override readonly name = 'Hex.SliceOffsetOutOfBoundsError'
 
@@ -115,6 +194,17 @@ export class Hex_SliceOffsetOutOfBoundsError extends BaseError {
   }
 }
 
+/**
+ * Thrown when the size of the value exceeds the pad size.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hex } from 'ox'
+ *
+ * Hex.padLeft('0x1a4e12a45a21323123aaa87a897a897a898a6567a578a867a98778a667a85a875a87a6a787a65a675a6a9', 32)
+ * // @error: Hex.SizeExceedsPaddingSizeError: Hex size (`43`) exceeds padding size (`32`).
+ * ```
+ */
 export class Hex_SizeExceedsPaddingSizeError extends BaseError {
   override readonly name = 'Hex.SizeExceedsPaddingSizeError'
 

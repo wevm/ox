@@ -44,7 +44,6 @@ test('exports', () => {
       "Hex_SizeExceedsPaddingSizeError",
       "Hex_SizeOverflowError",
       "Hex_SliceOffsetOutOfBoundsError",
-      "Log_ArgsMismatchError",
       "Provider_IsUndefinedError",
       "PublicKey_InvalidCompressedPrefixError",
       "PublicKey_InvalidError",

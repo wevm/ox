@@ -1,5 +1,6 @@
 import { BaseError } from '../Errors/base.js'
 
+/** Thrown when a WebAuthn P256 credential creation fails. */
 export class WebAuthnP256_CredentialCreationFailedError extends BaseError<Error> {
   override readonly name = 'WebAuthnP256.CredentialCreationFailedError'
 
@@ -10,6 +11,7 @@ export class WebAuthnP256_CredentialCreationFailedError extends BaseError<Error>
   }
 }
 
+/** Thrown when a WebAuthn P256 credential request fails. */
 export class WebAuthnP256_CredentialRequestFailedError extends BaseError<Error> {
   override readonly name = 'WebAuthnP256.CredentialRequestFailedError'
 

@@ -1,5 +1,16 @@
 import { BaseError } from '../Errors/base.js'
 
+/**
+ * Thrown when an address is invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ *
+ * Address.from('0x123')
+ * // @error: Address.InvalidAddressError: Address `0x123` is invalid.
+ * ```
+ */
 export class Address_InvalidAddressError<
   cause extends Address_InvalidInputError | Address_InvalidChecksumError =
     | Address_InvalidInputError
@@ -15,6 +26,7 @@ export class Address_InvalidAddressError<
   }
 }
 
+/** Thrown when an address is not a 20 byte (40 hexadecimal character) value. */
 export class Address_InvalidInputError extends BaseError {
   override readonly name = 'Address.InvalidInputError'
 
@@ -23,6 +35,7 @@ export class Address_InvalidInputError extends BaseError {
   }
 }
 
+/** Thrown when an address does not match its checksum counterpart. */
 export class Address_InvalidChecksumError extends BaseError {
   override readonly name = 'Address.InvalidChecksumError'
 

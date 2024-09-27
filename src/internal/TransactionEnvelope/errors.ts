@@ -3,6 +3,32 @@ import { prettyPrint } from '../Errors/utils.js'
 import type { Hex } from '../Hex/types.js'
 import { Value_formatGwei } from '../Value/formatGwei.js'
 
+/**
+ * Thrown when a transaction type cannot be inferred.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * const tx = TransactionEnvelope.from({
+ *   chainId: 1,
+ * })
+ * // @error: TransactionEnvelope.CannotInferTypeError: Cannot infer a transaction type from provided transaction.
+ * ```
+ *
+ * ### Solution
+ *
+ * Provide a `type` to the transaction, or a property that will infer the type.
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * const tx = TransactionEnvelope.from({
+ *   chainId: 1,
+ *   type: 'eip1559', // [!code ++]
+ * })
+ * ```
+ */
 export class TransactionEnvelope_CannotInferTypeError extends BaseError {
   override readonly name = 'TransactionEnvelope.CannotInferTypeError'
   constructor({ transaction }: { transaction: Record<string, unknown> }) {
@@ -25,6 +51,21 @@ export class TransactionEnvelope_CannotInferTypeError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a fee cap is too high.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * TransactionEnvelope.assert({
+ *   maxFeePerGas: 2n ** 256n - 1n + 1n,
+ *   chainId: 1,
+ *   type: 'eip1559',
+ * })
+ * // @error: TransactionEnvelope.FeeCapTooHighError: The fee cap (`maxFeePerGas`/`maxPriorityFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).
+ * ```
+ */
 export class TransactionEnvelope_FeeCapTooHighError extends BaseError {
   override readonly name = 'TransactionEnvelope.FeeCapTooHighError'
   constructor({
@@ -40,6 +81,21 @@ export class TransactionEnvelope_FeeCapTooHighError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a gas price is too high.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * TransactionEnvelope.assert({
+ *   gasPrice: 2n ** 256n - 1n + 1n,
+ *   chainId: 1,
+ *   type: 'legacy',
+ * })
+ * // @error: TransactionEnvelope.GasPriceTooHighError: The gas price (`gasPrice` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).
+ * ```
+ */
 export class TransactionEnvelope_GasPriceTooHighError extends BaseError {
   override readonly name = 'TransactionEnvelope.GasPriceTooHighError'
   constructor({
@@ -55,6 +111,17 @@ export class TransactionEnvelope_GasPriceTooHighError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a chain ID is invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip1559 } from 'ox'
+ *
+ * TransactionEnvelopeEip1559.assert({ chainId: 0 })
+ * // @error: TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.
+ * ```
+ */
 export class TransactionEnvelope_InvalidChainIdError extends BaseError {
   override readonly name = 'TransactionEnvelope.InvalidChainIdError'
   constructor({ chainId }: { chainId?: number | undefined }) {
@@ -66,6 +133,19 @@ export class TransactionEnvelope_InvalidChainIdError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a serialized transaction is invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip1559 } from 'ox'
+ *
+ * TransactionEnvelopeEip1559.deserialize('0x02c0')
+ * // @error: TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip1559" was provided.
+ * // @error: Serialized Transaction: "0x02c0"
+ * // @error: Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList
+ * ```
+ */
 export class TransactionEnvelope_InvalidSerializedError extends BaseError {
   override readonly name = 'TransactionEnvelope.InvalidSerializedError'
   constructor({
@@ -89,6 +169,18 @@ export class TransactionEnvelope_InvalidSerializedError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a transaction type is not implemented.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { TransactionEnvelope } from 'ox'
+ *
+ * TransactionEnvelope.from({ type: 'foo' })
+ * // @error: TransactionEnvelope.TypeNotImplementedError: The provided transaction type `foo` is not implemented.
+ * ```
+ */
 export class TransactionEnvelope_TypeNotImplementedError extends BaseError {
   override readonly name = 'TransactionEnvelope.TypeNotImplementedError'
   constructor({ type }: { type: string }) {
@@ -96,6 +188,21 @@ export class TransactionEnvelope_TypeNotImplementedError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a tip is higher than a fee cap.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelopeEip1559 } from 'ox'
+ *
+ * TransactionEnvelopeEip1559.assert({
+ *   chainId: 1,
+ *   maxFeePerGas: 10n,
+ *   maxPriorityFeePerGas: 11n,
+ * })
+ * // @error: TransactionEnvelope.TipAboveFeeCapError: The provided tip (`maxPriorityFeePerGas` = 11 gwei) cannot be higher than the fee cap (`maxFeePerGas` = 10 gwei).
+ * ```
+ */
 export class TransactionEnvelope_TipAboveFeeCapError extends BaseError {
   override readonly name = 'TransactionEnvelope.TipAboveFeeCapError'
   constructor({

@@ -2,6 +2,18 @@ import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
 import { Json_stringify } from '../Json/stringify.js'
 
+/**
+ * Thrown when the bytes value cannot be represented as a boolean.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * Bytes.toBoolean(Bytes.from([5]))
+ * // @error: Bytes.InvalidBytesBooleanError: Bytes value `[5]` is not a valid boolean.
+ * // @error: The bytes array must contain a single byte of either a `0` or `1` value.
+ * ```
+ */
 export class Bytes_InvalidBytesBooleanError extends BaseError {
   override readonly name = 'Bytes.InvalidBytesBooleanError'
 
@@ -15,6 +27,17 @@ export class Bytes_InvalidBytesBooleanError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a value cannot be converted to bytes.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * Bytes.from('foo')
+ * // @error: Bytes.InvalidBytesTypeError: Value `foo` of type `string` is an invalid Bytes value.
+ * ```
+ */
 export class Bytes_InvalidBytesTypeError extends BaseError {
   override readonly name = 'Bytes.InvalidBytesTypeError'
 
@@ -29,6 +52,17 @@ export class Bytes_InvalidBytesTypeError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a size exceeds the maximum allowed size.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * Bytes.fromString('Hello World!', { size: 8 })
+ * // @error: Bytes.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.
+ * ```
+ */
 export class Bytes_SizeOverflowError extends BaseError {
   override readonly name = 'Bytes.SizeOverflowError'
 
@@ -42,6 +76,17 @@ export class Bytes_SizeOverflowError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a slice offset is out-of-bounds.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * Bytes.slice(Bytes.from([1, 2, 3]), 4)
+ * // @error: Bytes.SliceOffsetOutOfBoundsError: Slice starting at offset `4` is out-of-bounds (size: `3`).
+ * ```
+ */
 export class Bytes_SliceOffsetOutOfBoundsError extends BaseError {
   override readonly name = 'Bytes.SliceOffsetOutOfBoundsError'
 
@@ -61,6 +106,17 @@ export class Bytes_SliceOffsetOutOfBoundsError extends BaseError {
   }
 }
 
+/**
+ * Thrown when a the padding size exceeds the maximum allowed size.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes } from 'ox'
+ *
+ * Bytes.padLeft(Bytes.fromString('Hello World!'), 8)
+ * // @error: [Bytes.SizeExceedsPaddingSizeError: Bytes size (`12`) exceeds padding size (`8`).
+ * ```
+ */
 export class Bytes_SizeExceedsPaddingSizeError extends BaseError {
   override readonly name = 'Bytes.SizeExceedsPaddingSizeError'
 

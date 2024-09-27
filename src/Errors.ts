@@ -65,8 +65,6 @@ export {
   Hex_SliceOffsetOutOfBoundsError,
 } from './internal/Hex/errors.js'
 
-export { Log_ArgsMismatchError } from './internal/Log/errors.js'
-
 export { Provider_IsUndefinedError } from './internal/Provider/errors.js'
 
 export {

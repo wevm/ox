@@ -5,6 +5,20 @@ import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import { Json_stringify } from '../Json/stringify.js'
 
+/**
+ * Thrown when a public key is invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * PublicKey.assert({ y: 1n })
+ * // @error: PublicKey.InvalidError: Value `{"y":1n}` is not a valid public key.
+ * // @error: Public key must contain:
+ * // @error: - an `x` and `prefix` value (compressed)
+ * // @error: - an `x`, `y`, and `prefix` value (uncompressed)
+ * ```
+ */
 export class PublicKey_InvalidError extends BaseError {
   override readonly name = 'PublicKey.InvalidError'
 
@@ -19,6 +33,7 @@ export class PublicKey_InvalidError extends BaseError {
   }
 }
 
+/** Thrown when a public key has an invalid prefix. */
 export class PublicKey_InvalidPrefixError<
   cause extends
     | PublicKey_InvalidCompressedPrefixError
@@ -35,6 +50,7 @@ export class PublicKey_InvalidPrefixError<
   }
 }
 
+/** Thrown when the public key has an invalid prefix for a compressed public key. */
 export class PublicKey_InvalidCompressedPrefixError extends BaseError {
   override readonly name = 'PublicKey.InvalidCompressedPrefixError'
 
@@ -43,6 +59,7 @@ export class PublicKey_InvalidCompressedPrefixError extends BaseError {
   }
 }
 
+/** Thrown when the public key has an invalid prefix for an uncompressed public key. */
 export class PublicKey_InvalidUncompressedPrefixError extends BaseError {
   override readonly name = 'PublicKey.InvalidUncompressedPrefixError'
 
@@ -51,6 +68,7 @@ export class PublicKey_InvalidUncompressedPrefixError extends BaseError {
   }
 }
 
+/** Thrown when the public key has an invalid serialized size. */
 export class PublicKey_InvalidSerializedSizeError extends BaseError {
   override readonly name = 'PublicKey.InvalidSerializedSizeError'
 

@@ -3,6 +3,7 @@ import { Kzg_versionedHashVersion } from '../Kzg/constants.js'
 
 import { BaseError } from '../Errors/base.js'
 
+/** Thrown when the blob size is too large. */
 export class Blobs_BlobSizeTooLargeError extends BaseError {
   override readonly name = 'Blobs.BlobSizeTooLargeError'
   constructor({ maxSize, size }: { maxSize: number; size: number }) {
@@ -12,6 +13,7 @@ export class Blobs_BlobSizeTooLargeError extends BaseError {
   }
 }
 
+/** Thrown when the blob is empty. */
 export class Blobs_EmptyBlobError extends BaseError {
   override readonly name = 'Blobs.EmptyBlobError'
   constructor() {
@@ -19,6 +21,7 @@ export class Blobs_EmptyBlobError extends BaseError {
   }
 }
 
+/** Thrown when the blob versioned hashes are empty. */
 export class Blobs_EmptyBlobVersionedHashesError extends BaseError {
   override readonly name = 'Blobs.EmptyBlobVersionedHashesError'
   constructor() {
@@ -26,6 +29,7 @@ export class Blobs_EmptyBlobVersionedHashesError extends BaseError {
   }
 }
 
+/** Thrown when the blob versioned hash size is invalid. */
 export class Blobs_InvalidVersionedHashSizeError extends BaseError {
   override readonly name = 'Blobs.InvalidVersionedHashSizeError'
   constructor({
@@ -41,6 +45,7 @@ export class Blobs_InvalidVersionedHashSizeError extends BaseError {
   }
 }
 
+/** Thrown when the blob versioned hash version is invalid. */
 export class Blobs_InvalidVersionedHashVersionError extends BaseError {
   override readonly name = 'Blobs.InvalidVersionedHashVersionError'
   constructor({

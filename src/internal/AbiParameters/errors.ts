@@ -3,6 +3,31 @@ import { BaseError } from '../Errors/base.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 
+/**
+ * Throws when the data size is too small for the given parameters.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * AbiParameters.decode([{ type: 'uint256' }], '0x010f')
+ * //                                             ↑ ❌ 2 bytes
+ * // @error: AbiParameters.DataSizeTooSmallError: Data size of 2 bytes is too small for given parameters.
+ * // @error: Params: (uint256)
+ * // @error: Data:   0x010f (2 bytes)
+ * ```
+ *
+ * ### Solution
+ *
+ * Pass a valid data size.
+ *
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * AbiParameters.decode([{ type: 'uint256' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * //                                             ↑ ✅ 32 bytes
+ * ```
+ */
 export class AbiParameters_DataSizeTooSmallError extends BaseError {
   override readonly name = 'AbiParameters.DataSizeTooSmallError'
   constructor({
@@ -19,6 +44,31 @@ export class AbiParameters_DataSizeTooSmallError extends BaseError {
   }
 }
 
+/**
+ * Throws when zero data is provided, but data is expected.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * AbiParameters.decode([{ type: 'uint256' }], '0x')
+ * //                                           ↑ ❌ zero data
+ * // @error: AbiParameters.DataSizeTooSmallError: Data size of 2 bytes is too small for given parameters.
+ * // @error: Params: (uint256)
+ * // @error: Data:   0x010f (2 bytes)
+ * ```
+ *
+ * ### Solution
+ *
+ * Pass valid data.
+ *
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * AbiParameters.decode([{ type: 'uint256' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * //                                             ↑ ✅ 32 bytes
+ * ```
+ */
 export class AbiParameters_ZeroDataError extends BaseError {
   override readonly name = 'AbiParameters.ZeroDataError'
   constructor() {
@@ -49,7 +99,7 @@ export class AbiParameters_ZeroDataError extends BaseError {
  * import { AbiParameters } from 'ox'
  * // ---cut---
  * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [[69n, 420n, 69n]])
- * //                                   ↑ ✅ length: 3
+ * //                                                         ↑ ✅ length: 3
  * ```
  */
 export class AbiParameters_ArrayLengthMismatchError extends BaseError {
@@ -175,6 +225,18 @@ export class AbiParameters_InvalidArrayError extends BaseError {
   }
 }
 
+/**
+ * Throws when the ABI parameter type is invalid.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiParameters } from 'ox'
+ *
+ * AbiParameters.decode([{ type: 'lol' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * //                             ↑ ❌ invalid type
+ * // @error: AbiParameters.InvalidTypeError: Type `lol` is not a valid ABI Type.
+ * ```
+ */
 export class AbiParameters_InvalidTypeError extends BaseError {
   override readonly name = 'AbiParameters.InvalidTypeError'
   constructor(type: string) {
