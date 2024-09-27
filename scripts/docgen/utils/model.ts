@@ -87,7 +87,7 @@ export function createDataLookup(apiItem: model.ApiItem) {
       ...extractChildren(apiItem),
       canonicalReference: apiItem.canonicalReference.toString(),
       comment,
-      description: comment?.summary.split('\n')[0]?.trim() ?? 'TODO',
+      description: comment?.summary.split('\n')[0]?.trim() ?? '',
       displayName: apiItem.displayName,
       excerpt: apiItem.excerpt.text,
       file: {

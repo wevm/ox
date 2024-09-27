@@ -12,16 +12,56 @@ import type {
 import type { Hex } from '../Hex/types.js'
 import type { TypeErrorMessage } from '../types.js'
 
+/** Root type for an {@link ox#AbiItem.AbiItem} with a `function` type. */
 export type AbiFunction = abitype_AbiFunction & {
   hash?: Hex | undefined
   overloads?: readonly AbiFunction[] | undefined
 }
 
+/**
+ * Extracts an {@link ox#AbiFunction.AbiFunction} item from an {@link ox#Abi.Abi}, given a name.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo(string)',
+ *   'function bar(uint256)',
+ * ])
+ *
+ * type Foo = AbiFunction.Extract<typeof abi, 'foo'>
+ * //   ^?
+ *
+ *
+ *
+ *
+ *
+ * ```
+ */
 export type AbiFunction_Extract<
   abi extends Abi,
   name extends AbiFunction_ExtractNames<abi>,
 > = ExtractAbiFunction<abi, name>
 
+/**
+ * Extracts the names of all {@link ox#AbiFunction.AbiFunction} items in an {@link ox#Abi.Abi}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo(string)',
+ *   'function bar(uint256)',
+ * ])
+ *
+ * type names = AbiFunction.Name<typeof abi>
+ * //   ^?
+ *
+ *
+ * ```
+ */
 export type AbiFunction_Name<abi extends Abi | readonly unknown[] = Abi> =
   abi extends Abi ? AbiFunction_ExtractNames<abi> : string
 

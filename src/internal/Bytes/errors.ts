@@ -32,6 +32,7 @@ export class Bytes_InvalidBytesBooleanError extends BaseError {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Bytes } from 'ox'
  *
  * Bytes.from('foo')

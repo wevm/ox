@@ -37,7 +37,7 @@ const rlp = Rlp.fromHex([Hex.fromString('hello'), Hex.fromString('world')])
 ```
 
 :::tip
-Using [Named Imports](#TODO) aligns closer with Ox's philosophy of module-driven Standard Library development, which enables categorical grouping of utilities and intuitive editor autocompletion. This does not compromise on tree-shakability and application bundle size.
+Using [Named Imports](/imports#named-imports) aligns closer with Ox's philosophy of module-driven Standard Library development, which enables categorical grouping of utilities and intuitive editor autocompletion. This does not compromise on tree-shakability and application bundle size.
 :::
 
 ## How to Read These Docs

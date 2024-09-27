@@ -5,6 +5,7 @@ import type {
 } from '../AbiItem/types.js'
 import type { TypeErrorMessage } from '../types.js'
 
+/** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
 export type AbiConstructor = abitype_AbiConstructor
 
 /////////////////////////////////////////////////////////////////////////////////

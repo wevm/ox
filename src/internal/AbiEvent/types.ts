@@ -17,16 +17,53 @@ import type {
   UnionToIntersection,
 } from '../types.js'
 
+/** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
 export type AbiEvent = abitype_AbiEvent & {
   hash?: Hex | undefined
   overloads?: readonly AbiEvent[] | undefined
 }
 
+/**
+ * Extracts an {@link ox#AbiEvent.AbiEvent} item from an {@link ox#Abi.Abi}, given a name.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Foo(string)',
+ *   'event Bar(uint256)',
+ * ])
+ *
+ * type Foo = AbiEvent.Extract<typeof abi, 'Foo'>
+ * //   ^?
+ *
+ *
+ *
+ *
+ * ```
+ */
 export type AbiEvent_Extract<
   abi extends Abi,
   name extends AbiEvent_ExtractNames<abi>,
 > = ExtractAbiEvent<abi, name>
 
+/**
+ * Extracts the names of all {@link ox#AbiError.AbiError} items in an {@link ox#Abi.Abi}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Foo(string)',
+ *   'event Bar(uint256)',
+ * ])
+ *
+ * type names = AbiEvent.Name<typeof abi>
+ * //   ^?
+ * ```
+ */
 export type AbiEvent_Name<abi extends Abi | readonly unknown[] = Abi> =
   abi extends Abi ? AbiEvent_ExtractNames<abi> : string
 

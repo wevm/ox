@@ -13,13 +13,52 @@ import type {
   UnionToTuple,
 } from '../types.js'
 
+/** Root type for an item on an {@link ox#Abi.Abi}. */
 export type AbiItem = Abi[number]
 
+/**
+ * Extracts an {@link ox#AbiItem.AbiItem} item from an {@link ox#Abi.Abi}, given a name.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error Foo(string)',
+ *   'function foo(string)',
+ *   'event Bar(uint256)',
+ * ])
+ *
+ * type Foo = AbiItem.Extract<typeof abi, 'Foo'>
+ * //   ^?
+ *
+ *
+ *
+ * ```
+ */
 export type AbiItem_Extract<
   abi extends Abi,
   name extends AbiItem_ExtractNames<abi>,
 > = Extract<abi[number], { name: name }>
 
+/**
+ * Extracts the names of all {@link ox#AbiItem.AbiItem} items in an {@link ox#Abi.Abi}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error Foo(string)',
+ *   'function foo(string)',
+ *   'event Bar(uint256)',
+ * ])
+ *
+ * type names = AbiItem.Name<typeof abi>
+ * //   ^?
+ *
+ * ```
+ */
 export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
   abi extends Abi ? AbiItem_ExtractNames<abi> : string
 

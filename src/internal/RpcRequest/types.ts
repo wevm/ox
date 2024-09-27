@@ -69,12 +69,12 @@ export type RpcRequest_ExtractMethodReturnType<
  * ```ts twoslash
  * import { RpcRequest } from 'ox'
  *
- * const Eth_Foobar = RpcRequest.DefineMethod<{
+ * type Eth_Foobar = RpcRequest.DefineMethod<{
  *   method: 'eth_foobar',
  *   params: [id: number],
  *   returnType: string
  * }>
- * const request = RpcRequest.defineRequest<Eth_Foobar>({
+ * const request = RpcRequest.from<Eth_Foobar>({
  *   id: 0,
  *   method: 'eth_foobar',
  *   params: [0],

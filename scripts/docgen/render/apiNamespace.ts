@@ -99,7 +99,7 @@ export function renderNamespaceErrors(options: {
       ? `${apiItem.parent.displayName}.${data.displayName}`
       : data.displayName
     content.push(`## \`${name}\``)
-    content.push(data.comment?.summary ?? 'TODO')
+    content.push(data.comment?.summary ?? '')
     if (data.comment?.examples?.length) {
       content.push('### Examples')
       for (const example of data.comment?.examples ?? []) {
@@ -132,7 +132,13 @@ export function renderNamespaceTypes(options: {
       ? `${apiItem.parent.displayName}.${data.displayName}`
       : data.displayName
     content.push(`## \`${name}\``)
-    content.push(data.comment?.summary ?? 'TODO')
+    content.push(data.comment?.summary ?? '')
+    if (data.comment?.examples?.length) {
+      content.push('### Examples')
+      for (const example of data.comment?.examples ?? []) {
+        content.push(example)
+      }
+    }
     content.push(
       `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
     )
@@ -178,7 +184,7 @@ export function renderNamespaceGlossary(options: {
     if (!data) throw new Error(`Could not find glossary data for ${id}`)
 
     content.push(`## \`${data.displayName.replaceAll('_', '.')}\``)
-    content.push(data.comment?.summary ?? 'TODO')
+    content.push(data.comment?.summary ?? '')
     if (data.comment?.examples?.length) {
       content.push('### Examples')
       for (const example of data.comment?.examples ?? []) {

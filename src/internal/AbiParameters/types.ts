@@ -6,7 +6,10 @@ import type {
 } from 'abitype'
 import type { Compute, IsNarrowable, UnionToIntersection } from '../types.js'
 
+/** Root type for ABI parameters. */
 export type AbiParameters = readonly AbiParameter[]
+
+/** A parameter on an {@link ox#AbiParameters.AbiParameters}. */
 export type AbiParameters_Parameter = AbiParameter
 
 /////////////////////////////////////////////////////////////////////////////////
