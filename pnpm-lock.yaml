@@ -174,8 +174,8 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
       vocs:
-        specifier: 1.0.0-alpha.60
-        version: 1.0.0-alpha.60(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4)
+        specifier: 1.0.0-alpha.61
+        version: 1.0.0-alpha.61(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4)
 
   src:
     dependencies:
@@ -4962,8 +4962,8 @@ packages:
       jsdom:
         optional: true
 
-  vocs@1.0.0-alpha.60:
-    resolution: {integrity: sha512-WrCDa6s7qcwhqOC2M8xCe1ezmOhOV0aF/l3jPx/SBXP25AZHR0Be07YEIeZcQRicYTZcIwK/Pq/ciWybwOedZg==}
+  vocs@1.0.0-alpha.61:
+    resolution: {integrity: sha512-3lyuyRAqoeZ8cY5H16Knd3NXbSXXWYBLkkxkDoSFYslBekpuvotdsx8/47bKAGYJiX403XopkUcyWx2tnFYdnA==}
     hasBin: true
     peerDependencies:
       react: ^18.2.0
@@ -10661,7 +10661,7 @@ snapshots:
       - supports-color
       - terser
 
-  vocs@1.0.0-alpha.60(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4):
+  vocs@1.0.0-alpha.61(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.20.0)(terser@5.31.5)(typescript@5.5.4):
     dependencies:
       '@floating-ui/react': 0.26.22(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@hono/node-server': 1.12.0
