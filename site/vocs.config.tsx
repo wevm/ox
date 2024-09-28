@@ -50,19 +50,42 @@ export default defineConfig({
         text: 'Guides',
         // collapsed: true,
         items: [
+          { text: 'AES-GCM Encryption 🚧', link: '/guides/encryption' },
           { text: 'Applications of ABIs 🚧', link: '/guides/abis' },
           { text: 'Applications of RLP 🚧', link: '/guides/rlp' },
           { text: 'Bytes & Hex Manipulation 🚧', link: '/guides/bytes-hex' },
+          { text: 'ECDSA & Signers 🚧', link: '/guides/ecdsa' },
           {
-            text: 'Constructing EIP-4844 Blobs 🚧',
-            link: '/guides/eip-4844-blobs',
+            text: 'EIP-1193 Providers 🚧',
+            link: '/guides/eip-1193',
           },
-          { text: 'Secp256k1 Signatures 🚧', link: '/guides/secp256k1' },
           {
-            text: 'Serializing Transactions 🚧',
+            text: 'EIP-4844 Blob Transactions 🚧',
+            link: '/guides/eip-4844',
+          },
+          {
+            text: 'EIP-7702 Auth Transactions 🚧',
+            link: '/guides/eip-7702',
+          },
+          { text: 'ENS 🚧', link: '/guides/ens' },
+          { text: 'JSON-RPC & Execution API 🚧', link: '/guides/json-rpc' },
+          {
+            text: 'Sign-In With Ethereum (SIWE) 🚧',
+            link: '/guides/siwe',
+          },
+          {
+            text: 'Signed Data (EIP-191) 🚧',
+            link: '/guides/signed-data',
+          },
+          {
+            text: 'Transaction Envelopes 🚧',
             link: '/guides/transaction-envelopes',
           },
-          { text: 'WebAuthn Signatures 🚧', link: '/guides/webauthn' },
+          {
+            text: 'Typed Data (EIP-712) 🚧',
+            link: '/guides/typed-data',
+          },
+          { text: 'WebAuthn Signers 🚧', link: '/guides/webauthn' },
           { text: 'Using with Effect 🚧', link: '/guides/effect' },
           { text: 'Using with NeverThrow 🚧', link: '/guides/neverthrow' },
           {
