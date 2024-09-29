@@ -60,6 +60,10 @@ export default defineConfig({
             link: '/guides/eip-1193',
           },
           {
+            text: 'EIP-1559 Transactions 🚧',
+            link: '/guides/eip-1559',
+          },
+          {
             text: 'EIP-4844 Blob Transactions 🚧',
             link: '/guides/eip-4844',
           },
