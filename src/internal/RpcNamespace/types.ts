@@ -5,8 +5,8 @@ import type {
 } from './eth.js'
 import type {
   RpcNamespace_MethodNameWallet,
-  RpcNamespace_MethodsWallet,
   RpcNamespace_MethodWallet,
+  RpcNamespace_MethodsWallet,
 } from './wallet.js'
 
 /** Extracts a method from a {@link ox#RpcNamespace.MethodGeneric} or {@link ox#RpcNamespace.MethodNameGeneric}. */

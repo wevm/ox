@@ -1,12 +1,12 @@
 import type { EventEmitter } from 'eventemitter3'
 import type { Address } from '../Address/types.js'
-import type { Compute } from '../types.js'
 import type {
   RpcNamespace_ExtractMethodParameters,
   RpcNamespace_ExtractMethodReturnType,
   RpcNamespace_MethodGeneric,
   RpcNamespace_MethodNameGeneric,
 } from '../RpcNamespace/types.js'
+import type { Compute } from '../types.js'
 
 /** Options for a {@link ox#Provider.Provider}. */
 export type Provider_Options = {
