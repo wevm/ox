@@ -1,12 +1,12 @@
 import type { EventEmitter } from 'eventemitter3'
 import type { Address } from '../Address/types.js'
-import type {
-  RpcRequest_ExtractMethodParameters,
-  RpcRequest_ExtractMethodReturnType,
-  RpcRequest_MethodGeneric,
-  RpcRequest_MethodNameGeneric,
-} from '../RpcRequest/types.js'
 import type { Compute } from '../types.js'
+import type {
+  RpcNamespace_ExtractMethodParameters,
+  RpcNamespace_ExtractMethodReturnType,
+  RpcNamespace_MethodGeneric,
+  RpcNamespace_MethodNameGeneric,
+} from '../RpcNamespace/types.js'
 
 /** Options for a {@link ox#Provider.Provider}. */
 export type Provider_Options = {
@@ -37,10 +37,10 @@ export type Provider_Emitter = Compute<EventEmitter<Provider_EventMap>>
 
 /** EIP-1193 Provider's `request` function. */
 export type Provider_RequestFn = <
-  method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
+  method extends RpcNamespace_MethodGeneric | RpcNamespace_MethodNameGeneric,
 >(
-  method: RpcRequest_ExtractMethodParameters<method>,
-) => Promise<RpcRequest_ExtractMethodReturnType<method>>
+  method: RpcNamespace_ExtractMethodParameters<method>,
+) => Promise<RpcNamespace_ExtractMethodReturnType<method>>
 
 /** Type for an EIP-1193 Provider's event listener functions (`on`, `removeListener`, etc). */
 export type Provider_EventListenerFn = <event extends keyof Provider_EventMap>(

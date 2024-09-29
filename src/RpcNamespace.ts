@@ -1,0 +1,34 @@
+export type {
+  RpcNamespace_DefineMethod as DefineMethod,
+  RpcNamespace_ExtractMethod as ExtractMethod,
+  RpcNamespace_ExtractMethodParameters as ExtractMethodParameters,
+  RpcNamespace_ExtractMethodReturnType as ExtractMethodReturnType,
+  RpcNamespace_Method as Method,
+  RpcNamespace_MethodGeneric as MethodGeneric,
+  RpcNamespace_MethodName as MethodName,
+  RpcNamespace_MethodNameGeneric as MethodNameGeneric,
+  RpcNamespace_Methods as Methods,
+} from './internal/RpcNamespace/types.js'
+
+export type {
+  RpcNamespace_MethodEth as MethodEth,
+  RpcNamespace_MethodNameEth as MethodNameEth,
+  RpcNamespace_MethodsEth as MethodsEth,
+} from './internal/RpcNamespace/eth.js'
+
+export type {
+  RpcNamespace_MethodNameWallet as MethodNameWallet,
+  RpcNamespace_MethodWallet as MethodWallet,
+  RpcNamespace_MethodsWallet as MethodsWallet,
+  RpcNamespace_WalletAddEthereumChainParameters as WalletAddEthereumChainParameters,
+  RpcNamespace_WalletCallReceipt as WalletCallReceipt,
+  RpcNamespace_WalletCapabilities as WalletCapabilities,
+  RpcNamespace_WalletCapabilitiesMap as WalletCapabilitiesMap,
+  RpcNamespace_WalletGetCallsStatusReturnType as WalletGetCallsStatusReturnType,
+  RpcNamespace_WalletGrantPermissionsParameters as WalletGrantPermissionsParameters,
+  RpcNamespace_WalletGrantPermissionsReturnType as WalletGrantPermissionsReturnType,
+  RpcNamespace_WalletPermission as WalletPermission,
+  RpcNamespace_WalletPermissionCaveat as WalletPermissionCaveat,
+  RpcNamespace_WalletSendCallsParameters as WalletSendCallsParameters,
+  RpcNamespace_WalletWatchAssetParameters as WalletWatchAssetParameters,
+} from './internal/RpcNamespace/wallet.js'

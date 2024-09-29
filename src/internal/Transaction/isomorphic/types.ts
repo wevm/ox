@@ -92,6 +92,7 @@ export type Transaction_Type =
   | TransactionEip2930_Type
   | TransactionEip4844_Type
   | TransactionEip7702_Type
+  | (string & {})
 
 /**
  * Union of RPC Transaction types.
@@ -109,3 +110,4 @@ export type Transaction_TypeRpc =
   | TransactionEip2930_TypeRpc
   | TransactionEip4844_TypeRpc
   | TransactionEip7702_TypeRpc
+  | (string & {})

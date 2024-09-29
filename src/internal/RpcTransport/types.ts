@@ -1,9 +1,9 @@
 import type {
-  RpcRequest_ExtractMethodParameters,
-  RpcRequest_ExtractMethodReturnType,
-  RpcRequest_MethodGeneric,
-  RpcRequest_MethodNameGeneric,
-} from '../RpcRequest/types.js'
+  RpcNamespace_ExtractMethodParameters,
+  RpcNamespace_ExtractMethodReturnType,
+  RpcNamespace_MethodGeneric,
+  RpcNamespace_MethodNameGeneric,
+} from '../RpcNamespace/types.js'
 import type { RpcResponse } from '../RpcResponse/types.js'
 import type { Compute } from '../types.js'
 
@@ -45,7 +45,7 @@ export type RpcTransport_HttpOptions = {
   fetchOptions?:
     | Omit<RequestInit, 'body'>
     | ((
-        method: Omit<RpcRequest_MethodGeneric, 'returnType'>,
+        method: Omit<RpcNamespace_MethodGeneric, 'returnType'>,
       ) => Omit<RequestInit, 'body'> | Promise<Omit<RequestInit, 'body'>>)
     | undefined
   /** Function to use to make the request. @default fetch */
@@ -62,17 +62,17 @@ export type RpcTransport_RequestFn<
   safe extends boolean = false,
   options extends Record<string, unknown> = {},
 > = <
-  method extends RpcRequest_MethodGeneric | RpcRequest_MethodNameGeneric,
+  method extends RpcNamespace_MethodGeneric | RpcNamespace_MethodNameGeneric,
   safe_override extends boolean | undefined = undefined,
 >(
-  method: RpcRequest_ExtractMethodParameters<method>,
+  method: RpcNamespace_ExtractMethodParameters<method>,
   options?: RpcTransport_Options<safe_override, options> | undefined,
 ) => Promise<
   safe_override extends boolean
     ? safe_override extends true
-      ? RpcResponse<RpcRequest_ExtractMethodReturnType<method>>
-      : RpcRequest_ExtractMethodReturnType<method>
+      ? RpcResponse<RpcNamespace_ExtractMethodReturnType<method>>
+      : RpcNamespace_ExtractMethodReturnType<method>
     : safe extends true
-      ? RpcResponse<RpcRequest_ExtractMethodReturnType<method>>
-      : RpcRequest_ExtractMethodReturnType<method>
+      ? RpcResponse<RpcNamespace_ExtractMethodReturnType<method>>
+      : RpcNamespace_ExtractMethodReturnType<method>
 >

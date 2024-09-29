@@ -1,21 +1,21 @@
-import type { AccountProof_Rpc } from '../../AccountProof/types.js'
-import type { Address } from '../../Address/types.js'
+import type { AccountProof_Rpc } from '../AccountProof/types.js'
+import type { Address } from '../Address/types.js'
 import type {
   Block_Hash,
   Block_Number,
   Block_Rpc,
   Block_Tag,
-} from '../../Block/types.js'
-import type { FeeHistoryRpc } from '../../Fee/types.js'
-import type { Filter_Rpc } from '../../Filter/types.js'
-import type { Hex } from '../../Hex/types.js'
-import type { Log_Rpc } from '../../Log/types.js'
-import type { Transaction_Rpc } from '../../Transaction/isomorphic/types.js'
-import type { TransactionReceipt_Rpc } from '../../TransactionReceipt/types.js'
-import type { ExactPartial } from '../../types.js'
+} from '../Block/types.js'
+import type { FeeHistoryRpc } from '../Fee/types.js'
+import type { Filter_Rpc } from '../Filter/types.js'
+import type { Hex } from '../Hex/types.js'
+import type { Log_Rpc } from '../Log/types.js'
+import type { Transaction_Rpc } from '../Transaction/isomorphic/types.js'
+import type { TransactionReceipt_Rpc } from '../TransactionReceipt/types.js'
+import type { TransactionRequest_Rpc } from '../TransactionRequest/types.js'
 
 /** Set of all JSON-RPC Methods for the `eth_` namespace. */
-export type RpcRequest_MethodsEth = [
+export type RpcNamespace_MethodsEth = [
   /**
    * Returns a list of addresses owned by this client
    *
@@ -69,13 +69,13 @@ export type RpcRequest_MethodsEth = [
   {
     method: 'eth_call'
     params:
-      | [transaction: ExactPartial<Transaction_Rpc>]
+      | [transaction: TransactionRequest_Rpc]
       | [
-          transaction: ExactPartial<Transaction_Rpc>,
+          transaction: TransactionRequest_Rpc,
           block: Block_Number<Hex> | Block_Tag | Block_Hash,
         ]
       | [
-          transaction: ExactPartial<Transaction_Rpc>,
+          transaction: TransactionRequest_Rpc,
           block: Block_Number<Hex> | Block_Tag | Block_Hash,
           // TODO: add type
           stateOverride: unknown,
@@ -125,13 +125,13 @@ export type RpcRequest_MethodsEth = [
   {
     method: 'eth_estimateGas'
     params:
-      | [transaction: ExactPartial<Transaction_Rpc>]
+      | [transaction: TransactionRequest_Rpc]
       | [
-          transaction: ExactPartial<Transaction_Rpc>,
+          transaction: TransactionRequest_Rpc,
           block: Block_Number<Hex> | Block_Tag | Block_Hash,
         ]
       | [
-          transaction: ExactPartial<Transaction_Rpc>,
+          transaction: TransactionRequest_Rpc,
           block: Block_Number<Hex> | Block_Tag | Block_Hash,
           // TODO: add type
           stateOverride: unknown,
@@ -414,6 +414,7 @@ export type RpcRequest_MethodsEth = [
   /**
    * Returns the number of transactions sent from an address
    *
+   * @example
    * ```
    * request({ method: 'eth_getTransactionCount', params: ['0x...', 'latest'] })
    * // '0x1'
@@ -578,7 +579,7 @@ export type RpcRequest_MethodsEth = [
    */
   {
     method: 'eth_sendTransaction'
-    params: [transaction: ExactPartial<Transaction_Rpc>]
+    params: [transaction: TransactionRequest_Rpc]
     returnType: Hex
   },
   /**
@@ -592,7 +593,7 @@ export type RpcRequest_MethodsEth = [
    */
   {
     method: 'eth_signTransaction'
-    params: [request: ExactPartial<Transaction_Rpc>]
+    params: [request: TransactionRequest_Rpc]
     returnType: Hex
   },
   /**
@@ -631,7 +632,7 @@ export type RpcRequest_MethodsEth = [
 ]
 
 /** Union of all JSON-RPC Methods for the `eth_` namespace. */
-export type RpcRequest_MethodEth = RpcRequest_MethodsEth[number]
+export type RpcNamespace_MethodEth = RpcNamespace_MethodsEth[number]
 
 /** Union of all JSON-RPC Method Names for the `eth_` namespace. */
-export type RpcRequest_MethodNameEth = RpcRequest_MethodEth['method']
+export type RpcNamespace_MethodNameEth = RpcNamespace_MethodEth['method']

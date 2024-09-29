@@ -1654,6 +1654,13 @@ export * as PublicKey from './PublicKey.js'
 export * as Rlp from './Rlp.js'
 
 /**
+ * Utility types for working with Ethereum JSON-RPC namespaces.
+ *
+ * @category JSON-RPC
+ */
+export * as RpcNamespace from './RpcNamespace.js'
+
+/**
  * Utility types & functions for working with [JSON-RPC 2.0 Requests](https://www.jsonrpc.org/specification#request_object) and Ethereum JSON-RPC methods as
  * defined on the [Ethereum API specification](https://github.com/ethereum/execution-apis)
  *
@@ -3020,6 +3027,13 @@ export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
  * @category Execution API
  */
 export * as TransactionReceipt from './TransactionReceipt.js'
+
+/**
+ * Utilities & types for working with **Transaction Requests** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423)
+ *
+ * @category Execution API
+ */
+export * as TransactionRequest from './TransactionRequest.js'
 
 /**
  * Utility functions for working with [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712)
