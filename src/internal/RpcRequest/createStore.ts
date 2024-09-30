@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import type { RpcNamespace_MethodGeneric } from '../RpcNamespace/types.js'
+import type { RpcSchema_Generic } from '../RpcSchema/types.js'
 import { RpcRequest_from } from './from.js'
 import type { RpcRequest_Store } from './types.js'
 
@@ -34,12 +34,12 @@ import type { RpcRequest_Store } from './types.js'
  * @example
  * ### Type-safe Custom Methods
  *
- * It is possible to define your own type-safe {@link ox#RpcNamespace.Method} by using the {@link ox#RpcNamespace.DefineMethod} type.
+ * It is possible to define your own type-safe namespace by using the {@link ox#RpcSchema.Define} type.
  *
  * ```ts twoslash
- * import { RpcNamespace, RpcRequest } from 'ox'
+ * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Method = RpcNamespace.DefineMethod<{ // [!code focus]
+ * type Method = RpcSchema.Define<{ // [!code focus]
  *   method: 'eth_foobar' // [!code focus]
  *   params: [number] // [!code focus]
  *   returnType: string // [!code focus]
@@ -62,7 +62,7 @@ import type { RpcRequest_Store } from './types.js'
  * @returns The request store
  */
 export function RpcRequest_createStore<
-  method extends RpcNamespace_MethodGeneric | undefined = undefined,
+  method extends RpcSchema_Generic | undefined = undefined,
 >(
   options: RpcRequest_createStore.Options = {},
 ): RpcRequest_createStore.ReturnType<method> {
@@ -86,7 +86,7 @@ export declare namespace RpcRequest_createStore {
     id?: number
   }
 
-  type ReturnType<method extends RpcNamespace_MethodGeneric | undefined> =
+  type ReturnType<method extends RpcSchema_Generic | undefined> =
     RpcRequest_Store<method>
 
   type ErrorType = GlobalErrorType

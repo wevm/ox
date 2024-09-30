@@ -40,7 +40,7 @@ test('exports', () => {
       "Provider",
       "PublicKey",
       "Rlp",
-      "RpcNamespace",
+      "RpcSchema",
       "RpcRequest",
       "RpcResponse",
       "RpcTransport",

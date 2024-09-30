@@ -1654,11 +1654,11 @@ export * as PublicKey from './PublicKey.js'
 export * as Rlp from './Rlp.js'
 
 /**
- * Utility types for working with Ethereum JSON-RPC namespaces.
+ * Utility types for working with Ethereum JSON-RPC namespaces & schemas.
  *
  * @category JSON-RPC
  */
-export * as RpcNamespace from './RpcNamespace.js'
+export * as RpcSchema from './RpcSchema.js'
 
 /**
  * Utility types & functions for working with [JSON-RPC 2.0 Requests](https://www.jsonrpc.org/specification#request_object) and Ethereum JSON-RPC methods as

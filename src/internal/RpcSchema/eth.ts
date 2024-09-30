@@ -14,8 +14,31 @@ import type { Transaction_Rpc } from '../Transaction/isomorphic/types.js'
 import type { TransactionReceipt_Rpc } from '../TransactionReceipt/types.js'
 import type { TransactionRequest_Rpc } from '../TransactionRequest/types.js'
 
-/** Set of all JSON-RPC Methods for the `eth_` namespace. */
-export type RpcNamespace_MethodsEth = [
+/**
+ * Union of all JSON-RPC Methods for the `eth_` namespace.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ *
+ * type Method = RpcSchema.Eth
+ * //   ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ */
+export type RpcSchema_Eth = [
   /**
    * Returns a list of addresses owned by this client
    *
@@ -629,10 +652,25 @@ export type RpcNamespace_MethodsEth = [
     params: [filterId: Hex]
     returnType: boolean
   },
-]
+][number]
 
-/** Union of all JSON-RPC Methods for the `eth_` namespace. */
-export type RpcNamespace_MethodEth = RpcNamespace_MethodsEth[number]
-
-/** Union of all JSON-RPC Method Names for the `eth_` namespace. */
-export type RpcNamespace_MethodNameEth = RpcNamespace_MethodEth['method']
+/**
+ * Union of all JSON-RPC Method Names for the `eth_` namespace.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ *
+ * type Name = RpcSchema.NameEth
+ * //   ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ */
+export type RpcSchema_NameEth = RpcSchema_Eth['method']

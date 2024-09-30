@@ -1,37 +1,38 @@
 import type {
-  RpcNamespace_ExtractMethodParameters,
-  RpcNamespace_MethodGeneric,
-  RpcNamespace_MethodNameGeneric,
-} from '../RpcNamespace/types.js'
+  RpcSchema_Extract,
+  RpcSchema_Generic,
+  RpcSchema_NameGeneric,
+} from '../RpcSchema/types.js'
 import type { Compute } from '../types.js'
 import type { RpcRequest_from } from './from.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
-export type RpcRequest<
-  method extends RpcNamespace_MethodGeneric = RpcNamespace_MethodGeneric,
-> = Compute<
-  Omit<method, 'returnType'> & {
-    id: number
-    jsonrpc: '2.0'
-    /** @deprecated */
-    _returnType: method['returnType']
-  }
->
+export type RpcRequest<method extends RpcSchema_Generic = RpcSchema_Generic> =
+  Compute<
+    Omit<method, 'returnType'> & {
+      id: number
+      jsonrpc: '2.0'
+      /** @deprecated internal */
+      _returnType: method['returnType']
+    }
+  >
 
 /** JSON-RPC request store type. */
-export type RpcRequest_Store<
-  method extends RpcNamespace_MethodGeneric | undefined,
-> = Compute<{
-  prepare: <
-    method_inferred extends
-      | RpcNamespace_MethodGeneric
-      | RpcNamespace_MethodNameGeneric,
-  >(
-    parameters: RpcNamespace_ExtractMethodParameters<
-      method extends RpcNamespace_MethodGeneric ? method : method_inferred
-    >,
-  ) => RpcRequest_from.ReturnType<
-    method extends RpcNamespace_MethodGeneric ? method : method_inferred
-  >
-  readonly id: number
-}>
+export type RpcRequest_Store<method extends RpcSchema_Generic | undefined> =
+  Compute<{
+    prepare: <
+      method_inferred extends RpcSchema_Generic | RpcSchema_NameGeneric,
+    >(
+      parameters: Compute<
+        Omit<
+          RpcSchema_Extract<
+            method extends RpcSchema_Generic ? method : method_inferred
+          >,
+          'returnType'
+        >
+      >,
+    ) => RpcRequest_from.ReturnType<
+      method extends RpcSchema_Generic ? method : method_inferred
+    >
+    readonly id: number
+  }>

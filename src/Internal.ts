@@ -229,3 +229,16 @@ export { HdKey_fromScure } from './internal/HdKey/fromScure.js'
 export { Promise_TimeoutError } from './internal/Promise/errors.js'
 
 export { Promise_withTimeout } from './internal/Promise/withTimeout.js'
+
+export type {
+  RpcSchema_WalletAddEthereumChainParameters,
+  RpcSchema_WalletCapabilities,
+  RpcSchema_WalletCapabilitiesMap,
+  RpcSchema_WalletGetCallsStatusReturnType,
+  RpcSchema_WalletGrantPermissionsParameters,
+  RpcSchema_WalletGrantPermissionsReturnType,
+  RpcSchema_WalletPermission,
+  RpcSchema_WalletPermissionCaveat,
+  RpcSchema_WalletSendCallsParameters,
+  RpcSchema_WalletWatchAssetParameters,
+} from './internal/RpcSchema/wallet.js'

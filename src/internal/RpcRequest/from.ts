@@ -1,11 +1,11 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import type {
-  RpcNamespace_ExtractMethodParameters,
-  RpcNamespace_Method,
-  RpcNamespace_MethodGeneric,
-  RpcNamespace_MethodNameGeneric,
-} from '../RpcNamespace/types.js'
-import type { IsNever } from '../types.js'
+  RpcSchema_All,
+  RpcSchema_Extract,
+  RpcSchema_Generic,
+  RpcSchema_NameGeneric,
+} from '../RpcSchema/types.js'
+import type { Compute, IsNever } from '../types.js'
 import type { RpcRequest } from './types.js'
 
 /**
@@ -48,14 +48,14 @@ import type { RpcRequest } from './types.js'
  * ```
  *
  * @example
- * ### Type-safe Custom Methods
+ * ### Type-safe Custom Namespaces
  *
- * It is possible to define your own type-safe {@link ox#RpcNamespace.Method} by using the {@link ox#RpcNamespace.DefineMethod} type.
+ * It is possible to define your own type-safe RPC Namespace by using the {@link ox#RpcSchema.Define} type.
  *
  * ```ts twoslash
- * import { RpcNamespace, RpcRequest } from 'ox'
+ * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Method = RpcNamespace.DefineMethod<{ // [!code focus]
+ * type Method = RpcSchema.Define<{ // [!code focus]
  *   method: 'eth_foobar' // [!code focus]
  *   params: [number] // [!code focus]
  *   returnType: string // [!code focus]
@@ -77,7 +77,7 @@ import type { RpcRequest } from './types.js'
  * @returns The fully-formed JSON-RPC request object.
  */
 export function RpcRequest_from<
-  method extends RpcNamespace_MethodGeneric | RpcNamespace_MethodNameGeneric,
+  method extends RpcSchema_Generic | RpcSchema_NameGeneric,
 >(
   options: RpcRequest_from.Options<method>,
 ): RpcRequest_from.ReturnType<method> {
@@ -88,19 +88,17 @@ export function RpcRequest_from<
 }
 
 export declare namespace RpcRequest_from {
-  type Options<
-    method extends RpcNamespace_MethodGeneric | RpcNamespace_MethodNameGeneric,
-  > = RpcNamespace_ExtractMethodParameters<method> & { id: number }
+  type Options<method extends RpcSchema_Generic | RpcSchema_NameGeneric> =
+    Compute<Omit<RpcSchema_Extract<method>, 'returnType'> & { id: number }>
 
-  type ReturnType<
-    method extends RpcNamespace_MethodGeneric | RpcNamespace_MethodNameGeneric,
-  > = RpcRequest<
-    method extends RpcNamespace_MethodGeneric
-      ? method
-      : IsNever<Extract<RpcNamespace_Method, { method: method }>> extends true
-        ? { method: method; params?: unknown[] | undefined }
-        : Extract<RpcNamespace_Method, { method: method }>
-  >
+  type ReturnType<method extends RpcSchema_Generic | RpcSchema_NameGeneric> =
+    RpcRequest<
+      method extends RpcSchema_Generic
+        ? method
+        : IsNever<Extract<RpcSchema_All, { method: method }>> extends true
+          ? { method: method; params?: unknown[] | undefined }
+          : Extract<RpcSchema_All, { method: method }>
+    >
 
   type ErrorType = GlobalErrorType
 }
