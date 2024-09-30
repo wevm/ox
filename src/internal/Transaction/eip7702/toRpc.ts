@@ -48,9 +48,10 @@ import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
  * @param transaction - The EIP-7702 transaction to convert.
  * @returns An RPC-formatted EIP-7702 transaction.
  */
-export function TransactionEip7702_toRpc(
-  transaction: TransactionEip7702,
-): TransactionEip7702_Rpc {
+export function TransactionEip7702_toRpc<pending extends boolean = false>(
+  transaction: TransactionEip7702<pending>,
+  _options?: TransactionEip7702_toRpc.Options<pending>,
+): TransactionEip7702_Rpc<pending> {
   const authorizationList = Authorization_toRpcList(
     transaction.authorizationList ?? [],
   )
@@ -82,11 +83,15 @@ export function TransactionEip7702_toRpc(
     type: '0x4',
     value: Hex_fromNumber(transaction.value ?? 0n),
     ...Signature_toRpc(signature),
-  }
+  } as TransactionEip7702_Rpc<pending>
 }
 
 export declare namespace TransactionEip7702_toRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionEip7702_toRpc.parseError = (error: unknown) =>

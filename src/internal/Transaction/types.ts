@@ -5,7 +5,7 @@ import type { Compute } from '../types.js'
 /** Base properties of a Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_Base<
   type extends string = string,
-  pending extends boolean = boolean,
+  pending extends boolean = false,
   bigintType = bigint,
   numberType = number,
 > = Compute<{
@@ -48,5 +48,5 @@ export type Transaction_Base<
 /** Base properties of an RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Transaction_BaseRpc<
   type extends string = string,
-  pending extends boolean = boolean,
+  pending extends boolean = false,
 > = Transaction_Base<type, pending, Hex, Hex>

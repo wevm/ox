@@ -9,8 +9,8 @@ import type { Compute } from '../types.js'
 
 /** A Block as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml). */
 export type Block<
-  includeTransactions extends boolean = boolean,
-  blockTag extends Block_Tag = Block_Tag,
+  includeTransactions extends boolean = false,
+  blockTag extends Block_Tag = 'latest',
   bigintType = bigint,
   numberType = number,
   transaction = Transaction<
@@ -84,7 +84,7 @@ export type Block_Number<bigintType = bigint> = bigintType
 /** An RPC Block as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml). */
 export type Block_Rpc<
   includeTransactions extends boolean = boolean,
-  blockTag extends Block_Tag = Block_Tag,
+  blockTag extends Block_Tag = 'latest',
   transaction = Transaction_Rpc<blockTag extends 'pending' ? true : false>,
 > = Block<includeTransactions, blockTag, Hex, Hex, transaction>
 

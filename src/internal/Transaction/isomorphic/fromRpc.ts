@@ -43,9 +43,11 @@ import type { Transaction, Transaction_Rpc } from './types.js'
  */
 export function Transaction_fromRpc<
   const transaction extends Transaction_Rpc | null,
+  pending extends boolean = false,
 >(
   transaction: transaction | Transaction_Rpc | null,
-): transaction extends Transaction_Rpc ? Transaction : null {
+  _options: Transaction_fromRpc.Options<pending> = {},
+): transaction extends Transaction_Rpc<pending> ? Transaction<pending> : null {
   if (!transaction) return null as never
   if (transaction.type === '0x1')
     return TransactionEip2930_fromRpc(transaction) as never
@@ -59,7 +61,11 @@ export function Transaction_fromRpc<
 }
 
 export declare namespace Transaction_fromRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 Transaction_fromRpc.parseError = (error: unknown) =>

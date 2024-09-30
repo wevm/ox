@@ -100,7 +100,13 @@ import type { Log, Log_Rpc } from './types.js'
  * @param log - The RPC log to convert.
  * @returns An instantiated {@link ox#Log.Log}.
  */
-export function Log_fromRpc(log: Log_Rpc): Log {
+export function Log_fromRpc<
+  const log extends Log_Rpc<boolean>,
+  pending extends boolean = false,
+>(
+  log: log | Log_Rpc<boolean>,
+  _options: Log_fromRpc.Options<pending> = {},
+): Log<pending> {
   return {
     address: log.address,
     blockHash: log.blockHash,
@@ -113,11 +119,15 @@ export function Log_fromRpc(log: Log_Rpc): Log {
       ? Number(log.transactionIndex)
       : null,
     removed: log.removed,
-  }
+  } as Log<pending>
 }
 
 export declare namespace Log_fromRpc {
-  export type ErrorType = GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = GlobalErrorType
 }
 
 Log_fromRpc.parseError = (error: unknown) =>

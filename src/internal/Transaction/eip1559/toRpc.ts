@@ -39,9 +39,10 @@ import type { TransactionEip1559, TransactionEip1559_Rpc } from './types.js'
  * @param transaction - The EIP-1559 transaction to convert.
  * @returns An RPC-formatted EIP-1559 transaction.
  */
-export function TransactionEip1559_toRpc(
-  transaction: TransactionEip1559,
-): TransactionEip1559_Rpc {
+export function TransactionEip1559_toRpc<pending extends boolean = false>(
+  transaction: TransactionEip1559<pending>,
+  _options?: TransactionEip1559_toRpc.Options<pending>,
+): TransactionEip1559_Rpc<pending> {
   const signature = Signature_extract(transaction)!
 
   return {
@@ -69,11 +70,15 @@ export function TransactionEip1559_toRpc(
     type: '0x2',
     value: Hex_fromNumber(transaction.value ?? 0n),
     ...Signature_toRpc(signature),
-  }
+  } as TransactionEip1559_Rpc<pending>
 }
 
 export declare namespace TransactionEip1559_toRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionEip1559_toRpc.parseError = (error: unknown) =>

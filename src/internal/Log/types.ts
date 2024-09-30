@@ -4,7 +4,7 @@ import type { Compute } from '../types.js'
 
 /** A Log as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
 export type Log<
-  pending extends boolean = boolean,
+  pending extends boolean = false,
   bigintType = bigint,
   numberType = number,
 > = Compute<{
@@ -29,4 +29,4 @@ export type Log<
 }>
 
 /** An RPC Log as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
-export type Log_Rpc<pending extends boolean = boolean> = Log<pending, Hex, Hex>
+export type Log_Rpc<pending extends boolean = false> = Log<pending, Hex, Hex>

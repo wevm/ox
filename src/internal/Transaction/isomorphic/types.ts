@@ -42,7 +42,7 @@ import type {
  * - `eip7702`
  */
 export type Transaction<
-  pending extends boolean = boolean,
+  pending extends boolean = false,
   bigintType = bigint,
   numberType = number,
 > = UnionCompute<
@@ -66,7 +66,7 @@ export type Transaction<
  * - `0x3`: EIP-4844 transactions
  * - `0x4`: EIP-7702 transactions
  */
-export type Transaction_Rpc<pending extends boolean = boolean> = UnionCompute<
+export type Transaction_Rpc<pending extends boolean = false> = UnionCompute<
   OneOf<
     | TransactionLegacy_Rpc<pending>
     | TransactionEip1559_Rpc<pending>

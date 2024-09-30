@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Transaction_fromRpc } from '../Transaction/isomorphic/fromRpc.js'
 import { Withdrawal_fromRpc } from '../Withdrawal/fromRpc.js'
-import type { Block, Block_Rpc } from './types.js'
+import type { Block, Block_Rpc, Block_Tag } from './types.js'
 
 /**
  * Converts a {@link ox#Block.Rpc} to an {@link ox#Block.Block}.
@@ -64,9 +64,14 @@ import type { Block, Block_Rpc } from './types.js'
  * @param block - The RPC block to convert.
  * @returns An instantiated {@link ox#Block.Block}.
  */
-export function Block_fromRpc<const block extends Block_Rpc | null>(
+export function Block_fromRpc<
+  const block extends Block_Rpc | null,
+  includeTransactions extends boolean = false,
+  blockTag extends Block_Tag = 'latest',
+>(
   block: block | Block_Rpc | null,
-): block extends Block_Rpc ? Block : null {
+  _options: Block_fromRpc.Options<includeTransactions, blockTag> = {},
+): block extends Block_Rpc ? Block<includeTransactions, blockTag> : null {
   if (!block) return null as never
 
   const transactions = block.transactions.map((transaction) => {
@@ -105,11 +110,19 @@ export function Block_fromRpc<const block extends Block_Rpc | null>(
     withdrawals: block.withdrawals?.map(Withdrawal_fromRpc),
     withdrawalsRoot: block.withdrawalsRoot,
     uncles: block.uncles,
-  } as never
+  } as Block as never
 }
 
 export declare namespace Block_fromRpc {
-  export type ErrorType = GlobalErrorType
+  type Options<
+    includeTransactions extends boolean = false,
+    blockTag extends Block_Tag = 'latest',
+  > = {
+    blockTag?: blockTag | Block_Tag | undefined
+    includeTransactions?: includeTransactions | boolean | undefined
+  }
+
+  type ErrorType = GlobalErrorType
 }
 
 Block_fromRpc.parseError = (error: unknown) =>

@@ -37,10 +37,14 @@ import type { TransactionEip1559, TransactionEip1559_Rpc } from './types.js'
  * @returns An instantiated {@link ox#Transaction.Eip1559}.
  */
 export function TransactionEip1559_fromRpc<
-  const transaction extends TransactionEip1559_Rpc | null,
+  const transaction extends TransactionEip1559_Rpc<boolean> | null,
+  pending extends boolean = false,
 >(
-  transaction: transaction | TransactionEip1559_Rpc | null,
-): transaction extends TransactionEip1559_Rpc ? TransactionEip1559 : null {
+  transaction: transaction | TransactionEip1559_Rpc<boolean> | null,
+  _options: TransactionEip1559_fromRpc.Options<pending> = {},
+): transaction extends TransactionEip1559_Rpc
+  ? TransactionEip1559<pending>
+  : null {
   if (!transaction) return null as never
 
   const signature = Signature_extract(transaction)!
@@ -72,7 +76,11 @@ export function TransactionEip1559_fromRpc<
 }
 
 export declare namespace TransactionEip1559_fromRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionEip1559_fromRpc.parseError = (error: unknown) =>

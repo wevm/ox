@@ -37,9 +37,10 @@ import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'
  * @param transaction - The legacy transaction to convert.
  * @returns An RPC-formatted legacy transaction.
  */
-export function TransactionLegacy_toRpc(
-  transaction: TransactionLegacy,
-): TransactionLegacy_Rpc {
+export function TransactionLegacy_toRpc<pending extends boolean = false>(
+  transaction: TransactionLegacy<pending>,
+  _options?: TransactionLegacy_toRpc.Options<pending>,
+): TransactionLegacy_Rpc<pending> {
   const signature = Signature_extract(transaction)!
 
   return {
@@ -67,11 +68,15 @@ export function TransactionLegacy_toRpc(
     value: Hex_fromNumber(transaction.value ?? 0n),
     v: signature.yParity === 0 ? '0x1b' : '0x1c',
     ...Signature_toRpc(signature),
-  }
+  } as TransactionLegacy_Rpc as never
 }
 
 export declare namespace TransactionLegacy_toRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionLegacy_toRpc.parseError = (error: unknown) =>

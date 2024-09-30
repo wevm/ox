@@ -2,7 +2,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Transaction_toRpc } from '../Transaction/isomorphic/toRpc.js'
 import { Withdrawal_toRpc } from '../Withdrawal/toRpc.js'
-import type { Block, Block_Rpc } from './types.js'
+import type { Block, Block_Rpc, Block_Tag } from './types.js'
 
 /**
  * Converts a {@link ox#Block.Block} to an {@link ox#Block.Rpc}.
@@ -33,10 +33,16 @@ import type { Block, Block_Rpc } from './types.js'
  * @param block - The Block to convert.
  * @returns An RPC Block.
  */
-export function Block_toRpc(block: Block): Block_Rpc {
+export function Block_toRpc<
+  includeTransactions extends boolean = false,
+  blockTag extends Block_Tag = 'latest',
+>(
+  block: Block<includeTransactions, blockTag>,
+  _options: Block_toRpc.Options<includeTransactions, blockTag> = {},
+): Block_Rpc<boolean, blockTag> {
   const transactions = block.transactions.map((transaction) => {
     if (typeof transaction === 'string') return transaction
-    return Transaction_toRpc(transaction) as any
+    return Transaction_toRpc(transaction as any) as any
   })
   return {
     baseFeePerGas:
@@ -63,8 +69,9 @@ export function Block_toRpc(block: Block): Block_Rpc {
     miner: block.miner,
     mixHash: block.mixHash,
     nonce: block.nonce,
-    number:
-      typeof block.number === 'bigint' ? Hex_fromNumber(block.number) : null,
+    number: (typeof block.number === 'bigint'
+      ? Hex_fromNumber(block.number)
+      : null) as never,
     parentBeaconBlockRoot: block.parentBeaconBlockRoot,
     parentHash: block.parentHash,
     receiptsRoot: block.receiptsRoot,
@@ -86,7 +93,15 @@ export function Block_toRpc(block: Block): Block_Rpc {
 }
 
 export declare namespace Block_toRpc {
-  export type ErrorType = GlobalErrorType
+  type Options<
+    includeTransactions extends boolean = false,
+    blockTag extends Block_Tag = 'latest',
+  > = {
+    blockTag?: blockTag | Block_Tag | undefined
+    includeTransactions?: includeTransactions | boolean | undefined
+  }
+
+  type ErrorType = GlobalErrorType
 }
 
 Block_toRpc.parseError = (error: unknown) =>

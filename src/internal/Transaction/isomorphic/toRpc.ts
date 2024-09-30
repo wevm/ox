@@ -43,23 +43,30 @@ import type { Transaction, Transaction_Rpc } from './types.js'
  * @param transaction - The transaction to convert.
  * @returns An RPC-formatted transaction.
  */
-export function Transaction_toRpc(transaction: Transaction): Transaction_Rpc {
-  if (transaction.type === 'legacy') return TransactionLegacy_toRpc(transaction)
+export function Transaction_toRpc<pending extends boolean = false>(
+  transaction: Transaction<pending>,
+): Transaction_Rpc<pending> {
+  if (transaction.type === 'legacy')
+    return TransactionLegacy_toRpc(transaction as never) as never
   if (transaction.type === 'eip2930')
-    return TransactionEip2930_toRpc(transaction)
+    return TransactionEip2930_toRpc(transaction as never) as never
   if (transaction.type === 'eip1559')
-    return TransactionEip1559_toRpc(transaction)
+    return TransactionEip1559_toRpc(transaction as never) as never
   if (transaction.type === 'eip4844')
-    return TransactionEip4844_toRpc(transaction)
+    return TransactionEip4844_toRpc(transaction as never) as never
   if (transaction.type === 'eip7702')
-    return TransactionEip7702_toRpc(transaction)
+    return TransactionEip7702_toRpc(transaction as never) as never
   throw new TransactionEnvelope_TypeNotImplementedError({
     type: (transaction as any).type,
   })
 }
 
 export declare namespace Transaction_toRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 Transaction_toRpc.parseError = (error: unknown) =>

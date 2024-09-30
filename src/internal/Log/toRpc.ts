@@ -49,7 +49,10 @@ import type { Log, Log_Rpc } from './types.js'
  * @param log - The log to convert.
  * @returns An RPC log.
  */
-export function Log_toRpc(log: Log): Log_Rpc {
+export function Log_toRpc<
+  const log extends Log<boolean>,
+  pending extends boolean = false,
+>(log: log, _options: Log_toRpc.Options<pending> = {}): Log_Rpc<pending> {
   return {
     address: log.address,
     blockHash: log.blockHash,
@@ -67,11 +70,15 @@ export function Log_toRpc(log: Log): Log_Rpc {
         ? Hex_fromNumber(log.transactionIndex)
         : null,
     removed: log.removed,
-  }
+  } as Log_Rpc as never
 }
 
 export declare namespace Log_toRpc {
-  export type ErrorType = GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = GlobalErrorType
 }
 
 Log_toRpc.parseError = (error: unknown) =>

@@ -41,9 +41,10 @@ import type { TransactionEip4844, TransactionEip4844_Rpc } from './types.js'
  * @param transaction - The EIP-4844 transaction to convert.
  * @returns An RPC-formatted EIP-4844 transaction.
  */
-export function TransactionEip4844_toRpc(
-  transaction: TransactionEip4844,
-): TransactionEip4844_Rpc {
+export function TransactionEip4844_toRpc<pending extends boolean = false>(
+  transaction: TransactionEip4844<pending>,
+  _options: TransactionEip4844_toRpc.Options<pending> = {},
+): TransactionEip4844_Rpc<pending> {
   const signature = Signature_extract(transaction)!
 
   return {
@@ -73,11 +74,15 @@ export function TransactionEip4844_toRpc(
     type: '0x3',
     value: Hex_fromNumber(transaction.value ?? 0n),
     ...Signature_toRpc(signature),
-  }
+  } as TransactionEip4844_Rpc<pending>
 }
 
 export declare namespace TransactionEip4844_toRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionEip4844_toRpc.parseError = (error: unknown) =>

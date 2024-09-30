@@ -46,10 +46,14 @@ import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
  * @returns An instantiated {@link ox#Transaction.Eip7702}.
  */
 export function TransactionEip7702_fromRpc<
-  const transaction extends TransactionEip7702_Rpc | null,
+  const transaction extends TransactionEip7702_Rpc<boolean> | null,
+  pending extends boolean = false,
 >(
-  transaction: transaction | TransactionEip7702_Rpc | null,
-): transaction extends TransactionEip7702_Rpc ? TransactionEip7702 : null {
+  transaction: transaction | TransactionEip7702_Rpc<boolean> | null,
+  _options: TransactionEip7702_fromRpc.Options<pending> = {},
+): transaction extends TransactionEip7702_Rpc<pending>
+  ? TransactionEip7702<pending>
+  : null {
   if (!transaction) return null as never
 
   const authorizationList = Authorization_fromRpcList(
@@ -84,7 +88,11 @@ export function TransactionEip7702_fromRpc<
 }
 
 export declare namespace TransactionEip7702_fromRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionEip7702_fromRpc.parseError = (error: unknown) =>

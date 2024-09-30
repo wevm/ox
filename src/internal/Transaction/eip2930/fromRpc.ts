@@ -37,10 +37,14 @@ import type { TransactionEip2930, TransactionEip2930_Rpc } from './types.js'
  * @returns An instantiated {@link ox#Transaction.Eip2930}.
  */
 export function TransactionEip2930_fromRpc<
-  const transaction extends TransactionEip2930_Rpc | null,
+  const transaction extends TransactionEip2930_Rpc<boolean> | null,
+  pending extends boolean = false,
 >(
-  transaction: transaction | TransactionEip2930_Rpc | null,
-): transaction extends TransactionEip2930_Rpc ? TransactionEip2930 : null {
+  transaction: transaction | TransactionEip2930_Rpc<boolean> | null,
+  _options: TransactionEip2930_fromRpc.Options<pending> = {},
+): transaction extends TransactionEip2930_Rpc
+  ? TransactionEip2930<pending>
+  : null {
   if (!transaction) return null as never
 
   const signature = Signature_extract(transaction)!
@@ -67,11 +71,15 @@ export function TransactionEip2930_fromRpc<
     value: BigInt(transaction.value ?? 0n),
     v: signature.yParity === 0 ? 27 : 28,
     ...signature,
-  } as never
+  } as TransactionEip2930 as never
 }
 
 export declare namespace TransactionEip2930_fromRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionEip2930_fromRpc.parseError = (error: unknown) =>

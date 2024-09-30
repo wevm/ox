@@ -122,7 +122,7 @@ export function TransactionReceipt_fromRpc<
     effectiveGasPrice: BigInt(receipt.effectiveGasPrice ?? 0n),
     from: receipt.from,
     gasUsed: BigInt(receipt.gasUsed ?? 0n),
-    logs: receipt.logs.map(Log_fromRpc),
+    logs: receipt.logs.map((log) => Log_fromRpc(log, { pending: false })),
     logsBloom: receipt.logsBloom,
     status: TransactionReceipt_status[receipt.status],
     to: receipt.to,

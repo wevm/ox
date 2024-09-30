@@ -41,22 +41,25 @@ test('default', () => {
 })
 
 test('behavior: nullish values', () => {
-  const log = Log.toRpc({
-    address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
-    blockHash: null,
-    blockNumber: null,
-    data: '0x',
-    logIndex: null,
-    removed: false,
-    topics: [
-      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
-      '0x000000000000000000000000000000000000000000000000000000000000025b',
-    ],
-    transactionHash: null,
-    transactionIndex: null,
-  })
+  const log = Log.toRpc(
+    {
+      address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
+      blockHash: null,
+      blockNumber: null,
+      data: '0x',
+      logIndex: null,
+      removed: false,
+      topics: [
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
+        '0x000000000000000000000000000000000000000000000000000000000000025b',
+      ],
+      transactionHash: null,
+      transactionIndex: null,
+    },
+    { pending: true },
+  )
   expect(log).toMatchInlineSnapshot(`
     {
       "address": "0xfba3912ca04dd458c843e2ee08967fc04f3579c2",

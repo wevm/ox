@@ -5,7 +5,7 @@ import type { Transaction_Base } from '../types.js'
 
 /** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type TransactionEip1559<
-  pending extends boolean = boolean,
+  pending extends boolean = false,
   bigintType = bigint,
   numberType = number,
   type extends string = TransactionEip1559_Type,
@@ -21,7 +21,7 @@ export type TransactionEip1559<
 >
 
 /** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
-export type TransactionEip1559_Rpc<pending extends boolean = boolean> = Compute<
+export type TransactionEip1559_Rpc<pending extends boolean = false> = Compute<
   TransactionEip1559<pending, Hex, Hex, TransactionEip1559_TypeRpc>
 >
 

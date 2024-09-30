@@ -35,10 +35,14 @@ import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'
  * @returns An instantiated {@link ox#Transaction.Legacy}.
  */
 export function TransactionLegacy_fromRpc<
-  const transaction extends TransactionLegacy_Rpc | null,
+  const transaction extends TransactionLegacy_Rpc<boolean> | null,
+  pending extends boolean = false,
 >(
-  transaction: transaction | TransactionLegacy_Rpc | null,
-): transaction extends TransactionLegacy_Rpc ? TransactionLegacy : null {
+  transaction: transaction | TransactionLegacy_Rpc<boolean> | null,
+  _options?: TransactionLegacy_fromRpc.Options<pending>,
+): transaction extends TransactionLegacy_Rpc<pending>
+  ? TransactionLegacy<pending>
+  : null {
   if (!transaction) return null as never
 
   const signature = Signature_extract(transaction)!
@@ -68,7 +72,11 @@ export function TransactionLegacy_fromRpc<
 }
 
 export declare namespace TransactionLegacy_fromRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type Options<pending extends boolean = false> = {
+    pending?: pending | boolean | undefined
+  }
+
+  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
 TransactionLegacy_fromRpc.parseError = (error: unknown) =>
