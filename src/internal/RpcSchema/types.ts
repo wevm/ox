@@ -1,4 +1,5 @@
 import type { Compute } from '../types.js'
+import type { RpcSchema_Eip4337, RpcSchema_NameEip4337 } from './eip4337.js'
 import type { RpcSchema_Eth, RpcSchema_NameEth } from './eth.js'
 import type { RpcSchema_NameWallet, RpcSchema_Wallet } from './wallet.js'
 
@@ -190,7 +191,7 @@ export type RpcSchema_NameGeneric = RpcSchema_NameEth | (string & {})
  *
  * ```
  */
-export type RpcSchema_All = RpcSchema_Eth | RpcSchema_Wallet
+export type RpcSchema_All = RpcSchema_Eth | RpcSchema_Wallet | RpcSchema_Eip4337
 
 /**
  * Type-safe union of all JSON-RPC Method Names.
@@ -211,4 +212,7 @@ export type RpcSchema_All = RpcSchema_Eth | RpcSchema_Wallet
  *
  * ```
  */
-export type RpcSchema_Name = RpcSchema_NameEth | RpcSchema_NameWallet
+export type RpcSchema_Name =
+  | RpcSchema_NameEth
+  | RpcSchema_NameWallet
+  | RpcSchema_NameEip4337

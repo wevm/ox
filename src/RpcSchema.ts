@@ -10,6 +10,11 @@ export type {
 } from './internal/RpcSchema/types.js'
 
 export type {
+  RpcSchema_Eip4337 as Eip4337,
+  RpcSchema_NameEip4337 as NameEip4337,
+} from './internal/RpcSchema/eip4337.js'
+
+export type {
   RpcSchema_Eth as Eth,
   RpcSchema_NameEth as NameEth,
 } from './internal/RpcSchema/eth.js'

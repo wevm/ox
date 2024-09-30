@@ -242,3 +242,11 @@ export type {
   RpcSchema_WalletSendCallsParameters,
   RpcSchema_WalletWatchAssetParameters,
 } from './internal/RpcSchema/wallet.js'
+
+export type {
+  RpcSchema_EntryPointVersion,
+  RpcSchema_EstimateUserOperationGasReturnType,
+  RpcSchema_GetUserOperationByHashReturnType,
+  RpcSchema_UserOperation,
+  RpcSchema_UserOperationReceipt,
+} from './internal/RpcSchema/eip4337.js'
