@@ -13,6 +13,7 @@ export type RpcRequest<
   Omit<method, 'returnType'> & {
     id: number
     jsonrpc: '2.0'
+    /** @deprecated */
     _returnType: method['returnType']
   }
 >
