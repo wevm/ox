@@ -23,7 +23,8 @@ test('default', async () => {
     method: 'POST',
   })
     .then((res) => res.json())
-    .then((res) => RpcResponse.parse(res, { request }))
+    .then((res) => RpcResponse.parse(res, { safe: true, request }))
+
   expect(response).toMatchInlineSnapshot(`
     {
       "id": 0,
