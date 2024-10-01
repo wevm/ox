@@ -305,7 +305,7 @@ export default defineConfig({
   ],
   theme: {
     accentColor: {
-      light: '#4b7b2b',
+      light: '#bd976a',
       dark: '#d2991d',
     },
   },
