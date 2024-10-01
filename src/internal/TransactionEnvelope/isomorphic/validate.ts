@@ -1,5 +1,4 @@
 import type { GlobalErrorType } from '../../Errors/error.js'
-import type { PartialBy } from '../../types.js'
 import { TransactionEnvelope_assert } from './assert.js'
 import type { TransactionEnvelope } from './types.js'
 
