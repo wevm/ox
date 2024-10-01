@@ -1,0 +1,43 @@
+:root {
+  --ox-color_noteText: #4b7b2a;
+  --ox-color_noteTextHover: #346414;
+  --ox-color_noteBackground: rgb(75 123 42 / 7%);
+  --ox-color_noteBorder: rgb(75 123 42 / 14%);
+  
+  --vocs-color_noteBackground: var(--ox-color_noteBackground);
+  --vocs-color_noteText: var(--ox-color_noteText);
+  --vocs-color_noteTextHover: var(--ox-color_noteTextHover);
+  --vocs-color_noteBorder: var(--ox-color_noteBorder);
+  --vocs-color_infoBackground: var(--ox-color_noteBackground);
+  --vocs-color_infoText: var(--ox-color_noteText);
+  --vocs-color_infoTextHover: var(--ox-color_noteTextHover);
+  --vocs-color_infoBorder: var(--ox-color_noteBorder);
+  --vocs-color_tipBackground: var(--ox-color_noteBackground);
+  --vocs-color_tipText: var(--ox-color_noteText);
+  --vocs-color_tipTextHover: var(--ox-color_noteTextHover);
+  --vocs-color_tipBorder: var(--ox-color_noteBorder);
+  --vocs-twoslash_tagColor: #4b7b2a;
+  --vocs-twoslash_tagBackground: rgb(75 123 42 / 7%);
+}
+
+:root.dark {
+  --ox-color_noteText: #dbb180;
+  --ox-color_noteTextHover: #a48054;
+  --ox-color_noteBackground: rgb(189 151 106 / 9%);
+  --ox-color_noteBorder: rgb(189 151 106 / 17%);
+  
+  --vocs-color_noteBackground: var(--ox-color_noteBackground);
+  --vocs-color_noteText: var(--ox-color_noteText);
+  --vocs-color_noteTextHover: var(--ox-color_noteTextHover);
+  --vocs-color_noteBorder: var(--ox-color_noteBorder);
+  --vocs-color_infoBackground: var(--ox-color_noteBackground);
+  --vocs-color_infoText: var(--ox-color_noteText);
+  --vocs-color_infoTextHover: var(--ox-color_noteTextHover);
+  --vocs-color_infoBorder: var(--ox-color_noteBorder);
+  --vocs-color_tipBackground: var(--ox-color_noteBackground);
+  --vocs-color_tipText: var(--ox-color_noteText);
+  --vocs-color_tipTextHover: var(--ox-color_noteTextHover);
+  --vocs-color_tipBorder: var(--ox-color_noteBorder);
+  --vocs-twoslash_tagColor: #d5ae81;
+  --vocs-twoslash_tagBackground: rgb(189 151 106 / 13%);
+}
