@@ -2050,13 +2050,6 @@ export * as Siwe from './Siwe.js'
 /**
  * Utilities & types for working with **Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
- * :::warning
- * The **Transaction** Module is not to be confused with the [TransactionEnvelope](/api/TransactionEnvelope) Module.
- *
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **Transaction** Module.
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelope](/api/TransactionEnvelope) Module.
- * :::
- *
  * @example
  * ### Converting from RPC Format
  *
@@ -2096,13 +2089,6 @@ export * as Transaction from './Transaction.js'
 /**
  * Utilities & types for working with **legacy Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
- * :::warning
- * The **TransactionLegacy** Module is not to be confused with the [TransactionEnvelopeLegacy](/api/TransactionEnvelopeLegacy) Module.
- *
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **TransactionLegacy** Module.
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeLegacy](/api/TransactionEnvelopeLegacy) Module.
- * :::
- *
  * @example
  * ### Converting from RPC Format
  *
@@ -2139,13 +2125,6 @@ export * as TransactionLegacy from './TransactionLegacy.js'
 
 /**
  * Utilities & types for working with **EIP-1559 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
- *
- * :::warning
- * The **TransactionEip1559** Module is not to be confused with the [TransactionEnvelopeEip1559](/api/TransactionEnvelopeEip1559) Module.
- *
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **TransactionEip1559** Module.
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip1559](/api/TransactionEnvelopeEip1559) Module.
- * :::
  *
  * @example
  * ### Converting from RPC Format
@@ -2186,13 +2165,6 @@ export * as TransactionEip1559 from './TransactionEip1559.js'
 /**
  * Utilities & types for working with **EIP-2930 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
- * :::warning
- * The **TransactionEip2930** Module is not to be confused with the [TransactionEnvelopeEip2930](/api/TransactionEnvelopeEip2930) Module.
- *
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **TransactionEip2930** Module.
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip2930](/api/TransactionEnvelopeEip2930) Module.
- * :::
- *
  * @example
  * ### Converting from RPC Format
  *
@@ -2231,13 +2203,6 @@ export * as TransactionEip2930 from './TransactionEip2930.js'
 
 /**
  * Utilities & types for working with **EIP-4844 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
- *
- * :::warning
- * The **TransactionEip4844** Module is not to be confused with the [TransactionEnvelopeEip4844](/api/TransactionEnvelopeEip4844) Module.
- *
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **TransactionEip4844** Module.
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip4844](/api/TransactionEnvelopeEip4844) Module.
- * :::
  *
  * @example
  * ### Converting from RPC Format
@@ -2279,13 +2244,6 @@ export * as TransactionEip4844 from './TransactionEip4844.js'
 
 /**
  * Utilities & types for working with **EIP-7702 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
- *
- * :::warning
- * The **TransactionEip7702** Module is not to be confused with the [TransactionEnvelopeEip7702](/api/TransactionEnvelopeEip7702) Module.
- *
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the **TransactionEip7702** Module.
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the [TransactionEnvelopeEip7702](/api/TransactionEnvelopeEip7702) Module.
- * :::
  *
  * @example
  * ### Converting from RPC Format
@@ -2333,13 +2291,6 @@ export * as TransactionEip7702 from './TransactionEip7702.js'
 
 /**
  * Utility functions for working with **Legacy Transaction Envelopes** & [EIP-2718 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2718)
- *
- * :::warning
- * The **TransactionEnvelope** Module is not to be confused with the [Transaction](/api/Transaction) Module.
- *
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelope** Module.
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [Transaction](/api/Transaction) Module.
- * :::
  *
  * @example
  * ### Instantiating Transaction Envelopes
@@ -2446,13 +2397,6 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * Utility functions for working
  * with **Legacy Transaction Envelopes**.
  *
- * :::warning
- * The **TransactionEnvelopeLegacy** Module is not to be confused with the [TransactionLegacy](/api/TransactionLegacy) Module.
- *
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelopeLegacy** Module.
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionLegacy](/api/TransactionLegacy) Module.
- * :::
- *
  * @example
  * ### Instantiating Transaction Envelopes
  *
@@ -2545,13 +2489,6 @@ export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
 
 /**
  * Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559)
- *
- * :::warning
- * The **TransactionEnvelopeEip1559** Module is not to be confused with the [TransactionEip1559](/api/TransactionEip1559) Module.
- *
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelopeEip1559** Module.
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip1559](/api/TransactionEip1559) Module.
- * :::
  *
  *  @example
  * ### Instantiating Transaction Envelopes
@@ -2659,13 +2596,6 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
 /**
  * Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930)
  *
- * :::warning
- * The **TransactionEnvelopeEip2930** Module is not to be confused with the [TransactionEip2930](/api/TransactionEip2930) Module.
- *
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelopeEip2930** Module.
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip2930](/api/TransactionEip1559) Module.
- * :::
- *
  * @example
  * ### Instantiating Transaction Envelopes
  *
@@ -2761,13 +2691,6 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
 
 /**
  * Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844)
- *
- * :::warning
- * The **TransactionEnvelopeEip4844** Module is not to be confused with the [TransactionEip4844](/api/TransactionEip4844) Module.
- *
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelopeEip4844** Module.
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip4844](/api/TransactionEip4844) Module.
- * :::
  *
  * @example
  * ### Instantiating Blobs
@@ -2896,13 +2819,6 @@ export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
 
 /**
  * Utility functions for working with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702)
- *
- * :::warning
- * The **TransactionEnvelopeEip7702** Module is not to be confused with the [TransactionEip7702](/api/TransactionEip7702) Module.
- *
- * - If you are dealing with Transaction **Requests** (ie. signing & sending transactions), use the **TransactionEnvelopeEip7702** Module.
- * - If you are dealing with Transaction **Responses** (ie. from the JSON-RPC API), use the [TransactionEip7702](/api/TransactionEip7702) Module.
- * :::
  *
  * @example
  * ### Instantiating Transaction Envelopes
