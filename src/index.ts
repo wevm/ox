@@ -3031,6 +3031,24 @@ export * as TransactionReceipt from './TransactionReceipt.js'
 /**
  * Utilities & types for working with **Transaction Requests** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423)
  *
+ * @example
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Provider, TransactionRequest, Value } from 'ox'
+ *
+ * const provider = Provider.from(window.ethereum!)
+ *
+ * const request = TransactionRequest.toRpc({ // [!code focus]
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // [!code focus]
+ *   value: Value.fromEther('0.01'), // [!code focus]
+ * }) // [!code focus]
+ *
+ * const hash = await provider.request({
+ *   method: 'eth_sendTransaction',
+ *   params: [request],
+ * })
+ * ```
+ *
  * @category Execution API
  */
 export * as TransactionRequest from './TransactionRequest.js'
