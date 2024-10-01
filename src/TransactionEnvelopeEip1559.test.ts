@@ -13,6 +13,7 @@ test('exports', () => {
       "hash",
       "serialize",
       "toRpc",
+      "validate",
     ]
   `)
 })

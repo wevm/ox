@@ -16,4 +16,6 @@ export { PublicKey_from as from } from './internal/PublicKey/from.js'
 
 export { PublicKey_serialize as serialize } from './internal/PublicKey/serialize.js'
 
+export { PublicKey_validate as validate } from './internal/PublicKey/validate.js'
+
 export type { PublicKey } from './internal/PublicKey/types.js'

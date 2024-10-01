@@ -25,3 +25,5 @@ export { TransactionEnvelopeEip4844_hash as hash } from './internal/TransactionE
 export { TransactionEnvelopeEip4844_serialize as serialize } from './internal/TransactionEnvelope/eip4844/serialize.js'
 
 export { TransactionEnvelopeEip4844_toRpc as toRpc } from './internal/TransactionEnvelope/eip4844/toRpc.js'
+
+export { TransactionEnvelopeEip4844_validate as validate } from './internal/TransactionEnvelope/eip4844/validate.js'

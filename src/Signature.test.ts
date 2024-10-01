@@ -21,6 +21,7 @@ test('exports', () => {
       "toDER",
       "toRpc",
       "toTuple",
+      "validate",
     ]
   `)
 })

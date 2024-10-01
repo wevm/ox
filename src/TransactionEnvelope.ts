@@ -75,3 +75,5 @@ export { TransactionEnvelope_serialize as serialize } from './internal/Transacti
 export { TransactionEnvelope_from as from } from './internal/TransactionEnvelope/isomorphic/from.js'
 
 export { TransactionEnvelope_toRpc as toRpc } from './internal/TransactionEnvelope/isomorphic/toRpc.js'
+
+export { TransactionEnvelope_validate as validate } from './internal/TransactionEnvelope/isomorphic/validate.js'

@@ -21,3 +21,5 @@ export { TransactionEnvelopeLegacy_hash as hash } from './internal/TransactionEn
 export { TransactionEnvelopeLegacy_serialize as serialize } from './internal/TransactionEnvelope/legacy/serialize.js'
 
 export { TransactionEnvelopeLegacy_toRpc as toRpc } from './internal/TransactionEnvelope/legacy/toRpc.js'
+
+export { TransactionEnvelopeLegacy_validate as validate } from './internal/TransactionEnvelope/legacy/validate.js'

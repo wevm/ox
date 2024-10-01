@@ -14,6 +14,7 @@ test('exports', () => {
       "deserialize",
       "from",
       "serialize",
+      "validate",
     ]
   `)
 })

@@ -36,3 +36,5 @@ export { Signature_toDER as toDER } from './internal/Signature/toDER.js'
 export { Signature_toRpc as toRpc } from './internal/Signature/toRpc.js'
 
 export { Signature_toTuple as toTuple } from './internal/Signature/toTuple.js'
+
+export { Signature_validate as validate } from './internal/Signature/validate.js'

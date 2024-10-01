@@ -18,6 +18,7 @@ test('exports', () => {
       "serialize",
       "from",
       "toRpc",
+      "validate",
     ]
   `)
 })

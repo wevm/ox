@@ -23,3 +23,5 @@ export { TransactionEnvelopeEip7702_getSignPayload as getSignPayload } from './i
 export { TransactionEnvelopeEip7702_hash as hash } from './internal/TransactionEnvelope/eip7702/hash.js'
 
 export { TransactionEnvelopeEip7702_serialize as serialize } from './internal/TransactionEnvelope/eip7702/serialize.js'
+
+export { TransactionEnvelopeEip7702_validate as validate } from './internal/TransactionEnvelope/eip7702/validate.js'

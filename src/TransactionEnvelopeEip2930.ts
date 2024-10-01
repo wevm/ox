@@ -25,3 +25,5 @@ export { TransactionEnvelopeEip2930_hash as hash } from './internal/TransactionE
 export { TransactionEnvelopeEip2930_serialize as serialize } from './internal/TransactionEnvelope/eip2930/serialize.js'
 
 export { TransactionEnvelopeEip2930_toRpc as toRpc } from './internal/TransactionEnvelope/eip2930/toRpc.js'
+
+export { TransactionEnvelopeEip2930_validate as validate } from './internal/TransactionEnvelope/eip2930/validate.js'
