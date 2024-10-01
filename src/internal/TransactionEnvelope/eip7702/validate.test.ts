@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { TransactionEnvelopeEip7702 } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   expect(

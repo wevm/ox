@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { PublicKey } from 'ox'
+import { expect, test } from 'vitest'
 
 test('default', () => {
   expect(
