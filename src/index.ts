@@ -657,7 +657,7 @@ export * as AbiParameters from './AbiParameters.js'
 /**
  * Utilities & types for working with Account Proofs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml)
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as AccountProof from './AccountProof.js'
 
@@ -971,14 +971,14 @@ export * as Blobs from './Blobs.js'
  * // @log: }
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as Block from './Block.js'
 
 /**
  * Utility functions for working with Bloom Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml)
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as Bloom from './Bloom.js'
 
@@ -1188,7 +1188,7 @@ export * as Errors from './Errors.js'
 /**
  * Utilities & types for working with Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml)
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as Filter from './Filter.js'
 
@@ -1339,7 +1339,7 @@ export * as Hex from './Hex.js'
 export * as Internal from './Internal.js'
 
 /**
- * @category Execution API
+ * @category Execution Spec
  */
 export * as Fee from './Fee.js'
 
@@ -1441,7 +1441,7 @@ export * as Kzg from './Kzg.js'
  * // @log: }
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as Log from './Log.js'
 
@@ -2089,7 +2089,7 @@ export * as Siwe from './Siwe.js'
  * })
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as Transaction from './Transaction.js'
 
@@ -2133,7 +2133,7 @@ export * as Transaction from './Transaction.js'
  * })
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as TransactionLegacy from './TransactionLegacy.js'
 
@@ -2179,7 +2179,7 @@ export * as TransactionLegacy from './TransactionLegacy.js'
  * })
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as TransactionEip1559 from './TransactionEip1559.js'
 
@@ -2225,7 +2225,7 @@ export * as TransactionEip1559 from './TransactionEip1559.js'
  * })
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as TransactionEip2930 from './TransactionEip2930.js'
 
@@ -2273,7 +2273,7 @@ export * as TransactionEip2930 from './TransactionEip2930.js'
  * })
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as TransactionEip4844 from './TransactionEip4844.js'
 
@@ -2327,7 +2327,7 @@ export * as TransactionEip4844 from './TransactionEip4844.js'
  * })
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as TransactionEip7702 from './TransactionEip7702.js'
 
@@ -3024,7 +3024,7 @@ export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
  * // @log: }
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as TransactionReceipt from './TransactionReceipt.js'
 
@@ -3049,7 +3049,7 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * })
  * ```
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as TransactionRequest from './TransactionRequest.js'
 
@@ -3284,6 +3284,6 @@ export * as WebCryptoP256 from './WebCryptoP256.js'
 /**
  * Utilities & types for working with Withdrawals as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/withdrawal.yaml)
  *
- * @category Execution API
+ * @category Execution Spec
  */
 export * as Withdrawal from './Withdrawal.js'
