@@ -1,10 +1,14 @@
+import type { IsNarrowable } from 'viem'
 import type { Compute } from '../types.js'
-import type { RpcSchema_Eip4337, RpcSchema_NameEip4337 } from './eip4337.js'
-import type { RpcSchema_Eth, RpcSchema_NameEth } from './eth.js'
-import type { RpcSchema_NameWallet, RpcSchema_Wallet } from './wallet.js'
+import type {
+  RpcSchema_Eip4337,
+  RpcSchema_MethodNameEip4337,
+} from './eip4337.js'
+import type { RpcSchema_Eth, RpcSchema_MethodNameEth } from './eth.js'
+import type { RpcSchema_MethodNameWallet, RpcSchema_Wallet } from './wallet.js'
 
 /**
- * Extracts a method from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.NameGeneric}.
+ * Extracts a method from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
  *
  * @example
  * ```ts twoslash
@@ -28,24 +32,54 @@ import type { RpcSchema_NameWallet, RpcSchema_Wallet } from './wallet.js'
  * ```
  */
 export type RpcSchema_Extract<
-  method extends RpcSchema_Generic | RpcSchema_NameGeneric,
+  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+> = Compute<{
+  Request: RpcSchema_ExtractRequest<schema>
+  ReturnType: RpcSchema_ExtractReturnType<schema>
+}>
+
+/**
+ * Extracts return type from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ *
+ * type Eth_GetBlockByNumber = RpcSchema.ExtractReturnType<'eth_getBlockByNumber'>
+ * //   ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ */
+export type RpcSchema_ExtractRequest<
+  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
 > = Compute<
-  {
-    method: method extends RpcSchema_Generic
-      ? method['method']
-      : method | RpcSchema_Name
-  } & (method extends RpcSchema_Generic
-    ? method
-    : {
-        params?: unknown[] | undefined
-        returnType: unknown
-      } & (method extends RpcSchema_Name
-        ? Extract<RpcSchema_All, { method: method }>
-        : { method: string }))
+  Omit<
+    {
+      method: schema extends RpcSchema_Generic
+        ? schema['Request']['method']
+        : schema | RpcSchema_MethodName
+      params?: unknown
+    } & (schema extends RpcSchema_Generic
+      ? schema['Request']
+      : IsNarrowable<schema, RpcSchema_MethodName> extends true
+        ? Extract<RpcSchema_All, { Request: { method: schema } }>['Request']
+        : {}),
+    ''
+  >
 >
 
 /**
- * Extracts parameters from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.NameGeneric}.
+ * Extracts parameters from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
  *
  * @example
  * ```ts twoslash
@@ -61,11 +95,11 @@ export type RpcSchema_Extract<
  * ```
  */
 export type RpcSchema_ExtractParams<
-  method extends RpcSchema_Generic | RpcSchema_NameGeneric,
-> = RpcSchema_Extract<method>['params']
+  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+> = RpcSchema_ExtractRequest<schema>['params']
 
 /**
- * Extracts return type from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.NameGeneric}.
+ * Extracts return type from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
  *
  * @example
  * ```ts twoslash
@@ -87,33 +121,39 @@ export type RpcSchema_ExtractParams<
  * ```
  */
 export type RpcSchema_ExtractReturnType<
-  method extends RpcSchema_Generic | RpcSchema_NameGeneric,
-> = RpcSchema_Extract<method>['returnType']
+  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+> = schema extends RpcSchema_Generic
+  ? schema['ReturnType']
+  : schema extends RpcSchema_MethodName
+    ? Extract<RpcSchema_All, { Request: { method: schema } }>['ReturnType']
+    : unknown
 
 ////////////////////////////////////////////////////////////////
 // Define Method
 ////////////////////////////////////////////////////////////////
 
 /**
- * Type to define a custom type-safe JSON-RPC Method to be used with {@link ox#RpcRequest.(from:function)}.
+ * Type to define a custom type-safe JSON-RPC Schema to be used with {@link ox#RpcRequest.(from:function)}.
  *
  * @example
  * ```ts twoslash
  * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Eth_Foobar = RpcSchema.Define<{
- *   method: 'eth_foobar',
- *   params: [id: number],
- *   returnType: string
+ * type Schema = RpcSchema.Define<{
+ *   Request: {
+ *     method: 'eth_foobar',
+ *     params: [id: number],
+ *   }
+ *   ReturnType: string
  * }>
- * const request = RpcRequest.from<Eth_Foobar>({
+ * const request = RpcRequest.from<Schema>({
  *   id: 0,
  *   method: 'eth_foobar',
  *   params: [0],
  * })
  * ```
  */
-export type RpcSchema_Define<method extends RpcSchema_Generic> = method
+export type RpcSchema_Define<schema extends RpcSchema_Generic> = schema
 
 ////////////////////////////////////////////////////////////////
 // Generic
@@ -126,7 +166,7 @@ export type RpcSchema_Define<method extends RpcSchema_Generic> = method
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Method = RpcSchema.Generic
+ * type Schema = RpcSchema.Generic
  * //   ^?
  *
  *
@@ -138,11 +178,13 @@ export type RpcSchema_Define<method extends RpcSchema_Generic> = method
  */
 export type RpcSchema_Generic<
   name extends string = string,
-  params extends unknown[] | undefined = unknown[] | undefined,
+  params = unknown,
 > = {
-  method: name
-  params?: params | undefined
-  returnType?: unknown
+  Request: {
+    method: name
+    params?: params | undefined
+  }
+  ReturnType?: unknown
 }
 
 /**
@@ -161,7 +203,7 @@ export type RpcSchema_Generic<
  *
  * ```
  */
-export type RpcSchema_NameGeneric = RpcSchema_NameEth | (string & {})
+export type RpcSchema_MethodNameGeneric = RpcSchema_MethodName | (string & {})
 
 ////////////////////////////////////////////////////////////////
 // All Methods
@@ -174,7 +216,7 @@ export type RpcSchema_NameGeneric = RpcSchema_NameEth | (string & {})
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Method = RpcSchema.All
+ * type Schema = RpcSchema.All
  * //   ^?
  *
  *
@@ -200,7 +242,7 @@ export type RpcSchema_All = RpcSchema_Eth | RpcSchema_Wallet | RpcSchema_Eip4337
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type MethodName = RpcSchema.Name
+ * type MethodName = RpcSchema.MethodName
  * //   ^?
  *
  *
@@ -212,7 +254,7 @@ export type RpcSchema_All = RpcSchema_Eth | RpcSchema_Wallet | RpcSchema_Eip4337
  *
  * ```
  */
-export type RpcSchema_Name =
-  | RpcSchema_NameEth
-  | RpcSchema_NameWallet
-  | RpcSchema_NameEip4337
+export type RpcSchema_MethodName =
+  | RpcSchema_MethodNameEth
+  | RpcSchema_MethodNameWallet
+  | RpcSchema_MethodNameEip4337

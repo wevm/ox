@@ -3,6 +3,7 @@ import type { Hex } from '../Hex/types.js'
 import type { Log_Rpc } from '../Log/types.js'
 import type { TransactionReceipt_Rpc } from '../TransactionReceipt/types.js'
 import type { OneOf, PartialBy } from '../types.js'
+
 /**
  * Union of all JSON-RPC Methods for EIP-4337.
  *
@@ -10,7 +11,7 @@ import type { OneOf, PartialBy } from '../types.js'
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Method = RpcSchema.Eip4337
+ * type Schema = RpcSchema.Eip4337
  * //   ^?
  *
  *
@@ -34,16 +35,18 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-4337#-eth_estimateuseroperationgas}
    */
   {
-    method: 'eth_estimateUserOperationGas'
-    params:
-      | [userOperation: RpcSchema_UserOperation, entrypoint: Address]
-      | [
-          userOperation: RpcSchema_UserOperation,
-          entrypoint: Address,
-          // TODO
-          // stateOverrideSet: RpcStateOverride,
-        ]
-    returnType: RpcSchema_EstimateUserOperationGasReturnType
+    Request: {
+      method: 'eth_estimateUserOperationGas'
+      params:
+        | [userOperation: RpcSchema_UserOperation, entrypoint: Address]
+        | [
+            userOperation: RpcSchema_UserOperation,
+            entrypoint: Address,
+            // TODO
+            // stateOverrideSet: RpcStateOverride,
+          ]
+    }
+    ReturnType: RpcSchema_EstimateUserOperationGasReturnType
   },
   /**
    * Return a UserOperation based on a hash.
@@ -51,9 +54,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-4337#-eth_getuseroperationbyhash}
    */
   {
-    method: 'eth_getUserOperationByHash'
-    params: [hash: Hex]
-    returnType: RpcSchema_GetUserOperationByHashReturnType | null
+    Request: {
+      method: 'eth_getUserOperationByHash'
+      params: [hash: Hex]
+    }
+    ReturnType: RpcSchema_GetUserOperationByHashReturnType | null
   },
   /**
    * @description Return a UserOperation receipt based on a hash.
@@ -68,9 +73,11 @@ export type RpcSchema_Eip4337 = [
    * // => { ... }
    */
   {
-    method: 'eth_getUserOperationReceipt'
-    params: [hash: Hex]
-    returnType: RpcSchema_UserOperationReceipt | null
+    Request: {
+      method: 'eth_getUserOperationReceipt'
+      params: [hash: Hex]
+    }
+    ReturnType: RpcSchema_UserOperationReceipt | null
   },
   /**
    * Submits a User Operation object to the User Operation pool of the client.
@@ -78,9 +85,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-4337#-eth_senduseroperation}
    */
   {
-    method: 'eth_sendUserOperation'
-    params: [userOperation: RpcSchema_UserOperation, entrypoint: Address]
-    returnType: Hex
+    Request: {
+      method: 'eth_sendUserOperation'
+      params: [userOperation: RpcSchema_UserOperation, entrypoint: Address]
+    }
+    ReturnType: Hex
   },
   /**
    * Return the list of supported entry points by the client.
@@ -88,9 +97,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-4337#-eth_supportedentrypoints}
    */
   {
-    method: 'eth_supportedEntryPoints'
-    params?: undefined
-    returnType: readonly Address[]
+    Request: {
+      method: 'eth_supportedEntryPoints'
+      params?: undefined
+    }
+    ReturnType: readonly Address[]
   },
   /**
    * Clears the bundler mempool and reputation data of paymasters/accounts/factories/aggregators.
@@ -98,9 +109,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/eth-infinitism/bundler-spec/blob/a247b5de59a702063ea5b09d6136f119a061642b/src/debug/debug.yaml#L1}
    */
   {
-    method: 'debug_bundler_clearState'
-    params?: undefined
-    returnType: undefined
+    Request: {
+      method: 'debug_bundler_clearState'
+      params?: undefined
+    }
+    ReturnType: undefined
   },
   /**
    * Returns the current mempool
@@ -108,9 +121,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/eth-infinitism/bundler-spec/blob/a247b5de59a702063ea5b09d6136f119a061642b/src/debug/debug.yaml#L8
    */
   {
-    method: 'debug_bundler_dumpMempool'
-    params: [entryPoint: Address]
-    returnType: readonly { userOp: RpcSchema_UserOperation }[]
+    Request: {
+      method: 'debug_bundler_dumpMempool'
+      params: [entryPoint: Address]
+    }
+    ReturnType: readonly { userOp: RpcSchema_UserOperation }[]
   },
   /**
    * Forces the bundler to execute the entire current mempool.
@@ -118,9 +133,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/eth-infinitism/bundler-spec/blob/a247b5de59a702063ea5b09d6136f119a061642b/src/debug/debug.yaml#L19
    */
   {
-    method: 'debug_bundler_sendBundleNow'
-    params?: undefined
-    returnType: Hex
+    Request: {
+      method: 'debug_bundler_sendBundleNow'
+      params?: undefined
+    }
+    ReturnType: Hex
   },
   /**
    * Toggles bundling mode between 'auto' and 'manual'
@@ -128,9 +145,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/eth-infinitism/bundler-spec/blob/a247b5de59a702063ea5b09d6136f119a061642b/src/debug/debug.yaml#L26
    */
   {
-    method: 'debug_bundler_setBundlingMode'
-    params: [mode: 'auto' | 'manual']
-    returnType: undefined
+    Request: {
+      method: 'debug_bundler_setBundlingMode'
+      params: [mode: 'auto' | 'manual']
+    }
+    ReturnType: undefined
   },
   /**
    * Sets reputation of given addresses.
@@ -138,16 +157,18 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/eth-infinitism/bundler-spec/blob/a247b5de59a702063ea5b09d6136f119a061642b/src/debug/debug.yaml#L37
    */
   {
-    method: 'debug_bundler_setReputation'
-    params: [
-      reputations: readonly {
-        address: Address
-        opsSeen: Hex
-        opsIncluded: Hex
-      }[],
-      entryPoint: Address,
-    ]
-    returnType: undefined
+    Request: {
+      method: 'debug_bundler_setReputation'
+      params: [
+        reputations: readonly {
+          address: Address
+          opsSeen: Hex
+          opsIncluded: Hex
+        }[],
+        entryPoint: Address,
+      ]
+    }
+    ReturnType: undefined
   },
   /**
    * Returns the reputation data of all observed addresses.
@@ -155,9 +176,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/eth-infinitism/bundler-spec/blob/a247b5de59a702063ea5b09d6136f119a061642b/src/debug/debug.yaml#L52
    */
   {
-    method: 'debug_bundler_dumpReputation'
-    params: [entryPoint: Address]
-    returnType: readonly {
+    Request: {
+      method: 'debug_bundler_dumpReputation'
+      params: [entryPoint: Address]
+    }
+    ReturnType: readonly {
       address: Address
       opsSeen: Hex
       opsIncluded: Hex
@@ -169,9 +192,11 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/eth-infinitism/bundler-spec/blob/a247b5de59a702063ea5b09d6136f119a061642b/src/debug/debug.yaml#L64
    */
   {
-    method: 'debug_bundler_addUserOps'
-    params: [userOps: readonly RpcSchema_UserOperation[], entryPoint: Address]
-    returnType: undefined
+    Request: {
+      method: 'debug_bundler_addUserOps'
+      params: [userOps: readonly RpcSchema_UserOperation[], entryPoint: Address]
+    }
+    ReturnType: undefined
   },
   /**
    * Returns the chain ID associated with the current network
@@ -179,57 +204,59 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-4337#-eth_chainid
    */
   {
-    method: 'pm_getPaymasterStubData'
-    params?: [
-      userOperation: OneOf<
-        | PartialBy<
-            Pick<
-              RpcSchema_UserOperation<'0.6'>,
-              | 'callData'
+    Request: {
+      method: 'pm_getPaymasterStubData'
+      params?: [
+        userOperation: OneOf<
+          | PartialBy<
+              Pick<
+                RpcSchema_UserOperation<'0.6'>,
+                | 'callData'
+                | 'callGasLimit'
+                | 'initCode'
+                | 'maxFeePerGas'
+                | 'maxPriorityFeePerGas'
+                | 'nonce'
+                | 'sender'
+                | 'preVerificationGas'
+                | 'verificationGasLimit'
+              >,
               | 'callGasLimit'
               | 'initCode'
               | 'maxFeePerGas'
               | 'maxPriorityFeePerGas'
-              | 'nonce'
-              | 'sender'
               | 'preVerificationGas'
               | 'verificationGasLimit'
-            >,
-            | 'callGasLimit'
-            | 'initCode'
-            | 'maxFeePerGas'
-            | 'maxPriorityFeePerGas'
-            | 'preVerificationGas'
-            | 'verificationGasLimit'
-          >
-        | PartialBy<
-            Pick<
-              RpcSchema_UserOperation<'0.7'>,
-              | 'callData'
+            >
+          | PartialBy<
+              Pick<
+                RpcSchema_UserOperation<'0.7'>,
+                | 'callData'
+                | 'callGasLimit'
+                | 'factory'
+                | 'factoryData'
+                | 'maxFeePerGas'
+                | 'maxPriorityFeePerGas'
+                | 'nonce'
+                | 'sender'
+                | 'preVerificationGas'
+                | 'verificationGasLimit'
+              >,
               | 'callGasLimit'
               | 'factory'
               | 'factoryData'
               | 'maxFeePerGas'
               | 'maxPriorityFeePerGas'
-              | 'nonce'
-              | 'sender'
               | 'preVerificationGas'
               | 'verificationGasLimit'
-            >,
-            | 'callGasLimit'
-            | 'factory'
-            | 'factoryData'
-            | 'maxFeePerGas'
-            | 'maxPriorityFeePerGas'
-            | 'preVerificationGas'
-            | 'verificationGasLimit'
-          >
-      >,
-      entrypoint: Address,
-      chainId: Hex,
-      context: unknown,
-    ]
-    returnType: OneOf<
+            >
+        >,
+        entrypoint: Address,
+        chainId: Hex,
+        context: unknown,
+      ]
+    }
+    ReturnType: OneOf<
       | { paymasterAndData: Hex }
       | {
           paymaster: Address
@@ -248,58 +275,60 @@ export type RpcSchema_Eip4337 = [
    * @see {@link https://github.com/ethereum/ERCs/blob/master/ERCS/erc-7677.md#pm_getpaymasterdata
    */
   {
-    method: 'pm_getPaymasterData'
-    params?: [
-      userOperation:
-        | PartialBy<
-            Pick<
-              RpcSchema_UserOperation<'0.6'>,
-              | 'callData'
+    Request: {
+      method: 'pm_getPaymasterData'
+      params?: [
+        userOperation:
+          | PartialBy<
+              Pick<
+                RpcSchema_UserOperation<'0.6'>,
+                | 'callData'
+                | 'callGasLimit'
+                | 'initCode'
+                | 'maxFeePerGas'
+                | 'maxPriorityFeePerGas'
+                | 'nonce'
+                | 'sender'
+                | 'preVerificationGas'
+                | 'verificationGasLimit'
+              >,
               | 'callGasLimit'
               | 'initCode'
               | 'maxFeePerGas'
               | 'maxPriorityFeePerGas'
-              | 'nonce'
-              | 'sender'
               | 'preVerificationGas'
               | 'verificationGasLimit'
-            >,
-            | 'callGasLimit'
-            | 'initCode'
-            | 'maxFeePerGas'
-            | 'maxPriorityFeePerGas'
-            | 'preVerificationGas'
-            | 'verificationGasLimit'
-          >
-        | PartialBy<
-            Pick<
-              RpcSchema_UserOperation<'0.7'>,
-              | 'callData'
+            >
+          | PartialBy<
+              Pick<
+                RpcSchema_UserOperation<'0.7'>,
+                | 'callData'
+                | 'callGasLimit'
+                | 'factory'
+                | 'factoryData'
+                | 'maxFeePerGas'
+                | 'maxPriorityFeePerGas'
+                | 'nonce'
+                | 'sender'
+                | 'preVerificationGas'
+                | 'verificationGasLimit'
+                | 'paymasterPostOpGasLimit'
+                | 'paymasterVerificationGasLimit'
+              >,
               | 'callGasLimit'
               | 'factory'
               | 'factoryData'
               | 'maxFeePerGas'
               | 'maxPriorityFeePerGas'
-              | 'nonce'
-              | 'sender'
               | 'preVerificationGas'
               | 'verificationGasLimit'
-              | 'paymasterPostOpGasLimit'
-              | 'paymasterVerificationGasLimit'
             >,
-            | 'callGasLimit'
-            | 'factory'
-            | 'factoryData'
-            | 'maxFeePerGas'
-            | 'maxPriorityFeePerGas'
-            | 'preVerificationGas'
-            | 'verificationGasLimit'
-          >,
-      entrypoint: Address,
-      chainId: Hex,
-      context: unknown,
-    ]
-    returnType: OneOf<
+        entrypoint: Address,
+        chainId: Hex,
+        context: unknown,
+      ]
+    }
+    ReturnType: OneOf<
       | { paymasterAndData: Hex }
       | {
           paymaster: Address
@@ -330,7 +359,7 @@ export type RpcSchema_Eip4337 = [
  *
  * ```
  */
-export type RpcSchema_NameEip4337 = RpcSchema_Eip4337['method']
+export type RpcSchema_MethodNameEip4337 = RpcSchema_Eip4337['Request']['method']
 
 /**
  * @see {@link https://github.com/eth-infinitism/account-abstraction/releases}

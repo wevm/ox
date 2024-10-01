@@ -1,4 +1,4 @@
-import { type RpcSchema, RpcTransport } from 'ox'
+import { RpcTransport } from 'ox'
 import { createServer } from 'prool'
 import { type AnvilParameters, anvil } from 'prool/instances'
 
@@ -37,11 +37,7 @@ function defineAnvil(parameters: AnvilParameters) {
 
   return {
     config,
-    async request<methodName extends RpcSchema.NameGeneric>(
-      parameters: Omit<RpcSchema.Extract<methodName>, 'returnType'>,
-    ) {
-      return await transport.request(parameters)
-    },
+    request: transport.request,
     async restart() {
       await fetch(`${rpcUrl}/restart`)
     },

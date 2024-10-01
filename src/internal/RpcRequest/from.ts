@@ -1,11 +1,11 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 import type {
-  RpcSchema_All,
   RpcSchema_Extract,
+  RpcSchema_ExtractRequest,
   RpcSchema_Generic,
-  RpcSchema_NameGeneric,
+  RpcSchema_MethodNameGeneric,
 } from '../RpcSchema/types.js'
-import type { Compute, IsNever } from '../types.js'
+import type { Compute } from '../types.js'
 import type { RpcRequest } from './types.js'
 
 /**
@@ -48,24 +48,28 @@ import type { RpcRequest } from './types.js'
  * ```
  *
  * @example
- * ### Type-safe Custom Namespaces
+ * ### Type-safe Custom Schemas
  *
- * It is possible to define your own type-safe RPC Namespace by using the {@link ox#RpcSchema.Define} type.
+ * It is possible to define your own type-safe RPC Schema by using the {@link ox#RpcSchema.Define} type.
  *
  * ```ts twoslash
  * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Method = RpcSchema.Define<{ // [!code focus]
- *   method: 'eth_foobar' // [!code focus]
- *   params: [number] // [!code focus]
- *   returnType: string // [!code focus]
+ * type Schema = RpcSchema.Define<{ // [!code focus]
+ *   Request: { // [!code focus]
+ *     method: 'eth_foobar' // [!code focus]
+ *     params: [number] // [!code focus]
+ *   } // [!code focus]
+ *   ReturnType: string // [!code focus]
  * } | { // [!code focus]
- *   method: 'eth_foobaz' // [!code focus]
- *   params: [string] // [!code focus]
- *   returnType: string // [!code focus]
+ *   Request: { // [!code focus]
+ *     method: 'eth_foobaz' // [!code focus]
+ *     params: [string] // [!code focus]
+ *   } // [!code focus]
+ *   ReturnType: string // [!code focus]
  * }> // [!code focus]
  *
- * const request = RpcRequest.from<Method>({ // [!code focus]
+ * const request = RpcRequest.from<Schema>({ // [!code focus]
  *   id: 0,
  *   method: 'eth_foobar', // [!code focus]
  *   // ^?
@@ -77,10 +81,10 @@ import type { RpcRequest } from './types.js'
  * @returns The fully-formed JSON-RPC request object.
  */
 export function RpcRequest_from<
-  method extends RpcSchema_Generic | RpcSchema_NameGeneric,
+  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
 >(
-  options: RpcRequest_from.Options<method>,
-): RpcRequest_from.ReturnType<method> {
+  options: RpcRequest_from.Options<schema>,
+): RpcRequest_from.ReturnType<schema> {
   return {
     ...options,
     jsonrpc: '2.0',
@@ -88,17 +92,16 @@ export function RpcRequest_from<
 }
 
 export declare namespace RpcRequest_from {
-  type Options<method extends RpcSchema_Generic | RpcSchema_NameGeneric> =
-    Compute<Omit<RpcSchema_Extract<method>, 'returnType'> & { id: number }>
+  type Options<schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric> =
+    Compute<RpcSchema_ExtractRequest<schema> & { id: number }>
 
-  type ReturnType<method extends RpcSchema_Generic | RpcSchema_NameGeneric> =
+  type ReturnType<
+    schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+  > = Compute<
     RpcRequest<
-      method extends RpcSchema_Generic
-        ? method
-        : IsNever<Extract<RpcSchema_All, { method: method }>> extends true
-          ? { method: method; params?: unknown[] | undefined }
-          : Extract<RpcSchema_All, { method: method }>
+      schema extends RpcSchema_Generic ? schema : RpcSchema_Extract<schema>
     >
+  >
 
   type ErrorType = GlobalErrorType
 }

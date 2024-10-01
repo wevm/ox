@@ -1,9 +1,9 @@
 import type { RpcResponse } from '../RpcResponse/types.js'
 import type {
-  RpcSchema_Extract,
+  RpcSchema_ExtractRequest,
   RpcSchema_ExtractReturnType,
   RpcSchema_Generic,
-  RpcSchema_NameGeneric,
+  RpcSchema_MethodNameGeneric,
 } from '../RpcSchema/types.js'
 import type { Compute } from '../types.js'
 
@@ -45,7 +45,7 @@ export type RpcTransport_HttpOptions = {
   fetchOptions?:
     | Omit<RequestInit, 'body'>
     | ((
-        method: Omit<RpcSchema_Generic, 'returnType'>,
+        method: RpcSchema_Generic['Request'],
       ) => Omit<RequestInit, 'body'> | Promise<Omit<RequestInit, 'body'>>)
     | undefined
   /** Function to use to make the request. @default fetch */
@@ -62,17 +62,17 @@ export type RpcTransport_RequestFn<
   safe extends boolean = false,
   options extends Record<string, unknown> = {},
 > = <
-  method extends RpcSchema_Generic | RpcSchema_NameGeneric,
+  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
   safe_override extends boolean | undefined = undefined,
 >(
-  parameters: Compute<Omit<RpcSchema_Extract<method>, 'returnType'>>,
+  parameters: Compute<RpcSchema_ExtractRequest<schema>>,
   options?: RpcTransport_Options<safe_override, options> | undefined,
 ) => Promise<
   safe_override extends boolean
     ? safe_override extends true
-      ? RpcResponse<RpcSchema_ExtractReturnType<method>>
-      : RpcSchema_ExtractReturnType<method>
+      ? RpcResponse<RpcSchema_ExtractReturnType<schema>>
+      : RpcSchema_ExtractReturnType<schema>
     : safe extends true
-      ? RpcResponse<RpcSchema_ExtractReturnType<method>>
-      : RpcSchema_ExtractReturnType<method>
+      ? RpcResponse<RpcSchema_ExtractReturnType<schema>>
+      : RpcSchema_ExtractReturnType<schema>
 >

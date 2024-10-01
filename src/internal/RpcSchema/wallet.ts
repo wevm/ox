@@ -9,7 +9,7 @@ import type { Compute } from '../types.js'
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Method = RpcSchema.Wallet
+ * type Schema = RpcSchema.Wallet
  * //   ^?
  *
  *
@@ -31,9 +31,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-1102}
    */
   {
-    method: 'eth_requestAccounts'
-    params?: undefined
-    returnType: readonly Address[]
+    Request: {
+      method: 'eth_requestAccounts'
+      params?: undefined
+    }
+    ReturnType: readonly Address[]
   },
   /**
    * Calculates an Ethereum-specific signature in the form of `keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))`
@@ -41,14 +43,16 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-1474}
    */
   {
-    method: 'personal_sign'
-    params: [
-      /** Data to sign */
-      data: Hex,
-      /** Address to use for signing */
-      address: Address,
-    ]
-    returnType: Hex
+    Request: {
+      method: 'personal_sign'
+      params: [
+        /** Data to sign */
+        data: Hex,
+        /** Address to use for signing */
+        address: Address,
+      ]
+    }
+    ReturnType: Hex
   },
   /**
    * Add an Ethereum chain to the wallet.
@@ -56,9 +60,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-3085}
    */
   {
-    method: 'wallet_addEthereumChain'
-    params: [chain: Compute<RpcSchema_WalletAddEthereumChainParameters>]
-    returnType: null
+    Request: {
+      method: 'wallet_addEthereumChain'
+      params: [chain: Compute<RpcSchema_WalletAddEthereumChainParameters>]
+    }
+    ReturnType: null
   },
   /**
    * Returns the status of a call batch that was sent via `wallet_sendCalls`.
@@ -66,9 +72,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-5792}
    */
   {
-    method: 'wallet_getCallsStatus'
-    params?: [string]
-    returnType: Compute<RpcSchema_WalletGetCallsStatusReturnType>
+    Request: {
+      method: 'wallet_getCallsStatus'
+      params?: [string]
+    }
+    ReturnType: Compute<RpcSchema_WalletGetCallsStatusReturnType>
   },
   /**
    * Gets the connected wallet's capabilities.
@@ -76,9 +84,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-5792}
    */
   {
-    method: 'wallet_getCapabilities'
-    params?: [Address]
-    returnType: Compute<RpcSchema_WalletCapabilitiesMap>
+    Request: {
+      method: 'wallet_getCapabilities'
+      params?: [Address]
+    }
+    ReturnType: Compute<RpcSchema_WalletCapabilitiesMap>
   },
   /**
    * Gets the wallets current permissions.
@@ -86,9 +96,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-2255}
    */
   {
-    method: 'wallet_getPermissions'
-    params?: undefined
-    returnType: readonly Compute<RpcSchema_WalletPermission>[]
+    Request: {
+      method: 'wallet_getPermissions'
+      params?: undefined
+    }
+    ReturnType: readonly Compute<RpcSchema_WalletPermission>[]
   },
   /**
    * Requests permissions from a wallet.
@@ -96,9 +108,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-7715}
    */
   {
-    method: 'wallet_grantPermissions'
-    params?: [RpcSchema_WalletGrantPermissionsParameters]
-    returnType: Compute<RpcSchema_WalletGrantPermissionsReturnType>
+    Request: {
+      method: 'wallet_grantPermissions'
+      params?: [RpcSchema_WalletGrantPermissionsParameters]
+    }
+    ReturnType: Compute<RpcSchema_WalletGrantPermissionsReturnType>
   },
   /**
    * Requests the given permissions from the user.
@@ -106,9 +120,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-2255}
    */
   {
-    method: 'wallet_requestPermissions'
-    params: [permissions: { eth_accounts: Record<string, any> }]
-    returnType: readonly Compute<RpcSchema_WalletPermission>[]
+    Request: {
+      method: 'wallet_requestPermissions'
+      params: [permissions: { eth_accounts: Record<string, any> }]
+    }
+    ReturnType: readonly Compute<RpcSchema_WalletPermission>[]
   },
   /**
    * Revokes the given permissions from the user.
@@ -116,9 +132,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://github.com/MetaMask/metamask-improvement-proposals/blob/main/MIPs/mip-2.md}
    */
   {
-    method: 'wallet_revokePermissions'
-    params: [permissions: { eth_accounts: Record<string, any> }]
-    returnType: null
+    Request: {
+      method: 'wallet_revokePermissions'
+      params: [permissions: { eth_accounts: Record<string, any> }]
+    }
+    ReturnType: null
   },
   /**
    * Requests the connected wallet to send a batch of calls.
@@ -126,9 +144,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-5792}
    */
   {
-    method: 'wallet_sendCalls'
-    params?: Compute<RpcSchema_WalletSendCallsParameters>
-    returnType: string
+    Request: {
+      method: 'wallet_sendCalls'
+      params?: Compute<RpcSchema_WalletSendCallsParameters>
+    }
+    ReturnType: string
   },
   /**
    * Requests for the wallet to show information about a call batch
@@ -137,9 +157,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-5792}
    */
   {
-    method: 'wallet_showCallsStatus'
-    params?: [string]
-    returnType: undefined
+    Request: {
+      method: 'wallet_showCallsStatus'
+      params?: [string]
+    }
+    ReturnType: undefined
   },
   /**
    * Switch the wallet to the given Ethereum chain.
@@ -147,9 +169,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-3326}
    */
   {
-    method: 'wallet_switchEthereumChain'
-    params: [chain: { chainId: string }]
-    returnType: null
+    Request: {
+      method: 'wallet_switchEthereumChain'
+      params: [chain: { chainId: string }]
+    }
+    ReturnType: null
   },
   /**
    * Requests that the user tracks the token in their wallet. Returns a boolean indicating if the token was successfully added.
@@ -157,9 +181,11 @@ export type RpcSchema_Wallet = [
    * @see {@link https://eips.ethereum.org/EIPS/eip-747}
    */
   {
-    method: 'wallet_watchAsset'
-    params: [Compute<RpcSchema_WalletWatchAssetParameters>]
-    returnType: boolean
+    Request: {
+      method: 'wallet_watchAsset'
+      params: [Compute<RpcSchema_WalletWatchAssetParameters>]
+    }
+    ReturnType: boolean
   },
 ][number]
 
@@ -180,7 +206,7 @@ export type RpcSchema_Wallet = [
  *
  * ```
  */
-export type RpcSchema_NameWallet = RpcSchema_Wallet['method']
+export type RpcSchema_MethodNameWallet = RpcSchema_Wallet['Request']['method']
 
 //////////////////////////////////////////////////////////////////
 // Parameter & Return Types

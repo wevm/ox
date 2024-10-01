@@ -1,4 +1,4 @@
-import { RpcRequest } from 'ox'
+import { RpcRequest, RpcResponse } from 'ox'
 import { expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 
@@ -21,7 +21,9 @@ test('default', async () => {
       'Content-Type': 'application/json',
     },
     method: 'POST',
-  }).then((res) => res.json())
+  })
+    .then((res) => res.json())
+    .then((res) => RpcResponse.parse(res, { request }))
   expect(response).toMatchInlineSnapshot(`
     {
       "id": 0,

@@ -32,24 +32,28 @@ import type { RpcRequest_Store } from './types.js'
  * ```
  *
  * @example
- * ### Type-safe Custom Methods
+ * ### Type-safe Custom Schemas
  *
- * It is possible to define your own type-safe namespace by using the {@link ox#RpcSchema.Define} type.
+ * It is possible to define your own type-safe schema by using the {@link ox#RpcSchema.Define} type.
  *
  * ```ts twoslash
  * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Method = RpcSchema.Define<{ // [!code focus]
- *   method: 'eth_foobar' // [!code focus]
- *   params: [number] // [!code focus]
- *   returnType: string // [!code focus]
+ * type Schema = RpcSchema.Define<{ // [!code focus]
+ *   Request: { // [!code focus]
+ *     method: 'eth_foobar' // [!code focus]
+ *     params: [number] // [!code focus]
+ *   } // [!code focus]
+ *   ReturnType: string // [!code focus]
  * } | { // [!code focus]
- *   method: 'eth_foobaz' // [!code focus]
- *   params: [string] // [!code focus]
- *   returnType: string // [!code focus]
+ *   Request: { // [!code focus]
+ *     method: 'eth_foobaz' // [!code focus]
+ *     params: [string] // [!code focus]
+ *   } // [!code focus]
+ *   ReturnType: string // [!code focus]
  * }> // [!code focus]
  *
- * const store = RpcRequest.createStore<Method>() // [!code focus]
+ * const store = RpcRequest.createStore<Schema>() // [!code focus]
  *
  * const request = store.prepare({
  *   method: 'eth_foobar', // [!code focus]
@@ -62,10 +66,10 @@ import type { RpcRequest_Store } from './types.js'
  * @returns The request store
  */
 export function RpcRequest_createStore<
-  method extends RpcSchema_Generic | undefined = undefined,
+  schema extends RpcSchema_Generic | undefined = undefined,
 >(
   options: RpcRequest_createStore.Options = {},
-): RpcRequest_createStore.ReturnType<method> {
+): RpcRequest_createStore.ReturnType<schema> {
   let id = options.id ?? 0
   return {
     prepare(options) {
@@ -86,8 +90,8 @@ export declare namespace RpcRequest_createStore {
     id?: number
   }
 
-  type ReturnType<method extends RpcSchema_Generic | undefined> =
-    RpcRequest_Store<method>
+  type ReturnType<schema extends RpcSchema_Generic | undefined> =
+    RpcRequest_Store<schema>
 
   type ErrorType = GlobalErrorType
 }
