@@ -13,6 +13,7 @@ import type { TransactionEnvelope } from './types.js'
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
+ *   type: 'eip1559',
  *   value: Value.fromEther('1'),
  * })
  * // @log: false
