@@ -5,21 +5,24 @@
   "scripts": {
     "bench": "vitest -c ./test/vitest.config.ts bench",
     "bench:types": "TYPES=true vitest -c ./test/vitest.config.ts src/**/*.bench-d.ts",
-    "build": "pnpm clean && tsc --project ./tsconfig.build.json",
+    "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
+    "build:esm": "tsc --project ./tsconfig.build.json --module es2020 --outDir ./src/_esm && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./src/_esm/package.json",
+    "build:cjs": "tsc --project ./tsconfig.build.json --module commonjs --outDir ./src/_cjs --removeComments --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\"}' > ./src/_cjs/package.json",
+    "build:types": "tsc --project ./tsconfig.build.json --module esnext --declarationDir ./src/_types --emitDeclarationOnly --declaration --declarationMap",
     "changeset:prepublish": "pnpm version:update && pnpm build && tsx scripts/prepublish.ts",
     "changeset:publish": "pnpm changeset:prepublish && changeset publish",
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
     "check": "biome check . --fix --unsafe",
     "check:repo": "sherif",
-    "check:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js --ignore-pattern 'src/_dist/**/*.js'",
+    "check:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js --ignore-pattern 'src/_esm/**/*.js'",
     "check:types": "tsc --noEmit",
-    "clean": "rimraf src/_dist ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
+    "clean": "rimraf src/_types src/_esm src/_cjs ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
     "contracts:build": "forge build --config-path ./contracts/foundry.toml && tsx contracts/scripts/generate-typed-artifacts.ts",
     "deps": "pnpx taze -r",
     "dev": "pnpm preconstruct && pnpm playground",
     "docs:dev": "pnpm --filter site dev",
     "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json && tsx scripts/docgen/build.ts",
-    "docs:gen": "pnpm build && pnpm docs:extract",
+    "docs:gen": "pnpm clean && pnpm build:types && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "knip": "knip --production",
     "format": "biome format --write",
@@ -113,162 +116,162 @@
   "size-limit": [
     {
       "name": "import * from 'ox'",
-      "path": "./src/_dist/index.js",
+      "path": "./src/_esm/index.js",
       "import": "*"
     },
     {
       "name": "import * as Abi from 'ox/Abi'",
-      "path": "./src/_dist/Abi.js",
+      "path": "./src/_esm/Abi.js",
       "import": "*"
     },
     {
       "name": "import * as AbiConstructor from 'ox/AbiConstructor'",
-      "path": "./src/_dist/AbiConstructor.js",
+      "path": "./src/_esm/AbiConstructor.js",
       "import": "*"
     },
     {
       "name": "import * as AbiError from 'ox/AbiError'",
-      "path": "./src/_dist/AbiError.js",
+      "path": "./src/_esm/AbiError.js",
       "import": "*"
     },
     {
       "name": "import * as AbiEvent from 'ox/AbiEvent'",
-      "path": "./src/_dist/AbiEvent.js",
+      "path": "./src/_esm/AbiEvent.js",
       "import": "*"
     },
     {
       "name": "import * as AbiFunction from 'ox/AbiFunction'",
-      "path": "./src/_dist/AbiFunction.js",
+      "path": "./src/_esm/AbiFunction.js",
       "import": "*"
     },
     {
       "name": "import * as AbiItem from 'ox/AbiItem'",
-      "path": "./src/_dist/AbiItem.js",
+      "path": "./src/_esm/AbiItem.js",
       "import": "*"
     },
     {
       "name": "import * as AbiParameters from 'ox/AbiParameters'",
-      "path": "./src/_dist/AbiParameters.js",
+      "path": "./src/_esm/AbiParameters.js",
       "import": "*"
     },
     {
       "name": "import * as Address from 'ox/Address'",
-      "path": "./src/_dist/Address.js",
+      "path": "./src/_esm/Address.js",
       "import": "*"
     },
     {
       "name": "import * as Base64 from 'ox/Base64'",
-      "path": "./src/_dist/Base64.js",
+      "path": "./src/_esm/Base64.js",
       "import": "*"
     },
     {
       "name": "import * as Block from 'ox/Block'",
-      "path": "./src/_dist/Block.js",
+      "path": "./src/_esm/Block.js",
       "import": "*"
     },
     {
       "name": "import * as Bloom from 'ox/Bloom'",
-      "path": "./src/_dist/Bloom.js",
+      "path": "./src/_esm/Bloom.js",
       "import": "*"
     },
     {
       "name": "import * as Bytes from 'ox/Bytes'",
-      "path": "./src/_dist/Bytes.js",
+      "path": "./src/_esm/Bytes.js",
       "import": "*"
     },
     {
       "name": "import * as ContractAddress from 'ox/ContractAddress'",
-      "path": "./src/_dist/ContractAddress.js",
+      "path": "./src/_esm/ContractAddress.js",
       "import": "*"
     },
     {
       "name": "import * as Errors from 'ox/Errors'",
-      "path": "./src/_dist/Errors.js",
+      "path": "./src/_esm/Errors.js",
       "import": "*"
     },
     {
       "name": "import * as Hex from 'ox/Hex'",
-      "path": "./src/_dist/Hex.js",
+      "path": "./src/_esm/Hex.js",
       "import": "*"
     },
     {
       "name": "import * as Kzg from 'ox/Kzg'",
-      "path": "./src/_dist/Kzg.js",
+      "path": "./src/_esm/Kzg.js",
       "import": "*"
     },
     {
       "name": "import * as Log from 'ox/Log'",
-      "path": "./src/_dist/Log.js",
+      "path": "./src/_esm/Log.js",
       "import": "*"
     },
     {
       "name": "import * as PersonalMessage from 'ox/PersonalMessage'",
-      "path": "./src/_dist/PersonalMessage.js",
+      "path": "./src/_esm/PersonalMessage.js",
       "import": "*"
     },
     {
       "name": "import * as Provider from 'ox/Provider'",
-      "path": "./src/_dist/Provider.js",
+      "path": "./src/_esm/Provider.js",
       "import": "*"
     },
     {
       "name": "import * as PublicKey from 'ox/PublicKey'",
-      "path": "./src/_dist/PublicKey.js",
+      "path": "./src/_esm/PublicKey.js",
       "import": "*"
     },
     {
       "name": "import * as Rlp from 'ox/Rlp'",
-      "path": "./src/_dist/Rlp.js",
+      "path": "./src/_esm/Rlp.js",
       "import": "*"
     },
     {
       "name": "import * as RpcRequest from 'ox/RpcRequest'",
-      "path": "./src/_dist/RpcRequest.js",
+      "path": "./src/_esm/RpcRequest.js",
       "import": "*"
     },
     {
       "name": "import * as RpcResponse from 'ox/RpcResponse'",
-      "path": "./src/_dist/RpcResponse.js",
+      "path": "./src/_esm/RpcResponse.js",
       "import": "*"
     },
     {
       "name": "import * as Secp256k1 from 'ox/Secp256k1'",
-      "path": "./src/_dist/Secp256k1.js",
+      "path": "./src/_esm/Secp256k1.js",
       "import": "*"
     },
     {
       "name": "import * as Signature from 'ox/Signature'",
-      "path": "./src/_dist/Signature.js",
+      "path": "./src/_esm/Signature.js",
       "import": "*"
     },
     {
       "name": "import * as Siwe from 'ox/Siwe'",
-      "path": "./src/_dist/Siwe.js",
+      "path": "./src/_esm/Siwe.js",
       "import": "*"
     },
     {
       "name": "import * as Transaction from 'ox/Transaction'",
-      "path": "./src/_dist/Transaction.js",
+      "path": "./src/_esm/Transaction.js",
       "import": "*"
     },
     {
       "name": "import * as TransactionEnvelope from 'ox/TransactionEnvelope'",
-      "path": "./src/_dist/TransactionEnvelope.js",
+      "path": "./src/_esm/TransactionEnvelope.js",
       "import": "*"
     },
     {
       "name": "import * as TransactionReceipt from 'ox/TransactionReceipt'",
-      "path": "./src/_dist/TransactionReceipt.js",
+      "path": "./src/_esm/TransactionReceipt.js",
       "import": "*"
     },
     {
       "name": "import * as TypedData from 'ox/TypedData'",
-      "path": "./src/_dist/TypedData.js",
+      "path": "./src/_esm/TypedData.js",
       "import": "*"
     },
     {
       "name": "import * as Value from 'ox/Value'",
-      "path": "./src/_dist/Value.js",
+      "path": "./src/_esm/Value.js",
       "import": "*"
     }
   ]

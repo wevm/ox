@@ -10,7 +10,10 @@ export function getExports({
     parentEntryName?: string | undefined
   }) => void
 } = {}) {
-  const dist = {} as Record<string, string | { types: string; default: string }>
+  const dist = {} as Record<
+    string,
+    string | { types: string; default: string; import: string }
+  >
   const src = {} as Record<string, string>
 
   const entries = fs.readdirSync(resolve(import.meta.dirname, '../../src'), {
@@ -18,7 +21,8 @@ export function getExports({
   })
 
   for (const parentEntry of entries) {
-    if (['node_modules', '_dist'].includes(parentEntry.name)) continue
+    if (['node_modules', '_types', '_esm', '_cjs'].includes(parentEntry.name))
+      continue
 
     if (!parentEntry.isDirectory()) {
       if (parentEntry.name.endsWith('test.ts')) continue
@@ -37,8 +41,9 @@ export function getExports({
         src[entryName] = entryName
       } else {
         dist[entryName] = {
-          types: `./_dist/${name}.d.ts`,
-          default: `./_dist/${name}.js`,
+          types: `./_types/${name}.d.ts`,
+          import: `./_esm/${name}.js`,
+          default: `./_cjs/${name}.js`,
         }
         src[entryName] = `./${name}.ts`
 
@@ -57,7 +62,8 @@ export function getExports({
       },
     )
     for (const entry of entries) {
-      if (['node_modules', '_dist'].includes(entry.name)) continue
+      if (['node_modules', '_types', '_esm', '_cjs'].includes(entry.name))
+        continue
       if (entry.name.endsWith('test.ts')) continue
       if (entry.isDirectory()) continue
 
@@ -69,8 +75,9 @@ export function getExports({
       const entryName = `.${parentEntry.name === 'core' ? '' : `/${parentEntry.name}`}${isIndex ? '' : `/${name}`}`
 
       dist[entryName] = {
-        types: `./_dist/${parentEntry.name}/${name}.d.ts`,
-        default: `./_dist/${parentEntry.name}/${name}.js`,
+        types: `./_types/${parentEntry.name}/${name}.d.ts`,
+        import: `./_esm/${parentEntry.name}/${name}.js`,
+        default: `./_cjs/${parentEntry.name}/${name}.js`,
       }
       src[entryName] = `./${parentEntry.name}/${name}.ts`
 

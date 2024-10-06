@@ -2,13 +2,15 @@
   // This file is used to compile the for cjs and esm (see package.json build scripts). It should exclude all test files.
   "extends": "./tsconfig.base.json",
   "include": ["src"],
-  "exclude": ["src/**/*.bench.ts", "src/**/*.bench-d.ts", "src/**/*.snap-d.ts", "src/**/*.test.ts", "src/**/*.test-d.ts"],
+  "exclude": [
+    "src/**/*.bench.ts",
+    "src/**/*.bench-d.ts",
+    "src/**/*.snap-d.ts",
+    "src/**/*.test.ts",
+    "src/**/*.test-d.ts"
+  ],
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
-    "module": "es2020",
     "moduleResolution": "node",
-    "outDir": "./src/_dist",
     "sourceMap": true,
     "rootDir": "./src"
   }

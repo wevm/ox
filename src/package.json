@@ -3,9 +3,10 @@
   "description": "Ethereum Standard Library",
   "version": "0.0.0",
   "type": "module",
-  "main": "./_dist/index.js",
-  "types": "./_dist/index.d.ts",
-  "typings": "./_dist/index.d.ts",
+  "main": "./_cjs/index.js",
+  "module": "./_esm/index.js",
+  "types": "./_types/index.d.ts",
+  "typings": "./_types/index.d.ts",
   "sideEffects": false,
   "files": [
     "*",

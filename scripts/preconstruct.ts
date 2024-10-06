@@ -14,7 +14,7 @@ console.log(`${packageJson.name} — ${dirname(packagePath)}`)
 const dir = resolve(dirname(packagePath))
 
 // Empty dist directories
-fs.emptyDirSync(resolve(dir, '_dist'))
+fs.emptyDirSync(resolve(dir, '_esm'))
 
 const exports = getExports()
 
@@ -36,6 +36,8 @@ for (const [key, distExports] of Object.entries(exports.dist ?? {})) {
     type: 'types' | 'default',
     value: string,
   ][]) {
+    if (value.includes('_cjs')) continue
+
     const srcFilePath = resolve(dir, exports.src[key]!)
 
     const distDir = resolve(dir, dirname(value))

@@ -3,7 +3,9 @@
 .attest
 .env
 .local
-_dist
+_esm
+_cjs
+_types
 dist
 coverage
 node_modules

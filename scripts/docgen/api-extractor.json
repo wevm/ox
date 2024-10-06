@@ -1,6 +1,6 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-  "mainEntryPointFilePath": "../../src/_dist/index.d.ts",
+  "mainEntryPointFilePath": "../../src/_types/index.d.ts",
   "bundledPackages": [],
   "newlineKind": "lf",
   "enumMemberOrder": "preserve",

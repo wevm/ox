@@ -13,7 +13,7 @@ export default defineConfig({
     },
     coverage: {
       all: false,
-      exclude: ['**/_dist/**'],
+      exclude: ['**/_types/**', '**/_esm/**', '**/_cjs/**'],
       include: ['**/src/**'],
       provider: 'v8',
       reporter: process.env.CI ? ['lcov'] : ['text', 'json', 'html'],
