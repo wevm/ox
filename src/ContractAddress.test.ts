@@ -5,8 +5,8 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "from",
-      "getCreateAddress",
-      "getCreate2Address",
+      "fromCreate",
+      "fromCreate2",
     ]
   `)
 })
