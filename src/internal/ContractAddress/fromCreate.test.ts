@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { ContractAddress } from 'ox'
+import { expect, test } from 'vitest'
 
 test('gets contract address (CREATE)', () => {
   expect(
