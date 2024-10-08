@@ -82,7 +82,7 @@ export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
 
   if (Array.isArray(args) && Array.isArray(matchArgs)) {
     for (const [index, value] of matchArgs.entries()) {
-      if (value === null) continue
+      if (value === null || value === undefined) continue
       const input = abiEvent.inputs[index]
       if (!input)
         throw new AbiEvent_InputNotFoundError({
@@ -110,7 +110,7 @@ export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
     !Array.isArray(matchArgs)
   )
     for (const [key, value] of Object.entries(matchArgs)) {
-      if (value === null) continue
+      if (value === null || value === undefined) continue
       const input = abiEvent.inputs.find((input) => input.name === key)
       if (!input) throw new AbiEvent_InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
