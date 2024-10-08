@@ -11,15 +11,15 @@ import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
- * Generates contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
+ * Computes contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
  *
  * @example
  * ```ts twoslash
- * import { Bytes, ContractAddress, Hex } from 'ox'
+ * import { ContractAddress, Hex } from 'ox'
  *
- * ContractAddress.getCreate2Address({
+ * ContractAddress.fromCreate2({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
- *   bytecode: Bytes.from('0x6394198df16000526103ff60206004601c335afa6040516060f3'),
+ *   bytecode: '0x6394198df16000526103ff60206004601c335afa6040516060f3',
  *   salt: Hex.fromString('hello world'),
  * })
  * // @log: '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
@@ -28,8 +28,8 @@ import type { Hex } from '../Hex/types.js'
  * @param options - Options for retrieving address.
  * @returns Contract Address.
  */
-export function ContractAddress_getCreate2Address(
-  options: ContractAddress_getCreate2Address.Options,
+export function ContractAddress_fromCreate2(
+  options: ContractAddress_fromCreate2.Options,
 ): Address {
   const from = Bytes_fromHex(Address_from(options.from))
   const salt = Bytes_padLeft(
@@ -55,7 +55,7 @@ export function ContractAddress_getCreate2Address(
   )
 }
 
-export declare namespace ContractAddress_getCreate2Address {
+export declare namespace ContractAddress_fromCreate2 {
   type Options =
     | {
         bytecode: Bytes | Hex
@@ -79,6 +79,6 @@ export declare namespace ContractAddress_getCreate2Address {
     | GlobalErrorType
 }
 
-ContractAddress_getCreate2Address.parseError = (error: unknown) =>
+ContractAddress_fromCreate2.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as ContractAddress_getCreate2Address.ErrorType
+  error as ContractAddress_fromCreate2.ErrorType

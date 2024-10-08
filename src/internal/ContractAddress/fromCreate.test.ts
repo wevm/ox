@@ -1,10 +1,9 @@
 import { expect, test } from 'vitest'
-
-import { ContractAddress_getCreateAddress } from './getCreateAddress.js'
+import { ContractAddress } from 'ox'
 
 test('gets contract address (CREATE)', () => {
   expect(
-    ContractAddress_getCreateAddress({
+    ContractAddress.fromCreate({
       from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
       nonce: 0n,
     }),

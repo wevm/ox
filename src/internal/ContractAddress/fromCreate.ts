@@ -7,13 +7,13 @@ import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Rlp_fromBytes } from '../Rlp/from.js'
 
 /**
- * Generates contract address via [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode.
+ * Computes contract address via [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode.
  *
  * @example
  * ```ts twoslash
  * import { ContractAddress } from 'ox'
  *
- * ContractAddress.getCreateAddress({
+ * ContractAddress.fromCreate({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
  *   nonce: 0n,
  * })
@@ -23,8 +23,8 @@ import { Rlp_fromBytes } from '../Rlp/from.js'
  * @param options - Options for retrieving address.
  * @returns Contract Address.
  */
-export function ContractAddress_getCreateAddress(
-  options: ContractAddress_getCreateAddress.Options,
+export function ContractAddress_fromCreate(
+  options: ContractAddress_fromCreate.Options,
 ): Address {
   const from = Bytes_fromHex(Address_from(options.from))
 
@@ -36,7 +36,7 @@ export function ContractAddress_getCreateAddress(
   )
 }
 
-export declare namespace ContractAddress_getCreateAddress {
+export declare namespace ContractAddress_fromCreate {
   type Options = {
     from: Address
     nonce: bigint
@@ -51,6 +51,6 @@ export declare namespace ContractAddress_getCreateAddress {
     | GlobalErrorType
 }
 
-ContractAddress_getCreateAddress.parseError = (error: unknown) =>
+ContractAddress_fromCreate.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as ContractAddress_getCreateAddress.ErrorType
+  error as ContractAddress_fromCreate.ErrorType

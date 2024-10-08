@@ -1120,12 +1120,12 @@ export * as Constants from './Constants.js'
  * @example
  * ### Computing Contract Addresses (CREATE)
  *
- * A Contract Address that was instantiated using the `CREATE` opcode can be computed using {@link ox#ContractAddress.(getCreateAddress:function)}:
+ * A Contract Address that was instantiated using the `CREATE` opcode can be computed using {@link ox#ContractAddress.(fromCreate:function)}:
  *
  * ```ts twoslash
  * import { ContractAddress } from 'ox'
  *
- * ContractAddress.getCreateAddress({
+ * ContractAddress.fromCreate({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
  *   nonce: 0n,
  * })
@@ -1135,12 +1135,12 @@ export * as Constants from './Constants.js'
  * @example
  * ### Computing Contract Addresses (CREATE2)
  *
- * A Contract Address that was instantiated using the `CREATE2` opcode can be computed using {@link ox#ContractAddress.(getCreate2Address:function)}:
+ * A Contract Address that was instantiated using the `CREATE2` opcode can be computed using {@link ox#ContractAddress.(fromCreate2:function)}:
  *
  * ```ts twoslash
  * import { Bytes, ContractAddress, Hex } from 'ox'
  *
- * ContractAddress.getCreate2Address({
+ * ContractAddress.fromCreate2({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
  *   bytecode: Bytes.from('0x6394198df16000526103ff60206004601c335afa6040516060f3'),
  *   salt: Hex.fromString('hello world'),
