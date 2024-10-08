@@ -725,13 +725,13 @@ export * as Address from './Address.js'
  * Data can be encrypted using {@link ox#AesGcm.(encrypt:function)}:
  *
  * ```ts twoslash
- * import { AesGcm, Bytes } from 'ox'
+ * import { AesGcm, Hex } from 'ox'
  *
  * const key = await AesGcm.getKey({ password: 'qwerty' })
- * const secret = Bytes.fromString('i am a secret message')
+ * const secret = Hex.fromString('i am a secret message')
  *
  * const encrypted = await AesGcm.encrypt(secret, key) // [!code focus]
- * // @log: Uint8Array [123, 79, 183, 167, 163, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166]
+ * // @log: '0x5e257b25bcf53d5431e54e5a68ca0138306d31bb6154f35a97bb8ea18111e7d82bcf619d3c76c4650688bc5310eed80b8fc86d1e3e'
  * ```
  *
  * @example
@@ -740,13 +740,13 @@ export * as Address from './Address.js'
  * Data can be decrypted using {@link ox#AesGcm.(decrypt:function)}:
  *
  * ```ts twoslash
- * import { AesGcm, Bytes } from 'ox'
+ * import { AesGcm, Hex } from 'ox'
  *
  * const key = await AesGcm.getKey({ password: 'qwerty' })
- * const encrypted = Bytes.from([123, 79, 183, 167, 163, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166])
+ * const encrypted = await AesGcm.encrypt(Hex.fromString('i am a secret message'), key)
  *
  * const decrypted = await AesGcm.decrypt(encrypted, key) // [!code focus]
- * // @log: Bytes.fromString('i am a secret message')
+ * // @log: Hex.fromString('i am a secret message')
  * ```
  *
  * @category Crypto

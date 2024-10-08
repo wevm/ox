@@ -18,7 +18,7 @@ import { AesGcm_ivLength } from './constants.js'
  * const secret = Hex.fromString('i am a secret message')
  *
  * const encrypted = await AesGcm.encrypt(secret, key) // [!code focus]
- * // @log: '0x...'
+ * // @log: '0x5e257b25bcf53d5431e54e5a68ca0138306d31bb6154f35a97bb8ea18111e7d82bcf619d3c76c4650688bc5310eed80b8fc86d1e3e'
  * ```
  *
  * @param data - The data to encrypt.
