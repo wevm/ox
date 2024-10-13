@@ -114,8 +114,8 @@ test('eip7702', () => {
   const envelope = TransactionEnvelope.from({
     authorizationList: [
       {
+        address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
         chainId: 1,
-        contractAddress: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
         nonce: 665n,
         r: BigInt(
           '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',

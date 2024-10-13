@@ -5,8 +5,8 @@ import { accounts } from '../../../../test/constants/accounts.js'
 
 test('default', () => {
   const authorization = Authorization.from({
+    address: wagmiContractConfig.address,
     chainId: 1,
-    contractAddress: wagmiContractConfig.address,
     nonce: 785n,
   })
   const signature = Secp256k1.sign({

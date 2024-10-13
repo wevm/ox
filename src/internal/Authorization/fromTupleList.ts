@@ -16,13 +16,13 @@ import type { Authorization_List, Authorization_TupleList } from './types.js'
  * ])
  * // @log: [
  * // @log:   {
+ * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 1,
- * // @log:     contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     nonce: 3n,
  * // @log:   },
  * // @log:   {
+ * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 3,
- * // @log:     contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     nonce: 20n,
  * // @log:   },
  * // @log: ]
@@ -40,16 +40,16 @@ import type { Authorization_List, Authorization_TupleList } from './types.js'
  * ])
  * // @log: [
  * // @log:   {
+ * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 1,
- * // @log:     contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     nonce: 3n,
  * // @log:     r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
  * // @log:     s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
  * // @log:     yParity: 0,
  * // @log:   },
  * // @log:   {
+ * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 3,
- * // @log:     contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     nonce: 20n,
  * // @log:     r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
  * // @log:     s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),

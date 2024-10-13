@@ -11,8 +11,8 @@ import { wagmiContractConfig } from '../../../../test/constants/abis.js'
 import { accounts } from '../../../../test/constants/accounts.js'
 
 const authorization_1 = Authorization.from({
+  address: wagmiContractConfig.address,
   chainId: 1,
-  contractAddress: wagmiContractConfig.address,
   nonce: 785n,
 })
 const signature_1 = Secp256k1.sign({
@@ -21,8 +21,8 @@ const signature_1 = Secp256k1.sign({
 })
 
 const authorization_2 = Authorization.from({
+  address: wagmiContractConfig.address,
   chainId: 10,
-  contractAddress: wagmiContractConfig.address,
   nonce: 786n,
 })
 const signature_2 = Secp256k1.sign({
@@ -269,8 +269,8 @@ test('behavior: network', async () => {
     })
 
     const authorization = Authorization.from({
+      address: contractAddress!,
       chainId: 1,
-      contractAddress: contractAddress!,
       nonce: BigInt(nonce),
     })
 
@@ -322,7 +322,7 @@ test('behavior: network', async () => {
       "accessList": [],
       "authorizationList": [
         {
-          "address": "0xbd2fe040d03eb1d1e5a151fbcc19a03333223019",
+          "address": "0xBD2fe040D03EB1d1E5A151fbcc19A03333223019",
           "chainId": "0x1",
           "nonce": "0x298",
           "r": "0xb7ba3c862bb67758a231b9f4c031f275fa3eeb436a8fd8312eda06e3b1931deb",
@@ -333,7 +333,7 @@ test('behavior: network', async () => {
       "blockHash": null,
       "blockNumber": "0x12f2977",
       "chainId": "0x1",
-      "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
       "gas": "0xf4240",
       "gasPrice": "0x3df788e0a",
       "hash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
@@ -343,7 +343,7 @@ test('behavior: network', async () => {
       "nonce": "0x70",
       "r": "0xfba1d00a6da7a7b1faabf2a3cfdab43c451156c47f4f504b00f8013dcead8312",
       "s": "0x44dad3618977b47f57f0cf2237c4d16bcf5a509a1d191fbfe0ac6198e5bc6658",
-      "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "to": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       "transactionIndex": "0x0",
       "type": "0x4",
       "v": "0x0",
@@ -371,11 +371,11 @@ test('behavior: network', async () => {
       "contractAddress": null,
       "cumulativeGasUsed": null,
       "effectiveGasPrice": "0x3df788e0a",
-      "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "from": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
       "gasUsed": null,
       "logs": [
         {
-          "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+          "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
           "blockHash": null,
           "blockNumber": "0x12f2977",
           "blockTimestamp": "0x66434e46",
@@ -390,7 +390,7 @@ test('behavior: network', async () => {
       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "root": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "status": "0x1",
-      "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "to": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       "transactionHash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
       "transactionIndex": "0x0",
       "type": "0x4",

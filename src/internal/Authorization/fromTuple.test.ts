@@ -10,8 +10,8 @@ test('default', () => {
   const authorization = Authorization.fromTuple(tuple)
   expect(authorization).toMatchInlineSnapshot(`
     {
+      "address": "0x0000000000000000000000000000000000000000",
       "chainId": 1,
-      "contractAddress": "0x0000000000000000000000000000000000000000",
       "nonce": 3n,
     }
   `)
@@ -29,8 +29,8 @@ test('behavior: signature', () => {
   const authorization = Authorization.fromTuple(tuple)
   expect(authorization).toMatchInlineSnapshot(`
     {
+      "address": "0x0000000000000000000000000000000000000000",
       "chainId": 1,
-      "contractAddress": "0x0000000000000000000000000000000000000000",
       "nonce": 3n,
       "r": 1n,
       "s": 2n,

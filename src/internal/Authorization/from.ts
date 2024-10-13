@@ -18,8 +18,8 @@ import type {
  * import { Authorization } from 'ox'
  *
  * const authorization = Authorization.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  *   nonce: 69n,
  * })
  * ```
@@ -34,7 +34,7 @@ import type {
  * import { Authorization, Secp256k1 } from 'ox'
  *
  * const authorization = Authorization.from({
- *   contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
  *   nonce: 40n,
  * })

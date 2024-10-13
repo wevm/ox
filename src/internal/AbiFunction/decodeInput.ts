@@ -10,7 +10,7 @@ import { AbiFunction_fromAbi } from './fromAbi.js'
 import type { AbiFunction } from './types.js'
 
 /**
- * ABI-decodes input data according to the ABI Item's input types (`inputs`).
+ * ABI-decodes function arguments according to the ABI Item's input types (`inputs`).
  *
  * @example
  * ```ts twoslash

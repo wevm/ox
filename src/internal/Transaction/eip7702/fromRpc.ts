@@ -12,8 +12,8 @@ import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
  *
  * const transaction = TransactionEip7702.fromRpc({
  *   authorizationList: [{
+ *     address: '0x0000000000000000000000000000000000000000',
  *     chainId: '0x1',
- *     contractAddress: '0x0000000000000000000000000000000000000000',
  *     nonce: '0x1',
  *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',

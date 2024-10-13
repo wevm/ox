@@ -32,7 +32,7 @@ import type {
  * import { AbiParameters } from 'ox'
  *
  * const data = AbiParameters.encode(
- *   AbiParameters.from('string, uint, bool'),
+ *   AbiParameters.from(['string', 'uint', 'bool']),
  *   ['wagmi', 420n, true],
  * )
  * ```

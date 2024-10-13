@@ -149,8 +149,8 @@ test('eip4844', () => {
 
 test('eip7702', () => {
   const authorization = Authorization.from({
+    address: wagmiContractConfig.address,
     chainId: 1,
-    contractAddress: wagmiContractConfig.address,
     nonce: 785n,
   })
   const signature_auth = Secp256k1.sign({

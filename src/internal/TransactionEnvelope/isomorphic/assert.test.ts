@@ -66,7 +66,7 @@ test('eip7702', () => {
     TransactionEnvelope.assert({
       authorizationList: [
         {
-          contractAddress: '0x0000000000000000000000000000000000000000',
+          address: '0x0000000000000000000000000000000000000000',
           chainId: 0,
           nonce: 0n,
           r: 0n,

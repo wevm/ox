@@ -6,7 +6,7 @@ test('invalid chainId', () => {
     TransactionEnvelopeEip7702.assert({
       authorizationList: [
         {
-          contractAddress: '0x0000000000000000000000000000000000000000',
+          address: '0x0000000000000000000000000000000000000000',
           chainId: 0,
           nonce: 0n,
           r: 0n,
@@ -26,7 +26,7 @@ test('invalid address', () => {
     TransactionEnvelopeEip7702.assert({
       authorizationList: [
         {
-          contractAddress: '0x0000000000000000000000000000000000000000',
+          address: '0x0000000000000000000000000000000000000000',
           chainId: 0,
           nonce: 0n,
           r: 0n,
@@ -46,7 +46,7 @@ test('fee cap too high', () => {
     TransactionEnvelopeEip7702.assert({
       authorizationList: [
         {
-          contractAddress: '0x0000000000000000000000000000000000000000',
+          address: '0x0000000000000000000000000000000000000000',
           chainId: 1,
           nonce: 0n,
           r: 0n,

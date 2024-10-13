@@ -14,8 +14,8 @@ import type { Authorization } from './types.js'
  * import { Authorization, Secp256k1 } from 'ox'
  *
  * const authorization = Authorization.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  *   nonce: 69n,
  * })
  *

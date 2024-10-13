@@ -103,7 +103,7 @@ test('behavior: network', async () => {
   const log = Log.fromRpc(logs[0]!)
   expect(log).toMatchInlineSnapshot(`
     {
-      "address": "0xfba3912ca04dd458c843e2ee08967fc04f3579c2",
+      "address": "0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2",
       "blockHash": "0xabe69134e80a12f6a93d0aa18215b5b86c2fb338bae911790ca374a8716e01a4",
       "blockNumber": 19760236n,
       "data": "0x",

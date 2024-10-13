@@ -11,8 +11,8 @@ import { wagmiContractConfig } from '../../../../test/constants/abis.js'
 import { accounts } from '../../../../test/constants/accounts.js'
 
 const authorization_1 = Authorization.from({
+  address: wagmiContractConfig.address,
   chainId: 1,
-  contractAddress: wagmiContractConfig.address,
   nonce: 785n,
 })
 const signature_1 = Secp256k1.sign({
@@ -21,8 +21,8 @@ const signature_1 = Secp256k1.sign({
 })
 
 const authorization_2 = Authorization.from({
+  address: wagmiContractConfig.address,
   chainId: 10,
-  contractAddress: wagmiContractConfig.address,
   nonce: 786n,
 })
 const signature_2 = Secp256k1.sign({

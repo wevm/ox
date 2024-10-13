@@ -11,26 +11,26 @@ import type { Authorization, Authorization_TupleList } from './types.js'
  * import { Authorization } from 'ox'
  *
  * const authorization_1 = Authorization.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  *   nonce: 69n,
  * })
  * const authorization_2 = Authorization.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 3,
- *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  *   nonce: 20n,
  * })
  *
  * const tuple = Authorization.toTupleList([authorization_1, authorization_2]) // [!code focus]
  * // @log: [
  * // @log:   [
+ * // @log:     address: '0x1234567890abcdef1234567890abcdef12345678',
  * // @log:     chainId: 1,
- * // @log:     contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  * // @log:     nonce: 69n,
  * // @log:   ],
  * // @log:   [
+ * // @log:     address: '0x1234567890abcdef1234567890abcdef12345678',
  * // @log:     chainId: 3,
- * // @log:     contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  * // @log:     nonce: 20n,
  * // @log:   ],
  * // @log: ]

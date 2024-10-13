@@ -11,7 +11,7 @@ export type Authorization<
 > = Compute<
   {
     /** Address of the contract to set as code for the Authority. */
-    contractAddress: Address
+    address: Address
     /** Chain ID to authorize. */
     chainId: numberType
     /** Nonce of the Authority to authorize. */

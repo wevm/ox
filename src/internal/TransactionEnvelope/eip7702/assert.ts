@@ -33,8 +33,8 @@ export function TransactionEnvelopeEip7702_assert(
   const { authorizationList } = envelope
   if (authorizationList) {
     for (const authorization of authorizationList) {
-      const { contractAddress, chainId } = authorization
-      if (contractAddress) Address_assert(contractAddress, { strict: false })
+      const { address, chainId } = authorization
+      if (address) Address_assert(address, { strict: false })
       if (Number(chainId) <= 0)
         throw new TransactionEnvelope_InvalidChainIdError({ chainId })
     }

@@ -4,7 +4,7 @@ import { expect, test } from 'vitest'
 test('default', () => {
   expect(
     Authorization.getSignPayload({
-      contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       chainId: 1,
       nonce: 40n,
     }),
@@ -14,8 +14,8 @@ test('default', () => {
 
   expect(
     Authorization.getSignPayload({
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       chainId: 69,
-      contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       nonce: 420n,
     }),
   ).toMatchInlineSnapshot(

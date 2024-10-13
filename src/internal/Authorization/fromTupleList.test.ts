@@ -10,13 +10,13 @@ test('default', () => {
   expect(authorization).toMatchInlineSnapshot(`
     [
       {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "chainId": 1,
-        "contractAddress": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "nonce": 40n,
       },
       {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "chainId": 3,
-        "contractAddress": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "nonce": 20n,
       },
     ]
@@ -46,16 +46,16 @@ test('behavior: signature', () => {
   expect(authorization).toMatchInlineSnapshot(`
     [
       {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "chainId": 5,
-        "contractAddress": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "nonce": 42n,
         "r": 1n,
         "s": 2n,
         "yParity": 0,
       },
       {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "chainId": 2,
-        "contractAddress": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "nonce": 43n,
         "r": 4n,
         "s": 5n,

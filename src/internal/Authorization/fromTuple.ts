@@ -17,8 +17,8 @@ import type { Authorization, Authorization_Tuple } from './types.js'
  *   '0x3'
  * ])
  * // @log: {
+ * // @log:   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:   chainId: 1,
- * // @log:   contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:   nonce: 3n
  * // @log: }
  * ```
@@ -38,8 +38,8 @@ import type { Authorization, Authorization_Tuple } from './types.js'
  *   '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * ])
  * // @log: {
+ * // @log:   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:   chainId: 1,
- * // @log:   contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:   nonce: 3n
  * // @log:   r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
  * // @log:   s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
@@ -53,12 +53,12 @@ import type { Authorization, Authorization_Tuple } from './types.js'
 export function Authorization_fromTuple<
   const tuple extends Authorization_Tuple,
 >(tuple: tuple): Authorization_fromTuple.ReturnType<tuple> {
-  const [chainId, contractAddress, nonce, yParity, r, s] = tuple
+  const [chainId, address, nonce, yParity, r, s] = tuple
   const signature =
     yParity && r && s ? Signature_fromTuple([yParity, r, s]) : undefined
   return Authorization_from({
+    address,
     chainId: Number(chainId),
-    contractAddress,
     nonce: BigInt(nonce),
     ...signature,
   }) as never

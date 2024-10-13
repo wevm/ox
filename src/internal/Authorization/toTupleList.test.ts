@@ -9,12 +9,12 @@ test('default', () => {
 
   {
     const authorization_1 = Authorization.from({
-      contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       chainId: 1,
       nonce: 40n,
     })
     const authorization_2 = Authorization.from({
-      contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       chainId: 3,
       nonce: 20n,
     })
@@ -37,7 +37,7 @@ test('default', () => {
 
   {
     const authorization_3 = Authorization.from({
-      contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       chainId: 5,
       nonce: 42n,
       r: 1n,
@@ -45,7 +45,7 @@ test('default', () => {
       yParity: 0,
     })
     const authorization_4 = Authorization.from({
-      contractAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       chainId: 2,
       nonce: 43n,
       r: 4n,

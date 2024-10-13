@@ -14,15 +14,15 @@ import type { Authorization, Authorization_Tuple } from './types.js'
  * import { Authorization } from 'ox'
  *
  * const authorization = Authorization.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  *   nonce: 69n,
  * })
  *
  * const tuple = Authorization.toTuple(authorization) // [!code focus]
  * // @log: [
+ * // @log:   address: '0x1234567890abcdef1234567890abcdef12345678',
  * // @log:   chainId: 1,
- * // @log:   contractAddress: '0x1234567890abcdef1234567890abcdef12345678',
  * // @log:   nonce: 69n,
  * // @log: ]
  * ```
@@ -35,11 +35,11 @@ export function Authorization_toTuple<
 >(
   authorization: authorization,
 ): Authorization_toTuple.ReturnType<authorization> {
-  const { contractAddress, chainId, nonce } = authorization
+  const { address, chainId, nonce } = authorization
   const signature = Signature_extract(authorization)
   return [
     Hex_fromNumber(chainId),
-    contractAddress,
+    address,
     nonce ? Hex_fromNumber(nonce) : '0x',
     ...(signature ? Signature_toTuple(signature) : []),
   ] as never
