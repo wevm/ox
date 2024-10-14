@@ -1,7 +1,6 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 
-const bigIntRegex = /(-?\d+)n/g
-const bigIntSuffix = '#__ox_bi__'
+const bigIntSuffix = '#__bigint'
 
 /**
  * Parses a JSON string, with support for `bigint`.
@@ -10,7 +9,7 @@ const bigIntSuffix = '#__ox_bi__'
  * ```ts twoslash
  * import { Json } from 'ox'
  *
- * const json = Json.parse('{"foo":"bar","baz":69420694206942069420694206942069420694206942069420}')
+ * const json = Json.parse('{"foo":"bar","baz":"69420694206942069420694206942069420694206942069420#__bigint"}')
  * // @log: {
  * // @log:   foo: 'bar',
  * // @log:   baz: 69420694206942069420694206942069420694206942069420n
@@ -25,15 +24,12 @@ export function Json_parse(
   string: string,
   reviver?: ((this: any, key: string, value: any) => any) | undefined,
 ) {
-  const string_ = string.replace(bigIntRegex, '"$1#__ox_bi__"')
-
-  const value = JSON.parse(string_, (key, value_) => {
+  return JSON.parse(string, (key, value_) => {
     const value = value_
     if (typeof value === 'string' && value.endsWith(bigIntSuffix))
       return BigInt(value.slice(0, -bigIntSuffix.length))
     return typeof reviver === 'function' ? reviver(key, value) : value
   })
-  return value
 }
 
 export declare namespace Json_parse {

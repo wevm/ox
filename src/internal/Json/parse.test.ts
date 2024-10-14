@@ -4,7 +4,7 @@ import { expect, test } from 'vitest'
 test('default', () => {
   expect(
     Json.parse(
-      '{"foo":"bar","baz":{"value1":69n,"value2":14124912949129519293629939492394239492349523949321n,"value3":420}}',
+      '{"foo":"bar","baz":{"value1":"69#__bigint","value2":"14124912949129519293629939492394239492349523949321#__bigint","value3":420}}',
     ),
   ).toMatchInlineSnapshot(`
     {
@@ -21,7 +21,7 @@ test('default', () => {
 test('args: replacer', () => {
   expect(
     Json.parse(
-      '{"foo":"bar","baz":{"value1":69n,"value2":14124912949129519293629939492394239492349523949321n,"value3":420}}',
+      '{"foo":"bar","baz":{"value1":"69#__bigint","value2":"14124912949129519293629939492394239492349523949321#__bigint","value3":420}}',
       (key, value) => {
         if (key === 'value1') return value * 2n
         return value
