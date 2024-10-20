@@ -10,6 +10,7 @@ export type {
 export {
   TypedData_BytesSizeMismatchError as BytesSizeMismatchError,
   TypedData_InvalidPrimaryTypeError as InvalidPrimaryTypeError,
+  TypedData_InvalidStructTypeError as InvalidStructTypeError,
 } from './internal/TypedData/errors.js'
 
 export { TypedData_assert as assert } from './internal/TypedData/assert.js'

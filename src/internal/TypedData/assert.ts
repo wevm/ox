@@ -14,6 +14,7 @@ import {
 import {
   TypedData_BytesSizeMismatchError,
   TypedData_InvalidPrimaryTypeError,
+  TypedData_InvalidStructTypeError,
 } from './errors.js'
 import type {
   TypedData,
@@ -103,7 +104,10 @@ export function TypedData_assert<
       }
 
       const struct = types[type]
-      if (struct) validateData(struct, value as Record<string, unknown>)
+      if (struct) {
+        validateReference(type)
+        validateData(struct, value as Record<string, unknown>)
+      }
     }
   }
 
@@ -135,3 +139,17 @@ export declare namespace TypedData_assert {
 TypedData_assert.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as TypedData_assert.ErrorType
+
+/** @internal */
+function validateReference(type: string) {
+  // Struct type must not be a Solidity type.
+  if (
+    type === 'address' ||
+    type === 'bool' ||
+    type === 'string' ||
+    type.startsWith('bytes') ||
+    type.startsWith('uint') ||
+    type.startsWith('int')
+  )
+    throw new TypedData_InvalidStructTypeError({ type })
+}

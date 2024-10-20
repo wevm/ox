@@ -32,3 +32,14 @@ export class TypedData_InvalidPrimaryTypeError extends BaseError {
     )
   }
 }
+
+/** Thrown when the struct type is not a valid type. */
+export class TypedData_InvalidStructTypeError extends BaseError {
+  override readonly name = 'TypedData.InvalidStructTypeError'
+
+  constructor({ type }: { type: string }) {
+    super(`Struct type "${type}" is invalid.`, {
+      metaMessages: ['Struct type must not be a Solidity type.'],
+    })
+  }
+}

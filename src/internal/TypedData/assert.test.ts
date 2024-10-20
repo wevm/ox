@@ -364,3 +364,36 @@ test('primaryType: does not exist in types', () => {
     See: https://oxlib.sh/api/glossary/Errors#typeddatainvalidprimarytypeerror]
   `)
 })
+
+test('struct type not valid', () => {
+  expect(() =>
+    TypedData.assert({
+      types: {
+        Mail: [
+          { name: 'from', type: 'Person' },
+          { name: 'to', type: 'Person' },
+        ],
+        Person: [
+          { name: 'name', type: 'string' },
+          { name: 'address', type: 'address' },
+        ],
+        address: [],
+      },
+      primaryType: 'Mail',
+      message: {
+        from: {
+          name: 'Cow',
+          address: '0x0000000000000000000000000000000000000000',
+        },
+        to: {
+          name: 'Bob',
+          address: '0x0000000000000000000000000000000000000000',
+        },
+      },
+    }),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [TypedData.InvalidStructTypeError: Struct type "address" is invalid.
+
+    Struct type must not be a Solidity type.]
+  `)
+})
