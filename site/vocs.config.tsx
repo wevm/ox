@@ -51,8 +51,10 @@ export default defineConfig({
         // collapsed: true,
         items: [
           { text: 'AES-GCM Encryption 🚧', link: '/guides/encryption' },
-          { text: 'Applications of ABIs 🚧', link: '/guides/abis' },
-          { text: 'Applications of RLP 🚧', link: '/guides/rlp' },
+          {
+            text: 'Application Binary Interface (ABI)',
+            link: '/guides/abi',
+          },
           { text: 'Bytes & Hex Manipulation 🚧', link: '/guides/bytes-hex' },
           { text: 'ECDSA & Signers 🚧', link: '/guides/ecdsa' },
           {
@@ -73,6 +75,7 @@ export default defineConfig({
           },
           { text: 'ENS 🚧', link: '/guides/ens' },
           { text: 'JSON-RPC & Execution API 🚧', link: '/guides/json-rpc' },
+          { text: 'Recursive Length Prefix (RLP)', link: '/guides/rlp' },
           {
             text: 'Sign-In With Ethereum (SIWE) 🚧',
             link: '/guides/siwe',

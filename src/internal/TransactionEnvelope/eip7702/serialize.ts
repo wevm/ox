@@ -24,8 +24,8 @@ import type {
  * import { Authorization, Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
  *
  * const authorization = Authorization.from({
+ *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   chainId: 1,
- *   contractAddress: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   nonce: 0n,
  * })
  *
