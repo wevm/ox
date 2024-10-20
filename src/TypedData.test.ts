@@ -7,6 +7,7 @@ test('exports', () => {
     [
       "BytesSizeMismatchError",
       "InvalidPrimaryTypeError",
+      "InvalidStructTypeError",
       "assert",
       "domainSeparator",
       "encodeType",
