@@ -61,15 +61,24 @@ Now that we are aware of how to encode and decode primitive types & values, let'
 
 ABI encoding and decoding form the backbone of interacting with smart contracts in the Ethereum ecosystem. Whether you’re calling contract functions, filtering/listening for events, or deploying new contracts. Below are some of the key applications of ABIs in smart contract development and interaction.
 
-### Contract Function Invocation
+### Contract Function Calls
 
 When calling a function on a smart contract, an ABI is used to encode the function signature and its parameters into a bytecode format that can be understood by the Ethereum Virtual Machine (EVM). It is equally important for decoding the response (or revert reason) from the contract, hence allowing for two-way communication.
 
-#### Encoding Function Calls
+#### Read-only Functions
 
-Encoding a function call involves the process of computing the function's selector and ABI-encoding its parameters.
+A [Pure Function](https://docs.soliditylang.org/en/latest/contracts.html#pure-functions) or [View Function](https://docs.soliditylang.org/en/latest/contracts.html#view-functions) (commonly known as a "contract read" function) does not modify the state of the blockchain. These functions have a `stateMutability` of `pure` or `view`. 
 
-Let's take a look at how we can encode a function call to the `approve` function on an ERC20 contract, and then
+They can only read the state of the contract, and cannot make any changes to it. Since pure/view functions do not change the state of the contract, they do not require any gas to be executed. This means that they can be called without the need for a transaction (via an `eth_call` JSON-RPC method).
+
+#### State-modifying Functions
+
+A **State-modifying Function** (commonly known as a "contract write" function) modifies the state of the blockchain. 
+These functions have a `stateMutability` of `nonpayable` or `payable`. 
+
+These types of functions require gas to be executed, and hence a transaction is needed to be broadcast in order to change the state (via an `eth_sendTransaction` JSON-RPC method).
+
+Let's take a look at how we can encode a [state-modifying `approve` function call](https://eips.ethereum.org/EIPS/eip-20#approve) on an ERC20 contract, and then
 broadcast it to the network.
 
 ::::steps
@@ -115,7 +124,7 @@ const data = AbiFunction.encodeInput( // [!code focus]
 
 ##### Broadcast the Transaction
 
-Now, we can broadcast the transaction to the network using a [JSON-RPC Transport](/api/RpcTransport) or [EIP-1193 Provider](/api/Provider):
+Now, we can broadcast the `data` to the network using `eth_sendTransaction` via a [JSON-RPC Transport](/api/RpcTransport) or [EIP-1193 Provider](/api/Provider). This will invoke the `approve` function on the USDC contract.
 
 ```ts twoslash
 import 'ox/window'
@@ -129,8 +138,11 @@ const data = AbiFunction.encodeInput(
 )
 
 const transaction = TransactionRequest.toRpc({ // [!code focus]
+  chainId: 1, // [!code focus]
+  //       ↑ Ethereum Mainnet // [!code focus]
   data, // [!code focus]
   to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // [!code focus]
+  //   ↑ USDC Contract Address // [!code focus]
 }) // [!code focus]
 
 const provider = Provider.from(window.ethereum) // [!code focus]
