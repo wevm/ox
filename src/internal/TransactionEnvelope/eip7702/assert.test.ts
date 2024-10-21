@@ -7,7 +7,7 @@ test('invalid chainId', () => {
       authorizationList: [
         {
           address: '0x0000000000000000000000000000000000000000',
-          chainId: 0,
+          chainId: -1,
           nonce: 0n,
           r: 0n,
           s: 0n,

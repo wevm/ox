@@ -217,13 +217,13 @@ test('options: signature', () => {
 
 test('behavior: network', async () => {
   const authority = accounts[0]
-  const invoker = accounts[1]
+  const delegate = accounts[1]
 
   // Deploy delegate contract
   const contractAddress = await (async () => {
     const nonce = await anvilMainnet.request({
       method: 'eth_getTransactionCount',
-      params: [authority.address, 'pending'],
+      params: [delegate.address, 'pending'],
     })
 
     const envelope = TransactionEnvelope.from({
@@ -237,7 +237,7 @@ test('behavior: network', async () => {
 
     const signature = Secp256k1.sign({
       payload: TransactionEnvelope.getSignPayload(envelope),
-      privateKey: authority.privateKey,
+      privateKey: delegate.privateKey,
     })
 
     const serialized = TransactionEnvelope.serialize(envelope, {
@@ -261,7 +261,7 @@ test('behavior: network', async () => {
     return receipt!.contractAddress
   })()
 
-  // Authorize injection of delegate contract onto authority
+  // Authorize injection of delegation contract onto authority
   const authorization = await (async () => {
     const nonce = await anvilMainnet.request({
       method: 'eth_getTransactionCount',
@@ -284,7 +284,7 @@ test('behavior: network', async () => {
 
   const nonce = await anvilMainnet.request({
     method: 'eth_getTransactionCount',
-    params: [invoker.address, 'pending'],
+    params: [delegate.address, 'pending'],
   })
 
   const envelope = TransactionEnvelopeEip7702.from({
@@ -300,7 +300,7 @@ test('behavior: network', async () => {
 
   const signature = Secp256k1.sign({
     payload: TransactionEnvelopeEip7702.getSignPayload(envelope),
-    privateKey: invoker.privateKey,
+    privateKey: delegate.privateKey,
   })
 
   const serialized = TransactionEnvelopeEip7702.serialize(envelope, {
@@ -322,12 +322,12 @@ test('behavior: network', async () => {
       "accessList": [],
       "authorizationList": [
         {
-          "address": "0xbd2fe040d03eb1d1e5a151fbcc19a03333223019",
+          "address": "0x1d1aee6d5dc35f3c15e2d11083d0e59c026b64c4",
           "chainId": "0x1",
-          "nonce": "0x298",
-          "r": "0xb7ba3c862bb67758a231b9f4c031f275fa3eeb436a8fd8312eda06e3b1931deb",
-          "s": "0x482c735314968a46724bcdf464047bb3d0317fc1a9bb22a9581b399090829a8e",
-          "yParity": "0x0",
+          "nonce": "0x297",
+          "r": "0x63a17c5bd4689e0a20cd66babbbc21f3036c93341c390f75b8f575c19e4f358b",
+          "s": "0x4ba15577764447dca6c0eab652914e6cdf889cd88d2c3afcc7bee281f1be57b4",
+          "yParity": "0x1",
         },
       ],
       "blockHash": null,
@@ -336,13 +336,13 @@ test('behavior: network', async () => {
       "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
       "gas": "0xf4240",
       "gasPrice": "0x3df788e0a",
-      "hash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
+      "hash": "0x457e23cafba3c0d5b061724b98c5da1c0a2bd87d30a25cfc2824dc3ce9fc770b",
       "input": "0xdeadbeef",
       "maxFeePerGas": "0x4a817c800",
       "maxPriorityFeePerGas": "0x2540be400",
-      "nonce": "0x70",
-      "r": "0xfba1d00a6da7a7b1faabf2a3cfdab43c451156c47f4f504b00f8013dcead8312",
-      "s": "0x44dad3618977b47f57f0cf2237c4d16bcf5a509a1d191fbfe0ac6198e5bc6658",
+      "nonce": "0x71",
+      "r": "0x674cf928a35d4fe579eec27d9a6a13af24f6a1d47d178a24e96173762c784cf5",
+      "s": "0x7feecdc37bd9fc83deddc3e985c015099a1e4e51f79ebd50b262a4bf9afe3d8f",
       "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
       "transactionIndex": "0x0",
       "type": "0x4",
@@ -383,14 +383,14 @@ test('behavior: network', async () => {
           "logIndex": "0x0",
           "removed": false,
           "topics": [],
-          "transactionHash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
+          "transactionHash": "0x457e23cafba3c0d5b061724b98c5da1c0a2bd87d30a25cfc2824dc3ce9fc770b",
           "transactionIndex": "0x0",
         },
       ],
       "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "status": "0x1",
       "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-      "transactionHash": "0xf269fd6abf599d69890284759f77fc1c14f277d4b396689ff1ecc0072e7abdc0",
+      "transactionHash": "0x457e23cafba3c0d5b061724b98c5da1c0a2bd87d30a25cfc2824dc3ce9fc770b",
       "transactionIndex": "0x0",
       "type": "0x4",
     }

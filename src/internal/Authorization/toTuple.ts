@@ -38,7 +38,7 @@ export function Authorization_toTuple<
   const { address, chainId, nonce } = authorization
   const signature = Signature_extract(authorization)
   return [
-    Hex_fromNumber(chainId),
+    chainId ? Hex_fromNumber(chainId) : '0x',
     address,
     nonce ? Hex_fromNumber(nonce) : '0x',
     ...(signature ? Signature_toTuple(signature) : []),

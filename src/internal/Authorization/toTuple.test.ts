@@ -39,4 +39,20 @@ test('default', () => {
       ]
     `)
   }
+
+  {
+    const authorization = Authorization.from({
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      chainId: 0,
+      nonce: 0n,
+    })
+    const tuple = Authorization.toTuple(authorization)
+    expect(tuple).toMatchInlineSnapshot(`
+      [
+        "0x",
+        "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "0x",
+      ]
+    `)
+  }
 })
