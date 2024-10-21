@@ -5,7 +5,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
-import type { RecursiveArray } from '../types.js'
+import type { ExactPartial, RecursiveArray } from '../types.js'
 
 type Encodable = {
   length: number
@@ -30,10 +30,12 @@ type Encodable = {
  * @param as - The type to convert the RLP value to.
  * @returns The RLP value.
  */
-export function Rlp_from<
-  value extends RecursiveArray<Bytes> | RecursiveArray<Hex>,
-  as extends 'Hex' | 'Bytes',
->(value: value, as: as | 'Hex' | 'Bytes'): Rlp_from.ReturnType<as> {
+export function Rlp_from<as extends 'Hex' | 'Bytes'>(
+  value: RecursiveArray<Bytes> | RecursiveArray<Hex>,
+  options: Rlp_from.Options<as>,
+): Rlp_from.ReturnType<as> {
+  const { as } = options
+
   const encodable = getEncodable(value)
   const cursor = createCursor(new Uint8Array(encodable.length))
   encodable.encode(cursor)
@@ -44,6 +46,10 @@ export function Rlp_from<
 }
 
 export declare namespace Rlp_from {
+  type Options<as extends 'Hex' | 'Bytes'> = {
+    as: as | 'Hex' | 'Bytes'
+  }
+
   type ReturnType<as extends 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
@@ -76,14 +82,20 @@ Rlp_from.parseError = (error: unknown) =>
  */
 export function Rlp_fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
   bytes: RecursiveArray<Bytes>,
-  as: as | 'Hex' | 'Bytes' | undefined = 'Bytes',
+  options: Rlp_fromBytes.Options<as> = {},
 ): Rlp_fromBytes.ReturnType<as> {
-  return Rlp_from(bytes, as)
+  const { as = 'Bytes' } = options
+  return Rlp_from(bytes, { as }) as never
 }
 
 export declare namespace Rlp_fromBytes {
+  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = ExactPartial<
+    Rlp_from.Options<as>
+  >
+
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> =
     Rlp_from.ReturnType<as>
+
   type ErrorType = Rlp_from.ErrorType | GlobalErrorType
 }
 
@@ -108,13 +120,19 @@ Rlp_fromBytes.parseError = (error: unknown) =>
  */
 export function Rlp_fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
   hex: RecursiveArray<Hex>,
-  as: as | 'Hex' | 'Bytes' | undefined = 'Hex',
+  options: Rlp_fromHex.Options<as> = {},
 ): Rlp_fromHex.ReturnType<as> {
-  return Rlp_from(hex, as)
+  const { as = 'Hex' } = options
+  return Rlp_from(hex, { as }) as never
 }
 
 export declare namespace Rlp_fromHex {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = ExactPartial<
+    Rlp_from.Options<as>
+  >
+
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = Rlp_from.ReturnType<as>
+
   type ErrorType = Rlp_from.ErrorType | GlobalErrorType
 }
 

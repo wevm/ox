@@ -49,6 +49,7 @@ export function ContractAddress_fromCreate2(
     Hex_slice(
       Hash_keccak256(
         Bytes_concat(Bytes_fromHex('0xff'), from, salt, bytecodeHash),
+        { as: 'Hex' },
       ),
       12,
     ),

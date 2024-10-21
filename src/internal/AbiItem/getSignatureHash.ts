@@ -1,6 +1,6 @@
-import { Bytes_fromString } from '../Bytes/fromString.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
+import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
 import { AbiItem_getSignature } from './getSignature.js'
 import type { AbiItem } from './types.js'
@@ -40,14 +40,14 @@ import type { AbiItem } from './types.js'
 export function AbiItem_getSignatureHash(abiItem: string | AbiItem): Hex {
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
     return abiItem.hash as Hex
-  return Hash_keccak256(Bytes_fromString(AbiItem_getSignature(abiItem)))
+  return Hash_keccak256(Hex_fromString(AbiItem_getSignature(abiItem)))
 }
 
 export declare namespace AbiItem_getSignatureHash {
   type ErrorType =
     | AbiItem_getSignature.ErrorType
     | Hash_keccak256.ErrorType
-    | Bytes_fromString.ErrorType
+    | Hex_fromString.ErrorType
     | GlobalErrorType
 }
 

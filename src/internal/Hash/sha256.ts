@@ -1,11 +1,10 @@
 import { sha256 as noble_sha256 } from '@noble/hashes/sha256'
 
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
+import { Bytes_from } from '../Bytes/from.js'
 
 /**
  * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
@@ -24,14 +23,17 @@ import { Hex_validate } from '../Hex/validate.js'
  * @param to - The return type.
  * @returns Sha256 hash.
  */
-export function Hash_sha256<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  value: Hex | Bytes,
+export function Hash_sha256<
+  value extends Hex | Bytes,
+  as extends 'Hex' | 'Bytes' =
+    | (value extends Hex ? 'Hex' : never)
+    | (value extends Bytes ? 'Bytes' : never),
+>(
+  value: value | Hex | Bytes,
   options: Hash_sha256.Options<as> = {},
 ): Hash_sha256.ReturnType<as> {
-  const { as = 'Hex' } = options
-  const bytes = noble_sha256(
-    Hex_validate(value, { strict: false }) ? Bytes_fromHex(value) : value,
-  )
+  const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
+  const bytes = noble_sha256(Bytes_from(value))
   if (as === 'Bytes') return bytes as never
   return Hex_fromBytes(bytes) as never
 }
@@ -47,8 +49,7 @@ export declare namespace Hash_sha256 {
     | (as extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | Bytes_fromHex.ErrorType
-    | Hex_validate.ErrorType
+    | Bytes_from.ErrorType
     | Hex_fromBytes.ErrorType
     | GlobalErrorType
 }

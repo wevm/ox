@@ -1,7 +1,7 @@
 import { Hash } from 'ox'
 import { expect, test } from 'vitest'
 
-test('to hex', () => {
+test('default', () => {
   expect(Hash.ripemd160('0xdeadbeef')).toMatchInlineSnapshot(
     `"0x226821c2f5423e11fe9af68bd285c249db2e4b5a"`,
   )
@@ -10,7 +10,30 @@ test('to hex', () => {
     Hash.ripemd160(
       new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
     ),
-  ).toMatchInlineSnapshot(`"0x8476ee4631b9b30ac2754b0ee0c47e161d3f724c"`)
+  ).toMatchInlineSnapshot(`
+    Uint8Array [
+      132,
+      118,
+      238,
+      70,
+      49,
+      185,
+      179,
+      10,
+      194,
+      117,
+      75,
+      14,
+      224,
+      196,
+      126,
+      22,
+      29,
+      63,
+      114,
+      76,
+    ]
+  `)
 })
 
 test('to bytes', () => {

@@ -32,7 +32,7 @@ export function ContractAddress_fromCreate(
   if (nonce[0] === 0) nonce = new Uint8Array([])
 
   return Address_from(
-    `0x${Hash_keccak256(Rlp_fromBytes([from, nonce])).slice(26)}` as Address,
+    `0x${Hash_keccak256(Rlp_fromBytes([from, nonce], { as: 'Hex' })).slice(26)}` as Address,
   )
 }
 

@@ -26,12 +26,17 @@ import { AesGcm_ivLength } from './constants.js'
  * @param options - Encryption options.
  * @returns The encrypted data.
  */
-export async function AesGcm_encrypt<as extends 'Bytes' | 'Hex' = 'Hex'>(
-  data: Bytes | Hex,
+export async function AesGcm_encrypt<
+  value extends Hex | Bytes,
+  as extends 'Bytes' | 'Hex' =
+    | (value extends Hex ? 'Hex' : never)
+    | (value extends Bytes ? 'Bytes' : never),
+>(
+  value: value | Bytes | Hex,
   key: CryptoKey,
   options: AesGcm_encrypt.Options<as> = {},
 ): Promise<AesGcm_encrypt.ReturnType<as>> {
-  const { as = 'Hex' } = options
+  const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
   const iv = Bytes_random(AesGcm_ivLength)
   const encrypted = await globalThis.crypto.subtle.encrypt(
     {
@@ -39,7 +44,7 @@ export async function AesGcm_encrypt<as extends 'Bytes' | 'Hex' = 'Hex'>(
       iv,
     },
     key,
-    Bytes_from(data),
+    Bytes_from(value),
   )
   const result = Bytes_concat(iv, new Uint8Array(encrypted))
   if (as === 'Bytes') return result as never
@@ -47,12 +52,12 @@ export async function AesGcm_encrypt<as extends 'Bytes' | 'Hex' = 'Hex'>(
 }
 
 export declare namespace AesGcm_encrypt {
-  type Options<as extends 'Bytes' | 'Hex' = 'Hex'> = {
+  type Options<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
     /** The output format. @default 'Hex' */
     as?: as | 'Bytes' | 'Hex' | undefined
   }
 
-  type ReturnType<as extends 'Bytes' | 'Hex' = 'Hex'> =
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
