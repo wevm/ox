@@ -1,9 +1,10 @@
 import type { Address } from '../Address/types.js'
 import type { Block_Number, Block_Tag } from '../Block/types.js'
 import type { Hex } from '../Hex/types.js'
+import type { Compute } from '../types.js'
 
 /** A Filter as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml). */
-export type Filter<bigintType = bigint> = {
+export type Filter<bigintType = bigint> = Compute<{
   /** Address to filter for logs. */
   address?: Address | readonly Address[] | null | undefined
   /** Block number or tag to filter logs from. */
@@ -12,7 +13,7 @@ export type Filter<bigintType = bigint> = {
   toBlock?: Block_Number<bigintType> | Block_Tag | undefined
   /** Topics to filter for logs. */
   topics?: Filter_Topics | undefined
-}
+}>
 
 /** RPC representation of a {@link ox#Filter.Filter}. */
 export type Filter_Rpc = Filter<Hex>
