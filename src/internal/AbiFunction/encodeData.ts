@@ -9,7 +9,7 @@ import { AbiFunction_getSelector } from './getSelector.js'
 import type { AbiFunction } from './types.js'
 
 /**
- * ABI-encodes the provided function input (`inputs`), prefixed with the 4 byte function selector.
+ * ABI-encodes function arguments (`inputs`), prefixed with the 4 byte function selector.
  *
  * :::tip
  *
@@ -25,7 +25,7 @@ import type { AbiFunction } from './types.js'
  *
  * const approve = AbiFunction.from('function approve(address, uint256)')
  *
- * const data = AbiFunction.encodeInput( // [!code focus]
+ * const data = AbiFunction.encodeData( // [!code focus]
  *   approve, // [!code focus]
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n] // [!code focus]
  * ) // [!code focus]
@@ -42,7 +42,7 @@ import type { AbiFunction } from './types.js'
  * const erc20Abi = Abi.from([...]) // [!code hl]
  * const approve = AbiFunction.fromAbi(erc20Abi, 'approve') // [!code hl]
  *
- * const data = AbiFunction.encodeInput(
+ * const data = AbiFunction.encodeData(
  *   approve,
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * )
@@ -52,7 +52,7 @@ import type { AbiFunction } from './types.js'
  * @example
  * ### End-to-end
  *
- * Below is an end-to-end example of using `AbiFunction.encodeInput` to encode the input of a `balanceOf` contract call on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
+ * Below is an end-to-end example of using `AbiFunction.encodeData` to encode the input of a `balanceOf` contract call on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
  *
  * ```ts twoslash
  * import 'ox/window'
@@ -73,7 +73,7 @@ import type { AbiFunction } from './types.js'
  * const balanceOf = AbiFunction.fromAbi(abi, 'balanceOf')
  *
  * // 2. Encode the Function Input. // [!code focus]
- * const data = AbiFunction.encodeInput( // [!code focus]
+ * const data = AbiFunction.encodeData( // [!code focus]
  *   balanceOf, // [!code focus]
  *   ['0xd2135CfB216b74109775236E36d4b433F1DF507B'] // [!code focus]
  * ) // [!code focus]
@@ -90,7 +90,7 @@ import type { AbiFunction } from './types.js'
  * })
  *
  * // 4. Decode the Function Output.
- * const balance = AbiFunction.decodeOutput(balanceOf, response)
+ * const balance = AbiFunction.decodeResult(balanceOf, response)
  * ```
  *
  * :::note
@@ -104,9 +104,9 @@ import type { AbiFunction } from './types.js'
  * @param args - Function arguments
  * @returns ABI-encoded function name and arguments
  */
-export function AbiFunction_encodeInput<const abiFunction extends AbiFunction>(
+export function AbiFunction_encodeData<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
-  ...args: AbiFunction_encodeInput.Args<abiFunction>
+  ...args: AbiFunction_encodeData.Args<abiFunction>
 ): Hex {
   const { overloads } = abiFunction
 
@@ -130,7 +130,7 @@ export function AbiFunction_encodeInput<const abiFunction extends AbiFunction>(
   return data ? Hex_concat(selector, data) : selector
 }
 
-export declare namespace AbiFunction_encodeInput {
+export declare namespace AbiFunction_encodeData {
   type Args<abiFunction extends AbiFunction = AbiFunction> = IsNarrowable<
     abiFunction,
     AbiFunction
@@ -153,6 +153,6 @@ export declare namespace AbiFunction_encodeInput {
   type ErrorType = GlobalErrorType
 }
 
-AbiFunction_encodeInput.parseError = (error: unknown) =>
+AbiFunction_encodeData.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiFunction_encodeInput.ErrorType
+  error as AbiFunction_encodeData.ErrorType

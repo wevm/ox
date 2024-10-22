@@ -8,17 +8,17 @@ import type { Hex } from '../Hex/types.js'
 import type { AbiFunction } from './types.js'
 
 /**
- * ABI-encodes the provided function output (`outputs`).
+ * ABI-encodes a function's result (`outputs`).
  *
  * @example
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
  * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
- * const output = AbiFunction.decodeOutput(totalSupply, '0x000000000000000000000000000000000000000000000000000000000000002a')
+ * const output = AbiFunction.decodeResult(totalSupply, '0x000000000000000000000000000000000000000000000000000000000000002a')
  * // 42n
  *
- * const data = AbiFunction.encodeOutput(totalSupply, 42n) // [!code focus]
+ * const data = AbiFunction.encodeResult(totalSupply, 42n) // [!code focus]
  * // @log: '0x000000000000000000000000000000000000000000000000000000000000002a'
  * ```
  *
@@ -27,13 +27,13 @@ import type { AbiFunction } from './types.js'
  * @param options - Encoding options.
  * @returns The encoded function output.
  */
-export function AbiFunction_encodeOutput<
+export function AbiFunction_encodeResult<
   const abiFunction extends AbiFunction,
   as extends 'Object' | 'Array' = 'Array',
 >(
   abiFunction: abiFunction | AbiFunction,
-  output: AbiFunction_encodeOutput.Output<abiFunction, as>,
-  options: AbiFunction_encodeOutput.Options<as> = {},
+  output: AbiFunction_encodeResult.Output<abiFunction, as>,
+  options: AbiFunction_encodeResult.Options<as> = {},
 ): Hex {
   const { as = 'Array' } = options
 
@@ -47,7 +47,7 @@ export function AbiFunction_encodeOutput<
   return AbiParameters_encode(abiFunction.outputs, values)
 }
 
-export declare namespace AbiFunction_encodeOutput {
+export declare namespace AbiFunction_encodeResult {
   type Output<
     abiFunction extends AbiFunction = AbiFunction,
     as extends 'Object' | 'Array' = 'Array',

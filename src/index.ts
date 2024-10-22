@@ -435,16 +435,16 @@ export * as AbiEvent from './AbiEvent.js'
  * ```
  *
  * @example
- * ### Encoding to Function Calldata
+ * ### Encoding to Function Data
  *
- * A Function and its arguments can be ABI-encoded into calldata using the {@link ox#AbiFunction.(encodeInput:function)} function. The output of this function can then be passed to `eth_sendTransaction` or `eth_call` as the `data` parameter.
+ * A Function and its arguments can be ABI-encoded into data using the {@link ox#AbiFunction.(encodeData:function)} function. The output of this function can then be passed to `eth_sendTransaction` or `eth_call` as the `data` parameter.
  *
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
  * const approve = AbiFunction.from('function approve(address, uint256)')
  *
- * const data = AbiFunction.encodeInput( // [!code focus]
+ * const data = AbiFunction.encodeData( // [!code focus]
  *   approve, // [!code focus]
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n] // [!code focus]
  * ) // [!code focus]
@@ -452,9 +452,9 @@ export * as AbiEvent from './AbiEvent.js'
  * ```
  *
  * @example
- * ### Decoding a Function's Return Value
+ * ### Decoding a Function's Result
  *
- * A Function's return value can be ABI-decoded using the {@link ox#AbiFunction.(decodeOutput:function)} function.
+ * A Function's result can be ABI-decoded using the {@link ox#AbiFunction.(decodeResult:function)} function.
  *
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
@@ -464,7 +464,7 @@ export * as AbiEvent from './AbiEvent.js'
  *
  * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
  *
- * const output = AbiFunction.decodeOutput(totalSupply, data) // [!code focus]
+ * const output = AbiFunction.decodeResult(totalSupply, data) // [!code focus]
  * // @log: 42n
  * ```
  *

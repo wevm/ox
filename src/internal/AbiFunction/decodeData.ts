@@ -18,23 +18,23 @@ import type { AbiFunction } from './types.js'
  *
  * const approve = AbiFunction.from('function approve(address, uint256)')
  *
- * const data = AbiFunction.encodeInput(
+ * const data = AbiFunction.encodeData(
  *   approve,
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * )
  * // '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
  *
- * const input = AbiFunction.decodeInput(approve, data) // [!code focus]
+ * const input = AbiFunction.decodeData(approve, data) // [!code focus]
  * // @log: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * ```
  *
  * @param abiFunction - The ABI Item to decode.
  * @param data - The data to decode.
  */
-export function AbiFunction_decodeInput<const abiItem extends AbiFunction>(
+export function AbiFunction_decodeData<const abiItem extends AbiFunction>(
   abiFunction: abiItem | AbiFunction,
   data: Hex,
-): AbiFunction_decodeInput.ReturnType<abiItem> {
+): AbiFunction_decodeData.ReturnType<abiItem> {
   const { overloads } = abiFunction
 
   if (Hex_size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
@@ -48,7 +48,7 @@ export function AbiFunction_decodeInput<const abiItem extends AbiFunction>(
   return AbiParameters_decode(item.inputs, Hex_slice(data, 4))
 }
 
-export declare namespace AbiFunction_decodeInput {
+export declare namespace AbiFunction_decodeData {
   type ReturnType<abiFunction extends AbiFunction = AbiFunction> = IsNarrowable<
     abiFunction,
     AbiFunction

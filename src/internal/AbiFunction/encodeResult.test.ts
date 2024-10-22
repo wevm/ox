@@ -6,8 +6,8 @@ test('default', () => {
     'function test() returns (uint a, (uint x, string y) b)',
   )
   const output = [420n, { x: 420n, y: 'lol' }] as const
-  const result = AbiFunction.encodeOutput(abiItem, output)
-  expect(AbiFunction.decodeOutput(abiItem, result)).toEqual(output)
+  const result = AbiFunction.encodeResult(abiItem, output)
+  expect(AbiFunction.decodeResult(abiItem, result)).toEqual(output)
   expect(result).toMatchInlineSnapshot(
     `"0x00000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000036c6f6c0000000000000000000000000000000000000000000000000000000000"`,
   )
@@ -18,8 +18,8 @@ test('behavior: single param', () => {
     'function test() returns ((uint x, string y) b)',
   )
   const output = { x: 420n, y: 'lol' } as const
-  const result = AbiFunction.encodeOutput(abiItem, output)
-  expect(AbiFunction.decodeOutput(abiItem, result)).toEqual(output)
+  const result = AbiFunction.encodeResult(abiItem, output)
+  expect(AbiFunction.decodeResult(abiItem, result)).toEqual(output)
   expect(result).toMatchInlineSnapshot(
     `"0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000036c6f6c0000000000000000000000000000000000000000000000000000000000"`,
   )
@@ -30,8 +30,8 @@ test('options: as = Object', () => {
     'function test() returns (uint a, (uint x, string y) b)',
   )
   const output = { a: 420n, b: { x: 420n, y: 'lol' } } as const
-  const result = AbiFunction.encodeOutput(abiItem, output, { as: 'Object' })
-  expect(AbiFunction.decodeOutput(abiItem, result, { as: 'Object' })).toEqual(
+  const result = AbiFunction.encodeResult(abiItem, output, { as: 'Object' })
+  expect(AbiFunction.decodeResult(abiItem, result, { as: 'Object' })).toEqual(
     output,
   )
   expect(result).toMatchInlineSnapshot(
@@ -44,8 +44,8 @@ test('options: as = Object, behavior: single param', () => {
     'function test() returns ((uint x, string y) b)',
   )
   const output = { x: 420n, y: 'lol' } as const
-  const result = AbiFunction.encodeOutput(abiItem, output, { as: 'Object' })
-  expect(AbiFunction.decodeOutput(abiItem, result, { as: 'Object' })).toEqual(
+  const result = AbiFunction.encodeResult(abiItem, output, { as: 'Object' })
+  expect(AbiFunction.decodeResult(abiItem, result, { as: 'Object' })).toEqual(
     output,
   )
   expect(result).toMatchInlineSnapshot(

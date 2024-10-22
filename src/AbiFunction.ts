@@ -1,10 +1,10 @@
-export { AbiFunction_decodeInput as decodeInput } from './internal/AbiFunction/decodeInput.js'
+export { AbiFunction_decodeData as decodeData } from './internal/AbiFunction/decodeData.js'
 
-export { AbiFunction_decodeOutput as decodeOutput } from './internal/AbiFunction/decodeOutput.js'
+export { AbiFunction_decodeResult as decodeResult } from './internal/AbiFunction/decodeResult.js'
 
-export { AbiFunction_encodeInput as encodeInput } from './internal/AbiFunction/encodeInput.js'
+export { AbiFunction_encodeData as encodeData } from './internal/AbiFunction/encodeData.js'
 
-export { AbiFunction_encodeOutput as encodeOutput } from './internal/AbiFunction/encodeOutput.js'
+export { AbiFunction_encodeResult as encodeResult } from './internal/AbiFunction/encodeResult.js'
 
 export { AbiFunction_format as format } from './internal/AbiFunction/format.js'
 

@@ -67,7 +67,7 @@ test('eip7702', () => {
       authorizationList: [
         {
           address: '0x0000000000000000000000000000000000000000',
-          chainId: 0,
+          chainId: -1,
           nonce: 0n,
           r: 0n,
           s: 0n,
@@ -78,7 +78,7 @@ test('eip7702', () => {
       type: 'eip7702',
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
+    `[TransactionEnvelope.InvalidChainIdError: Chain ID "-1" is invalid.]`,
   )
 })
 

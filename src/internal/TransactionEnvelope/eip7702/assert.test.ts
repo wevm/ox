@@ -17,7 +17,7 @@ test('invalid chainId', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
+    `[TransactionEnvelope.InvalidChainIdError: Chain ID "-1" is invalid.]`,
   )
 })
 
@@ -26,7 +26,7 @@ test('invalid address', () => {
     TransactionEnvelopeEip7702.assert({
       authorizationList: [
         {
-          address: '0x0000000000000000000000000000000000000000',
+          address: '0x000000000000000000000000000000000000000z',
           chainId: 0,
           nonce: 0n,
           r: 0n,
@@ -37,7 +37,12 @@ test('invalid address', () => {
       chainId: 1,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
+    `
+    [Address.InvalidAddressError: Address "0x000000000000000000000000000000000000000z" is invalid.
+
+    Details: Address is not a 20 byte (40 hexadecimal character) value.
+    See: https://oxlib.sh/errors#invalidaddresserror]
+  `,
   )
 })
 

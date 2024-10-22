@@ -99,7 +99,7 @@ describe('behavior: network', async () => {
         method: 'eth_call',
         params: [
           {
-            data: AbiFunction.encodeInput(
+            data: AbiFunction.encodeData(
               AbiFunction.fromAbi(abi, 'revertRead'),
             ),
             to: contractAddress,
@@ -136,7 +136,7 @@ describe('behavior: network', async () => {
         method: 'eth_call',
         params: [
           {
-            data: AbiFunction.encodeInput(
+            data: AbiFunction.encodeData(
               AbiFunction.fromAbi(abi, 'assertRead'),
             ),
             to: contractAddress,
@@ -175,7 +175,7 @@ describe('behavior: network', async () => {
         method: 'eth_call',
         params: [
           {
-            data: AbiFunction.encodeInput(
+            data: AbiFunction.encodeData(
               AbiFunction.fromAbi(abi, 'overflowRead'),
             ),
             to: contractAddress,
@@ -214,7 +214,7 @@ describe('behavior: network', async () => {
         method: 'eth_call',
         params: [
           {
-            data: AbiFunction.encodeInput(
+            data: AbiFunction.encodeData(
               AbiFunction.fromAbi(abi, 'complexCustomWrite'),
             ),
             to: contractAddress,

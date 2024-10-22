@@ -61,7 +61,7 @@ test('behavior: prepare = false', () => {
 describe('behavior: data', () => {
   test('function', () => {
     const item = AbiItem.fromAbi(wagmiContractConfig.abi, 'approve')
-    const data = AbiFunction.encodeInput(item, [
+    const data = AbiFunction.encodeData(item, [
       '0x0000000000000000000000000000000000000000',
       1n,
     ])

@@ -6,8 +6,8 @@ import { address } from '../../../test/constants/addresses.js'
 
 test('default', () => {
   const abiItem = AbiFunction.fromAbi(erc20Abi, 'decimals')
-  const data = AbiFunction.encodeInput(abiItem)
-  const input = AbiFunction.decodeInput(abiItem, data)
+  const data = AbiFunction.encodeData(abiItem)
+  const input = AbiFunction.decodeData(abiItem, data)
   attest(input).type.toString.snap('undefined')
 })
 
@@ -15,8 +15,8 @@ test('behavior: with data', () => {
   const abiItem = AbiFunction.fromAbi(erc20Abi, 'approve', {
     prepare: false,
   })
-  const data = AbiFunction.encodeInput(abiItem, [address.vitalik, 1n])
-  const input = AbiFunction.decodeInput(abiItem, data)
+  const data = AbiFunction.encodeData(abiItem, [address.vitalik, 1n])
+  const input = AbiFunction.decodeData(abiItem, data)
   attest(input).type.toString.snap('readonly [`0x${string}`, bigint]')
 })
 
@@ -39,13 +39,13 @@ test('behavior: with overloads', () => {
   ])
   const abiItem = AbiFunction.fromAbi(abi, 'balanceOf')
   attest(
-    AbiFunction.decodeInput(
+    AbiFunction.decodeData(
       abiItem,
       '0x9cc7f7080000000000000000000000000000000000000000000000000000000000000001',
     ),
   ).type.toString.snap('readonly [bigint] | readonly [`0x${string}`]')
   attest(
-    AbiFunction.decodeInput(
+    AbiFunction.decodeData(
       abiItem,
       '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
     ),

@@ -107,7 +107,7 @@ const approve = AbiFunction.fromAbi(abi, 'approve') // [!code focus]
 
 ##### Encode the Function Call
 
-Next, we will encode the function call using [`AbiFunction.encodeInput`](/api/AbiFunction/encodeInput):
+Next, we will encode the function call using [`AbiFunction.encodeData`](/api/AbiFunction/encodeData):
 
 In this example, we will encode arguments to approve 100 USDC to be spent by the `0xcb98643b8786950f0461f3b0edf99d88f274574d`.
 
@@ -116,7 +116,7 @@ import { AbiFunction, Value } from 'ox';
 
 const approve = AbiFunction.from('function approve(address, uint256)')
 
-const data = AbiFunction.encodeInput( // [!code focus]
+const data = AbiFunction.encodeData( // [!code focus]
   approve, // [!code focus]
   ['0xcb98643b8786950f0461f3b0edf99d88f274574d', Value.from('100', 18)] // [!code focus]
 ) // [!code focus]
@@ -132,7 +132,7 @@ import { AbiFunction, Provider, TransactionRequest, Value } from 'ox'
 
 const approve = AbiFunction.from('function approve(address, uint256)')
 
-const data = AbiFunction.encodeInput(
+const data = AbiFunction.encodeData(
   approve,
   ['0xcb98643b8786950f0461f3b0edf99d88f274574d', Value.fromEther('100')]
 )

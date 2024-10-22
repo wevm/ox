@@ -87,7 +87,7 @@ import type { AbiError } from './types.js'
  * const approve = AbiFunction.fromAbi(abi, 'approve')
  *
  * // 2. Encode the Function Input.
- * const data = AbiFunction.encodeInput(
+ * const data = AbiFunction.encodeData(
  *   approve,
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * )

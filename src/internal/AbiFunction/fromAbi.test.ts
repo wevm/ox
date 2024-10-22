@@ -58,7 +58,7 @@ test('behavior: prepare = false', () => {
 
 test('behavior: data', () => {
   const item = AbiFunction.fromAbi(wagmiContractConfig.abi, 'approve')
-  const data = AbiFunction.encodeInput(item, [
+  const data = AbiFunction.encodeData(item, [
     '0x0000000000000000000000000000000000000000',
     1n,
   ])
@@ -574,12 +574,12 @@ test('behavior: network', async () => {
       method: 'eth_call',
       params: [
         {
-          data: AbiFunction.encodeInput(totalSupplyItem),
+          data: AbiFunction.encodeData(totalSupplyItem),
           to: wagmiContractConfig.address,
         },
       ],
     })
-    .then((data) => AbiFunction.decodeOutput(totalSupplyItem, data))
+    .then((data) => AbiFunction.decodeResult(totalSupplyItem, data))
 
   expect(totalSupply).toEqual(648n)
 })
