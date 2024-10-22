@@ -5,7 +5,7 @@ TODO:
 - Switch example over to sign via Secp256k1 instead of JSON-RPC
 - Outline JSON-RPC approach for signing
 - Outline ERC-6492 verify
-``
+```
 
 ## Overview
 
