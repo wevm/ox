@@ -118,8 +118,9 @@ function renderSignature(options: {
     overloads,
     returnType,
   })
-  const signature = `function ${displayName
-    }${genericSignature}(${paramSignature}): ${returnTypeSignature}`
+  const signature = `function ${
+    displayName
+  }${genericSignature}(${paramSignature}): ${returnTypeSignature}`
 
   content.push(`\`\`\`ts\n${signature}\n\`\`\``)
   content.push(
