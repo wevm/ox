@@ -216,7 +216,6 @@ export type {
   PublicKeyCredentialUserEntity,
   ResidentKeyRequirement,
   UserVerificationRequirement,
-  WebAuthnP256_P256Credential,
   WebAuthnP256_SignMetadata,
 } from './internal/WebAuthnP256/types.js'
 
