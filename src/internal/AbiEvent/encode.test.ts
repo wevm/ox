@@ -357,3 +357,24 @@ test('error: array input', () => {
     `[AbiEvent.FilterTypeNotSupportedError: Filter type "uint256[]" is not supported.]`,
   )
 })
+
+test('behavior: network', async () => {
+  const transfer = AbiEvent.from(
+    'event Transfer(address indexed from, address indexed to, uint256 value)',
+  )
+
+  const { topics } = AbiEvent.encode(transfer)
+
+  const logs = await anvilMainnet.request({
+    method: 'eth_getLogs',
+    params: [{ topics }],
+  })
+
+  expect(AbiEvent.decode(transfer, logs[0]!)).toMatchInlineSnapshot(`
+    {
+      "from": "0x634cf119d1964b88a426e1e782bd09f37b51d949",
+      "to": "0xb77c2290c5e5acd8ca4778876b3caae593741bab",
+      "value": 714357880932609n,
+    }
+  `)
+})

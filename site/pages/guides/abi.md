@@ -118,11 +118,12 @@ const data = AbiFunction.encodeData( // [!code focus]
 
 #### Perform the Call
 
-Now, we can perform the call using `eth_call` via a [JSON-RPC Transport](/api/RpcTransport) or [EIP-1193 Provider](/api/Provider). This will invoke the `balanceOf` function on the ERC20 contract.
+Now, we can perform the call using `eth_call` via a [JSON-RPC Transport](/api/RpcTransport) or [EIP-1193 Provider](/api/Provider). This will invoke the `balanceOf` function on the ERC20 contract. 
+
+For this example, we will use a [`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp) to instantiate a HTTP JSON-RPC Transport.
 
 ```ts twoslash
-import 'ox/window'
-import { AbiFunction, Provider, TransactionRequest, Value } from 'ox'
+import { AbiFunction, RpcTransport, TransactionRequest, Value } from 'ox'
 
 const balanceOf = AbiFunction.from('function balanceOf(address) returns (uint256)')
 
@@ -131,9 +132,9 @@ const data = AbiFunction.encodeData(
   ['0xcb98643b8786950f0461f3b0edf99d88f274574d']
 )
 
-const provider = Provider.from(window.ethereum) // [!code focus]
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-const result = await provider.request({ // [!code focus]
+const result = await transport.request({ // [!code focus]
   method: 'eth_call', // [!code focus]
   params: [{ // [!code focus]
     data, // [!code focus]
@@ -147,8 +148,7 @@ const result = await provider.request({ // [!code focus]
 Now, we can decode the result using [`AbiFunction.decodeResult`](/api/AbiFunction/decodeResult):
 
 ```ts twoslash
-import 'ox/window'
-import { AbiFunction, Provider, TransactionRequest, Value } from 'ox'
+import { AbiFunction, RpcTransport, TransactionRequest, Value } from 'ox'
 
 const balanceOf = AbiFunction.from('function balanceOf(address) returns (uint256)')
 
@@ -157,9 +157,9 @@ const data = AbiFunction.encodeData(
   ['0xcb98643b8786950f0461f3b0edf99d88f274574d']
 )
 
-const provider = Provider.from(window.ethereum) 
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
 
-const result = await provider.request({ 
+const result = await transport.request({ 
   method: 'eth_call', 
   params: [{ 
     data, 
@@ -227,8 +227,7 @@ const data = AbiFunction.encodeData( // [!code focus]
 Now, we can broadcast the `data` to the network using `eth_sendTransaction` via a [JSON-RPC Transport](/api/RpcTransport) or [EIP-1193 Provider](/api/Provider). This will invoke the `approve` function on the USDC contract.
 
 ```ts twoslash
-import 'ox/window'
-import { AbiFunction, Provider, TransactionRequest, Value } from 'ox'
+import { AbiFunction, RpcTransport, Value } from 'ox'
 
 const approve = AbiFunction.from('function approve(address, uint256) returns (bool)')
 
@@ -237,19 +236,14 @@ const data = AbiFunction.encodeData(
   ['0xcb98643b8786950f0461f3b0edf99d88f274574d', Value.fromEther('100')]
 )
 
-const transaction = TransactionRequest.toRpc({ // [!code focus]
-  chainId: 1, // [!code focus]
-  //       ↑ Ethereum Mainnet // [!code focus]
-  data, // [!code focus]
-  to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // [!code focus]
-  //   ↑ USDC Contract Address // [!code focus]
-}) // [!code focus]
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
 
-const provider = Provider.from(window.ethereum) // [!code focus]
-
-const hash = await provider.request({ // [!code focus]
+const hash = await transport.request({ // [!code focus]
   method: 'eth_sendTransaction', // [!code focus]
-  params: [transaction], // [!code focus]
+  params: [{ // [!code focus]
+    data, // [!code focus]
+    to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // [!code focus]
+  }], // [!code focus]
 }) // [!code focus]
 ```
 
@@ -259,8 +253,7 @@ We can also "simulate" a Transaction by using `eth_call` instead of `eth_sendTra
 
 ```ts twoslash
 // @noErrors
-import 'ox/window'
-import { AbiFunction, Provider, TransactionRequest, Value } from 'ox'
+import { AbiFunction, RpcTransport, Value } from 'ox'
 
 const approve = AbiFunction.from('function approve(address, uint256) returns (bool)')
 
@@ -269,21 +262,16 @@ const data = AbiFunction.encodeData(
   ['0xcb98643b8786950f0461f3b0edf99d88f274574d', Value.fromEther('100')]
 )
 
-const transaction = TransactionRequest.toRpc({ 
-  chainId: 1, 
-  //       ↑ Ethereum Mainnet 
-  data, 
-  to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', 
-  //   ↑ USDC Contract Address 
-}) 
-
-const provider = Provider.from(window.ethereum) 
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') 
 // ---cut---
-const hash = await provider.request({ // [!code --]
+const hash = await transport.request({ // [!code --]
   method: 'eth_sendTransaction', // [!code --]
-const result = await provider.request({ // [!code ++]
+const result = await transport.request({ // [!code ++]
   method: 'eth_call', // [!code ++]
-  params: [transaction], 
+  params: [{
+    data,
+    to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  }],
 }) 
 
 const success = AbiFunction.decodeResult(approve, result) // [!code ++]
@@ -295,8 +283,7 @@ We can also estimate the gas required to execute a Transaction by using `eth_est
 
 ```ts twoslash
 // @noErrors
-import 'ox/window'
-import { AbiFunction, Provider, TransactionRequest, Value } from 'ox'
+import { AbiFunction, RpcTransport, Value } from 'ox'
 
 const approve = AbiFunction.from('function approve(address, uint256) returns (bool)')
 
@@ -305,21 +292,16 @@ const data = AbiFunction.encodeData(
   ['0xcb98643b8786950f0461f3b0edf99d88f274574d', Value.fromEther('100')]
 )
 
-const transaction = TransactionRequest.toRpc({ 
-  chainId: 1, 
-  //       ↑ Ethereum Mainnet 
-  data, 
-  to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', 
-  //   ↑ USDC Contract Address 
-}) 
-
-const provider = Provider.from(window.ethereum) 
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') 
 // ---cut---
-const hash = await provider.request({ // [!code --]
+const hash = await transport.request({ // [!code --]
   method: 'eth_sendTransaction', // [!code --]
-const gas = await provider.request({ // [!code ++]
+const gas = await transport.request({ // [!code ++]
   method: 'eth_estimateGas', // [!code ++]
-  params: [transaction], 
+  params: [{
+    data,
+    to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  }],
 }) 
 ```
 
@@ -329,10 +311,187 @@ const gas = await provider.request({ // [!code ++]
 
 ABIs can also be used to filter contract events by a topic (hashed event signature), and optional indexed parameters. This is useful for applications that need to extract or listen for specific events – such as ERC20 transfers or L2 messages – on Ethereum. We can also ABI-decode extracted event to retrieve the event name and arguments.
 
-TODO
+Let's take an example of how we can filter for ERC20 `Transfer` events, and decode the event arguments.
+
+::::steps
+
+#### Define the `Transfer` Event
+
+First, we will define the `Transfer` event using Ox's [`AbiEvent.from`](/api/AbiEvent/from) function:
+
+```ts twoslash
+import { AbiEvent } from 'ox';
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)'
+)
+```
+
+:::note
+
+If you're using a JSON ABI, you can also extract the Event using [`AbiEvent.fromAbi`](/api/AbiEvent/fromAbi):
+
+```ts twoslash
+// @noErrors
+const erc20Abi = [...] // [!code focus]
+const transfer = AbiEvent.fromAbi(abi, 'Transfer') // [!code focus]
+```
+
+:::
+
+#### Encode to Event Topics
+
+Next, we will encode the event filter using [`AbiEvent.encode`](/api/AbiEvent/encode). We will filter for transfers from `0x9f1fdab6458c5fc642fa0f4c5af7473c46837357`.
+
+```ts twoslash
+import { AbiEvent } from 'ox';
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+)
+
+const { topics } = AbiEvent.encode(transfer, { // [!code focus]
+  from: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357', // [!code focus]
+}) // [!code focus]
+```
+
+#### Filter Events
+
+Now, we can filter events using `eth_getLogs` via a [JSON-RPC Transport](/api/RpcTransport) or [EIP-1193 Provider](/api/Provider).
+
+For this example, we will use a [`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp) to instantiate a HTTP JSON-RPC Transport.
+
+```ts twoslash
+import { AbiEvent, RpcTransport } from 'ox';
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+)
+
+const { topics } = AbiEvent.encode(transfer, {
+  from: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+})
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+
+const logs = await transport.request({ // [!code focus]
+  method: 'eth_getLogs', // [!code focus]
+  params: [{ topics }], // [!code focus]
+}) // [!code focus]
+```
+
+#### Decode Logs
+
+We can decode the logs using [`AbiEvent.decode`](/api/AbiEvent/decode):
+
+```ts twoslash
+import { AbiEvent, RpcTransport } from 'ox';
+
+const transfer = AbiEvent.from(
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+)
+
+const { topics } = AbiEvent.encode(transfer, {
+  from: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+})
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+
+const logs = await transport.request({
+  method: 'eth_getLogs',
+  params: [{ topics }],
+})
+
+const decoded = logs.map(log => AbiEvent.decode(transfer, log)) // [!code focus]
+// @log: [
+// @log:   {
+// @log:     from: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357', 
+// @log:     to: '0xcb98643b8786950f0461f3b0edf99d88f274574d', 
+// @log:     value: 1n,
+// @log:   },
+// @log:   ...
+// @log: ]
+```
+
+::::
+
+
 
 ## Contract Deployment
 
 When deploying a smart contract, an ABI can be used to encode constructor arguments to pass to the transaction calldata, along with the deployment bytecode.
 
-TODO
+Let's take a look at how we can deploy a contract with arguments using Ox.
+
+::::steps
+
+#### Define the Constructor
+
+First, we will define the constructor using Ox's [`AbiConstructor.from`](/api/AbiConstructor/from) function:
+
+```ts twoslash
+import { AbiConstructor } from 'ox';
+
+const bytecode = '0x...'
+
+const constructor = AbiConstructor.from('constructor(address)')
+```
+
+:::note
+
+If you're using a JSON ABI, you can also extract the Constructor using [`AbiConstructor.fromAbi`](/api/AbiConstructor/fromAbi):
+
+```ts twoslash
+// @noErrors
+const erc20Abi = [...] // [!code focus]
+const constructor = AbiConstructor.fromAbi(abi) // [!code focus]
+```
+
+:::
+
+#### Encode the Constructor
+
+Next, we will encode the constructor arguments using [`AbiConstructor.encode`](/api/AbiConstructor/encode):
+
+```ts twoslash
+import { AbiConstructor } from 'ox';
+
+const bytecode = '0x...'
+
+const constructor = AbiConstructor.from('constructor(address)')
+
+const data = AbiConstructor.encode(constructor, {
+  bytecode,
+  args: ['0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'],
+})
+```
+
+#### Broadcast the Transaction
+
+We can now broadcast the deploy transaction to the network using `eth_sendTransaction` via a [JSON-RPC Transport](/api/RpcTransport) or [EIP-1193 Provider](/api/Provider).
+
+```ts twoslash
+import { AbiConstructor, RpcTransport } from 'ox';
+
+const bytecode = '0x...'
+
+const constructor = AbiConstructor.from('constructor(address)')
+
+const data = AbiConstructor.encode(constructor, {
+  bytecode,
+  args: ['0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'],
+})
+
+const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+
+const hash = await transport.request({ // [!code focus]
+  method: 'eth_sendTransaction', // [!code focus]
+  params: [{ data }], // [!code focus]
+}) // [!code focus]
+```
+
+:::note
+**Note:** Deploy Transactions do not contain a `to` address.
+:::
+
+::::
