@@ -21,7 +21,7 @@ export function renderApiFunction(options: {
 
   content.push(renderSignature({ data, dataLookup, overloads }))
 
-  if (data.parameters)
+  if (data.parameters?.length)
     content.push(
       renderParameters({
         data,
