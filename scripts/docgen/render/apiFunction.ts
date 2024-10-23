@@ -172,10 +172,40 @@ function renderParameters(options: {
       for (const child of interfaceData.children) {
         const childItem = dataLookup[child]
         if (!childItem) continue
+        const typeReference = (() => {
+          if (!childItem.references) return
+          const reference = childItem.references.find(
+            (x) => x.text === childItem.type,
+          )
+          return reference
+        })()
+        const link = typeReference
+          ? getTypeLink({
+              dataLookup,
+              type: {
+                primaryCanonicalReference: typeReference.canonicalReference,
+              },
+            })
+          : undefined
+        const type = (() => {
+          // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
+          const expandRegex = /^ox!(?<type>.+)(_2):type/
+          if (
+            typeReference?.canonicalReference &&
+            expandRegex.test(typeReference.canonicalReference)
+          ) {
+            const type =
+              typeReference.canonicalReference.match(expandRegex)?.groups?.type
+            if (type) return type
+          }
+          return childItem.type
+        })()
         properties.push({
           ...childItem,
           ...childItem.comment,
           name: childItem.displayName,
+          link,
+          type,
         })
       }
     } else if (inlineParameterType) {
@@ -192,6 +222,7 @@ function renderParameters(options: {
           name: parts[0]?.replace(/\?$/, ''),
           optional: parts[0]?.endsWith('?'),
           summary: undefined, // TODO
+          link: undefined, // TODO
           type: parts[1],
         })
       }
@@ -200,7 +231,10 @@ function renderParameters(options: {
     for (const property of properties) {
       content.push(`#### \`${property.name}\``)
 
-      const listContent = [`- **Type:** \`${property.type}\``]
+      const c = `\`${property.type}\``
+      const listContent = property.link
+        ? [`- **Type:** [${c}](${property.link})`]
+        : [`- **Type:** ${c}`]
       if (property.default)
         listContent.push(`- **Default:** \`${property.default}\``)
       if (!property.default && property.optional)
@@ -312,7 +346,7 @@ function resolveInlineParameterTypeForOverloads(options: {
   ) {
     const type =
       parameter.primaryCanonicalReference.match(expandRegex)?.groups?.type
-    return type
+    if (type) return type
   }
   return parameter.type
 }
