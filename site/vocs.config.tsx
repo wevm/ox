@@ -50,7 +50,7 @@ export default defineConfig({
         text: 'Guides',
         // collapsed: true,
         items: [
-          { text: 'AES-GCM Encryption 🚧', link: '/guides/encryption' },
+          { text: 'AES-GCM Encryption', link: '/guides/encryption' },
           {
             text: 'Application Binary Interface (ABI)',
             link: '/guides/abi',
