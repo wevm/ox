@@ -33,9 +33,10 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function Hex_from(value: Hex | Bytes): Hex {
+export function Hex_from(value: Hex | Bytes | readonly number[]): Hex {
   if (value instanceof Uint8Array) return Hex_fromBytes(value)
-  return value
+  if (Array.isArray(value)) return Hex_fromBytes(new Uint8Array(value))
+  return value as never
 }
 
 export declare namespace Hex_from {

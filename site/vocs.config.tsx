@@ -55,7 +55,7 @@ export default defineConfig({
             text: 'Application Binary Interface (ABI)',
             link: '/guides/abi',
           },
-          { text: 'Bytes & Hex Manipulation 🚧', link: '/guides/bytes-hex' },
+          { text: 'Bytes & Hex', link: '/guides/bytes-hex' },
           { text: 'ECDSA & Signers 🚧', link: '/guides/ecdsa' },
           {
             text: 'EIP-1193 Providers 🚧',
