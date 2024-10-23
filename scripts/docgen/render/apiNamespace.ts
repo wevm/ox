@@ -107,7 +107,7 @@ export function renderNamespaceErrors(options: {
       }
     }
     content.push(
-      `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
+      `**Source:** [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
     )
   }
 
@@ -140,7 +140,7 @@ export function renderNamespaceTypes(options: {
       }
     }
     content.push(
-      `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
+      `**Source:** [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
     )
   }
 

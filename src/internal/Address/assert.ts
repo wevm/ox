@@ -1,4 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
+import { addressRegex } from '../regex.js'
 import { Address_checksum } from './checksum.js'
 import {
   Address_InvalidAddressError,
@@ -6,8 +7,6 @@ import {
   Address_InvalidInputError,
 } from './errors.js'
 import type { Address } from './types.js'
-
-const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
 /**
  * Asserts that the given value is a valid {@link ox#Address.Address}.

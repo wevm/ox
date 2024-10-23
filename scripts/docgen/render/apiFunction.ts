@@ -31,10 +31,11 @@ export function renderApiFunction(options: {
       }),
     )
 
-  if (data.returnType)
+  if (data.returnType && !data.returnType.type.startsWith('asserts '))
     content.push(
       renderReturnType({
         comment: comment?.returns,
+        dataLookup,
         returnType: data.returnType,
       }),
     )
@@ -62,11 +63,14 @@ function renderImports(options: {
   const content = [
     '## Imports',
     [
-      '```ts twoslash',
-      '// @noErrors',
+      ':::code-group',
+      '```ts twoslash [Named]',
       `import { ${module} } from 'ox'`,
+      '```',
+      '```ts twoslash [Entrypoint]',
       `import * as ${module} from 'ox/${module}'`,
       '```',
+      ':::',
     ].join('\n'),
   ]
   return content.join('\n\n')
@@ -114,13 +118,12 @@ function renderSignature(options: {
     overloads,
     returnType,
   })
-  const signature = `function ${
-    displayName
-  }${genericSignature}(${paramSignature}): ${returnTypeSignature}`
+  const signature = `function ${displayName
+    }${genericSignature}(${paramSignature}): ${returnTypeSignature}`
 
   content.push(`\`\`\`ts\n${signature}\n\`\`\``)
   content.push(
-    `Source: [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
+    `**Source:** [${data.file.path}](${data.file.url}${data.file.lineNumber ? `#L${data.file.lineNumber}` : ''})`,
   )
   return content.join('\n\n')
 }
@@ -149,7 +152,12 @@ function renderParameters(options: {
     })
     parameterIndex += 1
 
-    const listContent = [`- **Type:** \`${type}\``]
+    const link = getTypeLink({ dataLookup, type: parameter })
+
+    const c = `\`${type}\``
+    const listContent = link
+      ? [`- **Type:** [${c}](${link})`]
+      : [`- **Type:** ${c}`]
     if (parameter.optional) listContent.push('- **Optional**')
     content.push(listContent.join('\n'))
 
@@ -207,13 +215,30 @@ function renderParameters(options: {
 
 function renderReturnType(options: {
   comment: NonNullable<Data['comment']>['returns'] | undefined
+  dataLookup: Record<string, Data>
   returnType: NonNullable<Data['returnType']>
 }) {
-  const { comment, returnType } = options
+  const { comment, dataLookup, returnType } = options
 
   const content = ['## Return Type']
   if (comment) content.push(comment)
-  content.push(`\`${returnType.type}\``)
+  const link = getTypeLink({ dataLookup, type: returnType })
+  const type = (() => {
+    // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
+    const expandRegex = /^ox!(?<type>.+)(_2):type/
+    if (
+      returnType.primaryCanonicalReference &&
+      expandRegex.test(returnType.primaryCanonicalReference) &&
+      !returnType.primaryGenericArguments
+    ) {
+      const type =
+        returnType.primaryCanonicalReference.match(expandRegex)?.groups?.type
+      return type
+    }
+    return returnType.type
+  })()
+  const c = `\`${type}\``
+  content.push(link ? `[${c}](${link})` : c)
 
   return content.join('\n\n')
 }
@@ -276,6 +301,18 @@ function resolveInlineParameterTypeForOverloads(options: {
         ) ?? parameter.type
       )
   }
+
+  // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
+  const expandRegex = /^ox!(?<type>.+)(_2):type/
+  if (
+    parameter.primaryCanonicalReference &&
+    expandRegex.test(parameter.primaryCanonicalReference) &&
+    !parameter.primaryGenericArguments
+  ) {
+    const type =
+      parameter.primaryCanonicalReference.match(expandRegex)?.groups?.type
+    return type
+  }
   return parameter.type
 }
 
@@ -333,4 +370,24 @@ function resolveErrorData(options: {
   }
 
   return errors
+}
+
+function getTypeLink(options: {
+  dataLookup: Record<string, Data>
+  type: Pick<
+    NonNullable<Data['returnType']>,
+    'primaryCanonicalReference' | 'primaryGenericArguments'
+  >
+}) {
+  const { dataLookup, type } = options
+  if (type.primaryCanonicalReference && !type.primaryGenericArguments) {
+    const data =
+      dataLookup[type.primaryCanonicalReference] ??
+      dataLookup[type.primaryCanonicalReference.replace('_2', '')]
+    if (!data) return
+
+    const displayNameWithNamespace = `${data.module}.${data.displayName}`
+    return `/api/${data.module}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`
+  }
+  return
 }

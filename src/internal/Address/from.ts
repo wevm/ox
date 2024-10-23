@@ -25,9 +25,6 @@ import type { Address } from './types.js'
  * ```
  *
  * @example
- *
- * Do something with {@link ox#Address.Address}.
- *
  * ```ts twoslash
  * import { Address } from 'ox'
  *

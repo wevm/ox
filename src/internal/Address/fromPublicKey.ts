@@ -24,7 +24,7 @@ import type { Address } from './types.js'
  * @returns The {@link ox#Address.Address}.
  */
 export function Address_fromPublicKey(
-  publicKey: PublicKey<false>,
+  publicKey: PublicKey,
   options: Address_fromPublicKey.Options = {},
 ): Address {
   const address = Hash_keccak256(

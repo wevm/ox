@@ -47,13 +47,13 @@ const moduleDocComments = extractNamespaceDocComments(
 )
 
 const testNamespaces: string[] = []
+const excludeNamespaces = ['Caches', 'Constants', 'Internal', 'Types']
 const namespaces = []
 const glossaryNamespaces = []
 for (const member of apiEntryPoint.members) {
   if (member.kind !== model.ApiItemKind.Namespace) continue
   if (!namespaceRegex.test(getId(member))) continue
-  if (['Caches', 'Constants', 'Internal', 'Types'].includes(member.displayName))
-    continue
+  if (excludeNamespaces.includes(member.displayName)) continue
   if (testNamespaces.length && !testNamespaces.includes(member.displayName))
     continue
   if (['Errors'].includes(member.displayName)) glossaryNamespaces.push(member)
@@ -229,8 +229,6 @@ fs.writeFileSync(
 let content = '# API Reference\n\n'
 
 content += '<table className="vocs_Table">\n'
-content +=
-  '<thead><tr><th className="vocs_TableHeader">Name</th><th className="vocs_TableHeader">Description</th></tr></thead>\n'
 content += '<tbody>\n'
 
 for (const [category, items] of alphabetizedNamespaceMap) {
