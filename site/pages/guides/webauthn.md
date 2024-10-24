@@ -2,7 +2,7 @@
 
 ## Overview
 
-The [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) contains a number of different credential types, including a credential with support for the P256 curve. This means that you can use WebAuthn-enabled authenticators like a Passkey or a Yubikey to sign transactions and arbitrary payloads. 
+The [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) contains a number of different credential types, including a credential with support for the P256 curve. This means that you can use WebAuthn-enabled authenticators like a [Passkey](https://passkeys.dev) or a [Yubikey](https://en.wikipedia.org/wiki/YubiKey) to sign transactions and arbitrary payloads. 
 
 By combining WebAuthn Signers with Account Abstraction, this means that Smart Contract Accounts can verify WebAuthn-P256 signatures with onchain arbitrary signature verification mechanisms such as [EIP-1271: Signature Verification for Contracts](https://eips.ethereum.org/EIPS/eip-1271).
 
