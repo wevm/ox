@@ -42,9 +42,11 @@ Using [Named Imports](/imports#named-imports) aligns closer with Ox's philosophy
 
 ## How to Read These Docs
 
-The documentation is split into two main sections – **Guides** and the **API Reference** – as displayed on the sidebar.
+The documentation is split into two main sections – **Guides** and the [API Reference](/api) – as displayed on the sidebar.
 
 If you are new to Ox, you can start by reading the **Guides** or you can use the **Search Bar** (`/`) to find the Modules you may be looking for.
 
-You can also skim the **API Reference** to get a quick overview of the available Modules. Ox's API is organized by Module, and each Module is further broken down into its individual utility exports.
+You can also skim the [API Reference](/api) to get a quick overview of the available Modules. Each Module has a brief overview of its purpose, as well as some examples ([Example](/api/Secp256k1)) – it can be seen as a "mini-guide" in addition to the formal Guides.
+
+Ox's API is organized by Module ([Example](/api/Hex)), and each Module is further broken down into its individual Function ([Example](/api/Hex/padLeft)).
 

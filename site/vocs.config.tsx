@@ -92,7 +92,7 @@ export default defineConfig({
             text: 'Typed Data (EIP-712) 🚧',
             link: '/guides/typed-data',
           },
-          { text: 'WebAuthn Signers 🚧', link: '/guides/webauthn' },
+          { text: 'WebAuthn Signers', link: '/guides/webauthn' },
           { text: 'Using with Effect 🚧', link: '/guides/effect' },
           { text: 'Using with NeverThrow 🚧', link: '/guides/neverthrow' },
           {
