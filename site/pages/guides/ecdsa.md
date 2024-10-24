@@ -17,9 +17,9 @@ We won't cover `WebAuthnP256` in this guide, please refer to the [WebAuthn Signe
 
 We can generate private keys using one of the Signer modules with their respective generation function:
 
-- [`Secp256k1.randomPrivateKey`](/api/Secp256k1/randomprivatekey)
-- [`P256.randomPrivateKey`](/api/P256/randomprivatekey)
-- [`WebCryptoP256.createKeyPair`](/api/WebCryptoP256/createkeypair)
+- [`Secp256k1.randomPrivateKey`](/api/Secp256k1/randomPrivateKey)
+- [`P256.randomPrivateKey`](/api/P256/randomPrivateKey)
+- [`WebCryptoP256.createKeyPair`](/api/WebCryptoP256/createKeyPair)
 
 ```ts twoslash
 import { P256, Secp256k1, WebCryptoP256 } from 'ox'
@@ -78,7 +78,7 @@ import { Secp256k1, P256 } from 'ox'
 }
 ```
 
-We can also extract an Ethereum Address from a Public Key using [`Address.fromPublicKey`](/api/Address/frompublickey):
+We can also extract an Ethereum Address from a Public Key using [`Address.fromPublicKey`](/api/Address/fromPublicKey):
 
 ```ts twoslash
 import { Address, Secp256k1 } from 'ox'
@@ -170,8 +170,8 @@ const payload = '0xdeadbeef' // [!code focus]
 
 Public Keys can be recovered from a signature and payload using the Signer's respective function:
 
-- [`Secp256k1.recoverPublicKey`](/api/Secp256k1/recoverpublickey)
-- [`P256.recoverPublicKey`](/api/P256/recoverpublickey)
+- [`Secp256k1.recoverPublicKey`](/api/Secp256k1/recoverPublicKey)
+- [`P256.recoverPublicKey`](/api/P256/recoverPublicKey)
 
 ```ts twoslash
 import { Secp256k1, P256, WebCryptoP256 } from 'ox' // [!code focus]
