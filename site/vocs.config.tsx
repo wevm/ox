@@ -58,7 +58,7 @@ export default defineConfig({
           { text: 'Bytes & Hex', link: '/guides/bytes-hex' },
           { text: 'ECDSA & Signers', link: '/guides/ecdsa' },
           {
-            text: 'EIP-1193 Providers 🚧',
+            text: 'EIP-1193 Providers',
             link: '/guides/eip-1193',
           },
           {
@@ -75,6 +75,10 @@ export default defineConfig({
           },
           { text: 'ENS 🚧', link: '/guides/ens' },
           { text: 'JSON-RPC & Execution API 🚧', link: '/guides/json-rpc' },
+          {
+            text: 'Mnemonics 🚧',
+            link: '/guides/mnemonics',
+          },
           { text: 'Recursive Length Prefix (RLP)', link: '/guides/rlp' },
           {
             text: 'Sign-In With Ethereum (SIWE) 🚧',

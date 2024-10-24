@@ -1543,10 +1543,26 @@ export * as PersonalMessage from './PersonalMessage.js'
  * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
  * ```
  *
+ * :::tip
+ *
+ * There are also libraries that distribute EIP-1193 Provider objects that you can use with `Provider.from`:
+ *
+ * - [`@walletconnect/ethereum-provider`](https://www.npmjs.com/package/\@walletconnect/ethereum-provider)
+ *
+ * - [`@coinbase/wallet-sdk`](https://www.npmjs.com/package/\@coinbase/wallet-sdk)
+ *
+ * - [`@metamask/detect-provider`](https://www.npmjs.com/package/\@metamask/detect-provider)
+ *
+ * - [`@safe-global/safe-apps-provider`](https://github.com/safe-global/safe-apps-sdk/tree/main/packages/safe-apps-provider)
+ *
+ * - [`mipd`](https://github.com/wevm/mipd): EIP-6963 Multi Injected Providers
+ *
+ * :::
+ *
  * @example
  * ### Instantiating with an RPC Transport
  *
- * HTTP EIP-1193 Providers can be instantiated with {@link ox#Provider.(from:function)} and {@link ox#RpcTransport.(fromHttp:function)}:
+ * Ox's {@link ox#RpcTransport} is also EIP-1193 compliant, and can be used to instantiate an EIP-1193 Provider. This means you can use any HTTP RPC endpoint as an EIP-1193 Provider.
  *
  * ```ts twoslash
  * import { Provider, RpcTransport } from 'ox'

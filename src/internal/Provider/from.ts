@@ -9,8 +9,7 @@ import type { Provider } from './types.js'
  * @example
  * ### Instantiating with RPC Transport
  *
- * The example below demonstrates how we can instantiate a typed HTTP EIP-1193 Provider from an
- * RPC Transport such as {@link ox#RpcTransport.(fromHttp:function)}.
+ * Ox's {@link ox#RpcTransport} is EIP-1193 compliant, and can be used to instantiate an EIP-1193 Provider. This means you can use any HTTP RPC endpoint as an EIP-1193 Provider.
  *
  * ```ts twoslash
  * import { Provider, RpcTransport } from 'ox'
