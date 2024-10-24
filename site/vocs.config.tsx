@@ -56,7 +56,7 @@ export default defineConfig({
             link: '/guides/abi',
           },
           { text: 'Bytes & Hex', link: '/guides/bytes-hex' },
-          { text: 'ECDSA & Signers 🚧', link: '/guides/ecdsa' },
+          { text: 'ECDSA & Signers', link: '/guides/ecdsa' },
           {
             text: 'EIP-1193 Providers 🚧',
             link: '/guides/eip-1193',
