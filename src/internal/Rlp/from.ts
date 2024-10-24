@@ -19,10 +19,10 @@ type Encodable = {
  * ```ts twoslash
  * import { Bytes, Rlp } from 'ox'
  *
- * Rlp.from('0x68656c6c6f20776f726c64', 'Hex')
+ * Rlp.from('0x68656c6c6f20776f726c64', { as: 'Hex' })
  * // @log: 0x8b68656c6c6f20776f726c64
  *
- * Rlp.from(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]), 'Bytes')
+ * Rlp.from(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]), { as: 'Bytes' })
  * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
  *
