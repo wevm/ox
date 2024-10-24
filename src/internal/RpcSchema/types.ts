@@ -194,7 +194,7 @@ export type RpcSchema_Generic<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Name = RpcSchema.NameGeneric
+ * type Name = RpcSchema.MethodNameGeneric
  * //   ^?
  *
  *

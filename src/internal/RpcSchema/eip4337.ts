@@ -347,7 +347,7 @@ export type RpcSchema_Eip4337 = [
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Name = RpcSchema.NameEth
+ * type Name = RpcSchema.MethodNameEth
  * //   ^?
  *
  *

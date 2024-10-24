@@ -81,7 +81,7 @@ test('behavior: network', async () => {
 
   expect(tx).toMatchInlineSnapshot(`
     {
-      "blockHash": "0x062f074e1dbdba9b7277e83d9212fdd4323ad7cf14de035f46d4fce9e8b7fdc7",
+      "blockHash": "0xde6b6b26f60a87f361b6688771196a79f6ac152cae6284142b2dfe363b78dbb4",
       "blockNumber": "0x12f2975",
       "chainId": "0x1",
       "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",

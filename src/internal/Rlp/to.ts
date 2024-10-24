@@ -21,13 +21,12 @@ import type { RecursiveArray } from '../types.js'
  * @param value - The value to decode.
  * @returns The decoded {@link ox#Bytes.Bytes} value.
  */
-export function Rlp_toBytes(value: Bytes | Hex): Rlp_toBytes.ReturnType {
+export function Rlp_toBytes(value: Bytes | Hex): RecursiveArray<Bytes> {
   return Rlp_to(value, 'Bytes')
 }
 
 export declare namespace Rlp_toBytes {
   type ErrorType = Rlp_to.ErrorType
-  type ReturnType = Rlp_to.ReturnType<'Bytes'>
 }
 
 Rlp_toBytes.parseError = (error: unknown) =>
@@ -47,13 +46,12 @@ Rlp_toBytes.parseError = (error: unknown) =>
  * @param value - The value to decode.
  * @returns The decoded {@link ox#Hex.Hex} value.
  */
-export function Rlp_toHex(value: Bytes | Hex): Rlp_toHex.ReturnType {
+export function Rlp_toHex(value: Bytes | Hex): RecursiveArray<Hex> {
   return Rlp_to(value, 'Hex')
 }
 
 export declare namespace Rlp_toHex {
   type ErrorType = Rlp_to.ErrorType
-  type ReturnType = Rlp_to.ReturnType<'Hex'>
 }
 
 Rlp_toHex.parseError = (error: unknown) =>

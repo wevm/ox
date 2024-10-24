@@ -383,8 +383,9 @@ function getTypeLink(options: {
   const { dataLookup, type } = options
 
   const data = (() => {
-    if (dataLookup[`ox!${type.type}:type`])
-      return dataLookup[`ox!${type.type}:type`]
+    // TODO: fix `type` link resolution.
+    // if (dataLookup[`ox!${type.type}:type`])
+    //   return dataLookup[`ox!${type.type}:type`]
     if (type.primaryCanonicalReference && !type.primaryGenericArguments)
       return (
         dataLookup[type.primaryCanonicalReference] ??

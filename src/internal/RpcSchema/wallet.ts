@@ -196,7 +196,7 @@ export type RpcSchema_Wallet = [
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Name = RpcSchema.NameWallet
+ * type Name = RpcSchema.MethodNameWallet
  * //   ^?
  *
  *
