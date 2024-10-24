@@ -378,7 +378,7 @@ test('behavior: network', async () => {
           "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
           "blockHash": null,
           "blockNumber": "0x12f2977",
-          "blockTimestamp": "0x66434e46",
+          "blockTimestamp": "0x66434e43",
           "data": "0xdeadbeef",
           "logIndex": "0x0",
           "removed": false,
