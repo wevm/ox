@@ -1,10 +1,9 @@
-import { ripemd160 } from '@noble/hashes/ripemd160'
+import { ripemd160 as nobile_ripemd160 } from '@noble/hashes/ripemd160'
 
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import type * as Hash from '../../Hash.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
@@ -23,37 +22,36 @@ import type { Hex } from '../Hex/types.js'
  * @param to - The return type.
  * @returns Ripemd160 hash.
  */
-export function Hash_ripemd160<
-  value extends Hex | Bytes,
+export function ripemd160<
+  value extends Hex.Hex | Bytes.Bytes,
   as extends 'Hex' | 'Bytes' =
-    | (value extends Hex ? 'Hex' : never)
-    | (value extends Bytes ? 'Bytes' : never),
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  value: value | Hex | Bytes,
-  options: Hash_ripemd160.Options<as> = {},
-): Hash_ripemd160.ReturnType<as> {
+  value: value | Hex.Hex | Bytes.Bytes,
+  options: Hash.ripemd160.Options<as> = {},
+): ripemd160.ReturnType<as> {
   const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const bytes = ripemd160(Bytes_from(value))
+  const bytes = nobile_ripemd160(Bytes.from(value))
   if (as === 'Bytes') return bytes as never
-  return Hex_fromBytes(bytes) as never
+  return Hex.fromBytes(bytes) as never
 }
 
-export declare namespace Hash_ripemd160 {
+export declare namespace ripemd160 {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
     /** The return type. @default 'Hex' */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
-    | Bytes_from.ErrorType
-    | Hex_fromBytes.ErrorType
-    | GlobalErrorType
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hash_ripemd160.parseError = (error: unknown) =>
-  error as Hash_ripemd160.ErrorType
+ripemd160.parseError = (error: unknown) => error as ripemd160.ErrorType

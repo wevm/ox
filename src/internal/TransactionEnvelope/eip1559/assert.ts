@@ -1,4 +1,4 @@
-import { Address_assert } from '../../Address/assert.js'
+import * as Address from '../../../Address.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
 import {
@@ -34,7 +34,7 @@ export function TransactionEnvelopeEip1559_assert(
   const { chainId, maxPriorityFeePerGas, maxFeePerGas, to } = envelope
   if (chainId <= 0)
     throw new TransactionEnvelope_InvalidChainIdError({ chainId })
-  if (to) Address_assert(to, { strict: false })
+  if (to) Address.assert(to, { strict: false })
   if (maxFeePerGas && BigInt(maxFeePerGas) > 2n ** 256n - 1n)
     throw new TransactionEnvelope_FeeCapTooHighError({ feeCap: maxFeePerGas })
   if (
@@ -50,7 +50,7 @@ export function TransactionEnvelopeEip1559_assert(
 
 export declare namespace TransactionEnvelopeEip1559_assert {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | TransactionEnvelope_InvalidChainIdError
     | TransactionEnvelope_FeeCapTooHighError
     | TransactionEnvelope_TipAboveFeeCapError

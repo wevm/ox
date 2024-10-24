@@ -1,7 +1,7 @@
 import type { AbiParameter } from 'abitype'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
+import { keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
 import type { Compute, IsNarrowable } from '../types.js'
@@ -127,8 +127,8 @@ export function AbiEvent_encode<const abiEvent extends AbiEvent>(
     if (args_.length > 0) {
       const encode = (param: AbiParameter, value: unknown) => {
         if (param.type === 'string')
-          return Hash_keccak256(Hex_fromString(value as string))
-        if (param.type === 'bytes') return Hash_keccak256(value as Hex)
+          return keccak256(Hex_fromString(value as string))
+        if (param.type === 'bytes') return keccak256(value as Hex)
         if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
           throw new AbiEvent_FilterTypeNotSupportedError(param.type)
         return AbiParameters_encode([param], [value])
@@ -177,7 +177,7 @@ export declare namespace AbiEvent_encode {
     | AbiParameters_encode.ErrorType
     | AbiEvent_getSelector.ErrorType
     | Hex_fromString.ErrorType
-    | Hash_keccak256.ErrorType
+    | keccak256.ErrorType
     | GlobalErrorType
 }
 

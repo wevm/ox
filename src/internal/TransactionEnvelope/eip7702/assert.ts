@@ -1,4 +1,4 @@
-import { Address_assert } from '../../Address/assert.js'
+import * as Address from '../../../Address.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
 import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
@@ -34,7 +34,7 @@ export function TransactionEnvelopeEip7702_assert(
   if (authorizationList) {
     for (const authorization of authorizationList) {
       const { address, chainId } = authorization
-      if (address) Address_assert(address, { strict: false })
+      if (address) Address.assert(address, { strict: false })
       if (Number(chainId) < 0)
         throw new TransactionEnvelope_InvalidChainIdError({ chainId })
     }
@@ -46,7 +46,7 @@ export function TransactionEnvelopeEip7702_assert(
 
 export declare namespace TransactionEnvelopeEip7702_assert {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | TransactionEnvelope_InvalidChainIdError
     | GlobalErrorType
 }

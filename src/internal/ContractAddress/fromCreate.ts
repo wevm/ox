@@ -1,10 +1,9 @@
-import { Address_from } from '../Address/from.js'
-import type { Address } from '../Address/types.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import { Bytes_fromNumber } from '../Bytes/fromNumber.js'
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Rlp_fromBytes } from '../Rlp/from.js'
+import * as Address from '../../Address.js'
+import * as Bytes from '../../Bytes.js'
+import type * as ContractAddress from '../../ContractAddress.js'
+import type * as Errors from '../../Errors.js'
+import * as Hash from '../../Hash.js'
+import * as Rlp from '../../Rlp.js'
 
 /**
  * Computes contract address via [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode.
@@ -23,36 +22,36 @@ import { Rlp_fromBytes } from '../Rlp/from.js'
  * @param options - Options for retrieving address.
  * @returns Contract Address.
  */
-export function ContractAddress_fromCreate(
-  options: ContractAddress_fromCreate.Options,
-): Address {
-  const from = Bytes_fromHex(Address_from(options.from))
+export function fromCreate(
+  options: ContractAddress.fromCreate.Options,
+): Address.Address {
+  const from = Bytes.fromHex(Address.from(options.from))
 
-  let nonce = Bytes_fromNumber(options.nonce)
+  let nonce = Bytes.fromNumber(options.nonce)
   if (nonce[0] === 0) nonce = new Uint8Array([])
 
-  return Address_from(
-    `0x${Hash_keccak256(Rlp_fromBytes([from, nonce], { as: 'Hex' })).slice(26)}` as Address,
+  return Address.from(
+    `0x${Hash.keccak256(Rlp.fromBytes([from, nonce], { as: 'Hex' })).slice(26)}` as Address.Address,
   )
 }
 
-export declare namespace ContractAddress_fromCreate {
+export declare namespace fromCreate {
   interface Options {
     /** The address the contract was deployed from. */
-    from: Address
+    from: Address.Address
     /** The nonce of the transaction which deployed the contract. */
     nonce: bigint
   }
 
   type ErrorType =
-    | Hash_keccak256.ErrorType
-    | Address_from.ErrorType
-    | Bytes_fromHex.ErrorType
-    | Bytes_fromNumber.ErrorType
-    | Rlp_fromBytes.ErrorType
-    | GlobalErrorType
+    | Hash.keccak256.ErrorType
+    | Address.from.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Bytes.fromNumber.ErrorType
+    | Rlp.fromBytes.ErrorType
+    | Errors.GlobalErrorType
 }
 
-ContractAddress_fromCreate.parseError = (error: unknown) =>
+fromCreate.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as ContractAddress_fromCreate.ErrorType
+  error as fromCreate.ErrorType

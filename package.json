@@ -30,7 +30,7 @@
     "preconstruct": "tsx ./scripts/preconstruct.ts",
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
-    "size": "size-limit",
+    "size": "size-limit --why",
     "test": "vitest -c ./test/vitest.config.ts",
     "test:ci": "CI=true vitest -c ./test/vitest.config.ts --coverage --retry=3 --bail=1",
     "test:cov": "vitest -c ./test/vitest.config.ts --coverage",
@@ -51,6 +51,7 @@
     "@microsoft/tsdoc": "^0.15.0",
     "@microsoft/tsdoc-config": "^0.17.0",
     "@size-limit/preset-big-lib": "^11.1.4",
+    "@size-limit/webpack-why": "^11.1.6",
     "@types/bun": "^1.1.6",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.5.4",
@@ -115,163 +116,8 @@
   },
   "size-limit": [
     {
-      "name": "import * from 'ox'",
-      "path": "./src/_esm/index.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Abi from 'ox/Abi'",
-      "path": "./src/_esm/Abi.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as AbiConstructor from 'ox/AbiConstructor'",
-      "path": "./src/_esm/AbiConstructor.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as AbiError from 'ox/AbiError'",
-      "path": "./src/_esm/AbiError.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as AbiEvent from 'ox/AbiEvent'",
-      "path": "./src/_esm/AbiEvent.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as AbiFunction from 'ox/AbiFunction'",
-      "path": "./src/_esm/AbiFunction.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as AbiItem from 'ox/AbiItem'",
-      "path": "./src/_esm/AbiItem.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as AbiParameters from 'ox/AbiParameters'",
-      "path": "./src/_esm/AbiParameters.js",
-      "import": "*"
-    },
-    {
       "name": "import * as Address from 'ox/Address'",
       "path": "./src/_esm/Address.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Base64 from 'ox/Base64'",
-      "path": "./src/_esm/Base64.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Block from 'ox/Block'",
-      "path": "./src/_esm/Block.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Bloom from 'ox/Bloom'",
-      "path": "./src/_esm/Bloom.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Bytes from 'ox/Bytes'",
-      "path": "./src/_esm/Bytes.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as ContractAddress from 'ox/ContractAddress'",
-      "path": "./src/_esm/ContractAddress.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Errors from 'ox/Errors'",
-      "path": "./src/_esm/Errors.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Hex from 'ox/Hex'",
-      "path": "./src/_esm/Hex.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Kzg from 'ox/Kzg'",
-      "path": "./src/_esm/Kzg.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Log from 'ox/Log'",
-      "path": "./src/_esm/Log.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as PersonalMessage from 'ox/PersonalMessage'",
-      "path": "./src/_esm/PersonalMessage.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Provider from 'ox/Provider'",
-      "path": "./src/_esm/Provider.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as PublicKey from 'ox/PublicKey'",
-      "path": "./src/_esm/PublicKey.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Rlp from 'ox/Rlp'",
-      "path": "./src/_esm/Rlp.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as RpcRequest from 'ox/RpcRequest'",
-      "path": "./src/_esm/RpcRequest.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as RpcResponse from 'ox/RpcResponse'",
-      "path": "./src/_esm/RpcResponse.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Secp256k1 from 'ox/Secp256k1'",
-      "path": "./src/_esm/Secp256k1.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Signature from 'ox/Signature'",
-      "path": "./src/_esm/Signature.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Siwe from 'ox/Siwe'",
-      "path": "./src/_esm/Siwe.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Transaction from 'ox/Transaction'",
-      "path": "./src/_esm/Transaction.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as TransactionEnvelope from 'ox/TransactionEnvelope'",
-      "path": "./src/_esm/TransactionEnvelope.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as TransactionReceipt from 'ox/TransactionReceipt'",
-      "path": "./src/_esm/TransactionReceipt.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as TypedData from 'ox/TypedData'",
-      "path": "./src/_esm/TypedData.js",
-      "import": "*"
-    },
-    {
-      "name": "import * as Value from 'ox/Value'",
-      "path": "./src/_esm/Value.js",
       "import": "*"
     }
   ]

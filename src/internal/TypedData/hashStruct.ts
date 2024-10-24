@@ -2,7 +2,7 @@ import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
+import { keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_encodeType } from './encodeType.js'
@@ -46,7 +46,7 @@ export function TypedData_hashStruct(value: TypedData_hashStruct.Value): Hex {
     primaryType,
     types,
   })
-  return Hash_keccak256(encoded)
+  return keccak256(encoded)
 }
 
 export declare namespace TypedData_hashStruct {
@@ -59,10 +59,7 @@ export declare namespace TypedData_hashStruct {
     types: TypedData
   }
 
-  type ErrorType =
-    | encodeData.ErrorType
-    | Hash_keccak256.ErrorType
-    | GlobalErrorType
+  type ErrorType = encodeData.ErrorType | keccak256.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -111,7 +108,7 @@ export function hashType(value: {
   const encodedHashType = Hex_fromString(
     TypedData_encodeType({ primaryType, types }),
   )
-  return Hash_keccak256(encodedHashType)
+  return keccak256(encodedHashType)
 }
 
 /** @internal */
@@ -119,7 +116,7 @@ export declare namespace hashType {
   type ErrorType =
     | Hex_fromString.ErrorType
     | TypedData_encodeType.ErrorType
-    | Hash_keccak256.ErrorType
+    | keccak256.ErrorType
     | GlobalErrorType
 }
 
@@ -135,19 +132,19 @@ export function encodeField(properties: {
   if (types[type] !== undefined)
     return [
       { type: 'bytes32' },
-      Hash_keccak256(encodeData({ data: value, primaryType: type, types })),
+      keccak256(encodeData({ data: value, primaryType: type, types })),
     ]
 
   if (type === 'bytes') {
     const prepend = value.length % 2 ? '0' : ''
     value = `0x${prepend + value.slice(2)}`
-    return [{ type: 'bytes32' }, Hash_keccak256(value, { as: 'Hex' })]
+    return [{ type: 'bytes32' }, keccak256(value, { as: 'Hex' })]
   }
 
   if (type === 'string')
     return [
       { type: 'bytes32' },
-      Hash_keccak256(Bytes_fromString(value), { as: 'Hex' }),
+      keccak256(Bytes_fromString(value), { as: 'Hex' }),
     ]
 
   if (type.lastIndexOf(']') === type.length - 1) {
@@ -163,7 +160,7 @@ export function encodeField(properties: {
     )
     return [
       { type: 'bytes32' },
-      Hash_keccak256(
+      keccak256(
         AbiParameters_encode(
           typeValuePairs.map(([t]) => t),
           typeValuePairs.map(([, v]) => v),
@@ -179,7 +176,7 @@ export function encodeField(properties: {
 export declare namespace encodeField {
   type ErrorType =
     | AbiParameters_encode.ErrorType
-    | Hash_keccak256.ErrorType
+    | keccak256.ErrorType
     | Bytes_fromString.ErrorType
     | GlobalErrorType
 }

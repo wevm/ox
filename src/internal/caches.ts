@@ -5,7 +5,7 @@ const caches = {
   checksum: /*#__PURE__*/ new LruMap<Address>(8192),
 }
 
-export const Caches_checksum = caches.checksum
+export const checksum = caches.checksum
 
 /**
  * Clears all global caches.
@@ -16,6 +16,6 @@ export const Caches_checksum = caches.checksum
  * Caches.clear()
  * ```
  */
-export function Caches_clear() {
+export function clear() {
   for (const cache of Object.values(caches)) cache.clear()
 }

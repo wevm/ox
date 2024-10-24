@@ -9,8 +9,7 @@ import type {
   SolidityString,
 } from 'abitype'
 
-import { Address_assert } from '../Address/assert.js'
-import type { Address } from '../Address/types.js'
+import * as Address from '../../Address.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_fromBoolean } from '../Hex/fromBoolean.js'
@@ -100,7 +99,7 @@ export type EncodePackedValues<
 
 declare namespace encode {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | Hex_concat.ErrorType
     | Hex_padLeft.ErrorType
     | Hex_padRight.ErrorType
@@ -116,12 +115,12 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   isArray = false,
 ): Hex {
   if (type === 'address') {
-    const address = value as Address
-    Address_assert(address)
+    const address = value as Address.Address
+    Address.assert(address)
     return Hex_padLeft(
       address.toLowerCase() as Hex,
       isArray ? 32 : 0,
-    ) as Address
+    ) as Address.Address
   }
   if (type === 'string') return Hex_fromString(value as string)
   if (type === 'bytes') return value as Hex

@@ -1,4 +1,4 @@
-import { Address_assert } from '../Address/assert.js'
+import * as Address from '../../Address.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Compute, Mutable } from '../types.js'
 import { AccessList_InvalidStorageKeySizeError } from './errors.js'
@@ -18,7 +18,7 @@ export function AccessList_toTupleList(
           storageKey: storageKeys[j]!,
         })
 
-    if (address) Address_assert(address, { strict: false })
+    if (address) Address.assert(address, { strict: false })
 
     tuple.push([address, storageKeys])
   }

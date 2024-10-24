@@ -1,9 +1,7 @@
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { PublicKey_serialize } from '../PublicKey/serialize.js'
-import type { PublicKey } from '../PublicKey/types.js'
-import { Address_from } from './from.js'
-import type { Address } from './types.js'
+import * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
+import * as Hash from '../../Hash.js'
+import * as PublicKey from '../../PublicKey.js'
 
 /**
  * Converts an ECDSA public key to an {@link ox#Address.Address}.
@@ -23,17 +21,17 @@ import type { Address } from './types.js'
  * @param options - Conversion options.
  * @returns The {@link ox#Address.Address} corresponding to the public key.
  */
-export function Address_fromPublicKey(
-  publicKey: PublicKey,
-  options: Address_fromPublicKey.Options = {},
-): Address {
-  const address = Hash_keccak256(
-    `0x${PublicKey_serialize(publicKey).slice(4)}`,
+export function fromPublicKey(
+  publicKey: PublicKey.PublicKey,
+  options: Address.fromPublicKey.Options = {},
+): Address.Address {
+  const address = Hash.keccak256(
+    `0x${PublicKey.serialize(publicKey).slice(4)}`,
   ).substring(26)
-  return Address_from(`0x${address}`, options)
+  return Address.from(`0x${address}`, options)
 }
 
-export declare namespace Address_fromPublicKey {
+export declare namespace fromPublicKey {
   interface Options {
     /**
      * Whether to checksum the address.
@@ -44,11 +42,11 @@ export declare namespace Address_fromPublicKey {
   }
 
   type ErrorType =
-    | Hash_keccak256.ErrorType
-    | PublicKey_serialize.ErrorType
-    | GlobalErrorType
+    | Hash.keccak256.ErrorType
+    | PublicKey.serialize.ErrorType
+    | Errors.GlobalErrorType
 }
 
-Address_fromPublicKey.parseError = (error: unknown) =>
+fromPublicKey.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Address_fromPublicKey.ErrorType
+  error as fromPublicKey.ErrorType

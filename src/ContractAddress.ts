@@ -1,5 +1,5 @@
-export { ContractAddress_from as from } from './internal/ContractAddress/from.js'
+export { from } from './internal/ContractAddress/from.js'
 
-export { ContractAddress_fromCreate as fromCreate } from './internal/ContractAddress/fromCreate.js'
+export { fromCreate } from './internal/ContractAddress/fromCreate.js'
 
-export { ContractAddress_fromCreate2 as fromCreate2 } from './internal/ContractAddress/fromCreate2.js'
+export { fromCreate2 } from './internal/ContractAddress/fromCreate2.js'

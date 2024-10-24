@@ -3,7 +3,7 @@ import { Bytes_concat } from '../Bytes/concat.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_sha256 } from '../Hash/sha256.js'
+import { sha256 } from '../Hash/sha256.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { P256_verify } from '../P256/verify.js'
@@ -86,7 +86,7 @@ export function WebAuthnP256_verify(
   if (Hex_fromBytes(Base64_toBytes(challenge_extracted!)) !== challenge)
     return false
 
-  const clientDataJSONHash = Hash_sha256(Bytes_fromString(clientDataJSON), {
+  const clientDataJSONHash = sha256(Bytes_fromString(clientDataJSON), {
     as: 'Bytes',
   })
   const payload = Bytes_concat(authenticatorDataBytes, clientDataJSONHash)

@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { Hash_keccak256 } from '../../Hash/keccak256.js'
+import { keccak256 } from '../../Hash/keccak256.js'
 import type { Hex } from '../../Hex/types.js'
 import { TransactionEnvelopeEip1559_serialize } from './serialize.js'
 import type { TransactionEnvelopeEip1559 } from './types.js'
@@ -41,7 +41,7 @@ export function TransactionEnvelopeEip1559_hash<
   options: TransactionEnvelopeEip1559_hash.Options<presign> = {},
 ): TransactionEnvelopeEip1559_hash.ReturnType {
   const { presign } = options
-  return Hash_keccak256(
+  return keccak256(
     TransactionEnvelopeEip1559_serialize({
       ...envelope,
       ...(presign
@@ -65,7 +65,7 @@ export declare namespace TransactionEnvelopeEip1559_hash {
   type ReturnType = Hex
 
   type ErrorType =
-    | Hash_keccak256.ErrorType
+    | keccak256.ErrorType
     | TransactionEnvelopeEip1559_serialize.ErrorType
     | GlobalErrorType
 }

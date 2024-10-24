@@ -1,6 +1,6 @@
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_sha256 } from '../Hash/sha256.js'
+import { sha256 } from '../Hash/sha256.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -69,7 +69,7 @@ export function Blobs_commitmentToVersionedHash<
   const { version = 1 } = options
   const as = options.as ?? (typeof commitment === 'string' ? 'Hex' : 'Bytes')
 
-  const versionedHash = Hash_sha256(commitment, { as: 'Bytes' })
+  const versionedHash = sha256(commitment, { as: 'Bytes' })
   versionedHash.set([version], 0)
   return (
     as === 'Bytes' ? versionedHash : Hex_fromBytes(versionedHash)

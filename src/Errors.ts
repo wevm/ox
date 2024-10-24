@@ -23,9 +23,9 @@ export {
 } from './internal/AbiParameters/errors.js'
 
 export {
-  Address_InvalidChecksumError,
-  Address_InvalidAddressError,
-  Address_InvalidInputError,
+  InvalidChecksumError as Address_InvalidChecksumError,
+  InvalidAddressError as Address_InvalidAddressError,
+  InvalidInputError as Address_InvalidInputError,
 } from './internal/Address/errors.js'
 
 export { BaseError } from './internal/Errors/base.js'

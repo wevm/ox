@@ -1,5 +1,4 @@
-import { Address_fromPublicKey } from '../Address/fromPublicKey.js'
-import type { Address } from '../Address/types.js'
+import * as Address from '../../Address.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
@@ -27,7 +26,7 @@ import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
 export function Secp256k1_recoverAddress(
   options: Secp256k1_recoverAddress.Options,
 ): Secp256k1_recoverAddress.ReturnType {
-  return Address_fromPublicKey(Secp256k1_recoverPublicKey(options))
+  return Address.fromPublicKey(Secp256k1_recoverPublicKey(options))
 }
 
 export declare namespace Secp256k1_recoverAddress {
@@ -38,10 +37,10 @@ export declare namespace Secp256k1_recoverAddress {
     signature: Signature
   }
 
-  type ReturnType = Address
+  type ReturnType = Address.Address
 
   type ErrorType =
-    | Address_fromPublicKey.ErrorType
+    | Address.fromPublicKey.ErrorType
     | Secp256k1_recoverPublicKey.ErrorType
     | GlobalErrorType
 }

@@ -1,4 +1,4 @@
-import { Address_isEqual } from '../Address/isEqual.js'
+import { isEqual } from '../Address/isEqual.js'
 import type { Address } from '../Address/types.js'
 import type { ExactPartial } from '../types.js'
 import type { Siwe_Message } from './types.js'
@@ -43,7 +43,7 @@ export function Siwe_validateMessage(
 
   try {
     if (!message.address) return false
-    if (address && !Address_isEqual(message.address, address)) return false
+    if (address && !isEqual(message.address, address)) return false
   } catch {
     return false
   }

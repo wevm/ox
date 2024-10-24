@@ -1,12 +1,6 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import { addressRegex } from '../regex.js'
-import { Address_checksum } from './checksum.js'
-import {
-  Address_InvalidAddressError,
-  Address_InvalidChecksumError,
-  Address_InvalidInputError,
-} from './errors.js'
-import type { Address } from './types.js'
 
 /**
  * Asserts that the given value is a valid {@link ox#Address.Address}.
@@ -29,29 +23,29 @@ import type { Address } from './types.js'
  * @param value - Value to assert if it is a valid address.
  * @param options - Assertion options.
  */
-export function Address_assert(
+export function assert(
   value: string,
-  options: Address_assert.Options = {},
-): asserts value is Address {
+  options: Address.assert.Options = {},
+): asserts value is Address.Address {
   const { strict = true } = options
 
   if (!addressRegex.test(value))
-    throw new Address_InvalidAddressError({
+    throw new Address.InvalidAddressError({
       address: value,
-      cause: new Address_InvalidInputError(),
+      cause: new Address.InvalidInputError(),
     })
 
   if (strict) {
     if (value.toLowerCase() === value) return
-    if (Address_checksum(value as Address) !== value)
-      throw new Address_InvalidAddressError({
+    if (Address.checksum(value as Address.Address) !== value)
+      throw new Address.InvalidAddressError({
         address: value,
-        cause: new Address_InvalidChecksumError(),
+        cause: new Address.InvalidChecksumError(),
       })
   }
 }
 
-export declare namespace Address_assert {
+export declare namespace assert {
   interface Options {
     /**
      * Enables strict mode. Whether or not to compare the address against its checksum.
@@ -61,9 +55,8 @@ export declare namespace Address_assert {
     strict?: boolean | undefined
   }
 
-  type ErrorType = Address_InvalidAddressError | GlobalErrorType
+  type ErrorType = Address.InvalidAddressError | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Address_assert.parseError = (error: unknown) =>
-  error as Address_assert.ErrorType
+assert.parseError = (error: unknown) => error as assert.ErrorType

@@ -1,7 +1,5 @@
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Address_assert } from './assert.js'
-import { Address_checksum } from './checksum.js'
-import type { Address } from './types.js'
+import * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Converts a stringified address to a typed (checksummed) {@link ox#Address.Address}.
@@ -36,17 +34,17 @@ import type { Address } from './types.js'
  * @param options - Conversion options.
  * @returns The typed Address.
  */
-export function Address_from(
+export function from(
   address: string,
-  options: Address_from.Options = {},
-): Address {
+  options: Address.from.Options = {},
+): Address.Address {
   const { checksum = false } = options
-  Address_assert(address)
-  if (checksum) return Address_checksum(address)
-  return address as Address
+  Address.assert(address)
+  if (checksum) return Address.checksum(address)
+  return address as Address.Address
 }
 
-export declare namespace Address_from {
+export declare namespace from {
   interface Options {
     /**
      * Whether to checksum the address.
@@ -57,10 +55,10 @@ export declare namespace Address_from {
   }
 
   type ErrorType =
-    | Address_assert.ErrorType
-    | Address_checksum.ErrorType
-    | GlobalErrorType
+    | Address.assert.ErrorType
+    | Address.checksum.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Address_from.parseError = (error: unknown) => error as Address_from.ErrorType
+from.parseError = (error: unknown) => error as Address.from.ErrorType

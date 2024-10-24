@@ -1,14 +1,9 @@
-import { Address_from } from '../Address/from.js'
-import type { Address } from '../Address/types.js'
-import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import { Bytes_padLeft } from '../Bytes/pad.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Bytes_validate } from '../Bytes/validate.js'
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
+import * as Address from '../../Address.js'
+import * as Bytes from '../../Bytes.js'
+import type * as ContractAddress from '../../ContractAddress.js'
+import type * as Errors from '../../Errors.js'
+import * as Hash from '../../Hash.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Computes contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
@@ -28,58 +23,60 @@ import type { Hex } from '../Hex/types.js'
  * @param options - Options for retrieving address.
  * @returns Contract Address.
  */
-export function ContractAddress_fromCreate2(
-  options: ContractAddress_fromCreate2.Options,
-): Address {
-  const from = Bytes_fromHex(Address_from(options.from))
-  const salt = Bytes_padLeft(
-    Bytes_validate(options.salt) ? options.salt : Bytes_fromHex(options.salt),
+export function fromCreate2(
+  options: ContractAddress.fromCreate2.Options,
+): Address.Address {
+  const from = Bytes.fromHex(Address.from(options.from))
+  const salt = Bytes.padLeft(
+    Bytes.validate(options.salt) ? options.salt : Bytes.fromHex(options.salt),
     32,
   )
 
   const bytecodeHash = (() => {
     if ('bytecodeHash' in options) {
-      if (Bytes_validate(options.bytecodeHash)) return options.bytecodeHash
-      return Bytes_fromHex(options.bytecodeHash)
+      if (Bytes.validate(options.bytecodeHash)) return options.bytecodeHash
+      return Bytes.fromHex(options.bytecodeHash)
     }
-    return Hash_keccak256(options.bytecode, { as: 'Bytes' })
+    return Hash.keccak256(options.bytecode, { as: 'Bytes' })
   })()
 
-  return Address_from(
-    Hex_slice(
-      Hash_keccak256(
-        Bytes_concat(Bytes_fromHex('0xff'), from, salt, bytecodeHash),
-        { as: 'Hex' },
+  return Address.from(
+    Hex.slice(
+      Hash.keccak256(
+        Bytes.concat(Bytes.fromHex('0xff'), from, salt, bytecodeHash),
+        {
+          as: 'Hex',
+        },
       ),
       12,
     ),
   )
 }
 
-export declare namespace ContractAddress_fromCreate2 {
+export declare namespace fromCreate2 {
   type Options =
     | {
-        bytecode: Bytes | Hex
-        from: Address
-        salt: Bytes | Hex
+        bytecode: Bytes.Bytes | Hex.Hex
+        from: Address.Address
+        salt: Bytes.Bytes | Hex.Hex
       }
     | {
-        bytecodeHash: Bytes | Hex
-        from: Address
-        salt: Bytes | Hex
+        bytecodeHash: Bytes.Bytes | Hex.Hex
+        from: Address.Address
+        salt: Bytes.Bytes | Hex.Hex
       }
 
   type ErrorType =
-    | Address_from.ErrorType
-    | Bytes_concat.ErrorType
-    | Bytes_validate.ErrorType
-    | Bytes_padLeft.ErrorType
-    | Hash_keccak256.ErrorType
-    | Hex_slice.ErrorType
-    | Bytes_fromHex.ErrorType
-    | GlobalErrorType
+    | Address.from.ErrorType
+    | Bytes.concat.ErrorType
+    | Bytes.validate.ErrorType
+    | Bytes.padLeft.ErrorType
+    | Hash.keccak256.ErrorType
+    | Hex.slice.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
 }
 
-ContractAddress_fromCreate2.parseError = (error: unknown) =>
+fromCreate2.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as ContractAddress_fromCreate2.ErrorType
+  error as fromCreate2.ErrorType

@@ -1,6 +1,6 @@
 import type { TypedData } from 'abitype'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
+import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_encode } from './encode.js'
 
@@ -53,12 +53,12 @@ export function TypedData_getSignPayload<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
 >(value: TypedData_encode.Value<typedData, primaryType>): Hex {
-  return Hash_keccak256(TypedData_encode(value))
+  return keccak256(TypedData_encode(value))
 }
 
 export declare namespace TypedData_getSignPayload {
   type ErrorType =
-    | Hash_keccak256.ErrorType
+    | keccak256.ErrorType
     | TypedData_encode.ErrorType
     | GlobalErrorType
 }

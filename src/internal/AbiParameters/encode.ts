@@ -1,4 +1,4 @@
-import { Address_assert } from '../Address/assert.js'
+import * as Address from '../../Address.js'
 import { BaseError } from '../Errors/base.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
@@ -236,14 +236,14 @@ export declare namespace encode {
 
 /** @internal */
 export function encodeAddress(value: Hex): PreparedParameter {
-  Address_assert(value)
+  Address.assert(value)
   return { dynamic: false, encoded: Hex_padLeft(value.toLowerCase() as Hex) }
 }
 
 /** @internal */
 export declare namespace encodeAddress {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | Hex_padLeft.ErrorType
     | GlobalErrorType
 }

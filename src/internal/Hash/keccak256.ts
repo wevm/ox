@@ -1,10 +1,9 @@
 import { keccak_256 } from '@noble/hashes/sha3'
 
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import type * as Hash from '../../Hash.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
@@ -43,37 +42,36 @@ import type { Hex } from '../Hex/types.js'
  * @param to - The return type.
  * @returns Keccak256 hash.
  */
-export function Hash_keccak256<
-  value extends Hex | Bytes,
+export function keccak256<
+  value extends Hex.Hex | Bytes.Bytes,
   as extends 'Hex' | 'Bytes' =
-    | (value extends Hex ? 'Hex' : never)
-    | (value extends Bytes ? 'Bytes' : never),
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  value: value | Hex | Bytes,
-  options: Hash_keccak256.Options<as> = {},
-): Hash_keccak256.ReturnType<as> {
+  value: value | Hex.Hex | Bytes.Bytes,
+  options: Hash.keccak256.Options<as> = {},
+): Hash.keccak256.ReturnType<as> {
   const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const bytes = keccak_256(Bytes_from(value))
+  const bytes = keccak_256(Bytes.from(value))
   if (as === 'Bytes') return bytes as never
-  return Hex_fromBytes(bytes) as never
+  return Hex.fromBytes(bytes) as never
 }
 
-export declare namespace Hash_keccak256 {
+export declare namespace keccak256 {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
     /** The return type. @default 'Hex' */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
-    | Bytes_from.ErrorType
-    | Hex_fromBytes.ErrorType
-    | GlobalErrorType
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hash_keccak256.parseError = (error: unknown) =>
-  error as Hash_keccak256.ErrorType
+keccak256.parseError = (error: unknown) => error as keccak256.ErrorType

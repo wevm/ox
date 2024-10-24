@@ -1,7 +1,7 @@
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
+import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import { ValidatorData_encode } from './encode.js'
 
@@ -26,7 +26,7 @@ import { ValidatorData_encode } from './encode.js'
 export function ValidatorData_getSignPayload(
   value: ValidatorData_getSignPayload.Value,
 ): Hex {
-  return Hash_keccak256(ValidatorData_encode(value))
+  return keccak256(ValidatorData_encode(value))
 }
 
 export declare namespace ValidatorData_getSignPayload {
@@ -36,7 +36,7 @@ export declare namespace ValidatorData_getSignPayload {
   }
 
   type ErrorType =
-    | Hash_keccak256.ErrorType
+    | keccak256.ErrorType
     | ValidatorData_encode.ErrorType
     | GlobalErrorType
 }

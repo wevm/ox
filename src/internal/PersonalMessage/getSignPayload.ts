@@ -1,6 +1,6 @@
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
+import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import { PersonalMessage_encode } from './encode.js'
 
@@ -20,12 +20,12 @@ import { PersonalMessage_encode } from './encode.js'
  * @returns The payload to use for signing.
  */
 export function PersonalMessage_getSignPayload(data: Hex | Bytes): Hex {
-  return Hash_keccak256(PersonalMessage_encode(data))
+  return keccak256(PersonalMessage_encode(data))
 }
 
 export declare namespace PersonalMessage_getSignPayload {
   type ErrorType =
-    | Hash_keccak256.ErrorType
+    | keccak256.ErrorType
     | PersonalMessage_encode.ErrorType
     | GlobalErrorType
 }

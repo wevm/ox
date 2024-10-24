@@ -1,6 +1,5 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
-import { Address_isEqual } from '../Address/isEqual.js'
-import type { Address } from '../Address/types.js'
+import * as Address from '../../Address.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
@@ -52,7 +51,7 @@ import { Secp256k1_recoverAddress } from './recoverAddress.js'
 export function Secp256k1_verify(options: Secp256k1_verify.Options): boolean {
   const { address, hash, payload, publicKey, signature } = options
   if (address)
-    return Address_isEqual(
+    return Address.isEqual(
       address,
       Secp256k1_recoverAddress({ payload, signature }),
     )
@@ -73,7 +72,7 @@ export declare namespace Secp256k1_verify {
   } & OneOf<
     | {
         /** Address that signed the payload. */
-        address: Address
+        address: Address.Address
         /** Signature of the payload. */
         signature: Signature
       }

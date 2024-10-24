@@ -1,5 +1,4 @@
-import { Address_assert } from './assert.js'
-import type { Address } from './types.js'
+import * as Address from '../../Address.js'
 
 /**
  * Checks if the given address is a valid {@link ox#Address.Address}.
@@ -24,20 +23,20 @@ import type { Address } from './types.js'
  * @param options - Check options.
  * @returns Whether the address is a valid address.
  */
-export function Address_validate(
+export function validate(
   address: string,
-  options: Address_validate.Options = {},
-): address is Address {
+  options: Address.validate.Options = {},
+): address is Address.Address {
   const { strict = true } = options ?? {}
   try {
-    Address_assert(address, { strict })
+    Address.assert(address, { strict })
     return true
   } catch {
     return false
   }
 }
 
-export declare namespace Address_validate {
+export declare namespace validate {
   interface Options {
     /**
      * Enables strict mode. Whether or not to compare the address against its checksum.

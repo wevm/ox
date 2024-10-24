@@ -1,9 +1,8 @@
-import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Caches_checksum } from '../caches.js'
-import { Address_assert } from './assert.js'
-import type { Address } from './types.js'
+import * as Address from '../../Address.js'
+import * as Bytes from '../../Bytes.js'
+import * as Caches from '../../Caches.js'
+import type * as Errors from '../../Errors.js'
+import * as Hash from '../../Hash.js'
 
 /**
  * Computes the checksum address for the given {@link ox#Address.Address}.
@@ -19,13 +18,13 @@ import type { Address } from './types.js'
  * @param address - The address to compute the checksum for.
  * @returns The checksummed address.
  */
-export function Address_checksum(address: string): Address {
-  if (Caches_checksum.has(address)) return Caches_checksum.get(address)!
+export function checksum(address: string): Address.Address {
+  if (Caches.checksum.has(address)) return Caches.checksum.get(address)!
 
-  Address_assert(address, { strict: false })
+  Address.assert(address, { strict: false })
 
   const hexAddress = address.substring(2).toLowerCase()
-  const hash = Hash_keccak256(Bytes_fromString(hexAddress), { as: 'Bytes' })
+  const hash = Hash.keccak256(Bytes.fromString(hexAddress), { as: 'Bytes' })
 
   const characters = hexAddress.split('')
   for (let i = 0; i < 40; i += 2) {
@@ -38,18 +37,18 @@ export function Address_checksum(address: string): Address {
   }
 
   const result = `0x${characters.join('')}` as const
-  Caches_checksum.set(address, result)
+  Caches.checksum.set(address, result)
   return result
 }
 
-export declare namespace Address_checksum {
+export declare namespace checksum {
   type ErrorType =
-    | Address_assert.ErrorType
-    | Hash_keccak256.ErrorType
-    | Bytes_fromString.ErrorType
-    | GlobalErrorType
+    | Address.assert.ErrorType
+    | Hash.keccak256.ErrorType
+    | Bytes.fromString.ErrorType
+    | Errors.GlobalErrorType
 }
 
-Address_checksum.parseError = (error: unknown) =>
+checksum.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Address_checksum.ErrorType
+  error as checksum.ErrorType

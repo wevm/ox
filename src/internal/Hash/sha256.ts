@@ -1,10 +1,9 @@
 import { sha256 as noble_sha256 } from '@noble/hashes/sha256'
 
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import type * as Hash from '../../Hash.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
@@ -23,36 +22,36 @@ import type { Hex } from '../Hex/types.js'
  * @param to - The return type.
  * @returns Sha256 hash.
  */
-export function Hash_sha256<
-  value extends Hex | Bytes,
+export function sha256<
+  value extends Hex.Hex | Bytes.Bytes,
   as extends 'Hex' | 'Bytes' =
-    | (value extends Hex ? 'Hex' : never)
-    | (value extends Bytes ? 'Bytes' : never),
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  value: value | Hex | Bytes,
-  options: Hash_sha256.Options<as> = {},
-): Hash_sha256.ReturnType<as> {
+  value: value | Hex.Hex | Bytes.Bytes,
+  options: Hash.sha256.Options<as> = {},
+): Hash.sha256.ReturnType<as> {
   const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const bytes = noble_sha256(Bytes_from(value))
+  const bytes = noble_sha256(Bytes.from(value))
   if (as === 'Bytes') return bytes as never
-  return Hex_fromBytes(bytes) as never
+  return Hex.fromBytes(bytes) as never
 }
 
-export declare namespace Hash_sha256 {
+export declare namespace sha256 {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** The return type. @default 'Hex' */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
-    | Bytes_from.ErrorType
-    | Hex_fromBytes.ErrorType
-    | GlobalErrorType
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hash_sha256.parseError = (error: unknown) => error as Hash_sha256.ErrorType
+sha256.parseError = (error: unknown) => error as sha256.ErrorType

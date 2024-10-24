@@ -1,7 +1,5 @@
-import type { GlobalErrorType } from '../Errors/error.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Checks if a string is a valid hash value.
@@ -20,13 +18,16 @@ import { Hex_validate } from '../Hex/validate.js'
  * @param value - Value to check.
  * @returns Whether the value is a valid hash.
  */
-export function Hash_validate(value: string): value is Hex {
-  return Hex_validate(value) && Hex_size(value) === 32
+export function validate(value: string): value is Hex.Hex {
+  return Hex.validate(value) && Hex.size(value) === 32
 }
 
-export declare namespace Hash_validate {
-  type ErrorType = Hex_validate.ErrorType | Hex_size.ErrorType | GlobalErrorType
+export declare namespace validate {
+  type ErrorType =
+    | Hex.validate.ErrorType
+    | Hex.size.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hash_validate.parseError = (error: unknown) => error as Hash_validate.ErrorType
+validate.parseError = (error: unknown) => error as validate.ErrorType
