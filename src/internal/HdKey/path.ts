@@ -20,12 +20,21 @@ export function HdKey_path(options: HdKey_path.Options = {}): string {
 }
 
 export declare namespace HdKey_path {
-  type Options = {
-    /** The account. @default `0` */
+  interface Options {
+    /**
+     * The account.
+     * @default 0
+     */
     account?: number | undefined
-    /** The change. @default `0` */
+    /**
+     * The change.
+     * @default 0
+     */
     change?: number | undefined
-    /** The address index. @default `0` */
+    /**
+     * The address index.
+     * @default 0
+     */
     index?: number | undefined
   }
 

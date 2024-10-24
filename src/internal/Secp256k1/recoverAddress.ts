@@ -31,7 +31,7 @@ export function Secp256k1_recoverAddress(
 }
 
 export declare namespace Secp256k1_recoverAddress {
-  type Options = {
+  interface Options {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */

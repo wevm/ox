@@ -65,7 +65,7 @@ export function PublicKey_assert(
 }
 
 export declare namespace PublicKey_assert {
-  type Options = {
+  interface Options {
     /** Whether or not the public key should be compressed. */
     compressed?: boolean
   }

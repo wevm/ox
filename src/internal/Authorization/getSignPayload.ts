@@ -32,13 +32,11 @@ import type { Authorization } from './types.js'
  */
 export function Authorization_getSignPayload(
   authorization: Authorization,
-): Authorization_getSignPayload.ReturnType {
+): Hex {
   return Authorization_hash(authorization)
 }
 
 export declare namespace Authorization_getSignPayload {
-  type ReturnType = Hex
-
   type ErrorType = Authorization_hash.ErrorType | GlobalErrorType
 }
 

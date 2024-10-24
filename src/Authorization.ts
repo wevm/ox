@@ -11,10 +11,6 @@ export type {
   Authorization_TupleSigned as TupleSigned,
 } from './internal/Authorization/types.js'
 
-export { Authorization_getSignPayload as getSignPayload } from './internal/Authorization/getSignPayload.js'
-
-export { Authorization_hash as hash } from './internal/Authorization/hash.js'
-
 export { Authorization_from as from } from './internal/Authorization/from.js'
 
 export { Authorization_fromRpc as fromRpc } from './internal/Authorization/fromRpc.js'
@@ -24,6 +20,10 @@ export { Authorization_fromRpcList as fromRpcList } from './internal/Authorizati
 export { Authorization_fromTuple as fromTuple } from './internal/Authorization/fromTuple.js'
 
 export { Authorization_fromTupleList as fromTupleList } from './internal/Authorization/fromTupleList.js'
+
+export { Authorization_getSignPayload as getSignPayload } from './internal/Authorization/getSignPayload.js'
+
+export { Authorization_hash as hash } from './internal/Authorization/hash.js'
 
 export { Authorization_toRpc as toRpc } from './internal/Authorization/toRpc.js'
 

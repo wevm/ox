@@ -23,7 +23,7 @@ import type {
  * ```
  *
  * @param authorizationList - The RPC-formatted Authorization list.
- * @returns An {@link ox#Authorization.List}.
+ * @returns A signed {@link ox#Authorization.List}.
  */
 export function Authorization_fromRpcList(
   authorizationList: Authorization_ListRpc,

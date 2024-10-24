@@ -40,7 +40,7 @@ export function P256_verify(options: P256_verify.Options): boolean {
 }
 
 export declare namespace P256_verify {
-  type Options = {
+  interface Options {
     /** If set to `true`, the payload will be hashed (sha256) before being verified. */
     hash?: boolean | undefined
     /** Payload that was signed. */

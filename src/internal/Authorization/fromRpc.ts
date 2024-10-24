@@ -20,7 +20,7 @@ import type { Authorization_Rpc, Authorization_Signed } from './types.js'
  * ```
  *
  * @param authorization - The RPC-formatted Authorization.
- * @returns An {@link ox#Authorization.Authorization}.
+ * @returns A signed {@link ox#Authorization.Authorization}.
  */
 export function Authorization_fromRpc(
   authorization: Authorization_Rpc,

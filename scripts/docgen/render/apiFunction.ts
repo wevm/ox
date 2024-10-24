@@ -177,29 +177,18 @@ function renderParameters(options: {
           const reference = childItem.references.find(
             (x) => x.text === childItem.type,
           )
-          return reference
+          if (!reference) return
+          return {
+            primaryCanonicalReference: reference.canonicalReference,
+            type: reference.text,
+          }
         })()
         const link = typeReference
-          ? getTypeLink({
-              dataLookup,
-              type: {
-                primaryCanonicalReference: typeReference.canonicalReference,
-              },
-            })
+          ? getTypeLink({ dataLookup, type: typeReference })
           : undefined
-        const type = (() => {
-          // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
-          const expandRegex = /^ox!(?<type>.+)(_2):type/
-          if (
-            typeReference?.canonicalReference &&
-            expandRegex.test(typeReference.canonicalReference)
-          ) {
-            const type =
-              typeReference.canonicalReference.match(expandRegex)?.groups?.type
-            if (type) return type
-          }
-          return childItem.type
-        })()
+        const type = typeReference
+          ? expandInlineType({ dataLookup, type: typeReference })
+          : childItem.type
         properties.push({
           ...childItem,
           ...childItem.comment,
@@ -229,7 +218,7 @@ function renderParameters(options: {
     }
 
     for (const property of properties) {
-      content.push(`#### \`${property.name}\``)
+      content.push(`#### \`${parameter.name}.${property.name}\``)
 
       const c = `\`${property.type}\``
       const listContent = property.link
@@ -258,20 +247,7 @@ function renderReturnType(options: {
   const content = ['## Return Type']
   if (comment) content.push(comment)
   const link = getTypeLink({ dataLookup, type: returnType })
-  const type = (() => {
-    // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
-    const expandRegex = /^ox!(?<type>.+)(_2):type/
-    if (
-      returnType.primaryCanonicalReference &&
-      expandRegex.test(returnType.primaryCanonicalReference) &&
-      !returnType.primaryGenericArguments
-    ) {
-      const type =
-        returnType.primaryCanonicalReference.match(expandRegex)?.groups?.type
-      return type
-    }
-    return returnType.type
-  })()
+  const type = expandInlineType({ dataLookup, type: returnType })
   const c = `\`${type}\``
   content.push(link ? `[${c}](${link})` : c)
 
@@ -337,18 +313,7 @@ function resolveInlineParameterTypeForOverloads(options: {
       )
   }
 
-  // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
-  const expandRegex = /^ox!(?<type>.+)(_2):type/
-  if (
-    parameter.primaryCanonicalReference &&
-    expandRegex.test(parameter.primaryCanonicalReference) &&
-    !parameter.primaryGenericArguments
-  ) {
-    const type =
-      parameter.primaryCanonicalReference.match(expandRegex)?.groups?.type
-    if (type) return type
-  }
-  return parameter.type
+  return expandInlineType({ dataLookup, type: parameter })
 }
 
 function resolveReturnTypeForOverloads(options: {
@@ -370,6 +335,7 @@ function resolveReturnTypeForOverloads(options: {
         ) ?? returnType.type
       )
   }
+
   return returnType?.type
 }
 
@@ -411,18 +377,46 @@ function getTypeLink(options: {
   dataLookup: Record<string, Data>
   type: Pick<
     NonNullable<Data['returnType']>,
-    'primaryCanonicalReference' | 'primaryGenericArguments'
+    'primaryCanonicalReference' | 'primaryGenericArguments' | 'type'
   >
 }) {
   const { dataLookup, type } = options
-  if (type.primaryCanonicalReference && !type.primaryGenericArguments) {
-    const data =
-      dataLookup[type.primaryCanonicalReference] ??
-      dataLookup[type.primaryCanonicalReference.replace('_2', '')]
-    if (!data) return
 
-    const displayNameWithNamespace = `${data.module}.${data.displayName}`
-    return `/api/${data.module}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`
-  }
-  return
+  const data = (() => {
+    if (dataLookup[`ox!${type.type}:type`])
+      return dataLookup[`ox!${type.type}:type`]
+    if (type.primaryCanonicalReference && !type.primaryGenericArguments)
+      return (
+        dataLookup[type.primaryCanonicalReference] ??
+        dataLookup[type.primaryCanonicalReference.replace('_2', '')]
+      )
+    return
+  })()
+  if (!data) return
+
+  const displayNameWithNamespace = `${data.module}.${data.displayName}`
+  return `/api/${data.module}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`
+}
+
+function expandInlineType(options: {
+  dataLookup: Record<string, Data>
+  type: Pick<
+    NonNullable<Data['returnType']>,
+    'primaryCanonicalReference' | 'primaryGenericArguments' | 'type'
+  >
+}) {
+  const { dataLookup, type } = options
+
+  // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
+  const expandRegex = /^ox!(?<type>.+)(_2):type/
+  if (
+    type.primaryCanonicalReference &&
+    expandRegex.test(type.primaryCanonicalReference) &&
+    !type.primaryGenericArguments
+  ) {
+    const groups =
+      type.primaryCanonicalReference.match(expandRegex)?.groups ?? {}
+    if (groups.type) return groups.type
+  } else if (dataLookup[`ox!${type.type}:type`]) return type.type
+  return type.type
 }

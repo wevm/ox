@@ -42,7 +42,7 @@ export function P256_recoverPublicKey(
 }
 
 export declare namespace P256_recoverPublicKey {
-  type Options = {
+  interface Options {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */

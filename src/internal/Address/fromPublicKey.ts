@@ -21,7 +21,7 @@ import type { Address } from './types.js'
  *
  * @param publicKey - The ECDSA public key to convert to an {@link ox#Address.Address}.
  * @param options - Conversion options.
- * @returns The {@link ox#Address.Address}.
+ * @returns The {@link ox#Address.Address} corresponding to the public key.
  */
 export function Address_fromPublicKey(
   publicKey: PublicKey,
