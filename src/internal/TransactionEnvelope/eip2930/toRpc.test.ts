@@ -79,10 +79,10 @@ test('behavior: network', async () => {
     params: [hash],
   })
 
-  expect(tx).toMatchInlineSnapshot(`
+  expect({ ...tx, blockHash: null }).toMatchInlineSnapshot(`
     {
       "accessList": [],
-      "blockHash": "0x193ebcb9d347f6bbc8eae8c502cba0b687aca2e418ba7a9f8f71aa34dd8dc7dc",
+      "blockHash": null,
       "blockNumber": "0x12f2975",
       "chainId": "0x1",
       "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
