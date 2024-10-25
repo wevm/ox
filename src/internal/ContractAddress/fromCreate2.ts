@@ -6,7 +6,7 @@ import * as Hash from '../../Hash.js'
 import * as Hex from '../../Hex.js'
 
 /**
- * Computes contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
+ * Computes a contract address that was deployed via the [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
  *
  * @example
  * ```ts twoslash
@@ -32,13 +32,7 @@ export function fromCreate2(
     32,
   )
 
-  const bytecodeHash = (() => {
-    if ('bytecodeHash' in options) {
-      if (Bytes.validate(options.bytecodeHash)) return options.bytecodeHash
-      return Bytes.fromHex(options.bytecodeHash)
-    }
-    return Hash.keccak256(options.bytecode, { as: 'Bytes' })
-  })()
+  const bytecodeHash = Hash.keccak256(options.bytecode, { as: 'Bytes' })
 
   return Address.from(
     Hex.slice(
@@ -54,17 +48,14 @@ export function fromCreate2(
 }
 
 export declare namespace fromCreate2 {
-  type Options =
-    | {
-        bytecode: Bytes.Bytes | Hex.Hex
-        from: Address.Address
-        salt: Bytes.Bytes | Hex.Hex
-      }
-    | {
-        bytecodeHash: Bytes.Bytes | Hex.Hex
-        from: Address.Address
-        salt: Bytes.Bytes | Hex.Hex
-      }
+  type Options = {
+    /** Bytecode of contract to be deployed. */
+    bytecode: Bytes.Bytes | Hex.Hex
+    /** Address of the deploying account. */
+    from: Address.Address
+    /** Salt to be used for contract address. */
+    salt: Bytes.Bytes | Hex.Hex
+  }
 
   type ErrorType =
     | Address.from.ErrorType
