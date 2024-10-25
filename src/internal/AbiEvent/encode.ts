@@ -1,13 +1,12 @@
 import type { AbiParameter } from 'abitype'
+import * as AbiEvent from '../../AbiEvent.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
 import type { Compute, IsNarrowable } from '../types.js'
-import { AbiEvent_FilterTypeNotSupportedError } from './errors.js'
-import { AbiEvent_getSelector } from './getSelector.js'
-import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
+import type { ParametersToPrimitiveTypes } from './types.js'
 
 /**
  * ABI-encodes the provided event input (`inputs`) into an array of [Event Topics](https://info.etherscan.com/what-is-event-logs/).
@@ -107,10 +106,10 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  * @param args - The arguments to encode.
  * @returns The encoded event topics.
  */
-export function AbiEvent_encode<const abiEvent extends AbiEvent>(
-  abiEvent: abiEvent | AbiEvent,
-  ...[args]: AbiEvent_encode.Args<abiEvent>
-): AbiEvent_encode.ReturnType {
+export function encode<const abiEvent extends AbiEvent.AbiEvent>(
+  abiEvent: abiEvent | AbiEvent.AbiEvent,
+  ...[args]: encode.Args<abiEvent>
+): encode.ReturnType {
   let topics: (Hex | Hex[] | null)[] = []
   if (args && abiEvent.inputs) {
     const indexedInputs = abiEvent.inputs.filter(
@@ -130,7 +129,7 @@ export function AbiEvent_encode<const abiEvent extends AbiEvent>(
           return keccak256(Hex_fromString(value as string))
         if (param.type === 'bytes') return keccak256(value as Hex)
         if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
-          throw new AbiEvent_FilterTypeNotSupportedError(param.type)
+          throw new AbiEvent.FilterTypeNotSupportedError(param.type)
         return AbiParameters_encode([param], [value])
       }
 
@@ -147,22 +146,20 @@ export function AbiEvent_encode<const abiEvent extends AbiEvent>(
 
   const selector = (() => {
     if (abiEvent.hash) return abiEvent.hash
-    return AbiEvent_getSelector(abiEvent)
+    return AbiEvent.getSelector(abiEvent)
   })()
 
   return { topics: [selector, ...topics] }
 }
 
-export declare namespace AbiEvent_encode {
-  type Args<abiEvent extends AbiEvent> = IsNarrowable<
+export declare namespace encode {
+  type Args<abiEvent extends AbiEvent.AbiEvent> = IsNarrowable<
     abiEvent,
-    AbiEvent
+    AbiEvent.AbiEvent
   > extends true
     ? abiEvent['inputs'] extends readonly []
       ? []
-      : AbiEvent_ParametersToPrimitiveTypes<
-            abiEvent['inputs']
-          > extends infer result
+      : ParametersToPrimitiveTypes<abiEvent['inputs']> extends infer result
         ? result extends readonly []
           ? []
           : [result] | []
@@ -175,12 +172,12 @@ export declare namespace AbiEvent_encode {
 
   type ErrorType =
     | AbiParameters_encode.ErrorType
-    | AbiEvent_getSelector.ErrorType
+    | AbiEvent.getSelector.ErrorType
     | Hex_fromString.ErrorType
     | keccak256.ErrorType
     | GlobalErrorType
 }
 
-AbiEvent_encode.parseError = (error: unknown) =>
+encode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiEvent_encode.ErrorType
+  error as encode.ErrorType

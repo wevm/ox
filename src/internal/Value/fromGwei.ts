@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Value_exponents } from './constants.js'
-import { Value_from } from './from.js'
+import { exponents } from './constants.js'
+import { from } from './from.js'
 
 /**
  * Parses a string representation of Gwei to a `bigint` Value (default: wei).
@@ -17,14 +17,13 @@ import { Value_from } from './from.js'
  * @param unit - The unit to parse to. @default 'wei'.
  * @returns A `bigint` Value.
  */
-export function Value_fromGwei(gwei: string, unit: 'wei' = 'wei') {
-  return Value_from(gwei, Value_exponents.gwei - Value_exponents[unit])
+export function fromGwei(gwei: string, unit: 'wei' = 'wei') {
+  return from(gwei, exponents.gwei - exponents[unit])
 }
 
-export declare namespace Value_fromGwei {
-  type ErrorType = Value_from.ErrorType | GlobalErrorType
+export declare namespace fromGwei {
+  type ErrorType = from.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-Value_fromGwei.parseError = (error: unknown) =>
-  error as Value_fromGwei.ErrorType
+fromGwei.parseError = (error: unknown) => error as fromGwei.ErrorType

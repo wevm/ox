@@ -27,13 +27,13 @@ import type { AbiFunction } from './types.js'
  * @param options - Encoding options.
  * @returns The encoded function output.
  */
-export function AbiFunction_encodeResult<
+export function encodeResult<
   const abiFunction extends AbiFunction,
   as extends 'Object' | 'Array' = 'Array',
 >(
   abiFunction: abiFunction | AbiFunction,
-  output: AbiFunction_encodeResult.Output<abiFunction, as>,
-  options: AbiFunction_encodeResult.Options<as> = {},
+  output: encodeResult.Output<abiFunction, as>,
+  options: encodeResult.Options<as> = {},
 ): Hex {
   const { as = 'Array' } = options
 
@@ -47,7 +47,7 @@ export function AbiFunction_encodeResult<
   return AbiParameters_encode(abiFunction.outputs, values)
 }
 
-export declare namespace AbiFunction_encodeResult {
+export declare namespace encodeResult {
   type Output<
     abiFunction extends AbiFunction = AbiFunction,
     as extends 'Object' | 'Array' = 'Array',

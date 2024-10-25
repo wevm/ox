@@ -1,3 +1,4 @@
+import * as AbiError from '../../AbiError.js'
 import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
@@ -7,13 +8,6 @@ import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import { Hex_validate } from '../Hex/validate.js'
 import type { IsNarrowable, IsNever } from '../types.js'
-import {
-  AbiError_solidityError,
-  AbiError_solidityErrorSelector,
-  AbiError_solidityPanic,
-  AbiError_solidityPanicSelector,
-} from './constants.js'
-import type { AbiError, AbiError_Name } from './types.js'
 
 /**
  * Extracts an {@link ox#AbiError.AbiError} from an {@link ox#Abi.Abi} given a name and optional arguments.
@@ -79,12 +73,12 @@ import type { AbiError, AbiError_Name } from './types.js'
  * @param options - Extraction options.
  * @returns The ABI item.
  */
-export function AbiError_fromAbi<
+export function fromAbi<
   const abi extends Abi | readonly unknown[],
-  name extends AbiError_Name<abi>,
+  name extends AbiError.Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
   //
-  allNames = AbiError_Name<abi>,
+  allNames = AbiError.Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
   name: Hex | (name extends allNames ? name : never),
@@ -94,15 +88,15 @@ export function AbiError_fromAbi<
     args,
     AbiItem_ExtractArgs<abi, name>
   >,
-): AbiError_fromAbi.ReturnType<abi, name, args> {
-  if (name === 'Error') return AbiError_solidityError as never
-  if (name === 'Panic') return AbiError_solidityPanic as never
+): fromAbi.ReturnType<abi, name, args> {
+  if (name === 'Error') return AbiError.solidityError as never
+  if (name === 'Panic') return AbiError.solidityPanic as never
   if (Hex_validate(name, { strict: false })) {
     const selector = Hex_slice(name, 0, 4)
-    if (selector === AbiError_solidityErrorSelector)
-      return AbiError_solidityError as never
-    if (selector === AbiError_solidityPanicSelector)
-      return AbiError_solidityPanic as never
+    if (selector === AbiError.solidityErrorSelector)
+      return AbiError.solidityError as never
+    if (selector === AbiError.solidityPanicSelector)
+      return AbiError.solidityPanic as never
   }
 
   const item = AbiItem_fromAbi(abi, name, options as any)
@@ -111,31 +105,31 @@ export function AbiError_fromAbi<
   return item as never
 }
 
-export declare namespace AbiError_fromAbi {
+export declare namespace fromAbi {
   type ReturnType<
     abi extends Abi | readonly unknown[] = Abi,
-    name extends AbiError_Name<abi> = AbiError_Name<abi>,
+    name extends AbiError.Name<abi> = AbiError.Name<abi>,
     args extends
       | AbiItem_ExtractArgs<abi, name>
       | undefined = AbiItem_ExtractArgs<abi, name>,
-  > = IsNarrowable<name, AbiError_Name<abi>> extends true
+  > = IsNarrowable<name, AbiError.Name<abi>> extends true
     ?
-        | (name extends 'Error' ? typeof AbiError_solidityError : never)
+        | (name extends 'Error' ? typeof AbiError.solidityError : never)
         | (name extends 'Panic'
-            ? typeof AbiError_solidityPanic
+            ? typeof AbiError.solidityPanic
             : never) extends infer result
       ? IsNever<result> extends true
-        ? AbiItem_fromAbi.ReturnType<abi, name, args, AbiError>
+        ? AbiItem_fromAbi.ReturnType<abi, name, args, AbiError.AbiError>
         : result
       : never
     :
-        | AbiItem_fromAbi.ReturnType<abi, name, args, AbiError>
-        | typeof AbiError_solidityError
-        | typeof AbiError_solidityPanic
+        | AbiItem_fromAbi.ReturnType<abi, name, args, AbiError.AbiError>
+        | typeof AbiError.solidityError
+        | typeof AbiError.solidityPanic
 
   type ErrorType = AbiItem_fromAbi.ErrorType | GlobalErrorType
 }
 
-AbiError_fromAbi.parseError = (error: unknown) =>
+fromAbi.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiError_fromAbi.ErrorType
+  error as fromAbi.ErrorType

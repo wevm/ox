@@ -42,9 +42,9 @@ export type AbiFunction = abitype_AbiFunction & {
  *
  * ```
  */
-export type AbiFunction_Extract<
+export type Extract<
   abi extends Abi,
-  name extends AbiFunction_ExtractNames<abi>,
+  name extends ExtractNames<abi>,
 > = ExtractAbiFunction<abi, name>
 
 /**
@@ -65,10 +65,11 @@ export type AbiFunction_Extract<
  *
  * ```
  */
-export type AbiFunction_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiFunction_ExtractNames<abi> : string
+export type Name<abi extends Abi | readonly unknown[] = Abi> = abi extends Abi
+  ? ExtractNames<abi>
+  : string
 
-export type AbiFunction_ExtractNames<
+export type ExtractNames<
   abi extends Abi,
   abiStateMutability extends AbiStateMutability = AbiStateMutability,
 > = ExtractAbiFunctionNames<abi, abiStateMutability>
@@ -78,7 +79,7 @@ export type AbiFunction_ExtractNames<
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type AbiFunction_IsSignature<signature extends string> =
+export type IsSignature<signature extends string> =
   | (IsFunctionSignature<signature> extends true ? true : never)
   | (IsStructSignature<signature> extends true
       ? true
@@ -89,10 +90,10 @@ export type AbiFunction_IsSignature<signature extends string> =
   : false
 
 /** @internal */
-export type AbiFunction_Signature<
+export type Signature<
   signature extends string,
   key extends string | unknown = unknown,
-> = AbiFunction_IsSignature<signature> extends true
+> = IsSignature<signature> extends true
   ? signature
   : string extends signature // if exactly `string` (not narrowed), then pass through as valid
     ? signature
@@ -101,6 +102,6 @@ export type AbiFunction_Signature<
         : ''}.`>
 
 /** @internal */
-export type AbiFunction_Signatures<signatures extends readonly string[]> = {
-  [key in keyof signatures]: AbiFunction_Signature<signatures[key], key>
+export type Signatures<signatures extends readonly string[]> = {
+  [key in keyof signatures]: Signature<signatures[key], key>
 }

@@ -27,18 +27,16 @@ import type { AbiConstructor } from './types.js'
  * @param abiConstructor - The ABI Constructor to format.
  * @returns The formatted ABI Constructor.
  */
-export function AbiConstructor_format<
-  const abiConstructor extends AbiConstructor,
->(
+export function format<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor | AbiConstructor,
 ): FormatAbiItem<abiConstructor> {
   return formatAbiItem(abiConstructor) as never
 }
 
-export declare namespace AbiConstructor_format {
+export declare namespace format {
   type ErrorType = GlobalErrorType
 }
 
-AbiConstructor_format.parseError = (error: unknown) =>
+format.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiConstructor_format.ErrorType
+  error as format.ErrorType

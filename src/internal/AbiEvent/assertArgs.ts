@@ -6,11 +6,8 @@ import type { GlobalErrorType } from '../Errors/error.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
-import {
-  AbiEvent_ArgsMismatchError,
-  AbiEvent_InputNotFoundError,
-} from './errors.js'
-import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
+import { ArgsMismatchError, InputNotFoundError } from './errors.js'
+import type { AbiEvent, ParametersToPrimitiveTypes } from './types.js'
 
 /**
  * Asserts that the provided arguments match the decoded log arguments.
@@ -52,20 +49,20 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  * @param args - Decoded arguments.
  * @param matchArgs - The arguments to check.
  */
-export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
+export function assertArgs<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   args: unknown,
   matchArgs: IsNarrowable<abiEvent, AbiEvent> extends true
     ? abiEvent['inputs'] extends readonly []
       ? never
-      : AbiEvent_ParametersToPrimitiveTypes<
+      : ParametersToPrimitiveTypes<
           abiEvent['inputs'],
           { EnableUnion: true; IndexedOnly: false; Required: false }
         >
     : unknown,
 ) {
   if (!args || !matchArgs)
-    throw new AbiEvent_ArgsMismatchError({
+    throw new ArgsMismatchError({
       abiEvent,
       expected: args,
       given: matchArgs,
@@ -85,7 +82,7 @@ export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
       if (value === null || value === undefined) continue
       const input = abiEvent.inputs[index]
       if (!input)
-        throw new AbiEvent_InputNotFoundError({
+        throw new InputNotFoundError({
           abiEvent,
           name: `${index}`,
         })
@@ -95,7 +92,7 @@ export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
         if (isEqual(input, value, args[index])) equal = true
       }
       if (!equal)
-        throw new AbiEvent_ArgsMismatchError({
+        throw new ArgsMismatchError({
           abiEvent,
           expected: args,
           given: matchArgs,
@@ -112,7 +109,7 @@ export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
     for (const [key, value] of Object.entries(matchArgs)) {
       if (value === null || value === undefined) continue
       const input = abiEvent.inputs.find((input) => input.name === key)
-      if (!input) throw new AbiEvent_InputNotFoundError({ abiEvent, name: key })
+      if (!input) throw new InputNotFoundError({ abiEvent, name: key })
       const value_ = Array.isArray(value) ? value : [value]
       let equal = false
       for (const value of value_) {
@@ -120,7 +117,7 @@ export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
           equal = true
       }
       if (!equal)
-        throw new AbiEvent_ArgsMismatchError({
+        throw new ArgsMismatchError({
           abiEvent,
           expected: args,
           given: matchArgs,
@@ -128,15 +125,15 @@ export function AbiEvent_assertArgs<const abiEvent extends AbiEvent>(
     }
 }
 
-export declare namespace AbiEvent_assertArgs {
+export declare namespace assertArgs {
   type ErrorType =
     | Address.isEqual.ErrorType
     | Bytes_fromString.ErrorType
     | keccak256.ErrorType
-    | AbiEvent_ArgsMismatchError
+    | ArgsMismatchError
     | GlobalErrorType
 }
 
-AbiEvent_assertArgs.parseError = (error: unknown) =>
+assertArgs.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiEvent_assertArgs.ErrorType
+  error as assertArgs.ErrorType

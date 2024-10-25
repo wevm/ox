@@ -79,23 +79,23 @@ import type { GlobalErrorType } from '../Errors/error.js'
  * @param abi - The ABI to parse.
  * @returns The typed ABI.
  */
-export function Abi_from<
+export function from<
   const abi extends Abi | readonly string[] | readonly unknown[],
 >(
   abi: (abi | Abi | readonly string[] | readonly unknown[]) &
     (abi extends readonly string[] ? AbiItem_Signatures<abi> : Abi),
-): Abi_from.ReturnType<abi> {
+): from.ReturnType<abi> {
   if (typeof abi[0] === 'string') return parseAbi(abi as never)
   return abi as never
 }
 
-export declare namespace Abi_from {
+export declare namespace from {
   type ReturnType<abi extends Abi | readonly string[] | readonly unknown[]> =
     abi extends readonly string[] ? ParseAbi<abi> : abi
 
   type ErrorType = GlobalErrorType
 }
 
-Abi_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Abi_from.ErrorType
+  error as from.ErrorType

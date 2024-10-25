@@ -15,7 +15,7 @@ import type { GlobalErrorType } from '../Errors/error.js'
  * @param decimals - The exponent to divide the `bigint` Value by.
  * @returns The string representation of the Value.
  */
-export function Value_format(value: bigint, decimals = 0) {
+export function format(value: bigint, decimals = 0) {
   let display = value.toString()
 
   const negative = display.startsWith('-')
@@ -33,9 +33,9 @@ export function Value_format(value: bigint, decimals = 0) {
   }`
 }
 
-export declare namespace Value_format {
+export declare namespace format {
   type ErrorType = GlobalErrorType
 }
 
 /* v8 ignore next */
-Value_format.parseError = (error: unknown) => error as Value_format.ErrorType
+format.parseError = (error: unknown) => error as format.ErrorType

@@ -1,7 +1,7 @@
 import type { GlobalErrorType } from '../Errors/error.js'
 
-import { Value_exponents } from './constants.js'
-import { Value_format } from './format.js'
+import { exponents } from './constants.js'
+import { format } from './format.js'
 
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Ether.
@@ -18,17 +18,16 @@ import { Value_format } from './format.js'
  * @param unit - The unit to format the Value in. @default 'wei'.
  * @returns The Ether string representation of the Value.
  */
-export function Value_formatEther(
+export function formatEther(
   wei: bigint,
   unit: 'wei' | 'gwei' | 'szabo' | 'finney' = 'wei',
 ) {
-  return Value_format(wei, Value_exponents.ether - Value_exponents[unit])
+  return format(wei, exponents.ether - exponents[unit])
 }
 
-export declare namespace Value_formatEther {
-  type ErrorType = Value_format.ErrorType | GlobalErrorType
+export declare namespace formatEther {
+  type ErrorType = format.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-Value_formatEther.parseError = (error: unknown) =>
-  error as Value_formatEther.ErrorType
+formatEther.parseError = (error: unknown) => error as formatEther.ErrorType

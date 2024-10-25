@@ -35,16 +35,16 @@ import type { AbiFunction } from './types.js'
  * @param abiFunction - The ABI Function to format.
  * @returns The formatted ABI Function.
  */
-export function AbiFunction_format<const abiFunction extends AbiFunction>(
+export function format<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
 ): FormatAbiItem<abiFunction> {
   return formatAbiItem(abiFunction) as never
 }
 
-export declare namespace AbiFunction_format {
+export declare namespace format {
   type ErrorType = GlobalErrorType
 }
 
-AbiFunction_format.parseError = (error: unknown) =>
+format.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiFunction_format.ErrorType
+  error as format.ErrorType

@@ -1,7 +1,7 @@
 /**
  * @see https://ethereum.github.io/yellowpaper/paper.pdf
  */
-export const Value_exponents = {
+export const exponents = {
   wei: 0,
   gwei: 9,
   szabo: 12,

@@ -1,10 +1,6 @@
 import { AbiItem_from } from '../AbiItem/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type {
-  AbiFunction,
-  AbiFunction_Signature,
-  AbiFunction_Signatures,
-} from './types.js'
+import type { AbiFunction, Signature, Signatures } from './types.js'
 
 /**
  * Parses an arbitrary **JSON ABI Function** or **Human Readable ABI Function** into a typed {@link ox#AbiFunction.AbiFunction}.
@@ -109,25 +105,23 @@ import type {
  * @param abiFunction - The ABI Function to parse.
  * @returns Typed ABI Function.
  */
-export function AbiFunction_from<
+export function from<
   const abiFunction extends AbiFunction | string | readonly string[],
 >(
   abiFunction: (abiFunction | AbiFunction | string | readonly string[]) &
     (
-      | (abiFunction extends string
-          ? AbiFunction_Signature<abiFunction>
-          : never)
+      | (abiFunction extends string ? Signature<abiFunction> : never)
       | (abiFunction extends readonly string[]
-          ? AbiFunction_Signatures<abiFunction>
+          ? Signatures<abiFunction>
           : never)
       | AbiFunction
     ),
-  options: AbiFunction_from.Options = {},
-): AbiFunction_from.ReturnType<abiFunction> {
+  options: from.Options = {},
+): from.ReturnType<abiFunction> {
   return AbiItem_from(abiFunction as AbiFunction, options) as never
 }
 
-export declare namespace AbiFunction_from {
+export declare namespace from {
   type Options = {
     /**
      * Whether or not to prepare the extracted function (optimization for encoding performance).
@@ -145,6 +139,6 @@ export declare namespace AbiFunction_from {
   type ErrorType = AbiItem_from.ErrorType | GlobalErrorType
 }
 
-AbiFunction_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiFunction_from.ErrorType
+  error as from.ErrorType

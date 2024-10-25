@@ -47,9 +47,9 @@ export type AbiEvent = abitype_AbiEvent & {
  *
  * ```
  */
-export type AbiEvent_Extract<
+export type Extract<
   abi extends Abi,
-  name extends AbiEvent_ExtractNames<abi>,
+  name extends ExtractNames<abi>,
 > = ExtractAbiEvent<abi, name>
 
 /**
@@ -68,10 +68,11 @@ export type AbiEvent_Extract<
  * //   ^?
  * ```
  */
-export type AbiEvent_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiEvent_ExtractNames<abi> : string
+export type Name<abi extends Abi | readonly unknown[] = Abi> = abi extends Abi
+  ? ExtractNames<abi>
+  : string
 
-export type AbiEvent_ExtractNames<abi extends Abi> = ExtractAbiEventNames<abi>
+export type ExtractNames<abi extends Abi> = ExtractAbiEventNames<abi>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal
@@ -92,7 +93,7 @@ export type DefaultEventParameterOptions = {
 }
 
 /** @internal */
-export type AbiEvent_IsSignature<signature extends string> =
+export type IsSignature<signature extends string> =
   | (IsEventSignature<signature> extends true ? true : never)
   | (IsStructSignature<signature> extends true
       ? true
@@ -103,10 +104,10 @@ export type AbiEvent_IsSignature<signature extends string> =
   : false
 
 /** @internal */
-export type AbiEvent_Signature<
+export type Signature<
   signature extends string,
   key extends string | unknown = unknown,
-> = AbiEvent_IsSignature<signature> extends true
+> = IsSignature<signature> extends true
   ? signature
   : string extends signature // if exactly `string` (not narrowed), then pass through as valid
     ? signature
@@ -115,12 +116,12 @@ export type AbiEvent_Signature<
         : ''}.`>
 
 /** @internal */
-export type AbiEvent_Signatures<signatures extends readonly string[]> = {
-  [key in keyof signatures]: AbiEvent_Signature<signatures[key], key>
+export type Signatures<signatures extends readonly string[]> = {
+  [key in keyof signatures]: Signature<signatures[key], key>
 }
 
 /** @internal */
-export type AbiEvent_ParametersToPrimitiveTypes<
+export type ParametersToPrimitiveTypes<
   abiParameters extends readonly AbiParameter[],
   options extends EventParameterOptions = DefaultEventParameterOptions,
   // Remove non-indexed parameters based on `Options['IndexedOnly']`
@@ -141,18 +142,12 @@ export type AbiEvent_ParametersToPrimitiveTypes<
               }
                 ? {
                     [key in name]?:
-                      | AbiEvent_ParameterToPrimitiveType<
-                          Filtered[index],
-                          options
-                        >
+                      | ParameterToPrimitiveType<Filtered[index], options>
                       | undefined
                   }
                 : {
                     [key in index]?:
-                      | AbiEvent_ParameterToPrimitiveType<
-                          Filtered[index],
-                          options
-                        >
+                      | ParameterToPrimitiveType<Filtered[index], options>
                       | undefined
                   }
             }[number]
@@ -169,7 +164,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
         : // Has unnamed tuple parameters so return as array
             | readonly [
                 ...{
-                  [K in keyof Filtered]: AbiEvent_ParameterToPrimitiveType<
+                  [K in keyof Filtered]: ParameterToPrimitiveType<
                     Filtered[K],
                     options
                   >
@@ -183,7 +178,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
                       ...infer Head extends readonly AbiParameter[],
                       infer _,
                     ]
-                  ? AbiEvent_ParametersToPrimitiveTypes<
+                  ? ParametersToPrimitiveTypes<
                       readonly [
                         ...{ [K in keyof Head]: Omit<Head[K], 'name'> },
                       ],
@@ -193,7 +188,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
     : never
 
 /** @internal */
-export type AbiEvent_ParameterToPrimitiveType<
+export type ParameterToPrimitiveType<
   abiParameter extends AbiParameter,
   //
   options extends EventParameterOptions = DefaultEventParameterOptions,

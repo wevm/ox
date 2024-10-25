@@ -29,14 +29,13 @@ import type { AbiError } from './types.js'
  * @param abiItem - The ABI item to compute the selector for.
  * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the error signature.
  */
-export function AbiError_getSelector(abiItem: string | AbiError): Hex {
+export function getSelector(abiItem: string | AbiError): Hex {
   return AbiItem_getSelector(abiItem)
 }
 
-export declare namespace AbiError_getSelector {
+export declare namespace getSelector {
   type ErrorType = AbiItem_getSelector.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-AbiError_getSelector.parseError = (error: unknown) =>
-  error as AbiError_getSelector.ErrorType
+getSelector.parseError = (error: unknown) => error as getSelector.ErrorType

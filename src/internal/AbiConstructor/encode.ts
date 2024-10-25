@@ -59,11 +59,9 @@ import type { AbiConstructor } from './types.js'
  * @param options - Encoding options.
  * @returns The encoded constructor.
  */
-export function AbiConstructor_encode<
-  const abiConstructor extends AbiConstructor,
->(
+export function encode<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor | AbiConstructor,
-  options: AbiConstructor_encode.Options<abiConstructor>,
+  options: encode.Options<abiConstructor>,
 ): Hex {
   const { bytecode, args } = options
   return Hex_concat(
@@ -74,7 +72,7 @@ export function AbiConstructor_encode<
   )
 }
 
-export declare namespace AbiConstructor_encode {
+export declare namespace encode {
   type Options<abiConstructor extends AbiConstructor = AbiConstructor> = {
     bytecode: Hex
   } & (IsNarrowable<abiConstructor, AbiConstructor> extends true
@@ -88,6 +86,6 @@ export declare namespace AbiConstructor_encode {
   type ErrorType = GlobalErrorType
 }
 
-AbiConstructor_encode.parseError = (error: unknown) =>
+encode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiConstructor_encode.ErrorType
+  error as encode.ErrorType

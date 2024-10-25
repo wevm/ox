@@ -1,12 +1,10 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
+import * as AbiFunction from '../../AbiFunction.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
-import { AbiFunction_fromAbi } from './fromAbi.js'
-import { AbiFunction_getSelector } from './getSelector.js'
-import type { AbiFunction } from './types.js'
 
 /**
  * ABI-encodes function arguments (`inputs`), prefixed with the 4 byte function selector.
@@ -104,23 +102,23 @@ import type { AbiFunction } from './types.js'
  * @param args - Function arguments
  * @returns ABI-encoded function name and arguments
  */
-export function AbiFunction_encodeData<const abiFunction extends AbiFunction>(
-  abiFunction: abiFunction | AbiFunction,
-  ...args: AbiFunction_encodeData.Args<abiFunction>
+export function encodeData<const abiFunction extends AbiFunction.AbiFunction>(
+  abiFunction: abiFunction | AbiFunction.AbiFunction,
+  ...args: encodeData.Args<abiFunction>
 ): Hex {
   const { overloads } = abiFunction
 
   const item = overloads
-    ? (AbiFunction_fromAbi(
-        [abiFunction as AbiFunction, ...overloads],
+    ? (AbiFunction.fromAbi(
+        [abiFunction as AbiFunction.AbiFunction, ...overloads],
         abiFunction.name,
         {
           args: (args as any)[0],
         },
-      ) as AbiFunction)
+      ) as AbiFunction.AbiFunction)
     : abiFunction
 
-  const selector = AbiFunction_getSelector(item)
+  const selector = AbiFunction.getSelector(item)
 
   const data =
     args.length > 0
@@ -130,18 +128,17 @@ export function AbiFunction_encodeData<const abiFunction extends AbiFunction>(
   return data ? Hex_concat(selector, data) : selector
 }
 
-export declare namespace AbiFunction_encodeData {
-  type Args<abiFunction extends AbiFunction = AbiFunction> = IsNarrowable<
-    abiFunction,
-    AbiFunction
-  > extends true
+export declare namespace encodeData {
+  type Args<
+    abiFunction extends AbiFunction.AbiFunction = AbiFunction.AbiFunction,
+  > = IsNarrowable<abiFunction, AbiFunction.AbiFunction> extends true
     ?
         | (AbiParametersToPrimitiveTypes<
             abiFunction['inputs']
           > extends readonly []
             ? []
             : [AbiParametersToPrimitiveTypes<abiFunction['inputs']>])
-        | (abiFunction['overloads'] extends readonly AbiFunction[]
+        | (abiFunction['overloads'] extends readonly AbiFunction.AbiFunction[]
             ? [
                 AbiParametersToPrimitiveTypes<
                   abiFunction['overloads'][number]['inputs']
@@ -153,6 +150,6 @@ export declare namespace AbiFunction_encodeData {
   type ErrorType = GlobalErrorType
 }
 
-AbiFunction_encodeData.parseError = (error: unknown) =>
+encodeData.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiFunction_encodeData.ErrorType
+  error as encodeData.ErrorType

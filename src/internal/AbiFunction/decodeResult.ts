@@ -100,14 +100,14 @@ import type { AbiFunction } from './types.js'
  * @param data - ABI-encoded function output
  * @returns Decoded function output
  */
-export function AbiFunction_decodeResult<
+export function decodeResult<
   const abiFunction extends AbiFunction,
   as extends 'Object' | 'Array' = 'Array',
 >(
   abiFunction: abiFunction | AbiFunction,
   data: Hex,
-  options: AbiFunction_decodeResult.Options<as> = {},
-): AbiFunction_decodeResult.ReturnType<abiFunction, as> {
+  options: decodeResult.Options<as> = {},
+): decodeResult.ReturnType<abiFunction, as> {
   const values = AbiParameters_decode(abiFunction.outputs, data, options)
   if (values && Object.keys(values).length === 0) return undefined
   if (values && Object.keys(values).length === 1) {
@@ -117,7 +117,7 @@ export function AbiFunction_decodeResult<
   return values
 }
 
-export declare namespace AbiFunction_decodeResult {
+export declare namespace decodeResult {
   type Options<as extends 'Object' | 'Array'> = {
     /**
      * Whether the decoded values should be returned as an `Object` or `Array`.

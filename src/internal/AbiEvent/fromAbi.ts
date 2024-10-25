@@ -4,7 +4,7 @@ import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
-import type { AbiEvent, AbiEvent_Name } from './types.js'
+import type { AbiEvent, Name } from './types.js'
 
 /**
  * Extracts an {@link ox#AbiEvent.AbiEvent} from an {@link ox#Abi.Abi} given a name and optional arguments.
@@ -70,12 +70,12 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
  * @param options - Extraction options.
  * @returns The ABI item.
  */
-export function AbiEvent_fromAbi<
+export function fromAbi<
   const abi extends Abi | readonly unknown[],
-  name extends AbiEvent_Name<abi>,
+  name extends Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
   //
-  allNames = AbiEvent_Name<abi>,
+  allNames = Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
   name: Hex | (name extends allNames ? name : never),
@@ -92,10 +92,10 @@ export function AbiEvent_fromAbi<
   return item as never
 }
 
-export declare namespace AbiEvent_fromAbi {
+export declare namespace fromAbi {
   type ErrorType = AbiItem_fromAbi.ErrorType | GlobalErrorType
 }
 
-AbiEvent_fromAbi.parseError = (error: unknown) =>
+fromAbi.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiEvent_fromAbi.ErrorType
+  error as fromAbi.ErrorType

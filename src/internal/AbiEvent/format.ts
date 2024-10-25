@@ -28,16 +28,16 @@ import type { AbiEvent } from './types.js'
  * @param abiEvent - The ABI Event to format.
  * @returns The formatted ABI Event.
  */
-export function AbiEvent_format<const abiEvent extends AbiEvent>(
+export function format<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
 ): FormatAbiItem<abiEvent> {
   return formatAbiItem(abiEvent) as never
 }
 
-export declare namespace AbiEvent_format {
+export declare namespace format {
   type ErrorType = GlobalErrorType
 }
 
-AbiEvent_format.parseError = (error: unknown) =>
+format.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiEvent_format.ErrorType
+  error as format.ErrorType

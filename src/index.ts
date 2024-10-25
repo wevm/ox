@@ -1336,8 +1336,6 @@ export * as HdKey from './HdKey.js'
  */
 export * as Hex from './Hex.js'
 
-export * as Internal from './Internal.js'
-
 /**
  * @category Execution Spec
  */

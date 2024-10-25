@@ -3,7 +3,7 @@ import { AbiParameters_format } from '../AbiParameters/format.js'
 import { BaseError } from '../Errors/base.js'
 import { prettyPrint } from '../Errors/utils.js'
 import type { Hex } from '../Hex/types.js'
-import { AbiEvent_format } from './format.js'
+import { format } from './format.js'
 import type { AbiEvent } from './types.js'
 
 /**
@@ -73,7 +73,7 @@ import type { AbiEvent } from './types.js'
  * })
  * ```
  */
-export class AbiEvent_ArgsMismatchError extends BaseError {
+export class ArgsMismatchError extends BaseError {
   override readonly name = 'AbiEvent.ArgsMismatchError'
 
   constructor({
@@ -87,7 +87,7 @@ export class AbiEvent_ArgsMismatchError extends BaseError {
   }) {
     super('Given arguments do not match the expected arguments.', {
       metaMessages: [
-        `Event: ${AbiEvent_format(abiEvent)}`,
+        `Event: ${format(abiEvent)}`,
         `Expected Arguments: ${!expected ? 'None' : ''}`,
         expected ? prettyPrint(expected) : undefined,
         `Given Arguments: ${!given ? 'None' : ''}`,
@@ -156,7 +156,7 @@ export class AbiEvent_ArgsMismatchError extends BaseError {
  * })
  * ```
  */
-export class AbiEvent_InputNotFoundError extends BaseError {
+export class InputNotFoundError extends BaseError {
   override readonly name = 'AbiEvent.InputNotFoundError'
 
   constructor({
@@ -166,7 +166,7 @@ export class AbiEvent_InputNotFoundError extends BaseError {
     abiEvent: AbiEvent
     name: string
   }) {
-    super(`Parameter "${name}" not found on \`${AbiEvent_format(abiEvent)}\`.`)
+    super(`Parameter "${name}" not found on \`${format(abiEvent)}\`.`)
   }
 }
 
@@ -217,7 +217,7 @@ export class AbiEvent_InputNotFoundError extends BaseError {
  * })
  * ```
  */
-export class AbiEvent_DataMismatchError extends BaseError {
+export class DataMismatchError extends BaseError {
   override readonly name = 'AbiEvent.DataMismatchError'
 
   abiEvent: AbiEvent
@@ -298,7 +298,7 @@ export class AbiEvent_DataMismatchError extends BaseError {
  * ```
  *
  */
-export class AbiEvent_TopicsMismatchError extends BaseError {
+export class TopicsMismatchError extends BaseError {
   override readonly name = 'AbiEvent.TopicsMismatchError'
 
   abiEvent: AbiEvent
@@ -314,7 +314,7 @@ export class AbiEvent_TopicsMismatchError extends BaseError {
       [
         `Expected a topic for indexed event parameter${
           param.name ? ` "${param.name}"` : ''
-        } for "${AbiEvent_format(abiEvent)}".`,
+        } for "${format(abiEvent)}".`,
       ].join('\n'),
     )
 
@@ -366,7 +366,7 @@ export class AbiEvent_TopicsMismatchError extends BaseError {
  * })
  * ```
  */
-export class AbiEvent_SelectorTopicMismatchError extends BaseError {
+export class SelectorTopicMismatchError extends BaseError {
   override readonly name = 'AbiEvent.SelectorTopicMismatchError'
 
   constructor({
@@ -381,10 +381,7 @@ export class AbiEvent_SelectorTopicMismatchError extends BaseError {
     super(
       `topics[0]="${actual}" does not match the expected topics[0]="${expected}".`,
       {
-        metaMessages: [
-          `Event: ${AbiEvent_format(abiEvent)}`,
-          `Selector: ${expected}`,
-        ],
+        metaMessages: [`Event: ${format(abiEvent)}`, `Selector: ${expected}`],
       },
     )
   }
@@ -419,7 +416,7 @@ export class AbiEvent_SelectorTopicMismatchError extends BaseError {
  *
  *
  */
-export class AbiEvent_FilterTypeNotSupportedError extends BaseError {
+export class FilterTypeNotSupportedError extends BaseError {
   override readonly name = 'AbiEvent.FilterTypeNotSupportedError'
   constructor(type: string) {
     super(`Filter type "${type}" is not supported.`)

@@ -124,14 +124,14 @@ import type { AbiError } from './types.js'
  * @param options - Decoding options.
  * @returns The decoded error.
  */
-export function AbiError_decode<
+export function decode<
   const abiError extends AbiError,
   as extends 'Object' | 'Array' = 'Array',
 >(
   abiError: abiError | AbiError,
   data: Hex,
-  options: AbiError_decode.Options<as> = {},
-): AbiError_decode.ReturnType<abiError, as> {
+  options: decode.Options<as> = {},
+): decode.ReturnType<abiError, as> {
   if (Hex_size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
   if (abiError.inputs.length === 0) return undefined
 
@@ -147,7 +147,7 @@ export function AbiError_decode<
   return values
 }
 
-export declare namespace AbiError_decode {
+export declare namespace decode {
   type Options<as extends 'Object' | 'Array'> = {
     /**
      * Whether the decoded values should be returned as an `Object` or `Array`.

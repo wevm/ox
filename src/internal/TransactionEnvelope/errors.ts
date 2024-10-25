@@ -1,7 +1,7 @@
+import type { Hex } from '../../Hex.js'
+import * as Value from '../../Value.js'
 import { BaseError } from '../Errors/base.js'
 import { prettyPrint } from '../Errors/utils.js'
-import type { Hex } from '../Hex/types.js'
-import { Value_formatGwei } from '../Value/formatGwei.js'
 
 /**
  * Thrown when a transaction type cannot be inferred.
@@ -75,7 +75,7 @@ export class TransactionEnvelope_FeeCapTooHighError extends BaseError {
   } = {}) {
     super(
       `The fee cap (\`maxFeePerGas\`/\`maxPriorityFeePerGas\`${
-        feeCap ? ` = ${Value_formatGwei(feeCap)} gwei` : ''
+        feeCap ? ` = ${Value.formatGwei(feeCap)} gwei` : ''
       }) cannot be higher than the maximum allowed value (2^256-1).`,
     )
   }
@@ -105,7 +105,7 @@ export class TransactionEnvelope_GasPriceTooHighError extends BaseError {
   } = {}) {
     super(
       `The gas price (\`gasPrice\`${
-        gasPrice ? ` = ${Value_formatGwei(gasPrice)} gwei` : ''
+        gasPrice ? ` = ${Value.formatGwei(gasPrice)} gwei` : ''
       }) cannot be higher than the maximum allowed value (2^256-1).`,
     )
   }
@@ -216,10 +216,10 @@ export class TransactionEnvelope_TipAboveFeeCapError extends BaseError {
       [
         `The provided tip (\`maxPriorityFeePerGas\`${
           maxPriorityFeePerGas
-            ? ` = ${Value_formatGwei(maxPriorityFeePerGas)} gwei`
+            ? ` = ${Value.formatGwei(maxPriorityFeePerGas)} gwei`
             : ''
         }) cannot be higher than the fee cap (\`maxFeePerGas\`${
-          maxFeePerGas ? ` = ${Value_formatGwei(maxFeePerGas)} gwei` : ''
+          maxFeePerGas ? ` = ${Value.formatGwei(maxFeePerGas)} gwei` : ''
         }).`,
       ].join('\n'),
     )

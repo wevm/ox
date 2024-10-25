@@ -1,4 +1,5 @@
 import type { AbiParameter } from 'abitype'
+import * as AbiEvent from '../../AbiEvent.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
 import type { GlobalErrorType } from '../Errors/error.js'
@@ -6,13 +7,7 @@ import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import { Cursor_PositionOutOfBoundsError } from '../cursor.js'
 import type { IsNarrowable } from '../types.js'
-import {
-  AbiEvent_DataMismatchError,
-  AbiEvent_SelectorTopicMismatchError,
-  AbiEvent_TopicsMismatchError,
-} from './errors.js'
-import { AbiEvent_getSelector } from './getSelector.js'
-import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
+import type { ParametersToPrimitiveTypes } from './types.js'
 
 /**
  * ABI-Decodes the provided [Log Topics and Data](https://info.etherscan.com/what-is-event-logs/) according to the ABI Event's parameter types (`input`).
@@ -101,17 +96,17 @@ import type { AbiEvent, AbiEvent_ParametersToPrimitiveTypes } from './types.js'
  * @param log - `topics` & `data` to decode.
  * @returns The decoded event.
  */
-export function AbiEvent_decode<const abiEvent extends AbiEvent>(
-  abiEvent: abiEvent | AbiEvent,
-  log: AbiEvent_decode.Log,
-): AbiEvent_decode.ReturnType<abiEvent> {
+export function decode<const abiEvent extends AbiEvent.AbiEvent>(
+  abiEvent: abiEvent | AbiEvent.AbiEvent,
+  log: decode.Log,
+): decode.ReturnType<abiEvent> {
   const { data, topics } = log
 
   const [selector_, ...argTopics] = topics
 
-  const selector = AbiEvent_getSelector(abiEvent)
+  const selector = AbiEvent.getSelector(abiEvent)
   if (selector_ !== selector)
-    throw new AbiEvent_SelectorTopicMismatchError({
+    throw new AbiEvent.SelectorTopicMismatchError({
       abiEvent,
       actual: selector_,
       expected: selector,
@@ -128,7 +123,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
     const param = indexedInputs[i]!
     const topic = argTopics[i]
     if (!topic)
-      throw new AbiEvent_TopicsMismatchError({
+      throw new AbiEvent.TopicsMismatchError({
         abiEvent,
         param: param as AbiParameter & { indexed: boolean },
       })
@@ -165,7 +160,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
           err instanceof AbiParameters_DataSizeTooSmallError ||
           err instanceof Cursor_PositionOutOfBoundsError
         )
-          throw new AbiEvent_DataMismatchError({
+          throw new AbiEvent.DataMismatchError({
             abiEvent,
             data: data,
             parameters: nonIndexedInputs,
@@ -174,7 +169,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
         throw err
       }
     } else {
-      throw new AbiEvent_DataMismatchError({
+      throw new AbiEvent.DataMismatchError({
         abiEvent,
         data: '0x',
         parameters: nonIndexedInputs,
@@ -186,33 +181,31 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
   return Object.values(args).length > 0 ? args : undefined
 }
 
-export declare namespace AbiEvent_decode {
+export declare namespace decode {
   type Log = {
     data?: Hex | undefined
     topics: readonly Hex[]
   }
 
-  type ReturnType<abiEvent extends AbiEvent = AbiEvent> = IsNarrowable<
-    abiEvent,
-    AbiEvent
-  > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? undefined
-      : AbiEvent_ParametersToPrimitiveTypes<
-          abiEvent['inputs'],
-          { EnableUnion: false; IndexedOnly: false; Required: true }
-        >
-    : unknown
+  type ReturnType<abiEvent extends AbiEvent.AbiEvent = AbiEvent.AbiEvent> =
+    IsNarrowable<abiEvent, AbiEvent.AbiEvent> extends true
+      ? abiEvent['inputs'] extends readonly []
+        ? undefined
+        : ParametersToPrimitiveTypes<
+            abiEvent['inputs'],
+            { EnableUnion: false; IndexedOnly: false; Required: true }
+          >
+      : unknown
 
   type ErrorType =
     | AbiParameters_decode.ErrorType
-    | AbiEvent_getSelector.ErrorType
-    | AbiEvent_DataMismatchError
-    | AbiEvent_SelectorTopicMismatchError
-    | AbiEvent_TopicsMismatchError
+    | AbiEvent.getSelector.ErrorType
+    | AbiEvent.DataMismatchError
+    | AbiEvent.SelectorTopicMismatchError
+    | AbiEvent.TopicsMismatchError
     | GlobalErrorType
 }
 
-AbiEvent_decode.parseError = (error: unknown) =>
+decode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiEvent_decode.ErrorType
+  error as decode.ErrorType

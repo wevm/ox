@@ -1,6 +1,6 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Value_exponents } from './constants.js'
-import { Value_from } from './from.js'
+import { exponents } from './constants.js'
+import { from } from './from.js'
 
 /**
  * Parses a string representation of Ether to a `bigint` Value (default: wei).
@@ -17,17 +17,16 @@ import { Value_from } from './from.js'
  * @param unit - The unit to parse to. @default 'wei'.
  * @returns A `bigint` Value.
  */
-export function Value_fromEther(
+export function fromEther(
   ether: string,
   unit: 'wei' | 'gwei' | 'szabo' | 'finney' = 'wei',
 ) {
-  return Value_from(ether, Value_exponents.ether - Value_exponents[unit])
+  return from(ether, exponents.ether - exponents[unit])
 }
 
-export declare namespace Value_fromEther {
-  type ErrorType = Value_from.ErrorType | GlobalErrorType
+export declare namespace fromEther {
+  type ErrorType = from.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-Value_fromEther.parseError = (error: unknown) =>
-  error as Value_fromEther.ErrorType
+fromEther.parseError = (error: unknown) => error as fromEther.ErrorType

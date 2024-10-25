@@ -13,7 +13,7 @@ export type AbiConstructor = abitype_AbiConstructor
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type AbiConstructor_IsSignature<signature extends string> =
+export type IsSignature<signature extends string> =
   | (IsConstructorSignature<signature> extends true ? true : never)
   | (IsStructSignature<signature> extends true
       ? true
@@ -24,10 +24,10 @@ export type AbiConstructor_IsSignature<signature extends string> =
   : false
 
 /** @internal */
-export type AbiConstructor_Signature<
+export type Signature<
   signature extends string,
   key extends string | unknown = unknown,
-> = AbiConstructor_IsSignature<signature> extends true
+> = IsSignature<signature> extends true
   ? signature
   : string extends signature // if exactly `string` (not narrowed), then pass through as valid
     ? signature
@@ -36,6 +36,6 @@ export type AbiConstructor_Signature<
         : ''}.`>
 
 /** @internal */
-export type AbiConstructor_Signatures<signatures extends readonly string[]> = {
-  [key in keyof signatures]: AbiConstructor_Signature<signatures[key], key>
+export type Signatures<signatures extends readonly string[]> = {
+  [key in keyof signatures]: Signature<signatures[key], key>
 }

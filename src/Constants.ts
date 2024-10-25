@@ -99,4 +99,4 @@ export {
   Solidity_minInt256,
 } from './internal/Solidity/constants.js'
 
-export { Value_exponents } from './internal/Value/constants.js'
+export { exponents } from './internal/Value/constants.js'

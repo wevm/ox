@@ -31,11 +31,9 @@ import type { AbiConstructor } from './types.js'
  * @param data - The encoded constructor inputs.
  * @returns The decoded constructor inputs.
  */
-export function AbiConstructor_decode<
-  const abiConstructor extends AbiConstructor,
->(
+export function decode<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor | AbiConstructor,
-  options: AbiConstructor_decode.Options,
+  options: decode.Options,
 ): Hex {
   const { bytecode } = options
   const data = options.data.replace(bytecode, '0x')
@@ -44,7 +42,7 @@ export function AbiConstructor_decode<
   return decoded as never
 }
 
-export declare namespace AbiConstructor_decode {
+export declare namespace decode {
   type Options = {
     bytecode: Hex
     data: Hex
@@ -62,6 +60,6 @@ export declare namespace AbiConstructor_decode {
   type ErrorType = GlobalErrorType
 }
 
-AbiConstructor_decode.parseError = (error: unknown) =>
+decode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiConstructor_decode.ErrorType
+  error as decode.ErrorType

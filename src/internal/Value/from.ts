@@ -1,5 +1,5 @@
 import type { GlobalErrorType } from '../Errors/error.js'
-import { Value_InvalidDecimalNumberError } from './errors.js'
+import { InvalidDecimalNumberError } from './errors.js'
 
 /**
  * Parses a `string` representation of a Value to `bigint` (multiplied by the given exponent).
@@ -16,9 +16,9 @@ import { Value_InvalidDecimalNumberError } from './errors.js'
  * @param decimals - The exponent to multiply the Value by.
  * @returns The `bigint` representation of the Value.
  */
-export function Value_from(value: string, decimals = 0) {
+export function from(value: string, decimals = 0) {
   if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
-    throw new Value_InvalidDecimalNumberError({ value })
+    throw new InvalidDecimalNumberError({ value })
 
   let [integer = '', fraction = '0'] = value.split('.')
 
@@ -58,9 +58,9 @@ export function Value_from(value: string, decimals = 0) {
   return BigInt(`${negative ? '-' : ''}${integer}${fraction}`)
 }
 
-export declare namespace Value_from {
+export declare namespace from {
   type ErrorType = GlobalErrorType
 }
 
 /* v8 ignore next */
-Value_from.parseError = (error: unknown) => error as Value_from.ErrorType
+from.parseError = (error: unknown) => error as from.ErrorType

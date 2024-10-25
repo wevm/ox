@@ -33,14 +33,13 @@ import type { AbiEvent } from './types.js'
  * @param abiItem - The ABI event to compute the selector for.
  * @returns The {@link ox#Hash.(keccak256:function)} hash of the event signature.
  */
-export function AbiEvent_getSelector(abiItem: string | AbiEvent): Hex {
+export function getSelector(abiItem: string | AbiEvent): Hex {
   return AbiItem_getSignatureHash(abiItem)
 }
 
-export declare namespace AbiEvent_getSelector {
+export declare namespace getSelector {
   type ErrorType = AbiItem_getSignatureHash.ErrorType | GlobalErrorType
 }
 
 /* v8 ignore next */
-AbiEvent_getSelector.parseError = (error: unknown) =>
-  error as AbiEvent_getSelector.ErrorType
+getSelector.parseError = (error: unknown) => error as getSelector.ErrorType

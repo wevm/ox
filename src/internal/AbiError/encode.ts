@@ -1,11 +1,10 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
+import * as AbiError from '../../AbiError.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
-import { AbiError_getSelector } from './getSelector.js'
-import type { AbiError } from './types.js'
 
 /**
  * ABI-encodes the provided error input (`inputs`), prefixed with the 4 byte error selector.
@@ -58,11 +57,11 @@ import type { AbiError } from './types.js'
  * @param args - Error arguments
  * @returns ABI-encoded error name and arguments
  */
-export function AbiError_encode<const abiError extends AbiError>(
-  abiError: abiError | AbiError,
-  ...args: AbiError_encode.Args<abiError>
+export function encode<const abiError extends AbiError.AbiError>(
+  abiError: abiError | AbiError.AbiError,
+  ...args: encode.Args<abiError>
 ): Hex {
-  const selector = AbiError_getSelector(abiError)
+  const selector = AbiError.getSelector(abiError)
 
   const data =
     args.length > 0
@@ -72,19 +71,17 @@ export function AbiError_encode<const abiError extends AbiError>(
   return data ? Hex_concat(selector, data) : selector
 }
 
-export declare namespace AbiError_encode {
-  type Args<abiError extends AbiError = AbiError> = IsNarrowable<
-    abiError,
-    AbiError
-  > extends true
-    ? AbiParametersToPrimitiveTypes<abiError['inputs']> extends readonly []
-      ? []
-      : [AbiParametersToPrimitiveTypes<abiError['inputs']>]
-    : readonly unknown[]
+export declare namespace encode {
+  type Args<abiError extends AbiError.AbiError = AbiError.AbiError> =
+    IsNarrowable<abiError, AbiError.AbiError> extends true
+      ? AbiParametersToPrimitiveTypes<abiError['inputs']> extends readonly []
+        ? []
+        : [AbiParametersToPrimitiveTypes<abiError['inputs']>]
+      : readonly unknown[]
 
   type ErrorType = GlobalErrorType
 }
 
-AbiError_encode.parseError = (error: unknown) =>
+encode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiError_encode.ErrorType
+  error as encode.ErrorType

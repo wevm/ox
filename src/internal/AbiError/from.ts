@@ -1,13 +1,9 @@
 import { AbiItem_from } from '../AbiItem/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type {
-  AbiError,
-  AbiError_Signature,
-  AbiError_Signatures,
-} from './types.js'
+import type { AbiError, Signature, Signatures } from './types.js'
 
 /**
- * Parses an arbitrary **JSON ABI Error** or **Human Readable ABI Error** into a typed {@link ox#AbiError.AbiError}.
+ * Parses an arbitrary **JSON ABI Error** or **Human Readable ABI Error** into a typed {@link ox#AbiError}.
  *
  * @example
  * ### JSON ABIs
@@ -98,23 +94,21 @@ import type {
  * @param abiError - The ABI Error to parse.
  * @returns Typed ABI Error.
  */
-export function AbiError_from<
+export function from<
   const abiError extends AbiError | string | readonly string[],
 >(
   abiError: (abiError | AbiError | string | readonly string[]) &
     (
-      | (abiError extends string ? AbiError_Signature<abiError> : never)
-      | (abiError extends readonly string[]
-          ? AbiError_Signatures<abiError>
-          : never)
+      | (abiError extends string ? Signature<abiError> : never)
+      | (abiError extends readonly string[] ? Signatures<abiError> : never)
       | AbiError
     ),
-  options: AbiError_from.Options = {},
-): AbiError_from.ReturnType<abiError> {
+  options: from.Options = {},
+): from.ReturnType<abiError> {
   return AbiItem_from(abiError as AbiError, options) as never
 }
 
-export declare namespace AbiError_from {
+export declare namespace from {
   type Options = {
     /**
      * Whether or not to prepare the extracted function (optimization for encoding performance).
@@ -131,6 +125,6 @@ export declare namespace AbiError_from {
   type ErrorType = AbiItem_from.ErrorType | GlobalErrorType
 }
 
-AbiError_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiError_from.ErrorType
+  error as from.ErrorType

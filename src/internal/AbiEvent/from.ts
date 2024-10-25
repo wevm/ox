@@ -1,10 +1,6 @@
 import { AbiItem_from } from '../AbiItem/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type {
-  AbiEvent,
-  AbiEvent_Signature,
-  AbiEvent_Signatures,
-} from './types.js'
+import type { AbiEvent, Signature, Signatures } from './types.js'
 
 /**
  * Parses an arbitrary **JSON ABI Event** or **Human Readable ABI Event** into a typed {@link ox#AbiEvent.AbiEvent}.
@@ -73,23 +69,21 @@ import type {
  * @param abiEvent - The ABI Event to parse.
  * @returns Typed ABI Event.
  */
-export function AbiEvent_from<
+export function from<
   const abiEvent extends AbiEvent | string | readonly string[],
 >(
   abiEvent: (abiEvent | AbiEvent | string | readonly string[]) &
     (
-      | (abiEvent extends string ? AbiEvent_Signature<abiEvent> : never)
-      | (abiEvent extends readonly string[]
-          ? AbiEvent_Signatures<abiEvent>
-          : never)
+      | (abiEvent extends string ? Signature<abiEvent> : never)
+      | (abiEvent extends readonly string[] ? Signatures<abiEvent> : never)
       | AbiEvent
     ),
-  options: AbiEvent_from.Options = {},
-): AbiEvent_from.ReturnType<abiEvent> {
+  options: from.Options = {},
+): from.ReturnType<abiEvent> {
   return AbiItem_from(abiEvent as AbiEvent, options) as never
 }
 
-export declare namespace AbiEvent_from {
+export declare namespace from {
   type Options = {
     /**
      * Whether or not to prepare the extracted event (optimization for encoding performance).
@@ -106,6 +100,6 @@ export declare namespace AbiEvent_from {
   type ErrorType = AbiItem_from.ErrorType | GlobalErrorType
 }
 
-AbiEvent_from.parseEvent = (Event: unknown) =>
+from.parseEvent = (Event: unknown) =>
   /* v8 ignore next */
-  Event as AbiEvent_from.ErrorType
+  Event as from.ErrorType

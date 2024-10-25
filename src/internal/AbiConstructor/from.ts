@@ -1,10 +1,6 @@
 import { AbiItem_from } from '../AbiItem/from.js'
 import type { GlobalErrorType } from '../Errors/error.js'
-import type {
-  AbiConstructor,
-  AbiConstructor_Signature,
-  AbiConstructor_Signatures,
-} from './types.js'
+import type { AbiConstructor, Signature, Signatures } from './types.js'
 
 /**
  * Parses an arbitrary **JSON ABI Constructor** or **Human Readable ABI Constructor** into a typed {@link ox#AbiConstructor.AbiConstructor}.
@@ -101,7 +97,7 @@ import type {
  * @param abiConstructor - The ABI Constructor to parse.
  * @returns Typed ABI Constructor.
  */
-export function AbiConstructor_from<
+export function from<
   const abiConstructor extends AbiConstructor | string | readonly string[],
 >(
   abiConstructor: (
@@ -111,19 +107,17 @@ export function AbiConstructor_from<
     | readonly string[]
   ) &
     (
-      | (abiConstructor extends string
-          ? AbiConstructor_Signature<abiConstructor>
-          : never)
+      | (abiConstructor extends string ? Signature<abiConstructor> : never)
       | (abiConstructor extends readonly string[]
-          ? AbiConstructor_Signatures<abiConstructor>
+          ? Signatures<abiConstructor>
           : never)
       | AbiConstructor
     ),
-): AbiConstructor_from.ReturnType<abiConstructor> {
+): from.ReturnType<abiConstructor> {
   return AbiItem_from(abiConstructor as AbiConstructor) as never
 }
 
-export declare namespace AbiConstructor_from {
+export declare namespace from {
   type ReturnType<
     abiConstructor extends AbiConstructor | string | readonly string[],
   > = AbiItem_from.ReturnType<abiConstructor>
@@ -131,6 +125,6 @@ export declare namespace AbiConstructor_from {
   type ErrorType = AbiItem_from.ErrorType | GlobalErrorType
 }
 
-AbiConstructor_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiConstructor_from.ErrorType
+  error as from.ErrorType

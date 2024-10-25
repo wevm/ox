@@ -38,9 +38,9 @@ export type AbiError = abitype_AbiError & {
  *
  * ```
  */
-export type AbiError_Extract<
+export type Extract<
   abi extends Abi,
-  name extends AbiError_ExtractNames<abi>,
+  name extends ExtractNames<abi>,
 > = ExtractAbiError<abi, name>
 
 /**
@@ -59,10 +59,11 @@ export type AbiError_Extract<
  * //   ^?
  * ```
  */
-export type AbiError_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiError_ExtractNames<abi> : string
+export type Name<abi extends Abi | readonly unknown[] = Abi> = abi extends Abi
+  ? ExtractNames<abi>
+  : string
 
-export type AbiError_ExtractNames<abi extends Abi> =
+export type ExtractNames<abi extends Abi> =
   | ExtractAbiErrorNames<abi>
   | 'Panic'
   | 'Error'
@@ -72,7 +73,7 @@ export type AbiError_ExtractNames<abi extends Abi> =
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type AbiError_IsSignature<signature extends string> =
+export type IsSignature<signature extends string> =
   | (IsErrorSignature<signature> extends true ? true : never)
   | (IsStructSignature<signature> extends true
       ? true
@@ -83,10 +84,10 @@ export type AbiError_IsSignature<signature extends string> =
   : false
 
 /** @internal */
-export type AbiError_Signature<
+export type Signature<
   signature extends string,
   key extends string | unknown = unknown,
-> = AbiError_IsSignature<signature> extends true
+> = IsSignature<signature> extends true
   ? signature
   : string extends signature // if exactly `string` (not narrowed), then pass through as valid
     ? signature
@@ -95,6 +96,6 @@ export type AbiError_Signature<
         : ''}.`>
 
 /** @internal */
-export type AbiError_Signatures<signatures extends readonly string[]> = {
-  [key in keyof signatures]: AbiError_Signature<signatures[key], key>
+export type Signatures<signatures extends readonly string[]> = {
+  [key in keyof signatures]: Signature<signatures[key], key>
 }

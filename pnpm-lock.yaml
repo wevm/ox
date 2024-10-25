@@ -128,22 +128,6 @@ importers:
         specifier: ^4.12.1
         version: 4.12.1(typescript@5.5.4)(zod@3.23.8)
 
-  examples/dsa:
-    dependencies:
-      ox:
-        specifier: workspace:*
-        version: link:../../src
-    devDependencies:
-      globals:
-        specifier: ^15.9.0
-        version: 15.9.0
-      typescript:
-        specifier: ^5.5.3
-        version: 5.5.4
-      vite:
-        specifier: ^5.4.1
-        version: 5.4.10(@types/node@22.5.4)(terser@5.31.5)
-
   examples/webauthn-p256:
     dependencies:
       ox:
@@ -2315,7 +2299,6 @@ packages:
 
   bun@1.1.24:
     resolution: {integrity: sha512-vZt5zNVaoNTSlNprdVdQVZInBcGC2QSik6o9ZsMzuYiiUEAEqpRwwMXAYDUN85mt2FNnsGvmk/8xVlUXS7IzEw==}
-    cpu: [arm64, x64]
     os: [darwin, linux, win32]
     hasBin: true
 

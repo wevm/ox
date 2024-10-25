@@ -1,9 +1,9 @@
 export {
-  AbiEvent_DataMismatchError,
-  AbiEvent_FilterTypeNotSupportedError,
-  AbiEvent_InputNotFoundError,
-  AbiEvent_SelectorTopicMismatchError,
-  AbiEvent_TopicsMismatchError,
+  DataMismatchError,
+  FilterTypeNotSupportedError,
+  InputNotFoundError,
+  SelectorTopicMismatchError,
+  TopicsMismatchError,
 } from './internal/AbiEvent/errors.js'
 
 export {
@@ -101,7 +101,7 @@ export {
   TypedData_InvalidPrimaryTypeError,
 } from './internal/TypedData/errors.js'
 
-export { Value_InvalidDecimalNumberError } from './internal/Value/errors.js'
+export { InvalidDecimalNumberError } from './internal/Value/errors.js'
 
 export {
   WebAuthnP256_CredentialCreationFailedError,

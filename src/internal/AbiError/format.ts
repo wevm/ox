@@ -33,16 +33,16 @@ import type { AbiError } from './types.js'
  * @param abiError - The ABI Error to format.
  * @returns The formatted ABI Error.
  */
-export function AbiError_format<const abiError extends AbiError>(
+export function format<const abiError extends AbiError>(
   abiError: abiError | AbiError,
 ): FormatAbiItem<abiError> {
   return formatAbiItem(abiError) as never
 }
 
-export declare namespace AbiError_format {
+export declare namespace format {
   type ErrorType = GlobalErrorType
 }
 
-AbiError_format.parseError = (error: unknown) =>
+format.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiError_format.ErrorType
+  error as format.ErrorType

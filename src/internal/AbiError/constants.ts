@@ -1,7 +1,7 @@
-import { AbiError_from } from './from.js'
+import { from } from './from.js'
 
 // https://docs.soliditylang.org/en/v0.8.16/control-structures.html#panic-via-assert-and-error-via-require
-export const AbiError_panicReasons = {
+export const panicReasons = {
   1: 'An `assert` condition failed.',
   17: 'Arithmetic operation resulted in underflow or overflow.',
   18: 'Division or modulo by zero (e.g. `5 / 0` or `23 % 0`).',
@@ -13,7 +13,7 @@ export const AbiError_panicReasons = {
   81: 'Attempted to call a zero-initialized variable of internal function type.',
 } as Record<number, string>
 
-export const AbiError_solidityError = /*#__PURE__*/ AbiError_from({
+export const solidityError = /*#__PURE__*/ from({
   inputs: [
     {
       name: 'message',
@@ -24,9 +24,9 @@ export const AbiError_solidityError = /*#__PURE__*/ AbiError_from({
   type: 'error',
 })
 
-export const AbiError_solidityErrorSelector = '0x08c379a0'
+export const solidityErrorSelector = '0x08c379a0'
 
-export const AbiError_solidityPanic = /*#__PURE__*/ AbiError_from({
+export const solidityPanic = /*#__PURE__*/ from({
   inputs: [
     {
       name: 'reason',
@@ -37,4 +37,4 @@ export const AbiError_solidityPanic = /*#__PURE__*/ AbiError_from({
   type: 'error',
 })
 
-export const AbiError_solidityPanicSelector = '0x4e487b71'
+export const solidityPanicSelector = '0x4e487b71'
