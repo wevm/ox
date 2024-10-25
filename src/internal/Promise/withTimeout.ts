@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Promise_TimeoutError } from './errors.js'
 
 /** @internal */
@@ -50,7 +50,7 @@ export declare namespace Promise_withTimeout {
     signal?: boolean | undefined
   }
 
-  type ErrorType = Promise_TimeoutError | GlobalErrorType
+  type ErrorType = Promise_TimeoutError | Errors.GlobalErrorType
 }
 
 /** @internal */

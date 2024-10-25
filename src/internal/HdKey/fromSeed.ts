@@ -1,8 +1,8 @@
 import { HDKey, type Versions } from '@scure/bip32'
 
+import type * as Errors from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import { HdKey_fromScure } from './fromScure.js'
 import type { HdKey } from './types.js'
@@ -55,7 +55,7 @@ export declare namespace HdKey_fromSeed {
   type ErrorType =
     | Bytes_from.ErrorType
     | HdKey_fromScure.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 HdKey_fromSeed.parseError = (error: unknown) =>

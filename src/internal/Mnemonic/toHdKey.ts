@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { HdKey_fromSeed } from '../HdKey/fromSeed.js'
 import type { HdKey } from '../HdKey/types.js'
 import { Mnemonic_toSeed } from './toSeed.js'
@@ -45,7 +45,7 @@ export declare namespace Mnemonic_toHdKey {
     passphrase?: string | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Mnemonic_toHdKey.parseError = (error: unknown) =>

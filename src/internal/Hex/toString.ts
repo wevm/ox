@@ -1,7 +1,7 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_assertSize } from '../Bytes/assertSize.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_trimRight } from '../Bytes/trim.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from './types.js'
 
 /**
@@ -48,7 +48,7 @@ export declare namespace Hex_toString {
     | Bytes_assertSize.ErrorType
     | Bytes_fromHex.ErrorType
     | Bytes_trimRight.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { RpcSchema_Generic } from '../RpcSchema/types.js'
 import { RpcRequest_from } from './from.js'
 import type { RpcRequest_Store } from './types.js'
@@ -93,7 +93,7 @@ export declare namespace RpcRequest_createStore {
   type ReturnType<schema extends RpcSchema_Generic | undefined> =
     RpcRequest_Store<schema>
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 RpcRequest_createStore.parseError = (error: unknown) =>

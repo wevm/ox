@@ -1,10 +1,10 @@
 import { type ParseAbiItem, parseAbiItem } from 'abitype'
+import type * as Errors from '../../Errors.js'
 import type {
   AbiItem,
   AbiItem_Signature,
   AbiItem_Signatures,
 } from '../AbiItem/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 
 /**
@@ -153,7 +153,7 @@ export declare namespace AbiItem_from {
         ? ParseAbiItem<abiItem>
         : abiItem
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 AbiItem_from.parseError = (error: unknown) =>

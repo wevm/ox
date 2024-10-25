@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Withdrawal, Withdrawal_Rpc } from './types.js'
 
 /**
@@ -35,7 +35,7 @@ export function Withdrawal_fromRpc(withdrawal: Withdrawal_Rpc): Withdrawal {
 }
 
 export declare namespace Withdrawal_fromRpc {
-  export type ErrorType = GlobalErrorType
+  export type ErrorType = Errors.GlobalErrorType
 }
 
 Withdrawal_fromRpc.parseError = (error: unknown) =>

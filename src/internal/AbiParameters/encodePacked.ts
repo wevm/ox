@@ -10,7 +10,7 @@ import type {
 } from 'abitype'
 
 import * as Address from '../../Address.js'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_fromBoolean } from '../Hex/fromBoolean.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
@@ -68,7 +68,7 @@ export declare namespace AbiParameters_encodePacked {
   type ErrorType =
     | Hex_concat.ErrorType
     | AbiParameters_LengthMismatchError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -106,7 +106,7 @@ declare namespace encode {
     | Hex_fromBoolean.ErrorType
     | Hex_fromNumber.ErrorType
     | Hex_fromString.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 function encode<const packedAbiType extends PackedAbiType | unknown>(

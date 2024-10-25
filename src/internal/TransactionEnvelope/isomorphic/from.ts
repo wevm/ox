@@ -1,10 +1,10 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Signature } from '../../Signature/types.js'
 import type { UnionCompute, UnionPartialBy } from '../../types.js'
 import { type GetType, getType } from './getType.js'
@@ -153,7 +153,7 @@ export declare namespace from {
   type ErrorType =
     | TransactionEnvelope.deserialize.ErrorType
     | getType.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 from.parseError = (error: unknown) =>

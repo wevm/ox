@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_SizeExceedsPaddingSizeError } from './errors.js'
 import type { Hex } from './types.js'
 
@@ -26,7 +26,7 @@ export function Hex_padLeft(
 
 export declare namespace Hex_padLeft {
   type ReturnType = Hex
-  type ErrorType = Hex_pad.ErrorType | GlobalErrorType
+  type ErrorType = Hex_pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -56,7 +56,7 @@ export function Hex_padRight(
 
 export declare namespace Hex_padRight {
   type ReturnType = Hex
-  type ErrorType = Hex_pad.ErrorType | GlobalErrorType
+  type ErrorType = Hex_pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -88,5 +88,5 @@ export declare namespace Hex_pad {
     dir?: 'left' | 'right' | undefined
     size?: number | undefined
   }
-  type ErrorType = Hex_SizeExceedsPaddingSizeError | GlobalErrorType
+  type ErrorType = Hex_SizeExceedsPaddingSizeError | Errors.GlobalErrorType
 }

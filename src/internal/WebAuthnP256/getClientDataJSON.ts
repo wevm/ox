@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { Base64_fromHex } from '../Base64/fromHex.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
@@ -60,7 +60,7 @@ export declare namespace WebAuthnP256_getClientDataJSON {
     origin?: string | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 WebAuthnP256_getClientDataJSON.parseError = (error: unknown) =>

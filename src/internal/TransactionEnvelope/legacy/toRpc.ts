@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import type * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
@@ -66,7 +66,7 @@ export function toRpc(
 }
 
 export declare namespace toRpc {
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  export type ErrorType = Signature_extract.ErrorType | Errors.GlobalErrorType
 }
 
 toRpc.parseError = (error: unknown) =>

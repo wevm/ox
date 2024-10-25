@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_SliceOffsetOutOfBoundsError } from './errors.js'
 import { Bytes_size } from './size.js'
 import type { Bytes } from './types.js'
@@ -46,7 +46,7 @@ export declare namespace Bytes_slice {
   export type ErrorType =
     | Bytes_assertStartOffset.ErrorType
     | Bytes_assertEndOffset.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -73,7 +73,7 @@ export declare namespace Bytes_assertStartOffset {
   export type ErrorType =
     | Bytes_SliceOffsetOutOfBoundsError
     | Bytes_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -99,5 +99,5 @@ export declare namespace Bytes_assertEndOffset {
   type ErrorType =
     | Bytes_SliceOffsetOutOfBoundsError
     | Bytes_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

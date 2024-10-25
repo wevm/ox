@@ -1,7 +1,7 @@
+import type * as Errors from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
@@ -59,7 +59,10 @@ export declare namespace TypedData_hashStruct {
     types: TypedData
   }
 
-  type ErrorType = encodeData.ErrorType | keccak256.ErrorType | GlobalErrorType
+  type ErrorType =
+    | encodeData.ErrorType
+    | keccak256.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -96,7 +99,7 @@ export declare namespace encodeData {
     | AbiParameters_encode.ErrorType
     | encodeField.ErrorType
     | hashType.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -117,7 +120,7 @@ export declare namespace hashType {
     | Hex_fromString.ErrorType
     | TypedData_encodeType.ErrorType
     | keccak256.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -178,5 +181,5 @@ export declare namespace encodeField {
     | AbiParameters_encode.ErrorType
     | keccak256.ErrorType
     | Bytes_fromString.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

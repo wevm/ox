@@ -1,10 +1,10 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import type { Compute, IsNarrowable } from '../../types.js'
 import { type GetType, getType } from './getType.js'
@@ -84,7 +84,7 @@ export declare namespace deserialize {
     | TransactionEnvelopeEip1559.deserialize.ErrorType
     | TransactionEnvelopeEip4844.deserialize.ErrorType
     | TransactionEnvelopeEip7702.deserialize.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 deserialize.parseError = (error: unknown) =>

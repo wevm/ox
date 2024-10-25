@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { TypedData } from './types.js'
 
 // TODO: Add error for `primaryType` not in `types`
@@ -51,7 +51,7 @@ export declare namespace TypedData_encodeType {
     types: TypedData
   }
 
-  type ErrorType = findTypeDependencies.ErrorType | GlobalErrorType
+  type ErrorType = findTypeDependencies.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -81,5 +81,5 @@ export function findTypeDependencies(
 
 /** @internal */
 export declare namespace findTypeDependencies {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }

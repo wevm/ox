@@ -1,6 +1,6 @@
 import { type Abi, type ParseAbi, parseAbi } from 'abitype'
+import type * as Errors from '../../Errors.js'
 import type { AbiItem_Signatures } from '../AbiItem/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 
 /**
  * Parses an arbitrary **JSON ABI** or **Human Readable ABI** into a typed {@link ox#Abi.Abi}.
@@ -93,7 +93,7 @@ export declare namespace from {
   type ReturnType<abi extends Abi | readonly string[] | readonly unknown[]> =
     abi extends readonly string[] ? ParseAbi<abi> : abi
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 from.parseError = (error: unknown) =>

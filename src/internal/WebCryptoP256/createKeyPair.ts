@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { PublicKey_from } from '../PublicKey/from.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Compute } from '../types.js'
@@ -62,7 +62,7 @@ export declare namespace WebCryptoP256_createKeyPair {
     publicKey: PublicKey
   }>
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 WebCryptoP256_createKeyPair.parseError = (error: unknown) =>

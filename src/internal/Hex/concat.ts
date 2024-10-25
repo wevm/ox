@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from './types.js'
 
 /**
@@ -20,7 +20,7 @@ export function Hex_concat(...values: readonly Hex[]): Hex {
 }
 
 export declare namespace Hex_concat {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

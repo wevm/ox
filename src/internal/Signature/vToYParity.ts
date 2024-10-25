@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Signature_InvalidVError } from './errors.js'
 import type { Signature } from './types.js'
 
@@ -12,5 +12,5 @@ export function Signature_vToYParity(v: number): Signature['yParity'] {
 
 /** @internal */
 export declare namespace Signature_vToYParity {
-  type ErrorType = Signature_InvalidVError | GlobalErrorType
+  type ErrorType = Signature_InvalidVError | Errors.GlobalErrorType
 }

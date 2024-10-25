@@ -1,6 +1,6 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from './types.js'
 
 /**
@@ -26,7 +26,7 @@ export function Bytes_isEqual(bytesA: Bytes, bytesB: Bytes) {
 }
 
 export declare namespace Bytes_isEqual {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

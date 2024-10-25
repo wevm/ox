@@ -1,6 +1,6 @@
 import { HDKey } from '@scure/bip32'
 
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { HdKey_fromScure } from './fromScure.js'
 import type { HdKey } from './types.js'
 
@@ -27,7 +27,7 @@ export function HdKey_fromExtendedKey(extendedKey: string): HdKey {
 }
 
 export declare namespace HdKey_fromExtendedKey {
-  type ErrorType = HdKey_fromScure.ErrorType | GlobalErrorType
+  type ErrorType = HdKey_fromScure.ErrorType | Errors.GlobalErrorType
 }
 
 HdKey_fromExtendedKey.parseError = (error: unknown) =>

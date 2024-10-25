@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Promise_withTimeout } from '../Promise/withTimeout.js'
 import { RpcTransport_create } from './create.js'
 import {
@@ -111,7 +111,7 @@ export declare namespace RpcTransport_fromHttp {
   type ErrorType =
     | Promise_withTimeout.ErrorType
     | RpcTransport_HttpError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 RpcTransport_fromHttp.parseError = (error: unknown) =>

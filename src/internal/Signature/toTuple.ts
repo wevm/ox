@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Hex_trimLeft } from '../Hex/trim.js'
 import type { Signature, Signature_Tuple } from './types.js'
@@ -35,5 +35,5 @@ export declare namespace Signature_toTuple {
   type ErrorType =
     | Hex_trimLeft.ErrorType
     | Hex_fromNumber.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

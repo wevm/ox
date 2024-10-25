@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
@@ -40,7 +40,10 @@ export declare namespace ValidatorData_encode {
     validator: Address
   }
 
-  type ErrorType = Hex_concat.ErrorType | Hex_from.ErrorType | GlobalErrorType
+  type ErrorType =
+    | Hex_concat.ErrorType
+    | Hex_from.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

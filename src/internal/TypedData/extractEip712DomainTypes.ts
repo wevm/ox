@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { TypedData_Domain, TypedData_Parameter } from './types.js'
 
 /**
@@ -44,7 +44,7 @@ export function TypedData_extractEip712DomainTypes(
 }
 
 export declare namespace TypedData_extractEip712DomainTypes {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 TypedData_extractEip712DomainTypes.parseError = (error: unknown) =>

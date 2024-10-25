@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Formats a `bigint` Value to its string representation (divided by the given exponent).
@@ -34,7 +34,7 @@ export function format(value: bigint, decimals = 0) {
 }
 
 export declare namespace format {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

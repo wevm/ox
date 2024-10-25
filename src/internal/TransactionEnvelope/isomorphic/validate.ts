@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 
 /**
  * Validates a {@link ox#TransactionEnvelope.TransactionEnvelope}. Returns `true` if the envelope is valid, `false` otherwise.
@@ -30,7 +30,7 @@ export function validate(envelope: TransactionEnvelope.TransactionEnvelope) {
 }
 
 export declare namespace validate {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 validate.parseError = (error: unknown) =>

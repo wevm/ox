@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from './types.js'
 
 /**
@@ -22,7 +22,7 @@ export function Hex_trimLeft(value: Hex): Hex_trimLeft.ReturnType {
 export declare namespace Hex_trimLeft {
   type ReturnType = Hex
 
-  type ErrorType = trim.ErrorType | GlobalErrorType
+  type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -49,7 +49,7 @@ export function Hex_trimRight(value: Hex): Hex_trimRight.ReturnType {
 export declare namespace Hex_trimRight {
   type ReturnType = Hex
 
-  type ErrorType = trim.ErrorType | GlobalErrorType
+  type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -88,5 +88,5 @@ export declare namespace trim {
 
   type ReturnType = Hex
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }

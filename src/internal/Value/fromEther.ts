@@ -1,6 +1,6 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
+import * as Value from '../../Value.js'
 import { exponents } from './constants.js'
-import { from } from './from.js'
 
 /**
  * Parses a string representation of Ether to a `bigint` Value (default: wei).
@@ -21,11 +21,11 @@ export function fromEther(
   ether: string,
   unit: 'wei' | 'gwei' | 'szabo' | 'finney' = 'wei',
 ) {
-  return from(ether, exponents.ether - exponents[unit])
+  return Value.from(ether, exponents.ether - exponents[unit])
 }
 
 export declare namespace fromEther {
-  type ErrorType = from.ErrorType | GlobalErrorType
+  type ErrorType = Value.from.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 import * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
 import type { PublicKey } from '../PublicKey/types.js'
@@ -84,7 +84,7 @@ export declare namespace Secp256k1_verify {
       }
   >
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Secp256k1_verify.parseError = (error: unknown) =>

@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import { Base64_fromBytes } from './fromBytes.js'
 
@@ -64,7 +64,7 @@ export declare namespace Base64_fromHex {
     url?: boolean | undefined
   }
 
-  type ErrorType = Base64_fromBytes.ErrorType | GlobalErrorType
+  type ErrorType = Base64_fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 Base64_fromHex.parseError = (error: unknown) =>

@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromBytes } from './fromBytes.js'
 import type { Hex } from './types.js'
 
@@ -34,7 +34,7 @@ export declare namespace Hex_fromString {
     size?: number | undefined
   }
 
-  type ErrorType = Hex_fromBytes.ErrorType | GlobalErrorType
+  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 Hex_fromString.parseError = (error: unknown) =>

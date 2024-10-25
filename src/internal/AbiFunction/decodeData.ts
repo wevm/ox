@@ -1,8 +1,8 @@
 import * as AbiFunction from '../../AbiFunction.js'
+import type * as Errors from '../../Errors.js'
 import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { AbiParameters_ToPrimitiveTypes } from '../AbiParameters/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_size } from '../Hex/size.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
@@ -67,5 +67,5 @@ export declare namespace decodeData {
     | AbiParameters_decode.ErrorType
     | Hex_size.ErrorType
     | Hex_slice.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

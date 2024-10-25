@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { AbiItem_getSelector } from '../AbiItem/getSelector.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { AbiError } from './types.js'
 
@@ -34,7 +34,7 @@ export function getSelector(abiItem: string | AbiError): Hex {
 }
 
 export declare namespace getSelector {
-  type ErrorType = AbiItem_getSelector.ErrorType | GlobalErrorType
+  type ErrorType = AbiItem_getSelector.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

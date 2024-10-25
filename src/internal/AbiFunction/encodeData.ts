@@ -1,7 +1,7 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
 import * as AbiFunction from '../../AbiFunction.js'
+import type * as Errors from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
@@ -147,7 +147,7 @@ export declare namespace encodeData {
             : [])
     : readonly unknown[]
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 encodeData.parseError = (error: unknown) =>

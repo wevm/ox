@@ -1,7 +1,7 @@
 import type { AbiParameter } from 'abitype'
 import * as AbiEvent from '../../AbiEvent.js'
+import type * as Errors from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
@@ -175,7 +175,7 @@ export declare namespace encode {
     | AbiEvent.getSelector.ErrorType
     | Hex_fromString.ErrorType
     | keccak256.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 encode.parseError = (error: unknown) =>

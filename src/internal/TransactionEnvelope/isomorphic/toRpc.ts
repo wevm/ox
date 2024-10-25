@@ -1,9 +1,9 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Signature_extract } from '../../Signature/extract.js'
 import type { UnionCompute } from '../../types.js'
 import type { GetType } from './getType.js'
@@ -70,7 +70,7 @@ export declare namespace TransactionEnvelope_toRpc {
         : never)
   >
 
-  export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  export type ErrorType = Signature_extract.ErrorType | Errors.GlobalErrorType
 }
 
 toRpc.parseError = (error: unknown) =>

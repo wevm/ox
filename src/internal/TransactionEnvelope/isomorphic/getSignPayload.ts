@@ -1,10 +1,10 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 
 /**
@@ -65,7 +65,7 @@ export declare namespace getSignPayload {
     | TransactionEnvelopeEip2930.getSignPayload.ErrorType
     | TransactionEnvelopeEip4844.getSignPayload.ErrorType
     | TransactionEnvelopeEip7702.getSignPayload.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 getSignPayload.parseError = (error: unknown) =>

@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { sha256 } from '../Hash/sha256.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
@@ -52,7 +52,7 @@ export declare namespace WebAuthnP256_getAuthenticatorData {
     signCount?: number | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 WebAuthnP256_getAuthenticatorData.parseError = (error: unknown) =>

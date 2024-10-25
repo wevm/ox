@@ -1,7 +1,7 @@
 import { formatAbiItem } from 'abitype'
 
+import type * as Errors from '../../Errors.js'
 import { BaseError } from '../Errors/base.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { AbiItem } from './types.js'
 
 /**
@@ -41,7 +41,7 @@ export function AbiItem_getSignature(abiItem: string | AbiItem): string {
 }
 
 export declare namespace AbiItem_getSignature {
-  type ErrorType = normalizeSignature.ErrorType | GlobalErrorType
+  type ErrorType = normalizeSignature.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -111,5 +111,5 @@ export function normalizeSignature(signature: string): string {
 
 /** @internal */
 export declare namespace normalizeSignature {
-  export type ErrorType = BaseError | GlobalErrorType
+  export type ErrorType = BaseError | Errors.GlobalErrorType
 }

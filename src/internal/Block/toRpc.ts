@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Transaction_toRpc } from '../Transaction/isomorphic/toRpc.js'
 import { Withdrawal_toRpc } from '../Withdrawal/toRpc.js'
@@ -101,7 +101,7 @@ export declare namespace Block_toRpc {
     includeTransactions?: includeTransactions | boolean | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Block_toRpc.parseError = (error: unknown) =>

@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Mutable, OneOf, UnionCompute } from '../types.js'
@@ -83,7 +83,7 @@ export declare namespace Blobs_toSidecars {
     | (blobs extends Blobs<Bytes> ? BlobSidecars<Bytes> : never)
   >
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Blobs_toSidecars.parseError = (error: unknown) =>

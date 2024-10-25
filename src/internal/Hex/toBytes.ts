@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from './types.js'
 
 /**
@@ -31,7 +31,7 @@ export declare namespace Hex_toBytes {
     size?: number | undefined
   }
 
-  type ErrorType = Bytes_fromHex.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -33,7 +33,7 @@ export function Base58_from(value: Hex | Bytes) {
 
 /** @internal */
 export declare namespace Base58_from {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /** @internal */

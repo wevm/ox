@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_SliceOffsetOutOfBoundsError } from './errors.js'
 import { Hex_size } from './size.js'
 import type { Hex } from './types.js'
@@ -43,7 +43,7 @@ export declare namespace Hex_slice {
   type ErrorType =
     | Hex_assertStartOffset.ErrorType
     | Hex_assertEndOffset.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -67,7 +67,7 @@ export declare namespace Hex_assertStartOffset {
   type ErrorType =
     | Hex_SliceOffsetOutOfBoundsError
     | Hex_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -93,5 +93,5 @@ export declare namespace Hex_assertEndOffset {
   type ErrorType =
     | Hex_SliceOffsetOutOfBoundsError
     | Hex_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

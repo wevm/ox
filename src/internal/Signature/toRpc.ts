@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import type { Signature, Signature_Rpc } from './types.js'
 
@@ -29,7 +29,7 @@ export function Signature_toRpc(signature: Signature): Signature_Rpc {
 }
 
 export declare namespace Signature_toRpc {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Signature_toRpc.parseError = (error: unknown) =>

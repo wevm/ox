@@ -1,8 +1,8 @@
 import type { AbiEventParameter } from 'abitype'
 
 import * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
@@ -131,7 +131,7 @@ export declare namespace assertArgs {
     | Bytes_fromString.ErrorType
     | keccak256.ErrorType
     | ArgsMismatchError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 assertArgs.parseError = (error: unknown) =>

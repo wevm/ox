@@ -1,8 +1,8 @@
+import type * as Errors from '../../Errors.js'
 import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { AbiFunction, Name } from './types.js'
 
@@ -94,7 +94,7 @@ export function fromAbi<
 }
 
 export declare namespace fromAbi {
-  type ErrorType = AbiItem_fromAbi.ErrorType | GlobalErrorType
+  type ErrorType = AbiItem_fromAbi.ErrorType | Errors.GlobalErrorType
 }
 
 fromAbi.parseError = (error: unknown) =>

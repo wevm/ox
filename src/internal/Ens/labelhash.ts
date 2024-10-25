@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Hex_fromString } from '../Hex/fromString.js'
@@ -31,7 +31,7 @@ export declare namespace Ens_labelhash {
     | Ens_encodedLabelToLabelhash.ErrorType
     | keccak256.ErrorType
     | Hex_fromString.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Ens_labelhash.parseError = (error: unknown) =>

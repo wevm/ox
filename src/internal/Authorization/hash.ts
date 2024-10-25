@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import { Hex_concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
@@ -37,7 +37,7 @@ export declare namespace Authorization_hash {
     | keccak256.ErrorType
     | Hex_concat.ErrorType
     | Rlp_fromHex.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Authorization_hash.parseError = (error: unknown) =>

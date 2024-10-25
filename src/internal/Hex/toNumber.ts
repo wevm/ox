@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_toBigInt } from './toBigInt.js'
 import type { Hex } from './types.js'
 
@@ -32,7 +32,7 @@ export function Hex_toNumber(
 export declare namespace Hex_toNumber {
   type Options = Hex_toBigInt.Options
 
-  type ErrorType = Hex_toBigInt.ErrorType | GlobalErrorType
+  type ErrorType = Hex_toBigInt.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

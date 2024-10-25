@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -39,7 +39,7 @@ export declare namespace Bloom_contains {
   type ErrorType =
     | Bytes_fromHex.ErrorType
     | keccak256.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Bloom_contains.parseError = (error: unknown) =>

@@ -1,10 +1,10 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import type * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import type * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import type * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import type * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import type * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type {
   FeeValuesEip1559,
   FeeValuesEip4844,
@@ -76,7 +76,9 @@ export function getType<
 
 /** @internal */
 export declare namespace getType {
-  type ErrorType = TransactionEnvelope.CannotInferTypeError | GlobalErrorType
+  type ErrorType =
+    | TransactionEnvelope.CannotInferTypeError
+    | Errors.GlobalErrorType
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

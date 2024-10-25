@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_SizeExceedsPaddingSizeError } from './errors.js'
 import type { Bytes } from './types.js'
 
@@ -26,7 +26,7 @@ export function Bytes_padLeft(
 
 export declare namespace Bytes_padLeft {
   type ReturnType = Bytes_pad.ReturnType
-  type ErrorType = Bytes_pad.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -56,7 +56,7 @@ export function Bytes_padRight(
 
 export declare namespace Bytes_padRight {
   type ReturnType = Bytes_pad.ReturnType
-  type ErrorType = Bytes_pad.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -94,5 +94,5 @@ export declare namespace Bytes_pad {
 
   type ReturnType = Bytes
 
-  type ErrorType = Bytes_SizeExceedsPaddingSizeError | GlobalErrorType
+  type ErrorType = Bytes_SizeExceedsPaddingSizeError | Errors.GlobalErrorType
 }

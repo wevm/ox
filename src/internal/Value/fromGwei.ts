@@ -1,6 +1,6 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
+import * as Value from '../../Value.js'
 import { exponents } from './constants.js'
-import { from } from './from.js'
 
 /**
  * Parses a string representation of Gwei to a `bigint` Value (default: wei).
@@ -18,11 +18,11 @@ import { from } from './from.js'
  * @returns A `bigint` Value.
  */
 export function fromGwei(gwei: string, unit: 'wei' = 'wei') {
-  return from(gwei, exponents.gwei - exponents[unit])
+  return Value.from(gwei, exponents.gwei - exponents[unit])
 }
 
 export declare namespace fromGwei {
-  type ErrorType = from.ErrorType | GlobalErrorType
+  type ErrorType = Value.from.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Signature_extract } from '../Signature/extract.js'
 import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 
@@ -37,7 +37,7 @@ export function Authorization_fromRpc(
 }
 
 export declare namespace Authorization_fromRpc {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Authorization_fromRpc.parseError = (error: unknown) =>

@@ -1,7 +1,7 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_InvalidLengthError } from '../Hex/errors.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
@@ -99,7 +99,7 @@ export declare namespace Rlp_to {
     | decodeRlpCursor.ErrorType
     | createCursor.ErrorType
     | Hex_InvalidLengthError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -141,7 +141,7 @@ export declare namespace decodeRlpCursor {
     | Hex_fromBytes.ErrorType
     | readLength.ErrorType
     | readList.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -157,7 +157,7 @@ export function readLength(cursor: Cursor, prefix: number, offset: number) {
 
 /** @internal */
 export declare namespace readLength {
-  type ErrorType = BaseError | GlobalErrorType
+  type ErrorType = BaseError | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -175,5 +175,5 @@ export function readList<to extends 'Hex' | 'Bytes'>(
 
 /** @internal */
 export declare namespace readList {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }

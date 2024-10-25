@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
@@ -74,7 +74,7 @@ export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
 }
 
 export declare namespace PublicKey_deserialize {
-  type ErrorType = Hex_fromBytes.ErrorType | GlobalErrorType
+  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 PublicKey_deserialize.parseError = (error: unknown) =>

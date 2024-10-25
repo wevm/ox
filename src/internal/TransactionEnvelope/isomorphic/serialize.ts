@@ -1,3 +1,4 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
@@ -5,7 +6,6 @@ import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844
 import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import type { Signature } from '../../Signature/types.js'
 
@@ -100,7 +100,7 @@ export declare namespace serialize {
     | TransactionEnvelopeEip4844.serialize.ErrorType
     | TransactionEnvelopeEip7702.serialize.ErrorType
     | TransactionEnvelope.TypeNotImplementedError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 serialize.parseError = (error: unknown) =>

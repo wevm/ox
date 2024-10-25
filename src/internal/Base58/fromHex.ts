@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Base58_from } from './from.js'
 
@@ -21,7 +21,7 @@ export function Base58_fromHex(value: Hex) {
 }
 
 export declare namespace Base58_fromHex {
-  type ErrorType = Base58_from.ErrorType | GlobalErrorType
+  type ErrorType = Base58_from.ErrorType | Errors.GlobalErrorType
 }
 
 Base58_fromHex.parseError = (error: unknown) =>

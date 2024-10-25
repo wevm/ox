@@ -1,8 +1,8 @@
+import type * as Errors from '../../Errors.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Bytes_concat } from '../Bytes/concat.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { sha256 } from '../Hash/sha256.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
@@ -118,7 +118,7 @@ export declare namespace WebAuthnP256_verify {
     | Bytes_concat.ErrorType
     | Bytes_fromHex.ErrorType
     | P256_verify.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 WebAuthnP256_verify.parseError = (error: unknown) =>

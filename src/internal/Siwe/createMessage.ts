@@ -1,5 +1,5 @@
 import * as Address from '../../Address.js'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import {
   Siwe_domainRegex,
   Siwe_ipRegex,
@@ -180,7 +180,7 @@ export declare namespace Siwe_createMessage {
   type ErrorType =
     | Address.from.ErrorType
     | Siwe_InvalidMessageFieldError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Siwe_createMessage.parseError = (error: unknown) =>

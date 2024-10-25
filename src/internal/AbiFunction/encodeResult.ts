@@ -1,9 +1,9 @@
+import type * as Errors from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type {
   AbiParameters_ToObject,
   AbiParameters_ToPrimitiveTypes,
 } from '../AbiParameters/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { AbiFunction } from './types.js'
 
@@ -63,5 +63,5 @@ export declare namespace encodeResult {
     as?: as | 'Object' | 'Array' | undefined
   }
 
-  type ErrorType = AbiParameters_encode.ErrorType | GlobalErrorType
+  type ErrorType = AbiParameters_encode.ErrorType | Errors.GlobalErrorType
 }

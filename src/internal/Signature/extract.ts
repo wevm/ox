@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Signature_from } from './from.js'
 import type { Signature } from './types.js'
@@ -44,7 +44,7 @@ export declare namespace Signature_extract {
     yParity?: number | Hex | undefined
     v?: number | Hex | undefined
   }
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Signature_extract.parseError = (error: unknown) =>

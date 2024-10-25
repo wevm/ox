@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Hex_toBigInt } from '../Hex/toBigInt.js'
 import { Bytes_assertSize } from './assertSize.js'
@@ -40,7 +40,7 @@ export declare namespace Bytes_toBigInt {
   type ErrorType =
     | Hex_fromBytes.ErrorType
     | Hex_toBigInt.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Bytes_toBigInt.parseError = (error: unknown) =>

@@ -1,3 +1,4 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_size } from '../Bytes/size.js'
 import { Bytes_slice } from '../Bytes/slice.js'
@@ -7,7 +8,6 @@ import { Bytes_toNumber } from '../Bytes/toNumber.js'
 import { Bytes_toString } from '../Bytes/toString.js'
 import { Bytes_trimLeft } from '../Bytes/trim.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
@@ -145,7 +145,7 @@ export declare namespace AbiParameters_decode {
     | decodeParameter.ErrorType
     | AbiParameters_ZeroDataError
     | AbiParameters_DataSizeTooSmallError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 AbiParameters_decode.parseError = (error: unknown) =>
@@ -190,7 +190,7 @@ export declare namespace decodeParameter {
     | decodeNumber.ErrorType
     | decodeString.ErrorType
     | AbiParameters_InvalidTypeError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -210,7 +210,7 @@ export declare namespace decodeAddress {
   type ErrorType =
     | Hex_fromBytes.ErrorType
     | Bytes_slice.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -294,7 +294,7 @@ export function decodeArray(
 }
 
 export declare namespace decodeArray {
-  type ErrorType = Bytes_toNumber.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_toNumber.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -303,7 +303,7 @@ export function decodeBool(cursor: Cursor) {
 }
 
 export declare namespace decodeBool {
-  type ErrorType = Bytes_toBoolean.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_toBoolean.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -344,7 +344,7 @@ export declare namespace decodeBytes {
   type ErrorType =
     | Hex_fromBytes.ErrorType
     | Bytes_toNumber.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -364,7 +364,7 @@ export declare namespace decodeNumber {
   type ErrorType =
     | Bytes_toNumber.ErrorType
     | Bytes_toBigInt.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -428,7 +428,7 @@ export function decodeTuple(
 }
 
 export declare namespace decodeTuple {
-  type ErrorType = Bytes_toNumber.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_toNumber.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -487,5 +487,5 @@ export declare namespace decodeString {
     | Bytes_toNumber.ErrorType
     | Bytes_toString.ErrorType
     | Bytes_trimLeft.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

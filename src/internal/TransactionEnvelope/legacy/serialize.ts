@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Hex_trimLeft } from '../../Hex/trim.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
@@ -139,7 +139,7 @@ export declare namespace serialize {
     | Hex_trimLeft.ErrorType
     | Rlp_fromHex.ErrorType
     | Signature_InvalidVError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 serialize.parseError = (error: unknown) =>

@@ -1,5 +1,5 @@
 import type { TypedData } from 'abitype'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_encode } from './encode.js'
@@ -60,7 +60,7 @@ export declare namespace TypedData_getSignPayload {
   type ErrorType =
     | keccak256.ErrorType
     | TypedData_encode.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TypedData_getSignPayload.parseError = (error: unknown) =>

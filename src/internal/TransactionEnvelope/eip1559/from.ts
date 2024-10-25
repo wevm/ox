@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import { Signature_from } from '../../Signature/from.js'
 import type { Signature } from '../../Signature/types.js'
@@ -135,7 +135,7 @@ export declare namespace from {
   type ErrorType =
     | TransactionEnvelopeEip1559.deserialize.ErrorType
     | TransactionEnvelopeEip1559.assert.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 from.parseError = (error: unknown) =>

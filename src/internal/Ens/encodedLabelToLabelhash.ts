@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Hex_validate } from '../Hex/validate.js'
 
@@ -13,5 +13,5 @@ export function Ens_encodedLabelToLabelhash(label: string): Hex | null {
 }
 
 export declare namespace Ens_encodedLabelToLabelhash {
-  type ErrorType = Hex_validate.ErrorType | GlobalErrorType
+  type ErrorType = Hex_validate.ErrorType | Errors.GlobalErrorType
 }

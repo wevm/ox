@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
@@ -134,7 +134,7 @@ export declare namespace Signature_from {
     | Signature_assert.ErrorType
     | Signature_deserialize.ErrorType
     | Signature_vToYParity.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Signature_from.parseError = (error: unknown) =>

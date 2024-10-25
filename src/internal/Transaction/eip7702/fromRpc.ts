@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import { Authorization_fromRpcList } from '../../Authorization/fromRpcList.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
 
@@ -92,7 +92,7 @@ export declare namespace TransactionEip7702_fromRpc {
     pending?: pending | boolean | undefined
   }
 
-  type ErrorType = Signature_extract.ErrorType | GlobalErrorType
+  type ErrorType = Signature_extract.ErrorType | Errors.GlobalErrorType
 }
 
 TransactionEip7702_fromRpc.parseError = (error: unknown) =>

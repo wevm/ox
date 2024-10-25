@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_random } from '../Bytes/random.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from './fromBytes.js'
 import type { Hex } from './types.js'
 
@@ -21,7 +21,7 @@ export function Hex_random(length: number): Hex {
 }
 
 export declare namespace Hex_random {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

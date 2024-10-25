@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_IntegerOutOfRangeError } from './errors.js'
 import { Hex_padLeft } from './pad.js'
 import type { Hex } from './types.js'
@@ -77,7 +77,7 @@ export declare namespace Hex_fromNumber {
   type ErrorType =
     | Hex_IntegerOutOfRangeError
     | Hex_padLeft.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Hex_fromNumber.parseError = (error: unknown) =>

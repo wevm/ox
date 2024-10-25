@@ -1,7 +1,7 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
@@ -58,7 +58,7 @@ export declare namespace Rlp_from {
     | createCursor.ErrorType
     | Hex_fromBytes.ErrorType
     | Bytes_fromHex.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Rlp_from.parseError = (error: unknown) =>
@@ -96,7 +96,7 @@ export declare namespace Rlp_fromBytes {
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> =
     Rlp_from.ReturnType<as>
 
-  type ErrorType = Rlp_from.ErrorType | GlobalErrorType
+  type ErrorType = Rlp_from.ErrorType | Errors.GlobalErrorType
 }
 
 Rlp_fromBytes.parseError = (error: unknown) =>
@@ -133,7 +133,7 @@ export declare namespace Rlp_fromHex {
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = Rlp_from.ReturnType<as>
 
-  type ErrorType = Rlp_from.ErrorType | GlobalErrorType
+  type ErrorType = Rlp_from.ErrorType | Errors.GlobalErrorType
 }
 
 Rlp_fromHex.parseError = (error: unknown) =>

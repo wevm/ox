@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type {
   CredentialRequestOptions,
@@ -69,7 +69,7 @@ export declare namespace WebAuthnP256_getCredentialRequestOptions {
   type ErrorType =
     | Bytes_fromHex.ErrorType
     | Base64_toBytes.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 WebAuthnP256_getCredentialRequestOptions.parseError = (error: unknown) =>

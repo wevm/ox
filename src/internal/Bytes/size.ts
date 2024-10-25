@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from './types.js'
 
 /**
@@ -20,7 +20,7 @@ export function Bytes_size(value: Bytes): number {
 }
 
 export declare namespace Bytes_size {
-  export type ErrorType = GlobalErrorType
+  export type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

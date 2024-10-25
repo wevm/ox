@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_assertSize } from './assertSize.js'
 import { Hex_padRight } from './pad.js'
 import type { Hex } from './types.js'
@@ -47,7 +47,7 @@ export declare namespace Hex_fromBytes {
   type ErrorType =
     | Hex_assertSize.ErrorType
     | Hex_padRight.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

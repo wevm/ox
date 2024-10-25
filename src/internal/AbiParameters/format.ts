@@ -4,7 +4,7 @@ import {
   type FormatAbiParameters,
   formatAbiParameters,
 } from 'abitype'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Formats {@link ox#AbiParameters.AbiParameters} into **Human Readable ABI Parameters**.
@@ -50,7 +50,7 @@ export function AbiParameters_format<
 }
 
 export declare namespace AbiParameters_format {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 AbiParameters_format.parseError = (error: unknown) =>

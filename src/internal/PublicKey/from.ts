@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
 import { Bytes_validate } from '../Bytes/validate.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import { Hex_validate } from '../Hex/validate.js'
 import type { Compute } from '../types.js'
@@ -97,7 +97,7 @@ export declare namespace PublicKey_from {
       : publicKey
     : PublicKey
 
-  type ErrorType = PublicKey_assert.ErrorType | GlobalErrorType
+  type ErrorType = PublicKey_assert.ErrorType | Errors.GlobalErrorType
 }
 
 PublicKey_from.parseError = (error: unknown) =>

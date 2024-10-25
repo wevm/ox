@@ -1,5 +1,5 @@
 import { type FormatAbiItem, formatAbiItem } from 'abitype'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { AbiItem } from './types.js'
 
 /**
@@ -42,7 +42,7 @@ export function AbiItem_format<const abiItem extends AbiItem>(
 }
 
 export declare namespace AbiItem_format {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 AbiItem_format.parseError = (error: unknown) =>

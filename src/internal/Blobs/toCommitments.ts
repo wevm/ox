@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import type { Kzg } from '../Kzg/types.js'
@@ -85,7 +85,7 @@ export declare namespace Blobs_toCommitments {
   type ErrorType =
     | Bytes_fromHex.ErrorType
     | Hex_fromBytes.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Blobs_toCommitments.parseError = (error: unknown) =>

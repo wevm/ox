@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { PublicKey_from } from '../PublicKey/from.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import { WebAuthnP256_CredentialCreationFailedError } from './errors.js'
@@ -79,7 +79,7 @@ export declare namespace WebAuthnP256_createCredential {
 
   type ErrorType =
     | WebAuthnP256_getCredentialCreationOptions.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 WebAuthnP256_createCredential.parseError = (error: unknown) =>

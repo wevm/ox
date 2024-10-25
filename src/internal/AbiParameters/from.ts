@@ -1,5 +1,5 @@
 import { type ParseAbiParameters, parseAbiParameters } from 'abitype'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { AbiParameters } from './types.js'
 
 /**
@@ -107,7 +107,7 @@ export declare namespace AbiParameters_from {
       ? ParseAbiParameters<parameters>
       : parameters
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 AbiParameters_from.parseError = (error: unknown) =>

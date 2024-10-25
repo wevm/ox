@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 
 /** @internal */
@@ -7,5 +7,5 @@ export function Ens_encodeLabelhash(hash: Hex): `[${string}]` {
 }
 
 export declare namespace Ens_encodeLabelhash {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }

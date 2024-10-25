@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_assertSize } from './assertSize.js'
 import { Hex_padLeft } from './pad.js'
 import type { Hex } from './types.js'
@@ -45,7 +45,7 @@ export declare namespace Hex_fromBoolean {
   type ErrorType =
     | Hex_assertSize.ErrorType
     | Hex_padLeft.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Hex_fromBoolean.parseError = (error: unknown) =>

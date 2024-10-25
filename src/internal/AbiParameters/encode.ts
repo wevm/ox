@@ -1,6 +1,6 @@
 import * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import { BaseError } from '../Errors/base.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_fromBoolean } from '../Hex/fromBoolean.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
@@ -87,7 +87,7 @@ export declare namespace AbiParameters_encode {
     | AbiParameters_LengthMismatchError
     | encode.ErrorType
     | prepareParameters.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 AbiParameters_encode.parseError = (error: unknown) =>
@@ -125,7 +125,7 @@ export function prepareParameters<const parameters extends AbiParameters>({
 
 /** @internal */
 export declare namespace prepareParameters {
-  type ErrorType = prepareParameter.ErrorType | GlobalErrorType
+  type ErrorType = prepareParameter.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -187,7 +187,7 @@ export declare namespace prepareParameter {
     | encodeBytes.ErrorType
     | encodeString.ErrorType
     | AbiParameters_InvalidTypeError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /////////////////////////////////////////////////////////////////
@@ -229,7 +229,7 @@ export declare namespace encode {
     | Hex_concat.ErrorType
     | Hex_fromNumber.ErrorType
     | Hex_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /////////////////////////////////////////////////////////////////
@@ -245,7 +245,7 @@ export declare namespace encodeAddress {
   type ErrorType =
     | Address.assert.ErrorType
     | Hex_padLeft.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -302,7 +302,7 @@ export declare namespace encodeArray {
     | AbiParameters_ArrayLengthMismatchError
     | Hex_concat.ErrorType
     | Hex_fromNumber.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -341,7 +341,7 @@ export declare namespace encodeBytes {
     | Hex_padRight.ErrorType
     | Hex_fromNumber.ErrorType
     | Hex_slice.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -358,7 +358,7 @@ export declare namespace encodeBoolean {
   type ErrorType =
     | Hex_padLeft.ErrorType
     | Hex_fromBoolean.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -377,7 +377,7 @@ export function encodeNumber(
 
 /** @internal */
 export declare namespace encodeNumber {
-  type ErrorType = Hex_fromNumber.ErrorType | GlobalErrorType
+  type ErrorType = Hex_fromNumber.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -404,7 +404,7 @@ export declare namespace encodeString {
     | Hex_padRight.ErrorType
     | Hex_slice.ErrorType
     | Hex_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -438,7 +438,7 @@ export function encodeTuple<
 
 /** @internal */
 export declare namespace encodeTuple {
-  type ErrorType = Hex_concat.ErrorType | GlobalErrorType
+  type ErrorType = Hex_concat.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */

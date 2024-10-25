@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { TypedData_assert } from './assert.js'
 import type { TypedData } from './types.js'
 
@@ -48,7 +48,7 @@ export function TypedData_validate<
 }
 
 export declare namespace TypedData_validate {
-  type ErrorType = TypedData_assert.ErrorType | GlobalErrorType
+  type ErrorType = TypedData_assert.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

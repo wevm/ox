@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Base58_toHex } from './toHex.js'
 
 /**
@@ -22,7 +22,7 @@ export function Base58_toBytes(value: string): Bytes {
 }
 
 export declare namespace Base58_toBytes {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Base58_toBytes.parseError = (error: unknown) =>

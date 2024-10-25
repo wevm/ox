@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { AesGcm_ivLength } from './constants.js'
@@ -63,7 +63,10 @@ export declare namespace AesGcm_decrypt {
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
-  type ErrorType = Bytes_from.ErrorType | Hex_from.ErrorType | GlobalErrorType
+  type ErrorType =
+    | Bytes_from.ErrorType
+    | Hex_from.ErrorType
+    | Errors.GlobalErrorType
 }
 
 AesGcm_decrypt.parseError = (error: unknown) =>

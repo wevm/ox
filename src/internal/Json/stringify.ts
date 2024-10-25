@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 const bigIntSuffix = '#__bigint'
 
@@ -38,7 +38,7 @@ export function Json_stringify(
 }
 
 export declare namespace Json_stringify {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Json_stringify.parseError = (error: unknown) =>

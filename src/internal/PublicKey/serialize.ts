@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import type { Hex } from '../Hex/types.js'
@@ -68,7 +68,7 @@ export declare namespace PublicKey_serialize {
   type ErrorType =
     | Hex_fromNumber.ErrorType
     | Bytes_fromHex.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 PublicKey_serialize.parseError = (error: unknown) =>

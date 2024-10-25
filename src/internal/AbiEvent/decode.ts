@@ -1,8 +1,8 @@
 import type { AbiParameter } from 'abitype'
 import * as AbiEvent from '../../AbiEvent.js'
+import type * as Errors from '../../Errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import { Cursor_PositionOutOfBoundsError } from '../cursor.js'
@@ -203,7 +203,7 @@ export declare namespace decode {
     | AbiEvent.DataMismatchError
     | AbiEvent.SelectorTopicMismatchError
     | AbiEvent.TopicsMismatchError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 decode.parseError = (error: unknown) =>

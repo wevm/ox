@@ -1,5 +1,5 @@
 import { ens_normalize } from '@adraffy/ens-normalize'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Normalizes ENS name according to [ENSIP-15](https://github.com/ensdomains/docs/blob/9edf9443de4333a0ea7ec658a870672d5d180d53/ens-improvement-proposals/ensip-15-normalization-standard.md).
@@ -21,7 +21,7 @@ export function Ens_normalize(name: string): string {
 }
 
 export declare namespace Ens_normalize {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Ens_normalize.parseError = (error: unknown) =>

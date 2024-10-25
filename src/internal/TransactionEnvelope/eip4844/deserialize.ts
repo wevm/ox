@@ -1,8 +1,8 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../../Blobs/toSidecars.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import { Hex_validate } from '../../Hex/validate.js'
@@ -130,7 +130,7 @@ export function deserialize(
 }
 
 export declare namespace deserialize {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 deserialize.parseError = (error: unknown) =>

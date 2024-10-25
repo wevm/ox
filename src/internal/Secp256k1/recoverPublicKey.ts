@@ -1,7 +1,7 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { PublicKey_from } from '../PublicKey/from.js'
@@ -50,7 +50,7 @@ export declare namespace Secp256k1_recoverPublicKey {
   type ErrorType =
     | PublicKey_from.ErrorType
     | Hex_from.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Secp256k1_recoverPublicKey.parseError = (error: unknown) =>

@@ -1,10 +1,10 @@
+import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import type { OneOf } from '../../types.js'
 
@@ -77,7 +77,7 @@ export declare namespace hash {
     | TransactionEnvelopeEip2930.hash.ErrorType
     | TransactionEnvelopeEip4844.hash.ErrorType
     | TransactionEnvelopeEip7702.hash.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 hash.parseError = (error: unknown) =>

@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { RpcRequest_createStore } from '../RpcRequest/createStore.js'
 import type { RpcRequest } from '../RpcRequest/types.js'
 import { RpcResponse_parse } from '../RpcResponse/parse.js'
@@ -43,7 +43,7 @@ export declare namespace RpcTransport_create {
   type ErrorType =
     | RpcRequest_createStore.ErrorType
     | RpcResponse_parse.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /** @internal */

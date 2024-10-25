@@ -1,5 +1,5 @@
 import { p256 } from '@noble/curves/p256'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Signature } from '../Signature/types.js'
 import { WebAuthnP256_CredentialRequestFailedError } from './errors.js'
@@ -108,7 +108,7 @@ export declare namespace WebAuthnP256_sign {
   type ErrorType =
     | Hex_fromBytes.ErrorType
     | WebAuthnP256_getCredentialRequestOptions.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 WebAuthnP256_sign.parseError = (error: unknown) =>

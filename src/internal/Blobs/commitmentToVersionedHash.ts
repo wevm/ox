@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { sha256 } from '../Hash/sha256.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
@@ -88,7 +88,7 @@ export declare namespace Blobs_commitmentToVersionedHash {
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Blobs_commitmentToVersionedHash.parseError = (error: unknown) =>

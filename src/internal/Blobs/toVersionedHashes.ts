@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Compute } from '../types.js'
@@ -53,7 +53,7 @@ export declare namespace Blobs_toVersionedHashes {
   type ErrorType =
     | Blobs_toCommitments.ErrorType
     | Blobs_commitmentsToVersionedHashes.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Blobs_toVersionedHashes.parseError = (error: unknown) =>

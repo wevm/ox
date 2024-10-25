@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from './types.js'
 
 /**
@@ -20,7 +20,7 @@ export function Hex_size(value: Hex): number {
 }
 
 export declare namespace Hex_size {
-  export type ErrorType = GlobalErrorType
+  export type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

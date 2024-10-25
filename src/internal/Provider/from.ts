@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Provider_IsUndefinedError } from './errors.js'
 import type { Provider } from './types.js'
 
@@ -124,7 +124,7 @@ export function Provider_from<provider extends Provider | unknown>(
 }
 
 export declare namespace Provider_from {
-  type ErrorType = Provider_IsUndefinedError | GlobalErrorType
+  type ErrorType = Provider_IsUndefinedError | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

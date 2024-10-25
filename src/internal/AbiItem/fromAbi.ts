@@ -1,8 +1,8 @@
+import type * as Errors from '../../Errors.js'
 import type { Abi } from '../Abi/types.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import type { Address } from '../Address/types.js'
 import { validate } from '../Address/validate.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import { Hex_validate } from '../Hex/validate.js'
@@ -237,7 +237,7 @@ export declare namespace AbiItem_fromAbi {
         >
     : fallback
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 AbiItem_fromAbi.parseError = (error: unknown) =>

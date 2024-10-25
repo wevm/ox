@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_assertSize } from './assertSize.js'
 import { Bytes_InvalidBytesBooleanError } from './errors.js'
 import { Bytes_trimLeft } from './trim.js'
@@ -43,7 +43,7 @@ export declare namespace Bytes_toBoolean {
   type ErrorType =
     | Bytes_assertSize.ErrorType
     | Bytes_trimLeft.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Bytes_toBoolean.parseError = (error: unknown) =>
