@@ -87,13 +87,13 @@ export {
 export { Siwe_InvalidMessageFieldError } from './internal/Siwe/errors.js'
 
 export {
-  TransactionEnvelope_CannotInferTypeError as CannotInferTypeError,
-  TransactionEnvelope_FeeCapTooHighError as FeeCapTooHighError,
-  TransactionEnvelope_GasPriceTooHighError as GasPriceTooHighError,
-  TransactionEnvelope_InvalidChainIdError as InvalidChainIdError,
-  TransactionEnvelope_InvalidSerializedError as InvalidSerializedError,
-  TransactionEnvelope_TipAboveFeeCapError as TipAboveFeeCapError,
-  TransactionEnvelope_TypeNotImplementedError as TypeNotImplementedError,
+  CannotInferTypeError,
+  FeeCapTooHighError,
+  GasPriceTooHighError,
+  InvalidChainIdError,
+  InvalidSerializedError,
+  TipAboveFeeCapError,
+  TypeNotImplementedError,
 } from './internal/TransactionEnvelope/errors.js'
 
 export {

@@ -1,10 +1,9 @@
 import * as Address from '../../../Address.js'
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import type * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
-import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
-import { TransactionEnvelope_InvalidChainIdError } from '../errors.js'
-import type { TransactionEnvelopeEip7702 } from './types.js'
 
 /**
  * Asserts a {@link ox#TransactionEnvelope.Eip7702} is valid.
@@ -27,8 +26,8 @@ import type { TransactionEnvelopeEip7702 } from './types.js'
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function TransactionEnvelopeEip7702_assert(
-  envelope: PartialBy<TransactionEnvelopeEip7702, 'type'>,
+export function assert(
+  envelope: PartialBy<TransactionEnvelopeEip7702.TransactionEnvelope, 'type'>,
 ) {
   const { authorizationList } = envelope
   if (authorizationList) {
@@ -36,21 +35,21 @@ export function TransactionEnvelopeEip7702_assert(
       const { address, chainId } = authorization
       if (address) Address.assert(address, { strict: false })
       if (Number(chainId) < 0)
-        throw new TransactionEnvelope_InvalidChainIdError({ chainId })
+        throw new TransactionEnvelope.InvalidChainIdError({ chainId })
     }
   }
-  TransactionEnvelopeEip1559_assert(
-    envelope as {} as TransactionEnvelopeEip1559,
+  TransactionEnvelopeEip1559.assert(
+    envelope as {} as TransactionEnvelopeEip1559.TransactionEnvelope,
   )
 }
 
-export declare namespace TransactionEnvelopeEip7702_assert {
+export declare namespace assert {
   type ErrorType =
     | Address.assert.ErrorType
-    | TransactionEnvelope_InvalidChainIdError
+    | TransactionEnvelope.InvalidChainIdError
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip7702_assert.parseError = (error: unknown) =>
+assert.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip7702_assert.ErrorType
+  error as assert.ErrorType

@@ -1,6 +1,6 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Signature_extract } from '../../Signature/extract.js'
-import { TransactionEnvelope_TypeNotImplementedError } from '../../TransactionEnvelope/errors.js'
 import { TransactionEip1559_toRpc } from '../eip1559/toRpc.js'
 import { TransactionEip2930_toRpc } from '../eip2930/toRpc.js'
 import { TransactionEip4844_toRpc } from '../eip4844/toRpc.js'
@@ -56,7 +56,7 @@ export function Transaction_toRpc<pending extends boolean = false>(
     return TransactionEip4844_toRpc(transaction as never) as never
   if (transaction.type === 'eip7702')
     return TransactionEip7702_toRpc(transaction as never) as never
-  throw new TransactionEnvelope_TypeNotImplementedError({
+  throw new TransactionEnvelope.TypeNotImplementedError({
     type: (transaction as any).type,
   })
 }

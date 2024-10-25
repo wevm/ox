@@ -101,7 +101,7 @@ test('exports', () => {
       "Solidity_minInt240",
       "Solidity_minInt248",
       "Solidity_minInt256",
-      "Value_exponents",
+      "exponents",
     ]
   `)
 })

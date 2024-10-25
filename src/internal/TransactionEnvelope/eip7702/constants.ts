@@ -1,3 +1,3 @@
-export const TransactionEnvelopeEip7702_serializedType = '0x04'
+export const serializedType = '0x04'
 
-export const TransactionEnvelopeEip7702_type = 'eip7702'
+export const type = 'eip7702'

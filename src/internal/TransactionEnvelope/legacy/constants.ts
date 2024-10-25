@@ -1,1 +1,1 @@
-export const TransactionEnvelopeLegacy_type = 'legacy'
+export const type = 'legacy'

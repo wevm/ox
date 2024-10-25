@@ -1,3 +1,5 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_slice } from '../../Hex/slice.js'
@@ -6,12 +8,6 @@ import { Hex_validate } from '../../Hex/validate.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_fromTuple } from '../../Signature/fromTuple.js'
 import type { Compute } from '../../types.js'
-import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
-import { TransactionEnvelopeEip1559_assert } from './assert.js'
-import type {
-  TransactionEnvelopeEip1559,
-  TransactionEnvelopeEip1559_Serialized,
-} from './types.js'
 
 /**
  * Deserializes a {@link ox#TransactionEnvelope.Eip1559} from its serialized form.
@@ -34,9 +30,9 @@ import type {
  * @param serializedTransaction - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
-export function TransactionEnvelopeEip1559_deserialize(
-  serializedTransaction: TransactionEnvelopeEip1559_Serialized,
-): TransactionEnvelopeEip1559_deserialize.ReturnType {
+export function deserialize(
+  serializedTransaction: TransactionEnvelopeEip1559.Serialized,
+): deserialize.ReturnType {
   const transactionArray = Rlp_toHex(Hex_slice(serializedTransaction, 1))
 
   const [
@@ -55,7 +51,7 @@ export function TransactionEnvelopeEip1559_deserialize(
   ] = transactionArray as readonly Hex[]
 
   if (!(transactionArray.length === 9 || transactionArray.length === 12))
-    throw new TransactionEnvelope_InvalidSerializedError({
+    throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         chainId,
         nonce,
@@ -81,7 +77,7 @@ export function TransactionEnvelopeEip1559_deserialize(
   let transaction = {
     chainId: Number(chainId),
     type: 'eip1559',
-  } as TransactionEnvelopeEip1559
+  } as TransactionEnvelopeEip1559.TransactionEnvelope
   if (Hex_validate(to) && to !== '0x') transaction.to = to
   if (Hex_validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
   if (Hex_validate(data) && data !== '0x') transaction.data = data
@@ -100,19 +96,19 @@ export function TransactionEnvelopeEip1559_deserialize(
     transaction = {
       ...transaction,
       ...signature,
-    } as TransactionEnvelopeEip1559
+    } as TransactionEnvelopeEip1559.TransactionEnvelope
 
-  TransactionEnvelopeEip1559_assert(transaction)
+  TransactionEnvelopeEip1559.assert(transaction)
 
   return transaction
 }
 
-export declare namespace TransactionEnvelopeEip1559_deserialize {
-  type ReturnType = Compute<TransactionEnvelopeEip1559>
+export declare namespace deserialize {
+  type ReturnType = Compute<TransactionEnvelopeEip1559.TransactionEnvelope>
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = TransactionEnvelopeEip1559.assert.ErrorType | GlobalErrorType
 }
 
-TransactionEnvelopeEip1559_deserialize.parseError = (error: unknown) =>
+deserialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip1559_deserialize.ErrorType
+  error as deserialize.ErrorType

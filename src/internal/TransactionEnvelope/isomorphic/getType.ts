@@ -1,3 +1,9 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import type * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import type * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
+import type * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
+import type * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
+import type * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type {
   FeeValuesEip1559,
@@ -14,53 +20,20 @@ import type {
   OneOf,
   ValueOf,
 } from '../../types.js'
-import type {
-  TransactionEnvelopeEip1559,
-  TransactionEnvelopeEip1559_Serialized,
-} from '../eip1559/types.js'
-import type {
-  TransactionEnvelopeEip2930,
-  TransactionEnvelopeEip2930_Serialized,
-} from '../eip2930/types.js'
-import type {
-  TransactionEnvelopeEip4844,
-  TransactionEnvelopeEip4844_Serialized,
-} from '../eip4844/types.js'
-import type {
-  TransactionEnvelopeEip7702,
-  TransactionEnvelopeEip7702_Serialized,
-} from '../eip7702/types.js'
-import {
-  TransactionEnvelope_CannotInferTypeError,
-  TransactionEnvelope_TypeNotImplementedError,
-} from '../errors.js'
-import type {
-  TransactionEnvelopeLegacy,
-  TransactionEnvelopeLegacy_Serialized,
-} from '../legacy/types.js'
-import type {
-  TransactionEnvelope,
-  TransactionEnvelope_Serialized,
-  TransactionEnvelope_Type,
-} from './types.js'
 
 /** @internal */
-export type TransactionEnvelope_GetType<
-  transaction extends
-    | TransactionEnvelope_Serialized
-    | OneOf<TransactionEnvelope_Generic>,
-> = transaction extends OneOf<TransactionEnvelope_Generic>
-  ? TransactionEnvelope_GetTypeFromObject<transaction>
-  : transaction extends TransactionEnvelope_Serialized
-    ? TransactionEnvelope_GetTypeFromSerialized<transaction>
+export type GetType<
+  transaction extends TransactionEnvelope.Serialized | OneOf<Generic>,
+> = transaction extends OneOf<Generic>
+  ? GetTypeFromObject<transaction>
+  : transaction extends TransactionEnvelope.Serialized
+    ? GetTypeFromSerialized<transaction>
     : never
 
 /** @internal */
-export function TransactionEnvelope_getType<
-  const transaction extends
-    | TransactionEnvelope_Serialized
-    | OneOf<TransactionEnvelope_Generic>,
->(transaction: transaction): TransactionEnvelope_GetType<transaction> {
+export function getType<
+  const transaction extends TransactionEnvelope.Serialized | OneOf<Generic>,
+>(transaction: transaction): GetType<transaction> {
   if (typeof transaction === 'string') {
     const serializedType = Hex_slice(transaction as Hex, 0, 1)
     if (serializedType !== '0x' && Number(serializedType) >= 0xc0)
@@ -69,13 +42,12 @@ export function TransactionEnvelope_getType<
     if (serializedType === '0x02') return 'eip1559' as never
     if (serializedType === '0x03') return 'eip4844' as never
     if (serializedType === '0x04') return 'eip7702' as never
-    throw new TransactionEnvelope_TypeNotImplementedError({
+    throw new TransactionEnvelope.TypeNotImplementedError({
       type: serializedType,
     })
   }
 
-  if (transaction.type)
-    return transaction.type as TransactionEnvelope_GetType<transaction>
+  if (transaction.type) return transaction.type as GetType<transaction>
 
   if (typeof transaction.authorizationList !== 'undefined')
     return 'eip7702' as never
@@ -99,12 +71,12 @@ export function TransactionEnvelope_getType<
     return 'legacy' as never
   }
 
-  throw new TransactionEnvelope_CannotInferTypeError({ transaction })
+  throw new TransactionEnvelope.CannotInferTypeError({ transaction })
 }
 
 /** @internal */
-export declare namespace TransactionEnvelope_getType {
-  type ErrorType = TransactionEnvelope_CannotInferTypeError | GlobalErrorType
+export declare namespace getType {
+  type ErrorType = TransactionEnvelope.CannotInferTypeError | GlobalErrorType
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,42 +84,21 @@ export declare namespace TransactionEnvelope_getType {
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type TransactionEnvelope_Generic = Assign<
-  ExactPartial<TransactionEnvelope>,
-  { type?: TransactionEnvelope_Type | undefined }
+export type Generic = Assign<
+  ExactPartial<TransactionEnvelope.TransactionEnvelope>,
+  { type?: TransactionEnvelope.Type | undefined }
 >
 
 /** @internal */
-export type TransactionEnvelope_GetTypeFromObject<
-  transaction extends
-    OneOf<TransactionEnvelope_Generic> = TransactionEnvelope_Generic,
+export type GetTypeFromObject<
+  transaction extends OneOf<Generic> = Generic,
   result =
-    | (transaction extends
-        | MatchKeys<TransactionEnvelopeLegacy, transaction>
-        | LegacyProperties
-        ? 'legacy'
-        : never)
-    | (transaction extends
-        | MatchKeys<TransactionEnvelopeEip1559, transaction>
-        | Eip1559Properties
-        ? 'eip1559'
-        : never)
-    | (transaction extends
-        | MatchKeys<TransactionEnvelopeEip2930, transaction>
-        | Eip2930Properties
-        ? 'eip2930'
-        : never)
-    | (transaction extends
-        | MatchKeys<TransactionEnvelopeEip4844, transaction>
-        | Eip4844Properties
-        ? 'eip4844'
-        : never)
-    | (transaction extends
-        | MatchKeys<TransactionEnvelopeEip7702, transaction>
-        | Eip7702Properties
-        ? 'eip7702'
-        : never)
-    | (transaction['type'] extends TransactionEnvelope_Generic['type']
+    | (transaction extends LegacyProperties ? 'legacy' : never)
+    | (transaction extends Eip1559Properties ? 'eip1559' : never)
+    | (transaction extends Eip2930Properties ? 'eip2930' : never)
+    | (transaction extends Eip4844Properties ? 'eip4844' : never)
+    | (transaction extends Eip7702Properties ? 'eip7702' : never)
+    | (transaction['type'] extends Generic['type']
         ? Extract<transaction['type'], string>
         : never),
 > = IsNever<keyof transaction> extends true
@@ -157,30 +108,30 @@ export type TransactionEnvelope_GetTypeFromObject<
     : string
 
 /** @internal */
-export type TransactionEnvelope_GetTypeFromSerialized<
+export type GetTypeFromSerialized<
   serializedTransaction extends
-    TransactionEnvelope_Serialized = TransactionEnvelope_Serialized,
+    TransactionEnvelope.Serialized = TransactionEnvelope.Serialized,
   result =
-    | (serializedTransaction extends TransactionEnvelopeEip1559_Serialized
+    | (serializedTransaction extends TransactionEnvelopeEip1559.Serialized
         ? 'eip1559'
         : never)
-    | (serializedTransaction extends TransactionEnvelopeEip2930_Serialized
+    | (serializedTransaction extends TransactionEnvelopeEip2930.Serialized
         ? 'eip2930'
         : never)
-    | (serializedTransaction extends TransactionEnvelopeEip4844_Serialized
+    | (serializedTransaction extends TransactionEnvelopeEip4844.Serialized
         ? 'eip4844'
         : never)
-    | (serializedTransaction extends TransactionEnvelopeEip7702_Serialized
+    | (serializedTransaction extends TransactionEnvelopeEip7702.Serialized
         ? 'eip7702'
         : never)
-    | (serializedTransaction extends TransactionEnvelopeLegacy_Serialized
+    | (serializedTransaction extends TransactionEnvelopeLegacy.Serialized
         ? 'legacy'
         : never),
 > = IsNarrowable<serializedTransaction, Hex> extends true
   ? IsNever<result> extends false
     ? result
-    : TransactionEnvelope_Type
-  : TransactionEnvelope_Type
+    : TransactionEnvelope.Type
+  : TransactionEnvelope.Type
 
 /** @internal */
 export type MatchKeys<T extends object, U extends object> = ValueOf<
@@ -218,7 +169,9 @@ export type Eip1559Properties = Assign<
       }
     | FeeValuesEip1559
   > & {
-    accessList?: TransactionEnvelopeEip2930['accessList'] | undefined
+    accessList?:
+      | TransactionEnvelopeEip2930.TransactionEnvelope['accessList']
+      | undefined
   }
 >
 
@@ -226,7 +179,7 @@ export type Eip1559Properties = Assign<
 export type Eip2930Properties = Assign<
   BaseProperties,
   ExactPartial<FeeValuesLegacy> & {
-    accessList: TransactionEnvelopeEip2930['accessList']
+    accessList: TransactionEnvelopeEip2930.TransactionEnvelope['accessList']
   }
 >
 
@@ -236,12 +189,12 @@ export type Eip4844Properties = Assign<
   ExactPartial<FeeValuesEip4844> &
     OneOf<
       | {
-          blobVersionedHashes: TransactionEnvelopeEip4844['blobVersionedHashes']
+          blobVersionedHashes: TransactionEnvelopeEip4844.TransactionEnvelope['blobVersionedHashes']
         }
       | {
-          sidecars: TransactionEnvelopeEip4844['sidecars']
+          sidecars: TransactionEnvelopeEip4844.TransactionEnvelope['sidecars']
         },
-      TransactionEnvelopeEip4844
+      TransactionEnvelopeEip4844.TransactionEnvelope
     >
 >
 
@@ -249,6 +202,6 @@ export type Eip4844Properties = Assign<
 export type Eip7702Properties = Assign<
   BaseProperties,
   ExactPartial<FeeValuesEip1559> & {
-    authorizationList: TransactionEnvelopeEip7702['authorizationList']
+    authorizationList: TransactionEnvelopeEip7702.TransactionEnvelope['authorizationList']
   }
 >

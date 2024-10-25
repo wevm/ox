@@ -1,12 +1,10 @@
+import type * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import { Signature_from } from '../../Signature/from.js'
 import type { Signature } from '../../Signature/types.js'
 import type { Assign, Compute, UnionPartialBy } from '../../types.js'
-import type { TransactionEnvelope } from '../isomorphic/types.js'
-import { TransactionEnvelopeLegacy_assert } from './assert.js'
-import { TransactionEnvelopeLegacy_deserialize } from './deserialize.js'
-import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
  * Converts an arbitrary transaction object into a legacy Transaction Envelope.
@@ -80,24 +78,27 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * @param options -
  * @returns A legacy Transaction Envelope.
  */
-export function TransactionEnvelopeLegacy_from<
+export function from<
   const envelope extends
-    | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
+    | UnionPartialBy<TransactionEnvelopeLegacy.TransactionEnvelope, 'type'>
     | Hex,
   const signature extends Signature | undefined = undefined,
 >(
-  envelope: envelope | UnionPartialBy<TransactionEnvelopeLegacy, 'type'> | Hex,
-  options: TransactionEnvelopeLegacy_from.Options<signature> = {},
-): TransactionEnvelopeLegacy_from.ReturnType<envelope, signature> {
+  envelope:
+    | envelope
+    | UnionPartialBy<TransactionEnvelopeLegacy.TransactionEnvelope, 'type'>
+    | Hex,
+  options: from.Options<signature> = {},
+): from.ReturnType<envelope, signature> {
   const { signature } = options
 
   const envelope_ = (
     typeof envelope === 'string'
-      ? TransactionEnvelopeLegacy_deserialize(envelope)
+      ? TransactionEnvelopeLegacy.deserialize(envelope)
       : envelope
-  ) as TransactionEnvelopeLegacy
+  ) as TransactionEnvelopeLegacy.TransactionEnvelope
 
-  TransactionEnvelopeLegacy_assert(envelope_)
+  TransactionEnvelopeLegacy.assert(envelope_)
 
   const signature_ = (() => {
     if (!signature) return {}
@@ -113,19 +114,19 @@ export function TransactionEnvelopeLegacy_from<
   } as never
 }
 
-export declare namespace TransactionEnvelopeLegacy_from {
+export declare namespace from {
   type Options<signature extends Signature | undefined = undefined> = {
     signature?: signature | Signature | undefined
   }
 
   type ReturnType<
-    envelope extends UnionPartialBy<TransactionEnvelope, 'type'> | Hex =
-      | TransactionEnvelopeLegacy
-      | Hex,
+    envelope extends
+      | UnionPartialBy<TransactionEnvelope.TransactionEnvelope, 'type'>
+      | Hex = TransactionEnvelopeLegacy.TransactionEnvelope | Hex,
     signature extends Signature | undefined = undefined,
   > = Compute<
     envelope extends Hex
-      ? TransactionEnvelopeLegacy
+      ? TransactionEnvelopeLegacy.TransactionEnvelope
       : Assign<
           envelope,
           (signature extends Signature
@@ -141,11 +142,11 @@ export declare namespace TransactionEnvelopeLegacy_from {
   >
 
   type ErrorType =
-    | TransactionEnvelopeLegacy_deserialize.ErrorType
-    | TransactionEnvelopeLegacy_assert.ErrorType
+    | TransactionEnvelopeLegacy.deserialize.ErrorType
+    | TransactionEnvelopeLegacy.assert.ErrorType
     | GlobalErrorType
 }
 
-TransactionEnvelopeLegacy_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeLegacy_from.ErrorType
+  error as from.ErrorType

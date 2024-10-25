@@ -3033,8 +3033,6 @@ export * as TransactionRequest from './TransactionRequest.js'
  */
 export * as TypedData from './TypedData.js'
 
-export * as Types from './Types.js'
-
 /**
  * Utilities & types for working with [EIP-191 Validator Data](https://eips.ethereum.org/EIPS/eip-191#0x00)
  *

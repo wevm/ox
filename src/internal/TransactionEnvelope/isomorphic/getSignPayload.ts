@@ -1,12 +1,11 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
+import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
+import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
-import { TransactionEnvelopeEip1559_getSignPayload } from '../eip1559/getSignPayload.js'
-import { TransactionEnvelopeEip2930_getSignPayload } from '../eip2930/getSignPayload.js'
-import { TransactionEnvelopeEip4844_getSignPayload } from '../eip4844/getSignPayload.js'
-import { TransactionEnvelopeEip7702_getSignPayload } from '../eip7702/getSignPayload.js'
-import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
-import { TransactionEnvelopeLegacy_getSignPayload } from '../legacy/getSignPayload.js'
-import type { TransactionEnvelope } from './types.js'
 
 /**
  * Returns the payload to sign for a {@link ox#TransactionEnvelope.TransactionEnvelope}.
@@ -38,37 +37,37 @@ import type { TransactionEnvelope } from './types.js'
  * @param envelope - The transaction envelope to get the sign payload for.
  * @returns The sign payload.
  */
-export function TransactionEnvelope_getSignPayload(
-  envelope: TransactionEnvelope<false>,
-): TransactionEnvelope_getSignPayload.ReturnType {
+export function getSignPayload(
+  envelope: TransactionEnvelope.TransactionEnvelope,
+): getSignPayload.ReturnType {
   if (envelope.type === 'legacy')
-    return TransactionEnvelopeLegacy_getSignPayload(envelope)
+    return TransactionEnvelopeLegacy.getSignPayload(envelope)
   if (envelope.type === 'eip2930')
-    return TransactionEnvelopeEip2930_getSignPayload(envelope)
+    return TransactionEnvelopeEip2930.getSignPayload(envelope)
   if (envelope.type === 'eip1559')
-    return TransactionEnvelopeEip1559_getSignPayload(envelope)
+    return TransactionEnvelopeEip1559.getSignPayload(envelope)
   if (envelope.type === 'eip4844')
-    return TransactionEnvelopeEip4844_getSignPayload(envelope)
+    return TransactionEnvelopeEip4844.getSignPayload(envelope)
   if (envelope.type === 'eip7702')
-    return TransactionEnvelopeEip7702_getSignPayload(envelope)
+    return TransactionEnvelopeEip7702.getSignPayload(envelope)
 
-  throw new TransactionEnvelope_TypeNotImplementedError({
+  throw new TransactionEnvelope.TypeNotImplementedError({
     type: (envelope as any).type,
   })
 }
 
-export declare namespace TransactionEnvelope_getSignPayload {
+export declare namespace getSignPayload {
   type ReturnType = Hex
 
   type ErrorType =
-    | TransactionEnvelopeLegacy_getSignPayload.ErrorType
-    | TransactionEnvelopeEip1559_getSignPayload.ErrorType
-    | TransactionEnvelopeEip2930_getSignPayload.ErrorType
-    | TransactionEnvelopeEip4844_getSignPayload.ErrorType
-    | TransactionEnvelopeEip7702_getSignPayload.ErrorType
+    | TransactionEnvelopeLegacy.getSignPayload.ErrorType
+    | TransactionEnvelopeEip1559.getSignPayload.ErrorType
+    | TransactionEnvelopeEip2930.getSignPayload.ErrorType
+    | TransactionEnvelopeEip4844.getSignPayload.ErrorType
+    | TransactionEnvelopeEip7702.getSignPayload.ErrorType
     | GlobalErrorType
 }
 
-TransactionEnvelope_getSignPayload.parseError = (error: unknown) =>
+getSignPayload.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelope_getSignPayload.ErrorType
+  error as getSignPayload.ErrorType

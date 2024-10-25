@@ -4,13 +4,13 @@ import * as exports from './Authorization.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "getSignPayload",
-      "hash",
       "from",
       "fromRpc",
       "fromRpcList",
       "fromTuple",
       "fromTupleList",
+      "getSignPayload",
+      "hash",
       "toRpc",
       "toRpcList",
       "toTuple",

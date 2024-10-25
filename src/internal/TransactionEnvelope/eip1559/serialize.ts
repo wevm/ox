@@ -1,3 +1,4 @@
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_concat } from '../../Hex/concat.js'
@@ -7,12 +8,6 @@ import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toTuple } from '../../Signature/toTuple.js'
 import type { Signature } from '../../Signature/types.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeEip1559_assert } from './assert.js'
-import { TransactionEnvelopeEip1559_serializedType } from './constants.js'
-import type {
-  TransactionEnvelopeEip1559,
-  TransactionEnvelopeEip1559_Serialized,
-} from './types.js'
 
 /**
  * Serializes a {@link ox#TransactionEnvelope.Eip1559}.
@@ -64,10 +59,10 @@ import type {
  * @param options -
  * @returns The serialized Transaction Envelope.
  */
-export function TransactionEnvelopeEip1559_serialize(
-  envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
-  options: TransactionEnvelopeEip1559_serialize.Options = {},
-): TransactionEnvelopeEip1559_Serialized {
+export function serialize(
+  envelope: PartialBy<TransactionEnvelopeEip1559.TransactionEnvelope, 'type'>,
+  options: TransactionEnvelopeEip1559.serialize.Options = {},
+): TransactionEnvelopeEip1559.Serialized {
   const {
     chainId,
     gas,
@@ -81,7 +76,7 @@ export function TransactionEnvelopeEip1559_serialize(
     input,
   } = envelope
 
-  TransactionEnvelopeEip1559_assert(envelope)
+  TransactionEnvelopeEip1559.assert(envelope)
 
   const accessTupleList = AccessList_toTupleList(accessList)
 
@@ -101,19 +96,19 @@ export function TransactionEnvelopeEip1559_serialize(
   ]
 
   return Hex_concat(
-    TransactionEnvelopeEip1559_serializedType,
+    TransactionEnvelopeEip1559.serializedType,
     Rlp_fromHex(serializedTransaction),
-  ) as TransactionEnvelopeEip1559_Serialized
+  ) as TransactionEnvelopeEip1559.Serialized
 }
 
-export declare namespace TransactionEnvelopeEip1559_serialize {
+export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
   }
 
   type ErrorType =
-    | TransactionEnvelopeEip1559_assert.ErrorType
+    | TransactionEnvelopeEip1559.assert.ErrorType
     | Hex_fromNumber.ErrorType
     | Signature_toTuple.ErrorType
     | Hex_concat.ErrorType
@@ -121,6 +116,6 @@ export declare namespace TransactionEnvelopeEip1559_serialize {
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip1559_serialize.parseError = (error: unknown) =>
+serialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip1559_serialize.ErrorType
+  error as serialize.ErrorType

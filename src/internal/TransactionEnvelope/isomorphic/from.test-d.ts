@@ -1,34 +1,37 @@
 import { TransactionEnvelope, Value } from 'ox'
 import { expectTypeOf, test } from 'vitest'
+import type * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
 import type { TransactionEnvelopeEip2930 } from '../eip2930/types.js'
 import type { TransactionEnvelopeEip4844 } from '../eip4844/types.js'
 import type { TransactionEnvelopeEip7702 } from '../eip7702/types.js'
-import type {
-  TransactionEnvelopeLegacy,
-  TransactionEnvelopeLegacy_Serialized,
-} from '../legacy/types.js'
 
 test('legacy', () => {
   {
     const envelope = TransactionEnvelope.from({
       gasPrice: 1n,
     })
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelope>()
   }
 
   {
     const envelope = TransactionEnvelope.from(
-      '0xabc' as TransactionEnvelopeLegacy_Serialized,
+      '0xabc' as TransactionEnvelopeLegacy.Serialized,
     )
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelope>()
   }
 
   {
     const envelope = TransactionEnvelope.from({
       type: 'legacy',
     })
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelope>()
   }
 })
 

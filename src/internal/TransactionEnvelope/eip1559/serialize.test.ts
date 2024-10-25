@@ -241,7 +241,7 @@ test('behavior: network', async () => {
   expect(response).toMatchInlineSnapshot(`
     {
       "blobGasPrice": "0x1",
-      "blockHash": "0x7b7a9129b1b94f9aa3d52ae696d3005b74bea426844850bb456ae9e3a493a78e",
+      "blockHash": "0xd5d12e83c8bb2c226302cb52a72dbd7107c83a84490f191911129805dd92ca20",
       "blockNumber": "0x12f2975",
       "contractAddress": null,
       "cumulativeGasUsed": "0x5208",

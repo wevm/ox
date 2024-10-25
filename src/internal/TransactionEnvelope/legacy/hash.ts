@@ -1,8 +1,7 @@
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { keccak256 } from '../../Hash/keccak256.js'
 import type { Hex } from '../../Hex/types.js'
-import { TransactionEnvelopeLegacy_serialize } from './serialize.js'
-import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
  * Hashes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelope}. This is the "transaction hash".
@@ -34,13 +33,13 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * @param options -
  * @returns The hash of the transaction envelope.
  */
-export function TransactionEnvelopeLegacy_hash<presign extends boolean = false>(
-  envelope: TransactionEnvelopeLegacy<presign extends true ? false : true>,
-  options: TransactionEnvelopeLegacy_hash.Options<presign> = {},
-): TransactionEnvelopeLegacy_hash.ReturnType {
+export function hash(
+  envelope: TransactionEnvelopeLegacy.TransactionEnvelope,
+  options: hash.Options = {},
+): hash.ReturnType {
   const { presign } = options
   return keccak256(
-    TransactionEnvelopeLegacy_serialize({
+    TransactionEnvelopeLegacy.serialize({
       ...envelope,
       ...(presign
         ? {
@@ -54,20 +53,20 @@ export function TransactionEnvelopeLegacy_hash<presign extends boolean = false>(
   )
 }
 
-export declare namespace TransactionEnvelopeLegacy_hash {
-  type Options<presign extends boolean = false> = {
+export declare namespace hash {
+  type Options = {
     /** Whether to hash this transaction for signing. @default false */
-    presign?: presign | boolean | undefined
+    presign?: boolean | undefined
   }
 
   type ReturnType = Hex
 
   type ErrorType =
     | keccak256.ErrorType
-    | TransactionEnvelopeLegacy_serialize.ErrorType
+    | TransactionEnvelopeLegacy.serialize.ErrorType
     | GlobalErrorType
 }
 
-TransactionEnvelopeLegacy_hash.parseError = (error: unknown) =>
+hash.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeLegacy_hash.ErrorType
+  error as hash.ErrorType

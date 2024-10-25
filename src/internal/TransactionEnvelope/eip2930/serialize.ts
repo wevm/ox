@@ -1,3 +1,4 @@
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_concat } from '../../Hex/concat.js'
@@ -7,11 +8,6 @@ import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toTuple } from '../../Signature/toTuple.js'
 import type { Signature } from '../../Signature/types.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeEip2930_assert } from './assert.js'
-import type {
-  TransactionEnvelopeEip2930,
-  TransactionEnvelopeEip2930_Serialized,
-} from './types.js'
 
 /**
  * Serializes a {@link ox#TransactionEnvelope.Eip2930}.
@@ -61,14 +57,14 @@ import type {
  * @param options -
  * @returns The serialized Transaction Envelope.
  */
-export function TransactionEnvelopeEip2930_serialize(
-  envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
-  options: TransactionEnvelopeEip2930_serialize.Options = {},
-): TransactionEnvelopeEip2930_Serialized {
+export function serialize(
+  envelope: PartialBy<TransactionEnvelopeEip2930.TransactionEnvelope, 'type'>,
+  options: serialize.Options = {},
+): TransactionEnvelopeEip2930.Serialized {
   const { chainId, gas, data, input, nonce, to, value, accessList, gasPrice } =
     envelope
 
-  TransactionEnvelopeEip2930_assert(envelope)
+  TransactionEnvelopeEip2930.assert(envelope)
 
   const accessTupleList = AccessList_toTupleList(accessList)
 
@@ -89,17 +85,17 @@ export function TransactionEnvelopeEip2930_serialize(
   return Hex_concat(
     '0x01',
     Rlp_fromHex(serializedTransaction),
-  ) as TransactionEnvelopeEip2930_Serialized
+  ) as TransactionEnvelopeEip2930.Serialized
 }
 
-export declare namespace TransactionEnvelopeEip2930_serialize {
+export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
   }
 
   type ErrorType =
-    | TransactionEnvelopeEip2930_assert.ErrorType
+    | TransactionEnvelopeEip2930.assert.ErrorType
     | Hex_fromNumber.ErrorType
     | Signature_toTuple.ErrorType
     | Hex_concat.ErrorType
@@ -107,6 +103,6 @@ export declare namespace TransactionEnvelopeEip2930_serialize {
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip2930_serialize.parseError = (error: unknown) =>
+serialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip2930_serialize.ErrorType
+  error as serialize.ErrorType

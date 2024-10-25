@@ -1,7 +1,6 @@
+import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
-import { TransactionEnvelopeEip4844_hash } from './hash.js'
-import type { TransactionEnvelopeEip4844 } from './types.js'
 
 /**
  * Returns the payload to sign for a {@link ox#TransactionEnvelope.Eip4844}.
@@ -37,18 +36,18 @@ import type { TransactionEnvelopeEip4844 } from './types.js'
  * @param envelope - The transaction envelope to get the sign payload for.
  * @returns The sign payload.
  */
-export function TransactionEnvelopeEip4844_getSignPayload(
-  envelope: TransactionEnvelopeEip4844,
-): TransactionEnvelopeEip4844_getSignPayload.ReturnType {
-  return TransactionEnvelopeEip4844_hash(envelope, { presign: true })
+export function getSignPayload(
+  envelope: TransactionEnvelopeEip4844.TransactionEnvelope,
+): getSignPayload.ReturnType {
+  return TransactionEnvelopeEip4844.hash(envelope, { presign: true })
 }
 
-export declare namespace TransactionEnvelopeEip4844_getSignPayload {
+export declare namespace getSignPayload {
   type ReturnType = Hex
 
-  type ErrorType = TransactionEnvelopeEip4844_hash.ErrorType | GlobalErrorType
+  type ErrorType = TransactionEnvelopeEip4844.hash.ErrorType | GlobalErrorType
 }
 
-TransactionEnvelopeEip4844_getSignPayload.parseError = (error: unknown) =>
+getSignPayload.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip4844_getSignPayload.ErrorType
+  error as getSignPayload.ErrorType

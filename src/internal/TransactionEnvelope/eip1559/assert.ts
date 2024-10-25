@@ -1,12 +1,8 @@
 import * as Address from '../../../Address.js'
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import type * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.ts'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
-import {
-  TransactionEnvelope_FeeCapTooHighError,
-  TransactionEnvelope_InvalidChainIdError,
-  TransactionEnvelope_TipAboveFeeCapError,
-} from '../errors.js'
-import type { TransactionEnvelopeEip1559 } from './types.js'
 
 /**
  * Asserts a {@link ox#TransactionEnvelope.Eip1559} is valid.
@@ -28,35 +24,35 @@ import type { TransactionEnvelopeEip1559 } from './types.js'
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function TransactionEnvelopeEip1559_assert(
-  envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
+export function assert(
+  envelope: PartialBy<TransactionEnvelopeEip1559.TransactionEnvelope, 'type'>,
 ) {
   const { chainId, maxPriorityFeePerGas, maxFeePerGas, to } = envelope
   if (chainId <= 0)
-    throw new TransactionEnvelope_InvalidChainIdError({ chainId })
+    throw new TransactionEnvelope.InvalidChainIdError({ chainId })
   if (to) Address.assert(to, { strict: false })
   if (maxFeePerGas && BigInt(maxFeePerGas) > 2n ** 256n - 1n)
-    throw new TransactionEnvelope_FeeCapTooHighError({ feeCap: maxFeePerGas })
+    throw new TransactionEnvelope.FeeCapTooHighError({ feeCap: maxFeePerGas })
   if (
     maxPriorityFeePerGas &&
     maxFeePerGas &&
     maxPriorityFeePerGas > maxFeePerGas
   )
-    throw new TransactionEnvelope_TipAboveFeeCapError({
+    throw new TransactionEnvelope.TipAboveFeeCapError({
       maxFeePerGas,
       maxPriorityFeePerGas,
     })
 }
 
-export declare namespace TransactionEnvelopeEip1559_assert {
+export declare namespace assert {
   type ErrorType =
     | Address.assert.ErrorType
-    | TransactionEnvelope_InvalidChainIdError
-    | TransactionEnvelope_FeeCapTooHighError
-    | TransactionEnvelope_TipAboveFeeCapError
+    | TransactionEnvelope.InvalidChainIdError
+    | TransactionEnvelope.FeeCapTooHighError
+    | TransactionEnvelope.TipAboveFeeCapError
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip1559_assert.parseError = (error: unknown) =>
+assert.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip1559_assert.ErrorType
+  error as assert.ErrorType

@@ -1,13 +1,12 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
+import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
+import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import type { OneOf } from '../../types.js'
-import { TransactionEnvelopeEip1559_hash } from '../eip1559/hash.js'
-import { TransactionEnvelopeEip2930_hash } from '../eip2930/hash.js'
-import { TransactionEnvelopeEip4844_hash } from '../eip4844/hash.js'
-import { TransactionEnvelopeEip7702_hash } from '../eip7702/hash.js'
-import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
-import { TransactionEnvelopeLegacy_hash } from '../legacy/hash.js'
-import type { TransactionEnvelope } from './types.js'
 
 /**
  * Hashes a {@link ox#TransactionEnvelope.TransactionEnvelope}. This is the "transaction hash".
@@ -40,47 +39,47 @@ import type { TransactionEnvelope } from './types.js'
  * @param options -
  * @returns The hash of the transaction envelope.
  */
-export function TransactionEnvelope_hash<presign extends boolean = false>(
-  envelope: TransactionEnvelope<presign extends true ? false : true>,
-  options: TransactionEnvelope_hash.Options<presign> = {},
-): TransactionEnvelope_hash.ReturnType {
+export function hash(
+  envelope: TransactionEnvelope.TransactionEnvelope,
+  options: hash.Options = {},
+): hash.ReturnType {
   const envelope_ = envelope as any
   if (envelope_.type === 'legacy')
-    return TransactionEnvelopeLegacy_hash(envelope_, options)
+    return TransactionEnvelopeLegacy.hash(envelope_, options)
   if (envelope_.type === 'eip2930')
-    return TransactionEnvelopeEip2930_hash(envelope_, options)
+    return TransactionEnvelopeEip2930.hash(envelope_, options)
   if (envelope_.type === 'eip1559')
-    return TransactionEnvelopeEip1559_hash(envelope_, options)
+    return TransactionEnvelopeEip1559.hash(envelope_, options)
   if (envelope_.type === 'eip4844')
-    return TransactionEnvelopeEip4844_hash(envelope_, options)
+    return TransactionEnvelopeEip4844.hash(envelope_, options)
   if (envelope_.type === 'eip7702')
-    return TransactionEnvelopeEip7702_hash(envelope_, options)
+    return TransactionEnvelopeEip7702.hash(envelope_, options)
 
-  throw new TransactionEnvelope_TypeNotImplementedError({
+  throw new TransactionEnvelope.TypeNotImplementedError({
     type: envelope_.type,
   })
 }
 
-export declare namespace TransactionEnvelope_hash {
-  type Options<presign extends boolean = false> = OneOf<
-    | TransactionEnvelopeLegacy_hash.Options<presign>
-    | TransactionEnvelopeEip1559_hash.Options<presign>
-    | TransactionEnvelopeEip2930_hash.Options<presign>
-    | TransactionEnvelopeEip4844_hash.Options<presign>
-    | TransactionEnvelopeEip7702_hash.Options<presign>
+export declare namespace hash {
+  type Options = OneOf<
+    | TransactionEnvelopeLegacy.hash.Options
+    | TransactionEnvelopeEip1559.hash.Options
+    | TransactionEnvelopeEip2930.hash.Options
+    | TransactionEnvelopeEip4844.hash.Options
+    | TransactionEnvelopeEip7702.hash.Options
   >
 
   type ReturnType = Hex
 
   type ErrorType =
-    | TransactionEnvelopeLegacy_hash.ErrorType
-    | TransactionEnvelopeEip1559_hash.ErrorType
-    | TransactionEnvelopeEip2930_hash.ErrorType
-    | TransactionEnvelopeEip4844_hash.ErrorType
-    | TransactionEnvelopeEip7702_hash.ErrorType
+    | TransactionEnvelopeLegacy.hash.ErrorType
+    | TransactionEnvelopeEip1559.hash.ErrorType
+    | TransactionEnvelopeEip2930.hash.ErrorType
+    | TransactionEnvelopeEip4844.hash.ErrorType
+    | TransactionEnvelopeEip7702.hash.ErrorType
     | GlobalErrorType
 }
 
-TransactionEnvelope_hash.parseError = (error: unknown) =>
+hash.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelope_hash.ErrorType
+  error as hash.ErrorType

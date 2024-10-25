@@ -1,3 +1,4 @@
+import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
@@ -9,11 +10,6 @@ import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toTuple } from '../../Signature/toTuple.js'
 import type { Signature } from '../../Signature/types.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeEip4844_assert } from './assert.js'
-import type {
-  TransactionEnvelopeEip4844,
-  TransactionEnvelopeEip4844_Serialized,
-} from './types.js'
 
 /**
  * Serializes a {@link ox#TransactionEnvelope.Eip4844}.
@@ -79,10 +75,10 @@ import type {
  * @param options -
  * @returns The serialized Transaction Envelope.
  */
-export function TransactionEnvelopeEip4844_serialize(
-  envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
-  options: TransactionEnvelopeEip4844_serialize.Options = {},
-): TransactionEnvelopeEip4844_Serialized {
+export function serialize(
+  envelope: PartialBy<TransactionEnvelopeEip4844.TransactionEnvelope, 'type'>,
+  options: serialize.Options = {},
+): TransactionEnvelopeEip4844.Serialized {
   const {
     blobVersionedHashes,
     chainId,
@@ -97,7 +93,7 @@ export function TransactionEnvelopeEip4844_serialize(
     data,
   } = envelope
 
-  TransactionEnvelopeEip4844_assert(envelope)
+  TransactionEnvelopeEip4844.assert(envelope)
 
   const accessTupleList = AccessList_toTupleList(accessList)
 
@@ -137,10 +133,10 @@ export function TransactionEnvelopeEip4844_serialize(
         Rlp_fromHex([serializedTransaction, blobs, commitments, proofs])
       : // Otherwise, standard envelope is used:
         Rlp_fromHex(serializedTransaction),
-  ) as TransactionEnvelopeEip4844_Serialized
+  ) as TransactionEnvelopeEip4844.Serialized
 }
 
-export declare namespace TransactionEnvelopeEip4844_serialize {
+export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
@@ -149,7 +145,7 @@ export declare namespace TransactionEnvelopeEip4844_serialize {
   }
 
   type ErrorType =
-    | TransactionEnvelopeEip4844_assert.ErrorType
+    | TransactionEnvelopeEip4844.assert.ErrorType
     | Hex_fromNumber.ErrorType
     | Signature_toTuple.ErrorType
     | Hex_concat.ErrorType
@@ -157,6 +153,6 @@ export declare namespace TransactionEnvelopeEip4844_serialize {
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip4844_serialize.parseError = (error: unknown) =>
+serialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip4844_serialize.ErrorType
+  error as serialize.ErrorType

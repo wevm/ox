@@ -1,15 +1,10 @@
+import type * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import { Signature_from } from '../../Signature/from.js'
 import type { Signature } from '../../Signature/types.js'
 import type { Assign, Compute, UnionPartialBy } from '../../types.js'
-import type { TransactionEnvelope } from '../isomorphic/types.js'
-import { TransactionEnvelopeEip2930_assert } from './assert.js'
-import { TransactionEnvelopeEip2930_deserialize } from './deserialize.js'
-import type {
-  TransactionEnvelopeEip2930,
-  TransactionEnvelopeEip2930_Serialized,
-} from './types.js'
 
 /**
  * Converts an arbitrary transaction object into an EIP-2930 Transaction Envelope.
@@ -85,27 +80,27 @@ import type {
  * @param options -
  * @returns A {@link ox#TransactionEnvelopeEip2930.TransactionEnvelope}
  */
-export function TransactionEnvelopeEip2930_from<
+export function from<
   const envelope extends
-    | UnionPartialBy<TransactionEnvelopeEip2930, 'type'>
-    | TransactionEnvelopeEip2930_Serialized,
+    | UnionPartialBy<TransactionEnvelopeEip2930.TransactionEnvelope, 'type'>
+    | TransactionEnvelopeEip2930.Serialized,
   const signature extends Signature | undefined = undefined,
 >(
   envelope:
     | envelope
-    | UnionPartialBy<TransactionEnvelopeEip2930, 'type'>
-    | TransactionEnvelopeEip2930_Serialized,
-  options: TransactionEnvelopeEip2930_from.Options<signature> = {},
-): TransactionEnvelopeEip2930_from.ReturnType<envelope, signature> {
+    | UnionPartialBy<TransactionEnvelopeEip2930.TransactionEnvelope, 'type'>
+    | TransactionEnvelopeEip2930.Serialized,
+  options: from.Options<signature> = {},
+): from.ReturnType<envelope, signature> {
   const { signature } = options
 
   const envelope_ = (
     typeof envelope === 'string'
-      ? TransactionEnvelopeEip2930_deserialize(envelope)
+      ? TransactionEnvelopeEip2930.deserialize(envelope)
       : envelope
-  ) as TransactionEnvelopeEip2930
+  ) as TransactionEnvelopeEip2930.TransactionEnvelope
 
-  TransactionEnvelopeEip2930_assert(envelope_)
+  TransactionEnvelopeEip2930.assert(envelope_)
 
   return {
     ...envelope_,
@@ -114,19 +109,19 @@ export function TransactionEnvelopeEip2930_from<
   } as never
 }
 
-export declare namespace TransactionEnvelopeEip2930_from {
+export declare namespace from {
   type Options<signature extends Signature | undefined = undefined> = {
     signature?: signature | Signature | undefined
   }
 
   type ReturnType<
-    envelope extends UnionPartialBy<TransactionEnvelope, 'type'> | Hex =
-      | TransactionEnvelopeEip2930
-      | Hex,
+    envelope extends
+      | UnionPartialBy<TransactionEnvelope.TransactionEnvelope, 'type'>
+      | Hex = TransactionEnvelopeEip2930.TransactionEnvelope | Hex,
     signature extends Signature | undefined = undefined,
   > = Compute<
     envelope extends Hex
-      ? TransactionEnvelopeEip2930
+      ? TransactionEnvelopeEip2930.TransactionEnvelope
       : Assign<
           envelope,
           (signature extends Signature ? Readonly<signature> : {}) & {
@@ -136,11 +131,11 @@ export declare namespace TransactionEnvelopeEip2930_from {
   >
 
   type ErrorType =
-    | TransactionEnvelopeEip2930_deserialize.ErrorType
-    | TransactionEnvelopeEip2930_assert.ErrorType
+    | TransactionEnvelopeEip2930.deserialize.ErrorType
+    | TransactionEnvelopeEip2930.assert.ErrorType
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip2930_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip2930_from.ErrorType
+  error as from.ErrorType

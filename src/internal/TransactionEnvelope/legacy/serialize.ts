@@ -1,3 +1,4 @@
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Hex_trimLeft } from '../../Hex/trim.js'
@@ -5,11 +6,6 @@ import { Rlp_fromHex } from '../../Rlp/from.js'
 import { Signature_InvalidVError } from '../../Signature/errors.js'
 import type { Signature } from '../../Signature/types.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeLegacy_assert } from './assert.js'
-import type {
-  TransactionEnvelopeLegacy,
-  TransactionEnvelopeLegacy_Serialized,
-} from './types.js'
 
 /**
  * Serializes a {@link ox#TransactionEnvelope.Legacy}.
@@ -61,13 +57,13 @@ import type {
  * @param options -
  * @returns The serialized Transaction Envelope.
  */
-export function TransactionEnvelopeLegacy_serialize(
-  envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
-  options: TransactionEnvelopeLegacy_serialize.Options = {},
-): TransactionEnvelopeLegacy_Serialized {
+export function serialize(
+  envelope: PartialBy<TransactionEnvelopeLegacy.TransactionEnvelope, 'type'>,
+  options: serialize.Options = {},
+): TransactionEnvelopeLegacy.Serialized {
   const { chainId = 0, gas, data, input, nonce, to, value, gasPrice } = envelope
 
-  TransactionEnvelopeLegacy_assert(envelope)
+  TransactionEnvelopeLegacy.assert(envelope)
 
   let serializedTransaction = [
     nonce ? Hex_fromNumber(nonce) : '0x',
@@ -131,14 +127,14 @@ export function TransactionEnvelopeLegacy_serialize(
   return Rlp_fromHex(serializedTransaction) as never
 }
 
-export declare namespace TransactionEnvelopeLegacy_serialize {
+export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
   }
 
   type ErrorType =
-    | TransactionEnvelopeLegacy_assert.ErrorType
+    | TransactionEnvelopeLegacy.assert.ErrorType
     | Hex_fromNumber.ErrorType
     | Hex_trimLeft.ErrorType
     | Rlp_fromHex.ErrorType
@@ -146,6 +142,6 @@ export declare namespace TransactionEnvelopeLegacy_serialize {
     | GlobalErrorType
 }
 
-TransactionEnvelopeLegacy_serialize.parseError = (error: unknown) =>
+serialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeLegacy_serialize.ErrorType
+  error as serialize.ErrorType

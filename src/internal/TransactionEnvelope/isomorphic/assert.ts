@@ -1,11 +1,10 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
+import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
+import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
-import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
-import { TransactionEnvelopeEip2930_assert } from '../eip2930/assert.js'
-import { TransactionEnvelopeEip4844_assert } from '../eip4844/assert.js'
-import { TransactionEnvelopeEip7702_assert } from '../eip7702/assert.js'
-import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
-import { TransactionEnvelopeLegacy_assert } from '../legacy/assert.js'
-import type { TransactionEnvelope } from './types.js'
 
 /**
  * Asserts a {@link ox#TransactionEnvelope.TransactionEnvelope} is valid.
@@ -28,33 +27,33 @@ import type { TransactionEnvelope } from './types.js'
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function TransactionEnvelope_assert(envelope: TransactionEnvelope) {
-  if (envelope.type === 'legacy') TransactionEnvelopeLegacy_assert(envelope)
+export function assert(envelope: TransactionEnvelope.TransactionEnvelope) {
+  if (envelope.type === 'legacy') TransactionEnvelopeLegacy.assert(envelope)
   else if (envelope.type === 'eip2930')
-    TransactionEnvelopeEip2930_assert(envelope)
+    TransactionEnvelopeEip2930.assert(envelope)
   else if (envelope.type === 'eip1559')
-    TransactionEnvelopeEip1559_assert(envelope)
+    TransactionEnvelopeEip1559.assert(envelope)
   else if (envelope.type === 'eip4844')
-    TransactionEnvelopeEip4844_assert(envelope)
+    TransactionEnvelopeEip4844.assert(envelope)
   else if (envelope.type === 'eip7702')
-    TransactionEnvelopeEip7702_assert(envelope)
+    TransactionEnvelopeEip7702.assert(envelope)
   else
-    throw new TransactionEnvelope_TypeNotImplementedError({
+    throw new TransactionEnvelope.TypeNotImplementedError({
       type: (envelope as any).type,
     })
 }
 
-export declare namespace TransactionEnvelope_assert {
+export declare namespace assert {
   type ErrorType =
-    | TransactionEnvelopeLegacy_assert.ErrorType
-    | TransactionEnvelopeEip2930_assert.ErrorType
-    | TransactionEnvelopeEip1559_assert.ErrorType
-    | TransactionEnvelopeEip4844_assert.ErrorType
-    | TransactionEnvelopeEip7702_assert.ErrorType
-    | TransactionEnvelope_TypeNotImplementedError
+    | TransactionEnvelopeLegacy.assert.ErrorType
+    | TransactionEnvelopeEip2930.assert.ErrorType
+    | TransactionEnvelopeEip1559.assert.ErrorType
+    | TransactionEnvelopeEip4844.assert.ErrorType
+    | TransactionEnvelopeEip7702.assert.ErrorType
+    | TransactionEnvelope.TypeNotImplementedError
     | GlobalErrorType
 }
 
-TransactionEnvelope_assert.parseError = (error: unknown) =>
+assert.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelope_assert.ErrorType
+  error as assert.ErrorType

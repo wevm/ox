@@ -4,11 +4,11 @@ import * as exports from './Errors.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "AbiEvent_DataMismatchError",
-      "AbiEvent_FilterTypeNotSupportedError",
-      "AbiEvent_InputNotFoundError",
-      "AbiEvent_SelectorTopicMismatchError",
-      "AbiEvent_TopicsMismatchError",
+      "DataMismatchError",
+      "FilterTypeNotSupportedError",
+      "InputNotFoundError",
+      "SelectorTopicMismatchError",
+      "TopicsMismatchError",
       "AbiItem_AmbiguityError",
       "AbiItem_InvalidSelectorSizeError",
       "AbiItem_NotFoundError",
@@ -66,7 +66,7 @@ test('exports', () => {
       "TypeNotImplementedError",
       "TypedData_BytesSizeMismatchError",
       "TypedData_InvalidPrimaryTypeError",
-      "Value_InvalidDecimalNumberError",
+      "InvalidDecimalNumberError",
       "WebAuthnP256_CredentialCreationFailedError",
       "WebAuthnP256_CredentialRequestFailedError",
     ]

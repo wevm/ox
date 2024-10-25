@@ -1,3 +1,5 @@
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import type * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import {
   Blobs_EmptyBlobVersionedHashesError,
   Blobs_InvalidVersionedHashSizeError,
@@ -9,9 +11,6 @@ import { Hex_slice } from '../../Hex/slice.js'
 import { Hex_toNumber } from '../../Hex/toNumber.js'
 import { Kzg_versionedHashVersion } from '../../Kzg/constants.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
-import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
-import type { TransactionEnvelopeEip4844 } from './types.js'
 
 /**
  * Asserts a {@link ox#TransactionEnvelope.Eip4844} is valid.
@@ -31,8 +30,8 @@ import type { TransactionEnvelopeEip4844 } from './types.js'
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function TransactionEnvelopeEip4844_assert(
-  envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
+export function assert(
+  envelope: PartialBy<TransactionEnvelopeEip4844.TransactionEnvelope, 'type'>,
 ) {
   const { blobVersionedHashes } = envelope
   if (blobVersionedHashes) {
@@ -50,14 +49,14 @@ export function TransactionEnvelopeEip4844_assert(
         })
     }
   }
-  TransactionEnvelopeEip1559_assert(
-    envelope as {} as TransactionEnvelopeEip1559,
+  TransactionEnvelopeEip1559.assert(
+    envelope as {} as TransactionEnvelopeEip1559.TransactionEnvelope,
   )
 }
 
-export declare namespace TransactionEnvelopeEip4844_assert {
+export declare namespace assert {
   type ErrorType =
-    | TransactionEnvelopeEip1559_assert.ErrorType
+    | TransactionEnvelopeEip1559.assert.ErrorType
     | Hex_size.ErrorType
     | Hex_toNumber.ErrorType
     | Hex_slice.ErrorType
@@ -67,6 +66,6 @@ export declare namespace TransactionEnvelopeEip4844_assert {
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip4844_assert.parseError = (error: unknown) =>
+assert.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip4844_assert.ErrorType
+  error as assert.ErrorType

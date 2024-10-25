@@ -1,3 +1,5 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import { Hex_validate } from '../../Hex/validate.js'
@@ -5,9 +7,6 @@ import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_InvalidVError } from '../../Signature/errors.js'
 import { Signature_vToYParity } from '../../Signature/vToYParity.js'
 import type { Compute } from '../../types.js'
-import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
-import { TransactionEnvelopeLegacy_assert } from './assert.js'
-import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
  * Deserializes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelope} from its serialized form.
@@ -30,16 +29,16 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * @param serializedTransaction - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
-export function TransactionEnvelopeLegacy_deserialize(
+export function deserialize(
   serializedTransaction: Hex,
-): Compute<TransactionEnvelopeLegacy> {
+): Compute<TransactionEnvelopeLegacy.TransactionEnvelope> {
   const tuple = Rlp_toHex(serializedTransaction)
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
     tuple as readonly Hex[]
 
   if (!(tuple.length === 6 || tuple.length === 9))
-    throw new TransactionEnvelope_InvalidSerializedError({
+    throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         nonce,
         gasPrice,
@@ -61,7 +60,7 @@ export function TransactionEnvelopeLegacy_deserialize(
 
   const transaction = {
     type: 'legacy',
-  } as TransactionEnvelopeLegacy
+  } as TransactionEnvelopeLegacy.TransactionEnvelope
   if (Hex_validate(to) && to !== '0x') transaction.to = to
   if (Hex_validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
   if (Hex_validate(data) && data !== '0x') transaction.data = data
@@ -92,15 +91,15 @@ export function TransactionEnvelopeLegacy_deserialize(
   transaction.s = s === '0x' ? 0n : BigInt(s!)
   transaction.r = r === '0x' ? 0n : BigInt(r!)
 
-  TransactionEnvelopeLegacy_assert(transaction)
+  TransactionEnvelopeLegacy.assert(transaction)
 
   return transaction
 }
 
-export declare namespace TransactionEnvelopeLegacy_deserialize {
+export declare namespace deserialize {
   type ErrorType = GlobalErrorType
 }
 
-TransactionEnvelopeLegacy_deserialize.parseError = (error: unknown) =>
+deserialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeLegacy_deserialize.ErrorType
+  error as deserialize.ErrorType

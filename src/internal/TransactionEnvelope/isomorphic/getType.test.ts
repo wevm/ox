@@ -2,19 +2,19 @@ import { assertType, describe, expect, test } from 'vitest'
 
 import type { TransactionEnvelopeLegacy } from 'ox'
 import type { Hex } from '../../Hex/types.js'
-import { TransactionEnvelope_getType } from './getType.js'
-import type { TransactionEnvelope_Type } from './types.js'
+import { getType } from './getType.js'
+import type { Type } from './types.js'
 
 describe('type', () => {
   test('eip1559', () => {
     {
-      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip1559' })
+      const type = getType({ chainId: 1, type: 'eip1559' })
       assertType<'eip1559'>(type)
       expect(type).toEqual('eip1559')
     }
 
     {
-      const type = TransactionEnvelope_getType('0x02abc')
+      const type = getType('0x02abc')
       assertType<'eip1559'>(type)
       expect(type).toEqual('eip1559')
     }
@@ -22,13 +22,13 @@ describe('type', () => {
 
   test('eip2930', () => {
     {
-      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip2930' })
+      const type = getType({ chainId: 1, type: 'eip2930' })
       assertType<'eip2930'>(type)
       expect(type).toEqual('eip2930')
     }
 
     {
-      const type = TransactionEnvelope_getType('0x01abc')
+      const type = getType('0x01abc')
       assertType<'eip2930'>(type)
       expect(type).toEqual('eip2930')
     }
@@ -36,13 +36,13 @@ describe('type', () => {
 
   test('eip4844', () => {
     {
-      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip4844' })
+      const type = getType({ chainId: 1, type: 'eip4844' })
       assertType<'eip4844'>(type)
       expect(type).toEqual('eip4844')
     }
 
     {
-      const type = TransactionEnvelope_getType('0x03abc')
+      const type = getType('0x03abc')
       assertType<'eip4844'>(type)
       expect(type).toEqual('eip4844')
     }
@@ -50,13 +50,13 @@ describe('type', () => {
 
   test('eip7702', () => {
     {
-      const type = TransactionEnvelope_getType({ chainId: 1, type: 'eip7702' })
+      const type = getType({ chainId: 1, type: 'eip7702' })
       assertType<'eip7702'>(type)
       expect(type).toEqual('eip7702')
     }
 
     {
-      const type = TransactionEnvelope_getType('0x04abc')
+      const type = getType('0x04abc')
       assertType<'eip7702'>(type)
       expect(type).toEqual('eip7702')
     }
@@ -64,15 +64,13 @@ describe('type', () => {
 
   test('legacy', () => {
     {
-      const type = TransactionEnvelope_getType({ type: 'legacy' })
+      const type = getType({ type: 'legacy' })
       assertType<'legacy'>(type)
       expect(type).toEqual('legacy')
     }
 
     {
-      const type = TransactionEnvelope_getType(
-        '0xc7c' as TransactionEnvelopeLegacy.Serialized,
-      )
+      const type = getType('0xc7c' as TransactionEnvelopeLegacy.Serialized)
       assertType<'legacy'>(type)
       expect(type).toEqual('legacy')
     }
@@ -80,14 +78,14 @@ describe('type', () => {
 
   test('other', () => {
     {
-      const type = TransactionEnvelope_getType({ type: '0x7e' })
+      const type = getType({ type: '0x7e' })
       assertType<'0x7e'>(type)
       expect(type).toEqual('0x7e')
     }
 
     {
-      const type = TransactionEnvelope_getType('0xc7c' as Hex)
-      assertType<TransactionEnvelope_Type>(type)
+      const type = getType('0xc7c' as Hex)
+      assertType<Type>(type)
       expect(type).toEqual('legacy')
     }
   })
@@ -95,7 +93,7 @@ describe('type', () => {
 
 describe('attributes', () => {
   test('eip1559', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       chainId: 1,
       maxFeePerGas: 1n,
     })
@@ -104,7 +102,7 @@ describe('attributes', () => {
   })
 
   test('eip1559 with gasPrice undefined', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       chainId: 1,
       maxFeePerGas: 1n,
       gasPrice: undefined,
@@ -114,7 +112,7 @@ describe('attributes', () => {
   })
 
   test('eip2930', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       chainId: 1,
       gasPrice: 1n,
       accessList: [],
@@ -124,7 +122,7 @@ describe('attributes', () => {
   })
 
   test('eip2930 with eip1559 properties undefined', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       chainId: 1,
       gasPrice: 1n,
       maxFeePerGas: undefined,
@@ -136,7 +134,7 @@ describe('attributes', () => {
   })
 
   test('eip4844', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       blobVersionedHashes: ['0x'],
       chainId: 1,
     })
@@ -145,7 +143,7 @@ describe('attributes', () => {
   })
 
   test('eip4844 with eip1559 properties', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       blobVersionedHashes: ['0x'],
       maxFeePerGas: 1n,
       chainId: 1,
@@ -155,7 +153,7 @@ describe('attributes', () => {
   })
 
   test('eip7702', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       authorizationList: [],
       chainId: 1,
     })
@@ -164,7 +162,7 @@ describe('attributes', () => {
   })
 
   test('eip7702 with eip1559 properties', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       authorizationList: [],
       maxFeePerGas: 1n,
       chainId: 1,
@@ -174,13 +172,13 @@ describe('attributes', () => {
   })
 
   test('legacy', () => {
-    const type = TransactionEnvelope_getType({ gasPrice: 1n })
+    const type = getType({ gasPrice: 1n })
     assertType<'legacy'>(type)
     expect(type).toEqual('legacy')
   })
 
   test('legacy with eip1559 properties undefined', () => {
-    const type = TransactionEnvelope_getType({
+    const type = getType({
       gasPrice: 1n,
       maxFeePerGas: undefined,
       maxPriorityFeePerGas: undefined,
@@ -191,9 +189,7 @@ describe('attributes', () => {
 })
 
 test('invalid', () => {
-  expect(() =>
-    TransactionEnvelope_getType({ chainId: 1 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
+  expect(() => getType({ chainId: 1 })).toThrowErrorMatchingInlineSnapshot(`
     [TransactionEnvelope.CannotInferTypeError: Cannot infer a transaction type from provided transaction.
 
     Provided Transaction:
@@ -210,9 +206,7 @@ test('invalid', () => {
     - a Legacy Transaction with \`gasPrice\`]
   `)
 
-  expect(() =>
-    TransactionEnvelope_getType('0x69abc'),
-  ).toThrowErrorMatchingInlineSnapshot(
+  expect(() => getType('0x69abc')).toThrowErrorMatchingInlineSnapshot(
     '[TransactionEnvelope.TypeNotImplementedError: The provided transaction type `0x69` is not implemented.]',
   )
 })

@@ -1,8 +1,7 @@
+import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { keccak256 } from '../../Hash/keccak256.js'
 import type { Hex } from '../../Hex/types.js'
-import { TransactionEnvelopeEip7702_serialize } from './serialize.js'
-import type { TransactionEnvelopeEip7702 } from './types.js'
 
 /**
  * Hashes a {@link ox#TransactionEnvelope.Eip7702}. This is the "transaction hash".
@@ -36,15 +35,13 @@ import type { TransactionEnvelopeEip7702 } from './types.js'
  * @param options -
  * @returns The hash of the transaction envelope.
  */
-export function TransactionEnvelopeEip7702_hash<
-  presign extends boolean = false,
->(
-  envelope: TransactionEnvelopeEip7702<presign extends true ? false : true>,
-  options: TransactionEnvelopeEip7702_hash.Options<presign> = {},
-): TransactionEnvelopeEip7702_hash.ReturnType {
+export function hash(
+  envelope: TransactionEnvelopeEip7702.TransactionEnvelope,
+  options: hash.Options = {},
+): hash.ReturnType {
   const { presign } = options
   return keccak256(
-    TransactionEnvelopeEip7702_serialize({
+    TransactionEnvelopeEip7702.serialize({
       ...envelope,
       ...(presign
         ? {
@@ -57,20 +54,20 @@ export function TransactionEnvelopeEip7702_hash<
   )
 }
 
-export declare namespace TransactionEnvelopeEip7702_hash {
-  type Options<presign extends boolean = false> = {
+export declare namespace hash {
+  type Options = {
     /** Whether to hash this transaction for signing. @default false */
-    presign?: presign | boolean | undefined
+    presign?: boolean | undefined
   }
 
   type ReturnType = Hex
 
   type ErrorType =
     | keccak256.ErrorType
-    | TransactionEnvelopeEip7702_serialize.ErrorType
+    | TransactionEnvelopeEip7702.serialize.ErrorType
     | GlobalErrorType
 }
 
-TransactionEnvelopeEip7702_hash.parseError = (error: unknown) =>
+hash.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip7702_hash.ErrorType
+  error as hash.ErrorType

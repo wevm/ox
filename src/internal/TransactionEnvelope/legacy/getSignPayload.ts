@@ -1,7 +1,6 @@
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
-import { TransactionEnvelopeLegacy_hash } from './hash.js'
-import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
  * Returns the payload to sign for a {@link ox#TransactionEnvelope.Legacy}.
@@ -31,18 +30,18 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * @param envelope - The transaction envelope to get the sign payload for.
  * @returns The sign payload.
  */
-export function TransactionEnvelopeLegacy_getSignPayload(
-  envelope: TransactionEnvelopeLegacy<false>,
-): TransactionEnvelopeLegacy_getSignPayload.ReturnType {
-  return TransactionEnvelopeLegacy_hash(envelope, { presign: true })
+export function getSignPayload(
+  envelope: TransactionEnvelopeLegacy.TransactionEnvelope,
+): getSignPayload.ReturnType {
+  return TransactionEnvelopeLegacy.hash(envelope, { presign: true })
 }
 
-export declare namespace TransactionEnvelopeLegacy_getSignPayload {
+export declare namespace getSignPayload {
   type ReturnType = Hex
 
-  type ErrorType = TransactionEnvelopeLegacy_hash.ErrorType | GlobalErrorType
+  type ErrorType = TransactionEnvelopeLegacy.hash.ErrorType | GlobalErrorType
 }
 
-TransactionEnvelopeLegacy_getSignPayload.parseError = (error: unknown) =>
+getSignPayload.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeLegacy_getSignPayload.ErrorType
+  error as getSignPayload.ErrorType

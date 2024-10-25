@@ -1,11 +1,8 @@
+import type * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
-import type {
-  TransactionEnvelopeLegacy,
-  TransactionEnvelopeLegacy_Rpc,
-} from './types.js'
 
 /**
  * Converts an {@link ox#TransactionEnvelope.Legacy} to an {@link ox#TransactionEnvelope.LegacyRpc}.
@@ -34,9 +31,9 @@ import type {
  * @param envelope - The legacy transaction envelope to convert.
  * @returns An RPC-formatted legacy transaction envelope.
  */
-export function TransactionEnvelopeLegacy_toRpc(
-  envelope: Omit<TransactionEnvelopeLegacy, 'type'>,
-): TransactionEnvelopeLegacy_Rpc {
+export function toRpc(
+  envelope: Omit<TransactionEnvelopeLegacy.TransactionEnvelope, 'type'>,
+): TransactionEnvelopeLegacy.Rpc {
   const signature = Signature_extract(envelope)!
 
   return {
@@ -68,10 +65,10 @@ export function TransactionEnvelopeLegacy_toRpc(
   } as never
 }
 
-export declare namespace TransactionEnvelopeLegacy_toRpc {
+export declare namespace toRpc {
   export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
-TransactionEnvelopeLegacy_toRpc.parseError = (error: unknown) =>
+toRpc.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeLegacy_toRpc.ErrorType
+  error as toRpc.ErrorType

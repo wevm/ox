@@ -1,17 +1,13 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
+import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
+import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import type { Signature } from '../../Signature/types.js'
-import { TransactionEnvelopeEip1559_serialize } from '../eip1559/serialize.js'
-import { TransactionEnvelopeEip2930_serialize } from '../eip2930/serialize.js'
-import { TransactionEnvelopeEip4844_serialize } from '../eip4844/serialize.js'
-import { TransactionEnvelopeEip7702_serialize } from '../eip7702/serialize.js'
-import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
-import { TransactionEnvelopeLegacy_serialize } from '../legacy/serialize.js'
-import type {
-  TransactionEnvelope,
-  TransactionEnvelope_Serialized,
-} from './types.js'
 
 /**
  * Serializes a {@link ox#TransactionEnvelope.TransactionEnvelope}.
@@ -62,29 +58,29 @@ import type {
  * @param envelope - The Transaction Envelope to serialize.
  * @returns The serialized Transaction Envelope.
  */
-export function TransactionEnvelope_serialize<
-  envelope extends TransactionEnvelope,
+export function serialize<
+  envelope extends TransactionEnvelope.TransactionEnvelope,
 >(
   envelope: envelope,
-  options: TransactionEnvelope_serialize.Options = {},
-): TransactionEnvelope_serialize.ReturnType<envelope> {
+  options: serialize.Options = {},
+): serialize.ReturnType<envelope> {
   if (envelope.type === 'legacy')
-    return TransactionEnvelopeLegacy_serialize(envelope, options) as never
+    return TransactionEnvelopeLegacy.serialize(envelope, options) as never
   if (envelope.type === 'eip2930')
-    return TransactionEnvelopeEip2930_serialize(envelope, options) as never
+    return TransactionEnvelopeEip2930.serialize(envelope, options) as never
   if (envelope.type === 'eip1559')
-    return TransactionEnvelopeEip1559_serialize(envelope, options) as never
+    return TransactionEnvelopeEip1559.serialize(envelope, options) as never
   if (envelope.type === 'eip4844')
-    return TransactionEnvelopeEip4844_serialize(envelope, options) as never
+    return TransactionEnvelopeEip4844.serialize(envelope, options) as never
   if (envelope.type === 'eip7702')
-    return TransactionEnvelopeEip7702_serialize(envelope, options) as never
+    return TransactionEnvelopeEip7702.serialize(envelope, options) as never
 
-  throw new TransactionEnvelope_TypeNotImplementedError({
+  throw new TransactionEnvelope.TypeNotImplementedError({
     type: (envelope as any).type,
   })
 }
 
-export declare namespace TransactionEnvelope_serialize {
+export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
@@ -92,19 +88,21 @@ export declare namespace TransactionEnvelope_serialize {
     sidecars?: BlobSidecars<Hex> | undefined
   }
 
-  type ReturnType<envelope extends TransactionEnvelope = TransactionEnvelope> =
-    TransactionEnvelope_Serialized<envelope['type']>
+  type ReturnType<
+    envelope extends
+      TransactionEnvelope.TransactionEnvelope = TransactionEnvelope.TransactionEnvelope,
+  > = TransactionEnvelope.Serialized<envelope['type']>
 
   type ErrorType =
-    | TransactionEnvelopeLegacy_serialize.ErrorType
-    | TransactionEnvelopeEip2930_serialize.ErrorType
-    | TransactionEnvelopeEip1559_serialize.ErrorType
-    | TransactionEnvelopeEip4844_serialize.ErrorType
-    | TransactionEnvelopeEip7702_serialize.ErrorType
-    | TransactionEnvelope_TypeNotImplementedError
+    | TransactionEnvelopeLegacy.serialize.ErrorType
+    | TransactionEnvelopeEip2930.serialize.ErrorType
+    | TransactionEnvelopeEip1559.serialize.ErrorType
+    | TransactionEnvelopeEip4844.serialize.ErrorType
+    | TransactionEnvelopeEip7702.serialize.ErrorType
+    | TransactionEnvelope.TypeNotImplementedError
     | GlobalErrorType
 }
 
-TransactionEnvelope_serialize.parseError = (error: unknown) =>
+serialize.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelope_serialize.ErrorType
+  error as serialize.ErrorType

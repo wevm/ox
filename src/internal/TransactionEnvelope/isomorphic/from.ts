@@ -1,21 +1,13 @@
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
+import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
+import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
+import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Signature } from '../../Signature/types.js'
 import type { UnionCompute, UnionPartialBy } from '../../types.js'
-import { TransactionEnvelopeEip1559_from } from '../eip1559/from.js'
-import { TransactionEnvelopeEip2930_from } from '../eip2930/from.js'
-import { TransactionEnvelopeEip4844_from } from '../eip4844/from.js'
-import { TransactionEnvelopeEip7702_from } from '../eip7702/from.js'
-import { TransactionEnvelope_TypeNotImplementedError } from '../errors.js'
-import { TransactionEnvelopeLegacy_from } from '../legacy/from.js'
-import type { TransactionEnvelope_deserialize } from './deserialize.js'
-import {
-  type TransactionEnvelope_GetType,
-  TransactionEnvelope_getType,
-} from './getType.js'
-import type {
-  TransactionEnvelope,
-  TransactionEnvelope_Serialized,
-} from './types.js'
+import { type GetType, getType } from './getType.js'
 
 /**
  * Converts an arbitrary transaction object into a typed {@link ox#TransactionEnvelope.TransactionEnvelope}.
@@ -102,32 +94,32 @@ import type {
  * @param options -
  * @returns A {@link ox#TransactionEnvelope.TransactionEnvelope}.
  */
-export function TransactionEnvelope_from<
+export function from<
   const value extends
-    | UnionPartialBy<TransactionEnvelope, 'type'>
-    | TransactionEnvelope_Serialized,
+    | UnionPartialBy<TransactionEnvelope.TransactionEnvelope, 'type'>
+    | TransactionEnvelope.Serialized,
   const signature extends Signature | undefined = undefined,
 >(
   value: value,
-  options: TransactionEnvelope_from.Options<signature> = {},
-): TransactionEnvelope_from.ReturnType<value, signature> {
-  const type = TransactionEnvelope_getType(value)
+  options: from.Options<signature> = {},
+): from.ReturnType<value, signature> {
+  const type = getType(value)
 
   if (type === 'legacy')
-    return TransactionEnvelopeLegacy_from(value as any, options) as never
+    return TransactionEnvelopeLegacy.from(value as any, options) as never
   if (type === 'eip2930')
-    return TransactionEnvelopeEip2930_from(value as any, options) as never
+    return TransactionEnvelopeEip2930.from(value as any, options) as never
   if (type === 'eip1559')
-    return TransactionEnvelopeEip1559_from(value as any, options) as never
+    return TransactionEnvelopeEip1559.from(value as any, options) as never
   if (type === 'eip4844')
-    return TransactionEnvelopeEip4844_from(value as any, options) as never
+    return TransactionEnvelopeEip4844.from(value as any, options) as never
   if (type === 'eip7702')
-    return TransactionEnvelopeEip7702_from(value as any, options) as never
+    return TransactionEnvelopeEip7702.from(value as any, options) as never
 
-  throw new TransactionEnvelope_TypeNotImplementedError({ type })
+  throw new TransactionEnvelope.TypeNotImplementedError({ type })
 }
 
-export declare namespace TransactionEnvelope_from {
+export declare namespace from {
   type Options<signature extends Signature | undefined = undefined> = {
     /** Signature to attach to the Transaction Envelope. */
     signature?: signature | Signature | undefined
@@ -135,35 +127,35 @@ export declare namespace TransactionEnvelope_from {
 
   type ReturnType<
     value extends
-      | UnionPartialBy<TransactionEnvelope, 'type'>
-      | TransactionEnvelope_Serialized =
-      | UnionPartialBy<TransactionEnvelope, 'type'>
-      | TransactionEnvelope_Serialized,
+      | UnionPartialBy<TransactionEnvelope.TransactionEnvelope, 'type'>
+      | TransactionEnvelope.Serialized =
+      | UnionPartialBy<TransactionEnvelope.TransactionEnvelope, 'type'>
+      | TransactionEnvelope.Serialized,
     signature extends Signature | undefined = undefined,
   > = UnionCompute<
-    | (TransactionEnvelope_GetType<value> extends 'legacy'
-        ? TransactionEnvelopeLegacy_from.ReturnType<value, signature>
+    | (GetType<value> extends 'legacy'
+        ? TransactionEnvelopeLegacy.from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<value> extends 'eip1559'
-        ? TransactionEnvelopeEip1559_from.ReturnType<value, signature>
+    | (GetType<value> extends 'eip1559'
+        ? TransactionEnvelopeEip1559.from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<value> extends 'eip2930'
-        ? TransactionEnvelopeEip2930_from.ReturnType<value, signature>
+    | (GetType<value> extends 'eip2930'
+        ? TransactionEnvelopeEip2930.from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<value> extends 'eip4844'
-        ? TransactionEnvelopeEip4844_from.ReturnType<value, signature>
+    | (GetType<value> extends 'eip4844'
+        ? TransactionEnvelopeEip4844.from.ReturnType<value, signature>
         : never)
-    | (TransactionEnvelope_GetType<value> extends 'eip7702'
-        ? TransactionEnvelopeEip7702_from.ReturnType<value, signature>
+    | (GetType<value> extends 'eip7702'
+        ? TransactionEnvelopeEip7702.from.ReturnType<value, signature>
         : never)
   >
 
   type ErrorType =
-    | TransactionEnvelope_deserialize.ErrorType
-    | TransactionEnvelope_getType.ErrorType
+    | TransactionEnvelope.deserialize.ErrorType
+    | getType.ErrorType
     | GlobalErrorType
 }
 
-TransactionEnvelope_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelope_from.ErrorType
+  error as from.ErrorType

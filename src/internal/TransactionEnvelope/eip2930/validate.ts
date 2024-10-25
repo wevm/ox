@@ -1,7 +1,6 @@
+import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeEip2930_assert } from './assert.js'
-import type { TransactionEnvelopeEip2930 } from './types.js'
 
 /**
  * Validates a {@link ox#TransactionEnvelopeEip2930.TransactionEnvelope}. Returns `true` if the envelope is valid, `false` otherwise.
@@ -21,21 +20,21 @@ import type { TransactionEnvelopeEip2930 } from './types.js'
  *
  * @param envelope - The transaction envelope to validate.
  */
-export function TransactionEnvelopeEip2930_validate(
-  envelope: PartialBy<TransactionEnvelopeEip2930, 'type'>,
+export function validate(
+  envelope: PartialBy<TransactionEnvelopeEip2930.TransactionEnvelope, 'type'>,
 ) {
   try {
-    TransactionEnvelopeEip2930_assert(envelope)
+    TransactionEnvelopeEip2930.assert(envelope)
     return true
   } catch {
     return false
   }
 }
 
-export declare namespace TransactionEnvelopeEip2930_validate {
+export declare namespace validate {
   type ErrorType = GlobalErrorType
 }
 
-TransactionEnvelopeEip2930_validate.parseError = (error: unknown) =>
+validate.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip2930_validate.ErrorType
+  error as validate.ErrorType

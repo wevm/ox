@@ -1,11 +1,8 @@
+import type * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
-import type {
-  TransactionEnvelopeEip4844,
-  TransactionEnvelopeEip4844_Rpc,
-} from './types.js'
 
 /**
  * Converts an {@link ox#TransactionEnvelope.Eip4844} to an {@link ox#TransactionEnvelope.Eip4844Rpc}.
@@ -41,9 +38,9 @@ import type {
  * @param envelope - The EIP-4844 transaction envelope to convert.
  * @returns An RPC-formatted EIP-4844 transaction envelope.
  */
-export function TransactionEnvelopeEip4844_toRpc(
-  envelope: Omit<TransactionEnvelopeEip4844, 'type'>,
-): TransactionEnvelopeEip4844_Rpc {
+export function toRpc(
+  envelope: Omit<TransactionEnvelopeEip4844.TransactionEnvelope, 'type'>,
+): TransactionEnvelopeEip4844.Rpc {
   const signature = Signature_extract(envelope)
 
   return {
@@ -73,10 +70,10 @@ export function TransactionEnvelopeEip4844_toRpc(
   } as never
 }
 
-export declare namespace TransactionEnvelopeEip4844_toRpc {
+export declare namespace toRpc {
   export type ErrorType = Signature_extract.ErrorType | GlobalErrorType
 }
 
-TransactionEnvelopeEip4844_toRpc.parseError = (error: unknown) =>
+toRpc.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeEip4844_toRpc.ErrorType
+  error as toRpc.ErrorType

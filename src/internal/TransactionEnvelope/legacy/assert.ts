@@ -1,11 +1,8 @@
 import * as Address from '../../../Address.js'
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
+import type * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
 import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
-import {
-  TransactionEnvelope_GasPriceTooHighError,
-  TransactionEnvelope_InvalidChainIdError,
-} from '../errors.js'
-import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
  * Asserts a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelope} is valid.
@@ -27,25 +24,25 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function TransactionEnvelopeLegacy_assert(
-  envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
+export function assert(
+  envelope: PartialBy<TransactionEnvelopeLegacy.TransactionEnvelope, 'type'>,
 ) {
   const { chainId, gasPrice, to } = envelope
   if (to) Address.assert(to, { strict: false })
   if (typeof chainId !== 'undefined' && chainId <= 0)
-    throw new TransactionEnvelope_InvalidChainIdError({ chainId })
+    throw new TransactionEnvelope.InvalidChainIdError({ chainId })
   if (gasPrice && BigInt(gasPrice) > 2n ** 256n - 1n)
-    throw new TransactionEnvelope_GasPriceTooHighError({ gasPrice })
+    throw new TransactionEnvelope.GasPriceTooHighError({ gasPrice })
 }
 
-export declare namespace TransactionEnvelopeLegacy_assert {
+export declare namespace assert {
   type ErrorType =
     | Address.assert.ErrorType
-    | TransactionEnvelope_InvalidChainIdError
-    | TransactionEnvelope_GasPriceTooHighError
+    | TransactionEnvelope.InvalidChainIdError
+    | TransactionEnvelope.GasPriceTooHighError
     | GlobalErrorType
 }
 
-TransactionEnvelopeLegacy_assert.parseError = (error: unknown) =>
+assert.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as TransactionEnvelopeLegacy_assert.ErrorType
+  error as assert.ErrorType
