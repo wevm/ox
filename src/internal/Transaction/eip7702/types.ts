@@ -1,5 +1,5 @@
+import type * as Authorization from '../../../Authorization.js'
 import type { AccessList } from '../../AccessList/types.js'
-import type { Authorization_ListSigned } from '../../Authorization/types.js'
 import type { Hex } from '../../Hex/types.js'
 import type { Compute } from '../../types.js'
 import type { Transaction_Base } from '../types.js'
@@ -15,7 +15,7 @@ export type TransactionEip7702<
     /** EIP-2930 Access List. */
     accessList: AccessList
     /** EIP-7702 Authorization list for the transaction. */
-    authorizationList: Authorization_ListSigned<bigintType, numberType>
+    authorizationList: Authorization.ListSigned<bigintType, numberType>
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas: bigintType
     /** Max priority fee per gas (in wei). */

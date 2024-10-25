@@ -14,9 +14,7 @@ test('default', () => {
       readonly chainId: 1
       readonly nonce: 40n
     }>()
-    expectTypeOf(authorization).toMatchTypeOf<
-      Authorization.Authorization<false>
-    >()
+    expectTypeOf(authorization).toMatchTypeOf<Authorization.Authorization>()
     expect(authorization).toMatchInlineSnapshot(
       `
       {
@@ -45,9 +43,7 @@ test('default', () => {
       readonly s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n
       readonly yParity: 0
     }>()
-    expectTypeOf(authorization).toMatchTypeOf<
-      Authorization.Authorization<true>
-    >()
+    expectTypeOf(authorization).toMatchTypeOf<Authorization.Signed>()
     expect(authorization).toMatchInlineSnapshot(
       `
       {
@@ -82,9 +78,7 @@ test('options: signature', () => {
     readonly s: bigint
     readonly yParity: number
   }>()
-  expectTypeOf(authorization_signed).toMatchTypeOf<
-    Authorization.Authorization<true>
-  >()
+  expectTypeOf(authorization_signed).toMatchTypeOf<Authorization.Signed>()
   expect(authorization_signed).toMatchInlineSnapshot(
     `
     {

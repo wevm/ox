@@ -23,15 +23,18 @@ import * as Rlp from '../../Rlp.js'
  * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns The hash.
  */
-export function Authorization_hash(
-  authorization: Authorization.Authorization,
-): Hex.Hex {
+export function hash(authorization: Authorization.Authorization): Hex.Hex {
   return Hash.keccak256(
-    Hex.concat('0x05', Rlp.fromHex(Authorization.toTuple(authorization))),
+    Hex.concat(
+      '0x05',
+      Rlp.fromHex(
+        Authorization.toTuple(authorization) as Rlp.RecursiveArray<Hex.Hex>,
+      ),
+    ),
   )
 }
 
-export declare namespace Authorization_hash {
+export declare namespace hash {
   type ErrorType =
     | Authorization.toTuple.ErrorType
     | Hash.keccak256.ErrorType
@@ -40,6 +43,6 @@ export declare namespace Authorization_hash {
     | Errors.GlobalErrorType
 }
 
-Authorization_hash.parseError = (error: unknown) =>
+hash.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Authorization.hash.ErrorType

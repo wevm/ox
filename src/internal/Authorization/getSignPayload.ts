@@ -29,16 +29,16 @@ import type * as Hex from '../../Hex.js'
  * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns The sign payload.
  */
-export function Authorization_getSignPayload(
+export function getSignPayload(
   authorization: Authorization.Authorization,
 ): Hex.Hex {
   return Authorization.hash(authorization)
 }
 
-export declare namespace Authorization_getSignPayload {
+export declare namespace getSignPayload {
   type ErrorType = Authorization.hash.ErrorType | Errors.GlobalErrorType
 }
 
-Authorization_getSignPayload.parseError = (error: unknown) =>
+getSignPayload.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization.getSignPayload.ErrorType
+  error as getSignPayload.ErrorType

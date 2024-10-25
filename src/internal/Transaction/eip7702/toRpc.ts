@@ -1,5 +1,5 @@
+import * as Authorization from '../../../Authorization.js'
 import type * as Errors from '../../../Errors.js'
-import { Authorization_toRpcList } from '../../Authorization/toRpcList.js'
 import { fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
@@ -52,7 +52,7 @@ export function TransactionEip7702_toRpc<pending extends boolean = false>(
   transaction: TransactionEip7702<pending>,
   _options?: TransactionEip7702_toRpc.Options<pending>,
 ): TransactionEip7702_Rpc<pending> {
-  const authorizationList = Authorization_toRpcList(
+  const authorizationList = Authorization.toRpcList(
     transaction.authorizationList ?? [],
   )
   const signature = Signature_extract(transaction)!

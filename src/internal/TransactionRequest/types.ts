@@ -1,7 +1,7 @@
+import type * as Authorization from '../../Authorization.js'
 import type * as TransactionEnvelope from '../../TransactionEnvelope.js'
 import type { AccessList } from '../AccessList/types.js'
 import type { Address } from '../Address/types.js'
-import type { Authorization_ListSigned } from '../Authorization/types.js'
 import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
 
@@ -15,7 +15,7 @@ export type TransactionRequest<
   accessList?: AccessList | undefined
   /** EIP-7702 Authorization List. */
   authorizationList?:
-    | Authorization_ListSigned<bigintType, numberType>
+    | Authorization.ListSigned<bigintType, numberType>
     | undefined
   /** Versioned hashes of blobs to be included in the transaction. */
   blobVersionedHashes?: readonly Hex[]

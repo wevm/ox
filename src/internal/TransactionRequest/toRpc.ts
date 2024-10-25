@@ -1,6 +1,6 @@
+import * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
-import { Authorization_toRpcList } from '../Authorization/toRpcList.js'
-import { fromNumber } from '../Hex/fromNumber.js'
+import * as Hex from '../../Hex.js'
 import type { TransactionRequest, TransactionRequest_Rpc } from './types.js'
 
 /**
@@ -50,14 +50,14 @@ export function TransactionRequest_toRpc(
   if (typeof request.accessList !== 'undefined')
     request_rpc.accessList = request.accessList
   if (typeof request.authorizationList !== 'undefined')
-    request_rpc.authorizationList = Authorization_toRpcList(
+    request_rpc.authorizationList = Authorization.toRpcList(
       request.authorizationList,
     )
   if (typeof request.blobVersionedHashes !== 'undefined')
     request_rpc.blobVersionedHashes = request.blobVersionedHashes
   if (typeof request.blobs !== 'undefined') request_rpc.blobs = request.blobs
   if (typeof request.chainId !== 'undefined')
-    request_rpc.chainId = fromNumber(request.chainId)
+    request_rpc.chainId = Hex.fromNumber(request.chainId)
   if (typeof request.data !== 'undefined') {
     request_rpc.data = request.data
     request_rpc.input = request.data
@@ -67,31 +67,35 @@ export function TransactionRequest_toRpc(
   }
   if (typeof request.from !== 'undefined') request_rpc.from = request.from
   if (typeof request.gas !== 'undefined')
-    request_rpc.gas = fromNumber(request.gas)
+    request_rpc.gas = Hex.fromNumber(request.gas)
   if (typeof request.gasPrice !== 'undefined')
-    request_rpc.gasPrice = fromNumber(request.gasPrice)
+    request_rpc.gasPrice = Hex.fromNumber(request.gasPrice)
   if (typeof request.maxFeePerBlobGas !== 'undefined')
-    request_rpc.maxFeePerBlobGas = fromNumber(request.maxFeePerBlobGas)
+    request_rpc.maxFeePerBlobGas = Hex.fromNumber(request.maxFeePerBlobGas)
   if (typeof request.maxFeePerGas !== 'undefined')
-    request_rpc.maxFeePerGas = fromNumber(request.maxFeePerGas)
+    request_rpc.maxFeePerGas = Hex.fromNumber(request.maxFeePerGas)
   if (typeof request.maxPriorityFeePerGas !== 'undefined')
-    request_rpc.maxPriorityFeePerGas = fromNumber(request.maxPriorityFeePerGas)
+    request_rpc.maxPriorityFeePerGas = Hex.fromNumber(
+      request.maxPriorityFeePerGas,
+    )
   if (typeof request.maxPriorityFeePerGas !== 'undefined')
-    request_rpc.maxPriorityFeePerGas = fromNumber(request.maxPriorityFeePerGas)
+    request_rpc.maxPriorityFeePerGas = Hex.fromNumber(
+      request.maxPriorityFeePerGas,
+    )
   if (typeof request.nonce !== 'undefined')
-    request_rpc.nonce = fromNumber(request.nonce)
+    request_rpc.nonce = Hex.fromNumber(request.nonce)
   if (typeof request.to !== 'undefined') request_rpc.to = request.to
   if (typeof request.type !== 'undefined') request_rpc.type = request.type
   if (typeof request.value !== 'undefined')
-    request_rpc.value = fromNumber(request.value)
+    request_rpc.value = Hex.fromNumber(request.value)
 
   return request_rpc
 }
 
 export declare namespace TransactionRequest_toRpc {
   export type ErrorType =
-    | Authorization_toRpcList.ErrorType
-    | fromNumber.ErrorType
+    | Authorization.toRpcList.ErrorType
+    | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }
 

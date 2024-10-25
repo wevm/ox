@@ -1,6 +1,6 @@
+import type * as Authorization from '../../../Authorization.js'
 import type { AccessList } from '../../AccessList/types.js'
 import type { Address } from '../../Address/types.js'
-import type { Authorization_ListSigned } from '../../Authorization/types.js'
 import type { Hex } from '../../Hex/types.js'
 
 export type TransactionEnvelopeEip7702<
@@ -11,7 +11,7 @@ export type TransactionEnvelopeEip7702<
   /** EIP-2930 Access List. */
   accessList?: AccessList | undefined
   /** EIP-7702 Authorization List. */
-  authorizationList: Authorization_ListSigned<bigintType, numberType>
+  authorizationList: Authorization.ListSigned<bigintType, numberType>
   /** EIP-155 Chain ID. */
   chainId: numberType
   /** Contract code or a hashed method call with encoded args */

@@ -1,8 +1,8 @@
+import * as Authorization from '../../../Authorization.js'
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip7702 from '../../../TransactionEnvelopeEip7702.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
-import { Authorization_fromTupleList } from '../../Authorization/fromTupleList.js'
 import { slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import { validate } from '../../Hex/validate.js'
@@ -94,7 +94,7 @@ export function deserialize(
   if (accessList!.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList_fromTupleList(accessList as never)
   if (authorizationList !== '0x')
-    transaction.authorizationList = Authorization_fromTupleList(
+    transaction.authorizationList = Authorization.fromTupleList(
       authorizationList as never,
     )
 

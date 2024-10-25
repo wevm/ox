@@ -1,7 +1,6 @@
 import * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
 import * as Signature from '../../Signature.js'
-import type { Compute } from '../types.js'
 
 /**
  * Converts an {@link ox#Authorization.Tuple} to an {@link ox#Authorization.Authorization}.
@@ -49,9 +48,9 @@ import type { Compute } from '../types.js'
  * @param tuple - The [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple.
  * @returns The {@link ox#Authorization.Authorization}.
  */
-export function Authorization_fromTuple<
-  const tuple extends Authorization.Tuple,
->(tuple: tuple): Authorization.fromTuple.ReturnType<tuple> {
+export function fromTuple<const tuple extends Authorization.Tuple>(
+  tuple: tuple | Authorization.Tuple,
+): Authorization.fromTuple.ReturnType<tuple> {
   const [chainId, address, nonce, yParity, r, s] = tuple
   const signature =
     yParity && r && s ? Signature.fromTuple([yParity, r, s]) : undefined
@@ -63,14 +62,12 @@ export function Authorization_fromTuple<
   }) as never
 }
 
-export declare namespace Authorization_fromTuple {
+export declare namespace fromTuple {
   type ReturnType<
     authorization extends Authorization.Tuple = Authorization.Tuple,
-  > = Compute<
-    Authorization.Authorization<
-      authorization extends Authorization.Tuple<true> ? true : false
-    >
-  >
+  > = authorization extends Authorization.TupleSigned
+    ? Authorization.Signed
+    : Authorization.Authorization
 
   type ErrorType =
     | Signature.fromRpc.ErrorType
@@ -78,6 +75,6 @@ export declare namespace Authorization_fromTuple {
     | Errors.GlobalErrorType
 }
 
-Authorization_fromTuple.parseError = (error: unknown) =>
+fromTuple.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization.fromTuple.ErrorType
+  error as fromTuple.ErrorType

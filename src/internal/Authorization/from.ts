@@ -46,7 +46,7 @@ import type { Compute } from '../types.js'
  * @param options - Authorization options.
  * @returns The {@link ox#Authorization.Authorization}.
  */
-export function Authorization_from<
+export function from<
   const authorization extends Authorization.Authorization | Authorization.Rpc,
   const signature extends Signature.Signature | undefined = undefined,
 >(
@@ -58,7 +58,7 @@ export function Authorization_from<
   return { ...authorization, ...options.signature } as never
 }
 
-export declare namespace Authorization_from {
+export declare namespace from {
   interface Options<
     signature extends Signature.Signature | undefined =
       | Signature.Signature
@@ -85,6 +85,6 @@ export declare namespace Authorization_from {
   type ErrorType = Errors.GlobalErrorType
 }
 
-Authorization_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Authorization.from.ErrorType

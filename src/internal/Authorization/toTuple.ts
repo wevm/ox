@@ -2,7 +2,6 @@ import type * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 import * as Signature from '../../Signature.js'
-import type { Compute } from '../types.js'
 
 /**
  * Converts an {@link ox#Authorization.Authorization} to an {@link ox#Authorization.Tuple}.
@@ -28,7 +27,7 @@ import type { Compute } from '../types.js'
  * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple.
  */
-export function Authorization_toTuple<
+export function toTuple<
   const authorization extends Authorization.Authorization,
 >(
   authorization: authorization,
@@ -43,15 +42,13 @@ export function Authorization_toTuple<
   ] as never
 }
 
-export declare namespace Authorization_toTuple {
+export declare namespace toTuple {
   type ReturnType<
     authorization extends
       Authorization.Authorization = Authorization.Authorization,
-  > = Compute<
-    Authorization.Tuple<
-      authorization extends Signature.Signature ? true : false
-    >
-  >
+  > = authorization extends Signature.Signature
+    ? Authorization.TupleSigned
+    : Authorization.Tuple
 
   type ErrorType =
     | Signature.extract.ErrorType
@@ -60,6 +57,6 @@ export declare namespace Authorization_toTuple {
     | Errors.GlobalErrorType
 }
 
-Authorization_toTuple.parseError = (error: unknown) =>
+toTuple.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Authorization.toTuple.ErrorType

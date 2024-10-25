@@ -1,6 +1,6 @@
 import * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
-import type { Compute, Mutable } from '../types.js'
+import type { Mutable } from '../types.js'
 
 /**
  * Converts an {@link ox#Authorization.TupleList} to an {@link ox#Authorization.List}.
@@ -60,24 +60,23 @@ import type { Compute, Mutable } from '../types.js'
  * @param tupleList - The [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple list.
  * @returns An {@link ox#Authorization.List}.
  */
-export function Authorization_fromTupleList<
-  const tupleList extends Authorization.TupleList,
->(tupleList: tupleList): Authorization.fromTupleList.ReturnType<tupleList> {
+export function fromTupleList<const tupleList extends Authorization.TupleList>(
+  tupleList: tupleList,
+): fromTupleList.ReturnType<tupleList> {
   const list: Mutable<Authorization.List> = []
   for (const tuple of tupleList) list.push(Authorization.fromTuple(tuple))
   return list as never
 }
 
-export declare namespace Authorization_fromTupleList {
-  type ReturnType<tupleList extends Authorization.TupleList> = Compute<
-    Authorization.TupleList<
-      tupleList extends Authorization.TupleList<true> ? true : false
-    >
-  >
+export declare namespace fromTupleList {
+  type ReturnType<tupleList extends Authorization.TupleList> =
+    tupleList extends Authorization.TupleListSigned
+      ? Authorization.ListSigned
+      : Authorization.List
 
   type ErrorType = Authorization.fromTuple.ErrorType | Errors.GlobalErrorType
 }
 
-Authorization_fromTupleList.parseError = (error: unknown) =>
+fromTupleList.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization.fromTupleList.ErrorType
+  error as fromTupleList.ErrorType

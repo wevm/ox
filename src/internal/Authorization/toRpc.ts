@@ -23,9 +23,7 @@ import * as Signature from '../../Signature.js'
  * @param authorization - An Authorization.
  * @returns An RPC-formatted Authorization.
  */
-export function Authorization_toRpc(
-  authorization: Authorization.Signed,
-): Authorization.Rpc {
+export function toRpc(authorization: Authorization.Signed): Authorization.Rpc {
   const { address, chainId, nonce, ...signature } = authorization
 
   return {
@@ -36,13 +34,13 @@ export function Authorization_toRpc(
   }
 }
 
-export declare namespace Authorization_toRpc {
+export declare namespace toRpc {
   type ErrorType =
     | Hex.fromNumber.ErrorType
     | Signature.toRpc.ErrorType
     | Errors.GlobalErrorType
 }
 
-Authorization_toRpc.parseError = (error: unknown) =>
+toRpc.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as Authorization.toRpc.ErrorType

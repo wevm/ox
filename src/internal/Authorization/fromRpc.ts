@@ -22,7 +22,7 @@ import * as Signature from '../../Signature.js'
  * @param authorization - The RPC-formatted Authorization.
  * @returns A signed {@link ox#Authorization.Authorization}.
  */
-export function Authorization_fromRpc(
+export function fromRpc(
   authorization: Authorization.Rpc,
 ): Authorization.Signed {
   const { address, chainId, nonce } = authorization
@@ -36,10 +36,10 @@ export function Authorization_fromRpc(
   }
 }
 
-export declare namespace Authorization_fromRpc {
+export declare namespace fromRpc {
   type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
-Authorization_fromRpc.parseError = (error: unknown) =>
+fromRpc.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization.fromRpc.ErrorType
+  error as fromRpc.ErrorType

@@ -1,5 +1,5 @@
+import * as Authorization from '../../../Authorization.js'
 import type * as Errors from '../../../Errors.js'
-import { Authorization_fromRpcList } from '../../Authorization/fromRpcList.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import type { TransactionEip7702, TransactionEip7702_Rpc } from './types.js'
 
@@ -56,7 +56,7 @@ export function TransactionEip7702_fromRpc<
   : null {
   if (!transaction) return null as never
 
-  const authorizationList = Authorization_fromRpcList(
+  const authorizationList = Authorization.fromRpcList(
     transaction.authorizationList ?? [],
   )
   const signature = Signature_extract(transaction)!

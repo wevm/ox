@@ -21,16 +21,16 @@ import type * as Errors from '../../Errors.js'
  * @param authorizationList - The RPC-formatted Authorization list.
  * @returns A signed {@link ox#Authorization.List}.
  */
-export function Authorization_fromRpcList(
+export function fromRpcList(
   authorizationList: Authorization.ListRpc,
 ): Authorization.ListSigned {
   return authorizationList.map(Authorization.fromRpc)
 }
 
-export declare namespace Authorization_fromRpcList {
+export declare namespace fromRpcList {
   type ErrorType = Authorization.fromRpc.ErrorType | Errors.GlobalErrorType
 }
 
-Authorization_fromRpcList.parseError = (error: unknown) =>
+fromRpcList.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization.fromRpcList.ErrorType
+  error as fromRpcList.ErrorType
