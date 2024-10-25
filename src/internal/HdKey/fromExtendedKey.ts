@@ -18,7 +18,6 @@ import type { HdKey } from './types.js'
  * ```
  *
  * @param extendedKey - The extended private key.
- * @param options - Creation options.
  * @returns The HD Key.
  */
 export function HdKey_fromExtendedKey(extendedKey: string): HdKey {

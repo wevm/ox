@@ -84,7 +84,7 @@ import type {
  * ```
  *
  * @param envelope - The transaction object to convert.
- * @param options -
+ * @param options - Options.
  * @returns An EIP-1559 Transaction Envelope.
  */
 export function TransactionEnvelopeEip1559_from<

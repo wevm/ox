@@ -17,7 +17,7 @@ import type { Hex } from './types.js'
  * ```
  *
  * @param value - The value to check.
- * @param options -
+ * @param options - Options.
  * @returns `true` if the value is a {@link ox#Hex.Hex}, `false` otherwise.
  */
 export function Hex_validate(

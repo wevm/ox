@@ -21,7 +21,7 @@ import type { Blobs } from './types.js'
  * ```
  *
  * @param blobs - The {@link ox#Blobs.Blobs} to compute proofs for.
- * @param options -
+ * @param options - Options.
  * @returns The Blob proofs.
  */
 export function Blobs_toProofs<
@@ -31,17 +31,17 @@ export function Blobs_toProofs<
     | (blobs extends readonly Hex[] ? 'Hex' : never)
     | (blobs extends readonly Bytes[] ? 'Bytes' : never),
 >(
-  blobs_: blobs | Blobs<Bytes> | Blobs<Hex>,
+  blobs: blobs | Blobs<Bytes> | Blobs<Hex>,
   options: Blobs_toProofs.Options<blobs, commitments, as>,
 ): Blobs_toProofs.ReturnType<as> {
   const { kzg } = options
 
-  const as = options.as ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
+  const as = options.as ?? (typeof blobs[0] === 'string' ? 'Hex' : 'Bytes')
 
-  const blobs = (
-    typeof blobs_[0] === 'string'
-      ? blobs_.map((x) => Bytes_fromHex(x as any))
-      : blobs_
+  const blobs_ = (
+    typeof blobs[0] === 'string'
+      ? blobs.map((x) => Bytes_fromHex(x as any))
+      : blobs
   ) as Bytes[]
   const commitments = (
     typeof options.commitments[0] === 'string'
@@ -50,8 +50,8 @@ export function Blobs_toProofs<
   ) as Bytes[]
 
   const proofs: Bytes[] = []
-  for (let i = 0; i < blobs.length; i++) {
-    const blob = blobs[i]!
+  for (let i = 0; i < blobs_.length; i++) {
+    const blob = blobs_[i]!
     const commitment = commitments[i]!
     proofs.push(Uint8Array.from(kzg.computeBlobKzgProof(blob, commitment)))
   }

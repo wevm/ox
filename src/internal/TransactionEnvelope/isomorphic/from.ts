@@ -99,7 +99,7 @@ import type {
  *
  *
  * @param value - The arbitrary value to instantiate a {@link ox#TransactionEnvelope.TransactionEnvelope} from.
- * @param options -
+ * @param options - Options.
  * @returns A {@link ox#TransactionEnvelope.TransactionEnvelope}.
  */
 export function TransactionEnvelope_from<
@@ -108,7 +108,10 @@ export function TransactionEnvelope_from<
     | TransactionEnvelope_Serialized,
   const signature extends Signature | undefined = undefined,
 >(
-  value: value,
+  value:
+    | value
+    | UnionPartialBy<TransactionEnvelope, 'type'>
+    | TransactionEnvelope_Serialized,
   options: TransactionEnvelope_from.Options<signature> = {},
 ): TransactionEnvelope_from.ReturnType<value, signature> {
   const type = TransactionEnvelope_getType(value)

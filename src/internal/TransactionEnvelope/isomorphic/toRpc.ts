@@ -37,8 +37,8 @@ import type { TransactionEnvelope } from './types.js'
  * })
  * ```
  *
- * @param transaction - The transaction to convert.
- * @returns An RPC-formatted transaction.
+ * @param envelope - The transaction envelope to convert.
+ * @returns An RPC-formatted transaction envelope.
  */
 export function TransactionEnvelope_toRpc<envelope extends TransactionEnvelope>(
   envelope: envelope,

@@ -18,7 +18,6 @@ import type { HdKey } from './types.js'
  * ```
  *
  * @param json - The JSON object containing an extended private key (`xpriv`).
- * @param options - Creation options.
  * @returns The HD Key.
  */
 export function HdKey_fromJson(json: { xpriv: string }): HdKey {

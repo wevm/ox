@@ -102,7 +102,7 @@ import type {
  * ```
  *
  * @param envelope - The transaction object to convert.
- * @param options -
+ * @param options - Options.
  * @returns An EIP-4844 Transaction Envelope.
  */
 export function TransactionEnvelopeEip4844_from<

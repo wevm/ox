@@ -20,7 +20,7 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
  * ```
  *
  * @param value - The {@link ox#Bytes.Bytes} value to encode.
- * @param options -
+ * @param options - Options.
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_fromBytes(

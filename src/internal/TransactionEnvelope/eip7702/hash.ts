@@ -33,7 +33,7 @@ import type { TransactionEnvelopeEip7702 } from './types.js'
  * ```
  *
  * @param envelope - The EIP-7702 Transaction Envelope to hash.
- * @param options -
+ * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
 export function TransactionEnvelopeEip7702_hash<

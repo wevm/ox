@@ -49,7 +49,7 @@ import { Blobs_BlobSizeTooLargeError, Blobs_EmptyBlobError } from './errors.js'
  * ```
  *
  * @param data - The data to convert to {@link ox#Blobs.Blobs}.
- * @param options -
+ * @param options - Options.
  * @returns The {@link ox#Blobs.Blobs}.
  */
 export function Blobs_from<

@@ -96,8 +96,9 @@ import type { AbiFunction } from './types.js'
  *
  * :::
  *
- * @param abiItem - ABI Function to decode
+ * @param abiFunction - ABI Function to decode
  * @param data - ABI-encoded function output
+ * @param options - Decoding options
  * @returns Decoded function output
  */
 export function AbiFunction_decodeResult<

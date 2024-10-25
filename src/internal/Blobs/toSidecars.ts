@@ -37,7 +37,7 @@ import type { BlobSidecars, Blobs } from './types.js'
  * ```
  *
  * @param blobs - The {@link ox#Blobs.Blobs} to transform into {@link ox#Blobs.BlobSidecars}.
- * @param options -
+ * @param options - Options.
  * @returns The {@link ox#Blobs.BlobSidecars}.
  */
 export function Blobs_toSidecars<const blobs extends Blobs<Hex> | Blobs<Bytes>>(

@@ -20,7 +20,7 @@ import { ValidatorData_encode } from './encode.js'
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
  * ```
  *
- * @param data - The data to get the sign payload for.
+ * @param value - The data to get the sign payload for.
  * @returns The payload to use for signing.
  */
 export function ValidatorData_getSignPayload(

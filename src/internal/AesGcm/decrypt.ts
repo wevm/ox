@@ -21,7 +21,7 @@ import { AesGcm_ivLength } from './constants.js'
  * // @log: Hex.fromString('i am a secret message')
  * ```
  *
- * @param data - The data to encrypt.
+ * @param value - The data to encrypt.
  * @param key - The `CryptoKey` to use for encryption.
  * @param options - Decryption options.
  * @returns The decrypted data.

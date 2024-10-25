@@ -82,7 +82,7 @@ import type {
  * ```
  *
  * @param envelope - The transaction object to convert.
- * @param options -
+ * @param options - Options.
  * @returns A {@link ox#TransactionEnvelopeEip2930.TransactionEnvelope}
  */
 export function TransactionEnvelopeEip2930_from<

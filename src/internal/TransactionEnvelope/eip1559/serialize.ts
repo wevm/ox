@@ -61,7 +61,7 @@ import type {
  * ```
  *
  * @param envelope - The Transaction Envelope to serialize.
- * @param options -
+ * @param options - Options.
  * @returns The serialized Transaction Envelope.
  */
 export function TransactionEnvelopeEip1559_serialize(

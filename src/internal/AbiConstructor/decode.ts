@@ -28,7 +28,7 @@ import type { AbiConstructor } from './types.js'
  * ```
  *
  * @param abiConstructor - The ABI Constructor to decode.
- * @param data - The encoded constructor inputs.
+ * @param options - Decoding options.
  * @returns The decoded constructor inputs.
  */
 export function AbiConstructor_decode<

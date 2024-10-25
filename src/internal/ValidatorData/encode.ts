@@ -20,7 +20,7 @@ import type { Hex } from '../Hex/types.js'
  * // @log: '0x19 ‖ 0x00 ‖ 0xd8da6bf26964af9d7eed9e03e53415d37aa96045 ‖ "hello world"'
  * ```
  *
- * @param data - The data to encode.
+ * @param value - The data to encode.
  * @returns The encoded personal sign message.
  */
 export function ValidatorData_encode(value: ValidatorData_encode.Value): Hex {

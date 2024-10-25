@@ -53,7 +53,7 @@ import type { BlobSidecars } from './types.js'
  * ```
  *
  * @param sidecars - The {@link ox#Blobs.BlobSidecars} to transform to Blob Versioned Hashes.
- * @param options -
+ * @param options - Options.
  * @returns The versioned hashes.
  */
 export function Blobs_sidecarsToVersionedHashes<

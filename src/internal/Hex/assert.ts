@@ -16,7 +16,7 @@ import type { Hex } from './types.js'
  * ```
  *
  * @param value - The value to assert.
- * @param options -
+ * @param options - Options.
  */
 export function Hex_assert(
   value: unknown,

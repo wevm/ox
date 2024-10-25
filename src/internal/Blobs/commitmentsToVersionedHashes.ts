@@ -54,7 +54,7 @@ import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
  * ```
  *
  * @param commitments - A list of commitments.
- * @param as - The return type.
+ * @param options - Options.
  * @returns A list of Blob Versioned Hashes.
  */
 export function Blobs_commitmentsToVersionedHashes<

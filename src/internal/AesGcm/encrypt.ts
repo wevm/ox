@@ -21,7 +21,7 @@ import { AesGcm_ivLength } from './constants.js'
  * // @log: '0x5e257b25bcf53d5431e54e5a68ca0138306d31bb6154f35a97bb8ea18111e7d82bcf619d3c76c4650688bc5310eed80b8fc86d1e3e'
  * ```
  *
- * @param data - The data to encrypt.
+ * @param value - The data to encrypt.
  * @param key - The `CryptoKey` to use for encryption.
  * @param options - Encryption options.
  * @returns The encrypted data.

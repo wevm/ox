@@ -20,18 +20,18 @@ import type { Bytes } from './types.js'
  * @returns Decoded boolean.
  */
 export function Bytes_toBoolean(
-  bytes_: Bytes,
+  bytes: Bytes,
   options: Bytes_toBoolean.Options = {},
 ): boolean {
   const { size } = options
-  let bytes = bytes_
+  let bytes_ = bytes
   if (typeof size !== 'undefined') {
-    Bytes_assertSize(bytes, size)
-    bytes = Bytes_trimLeft(bytes)
+    Bytes_assertSize(bytes_, size)
+    bytes_ = Bytes_trimLeft(bytes_)
   }
-  if (bytes.length > 1 || bytes[0]! > 1)
-    throw new Bytes_InvalidBytesBooleanError(bytes)
-  return Boolean(bytes[0])
+  if (bytes_.length > 1 || bytes_[0]! > 1)
+    throw new Bytes_InvalidBytesBooleanError(bytes_)
+  return Boolean(bytes_[0])
 }
 
 export declare namespace Bytes_toBoolean {

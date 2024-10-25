@@ -15,7 +15,7 @@ import type { Hex } from './types.js'
  * ```
  *
  * @param hex - The {@link ox#Hex.Hex} value to decode.
- * @param options -
+ * @param options - Options.
  * @returns The decoded {@link ox#Bytes.Bytes}.
  */
 export function Hex_toBytes(

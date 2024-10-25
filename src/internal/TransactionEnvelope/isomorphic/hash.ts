@@ -37,7 +37,7 @@ import type { TransactionEnvelope } from './types.js'
  * ```
  *
  * @param envelope - The Transaction Envelope to hash.
- * @param options -
+ * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
 export function TransactionEnvelope_hash<presign extends boolean = false>(

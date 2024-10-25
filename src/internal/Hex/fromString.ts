@@ -18,7 +18,7 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * ```
  *
  * @param value - The string value to encode.
- * @param options -
+ * @param options - Options.
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_fromString(

@@ -27,7 +27,7 @@ type Encodable = {
  * ```
  *
  * @param value - The {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to encode.
- * @param as - The type to convert the RLP value to.
+ * @param options - Options.
  * @returns The RLP value.
  */
 export function Rlp_from<as extends 'Hex' | 'Bytes'>(
@@ -47,6 +47,7 @@ export function Rlp_from<as extends 'Hex' | 'Bytes'>(
 
 export declare namespace Rlp_from {
   type Options<as extends 'Hex' | 'Bytes'> = {
+    /** The type to convert the RLP value to. */
     as: as | 'Hex' | 'Bytes'
   }
 
@@ -77,7 +78,7 @@ Rlp_from.parseError = (error: unknown) =>
  * ```
  *
  * @param bytes - The {@link ox#Bytes.Bytes} value to encode.
- * @param as - The type to convert the RLP value to.
+ * @param options - Options.
  * @returns The RLP value.
  */
 export function Rlp_fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
@@ -115,7 +116,7 @@ Rlp_fromBytes.parseError = (error: unknown) =>
  * ```
  *
  * @param hex - The {@link ox#Hex.Hex} value to encode.
- * @param to - The type to convert the RLP value to.
+ * @param options - Options.
  * @returns The RLP value.
  */
 export function Rlp_fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(

@@ -3,7 +3,7 @@ import { Hex_validate } from '../Hex/validate.js'
 import type { Filter, Filter_Rpc } from './types.js'
 
 /**
- * Converts a {@link ox#Log.Rpc} to an {@link ox#Log.Log}.
+ * Converts a {@link ox#Filter.Rpc} to an {@link ox#Filter.Filter}.
  *
  * @example
  * ```ts twoslash
@@ -31,8 +31,8 @@ import type { Filter, Filter_Rpc } from './types.js'
  * // @log: }
  * ```
  *
- * @param log - The RPC log to convert.
- * @returns An instantiated {@link ox#Log.Log}.
+ * @param filter - The RPC filter to convert.
+ * @returns An instantiated {@link ox#Filter.Filter}.
  */
 export function Filter_fromRpc(filter: Filter_Rpc): Filter {
   const { address, topics, fromBlock, toBlock } = filter

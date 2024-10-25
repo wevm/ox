@@ -17,7 +17,7 @@ const decoder = /*#__PURE__*/ new TextDecoder()
  * ```
  *
  * @param bytes - The {@link ox#Bytes.Bytes} to decode.
- * @param options -
+ * @param options - Options.
  * @returns Decoded string.
  */
 export function Bytes_toString(

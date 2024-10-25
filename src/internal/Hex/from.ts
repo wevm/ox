@@ -30,7 +30,6 @@ import type { Hex } from './types.js'
  * ```
  *
  * @param value - The {@link ox#Bytes.Bytes} value to encode.
- * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_from(value: Hex | Bytes | readonly number[]): Hex {

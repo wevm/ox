@@ -17,25 +17,26 @@ import type { Hex } from './types.js'
  * @param value - The {@link ox#Hex.Hex} value to slice.
  * @param start - The start offset (in bytes).
  * @param end - The end offset (in bytes).
+ * @param options - Options.
  * @returns The sliced {@link ox#Hex.Hex} value.
  */
 export function Hex_slice(
-  value_: Hex,
+  value: Hex,
   start?: number | undefined,
   end?: number | undefined,
   options: Hex_slice.Options = {},
 ): Hex {
   const { strict } = options
-  Hex_assertStartOffset(value_, start)
-  const value = `0x${value_
+  Hex_assertStartOffset(value, start)
+  const value_ = `0x${value
     .replace('0x', '')
-    .slice((start ?? 0) * 2, (end ?? value_.length) * 2)}` as const
-  if (strict) Hex_assertEndOffset(value, start, end)
-  return value
+    .slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
+  if (strict) Hex_assertEndOffset(value_, start, end)
+  return value_
 }
 
 export declare namespace Hex_slice {
-  interface Options {
+  type Options = {
     /** Asserts that the sliced value is the same size as the given start/end offsets. */
     strict?: boolean | undefined
   }

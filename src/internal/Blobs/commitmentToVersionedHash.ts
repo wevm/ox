@@ -54,7 +54,7 @@ import type { Hex } from '../Hex/types.js'
  * ```
  *
  * @param commitment - The commitment.
- * @param as - The return type.
+ * @param options - Options.
  * @returns The Blob Versioned Hash.
  */
 export function Blobs_commitmentToVersionedHash<

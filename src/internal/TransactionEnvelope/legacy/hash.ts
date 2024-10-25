@@ -31,7 +31,7 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * ```
  *
  * @param envelope - The Legacy Transaction Envelope to hash.
- * @param options -
+ * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
 export function TransactionEnvelopeLegacy_hash<presign extends boolean = false>(

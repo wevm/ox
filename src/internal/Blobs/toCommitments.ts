@@ -39,7 +39,7 @@ import type { Blobs } from './types.js'
  * ```
  *
  * @param blobs - The {@link ox#Blobs.Blobs} to transform to commitments.
- * @param options -
+ * @param options - Options.
  * @returns The commitments.
  */
 export function Blobs_toCommitments<
@@ -48,20 +48,20 @@ export function Blobs_toCommitments<
     | (blobs extends Blobs<Hex> ? 'Hex' : never)
     | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
-  blobs_: blobs | Blobs<Bytes> | Blobs<Hex>,
+  blobs: blobs | Blobs<Bytes> | Blobs<Hex>,
   options: Blobs_toCommitments.Options<as>,
 ): Blobs_toCommitments.ReturnType<as> {
   const { kzg } = options
 
-  const as = options.as ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
-  const blobs = (
-    typeof blobs_[0] === 'string'
-      ? blobs_.map((x) => Bytes_fromHex(x as any))
-      : blobs_
+  const as = options.as ?? (typeof blobs[0] === 'string' ? 'Hex' : 'Bytes')
+  const blobs_ = (
+    typeof blobs[0] === 'string'
+      ? blobs.map((x) => Bytes_fromHex(x as any))
+      : blobs
   ) as Bytes[]
 
   const commitments: Bytes[] = []
-  for (const blob of blobs)
+  for (const blob of blobs_)
     commitments.push(Uint8Array.from(kzg.blobToKzgCommitment(blob)))
 
   return (

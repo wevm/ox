@@ -20,7 +20,7 @@ import type { Hex } from '../Hex/types.js'
  * ```
  *
  * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
- * @param to - The return type.
+ * @param options - Options.
  * @returns Sha256 hash.
  */
 export function Hash_sha256<

@@ -41,21 +41,21 @@ export function Blobs_to<
     | (blobs extends Blobs<Hex> ? 'Hex' : never)
     | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
 >(
-  blobs_: blobs | Blobs<Hex> | Blobs<Bytes>,
-  to_?: to | 'Hex' | 'Bytes' | undefined,
+  blobs: blobs | Blobs<Hex> | Blobs<Bytes>,
+  to?: to | 'Hex' | 'Bytes' | undefined,
 ): Blobs_to.ReturnType<to> {
-  const to = to_ ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
-  const blobs = (
-    typeof blobs_[0] === 'string'
-      ? blobs_.map((x) => Bytes_fromHex(x as Hex))
-      : blobs_
+  const to_ = to ?? (typeof blobs[0] === 'string' ? 'Hex' : 'Bytes')
+  const blobs_ = (
+    typeof blobs[0] === 'string'
+      ? blobs.map((x) => Bytes_fromHex(x as Hex))
+      : blobs
   ) as Bytes[]
 
-  const length = blobs.reduce((length, blob) => length + blob.length, 0)
+  const length = blobs_.reduce((length, blob) => length + blob.length, 0)
   const data = createCursor(new Uint8Array(length))
   let active = true
 
-  for (const blob of blobs) {
+  for (const blob of blobs_) {
     const cursor = createCursor(blob)
     while (active && cursor.position < blob.length) {
       // First byte will be a zero 0x00 byte – we can skip.
@@ -79,7 +79,7 @@ export function Blobs_to<
   }
 
   const trimmedData = data.bytes.slice(0, data.position)
-  return (to === 'Hex' ? Hex_fromBytes(trimmedData) : trimmedData) as never
+  return (to_ === 'Hex' ? Hex_fromBytes(trimmedData) : trimmedData) as never
 }
 
 export declare namespace Blobs_to {

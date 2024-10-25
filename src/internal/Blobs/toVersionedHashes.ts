@@ -21,7 +21,7 @@ import type { Blobs } from './types.js'
  * ```
  *
  * @param blobs - The {@link ox#Blobs.Blobs} to transform into Blob Versioned Hashes.
- * @param options -
+ * @param options - Options.
  * @returns The Blob Versioned Hashes.
  */
 export function Blobs_toVersionedHashes<

@@ -45,7 +45,7 @@ function charCodeToBase16(char: number) {
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
  *
- * @param hex - {@link ox#Hex.Hex} value to encode.
+ * @param value - {@link ox#Hex.Hex} value to encode.
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */

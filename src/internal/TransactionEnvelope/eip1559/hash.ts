@@ -31,7 +31,7 @@ import type { TransactionEnvelopeEip1559 } from './types.js'
  * ```
  *
  * @param envelope - The EIP-1559 Transaction Envelope to hash.
- * @param options -
+ * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
 export function TransactionEnvelopeEip1559_hash<

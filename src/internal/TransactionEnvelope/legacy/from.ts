@@ -77,7 +77,7 @@ import type { TransactionEnvelopeLegacy } from './types.js'
  * ```
  *
  * @param envelope - The transaction object to convert.
- * @param options -
+ * @param options - Options.
  * @returns A legacy Transaction Envelope.
  */
 export function TransactionEnvelopeLegacy_from<

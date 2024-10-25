@@ -21,7 +21,7 @@ import type { Hex } from './types.js'
  * ```
  *
  * @param value - The boolean value to encode.
- * @param options -
+ * @param options - Options.
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function Hex_fromBoolean(

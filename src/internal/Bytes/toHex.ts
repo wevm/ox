@@ -14,8 +14,8 @@ import type { Bytes } from './types.js'
  * // '0x48656c6c6f20576f726c6421'
  * ```
  *
- * @param bytes - The {@link ox#Bytes.Bytes} to decode.
- * @param options -
+ * @param value - The {@link ox#Bytes.Bytes} to decode.
+ * @param options - Options.
  * @returns Decoded {@link ox#Hex.Hex} value.
  */
 export function Bytes_toHex(
