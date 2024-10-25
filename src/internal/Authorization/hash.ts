@@ -1,8 +1,8 @@
 import * as Authorization from '../../Authorization.js'
+import type * as Errors from '../../Errors.js'
 import * as Hash from '../../Hash.js'
 import * as Hex from '../../Hex.js'
 import * as Rlp from '../../Rlp.js'
-import type * as Errors from '../../Errors.js'
 
 /**
  * Computes the hash for an {@link ox#Authorization.Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.

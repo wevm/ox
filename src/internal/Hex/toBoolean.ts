@@ -1,4 +1,4 @@
-import * as Errors from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 import { assertSize } from './assertSize.js'
 
@@ -31,7 +31,7 @@ export function toBoolean(
   }
   if (Hex.trimLeft(hex_) === '0x00') return false
   if (Hex.trimLeft(hex_) === '0x01') return true
-  throw new Errors.InvalidHexBooleanError(hex_)
+  throw new Hex.InvalidHexBooleanError(hex_)
 }
 
 export declare namespace toBoolean {
@@ -43,7 +43,7 @@ export declare namespace toBoolean {
   type ErrorType =
     | assertSize.ErrorType
     | Hex.trimLeft.ErrorType
-    | Errors.InvalidHexBooleanError
+    | Hex.InvalidHexBooleanError
     | Errors.GlobalErrorType
 }
 

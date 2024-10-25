@@ -1,5 +1,5 @@
-import * as Bytes from '../../Bytes.js'
 import type * as AesGcm from '../../AesGcm.js'
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 
 /**

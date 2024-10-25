@@ -1,5 +1,5 @@
 import * as Bytes from '../../Bytes.js'
-import * as Errors from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Returns a section of a {@link ox#Bytes.Bytes} value given a start/end bytes offset.
@@ -60,7 +60,7 @@ export function assertStartOffset(
   start?: number | undefined,
 ) {
   if (typeof start === 'number' && start > 0 && start > Bytes.size(value) - 1)
-    throw new Errors.SliceOffsetOutOfBoundsError({
+    throw new Bytes.SliceOffsetOutOfBoundsError({
       offset: start,
       position: 'start',
       size: Bytes.size(value),
@@ -69,7 +69,7 @@ export function assertStartOffset(
 
 export declare namespace assertStartOffset {
   export type ErrorType =
-    | Errors.SliceOffsetOutOfBoundsError
+    | Bytes.SliceOffsetOutOfBoundsError
     | Bytes.size.ErrorType
     | Errors.GlobalErrorType
 }
@@ -85,7 +85,7 @@ export function assertEndOffset(
     typeof end === 'number' &&
     Bytes.size(value) !== end - start
   )
-    throw new Errors.SliceOffsetOutOfBoundsError({
+    throw new Bytes.SliceOffsetOutOfBoundsError({
       offset: end,
       position: 'end',
       size: Bytes.size(value),
@@ -94,7 +94,7 @@ export function assertEndOffset(
 
 export declare namespace assertEndOffset {
   type ErrorType =
-    | Errors.SliceOffsetOutOfBoundsError
+    | Bytes.SliceOffsetOutOfBoundsError
     | Bytes.size.ErrorType
     | Errors.GlobalErrorType
 }

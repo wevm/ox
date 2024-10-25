@@ -1,5 +1,5 @@
-import type * as Bytes from '../../Bytes.js'
-import * as Errors from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Pads a {@link ox#Bytes.Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
@@ -70,7 +70,7 @@ export function pad(bytes: Bytes.Bytes, options: pad.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes
   if (bytes.length > size)
-    throw new Errors.SizeExceedsPaddingSizeError({
+    throw new Bytes.SizeExceedsPaddingSizeError({
       size: bytes.length,
       targetSize: size,
       type: 'Bytes',
@@ -92,5 +92,5 @@ export declare namespace pad {
 
   type ReturnType = Bytes.Bytes
 
-  type ErrorType = Errors.SizeExceedsPaddingSizeError | Errors.GlobalErrorType
+  type ErrorType = Bytes.SizeExceedsPaddingSizeError | Errors.GlobalErrorType
 }

@@ -1,6 +1,6 @@
-import * as Signature from '../../Signature.js'
 import type * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
+import * as Signature from '../../Signature.js'
 
 /**
  * Converts an {@link ox#Authorization.Rpc} to an {@link ox#Authorization.Authorization}.

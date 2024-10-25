@@ -1,7 +1,7 @@
-import * as Hex from '../../Hex.js'
-import * as Signature from '../../Signature.js'
 import type * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
+import * as Signature from '../../Signature.js'
 import type { Compute } from '../types.js'
 
 /**
@@ -46,7 +46,7 @@ export function Authorization_toTuple<
 export declare namespace Authorization_toTuple {
   type ReturnType<
     authorization extends
-    Authorization.Authorization = Authorization.Authorization,
+      Authorization.Authorization = Authorization.Authorization,
   > = Compute<
     Authorization.Tuple<
       authorization extends Signature.Signature ? true : false

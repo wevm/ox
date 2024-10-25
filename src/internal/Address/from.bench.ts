@@ -1,6 +1,6 @@
 import * as ethers from 'ethers'
-import { bench, describe } from 'vitest'
 import { Address } from 'ox'
+import { bench, describe } from 'vitest'
 
 describe('Address', () => {
   bench('ox: `Address.from`', () => {

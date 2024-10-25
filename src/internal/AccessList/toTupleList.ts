@@ -1,6 +1,6 @@
 import * as Address from '../../Address.js'
-import * as Hex from '../../Hex.js'
 import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Compute, Mutable } from '../types.js'
 import { InvalidStorageKeySizeError } from './errors.js'
 import type { AccessList, AccessList_Tuple } from './types.js'

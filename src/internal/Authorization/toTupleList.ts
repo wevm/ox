@@ -40,8 +40,8 @@ import type { Compute, Mutable } from '../types.js'
  */
 export function Authorization_toTupleList<
   const list extends
-  | readonly Authorization.Authorization<true>[]
-  | readonly Authorization.Authorization<false>[],
+    | readonly Authorization.Authorization<true>[]
+    | readonly Authorization.Authorization<false>[],
 >(list?: list | undefined): Authorization.toTupleList.ReturnType<list> {
   if (!list || list.length === 0) return []
 
@@ -55,8 +55,8 @@ export function Authorization_toTupleList<
 export declare namespace Authorization_toTupleList {
   type ReturnType<
     list extends
-    | readonly Authorization.Authorization<true>[]
-    | readonly Authorization.Authorization<false>[],
+      | readonly Authorization.Authorization<true>[]
+      | readonly Authorization.Authorization<false>[],
   > = Compute<
     Authorization.TupleList<
       list extends readonly Authorization.Authorization<true>[] ? true : false

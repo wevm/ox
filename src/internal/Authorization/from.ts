@@ -1,6 +1,6 @@
 import * as Authorization from '../../Authorization.js'
-import type * as Signature from '../../Signature.js'
 import type * as Errors from '../../Errors.js'
+import type * as Signature from '../../Signature.js'
 import type { Compute } from '../types.js'
 
 /**
@@ -61,8 +61,8 @@ export function Authorization_from<
 export declare namespace Authorization_from {
   interface Options<
     signature extends Signature.Signature | undefined =
-    | Signature.Signature
-    | undefined,
+      | Signature.Signature
+      | undefined,
   > {
     /** The {@link ox#Signature.Signature} to attach to the Authorization. */
     signature?: signature | Signature.Signature | undefined
@@ -70,16 +70,16 @@ export declare namespace Authorization_from {
 
   type ReturnType<
     authorization extends
-    | Authorization.Authorization
-    | Authorization.Rpc = Authorization.Authorization,
+      | Authorization.Authorization
+      | Authorization.Rpc = Authorization.Authorization,
     signature extends Signature.Signature | undefined =
-    | Signature.Signature
-    | undefined,
+      | Signature.Signature
+      | undefined,
   > = Compute<
     authorization extends Authorization.Rpc
-    ? Authorization.Signed
-    : authorization &
-    (signature extends Signature.Signature ? Readonly<signature> : {})
+      ? Authorization.Signed
+      : authorization &
+          (signature extends Signature.Signature ? Readonly<signature> : {})
   >
 
   type ErrorType = Errors.GlobalErrorType

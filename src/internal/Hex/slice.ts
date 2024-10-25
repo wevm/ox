@@ -1,4 +1,4 @@
-import * as Errors from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 
 /**
@@ -54,7 +54,7 @@ slice.parseError = (error: unknown) => error as Hex.slice.ErrorType
 /** @internal */
 export function assertStartOffset(value: Hex.Hex, start?: number | undefined) {
   if (typeof start === 'number' && start > 0 && start > Hex.size(value) - 1)
-    throw new Errors.SliceOffsetOutOfBoundsError({
+    throw new Hex.SliceOffsetOutOfBoundsError({
       offset: start,
       position: 'start',
       size: Hex.size(value),
@@ -63,7 +63,7 @@ export function assertStartOffset(value: Hex.Hex, start?: number | undefined) {
 
 export declare namespace assertStartOffset {
   type ErrorType =
-    | Errors.SliceOffsetOutOfBoundsError
+    | Hex.SliceOffsetOutOfBoundsError
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }
@@ -79,7 +79,7 @@ export function assertEndOffset(
     typeof end === 'number' &&
     Hex.size(value) !== end - start
   )
-    throw new Errors.SliceOffsetOutOfBoundsError({
+    throw new Hex.SliceOffsetOutOfBoundsError({
       offset: end,
       position: 'end',
       size: Hex.size(value),
@@ -88,7 +88,7 @@ export function assertEndOffset(
 
 export declare namespace assertEndOffset {
   type ErrorType =
-    | Errors.SliceOffsetOutOfBoundsError
+    | Hex.SliceOffsetOutOfBoundsError
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }

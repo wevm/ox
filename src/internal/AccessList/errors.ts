@@ -1,5 +1,5 @@
-import * as Hex from '../../Hex.js'
 import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /** Thrown when the size of a storage key is invalid. */
 export class InvalidStorageKeySizeError extends Errors.BaseError {

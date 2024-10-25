@@ -68,10 +68,10 @@ export function deserialize(
         authorizationList,
         ...(transactionArray.length > 9
           ? {
-            yParity,
-            r,
-            s,
-          }
+              yParity,
+              r,
+              s,
+            }
           : {}),
       },
       serializedTransaction,

@@ -1,4 +1,5 @@
-import * as Errors from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
+import * as Value from '../../Value.js'
 
 /**
  * Parses a `string` representation of a Value to `bigint` (multiplied by the given exponent).
@@ -17,7 +18,7 @@ import * as Errors from '../../Errors.js'
  */
 export function from(value: string, decimals = 0) {
   if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
-    throw new Errors.InvalidDecimalNumberError({ value })
+    throw new Value.InvalidDecimalNumberError({ value })
 
   let [integer = '', fraction = '0'] = value.split('.')
 
@@ -58,7 +59,7 @@ export function from(value: string, decimals = 0) {
 }
 
 export declare namespace from {
-  type ErrorType = Errors.InvalidDecimalNumberError | Errors.GlobalErrorType
+  type ErrorType = Value.InvalidDecimalNumberError | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

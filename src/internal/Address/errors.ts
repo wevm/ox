@@ -13,8 +13,8 @@ import * as Errors from '../../Errors.js'
  */
 export class InvalidAddressError<
   cause extends InvalidInputError | InvalidChecksumError =
-  | InvalidInputError
-  | InvalidChecksumError,
+    | InvalidInputError
+    | InvalidChecksumError,
 > extends Errors.BaseError<cause> {
   override readonly name = 'Address.InvalidAddressError'
 

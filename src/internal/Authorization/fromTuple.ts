@@ -1,6 +1,6 @@
 import * as Authorization from '../../Authorization.js'
-import * as Signature from '../../Signature.js'
 import type * as Errors from '../../Errors.js'
+import * as Signature from '../../Signature.js'
 import type { Compute } from '../types.js'
 
 /**

@@ -1,4 +1,4 @@
-import * as Errors from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 
 /**
@@ -39,7 +39,7 @@ export function fromNumber(
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''
-    throw new Errors.IntegerOutOfRangeError({
+    throw new Hex.IntegerOutOfRangeError({
       max: maxValue ? `${maxValue}${suffix}` : undefined,
       min: `${minValue}${suffix}`,
       signed,
@@ -73,7 +73,7 @@ export declare namespace fromNumber {
       }
 
   type ErrorType =
-    | Errors.IntegerOutOfRangeError
+    | Hex.IntegerOutOfRangeError
     | Hex.padLeft.ErrorType
     | Errors.GlobalErrorType
 }

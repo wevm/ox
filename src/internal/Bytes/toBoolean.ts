@@ -1,5 +1,5 @@
 import * as Bytes from '../../Bytes.js'
-import * as Errors from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { assertSize } from './assertSize.js'
 
 /**
@@ -28,7 +28,7 @@ export function toBoolean(
     bytes_ = Bytes.trimLeft(bytes_)
   }
   if (bytes_.length > 1 || bytes_[0]! > 1)
-    throw new Errors.InvalidBytesBooleanError(bytes_)
+    throw new Bytes.InvalidBytesBooleanError(bytes_)
   return Boolean(bytes_[0])
 }
 
@@ -41,6 +41,7 @@ export declare namespace toBoolean {
   type ErrorType =
     | assertSize.ErrorType
     | Bytes.trimLeft.ErrorType
+    | Bytes.InvalidBytesBooleanError
     | Errors.GlobalErrorType
 }
 

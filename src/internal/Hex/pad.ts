@@ -1,5 +1,5 @@
-import * as Errors from '../../Errors.js'
-import type * as Hex from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Pads a {@link ox#Hex.Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
@@ -65,7 +65,7 @@ export function pad(hex_: Hex.Hex, options: pad.Options = {}) {
 
   const hex = hex_.replace('0x', '')
   if (hex.length > size * 2)
-    throw new Errors.SizeExceedsPaddingSizeError({
+    throw new Hex.SizeExceedsPaddingSizeError({
       size: Math.ceil(hex.length / 2),
       targetSize: size,
       type: 'Hex',
@@ -80,5 +80,5 @@ export declare namespace pad {
     dir?: 'left' | 'right' | undefined
     size?: number | undefined
   }
-  type ErrorType = Errors.SizeExceedsPaddingSizeError | Errors.GlobalErrorType
+  type ErrorType = Hex.SizeExceedsPaddingSizeError | Errors.GlobalErrorType
 }

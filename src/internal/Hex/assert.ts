@@ -1,5 +1,5 @@
-import * as Errors from '../../Errors.js'
-import type * as Hex from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Asserts if the given value is {@link ox#Hex.Hex}.
@@ -22,13 +22,13 @@ export function assert(
   options: Hex.assert.Options = {},
 ): asserts value is Hex.Hex {
   const { strict = true } = options
-  if (!value) throw new Errors.InvalidHexTypeError(value)
-  if (typeof value !== 'string') throw new Errors.InvalidHexTypeError(value)
+  if (!value) throw new Hex.InvalidHexTypeError(value)
+  if (typeof value !== 'string') throw new Hex.InvalidHexTypeError(value)
   if (strict) {
     if (!/^0x[0-9a-fA-F]*$/.test(value))
-      throw new Errors.InvalidHexValueError(value)
+      throw new Hex.InvalidHexValueError(value)
   }
-  if (!value.startsWith('0x')) throw new Errors.InvalidHexValueError(value)
+  if (!value.startsWith('0x')) throw new Hex.InvalidHexValueError(value)
 }
 
 export declare namespace assert {
@@ -38,8 +38,8 @@ export declare namespace assert {
   }
 
   type ErrorType =
-    | Errors.InvalidHexTypeError
-    | Errors.InvalidHexValueError
+    | Hex.InvalidHexTypeError
+    | Hex.InvalidHexValueError
     | Errors.GlobalErrorType
 }
 
