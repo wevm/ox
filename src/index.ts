@@ -1118,14 +1118,14 @@ export * as Constants from './Constants.js'
  * Utility functions for computing Contract Addresses.
  *
  * @example
- * ### Computing Contract Addresses (CREATE)
+ * ### Computing Contract Addresses
  *
- * A Contract Address that was instantiated using the `CREATE` opcode can be computed using {@link ox#ContractAddress.(fromCreate:function)}:
+ * A Contract Address can be computed using {@link ox#ContractAddress.(from:function)}:
  *
  * ```ts twoslash
  * import { ContractAddress } from 'ox'
  *
- * ContractAddress.fromCreate({
+ * ContractAddress.from({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
  *   nonce: 0n,
  * })
