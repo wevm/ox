@@ -1,5 +1,5 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from './types.js'
 
 /**
  * Retrieves the size of a {@link ox#Bytes.Bytes} value.
@@ -15,13 +15,13 @@ import type { Bytes } from './types.js'
  * @param value - {@link ox#Bytes.Bytes} value.
  * @returns Size of the {@link ox#Bytes.Bytes} value.
  */
-export function Bytes_size(value: Bytes): number {
+export function size(value: Bytes.Bytes): number {
   return value.length
 }
 
-export declare namespace Bytes_size {
+export declare namespace size {
   export type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_size.parseError = (error: unknown) => error as Bytes_size.ErrorType
+size.parseError = (error: unknown) => error as Bytes.size.ErrorType

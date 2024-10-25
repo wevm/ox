@@ -1,8 +1,8 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
-import { Hex_concat } from '../../Hex/concat.js'
-import { Hex_fromNumber } from '../../Hex/fromNumber.js'
+import { concat } from '../../Hex/concat.js'
+import { fromNumber } from '../../Hex/fromNumber.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toTuple } from '../../Signature/toTuple.js'
@@ -71,18 +71,18 @@ export function serialize(
   const signature = Signature_extract(options.signature || (envelope as any))
 
   const serializedTransaction = [
-    Hex_fromNumber(chainId),
-    nonce ? Hex_fromNumber(nonce) : '0x',
-    gasPrice ? Hex_fromNumber(gasPrice) : '0x',
-    gas ? Hex_fromNumber(gas) : '0x',
+    fromNumber(chainId),
+    nonce ? fromNumber(nonce) : '0x',
+    gasPrice ? fromNumber(gasPrice) : '0x',
+    gas ? fromNumber(gas) : '0x',
     to ?? '0x',
-    value ? Hex_fromNumber(value) : '0x',
+    value ? fromNumber(value) : '0x',
     data ?? input ?? '0x',
     accessTupleList,
     ...(signature ? Signature_toTuple(signature) : []),
   ] as const
 
-  return Hex_concat(
+  return concat(
     '0x01',
     Rlp_fromHex(serializedTransaction),
   ) as TransactionEnvelopeEip2930.Serialized
@@ -96,9 +96,9 @@ export declare namespace serialize {
 
   type ErrorType =
     | TransactionEnvelopeEip2930.assert.ErrorType
-    | Hex_fromNumber.ErrorType
+    | fromNumber.ErrorType
     | Signature_toTuple.ErrorType
-    | Hex_concat.ErrorType
+    | concat.ErrorType
     | Rlp_fromHex.ErrorType
     | Errors.GlobalErrorType
 }

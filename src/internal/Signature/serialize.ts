@@ -1,8 +1,8 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { concat } from '../Hex/concat.js'
+import { fromNumber } from '../Hex/fromNumber.js'
 import type { Hex } from '../Hex/types.js'
 import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'
@@ -36,17 +36,17 @@ export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const r = signature.r
   const s = signature.s
 
-  const signature_ = Hex_concat(
-    Hex_fromNumber(r, { size: 32 }),
-    Hex_fromNumber(s, { size: 32 }),
+  const signature_ = concat(
+    fromNumber(r, { size: 32 }),
+    fromNumber(s, { size: 32 }),
     // If the signature is recovered, add the recovery byte to the signature.
     typeof signature.yParity === 'number'
-      ? Hex_fromNumber(signature.yParity, { size: 1 })
+      ? fromNumber(signature.yParity, { size: 1 })
       : '0x',
   )
 
   if (as === 'Hex') return signature_ as Signature_serialize.ReturnType<as>
-  return Bytes_fromHex(signature_) as Signature_serialize.ReturnType<as>
+  return fromHex(signature_) as Signature_serialize.ReturnType<as>
 }
 
 export declare namespace Signature_serialize {
@@ -62,7 +62,7 @@ export declare namespace Signature_serialize {
     | (as extends 'Hex' ? Hex : never)
     | (as extends 'Bytes' ? Bytes : never)
 
-  type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
+  type ErrorType = fromHex.ErrorType | Errors.GlobalErrorType
 }
 
 Signature_serialize.parseError = (error: unknown) =>

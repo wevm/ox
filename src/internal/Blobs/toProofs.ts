@@ -1,7 +1,7 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Blobs } from './types.js'
@@ -40,12 +40,12 @@ export function Blobs_toProofs<
 
   const blobs = (
     typeof blobs_[0] === 'string'
-      ? blobs_.map((x) => Bytes_fromHex(x as any))
+      ? blobs_.map((x) => fromHex(x as any))
       : blobs_
   ) as Bytes[]
   const commitments = (
     typeof options.commitments[0] === 'string'
-      ? options.commitments.map((x) => Bytes_fromHex(x as any))
+      ? options.commitments.map((x) => fromHex(x as any))
       : options.commitments
   ) as Bytes[]
 
@@ -56,9 +56,7 @@ export function Blobs_toProofs<
     proofs.push(Uint8Array.from(kzg.computeBlobKzgProof(blob, commitment)))
   }
 
-  return (
-    as === 'Bytes' ? proofs : proofs.map((x) => Hex_fromBytes(x))
-  ) as never
+  return (as === 'Bytes' ? proofs : proofs.map((x) => fromBytes(x))) as never
 }
 
 export declare namespace Blobs_toProofs {
@@ -87,8 +85,8 @@ export declare namespace Blobs_toProofs {
     | (as extends 'Hex' ? readonly Hex[] : never)
 
   type ErrorType =
-    | Hex_fromBytes.ErrorType
-    | Bytes_fromHex.ErrorType
+    | fromBytes.ErrorType
+    | fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -2,7 +2,7 @@ import type { AbiParametersToPrimitiveTypes } from 'abitype'
 import * as AbiError from '../../AbiError.js'
 import type * as Errors from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
-import { Hex_concat } from '../Hex/concat.js'
+import { concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
 
@@ -68,7 +68,7 @@ export function encode<const abiError extends AbiError.AbiError>(
       ? AbiParameters_encode(abiError.inputs, (args as any)[0])
       : undefined
 
-  return data ? Hex_concat(selector, data) : selector
+  return data ? concat(selector, data) : selector
 }
 
 export declare namespace encode {

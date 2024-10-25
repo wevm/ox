@@ -1,6 +1,6 @@
-import type { Bytes } from '../Bytes/types.js'
-import { BaseError } from '../Errors/base.js'
-import { Json_stringify } from '../Json/stringify.js'
+import type * as Bytes from '../../Bytes.js'
+import * as Errors from '../../Errors.js'
+import * as Json from '../../Json.js'
 
 /**
  * Thrown when the bytes value cannot be represented as a boolean.
@@ -14,10 +14,10 @@ import { Json_stringify } from '../Json/stringify.js'
  * // @error: The bytes array must contain a single byte of either a `0` or `1` value.
  * ```
  */
-export class Bytes_InvalidBytesBooleanError extends BaseError {
+export class InvalidBytesBooleanError extends Errors.BaseError {
   override readonly name = 'Bytes.InvalidBytesBooleanError'
 
-  constructor(bytes: Bytes) {
+  constructor(bytes: Bytes.Bytes) {
     super(`Bytes value \`${bytes}\` is not a valid boolean.`, {
       docsPath: '/errors#bytesinvalidbytesbooleanerror',
       metaMessages: [
@@ -39,12 +39,12 @@ export class Bytes_InvalidBytesBooleanError extends BaseError {
  * // @error: Bytes.InvalidBytesTypeError: Value `foo` of type `string` is an invalid Bytes value.
  * ```
  */
-export class Bytes_InvalidBytesTypeError extends BaseError {
+export class InvalidBytesTypeError extends Errors.BaseError {
   override readonly name = 'Bytes.InvalidBytesTypeError'
 
   constructor(value: unknown) {
     super(
-      `Value \`${typeof value === 'object' ? Json_stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`,
+      `Value \`${typeof value === 'object' ? Json.stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`,
       {
         docsPath: '/errors#bytesinvalidbytestypeerror',
         metaMessages: ['Bytes values must be of type `Bytes`.'],
@@ -64,7 +64,7 @@ export class Bytes_InvalidBytesTypeError extends BaseError {
  * // @error: Bytes.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.
  * ```
  */
-export class Bytes_SizeOverflowError extends BaseError {
+export class SizeOverflowError extends Errors.BaseError {
   override readonly name = 'Bytes.SizeOverflowError'
 
   constructor({ givenSize, maxSize }: { givenSize: number; maxSize: number }) {
@@ -88,7 +88,7 @@ export class Bytes_SizeOverflowError extends BaseError {
  * // @error: Bytes.SliceOffsetOutOfBoundsError: Slice starting at offset `4` is out-of-bounds (size: `3`).
  * ```
  */
-export class Bytes_SliceOffsetOutOfBoundsError extends BaseError {
+export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
   override readonly name = 'Bytes.SliceOffsetOutOfBoundsError'
 
   constructor({
@@ -118,7 +118,7 @@ export class Bytes_SliceOffsetOutOfBoundsError extends BaseError {
  * // @error: [Bytes.SizeExceedsPaddingSizeError: Bytes size (`12`) exceeds padding size (`8`).
  * ```
  */
-export class Bytes_SizeExceedsPaddingSizeError extends BaseError {
+export class SizeExceedsPaddingSizeError extends Errors.BaseError {
   override readonly name = 'Bytes.SizeExceedsPaddingSizeError'
 
   constructor({

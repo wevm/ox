@@ -1,6 +1,6 @@
 import { p256 } from '@noble/curves/p256'
 import type * as Errors from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Signature } from '../Signature/types.js'
 import { WebAuthnP256_CredentialRequestFailedError } from './errors.js'
 import { WebAuthnP256_getCredentialRequestOptions } from './getCredentialRequestOptions.js'
@@ -65,7 +65,7 @@ export async function WebAuthnP256_sign(
 
     return {
       metadata: {
-        authenticatorData: Hex_fromBytes(
+        authenticatorData: fromBytes(
           new Uint8Array(response.authenticatorData),
         ),
         clientDataJSON,
@@ -106,7 +106,7 @@ export declare namespace WebAuthnP256_sign {
   }
 
   type ErrorType =
-    | Hex_fromBytes.ErrorType
+    | fromBytes.ErrorType
     | WebAuthnP256_getCredentialRequestOptions.ErrorType
     | Errors.GlobalErrorType
 }
@@ -125,8 +125,8 @@ export function parseAsn1Signature(bytes: Uint8Array) {
   const r_end = r_start + 32
   const s_start = bytes[r_end + 2] === 0 ? r_end + 3 : r_end + 2
 
-  const r = BigInt(Hex_fromBytes(bytes.slice(r_start, r_end)))
-  const s = BigInt(Hex_fromBytes(bytes.slice(s_start)))
+  const r = BigInt(fromBytes(bytes.slice(r_start, r_end)))
+  const s = BigInt(fromBytes(bytes.slice(s_start)))
 
   return {
     r,

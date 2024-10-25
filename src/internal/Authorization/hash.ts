@@ -1,6 +1,6 @@
 import type * as Errors from '../../Errors.js'
 import { keccak256 } from '../Hash/keccak256.js'
-import { Hex_concat } from '../Hex/concat.js'
+import { concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
 import { Rlp_fromHex } from '../Rlp/from.js'
 import { Authorization_toTuple } from './toTuple.js'
@@ -27,7 +27,7 @@ import type { Authorization } from './types.js'
  */
 export function Authorization_hash(authorization: Authorization): Hex {
   return keccak256(
-    Hex_concat('0x05', Rlp_fromHex(Authorization_toTuple(authorization))),
+    concat('0x05', Rlp_fromHex(Authorization_toTuple(authorization))),
   )
 }
 
@@ -35,7 +35,7 @@ export declare namespace Authorization_hash {
   type ErrorType =
     | Authorization_toTuple.ErrorType
     | keccak256.ErrorType
-    | Hex_concat.ErrorType
+    | concat.ErrorType
     | Rlp_fromHex.ErrorType
     | Errors.GlobalErrorType
 }

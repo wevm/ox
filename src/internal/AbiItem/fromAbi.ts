@@ -1,11 +1,8 @@
+import type * as Abi from '../../Abi.js'
+import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
-import type { Abi } from '../Abi/types.js'
+import * as Hex from '../../Hex.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
-import type { Address } from '../Address/types.js'
-import { validate } from '../Address/validate.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
 import type { UnionCompute } from '../types.js'
 import { AbiItem_AmbiguityError, AbiItem_NotFoundError } from './errors.js'
 import { AbiItem_getSelector } from './getSelector.js'
@@ -86,24 +83,24 @@ import type {
  * @returns The ABI item.
  */
 export function AbiItem_fromAbi<
-  const abi extends Abi | readonly unknown[],
+  const abi extends Abi.Abi | readonly unknown[],
   name extends AbiItem_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
   //
   allNames = AbiItem_Name<abi>,
 >(
-  abi: abi | Abi | readonly unknown[],
-  name: Hex | (name extends allNames ? name : never),
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
   options?: AbiItem_fromAbi.Options<abi, name, args>,
 ): AbiItem_fromAbi.ReturnType<abi, name, args> {
   const { args = [], prepare = true } = (options ??
     {}) as unknown as AbiItem_fromAbi.Options
 
-  const isSelector = Hex_validate(name, { strict: false })
-  const abiItems = (abi as Abi).filter((abiItem) => {
+  const isSelector = Hex.validate(name, { strict: false })
+  const abiItems = (abi as Abi.Abi).filter((abiItem) => {
     if (isSelector) {
       if (abiItem.type === 'function' || abiItem.type === 'error')
-        return AbiItem_getSelector(abiItem) === Hex_slice(name, 0, 4)
+        return AbiItem_getSelector(abiItem) === Hex.slice(name, 0, 4)
       if (abiItem.type === 'event')
         return AbiItem_getSignatureHash(abiItem) === name
       return false
@@ -182,7 +179,7 @@ export function AbiItem_fromAbi<
 
 export declare namespace AbiItem_fromAbi {
   type Options<
-    abi extends Abi | readonly unknown[] = Abi,
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
     args extends
       | AbiItem_ExtractArgs<abi, name>
@@ -203,7 +200,7 @@ export declare namespace AbiItem_fromAbi {
           args?:
             | allArgs // show all options
             // infer value, widen inferred value of `args` conditionally to match `allArgs`
-            | (abi extends Abi
+            | (abi extends Abi.Abi
                 ? args extends allArgs
                   ? Widen<args>
                   : never
@@ -219,14 +216,14 @@ export declare namespace AbiItem_fromAbi {
   >
 
   type ReturnType<
-    abi extends Abi | readonly unknown[] = Abi,
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
     args extends
       | AbiItem_ExtractArgs<abi, name>
       | undefined = AbiItem_ExtractArgs<abi, name>,
     fallback = AbiItem,
-  > = abi extends Abi
-    ? Abi extends abi
+  > = abi extends Abi.Abi
+    ? Abi.Abi extends abi
       ? fallback
       : AbiItem_ExtractForArgs<
           abi,
@@ -253,7 +250,7 @@ export function isArgOfType(
   const abiParameterType = abiParameter.type
   switch (abiParameterType) {
     case 'address':
-      return validate(arg as Address, { strict: false })
+      return Address.validate(arg as Address.Address, { strict: false })
     case 'bool':
       return argType === 'boolean'
     case 'function':
@@ -332,11 +329,11 @@ export function getAmbiguousTypes(
     const ambiguous = (() => {
       if (types.includes('address') && types.includes('bytes20')) return true
       if (types.includes('address') && types.includes('string'))
-        return validate(args[parameterIndex] as Address, {
+        return Address.validate(args[parameterIndex] as Address.Address, {
           strict: false,
         })
       if (types.includes('address') && types.includes('bytes'))
-        return validate(args[parameterIndex] as Address, {
+        return Address.validate(args[parameterIndex] as Address.Address, {
           strict: false,
         })
       return false

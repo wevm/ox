@@ -1,6 +1,5 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_assert } from './assert.js'
-import type { Bytes } from './types.js'
 
 /**
  * Checks if the given value is {@link ox#Bytes.Bytes}.
@@ -19,19 +18,18 @@ import type { Bytes } from './types.js'
  * @param value - Value to check.
  * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
-export function Bytes_validate(value: unknown): value is Bytes {
+export function validate(value: unknown): value is Bytes.Bytes {
   try {
-    Bytes_assert(value)
+    Bytes.assert(value)
     return true
   } catch {
     return false
   }
 }
 
-export declare namespace Bytes_validate {
+export declare namespace validate {
   export type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_validate.parseError = (error: unknown) =>
-  error as Bytes_validate.ErrorType
+validate.parseError = (error: unknown) => error as Bytes.validate.ErrorType

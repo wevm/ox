@@ -1,7 +1,5 @@
-import type * as Errors from '../../Errors.js'
-import { Hex_IntegerOutOfRangeError } from './errors.js'
-import { Hex_padLeft } from './pad.js'
-import type { Hex } from './types.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Encodes a number or bigint into a {@link ox#Hex.Hex} value.
@@ -21,10 +19,10 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function Hex_fromNumber(
+export function fromNumber(
   value: number | bigint,
-  options: Hex_fromNumber.Options = {},
-): Hex {
+  options: Hex.fromNumber.Options = {},
+): Hex.Hex {
   const { signed, size } = options
 
   const value_ = BigInt(value)
@@ -41,7 +39,7 @@ export function Hex_fromNumber(
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''
-    throw new Hex_IntegerOutOfRangeError({
+    throw new Errors.IntegerOutOfRangeError({
       max: maxValue ? `${maxValue}${suffix}` : undefined,
       min: `${minValue}${suffix}`,
       signed,
@@ -55,12 +53,12 @@ export function Hex_fromNumber(
   ).toString(16)
 
   const hex =
-    `0x${stringValue.length % 2 === 0 ? stringValue : `0${stringValue}`}` as Hex
-  if (size) return Hex_padLeft(hex, size) as Hex
+    `0x${stringValue.length % 2 === 0 ? stringValue : `0${stringValue}`}` as Hex.Hex
+  if (size) return Hex.padLeft(hex, size) as Hex.Hex
   return hex
 }
 
-export declare namespace Hex_fromNumber {
+export declare namespace fromNumber {
   type Options =
     | {
         /** Whether or not the number of a signed representation. */
@@ -75,11 +73,11 @@ export declare namespace Hex_fromNumber {
       }
 
   type ErrorType =
-    | Hex_IntegerOutOfRangeError
-    | Hex_padLeft.ErrorType
+    | Errors.IntegerOutOfRangeError
+    | Hex.padLeft.ErrorType
     | Errors.GlobalErrorType
 }
 
-Hex_fromNumber.parseError = (error: unknown) =>
+fromNumber.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Hex_fromNumber.ErrorType
+  error as Hex.fromNumber.ErrorType

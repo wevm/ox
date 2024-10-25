@@ -1,7 +1,6 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_assertSize } from './assertSize.js'
-import { Hex_padLeft } from './pad.js'
-import type { Hex } from './types.js'
+import * as Hex from '../../Hex.js'
+import { assertSize } from './assertSize.js'
 
 /**
  * Encodes a boolean into a {@link ox#Hex.Hex} value.
@@ -24,30 +23,30 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function Hex_fromBoolean(
+export function fromBoolean(
   value: boolean,
-  options: Hex_fromBoolean.Options = {},
-): Hex {
-  const hex: Hex = `0x0${Number(value)}`
+  options: Hex.fromBoolean.Options = {},
+): Hex.Hex {
+  const hex: Hex.Hex = `0x0${Number(value)}`
   if (typeof options.size === 'number') {
-    Hex_assertSize(hex, options.size)
-    return Hex_padLeft(hex, options.size)
+    assertSize(hex, options.size)
+    return Hex.padLeft(hex, options.size)
   }
   return hex
 }
 
-export declare namespace Hex_fromBoolean {
+export declare namespace fromBoolean {
   type Options = {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Hex_assertSize.ErrorType
-    | Hex_padLeft.ErrorType
+    | assertSize.ErrorType
+    | Hex.padLeft.ErrorType
     | Errors.GlobalErrorType
 }
 
-Hex_fromBoolean.parseError = (error: unknown) =>
+fromBoolean.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Hex_fromBoolean.ErrorType
+  error as Hex.fromBoolean.ErrorType

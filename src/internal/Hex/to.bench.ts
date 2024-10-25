@@ -1,22 +1,22 @@
-import { getBytes, toBigInt, toUtf8String } from 'ethers'
+import { toBigInt as ethers_toBigInt, getBytes, toUtf8String } from 'ethers'
 import { bench, describe } from 'vitest'
-import { Hex_toBigInt } from './toBigInt.js'
-import { Hex_toBytes } from './toBytes.js'
-import { Hex_toNumber } from './toNumber.js'
+import { toBigInt } from './toBigInt.js'
+import { toBytes } from './toBytes.js'
+import { toNumber } from './toNumber.js'
 
 describe('Hex to BigInt', () => {
   bench('ox: `Hex.toBigInt`', () => {
-    Hex_toBigInt('0x1a4')
+    toBigInt('0x1a4')
   })
 
   bench('ethers: `toBigInt`', () => {
-    toBigInt('0x1a4')
+    ethers_toBigInt('0x1a4')
   })
 })
 
 describe('Hex to String', () => {
   bench('ox: `hexToString`', () => {
-    Hex_toNumber('0x48656c6c6f20576f726c6421')
+    toNumber('0x48656c6c6f20576f726c6421')
   })
 
   bench('ethers: `toUtf8String`', () => {
@@ -26,7 +26,7 @@ describe('Hex to String', () => {
 
 describe('Hex to Bytes', () => {
   bench('ox: `Hex.toBytes`', () => {
-    Hex_toBytes('0x48656c6c6f20576f726c6421')
+    toBytes('0x48656c6c6f20576f726c6421')
   })
 
   bench('ethers: `toUtf8String`', () => {

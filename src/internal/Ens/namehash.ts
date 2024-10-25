@@ -1,9 +1,9 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
+import { concat } from '../Bytes/concat.js'
+import { fromHex } from '../Bytes/fromHex.js'
+import { fromString } from '../Bytes/fromString.js'
 import { keccak256 } from '../Hash/keccak256.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
 
 /**
@@ -23,29 +23,29 @@ import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
  */
 export function Ens_namehash(name: string) {
   let result = new Uint8Array(32).fill(0)
-  if (!name) return Hex_fromBytes(result)
+  if (!name) return fromBytes(result)
 
   const labels = name.split('.')
   // Iterate in reverse order building up hash
   for (let i = labels.length - 1; i >= 0; i -= 1) {
     const hashFromEncodedLabel = Ens_encodedLabelToLabelhash(labels[i]!)
     const hashed = hashFromEncodedLabel
-      ? Bytes_fromHex(hashFromEncodedLabel)
-      : keccak256(Bytes_fromString(labels[i]!), { as: 'Bytes' })
-    result = keccak256(Bytes_concat(result, hashed), { as: 'Bytes' })
+      ? fromHex(hashFromEncodedLabel)
+      : keccak256(fromString(labels[i]!), { as: 'Bytes' })
+    result = keccak256(concat(result, hashed), { as: 'Bytes' })
   }
 
-  return Hex_fromBytes(result)
+  return fromBytes(result)
 }
 
 export declare namespace Ens_namehash {
   type ErrorType =
-    | Hex_fromBytes.ErrorType
+    | fromBytes.ErrorType
     | Ens_encodedLabelToLabelhash.ErrorType
-    | Bytes_fromHex.ErrorType
+    | fromHex.ErrorType
     | keccak256.ErrorType
-    | Bytes_fromString.ErrorType
-    | Bytes_concat.ErrorType
+    | fromString.ErrorType
+    | concat.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -1,9 +1,9 @@
 import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_from } from '../Hex/from.js'
-import { Hex_fromString } from '../Hex/fromString.js'
-import { Hex_size } from '../Hex/size.js'
+import { concat } from '../Hex/concat.js'
+import { from } from '../Hex/from.js'
+import { fromString } from '../Hex/fromString.js'
+import { size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
@@ -22,20 +22,20 @@ import type { Hex } from '../Hex/types.js'
  * @returns The encoded personal sign message.
  */
 export function PersonalMessage_encode(data: Hex | Bytes): Hex {
-  const message = Hex_from(data)
-  return Hex_concat(
+  const message = from(data)
+  return concat(
     // Personal Sign Format: `0x19 ‖ "Ethereum Signed Message:\n" ‖ message.length ‖ message`
     '0x19',
-    Hex_fromString('Ethereum Signed Message:\n' + Hex_size(message)),
+    fromString('Ethereum Signed Message:\n' + size(message)),
     message,
   )
 }
 
 export declare namespace PersonalMessage_encode {
   type ErrorType =
-    | Hex_concat.ErrorType
-    | Hex_from.ErrorType
-    | Hex_fromString.ErrorType
+    | concat.ErrorType
+    | from.ErrorType
+    | fromString.ErrorType
     | Errors.GlobalErrorType
 }
 

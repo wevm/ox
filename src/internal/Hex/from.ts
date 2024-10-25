@@ -1,7 +1,6 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from './fromBytes.js'
-import type { Hex } from './types.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Instantiates a {@link ox#Hex.Hex} value from a hex string or {@link ox#Bytes.Bytes} value.
@@ -33,20 +32,22 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function Hex_from(value: Hex | Bytes | readonly number[]): Hex {
-  if (value instanceof Uint8Array) return Hex_fromBytes(value)
-  if (Array.isArray(value)) return Hex_fromBytes(new Uint8Array(value))
+export function from(
+  value: Hex.Hex | Bytes.Bytes | readonly number[],
+): Hex.Hex {
+  if (value instanceof Uint8Array) return Hex.fromBytes(value)
+  if (Array.isArray(value)) return Hex.fromBytes(new Uint8Array(value))
   return value as never
 }
 
-export declare namespace Hex_from {
+export declare namespace from {
   type Options = {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }
 
-  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_from.parseError = (error: unknown) => error as Hex_from.ErrorType
+from.parseError = (error: unknown) => error as Hex.from.ErrorType

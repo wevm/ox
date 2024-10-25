@@ -1,7 +1,7 @@
 import type { HDKey } from '@scure/bip32'
 
 import type * as Errors from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import { Secp256k1_getPublicKey } from '../Secp256k1/getPublicKey.js'
 import type { HdKey } from './types.js'
 
@@ -10,9 +10,9 @@ export function HdKey_fromScure(key: HDKey): HdKey {
   return {
     derive: (path) => HdKey_fromScure(key.derive(path)),
     depth: key.depth,
-    identifier: Hex_fromBytes(key.identifier!),
+    identifier: fromBytes(key.identifier!),
     index: key.index,
-    privateKey: Hex_fromBytes(key.privateKey!),
+    privateKey: fromBytes(key.privateKey!),
     privateExtendedKey: key.privateExtendedKey,
     publicKey: Secp256k1_getPublicKey({ privateKey: key.privateKey! }),
     publicExtendedKey: key.publicExtendedKey,

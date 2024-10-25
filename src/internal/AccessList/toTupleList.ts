@@ -1,5 +1,5 @@
 import * as Address from '../../Address.js'
-import { Hex_size } from '../Hex/size.js'
+import { size } from '../Hex/size.js'
 import type { Compute, Mutable } from '../types.js'
 import { AccessList_InvalidStorageKeySizeError } from './errors.js'
 import type { AccessList, AccessList_Tuple } from './types.js'
@@ -13,7 +13,7 @@ export function AccessList_toTupleList(
   const tuple: Mutable<AccessList_Tuple> = []
   for (const { address, storageKeys } of accessList) {
     for (let j = 0; j < storageKeys.length; j++)
-      if (Hex_size(storageKeys[j]!) !== 32)
+      if (size(storageKeys[j]!) !== 32)
         throw new AccessList_InvalidStorageKeySizeError({
           storageKey: storageKeys[j]!,
         })

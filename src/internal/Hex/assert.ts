@@ -1,6 +1,5 @@
-import type * as Errors from '../../Errors.js'
-import { Hex_InvalidHexTypeError, Hex_InvalidHexValueError } from './errors.js'
-import type { Hex } from './types.js'
+import * as Errors from '../../Errors.js'
+import type * as Hex from '../../Hex.js'
 
 /**
  * Asserts if the given value is {@link ox#Hex.Hex}.
@@ -16,33 +15,33 @@ import type { Hex } from './types.js'
  * ```
  *
  * @param value - The value to assert.
- * @param options -
+ * @param options - Assertion options.
  */
-export function Hex_assert(
+export function assert(
   value: unknown,
-  options: Hex_assert.Options = {},
-): asserts value is Hex {
+  options: Hex.assert.Options = {},
+): asserts value is Hex.Hex {
   const { strict = true } = options
-  if (!value) throw new Hex_InvalidHexTypeError(value)
-  if (typeof value !== 'string') throw new Hex_InvalidHexTypeError(value)
+  if (!value) throw new Errors.InvalidHexTypeError(value)
+  if (typeof value !== 'string') throw new Errors.InvalidHexTypeError(value)
   if (strict) {
     if (!/^0x[0-9a-fA-F]*$/.test(value))
-      throw new Hex_InvalidHexValueError(value)
+      throw new Errors.InvalidHexValueError(value)
   }
-  if (!value.startsWith('0x')) throw new Hex_InvalidHexValueError(value)
+  if (!value.startsWith('0x')) throw new Errors.InvalidHexValueError(value)
 }
 
-export declare namespace Hex_assert {
+export declare namespace assert {
   type Options = {
     /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
   }
 
   type ErrorType =
-    | Hex_InvalidHexTypeError
-    | Hex_InvalidHexValueError
+    | Errors.InvalidHexTypeError
+    | Errors.InvalidHexValueError
     | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_assert.parseError = (error: unknown) => error as Hex_assert.ErrorType
+assert.parseError = (error: unknown) => error as Hex.assert.ErrorType

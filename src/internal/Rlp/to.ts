@@ -1,9 +1,8 @@
-import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import * as Errors from '../../Errors.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import { Hex_InvalidLengthError } from '../Hex/errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import type { RecursiveArray } from '../types.js'
@@ -74,8 +73,8 @@ export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
   const bytes = (() => {
     if (typeof value === 'string') {
       if (value.length > 3 && value.length % 2 !== 0)
-        throw new Hex_InvalidLengthError(value)
-      return Bytes_fromHex(value)
+        throw new Errors.InvalidLengthError(value)
+      return fromHex(value)
     }
     return value as Bytes
   })()
@@ -95,10 +94,10 @@ export declare namespace Rlp_to {
     | (to extends 'Hex' ? RecursiveArray<Hex> : never)
 
   type ErrorType =
-    | Bytes_fromHex.ErrorType
+    | fromHex.ErrorType
     | decodeRlpCursor.ErrorType
     | createCursor.ErrorType
-    | Hex_InvalidLengthError
+    | Errors.InvalidLengthError
     | Errors.GlobalErrorType
 }
 
@@ -114,7 +113,7 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
 ): decodeRlpCursor.ReturnType<to> {
   if (cursor.bytes.length === 0)
     return (
-      to === 'Hex' ? Hex_fromBytes(cursor.bytes) : cursor.bytes
+      to === 'Hex' ? fromBytes(cursor.bytes) : cursor.bytes
     ) as decodeRlpCursor.ReturnType<to>
 
   const prefix = cursor.readByte()
@@ -125,7 +124,7 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
     const length = readLength(cursor, prefix, 0x80)
     const bytes = cursor.readBytes(length)
     return (
-      to === 'Hex' ? Hex_fromBytes(bytes) : bytes
+      to === 'Hex' ? fromBytes(bytes) : bytes
     ) as decodeRlpCursor.ReturnType<to>
   }
 
@@ -138,7 +137,7 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
 export declare namespace decodeRlpCursor {
   type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> = Rlp_to.ReturnType<to>
   type ErrorType =
-    | Hex_fromBytes.ErrorType
+    | fromBytes.ErrorType
     | readLength.ErrorType
     | readList.ErrorType
     | Errors.GlobalErrorType

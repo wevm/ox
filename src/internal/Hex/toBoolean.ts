@@ -1,8 +1,6 @@
-import type * as Errors from '../../Errors.js'
-import { Hex_assertSize } from './assertSize.js'
-import { Hex_InvalidHexBooleanError } from './errors.js'
-import { Hex_trimLeft } from './trim.js'
-import type { Hex } from './types.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
+import { assertSize } from './assertSize.js'
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a boolean.
@@ -22,32 +20,32 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The decoded boolean.
  */
-export function Hex_toBoolean(
-  hex: Hex,
-  options: Hex_toBoolean.Options = {},
+export function toBoolean(
+  hex: Hex.Hex,
+  options: Hex.toBoolean.Options = {},
 ): boolean {
   let hex_ = hex
   if (options.size) {
-    Hex_assertSize(hex, options.size)
-    hex_ = Hex_trimLeft(hex_)
+    assertSize(hex, options.size)
+    hex_ = Hex.trimLeft(hex_)
   }
-  if (Hex_trimLeft(hex_) === '0x00') return false
-  if (Hex_trimLeft(hex_) === '0x01') return true
-  throw new Hex_InvalidHexBooleanError(hex_)
+  if (Hex.trimLeft(hex_) === '0x00') return false
+  if (Hex.trimLeft(hex_) === '0x01') return true
+  throw new Errors.InvalidHexBooleanError(hex_)
 }
 
-export declare namespace Hex_toBoolean {
+export declare namespace toBoolean {
   type Options = {
     /** Size (in bytes) of the hex value. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Hex_assertSize.ErrorType
-    | Hex_trimLeft.ErrorType
-    | Hex_InvalidHexBooleanError
+    | assertSize.ErrorType
+    | Hex.trimLeft.ErrorType
+    | Errors.InvalidHexBooleanError
     | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_toBoolean.parseError = (error: unknown) => error as Hex_toBoolean.ErrorType
+toBoolean.parseError = (error: unknown) => error as Hex.toBoolean.ErrorType

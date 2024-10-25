@@ -2,7 +2,7 @@ import type { AbiEventParameter } from 'abitype'
 
 import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
+import { fromString } from '../Bytes/fromString.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
@@ -72,7 +72,7 @@ export function assertArgs<const abiEvent extends AbiEvent>(
     if (input.type === 'address')
       return Address.isEqual(value as Address.Address, arg as Address.Address)
     if (input.type === 'string')
-      return keccak256(Bytes_fromString(value as string)) === arg
+      return keccak256(fromString(value as string)) === arg
     if (input.type === 'bytes') return keccak256(value as Hex) === arg
     return value === arg
   }
@@ -128,7 +128,7 @@ export function assertArgs<const abiEvent extends AbiEvent>(
 export declare namespace assertArgs {
   type ErrorType =
     | Address.isEqual.ErrorType
-    | Bytes_fromString.ErrorType
+    | fromString.ErrorType
     | keccak256.ErrorType
     | ArgsMismatchError
     | Errors.GlobalErrorType

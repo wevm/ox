@@ -1,7 +1,7 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelopeLegacy from '../../../TransactionEnvelopeLegacy.js'
-import { Hex_fromNumber } from '../../Hex/fromNumber.js'
-import { Hex_trimLeft } from '../../Hex/trim.js'
+import { fromNumber } from '../../Hex/fromNumber.js'
+import { trimLeft } from '../../Hex/trim.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
 import { Signature_InvalidVError } from '../../Signature/errors.js'
 import type { Signature } from '../../Signature/types.js'
@@ -66,11 +66,11 @@ export function serialize(
   TransactionEnvelopeLegacy.assert(envelope)
 
   let serializedTransaction = [
-    nonce ? Hex_fromNumber(nonce) : '0x',
-    gasPrice ? Hex_fromNumber(gasPrice) : '0x',
-    gas ? Hex_fromNumber(gas) : '0x',
+    nonce ? fromNumber(nonce) : '0x',
+    gasPrice ? fromNumber(gasPrice) : '0x',
+    gas ? fromNumber(gas) : '0x',
     to ?? '0x',
-    value ? Hex_fromNumber(value) : '0x',
+    value ? fromNumber(value) : '0x',
     data ?? input ?? '0x',
   ]
 
@@ -112,14 +112,14 @@ export function serialize(
 
     serializedTransaction = [
       ...serializedTransaction,
-      Hex_fromNumber(v),
-      signature.r === 0n ? '0x' : Hex_trimLeft(Hex_fromNumber(signature.r)),
-      signature.s === 0n ? '0x' : Hex_trimLeft(Hex_fromNumber(signature.s)),
+      fromNumber(v),
+      signature.r === 0n ? '0x' : trimLeft(fromNumber(signature.r)),
+      signature.s === 0n ? '0x' : trimLeft(fromNumber(signature.s)),
     ]
   } else if (chainId > 0)
     serializedTransaction = [
       ...serializedTransaction,
-      Hex_fromNumber(chainId),
+      fromNumber(chainId),
       '0x',
       '0x',
     ]
@@ -135,8 +135,8 @@ export declare namespace serialize {
 
   type ErrorType =
     | TransactionEnvelopeLegacy.assert.ErrorType
-    | Hex_fromNumber.ErrorType
-    | Hex_trimLeft.ErrorType
+    | fromNumber.ErrorType
+    | trimLeft.ErrorType
     | Rlp_fromHex.ErrorType
     | Signature_InvalidVError
     | Errors.GlobalErrorType

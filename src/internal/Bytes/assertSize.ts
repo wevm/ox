@@ -1,21 +1,19 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_SizeOverflowError } from './errors.js'
-import { Bytes_size } from './size.js'
-import type { Bytes } from './types.js'
 
 /** @internal */
-export function Bytes_assertSize(bytes: Bytes, size_: number): void {
-  if (Bytes_size(bytes) > size_)
-    throw new Bytes_SizeOverflowError({
-      givenSize: Bytes_size(bytes),
+export function assertSize(bytes: Bytes.Bytes, size_: number): void {
+  if (Bytes.size(bytes) > size_)
+    throw new Bytes.SizeOverflowError({
+      givenSize: Bytes.size(bytes),
       maxSize: size_,
     })
 }
 
 /** @internal */
-export declare namespace Bytes_assertSize {
+export declare namespace assertSize {
   type ErrorType =
-    | Bytes_size.ErrorType
-    | Bytes_SizeOverflowError
+    | Bytes.size.ErrorType
+    | Bytes.SizeOverflowError
     | Errors.GlobalErrorType
 }

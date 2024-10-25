@@ -1,5 +1,5 @@
 import type * as Errors from '../../../Errors.js'
-import { Hex_fromNumber } from '../../Hex/fromNumber.js'
+import { fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type { TransactionEip1559, TransactionEip1559_Rpc } from './types.js'
@@ -50,25 +50,23 @@ export function TransactionEip1559_toRpc<pending extends boolean = false>(
     blockHash: transaction.blockHash ?? null,
     blockNumber:
       typeof transaction.blockNumber === 'bigint'
-        ? Hex_fromNumber(transaction.blockNumber)
+        ? fromNumber(transaction.blockNumber)
         : null,
-    chainId: Hex_fromNumber(transaction.chainId),
+    chainId: fromNumber(transaction.chainId),
     data: transaction.input,
     from: transaction.from,
-    gas: Hex_fromNumber(transaction.gas ?? 0n),
+    gas: fromNumber(transaction.gas ?? 0n),
     hash: transaction.hash,
     input: transaction.input,
-    maxFeePerGas: Hex_fromNumber(transaction.maxFeePerGas ?? 0n),
-    maxPriorityFeePerGas: Hex_fromNumber(
-      transaction.maxPriorityFeePerGas ?? 0n,
-    ),
-    nonce: Hex_fromNumber(transaction.nonce ?? 0n),
+    maxFeePerGas: fromNumber(transaction.maxFeePerGas ?? 0n),
+    maxPriorityFeePerGas: fromNumber(transaction.maxPriorityFeePerGas ?? 0n),
+    nonce: fromNumber(transaction.nonce ?? 0n),
     to: transaction.to,
     transactionIndex: transaction.transactionIndex
-      ? Hex_fromNumber(transaction.transactionIndex)
+      ? fromNumber(transaction.transactionIndex)
       : null,
     type: '0x2',
-    value: Hex_fromNumber(transaction.value ?? 0n),
+    value: fromNumber(transaction.value ?? 0n),
     ...Signature_toRpc(signature),
   } as TransactionEip1559_Rpc<pending>
 }

@@ -1,8 +1,8 @@
 import type * as Errors from '../../Errors.js'
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_from } from '../Hex/from.js'
+import { concat } from '../Hex/concat.js'
+import { from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
@@ -25,12 +25,12 @@ import type { Hex } from '../Hex/types.js'
  */
 export function ValidatorData_encode(value: ValidatorData_encode.Value): Hex {
   const { data, validator } = value
-  return Hex_concat(
+  return concat(
     // Validator Data Format: `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`
     '0x19',
     '0x00',
     validator,
-    Hex_from(data),
+    from(data),
   )
 }
 
@@ -40,10 +40,7 @@ export declare namespace ValidatorData_encode {
     validator: Address
   }
 
-  type ErrorType =
-    | Hex_concat.ErrorType
-    | Hex_from.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = concat.ErrorType | from.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

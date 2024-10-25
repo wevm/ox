@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import { keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
@@ -23,7 +23,7 @@ import type { Hex } from '../Hex/types.js'
  * @returns Whether the input is matched in the bloom filter.
  */
 export function Bloom_contains(bloom: Hex, input: Hex | Bytes): boolean {
-  const filter = Bytes_fromHex(bloom)
+  const filter = fromHex(bloom)
   const hash = keccak256(input, { as: 'Bytes' })
 
   for (const i of [0, 2, 4]) {
@@ -37,7 +37,7 @@ export function Bloom_contains(bloom: Hex, input: Hex | Bytes): boolean {
 
 export declare namespace Bloom_contains {
   type ErrorType =
-    | Bytes_fromHex.ErrorType
+    | fromHex.ErrorType
     | keccak256.ErrorType
     | Errors.GlobalErrorType
 }

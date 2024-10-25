@@ -1,8 +1,6 @@
-import type * as Errors from '../../Errors.js'
-import { Bytes_assertSize } from './assertSize.js'
-import { Bytes_InvalidBytesBooleanError } from './errors.js'
-import { Bytes_trimLeft } from './trim.js'
-import type { Bytes } from './types.js'
+import * as Bytes from '../../Bytes.js'
+import * as Errors from '../../Errors.js'
+import { assertSize } from './assertSize.js'
 
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a boolean.
@@ -19,33 +17,33 @@ import type { Bytes } from './types.js'
  * @param options - Decoding options.
  * @returns Decoded boolean.
  */
-export function Bytes_toBoolean(
-  bytes_: Bytes,
-  options: Bytes_toBoolean.Options = {},
+export function toBoolean(
+  bytes: Bytes.Bytes,
+  options: Bytes.toBoolean.Options = {},
 ): boolean {
   const { size } = options
-  let bytes = bytes_
+  let bytes_ = bytes
   if (typeof size !== 'undefined') {
-    Bytes_assertSize(bytes, size)
-    bytes = Bytes_trimLeft(bytes)
+    assertSize(bytes_, size)
+    bytes_ = Bytes.trimLeft(bytes_)
   }
-  if (bytes.length > 1 || bytes[0]! > 1)
-    throw new Bytes_InvalidBytesBooleanError(bytes)
-  return Boolean(bytes[0])
+  if (bytes_.length > 1 || bytes_[0]! > 1)
+    throw new Errors.InvalidBytesBooleanError(bytes_)
+  return Boolean(bytes_[0])
 }
 
-export declare namespace Bytes_toBoolean {
+export declare namespace toBoolean {
   type Options = {
     /** Size of the bytes. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Bytes_assertSize.ErrorType
-    | Bytes_trimLeft.ErrorType
+    | assertSize.ErrorType
+    | Bytes.trimLeft.ErrorType
     | Errors.GlobalErrorType
 }
 
-Bytes_toBoolean.parseError = (error: unknown) =>
+toBoolean.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Bytes_toBoolean.ErrorType
+  error as Bytes.toBoolean.ErrorType

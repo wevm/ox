@@ -1,8 +1,8 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { concat } from '../Hex/concat.js'
+import { fromNumber } from '../Hex/fromNumber.js'
 import type { Hex } from '../Hex/types.js'
 import { PublicKey_assert } from './assert.js'
 import type { PublicKey } from './types.js'
@@ -36,15 +36,15 @@ export function PublicKey_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { prefix, x, y } = publicKey
   const { as = 'Hex', includePrefix = true } = options
 
-  const publicKey_ = Hex_concat(
-    includePrefix ? Hex_fromNumber(prefix, { size: 1 }) : '0x',
-    Hex_fromNumber(x, { size: 32 }),
+  const publicKey_ = concat(
+    includePrefix ? fromNumber(prefix, { size: 1 }) : '0x',
+    fromNumber(x, { size: 32 }),
     // If the public key is not compressed, add the y coordinate.
-    typeof y === 'bigint' ? Hex_fromNumber(y, { size: 32 }) : '0x',
+    typeof y === 'bigint' ? fromNumber(y, { size: 32 }) : '0x',
   )
 
   if (as === 'Hex') return publicKey_ as never
-  return Bytes_fromHex(publicKey_) as never
+  return fromHex(publicKey_) as never
 }
 
 export declare namespace PublicKey_serialize {
@@ -66,8 +66,8 @@ export declare namespace PublicKey_serialize {
     | (as extends 'Bytes' ? Bytes : never)
 
   type ErrorType =
-    | Hex_fromNumber.ErrorType
-    | Bytes_fromHex.ErrorType
+    | fromNumber.ErrorType
+    | fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 

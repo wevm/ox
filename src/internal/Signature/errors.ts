@@ -1,9 +1,9 @@
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import { Hex_from } from '../Hex/from.js'
-import { Hex_size } from '../Hex/size.js'
+import { from } from '../Hex/from.js'
+import { size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
-import { Json_stringify } from '../Json/stringify.js'
+import { stringify } from '../Json/stringify.js'
 
 /** Thrown when the serialized signature is of an invalid size. */
 export class Signature_InvalidSerializedSizeError extends BaseError {
@@ -14,7 +14,7 @@ export class Signature_InvalidSerializedSizeError extends BaseError {
       docsPath: '/errors#invalidserializedsignaturesizeerror',
       metaMessages: [
         'Expected: 64 bytes or 65 bytes.',
-        `Received ${Hex_size(Hex_from(signature))} bytes.`,
+        `Received ${size(from(signature))} bytes.`,
       ],
     })
   }
@@ -26,7 +26,7 @@ export class Signature_MissingPropertiesError extends BaseError {
 
   constructor({ signature }: { signature: unknown }) {
     super(
-      `Signature \`${Json_stringify(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`,
+      `Signature \`${stringify(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`,
       {
         docsPath: '/errors#missingsignaturepropertieserror',
       },

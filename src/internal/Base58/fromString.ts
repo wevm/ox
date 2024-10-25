@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
+import { fromString } from '../Bytes/fromString.js'
 import { Base58_from } from './from.js'
 
 /**
@@ -17,7 +17,7 @@ import { Base58_from } from './from.js'
  * @returns The Base58 encoded string.
  */
 export function Base58_fromString(value: string) {
-  return Base58_from(Bytes_fromString(value))
+  return Base58_from(fromString(value))
 }
 
 export declare namespace Base58_fromString {

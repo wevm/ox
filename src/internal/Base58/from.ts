@@ -1,18 +1,18 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_from } from '../Bytes/from.js'
+import { from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 
 const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 /** @internal */
 export function Base58_from(value: Hex | Bytes) {
-  let bytes = Bytes_from(value)
+  let bytes = from(value)
 
   let integer = (() => {
     let hex = value
-    if (value instanceof Uint8Array) hex = Hex_fromBytes(bytes)
+    if (value instanceof Uint8Array) hex = fromBytes(bytes)
     return BigInt(hex as string)
   })()
 

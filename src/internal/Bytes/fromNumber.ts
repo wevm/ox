@@ -1,6 +1,6 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
-import { Bytes_fromHex } from './fromHex.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Encodes a number value into {@link ox#Bytes.Bytes}.
@@ -25,23 +25,23 @@ import { Bytes_fromHex } from './fromHex.js'
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
-export function Bytes_fromNumber(
+export function fromNumber(
   value: bigint | number,
-  options?: Bytes_fromNumber.Options | undefined,
+  options?: Bytes.fromNumber.Options | undefined,
 ) {
-  const hex = Hex_fromNumber(value, options)
-  return Bytes_fromHex(hex)
+  const hex = Hex.fromNumber(value, options)
+  return Bytes.fromHex(hex)
 }
 
-export declare namespace Bytes_fromNumber {
-  export type Options = Hex_fromNumber.Options
+export declare namespace fromNumber {
+  export type Options = Hex.fromNumber.Options
 
   export type ErrorType =
-    | Hex_fromNumber.ErrorType
-    | Bytes_fromHex.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 
-Bytes_fromNumber.parseError = (error: unknown) =>
+fromNumber.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Bytes_fromNumber.ErrorType
+  error as Bytes.fromNumber.ErrorType

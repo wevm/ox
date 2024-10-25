@@ -1,7 +1,6 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_random } from '../Bytes/random.js'
-import { Hex_fromBytes } from './fromBytes.js'
-import type { Hex } from './types.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Generates a random {@link ox#Hex.Hex} value of the specified length.
@@ -16,13 +15,13 @@ import type { Hex } from './types.js'
  *
  * @returns Random {@link ox#Hex.Hex} value.
  */
-export function Hex_random(length: number): Hex {
-  return Hex_fromBytes(Bytes_random(length))
+export function random(length: number): Hex.Hex {
+  return Hex.fromBytes(Bytes.random(length))
 }
 
-export declare namespace Hex_random {
+export declare namespace random {
   type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_random.parseError = (error: unknown) => error as Hex_random.ErrorType
+random.parseError = (error: unknown) => error as Hex.random.ErrorType

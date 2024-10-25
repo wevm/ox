@@ -1,9 +1,9 @@
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import { Hex_from } from '../Hex/from.js'
-import { Hex_size } from '../Hex/size.js'
+import { from } from '../Hex/from.js'
+import { size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
-import { Json_stringify } from '../Json/stringify.js'
+import { stringify } from '../Json/stringify.js'
 
 /**
  * Thrown when a public key is invalid.
@@ -23,7 +23,7 @@ export class PublicKey_InvalidError extends BaseError {
   override readonly name = 'PublicKey.InvalidError'
 
   constructor({ publicKey }: { publicKey: unknown }) {
-    super(`Value \`${Json_stringify(publicKey)}\` is not a valid public key.`, {
+    super(`Value \`${stringify(publicKey)}\` is not a valid public key.`, {
       metaMessages: [
         'Public key must contain:',
         '- an `x` and `prefix` value (compressed)',
@@ -76,7 +76,7 @@ export class PublicKey_InvalidSerializedSizeError extends BaseError {
     super(`Value \`${publicKey}\` is an invalid public key size.`, {
       metaMessages: [
         'Expected: 33 bytes (compressed + prefix), 64 bytes (uncompressed) or 65 bytes (uncompressed + prefix).',
-        `Received ${Hex_size(Hex_from(publicKey))} bytes.`,
+        `Received ${size(from(publicKey))} bytes.`,
       ],
     })
   }

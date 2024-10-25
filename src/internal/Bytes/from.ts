@@ -1,8 +1,6 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Hex } from '../Hex/types.js'
-import { Bytes_fromArray } from './fromArray.js'
-import { Bytes_fromHex } from './fromHex.js'
-import type { Bytes } from './types.js'
+import type * as Hex from '../../Hex.js'
 
 /**
  * Instantiates a {@link ox#Bytes.Bytes} value from a `Uint8Array`, a hex string, or an array of unsigned 8-bit integers.
@@ -34,19 +32,21 @@ import type { Bytes } from './types.js'
  * @param value - Value to convert.
  * @returns A {@link ox#Bytes.Bytes} instance.
  */
-export function Bytes_from(value: Hex | Bytes | readonly number[]): Bytes {
+export function from(
+  value: Hex.Hex | Bytes.Bytes | readonly number[],
+): Bytes.Bytes {
   if (value instanceof Uint8Array) return value
-  if (typeof value === 'string') return Bytes_fromHex(value)
-  return Bytes_fromArray(value)
+  if (typeof value === 'string') return Bytes.fromHex(value)
+  return Bytes.fromArray(value)
 }
 
-export declare namespace Bytes_from {
+export declare namespace from {
   type ErrorType =
-    | Bytes_fromHex.ErrorType
-    | Bytes_fromArray.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Bytes.fromArray.ErrorType
     | Errors.GlobalErrorType
 }
 
-Bytes_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Bytes_from.ErrorType
+  error as Bytes.from.ErrorType

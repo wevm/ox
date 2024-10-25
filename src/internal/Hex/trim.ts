@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import type { Hex } from './types.js'
+import type * as Hex from '../../Hex.js'
 
 /**
  * Trims leading zeros from a {@link ox#Hex.Hex} value.
@@ -15,18 +15,18 @@ import type { Hex } from './types.js'
  * @param value - The {@link ox#Hex.Hex} value to trim.
  * @returns The trimmed {@link ox#Hex.Hex} value.
  */
-export function Hex_trimLeft(value: Hex): Hex_trimLeft.ReturnType {
+export function trimLeft(value: Hex.Hex): Hex.trimLeft.ReturnType {
   return trim(value, { dir: 'left' })
 }
 
-export declare namespace Hex_trimLeft {
-  type ReturnType = Hex
+export declare namespace trimLeft {
+  type ReturnType = Hex.Hex
 
   type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_trimLeft.parseError = (error: unknown) => error as Hex_trimLeft.ErrorType
+trimLeft.parseError = (error: unknown) => error as Hex.trimLeft.ErrorType
 
 /**
  * Trims trailing zeros from a {@link ox#Hex.Hex} value.
@@ -42,25 +42,28 @@ Hex_trimLeft.parseError = (error: unknown) => error as Hex_trimLeft.ErrorType
  * @param value - The {@link ox#Hex.Hex} value to trim.
  * @returns The trimmed {@link ox#Hex.Hex} value.
  */
-export function Hex_trimRight(value: Hex): Hex_trimRight.ReturnType {
+export function trimRight(value: Hex.Hex): Hex.trimRight.ReturnType {
   return trim(value, { dir: 'right' })
 }
 
-export declare namespace Hex_trimRight {
-  type ReturnType = Hex
+export declare namespace trimRight {
+  type ReturnType = Hex.Hex
 
   type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_trimRight.parseError = (error: unknown) => error as Hex_trimRight.ErrorType
+trimRight.parseError = (error: unknown) => error as Hex.trimRight.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export function trim(value: Hex, options: trim.Options = {}): trim.ReturnType {
+export function trim(
+  value: Hex.Hex,
+  options: trim.Options = {},
+): trim.ReturnType {
   const { dir = 'left' } = options
 
   let data = value.replace('0x', '')
@@ -86,7 +89,7 @@ export declare namespace trim {
     dir?: 'left' | 'right' | undefined
   }
 
-  type ReturnType = Hex
+  type ReturnType = Hex.Hex
 
   type ErrorType = Errors.GlobalErrorType
 }

@@ -1,11 +1,11 @@
 import * as ethjs from '@ethereumjs/util'
 import * as ethers from 'ethers'
+import { Bytes } from 'ox'
 import { bench, describe } from 'vitest'
-import { Bytes_random } from './random.js'
 
 describe('Bytes.random', () => {
   bench('ox', () => {
-    Bytes_random(128)
+    Bytes.random(128)
   })
 
   bench('@ethereumjs/util', () => {

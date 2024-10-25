@@ -1,6 +1,6 @@
+import * as Base58 from '../../Base58.js'
 import type * as Errors from '../../Errors.js'
-import { Hex_toString } from '../Hex/toString.js'
-import { Base58_toHex } from './toHex.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Decodes a Base58-encoded string to a string.
@@ -17,7 +17,7 @@ import { Base58_toHex } from './toHex.js'
  * @returns The decoded string.
  */
 export function Base58_toString(value: string): string {
-  return Hex_toString(Base58_toHex(value))
+  return Hex.toString(Base58.toHex(value))
 }
 
 export declare namespace Base58_toString {

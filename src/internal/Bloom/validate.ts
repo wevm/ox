@@ -1,7 +1,7 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_size } from '../Hex/size.js'
+import { size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
+import { validate } from '../Hex/validate.js'
 
 /**
  * Checks if a string is a valid bloom filter value.
@@ -21,14 +21,11 @@ import { Hex_validate } from '../Hex/validate.js'
  * @returns Whether the value is a valid bloom filter.
  */
 export function Bloom_validate(value: string): value is Hex {
-  return Hex_validate(value) && Hex_size(value) === 256
+  return validate(value) && size(value) === 256
 }
 
 export declare namespace Bloom_validate {
-  type ErrorType =
-    | Hex_validate.ErrorType
-    | Hex_size.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = validate.ErrorType | size.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

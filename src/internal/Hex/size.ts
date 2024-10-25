@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import type { Hex } from './types.js'
+import type * as Hex from '../../Hex.js'
 
 /**
  * Retrieves the size of a {@link ox#Hex.Hex} value (in bytes).
@@ -15,13 +15,13 @@ import type { Hex } from './types.js'
  * @param value - The {@link ox#Hex.Hex} value to get the size of.
  * @returns The size of the {@link ox#Hex.Hex} value (in bytes).
  */
-export function Hex_size(value: Hex): number {
+export function size(value: Hex.Hex): number {
   return Math.ceil((value.length - 2) / 2)
 }
 
-export declare namespace Hex_size {
+export declare namespace size {
   export type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_size.parseError = (error: unknown) => error as Hex_size.ErrorType
+size.parseError = (error: unknown) => error as Hex.size.ErrorType

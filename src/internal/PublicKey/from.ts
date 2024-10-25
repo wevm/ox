@@ -1,20 +1,8 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Bytes_validate } from '../Bytes/validate.js'
-import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
+import * as Hex from '../../Hex.js'
+import * as PublicKey from '../../PublicKey.js'
 import type { Compute } from '../types.js'
-import { PublicKey_assert } from './assert.js'
-import { PublicKey_deserialize } from './deserialize.js'
-import type { PublicKey } from './types.js'
-
-/** @internal */
-export type CompressedPublicKey = PublicKey<true>
-
-/** @internal */
-export type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
-  prefix?: PublicKey['prefix'] | undefined
-}
 
 /**
  * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
@@ -56,14 +44,14 @@ export function PublicKey_from<
   const publicKey extends
     | CompressedPublicKey
     | UncompressedPublicKey
-    | Hex
-    | Bytes,
+    | Hex.Hex
+    | Bytes.Bytes,
 >(
-  value: PublicKey_from.Value<publicKey>,
-): PublicKey_from.ReturnType<publicKey> {
+  value: PublicKey.from.Value<publicKey>,
+): PublicKey.from.ReturnType<publicKey> {
   const publicKey = (() => {
-    if (Hex_validate(value)) return PublicKey_deserialize(value)
-    if (Bytes_validate(value)) return PublicKey_deserialize(value)
+    if (Hex.validate(value)) return PublicKey.deserialize(value)
+    if (Bytes.validate(value)) return PublicKey.deserialize(value)
 
     const { prefix, x, y } = value
     if (typeof x === 'bigint' && typeof y === 'bigint')
@@ -71,7 +59,7 @@ export function PublicKey_from<
     return { prefix, x }
   })()
 
-  PublicKey_assert(publicKey)
+  PublicKey.assert(publicKey)
 
   return publicKey as never
 }
@@ -81,25 +69,36 @@ export declare namespace PublicKey_from {
     publicKey extends
       | CompressedPublicKey
       | UncompressedPublicKey
-      | Hex
-      | Bytes = PublicKey,
+      | Hex.Hex
+      | Bytes.Bytes = PublicKey.PublicKey,
   > = publicKey | CompressedPublicKey | UncompressedPublicKey
 
   type ReturnType<
     publicKey extends
       | CompressedPublicKey
       | UncompressedPublicKey
-      | Hex
-      | Bytes = PublicKey,
+      | Hex.Hex
+      | Bytes.Bytes = PublicKey.PublicKey,
   > = publicKey extends CompressedPublicKey | UncompressedPublicKey
     ? publicKey extends UncompressedPublicKey
       ? Compute<publicKey & { readonly prefix: 0x04 }>
       : publicKey
-    : PublicKey
+    : PublicKey.PublicKey
 
-  type ErrorType = PublicKey_assert.ErrorType | Errors.GlobalErrorType
+  type ErrorType = PublicKey.assert.ErrorType | Errors.GlobalErrorType
 }
 
 PublicKey_from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as PublicKey_from.ErrorType
+  error as PublicKey.from.ErrorType
+
+/** @internal */
+export type CompressedPublicKey = PublicKey.PublicKey<true>
+
+/** @internal */
+export type UncompressedPublicKey = Omit<
+  PublicKey.PublicKey<false>,
+  'prefix'
+> & {
+  prefix?: PublicKey.PublicKey['prefix'] | undefined
+}

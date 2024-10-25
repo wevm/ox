@@ -1,5 +1,5 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from './types.js'
 
 /**
  * Generates random {@link ox#Bytes.Bytes} of the specified length.
@@ -15,13 +15,13 @@ import type { Bytes } from './types.js'
  * @param length - Length of the random {@link ox#Bytes.Bytes} to generate.
  * @returns Random {@link ox#Bytes.Bytes} of the specified length.
  */
-export function Bytes_random(length: number): Bytes {
+export function random(length: number): Bytes.Bytes {
   return crypto.getRandomValues(new Uint8Array(length))
 }
 
-export declare namespace Bytes_random {
+export declare namespace random {
   type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_random.parseError = (error: unknown) => error as Bytes_random.ErrorType
+random.parseError = (error: unknown) => error as Bytes.random.ErrorType

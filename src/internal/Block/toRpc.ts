@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { fromNumber } from '../Hex/fromNumber.js'
 import { Transaction_toRpc } from '../Transaction/isomorphic/toRpc.js'
 import { Withdrawal_toRpc } from '../Withdrawal/toRpc.js'
 import type { Block, Block_Rpc, Block_Tag } from './types.js'
@@ -47,42 +47,42 @@ export function Block_toRpc<
   return {
     baseFeePerGas:
       typeof block.baseFeePerGas === 'bigint'
-        ? Hex_fromNumber(block.baseFeePerGas)
+        ? fromNumber(block.baseFeePerGas)
         : undefined,
     blobGasUsed:
       typeof block.blobGasUsed === 'bigint'
-        ? Hex_fromNumber(block.blobGasUsed)
+        ? fromNumber(block.blobGasUsed)
         : undefined,
     excessBlobGas:
       typeof block.excessBlobGas === 'bigint'
-        ? Hex_fromNumber(block.excessBlobGas)
+        ? fromNumber(block.excessBlobGas)
         : undefined,
     extraData: block.extraData,
     difficulty:
       typeof block.difficulty === 'bigint'
-        ? Hex_fromNumber(block.difficulty)
+        ? fromNumber(block.difficulty)
         : undefined,
-    gasLimit: Hex_fromNumber(block.gasLimit),
-    gasUsed: Hex_fromNumber(block.gasUsed),
+    gasLimit: fromNumber(block.gasLimit),
+    gasUsed: fromNumber(block.gasUsed),
     hash: block.hash,
     logsBloom: block.logsBloom,
     miner: block.miner,
     mixHash: block.mixHash,
     nonce: block.nonce,
     number: (typeof block.number === 'bigint'
-      ? Hex_fromNumber(block.number)
+      ? fromNumber(block.number)
       : null) as never,
     parentBeaconBlockRoot: block.parentBeaconBlockRoot,
     parentHash: block.parentHash,
     receiptsRoot: block.receiptsRoot,
     sealFields: block.sealFields,
     sha3Uncles: block.sha3Uncles,
-    size: Hex_fromNumber(block.size),
+    size: fromNumber(block.size),
     stateRoot: block.stateRoot,
-    timestamp: Hex_fromNumber(block.timestamp),
+    timestamp: fromNumber(block.timestamp),
     totalDifficulty:
       typeof block.totalDifficulty === 'bigint'
-        ? Hex_fromNumber(block.totalDifficulty)
+        ? fromNumber(block.totalDifficulty)
         : undefined,
     transactions,
     transactionsRoot: block.transactionsRoot,

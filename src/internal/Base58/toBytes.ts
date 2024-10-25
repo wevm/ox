@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import { Base58_toHex } from './toHex.js'
 
@@ -18,7 +18,7 @@ import { Base58_toHex } from './toHex.js'
  * @returns The decoded byte array.
  */
 export function Base58_toBytes(value: string): Bytes {
-  return Bytes_fromHex(Base58_toHex(value))
+  return fromHex(Base58_toHex(value))
 }
 
 export declare namespace Base58_toBytes {

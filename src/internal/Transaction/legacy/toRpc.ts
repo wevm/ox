@@ -1,5 +1,5 @@
 import type * as Errors from '../../../Errors.js'
-import { Hex_fromNumber } from '../../Hex/fromNumber.js'
+import { fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'
@@ -47,25 +47,25 @@ export function TransactionLegacy_toRpc<pending extends boolean = false>(
     blockHash: transaction.blockHash ?? null,
     blockNumber:
       typeof transaction.blockNumber === 'bigint'
-        ? Hex_fromNumber(transaction.blockNumber)
+        ? fromNumber(transaction.blockNumber)
         : null,
     chainId:
       typeof transaction.chainId === 'number'
-        ? Hex_fromNumber(transaction.chainId)
+        ? fromNumber(transaction.chainId)
         : undefined,
     data: transaction.input,
     from: transaction.from,
-    gas: Hex_fromNumber(transaction.gas ?? 0n),
-    gasPrice: Hex_fromNumber(transaction.gasPrice ?? 0n),
+    gas: fromNumber(transaction.gas ?? 0n),
+    gasPrice: fromNumber(transaction.gasPrice ?? 0n),
     hash: transaction.hash,
     input: transaction.input,
-    nonce: Hex_fromNumber(transaction.nonce ?? 0n),
+    nonce: fromNumber(transaction.nonce ?? 0n),
     to: transaction.to,
     transactionIndex: transaction.transactionIndex
-      ? Hex_fromNumber(transaction.transactionIndex)
+      ? fromNumber(transaction.transactionIndex)
       : null,
     type: '0x0',
-    value: Hex_fromNumber(transaction.value ?? 0n),
+    value: fromNumber(transaction.value ?? 0n),
     v: signature.yParity === 0 ? '0x1b' : '0x1c',
     ...Signature_toRpc(signature),
   } as TransactionLegacy_Rpc as never

@@ -4,9 +4,9 @@ import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
-import { Hex_slice } from '../Hex/slice.js'
+import { slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
+import { validate } from '../Hex/validate.js'
 import type { IsNarrowable, IsNever } from '../types.js'
 
 /**
@@ -91,8 +91,8 @@ export function fromAbi<
 ): fromAbi.ReturnType<abi, name, args> {
   if (name === 'Error') return AbiError.solidityError as never
   if (name === 'Panic') return AbiError.solidityPanic as never
-  if (Hex_validate(name, { strict: false })) {
-    const selector = Hex_slice(name, 0, 4)
+  if (validate(name, { strict: false })) {
+    const selector = slice(name, 0, 4)
     if (selector === AbiError.solidityErrorSelector)
       return AbiError.solidityError as never
     if (selector === AbiError.solidityPanicSelector)

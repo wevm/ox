@@ -1,8 +1,7 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_assertSize } from '../Bytes/assertSize.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import { Bytes_trimRight } from '../Bytes/trim.js'
-import type { Hex } from './types.js'
+import type * as Hex from '../../Hex.js'
+import { assertSize } from '../Bytes/assertSize.js'
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a string.
@@ -24,32 +23,33 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The decoded string.
  */
-export function Hex_toString(
-  hex: Hex,
-  options: Hex_toString.Options = {},
+// biome-ignore lint/suspicious/noShadowRestrictedNames: <explanation>
+export function toString(
+  hex: Hex.Hex,
+  options: Hex.toString.Options = {},
 ): string {
   const { size } = options
 
-  let bytes = Bytes_fromHex(hex)
+  let bytes = Bytes.fromHex(hex)
   if (size) {
-    Bytes_assertSize(bytes, size)
-    bytes = Bytes_trimRight(bytes)
+    assertSize(bytes, size)
+    bytes = Bytes.trimRight(bytes)
   }
   return new TextDecoder().decode(bytes)
 }
 
-export declare namespace Hex_toString {
+export declare namespace toString {
   type Options = {
     /** Size (in bytes) of the hex value. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Bytes_assertSize.ErrorType
-    | Bytes_fromHex.ErrorType
-    | Bytes_trimRight.ErrorType
+    | assertSize.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Bytes.trimRight.ErrorType
     | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_toString.parseError = (error: unknown) => error as Hex_toString.ErrorType
+toString.parseError = (error: unknown) => error as Hex.toString.ErrorType

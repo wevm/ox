@@ -1,6 +1,6 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
-import { Hex_trimLeft } from '../Hex/trim.js'
+import { fromNumber } from '../Hex/fromNumber.js'
+import { trimLeft } from '../Hex/trim.js'
 import type { Signature, Signature_Tuple } from './types.js'
 
 /**
@@ -26,14 +26,14 @@ export function Signature_toTuple(signature: Signature): Signature_Tuple {
 
   return [
     yParity ? '0x01' : '0x',
-    r === 0n ? '0x' : Hex_trimLeft(Hex_fromNumber(r!)),
-    s === 0n ? '0x' : Hex_trimLeft(Hex_fromNumber(s!)),
+    r === 0n ? '0x' : trimLeft(fromNumber(r!)),
+    s === 0n ? '0x' : trimLeft(fromNumber(s!)),
   ] as const
 }
 
 export declare namespace Signature_toTuple {
   type ErrorType =
-    | Hex_trimLeft.ErrorType
-    | Hex_fromNumber.ErrorType
+    | trimLeft.ErrorType
+    | fromNumber.ErrorType
     | Errors.GlobalErrorType
 }

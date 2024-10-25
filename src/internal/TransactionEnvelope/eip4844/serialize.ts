@@ -2,8 +2,8 @@ import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
-import { Hex_concat } from '../../Hex/concat.js'
-import { Hex_fromNumber } from '../../Hex/fromNumber.js'
+import { concat } from '../../Hex/concat.js'
+import { fromNumber } from '../../Hex/fromNumber.js'
 import type { Hex } from '../../Hex/types.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
 import { Signature_extract } from '../../Signature/extract.js'
@@ -100,16 +100,16 @@ export function serialize(
   const signature = Signature_extract(options.signature || envelope)
 
   const serializedTransaction = [
-    Hex_fromNumber(chainId),
-    nonce ? Hex_fromNumber(nonce) : '0x',
-    maxPriorityFeePerGas ? Hex_fromNumber(maxPriorityFeePerGas) : '0x',
-    maxFeePerGas ? Hex_fromNumber(maxFeePerGas) : '0x',
-    gas ? Hex_fromNumber(gas) : '0x',
+    fromNumber(chainId),
+    nonce ? fromNumber(nonce) : '0x',
+    maxPriorityFeePerGas ? fromNumber(maxPriorityFeePerGas) : '0x',
+    maxFeePerGas ? fromNumber(maxFeePerGas) : '0x',
+    gas ? fromNumber(gas) : '0x',
     to ?? '0x',
-    value ? Hex_fromNumber(value) : '0x',
+    value ? fromNumber(value) : '0x',
     data ?? '0x',
     accessTupleList,
-    maxFeePerBlobGas ? Hex_fromNumber(maxFeePerBlobGas) : '0x',
+    maxFeePerBlobGas ? fromNumber(maxFeePerBlobGas) : '0x',
     blobVersionedHashes ?? [],
     ...(signature ? Signature_toTuple(signature) : []),
   ] as const
@@ -126,7 +126,7 @@ export function serialize(
       proofs.push(proof)
     }
 
-  return Hex_concat(
+  return concat(
     '0x03',
     sidecars
       ? // If sidecars are provided, envelope turns into a "network wrapper":
@@ -146,9 +146,9 @@ export declare namespace serialize {
 
   type ErrorType =
     | TransactionEnvelopeEip4844.assert.ErrorType
-    | Hex_fromNumber.ErrorType
+    | fromNumber.ErrorType
     | Signature_toTuple.ErrorType
-    | Hex_concat.ErrorType
+    | concat.ErrorType
     | Rlp_fromHex.ErrorType
     | Errors.GlobalErrorType
 }

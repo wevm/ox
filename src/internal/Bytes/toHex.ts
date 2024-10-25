@@ -1,7 +1,6 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
-import type { Bytes } from './types.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
@@ -18,21 +17,21 @@ import type { Bytes } from './types.js'
  * @param options -
  * @returns Decoded {@link ox#Hex.Hex} value.
  */
-export function Bytes_toHex(
-  value: Bytes,
-  options: Bytes_toHex.Options = {},
-): Hex {
-  return Hex_fromBytes(value, options)
+export function toHex(
+  value: Bytes.Bytes,
+  options: Bytes.toHex.Options = {},
+): Hex.Hex {
+  return Hex.fromBytes(value, options)
 }
 
-export declare namespace Bytes_toHex {
+export declare namespace toHex {
   type Options = {
     /** Size of the bytes. */
     size?: number | undefined
   }
 
-  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_toHex.parseError = (error: unknown) => error as Bytes_toHex.ErrorType
+toHex.parseError = (error: unknown) => error as Bytes.toHex.ErrorType

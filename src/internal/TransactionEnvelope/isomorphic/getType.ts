@@ -10,7 +10,7 @@ import type {
   FeeValuesEip4844,
   FeeValuesLegacy,
 } from '../../Fee/types.js'
-import { Hex_slice } from '../../Hex/slice.js'
+import { slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import type {
   Assign,
@@ -35,7 +35,7 @@ export function getType<
   const transaction extends TransactionEnvelope.Serialized | OneOf<Generic>,
 >(transaction: transaction): GetType<transaction> {
   if (typeof transaction === 'string') {
-    const serializedType = Hex_slice(transaction as Hex, 0, 1)
+    const serializedType = slice(transaction as Hex, 0, 1)
     if (serializedType !== '0x' && Number(serializedType) >= 0xc0)
       return 'legacy' as never
     if (serializedType === '0x01') return 'eip2930' as never

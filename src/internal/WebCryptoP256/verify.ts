@@ -1,7 +1,7 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_from } from '../Bytes/from.js'
-import { Bytes_fromNumber } from '../Bytes/fromNumber.js'
+import { concat } from '../Bytes/concat.js'
+import { from } from '../Bytes/from.js'
+import { fromNumber } from '../Bytes/fromNumber.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { Hex } from '../Hex/types.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
@@ -49,8 +49,8 @@ export async function WebCryptoP256_verify(
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes_concat(Bytes_fromNumber(signature.r), Bytes_fromNumber(signature.s)),
-    Bytes_from(payload),
+    concat(fromNumber(signature.r), fromNumber(signature.s)),
+    from(payload),
   )
 }
 

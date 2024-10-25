@@ -8,15 +8,12 @@ import {
   stringToBytes,
 } from 'viem'
 import { bench, describe } from 'vitest'
-import { Bytes_fromHex } from './fromHex.js'
-import { Bytes_fromNumber } from './fromNumber.js'
-import { Bytes_fromString } from './fromString.js'
 
 describe('Bytes from Hex', () => {
   const hex = Bytes.toHex(Bytes.random(1024))
 
   bench('ox: `Bytes.from`', () => {
-    Bytes_fromHex(hex)
+    Bytes.fromHex(hex)
   })
 
   bench('viem: `hexToBytes`', () => {
@@ -40,7 +37,7 @@ describe('Bytes from Number', () => {
   const number = 69420
 
   bench('ox: `Bytes.from`', () => {
-    Bytes_fromNumber(number)
+    Bytes.fromNumber(number)
   })
 
   bench('viem: `numberToBytes`', () => {
@@ -60,7 +57,7 @@ describe('Bytes from String', () => {
   const string = 'hello world'
 
   bench('ox: `Bytes.from`', () => {
-    Bytes_fromString(string)
+    Bytes.fromString(string)
   })
 
   bench('viem: `stringToBytes`', () => {

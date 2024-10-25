@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { Base64_toBytes } from './toBytes.js'
 
@@ -18,7 +18,7 @@ import { Base64_toBytes } from './toBytes.js'
  * @returns The Base64 decoded {@link ox#Hex.Hex}.
  */
 export function Base64_toHex(value: string): Hex {
-  return Hex_fromBytes(Base64_toBytes(value))
+  return fromBytes(Base64_toBytes(value))
 }
 
 export declare namespace Base64_toHex {

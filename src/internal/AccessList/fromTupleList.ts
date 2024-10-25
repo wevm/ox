@@ -1,6 +1,6 @@
 import * as Address from '../../Address.js'
 import { validate } from '../Hash/validate.js'
-import { Hex_trimLeft } from '../Hex/trim.js'
+import { trimLeft } from '../Hex/trim.js'
 import type { Hex } from '../Hex/types.js'
 import type { Mutable } from '../types.js'
 import type { AccessList, AccessList_Tuple } from './types.js'
@@ -18,7 +18,7 @@ export function AccessList_fromTupleList(
     accessList.push({
       address: address,
       storageKeys: storageKeys.map((key) =>
-        validate(key) ? key : Hex_trimLeft(key),
+        validate(key) ? key : trimLeft(key),
       ),
     })
   }

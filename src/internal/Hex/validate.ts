@@ -1,6 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_assert } from './assert.js'
-import type { Hex } from './types.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Checks if the given value is {@link ox#Hex.Hex}.
@@ -20,20 +19,20 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns `true` if the value is a {@link ox#Hex.Hex}, `false` otherwise.
  */
-export function Hex_validate(
+export function validate(
   value: unknown,
-  options: Hex_validate.Options = {},
-): value is Hex {
+  options: Hex.validate.Options = {},
+): value is Hex.Hex {
   const { strict = true } = options
   try {
-    Hex_assert(value, { strict })
+    Hex.assert(value, { strict })
     return true
   } catch {
     return false
   }
 }
 
-export declare namespace Hex_validate {
+export declare namespace validate {
   type Options = {
     /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
@@ -43,4 +42,4 @@ export declare namespace Hex_validate {
 }
 
 /* v8 ignore next */
-Hex_validate.parseError = (error: unknown) => error as Hex_validate.ErrorType
+validate.parseError = (error: unknown) => error as Hex.validate.ErrorType

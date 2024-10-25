@@ -1,7 +1,7 @@
 import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
-import { Hex_slice } from '../Hex/slice.js'
+import { from } from '../Hex/from.js'
+import { slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import {
   Signature_InvalidSerializedSizeError,
@@ -25,13 +25,13 @@ import { Signature_vToYParity } from './vToYParity.js'
  * @returns The deserialized {@link ox#Signature.Signature}.
  */
 export function Signature_deserialize(serialized: Bytes | Hex): Signature {
-  const hex = Hex_from(serialized)
+  const hex = from(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)
     throw new Signature_InvalidSerializedSizeError({ signature: hex })
 
-  const r = BigInt(Hex_slice(hex, 0, 32))
-  const s = BigInt(Hex_slice(hex, 32, 64))
+  const r = BigInt(slice(hex, 0, 32))
+  const s = BigInt(slice(hex, 32, 64))
 
   const yParity = (() => {
     const yParity = Number(`0x${hex.slice(130)}`)
@@ -57,7 +57,7 @@ export function Signature_deserialize(serialized: Bytes | Hex): Signature {
 
 export declare namespace Signature_deserialize {
   type ErrorType =
-    | Hex_from.ErrorType
+    | from.ErrorType
     | Signature_InvalidSerializedSizeError
     | Errors.GlobalErrorType
 }

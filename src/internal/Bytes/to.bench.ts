@@ -1,15 +1,11 @@
 import * as ethjs from '@ethereumjs/util'
 import { hexlify, toBigInt, toNumber, toUtf8String } from 'ethers'
+import { Bytes, Hex } from 'ox'
 import { bench, describe } from 'vitest'
-
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import { Bytes_toBigInt } from './toBigInt.js'
-import { Bytes_toNumber } from './toNumber.js'
-import { Bytes_toString } from './toString.js'
 
 describe('Bytes to Hex', () => {
   bench('ox: `Hex.fromBytes`', () => {
-    Hex_fromBytes(
+    Hex.fromBytes(
       new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
     )
   })
@@ -29,7 +25,7 @@ describe('Bytes to Hex', () => {
 
 describe('Bytes to String', () => {
   bench('ox: `Bytes.toString`', () => {
-    Bytes_toString(
+    Bytes.toString(
       new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
     )
   })
@@ -49,7 +45,7 @@ describe('Bytes to String', () => {
 
 describe('Bytes to BigInt', () => {
   bench('ox: `Bytes.toNumber`', () => {
-    Bytes_toBigInt(
+    Bytes.toBigInt(
       new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
     )
   })
@@ -69,7 +65,7 @@ describe('Bytes to BigInt', () => {
 
 describe('Bytes to Number', () => {
   bench('ox: `Bytes.toNumber`', () => {
-    Bytes_toNumber(new Uint8Array([72, 101]))
+    Bytes.toNumber(new Uint8Array([72, 101]))
   })
 
   bench('ethers: `toNumber`', () => {

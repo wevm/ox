@@ -1,8 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_fromBytes } from './fromBytes.js'
-import type { Hex } from './types.js'
-
-const encoder = /*#__PURE__*/ new TextEncoder()
+import * as Hex from '../../Hex.js'
 
 /**
  * Encodes a string into a {@link ox#Hex.Hex} value.
@@ -21,22 +18,24 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function Hex_fromString(
+export function fromString(
   value: string,
-  options: Hex_fromString.Options = {},
-): Hex {
-  return Hex_fromBytes(encoder.encode(value), options)
+  options: Hex.fromString.Options = {},
+): Hex.Hex {
+  return Hex.fromBytes(encoder.encode(value), options)
 }
 
-export declare namespace Hex_fromString {
+export declare namespace fromString {
   type Options = {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }
 
-  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
-Hex_fromString.parseError = (error: unknown) =>
+fromString.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Hex_fromString.ErrorType
+  error as Hex.fromString.ErrorType
+
+const encoder = /*#__PURE__*/ new TextEncoder()

@@ -1,5 +1,5 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from './types.js'
 
 /**
  * Concatenates two or more {@link ox#Bytes.Bytes}.
@@ -19,7 +19,7 @@ import type { Bytes } from './types.js'
  * @param values - Values to concatenate.
  * @returns Concatenated {@link ox#Bytes.Bytes}.
  */
-export function Bytes_concat(...values: readonly Bytes[]): Bytes {
+export function concat(...values: readonly Bytes.Bytes[]): Bytes.Bytes {
   let length = 0
   for (const arr of values) {
     length += arr.length
@@ -33,9 +33,9 @@ export function Bytes_concat(...values: readonly Bytes[]): Bytes {
   return result
 }
 
-export declare namespace Bytes_concat {
+export declare namespace concat {
   type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_concat.parseError = (error: unknown) => error as Bytes_concat.ErrorType
+concat.parseError = (error: unknown) => error as Bytes.concat.ErrorType

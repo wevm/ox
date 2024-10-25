@@ -1,9 +1,8 @@
 import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { InvalidAddressError, InvalidInputError } from '../Address/errors.js'
 import { validate } from '../Address/validate.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
+import { fromNumber } from '../Hex/fromNumber.js'
 import {
   Solidity_bytesRegex,
   Solidity_integerRegex,
@@ -74,7 +73,7 @@ export function TypedData_assert<
         const [, base, size_] = integerMatch
         // If number cannot be cast to a sized hex value, it is out of range
         // and will throw.
-        Hex_fromNumber(value, {
+        fromNumber(value, {
           signed: base === 'int',
           size: Number.parseInt(size_ ?? '') / 8,
         })
@@ -89,10 +88,10 @@ export function TypedData_assert<
       const bytesMatch = type.match(Solidity_bytesRegex)
       if (bytesMatch) {
         const [, size] = bytesMatch
-        if (size && Hex_size(value as Hex) !== Number.parseInt(size))
+        if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size))
           throw new TypedData_BytesSizeMismatchError({
             expectedSize: Number.parseInt(size),
-            givenSize: Hex_size(value as Hex),
+            givenSize: Hex.size(value as Hex.Hex),
           })
       }
 
@@ -124,8 +123,8 @@ export declare namespace TypedData_assert {
     | InvalidAddressError
     | TypedData_BytesSizeMismatchError
     | TypedData_InvalidPrimaryTypeError
-    | Hex_fromNumber.ErrorType
-    | Hex_size.ErrorType
+    | fromNumber.ErrorType
+    | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }
 

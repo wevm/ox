@@ -1,8 +1,8 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
 import { BaseError } from '../Errors/base.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import type { ExactPartial, RecursiveArray } from '../types.js'
@@ -40,8 +40,7 @@ export function Rlp_from<as extends 'Hex' | 'Bytes'>(
   const cursor = createCursor(new Uint8Array(encodable.length))
   encodable.encode(cursor)
 
-  if (as === 'Hex')
-    return Hex_fromBytes(cursor.bytes) as Rlp_from.ReturnType<as>
+  if (as === 'Hex') return fromBytes(cursor.bytes) as Rlp_from.ReturnType<as>
   return cursor.bytes as Rlp_from.ReturnType<as>
 }
 
@@ -56,8 +55,8 @@ export declare namespace Rlp_from {
 
   type ErrorType =
     | createCursor.ErrorType
-    | Hex_fromBytes.ErrorType
-    | Bytes_fromHex.ErrorType
+    | fromBytes.ErrorType
+    | fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -182,7 +181,7 @@ function getEncodableList(list: Encodable[]): Encodable {
 
 function getEncodableBytes(bytesOrHex: Bytes | Hex): Encodable {
   const bytes =
-    typeof bytesOrHex === 'string' ? Bytes_fromHex(bytesOrHex) : bytesOrHex
+    typeof bytesOrHex === 'string' ? fromHex(bytesOrHex) : bytesOrHex
 
   const sizeOfBytesLength = getSizeOfLength(bytes.length)
   const length = (() => {

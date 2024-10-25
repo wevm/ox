@@ -1,6 +1,6 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_assertSize } from './assertSize.js'
-import { Bytes_padLeft } from './pad.js'
+import { assertSize } from './assertSize.js'
 
 /**
  * Encodes a boolean value into {@link ox#Bytes.Bytes}.
@@ -25,32 +25,32 @@ import { Bytes_padLeft } from './pad.js'
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
-export function Bytes_fromBoolean(
+export function fromBoolean(
   value: boolean,
-  options: Bytes_fromBoolean.Options = {},
+  options: Bytes.fromBoolean.Options = {},
 ) {
   const { size } = options
   const bytes = new Uint8Array(1)
   bytes[0] = Number(value)
   if (typeof size === 'number') {
-    Bytes_assertSize(bytes, size)
-    return Bytes_padLeft(bytes, size)
+    assertSize(bytes, size)
+    return Bytes.padLeft(bytes, size)
   }
   return bytes
 }
 
-export declare namespace Bytes_fromBoolean {
+export declare namespace fromBoolean {
   type Options = {
     /** Size of the output bytes. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Bytes_assertSize.ErrorType
-    | Bytes_padLeft.ErrorType
+    | assertSize.ErrorType
+    | Bytes.padLeft.ErrorType
     | Errors.GlobalErrorType
 }
 
-Bytes_fromBoolean.parseError = (error: unknown) =>
+fromBoolean.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Bytes_fromBoolean.ErrorType
+  error as Bytes.fromBoolean.ErrorType

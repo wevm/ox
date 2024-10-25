@@ -1,5 +1,5 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from './types.js'
 
 /**
  * Converts an array of unsigned 8-bit integers into {@link ox#Bytes.Bytes}.
@@ -15,14 +15,14 @@ import type { Bytes } from './types.js'
  * @param value - Value to convert.
  * @returns A {@link ox#Bytes.Bytes} instance.
  */
-export function Bytes_fromArray(value: readonly number[] | Uint8Array): Bytes {
+export function fromArray(value: readonly number[] | Uint8Array): Bytes.Bytes {
   return value instanceof Uint8Array ? value : new Uint8Array(value)
 }
 
-export declare namespace Bytes_fromArray {
+export declare namespace fromArray {
   type ErrorType = Errors.GlobalErrorType
 }
 
-Bytes_fromArray.parseError = (error: unknown) =>
+fromArray.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Bytes_fromArray.ErrorType
+  error as Bytes.fromArray.ErrorType

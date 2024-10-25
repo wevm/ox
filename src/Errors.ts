@@ -39,11 +39,11 @@ export {
 } from './internal/Blobs/errors.js'
 
 export {
-  Bytes_InvalidBytesBooleanError,
-  Bytes_InvalidBytesTypeError,
-  Bytes_SizeExceedsPaddingSizeError,
-  Bytes_SizeOverflowError,
-  Bytes_SliceOffsetOutOfBoundsError,
+  InvalidBytesBooleanError,
+  InvalidBytesTypeError,
+  SizeExceedsPaddingSizeError,
+  SizeOverflowError,
+  SliceOffsetOutOfBoundsError,
 } from './internal/Bytes/errors.js'
 
 export {
@@ -55,14 +55,14 @@ export {
 export type { GlobalErrorType } from './internal/Errors/error.js'
 
 export {
-  Hex_IntegerOutOfRangeError,
-  Hex_InvalidHexBooleanError,
-  Hex_InvalidHexTypeError,
-  Hex_InvalidHexValueError,
-  Hex_InvalidLengthError,
-  Hex_SizeExceedsPaddingSizeError,
-  Hex_SizeOverflowError,
-  Hex_SliceOffsetOutOfBoundsError,
+  IntegerOutOfRangeError,
+  InvalidHexBooleanError,
+  InvalidHexTypeError,
+  InvalidHexValueError,
+  InvalidLengthError,
+  SizeExceedsPaddingSizeError,
+  SizeOverflowError,
+  SliceOffsetOutOfBoundsError,
 } from './internal/Hex/errors.js'
 
 export { Provider_IsUndefinedError } from './internal/Provider/errors.js'

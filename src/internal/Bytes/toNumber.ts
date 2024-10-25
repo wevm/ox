@@ -1,8 +1,7 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import { Hex_toNumber } from '../Hex/toNumber.js'
-import { Bytes_assertSize } from './assertSize.js'
-import type { Bytes } from './types.js'
+import * as Hex from '../../Hex.js'
+import { assertSize } from './assertSize.js'
 
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a number.
@@ -15,17 +14,17 @@ import type { Bytes } from './types.js'
  * // @log: 420
  * ```
  */
-export function Bytes_toNumber(
-  bytes: Bytes,
-  options: Bytes_toNumber.Options = {},
+export function toNumber(
+  bytes: Bytes.Bytes,
+  options: Bytes.toNumber.Options = {},
 ): number {
   const { size } = options
-  if (typeof size !== 'undefined') Bytes_assertSize(bytes, size)
-  const hex = Hex_fromBytes(bytes, options)
-  return Hex_toNumber(hex, options)
+  if (typeof size !== 'undefined') assertSize(bytes, size)
+  const hex = Hex.fromBytes(bytes, options)
+  return Hex.toNumber(hex, options)
 }
 
-export declare namespace Bytes_toNumber {
+export declare namespace toNumber {
   type Options = {
     /** Whether or not the number of a signed representation. */
     signed?: boolean | undefined
@@ -34,11 +33,11 @@ export declare namespace Bytes_toNumber {
   }
 
   type ErrorType =
-    | Hex_fromBytes.ErrorType
-    | Hex_toNumber.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Hex.toNumber.ErrorType
     | Errors.GlobalErrorType
 }
 
-Bytes_toNumber.parseError = (error: unknown) =>
+toNumber.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Bytes_toNumber.ErrorType
+  error as Bytes.toNumber.ErrorType

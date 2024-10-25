@@ -1,8 +1,7 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Hex_assertSize } from './assertSize.js'
-import { Hex_padRight } from './pad.js'
-import type { Hex } from './types.js'
+import * as Hex from '../../Hex.js'
+import { assertSize } from './assertSize.js'
 
 const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
   i.toString(16).padStart(2, '0'),
@@ -23,32 +22,32 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
  * @param options -
  * @returns The encoded {@link ox#Hex.Hex} value.
  */
-export function Hex_fromBytes(
-  value: Bytes,
-  options: Hex_fromBytes.Options = {},
-): Hex {
+export function fromBytes(
+  value: Bytes.Bytes,
+  options: Hex.fromBytes.Options = {},
+): Hex.Hex {
   let string = ''
   for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
   const hex = `0x${string}` as const
 
   if (typeof options.size === 'number') {
-    Hex_assertSize(hex, options.size)
-    return Hex_padRight(hex, options.size)
+    assertSize(hex, options.size)
+    return Hex.padRight(hex, options.size)
   }
   return hex
 }
 
-export declare namespace Hex_fromBytes {
+export declare namespace fromBytes {
   type Options = {
     /** The size (in bytes) of the output hex value. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Hex_assertSize.ErrorType
-    | Hex_padRight.ErrorType
+    | assertSize.ErrorType
+    | Hex.padRight.ErrorType
     | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_fromBytes.parseError = (error: unknown) => error as Hex_fromBytes.ErrorType
+fromBytes.parseError = (error: unknown) => error as Hex.fromBytes.ErrorType

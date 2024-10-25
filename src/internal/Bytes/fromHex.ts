@@ -1,30 +1,7 @@
-import type * as Errors from '../../Errors.js'
-import { BaseError } from '../Errors/base.js'
-import { Hex_assertSize } from '../Hex/assertSize.js'
-import { Hex_InvalidLengthError } from '../Hex/errors.js'
-import { Hex_padRight } from '../Hex/pad.js'
-import type { Hex } from '../Hex/types.js'
-import type { Bytes } from './types.js'
-
-// We use very optimized technique to convert hex string to byte array
-const charCodeMap = {
-  zero: 48,
-  nine: 57,
-  A: 65,
-  F: 70,
-  a: 97,
-  f: 102,
-} as const
-
-function charCodeToBase16(char: number) {
-  if (char >= charCodeMap.zero && char <= charCodeMap.nine)
-    return char - charCodeMap.zero
-  if (char >= charCodeMap.A && char <= charCodeMap.F)
-    return char - (charCodeMap.A - 10)
-  if (char >= charCodeMap.a && char <= charCodeMap.f)
-    return char - (charCodeMap.a - 10)
-  return undefined
-}
+import type * as Bytes from '../../Bytes.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
+import { assertSize } from '../Hex/assertSize.js'
 
 /**
  * Encodes a {@link ox#Hex.Hex} value into {@link ox#Bytes.Bytes}.
@@ -49,18 +26,18 @@ function charCodeToBase16(char: number) {
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
-export function Bytes_fromHex(
-  value: Hex,
-  options: Bytes_fromHex.Options = {},
-): Bytes {
+export function fromHex(
+  value: Hex.Hex,
+  options: Bytes.fromHex.Options = {},
+): Bytes.Bytes {
   const { size } = options
 
-  if (value.length % 2) throw new Hex_InvalidLengthError(value)
+  if (value.length % 2) throw new Hex.InvalidLengthError(value)
 
   let hex = value
   if (size) {
-    Hex_assertSize(value, size)
-    hex = Hex_padRight(value, size)
+    assertSize(value, size)
+    hex = Hex.padRight(value, size)
   }
 
   const hexString = hex.slice(2) as string
@@ -71,7 +48,7 @@ export function Bytes_fromHex(
     const nibbleLeft = charCodeToBase16(hexString.charCodeAt(j++))
     const nibbleRight = charCodeToBase16(hexString.charCodeAt(j++))
     if (nibbleLeft === undefined || nibbleRight === undefined) {
-      throw new BaseError(
+      throw new Errors.BaseError(
         `Invalid byte sequence ("${hexString[j - 2]}${hexString[j - 1]}" in "${hexString}").`,
       )
     }
@@ -80,18 +57,38 @@ export function Bytes_fromHex(
   return bytes
 }
 
-export declare namespace Bytes_fromHex {
+export declare namespace fromHex {
   type Options = {
     /** Size of the output bytes. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Hex_assertSize.ErrorType
-    | Hex_padRight.ErrorType
-    | Hex_InvalidLengthError
+    | assertSize.ErrorType
+    | Hex.padRight.ErrorType
+    | Hex.InvalidLengthError
     | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_fromHex.parseError = (error: unknown) => error as Bytes_fromHex.ErrorType
+fromHex.parseError = (error: unknown) => error as Bytes.fromHex.ErrorType
+
+// We use very optimized technique to convert hex string to byte array
+const charCodeMap = {
+  zero: 48,
+  nine: 57,
+  A: 65,
+  F: 70,
+  a: 97,
+  f: 102,
+} as const
+
+function charCodeToBase16(char: number) {
+  if (char >= charCodeMap.zero && char <= charCodeMap.nine)
+    return char - charCodeMap.zero
+  if (char >= charCodeMap.A && char <= charCodeMap.F)
+    return char - (charCodeMap.A - 10)
+  if (char >= charCodeMap.a && char <= charCodeMap.f)
+    return char - (charCodeMap.a - 10)
+  return undefined
+}

@@ -1,7 +1,7 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Compute } from '../types.js'
@@ -56,7 +56,7 @@ export function Blobs_toCommitments<
   const as = options.as ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
   const blobs = (
     typeof blobs_[0] === 'string'
-      ? blobs_.map((x) => Bytes_fromHex(x as any))
+      ? blobs_.map((x) => fromHex(x as any))
       : blobs_
   ) as Bytes[]
 
@@ -65,7 +65,7 @@ export function Blobs_toCommitments<
     commitments.push(Uint8Array.from(kzg.blobToKzgCommitment(blob)))
 
   return (
-    as === 'Bytes' ? commitments : commitments.map((x) => Hex_fromBytes(x))
+    as === 'Bytes' ? commitments : commitments.map((x) => fromBytes(x))
   ) as never
 }
 
@@ -83,8 +83,8 @@ export declare namespace Blobs_toCommitments {
   >
 
   type ErrorType =
-    | Bytes_fromHex.ErrorType
-    | Hex_fromBytes.ErrorType
+    | fromHex.ErrorType
+    | fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
 

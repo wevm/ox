@@ -1,5 +1,5 @@
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from './types.js'
 
 /**
  * Trims leading zeros from a {@link ox#Bytes.Bytes} value.
@@ -15,17 +15,16 @@ import type { Bytes } from './types.js'
  * @param value - {@link ox#Bytes.Bytes} value.
  * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
-export function Bytes_trimLeft(value: Bytes): Bytes {
+export function trimLeft(value: Bytes.Bytes): Bytes.Bytes {
   return trim(value, { dir: 'left' })
 }
 
-export declare namespace Bytes_trimLeft {
+export declare namespace trimLeft {
   type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_trimLeft.parseError = (error: unknown) =>
-  error as Bytes_trimLeft.ErrorType
+trimLeft.parseError = (error: unknown) => error as Bytes.trimLeft.ErrorType
 
 /**
  * Trims trailing zeros from a {@link ox#Bytes.Bytes} value.
@@ -41,21 +40,20 @@ Bytes_trimLeft.parseError = (error: unknown) =>
  * @param value - {@link ox#Bytes.Bytes} value.
  * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
-export function Bytes_trimRight(value: Bytes): Bytes {
+export function trimRight(value: Bytes.Bytes): Bytes.Bytes {
   return trim(value, { dir: 'right' })
 }
 
-export declare namespace Bytes_trimRight {
+export declare namespace trimRight {
   export type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_trimRight.parseError = (error: unknown) =>
-  error as Bytes_trimRight.ErrorType
+trimRight.parseError = (error: unknown) => error as Bytes.trimRight.ErrorType
 
 /** @internal */
 export function trim(
-  value: Bytes,
+  value: Bytes.Bytes,
   options: trim.Options = {},
 ): trim.ReturnType {
   const { dir = 'left' } = options
@@ -82,7 +80,7 @@ export declare namespace trim {
     dir?: 'left' | 'right' | undefined
   }
 
-  type ReturnType = Bytes
+  type ReturnType = Bytes.Bytes
 
   type ErrorType = Errors.GlobalErrorType
 }

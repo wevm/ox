@@ -1,20 +1,17 @@
-import type * as Errors from '../../Errors.js'
-import { Hex_SizeOverflowError } from './errors.js'
-import { Hex_size } from './size.js'
-import type { Hex } from './types.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
-/** @internal */
-export function Hex_assertSize(hex: Hex, size_: number): void {
-  if (Hex_size(hex) > size_)
-    throw new Hex_SizeOverflowError({
-      givenSize: Hex_size(hex),
+export function assertSize(hex: Hex.Hex, size_: number): void {
+  if (Hex.size(hex) > size_)
+    throw new Errors.SizeOverflowError({
+      givenSize: Hex.size(hex),
       maxSize: size_,
     })
 }
 
-export declare namespace Hex_assertSize {
+export declare namespace assertSize {
   type ErrorType =
-    | Hex_size.ErrorType
-    | Hex_SizeOverflowError
+    | Hex.size.ErrorType
+    | Errors.SizeOverflowError
     | Errors.GlobalErrorType
 }

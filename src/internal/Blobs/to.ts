@@ -1,7 +1,7 @@
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
+import { fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { createCursor } from '../cursor.js'
 import type { Blobs } from './types.js'
@@ -47,7 +47,7 @@ export function Blobs_to<
   const to = to_ ?? (typeof blobs_[0] === 'string' ? 'Hex' : 'Bytes')
   const blobs = (
     typeof blobs_[0] === 'string'
-      ? blobs_.map((x) => Bytes_fromHex(x as Hex))
+      ? blobs_.map((x) => fromHex(x as Hex))
       : blobs_
   ) as Bytes[]
 
@@ -79,7 +79,7 @@ export function Blobs_to<
   }
 
   const trimmedData = data.bytes.slice(0, data.position)
-  return (to === 'Hex' ? Hex_fromBytes(trimmedData) : trimmedData) as never
+  return (to === 'Hex' ? fromBytes(trimmedData) : trimmedData) as never
 }
 
 export declare namespace Blobs_to {
@@ -88,8 +88,8 @@ export declare namespace Blobs_to {
     | (to extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | Hex_fromBytes.ErrorType
-    | Bytes_fromHex.ErrorType
+    | fromBytes.ErrorType
+    | fromHex.ErrorType
     | createCursor.ErrorType
     | Errors.GlobalErrorType
 }

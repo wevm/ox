@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { Ens_encodeLabelhash } from './encodeLabelhash.js'
+import { encodeLabelhash } from './encodeLabelhash.js'
 
 test.each([
   {
@@ -14,5 +14,5 @@ test.each([
       '[4f5b812789fc606be1b3b16908db13fc7a9adf7ca72641f84d75b47069d3d7f0]',
   },
 ] as const)(`encodeLabelhash('$hash') -> $expected`, ({ hash, expected }) => {
-  expect(Ens_encodeLabelhash(hash)).toBe(expected)
+  expect(encodeLabelhash(hash)).toBe(expected)
 })

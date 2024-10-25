@@ -20,7 +20,7 @@ const bigIntSuffix = '#__bigint'
  * @param reviver - A function that transforms the results.
  * @returns The parsed value.
  */
-export function Json_parse(
+export function parse(
   string: string,
   reviver?: ((this: any, key: string, value: any) => any) | undefined,
 ) {
@@ -32,10 +32,10 @@ export function Json_parse(
   })
 }
 
-export declare namespace Json_parse {
+export declare namespace parse {
   type ErrorType = Errors.GlobalErrorType
 }
 
-Json_parse.parseError = (error: unknown) =>
+parse.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Json_parse.ErrorType
+  error as parse.ErrorType

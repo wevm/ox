@@ -1,6 +1,6 @@
 import type * as Errors from '../../../Errors.js'
 import type * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
-import { Hex_fromNumber } from '../../Hex/fromNumber.js'
+import { fromNumber } from '../../Hex/fromNumber.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 
@@ -45,25 +45,25 @@ export function toRpc(
 
   return {
     ...envelope,
-    chainId: Hex_fromNumber(envelope.chainId),
+    chainId: fromNumber(envelope.chainId),
     data: envelope.data ?? envelope.input,
     ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex_fromNumber(envelope.gas) }
+      ? { gas: fromNumber(envelope.gas) }
       : {}),
     ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex_fromNumber(envelope.nonce) }
+      ? { nonce: fromNumber(envelope.nonce) }
       : {}),
     ...(typeof envelope.value === 'bigint'
-      ? { value: Hex_fromNumber(envelope.value) }
+      ? { value: fromNumber(envelope.value) }
       : {}),
     ...(typeof envelope.maxFeePerBlobGas === 'bigint'
-      ? { maxFeePerBlobGas: Hex_fromNumber(envelope.maxFeePerBlobGas) }
+      ? { maxFeePerBlobGas: fromNumber(envelope.maxFeePerBlobGas) }
       : {}),
     ...(typeof envelope.maxFeePerGas === 'bigint'
-      ? { maxFeePerGas: Hex_fromNumber(envelope.maxFeePerGas) }
+      ? { maxFeePerGas: fromNumber(envelope.maxFeePerGas) }
       : {}),
     ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
-      ? { maxPriorityFeePerGas: Hex_fromNumber(envelope.maxPriorityFeePerGas) }
+      ? { maxPriorityFeePerGas: fromNumber(envelope.maxPriorityFeePerGas) }
       : {}),
     type: '0x3',
     ...(signature ? Signature_toRpc(signature) : {}),

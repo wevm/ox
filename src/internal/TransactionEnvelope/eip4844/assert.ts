@@ -1,4 +1,5 @@
 import type * as Errors from '../../../Errors.js'
+import * as Hex from '../../../Hex.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import type * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
 import {
@@ -6,9 +7,6 @@ import {
   Blobs_InvalidVersionedHashSizeError,
   Blobs_InvalidVersionedHashVersionError,
 } from '../../Blobs/errors.js'
-import { Hex_size } from '../../Hex/size.js'
-import { Hex_slice } from '../../Hex/slice.js'
-import { Hex_toNumber } from '../../Hex/toNumber.js'
 import { Kzg_versionedHashVersion } from '../../Kzg/constants.js'
 import type { PartialBy } from '../../types.js'
 
@@ -38,8 +36,8 @@ export function assert(
     if (blobVersionedHashes.length === 0)
       throw new Blobs_EmptyBlobVersionedHashesError()
     for (const hash of blobVersionedHashes) {
-      const size = Hex_size(hash)
-      const version = Hex_toNumber(Hex_slice(hash, 0, 1))
+      const size = Hex.size(hash)
+      const version = Hex.toNumber(Hex.slice(hash, 0, 1))
       if (size !== 32)
         throw new Blobs_InvalidVersionedHashSizeError({ hash, size })
       if (version !== Kzg_versionedHashVersion)
@@ -57,9 +55,9 @@ export function assert(
 export declare namespace assert {
   type ErrorType =
     | TransactionEnvelopeEip1559.assert.ErrorType
-    | Hex_size.ErrorType
-    | Hex_toNumber.ErrorType
-    | Hex_slice.ErrorType
+    | Hex.size.ErrorType
+    | Hex.toNumber.ErrorType
+    | Hex.slice.ErrorType
     | Blobs_EmptyBlobVersionedHashesError
     | Blobs_InvalidVersionedHashSizeError
     | Blobs_InvalidVersionedHashVersionError

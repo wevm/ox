@@ -1,14 +1,6 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import { Bytes_size } from '../Bytes/size.js'
-import { Bytes_slice } from '../Bytes/slice.js'
-import { Bytes_toBigInt } from '../Bytes/toBigInt.js'
-import { Bytes_toBoolean } from '../Bytes/toBoolean.js'
-import { Bytes_toNumber } from '../Bytes/toNumber.js'
-import { Bytes_toString } from '../Bytes/toString.js'
-import { Bytes_trimLeft } from '../Bytes/trim.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { getArrayComponents } from './encode.js'
@@ -29,7 +21,7 @@ export function AbiParameters_decode<
   as extends 'Object' | 'Array' = 'Array',
 >(
   parameters: parameters,
-  data: Bytes | Hex,
+  data: Bytes.Bytes | Hex,
   options?: AbiParameters_decode.Options<as>,
 ): AbiParameters_decode.ReturnType<parameters, as>
 
@@ -73,7 +65,7 @@ export function AbiParameters_decode<
  */
 export function AbiParameters_decode(
   parameters: AbiParameters,
-  data: Bytes | Hex,
+  data: Bytes.Bytes | Hex,
   options?: {
     /**
      * Whether the decoded values should be returned as an `Object` or `Array`.
@@ -87,21 +79,21 @@ export function AbiParameters_decode(
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function AbiParameters_decode(
   parameters: AbiParameters,
-  data: Bytes | Hex,
+  data: Bytes.Bytes | Hex,
   options: { as?: 'Array' | 'Object' | undefined } = {},
 ): readonly unknown[] | Record<string, unknown> {
   const { as = 'Array' } = options
 
-  const bytes = typeof data === 'string' ? Bytes_fromHex(data) : data
+  const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
   const cursor = createCursor(bytes)
 
-  if (Bytes_size(bytes) === 0 && parameters.length > 0)
+  if (Bytes.size(bytes) === 0 && parameters.length > 0)
     throw new AbiParameters_ZeroDataError()
-  if (Bytes_size(bytes) && Bytes_size(bytes) < 32)
+  if (Bytes.size(bytes) && Bytes.size(bytes) < 32)
     throw new AbiParameters_DataSizeTooSmallError({
-      data: typeof data === 'string' ? data : Hex_fromBytes(data),
+      data: typeof data === 'string' ? data : fromBytes(data),
       parameters: parameters as readonly AbiParameters_Parameter[],
-      size: Bytes_size(bytes),
+      size: Bytes.size(bytes),
     })
 
   let consumed = 0
@@ -141,7 +133,7 @@ export declare namespace AbiParameters_decode {
       : AbiParameters_ToPrimitiveTypes<parameters>
 
   type ErrorType =
-    | Bytes_fromHex.ErrorType
+    | Bytes.fromHex.ErrorType
     | decodeParameter.ErrorType
     | AbiParameters_ZeroDataError
     | AbiParameters_DataSizeTooSmallError
@@ -203,13 +195,13 @@ const sizeOfOffset = 32
 /** @internal */
 export function decodeAddress(cursor: Cursor) {
   const value = cursor.readBytes(32)
-  return [Hex_fromBytes(Bytes_slice(value, -20)), 32]
+  return [fromBytes(Bytes.slice(value, -20)), 32]
 }
 
 export declare namespace decodeAddress {
   type ErrorType =
-    | Hex_fromBytes.ErrorType
-    | Bytes_slice.ErrorType
+    | fromBytes.ErrorType
+    | Bytes.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -223,7 +215,7 @@ export function decodeArray(
   // this means we will need to wonder off to the pointer and decode.
   if (!length) {
     // Dealing with a dynamic type, so get the offset of the array data.
-    const offset = Bytes_toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of current slot + offset.
     const start = staticPosition + offset
@@ -231,7 +223,7 @@ export function decodeArray(
 
     // Get the length of the array from the offset.
     cursor.setPosition(start)
-    const length = Bytes_toNumber(cursor.readBytes(sizeOfLength))
+    const length = Bytes.toNumber(cursor.readBytes(sizeOfLength))
 
     // Check if the array has any dynamic children.
     const dynamicChild = hasDynamicChild(param)
@@ -259,7 +251,7 @@ export function decodeArray(
   // we need to decode the offset of the array data.
   if (hasDynamicChild(param)) {
     // Dealing with dynamic types, so get the offset of the array data.
-    const offset = Bytes_toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of current slot + offset.
     const start = staticPosition + offset
@@ -294,16 +286,16 @@ export function decodeArray(
 }
 
 export declare namespace decodeArray {
-  type ErrorType = Bytes_toNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.toNumber.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
 export function decodeBool(cursor: Cursor) {
-  return [Bytes_toBoolean(cursor.readBytes(32), { size: 32 }), 32]
+  return [Bytes.toBoolean(cursor.readBytes(32), { size: 32 }), 32]
 }
 
 export declare namespace decodeBool {
-  type ErrorType = Bytes_toBoolean.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.toBoolean.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -315,12 +307,12 @@ export function decodeBytes(
   const [_, size] = param.type.split('bytes')
   if (!size) {
     // Dealing with dynamic types, so get the offset of the bytes data.
-    const offset = Bytes_toNumber(cursor.readBytes(32))
+    const offset = Bytes.toNumber(cursor.readBytes(32))
 
     // Set position of the cursor to start of bytes data.
     cursor.setPosition(staticPosition + offset)
 
-    const length = Bytes_toNumber(cursor.readBytes(32))
+    const length = Bytes.toNumber(cursor.readBytes(32))
 
     // If there is no length, we have zero data.
     if (length === 0) {
@@ -333,17 +325,17 @@ export function decodeBytes(
 
     // As we have gone wondering, restore to the original position + next slot.
     cursor.setPosition(staticPosition + 32)
-    return [Hex_fromBytes(data), 32]
+    return [fromBytes(data), 32]
   }
 
-  const value = Hex_fromBytes(cursor.readBytes(Number.parseInt(size), 32))
+  const value = fromBytes(cursor.readBytes(Number.parseInt(size), 32))
   return [value, 32]
 }
 
 export declare namespace decodeBytes {
   type ErrorType =
-    | Hex_fromBytes.ErrorType
-    | Bytes_toNumber.ErrorType
+    | fromBytes.ErrorType
+    | Bytes.toNumber.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -354,16 +346,16 @@ export function decodeNumber(cursor: Cursor, param: AbiParameters_Parameter) {
   const value = cursor.readBytes(32)
   return [
     size > 48
-      ? Bytes_toBigInt(value, { signed })
-      : Bytes_toNumber(value, { signed }),
+      ? Bytes.toBigInt(value, { signed })
+      : Bytes.toNumber(value, { signed }),
     32,
   ]
 }
 
 export declare namespace decodeNumber {
   type ErrorType =
-    | Bytes_toNumber.ErrorType
-    | Bytes_toBigInt.ErrorType
+    | Bytes.toNumber.ErrorType
+    | Bytes.toBigInt.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -394,7 +386,7 @@ export function decodeTuple(
   // tuple data.
   if (hasDynamicChild(param)) {
     // Dealing with dynamic types, so get the offset of the tuple data.
-    const offset = Bytes_toNumber(cursor.readBytes(sizeOfOffset))
+    const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
 
     // Start is the static position of referencing slot + offset.
     const start = staticPosition + offset
@@ -428,7 +420,7 @@ export function decodeTuple(
 }
 
 export declare namespace decodeTuple {
-  type ErrorType = Bytes_toNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.toNumber.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
@@ -437,13 +429,13 @@ export function decodeString(
   { staticPosition }: { staticPosition: number },
 ) {
   // Get offset to start of string data.
-  const offset = Bytes_toNumber(cursor.readBytes(32))
+  const offset = Bytes.toNumber(cursor.readBytes(32))
 
   // Start is the static position of current slot + offset.
   const start = staticPosition + offset
   cursor.setPosition(start)
 
-  const length = Bytes_toNumber(cursor.readBytes(32))
+  const length = Bytes.toNumber(cursor.readBytes(32))
 
   // If there is no length, we have zero data (empty string).
   if (length === 0) {
@@ -452,7 +444,7 @@ export function decodeString(
   }
 
   const data = cursor.readBytes(length, 32)
-  const value = Bytes_toString(Bytes_trimLeft(data))
+  const value = Bytes.toString(Bytes.trimLeft(data))
 
   // As we have gone wondering, restore to the original position + next slot.
   cursor.setPosition(staticPosition + 32)
@@ -484,8 +476,8 @@ export function hasDynamicChild(param: AbiParameters_Parameter) {
 
 export declare namespace decodeString {
   type ErrorType =
-    | Bytes_toNumber.ErrorType
-    | Bytes_toString.ErrorType
-    | Bytes_trimLeft.ErrorType
+    | Bytes.toNumber.ErrorType
+    | Bytes.toString.ErrorType
+    | Bytes.trimLeft.ErrorType
     | Errors.GlobalErrorType
 }

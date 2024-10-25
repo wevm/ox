@@ -1,7 +1,7 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 
+import type * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import type { Bytes } from './types.js'
 
 /**
  * Checks if two {@link ox#Bytes.Bytes} values are equal.
@@ -21,13 +21,13 @@ import type { Bytes } from './types.js'
  * @param bytesB - Second {@link ox#Bytes.Bytes} value.
  * @returns `true` if the two values are equal, otherwise `false`.
  */
-export function Bytes_isEqual(bytesA: Bytes, bytesB: Bytes) {
+export function isEqual(bytesA: Bytes.Bytes, bytesB: Bytes.Bytes) {
   return equalBytes(bytesA, bytesB)
 }
 
-export declare namespace Bytes_isEqual {
+export declare namespace isEqual {
   type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_isEqual.parseError = (error: unknown) => error as Bytes_isEqual.ErrorType
+isEqual.parseError = (error: unknown) => error as Bytes.isEqual.ErrorType

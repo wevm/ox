@@ -1,6 +1,6 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_assertSize } from './assertSize.js'
-import type { Hex } from './types.js'
+import type * as Hex from '../../Hex.js'
+import { assertSize } from './assertSize.js'
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a BigInt.
@@ -20,13 +20,13 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The decoded BigInt.
  */
-export function Hex_toBigInt(
-  hex: Hex,
-  options: Hex_toBigInt.Options = {},
+export function toBigInt(
+  hex: Hex.Hex,
+  options: Hex.toBigInt.Options = {},
 ): bigint {
   const { signed } = options
 
-  if (options.size) Hex_assertSize(hex, options.size)
+  if (options.size) assertSize(hex, options.size)
 
   const value = BigInt(hex)
   if (!signed) return value
@@ -40,7 +40,7 @@ export function Hex_toBigInt(
   return value - max_unsigned - 1n
 }
 
-export declare namespace Hex_toBigInt {
+export declare namespace toBigInt {
   type Options = {
     /** Whether or not the number of a signed representation. */
     signed?: boolean | undefined
@@ -48,8 +48,8 @@ export declare namespace Hex_toBigInt {
     size?: number | undefined
   }
 
-  type ErrorType = Hex_assertSize.ErrorType | Errors.GlobalErrorType
+  type ErrorType = assertSize.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_toBigInt.parseError = (error: unknown) => error as Hex_toBigInt.ErrorType
+toBigInt.parseError = (error: unknown) => error as Hex.toBigInt.ErrorType

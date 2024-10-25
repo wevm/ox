@@ -21,7 +21,7 @@ const bigIntSuffix = '#__bigint'
  * @param space - A string or number that determines the indentation of the JSON string. If it is a number, it indicates the number of spaces to use as indentation; if it is a string (e.g. `'\t'`), it uses the string as the indentation character.
  * @returns The JSON string.
  */
-export function Json_stringify(
+export function stringify(
   value: any,
   replacer?: ((this: any, key: string, value: any) => any) | null | undefined,
   space?: string | number | undefined,
@@ -37,10 +37,10 @@ export function Json_stringify(
   )
 }
 
-export declare namespace Json_stringify {
+export declare namespace stringify {
   type ErrorType = Errors.GlobalErrorType
 }
 
-Json_stringify.parseError = (error: unknown) =>
+stringify.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Json_stringify.ErrorType
+  error as stringify.ErrorType

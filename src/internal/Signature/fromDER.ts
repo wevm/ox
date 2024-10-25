@@ -1,7 +1,7 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
+import { from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import type { Signature } from './types.js'
 
@@ -23,7 +23,7 @@ import type { Signature } from './types.js'
  * @returns The {@link ox#Signature.Signature}.
  */
 export function Signature_fromDER(signature: Hex | Bytes): Signature<false> {
-  const { r, s } = secp256k1.Signature.fromDER(Hex_from(signature).slice(2))
+  const { r, s } = secp256k1.Signature.fromDER(from(signature).slice(2))
   return { r, s }
 }
 

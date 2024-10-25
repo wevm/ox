@@ -2,13 +2,13 @@ import { bytesToHex as bytesToHex_ethjs } from '@ethereumjs/util'
 import { hexlify, toBeHex, toUtf8Bytes } from 'ethers'
 import { Bytes } from 'ox'
 import { bench, describe } from 'vitest'
-import { Hex_fromBytes } from './fromBytes.js'
-import { Hex_fromNumber } from './fromNumber.js'
-import { Hex_fromString } from './fromString.js'
+import { fromBytes } from './fromBytes.js'
+import { fromNumber } from './fromNumber.js'
+import { fromString } from './fromString.js'
 
 describe('Number to Hex', () => {
   bench('ox: `Hex.fromNumber`', () => {
-    Hex_fromNumber(52)
+    fromNumber(52)
   })
 
   bench('ethers: `hexlify`', () => {
@@ -18,7 +18,7 @@ describe('Number to Hex', () => {
 
 describe('String to Hex', () => {
   bench('ox: `Hex.fromString`', () => {
-    Hex_fromString('Hello world.')
+    fromString('Hello world.')
   })
 
   bench('ethers: `hexlify`', () => {
@@ -30,7 +30,7 @@ describe('Bytes to Hex', () => {
   const bytes = Bytes.random(1024)
 
   bench('ox: `Hex.fromBytes`', () => {
-    Hex_fromBytes(bytes)
+    fromBytes(bytes)
   })
 
   bench('ethers: `bytesToHex`', () => {

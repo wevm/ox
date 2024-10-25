@@ -1,10 +1,7 @@
+import type * as AesGcm from '../../AesGcm.js'
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_from } from '../Bytes/from.js'
-import { Bytes_random } from '../Bytes/random.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
 import { AesGcm_ivLength } from './constants.js'
 
 /**
@@ -27,28 +24,28 @@ import { AesGcm_ivLength } from './constants.js'
  * @returns The encrypted data.
  */
 export async function AesGcm_encrypt<
-  value extends Hex | Bytes,
+  value extends Hex.Hex | Bytes.Bytes,
   as extends 'Bytes' | 'Hex' =
-    | (value extends Hex ? 'Hex' : never)
-    | (value extends Bytes ? 'Bytes' : never),
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  value: value | Bytes | Hex,
+  value: value | Bytes.Bytes | Hex.Hex,
   key: CryptoKey,
-  options: AesGcm_encrypt.Options<as> = {},
-): Promise<AesGcm_encrypt.ReturnType<as>> {
+  options: AesGcm.encrypt.Options<as> = {},
+): Promise<AesGcm.encrypt.ReturnType<as>> {
   const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const iv = Bytes_random(AesGcm_ivLength)
+  const iv = Bytes.random(AesGcm_ivLength)
   const encrypted = await globalThis.crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
       iv,
     },
     key,
-    Bytes_from(value),
+    Bytes.from(value),
   )
-  const result = Bytes_concat(iv, new Uint8Array(encrypted))
+  const result = Bytes.concat(iv, new Uint8Array(encrypted))
   if (as === 'Bytes') return result as never
-  return Hex_from(result) as never
+  return Hex.from(result) as never
 }
 
 export declare namespace AesGcm_encrypt {
@@ -58,17 +55,17 @@ export declare namespace AesGcm_encrypt {
   }
 
   type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
-    | Bytes_concat.ErrorType
-    | Bytes_from.ErrorType
-    | Bytes_random.ErrorType
-    | Hex_from.ErrorType
+    | Bytes.concat.ErrorType
+    | Bytes.from.ErrorType
+    | Bytes.random.ErrorType
+    | Hex.from.ErrorType
     | Errors.GlobalErrorType
 }
 
 AesGcm_encrypt.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AesGcm_encrypt.ErrorType
+  error as AesGcm.encrypt.ErrorType

@@ -2,7 +2,7 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 
 import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
+import { from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { PublicKey_from } from '../PublicKey/from.js'
 import type { PublicKey } from '../PublicKey/types.js'
@@ -35,7 +35,7 @@ export function Secp256k1_recoverPublicKey(
     BigInt(r),
     BigInt(s),
   ).addRecoveryBit(yParity)
-  const point = signature_.recoverPublicKey(Hex_from(payload).substring(2))
+  const point = signature_.recoverPublicKey(from(payload).substring(2))
   return PublicKey_from(point)
 }
 
@@ -49,7 +49,7 @@ export declare namespace Secp256k1_recoverPublicKey {
 
   type ErrorType =
     | PublicKey_from.ErrorType
-    | Hex_from.ErrorType
+    | from.ErrorType
     | Errors.GlobalErrorType
 }
 

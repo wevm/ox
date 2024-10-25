@@ -1,6 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Hex_toBigInt } from './toBigInt.js'
-import type { Hex } from './types.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a number.
@@ -20,20 +19,20 @@ import type { Hex } from './types.js'
  * @param options -
  * @returns The decoded number.
  */
-export function Hex_toNumber(
-  hex: Hex,
-  options: Hex_toNumber.Options = {},
+export function toNumber(
+  hex: Hex.Hex,
+  options: Hex.toNumber.Options = {},
 ): number {
   const { signed, size } = options
   if (!signed && !size) return Number(hex)
-  return Number(Hex_toBigInt(hex, options))
+  return Number(Hex.toBigInt(hex, options))
 }
 
-export declare namespace Hex_toNumber {
-  type Options = Hex_toBigInt.Options
+export declare namespace toNumber {
+  type Options = Hex.toBigInt.Options
 
-  type ErrorType = Hex_toBigInt.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.toBigInt.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Hex_toNumber.parseError = (error: unknown) => error as Hex_toNumber.ErrorType
+toNumber.parseError = (error: unknown) => error as Hex.toNumber.ErrorType

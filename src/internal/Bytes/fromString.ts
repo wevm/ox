@@ -1,7 +1,6 @@
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { Bytes_assertSize } from './assertSize.js'
-import { Bytes_padRight } from './pad.js'
-import type { Bytes } from './types.js'
+import { assertSize } from './assertSize.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()
 
@@ -28,32 +27,32 @@ const encoder = /*#__PURE__*/ new TextEncoder()
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
-export function Bytes_fromString(
+export function fromString(
   value: string,
-  options: Bytes_fromString.Options = {},
-): Bytes {
+  options: Bytes.fromString.Options = {},
+): Bytes.Bytes {
   const { size } = options
 
   const bytes = encoder.encode(value)
   if (typeof size === 'number') {
-    Bytes_assertSize(bytes, size)
-    return Bytes_padRight(bytes, size)
+    assertSize(bytes, size)
+    return Bytes.padRight(bytes, size)
   }
   return bytes
 }
 
-export declare namespace Bytes_fromString {
+export declare namespace fromString {
   type Options = {
     /** Size of the output bytes. */
     size?: number | undefined
   }
 
   type ErrorType =
-    | Bytes_assertSize.ErrorType
-    | Bytes_padRight.ErrorType
+    | assertSize.ErrorType
+    | Bytes.padRight.ErrorType
     | Errors.GlobalErrorType
 }
 
-Bytes_fromString.parseError = (error: unknown) =>
+fromString.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Bytes_fromString.ErrorType
+  error as Bytes.fromString.ErrorType

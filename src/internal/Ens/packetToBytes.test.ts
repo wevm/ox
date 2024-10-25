@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { fromBytes } from '../Hex/fromBytes.js'
 import { Ens_packetToBytes } from './packetToBytes.js'
 
 test.each([
@@ -19,5 +19,5 @@ test.each([
       '0x425b316461613730333461646162363664396563396530336532633839323031623833613734393765383564633562393731616139646165326363626237613230385d00',
   },
 ])("packetToBytes('$packet') -> '$expected'", ({ packet, expected }) => {
-  expect(Hex_fromBytes(Ens_packetToBytes(packet))).toBe(expected)
+  expect(fromBytes(Ens_packetToBytes(packet))).toBe(expected)
 })

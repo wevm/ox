@@ -1,10 +1,10 @@
 import { p256 } from '@noble/curves/p256'
 
 import type * as Errors from '../../Errors.js'
-import { Bytes_from } from '../Bytes/from.js'
-import { Bytes_fromArray } from '../Bytes/fromArray.js'
-import { Bytes_slice } from '../Bytes/slice.js'
-import { Bytes_toBigInt } from '../Bytes/toBigInt.js'
+import { from } from '../Bytes/from.js'
+import { fromArray } from '../Bytes/fromArray.js'
+import { slice } from '../Bytes/slice.js'
+import { toBigInt } from '../Bytes/toBigInt.js'
 import type { Bytes } from '../Bytes/types.js'
 import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
@@ -41,11 +41,11 @@ export async function WebCryptoP256_sign(
       hash: 'SHA-256',
     },
     privateKey,
-    Bytes_from(payload),
+    from(payload),
   )
-  const signature_bytes = Bytes_fromArray(new Uint8Array(signature))
-  const r = Bytes_toBigInt(Bytes_slice(signature_bytes, 0, 32))
-  let s = Bytes_toBigInt(Bytes_slice(signature_bytes, 32, 64))
+  const signature_bytes = fromArray(new Uint8Array(signature))
+  const r = toBigInt(slice(signature_bytes, 0, 32))
+  let s = toBigInt(slice(signature_bytes, 32, 64))
   if (s > p256.CURVE.n / 2n) s = p256.CURVE.n - s
   return { r, s }
 }
@@ -58,7 +58,7 @@ export declare namespace WebCryptoP256_sign {
     privateKey: CryptoKey
   }
 
-  type ErrorType = Bytes_fromArray.ErrorType | Errors.GlobalErrorType
+  type ErrorType = fromArray.ErrorType | Errors.GlobalErrorType
 }
 
 WebCryptoP256_sign.parseError = (error: unknown) =>

@@ -1,6 +1,5 @@
-import type * as Errors from '../../Errors.js'
-import { Bytes_SizeExceedsPaddingSizeError } from './errors.js'
-import type { Bytes } from './types.js'
+import type * as Bytes from '../../Bytes.js'
+import * as Errors from '../../Errors.js'
 
 /**
  * Pads a {@link ox#Bytes.Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
@@ -17,20 +16,20 @@ import type { Bytes } from './types.js'
  * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
  * @returns Padded {@link ox#Bytes.Bytes} value.
  */
-export function Bytes_padLeft(
-  value: Bytes,
+export function padLeft(
+  value: Bytes.Bytes,
   size?: number | undefined,
-): Bytes_padLeft.ReturnType {
-  return Bytes_pad(value, { dir: 'left', size })
+): Bytes.padLeft.ReturnType {
+  return pad(value, { dir: 'left', size })
 }
 
-export declare namespace Bytes_padLeft {
-  type ReturnType = Bytes_pad.ReturnType
-  type ErrorType = Bytes_pad.ErrorType | Errors.GlobalErrorType
+export declare namespace padLeft {
+  type ReturnType = pad.ReturnType
+  type ErrorType = pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_padLeft.parseError = (error: unknown) => error as Bytes_padLeft.ErrorType
+padLeft.parseError = (error: unknown) => error as Bytes.padLeft.ErrorType
 
 /**
  * Pads a {@link ox#Bytes.Bytes} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
@@ -47,32 +46,31 @@ Bytes_padLeft.parseError = (error: unknown) => error as Bytes_padLeft.ErrorType
  * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
  * @returns Padded {@link ox#Bytes.Bytes} value.
  */
-export function Bytes_padRight(
-  value: Bytes,
+export function padRight(
+  value: Bytes.Bytes,
   size?: number | undefined,
-): Bytes_padRight.ReturnType {
-  return Bytes_pad(value, { dir: 'right', size })
+): Bytes.padRight.ReturnType {
+  return pad(value, { dir: 'right', size })
 }
 
-export declare namespace Bytes_padRight {
-  type ReturnType = Bytes_pad.ReturnType
-  type ErrorType = Bytes_pad.ErrorType | Errors.GlobalErrorType
+export declare namespace padRight {
+  type ReturnType = pad.ReturnType
+  type ErrorType = pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-Bytes_padRight.parseError = (error: unknown) =>
-  error as Bytes_padRight.ErrorType
+padRight.parseError = (error: unknown) => error as Bytes.padRight.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Utilities
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export function Bytes_pad(bytes: Bytes, options: Bytes_pad.Options = {}) {
+export function pad(bytes: Bytes.Bytes, options: pad.Options = {}) {
   const { dir, size = 32 } = options
   if (size === 0) return bytes
   if (bytes.length > size)
-    throw new Bytes_SizeExceedsPaddingSizeError({
+    throw new Errors.SizeExceedsPaddingSizeError({
       size: bytes.length,
       targetSize: size,
       type: 'Bytes',
@@ -86,13 +84,13 @@ export function Bytes_pad(bytes: Bytes, options: Bytes_pad.Options = {}) {
   return paddedBytes
 }
 
-export declare namespace Bytes_pad {
+export declare namespace pad {
   type Options = {
     dir?: 'left' | 'right' | undefined
     size?: number | undefined
   }
 
-  type ReturnType = Bytes
+  type ReturnType = Bytes.Bytes
 
-  type ErrorType = Bytes_SizeExceedsPaddingSizeError | Errors.GlobalErrorType
+  type ErrorType = Errors.SizeExceedsPaddingSizeError | Errors.GlobalErrorType
 }
