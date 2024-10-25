@@ -1,7 +1,6 @@
+import * as AesGcm from '../../AesGcm.js'
+import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
-import { fromString } from '../Bytes/fromString.js'
-import type { Bytes } from '../Bytes/types.js'
-import { AesGcm_randomSalt } from './randomSalt.js'
 
 /**
  * Derives an AES-GCM key from a password using PBKDF2.
@@ -18,16 +17,16 @@ import { AesGcm_randomSalt } from './randomSalt.js'
  * @returns The derived key.
  */
 export async function AesGcm_getKey(
-  options: AesGcm_getKey.Options,
+  options: AesGcm.getKey.Options,
 ): Promise<CryptoKey> {
   const {
     iterations = 900_000,
     password,
-    salt = AesGcm_randomSalt(32),
+    salt = AesGcm.randomSalt(32),
   } = options
   const baseKey = await globalThis.crypto.subtle.importKey(
     'raw',
-    fromString(password),
+    Bytes.fromString(password),
     { name: 'PBKDF2' },
     false,
     ['deriveBits', 'deriveKey'],
@@ -54,12 +53,12 @@ export declare namespace AesGcm_getKey {
     /** Password to derive key from. */
     password: string
     /** Salt to use for key derivation. @default `AesGcm.randomSalt(32)` */
-    salt?: Bytes | undefined
+    salt?: Bytes.Bytes | undefined
   }
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = Bytes.fromString.ErrorType | Errors.GlobalErrorType
 }
 
 AesGcm_getKey.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AesGcm_getKey.ErrorType
+  error as AesGcm.getKey.ErrorType

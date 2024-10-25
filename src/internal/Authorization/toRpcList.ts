@@ -1,9 +1,5 @@
+import * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
-import { Authorization_toRpc } from './toRpc.js'
-import type {
-  Authorization_ListRpc,
-  Authorization_ListSigned,
-} from './types.js'
 
 /**
  * Converts an {@link ox#Authorization.List} to an {@link ox#Authorization.ListRpc}.
@@ -26,15 +22,15 @@ import type {
  * @returns An RPC-formatted Authorization List.
  */
 export function Authorization_toRpcList(
-  authorizationList: Authorization_ListSigned,
-): Authorization_ListRpc {
-  return authorizationList.map(Authorization_toRpc)
+  authorizationList: Authorization.ListSigned,
+): Authorization.ListRpc {
+  return authorizationList.map(Authorization.toRpc)
 }
 
 export declare namespace Authorization_toRpcList {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = Authorization.toRpc.ErrorType | Errors.GlobalErrorType
 }
 
 Authorization_toRpcList.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_toRpcList.ErrorType
+  error as Authorization.toRpcList.ErrorType

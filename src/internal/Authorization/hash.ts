@@ -1,10 +1,8 @@
+import * as Authorization from '../../Authorization.js'
+import * as Hash from '../../Hash.js'
+import * as Hex from '../../Hex.js'
+import * as Rlp from '../../Rlp.js'
 import type * as Errors from '../../Errors.js'
-import { keccak256 } from '../Hash/keccak256.js'
-import { concat } from '../Hex/concat.js'
-import type { Hex } from '../Hex/types.js'
-import { Rlp_fromHex } from '../Rlp/from.js'
-import { Authorization_toTuple } from './toTuple.js'
-import type { Authorization } from './types.js'
 
 /**
  * Computes the hash for an {@link ox#Authorization.Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
@@ -25,21 +23,23 @@ import type { Authorization } from './types.js'
  * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns The hash.
  */
-export function Authorization_hash(authorization: Authorization): Hex {
-  return keccak256(
-    concat('0x05', Rlp_fromHex(Authorization_toTuple(authorization))),
+export function Authorization_hash(
+  authorization: Authorization.Authorization,
+): Hex.Hex {
+  return Hash.keccak256(
+    Hex.concat('0x05', Rlp.fromHex(Authorization.toTuple(authorization))),
   )
 }
 
 export declare namespace Authorization_hash {
   type ErrorType =
-    | Authorization_toTuple.ErrorType
-    | keccak256.ErrorType
-    | concat.ErrorType
-    | Rlp_fromHex.ErrorType
+    | Authorization.toTuple.ErrorType
+    | Hash.keccak256.ErrorType
+    | Hex.concat.ErrorType
+    | Rlp.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 
 Authorization_hash.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_hash.ErrorType
+  error as Authorization.hash.ErrorType

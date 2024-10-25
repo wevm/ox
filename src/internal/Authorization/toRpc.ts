@@ -1,7 +1,7 @@
+import * as Hex from '../../Hex.js'
+import * as Signature from '../../Signature.js'
+import type * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
-import { fromNumber } from '../Hex/fromNumber.js'
-import { Signature_toRpc } from '../Signature/toRpc.js'
-import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 
 /**
  * Converts an {@link ox#Authorization.Authorization} to an {@link ox#Authorization.Rpc}.
@@ -24,22 +24,25 @@ import type { Authorization_Rpc, Authorization_Signed } from './types.js'
  * @returns An RPC-formatted Authorization.
  */
 export function Authorization_toRpc(
-  authorization: Authorization_Signed,
-): Authorization_Rpc {
+  authorization: Authorization.Signed,
+): Authorization.Rpc {
   const { address, chainId, nonce, ...signature } = authorization
 
   return {
     address,
-    chainId: fromNumber(chainId),
-    nonce: fromNumber(nonce),
-    ...Signature_toRpc(signature),
+    chainId: Hex.fromNumber(chainId),
+    nonce: Hex.fromNumber(nonce),
+    ...Signature.toRpc(signature),
   }
 }
 
 export declare namespace Authorization_toRpc {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | Hex.fromNumber.ErrorType
+    | Signature.toRpc.ErrorType
+    | Errors.GlobalErrorType
 }
 
 Authorization_toRpc.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_toRpc.ErrorType
+  error as Authorization.toRpc.ErrorType

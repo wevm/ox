@@ -1,8 +1,7 @@
+import * as Authorization from '../../Authorization.js'
+import * as Signature from '../../Signature.js'
 import type * as Errors from '../../Errors.js'
-import { Signature_fromTuple } from '../Signature/fromTuple.js'
 import type { Compute } from '../types.js'
-import { Authorization_from } from './from.js'
-import type { Authorization, Authorization_Tuple } from './types.js'
 
 /**
  * Converts an {@link ox#Authorization.Tuple} to an {@link ox#Authorization.Authorization}.
@@ -51,12 +50,12 @@ import type { Authorization, Authorization_Tuple } from './types.js'
  * @returns The {@link ox#Authorization.Authorization}.
  */
 export function Authorization_fromTuple<
-  const tuple extends Authorization_Tuple,
->(tuple: tuple): Authorization_fromTuple.ReturnType<tuple> {
+  const tuple extends Authorization.Tuple,
+>(tuple: tuple): Authorization.fromTuple.ReturnType<tuple> {
   const [chainId, address, nonce, yParity, r, s] = tuple
   const signature =
-    yParity && r && s ? Signature_fromTuple([yParity, r, s]) : undefined
-  return Authorization_from({
+    yParity && r && s ? Signature.fromTuple([yParity, r, s]) : undefined
+  return Authorization.from({
     address,
     chainId: Number(chainId),
     nonce: BigInt(nonce),
@@ -66,16 +65,19 @@ export function Authorization_fromTuple<
 
 export declare namespace Authorization_fromTuple {
   type ReturnType<
-    authorization extends Authorization_Tuple = Authorization_Tuple,
+    authorization extends Authorization.Tuple = Authorization.Tuple,
   > = Compute<
-    Authorization<
-      authorization extends Authorization_Tuple<true> ? true : false
+    Authorization.Authorization<
+      authorization extends Authorization.Tuple<true> ? true : false
     >
   >
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | Signature.fromRpc.ErrorType
+    | Authorization.from.ErrorType
+    | Errors.GlobalErrorType
 }
 
 Authorization_fromTuple.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_fromTuple.ErrorType
+  error as Authorization.fromTuple.ErrorType

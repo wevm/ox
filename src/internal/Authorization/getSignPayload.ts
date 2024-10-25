@@ -1,7 +1,6 @@
+import * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
-import type { Hex } from '../Hex/types.js'
-import { Authorization_hash } from './hash.js'
-import type { Authorization } from './types.js'
+import type * as Hex from '../../Hex.js'
 
 /**
  * Computes the sign payload for an {@link ox#Authorization.Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
@@ -31,15 +30,15 @@ import type { Authorization } from './types.js'
  * @returns The sign payload.
  */
 export function Authorization_getSignPayload(
-  authorization: Authorization,
-): Hex {
-  return Authorization_hash(authorization)
+  authorization: Authorization.Authorization,
+): Hex.Hex {
+  return Authorization.hash(authorization)
 }
 
 export declare namespace Authorization_getSignPayload {
-  type ErrorType = Authorization_hash.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Authorization.hash.ErrorType | Errors.GlobalErrorType
 }
 
 Authorization_getSignPayload.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_getSignPayload.ErrorType
+  error as Authorization.getSignPayload.ErrorType

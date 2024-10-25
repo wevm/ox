@@ -1,13 +1,12 @@
-import { BaseError } from '../Errors/base.js'
-import { size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
+import * as Errors from '../../Errors.js'
 
 /** Thrown when the size of a storage key is invalid. */
-export class AccessList_InvalidStorageKeySizeError extends BaseError {
+export class InvalidStorageKeySizeError extends Errors.BaseError {
   override readonly name = 'AccessList.InvalidStorageKeySizeError'
-  constructor({ storageKey }: { storageKey: Hex }) {
+  constructor({ storageKey }: { storageKey: Hex.Hex }) {
     super(
-      `Size for storage key "${storageKey}" is invalid. Expected 32 bytes. Got ${size(storageKey)} bytes.`,
+      `Size for storage key "${storageKey}" is invalid. Expected 32 bytes. Got ${Hex.size(storageKey)} bytes.`,
     )
   }
 }

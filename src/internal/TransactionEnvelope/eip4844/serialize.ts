@@ -130,9 +130,9 @@ export function serialize(
     '0x03',
     sidecars
       ? // If sidecars are provided, envelope turns into a "network wrapper":
-        Rlp_fromHex([serializedTransaction, blobs, commitments, proofs])
+      Rlp_fromHex([serializedTransaction, blobs, commitments, proofs])
       : // Otherwise, standard envelope is used:
-        Rlp_fromHex(serializedTransaction),
+      Rlp_fromHex(serializedTransaction),
   ) as TransactionEnvelopeEip4844.Serialized
 }
 
@@ -145,6 +145,7 @@ export declare namespace serialize {
   }
 
   type ErrorType =
+    | AccessList_toTupleList.ErrorType
     | TransactionEnvelopeEip4844.assert.ErrorType
     | fromNumber.ErrorType
     | Signature_toTuple.ErrorType

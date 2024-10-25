@@ -1,7 +1,7 @@
 import * as Address from '../../Address.js'
-import type * as Errors from '../../Errors.js'
 import * as Hash from '../../Hash.js'
 import * as PublicKey from '../../PublicKey.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Converts an ECDSA public key to an {@link ox#Address.Address}.
@@ -49,4 +49,4 @@ export declare namespace fromPublicKey {
 
 fromPublicKey.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as fromPublicKey.ErrorType
+  error as Address.fromPublicKey.ErrorType

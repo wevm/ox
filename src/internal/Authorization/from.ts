@@ -1,12 +1,7 @@
+import * as Authorization from '../../Authorization.js'
+import type * as Signature from '../../Signature.js'
 import type * as Errors from '../../Errors.js'
-import type { Signature } from '../Signature/types.js'
 import type { Compute } from '../types.js'
-import { Authorization_fromRpc } from './fromRpc.js'
-import type {
-  Authorization,
-  Authorization_Rpc,
-  Authorization_Signed,
-} from './types.js'
 
 /**
  * Converts an [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization object into a typed {@link ox#Authorization.Authorization}.
@@ -52,32 +47,39 @@ import type {
  * @returns The {@link ox#Authorization.Authorization}.
  */
 export function Authorization_from<
-  const authorization extends Authorization | Authorization_Rpc,
-  const signature extends Signature | undefined = undefined,
+  const authorization extends Authorization.Authorization | Authorization.Rpc,
+  const signature extends Signature.Signature | undefined = undefined,
 >(
-  authorization: authorization | Authorization,
-  options: Authorization_from.Options<signature> = {},
-): Authorization_from.ReturnType<authorization, signature> {
+  authorization: authorization | Authorization.Authorization,
+  options: Authorization.from.Options<signature> = {},
+): Authorization.from.ReturnType<authorization, signature> {
   if (typeof authorization.chainId === 'string')
-    return Authorization_fromRpc(authorization) as never
+    return Authorization.fromRpc(authorization) as never
   return { ...authorization, ...options.signature } as never
 }
 
 export declare namespace Authorization_from {
   interface Options<
-    signature extends Signature | undefined = Signature | undefined,
+    signature extends Signature.Signature | undefined =
+    | Signature.Signature
+    | undefined,
   > {
     /** The {@link ox#Signature.Signature} to attach to the Authorization. */
-    signature?: signature | Signature | undefined
+    signature?: signature | Signature.Signature | undefined
   }
 
   type ReturnType<
-    authorization extends Authorization | Authorization_Rpc = Authorization,
-    signature extends Signature | undefined = Signature | undefined,
+    authorization extends
+    | Authorization.Authorization
+    | Authorization.Rpc = Authorization.Authorization,
+    signature extends Signature.Signature | undefined =
+    | Signature.Signature
+    | undefined,
   > = Compute<
-    authorization extends Authorization_Rpc
-      ? Authorization_Signed
-      : authorization & (signature extends Signature ? Readonly<signature> : {})
+    authorization extends Authorization.Rpc
+    ? Authorization.Signed
+    : authorization &
+    (signature extends Signature.Signature ? Readonly<signature> : {})
   >
 
   type ErrorType = Errors.GlobalErrorType
@@ -85,4 +87,4 @@ export declare namespace Authorization_from {
 
 Authorization_from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_from.ErrorType
+  error as Authorization.from.ErrorType

@@ -1,6 +1,6 @@
+import * as Signature from '../../Signature.js'
+import type * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
-import { Signature_extract } from '../Signature/extract.js'
-import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 
 /**
  * Converts an {@link ox#Authorization.Rpc} to an {@link ox#Authorization.Authorization}.
@@ -23,10 +23,10 @@ import type { Authorization_Rpc, Authorization_Signed } from './types.js'
  * @returns A signed {@link ox#Authorization.Authorization}.
  */
 export function Authorization_fromRpc(
-  authorization: Authorization_Rpc,
-): Authorization_Signed {
+  authorization: Authorization.Rpc,
+): Authorization.Signed {
   const { address, chainId, nonce } = authorization
-  const signature = Signature_extract(authorization)!
+  const signature = Signature.extract(authorization)!
 
   return {
     address,
@@ -37,9 +37,9 @@ export function Authorization_fromRpc(
 }
 
 export declare namespace Authorization_fromRpc {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
 Authorization_fromRpc.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_fromRpc.ErrorType
+  error as Authorization.fromRpc.ErrorType

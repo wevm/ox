@@ -127,6 +127,7 @@ export declare namespace serialize {
   }
 
   type ErrorType =
+    | AccessList_toTupleList.ErrorType
     | TransactionEnvelopeEip7702.assert.ErrorType
     | fromNumber.ErrorType
     | Signature_toTuple.ErrorType

@@ -45,4 +45,4 @@ export declare namespace isEqual {
 
 isEqual.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as isEqual.ErrorType
+  error as Address.isEqual.ErrorType

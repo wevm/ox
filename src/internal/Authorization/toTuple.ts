@@ -1,10 +1,8 @@
+import * as Hex from '../../Hex.js'
+import * as Signature from '../../Signature.js'
+import type * as Authorization from '../../Authorization.js'
 import type * as Errors from '../../Errors.js'
-import { fromNumber } from '../Hex/fromNumber.js'
-import { Signature_extract } from '../Signature/extract.js'
-import { Signature_toTuple } from '../Signature/toTuple.js'
-import type { Signature } from '../Signature/types.js'
 import type { Compute } from '../types.js'
-import type { Authorization, Authorization_Tuple } from './types.js'
 
 /**
  * Converts an {@link ox#Authorization.Authorization} to an {@link ox#Authorization.Tuple}.
@@ -31,27 +29,37 @@ import type { Authorization, Authorization_Tuple } from './types.js'
  * @returns An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization tuple.
  */
 export function Authorization_toTuple<
-  const authorization extends Authorization,
+  const authorization extends Authorization.Authorization,
 >(
   authorization: authorization,
-): Authorization_toTuple.ReturnType<authorization> {
+): Authorization.toTuple.ReturnType<authorization> {
   const { address, chainId, nonce } = authorization
-  const signature = Signature_extract(authorization)
+  const signature = Signature.extract(authorization)
   return [
-    chainId ? fromNumber(chainId) : '0x',
+    chainId ? Hex.fromNumber(chainId) : '0x',
     address,
-    nonce ? fromNumber(nonce) : '0x',
-    ...(signature ? Signature_toTuple(signature) : []),
+    nonce ? Hex.fromNumber(nonce) : '0x',
+    ...(signature ? Signature.toTuple(signature) : []),
   ] as never
 }
 
 export declare namespace Authorization_toTuple {
-  type ReturnType<authorization extends Authorization = Authorization> =
-    Compute<Authorization_Tuple<authorization extends Signature ? true : false>>
+  type ReturnType<
+    authorization extends
+    Authorization.Authorization = Authorization.Authorization,
+  > = Compute<
+    Authorization.Tuple<
+      authorization extends Signature.Signature ? true : false
+    >
+  >
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | Signature.extract.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Signature.toTuple.ErrorType
+    | Errors.GlobalErrorType
 }
 
 Authorization_toTuple.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Authorization_toTuple.ErrorType
+  error as Authorization.toTuple.ErrorType

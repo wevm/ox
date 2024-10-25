@@ -64,10 +64,10 @@ export function deserialize(
         accessList,
         ...(transactionArray.length > 9
           ? {
-              yParity,
-              r,
-              s,
-            }
+            yParity,
+            r,
+            s,
+          }
           : {}),
       },
       serializedTransaction,
@@ -107,6 +107,7 @@ export declare namespace deserialize {
   type ReturnType = Compute<TransactionEnvelopeEip1559.TransactionEnvelope>
 
   type ErrorType =
+    | AccessList_fromTupleList.ErrorType
     | TransactionEnvelopeEip1559.assert.ErrorType
     | Errors.GlobalErrorType
 }

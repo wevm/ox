@@ -61,10 +61,10 @@ export function deserialize(
         accessList,
         ...(transactionArray.length > 8
           ? {
-              yParity,
-              r,
-              s,
-            }
+            yParity,
+            r,
+            s,
+          }
           : {}),
       },
       serializedTransaction,
@@ -99,7 +99,7 @@ export function deserialize(
 }
 
 export declare namespace deserialize {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = AccessList_fromTupleList.ErrorType | Errors.GlobalErrorType
 }
 
 deserialize.parseError = (error: unknown) =>

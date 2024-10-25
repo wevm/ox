@@ -1,7 +1,8 @@
 import * as Address from '../../Address.js'
-import { size } from '../Hex/size.js'
+import * as Hex from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
 import type { Compute, Mutable } from '../types.js'
-import { AccessList_InvalidStorageKeySizeError } from './errors.js'
+import { InvalidStorageKeySizeError } from './errors.js'
 import type { AccessList, AccessList_Tuple } from './types.js'
 
 /** @internal */
@@ -13,8 +14,8 @@ export function AccessList_toTupleList(
   const tuple: Mutable<AccessList_Tuple> = []
   for (const { address, storageKeys } of accessList) {
     for (let j = 0; j < storageKeys.length; j++)
-      if (size(storageKeys[j]!) !== 32)
-        throw new AccessList_InvalidStorageKeySizeError({
+      if (Hex.size(storageKeys[j]!) !== 32)
+        throw new InvalidStorageKeySizeError({
           storageKey: storageKeys[j]!,
         })
 
@@ -23,4 +24,12 @@ export function AccessList_toTupleList(
     tuple.push([address, storageKeys])
   }
   return tuple
+}
+
+/** @internal */
+export declare namespace AccessList_toTupleList {
+  type ErrorType =
+    | Address.assert.ErrorType
+    | InvalidStorageKeySizeError
+    | Errors.GlobalErrorType
 }
