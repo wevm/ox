@@ -1,11 +1,9 @@
 import * as AbiFunction from '../../AbiFunction.js'
 import * as AbiItem from '../../AbiItem.js'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import type { AbiParameters_ToPrimitiveTypes } from '../AbiParameters/types.js'
-import { size } from '../Hex/size.js'
-import { slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
+import type { ToPrimitiveTypes } from '../AbiParameters/types.js'
 import type { IsNarrowable } from '../types.js'
 
 /**
@@ -32,19 +30,19 @@ import type { IsNarrowable } from '../types.js'
  */
 export function decodeData<const abiItem extends AbiFunction.AbiFunction>(
   abiFunction: abiItem | AbiFunction.AbiFunction,
-  data: Hex,
+  data: Hex.Hex,
 ): decodeData.ReturnType<abiItem> {
   const { overloads } = abiFunction
 
-  if (size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
   if (abiFunction.inputs.length === 0) return undefined
 
   const item = overloads
     ? AbiFunction.fromAbi([abiFunction, ...overloads], data as never)
     : abiFunction
 
-  if (size(data) <= 4) return undefined
-  return AbiParameters_decode(item.inputs, slice(data, 4))
+  if (Hex.size(data) <= 4) return undefined
+  return AbiParameters.decode(item.inputs, Hex.slice(data, 4))
 }
 
 export declare namespace decodeData {
@@ -54,18 +52,16 @@ export declare namespace decodeData {
     ? abiFunction['inputs'] extends readonly []
       ? undefined
       :
-          | AbiParameters_ToPrimitiveTypes<abiFunction['inputs']>
+          | ToPrimitiveTypes<abiFunction['inputs']>
           | (abiFunction['overloads'] extends readonly AbiFunction.AbiFunction[]
-              ? AbiParameters_ToPrimitiveTypes<
-                  abiFunction['overloads'][number]['inputs']
-                >
+              ? ToPrimitiveTypes<abiFunction['overloads'][number]['inputs']>
               : never)
     : unknown
 
   type ErrorType =
     | AbiFunction.fromAbi.ErrorType
-    | AbiParameters_decode.ErrorType
-    | size.ErrorType
-    | slice.ErrorType
+    | AbiParameters.decode.ErrorType
+    | Hex.size.ErrorType
+    | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }

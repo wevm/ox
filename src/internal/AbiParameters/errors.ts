@@ -28,7 +28,7 @@ import type { Hex } from '../Hex/types.js'
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
-export class AbiParameters_DataSizeTooSmallError extends BaseError {
+export class DataSizeTooSmallError extends BaseError {
   override readonly name = 'AbiParameters.DataSizeTooSmallError'
   constructor({
     data,
@@ -69,7 +69,7 @@ export class AbiParameters_DataSizeTooSmallError extends BaseError {
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
-export class AbiParameters_ZeroDataError extends BaseError {
+export class ZeroDataError extends BaseError {
   override readonly name = 'AbiParameters.ZeroDataError'
   constructor() {
     super('Cannot decode zero data ("0x") with ABI parameters.')
@@ -102,7 +102,7 @@ export class AbiParameters_ZeroDataError extends BaseError {
  * //                                                         ↑ ✅ length: 3
  * ```
  */
-export class AbiParameters_ArrayLengthMismatchError extends BaseError {
+export class ArrayLengthMismatchError extends BaseError {
   override readonly name = 'AbiParameters.ArrayLengthMismatchError'
   constructor({
     expectedLength,
@@ -129,7 +129,7 @@ export class AbiParameters_ArrayLengthMismatchError extends BaseError {
  * // ---cut---
  * AbiParameters.encode(AbiParameters.from('bytes8'), [['0xdeadbeefdeadbeefdeadbeef']])
  * //                                            ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
- * // @error: AbiParameters_BytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
+ * // @error: BytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
  * // @error: (bytes12) does not match expected size (bytes8).
  * ```
  *
@@ -144,7 +144,7 @@ export class AbiParameters_ArrayLengthMismatchError extends BaseError {
  * //                                                       ↑ ✅ size: 8 bytes
  * ```
  */
-export class AbiParameters_BytesSizeMismatchError extends BaseError {
+export class BytesSizeMismatchError extends BaseError {
   override readonly name = 'AbiParameters.BytesSizeMismatchError'
   constructor({ expectedSize, value }: { expectedSize: number; value: Hex }) {
     super(
@@ -168,7 +168,7 @@ export class AbiParameters_BytesSizeMismatchError extends BaseError {
  * import { AbiParameters } from 'ox'
  * // ---cut---
  * AbiParameters.encode(AbiParameters.from(['string', 'uint256']), ['hello'])
- * // @error: AbiParameters_LengthMismatchError: ABI encoding params/values length mismatch.
+ * // @error: LengthMismatchError: ABI encoding params/values length mismatch.
  * // @error: Expected length (params): 2
  * // @error: Given length (values): 1
  * ```
@@ -181,7 +181,7 @@ export class AbiParameters_BytesSizeMismatchError extends BaseError {
  *
  * Pass a [valid ABI type](https://docs.soliditylang.org/en/develop/abi-spec.html#types).
  */
-export class AbiParameters_LengthMismatchError extends BaseError {
+export class LengthMismatchError extends BaseError {
   override readonly name = 'AbiParameters.LengthMismatchError'
   constructor({
     expectedLength,
@@ -216,7 +216,7 @@ export class AbiParameters_LengthMismatchError extends BaseError {
  *
  * Pass an array value.
  */
-export class AbiParameters_InvalidArrayError extends BaseError {
+export class InvalidArrayError extends BaseError {
   override readonly name = 'AbiParameters.InvalidArrayError'
   constructor(value: unknown) {
     super(`Value \`${value}\` is not a valid array.`, {
@@ -237,7 +237,7 @@ export class AbiParameters_InvalidArrayError extends BaseError {
  * // @error: AbiParameters.InvalidTypeError: Type `lol` is not a valid ABI Type.
  * ```
  */
-export class AbiParameters_InvalidTypeError extends BaseError {
+export class InvalidTypeError extends BaseError {
   override readonly name = 'AbiParameters.InvalidTypeError'
   constructor(type: string) {
     super(`Type \`${type}\` is not a valid ABI Type.`, {

@@ -1,10 +1,8 @@
 import type { AbiParameter } from 'abitype'
 import * as AbiEvent from '../../AbiEvent.js'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
-import { size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
 import { Cursor_PositionOutOfBoundsError } from '../cursor.js'
 import type { IsNarrowable } from '../types.js'
 import type { ParametersToPrimitiveTypes } from './types.js'
@@ -135,7 +133,7 @@ export function decode<const abiEvent extends AbiEvent.AbiEvent>(
         param.type.match(/^(.*)\[(\d+)?\]$/)
       )
         return topic
-      const decoded = AbiParameters_decode([param], topic) || []
+      const decoded = AbiParameters.decode([param], topic) || []
       return decoded[0]
     })()
   }
@@ -145,7 +143,7 @@ export function decode<const abiEvent extends AbiEvent.AbiEvent>(
   if (nonIndexedInputs.length > 0) {
     if (data && data !== '0x') {
       try {
-        const decodedData = AbiParameters_decode(nonIndexedInputs, data)
+        const decodedData = AbiParameters.decode(nonIndexedInputs, data)
         if (decodedData) {
           if (isUnnamed) args = [...args, ...decodedData]
           else {
@@ -157,14 +155,14 @@ export function decode<const abiEvent extends AbiEvent.AbiEvent>(
         }
       } catch (err) {
         if (
-          err instanceof AbiParameters_DataSizeTooSmallError ||
+          err instanceof AbiParameters.DataSizeTooSmallError ||
           err instanceof Cursor_PositionOutOfBoundsError
         )
           throw new AbiEvent.DataMismatchError({
             abiEvent,
             data: data,
             parameters: nonIndexedInputs,
-            size: size(data),
+            size: Hex.size(data),
           })
         throw err
       }
@@ -183,8 +181,8 @@ export function decode<const abiEvent extends AbiEvent.AbiEvent>(
 
 export declare namespace decode {
   type Log = {
-    data?: Hex | undefined
-    topics: readonly Hex[]
+    data?: Hex.Hex | undefined
+    topics: readonly Hex.Hex[]
   }
 
   type ReturnType<abiEvent extends AbiEvent.AbiEvent = AbiEvent.AbiEvent> =
@@ -198,7 +196,7 @@ export declare namespace decode {
       : unknown
 
   type ErrorType =
-    | AbiParameters_decode.ErrorType
+    | AbiParameters.decode.ErrorType
     | AbiEvent.getSelector.ErrorType
     | AbiEvent.DataMismatchError
     | AbiEvent.SelectorTopicMismatchError

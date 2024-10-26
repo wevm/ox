@@ -1,6 +1,6 @@
 import { type ParseAbiParameters, parseAbiParameters } from 'abitype'
+import type * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import type { AbiParameters } from './types.js'
 
 /**
  * Parses arbitrary **JSON ABI Parameters** or **Human Readable ABI Parameters** into typed {@link ox#AbiParameters.AbiParameters}.
@@ -86,11 +86,18 @@ import type { AbiParameters } from './types.js'
  * @param parameters - The ABI Parameters to parse.
  * @returns The typed ABI Parameters.
  */
-export function AbiParameters_from<
-  const parameters extends AbiParameters | string | readonly string[],
+export function from<
+  const parameters extends
+    | AbiParameters.AbiParameters
+    | string
+    | readonly string[],
 >(
-  parameters: parameters | AbiParameters | string | readonly string[],
-): AbiParameters_from.ReturnType<parameters> {
+  parameters:
+    | parameters
+    | AbiParameters.AbiParameters
+    | string
+    | readonly string[],
+): from.ReturnType<parameters> {
   if (Array.isArray(parameters) && typeof parameters[0] === 'string')
     return parseAbiParameters(parameters) as never
   if (typeof parameters === 'string')
@@ -98,9 +105,9 @@ export function AbiParameters_from<
   return parameters as never
 }
 
-export declare namespace AbiParameters_from {
+export declare namespace from {
   type ReturnType<
-    parameters extends AbiParameters | string | readonly string[],
+    parameters extends AbiParameters.AbiParameters | string | readonly string[],
   > = parameters extends string
     ? ParseAbiParameters<parameters>
     : parameters extends readonly string[]
@@ -110,6 +117,6 @@ export declare namespace AbiParameters_from {
   type ErrorType = Errors.GlobalErrorType
 }
 
-AbiParameters_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiParameters_from.ErrorType
+  error as from.ErrorType

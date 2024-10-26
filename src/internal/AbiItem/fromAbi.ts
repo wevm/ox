@@ -1,9 +1,9 @@
 import type * as Abi from '../../Abi.js'
 import * as AbiItem from '../../AbiItem.js'
+import type * as AbiParameters from '../../AbiParameters.js'
 import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import type { UnionCompute } from '../types.js'
 import type { ExtractArgs, ExtractForArgs, Widen } from './types.js'
 
@@ -230,7 +230,7 @@ fromAbi.parseError = (error: unknown) =>
 /** @internal */
 export function isArgOfType(
   arg: unknown,
-  abiParameter: AbiParameters_Parameter,
+  abiParameter: AbiParameters.Parameter,
 ): boolean {
   const argType = typeof arg
   const abiParameterType = abiParameter.type
@@ -249,7 +249,7 @@ export function isArgOfType(
           (component, index) => {
             return isArgOfType(
               Object.values(arg as unknown[] | Record<string, unknown>)[index],
-              component as AbiParameters_Parameter,
+              component as AbiParameters.Parameter,
             )
           },
         )
@@ -278,7 +278,7 @@ export function isArgOfType(
               ...abiParameter,
               // Pop off `[]` or `[M]` from end of type
               type: abiParameterType.replace(/(\[[0-9]{0,}\])$/, ''),
-            } as AbiParameters_Parameter),
+            } as AbiParameters.Parameter),
           )
         )
       }
@@ -290,10 +290,10 @@ export function isArgOfType(
 
 /** @internal */
 export function getAmbiguousTypes(
-  sourceParameters: readonly AbiParameters_Parameter[],
-  targetParameters: readonly AbiParameters_Parameter[],
+  sourceParameters: readonly AbiParameters.Parameter[],
+  targetParameters: readonly AbiParameters.Parameter[],
   args: ExtractArgs,
-): AbiParameters_Parameter['type'][] | undefined {
+): AbiParameters.Parameter['type'][] | undefined {
   for (const parameterIndex in sourceParameters) {
     const sourceParameter = sourceParameters[parameterIndex]!
     const targetParameter = targetParameters[parameterIndex]!

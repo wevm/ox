@@ -1,9 +1,9 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
+import type * as AbiConstructor from '../../AbiConstructor.js'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import type { Hex } from '../Hex/types.js'
+import type * as Hex from '../../Hex.js'
 import type { IsNarrowable } from '../types.js'
-import type { AbiConstructor } from './types.js'
 
 /**
  * ABI-decodes the provided constructor input (`inputs`).
@@ -31,31 +31,35 @@ import type { AbiConstructor } from './types.js'
  * @param data - The encoded constructor inputs.
  * @returns The decoded constructor inputs.
  */
-export function decode<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor | AbiConstructor,
+export function decode<
+  const abiConstructor extends AbiConstructor.AbiConstructor,
+>(
+  abiConstructor: abiConstructor | AbiConstructor.AbiConstructor,
   options: decode.Options,
-): Hex {
+): Hex.Hex {
   const { bytecode } = options
   const data = options.data.replace(bytecode, '0x')
-  const decoded = AbiParameters_decode(abiConstructor.inputs, data as Hex)
+  const decoded = AbiParameters.decode(abiConstructor.inputs, data as Hex.Hex)
   if (decoded.length === 0) return undefined as never
   return decoded as never
 }
 
 export declare namespace decode {
   type Options = {
-    bytecode: Hex
-    data: Hex
+    bytecode: Hex.Hex
+    data: Hex.Hex
   }
 
-  type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
-    IsNarrowable<abiConstructor, AbiConstructor> extends true
-      ? AbiParametersToPrimitiveTypes<
-          abiConstructor['inputs']
-        > extends readonly []
-        ? undefined
-        : AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
-      : readonly unknown[]
+  type ReturnType<
+    abiConstructor extends
+      AbiConstructor.AbiConstructor = AbiConstructor.AbiConstructor,
+  > = IsNarrowable<abiConstructor, AbiConstructor.AbiConstructor> extends true
+    ? AbiParametersToPrimitiveTypes<
+        abiConstructor['inputs']
+      > extends readonly []
+      ? undefined
+      : AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
+    : readonly unknown[]
 
   type ErrorType = Errors.GlobalErrorType
 }

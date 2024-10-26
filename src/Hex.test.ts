@@ -8,6 +8,7 @@ test('exports', () => {
       "InvalidHexBooleanError",
       "InvalidHexTypeError",
       "InvalidHexValueError",
+      "InvalidLengthError",
       "SizeExceedsPaddingSizeError",
       "SizeOverflowError",
       "SliceOffsetOutOfBoundsError",
@@ -18,8 +19,6 @@ test('exports', () => {
       "padRight",
       "slice",
       "size",
-      "trimLeft",
-      "trimRight",
       "from",
       "fromBoolean",
       "fromBytes",
@@ -31,6 +30,8 @@ test('exports', () => {
       "toBytes",
       "toNumber",
       "toString",
+      "trimLeft",
+      "trimRight",
       "validate",
     ]
   `)

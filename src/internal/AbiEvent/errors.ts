@@ -1,10 +1,9 @@
 import type { AbiParameter } from 'abitype'
-import { AbiParameters_format } from '../AbiParameters/format.js'
+import * as AbiEvent from '../../AbiEvent.js'
+import * as AbiParameters from '../../AbiParameters.js'
+import type * as Hex from '../../Hex.js'
 import { BaseError } from '../Errors/base.js'
 import { prettyPrint } from '../Errors/utils.js'
-import type { Hex } from '../Hex/types.js'
-import { format } from './format.js'
-import type { AbiEvent } from './types.js'
 
 /**
  * Thrown when the provided arguments do not match the expected arguments.
@@ -81,13 +80,13 @@ export class ArgsMismatchError extends BaseError {
     expected,
     given,
   }: {
-    abiEvent: AbiEvent
+    abiEvent: AbiEvent.AbiEvent
     expected: unknown
     given: unknown
   }) {
     super('Given arguments do not match the expected arguments.', {
       metaMessages: [
-        `Event: ${format(abiEvent)}`,
+        `Event: ${AbiEvent.format(abiEvent)}`,
         `Expected Arguments: ${!expected ? 'None' : ''}`,
         expected ? prettyPrint(expected) : undefined,
         `Given Arguments: ${!given ? 'None' : ''}`,
@@ -163,10 +162,10 @@ export class InputNotFoundError extends BaseError {
     abiEvent,
     name,
   }: {
-    abiEvent: AbiEvent
+    abiEvent: AbiEvent.AbiEvent
     name: string
   }) {
-    super(`Parameter "${name}" not found on \`${format(abiEvent)}\`.`)
+    super(`Parameter "${name}" not found on \`${AbiEvent.format(abiEvent)}\`.`)
   }
 }
 
@@ -220,8 +219,8 @@ export class InputNotFoundError extends BaseError {
 export class DataMismatchError extends BaseError {
   override readonly name = 'AbiEvent.DataMismatchError'
 
-  abiEvent: AbiEvent
-  data: Hex
+  abiEvent: AbiEvent.AbiEvent
+  data: Hex.Hex
   parameters: readonly AbiParameter[]
   size: number
 
@@ -231,8 +230,8 @@ export class DataMismatchError extends BaseError {
     parameters,
     size,
   }: {
-    abiEvent: AbiEvent
-    data: Hex
+    abiEvent: AbiEvent.AbiEvent
+    data: Hex.Hex
     parameters: readonly AbiParameter[]
     size: number
   }) {
@@ -242,7 +241,7 @@ export class DataMismatchError extends BaseError {
       ].join('\n'),
       {
         metaMessages: [
-          `Non-indexed Parameters: (${AbiParameters_format(parameters as any)})`,
+          `Non-indexed Parameters: (${AbiParameters.format(parameters as any)})`,
           `Data:   ${data} (${size} bytes)`,
         ],
       },
@@ -301,20 +300,20 @@ export class DataMismatchError extends BaseError {
 export class TopicsMismatchError extends BaseError {
   override readonly name = 'AbiEvent.TopicsMismatchError'
 
-  abiEvent: AbiEvent
+  abiEvent: AbiEvent.AbiEvent
 
   constructor({
     abiEvent,
     param,
   }: {
-    abiEvent: AbiEvent
+    abiEvent: AbiEvent.AbiEvent
     param: AbiParameter & { indexed: boolean }
   }) {
     super(
       [
         `Expected a topic for indexed event parameter${
           param.name ? ` "${param.name}"` : ''
-        } for "${format(abiEvent)}".`,
+        } for "${AbiEvent.format(abiEvent)}".`,
       ].join('\n'),
     )
 
@@ -374,14 +373,17 @@ export class SelectorTopicMismatchError extends BaseError {
     actual,
     expected,
   }: {
-    abiEvent: AbiEvent
-    actual: Hex | undefined
-    expected: Hex
+    abiEvent: AbiEvent.AbiEvent
+    actual: Hex.Hex | undefined
+    expected: Hex.Hex
   }) {
     super(
       `topics[0]="${actual}" does not match the expected topics[0]="${expected}".`,
       {
-        metaMessages: [`Event: ${format(abiEvent)}`, `Selector: ${expected}`],
+        metaMessages: [
+          `Event: ${AbiEvent.format(abiEvent)}`,
+          `Selector: ${expected}`,
+        ],
       },
     )
   }

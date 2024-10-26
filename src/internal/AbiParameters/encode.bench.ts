@@ -2,13 +2,13 @@ import { AbiCoder } from 'ethers'
 import { bench, describe } from 'vitest'
 import { Web3 } from 'web3'
 import { address } from '../../../test/constants/addresses.js'
-import { AbiParameters_encode } from './encode.js'
+import { encode } from './encode.js'
 
 const web3 = new Web3()
 
 describe('ABI Encode', () => {
   bench('ox: `encodeAbi`', () => {
-    AbiParameters_encode(
+    encode(
       [
         {
           components: [
@@ -215,7 +215,7 @@ describe('ABI Encode', () => {
 
 describe('Seaport function', () => {
   bench('ox: `encodeAbi`', () => {
-    AbiParameters_encode(
+    encode(
       [
         {
           components: [

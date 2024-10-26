@@ -1,10 +1,9 @@
 import type { AbiParameter } from 'abitype'
 import * as AbiEvent from '../../AbiEvent.js'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import { AbiParameters_encode } from '../AbiParameters/encode.js'
-import { keccak256 } from '../Hash/keccak256.js'
-import { fromString } from '../Hex/fromString.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hash from '../../Hash.js'
+import * as Hex from '../../Hex.js'
 import type { Compute, IsNarrowable } from '../types.js'
 import type { ParametersToPrimitiveTypes } from './types.js'
 
@@ -110,7 +109,7 @@ export function encode<const abiEvent extends AbiEvent.AbiEvent>(
   abiEvent: abiEvent | AbiEvent.AbiEvent,
   ...[args]: encode.Args<abiEvent>
 ): encode.ReturnType {
-  let topics: (Hex | Hex[] | null)[] = []
+  let topics: (Hex.Hex | Hex.Hex[] | null)[] = []
   if (args && abiEvent.inputs) {
     const indexedInputs = abiEvent.inputs.filter(
       (param) => 'indexed' in param && param.indexed,
@@ -126,11 +125,11 @@ export function encode<const abiEvent extends AbiEvent.AbiEvent>(
     if (args_.length > 0) {
       const encode = (param: AbiParameter, value: unknown) => {
         if (param.type === 'string')
-          return keccak256(fromString(value as string))
-        if (param.type === 'bytes') return keccak256(value as Hex)
+          return Hash.keccak256(Hex.fromString(value as string))
+        if (param.type === 'bytes') return Hash.keccak256(value as Hex.Hex)
         if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
           throw new AbiEvent.FilterTypeNotSupportedError(param.type)
-        return AbiParameters_encode([param], [value])
+        return AbiParameters.encode([param], [value])
       }
 
       topics =
@@ -167,14 +166,16 @@ export declare namespace encode {
     : [readonly unknown[] | Record<string, unknown>] | []
 
   type ReturnType = {
-    topics: Compute<[selector: Hex, ...(Hex | readonly Hex[] | null)[]]>
+    topics: Compute<
+      [selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]
+    >
   }
 
   type ErrorType =
-    | AbiParameters_encode.ErrorType
+    | AbiParameters.encode.ErrorType
     | AbiEvent.getSelector.ErrorType
-    | fromString.ErrorType
-    | keccak256.ErrorType
+    | Hex.fromString.ErrorType
+    | Hash.keccak256.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -1,9 +1,8 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
 import * as AbiError from '../../AbiError.js'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import { AbiParameters_encode } from '../AbiParameters/encode.js'
-import { concat } from '../Hex/concat.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
 import type { IsNarrowable } from '../types.js'
 
 /**
@@ -60,15 +59,15 @@ import type { IsNarrowable } from '../types.js'
 export function encode<const abiError extends AbiError.AbiError>(
   abiError: abiError | AbiError.AbiError,
   ...args: encode.Args<abiError>
-): Hex {
+): Hex.Hex {
   const selector = AbiError.getSelector(abiError)
 
   const data =
     args.length > 0
-      ? AbiParameters_encode(abiError.inputs, (args as any)[0])
+      ? AbiParameters.encode(abiError.inputs, (args as any)[0])
       : undefined
 
-  return data ? concat(selector, data) : selector
+  return data ? Hex.concat(selector, data) : selector
 }
 
 export declare namespace encode {

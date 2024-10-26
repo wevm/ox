@@ -33,7 +33,7 @@ import type * as Errors from '../../Errors.js'
  * @param parameters - The ABI Parameters to format.
  * @returns The formatted ABI Parameters  .
  */
-export function AbiParameters_format<
+export function format<
   const parameters extends readonly [
     AbiParameter | AbiEventParameter,
     ...(readonly (AbiParameter | AbiEventParameter)[]),
@@ -49,10 +49,10 @@ export function AbiParameters_format<
   return formatAbiParameters(parameters)
 }
 
-export declare namespace AbiParameters_format {
+export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
 
-AbiParameters_format.parseError = (error: unknown) =>
+format.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiParameters_format.ErrorType
+  error as format.ErrorType

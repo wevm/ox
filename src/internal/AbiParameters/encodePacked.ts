@@ -9,24 +9,15 @@ import type {
   SolidityString,
 } from 'abitype'
 
+import * as AbiParameters from '../../AbiParameters.js'
 import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
-import { concat } from '../Hex/concat.js'
-import { fromBoolean } from '../Hex/fromBoolean.js'
-import { fromNumber } from '../Hex/fromNumber.js'
-import { fromString } from '../Hex/fromString.js'
-import { padLeft, padRight } from '../Hex/pad.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
 import {
   Solidity_arrayRegex,
   Solidity_bytesRegex,
   Solidity_integerRegex,
 } from '../Solidity/constants.js'
-import {
-  AbiParameters_BytesSizeMismatchError,
-  AbiParameters_InvalidTypeError,
-  AbiParameters_LengthMismatchError,
-} from './errors.js'
 
 /**
  * Encodes an array of primitive values to a [packed ABI encoding](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode).
@@ -46,34 +37,33 @@ import {
  * @param values - The set of primitive values that correspond to the ABI types defined in `types`.
  * @returns The encoded packed data.
  */
-export function AbiParameters_encodePacked<
+export function encodePacked<
   const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
->(types: packedAbiTypes, values: EncodePackedValues<packedAbiTypes>): Hex {
+>(types: packedAbiTypes, values: EncodePackedValues<packedAbiTypes>): Hex.Hex {
   if (types.length !== values.length)
-    throw new AbiParameters_LengthMismatchError({
+    throw new AbiParameters.LengthMismatchError({
       expectedLength: types.length as number,
       givenLength: values.length as number,
     })
 
-  const data: Hex[] = []
+  const data: Hex.Hex[] = []
   for (let i = 0; i < (types as unknown[]).length; i++) {
     const type = types[i]
     const value = values[i]
     data.push(encode(type, value))
   }
-  return concat(...data)
+  return Hex.concat(...data)
 }
 
-export declare namespace AbiParameters_encodePacked {
+export declare namespace encodePacked {
   type ErrorType =
-    | concat.ErrorType
-    | AbiParameters_LengthMismatchError
+    | Hex.concat.ErrorType
+    | AbiParameters.LengthMismatchError
     | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-AbiParameters_encodePacked.parseError = (error: unknown) =>
-  error as AbiParameters_encodePacked.ErrorType
+encodePacked.parseError = (error: unknown) => error as encodePacked.ErrorType
 
 /** @internal */
 export type PackedAbiType =
@@ -100,12 +90,12 @@ export type EncodePackedValues<
 declare namespace encode {
   type ErrorType =
     | Address.assert.ErrorType
-    | concat.ErrorType
-    | padLeft.ErrorType
-    | padRight.ErrorType
-    | fromBoolean.ErrorType
-    | fromNumber.ErrorType
-    | fromString.ErrorType
+    | Hex.concat.ErrorType
+    | Hex.padLeft.ErrorType
+    | Hex.padRight.ErrorType
+    | Hex.fromBoolean.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.fromString.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -113,25 +103,25 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   type: packedAbiType,
   value: EncodePackedValues<[packedAbiType]>[0],
   isArray = false,
-): Hex {
+): Hex.Hex {
   if (type === 'address') {
     const address = value as Address.Address
     Address.assert(address)
-    return padLeft(
-      address.toLowerCase() as Hex,
+    return Hex.padLeft(
+      address.toLowerCase() as Hex.Hex,
       isArray ? 32 : 0,
     ) as Address.Address
   }
-  if (type === 'string') return fromString(value as string)
-  if (type === 'bytes') return value as Hex
+  if (type === 'string') return Hex.fromString(value as string)
+  if (type === 'bytes') return value as Hex.Hex
   if (type === 'bool')
-    return padLeft(fromBoolean(value as boolean), isArray ? 32 : 1)
+    return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
 
   const intMatch = (type as string).match(Solidity_integerRegex)
   if (intMatch) {
     const [_type, baseType, bits = '256'] = intMatch
     const size = Number.parseInt(bits) / 8
-    return fromNumber(value as number, {
+    return Hex.fromNumber(value as number, {
       size: isArray ? 32 : size,
       signed: baseType === 'int',
     })
@@ -140,24 +130,24 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   const bytesMatch = (type as string).match(Solidity_bytesRegex)
   if (bytesMatch) {
     const [_type, size] = bytesMatch
-    if (Number.parseInt(size!) !== ((value as Hex).length - 2) / 2)
-      throw new AbiParameters_BytesSizeMismatchError({
+    if (Number.parseInt(size!) !== ((value as Hex.Hex).length - 2) / 2)
+      throw new AbiParameters.BytesSizeMismatchError({
         expectedSize: Number.parseInt(size!),
-        value: value as Hex,
+        value: value as Hex.Hex,
       })
-    return padRight(value as Hex, isArray ? 32 : 0) as Hex
+    return Hex.padRight(value as Hex.Hex, isArray ? 32 : 0) as Hex.Hex
   }
 
   const arrayMatch = (type as string).match(Solidity_arrayRegex)
   if (arrayMatch && Array.isArray(value)) {
     const [_type, childType] = arrayMatch
-    const data: Hex[] = []
+    const data: Hex.Hex[] = []
     for (let i = 0; i < value.length; i++) {
       data.push(encode(childType, value[i], true))
     }
     if (data.length === 0) return '0x'
-    return concat(...data)
+    return Hex.concat(...data)
   }
 
-  throw new AbiParameters_InvalidTypeError(type as string)
+  throw new AbiParameters.InvalidTypeError(type as string)
 }

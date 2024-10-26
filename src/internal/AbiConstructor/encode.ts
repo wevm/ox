@@ -1,10 +1,9 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
+import type * as AbiConstructor from '../../AbiConstructor.js'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import { AbiParameters_encode } from '../AbiParameters/encode.js'
-import { concat } from '../Hex/concat.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
 import type { IsNarrowable } from '../types.js'
-import type { AbiConstructor } from './types.js'
 
 /**
  * ABI-encodes the provided constructor input (`inputs`).
@@ -59,23 +58,25 @@ import type { AbiConstructor } from './types.js'
  * @param options - Encoding options.
  * @returns The encoded constructor.
  */
-export function encode<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor | AbiConstructor,
+export function encode<
+  const abiConstructor extends AbiConstructor.AbiConstructor,
+>(
+  abiConstructor: abiConstructor | AbiConstructor.AbiConstructor,
   options: encode.Options<abiConstructor>,
-): Hex {
+): Hex.Hex {
   const { bytecode, args } = options
-  return concat(
+  return Hex.concat(
     bytecode,
     abiConstructor.inputs?.length && args?.length
-      ? AbiParameters_encode(abiConstructor.inputs, args as readonly unknown[])
+      ? AbiParameters.encode(abiConstructor.inputs, args as readonly unknown[])
       : '0x',
   )
 }
 
 export declare namespace encode {
-  type Options<abiConstructor extends AbiConstructor = AbiConstructor> = {
-    bytecode: Hex
-  } & (IsNarrowable<abiConstructor, AbiConstructor> extends true
+  type Options<abiConstructor extends AbiConstructor.AbiConstructor> = {
+    bytecode: Hex.Hex
+  } & (IsNarrowable<abiConstructor, AbiConstructor.AbiConstructor> extends true
     ? AbiParametersToPrimitiveTypes<
         abiConstructor['inputs']
       > extends readonly []

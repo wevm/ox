@@ -10,26 +10,26 @@ import type { Compute, IsNarrowable, UnionToIntersection } from '../types.js'
 export type AbiParameters = readonly AbiParameter[]
 
 /** A parameter on an {@link ox#AbiParameters.AbiParameters}. */
-export type AbiParameters_Parameter = AbiParameter
+export type Parameter = AbiParameter
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type AbiParameters_ToPrimitiveTypes<
+export type ToPrimitiveTypes<
   abiParameters extends readonly AbiParameter[],
   abiParameterKind extends AbiParameterKind = AbiParameterKind,
 > = AbiParametersToPrimitiveTypes<abiParameters, abiParameterKind>
 
 /** @internal */
-export type AbiParameters_ParameterToPrimitiveType<
+export type ParameterToPrimitiveType<
   abiParameter extends AbiParameter | { name: string; type: unknown },
   abiParameterKind extends AbiParameterKind = AbiParameterKind,
 > = AbiParameterToPrimitiveType<abiParameter, abiParameterKind>
 
 /** @internal */
-export type AbiParameters_ToObject<
+export type ToObject<
   parameters extends readonly AbiParameter[],
   kind extends AbiParameterKind = AbiParameterKind,
 > = IsNarrowable<parameters, AbiParameters> extends true
