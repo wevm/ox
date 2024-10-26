@@ -1,7 +1,7 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
-import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
+import * as AccessList from '../../AccessList/fromTupleList.js'
 import { slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import { validate } from '../../Hex/validate.js'
@@ -88,7 +88,7 @@ export function deserialize(
   if (validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList_fromTupleList(accessList as any)
+    transaction.accessList = AccessList.fromTupleList(accessList as any)
 
   const signature =
     r && s && yParity ? Signature_fromTuple([yParity, r, s]) : undefined
@@ -107,7 +107,7 @@ export declare namespace deserialize {
   type ReturnType = Compute<TransactionEnvelopeEip1559.TransactionEnvelope>
 
   type ErrorType =
-    | AccessList_fromTupleList.ErrorType
+    | AccessList.fromTupleList.ErrorType
     | TransactionEnvelopeEip1559.assert.ErrorType
     | Errors.GlobalErrorType
 }

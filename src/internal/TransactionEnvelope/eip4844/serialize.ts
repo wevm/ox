@@ -1,6 +1,6 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
-import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
+import * as AccessList from '../../AccessList/toTupleList.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
 import { concat } from '../../Hex/concat.js'
 import { fromNumber } from '../../Hex/fromNumber.js'
@@ -95,7 +95,7 @@ export function serialize(
 
   TransactionEnvelopeEip4844.assert(envelope)
 
-  const accessTupleList = AccessList_toTupleList(accessList)
+  const accessTupleList = AccessList.toTupleList(accessList)
 
   const signature = Signature_extract(options.signature || envelope)
 
@@ -145,7 +145,7 @@ export declare namespace serialize {
   }
 
   type ErrorType =
-    | AccessList_toTupleList.ErrorType
+    | AccessList.toTupleList.ErrorType
     | TransactionEnvelopeEip4844.assert.ErrorType
     | fromNumber.ErrorType
     | Signature_toTuple.ErrorType

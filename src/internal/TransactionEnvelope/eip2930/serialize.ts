@@ -1,6 +1,6 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
-import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
+import * as AccessList from '../../AccessList/toTupleList.js'
 import { concat } from '../../Hex/concat.js'
 import { fromNumber } from '../../Hex/fromNumber.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
@@ -66,7 +66,7 @@ export function serialize(
 
   TransactionEnvelopeEip2930.assert(envelope)
 
-  const accessTupleList = AccessList_toTupleList(accessList)
+  const accessTupleList = AccessList.toTupleList(accessList)
 
   const signature = Signature_extract(options.signature || (envelope as any))
 
@@ -95,7 +95,7 @@ export declare namespace serialize {
   }
 
   type ErrorType =
-    | AccessList_toTupleList.ErrorType
+    | AccessList.toTupleList.ErrorType
     | TransactionEnvelopeEip2930.assert.ErrorType
     | fromNumber.ErrorType
     | Signature_toTuple.ErrorType

@@ -3,12 +3,10 @@ import type * as Errors from '../../Errors.js'
 import * as Hash from '../../Hash.js'
 import * as Hex from '../../Hex.js'
 import type { Mutable } from '../types.js'
-import type { AccessList, AccessList_Tuple } from './types.js'
+import type { AccessList, Tuple } from './types.js'
 
 /** @internal */
-export function AccessList_fromTupleList(
-  accessList_: AccessList_Tuple,
-): AccessList {
+export function fromTupleList(accessList_: Tuple): AccessList {
   const accessList: Mutable<AccessList> = []
   for (let i = 0; i < accessList_.length; i++) {
     const [address, storageKeys] = accessList_[i] as [Hex.Hex, Hex.Hex[]]
@@ -26,6 +24,6 @@ export function AccessList_fromTupleList(
 }
 
 /** @internal */
-export declare namespace AccessList_fromTupleList {
+export declare namespace fromTupleList {
   type ErrorType = Address.assert.ErrorType | Errors.GlobalErrorType
 }

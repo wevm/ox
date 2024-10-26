@@ -1,7 +1,7 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip2930 from '../../../TransactionEnvelopeEip2930.js'
-import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
+import * as AccessList from '../../AccessList/fromTupleList.js'
 import { slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import { validate } from '../../Hex/validate.js'
@@ -83,7 +83,7 @@ export function deserialize(
   if (validate(gasPrice) && gasPrice !== '0x')
     transaction.gasPrice = BigInt(gasPrice)
   if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList_fromTupleList(accessList as any)
+    transaction.accessList = AccessList.fromTupleList(accessList as any)
 
   const signature =
     r && s && yParity ? Signature_fromTuple([yParity, r, s]) : undefined
@@ -99,7 +99,7 @@ export function deserialize(
 }
 
 export declare namespace deserialize {
-  type ErrorType = AccessList_fromTupleList.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AccessList.fromTupleList.ErrorType | Errors.GlobalErrorType
 }
 
 deserialize.parseError = (error: unknown) =>

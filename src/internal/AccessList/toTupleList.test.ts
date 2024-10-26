@@ -1,14 +1,14 @@
 import { expect, test } from 'vitest'
 
-import { AccessList_toTupleList } from './toTupleList.js'
+import { toTupleList } from './toTupleList.js'
 
 test('when accessList is empty', () => {
-  expect(AccessList_toTupleList([])).toEqual([])
+  expect(toTupleList([])).toEqual([])
 })
 
 test('when accessList contains in invalid Address', () => {
   expect(() =>
-    AccessList_toTupleList([{ address: '0x123', storageKeys: [] }]),
+    toTupleList([{ address: '0x123', storageKeys: [] }]),
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0x123" is invalid.
 
@@ -20,7 +20,7 @@ test('when accessList contains in invalid Address', () => {
 test('when accessList contains in invalid Storage Key', () => {
   const badKey = '0xI like cheese'
   expect(() =>
-    AccessList_toTupleList([
+    toTupleList([
       {
         address: '0x123',
         storageKeys: [
@@ -45,7 +45,7 @@ test('with valid accessList', () => {
     },
   ] as const
 
-  expect(AccessList_toTupleList(accessList)).toEqual([
+  expect(toTupleList(accessList)).toEqual([
     [
       '0x0000000000000000000000000000000000000000',
       [

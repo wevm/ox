@@ -1,10 +1,10 @@
 import { expect, test } from 'vitest'
 
-import { AccessList_fromTupleList } from './fromTupleList.js'
+import { fromTupleList } from './fromTupleList.js'
 
 test('default', () => {
   expect(
-    AccessList_fromTupleList([
+    fromTupleList([
       [
         '0x1234512345123451234512345123451234512345',
         [

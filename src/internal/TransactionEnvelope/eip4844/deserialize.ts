@@ -1,7 +1,7 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import * as TransactionEnvelopeEip4844 from '../../../TransactionEnvelopeEip4844.js'
-import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
+import * as AccessList from '../../AccessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../../Blobs/toSidecars.js'
 import { slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
@@ -105,7 +105,7 @@ export function deserialize(
   if (validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList?.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList_fromTupleList(accessList as any)
+    transaction.accessList = AccessList.fromTupleList(accessList as any)
   if (blobs && commitments && proofs)
     transaction.sidecars = Blobs_toSidecars(blobs as Hex[], {
       commitments: commitments as Hex[],
@@ -128,7 +128,7 @@ export function deserialize(
 }
 
 export declare namespace deserialize {
-  type ErrorType = AccessList_fromTupleList.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AccessList.fromTupleList.ErrorType | Errors.GlobalErrorType
 }
 
 deserialize.parseError = (error: unknown) =>
