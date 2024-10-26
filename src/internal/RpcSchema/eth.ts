@@ -1,4 +1,4 @@
-import type { AccountProof_Rpc } from '../AccountProof/types.js'
+import type * as AccountProof from '../../AccountProof.js'
 import type { Address } from '../Address/types.js'
 import type {
   Block_Hash,
@@ -410,7 +410,7 @@ export type RpcSchema_Eth = [
         block: Block_Number<Hex> | Block_Tag | Block_Hash,
       ]
     }
-    ReturnType: AccountProof_Rpc
+    ReturnType: AccountProof.AccountProofRpc
   },
   /**
    * Returns the value from a storage position at an address
