@@ -1,4 +1,5 @@
 import type { AbiConstructor as abitype_AbiConstructor } from 'abitype'
+
 import type {
   IsConstructorSignature,
   IsStructSignature,

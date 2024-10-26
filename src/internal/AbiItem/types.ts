@@ -1,3 +1,4 @@
+// TODO: Bring over signature validation from ABIType
 import type {
   AbiParameter,
   AbiParametersToPrimitiveTypes,

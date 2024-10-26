@@ -1,5 +1,5 @@
 import { Abi } from 'ox'
-import { expect, test } from 'vitest'
+import { expect, expectTypeOf, test } from 'vitest'
 
 test('default', () => {
   const abi = Abi.from([
@@ -26,4 +26,7 @@ test('default', () => {
       "function approve(address spender, uint256 amount) returns (bool)",
     ]
   `)
+  expectTypeOf(formatted).toEqualTypeOf([
+    'function approve(address spender, uint256 amount) returns (bool)',
+  ] as const)
 })

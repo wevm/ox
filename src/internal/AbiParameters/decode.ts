@@ -6,6 +6,15 @@ import { type Cursor, createCursor } from '../cursor.js'
 import { getArrayComponents } from './encode.js'
 import type { ToObject, ToPrimitiveTypes } from './types.js'
 
+export function decode<
+  const parameters extends AbiParameters.AbiParameters,
+  as extends 'Object' | 'Array' = 'Array',
+>(
+  parameters: parameters,
+  data: Bytes.Bytes | Hex.Hex,
+  options?: decode.Options<as>,
+): decode.ReturnType<parameters, as>
+
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.
  *
@@ -44,14 +53,11 @@ import type { ToObject, ToPrimitiveTypes } from './types.js'
  * @param options - Decoding options.
  * @returns Array of decoded values.
  */
-export function decode<
-  const parameters extends AbiParameters.AbiParameters,
-  as extends 'Object' | 'Array' = 'Array',
->(
-  parameters: parameters,
+export function decode(
+  parameters: AbiParameters.AbiParameters,
   data: Bytes.Bytes | Hex.Hex,
-  options: decode.Options<as> = {},
-): decode.ReturnType<parameters, as> {
+  options: decode.Options = {},
+): decode.ReturnType {
   const { as = 'Array' } = options
 
   const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
@@ -82,7 +88,7 @@ export function decode<
 }
 
 export declare namespace decode {
-  type Options<as extends 'Object' | 'Array'> = {
+  type Options<as extends 'Object' | 'Array' = 'Array'> = {
     /**
      * Whether the decoded values should be returned as an `Object` or `Array`.
      *
@@ -98,7 +104,7 @@ export declare namespace decode {
   > = parameters extends readonly []
     ? as extends 'Object'
       ? {}
-      : []
+      : readonly []
     : as extends 'Object'
       ? ToObject<parameters>
       : ToPrimitiveTypes<parameters>
@@ -113,7 +119,7 @@ export declare namespace decode {
 
 decode.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as decode.ErrorType
+  error as AbiParameters.decode.ErrorType
 
 //////////////////////////////////////////////////////////////////////////////
 // Internal

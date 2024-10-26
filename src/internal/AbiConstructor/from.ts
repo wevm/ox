@@ -1,6 +1,7 @@
+import type * as AbiConstructor from '../../AbiConstructor.js'
 import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
-import type { AbiConstructor, Signature, Signatures } from './types.js'
+import type { Signature, Signatures } from './types.js'
 
 /**
  * Parses an arbitrary **JSON ABI Constructor** or **Human Readable ABI Constructor** into a typed {@link ox#AbiConstructor.AbiConstructor}.
@@ -98,11 +99,14 @@ import type { AbiConstructor, Signature, Signatures } from './types.js'
  * @returns Typed ABI Constructor.
  */
 export function from<
-  const abiConstructor extends AbiConstructor | string | readonly string[],
+  const abiConstructor extends
+    | AbiConstructor.AbiConstructor
+    | string
+    | readonly string[],
 >(
   abiConstructor: (
     | abiConstructor
-    | AbiConstructor
+    | AbiConstructor.AbiConstructor
     | string
     | readonly string[]
   ) &
@@ -111,15 +115,18 @@ export function from<
       | (abiConstructor extends readonly string[]
           ? Signatures<abiConstructor>
           : never)
-      | AbiConstructor
+      | AbiConstructor.AbiConstructor
     ),
 ): from.ReturnType<abiConstructor> {
-  return AbiItem.from(abiConstructor as AbiConstructor) as never
+  return AbiItem.from(abiConstructor as AbiConstructor.AbiConstructor) as never
 }
 
 export declare namespace from {
   type ReturnType<
-    abiConstructor extends AbiConstructor | string | readonly string[],
+    abiConstructor extends
+      | AbiConstructor.AbiConstructor
+      | string
+      | readonly string[],
   > = AbiItem.from.ReturnType<abiConstructor>
 
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType

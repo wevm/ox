@@ -1,6 +1,5 @@
-import { AbiItem, AbiParameters, Bytes, type Hex } from 'ox'
+import { AbiItem, AbiParameters, type Address, Bytes, type Hex } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
-import type { Address } from '../Address/types.js'
 
 import {
   multicall3Abi,
@@ -108,7 +107,7 @@ describe('static', () => {
         AbiParameters.from('address'),
         '0x00000000000000000000000014dc79964da2c08b23698b3d3cc7ca32193d9955',
       )
-      assertType<readonly [Address]>(result)
+      assertType<readonly [Address.Address]>(result)
       expect(
         AbiParameters.decode(
           AbiParameters.from('address'),
@@ -168,7 +167,7 @@ describe('static', () => {
         AbiParameters.from('address[2]'),
         '0x000000000000000000000000c961145a54c96e3ae9baa048c4f4d6b04c13916b000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
       )
-      assertType<readonly [readonly [Address, Address]]>(result)
+      assertType<readonly [readonly [Address.Address, Address.Address]]>(result)
       expect(result).toEqual([
         [
           '0xc961145a54c96e3ae9baa048c4f4d6b04c13916b',

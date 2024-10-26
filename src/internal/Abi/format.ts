@@ -1,5 +1,11 @@
-import { type Abi, type FormatAbi, formatAbi } from 'abitype'
+import { type FormatAbi, formatAbi } from 'abitype'
+
+import type * as Abi from '../../Abi.js'
 import type * as Errors from '../../Errors.js'
+
+export function format<const abi extends Abi.Abi>(
+  abi: abi,
+): Abi.format.ReturnType<abi>
 
 /**
  * Formats an {@link ox#Abi.Abi} into a **Human Readable ABI**.
@@ -34,16 +40,19 @@ import type * as Errors from '../../Errors.js'
  * @param abi - The ABI to format.
  * @returns The formatted ABI.
  */
-export function format<const abi extends Abi | readonly unknown[]>(
-  abi: abi | Abi | readonly unknown[],
-): FormatAbi<abi> {
-  return formatAbi(abi) as never
+export function format(
+  abi: Abi.Abi | readonly unknown[],
+): Abi.format.ReturnType {
+  return formatAbi(abi)
 }
 
 export declare namespace format {
+  type ReturnType<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
+    FormatAbi<abi>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
 format.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as format.ErrorType
+  error as Abi.format.ErrorType

@@ -6,32 +6,30 @@ import { anvilMainnet } from '../../../test/anvil.js'
 import { address } from '../../../test/constants/addresses.js'
 
 test('default', () => {
-  const constructor_ = AbiConstructor.from('constructor()')
-  const encoded = AbiConstructor.encode(constructor_, {
+  const abiConstructor = AbiConstructor.from('constructor()')
+  const encoded = AbiConstructor.encode(abiConstructor, {
     bytecode: Constructor.bytecode.object,
   })
 
-  expect(
-    AbiConstructor.decode(constructor_, {
-      bytecode: Constructor.bytecode.object,
-      data: encoded,
-    }),
-  ).toBe(undefined)
+  const decoded = AbiConstructor.decode(abiConstructor, {
+    bytecode: Constructor.bytecode.object,
+    data: encoded,
+  })
+  expect(decoded).toBe(undefined)
 })
 
 test('behavior: args', () => {
-  const constructor_ = AbiConstructor.from('constructor(address, uint256)')
-  const encoded = AbiConstructor.encode(constructor_, {
+  const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
+  const encoded = AbiConstructor.encode(abiConstructor, {
     bytecode: Constructor.bytecode.object,
     args: [address.vitalik, 123n],
   })
 
-  expect(
-    AbiConstructor.decode(constructor_, {
-      bytecode: Constructor.bytecode.object,
-      data: encoded,
-    }),
-  ).toMatchInlineSnapshot(`
+  const decoded = AbiConstructor.decode(abiConstructor, {
+    bytecode: Constructor.bytecode.object,
+    data: encoded,
+  })
+  expect(decoded).toMatchInlineSnapshot(`
     [
       "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
       123n,
@@ -40,9 +38,9 @@ test('behavior: args', () => {
 })
 
 test('behavior: network', async () => {
-  const constructor_ = AbiConstructor.fromAbi(Constructor.abi)
+  const abiConstructor = AbiConstructor.fromAbi(Constructor.abi)
 
-  const data = AbiConstructor.encode(constructor_, {
+  const data = AbiConstructor.encode(abiConstructor, {
     bytecode: Constructor.bytecode.object,
     args: [address.vitalik, 123n],
   })
@@ -61,12 +59,11 @@ test('behavior: network', async () => {
     params: [hash],
   }))!
 
-  expect(
-    AbiConstructor.decode(constructor_, {
-      bytecode: Constructor.bytecode.object,
-      data: input,
-    }),
-  ).toMatchInlineSnapshot(`
+  const decoded = AbiConstructor.decode(abiConstructor, {
+    bytecode: Constructor.bytecode.object,
+    data: input,
+  })
+  expect(decoded).toMatchInlineSnapshot(`
     [
       "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
       123n,

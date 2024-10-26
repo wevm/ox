@@ -1,8 +1,8 @@
-import type * as Abi from '../../Abi.js'
 import * as AbiItem from '../../AbiItem.js'
+import type * as Abi from '../../Abi.js'
+import type * as AbiConstructor from '../../AbiConstructor.js'
 import type * as Errors from '../../Errors.js'
 import type { IsNarrowable } from '../types.js'
-import type { AbiConstructor } from './types.js'
 
 /**
  * Extracts an {@link ox#AbiConstructor.AbiConstructor} from an {@link ox#Abi.Abi} given a name and optional arguments.
@@ -36,7 +36,7 @@ import type { AbiConstructor } from './types.js'
  */
 export function fromAbi<const abi extends Abi.Abi | readonly unknown[]>(
   abi: abi | Abi.Abi | readonly unknown[],
-): fromAbi.ReturnType<abi> {
+): AbiConstructor.fromAbi.ReturnType<abi> {
   const item = (abi as Abi.Abi).find((item) => item.type === 'constructor')
   if (!item) throw new AbiItem.NotFoundError({ name: 'constructor' })
   return item
@@ -48,11 +48,11 @@ export declare namespace fromAbi {
     Abi.Abi
   > extends true
     ? Extract<abi[number], { type: 'constructor' }>
-    : AbiConstructor
+    : AbiConstructor.AbiConstructor
 
   type ErrorType = AbiItem.NotFoundError | Errors.GlobalErrorType
 }
 
 fromAbi.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as fromAbi.ErrorType
+  error as AbiConstructor.fromAbi.ErrorType

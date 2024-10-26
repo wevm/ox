@@ -1,5 +1,6 @@
 import { AbiConstructor } from 'ox'
 import { expect, test } from 'vitest'
+
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 
 test('default', () => {
