@@ -1,6 +1,6 @@
+import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
-import { AbiItem_getSignatureHash } from '../AbiItem/getSignatureHash.js'
-import type { Hex } from '../Hex/types.js'
+import type * as Hex from '../../Hex.js'
 import type { AbiEvent } from './types.js'
 
 /**
@@ -33,12 +33,12 @@ import type { AbiEvent } from './types.js'
  * @param abiItem - The ABI event to compute the selector for.
  * @returns The {@link ox#Hash.(keccak256:function)} hash of the event signature.
  */
-export function getSelector(abiItem: string | AbiEvent): Hex {
-  return AbiItem_getSignatureHash(abiItem)
+export function getSelector(abiItem: string | AbiEvent): Hex.Hex {
+  return AbiItem.getSignatureHash(abiItem)
 }
 
 export declare namespace getSelector {
-  type ErrorType = AbiItem_getSignatureHash.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AbiItem.getSignatureHash.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

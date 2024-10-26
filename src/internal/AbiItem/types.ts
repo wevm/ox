@@ -41,9 +41,9 @@ export type AbiItem = Abi[number]
  *
  * ```
  */
-export type AbiItem_Extract<
+export type ExtractByName<
   abi extends Abi,
-  name extends AbiItem_ExtractNames<abi>,
+  name extends ExtractNames<abi>,
 > = Extract<abi[number], { name: name }>
 
 /**
@@ -64,10 +64,11 @@ export type AbiItem_Extract<
  *
  * ```
  */
-export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiItem_ExtractNames<abi> : string
+export type Name<abi extends Abi | readonly unknown[] = Abi> = abi extends Abi
+  ? ExtractNames<abi>
+  : string
 
-export type AbiItem_ExtractNames<abi extends Abi> = Extract<
+export type ExtractNames<abi extends Abi> = Extract<
   abi[number],
   { name: string }
 >['name']
@@ -77,11 +78,11 @@ export type AbiItem_ExtractNames<abi extends Abi> = Extract<
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type AbiItem_ExtractArgs<
+export type ExtractArgs<
   abi extends Abi | readonly unknown[] = Abi,
-  name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
+  name extends Name<abi> = Name<abi>,
 > = AbiParametersToPrimitiveTypes<
-  AbiItem_Extract<abi extends Abi ? abi : Abi, name>['inputs'],
+  ExtractByName<abi extends Abi ? abi : Abi, name>['inputs'],
   'inputs'
 > extends infer args
   ? [args] extends [never]
@@ -90,15 +91,15 @@ export type AbiItem_ExtractArgs<
   : readonly unknown[]
 
 /** @internal */
-export type AbiItem_ExtractForArgs<
+export type ExtractForArgs<
   abi extends Abi,
-  name extends AbiItem_Name<abi>,
-  args extends AbiItem_ExtractArgs<abi, name>,
+  name extends Name<abi>,
+  args extends ExtractArgs<abi, name>,
 > = IsUnion<name> extends true
   ? {
       [key in keyof abi]: abi[key] extends { name: name } ? abi[key] : never
     }[number]
-  : AbiItem_Extract<abi, name> extends infer abiItem extends AbiItem & {
+  : ExtractByName<abi, name> extends infer abiItem extends AbiItem & {
         inputs: readonly AbiParameter[]
       }
     ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
@@ -125,8 +126,8 @@ export type TupleToUnion<
     inputs: readonly AbiParameter[]
   }[],
   abi extends Abi,
-  name extends AbiItem_Name<abi>,
-  args extends AbiItem_ExtractArgs<abi, name>,
+  name extends Name<abi>,
+  args extends ExtractArgs<abi, name>,
 > = {
   [k in keyof abiItems]: (
     readonly [] extends args
@@ -254,7 +255,7 @@ export type IsSignature<type extends string> =
   : false
 
 /** @internal */
-export type AbiItem_Signature<
+export type Signature<
   string1 extends string,
   string2 extends string | unknown = unknown,
 > = IsSignature<string1> extends true
@@ -266,8 +267,8 @@ export type AbiItem_Signature<
         : ''}.`>
 
 /** @internal */
-export type AbiItem_Signatures<signatures extends readonly string[]> = {
-  [key in keyof signatures]: AbiItem_Signature<signatures[key], key>
+export type Signatures<signatures extends readonly string[]> = {
+  [key in keyof signatures]: Signature<signatures[key], key>
 }
 
 /** @internal */

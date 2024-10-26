@@ -1,19 +1,11 @@
 import type * as Abi from '../../Abi.js'
+import * as AbiItem from '../../AbiItem.js'
 import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import type { UnionCompute } from '../types.js'
-import { AbiItem_AmbiguityError, AbiItem_NotFoundError } from './errors.js'
-import { AbiItem_getSelector } from './getSelector.js'
-import { AbiItem_getSignatureHash } from './getSignatureHash.js'
-import type {
-  AbiItem,
-  AbiItem_ExtractArgs,
-  AbiItem_ExtractForArgs,
-  AbiItem_Name,
-  Widen,
-} from './types.js'
+import type { ExtractArgs, ExtractForArgs, Widen } from './types.js'
 
 /**
  * Extracts an {@link ox#AbiItem.AbiItem} from an {@link ox#Abi.Abi} given a name and optional arguments.
@@ -82,48 +74,48 @@ import type {
  * @param options - Extraction options.
  * @returns The ABI item.
  */
-export function AbiItem_fromAbi<
+export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
-  name extends AbiItem_Name<abi>,
-  const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
+  name extends AbiItem.Name<abi>,
+  const args extends ExtractArgs<abi, name> | undefined = undefined,
   //
-  allNames = AbiItem_Name<abi>,
+  allNames = AbiItem.Name<abi>,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
-  options?: AbiItem_fromAbi.Options<abi, name, args>,
-): AbiItem_fromAbi.ReturnType<abi, name, args> {
+  options?: fromAbi.Options<abi, name, args>,
+): fromAbi.ReturnType<abi, name, args> {
   const { args = [], prepare = true } = (options ??
-    {}) as unknown as AbiItem_fromAbi.Options
+    {}) as unknown as fromAbi.Options
 
   const isSelector = Hex.validate(name, { strict: false })
   const abiItems = (abi as Abi.Abi).filter((abiItem) => {
     if (isSelector) {
       if (abiItem.type === 'function' || abiItem.type === 'error')
-        return AbiItem_getSelector(abiItem) === Hex.slice(name, 0, 4)
+        return AbiItem.getSelector(abiItem) === Hex.slice(name, 0, 4)
       if (abiItem.type === 'event')
-        return AbiItem_getSignatureHash(abiItem) === name
+        return AbiItem.getSignatureHash(abiItem) === name
       return false
     }
     return 'name' in abiItem && abiItem.name === name
   })
 
   if (abiItems.length === 0)
-    throw new AbiItem_NotFoundError({ name: name as string })
+    throw new AbiItem.NotFoundError({ name: name as string })
   if (abiItems.length === 1)
     return {
       ...abiItems[0],
-      ...(prepare ? { hash: AbiItem_getSignatureHash(abiItems[0]!) } : {}),
+      ...(prepare ? { hash: AbiItem.getSignatureHash(abiItems[0]!) } : {}),
     } as never
 
-  let matchedAbiItem: AbiItem | undefined = undefined
+  let matchedAbiItem: AbiItem.AbiItem | undefined = undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
       if (!abiItem.inputs || abiItem.inputs.length === 0)
         return {
           ...abiItem,
-          ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),
+          ...(prepare ? { hash: AbiItem.getSignatureHash(abiItem) } : {}),
         } as never
       continue
     }
@@ -148,7 +140,7 @@ export function AbiItem_fromAbi<
           args as readonly unknown[],
         )
         if (ambiguousTypes)
-          throw new AbiItem_AmbiguityError(
+          throw new AbiItem.AmbiguityError(
             {
               abiItem,
               type: ambiguousTypes[0]!,
@@ -170,22 +162,20 @@ export function AbiItem_fromAbi<
     return { ...abiItem!, overloads }
   })()
 
-  if (!abiItem) throw new AbiItem_NotFoundError({ name: name as string })
+  if (!abiItem) throw new AbiItem.NotFoundError({ name: name as string })
   return {
     ...abiItem,
-    ...(prepare ? { hash: AbiItem_getSignatureHash(abiItem) } : {}),
+    ...(prepare ? { hash: AbiItem.getSignatureHash(abiItem) } : {}),
   } as never
 }
 
-export declare namespace AbiItem_fromAbi {
+export declare namespace fromAbi {
   type Options<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
-    name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
-    args extends
-      | AbiItem_ExtractArgs<abi, name>
-      | undefined = AbiItem_ExtractArgs<abi, name>,
+    name extends AbiItem.Name<abi> = AbiItem.Name<abi>,
+    args extends ExtractArgs<abi, name> | undefined = ExtractArgs<abi, name>,
     ///
-    allArgs = AbiItem_ExtractArgs<abi, name>,
+    allArgs = ExtractArgs<abi, name>,
   > = {
     /**
      * Whether or not to prepare the extracted item (optimization for encoding performance).
@@ -217,29 +207,25 @@ export declare namespace AbiItem_fromAbi {
 
   type ReturnType<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
-    name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
-    args extends
-      | AbiItem_ExtractArgs<abi, name>
-      | undefined = AbiItem_ExtractArgs<abi, name>,
-    fallback = AbiItem,
+    name extends AbiItem.Name<abi> = AbiItem.Name<abi>,
+    args extends ExtractArgs<abi, name> | undefined = ExtractArgs<abi, name>,
+    fallback = AbiItem.AbiItem,
   > = abi extends Abi.Abi
     ? Abi.Abi extends abi
       ? fallback
-      : AbiItem_ExtractForArgs<
+      : ExtractForArgs<
           abi,
           name,
-          args extends AbiItem_ExtractArgs<abi, name>
-            ? args
-            : AbiItem_ExtractArgs<abi, name>
+          args extends ExtractArgs<abi, name> ? args : ExtractArgs<abi, name>
         >
     : fallback
 
   type ErrorType = Errors.GlobalErrorType
 }
 
-AbiItem_fromAbi.parseError = (error: unknown) =>
+fromAbi.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiItem_fromAbi.ErrorType
+  error as fromAbi.ErrorType
 
 /** @internal */
 export function isArgOfType(
@@ -306,7 +292,7 @@ export function isArgOfType(
 export function getAmbiguousTypes(
   sourceParameters: readonly AbiParameters_Parameter[],
   targetParameters: readonly AbiParameters_Parameter[],
-  args: AbiItem_ExtractArgs,
+  args: ExtractArgs,
 ): AbiParameters_Parameter['type'][] | undefined {
   for (const parameterIndex in sourceParameters) {
     const sourceParameter = sourceParameters[parameterIndex]!

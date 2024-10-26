@@ -1,6 +1,6 @@
 import { type Abi, type ParseAbi, parseAbi } from 'abitype'
 import type * as Errors from '../../Errors.js'
-import type { AbiItem_Signatures } from '../AbiItem/types.js'
+import type { Signatures } from '../AbiItem/types.js'
 
 /**
  * Parses an arbitrary **JSON ABI** or **Human Readable ABI** into a typed {@link ox#Abi.Abi}.
@@ -83,7 +83,7 @@ export function from<
   const abi extends Abi | readonly string[] | readonly unknown[],
 >(
   abi: (abi | Abi | readonly string[] | readonly unknown[]) &
-    (abi extends readonly string[] ? AbiItem_Signatures<abi> : Abi),
+    (abi extends readonly string[] ? Signatures<abi> : Abi),
 ): from.ReturnType<abi> {
   if (typeof abi[0] === 'string') return parseAbi(abi as never)
   return abi as never

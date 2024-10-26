@@ -1,8 +1,7 @@
 import { formatAbiItem } from 'abitype'
 
-import type * as Errors from '../../Errors.js'
-import { BaseError } from '../Errors/base.js'
-import type { AbiItem } from './types.js'
+import type * as AbiItem from '../../AbiItem.js'
+import * as Errors from '../../Errors.js'
 
 /**
  * Computes the stringified signature for a given {@link ox#AbiItem.AbiItem}.
@@ -32,7 +31,7 @@ import type { AbiItem } from './types.js'
  * @param abiItem - The ABI Item to compute the signature for.
  * @returns The stringified signature of the ABI Item.
  */
-export function AbiItem_getSignature(abiItem: string | AbiItem): string {
+export function getSignature(abiItem: string | AbiItem.AbiItem): string {
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
     return formatAbiItem(abiItem)
@@ -40,13 +39,12 @@ export function AbiItem_getSignature(abiItem: string | AbiItem): string {
   return normalizeSignature(signature)
 }
 
-export declare namespace AbiItem_getSignature {
+export declare namespace getSignature {
   type ErrorType = normalizeSignature.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-AbiItem_getSignature.parseError = (error: unknown) =>
-  error as AbiItem_getSignature.ErrorType
+getSignature.parseError = (error: unknown) => error as getSignature.ErrorType
 
 ///////////////////////////////////////////////////////////////////////////
 // Utilities
@@ -104,12 +102,12 @@ export function normalizeSignature(signature: string): string {
     current += char
   }
 
-  if (!valid) throw new BaseError('Unable to normalize signature.')
+  if (!valid) throw new Errors.BaseError('Unable to normalize signature.')
 
   return result
 }
 
 /** @internal */
 export declare namespace normalizeSignature {
-  export type ErrorType = BaseError | Errors.GlobalErrorType
+  export type ErrorType = Errors.BaseError | Errors.GlobalErrorType
 }

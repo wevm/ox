@@ -1,6 +1,6 @@
 import { type FormatAbiItem, formatAbiItem } from 'abitype'
+import type * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
-import type { AbiItem } from './types.js'
 
 /**
  * Formats an {@link ox#AbiItem.AbiItem} into a **Human Readable ABI Item**.
@@ -35,16 +35,16 @@ import type { AbiItem } from './types.js'
  * @param abiItem - The ABI Item to format.
  * @returns The formatted ABI Item  .
  */
-export function AbiItem_format<const abiItem extends AbiItem>(
-  abiItem: abiItem | AbiItem,
+export function format<const abiItem extends AbiItem.AbiItem>(
+  abiItem: abiItem | AbiItem.AbiItem,
 ): FormatAbiItem<abiItem> {
   return formatAbiItem(abiItem) as never
 }
 
-export declare namespace AbiItem_format {
+export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
 
-AbiItem_format.parseError = (error: unknown) =>
+format.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiItem_format.ErrorType
+  error as format.ErrorType

@@ -1,9 +1,7 @@
+import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
-import { keccak256 } from '../Hash/keccak256.js'
-import { fromString } from '../Hex/fromString.js'
-import type { Hex } from '../Hex/types.js'
-import { AbiItem_getSignature } from './getSignature.js'
-import type { AbiItem } from './types.js'
+import * as Hash from '../../Hash.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Computes the signature hash for an {@link ox#AbiItem.AbiItem}.
@@ -37,20 +35,20 @@ import type { AbiItem } from './types.js'
  * @param abiItem - The ABI Item to compute the signature hash for.
  * @returns The {@link ox#Hash.(keccak256:function)} hash of the ABI item's signature.
  */
-export function AbiItem_getSignatureHash(abiItem: string | AbiItem): Hex {
+export function getSignatureHash(abiItem: string | AbiItem.AbiItem): Hex.Hex {
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
-    return abiItem.hash as Hex
-  return keccak256(fromString(AbiItem_getSignature(abiItem)))
+    return abiItem.hash as Hex.Hex
+  return Hash.keccak256(Hex.fromString(AbiItem.getSignature(abiItem)))
 }
 
-export declare namespace AbiItem_getSignatureHash {
+export declare namespace getSignatureHash {
   type ErrorType =
-    | AbiItem_getSignature.ErrorType
-    | keccak256.ErrorType
-    | fromString.ErrorType
+    | AbiItem.getSignature.ErrorType
+    | Hash.keccak256.ErrorType
+    | Hex.fromString.ErrorType
     | Errors.GlobalErrorType
 }
 
-AbiItem_getSignatureHash.parseError = (error: unknown) =>
+getSignatureHash.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiItem_getSignatureHash.ErrorType
+  error as getSignatureHash.ErrorType

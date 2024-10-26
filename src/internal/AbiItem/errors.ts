@@ -1,8 +1,7 @@
 import { type Abi, formatAbiItem } from 'abitype'
-import { normalizeSignature } from '../AbiItem/getSignature.js'
-import { BaseError } from '../Errors/base.js'
-import { size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
+import { normalizeSignature } from './getSignature.js'
 
 /**
  * Throws when ambiguous types are found on overloaded ABI items.
@@ -43,7 +42,7 @@ import type { Hex } from '../Hex/types.js'
  * // @error: Remove one of the ambiguous items in the ABI.
  * ```
  */
-export class AbiItem_AmbiguityError extends BaseError {
+export class AmbiguityError extends Errors.BaseError {
   override readonly name = 'AbiItem.AmbiguityError'
   constructor(
     x: { abiItem: Abi[number]; type: string },
@@ -95,7 +94,7 @@ export class AbiItem_AmbiguityError extends BaseError {
  * AbiFunction.fromAbi(foo, 'baz')
  * ```
  */
-export class AbiItem_NotFoundError extends BaseError {
+export class NotFoundError extends Errors.BaseError {
   override readonly name = 'AbiItem.NotFoundError'
   constructor({
     name,
@@ -103,7 +102,7 @@ export class AbiItem_NotFoundError extends BaseError {
     type = 'item',
   }: {
     name?: string | undefined
-    data?: Hex | undefined
+    data?: Hex.Hex | undefined
     type?: string | undefined
   }) {
     const selector = (() => {
@@ -147,11 +146,11 @@ export class AbiItem_NotFoundError extends BaseError {
  * AbiFunction.fromAbi(foo, '0x7af82b1a')
  * ```
  */
-export class AbiItem_InvalidSelectorSizeError extends BaseError {
+export class InvalidSelectorSizeError extends Errors.BaseError {
   override readonly name = 'AbiItem.InvalidSelectorSizeError'
-  constructor({ data }: { data: Hex }) {
+  constructor({ data }: { data: Hex.Hex }) {
     super(
-      `Selector size is invalid. Expected 4 bytes. Received ${size(data)} bytes ("${data}").`,
+      `Selector size is invalid. Expected 4 bytes. Received ${Hex.size(data)} bytes ("${data}").`,
       {
         docsPath: '/errors#abiiteminvalidselectorsizeerror',
       },

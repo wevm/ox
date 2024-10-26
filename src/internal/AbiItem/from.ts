@@ -1,11 +1,7 @@
 import { type ParseAbiItem, parseAbiItem } from 'abitype'
+import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
-import type {
-  AbiItem,
-  AbiItem_Signature,
-  AbiItem_Signatures,
-} from '../AbiItem/types.js'
-import { AbiItem_getSignatureHash } from './getSignatureHash.js'
+import type { Signature, Signatures } from './types.js'
 
 /**
  * Parses an arbitrary **JSON ABI Item** or **Human Readable ABI Item** into a typed {@link ox#AbiItem.AbiItem}.
@@ -110,32 +106,30 @@ import { AbiItem_getSignatureHash } from './getSignatureHash.js'
  * @param abiItem - The ABI Item to parse.
  * @returns The typed ABI Item.
  */
-export function AbiItem_from<
-  const abiItem extends AbiItem | string | readonly string[],
+export function from<
+  const abiItem extends AbiItem.AbiItem | string | readonly string[],
 >(
-  abiItem: (abiItem | AbiItem | string | readonly string[]) &
+  abiItem: (abiItem | AbiItem.AbiItem | string | readonly string[]) &
     (
-      | (abiItem extends string ? AbiItem_Signature<abiItem> : never)
-      | (abiItem extends readonly string[]
-          ? AbiItem_Signatures<abiItem>
-          : never)
-      | AbiItem
+      | (abiItem extends string ? Signature<abiItem> : never)
+      | (abiItem extends readonly string[] ? Signatures<abiItem> : never)
+      | AbiItem.AbiItem
     ),
-  options: AbiItem_from.Options = {},
-): AbiItem_from.ReturnType<abiItem> {
+  options: from.Options = {},
+): from.ReturnType<abiItem> {
   const { prepare = true } = options
   const item = (() => {
     if (Array.isArray(abiItem)) return parseAbiItem(abiItem)
     if (typeof abiItem === 'string') return parseAbiItem(abiItem as never)
     return abiItem
-  })() as AbiItem
+  })() as AbiItem.AbiItem
   return {
     ...item,
-    ...(prepare ? { hash: AbiItem_getSignatureHash(item) } : {}),
+    ...(prepare ? { hash: AbiItem.getSignatureHash(item) } : {}),
   } as never
 }
 
-export declare namespace AbiItem_from {
+export declare namespace from {
   type Options = {
     /**
      * Whether or not to prepare the extracted item (optimization for encoding performance).
@@ -146,16 +140,17 @@ export declare namespace AbiItem_from {
     prepare?: boolean | undefined
   }
 
-  type ReturnType<abiItem extends AbiItem | string | readonly string[]> =
-    abiItem extends string
+  type ReturnType<
+    abiItem extends AbiItem.AbiItem | string | readonly string[],
+  > = abiItem extends string
+    ? ParseAbiItem<abiItem>
+    : abiItem extends readonly string[]
       ? ParseAbiItem<abiItem>
-      : abiItem extends readonly string[]
-        ? ParseAbiItem<abiItem>
-        : abiItem
+      : abiItem
 
   type ErrorType = Errors.GlobalErrorType
 }
 
-AbiItem_from.parseError = (error: unknown) =>
+from.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as AbiItem_from.ErrorType
+  error as from.ErrorType

@@ -1,8 +1,6 @@
+import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
-import { slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
-import { AbiItem_getSignatureHash } from './getSignatureHash.js'
-import type { AbiItem } from './types.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link ox#AbiItem.AbiItem}.
@@ -34,17 +32,16 @@ import type { AbiItem } from './types.js'
  * @param abiItem - The ABI item to compute the selector for. Can be a signature or an ABI item for an error, event, function, etc.
  * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the function signature.
  */
-export function AbiItem_getSelector(abiItem: string | AbiItem): Hex {
-  return slice(AbiItem_getSignatureHash(abiItem), 0, 4)
+export function getSelector(abiItem: string | AbiItem.AbiItem): Hex.Hex {
+  return Hex.slice(AbiItem.getSignatureHash(abiItem), 0, 4)
 }
 
-export declare namespace AbiItem_getSelector {
+export declare namespace getSelector {
   type ErrorType =
-    | AbiItem_getSignatureHash.ErrorType
-    | slice.ErrorType
+    | AbiItem.getSignatureHash.ErrorType
+    | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
-AbiItem_getSelector.parseError = (error: unknown) =>
-  error as AbiItem_getSelector.ErrorType
+getSelector.parseError = (error: unknown) => error as getSelector.ErrorType

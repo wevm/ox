@@ -1,12 +1,10 @@
 import type { AbiParameter, AbiParameterToPrimitiveType } from 'abitype'
+import type * as AbiError from '../../AbiError.js'
+import * as AbiItem from '../../AbiItem.js'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
-import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import { size } from '../Hex/size.js'
-import { slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
+import * as Hex from '../../Hex.js'
 import type { IsNarrowable } from '../types.js'
-import type { AbiError } from './types.js'
 
 /**
  * ABI-decodes the provided error input (`inputs`).
@@ -125,17 +123,21 @@ import type { AbiError } from './types.js'
  * @returns The decoded error.
  */
 export function decode<
-  const abiError extends AbiError,
+  const abiError extends AbiError.AbiError,
   as extends 'Object' | 'Array' = 'Array',
 >(
-  abiError: abiError | AbiError,
-  data: Hex,
+  abiError: abiError | AbiError.AbiError,
+  data: Hex.Hex,
   options: decode.Options<as> = {},
 ): decode.ReturnType<abiError, as> {
-  if (size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
   if (abiError.inputs.length === 0) return undefined
 
-  const values = AbiParameters_decode(abiError.inputs, slice(data, 4), options)
+  const values = AbiParameters.decode(
+    abiError.inputs,
+    Hex.slice(data, 4),
+    options,
+  )
   if (values && Object.keys(values).length === 1) {
     if (Array.isArray(values)) return values[0]
     return Object.values(values)[0]
@@ -154,14 +156,14 @@ export declare namespace decode {
   }
 
   type ReturnType<
-    abiError extends AbiError = AbiError,
+    abiError extends AbiError.AbiError = AbiError.AbiError,
     as extends 'Object' | 'Array' = 'Array',
-  > = IsNarrowable<abiError, AbiError> extends true
+  > = IsNarrowable<abiError, AbiError.AbiError> extends true
     ? abiError['inputs'] extends readonly []
       ? undefined
       : abiError['inputs'] extends readonly [infer type extends AbiParameter]
         ? AbiParameterToPrimitiveType<type>
-        : AbiParameters_decode.ReturnType<
+        : AbiParameters.decode.ReturnType<
               abiError['inputs'],
               as
             > extends infer types
@@ -174,8 +176,8 @@ export declare namespace decode {
     : unknown
 
   type ErrorType =
-    | AbiParameters_decode.ErrorType
-    | size.ErrorType
-    | AbiItem_InvalidSelectorSizeError
+    | AbiParameters.decode.ErrorType
+    | Hex.size.ErrorType
+    | AbiItem.InvalidSelectorSizeError
     | Errors.GlobalErrorType
 }

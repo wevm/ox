@@ -1,6 +1,5 @@
 import type { Address } from '../Address/types.js'
 import type { Hex } from '../Hex/types.js'
-import type { Compute } from '../types.js'
 
 /** Root type for an EIP-7702 Authorization. */
 export type Authorization<bigintType = bigint, numberType = number> = {
@@ -22,17 +21,19 @@ export type Authorization<bigintType = bigint, numberType = number> = {
 export type Rpc = Signed<Hex, Hex>
 
 /** List of {@link ox#Authorization.Authorization}. */
-export type List<bigintType = bigint, numberType = number> = Compute<
-  readonly Authorization<bigintType, numberType>[]
->
+export type List<
+  bigintType = bigint,
+  numberType = number,
+> = readonly Authorization<bigintType, numberType>[]
 
 /** RPC representation of an {@link ox#Authorization.List}. */
 export type ListRpc = ListSigned<Hex, Hex>
 
 /** Signed representation of a list of {@link ox#Authorization.Authorization}. */
-export type ListSigned<bigintType = bigint, numberType = number> = Compute<
-  readonly Signed<bigintType, numberType>[]
->
+export type ListSigned<
+  bigintType = bigint,
+  numberType = number,
+> = readonly Signed<bigintType, numberType>[]
 
 /** Signed representation of an {@link ox#Authorization.Authorization}. */
 export type Signed<bigintType = bigint, numberType = number> = {
