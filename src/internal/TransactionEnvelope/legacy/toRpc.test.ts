@@ -94,6 +94,7 @@ test('behavior: network', async () => {
       "s": "0x243e08c40d4f672d37712b579481bf4324464a72a5fcba033aebf474fb65382b",
       "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
       "transactionIndex": "0x0",
+      "type": "0x0",
       "v": "0x26",
       "value": "0xde0b6b3a7640000",
     }
