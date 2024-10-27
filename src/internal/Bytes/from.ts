@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Bytes_fromArray } from './fromArray.js'
 import { Bytes_fromHex } from './fromHex.js'
@@ -44,7 +44,7 @@ export declare namespace Bytes_from {
   type ErrorType =
     | Bytes_fromHex.ErrorType
     | Bytes_fromArray.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Bytes_from.parseError = (error: unknown) =>

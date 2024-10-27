@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_toString } from '../Bytes/toString.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Base64_toBytes } from './toBytes.js'
 
 /**
@@ -21,7 +21,7 @@ export function Base64_toString(value: string): string {
 }
 
 export declare namespace Base64_toString {
-  type ErrorType = Base64_toBytes.ErrorType | GlobalErrorType
+  type ErrorType = Base64_toBytes.ErrorType | Errors.GlobalErrorType
 }
 
 Base64_toString.parseError = (error: unknown) =>

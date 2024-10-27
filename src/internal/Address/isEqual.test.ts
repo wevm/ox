@@ -37,8 +37,7 @@ test('error: invalid address', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678az" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
   expect(() =>
     Address.isEqual(
@@ -48,7 +47,6 @@ test('error: invalid address', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678aff" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })

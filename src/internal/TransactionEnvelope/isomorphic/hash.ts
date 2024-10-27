@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import type { Hex } from '../../Hex/types.js'
 import type { OneOf } from '../../types.js'
 import { TransactionEnvelopeEip1559_hash } from '../eip1559/hash.js'
@@ -78,7 +78,7 @@ export declare namespace TransactionEnvelope_hash {
     | TransactionEnvelopeEip2930_hash.ErrorType
     | TransactionEnvelopeEip4844_hash.ErrorType
     | TransactionEnvelopeEip7702_hash.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelope_hash.parseError = (error: unknown) =>

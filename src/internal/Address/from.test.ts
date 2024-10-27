@@ -21,8 +21,7 @@ test('error: invalid address input', () => {
   expect(() => Address.from('0xa')).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })
 
@@ -32,7 +31,6 @@ test('error: invalid address checksum', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xA0Cf798816D4b9b9866b5330Eea46a18382f251e" is invalid.
 
-    Details: Address does not match its checksum counterpart.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address does not match its checksum counterpart.]
   `)
 })

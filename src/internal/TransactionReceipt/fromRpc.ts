@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Log_fromRpc } from '../Log/fromRpc.js'
 import {
   TransactionReceipt_status,
@@ -134,7 +134,7 @@ export function TransactionReceipt_fromRpc<
 }
 
 export declare namespace TransactionReceipt_fromRpc {
-  export type ErrorType = Log_fromRpc.ErrorType | GlobalErrorType
+  export type ErrorType = Log_fromRpc.ErrorType | Errors.GlobalErrorType
 }
 
 TransactionReceipt_fromRpc.parseError = (error: unknown) =>

@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import { Hex_validate } from '../../Hex/validate.js'
@@ -110,7 +110,7 @@ export function TransactionEnvelopeEip1559_deserialize(
 export declare namespace TransactionEnvelopeEip1559_deserialize {
   type ReturnType = Compute<TransactionEnvelopeEip1559>
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip1559_deserialize.parseError = (error: unknown) =>

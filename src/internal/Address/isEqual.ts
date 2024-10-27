@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 
@@ -38,7 +38,7 @@ export function Address_isEqual(addressA: Address, addressB: Address): boolean {
 }
 
 export declare namespace Address_isEqual {
-  type ErrorType = Address_assert.ErrorType | GlobalErrorType
+  type ErrorType = Address_assert.ErrorType | Errors.GlobalErrorType
 }
 
 Address_isEqual.parseError = (error: unknown) =>

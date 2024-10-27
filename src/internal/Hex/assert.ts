@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_InvalidHexTypeError, Hex_InvalidHexValueError } from './errors.js'
 import type { Hex } from './types.js'
 
@@ -41,7 +41,7 @@ export declare namespace Hex_assert {
   type ErrorType =
     | Hex_InvalidHexTypeError
     | Hex_InvalidHexValueError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

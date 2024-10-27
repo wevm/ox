@@ -1,4 +1,5 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import { addressRegex } from '../regex.js'
 import { Address_checksum } from './checksum.js'
 import {
@@ -6,7 +7,6 @@ import {
   Address_InvalidChecksumError,
   Address_InvalidInputError,
 } from './errors.js'
-import type { Address } from './types.js'
 
 /**
  * Asserts that the given value is a valid {@link ox#Address.Address}.
@@ -32,7 +32,7 @@ import type { Address } from './types.js'
 export function Address_assert(
   value: string,
   options: Address_assert.Options = {},
-): asserts value is Address {
+): asserts value is Address.Address {
   const { strict = true } = options
 
   if (!addressRegex.test(value))
@@ -43,7 +43,7 @@ export function Address_assert(
 
   if (strict) {
     if (value.toLowerCase() === value) return
-    if (Address_checksum(value as Address) !== value)
+    if (Address_checksum(value as Address.Address) !== value)
       throw new Address_InvalidAddressError({
         address: value,
         cause: new Address_InvalidChecksumError(),
@@ -61,7 +61,7 @@ export declare namespace Address_assert {
     strict?: boolean | undefined
   }
 
-  type ErrorType = Address_InvalidAddressError | GlobalErrorType
+  type ErrorType = Address_InvalidAddressError | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

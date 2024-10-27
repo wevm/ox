@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import { Hash_keccak256 } from '../../Hash/keccak256.js'
 import type { Hex } from '../../Hex/types.js'
 import { TransactionEnvelopeEip7702_serialize } from './serialize.js'
@@ -68,7 +68,7 @@ export declare namespace TransactionEnvelopeEip7702_hash {
   type ErrorType =
     | Hash_keccak256.ErrorType
     | TransactionEnvelopeEip7702_serialize.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip7702_hash.parseError = (error: unknown) =>

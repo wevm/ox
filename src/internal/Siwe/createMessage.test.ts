@@ -248,8 +248,7 @@ test('behavior: invalid address', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xfoobarbaz" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })
 
@@ -262,9 +261,7 @@ test('behavior: invalid chainId', () => {
     - Chain ID must be a EIP-155 chain ID.
     - See https://eips.ethereum.org/EIPS/eip-155
 
-    Provided value: 1.1
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: 1.1]
   `)
 })
 
@@ -277,9 +274,7 @@ test('behavior: invalid domain', () => {
     - Domain must be an RFC 3986 authority.
     - See https://www.rfc-editor.org/rfc/rfc3986
 
-    Provided value: #foo
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: #foo]
   `)
 })
 
@@ -292,9 +287,7 @@ test('behavior: invalid nonce', () => {
     - Nonce must be at least 8 characters.
     - Nonce must be alphanumeric.
 
-    Provided value: #foo
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: #foo]
   `)
 })
 
@@ -307,9 +300,7 @@ test('behavior: invalid uri', () => {
     - URI must be a RFC 3986 URI referring to the resource that is the subject of the signing.
     - See https://www.rfc-editor.org/rfc/rfc3986
 
-    Provided value: #foo
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: #foo]
   `)
 })
 
@@ -322,9 +313,7 @@ test('behavior: invalid version', () => {
 
     - Version must be '1'.
 
-    Provided value: 2
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: 2]
   `)
 })
 
@@ -337,9 +326,7 @@ test('behavior: invalid scheme', () => {
     - Scheme must be an RFC 3986 URI scheme.
     - See https://www.rfc-editor.org/rfc/rfc3986#section-3.1
 
-    Provided value: foo_bar
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: foo_bar]
   `)
 })
 
@@ -352,9 +339,7 @@ test('behavior: invalid statement', () => {
     - Statement must not include '\\n'.
 
     Provided value: foo
-    bar
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    bar]
   `)
 })
 
@@ -370,9 +355,7 @@ test('behavior: invalid resources', () => {
     - Every resource must be a RFC 3986 URI.
     - See https://www.rfc-editor.org/rfc/rfc3986
 
-    Provided value: https://example.com
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: https://example.com]
   `)
 })
 

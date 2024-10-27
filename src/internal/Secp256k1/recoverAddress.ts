@@ -1,7 +1,7 @@
+import type * as Errors from '../../Errors.js'
 import { Address_fromPublicKey } from '../Address/fromPublicKey.js'
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
 import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
@@ -43,7 +43,7 @@ export declare namespace Secp256k1_recoverAddress {
   type ErrorType =
     | Address_fromPublicKey.ErrorType
     | Secp256k1_recoverPublicKey.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Secp256k1_recoverAddress.parseError = (error: unknown) =>

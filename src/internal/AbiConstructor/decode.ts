@@ -1,6 +1,6 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
+import type * as Errors from '../../Errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiConstructor } from './types.js'
@@ -59,7 +59,7 @@ export declare namespace AbiConstructor_decode {
         : AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
       : readonly unknown[]
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 AbiConstructor_decode.parseError = (error: unknown) =>

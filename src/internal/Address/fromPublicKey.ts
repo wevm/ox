@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
 import type { PublicKey } from '../PublicKey/types.js'
@@ -46,7 +46,7 @@ export declare namespace Address_fromPublicKey {
   type ErrorType =
     | Hash_keccak256.ErrorType
     | PublicKey_serialize.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Address_fromPublicKey.parseError = (error: unknown) =>

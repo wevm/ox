@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import type {
   FeeValuesEip1559,
   FeeValuesEip4844,
@@ -104,7 +104,9 @@ export function TransactionEnvelope_getType<
 
 /** @internal */
 export declare namespace TransactionEnvelope_getType {
-  type ErrorType = TransactionEnvelope_CannotInferTypeError | GlobalErrorType
+  type ErrorType =
+    | TransactionEnvelope_CannotInferTypeError
+    | Errors.GlobalErrorType
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

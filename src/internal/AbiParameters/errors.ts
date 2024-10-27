@@ -111,9 +111,6 @@ export class AbiParameters_ArrayLengthMismatchError extends BaseError {
   }: { expectedLength: number; givenLength: number; type: string }) {
     super(
       `Array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`,
-      {
-        docsPath: '/errors#abiparametersarraylengthmismatcherror',
-      },
     )
   }
 }
@@ -151,9 +148,6 @@ export class AbiParameters_BytesSizeMismatchError extends BaseError {
       `Size of bytes "${value}" (bytes${Hex_size(
         value,
       )}) does not match expected size (bytes${expectedSize}).`,
-      {
-        docsPath: '/errors#abiparametersbytessizemismatcherror',
-      },
     )
   }
 }
@@ -193,9 +187,6 @@ export class AbiParameters_LengthMismatchError extends BaseError {
         `Expected length (parameters): ${expectedLength}`,
         `Given length (values): ${givenLength}`,
       ].join('\n'),
-      {
-        docsPath: '/errors#abiparameterslengthmismatcherror',
-      },
     )
   }
 }
@@ -219,9 +210,7 @@ export class AbiParameters_LengthMismatchError extends BaseError {
 export class AbiParameters_InvalidArrayError extends BaseError {
   override readonly name = 'AbiParameters.InvalidArrayError'
   constructor(value: unknown) {
-    super(`Value \`${value}\` is not a valid array.`, {
-      docsPath: '/errors#abiparametersinvalidarrayerror',
-    })
+    super(`Value \`${value}\` is not a valid array.`)
   }
 }
 
@@ -240,8 +229,6 @@ export class AbiParameters_InvalidArrayError extends BaseError {
 export class AbiParameters_InvalidTypeError extends BaseError {
   override readonly name = 'AbiParameters.InvalidTypeError'
   constructor(type: string) {
-    super(`Type \`${type}\` is not a valid ABI Type.`, {
-      docsPath: '/errors#abiparametersinvalidtypeerror',
-    })
+    super(`Type \`${type}\` is not a valid ABI Type.`)
   }
 }

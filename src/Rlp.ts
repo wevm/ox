@@ -8,3 +8,5 @@ export {
   Rlp_fromBytes as fromBytes,
   Rlp_fromHex as fromHex,
 } from './internal/Rlp/from.js'
+
+export type { RecursiveArray } from './internal/types.js'

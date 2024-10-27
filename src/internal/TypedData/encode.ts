@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_assert } from './assert.js'
@@ -106,7 +106,7 @@ export declare namespace TypedData_encode {
     | TypedData_hashDomain.ErrorType
     | TypedData_hashStruct.ErrorType
     | TypedData_assert.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

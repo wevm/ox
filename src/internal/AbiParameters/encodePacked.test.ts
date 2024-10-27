@@ -220,8 +220,7 @@ test('error: invalid address', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xdeadbeef" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })
 
@@ -232,29 +231,23 @@ test('error: length mismatch', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiParameters.LengthMismatchError: ABI encoding parameters/values length mismatch.
     Expected length (parameters): 1
-    Given length (values): 2
-
-    See: https://oxlib.sh/errors#abiparameterslengthmismatcherror]
+    Given length (values): 2]
   `)
 })
 
 test('error: bytes size mismatch', () => {
   expect(() =>
     AbiParameters.encodePacked(['bytes8'], ['0xdeadbeef']),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiParameters.BytesSizeMismatchError: Size of bytes "0xdeadbeef" (bytes4) does not match expected size (bytes8).
-
-    See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[AbiParameters.BytesSizeMismatchError: Size of bytes "0xdeadbeef" (bytes4) does not match expected size (bytes8).]`,
+  )
 })
 
 test('error: unsupported type', () => {
   expect(
     // @ts-expect-error
     () => AbiParameters.encodePacked(['function'], ['0x']),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiParameters.InvalidTypeError: Type \`function\` is not a valid ABI Type.
-
-    See: https://oxlib.sh/errors#abiparametersinvalidtypeerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[AbiParameters.InvalidTypeError: Type `function` is not a valid ABI Type.]',
+  )
 })

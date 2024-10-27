@@ -22,9 +22,7 @@ test('args: size', () => {
 test('error: size overflow', () => {
   expect(() =>
     Hex.fromString('Hello World!', { size: 8 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.]',
+  )
 })

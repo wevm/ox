@@ -37,10 +37,6 @@ test('error: size overflow', () => {
       size: 32,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [Bytes.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
-
-    See: https://oxlib.sh/errors#bytessizeoverflowerror]
-  `,
+    '[Bytes.SizeOverflowError: Size cannot exceed `32` bytes. Given size: `64` bytes.]',
   )
 })

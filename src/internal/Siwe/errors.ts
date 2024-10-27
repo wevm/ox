@@ -30,7 +30,6 @@ export class Siwe_InvalidMessageFieldError extends BaseError {
   }) {
     const { field, metaMessages } = parameters
     super(`Invalid Sign-In with Ethereum message field "${field}".`, {
-      docsPath: '/errors#siweinvalidmessagefielderror',
       metaMessages,
     })
   }

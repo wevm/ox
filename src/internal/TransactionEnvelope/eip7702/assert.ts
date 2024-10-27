@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import { Address_assert } from '../../Address/assert.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
 import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
 import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
@@ -48,7 +48,7 @@ export declare namespace TransactionEnvelopeEip7702_assert {
   type ErrorType =
     | Address_assert.ErrorType
     | TransactionEnvelope_InvalidChainIdError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip7702_assert.parseError = (error: unknown) =>

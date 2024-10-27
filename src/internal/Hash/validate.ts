@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import { Hex_validate } from '../Hex/validate.js'
@@ -25,7 +25,10 @@ export function Hash_validate(value: string): value is Hex {
 }
 
 export declare namespace Hash_validate {
-  type ErrorType = Hex_validate.ErrorType | Hex_size.ErrorType | GlobalErrorType
+  type ErrorType =
+    | Hex_validate.ErrorType
+    | Hex_size.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -1336,8 +1336,6 @@ export * as HdKey from './HdKey.js'
  */
 export * as Hex from './Hex.js'
 
-export * as Internal from './Internal.js'
-
 /**
  * @category Execution Spec
  */
@@ -3034,8 +3032,6 @@ export * as TransactionRequest from './TransactionRequest.js'
  * @category Signed & Typed Data
  */
 export * as TypedData from './TypedData.js'
-
-export * as Types from './Types.js'
 
 /**
  * Utilities & types for working with [EIP-191 Validator Data](https://eips.ethereum.org/EIPS/eip-191#0x00)

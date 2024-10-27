@@ -1,5 +1,5 @@
 import { EventEmitter } from 'eventemitter3'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Provider_Emitter, Provider_EventMap } from './types.js'
 
 /**
@@ -60,7 +60,7 @@ export function Provider_createEmitter(): Provider_Emitter {
 }
 
 export declare namespace Provider_createEmitter {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Provider_createEmitter.parseError = (error: unknown) =>

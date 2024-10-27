@@ -1,5 +1,5 @@
 import { validateMnemonic } from '@scure/bip39'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Checks if a mnemonic is valid, given a wordlist.
@@ -27,7 +27,7 @@ export function Mnemonic_validate(
 }
 
 export declare namespace Mnemonic_validate {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Mnemonic_validate.parseError = (error: unknown) =>

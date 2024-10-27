@@ -11,18 +11,10 @@ test('default', () => {
     // biome-ignore lint/correctness/noPrecisionLoss: precision loss expected for test
     Hex.fromNumber(420182738912731283712937129),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-      [Hex.IntegerOutOfRangeError: Number \`4.2018273891273126e+26\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+    '[Hex.IntegerOutOfRangeError: Number `4.2018273891273126e+26` is not in safe unsigned integer range (`0` to `9007199254740991`)]',
   )
   expect(() => Hex.fromNumber(-69)).toThrowErrorMatchingInlineSnapshot(
-    `
-      [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+    '[Hex.IntegerOutOfRangeError: Number `-69` is not in safe unsigned integer range (`0` to `9007199254740991`)]',
   )
 })
 
@@ -37,29 +29,17 @@ test('args: size', () => {
   expect(() =>
     Hex.fromNumber(-7, { size: 1 }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-      [Hex.IntegerOutOfRangeError: Number \`-7\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+    '[Hex.IntegerOutOfRangeError: Number `-7` is not in safe 8-bit unsigned integer range (`0` to `255`)]',
   )
   expect(() =>
     Hex.fromNumber(256, { size: 1 }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-      [Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+    '[Hex.IntegerOutOfRangeError: Number `256` is not in safe 8-bit unsigned integer range (`0` to `255`)]',
   )
   expect(() =>
     Hex.fromNumber(65536, { size: 2 }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-      [Hex.IntegerOutOfRangeError: Number \`65536\` is not in safe 16-bit unsigned integer range (\`0\` to \`65535\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+    '[Hex.IntegerOutOfRangeError: Number `65536` is not in safe 16-bit unsigned integer range (`0` to `65535`)]',
   )
 })
 
@@ -85,19 +65,11 @@ test('args: signed', () => {
   expect(() =>
     Hex.fromNumber(32768, { size: 2, signed: true }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-      [Hex.IntegerOutOfRangeError: Number \`32768\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+    '[Hex.IntegerOutOfRangeError: Number `32768` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
   )
   expect(() =>
     Hex.fromNumber(-32769, { size: 2, signed: true }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-      [Hex.IntegerOutOfRangeError: Number \`-32769\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+    '[Hex.IntegerOutOfRangeError: Number `-32769` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
   )
 })

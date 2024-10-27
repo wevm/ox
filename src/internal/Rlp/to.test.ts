@@ -315,9 +315,7 @@ test('error: invalid hex value', () => {
     `
     [Hex.InvalidLengthError: Hex value \`"0x010"\` is an odd length (3 nibbles).
 
-    It must be an even length.
-
-    See: https://oxlib.sh/errors#bytesinvalidhexlengtherror]
+    It must be an even length.]
   `,
   )
 })

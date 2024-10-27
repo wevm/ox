@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { OneOf } from '../types.js'
 import type {
@@ -142,7 +142,7 @@ export declare namespace WebAuthnP256_getCredentialCreationOptions {
     | Base64_toBytes.ErrorType
     | Hash_keccak256.ErrorType
     | Bytes_fromString.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 WebAuthnP256_getCredentialCreationOptions.parseError = (error: unknown) =>

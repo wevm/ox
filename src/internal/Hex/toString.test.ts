@@ -23,9 +23,7 @@ test('error: size overflow', () => {
     Hex.toString(Hex.fromString('wagmi', { size: 64 }), {
       size: 32,
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-      [Bytes.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
-
-      See: https://oxlib.sh/errors#bytessizeoverflowerror]
-    `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Bytes.SizeOverflowError: Size cannot exceed `32` bytes. Given size: `64` bytes.]',
+  )
 })

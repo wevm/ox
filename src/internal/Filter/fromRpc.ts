@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_validate } from '../Hex/validate.js'
 import type { Filter, Filter_Rpc } from './types.js'
 
@@ -53,7 +53,7 @@ export function Filter_fromRpc(filter: Filter_Rpc): Filter {
 }
 
 export declare namespace Filter_fromRpc {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Filter_fromRpc.parseError = (error: unknown) =>

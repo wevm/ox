@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Authorization_hash } from './hash.js'
 import type { Authorization } from './types.js'
@@ -37,7 +37,7 @@ export function Authorization_getSignPayload(
 }
 
 export declare namespace Authorization_getSignPayload {
-  type ErrorType = Authorization_hash.ErrorType | GlobalErrorType
+  type ErrorType = Authorization_hash.ErrorType | Errors.GlobalErrorType
 }
 
 Authorization_getSignPayload.parseError = (error: unknown) =>

@@ -1,5 +1,5 @@
 import { type Abi, type FormatAbi, formatAbi } from 'abitype'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Formats an {@link ox#Abi.Abi} into a **Human Readable ABI**.
@@ -41,7 +41,7 @@ export function Abi_format<const abi extends Abi | readonly unknown[]>(
 }
 
 export declare namespace Abi_format {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Abi_format.parseError = (error: unknown) =>

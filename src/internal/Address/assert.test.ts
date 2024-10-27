@@ -10,22 +10,19 @@ test('default', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac" is invalid.
 
-    Details: Address does not match its checksum counterpart.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address does not match its checksum counterpart.]
   `)
 
   expect(() => Address.assert('x')).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "x" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 
   expect(() => Address.assert('0xa')).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 
   expect(() =>
@@ -33,8 +30,7 @@ test('default', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678az" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 
   expect(() =>
@@ -42,8 +38,7 @@ test('default', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678aff" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 
   expect(() =>
@@ -51,7 +46,6 @@ test('default', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "a5cc3c03994db5b0d9a5eEdD10Cabab0813678ac" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })

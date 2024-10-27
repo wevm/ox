@@ -143,21 +143,17 @@ test('no matching name', () => {
     AbiItem.fromAbi([] as readonly unknown[], 'balanceOf', {
       args: ['0x0000000000000000000000000000000000000000'],
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItem.NotFoundError: ABI item with name "balanceOf" not found.
-
-    See: https://oxlib.sh/errors#abiitemnotfounderror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[AbiItem.NotFoundError: ABI item with name "balanceOf" not found.]`,
+  )
 })
 
 test('no matching data', () => {
   expect(() =>
     AbiItem.fromAbi([], '0xdeadbeef'),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiItem.NotFoundError: ABI item with name "0xdeadbeef" not found.
-
-    See: https://oxlib.sh/errors#abiitemnotfounderror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[AbiItem.NotFoundError: ABI item with name "0xdeadbeef" not found.]`,
+  )
 })
 
 test('behavior: overloads', () => {
@@ -453,9 +449,7 @@ test('behavior: overloads: ambiguious types', () => {
     \`address\` in \`foo(address)\`
 
     These types encode differently and cannot be distinguished at runtime.
-    Remove one of the ambiguous items in the ABI.
-
-    See: https://oxlib.sh/errors#abiitemambiguityerror]
+    Remove one of the ambiguous items in the ABI.]
   `)
 
   expect(() =>
@@ -477,9 +471,7 @@ test('behavior: overloads: ambiguious types', () => {
     \`string\` in \`foo(string)\`
 
     These types encode differently and cannot be distinguished at runtime.
-    Remove one of the ambiguous items in the ABI.
-
-    See: https://oxlib.sh/errors#abiitemambiguityerror]
+    Remove one of the ambiguous items in the ABI.]
   `)
 
   expect(
@@ -557,9 +549,7 @@ test('behavior: overloads: ambiguious types', () => {
     \`address\` in \`foo(address)\`
 
     These types encode differently and cannot be distinguished at runtime.
-    Remove one of the ambiguous items in the ABI.
-
-    See: https://oxlib.sh/errors#abiitemambiguityerror]
+    Remove one of the ambiguous items in the ABI.]
   `)
 
   expect(() =>
@@ -577,9 +567,7 @@ test('behavior: overloads: ambiguious types', () => {
     \`address\` in \`foo((address))\`
 
     These types encode differently and cannot be distinguished at runtime.
-    Remove one of the ambiguous items in the ABI.
-
-    See: https://oxlib.sh/errors#abiitemambiguityerror]
+    Remove one of the ambiguous items in the ABI.]
   `)
 
   expect(() =>
@@ -600,9 +588,7 @@ test('behavior: overloads: ambiguious types', () => {
     \`address\` in \`foo(string,(address))\`
 
     These types encode differently and cannot be distinguished at runtime.
-    Remove one of the ambiguous items in the ABI.
-
-    See: https://oxlib.sh/errors#abiitemambiguityerror]
+    Remove one of the ambiguous items in the ABI.]
   `)
 })
 

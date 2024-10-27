@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Json_stringify } from '../Json/stringify.js'
 import type {
   TypedData,
@@ -87,7 +87,7 @@ export declare namespace TypedData_serialize {
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
   > = TypedData_Definition<typedData, primaryType>
 
-  type ErrorType = Json_stringify.ErrorType | GlobalErrorType
+  type ErrorType = Json_stringify.ErrorType | Errors.GlobalErrorType
 }
 
 TypedData_serialize.parseError = (error: unknown) =>

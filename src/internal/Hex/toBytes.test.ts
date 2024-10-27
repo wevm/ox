@@ -123,11 +123,9 @@ test('error: size overflow', () => {
     Hex.toString(Hex.fromBytes(Bytes.fromArray([69, 420]), { size: 64 }), {
       size: 32,
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Bytes.SizeOverflowError: Size cannot exceed \`32\` bytes. Given size: \`64\` bytes.
-
-    See: https://oxlib.sh/errors#bytessizeoverflowerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Bytes.SizeOverflowError: Size cannot exceed `32` bytes. Given size: `64` bytes.]',
+  )
 })
 
 test('error: invalid bytes', () => {

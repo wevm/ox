@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_assert } from './assert.js'
 import type { Bytes } from './types.js'
 
@@ -29,7 +29,7 @@ export function Bytes_validate(value: unknown): value is Bytes {
 }
 
 export declare namespace Bytes_validate {
-  export type ErrorType = GlobalErrorType
+  export type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

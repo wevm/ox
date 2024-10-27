@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 
 const decoder = /*#__PURE__*/ new TextDecoder()
 const lookup = /*#__PURE__*/ Object.fromEntries(
@@ -87,7 +87,7 @@ export declare namespace Base64_fromBytes {
     url?: boolean | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Base64_fromBytes.parseError = (error: unknown) =>

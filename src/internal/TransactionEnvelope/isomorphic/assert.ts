@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
 import { TransactionEnvelopeEip2930_assert } from '../eip2930/assert.js'
 import { TransactionEnvelopeEip4844_assert } from '../eip4844/assert.js'
@@ -52,7 +52,7 @@ export declare namespace TransactionEnvelope_assert {
     | TransactionEnvelopeEip4844_assert.ErrorType
     | TransactionEnvelopeEip7702_assert.ErrorType
     | TransactionEnvelope_TypeNotImplementedError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelope_assert.parseError = (error: unknown) =>

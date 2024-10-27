@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from './types.js'
 
 /**
@@ -20,7 +20,7 @@ export function Bytes_trimLeft(value: Bytes): Bytes {
 }
 
 export declare namespace Bytes_trimLeft {
-  type ErrorType = trim.ErrorType | GlobalErrorType
+  type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -46,7 +46,7 @@ export function Bytes_trimRight(value: Bytes): Bytes {
 }
 
 export declare namespace Bytes_trimRight {
-  export type ErrorType = trim.ErrorType | GlobalErrorType
+  export type ErrorType = trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -84,5 +84,5 @@ export declare namespace trim {
 
   type ReturnType = Bytes
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }

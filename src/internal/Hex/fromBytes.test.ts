@@ -43,9 +43,7 @@ test('error: size overflow', () => {
         size: 8,
       },
     ),
-  ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.]',
+  )
 })

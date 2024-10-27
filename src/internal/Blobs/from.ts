@@ -1,7 +1,7 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_size } from '../Bytes/size.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { createCursor } from '../cursor.js'
@@ -131,7 +131,7 @@ export declare namespace Blobs_from {
     | Hex_fromBytes.ErrorType
     | createCursor.ErrorType
     | Bytes_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

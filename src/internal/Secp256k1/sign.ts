@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
+import type * as Errors from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
 
@@ -46,7 +46,7 @@ export declare namespace Secp256k1_sign {
     privateKey: Hex | Bytes
   }
 
-  type ErrorType = Bytes_from.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_from.ErrorType | Errors.GlobalErrorType
 }
 
 Secp256k1_sign.parseError = (error: unknown) =>

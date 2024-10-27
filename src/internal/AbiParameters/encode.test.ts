@@ -345,11 +345,7 @@ describe('static', () => {
           ],
         ),
       ).toThrowErrorMatchingInlineSnapshot(
-        `
-        [AbiParameters.BytesSizeMismatchError: Size of bytes "0x0000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef" (bytes44) does not match expected size (bytes8).
-
-        See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
-      `,
+        `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x0000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef" (bytes44) does not match expected size (bytes8).]`,
       )
     })
   })
@@ -385,11 +381,7 @@ describe('static', () => {
           ],
         ),
       ).toThrowErrorMatchingInlineSnapshot(
-        `
-        [AbiParameters.BytesSizeMismatchError: Size of bytes "0x000000000000000000000000000000000000000000000000000000000000000420" (bytes33) does not match expected size (bytes16).
-
-        See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
-      `,
+        `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x000000000000000000000000000000000000000000000000000000000000000420" (bytes33) does not match expected size (bytes16).]`,
       )
     })
   })
@@ -1737,11 +1729,7 @@ test('invalid type', () => {
   expect(() =>
     AbiParameters.encode([{ name: 'x', type: 'lol' }], [69]),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [AbiParameters.InvalidTypeError: Type \`lol\` is not a valid ABI Type.
-
-    See: https://oxlib.sh/errors#abiparametersinvalidtypeerror]
-  `,
+    '[AbiParameters.InvalidTypeError: Type `lol` is not a valid ABI Type.]',
   )
 })
 
@@ -1755,9 +1743,7 @@ test('invalid params/values lengths', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [AbiParameters.LengthMismatchError: ABI encoding parameters/values length mismatch.
     Expected length (parameters): 1
-    Given length (values): 2
-
-    See: https://oxlib.sh/errors#abiparameterslengthmismatcherror]
+    Given length (values): 2]
   `)
 })
 
@@ -1767,8 +1753,7 @@ test('invalid address', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0x111" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })
 
@@ -1780,11 +1765,7 @@ test('invalid array', () => {
       [69],
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [AbiParameters.InvalidArrayError: Value \`69\` is not a valid array.
-
-    See: https://oxlib.sh/errors#abiparametersinvalidarrayerror]
-  `,
+    '[AbiParameters.InvalidArrayError: Value `69` is not a valid array.]',
   )
 })
 
@@ -1796,11 +1777,7 @@ test('invalid array lengths', () => {
       [[69n, 420n]],
     ),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [AbiParameters.ArrayLengthMismatchError: Array length mismatch for type \`uint256[3]\`. Expected: \`3\`. Given: \`2\`.
-
-    See: https://oxlib.sh/errors#abiparametersarraylengthmismatcherror]
-  `,
+    '[AbiParameters.ArrayLengthMismatchError: Array length mismatch for type `uint256[3]`. Expected: `3`. Given: `2`.]',
   )
 })
 
@@ -1808,11 +1785,7 @@ test('invalid bytes', () => {
   expect(() =>
     AbiParameters.encode([{ name: 'x', type: 'bytes8' }], ['0x111']),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [AbiParameters.BytesSizeMismatchError: Size of bytes "0x111" (bytes2) does not match expected size (bytes8).
-
-    See: https://oxlib.sh/errors#abiparametersbytessizemismatcherror]
-  `,
+    `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x111" (bytes2) does not match expected size (bytes8).]`,
   )
 })
 

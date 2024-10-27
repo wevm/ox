@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Authorization_toRpc } from './toRpc.js'
 import type {
   Authorization_ListRpc,
@@ -32,7 +32,7 @@ export function Authorization_toRpcList(
 }
 
 export declare namespace Authorization_toRpcList {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Authorization_toRpcList.parseError = (error: unknown) =>

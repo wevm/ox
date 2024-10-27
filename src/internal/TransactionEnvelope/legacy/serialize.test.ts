@@ -339,10 +339,6 @@ test('error: invalid v', () => {
       v: 29,
     }),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [Signature.InvalidVError: Value \`29\` is an invalid v value. v must be 27, 28 or >=35.
-
-    See: https://oxlib.sh/errors#invalidsignatureverror]
-  `,
+    '[Signature.InvalidVError: Value `29` is an invalid v value. v must be 27, 28 or >=35.]',
   )
 })

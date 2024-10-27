@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import type { Hex } from '../../Hex/types.js'
 import type { Compute, IsNarrowable } from '../../types.js'
 import { TransactionEnvelopeEip1559_deserialize } from '../eip1559/deserialize.js'
@@ -90,7 +90,7 @@ export declare namespace TransactionEnvelope_deserialize {
     | TransactionEnvelopeEip1559_deserialize.ErrorType
     | TransactionEnvelopeEip4844_deserialize.ErrorType
     | TransactionEnvelopeEip7702_deserialize.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelope_deserialize.parseError = (error: unknown) =>

@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_assertSize } from './assertSize.js'
 import type { Hex } from './types.js'
 
@@ -48,7 +48,7 @@ export declare namespace Hex_toBigInt {
     size?: number | undefined
   }
 
-  type ErrorType = Hex_assertSize.ErrorType | GlobalErrorType
+  type ErrorType = Hex_assertSize.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

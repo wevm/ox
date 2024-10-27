@@ -1,9 +1,9 @@
+import type * as Errors from '../../Errors.js'
 import {
   Address_InvalidAddressError,
   Address_InvalidInputError,
 } from '../Address/errors.js'
 import { Address_validate } from '../Address/validate.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
@@ -133,7 +133,7 @@ export declare namespace TypedData_assert {
     | TypedData_InvalidPrimaryTypeError
     | Hex_fromNumber.ErrorType
     | Hex_size.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TypedData_assert.parseError = (error: unknown) =>

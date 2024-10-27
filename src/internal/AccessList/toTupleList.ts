@@ -1,3 +1,4 @@
+// TODO: public
 import { Address_assert } from '../Address/assert.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Compute, Mutable } from '../types.js'

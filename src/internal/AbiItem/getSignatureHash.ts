@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromString } from '../Hex/fromString.js'
 import type { Hex } from '../Hex/types.js'
@@ -48,7 +48,7 @@ export declare namespace AbiItem_getSignatureHash {
     | AbiItem_getSignature.ErrorType
     | Hash_keccak256.ErrorType
     | Hex_fromString.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 AbiItem_getSignatureHash.parseError = (error: unknown) =>

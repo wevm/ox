@@ -21,7 +21,6 @@ export class Address_InvalidAddressError<
   constructor({ address, cause }: { address: string; cause: cause }) {
     super(`Address "${address}" is invalid.`, {
       cause,
-      docsPath: '/errors#invalidaddresserror',
     })
   }
 }

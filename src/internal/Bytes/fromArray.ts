@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from './types.js'
 
 /**
@@ -20,7 +20,7 @@ export function Bytes_fromArray(value: readonly number[] | Uint8Array): Bytes {
 }
 
 export declare namespace Bytes_fromArray {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Bytes_fromArray.parseError = (error: unknown) =>

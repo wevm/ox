@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { AbiItem_from } from '../AbiItem/from.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type {
   AbiConstructor,
   AbiConstructor_Signature,
@@ -128,7 +128,7 @@ export declare namespace AbiConstructor_from {
     abiConstructor extends AbiConstructor | string | readonly string[],
   > = AbiItem_from.ReturnType<abiConstructor>
 
-  type ErrorType = AbiItem_from.ErrorType | GlobalErrorType
+  type ErrorType = AbiItem_from.ErrorType | Errors.GlobalErrorType
 }
 
 AbiConstructor_from.parseError = (error: unknown) =>

@@ -1,5 +1,5 @@
 import { generateMnemonic } from '@scure/bip39'
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Generates a random mnemonic.
@@ -33,7 +33,7 @@ export declare namespace Mnemonic_random {
     strength?: number | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Mnemonic_random.parseError = (error: unknown) =>

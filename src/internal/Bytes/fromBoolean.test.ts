@@ -80,9 +80,7 @@ test('args: size', () => {
 test('error: size overflow', () => {
   expect(() =>
     Bytes.fromBoolean(false, { size: 0 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-      [Bytes.SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
-
-      See: https://oxlib.sh/errors#bytessizeoverflowerror]
-    `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Bytes.SizeOverflowError: Size cannot exceed `0` bytes. Given size: `1` bytes.]',
+  )
 })

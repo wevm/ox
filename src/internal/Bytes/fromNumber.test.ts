@@ -26,11 +26,7 @@ describe('numbers to bytes', () => {
     `)
 
     expect(() => Bytes.fromNumber(-69)).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`-69\` is not in safe unsigned integer range (\`0\` to \`9007199254740991\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `-69` is not in safe unsigned integer range (`0` to `9007199254740991`)]',
     )
   })
 
@@ -102,29 +98,17 @@ describe('numbers to bytes', () => {
     expect(() =>
       Bytes.fromNumber(-7, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`-7\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `-7` is not in safe 8-bit unsigned integer range (`0` to `255`)]',
     )
     expect(() =>
       Bytes.fromNumber(256, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `256` is not in safe 8-bit unsigned integer range (`0` to `255`)]',
     )
     expect(() =>
       Bytes.fromNumber(65536, { size: 2 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`65536\` is not in safe 16-bit unsigned integer range (\`0\` to \`65535\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `65536` is not in safe 16-bit unsigned integer range (`0` to `65535`)]',
     )
   })
 
@@ -199,20 +183,12 @@ describe('numbers to bytes', () => {
     expect(() =>
       Bytes.fromNumber(32768, { size: 2, signed: true }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`32768\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `32768` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
     )
     expect(() =>
       Bytes.fromNumber(-32769, { size: 2, signed: true }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`-32769\` is not in safe 16-bit signed integer range (\`-32768\` to \`32767\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `-32769` is not in safe 16-bit signed integer range (`-32768` to `32767`)]',
     )
   })
 })
@@ -329,38 +305,22 @@ describe('bigints to bytes', () => {
     expect(() =>
       Bytes.fromNumber(-7n, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`-7n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `-7n` is not in safe 8-bit unsigned integer range (`0n` to `255n`)]',
     )
     expect(() =>
       Bytes.fromNumber(256n, { size: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`256n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `256n` is not in safe 8-bit unsigned integer range (`0n` to `255n`)]',
     )
     expect(() =>
       Bytes.fromNumber(65536n, { size: 2 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`65536n\` is not in safe 16-bit unsigned integer range (\`0n\` to \`65535n\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `65536n` is not in safe 16-bit unsigned integer range (`0n` to `65535n`)]',
     )
     expect(() =>
       Bytes.fromNumber(18446744073709551616n, { size: 8 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`18446744073709551616n\` is not in safe 64-bit unsigned integer range (\`0n\` to \`18446744073709551615n\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `18446744073709551616n` is not in safe 64-bit unsigned integer range (`0n` to `18446744073709551615n`)]',
     )
   })
 
@@ -521,11 +481,7 @@ describe('bigints to bytes', () => {
         signed: true,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`170141183460469231731687303715884105728n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `170141183460469231731687303715884105728n` is not in safe 128-bit signed integer range (`-170141183460469231731687303715884105728n` to `170141183460469231731687303715884105727n`)]',
     )
     expect(() =>
       Bytes.fromNumber(-170141183460469231731687303715884105729n, {
@@ -533,11 +489,7 @@ describe('bigints to bytes', () => {
         signed: true,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.IntegerOutOfRangeError: Number \`-170141183460469231731687303715884105729n\` is not in safe 128-bit signed integer range (\`-170141183460469231731687303715884105728n\` to \`170141183460469231731687303715884105727n\`)
-
-      See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-    `,
+      '[Hex.IntegerOutOfRangeError: Number `-170141183460469231731687303715884105729n` is not in safe 128-bit signed integer range (`-170141183460469231731687303715884105728n` to `170141183460469231731687303715884105727n`)]',
     )
   })
 })

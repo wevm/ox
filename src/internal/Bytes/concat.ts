@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from './types.js'
 
 /**
@@ -34,7 +34,7 @@ export function Bytes_concat(...values: readonly Bytes[]): Bytes {
 }
 
 export declare namespace Bytes_concat {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -8,6 +8,7 @@ test('exports', () => {
       "InvalidHexBooleanError",
       "InvalidHexTypeError",
       "InvalidHexValueError",
+      "InvalidLengthError",
       "SizeExceedsPaddingSizeError",
       "SizeOverflowError",
       "SliceOffsetOutOfBoundsError",

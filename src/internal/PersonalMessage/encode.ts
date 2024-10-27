@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_from } from '../Hex/from.js'
 import { Hex_fromString } from '../Hex/fromString.js'
@@ -36,7 +36,7 @@ export declare namespace PersonalMessage_encode {
     | Hex_concat.ErrorType
     | Hex_from.ErrorType
     | Hex_fromString.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

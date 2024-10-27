@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_SizeOverflowError } from './errors.js'
 import { Bytes_size } from './size.js'
 import type { Bytes } from './types.js'
@@ -17,5 +17,5 @@ export declare namespace Bytes_assertSize {
   type ErrorType =
     | Bytes_size.ErrorType
     | Bytes_SizeOverflowError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

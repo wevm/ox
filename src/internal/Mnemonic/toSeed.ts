@@ -1,7 +1,7 @@
 import { mnemonicToSeedSync } from '@scure/bip39'
+import type * as Errors from '../../Errors.js'
 import { Bytes_toHex } from '../Bytes/toHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 
 /**
@@ -42,7 +42,7 @@ export declare namespace Mnemonic_toSeed {
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Mnemonic_toSeed.parseError = (error: unknown) =>

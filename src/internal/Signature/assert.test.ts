@@ -4,35 +4,27 @@ import { expect, test } from 'vitest'
 test('default', () => {
   expect(() =>
     Signature.assert({ r: undefined, s: 0n, yParity: 0 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.MissingPropertiesError: Signature \`{"s":"0#__bigint","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
-
-    See: https://oxlib.sh/errors#missingsignaturepropertieserror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[Signature.MissingPropertiesError: Signature \`{"s":"0#__bigint","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+  )
 
   expect(() =>
     Signature.assert({ r: 0n, s: undefined, yParity: 0 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.MissingPropertiesError: Signature \`{"r":"0#__bigint","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
-
-    See: https://oxlib.sh/errors#missingsignaturepropertieserror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[Signature.MissingPropertiesError: Signature \`{"r":"0#__bigint","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+  )
 
   expect(() =>
     Signature.assert({ r: 0n, s: 0n, yParity: 69 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.InvalidYParityError: Value \`69\` is an invalid y-parity value. Y-parity must be 0 or 1.
-
-    See: https://oxlib.sh/errors#invalidsignatureyparityerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Signature.InvalidYParityError: Value `69` is an invalid y-parity value. Y-parity must be 0 or 1.]',
+  )
 
   expect(() =>
     Signature.assert({ r: 0n, s: 0n }, { recovered: true }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Signature.MissingPropertiesError: Signature \`{"r":"0#__bigint","s":"0#__bigint"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.
-
-    See: https://oxlib.sh/errors#missingsignaturepropertieserror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    `[Signature.MissingPropertiesError: Signature \`{"r":"0#__bigint","s":"0#__bigint"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+  )
 
   expect(() =>
     Signature.assert({ r: -1n, s: 0n, yParity: 0 }),

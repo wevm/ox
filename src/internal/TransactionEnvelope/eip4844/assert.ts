@@ -1,9 +1,9 @@
+import type * as Errors from '../../../Errors.js'
 import {
   Blobs_EmptyBlobVersionedHashesError,
   Blobs_InvalidVersionedHashSizeError,
   Blobs_InvalidVersionedHashVersionError,
 } from '../../Blobs/errors.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_size } from '../../Hex/size.js'
 import { Hex_slice } from '../../Hex/slice.js'
 import { Hex_toNumber } from '../../Hex/toNumber.js'
@@ -64,7 +64,7 @@ export declare namespace TransactionEnvelopeEip4844_assert {
     | Blobs_EmptyBlobVersionedHashesError
     | Blobs_InvalidVersionedHashSizeError
     | Blobs_InvalidVersionedHashVersionError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip4844_assert.parseError = (error: unknown) =>

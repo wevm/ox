@@ -1,8 +1,8 @@
 import { secp256r1 } from '@noble/curves/p256'
 
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
 
@@ -46,7 +46,7 @@ export declare namespace P256_sign {
     privateKey: Hex | Bytes
   }
 
-  type ErrorType = Bytes_fromHex.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

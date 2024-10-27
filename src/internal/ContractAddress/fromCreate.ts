@@ -1,8 +1,8 @@
+import type * as Errors from '../../Errors.js'
 import { Address_from } from '../Address/from.js'
 import type { Address } from '../Address/types.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_fromNumber } from '../Bytes/fromNumber.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Rlp_fromBytes } from '../Rlp/from.js'
 
@@ -50,7 +50,7 @@ export declare namespace ContractAddress_fromCreate {
     | Bytes_fromHex.ErrorType
     | Bytes_fromNumber.ErrorType
     | Rlp_fromBytes.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 ContractAddress_fromCreate.parseError = (error: unknown) =>

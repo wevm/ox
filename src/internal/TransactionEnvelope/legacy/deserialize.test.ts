@@ -319,11 +319,9 @@ describe('errors', () => {
           Hex.fromNumber(420), // s
         ]),
       ),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Signature.InvalidVError: Value \`0\` is an invalid v value. v must be 27, 28 or >=35.
-
-      See: https://oxlib.sh/errors#invalidsignatureverror]
-    `)
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Signature.InvalidVError: Value `0` is an invalid v value. v must be 27, 28 or >=35.]',
+    )
 
     expect(() =>
       TransactionEnvelopeLegacy.deserialize(
@@ -339,10 +337,8 @@ describe('errors', () => {
           Hex.fromNumber(420), // s
         ]),
       ),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Signature.InvalidVError: Value \`35\` is an invalid v value. v must be 27, 28 or >=35.
-
-      See: https://oxlib.sh/errors#invalidsignatureverror]
-    `)
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Signature.InvalidVError: Value `35` is an invalid v value. v must be 27, 28 or >=35.]',
+    )
   })
 })

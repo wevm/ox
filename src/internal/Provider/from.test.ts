@@ -65,10 +65,6 @@ test('behavior: events', async () => {
 
 test('error: undefined', () => {
   expect(() => Provider.from(undefined)).toThrowErrorMatchingInlineSnapshot(
-    `
-    [Provider.IsUndefinedError: \`provider\` is undefined.
-
-    See: https://oxlib.sh/errors#providerisundefinederror]
-  `,
+    '[Provider.IsUndefinedError: `provider` is undefined.]',
   )
 })

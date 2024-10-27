@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 
 const alphabet = /* __PURE__ */ Object.freeze<Record<string, bigint>>({
@@ -101,7 +101,7 @@ export function Base58_toHex(value: string): Hex {
 }
 
 export declare namespace Base58_toHex {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Base58_toHex.parseError = (error: unknown) =>

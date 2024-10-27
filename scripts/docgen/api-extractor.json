@@ -33,7 +33,8 @@
       "ae-incompatible-release-tags": { "logLevel": "none" },
       "ae-internal-mixed-release-tag": { "logLevel": "none" },
       "ae-missing-release-tag": { "logLevel": "none" },
-      "ae-unresolved-link": { "logLevel": "none" }
+      "ae-unresolved-link": { "logLevel": "none" },
+      "ae-forgotten-export": { "logLevel": "none" }
     }
   }
 }

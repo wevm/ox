@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_hashDomain } from './hashDomain.js'
 import type { TypedData_Domain } from './types.js'
@@ -29,7 +29,7 @@ export function TypedData_domainSeparator(domain: TypedData_Domain): Hex {
 }
 
 export declare namespace TypedData_domainSeparator {
-  type ErrorType = TypedData_hashDomain.ErrorType | GlobalErrorType
+  type ErrorType = TypedData_hashDomain.ErrorType | Errors.GlobalErrorType
 }
 
 TypedData_domainSeparator.parseError = (error: unknown) =>

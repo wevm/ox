@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import { ValidatorData_encode } from './encode.js'
@@ -38,7 +38,7 @@ export declare namespace ValidatorData_getSignPayload {
   type ErrorType =
     | Hash_keccak256.ErrorType
     | ValidatorData_encode.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

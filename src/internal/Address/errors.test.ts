@@ -15,8 +15,7 @@ test('InvalidAddressError', () => {
       `
       "Address "0x1234567890123456789012345678901234567890" is invalid.
 
-      Details: Address does not match its checksum counterpart.
-      See: https://oxlib.sh/errors#invalidaddresserror"
+      Details: Address does not match its checksum counterpart."
     `,
     )
   }
@@ -30,8 +29,7 @@ test('InvalidAddressError', () => {
       `
       "Address "0x1234567890123456789012345678901234567890" is invalid.
 
-      Details: Address is not a 20 byte (40 hexadecimal character) value.
-      See: https://oxlib.sh/errors#invalidaddresserror"
+      Details: Address is not a 20 byte (40 hexadecimal character) value."
     `,
     )
   }

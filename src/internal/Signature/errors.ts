@@ -11,7 +11,6 @@ export class Signature_InvalidSerializedSizeError extends BaseError {
 
   constructor({ signature }: { signature: Hex | Bytes }) {
     super(`Value \`${signature}\` is an invalid signature size.`, {
-      docsPath: '/errors#invalidserializedsignaturesizeerror',
       metaMessages: [
         'Expected: 64 bytes or 65 bytes.',
         `Received ${Hex_size(Hex_from(signature))} bytes.`,
@@ -27,9 +26,6 @@ export class Signature_MissingPropertiesError extends BaseError {
   constructor({ signature }: { signature: unknown }) {
     super(
       `Signature \`${Json_stringify(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`,
-      {
-        docsPath: '/errors#missingsignaturepropertieserror',
-      },
     )
   }
 }
@@ -63,9 +59,6 @@ export class Signature_InvalidYParityError extends BaseError {
   constructor({ value }: { value: unknown }) {
     super(
       `Value \`${value}\` is an invalid y-parity value. Y-parity must be 0 or 1.`,
-      {
-        docsPath: '/errors#invalidsignatureyparityerror',
-      },
     )
   }
 }
@@ -75,11 +68,6 @@ export class Signature_InvalidVError extends BaseError {
   override readonly name = 'Signature.InvalidVError'
 
   constructor({ value }: { value: number }) {
-    super(
-      `Value \`${value}\` is an invalid v value. v must be 27, 28 or >=35.`,
-      {
-        docsPath: '/errors#invalidsignatureverror',
-      },
-    )
+    super(`Value \`${value}\` is an invalid v value. v must be 27, 28 or >=35.`)
   }
 }

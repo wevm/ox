@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import type { Hex } from '../Hex/types.js'
@@ -62,7 +62,7 @@ export declare namespace Signature_serialize {
     | (as extends 'Hex' ? Hex : never)
     | (as extends 'Bytes' ? Bytes : never)
 
-  type ErrorType = Bytes_fromHex.ErrorType | GlobalErrorType
+  type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
 }
 
 Signature_serialize.parseError = (error: unknown) =>

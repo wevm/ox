@@ -6,7 +6,6 @@ import {
   type ModuleItem,
   renderNamespace,
   renderNamespaceErrors,
-  renderNamespaceGlossary,
   renderNamespaceTypes,
 } from './render/apiNamespace.js'
 import { createDataLookup, getId } from './utils/model.js'
@@ -47,17 +46,15 @@ const moduleDocComments = extractNamespaceDocComments(
 )
 
 const testNamespaces: string[] = []
-const excludeNamespaces = ['Caches', 'Constants', 'Internal', 'Types']
+const excludeNamespaces = ['Caches', 'Constants', 'Errors', 'Internal', 'Types']
 const namespaces = []
-const glossaryNamespaces = []
 for (const member of apiEntryPoint.members) {
   if (member.kind !== model.ApiItemKind.Namespace) continue
   if (!namespaceRegex.test(getId(member))) continue
   if (excludeNamespaces.includes(member.displayName)) continue
   if (testNamespaces.length && !testNamespaces.includes(member.displayName))
     continue
-  if (['Errors'].includes(member.displayName)) glossaryNamespaces.push(member)
-  else namespaces.push(member)
+  namespaces.push(member)
 }
 
 ////////////////////////////////////////////////////////////
@@ -174,25 +171,6 @@ for (const namespace of namespaces) {
   fs.writeFileSync(`${dir}/index.md`, content)
 }
 
-// Error glossary
-const glossarySidebar = []
-for (const namespace of glossaryNamespaces) {
-  const name = namespace.displayName
-  glossarySidebar.push({
-    link: `/api/glossary/${name}`,
-    text: name,
-  })
-
-  const content = renderNamespaceGlossary({
-    apiItem: namespace,
-    dataLookup,
-    type: name as 'Errors' | 'Types',
-  })
-  const dir = `${pagesDir}/api/glossary`
-  fs.ensureDirSync(dir)
-  fs.writeFileSync(`${dir}/${name}.md`, content)
-}
-
 const alphabetizedNamespaceMap = new Map(
   [...namespaceMap].sort(([categoryA], [categoryB]) =>
     categoryA.localeCompare(categoryB),
@@ -212,10 +190,6 @@ const sidebar = [
     link: '/api',
   },
   ...namespaceSidebarItems,
-  {
-    text: 'Glossary',
-    items: glossarySidebar,
-  },
 ]
 fs.writeFileSync(
   './site/sidebar-generated.ts',

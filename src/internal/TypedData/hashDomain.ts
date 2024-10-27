@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashStruct } from './hashStruct.js'
@@ -51,7 +51,7 @@ export declare namespace TypedData_hashDomain {
       | undefined
   }
 
-  type ErrorType = TypedData_hashStruct.ErrorType | GlobalErrorType
+  type ErrorType = TypedData_hashStruct.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

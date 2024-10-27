@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { PublicKey } from './types.js'
 
 /**
@@ -35,7 +35,7 @@ export function PublicKey_compress(
 }
 
 export declare namespace PublicKey_compress {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 PublicKey_compress.parseError = (error: unknown) =>

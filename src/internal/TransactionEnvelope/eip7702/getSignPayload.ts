@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import type { Hex } from '../../Hex/types.js'
 import { TransactionEnvelopeEip7702_hash } from './hash.js'
 import type { TransactionEnvelopeEip7702 } from './types.js'
@@ -42,7 +42,9 @@ export function TransactionEnvelopeEip7702_getSignPayload(
 export declare namespace TransactionEnvelopeEip7702_getSignPayload {
   type ReturnType = Hex
 
-  type ErrorType = TransactionEnvelopeEip7702_hash.ErrorType | GlobalErrorType
+  type ErrorType =
+    | TransactionEnvelopeEip7702_hash.ErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip7702_getSignPayload.parseError = (error: unknown) =>

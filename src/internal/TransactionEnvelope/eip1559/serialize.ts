@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_concat } from '../../Hex/concat.js'
 import { Hex_fromNumber } from '../../Hex/fromNumber.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
@@ -118,7 +118,7 @@ export declare namespace TransactionEnvelopeEip1559_serialize {
     | Signature_toTuple.ErrorType
     | Hex_concat.ErrorType
     | Rlp_fromHex.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip1559_serialize.parseError = (error: unknown) =>

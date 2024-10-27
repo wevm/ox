@@ -18,9 +18,7 @@ test('args: size', () => {
 test('error: size overflow', () => {
   expect(() =>
     Hex.fromBoolean(false, { size: 0 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.SizeOverflowError: Size cannot exceed \`0\` bytes. Given size: \`1\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.SizeOverflowError: Size cannot exceed `0` bytes. Given size: `1` bytes.]',
+  )
 })

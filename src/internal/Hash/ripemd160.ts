@@ -1,8 +1,8 @@
 import { ripemd160 } from '@noble/hashes/ripemd160'
 
+import type * as Errors from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -51,7 +51,7 @@ export declare namespace Hash_ripemd160 {
   type ErrorType =
     | Bytes_from.ErrorType
     | Hex_fromBytes.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

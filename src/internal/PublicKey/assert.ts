@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { ExactPartial } from '../types.js'
 import {
   PublicKey_InvalidCompressedPrefixError,
@@ -73,5 +73,5 @@ export declare namespace PublicKey_assert {
   type ErrorType =
     | PublicKey_InvalidError
     | PublicKey_InvalidPrefixError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }

@@ -1,6 +1,6 @@
 import { BaseError } from '../Errors.js'
+import type * as Errors from '../Errors.js'
 import type { Bytes } from './Bytes/types.js'
-import type { GlobalErrorType } from './Errors/error.js'
 
 /** @internal */
 export type Cursor = {
@@ -201,7 +201,7 @@ const staticCursor: Cursor = /*#__PURE__*/ {
 export declare namespace createCursor {
   type Config = { recursiveReadLimit?: number | undefined }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /** @internal */

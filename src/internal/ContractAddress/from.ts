@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import type { Address } from '../Address/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { OneOf } from '../types.js'
 import { ContractAddress_fromCreate } from './fromCreate.js'
 import { ContractAddress_fromCreate2 } from './fromCreate2.js'
@@ -54,7 +54,7 @@ export declare namespace ContractAddress_from {
   type ErrorType =
     | ContractAddress_fromCreate.ErrorType
     | ContractAddress_fromCreate2.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 ContractAddress_from.parseError = (error: unknown) =>

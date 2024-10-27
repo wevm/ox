@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import { Address_assert } from '../../Address/assert.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { PartialBy } from '../../types.js'
 import {
   TransactionEnvelope_GasPriceTooHighError,
@@ -43,7 +43,7 @@ export declare namespace TransactionEnvelopeLegacy_assert {
     | Address_assert.ErrorType
     | TransactionEnvelope_InvalidChainIdError
     | TransactionEnvelope_GasPriceTooHighError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelopeLegacy_assert.parseError = (error: unknown) =>

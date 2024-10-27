@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_slice } from '../Hex/slice.js'
 import type { Hex } from '../Hex/types.js'
 import { AbiItem_getSignatureHash } from './getSignatureHash.js'
@@ -42,7 +42,7 @@ export declare namespace AbiItem_getSelector {
   type ErrorType =
     | AbiItem_getSignatureHash.ErrorType
     | Hex_slice.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

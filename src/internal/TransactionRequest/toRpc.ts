@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { Authorization_toRpcList } from '../Authorization/toRpcList.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import type { TransactionRequest, TransactionRequest_Rpc } from './types.js'
 
@@ -96,7 +96,7 @@ export declare namespace TransactionRequest_toRpc {
   export type ErrorType =
     | Authorization_toRpcList.ErrorType
     | Hex_fromNumber.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionRequest_toRpc.parseError = (error: unknown) =>

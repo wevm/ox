@@ -50,7 +50,6 @@ export class AbiItem_AmbiguityError extends BaseError {
     y: { abiItem: Abi[number]; type: string },
   ) {
     super('Found ambiguous types in overloaded ABI Items.', {
-      docsPath: '/errors#abiitemambiguityerror',
       metaMessages: [
         // TODO: abitype to add support for signature-formatted ABI items.
         `\`${x.type}\` in \`${normalizeSignature(formatAbiItem(x.abiItem))}\`, and`,
@@ -111,9 +110,7 @@ export class AbiItem_NotFoundError extends BaseError {
       if (data) return ` with data "${data}"`
       return ''
     })()
-    super(`ABI ${type}${selector} not found.`, {
-      docsPath: '/errors#abiitemnotfounderror',
-    })
+    super(`ABI ${type}${selector} not found.`)
   }
 }
 
@@ -152,9 +149,6 @@ export class AbiItem_InvalidSelectorSizeError extends BaseError {
   constructor({ data }: { data: Hex }) {
     super(
       `Selector size is invalid. Expected 4 bytes. Received ${Hex_size(data)} bytes ("${data}").`,
-      {
-        docsPath: '/errors#abiiteminvalidselectorsizeerror',
-      },
     )
   }
 }

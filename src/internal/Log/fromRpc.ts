@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Log, Log_Rpc } from './types.js'
 
 /**
@@ -127,7 +127,7 @@ export declare namespace Log_fromRpc {
     pending?: pending | boolean | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Log_fromRpc.parseError = (error: unknown) =>

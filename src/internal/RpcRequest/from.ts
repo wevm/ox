@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type {
   RpcSchema_Extract,
   RpcSchema_ExtractRequest,
@@ -103,7 +103,7 @@ export declare namespace RpcRequest_from {
     >
   >
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 RpcRequest_from.parseError = (error: unknown) =>

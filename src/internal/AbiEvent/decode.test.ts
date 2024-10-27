@@ -247,9 +247,7 @@ test('error: invalid boolean', () => {
     `
     [Bytes.InvalidBytesBooleanError: Bytes value \`221,242,82,173,27,226,200,155,105,194,176,104,252,55,141,170,149,43,167,241,99,196,161,22,40,245,90,77,245,35,179,239\` is not a valid boolean.
 
-    The bytes array must contain a single byte of either a \`0\` or \`1\` value.
-
-    See: https://oxlib.sh/errors#bytesinvalidbytesbooleanerror]
+    The bytes array must contain a single byte of either a \`0\` or \`1\` value.]
   `,
   )
 })

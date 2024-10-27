@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import { Signature_extract } from '../Signature/extract.js'
 import { Signature_toTuple } from '../Signature/toTuple.js'
@@ -49,7 +49,7 @@ export declare namespace Authorization_toTuple {
   type ReturnType<authorization extends Authorization = Authorization> =
     Compute<Authorization_Tuple<authorization extends Signature ? true : false>>
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Authorization_toTuple.parseError = (error: unknown) =>

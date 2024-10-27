@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Value_InvalidDecimalNumberError } from './errors.js'
 
 /**
@@ -59,7 +59,7 @@ export function Value_from(value: string, decimals = 0) {
 }
 
 export declare namespace Value_from {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

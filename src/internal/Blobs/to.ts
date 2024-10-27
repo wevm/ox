@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { createCursor } from '../cursor.js'
@@ -91,7 +91,7 @@ export declare namespace Blobs_to {
     | Hex_fromBytes.ErrorType
     | Bytes_fromHex.ErrorType
     | createCursor.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -117,7 +117,7 @@ export function Blobs_toHex(
 
 export declare namespace Blobs_toHex {
   type ReturnType = Blobs_to.ReturnType<'Hex'>
-  type ErrorType = Blobs_to.ErrorType | GlobalErrorType
+  type ErrorType = Blobs_to.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -143,7 +143,7 @@ export function Blobs_toBytes(
 
 export declare namespace Blobs_toBytes {
   type ReturnType = Blobs_to.ReturnType<'Bytes'>
-  type ErrorType = Blobs_to.ErrorType | GlobalErrorType
+  type ErrorType = Blobs_to.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

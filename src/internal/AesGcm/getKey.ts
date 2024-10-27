@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { AesGcm_randomSalt } from './randomSalt.js'
 
 /**
@@ -57,7 +57,7 @@ export declare namespace AesGcm_getKey {
     salt?: Bytes | undefined
   }
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 AesGcm_getKey.parseError = (error: unknown) =>

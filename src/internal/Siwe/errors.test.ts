@@ -19,8 +19,6 @@ test('InvalidMessageFieldError', () => {
     - Nonce must be at least 8 characters.
     - Nonce must be alphanumeric.
 
-    Provided value: foobarbaz$
-
-    See: https://oxlib.sh/errors#siweinvalidmessagefielderror]
+    Provided value: foobarbaz$]
   `)
 })

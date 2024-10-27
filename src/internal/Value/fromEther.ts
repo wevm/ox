@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Value_exponents } from './constants.js'
 import { Value_from } from './from.js'
 
@@ -25,7 +25,7 @@ export function Value_fromEther(
 }
 
 export declare namespace Value_fromEther {
-  type ErrorType = Value_from.ErrorType | GlobalErrorType
+  type ErrorType = Value_from.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

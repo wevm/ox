@@ -5,6 +5,7 @@ export {
   Hex_InvalidHexBooleanError as InvalidHexBooleanError,
   Hex_InvalidHexTypeError as InvalidHexTypeError,
   Hex_InvalidHexValueError as InvalidHexValueError,
+  Hex_InvalidLengthError as InvalidLengthError,
   Hex_SizeExceedsPaddingSizeError as SizeExceedsPaddingSizeError,
   Hex_SizeOverflowError as SizeOverflowError,
   Hex_SliceOffsetOutOfBoundsError as SliceOffsetOutOfBoundsError,

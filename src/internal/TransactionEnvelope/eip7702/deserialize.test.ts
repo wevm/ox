@@ -246,8 +246,7 @@ describe('errors', () => {
     ).toThrowErrorMatchingInlineSnapshot(`
       [Address.InvalidAddressError: Address "0x" is invalid.
 
-      Details: Address is not a 20 byte (40 hexadecimal character) value.
-      See: https://oxlib.sh/errors#invalidaddresserror]
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
     `)
 
     expect(() =>
@@ -268,9 +267,7 @@ describe('errors', () => {
     ).toThrowErrorMatchingInlineSnapshot(`
       [Hex.InvalidLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
 
-      It must be an even length.
-
-      See: https://oxlib.sh/errors#bytesinvalidhexlengtherror]
+      It must be an even length.]
     `)
   })
 

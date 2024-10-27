@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import { TransactionEnvelope_assert } from './assert.js'
 import type { TransactionEnvelope } from './types.js'
 
@@ -31,7 +31,7 @@ export function TransactionEnvelope_validate(envelope: TransactionEnvelope) {
 }
 
 export declare namespace TransactionEnvelope_validate {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 TransactionEnvelope_validate.parseError = (error: unknown) =>

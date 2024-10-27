@@ -1,5 +1,5 @@
+import type * as Errors from '../../Errors.js'
 import { AbiItem_getSignatureHash } from '../AbiItem/getSignatureHash.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import type { Hex } from '../Hex/types.js'
 import type { AbiEvent } from './types.js'
 
@@ -38,7 +38,7 @@ export function AbiEvent_getSelector(abiItem: string | AbiEvent): Hex {
 }
 
 export declare namespace AbiEvent_getSelector {
-  type ErrorType = AbiItem_getSignatureHash.ErrorType | GlobalErrorType
+  type ErrorType = AbiItem_getSignatureHash.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

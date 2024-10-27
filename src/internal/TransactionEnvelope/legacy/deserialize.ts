@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import type { Hex } from '../../Hex/types.js'
 import { Hex_validate } from '../../Hex/validate.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
@@ -98,7 +98,7 @@ export function TransactionEnvelopeLegacy_deserialize(
 }
 
 export declare namespace TransactionEnvelopeLegacy_deserialize {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 TransactionEnvelopeLegacy_deserialize.parseError = (error: unknown) =>

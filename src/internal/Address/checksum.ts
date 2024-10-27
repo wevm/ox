@@ -1,9 +1,9 @@
+import type * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Caches_checksum } from '../caches.js'
 import { Address_assert } from './assert.js'
-import type { Address } from './types.js'
 
 /**
  * Computes the checksum address for the given {@link ox#Address.Address}.
@@ -19,7 +19,7 @@ import type { Address } from './types.js'
  * @param address - The address to compute the checksum for.
  * @returns The checksummed address.
  */
-export function Address_checksum(address: string): Address {
+export function Address_checksum(address: string): Address.Address {
   if (Caches_checksum.has(address)) return Caches_checksum.get(address)!
 
   Address_assert(address, { strict: false })
@@ -47,7 +47,7 @@ export declare namespace Address_checksum {
     | Address_assert.ErrorType
     | Hash_keccak256.ErrorType
     | Bytes_fromString.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 Address_checksum.parseError = (error: unknown) =>

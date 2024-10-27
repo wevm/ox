@@ -67,11 +67,9 @@ test('negative uint', () => {
         },
       },
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Hex.IntegerOutOfRangeError: Number \`-1\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
-
-    See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `-1` is not in safe 8-bit unsigned integer range (`0` to `255`)]',
+  )
 })
 
 test('uint overflow', () => {
@@ -100,11 +98,9 @@ test('uint overflow', () => {
         },
       },
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Hex.IntegerOutOfRangeError: Number \`256\` is not in safe 8-bit unsigned integer range (\`0\` to \`255\`)
-
-    See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `256` is not in safe 8-bit unsigned integer range (`0` to `255`)]',
+  )
 })
 
 test('int underflow', () => {
@@ -133,11 +129,9 @@ test('int underflow', () => {
         },
       },
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Hex.IntegerOutOfRangeError: Number \`-129\` is not in safe 8-bit signed integer range (\`-128\` to \`127\`)
-
-    See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `-129` is not in safe 8-bit signed integer range (`-128` to `127`)]',
+  )
 })
 
 test('invalid address', () => {
@@ -169,8 +163,7 @@ test('invalid address', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0x000000000000000000000000000000000000z" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })
 
@@ -200,11 +193,9 @@ test('bytes size mismatch', () => {
         },
       },
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [TypedData.BytesSizeMismatchError: Expected bytes32, got bytes20.
-
-    See: https://oxlib.sh/api/glossary/Errors#typeddatabytessizemismatcherror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[TypedData.BytesSizeMismatchError: Expected bytes32, got bytes20.]',
+  )
 })
 
 test('domain: invalid chainId', () => {
@@ -246,11 +237,9 @@ test('domain: invalid chainId', () => {
         contents: 'Hello, Bob!',
       },
     }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [Hex.IntegerOutOfRangeError: Number \`-1n\` is not in safe 256-bit unsigned integer range (\`0n\` to \`115792089237316195423570985008687907853269984665640564039457584007913129639935n\`)
-
-    See: https://oxlib.sh/errors#hexintegeroutofrangeerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `-1n` is not in safe 256-bit unsigned integer range (`0n` to `115792089237316195423570985008687907853269984665640564039457584007913129639935n`)]',
+  )
 })
 
 test('domain: invalid contract', () => {
@@ -295,8 +284,7 @@ test('domain: invalid contract', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xCczCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC" is invalid.
 
-    Details: Address is not a 20 byte (40 hexadecimal character) value.
-    See: https://oxlib.sh/errors#invalidaddresserror]
+    Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 })
 
@@ -359,9 +347,7 @@ test('primaryType: does not exist in types', () => {
   ).toThrowErrorMatchingInlineSnapshot(`
     [TypedData.InvalidPrimaryTypeError: Invalid primary type \`Foo\` must be one of \`["EIP712Domain","Mail","Person"]\`.
 
-    Check that the primary type is a key in \`types\`.
-
-    See: https://oxlib.sh/api/glossary/Errors#typeddatainvalidprimarytypeerror]
+    Check that the primary type is a key in \`types\`.]
   `)
 })
 

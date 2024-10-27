@@ -9,11 +9,9 @@ test('BytesSizeMismatchError', () => {
       expectedSize: 69,
       givenSize: 420,
     }),
-  ).toMatchInlineSnapshot(`
-    [TypedData.BytesSizeMismatchError: Expected bytes69, got bytes420.
-
-    See: https://oxlib.sh/api/glossary/Errors#typeddatabytessizemismatcherror]
-  `)
+  ).toMatchInlineSnapshot(
+    '[TypedData.BytesSizeMismatchError: Expected bytes69, got bytes420.]',
+  )
 })
 
 test('InvalidPrimaryTypeError', () => {
@@ -25,8 +23,6 @@ test('InvalidPrimaryTypeError', () => {
   ).toMatchInlineSnapshot(`
     [TypedData.InvalidPrimaryTypeError: Invalid primary type \`Boo\` must be one of \`["Name","Person","Mail"]\`.
 
-    Check that the primary type is a key in \`types\`.
-
-    See: https://oxlib.sh/api/glossary/Errors#typeddatainvalidprimarytypeerror]
+    Check that the primary type is a key in \`types\`.]
   `)
 })

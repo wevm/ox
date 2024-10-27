@@ -1,5 +1,5 @@
+import type * as Errors from '../../../Errors.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import type { Hex } from '../../Hex/types.js'
 import type { Signature } from '../../Signature/types.js'
 import { TransactionEnvelopeEip1559_serialize } from '../eip1559/serialize.js'
@@ -102,7 +102,7 @@ export declare namespace TransactionEnvelope_serialize {
     | TransactionEnvelopeEip4844_serialize.ErrorType
     | TransactionEnvelopeEip7702_serialize.ErrorType
     | TransactionEnvelope_TypeNotImplementedError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelope_serialize.parseError = (error: unknown) =>

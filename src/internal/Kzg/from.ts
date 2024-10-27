@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { Kzg } from './types.js'
 
 /**
@@ -28,7 +28,7 @@ export function Kzg_from(value: Kzg): Kzg {
 }
 
 export declare namespace Kzg_from {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

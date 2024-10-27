@@ -103,11 +103,9 @@ test('args: size', () => {
 test('error: size overflow', () => {
   expect(() =>
     Bytes.fromHex('0x48656c6c6f20576f726c6421', { size: 8 }),
-  ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.SizeOverflowError: Size cannot exceed \`8\` bytes. Given size: \`12\` bytes.
-
-      See: https://oxlib.sh/errors#hexsizeoverflowerror]
-    `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.]',
+  )
 })
 
 test('error: invalid hex', () => {
@@ -119,11 +117,9 @@ test('error: invalid hex', () => {
 test('error: invalid length', () => {
   expect(() => Bytes.fromHex('0xabcde')).toThrowErrorMatchingInlineSnapshot(
     `
-      [Hex.InvalidLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
+    [Hex.InvalidLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
 
-      It must be an even length.
-
-      See: https://oxlib.sh/errors#bytesinvalidhexlengtherror]
-    `,
+    It must be an even length.]
+  `,
   )
 })

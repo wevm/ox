@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 
 import { Value_exponents } from './constants.js'
 import { Value_format } from './format.js'
@@ -23,7 +23,7 @@ export function Value_formatGwei(wei: bigint, unit: 'wei' = 'wei') {
 }
 
 export declare namespace Value_formatGwei {
-  type ErrorType = Value_format.ErrorType | GlobalErrorType
+  type ErrorType = Value_format.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

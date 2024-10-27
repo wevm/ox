@@ -1,7 +1,7 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import { Address_assert } from './assert.js'
 import { Address_checksum } from './checksum.js'
-import type { Address } from './types.js'
 
 /**
  * Converts a stringified address to a typed (checksummed) {@link ox#Address.Address}.
@@ -39,11 +39,11 @@ import type { Address } from './types.js'
 export function Address_from(
   address: string,
   options: Address_from.Options = {},
-): Address {
+): Address.Address {
   const { checksum = false } = options
   Address_assert(address)
   if (checksum) return Address_checksum(address)
-  return address as Address
+  return address as Address.Address
 }
 
 export declare namespace Address_from {
@@ -59,7 +59,7 @@ export declare namespace Address_from {
   type ErrorType =
     | Address_assert.ErrorType
     | Address_checksum.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

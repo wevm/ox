@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import type { RpcRequest } from '../RpcRequest/types.js'
 import type { Compute } from '../types.js'
 import {
@@ -190,7 +190,7 @@ export declare namespace RpcResponse_parse {
     | RpcResponse_InvalidParamsError
     | RpcResponse_InternalError
     | RpcResponse_ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 RpcResponse_parse.parseError = (error: unknown) =>

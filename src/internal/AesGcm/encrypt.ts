@@ -1,8 +1,8 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_concat } from '../Bytes/concat.js'
 import { Bytes_from } from '../Bytes/from.js'
 import { Bytes_random } from '../Bytes/random.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { Hex_from } from '../Hex/from.js'
 import type { Hex } from '../Hex/types.js'
 import { AesGcm_ivLength } from './constants.js'
@@ -66,7 +66,7 @@ export declare namespace AesGcm_encrypt {
     | Bytes_from.ErrorType
     | Bytes_random.ErrorType
     | Hex_from.ErrorType
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 AesGcm_encrypt.parseError = (error: unknown) =>

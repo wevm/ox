@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_assertSize } from './assertSize.js'
 import { Hex_InvalidHexBooleanError } from './errors.js'
 import { Hex_trimLeft } from './trim.js'
@@ -46,7 +46,7 @@ export declare namespace Hex_toBoolean {
     | Hex_assertSize.ErrorType
     | Hex_trimLeft.ErrorType
     | Hex_InvalidHexBooleanError
-    | GlobalErrorType
+    | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -1,6 +1,6 @@
+import type * as Errors from '../../../Errors.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../../Blobs/toSidecars.js'
-import type { GlobalErrorType } from '../../Errors/error.js'
 import { Hex_slice } from '../../Hex/slice.js'
 import type { Hex } from '../../Hex/types.js'
 import { Hex_validate } from '../../Hex/validate.js'
@@ -134,7 +134,7 @@ export function TransactionEnvelopeEip4844_deserialize(
 }
 
 export declare namespace TransactionEnvelopeEip4844_deserialize {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip4844_deserialize.parseError = (error: unknown) =>

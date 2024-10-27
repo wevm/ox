@@ -1,6 +1,6 @@
+import type * as Errors from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { GlobalErrorType } from '../Errors/error.js'
 import { HdKey_path } from '../HdKey/path.js'
 import type { Hex } from '../Hex/types.js'
 import { Mnemonic_toHdKey } from './toHdKey.js'
@@ -60,7 +60,7 @@ export declare namespace Mnemonic_toPrivateKey {
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 Mnemonic_toPrivateKey.parseError = (error: unknown) =>

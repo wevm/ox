@@ -1,6 +1,6 @@
 import type { HDKey } from '@scure/bip32'
 
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Secp256k1_getPublicKey } from '../Secp256k1/getPublicKey.js'
 import type { HdKey } from './types.js'
@@ -22,5 +22,5 @@ export function HdKey_fromScure(key: HDKey): HdKey {
 
 /** @internal */
 export declare namespace HdKey_fromScure {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }

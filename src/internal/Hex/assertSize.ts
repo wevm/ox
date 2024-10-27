@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../Errors/error.js'
+import type * as Errors from '../../Errors.js'
 import { Hex_SizeOverflowError } from './errors.js'
 import { Hex_size } from './size.js'
 import type { Hex } from './types.js'
@@ -13,5 +13,8 @@ export function Hex_assertSize(hex: Hex, size_: number): void {
 }
 
 export declare namespace Hex_assertSize {
-  type ErrorType = Hex_size.ErrorType | Hex_SizeOverflowError | GlobalErrorType
+  type ErrorType =
+    | Hex_size.ErrorType
+    | Hex_SizeOverflowError
+    | Errors.GlobalErrorType
 }

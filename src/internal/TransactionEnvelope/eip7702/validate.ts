@@ -1,4 +1,4 @@
-import type { GlobalErrorType } from '../../Errors/error.js'
+import type * as Errors from '../../../Errors.js'
 import type { PartialBy } from '../../types.js'
 import { TransactionEnvelopeEip7702_assert } from './assert.js'
 import type { TransactionEnvelopeEip7702 } from './types.js'
@@ -34,7 +34,7 @@ export function TransactionEnvelopeEip7702_validate(
 }
 
 export declare namespace TransactionEnvelopeEip7702_validate {
-  type ErrorType = GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip7702_validate.parseError = (error: unknown) =>

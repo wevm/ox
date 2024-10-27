@@ -1526,11 +1526,9 @@ test('invalid type', () => {
       [{ name: 'x', type: 'lol' }],
       '0x0000000000000000000000000000000000000000000000000000000000000000',
     ),
-  ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiParameters.InvalidTypeError: Type \`lol\` is not a valid ABI Type.
-
-    See: https://oxlib.sh/errors#abiparametersinvalidtypeerror]
-  `)
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[AbiParameters.InvalidTypeError: Type `lol` is not a valid ABI Type.]',
+  )
 })
 
 test('error: zero data', () => {
