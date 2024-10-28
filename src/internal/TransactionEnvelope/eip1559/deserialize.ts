@@ -36,7 +36,7 @@ import type {
  */
 export function TransactionEnvelopeEip1559_deserialize(
   serializedTransaction: TransactionEnvelopeEip1559_Serialized,
-): TransactionEnvelopeEip1559_deserialize.ReturnType {
+): Compute<TransactionEnvelopeEip1559> {
   const transactionArray = Rlp_toHex(Hex_slice(serializedTransaction, 1))
 
   const [
@@ -108,8 +108,6 @@ export function TransactionEnvelopeEip1559_deserialize(
 }
 
 export declare namespace TransactionEnvelopeEip1559_deserialize {
-  type ReturnType = Compute<TransactionEnvelopeEip1559>
-
   type ErrorType = Errors.GlobalErrorType
 }
 

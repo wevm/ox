@@ -34,8 +34,8 @@ import { WebAuthnP256 } from 'ox'
 const credential = await WebAuthnP256.createCredential({ name: 'Example' })
 
 const { metadata, signature } = await WebAuthnP256.sign({ // [!code focus]
-  credentialId: credential.id, // [!code focus]
   challenge: '0xdeadbeef', // [!code focus]
+  credentialId: credential.id, // [!code focus]
 }) // [!code focus]
 
 metadata // [!code focus]
