@@ -1,7 +1,7 @@
 import {
   Secp256k1,
   Transaction,
-  TransactionEnvelope,
+  TransactionEnvelopeLegacy,
   TransactionLegacy,
 } from 'ox'
 import { expect, test } from 'vitest'
@@ -155,6 +155,7 @@ test('behavior: network', async () => {
       params: ['0x10f2dd', '0x0'],
     })
     .then(Transaction.fromRpc)
+
   expect(transaction).toMatchInlineSnapshot(`
     {
       "blockHash": "0x8299a290ae51a8958965987e2caf178a09b8ecde01b737b5f9a8badbacb407cb",
@@ -187,17 +188,19 @@ test('behavior: tx replay', async () => {
     })
     .then(Transaction.fromRpc)
 
-  const envelope = TransactionEnvelope.from({
+  if (transaction_rpc?.type !== 'legacy') return
+
+  const envelope = TransactionEnvelopeLegacy.from({
     ...transaction_rpc!,
     nonce: 69420n,
   })
 
   const signature = Secp256k1.sign({
-    payload: TransactionEnvelope.getSignPayload(envelope),
+    payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
     privateKey: accounts[0].privateKey,
   })
 
-  const envelope_serialized = TransactionEnvelope.serialize(envelope, {
+  const envelope_serialized = TransactionEnvelopeLegacy.serialize(envelope, {
     signature,
   })
 

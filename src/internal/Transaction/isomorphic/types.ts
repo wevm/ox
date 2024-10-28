@@ -1,3 +1,4 @@
+import type * as Hex from '../../../Hex.js'
 import type { OneOf, UnionCompute } from '../../types.js'
 import type {
   TransactionEip1559,
@@ -53,6 +54,17 @@ export type Transaction<
     | TransactionEip4844<pending, bigintType, numberType>
     | TransactionEip7702<pending, bigintType, numberType>
   >
+>
+
+/**
+ * A generic Transaction that supports any type.
+ */
+export type Transaction_Generic<
+  pending extends boolean = false,
+  bigintType = bigint,
+  numberType = number,
+> = UnionCompute<
+  OneOf<Transaction<pending, bigintType, numberType> | { type: Hex.Hex }>
 >
 
 /**

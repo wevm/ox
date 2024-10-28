@@ -48,19 +48,16 @@ export function TransactionLegacy_fromRpc<
   const signature = Signature_extract(transaction)!
 
   return {
+    ...transaction,
     blockHash: transaction.blockHash ?? null,
     blockNumber: transaction.blockNumber
       ? BigInt(transaction.blockNumber)
       : null,
     chainId: transaction.chainId ? Number(transaction.chainId) : undefined,
     data: transaction.input,
-    from: transaction.from,
     gas: BigInt(transaction.gas ?? 0n),
     gasPrice: BigInt(transaction.gasPrice ?? 0n),
-    hash: transaction.hash,
-    input: transaction.input,
     nonce: BigInt(transaction.nonce ?? 0n),
-    to: transaction.to,
     transactionIndex: transaction.transactionIndex
       ? Number(transaction.transactionIndex)
       : null,

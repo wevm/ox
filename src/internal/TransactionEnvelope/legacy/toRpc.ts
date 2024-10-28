@@ -8,7 +8,7 @@ import type {
 } from './types.js'
 
 /**
- * Converts an {@link ox#TransactionEnvelope.Legacy} to an {@link ox#TransactionEnvelope.LegacyRpc}.
+ * Converts an {@link ox#TransactionEnvelopeLegacy.TransactionEnvelope} to an {@link ox#TransactionEnvelopeLegacy.Rpc}.
  *
  * @example
  * ```ts twoslash

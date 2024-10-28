@@ -14,7 +14,7 @@ import type {
 } from './types.js'
 
 /**
- * Serializes a {@link ox#TransactionEnvelope.Eip2930}.
+ * Serializes a {@link ox#TransactionEnvelopeEip2930.TransactionEnvelope}.
  *
  * @example
  * ```ts twoslash

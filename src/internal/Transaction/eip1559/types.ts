@@ -13,6 +13,8 @@ export type TransactionEip1559<
   Transaction_Base<type, pending, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList: AccessList
+    /** Effective gas price paid by the sender in wei. */
+    gasPrice?: bigintType | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas: bigintType
     /** Max priority fee per gas (in wei). */

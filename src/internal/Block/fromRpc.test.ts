@@ -57,7 +57,6 @@ test('default', () => {
       "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "nonce": "0x0000000000000000",
       "number": 15495110n,
-      "parentBeaconBlockRoot": undefined,
       "parentHash": "0xe55516ad8029e53cd32087f14653d851401b05245abb1b2d6ed4ddcc597ac5a6",
       "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
       "sealFields": [
@@ -129,7 +128,6 @@ test('behavior: nullish values', () => {
       "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "nonce": "0x0000000000000000",
       "number": null,
-      "parentBeaconBlockRoot": undefined,
       "parentHash": "0xe55516ad8029e53cd32087f14653d851401b05245abb1b2d6ed4ddcc597ac5a6",
       "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
       "sealFields": [
@@ -176,7 +174,6 @@ test('behavior: network', async () => {
       "parentBeaconBlockRoot": "0xd472790dc1fd2d1b1cc9e208706266196f261e4c1a74f535d86981670c0d5f99",
       "parentHash": "0xa93b995575bda48d4cf45a4f72593a48a744786b5e32e5ff92a21372f7a60875",
       "receiptsRoot": "0xe2822bc9663118439077ad806cd7a2a1a75bf1d70bf61d901199cf599c46f9d7",
-      "sealFields": undefined,
       "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
       "size": 56024n,
       "stateRoot": "0x115fd5eac921e6728825958b2b87da8aaf17edc0085164f11de798f6ed00abbd",

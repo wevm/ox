@@ -27,7 +27,7 @@ import type { Withdrawal, Withdrawal_Rpc } from './types.js'
  */
 export function Withdrawal_fromRpc(withdrawal: Withdrawal_Rpc): Withdrawal {
   return {
-    address: withdrawal.address,
+    ...withdrawal,
     amount: BigInt(withdrawal.amount),
     index: Number(withdrawal.index),
     validatorIndex: Number(withdrawal.validatorIndex),

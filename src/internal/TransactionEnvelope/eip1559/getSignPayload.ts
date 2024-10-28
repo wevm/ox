@@ -4,7 +4,7 @@ import { TransactionEnvelopeEip1559_hash } from './hash.js'
 import type { TransactionEnvelopeEip1559 } from './types.js'
 
 /**
- * Returns the payload to sign for a {@link ox#TransactionEnvelope.Eip1559}.
+ * Returns the payload to sign for a {@link ox#TransactionEnvelopeEip1559.TransactionEnvelope}.
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used

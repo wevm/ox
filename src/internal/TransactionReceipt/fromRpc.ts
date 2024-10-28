@@ -111,25 +111,19 @@ export function TransactionReceipt_fromRpc<
   if (!receipt) return null as never
 
   return {
+    ...receipt,
     blobGasPrice: receipt.blobGasPrice
       ? BigInt(receipt.blobGasPrice)
       : undefined,
     blobGasUsed: receipt.blobGasUsed ? BigInt(receipt.blobGasUsed) : undefined,
-    blockHash: receipt.blockHash,
     blockNumber: BigInt(receipt.blockNumber ?? 0n),
-    contractAddress: receipt.contractAddress,
     cumulativeGasUsed: BigInt(receipt.cumulativeGasUsed ?? 0n),
     effectiveGasPrice: BigInt(receipt.effectiveGasPrice ?? 0n),
-    from: receipt.from,
     gasUsed: BigInt(receipt.gasUsed ?? 0n),
     logs: receipt.logs.map((log) => Log_fromRpc(log, { pending: false })),
-    logsBloom: receipt.logsBloom,
     status: TransactionReceipt_status[receipt.status],
-    to: receipt.to,
-    transactionHash: receipt.transactionHash,
     transactionIndex: Number(receipt.transactionIndex ?? 0),
     type: (TransactionReceipt_type as any)[receipt.type] || receipt.type,
-    root: receipt.root,
   } as never
 }
 

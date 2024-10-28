@@ -4,7 +4,7 @@ import { TransactionEnvelopeLegacy_hash } from './hash.js'
 import type { TransactionEnvelopeLegacy } from './types.js'
 
 /**
- * Returns the payload to sign for a {@link ox#TransactionEnvelope.Legacy}.
+ * Returns the payload to sign for a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelope}.
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used

@@ -12,7 +12,7 @@ import type {
 } from './types.js'
 
 /**
- * Serializes a {@link ox#TransactionEnvelope.Legacy}.
+ * Serializes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelope}.
  *
  * @example
  * ```ts twoslash

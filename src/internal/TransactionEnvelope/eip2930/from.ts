@@ -3,7 +3,6 @@ import type { Hex } from '../../Hex/types.js'
 import { Signature_from } from '../../Signature/from.js'
 import type { Signature } from '../../Signature/types.js'
 import type { Assign, Compute, UnionPartialBy } from '../../types.js'
-import type { TransactionEnvelope } from '../isomorphic/types.js'
 import { TransactionEnvelopeEip2930_assert } from './assert.js'
 import { TransactionEnvelopeEip2930_deserialize } from './deserialize.js'
 import type {
@@ -66,7 +65,7 @@ import type {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an EIP-2930 Transaction Envelope from a {@link ox#TransactionEnvelope.Serialized} value.
+ * It is possible to instantiate an EIP-2930 Transaction Envelope from a {@link ox#TransactionEnvelopeEip2930.Serialized} value.
  *
  * ```ts twoslash
  * import { TransactionEnvelopeEip2930 } from 'ox'
@@ -120,7 +119,7 @@ export declare namespace TransactionEnvelopeEip2930_from {
   }
 
   type ReturnType<
-    envelope extends UnionPartialBy<TransactionEnvelope, 'type'> | Hex =
+    envelope extends UnionPartialBy<TransactionEnvelopeEip2930, 'type'> | Hex =
       | TransactionEnvelopeEip2930
       | Hex,
     signature extends Signature | undefined = undefined,

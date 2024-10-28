@@ -8,7 +8,7 @@ By combining WebAuthn Signers with Account Abstraction, this means that Smart Co
 
 Ox exports the [`WebAuthnP256`](/api/WebAuthnP256) module, which contains utilities for working with a WebAuthn-P256 Signer.
 
-## Example
+## Examples
 
 ### Registering a WebAuthn Credential
 

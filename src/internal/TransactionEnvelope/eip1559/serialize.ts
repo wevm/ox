@@ -15,7 +15,7 @@ import type {
 } from './types.js'
 
 /**
- * Serializes a {@link ox#TransactionEnvelope.Eip1559}.
+ * Serializes a {@link ox#TransactionEnvelopeEip1559.TransactionEnvelope}.
  *
  * @example
  * ```ts twoslash
@@ -85,7 +85,7 @@ export function TransactionEnvelopeEip1559_serialize(
 
   const accessTupleList = AccessList_toTupleList(accessList)
 
-  const signature = Signature_extract(options.signature || (envelope as any))
+  const signature = Signature_extract(options.signature || envelope)
 
   const serializedTransaction = [
     Hex_fromNumber(chainId),

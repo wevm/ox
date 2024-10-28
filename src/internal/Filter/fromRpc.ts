@@ -35,10 +35,9 @@ import type { Filter, Filter_Rpc } from './types.js'
  * @returns An instantiated {@link ox#Filter.Filter}.
  */
 export function Filter_fromRpc(filter: Filter_Rpc): Filter {
-  const { address, topics, fromBlock, toBlock } = filter
+  const { fromBlock, toBlock } = filter
   return {
-    ...(address && { address }),
-    ...(topics && { topics }),
+    ...filter,
     ...(fromBlock && {
       fromBlock: Hex_validate(fromBlock, { strict: false })
         ? BigInt(fromBlock)
@@ -49,7 +48,7 @@ export function Filter_fromRpc(filter: Filter_Rpc): Filter {
         ? BigInt(toBlock)
         : toBlock,
     }),
-  }
+  } as Filter
 }
 
 export declare namespace Filter_fromRpc {

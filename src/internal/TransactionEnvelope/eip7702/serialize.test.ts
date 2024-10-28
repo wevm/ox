@@ -1,7 +1,7 @@
 import {
   Authorization,
   Secp256k1,
-  TransactionEnvelope,
+  TransactionEnvelopeEip1559,
   TransactionEnvelopeEip7702,
   Value,
 } from 'ox'
@@ -226,7 +226,7 @@ test('behavior: network', async () => {
       params: [delegate.address, 'pending'],
     })
 
-    const envelope = TransactionEnvelope.from({
+    const envelope = TransactionEnvelopeEip1559.from({
       chainId: 1,
       nonce: BigInt(nonce),
       gas: 3_000_000n,
@@ -236,11 +236,11 @@ test('behavior: network', async () => {
     })
 
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelope.getSignPayload(envelope),
+      payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
       privateKey: delegate.privateKey,
     })
 
-    const serialized = TransactionEnvelope.serialize(envelope, {
+    const serialized = TransactionEnvelopeEip1559.serialize(envelope, {
       signature,
     })
 

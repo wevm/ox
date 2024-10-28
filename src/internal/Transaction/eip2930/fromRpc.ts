@@ -50,6 +50,7 @@ export function TransactionEip2930_fromRpc<
   const signature = Signature_extract(transaction)!
 
   return {
+    ...transaction,
     accessList: transaction.accessList ?? [],
     blockHash: transaction.blockHash ?? null,
     blockNumber: transaction.blockNumber
@@ -57,13 +58,9 @@ export function TransactionEip2930_fromRpc<
       : null,
     chainId: Number(transaction.chainId),
     data: transaction.input,
-    from: transaction.from,
     gas: BigInt(transaction.gas ?? 0n),
     gasPrice: BigInt(transaction.gasPrice ?? 0n),
-    hash: transaction.hash,
-    input: transaction.input,
     nonce: BigInt(transaction.nonce ?? 0n),
-    to: transaction.to,
     transactionIndex: transaction.transactionIndex
       ? Number(transaction.transactionIndex)
       : null,

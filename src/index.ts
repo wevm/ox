@@ -799,7 +799,7 @@ export * as AesGcm from './AesGcm.js'
  * A signature can be attached to an Authorization using {@link ox#Authorization.(from:function)}:
  *
  * ```ts twoslash
- * import { Authorization, Secp256k1, TransactionEnvelope, Value } from 'ox'
+ * import { Authorization, Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
@@ -814,7 +814,7 @@ export * as AesGcm from './AesGcm.js'
  *
  * const authorization_signed = Authorization.from(authorization, { signature }) // [!code focus]
  *
- * const envelope = TransactionEnvelope.from({
+ * const envelope = TransactionEnvelopeEip7702.from({
  *   authorizationList: [authorization_signed],
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
@@ -2062,7 +2062,7 @@ export * as Signature from './Signature.js'
 export * as Siwe from './Siwe.js'
 
 /**
- * Utilities & types for working with **Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
+ * Utilities & types for working with **Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
  * @example
  * ### Converting from RPC Format
@@ -2101,7 +2101,7 @@ export * as Siwe from './Siwe.js'
 export * as Transaction from './Transaction.js'
 
 /**
- * Utilities & types for working with **legacy Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
+ * Utilities & types for working with **legacy Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
  * @example
  * ### Converting from RPC Format
@@ -2138,7 +2138,7 @@ export * as Transaction from './Transaction.js'
 export * as TransactionLegacy from './TransactionLegacy.js'
 
 /**
- * Utilities & types for working with **EIP-1559 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
+ * Utilities & types for working with **EIP-1559 Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
  * @example
  * ### Converting from RPC Format
@@ -2177,7 +2177,7 @@ export * as TransactionLegacy from './TransactionLegacy.js'
 export * as TransactionEip1559 from './TransactionEip1559.js'
 
 /**
- * Utilities & types for working with **EIP-2930 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
+ * Utilities & types for working with **EIP-2930 Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
  * @example
  * ### Converting from RPC Format
@@ -2216,7 +2216,7 @@ export * as TransactionEip1559 from './TransactionEip1559.js'
 export * as TransactionEip2930 from './TransactionEip2930.js'
 
 /**
- * Utilities & types for working with **EIP-4844 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
+ * Utilities & types for working with **EIP-4844 Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
  * @example
  * ### Converting from RPC Format
@@ -2257,7 +2257,7 @@ export * as TransactionEip2930 from './TransactionEip2930.js'
 export * as TransactionEip4844 from './TransactionEip4844.js'
 
 /**
- * Utilities & types for working with **EIP-7702 Transaction Responses** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
+ * Utilities & types for working with **EIP-7702 Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
  *
  * @example
  * ### Converting from RPC Format
@@ -2304,104 +2304,16 @@ export * as TransactionEip4844 from './TransactionEip4844.js'
 export * as TransactionEip7702 from './TransactionEip7702.js'
 
 /**
- * Utility functions for working with **Legacy Transaction Envelopes** & [EIP-2718 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2718)
+ * Errors & Types for working with Transaction Envelopes.
  *
- * @example
- * ### Instantiating Transaction Envelopes
- *
- * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelope.(from:function)}:
- *
- * ```ts twoslash
- * import { TransactionEnvelope, Value } from 'ox'
- *
- * const envelope = TransactionEnvelope.from({
- *   chainId: 1,
- *   maxFeePerGas: Value.fromGwei('10'),
- *   maxPriorityFeePerGas: Value.fromGwei('1'),
- *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
- * })
- * // @log: {
- * // @log:   chainId: 1,
- * // @log:   maxFeePerGas: 10000000000n,
- * // @log:   maxPriorityFeePerGas: 1000000000n,
- * // @log:   to: '0x0000000000000000000000000000000000000000',
- * // @log:   type: 'eip1559',
- * // @log:   value: 1000000000000000000n,
- * // @log: }
- * ```
- *
- * @example
- * ### Signing Transaction Envelopes
- *
- * Transaction Envelopes can be signed using {@link ox#TransactionEnvelope.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
- *
- * ```ts twoslash
- * import { Secp256k1, TransactionEnvelope } from 'ox'
- *
- * const envelope = TransactionEnvelope.from({
- *   chainId: 1,
- *   nonce: 0n,
- *   gasPrice: 1000000000n,
- *   gas: 21000n,
- *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
- * })
- *
- * const signature = Secp256k1.sign({ // [!code focus]
- *   payload: TransactionEnvelope.getSignPayload(envelope), // [!code focus]
- *   privateKey: '0x...' // [!code focus]
- * }) // [!code focus]
- *
- * const envelope_signed = TransactionEnvelope.from(envelope, { signature })
- * ```
- *
- * @example
- * ### Serializing Transaction Envelopes
- *
- * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelope.(serialize:function)}:
- *
- * ```ts twoslash
- * import { TransactionEnvelope, Value } from 'ox'
- *
- * const envelope = TransactionEnvelope.from({
- *   chainId: 1,
- *   maxFeePerGas: Value.fromGwei('10'),
- *   maxPriorityFeePerGas: Value.fromGwei('1'),
- *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
- * })
- *
- * const serialized = TransactionEnvelope.serialize(envelope) // [!code focus]
- * ```
- *
- * @example
- * ### Computing Transaction Hashes
- *
- * Transaction Hashes can be computed using {@link ox#TransactionEnvelope.(hash:function)}:
- *
- * ```ts twoslash
- * import { Secp256k1, TransactionEnvelope } from 'ox'
- *
- * const envelope = TransactionEnvelope.from({
- *   chainId: 1,
- *   nonce: 0n,
- *   gasPrice: 1000000000n,
- *   gas: 21000n,
- *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
- *   data: '0x',
- * })
- *
- * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelope.getSignPayload(envelope),
- *   privateKey: '0x...'
- * })
- *
- * const envelope_signed = TransactionEnvelope.from(envelope, { signature })
- *
- * const hash = TransactionEnvelope.hash(envelope_signed) // [!code focus]
- * ```
+ * :::note
+ * Refer to the following modules for specific Transaction Envelope types:
+ * - [`TransactionEnvelopeLegacy`](/api/TransactionEnvelopeLegacy)
+ * - [`TransactionEnvelopeEip1559`](/api/TransactionEnvelopeEip1559)
+ * - [`TransactionEnvelopeEip2930`](/api/TransactionEnvelopeEip2930)
+ * - [`TransactionEnvelopeEip4844`](/api/TransactionEnvelopeEip4844)
+ * - [`TransactionEnvelopeEip7702`](/api/TransactionEnvelopeEip7702)
+ * :::
  *
  * @category Transaction Envelopes
  */

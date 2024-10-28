@@ -5,7 +5,7 @@ import { TransactionEnvelopeEip7702_serialize } from './serialize.js'
 import type { TransactionEnvelopeEip7702 } from './types.js'
 
 /**
- * Hashes a {@link ox#TransactionEnvelope.Eip7702}. This is the "transaction hash".
+ * Hashes a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelope}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash

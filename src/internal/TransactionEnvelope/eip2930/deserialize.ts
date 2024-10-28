@@ -13,7 +13,7 @@ import type {
 } from './types.js'
 
 /**
- * Deserializes a {@link ox#TransactionEnvelope.Eip2930} from its serialized form.
+ * Deserializes a {@link ox#TransactionEnvelopeEip2930.TransactionEnvelope} from its serialized form.
  *
  * @example
  * ```ts twoslash

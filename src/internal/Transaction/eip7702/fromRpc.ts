@@ -62,6 +62,7 @@ export function TransactionEip7702_fromRpc<
   const signature = Signature_extract(transaction)!
 
   return {
+    ...transaction,
     accessList: transaction.accessList ?? [],
     authorizationList,
     blockHash: transaction.blockHash ?? null,
@@ -70,19 +71,16 @@ export function TransactionEip7702_fromRpc<
       : null,
     chainId: Number(transaction.chainId),
     data: transaction.input,
-    from: transaction.from,
     gas: BigInt(transaction.gas ?? 0n),
-    hash: transaction.hash,
-    input: transaction.input,
     maxFeePerGas: BigInt(transaction.maxFeePerGas ?? 0n),
     maxPriorityFeePerGas: BigInt(transaction.maxPriorityFeePerGas ?? 0n),
     nonce: BigInt(transaction.nonce ?? 0n),
-    to: transaction.to,
     transactionIndex: transaction.transactionIndex
       ? Number(transaction.transactionIndex)
       : null,
     type: 'eip7702',
     value: BigInt(transaction.value ?? 0n),
+    v: signature.yParity === 0 ? 27 : 28,
     ...signature,
   } as never
 }

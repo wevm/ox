@@ -3,7 +3,6 @@ import type { Hex } from '../../Hex/types.js'
 import { Signature_from } from '../../Signature/from.js'
 import type { Signature } from '../../Signature/types.js'
 import type { Assign, Compute, UnionPartialBy } from '../../types.js'
-import type { TransactionEnvelope } from '../isomorphic/types.js'
 import { TransactionEnvelopeEip7702_assert } from './assert.js'
 import { TransactionEnvelopeEip7702_deserialize } from './deserialize.js'
 import type {
@@ -84,7 +83,7 @@ import type {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an EIP-7702 Transaction Envelope from a {@link ox#TransactionEnvelope.Serialized} value.
+ * It is possible to instantiate an EIP-7702 Transaction Envelope from a {@link ox#TransactionEnvelopeEip7702.Serialized} value.
  *
  * ```ts twoslash
  * import { TransactionEnvelopeEip7702 } from 'ox'
@@ -139,7 +138,7 @@ export declare namespace TransactionEnvelopeEip7702_from {
   }
 
   type ReturnType<
-    envelope extends UnionPartialBy<TransactionEnvelope, 'type'> | Hex =
+    envelope extends UnionPartialBy<TransactionEnvelopeEip7702, 'type'> | Hex =
       | TransactionEnvelopeEip7702
       | Hex,
     signature extends Signature | undefined = undefined,
@@ -155,8 +154,9 @@ export declare namespace TransactionEnvelopeEip7702_from {
   >
 
   type ErrorType =
-    // | TransactionEnvelopeEip7702_deserialize.ErrorType
-    TransactionEnvelopeEip7702_assert.ErrorType | Errors.GlobalErrorType
+    | TransactionEnvelopeEip7702_deserialize.ErrorType
+    | TransactionEnvelopeEip7702_assert.ErrorType
+    | Errors.GlobalErrorType
 }
 
 TransactionEnvelopeEip7702_from.parseError = (error: unknown) =>

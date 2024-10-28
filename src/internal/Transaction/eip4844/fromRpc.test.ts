@@ -63,6 +63,7 @@ test('default', () => {
       "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
       "transactionIndex": 2,
       "type": "eip4844",
+      "v": 27,
       "value": 700000000000000000n,
       "yParity": 0,
     }
@@ -110,6 +111,7 @@ test('behavior: nullish', () => {
       "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
       "transactionIndex": 2,
       "type": "eip4844",
+      "v": 27,
       "value": 0n,
       "yParity": 0,
     }
@@ -170,6 +172,7 @@ test('behavior: pending', () => {
       "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
       "transactionIndex": null,
       "type": "eip4844",
+      "v": 27,
       "value": 700000000000000000n,
       "yParity": 0,
     }

@@ -7,7 +7,7 @@ import { TransactionEnvelope_InvalidChainIdError } from '../errors.js'
 import type { TransactionEnvelopeEip7702 } from './types.js'
 
 /**
- * Asserts a {@link ox#TransactionEnvelope.Eip7702} is valid.
+ * Asserts a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelope} is valid.
  *
  * @example
  * ```ts twoslash

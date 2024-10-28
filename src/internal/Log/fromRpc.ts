@@ -108,17 +108,12 @@ export function Log_fromRpc<
   _options: Log_fromRpc.Options<pending> = {},
 ): Log<pending> {
   return {
-    address: log.address,
-    blockHash: log.blockHash,
+    ...log,
     blockNumber: log.blockNumber ? BigInt(log.blockNumber) : null,
-    data: log.data,
     logIndex: log.logIndex ? Number(log.logIndex) : null,
-    topics: log.topics,
-    transactionHash: log.transactionHash,
     transactionIndex: log.transactionIndex
       ? Number(log.transactionIndex)
       : null,
-    removed: log.removed,
   } as Log<pending>
 }
 

@@ -79,6 +79,7 @@ export function Block_fromRpc<
     return Transaction_fromRpc(transaction) as any
   })
   return {
+    ...block,
     baseFeePerGas: block.baseFeePerGas
       ? BigInt(block.baseFeePerGas)
       : undefined,
@@ -87,29 +88,15 @@ export function Block_fromRpc<
     excessBlobGas: block.excessBlobGas
       ? BigInt(block.excessBlobGas)
       : undefined,
-    extraData: block.extraData,
     gasLimit: BigInt(block.gasLimit ?? 0n),
     gasUsed: BigInt(block.gasUsed ?? 0n),
-    hash: block.hash,
-    logsBloom: block.logsBloom,
-    miner: block.miner,
-    mixHash: block.mixHash,
-    nonce: block.nonce,
     number: block.number ? BigInt(block.number) : null,
-    parentBeaconBlockRoot: block.parentBeaconBlockRoot,
-    parentHash: block.parentHash,
-    receiptsRoot: block.receiptsRoot,
-    sealFields: block.sealFields,
-    sha3Uncles: block.sha3Uncles,
     size: BigInt(block.size ?? 0n),
     stateRoot: block.stateRoot,
     timestamp: BigInt(block.timestamp ?? 0n),
     totalDifficulty: BigInt(block.totalDifficulty ?? 0n),
     transactions,
-    transactionsRoot: block.transactionsRoot,
     withdrawals: block.withdrawals?.map(Withdrawal_fromRpc),
-    withdrawalsRoot: block.withdrawalsRoot,
-    uncles: block.uncles,
   } as Block as never
 }
 
