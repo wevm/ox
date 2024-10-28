@@ -9,7 +9,6 @@ test('exports', () => {
       "InvalidChainIdError",
       "InvalidSerializedError",
       "TipAboveFeeCapError",
-      "TypeNotImplementedError",
     ]
   `)
 })
