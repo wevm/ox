@@ -89,7 +89,7 @@ export default defineConfig({
             link: '/guides/signed-data',
           },
           {
-            text: 'Transaction Envelopes 🚧',
+            text: 'Transaction Envelopes',
             link: '/guides/transaction-envelopes',
           },
           {
