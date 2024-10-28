@@ -40,7 +40,7 @@ export function Secp256k1_recoverPublicKey(
 }
 
 export declare namespace Secp256k1_recoverPublicKey {
-  interface Options {
+  type Options = {
     /** Payload that was signed. */
     payload: Hex | Bytes
     /** Signature of the payload. */

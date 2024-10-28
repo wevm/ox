@@ -34,7 +34,7 @@ export function Address_fromPublicKey(
 }
 
 export declare namespace Address_fromPublicKey {
-  interface Options {
+  type Options = {
     /**
      * Whether to checksum the address.
      *

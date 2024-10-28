@@ -37,7 +37,7 @@ export function Secp256k1_sign(options: Secp256k1_sign.Options): Signature {
 }
 
 export declare namespace Secp256k1_sign {
-  interface Options {
+  type Options = {
     /** If set to `true`, the payload will be hashed (sha256) before being signed. */
     hash?: boolean | undefined
     /** Payload to sign. */

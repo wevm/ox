@@ -64,9 +64,9 @@ export function Authorization_from<
 }
 
 export declare namespace Authorization_from {
-  interface Options<
+  type Options<
     signature extends Signature | undefined = Signature | undefined,
-  > {
+  > = {
     /** The {@link ox#Signature.Signature} to attach to the Authorization. */
     signature?: signature | Signature | undefined
   }

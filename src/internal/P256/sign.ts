@@ -37,7 +37,7 @@ export function P256_sign(options: P256_sign.Options): Signature {
 }
 
 export declare namespace P256_sign {
-  interface Options {
+  type Options = {
     /** If set to `true`, the payload will be hashed (sha256) before being signed. */
     hash?: boolean | undefined
     /** Payload to sign. */

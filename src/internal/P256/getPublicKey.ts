@@ -33,7 +33,7 @@ export function P256_getPublicKey(
 }
 
 export declare namespace P256_getPublicKey {
-  interface Options {
+  type Options = {
     /**
      * Private key to compute the public key from.
      */

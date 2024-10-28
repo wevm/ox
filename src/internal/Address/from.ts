@@ -47,7 +47,7 @@ export function Address_from(
 }
 
 export declare namespace Address_from {
-  interface Options {
+  type Options = {
     /**
      * Whether to checksum the address.
      *

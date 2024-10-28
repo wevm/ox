@@ -32,7 +32,7 @@ export function PublicKey_validate(
 }
 
 export declare namespace PublicKey_validate {
-  interface Options {
+  type Options = {
     /** Whether or not the public key should be compressed. */
     compressed?: boolean
   }

@@ -2,33 +2,27 @@ import { resolve } from 'node:path'
 import type * as model from '@microsoft/api-extractor-model'
 import * as tsdoc from '@microsoft/tsdoc'
 import { TSDocConfigFile } from '@microsoft/tsdoc-config'
-import { Project, ScriptTarget, SyntaxKind } from 'ts-morph'
+import { SyntaxKind } from 'ts-morph'
 
 import {
   type ResolveDeclarationReference,
   createResolveDeclarationReference,
 } from './model.js'
+import { project } from './tsmorph.js'
+
+const tsdocConfiguration = new tsdoc.TSDocConfiguration()
+const configFile = TSDocConfigFile.loadFile(
+  resolve(import.meta.dirname, '../../../tsdoc.json'),
+)
+configFile.configureParser(tsdocConfiguration)
+
+export const tsdocParser = new tsdoc.TSDocParser(tsdocConfiguration)
 
 export function extractNamespaceDocComments(
   file: string,
   apiItem: model.ApiItem,
 ) {
-  const project = new Project({
-    compilerOptions: {
-      target: ScriptTarget.ESNext,
-    },
-  })
   const entrypointAst = project.addSourceFileAtPath(file)
-
-  const configFile = TSDocConfigFile.loadFile(
-    resolve(import.meta.dirname, '../../../tsdoc.json'),
-  )
-
-  const tsdocConfiguration = new tsdoc.TSDocConfiguration()
-  configFile.configureParser(tsdocConfiguration)
-  const tsdocParser: tsdoc.TSDocParser = new tsdoc.TSDocParser(
-    tsdocConfiguration,
-  )
 
   const nodes = entrypointAst.getDescendantsOfKind(SyntaxKind.ExportDeclaration)
 
@@ -43,7 +37,7 @@ export function extractNamespaceDocComments(
     const tsDoc = node.getDescendantsOfKind(SyntaxKind.JSDoc)[0]?.getText()
     if (!tsDoc) continue
 
-    const parserContext: tsdoc.ParserContext = tsdocParser.parseString(tsDoc)
+    const parserContext = tsdocParser.parseString(tsDoc)
     const docComment = processDocComment(
       parserContext.docComment,
       createResolveDeclarationReference(apiItem),

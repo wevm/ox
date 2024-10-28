@@ -47,7 +47,7 @@ export function HdKey_fromSeed(
 }
 
 export declare namespace HdKey_fromSeed {
-  interface Options {
+  type Options = {
     /** The versions to use for the HD Key. */
     versions?: Versions | undefined
   }

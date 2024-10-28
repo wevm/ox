@@ -52,7 +52,7 @@ export function Address_assert(
 }
 
 export declare namespace Address_assert {
-  interface Options {
+  type Options = {
     /**
      * Enables strict mode. Whether or not to compare the address against its checksum.
      *
