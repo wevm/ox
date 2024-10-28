@@ -38,7 +38,7 @@ export function Address_validate(
 }
 
 export declare namespace Address_validate {
-  interface Options {
+  type Options = {
     /**
      * Enables strict mode. Whether or not to compare the address against its checksum.
      *

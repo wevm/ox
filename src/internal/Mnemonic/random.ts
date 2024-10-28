@@ -25,7 +25,7 @@ export function Mnemonic_random(
 }
 
 export declare namespace Mnemonic_random {
-  interface Options {
+  type Options = {
     /**
      * The strength of the mnemonic to generate, in bits.
      * @default 128

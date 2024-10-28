@@ -28,7 +28,7 @@ export function Secp256k1_randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 }
 
 export declare namespace Secp256k1_randomPrivateKey {
-  interface Options<as extends 'Hex' | 'Bytes' = 'Hex'> {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /**
      * Format of the returned private key.
      * @default 'Hex'

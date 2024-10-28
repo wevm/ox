@@ -31,7 +31,7 @@ export function Secp256k1_getPublicKey(
 }
 
 export declare namespace Secp256k1_getPublicKey {
-  interface Options {
+  type Options = {
     /**
      * Private key to compute the public key from.
      */

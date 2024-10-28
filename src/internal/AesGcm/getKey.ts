@@ -48,7 +48,7 @@ export async function AesGcm_getKey(
 }
 
 export declare namespace AesGcm_getKey {
-  interface Options {
+  type Options = {
     /** The number of iterations to use. @default 900_000 */
     iterations?: number | undefined
     /** Password to derive key from. */

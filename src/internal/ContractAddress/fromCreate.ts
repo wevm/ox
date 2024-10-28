@@ -37,7 +37,7 @@ export function ContractAddress_fromCreate(
 }
 
 export declare namespace ContractAddress_fromCreate {
-  interface Options {
+  type Options = {
     /** The address the contract was deployed from. */
     from: Address
     /** The nonce of the transaction which deployed the contract. */

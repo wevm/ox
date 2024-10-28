@@ -40,7 +40,7 @@ export function Mnemonic_toHdKey(
 }
 
 export declare namespace Mnemonic_toHdKey {
-  interface Options {
+  type Options = {
     /** An optional passphrase for additional protection to the seed. */
     passphrase?: string | undefined
   }

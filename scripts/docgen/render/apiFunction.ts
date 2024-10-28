@@ -1,13 +1,17 @@
 import * as model from '@microsoft/api-extractor-model'
+import * as ts from 'ts-morph'
 
-import type { Data } from '../utils/model.js'
+import { type Data, createResolveDeclarationReference } from '../utils/model.js'
+import { processDocComment, tsdocParser } from '../utils/tsdoc.js'
+import { project } from '../utils/tsmorph.js'
 
 export function renderApiFunction(options: {
+  apiItem: model.ApiItem
   data: Data
   dataLookup: Record<string, Data>
   overloads: string[]
 }) {
-  const { data, dataLookup, overloads } = options
+  const { apiItem, data, dataLookup, overloads } = options
   const { comment, displayName, module } = data
   if (!module) throw new Error('Module not found')
 
@@ -24,10 +28,11 @@ export function renderApiFunction(options: {
   if (data.parameters?.length)
     content.push(
       renderParameters({
+        apiItem,
         data,
         dataLookup,
-        parameters: data.parameters,
         overloads,
+        parameters: data.parameters,
       }),
     )
 
@@ -130,18 +135,23 @@ function renderSignature(options: {
 }
 
 function renderParameters(options: {
+  apiItem: model.ApiItem
   data: Data
   dataLookup: Record<string, Data>
   overloads: string[]
   parameters: NonNullable<Data['parameters']>
 }) {
-  const { dataLookup, overloads, parameters } = options
+  const { apiItem, data, dataLookup, overloads, parameters } = options
+
+  const parameterDeclarations = extractParameterDeclarations(data)
 
   const content = ['## Parameters']
 
   let parameterIndex = 0
   for (const parameter of parameters) {
-    content.push(`### \`${parameter.name}\``)
+    if (parameter.name.startsWith('_')) continue
+
+    content.push(`### ${parameter.name}`)
 
     // Swap out the inline type for the namespace type for overloads
     // e.g. `{ foo: string; bar: bigint }` -> `Foo.bar.Options`
@@ -164,77 +174,91 @@ function renderParameters(options: {
 
     if (parameter.comment) content.push(parameter.comment)
 
-    const interfaceData = dataLookup[`ox!${parameter.type}:interface`]
-    const inlineParameterType =
-      parameter.type.startsWith('{') && parameter.type.endsWith('}')
-    const properties = []
-    if (interfaceData) {
-      for (const child of interfaceData.children) {
-        const childItem = dataLookup[child]
-        if (!childItem) continue
-        const typeReference = (() => {
-          if (!childItem.references) return
-          const reference = childItem.references.find(
-            (x) => x.text === childItem.type,
-          )
-          if (!reference) return
-          return {
-            primaryCanonicalReference: reference.canonicalReference,
-            type: reference.text,
-          }
-        })()
-        const link = typeReference
-          ? getTypeLink({ dataLookup, type: typeReference })
-          : undefined
-        const type = typeReference
-          ? expandInlineType({ dataLookup, type: typeReference })
-          : childItem.type
-        properties.push({
-          ...childItem,
-          ...childItem.comment,
-          name: childItem.displayName,
-          link,
-          type,
-        })
-      }
-    } else if (inlineParameterType) {
-      for (const value of parameter.type
-        .slice(1, -1)
-        .split(';')
-        .map((x) => x.trim())) {
-        if (!value) continue
-
-        const parts = value.split(': ')
-        // https://github.com/apollographql/apollo-client/blob/main/docs/shared/ApiDoc/ParameterTable.js#L9
-        properties.push({
-          default: undefined, // TODO
-          name: parts[0]?.replace(/\?$/, ''),
-          optional: parts[0]?.endsWith('?'),
-          summary: undefined, // TODO
-          link: undefined, // TODO
-          type: parts[1],
-        })
-      }
-    }
-
-    for (const property of properties) {
-      content.push(`#### \`${parameter.name}.${property.name}\``)
-
-      const c = `\`${property.type}\``
-      const listContent = property.link
-        ? [`- **Type:** [${c}](${property.link})`]
-        : [`- **Type:** ${c}`]
-      if (property.default)
-        listContent.push(`- **Default:** \`${property.default}\``)
-      if (!property.default && property.optional)
-        listContent.push('- **Optional**')
-      content.push(listContent.join('\n'))
-
-      if (property.summary) content.push(property.summary)
-    }
+    const node = extractParameterTypeNode(parameter, parameterDeclarations)
+    if (node) content.push(renderProperties({ apiItem, node, parameter }))
   }
 
   return content.join('\n\n')
+}
+
+function renderProperties(options: {
+  apiItem: model.ApiItem
+  node: ts.TypeNode
+  parameter: NonNullable<Data['parameters']>[number]
+}) {
+  const { apiItem, node, parameter } = options
+
+  const contentMap = new Map<string, string>()
+
+  function render(node: ts.TypeNode) {
+    const properties = node.getDescendantsOfKind(
+      ts.SyntaxKind.PropertySignature,
+    )
+    for (const property of properties) {
+      const propertyName = property.getName()
+      const typeNode = property.getTypeNode()
+
+      if (propertyName.startsWith('_')) continue
+
+      let type = typeNode
+        ?.getType()
+        ?.getText(
+          undefined,
+          ts.TypeFormatFlags.UseAliasDefinedOutsideCurrentScope,
+        )
+      if (type === 'any') type = typeNode?.getText()
+      if (type === 'undefined') continue
+
+      const content = [`#### ${parameter.name}.${propertyName}`, '']
+
+      const comment = property.getJsDocs().at(0)?.getDescription()
+      const tsDoc = getTsDoc(comment, apiItem)
+
+      if (type) content.push(`- **Type:** \`${type.replaceAll('`', '')}\``)
+      if (tsDoc?.default) content.push(`- **Default:** \`${tsDoc.default}\``)
+      const questionToken = property.getQuestionTokenNode()
+      if (questionToken) content.push('- **Optional**')
+
+      if (typeof tsDoc?.summary === 'string') content.push(`\n${tsDoc.summary}`)
+
+      contentMap.set(propertyName, content.join('\n'))
+    }
+
+    // Expand sibling type references
+    const reference = node.getFirstDescendantByKind(ts.SyntaxKind.TypeReference)
+    const isChild = reference
+      ? properties.some((x) => x.getDescendants().includes(reference))
+      : false
+    if (isChild) return
+
+    const references = [
+      reference,
+      ...(reference
+        ?.getNextSiblings()
+        .filter((x) => x.isKind(ts.SyntaxKind.TypeReference)) ?? []),
+    ]
+
+    const nodes = references
+      .map((x) => {
+        const identifier = x?.getFirstDescendantByKind(ts.SyntaxKind.Identifier)
+        if (!identifier) return
+        return identifier
+          .getDefinitionNodes()
+          .find((x) => x.isKind(ts.SyntaxKind.TypeAliasDeclaration))
+          ?.getTypeNode()
+      })
+      .filter(Boolean) as ts.TypeNode[]
+
+    if (nodes.length) for (const node of nodes) render(node)
+  }
+  render(node)
+
+  // sort properties alphabetically
+  const contents = Array.from(contentMap.entries()).sort(([a], [b]) =>
+    a > b ? 1 : -1,
+  )
+
+  return contents.map(([, content]) => content).join('\n\n')
 }
 
 function renderReturnType(options: {
@@ -372,6 +396,45 @@ function resolveErrorData(options: {
   }
 
   return errors
+}
+
+function extractParameterDeclarations(data: Data) {
+  const functionNameMatch = data.excerpt.match(
+    /export declare function (.*?)(\(|<)/,
+  )
+  const functionName = functionNameMatch?.[1]
+  const file = project.addSourceFileAtPath(data.file.path!)
+  const declaration = file.getFunctionOrThrow(functionName!)
+  const declarations = declaration.getParameters()
+  return declarations
+}
+
+function extractParameterTypeNode(
+  parameter: NonNullable<Data['parameters']>[number],
+  parameterDeclarations: ts.ParameterDeclaration[],
+) {
+  const declaration = parameterDeclarations.find(
+    (x) => x.getName() === parameter.name,
+  )
+  const reference = declaration
+    ?.getDescendantsOfKind(ts.SyntaxKind.TypeReference)
+    .at(0)
+  const typeAliasDeclaration = reference
+    ?.getType()
+    .getAliasSymbol()
+    ?.getDeclarations()
+    .at(0)
+  if (!typeAliasDeclaration?.isKind(ts.SyntaxKind.TypeAliasDeclaration)) return
+  return typeAliasDeclaration.getTypeNode()
+}
+
+function getTsDoc(comment: string | undefined, apiItem: model.ApiItem) {
+  if (!comment) return
+  const context = tsdocParser.parseString(`/**${comment}*/`)
+  return processDocComment(
+    context.docComment,
+    createResolveDeclarationReference(apiItem),
+  )
 }
 
 function getTypeLink(options: {

@@ -113,7 +113,12 @@ for (const namespace of namespaces) {
       items.push({ text: `.${displayName}`, link })
       functions.push({ apiItem: member, description, link })
 
-      const content = renderApiFunction({ data, dataLookup, overloads })
+      const content = renderApiFunction({
+        apiItem: apiPackage,
+        data,
+        dataLookup,
+        overloads,
+      })
       fs.writeFileSync(`${dir}/${displayName}.md`, content)
     } else if (member.kind === model.ApiItemKind.Class) {
       if (displayName.endsWith('Error'))
