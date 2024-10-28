@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Bytes_SizeExceedsPaddingSizeError } from './errors.js'
 import type { Bytes } from './types.js'
 

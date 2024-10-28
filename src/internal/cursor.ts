@@ -1,5 +1,4 @@
-import { BaseError } from '../Errors.js'
-import type * as Errors from '../Errors.js'
+import { Errors } from '../Errors.js'
 import type { Bytes } from './Bytes/types.js'
 
 /** @internal */
@@ -221,7 +220,7 @@ export function createCursor(
   return cursor
 }
 
-export class Cursor_NegativeOffsetError extends BaseError {
+export class Cursor_NegativeOffsetError extends Errors.BaseError {
   override readonly name = 'Cursor.NegativeOffsetError'
 
   constructor({ offset }: { offset: number }) {
@@ -229,7 +228,7 @@ export class Cursor_NegativeOffsetError extends BaseError {
   }
 }
 
-export class Cursor_PositionOutOfBoundsError extends BaseError {
+export class Cursor_PositionOutOfBoundsError extends Errors.BaseError {
   override readonly name = 'Cursor.PositionOutOfBoundsError'
 
   constructor({ length, position }: { length: number; position: number }) {
@@ -239,7 +238,7 @@ export class Cursor_PositionOutOfBoundsError extends BaseError {
   }
 }
 
-export class Cursor_RecursiveReadLimitExceededError extends BaseError {
+export class Cursor_RecursiveReadLimitExceededError extends Errors.BaseError {
   override readonly name = 'Cursor.RecursiveReadLimitExceededError'
 
   constructor({ count, limit }: { count: number; limit: number }) {

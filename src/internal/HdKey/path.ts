@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 
 /**
  * Creates an Ethereum-based BIP-44 HD path.

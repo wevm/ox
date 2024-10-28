@@ -1,5 +1,5 @@
 import type { AbiParameter } from 'abitype'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
 import { Hex_size } from '../Hex/size.js'

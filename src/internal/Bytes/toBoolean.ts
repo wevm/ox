@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Bytes_assertSize } from './assertSize.js'
 import { Bytes_InvalidBytesBooleanError } from './errors.js'
 import { Bytes_trimLeft } from './trim.js'

@@ -1,8 +1,8 @@
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 import { getUrl } from '../Errors/utils.js'
 
 /** Thrown when a HTTP request fails. */
-export class RpcTransport_HttpError extends BaseError {
+export class RpcTransport_HttpError extends Errors.BaseError {
   override readonly name = 'RpcTransport.HttpError'
 
   constructor({
@@ -23,7 +23,7 @@ export class RpcTransport_HttpError extends BaseError {
 }
 
 /** Thrown when a HTTP response is malformed. */
-export class RpcTransport_MalformedResponseError extends BaseError {
+export class RpcTransport_MalformedResponseError extends Errors.BaseError {
   override readonly name = 'RpcTransport.MalformedResponseError'
 
   constructor({ response }: { response: string }) {

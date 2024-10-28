@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 
 const alphabet = /* __PURE__ */ Object.freeze<Record<string, bigint>>({

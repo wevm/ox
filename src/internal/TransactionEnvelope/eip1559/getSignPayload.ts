@@ -1,4 +1,4 @@
-import type * as Errors from '../../../Errors.js'
+import type { Errors } from '../../../Errors.js'
 import type { Hex } from '../../Hex/types.js'
 import { TransactionEnvelopeEip1559_hash } from './hash.js'
 import type { TransactionEnvelopeEip1559 } from './types.js'

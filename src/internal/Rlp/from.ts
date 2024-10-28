@@ -1,7 +1,6 @@
-import type * as Errors from '../../Errors.js'
+import { Errors } from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { BaseError } from '../Errors/base.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
@@ -217,5 +216,5 @@ function getSizeOfLength(length: number) {
   if (length < 2 ** 16) return 2
   if (length < 2 ** 24) return 3
   if (length < 2 ** 32) return 4
-  throw new BaseError('Length is too large.')
+  throw new Errors.BaseError('Length is too large.')
 }

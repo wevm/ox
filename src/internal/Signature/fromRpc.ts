@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Signature_InvalidYParityError } from './errors.js'
 import type { Signature } from './types.js'

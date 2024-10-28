@@ -1,6 +1,6 @@
 import { type Abi, formatAbiItem } from 'abitype'
+import { Errors } from '../../Errors.js'
 import { normalizeSignature } from '../AbiItem/getSignature.js'
-import { BaseError } from '../Errors/base.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -43,7 +43,7 @@ import type { Hex } from '../Hex/types.js'
  * // @error: Remove one of the ambiguous items in the ABI.
  * ```
  */
-export class AbiItem_AmbiguityError extends BaseError {
+export class AbiItem_AmbiguityError extends Errors.BaseError {
   override readonly name = 'AbiItem.AmbiguityError'
   constructor(
     x: { abiItem: Abi[number]; type: string },
@@ -94,7 +94,7 @@ export class AbiItem_AmbiguityError extends BaseError {
  * AbiFunction.fromAbi(foo, 'baz')
  * ```
  */
-export class AbiItem_NotFoundError extends BaseError {
+export class AbiItem_NotFoundError extends Errors.BaseError {
   override readonly name = 'AbiItem.NotFoundError'
   constructor({
     name,
@@ -144,7 +144,7 @@ export class AbiItem_NotFoundError extends BaseError {
  * AbiFunction.fromAbi(foo, '0x7af82b1a')
  * ```
  */
-export class AbiItem_InvalidSelectorSizeError extends BaseError {
+export class AbiItem_InvalidSelectorSizeError extends Errors.BaseError {
   override readonly name = 'AbiItem.InvalidSelectorSizeError'
   constructor({ data }: { data: Hex }) {
     super(

@@ -1,4 +1,4 @@
-import type * as Errors from '../../../Errors.js'
+import type { Errors } from '../../../Errors.js'
 import type { PartialBy } from '../../types.js'
 import { TransactionEnvelopeEip1559_assert } from './assert.js'
 import type { TransactionEnvelopeEip1559 } from './types.js'

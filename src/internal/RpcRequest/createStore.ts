@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { RpcSchema_Generic } from '../RpcSchema/types.js'
 import { RpcRequest_from } from './from.js'
 import type { RpcRequest_Store } from './types.js'

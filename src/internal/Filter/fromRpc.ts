@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Hex_validate } from '../Hex/validate.js'
 import type { Filter, Filter_Rpc } from './types.js'
 

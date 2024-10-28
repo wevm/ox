@@ -1,5 +1,4 @@
-import type * as Errors from '../../Errors.js'
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 import { Hex_assertSize } from '../Hex/assertSize.js'
 import { Hex_InvalidLengthError } from '../Hex/errors.js'
 import { Hex_padRight } from '../Hex/pad.js'
@@ -71,7 +70,7 @@ export function Bytes_fromHex(
     const nibbleLeft = charCodeToBase16(hexString.charCodeAt(j++))
     const nibbleRight = charCodeToBase16(hexString.charCodeAt(j++))
     if (nibbleLeft === undefined || nibbleRight === undefined) {
-      throw new BaseError(
+      throw new Errors.BaseError(
         `Invalid byte sequence ("${hexString[j - 2]}${hexString[j - 1]}" in "${hexString}").`,
       )
     }

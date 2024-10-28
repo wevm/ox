@@ -1,6 +1,5 @@
-import type * as Errors from '../../Errors.js'
+import { Errors } from '../../Errors.js'
 import { Address_assert } from '../Address/assert.js'
-import { BaseError } from '../Errors/base.js'
 import { Hex_concat } from '../Hex/concat.js'
 import { Hex_fromBoolean } from '../Hex/fromBoolean.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
@@ -347,7 +346,7 @@ export declare namespace encodeBytes {
 /** @internal */
 export function encodeBoolean(value: boolean): PreparedParameter {
   if (typeof value !== 'boolean')
-    throw new BaseError(
+    throw new Errors.BaseError(
       `Invalid boolean value: "${value}" (type: ${typeof value}). Expected: \`true\` or \`false\`.`,
     )
   return { dynamic: false, encoded: Hex_padLeft(Hex_fromBoolean(value)) }

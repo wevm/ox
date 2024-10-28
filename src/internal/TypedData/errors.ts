@@ -1,8 +1,8 @@
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 import type { TypedData } from './types.js'
 
 /** Thrown when the bytes size of a typed data value does not match the expected size. */
-export class TypedData_BytesSizeMismatchError extends BaseError {
+export class TypedData_BytesSizeMismatchError extends Errors.BaseError {
   override readonly name = 'TypedData.BytesSizeMismatchError'
 
   constructor({
@@ -14,7 +14,7 @@ export class TypedData_BytesSizeMismatchError extends BaseError {
 }
 
 /** Thrown when the primary type of a typed data value is invalid. */
-export class TypedData_InvalidPrimaryTypeError extends BaseError {
+export class TypedData_InvalidPrimaryTypeError extends Errors.BaseError {
   override readonly name = 'TypedData.InvalidPrimaryTypeError'
 
   constructor({
@@ -31,7 +31,7 @@ export class TypedData_InvalidPrimaryTypeError extends BaseError {
 }
 
 /** Thrown when the struct type is not a valid type. */
-export class TypedData_InvalidStructTypeError extends BaseError {
+export class TypedData_InvalidStructTypeError extends Errors.BaseError {
   override readonly name = 'TypedData.InvalidStructTypeError'
 
   constructor({ type }: { type: string }) {

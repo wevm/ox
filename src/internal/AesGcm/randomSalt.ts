@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Bytes_random } from '../Bytes/random.js'
 import type { Bytes } from '../Bytes/types.js'
 

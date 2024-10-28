@@ -1,5 +1,5 @@
 import { type FormatAbiItem, formatAbiItem } from 'abitype'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { AbiConstructor } from './types.js'
 
 /**

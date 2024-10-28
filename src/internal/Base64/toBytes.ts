@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()

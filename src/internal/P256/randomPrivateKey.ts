@@ -1,6 +1,6 @@
 import { secp256r1 } from '@noble/curves/p256'
 
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'

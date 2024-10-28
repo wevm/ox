@@ -1,5 +1,5 @@
 import type { AbiEventParameter } from 'abitype'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Address_isEqual } from '../Address/isEqual.js'
 import type { Address } from '../Address/types.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'

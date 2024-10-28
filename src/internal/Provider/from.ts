@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Provider_IsUndefinedError } from './errors.js'
 import type { Provider } from './types.js'
 

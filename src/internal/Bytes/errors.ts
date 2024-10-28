@@ -1,5 +1,5 @@
+import { Errors } from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import { BaseError } from '../Errors/base.js'
 import { Json_stringify } from '../Json/stringify.js'
 
 /**
@@ -14,7 +14,7 @@ import { Json_stringify } from '../Json/stringify.js'
  * // @error: The bytes array must contain a single byte of either a `0` or `1` value.
  * ```
  */
-export class Bytes_InvalidBytesBooleanError extends BaseError {
+export class Bytes_InvalidBytesBooleanError extends Errors.BaseError {
   override readonly name = 'Bytes.InvalidBytesBooleanError'
 
   constructor(bytes: Bytes) {
@@ -38,7 +38,7 @@ export class Bytes_InvalidBytesBooleanError extends BaseError {
  * // @error: Bytes.InvalidBytesTypeError: Value `foo` of type `string` is an invalid Bytes value.
  * ```
  */
-export class Bytes_InvalidBytesTypeError extends BaseError {
+export class Bytes_InvalidBytesTypeError extends Errors.BaseError {
   override readonly name = 'Bytes.InvalidBytesTypeError'
 
   constructor(value: unknown) {
@@ -62,7 +62,7 @@ export class Bytes_InvalidBytesTypeError extends BaseError {
  * // @error: Bytes.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.
  * ```
  */
-export class Bytes_SizeOverflowError extends BaseError {
+export class Bytes_SizeOverflowError extends Errors.BaseError {
   override readonly name = 'Bytes.SizeOverflowError'
 
   constructor({ givenSize, maxSize }: { givenSize: number; maxSize: number }) {
@@ -83,7 +83,7 @@ export class Bytes_SizeOverflowError extends BaseError {
  * // @error: Bytes.SliceOffsetOutOfBoundsError: Slice starting at offset `4` is out-of-bounds (size: `3`).
  * ```
  */
-export class Bytes_SliceOffsetOutOfBoundsError extends BaseError {
+export class Bytes_SliceOffsetOutOfBoundsError extends Errors.BaseError {
   override readonly name = 'Bytes.SliceOffsetOutOfBoundsError'
 
   constructor({
@@ -110,7 +110,7 @@ export class Bytes_SliceOffsetOutOfBoundsError extends BaseError {
  * // @error: [Bytes.SizeExceedsPaddingSizeError: Bytes size (`12`) exceeds padding size (`8`).
  * ```
  */
-export class Bytes_SizeExceedsPaddingSizeError extends BaseError {
+export class Bytes_SizeExceedsPaddingSizeError extends Errors.BaseError {
   override readonly name = 'Bytes.SizeExceedsPaddingSizeError'
 
   constructor({

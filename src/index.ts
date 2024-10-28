@@ -1183,7 +1183,7 @@ export * as ContractAddress from './ContractAddress.js'
  */
 export * as Ens from './Ens.js'
 
-export * as Errors from './Errors.js'
+export { Errors } from './Errors.js'
 
 /**
  * Utilities & types for working with Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml)

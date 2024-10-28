@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Address_fromPublicKey } from '../Address/fromPublicKey.js'
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'

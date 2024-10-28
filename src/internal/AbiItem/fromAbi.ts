@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { Abi } from '../Abi/types.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import type { Address } from '../Address/types.js'

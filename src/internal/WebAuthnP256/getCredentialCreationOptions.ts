@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'

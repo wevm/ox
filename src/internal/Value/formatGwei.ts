@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 
 import { Value_exponents } from './constants.js'
 import { Value_format } from './format.js'

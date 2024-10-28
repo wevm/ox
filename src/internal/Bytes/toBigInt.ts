@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Hex_toBigInt } from '../Hex/toBigInt.js'
 import { Bytes_assertSize } from './assertSize.js'

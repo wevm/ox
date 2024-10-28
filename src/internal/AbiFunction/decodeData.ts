@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { AbiParameters_ToPrimitiveTypes } from '../AbiParameters/types.js'

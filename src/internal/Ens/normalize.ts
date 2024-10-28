@@ -1,5 +1,5 @@
 import { ens_normalize } from '@adraffy/ens-normalize'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 
 /**
  * Normalizes ENS name according to [ENSIP-15](https://github.com/ensdomains/docs/blob/9edf9443de4333a0ea7ec658a870672d5d180d53/ens-improvement-proposals/ensip-15-normalization-standard.md).

@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { HdKey_fromSeed } from '../HdKey/fromSeed.js'
 import type { HdKey } from '../HdKey/types.js'
 import { Mnemonic_toSeed } from './toSeed.js'

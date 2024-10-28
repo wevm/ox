@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Value_InvalidDecimalNumberError } from './errors.js'
 
 /**

@@ -1,7 +1,6 @@
 import { formatAbiItem } from 'abitype'
 
-import type * as Errors from '../../Errors.js'
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 import type { AbiItem } from './types.js'
 
 /**
@@ -104,12 +103,12 @@ export function normalizeSignature(signature: string): string {
     current += char
   }
 
-  if (!valid) throw new BaseError('Unable to normalize signature.')
+  if (!valid) throw new Errors.BaseError('Unable to normalize signature.')
 
   return result
 }
 
 /** @internal */
 export declare namespace normalizeSignature {
-  export type ErrorType = BaseError | Errors.GlobalErrorType
+  export type ErrorType = Errors.BaseError | Errors.GlobalErrorType
 }

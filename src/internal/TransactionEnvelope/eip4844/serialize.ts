@@ -1,4 +1,4 @@
-import type * as Errors from '../../../Errors.js'
+import type { Errors } from '../../../Errors.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
 import { Hex_concat } from '../../Hex/concat.js'

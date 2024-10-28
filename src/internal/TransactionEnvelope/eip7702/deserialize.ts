@@ -1,4 +1,4 @@
-import type * as Errors from '../../../Errors.js'
+import type { Errors } from '../../../Errors.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Authorization_fromTupleList } from '../../Authorization/fromTupleList.js'
 import { Hex_slice } from '../../Hex/slice.js'

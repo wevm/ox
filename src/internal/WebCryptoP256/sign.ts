@@ -1,6 +1,6 @@
 import { p256 } from '@noble/curves/p256'
 
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Bytes_from } from '../Bytes/from.js'
 import { Bytes_fromArray } from '../Bytes/fromArray.js'
 import { Bytes_slice } from '../Bytes/slice.js'

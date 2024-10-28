@@ -1,4 +1,4 @@
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 
 /**
  * Thrown when an address is invalid.
@@ -15,7 +15,7 @@ export class Address_InvalidAddressError<
   cause extends Address_InvalidInputError | Address_InvalidChecksumError =
     | Address_InvalidInputError
     | Address_InvalidChecksumError,
-> extends BaseError<cause> {
+> extends Errors.BaseError<cause> {
   override readonly name = 'Address.InvalidAddressError'
 
   constructor({ address, cause }: { address: string; cause: cause }) {
@@ -26,7 +26,7 @@ export class Address_InvalidAddressError<
 }
 
 /** Thrown when an address is not a 20 byte (40 hexadecimal character) value. */
-export class Address_InvalidInputError extends BaseError {
+export class Address_InvalidInputError extends Errors.BaseError {
   override readonly name = 'Address.InvalidInputError'
 
   constructor() {
@@ -35,7 +35,7 @@ export class Address_InvalidInputError extends BaseError {
 }
 
 /** Thrown when an address does not match its checksum counterpart. */
-export class Address_InvalidChecksumError extends BaseError {
+export class Address_InvalidChecksumError extends Errors.BaseError {
   override readonly name = 'Address.InvalidChecksumError'
 
   constructor() {

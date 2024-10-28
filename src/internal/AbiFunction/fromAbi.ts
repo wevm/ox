@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'

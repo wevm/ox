@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 // Adapted from https://github.com/mafintosh/dns-packet
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import type { Bytes } from '../Bytes/types.js'

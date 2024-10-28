@@ -1,5 +1,5 @@
 import { generateMnemonic } from '@scure/bip39'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 
 /**
  * Generates a random mnemonic.

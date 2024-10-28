@@ -1,5 +1,5 @@
 import type { AbiParameter } from 'abitype'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Hex_fromString } from '../Hex/fromString.js'

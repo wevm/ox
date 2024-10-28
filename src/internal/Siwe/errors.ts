@@ -1,4 +1,4 @@
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 
 /**
  * Thrown when a field in a SIWE Message is invalid.
@@ -21,7 +21,7 @@ import { BaseError } from '../Errors/base.js'
  * // @error: Provided value: 1.1
  * ```
  */
-export class Siwe_InvalidMessageFieldError extends BaseError {
+export class Siwe_InvalidMessageFieldError extends Errors.BaseError {
   override readonly name = 'Siwe.InvalidMessageFieldError'
 
   constructor(parameters: {

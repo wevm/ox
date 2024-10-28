@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 
 /**
  * Formats a `bigint` Value to its string representation (divided by the given exponent).

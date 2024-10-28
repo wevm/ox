@@ -1,7 +1,6 @@
-import type * as Errors from '../../Errors.js'
+import { Errors } from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { BaseError } from '../Errors/base.js'
 import { Hex_InvalidLengthError } from '../Hex/errors.js'
 import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import type { Hex } from '../Hex/types.js'
@@ -150,12 +149,12 @@ export function readLength(cursor: Cursor, prefix: number, offset: number) {
   if (prefix === offset + 55 + 2) return cursor.readUint16()
   if (prefix === offset + 55 + 3) return cursor.readUint24()
   if (prefix === offset + 55 + 4) return cursor.readUint32()
-  throw new BaseError('Invalid RLP prefix')
+  throw new Errors.BaseError('Invalid RLP prefix')
 }
 
 /** @internal */
 export declare namespace readLength {
-  type ErrorType = BaseError | Errors.GlobalErrorType
+  type ErrorType = Errors.BaseError | Errors.GlobalErrorType
 }
 
 /** @internal */

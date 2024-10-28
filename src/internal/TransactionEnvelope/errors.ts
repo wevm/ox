@@ -1,4 +1,4 @@
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Value_formatGwei } from '../Value/formatGwei.js'
 
@@ -16,7 +16,7 @@ import { Value_formatGwei } from '../Value/formatGwei.js'
  * // @error: TransactionEnvelope.FeeCapTooHighError: The fee cap (`maxFeePerGas`/`maxPriorityFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).
  * ```
  */
-export class TransactionEnvelope_FeeCapTooHighError extends BaseError {
+export class TransactionEnvelope_FeeCapTooHighError extends Errors.BaseError {
   override readonly name = 'TransactionEnvelope.FeeCapTooHighError'
   constructor({
     feeCap,
@@ -45,7 +45,7 @@ export class TransactionEnvelope_FeeCapTooHighError extends BaseError {
  * // @error: TransactionEnvelope.GasPriceTooHighError: The gas price (`gasPrice` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).
  * ```
  */
-export class TransactionEnvelope_GasPriceTooHighError extends BaseError {
+export class TransactionEnvelope_GasPriceTooHighError extends Errors.BaseError {
   override readonly name = 'TransactionEnvelope.GasPriceTooHighError'
   constructor({
     gasPrice,
@@ -71,7 +71,7 @@ export class TransactionEnvelope_GasPriceTooHighError extends BaseError {
  * // @error: TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.
  * ```
  */
-export class TransactionEnvelope_InvalidChainIdError extends BaseError {
+export class TransactionEnvelope_InvalidChainIdError extends Errors.BaseError {
   override readonly name = 'TransactionEnvelope.InvalidChainIdError'
   constructor({ chainId }: { chainId?: number | undefined }) {
     super(
@@ -95,7 +95,7 @@ export class TransactionEnvelope_InvalidChainIdError extends BaseError {
  * // @error: Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList
  * ```
  */
-export class TransactionEnvelope_InvalidSerializedError extends BaseError {
+export class TransactionEnvelope_InvalidSerializedError extends Errors.BaseError {
   override readonly name = 'TransactionEnvelope.InvalidSerializedError'
   constructor({
     attributes,
@@ -133,7 +133,7 @@ export class TransactionEnvelope_InvalidSerializedError extends BaseError {
  * // @error: TransactionEnvelope.TipAboveFeeCapError: The provided tip (`maxPriorityFeePerGas` = 11 gwei) cannot be higher than the fee cap (`maxFeePerGas` = 10 gwei).
  * ```
  */
-export class TransactionEnvelope_TipAboveFeeCapError extends BaseError {
+export class TransactionEnvelope_TipAboveFeeCapError extends Errors.BaseError {
   override readonly name = 'TransactionEnvelope.TipAboveFeeCapError'
   constructor({
     maxPriorityFeePerGas,

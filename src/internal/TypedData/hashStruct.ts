@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'

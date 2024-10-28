@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Hex_IntegerOutOfRangeError } from './errors.js'
 import { Hex_padLeft } from './pad.js'
 import type { Hex } from './types.js'

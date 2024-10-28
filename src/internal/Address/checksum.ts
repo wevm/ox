@@ -1,5 +1,5 @@
 import type * as Address from '../../Address.js'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Caches_checksum } from '../caches.js'

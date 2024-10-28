@@ -1,9 +1,9 @@
+import { Errors } from '../../Errors.js'
 import type * as Hex from '../../Hex.js'
-import { BaseError } from '../Errors/base.js'
 import { Hex_size } from '../Hex/size.js'
 
 /** Thrown when the size of a storage key is invalid. */
-export class AccessList_InvalidStorageKeySizeError extends BaseError {
+export class AccessList_InvalidStorageKeySizeError extends Errors.BaseError {
   override readonly name = 'AccessList.InvalidStorageKeySizeError'
   constructor({ storageKey }: { storageKey: Hex.Hex }) {
     super(

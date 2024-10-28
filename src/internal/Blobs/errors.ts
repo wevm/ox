@@ -1,10 +1,10 @@
 import type { Hex } from '../Hex/types.js'
 import { Kzg_versionedHashVersion } from '../Kzg/constants.js'
 
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 
 /** Thrown when the blob size is too large. */
-export class Blobs_BlobSizeTooLargeError extends BaseError {
+export class Blobs_BlobSizeTooLargeError extends Errors.BaseError {
   override readonly name = 'Blobs.BlobSizeTooLargeError'
   constructor({ maxSize, size }: { maxSize: number; size: number }) {
     super('Blob size is too large.', {
@@ -14,7 +14,7 @@ export class Blobs_BlobSizeTooLargeError extends BaseError {
 }
 
 /** Thrown when the blob is empty. */
-export class Blobs_EmptyBlobError extends BaseError {
+export class Blobs_EmptyBlobError extends Errors.BaseError {
   override readonly name = 'Blobs.EmptyBlobError'
   constructor() {
     super('Blob data must not be empty.')
@@ -22,7 +22,7 @@ export class Blobs_EmptyBlobError extends BaseError {
 }
 
 /** Thrown when the blob versioned hashes are empty. */
-export class Blobs_EmptyBlobVersionedHashesError extends BaseError {
+export class Blobs_EmptyBlobVersionedHashesError extends Errors.BaseError {
   override readonly name = 'Blobs.EmptyBlobVersionedHashesError'
   constructor() {
     super('Blob versioned hashes must not be empty.')
@@ -30,7 +30,7 @@ export class Blobs_EmptyBlobVersionedHashesError extends BaseError {
 }
 
 /** Thrown when the blob versioned hash size is invalid. */
-export class Blobs_InvalidVersionedHashSizeError extends BaseError {
+export class Blobs_InvalidVersionedHashSizeError extends Errors.BaseError {
   override readonly name = 'Blobs.InvalidVersionedHashSizeError'
   constructor({
     hash,
@@ -46,7 +46,7 @@ export class Blobs_InvalidVersionedHashSizeError extends BaseError {
 }
 
 /** Thrown when the blob versioned hash version is invalid. */
-export class Blobs_InvalidVersionedHashVersionError extends BaseError {
+export class Blobs_InvalidVersionedHashVersionError extends Errors.BaseError {
   override readonly name = 'Blobs.InvalidVersionedHashVersionError'
   constructor({
     hash,

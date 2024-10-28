@@ -1,6 +1,6 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Hex } from './types.js'
 

@@ -1,4 +1,4 @@
-import type * as Errors from '../../../Errors.js'
+import type { Errors } from '../../../Errors.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import type { TransactionEip2930, TransactionEip2930_Rpc } from './types.js'
 

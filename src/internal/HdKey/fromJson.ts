@@ -1,6 +1,6 @@
 import { HDKey } from '@scure/bip32'
 
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { HdKey_fromScure } from './fromScure.js'
 import type { HdKey } from './types.js'
 

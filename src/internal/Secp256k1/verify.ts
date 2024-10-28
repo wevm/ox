@@ -1,5 +1,5 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Address_isEqual } from '../Address/isEqual.js'
 import type { Address } from '../Address/types.js'
 import { Bytes_from } from '../Bytes/from.js'

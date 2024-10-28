@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
 import type { PublicKey } from '../PublicKey/types.js'

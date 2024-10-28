@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import type { ExactPartial } from '../types.js'
 import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'

@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Authorization_toRpcList } from '../Authorization/toRpcList.js'
 import { Hex_fromNumber } from '../Hex/fromNumber.js'
 import type { TransactionRequest, TransactionRequest_Rpc } from './types.js'

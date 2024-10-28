@@ -9,7 +9,7 @@ import type {
   SolidityString,
 } from 'abitype'
 
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Address_assert } from '../Address/assert.js'
 import type { Address } from '../Address/types.js'
 import { Hex_concat } from '../Hex/concat.js'

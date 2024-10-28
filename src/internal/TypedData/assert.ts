@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import {
   Address_InvalidAddressError,
   Address_InvalidInputError,

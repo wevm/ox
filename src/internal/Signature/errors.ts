@@ -1,12 +1,12 @@
+import { Errors } from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import { BaseError } from '../Errors/base.js'
 import { Hex_from } from '../Hex/from.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 import { Json_stringify } from '../Json/stringify.js'
 
 /** Thrown when the serialized signature is of an invalid size. */
-export class Signature_InvalidSerializedSizeError extends BaseError {
+export class Signature_InvalidSerializedSizeError extends Errors.BaseError {
   override readonly name = 'Signature.InvalidSerializedSizeError'
 
   constructor({ signature }: { signature: Hex | Bytes }) {
@@ -20,7 +20,7 @@ export class Signature_InvalidSerializedSizeError extends BaseError {
 }
 
 /** Thrown when the signature is missing either an `r`, `s`, or `yParity` property. */
-export class Signature_MissingPropertiesError extends BaseError {
+export class Signature_MissingPropertiesError extends Errors.BaseError {
   override readonly name = 'Signature.MissingPropertiesError'
 
   constructor({ signature }: { signature: unknown }) {
@@ -31,7 +31,7 @@ export class Signature_MissingPropertiesError extends BaseError {
 }
 
 /** Thrown when the signature has an invalid `r` value. */
-export class Signature_InvalidRError extends BaseError {
+export class Signature_InvalidRError extends Errors.BaseError {
   override readonly name = 'Signature.InvalidRError'
 
   constructor({ value }: { value: unknown }) {
@@ -42,7 +42,7 @@ export class Signature_InvalidRError extends BaseError {
 }
 
 /** Thrown when the signature has an invalid `s` value. */
-export class Signature_InvalidSError extends BaseError {
+export class Signature_InvalidSError extends Errors.BaseError {
   override readonly name = 'Signature.InvalidSError'
 
   constructor({ value }: { value: unknown }) {
@@ -53,7 +53,7 @@ export class Signature_InvalidSError extends BaseError {
 }
 
 /** Thrown when the signature has an invalid `yParity` value. */
-export class Signature_InvalidYParityError extends BaseError {
+export class Signature_InvalidYParityError extends Errors.BaseError {
   override readonly name = 'Signature.InvalidYParityError'
 
   constructor({ value }: { value: unknown }) {
@@ -64,7 +64,7 @@ export class Signature_InvalidYParityError extends BaseError {
 }
 
 /** Thrown when the signature has an invalid `v` value. */
-export class Signature_InvalidVError extends BaseError {
+export class Signature_InvalidVError extends Errors.BaseError {
   override readonly name = 'Signature.InvalidVError'
 
   constructor({ value }: { value: number }) {

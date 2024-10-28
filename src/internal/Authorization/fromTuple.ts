@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Signature_fromTuple } from '../Signature/fromTuple.js'
 import type { Compute } from '../types.js'
 import { Authorization_from } from './from.js'

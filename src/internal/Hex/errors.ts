@@ -1,4 +1,4 @@
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 import type { Hex } from '../Hex/types.js'
 import { Json_stringify } from '../Json/stringify.js'
 
@@ -13,7 +13,7 @@ import { Json_stringify } from '../Json/stringify.js'
  * // @error: Hex.IntegerOutOfRangeError: Number \`4.2018273891273126e+26\` is not in safe unsigned integer range (`0` to `9007199254740991`)
  * ```
  */
-export class Hex_IntegerOutOfRangeError extends BaseError {
+export class Hex_IntegerOutOfRangeError extends Errors.BaseError {
   override readonly name = 'Hex.IntegerOutOfRangeError'
 
   constructor({
@@ -49,7 +49,7 @@ export class Hex_IntegerOutOfRangeError extends BaseError {
  * // @error: The hex value must be `"0x0"` (false) or `"0x1"` (true).
  * ```
  */
-export class Hex_InvalidHexBooleanError extends BaseError {
+export class Hex_InvalidHexBooleanError extends Errors.BaseError {
   override readonly name = 'Hex.InvalidHexBooleanError'
 
   constructor(hex: Hex) {
@@ -72,7 +72,7 @@ export class Hex_InvalidHexBooleanError extends BaseError {
  * // @error: Hex.InvalidHexTypeError: Value `1` of type `number` is an invalid hex type.
  * ```
  */
-export class Hex_InvalidHexTypeError extends BaseError {
+export class Hex_InvalidHexTypeError extends Errors.BaseError {
   override readonly name = 'Hex.InvalidHexTypeError'
 
   constructor(value: unknown) {
@@ -97,7 +97,7 @@ export class Hex_InvalidHexTypeError extends BaseError {
  * // @error: Hex values must start with `"0x"` and contain only hexadecimal characters (0-9, a-f, A-F).
  * ```
  */
-export class Hex_InvalidHexValueError extends BaseError {
+export class Hex_InvalidHexValueError extends Errors.BaseError {
   override readonly name = 'Hex.InvalidHexValueError'
 
   constructor(value: unknown) {
@@ -120,7 +120,7 @@ export class Hex_InvalidHexValueError extends BaseError {
  * // @error: Hex.InvalidLengthError: Hex value `"0xabcde"` is an odd length (5 nibbles).
  * ```
  */
-export class Hex_InvalidLengthError extends BaseError {
+export class Hex_InvalidLengthError extends Errors.BaseError {
   override readonly name = 'Hex.InvalidLengthError'
 
   constructor(value: Hex) {
@@ -144,7 +144,7 @@ export class Hex_InvalidLengthError extends BaseError {
  * // @error: Hex.SizeOverflowError: Size cannot exceed `8` bytes. Given size: `12` bytes.
  * ```
  */
-export class Hex_SizeOverflowError extends BaseError {
+export class Hex_SizeOverflowError extends Errors.BaseError {
   override readonly name = 'Hex.SizeOverflowError'
 
   constructor({ givenSize, maxSize }: { givenSize: number; maxSize: number }) {
@@ -165,7 +165,7 @@ export class Hex_SizeOverflowError extends BaseError {
  * // @error: Hex.SliceOffsetOutOfBoundsError: Slice starting at offset `6` is out-of-bounds (size: `5`).
  * ```
  */
-export class Hex_SliceOffsetOutOfBoundsError extends BaseError {
+export class Hex_SliceOffsetOutOfBoundsError extends Errors.BaseError {
   override readonly name = 'Hex.SliceOffsetOutOfBoundsError'
 
   constructor({
@@ -192,7 +192,7 @@ export class Hex_SliceOffsetOutOfBoundsError extends BaseError {
  * // @error: Hex.SizeExceedsPaddingSizeError: Hex size (`43`) exceeds padding size (`32`).
  * ```
  */
-export class Hex_SizeExceedsPaddingSizeError extends BaseError {
+export class Hex_SizeExceedsPaddingSizeError extends Errors.BaseError {
   override readonly name = 'Hex.SizeExceedsPaddingSizeError'
 
   constructor({

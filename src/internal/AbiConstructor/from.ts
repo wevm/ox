@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { AbiItem_from } from '../AbiItem/from.js'
 import type {
   AbiConstructor,

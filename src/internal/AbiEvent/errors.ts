@@ -1,6 +1,6 @@
 import type { AbiParameter } from 'abitype'
+import { Errors } from '../../Errors.js'
 import { AbiParameters_format } from '../AbiParameters/format.js'
-import { BaseError } from '../Errors/base.js'
 import { prettyPrint } from '../Errors/utils.js'
 import type { Hex } from '../Hex/types.js'
 import { AbiEvent_format } from './format.js'
@@ -73,7 +73,7 @@ import type { AbiEvent } from './types.js'
  * })
  * ```
  */
-export class AbiEvent_ArgsMismatchError extends BaseError {
+export class AbiEvent_ArgsMismatchError extends Errors.BaseError {
   override readonly name = 'AbiEvent.ArgsMismatchError'
 
   constructor({
@@ -156,7 +156,7 @@ export class AbiEvent_ArgsMismatchError extends BaseError {
  * })
  * ```
  */
-export class AbiEvent_InputNotFoundError extends BaseError {
+export class AbiEvent_InputNotFoundError extends Errors.BaseError {
   override readonly name = 'AbiEvent.InputNotFoundError'
 
   constructor({
@@ -217,7 +217,7 @@ export class AbiEvent_InputNotFoundError extends BaseError {
  * })
  * ```
  */
-export class AbiEvent_DataMismatchError extends BaseError {
+export class AbiEvent_DataMismatchError extends Errors.BaseError {
   override readonly name = 'AbiEvent.DataMismatchError'
 
   abiEvent: AbiEvent
@@ -298,7 +298,7 @@ export class AbiEvent_DataMismatchError extends BaseError {
  * ```
  *
  */
-export class AbiEvent_TopicsMismatchError extends BaseError {
+export class AbiEvent_TopicsMismatchError extends Errors.BaseError {
   override readonly name = 'AbiEvent.TopicsMismatchError'
 
   abiEvent: AbiEvent
@@ -366,7 +366,7 @@ export class AbiEvent_TopicsMismatchError extends BaseError {
  * })
  * ```
  */
-export class AbiEvent_SelectorTopicMismatchError extends BaseError {
+export class AbiEvent_SelectorTopicMismatchError extends Errors.BaseError {
   override readonly name = 'AbiEvent.SelectorTopicMismatchError'
 
   constructor({
@@ -419,7 +419,7 @@ export class AbiEvent_SelectorTopicMismatchError extends BaseError {
  *
  *
  */
-export class AbiEvent_FilterTypeNotSupportedError extends BaseError {
+export class AbiEvent_FilterTypeNotSupportedError extends Errors.BaseError {
   override readonly name = 'AbiEvent.FilterTypeNotSupportedError'
   constructor(type: string) {
     super(`Filter type "${type}" is not supported.`)

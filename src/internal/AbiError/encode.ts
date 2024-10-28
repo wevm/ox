@@ -1,5 +1,5 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import { Hex_concat } from '../Hex/concat.js'
 import type { Hex } from '../Hex/types.js'

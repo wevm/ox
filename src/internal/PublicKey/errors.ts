@@ -1,5 +1,5 @@
+import { Errors } from '../../Errors.js'
 import type { Bytes } from '../Bytes/types.js'
-import { BaseError } from '../Errors/base.js'
 import { Hex_from } from '../Hex/from.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
@@ -19,7 +19,7 @@ import { Json_stringify } from '../Json/stringify.js'
  * // @error: - an `x`, `y`, and `prefix` value (uncompressed)
  * ```
  */
-export class PublicKey_InvalidError extends BaseError {
+export class PublicKey_InvalidError extends Errors.BaseError {
   override readonly name = 'PublicKey.InvalidError'
 
   constructor({ publicKey }: { publicKey: unknown }) {
@@ -40,7 +40,7 @@ export class PublicKey_InvalidPrefixError<
     | PublicKey_InvalidUncompressedPrefixError =
     | PublicKey_InvalidCompressedPrefixError
     | PublicKey_InvalidUncompressedPrefixError,
-> extends BaseError<cause> {
+> extends Errors.BaseError<cause> {
   override readonly name = 'PublicKey.InvalidPrefixError'
 
   constructor({ prefix, cause }: { prefix: number | undefined; cause: cause }) {
@@ -51,7 +51,7 @@ export class PublicKey_InvalidPrefixError<
 }
 
 /** Thrown when the public key has an invalid prefix for a compressed public key. */
-export class PublicKey_InvalidCompressedPrefixError extends BaseError {
+export class PublicKey_InvalidCompressedPrefixError extends Errors.BaseError {
   override readonly name = 'PublicKey.InvalidCompressedPrefixError'
 
   constructor() {
@@ -60,7 +60,7 @@ export class PublicKey_InvalidCompressedPrefixError extends BaseError {
 }
 
 /** Thrown when the public key has an invalid prefix for an uncompressed public key. */
-export class PublicKey_InvalidUncompressedPrefixError extends BaseError {
+export class PublicKey_InvalidUncompressedPrefixError extends Errors.BaseError {
   override readonly name = 'PublicKey.InvalidUncompressedPrefixError'
 
   constructor() {
@@ -69,7 +69,7 @@ export class PublicKey_InvalidUncompressedPrefixError extends BaseError {
 }
 
 /** Thrown when the public key has an invalid serialized size. */
-export class PublicKey_InvalidSerializedSizeError extends BaseError {
+export class PublicKey_InvalidSerializedSizeError extends Errors.BaseError {
   override readonly name = 'PublicKey.InvalidSerializedSizeError'
 
   constructor({ publicKey }: { publicKey: Hex | Bytes }) {

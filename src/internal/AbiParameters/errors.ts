@@ -1,5 +1,5 @@
 import { type AbiParameter, formatAbiParameters } from 'abitype'
-import { BaseError } from '../Errors/base.js'
+import { Errors } from '../../Errors.js'
 import { Hex_size } from '../Hex/size.js'
 import type { Hex } from '../Hex/types.js'
 
@@ -28,7 +28,7 @@ import type { Hex } from '../Hex/types.js'
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
-export class AbiParameters_DataSizeTooSmallError extends BaseError {
+export class AbiParameters_DataSizeTooSmallError extends Errors.BaseError {
   override readonly name = 'AbiParameters.DataSizeTooSmallError'
   constructor({
     data,
@@ -69,7 +69,7 @@ export class AbiParameters_DataSizeTooSmallError extends BaseError {
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
-export class AbiParameters_ZeroDataError extends BaseError {
+export class AbiParameters_ZeroDataError extends Errors.BaseError {
   override readonly name = 'AbiParameters.ZeroDataError'
   constructor() {
     super('Cannot decode zero data ("0x") with ABI parameters.')
@@ -102,7 +102,7 @@ export class AbiParameters_ZeroDataError extends BaseError {
  * //                                                         ↑ ✅ length: 3
  * ```
  */
-export class AbiParameters_ArrayLengthMismatchError extends BaseError {
+export class AbiParameters_ArrayLengthMismatchError extends Errors.BaseError {
   override readonly name = 'AbiParameters.ArrayLengthMismatchError'
   constructor({
     expectedLength,
@@ -141,7 +141,7 @@ export class AbiParameters_ArrayLengthMismatchError extends BaseError {
  * //                                                       ↑ ✅ size: 8 bytes
  * ```
  */
-export class AbiParameters_BytesSizeMismatchError extends BaseError {
+export class AbiParameters_BytesSizeMismatchError extends Errors.BaseError {
   override readonly name = 'AbiParameters.BytesSizeMismatchError'
   constructor({ expectedSize, value }: { expectedSize: number; value: Hex }) {
     super(
@@ -175,7 +175,7 @@ export class AbiParameters_BytesSizeMismatchError extends BaseError {
  *
  * Pass a [valid ABI type](https://docs.soliditylang.org/en/develop/abi-spec.html#types).
  */
-export class AbiParameters_LengthMismatchError extends BaseError {
+export class AbiParameters_LengthMismatchError extends Errors.BaseError {
   override readonly name = 'AbiParameters.LengthMismatchError'
   constructor({
     expectedLength,
@@ -207,7 +207,7 @@ export class AbiParameters_LengthMismatchError extends BaseError {
  *
  * Pass an array value.
  */
-export class AbiParameters_InvalidArrayError extends BaseError {
+export class AbiParameters_InvalidArrayError extends Errors.BaseError {
   override readonly name = 'AbiParameters.InvalidArrayError'
   constructor(value: unknown) {
     super(`Value \`${value}\` is not a valid array.`)
@@ -226,7 +226,7 @@ export class AbiParameters_InvalidArrayError extends BaseError {
  * // @error: AbiParameters.InvalidTypeError: Type `lol` is not a valid ABI Type.
  * ```
  */
-export class AbiParameters_InvalidTypeError extends BaseError {
+export class AbiParameters_InvalidTypeError extends Errors.BaseError {
   override readonly name = 'AbiParameters.InvalidTypeError'
   constructor(type: string) {
     super(`Type \`${type}\` is not a valid ABI Type.`)

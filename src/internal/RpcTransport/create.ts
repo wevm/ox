@@ -1,4 +1,4 @@
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { RpcRequest_createStore } from '../RpcRequest/createStore.js'
 import type { RpcRequest } from '../RpcRequest/types.js'
 import { RpcResponse_parse } from '../RpcResponse/parse.js'

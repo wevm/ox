@@ -1,5 +1,5 @@
 import type { TypedData } from 'abitype'
-import type * as Errors from '../../Errors.js'
+import type { Errors } from '../../Errors.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { Hex } from '../Hex/types.js'
 import { TypedData_encode } from './encode.js'
