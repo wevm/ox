@@ -7,13 +7,13 @@ utilized to construct Transactions to be broadcast to a network.
 
 Ox supports the core Ethereum Transaction Envelope types:
 
-| Type   | Name                                                                            | Module                                                          |
-| ------ | ------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `0x00` | Legacy Transactions                                                             | [`TransactionEnvelopeLegacy`](/api/TransactionEnvelopeLegacy)   |
-| `0x01` | [EIP-2930: Access List Transactions](https://eips.ethereum.org/EIPS/eip-2930)   | [`TransactionEnvelopeEip2930`](/api/TransactionEnvelopeEip2930) |
-| `0x02` | [EIP-1559: Fee Market Transactions](https://eips.ethereum.org/EIPS/eip-1559)    | [`TransactionEnvelopeEip1559`](/api/TransactionEnvelopeEip1559) |
-| `0x03` | [EIP-4844: Blob Transactions](https://eips.ethereum.org/EIPS/eip-4844)          | [`TransactionEnvelopeEip4844`](/api/TransactionEnvelopeEip4844) |
-| `0x04` | [EIP-7702: Authorization Transactions](https://eips.ethereum.org/EIPS/eip-7702) | [`TransactionEnvelopeEip7702`](/api/TransactionEnvelopeEip7702) |
+| Module                                                          | Name                                                                            | Type   |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------ |
+| [`TransactionEnvelopeLegacy`](/api/TransactionEnvelopeLegacy)   | Legacy Transactions                                                             | `0x00` |
+| [`TransactionEnvelopeEip2930`](/api/TransactionEnvelopeEip2930) | [EIP-2930: Access List Transactions](https://eips.ethereum.org/EIPS/eip-2930)   | `0x01` |
+| [`TransactionEnvelopeEip1559`](/api/TransactionEnvelopeEip1559) | [EIP-1559: Fee Market Transactions](https://eips.ethereum.org/EIPS/eip-1559)    | `0x02` |
+| [`TransactionEnvelopeEip4844`](/api/TransactionEnvelopeEip4844) | [EIP-4844: Blob Transactions](https://eips.ethereum.org/EIPS/eip-4844)          | `0x03` |
+| [`TransactionEnvelopeEip7702`](/api/TransactionEnvelopeEip7702) | [EIP-7702: Authorization Transactions](https://eips.ethereum.org/EIPS/eip-7702) | `0x04` |
 
 ## Examples
 
@@ -31,7 +31,6 @@ const envelope = TransactionEnvelopeEip1559.from({
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-  type: 'eip1559',
   value: Value.fromEther('1.5'),
 })
 ```
@@ -51,7 +50,6 @@ const envelope = TransactionEnvelopeEip1559.from({
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-  type: 'eip1559',
   value: Value.fromEther('1.5'),
 })
 
@@ -94,7 +92,6 @@ const envelope = TransactionEnvelopeEip1559.from({
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-  type: 'eip1559',
   value: Value.fromEther('1.5'),
 })
 
@@ -129,7 +126,6 @@ const envelope = TransactionEnvelopeEip1559.from({
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-  type: 'eip1559',
   value: Value.fromEther('1.5'),
 })
 
