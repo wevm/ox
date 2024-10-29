@@ -1,7 +1,6 @@
-import type { Errors } from '../../Errors.js'
 // Adapted from https://github.com/mafintosh/dns-packet
-import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { Bytes } from '../Bytes/types.js'
+import { Bytes } from '../../Bytes.js'
+import type { Errors } from '../../Errors.js'
 import { Ens_encodeLabelhash } from './encodeLabelhash.js'
 import { Ens_labelhash } from './labelhash.js'
 
@@ -14,16 +13,16 @@ export function Ens_packetToBytes(packet: string): Bytes {
   const value = packet.replace(/^\.|\.$/gm, '')
   if (value.length === 0) return new Uint8Array(1)
 
-  const bytes = new Uint8Array(Bytes_fromString(value).byteLength + 2)
+  const bytes = new Uint8Array(Bytes.fromString(value).byteLength + 2)
 
   let offset = 0
   const list = value.split('.')
   for (let i = 0; i < list.length; i++) {
-    let encoded = Bytes_fromString(list[i]!)
+    let encoded = Bytes.fromString(list[i]!)
     // if the length is > 255, make the encoded label value a labelhash
     // this is compatible with the universal resolver
     if (encoded.byteLength > 255)
-      encoded = Bytes_fromString(Ens_encodeLabelhash(Ens_labelhash(list[i]!)))
+      encoded = Bytes.fromString(Ens_encodeLabelhash(Ens_labelhash(list[i]!)))
     bytes[offset] = encoded.length
     bytes.set(encoded, offset + 1)
     offset += encoded.length + 1
@@ -38,6 +37,6 @@ export declare namespace Ens_packetToBytes {
   type ErrorType =
     | Ens_encodeLabelhash.ErrorType
     | Ens_labelhash.ErrorType
-    | Bytes_fromString.ErrorType
+    | Bytes.fromString.ErrorType
     | Errors.GlobalErrorType
 }

@@ -1,10 +1,6 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
-import type { Bytes } from './Bytes.js'
+import { Bytes } from './Bytes.js'
 import { Errors } from './Errors.js'
-import { Bytes_assertSize } from './internal/Bytes/assertSize.js'
-import { Bytes_fromHex } from './internal/Bytes/fromHex.js'
-import { Bytes_random } from './internal/Bytes/random.js'
-import { Bytes_trimRight } from './internal/Bytes/trim.js'
 import { Json_stringify } from './internal/Json/stringify.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()
@@ -91,7 +87,7 @@ export namespace Hex {
   concat.parseError = (error: unknown) => error as Hex.concat.ErrorType
 
   /**
-   * Instantiates a {@link ox#(Hex:type)} value from a hex string or {@link ox#Bytes.Bytes} value.
+   * Instantiates a {@link ox#(Hex:type)} value from a hex string or {@link ox#(Bytes:namespace).(Bytes:type)} value.
    *
    * :::tip
    *
@@ -116,7 +112,7 @@ export namespace Hex {
    * // @log: '0x48656c6c6f20576f726c6421'
    * ```
    *
-   * @param value - The {@link ox#Bytes.Bytes} value to encode.
+   * @param value - The {@link ox#(Bytes:namespace).(Bytes:type)} value to encode.
    * @returns The encoded {@link ox#(Hex:type)} value.
    */
   export function from(value: Hex | Bytes | readonly number[]): Hex {
@@ -187,7 +183,7 @@ export namespace Hex {
     error as fromBoolean.ErrorType
 
   /**
-   * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#(Hex:type)} value.
+   * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} value into a {@link ox#(Hex:type)} value.
    *
    * @example
    * ```ts twoslash
@@ -197,7 +193,7 @@ export namespace Hex {
    * // @log: '0x48656c6c6f20576f726c6421'
    * ```
    *
-   * @param value - The {@link ox#Bytes.Bytes} value to encode.
+   * @param value - The {@link ox#(Bytes:namespace).(Bytes:type)} value to encode.
    * @param options - Options.
    * @returns The encoded {@link ox#(Hex:type)} value.
    */
@@ -368,11 +364,11 @@ export namespace Hex {
    * @returns `true` if the two {@link ox#(Hex:type)} values are equal, `false` otherwise.
    */
   export function isEqual(hexA: Hex, hexB: Hex) {
-    return equalBytes(Bytes_fromHex(hexA), Bytes_fromHex(hexB))
+    return equalBytes(Bytes.fromHex(hexA), Bytes.fromHex(hexB))
   }
 
   export declare namespace isEqual {
-    type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
+    type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
   }
 
   /* v8 ignore next */
@@ -452,7 +448,7 @@ export namespace Hex {
    * @returns Random {@link ox#(Hex:type)} value.
    */
   export function random(length: number): Hex {
-    return Hex.fromBytes(Bytes_random(length))
+    return Hex.fromBytes(Bytes.random(length))
   }
 
   export declare namespace random {
@@ -463,7 +459,7 @@ export namespace Hex {
   random.parseError = (error: unknown) => error as random.ErrorType
 
   /**
-   * Returns a section of a {@link ox#Bytes.Bytes} value given a start/end bytes offset.
+   * Returns a section of a {@link ox#(Bytes:namespace).(Bytes:type)} value given a start/end bytes offset.
    *
    * @example
    * ```ts twoslash
@@ -686,7 +682,7 @@ export namespace Hex {
   toBoolean.parseError = (error: unknown) => error as toBoolean.ErrorType
 
   /**
-   * Decodes a {@link ox#(Hex:type)} value into a {@link ox#Bytes.Bytes}.
+   * Decodes a {@link ox#(Hex:type)} value into a {@link ox#(Bytes:namespace).(Bytes:type)}.
    *
    * @example
    * ```ts twoslash
@@ -698,10 +694,10 @@ export namespace Hex {
    *
    * @param hex - The {@link ox#(Hex:type)} value to decode.
    * @param options - Options.
-   * @returns The decoded {@link ox#Bytes.Bytes}.
+   * @returns The decoded {@link ox#(Bytes:namespace).(Bytes:type)}.
    */
   export function toBytes(hex: Hex, options: toBytes.Options = {}): Bytes {
-    return Bytes_fromHex(hex, options)
+    return Bytes.fromHex(hex, options)
   }
 
   export declare namespace toBytes {
@@ -710,7 +706,7 @@ export namespace Hex {
       size?: number | undefined
     }
 
-    type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
+    type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
   }
 
   /* v8 ignore next */
@@ -772,10 +768,10 @@ export namespace Hex {
   export function toString(hex: Hex, options: toString.Options = {}): string {
     const { size } = options
 
-    let bytes = Bytes_fromHex(hex)
+    let bytes = Bytes.fromHex(hex)
     if (size) {
-      Bytes_assertSize(bytes, size)
-      bytes = Bytes_trimRight(bytes)
+      Bytes.assertSize(bytes, size)
+      bytes = Bytes.trimRight(bytes)
     }
     return new TextDecoder().decode(bytes)
   }
@@ -787,9 +783,9 @@ export namespace Hex {
     }
 
     type ErrorType =
-      | Bytes_assertSize.ErrorType
-      | Bytes_fromHex.ErrorType
-      | Bytes_trimRight.ErrorType
+      | Bytes.assertSize.ErrorType
+      | Bytes.fromHex.ErrorType
+      | Bytes.trimRight.ErrorType
       | Errors.GlobalErrorType
   }
 

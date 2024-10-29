@@ -1,6 +1,5 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import { Bytes_random } from '../Bytes/random.js'
-import type { Bytes } from '../Bytes/types.js'
 
 /**
  * Generates a random salt of the specified size.
@@ -17,13 +16,13 @@ import type { Bytes } from '../Bytes/types.js'
  * @returns A random salt of the specified size.
  */
 export function AesGcm_randomSalt(size = 32): Bytes {
-  return Bytes_random(size)
+  return Bytes.random(size)
 }
 
 export declare namespace AesGcm_randomSalt {
-  type ErrorType = Bytes_random.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.random.ErrorType | Errors.GlobalErrorType
 }
 
-Bytes_random.parseError = (error) =>
+Bytes.random.parseError = (error) =>
   /* v8 ignore next */
   error as AesGcm_randomSalt.ErrorType

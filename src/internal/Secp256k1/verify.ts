@@ -1,10 +1,9 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { Address_isEqual } from '../Address/isEqual.js'
 import type { Address } from '../Address/types.js'
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
@@ -58,7 +57,7 @@ export function Secp256k1_verify(options: Secp256k1_verify.Options): boolean {
     )
   return secp256k1.verify(
     signature,
-    Bytes_from(payload),
+    Bytes.from(payload),
     PublicKey_serialize(publicKey, { as: 'Bytes' }),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )

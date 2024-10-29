@@ -1,6 +1,6 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { OneOf } from '../types.js'
 import type {
@@ -71,7 +71,7 @@ export function WebAuthnP256_getCredentialCreationOptions(
       ],
       rp,
       user: {
-        id: user?.id ?? Hash_keccak256(Bytes_fromString(name), { as: 'Bytes' }),
+        id: user?.id ?? Hash_keccak256(Bytes.fromString(name), { as: 'Bytes' }),
         name,
         displayName: user?.displayName ?? name,
       },
@@ -141,7 +141,7 @@ export declare namespace WebAuthnP256_getCredentialCreationOptions {
   type ErrorType =
     | Base64_toBytes.ErrorType
     | Hash_keccak256.ErrorType
-    | Bytes_fromString.ErrorType
+    | Bytes.fromString.ErrorType
     | Errors.GlobalErrorType
 }
 

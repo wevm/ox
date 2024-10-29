@@ -1,6 +1,6 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import type { Bytes } from '../Bytes/types.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Mutable, OneOf, UnionCompute } from '../types.js'
 import { Blobs_toCommitments } from './toCommitments.js'

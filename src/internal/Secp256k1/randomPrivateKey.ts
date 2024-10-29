@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import type { Bytes } from '../Bytes/types.js'
 
 /**
  * Generates a random ECDSA private key on the secp256k1 curve.

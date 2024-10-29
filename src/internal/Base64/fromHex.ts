@@ -1,6 +1,6 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Base64_fromBytes } from './fromBytes.js'
 
 /**
@@ -45,7 +45,7 @@ export function Base64_fromHex(
   value: Hex,
   options: Base64_fromHex.Options = {},
 ) {
-  return Base64_fromBytes(Bytes_fromHex(value), options)
+  return Base64_fromBytes(Bytes.fromHex(value), options)
 }
 
 export declare namespace Base64_fromHex {

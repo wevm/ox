@@ -1,7 +1,6 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
 import { HdKey_path } from '../HdKey/path.js'
 import { Mnemonic_toHdKey } from './toHdKey.js'
 
@@ -42,7 +41,7 @@ export function Mnemonic_toPrivateKey<as extends 'Bytes' | 'Hex' = 'Bytes'>(
 ): Mnemonic_toPrivateKey.ReturnType<as> {
   const { path = HdKey_path(), passphrase } = options
   const hdKey = Mnemonic_toHdKey(mnemonic, { passphrase }).derive(path)
-  if (options.as === 'Bytes') return Bytes_from(hdKey.privateKey) as never
+  if (options.as === 'Bytes') return Bytes.from(hdKey.privateKey) as never
   return hdKey.privateKey as never
 }
 

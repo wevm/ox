@@ -1,9 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
 import type { Signature } from '../Signature/types.js'
 
 /**
@@ -25,8 +24,8 @@ import type { Signature } from '../Signature/types.js'
 export function Secp256k1_sign(options: Secp256k1_sign.Options): Signature {
   const { hash, payload, privateKey } = options
   const { r, s, recovery } = secp256k1.sign(
-    Bytes_from(payload),
-    Bytes_from(privateKey),
+    Bytes.from(payload),
+    Bytes.from(privateKey),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
   return {
@@ -46,7 +45,7 @@ export declare namespace Secp256k1_sign {
     privateKey: Hex | Bytes
   }
 
-  type ErrorType = Bytes_from.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
 }
 
 Secp256k1_sign.parseError = (error: unknown) =>

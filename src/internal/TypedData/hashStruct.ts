@@ -1,8 +1,8 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { TypedData_encodeType } from './encodeType.js'
 import type { TypedData } from './types.js'
@@ -146,7 +146,7 @@ export function encodeField(properties: {
   if (type === 'string')
     return [
       { type: 'bytes32' },
-      Hash_keccak256(Bytes_fromString(value), { as: 'Hex' }),
+      Hash_keccak256(Bytes.fromString(value), { as: 'Hex' }),
     ]
 
   if (type.lastIndexOf(']') === type.length - 1) {
@@ -179,6 +179,6 @@ export declare namespace encodeField {
   type ErrorType =
     | AbiParameters_encode.ErrorType
     | Hash_keccak256.ErrorType
-    | Bytes_fromString.ErrorType
+    | Bytes.fromString.ErrorType
     | Errors.GlobalErrorType
 }

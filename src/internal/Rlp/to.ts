@@ -1,12 +1,11 @@
+import { Bytes } from '../../Bytes.js'
 import { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import type { RecursiveArray } from '../types.js'
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#(Bytes:namespace).(Bytes:type)} value.
  *
  * @example
  * ```ts twoslash
@@ -16,7 +15,7 @@ import type { RecursiveArray } from '../types.js'
  * ```
  *
  * @param value - The value to decode.
- * @returns The decoded {@link ox#Bytes.Bytes} value.
+ * @returns The decoded {@link ox#(Bytes:namespace).(Bytes:type)} value.
  */
 export function Rlp_toBytes(value: Bytes | Hex): RecursiveArray<Bytes> {
   return Rlp_to(value, 'Bytes')
@@ -70,7 +69,7 @@ export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
     if (typeof value === 'string') {
       if (value.length > 3 && value.length % 2 !== 0)
         throw new Hex.InvalidLengthError(value)
-      return Bytes_fromHex(value)
+      return Bytes.fromHex(value)
     }
     return value as Bytes
   })()
@@ -90,7 +89,7 @@ export declare namespace Rlp_to {
     | (to extends 'Hex' ? RecursiveArray<Hex> : never)
 
   type ErrorType =
-    | Bytes_fromHex.ErrorType
+    | Bytes.fromHex.ErrorType
     | decodeRlpCursor.ErrorType
     | createCursor.ErrorType
     | Hex.InvalidLengthError

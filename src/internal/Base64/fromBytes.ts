@@ -1,5 +1,5 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import type { Bytes } from '../Bytes/types.js'
 
 const decoder = /*#__PURE__*/ new TextDecoder()
 const lookup = /*#__PURE__*/ Object.fromEntries(
@@ -9,7 +9,7 @@ const lookup = /*#__PURE__*/ Object.fromEntries(
 )
 
 /**
- * Encodes a {@link ox#Bytes.Bytes} to a Base64-encoded string (with optional padding and/or URL-safe characters).
+ * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
  * @example
  * ```ts twoslash

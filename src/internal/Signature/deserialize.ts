@@ -1,6 +1,6 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import type { Bytes } from '../Bytes/types.js'
 import {
   Signature_InvalidSerializedSizeError,
   Signature_InvalidYParityError,
@@ -9,7 +9,7 @@ import type { Signature } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
- * Deserializes a {@link ox#Bytes.Bytes} or {@link ox#(Hex:type)} signature into a structured {@link ox#Signature.Signature}.
+ * Deserializes a {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} signature into a structured {@link ox#Signature.Signature}.
  *
  * @example
  * ```ts twoslash

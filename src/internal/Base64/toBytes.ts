@@ -1,5 +1,5 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import type { Bytes } from '../Bytes/types.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()
 const lookup = /*#__PURE__*/ {
@@ -14,7 +14,7 @@ const lookup = /*#__PURE__*/ {
 } as Record<number, number>
 
 /**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Bytes.Bytes}.
+ * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#(Bytes:namespace).(Bytes:type)}.
  *
  * @example
  * ```ts twoslash
@@ -25,7 +25,7 @@ const lookup = /*#__PURE__*/ {
  * ```
  *
  * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded {@link ox#Bytes.Bytes}.
+ * @returns The Base64 decoded {@link ox#(Bytes:namespace).(Bytes:type)}.
  */
 export function Base64_toBytes(value: string): Bytes {
   const base64 = value.replace(/=+$/, '')

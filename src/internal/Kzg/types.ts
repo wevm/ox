@@ -1,4 +1,4 @@
-import type { Bytes } from '../Bytes/types.js'
+import type { Bytes } from '../../Bytes.js'
 
 /** Root type for a KZG interface. */
 export type Kzg = {

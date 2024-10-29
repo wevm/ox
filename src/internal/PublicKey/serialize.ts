@@ -1,12 +1,11 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { PublicKey_assert } from './assert.js'
 import type { PublicKey } from './types.js'
 
 /**
- * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#(Hex:type)} or {@link ox#Bytes.Bytes}.
+ * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)}.
  *
  * @example
  * ```ts twoslash
@@ -42,7 +41,7 @@ export function PublicKey_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   )
 
   if (as === 'Hex') return publicKey_ as never
-  return Bytes_fromHex(publicKey_) as never
+  return Bytes.fromHex(publicKey_) as never
 }
 
 export declare namespace PublicKey_serialize {
@@ -65,7 +64,7 @@ export declare namespace PublicKey_serialize {
 
   type ErrorType =
     | Hex.fromNumber.ErrorType
-    | Bytes_fromHex.ErrorType
+    | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 

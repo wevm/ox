@@ -1,9 +1,8 @@
 import { HDKey, type Versions } from '@scure/bip32'
 
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
 import { HdKey_fromScure } from './fromScure.js'
 import type { HdKey } from './types.js'
 
@@ -42,7 +41,7 @@ export function HdKey_fromSeed(
   options: HdKey_fromSeed.Options = {},
 ): HdKey {
   const { versions } = options
-  const key = HDKey.fromMasterSeed(Bytes_from(seed), versions)
+  const key = HDKey.fromMasterSeed(Bytes.from(seed), versions)
   return HdKey_fromScure(key)
 }
 
@@ -53,7 +52,7 @@ export declare namespace HdKey_fromSeed {
   }
 
   type ErrorType =
-    | Bytes_from.ErrorType
+    | Bytes.from.ErrorType
     | HdKey_fromScure.ErrorType
     | Errors.GlobalErrorType
 }

@@ -1,11 +1,11 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { PublicKey_InvalidSerializedSizeError } from './errors.js'
 import type { PublicKey } from './types.js'
 
 /**
- * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#(Hex:type)} or {@link ox#Bytes.Bytes} value.
+ * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)} value.
  *
  * @example
  * ```ts twoslash

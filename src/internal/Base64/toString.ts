@@ -1,5 +1,5 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import { Bytes_toString } from '../Bytes/toString.js'
 import { Base64_toBytes } from './toBytes.js'
 
 /**
@@ -17,7 +17,7 @@ import { Base64_toBytes } from './toBytes.js'
  * @returns The Base64 decoded string.
  */
 export function Base64_toString(value: string): string {
-  return Bytes_toString(Base64_toBytes(value))
+  return Bytes.toString(Base64_toBytes(value))
 }
 
 export declare namespace Base64_toString {

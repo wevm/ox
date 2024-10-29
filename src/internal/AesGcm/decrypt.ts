@@ -1,7 +1,6 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import { Bytes_from } from '../Bytes/from.js'
-import type { Bytes } from '../Bytes/types.js'
 import { AesGcm_ivLength } from './constants.js'
 
 /**
@@ -36,7 +35,7 @@ export async function AesGcm_decrypt<
   options: AesGcm_decrypt.Options<as> = {},
 ): Promise<AesGcm_decrypt.ReturnType<as>> {
   const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const encrypted = Bytes_from(value)
+  const encrypted = Bytes.from(value)
   const iv = encrypted.slice(0, AesGcm_ivLength)
   const data = encrypted.slice(AesGcm_ivLength)
   const decrypted = await globalThis.crypto.subtle.decrypt(
@@ -45,7 +44,7 @@ export async function AesGcm_decrypt<
       iv,
     },
     key,
-    Bytes_from(data),
+    Bytes.from(data),
   )
   const result = new Uint8Array(decrypted)
   if (as === 'Bytes') return result as never
@@ -63,7 +62,7 @@ export declare namespace AesGcm_decrypt {
     | (as extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | Bytes_from.ErrorType
+    | Bytes.from.ErrorType
     | Hex.from.ErrorType
     | Errors.GlobalErrorType
 }

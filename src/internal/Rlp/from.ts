@@ -1,7 +1,6 @@
+import { Bytes } from '../../Bytes.js'
 import { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import type { ExactPartial, RecursiveArray } from '../types.js'
 
@@ -11,7 +10,7 @@ type Encodable = {
 }
 
 /**
- * Encodes a {@link ox#Bytes.Bytes} or {@link ox#(Hex:type)} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -24,7 +23,7 @@ type Encodable = {
  * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
  *
- * @param value - The {@link ox#Bytes.Bytes} or {@link ox#(Hex:type)} value to encode.
+ * @param value - The {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value to encode.
  * @param options - Options.
  * @returns The RLP value.
  */
@@ -56,7 +55,7 @@ export declare namespace Rlp_from {
   type ErrorType =
     | createCursor.ErrorType
     | Hex.fromBytes.ErrorType
-    | Bytes_fromHex.ErrorType
+    | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -65,7 +64,7 @@ Rlp_from.parseError = (error: unknown) =>
   error as Rlp_from.ErrorType
 
 /**
- * Encodes a {@link ox#Bytes.Bytes} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -75,7 +74,7 @@ Rlp_from.parseError = (error: unknown) =>
  * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
  *
- * @param bytes - The {@link ox#Bytes.Bytes} value to encode.
+ * @param bytes - The {@link ox#(Bytes:namespace).(Bytes:type)} value to encode.
  * @param options - Options.
  * @returns The RLP value.
  */
@@ -181,7 +180,7 @@ function getEncodableList(list: Encodable[]): Encodable {
 
 function getEncodableBytes(bytesOrHex: Bytes | Hex): Encodable {
   const bytes =
-    typeof bytesOrHex === 'string' ? Bytes_fromHex(bytesOrHex) : bytesOrHex
+    typeof bytesOrHex === 'string' ? Bytes.fromHex(bytesOrHex) : bytesOrHex
 
   const sizeOfBytesLength = getSizeOfLength(bytes.length)
   const length = (() => {

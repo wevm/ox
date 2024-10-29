@@ -1,9 +1,6 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_from } from '../Bytes/from.js'
-import { Bytes_random } from '../Bytes/random.js'
-import type { Bytes } from '../Bytes/types.js'
 import { AesGcm_ivLength } from './constants.js'
 
 /**
@@ -36,16 +33,16 @@ export async function AesGcm_encrypt<
   options: AesGcm_encrypt.Options<as> = {},
 ): Promise<AesGcm_encrypt.ReturnType<as>> {
   const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
-  const iv = Bytes_random(AesGcm_ivLength)
+  const iv = Bytes.random(AesGcm_ivLength)
   const encrypted = await globalThis.crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
       iv,
     },
     key,
-    Bytes_from(value),
+    Bytes.from(value),
   )
-  const result = Bytes_concat(iv, new Uint8Array(encrypted))
+  const result = Bytes.concat(iv, new Uint8Array(encrypted))
   if (as === 'Bytes') return result as never
   return Hex.from(result) as never
 }
@@ -61,9 +58,9 @@ export declare namespace AesGcm_encrypt {
     | (as extends 'Hex' ? Hex : never)
 
   type ErrorType =
-    | Bytes_concat.ErrorType
-    | Bytes_from.ErrorType
-    | Bytes_random.ErrorType
+    | Bytes.concat.ErrorType
+    | Bytes.from.ErrorType
+    | Bytes.random.ErrorType
     | Hex.from.ErrorType
     | Errors.GlobalErrorType
 }

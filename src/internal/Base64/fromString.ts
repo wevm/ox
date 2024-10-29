@@ -1,5 +1,5 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Base64_fromBytes } from './fromBytes.js'
 
 /**
@@ -44,7 +44,7 @@ export function Base64_fromString(
   value: string,
   options: Base64_fromString.Options = {},
 ) {
-  return Base64_fromBytes(Bytes_fromString(value), options)
+  return Base64_fromBytes(Bytes.fromString(value), options)
 }
 
 export declare namespace Base64_fromString {

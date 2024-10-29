@@ -1,6 +1,6 @@
 import type * as Address from '../../Address.js'
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Caches_checksum } from '../caches.js'
 import { Address_assert } from './assert.js'
@@ -25,7 +25,7 @@ export function Address_checksum(address: string): Address.Address {
   Address_assert(address, { strict: false })
 
   const hexAddress = address.substring(2).toLowerCase()
-  const hash = Hash_keccak256(Bytes_fromString(hexAddress), { as: 'Bytes' })
+  const hash = Hash_keccak256(Bytes.fromString(hexAddress), { as: 'Bytes' })
 
   const characters = hexAddress.split('')
   for (let i = 0; i < 40; i += 2) {
@@ -46,7 +46,7 @@ export declare namespace Address_checksum {
   type ErrorType =
     | Address_assert.ErrorType
     | Hash_keccak256.ErrorType
-    | Bytes_fromString.ErrorType
+    | Bytes.fromString.ErrorType
     | Errors.GlobalErrorType
 }
 

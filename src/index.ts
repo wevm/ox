@@ -988,17 +988,17 @@ export * as Bloom from './Bloom.js'
  * @example
  * ### Instantiating Bytes
  *
- * Values can be instantiated as {@link ox#Bytes.Bytes} using:
+ * Values can be instantiated as {@link ox#(Bytes:namespace).(Bytes:type)} using:
  *
- * - {@link ox#Bytes.(fromArray:function)}
+ * - {@link ox#(Bytes:namespace).(fromArray:function)}
  *
- * - {@link ox#Bytes.(fromBoolean:function)}
+ * - {@link ox#(Bytes:namespace).(fromBoolean:function)}
  *
- * - {@link ox#Bytes.(fromHex:function)}
+ * - {@link ox#(Bytes:namespace).(fromHex:function)}
  *
- * - {@link ox#Bytes.(fromNumber:function)}
+ * - {@link ox#(Bytes:namespace).(fromNumber:function)}
  *
- * - {@link ox#Bytes.(fromString:function)}
+ * - {@link ox#(Bytes:namespace).(fromString:function)}
  *
  * ```ts twoslash
  * import { Bytes } from 'ox'
@@ -1022,17 +1022,17 @@ export * as Bloom from './Bloom.js'
  * @example
  * ### Converting from Bytes
  *
- * Values can be converted from {@link ox#Bytes.Bytes} using:
+ * Values can be converted from {@link ox#(Bytes:namespace).(Bytes:type)} using:
  *
- * - {@link ox#Bytes.(toBigInt:function)}
+ * - {@link ox#(Bytes:namespace).(toBigInt:function)}
  *
- * - {@link ox#Bytes.(toBoolean:function)}
+ * - {@link ox#(Bytes:namespace).(toBoolean:function)}
  *
- * - {@link ox#Bytes.(toHex:function)}
+ * - {@link ox#(Bytes:namespace).(toHex:function)}
  *
- * - {@link ox#Bytes.(toNumber:function)}
+ * - {@link ox#(Bytes:namespace).(toNumber:function)}
  *
- * - {@link ox#Bytes.(toString:function)}
+ * - {@link ox#(Bytes:namespace).(toString:function)}
  *
  * ```ts twoslash
  * import { Bytes } from 'ox'
@@ -1056,7 +1056,7 @@ export * as Bloom from './Bloom.js'
  * @example
  * ### Concatenating Bytes
  *
- * Values can be concatenated using {@link ox#Bytes.(concat:function)}:
+ * Values can be concatenated using {@link ox#(Bytes:namespace).(concat:function)}:
  *
  * ```ts twoslash
  * import { Bytes } from 'ox'
@@ -1070,7 +1070,7 @@ export * as Bloom from './Bloom.js'
  * @example
  * ### Slicing Bytes
  *
- * Values can be sliced using {@link ox#Bytes.(slice:function)}:
+ * Values can be sliced using {@link ox#(Bytes:namespace).(slice:function)}:
  *
  * ```ts twoslash
  * import { Bytes } from 'ox'
@@ -1082,7 +1082,7 @@ export * as Bloom from './Bloom.js'
  * @example
  * ### Padding Bytes
  *
- * Values can be padded with zeroes using {@link ox#Bytes.(padLeft:function)} or {@link ox#Bytes.(padRight:function)}:
+ * Values can be padded with zeroes using {@link ox#(Bytes:namespace).(padLeft:function)} or {@link ox#(Bytes:namespace).(padRight:function)}:
  *
  * ```ts twoslash
  * import { Bytes } from 'ox'
@@ -1097,7 +1097,7 @@ export * as Bloom from './Bloom.js'
  * @example
  * ### Trimming Bytes
  *
- * Zeroes in values can be trimmed using {@link ox#Bytes.(trimLeft:function)} or {@link ox#Bytes.(trimRight:function)}:
+ * Zeroes in values can be trimmed using {@link ox#(Bytes:namespace).(trimLeft:function)} or {@link ox#(Bytes:namespace).(trimRight:function)}:
  *
  * ```ts twoslash
  * import { Bytes } from 'ox'
@@ -1108,7 +1108,7 @@ export * as Bloom from './Bloom.js'
  *
  * @category Encoding
  */
-export * as Bytes from './Bytes.js'
+export { Bytes } from './Bytes.js'
 
 export * as Caches from './Caches.js'
 

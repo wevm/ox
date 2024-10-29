@@ -1,6 +1,5 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import { Bytes_fromString } from '../Bytes/fromString.js'
-import type { Bytes } from '../Bytes/types.js'
 import { AesGcm_randomSalt } from './randomSalt.js'
 
 /**
@@ -27,7 +26,7 @@ export async function AesGcm_getKey(
   } = options
   const baseKey = await globalThis.crypto.subtle.importKey(
     'raw',
-    Bytes_fromString(password),
+    Bytes.fromString(password),
     { name: 'PBKDF2' },
     false,
     ['deriveBits', 'deriveKey'],

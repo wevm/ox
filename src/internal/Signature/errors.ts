@@ -1,6 +1,6 @@
+import type { Bytes } from '../../Bytes.js'
 import { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { Json_stringify } from '../Json/stringify.js'
 
 /** Thrown when the serialized signature is of an invalid size. */

@@ -1,8 +1,7 @@
 import { mnemonicToSeedSync } from '@scure/bip39'
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Bytes_toHex } from '../Bytes/toHex.js'
-import type { Bytes } from '../Bytes/types.js'
 
 /**
  * Converts a mnemonic to a master seed.
@@ -26,7 +25,7 @@ export function Mnemonic_toSeed<as extends 'Bytes' | 'Hex' = 'Bytes'>(
 ): Mnemonic_toSeed.ReturnType<as> {
   const { passphrase } = options
   const seed = mnemonicToSeedSync(mnemonic, passphrase)
-  if (options.as === 'Hex') return Bytes_toHex(seed) as never
+  if (options.as === 'Hex') return Bytes.toHex(seed) as never
   return seed as never
 }
 

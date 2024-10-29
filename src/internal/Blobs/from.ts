@@ -1,8 +1,6 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import { Bytes_size } from '../Bytes/size.js'
-import type { Bytes } from '../Bytes/types.js'
 import { createCursor } from '../cursor.js'
 import {
   Blobs_bytesPerBlob,
@@ -61,9 +59,9 @@ export function Blobs_from<
   options: Blobs_from.Options<as> = {},
 ): Blobs_from.ReturnType<as> {
   const as = options.as ?? (typeof data === 'string' ? 'Hex' : 'Bytes')
-  const data_ = (typeof data === 'string' ? Bytes_fromHex(data) : data) as Bytes
+  const data_ = (typeof data === 'string' ? Bytes.fromHex(data) : data) as Bytes
 
-  const size_ = Bytes_size(data_)
+  const size_ = Bytes.size(data_)
   if (!size_) throw new Blobs_EmptyBlobError()
   if (size_ > Blobs_maxBytesPerTransaction)
     throw new Blobs_BlobSizeTooLargeError({
@@ -126,10 +124,10 @@ export declare namespace Blobs_from {
   type ErrorType =
     | Blobs_BlobSizeTooLargeError
     | Blobs_EmptyBlobError
-    | Bytes_fromHex.ErrorType
+    | Bytes.fromHex.ErrorType
     | Hex.fromBytes.ErrorType
     | createCursor.ErrorType
-    | Bytes_size.ErrorType
+    | Bytes.size.ErrorType
     | Errors.GlobalErrorType
 }
 

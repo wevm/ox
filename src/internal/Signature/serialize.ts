@@ -1,12 +1,11 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'
 
 /**
- * Serializes a {@link ox#Signature.Signature} to {@link ox#(Hex:type)} or {@link ox#Bytes.Bytes}.
+ * Serializes a {@link ox#Signature.Signature} to {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)}.
  *
  * @example
  * ```ts twoslash
@@ -44,7 +43,7 @@ export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   )
 
   if (as === 'Hex') return signature_ as Signature_serialize.ReturnType<as>
-  return Bytes_fromHex(signature_) as Signature_serialize.ReturnType<as>
+  return Bytes.fromHex(signature_) as Signature_serialize.ReturnType<as>
 }
 
 export declare namespace Signature_serialize {
@@ -60,7 +59,7 @@ export declare namespace Signature_serialize {
     | (as extends 'Hex' ? Hex : never)
     | (as extends 'Bytes' ? Bytes : never)
 
-  type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
 
 Signature_serialize.parseError = (error: unknown) =>

@@ -1,6 +1,6 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 
 /**

@@ -1,8 +1,7 @@
 import { secp256r1 } from '@noble/curves/p256'
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { Bytes } from '../Bytes/types.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
@@ -33,7 +32,7 @@ export function P256_verify(options: P256_verify.Options): boolean {
   const { hash, payload, publicKey, signature } = options
   return secp256r1.verify(
     signature,
-    payload instanceof Uint8Array ? payload : Bytes_fromHex(payload),
+    payload instanceof Uint8Array ? payload : Bytes.fromHex(payload),
     PublicKey_serialize(publicKey).substring(2),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )

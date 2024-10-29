@@ -1,6 +1,6 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import type { Bytes } from '../Bytes/types.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Compute } from '../types.js'
 import { Blobs_commitmentsToVersionedHashes } from './commitmentsToVersionedHashes.js'

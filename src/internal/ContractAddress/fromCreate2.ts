@@ -1,12 +1,8 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
 import { Address_from } from '../Address/from.js'
 import type { Address } from '../Address/types.js'
-import { Bytes_concat } from '../Bytes/concat.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import { Bytes_padLeft } from '../Bytes/pad.js'
-import type { Bytes } from '../Bytes/types.js'
-import { Bytes_validate } from '../Bytes/validate.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 
 /**
@@ -30,16 +26,16 @@ import { Hash_keccak256 } from '../Hash/keccak256.js'
 export function ContractAddress_fromCreate2(
   options: ContractAddress_fromCreate2.Options,
 ): Address {
-  const from = Bytes_fromHex(Address_from(options.from))
-  const salt = Bytes_padLeft(
-    Bytes_validate(options.salt) ? options.salt : Bytes_fromHex(options.salt),
+  const from = Bytes.fromHex(Address_from(options.from))
+  const salt = Bytes.padLeft(
+    Bytes.validate(options.salt) ? options.salt : Bytes.fromHex(options.salt),
     32,
   )
 
   const bytecodeHash = (() => {
     if ('bytecodeHash' in options) {
-      if (Bytes_validate(options.bytecodeHash)) return options.bytecodeHash
-      return Bytes_fromHex(options.bytecodeHash)
+      if (Bytes.validate(options.bytecodeHash)) return options.bytecodeHash
+      return Bytes.fromHex(options.bytecodeHash)
     }
     return Hash_keccak256(options.bytecode, { as: 'Bytes' })
   })()
@@ -47,7 +43,7 @@ export function ContractAddress_fromCreate2(
   return Address_from(
     Hex.slice(
       Hash_keccak256(
-        Bytes_concat(Bytes_fromHex('0xff'), from, salt, bytecodeHash),
+        Bytes.concat(Bytes.fromHex('0xff'), from, salt, bytecodeHash),
         { as: 'Hex' },
       ),
       12,
@@ -70,12 +66,12 @@ export declare namespace ContractAddress_fromCreate2 {
 
   type ErrorType =
     | Address_from.ErrorType
-    | Bytes_concat.ErrorType
-    | Bytes_validate.ErrorType
-    | Bytes_padLeft.ErrorType
+    | Bytes.concat.ErrorType
+    | Bytes.validate.ErrorType
+    | Bytes.padLeft.ErrorType
     | Hash_keccak256.ErrorType
     | Hex.slice.ErrorType
-    | Bytes_fromHex.ErrorType
+    | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 

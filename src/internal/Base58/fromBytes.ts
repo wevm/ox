@@ -1,9 +1,9 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
-import type { Bytes } from '../Bytes/types.js'
 import { Base58_from } from './from.js'
 
 /**
- * Encodes a {@link ox#Bytes.Bytes} to a Base58-encoded string.
+ * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} to a Base58-encoded string.
  *
  * @example
  * ```ts twoslash

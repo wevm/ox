@@ -1,7 +1,7 @@
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type {
   CredentialRequestOptions,
   PublicKeyCredentialRequestOptions,
@@ -45,7 +45,7 @@ export function WebAuthnP256_getCredentialRequestOptions(
             ],
           }
         : {}),
-      challenge: Bytes_fromHex(challenge),
+      challenge: Bytes.fromHex(challenge),
       rpId,
       userVerification,
     },
@@ -67,7 +67,7 @@ export declare namespace WebAuthnP256_getCredentialRequestOptions {
   }
 
   type ErrorType =
-    | Bytes_fromHex.ErrorType
+    | Bytes.fromHex.ErrorType
     | Base64_toBytes.ErrorType
     | Errors.GlobalErrorType
 }

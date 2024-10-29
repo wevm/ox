@@ -1,7 +1,7 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import { Hex } from '../../Hex.js'
 import type { Address } from '../Address/types.js'
-import type { Bytes } from '../Bytes/types.js'
 
 /**
  * Encodes data with a validator in [EIP-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x00): `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`.

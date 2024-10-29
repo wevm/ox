@@ -1,7 +1,7 @@
+import type { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import type { Address } from '../Address/types.js'
-import type { Bytes } from '../Bytes/types.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { ValidatorData_encode } from './encode.js'
 

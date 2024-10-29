@@ -1,9 +1,8 @@
 import { secp256r1 } from '@noble/curves/p256'
 
+import { Bytes } from '../../Bytes.js'
 import type { Errors } from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { Bytes } from '../Bytes/types.js'
 import type { Signature } from '../Signature/types.js'
 
 /**
@@ -25,8 +24,8 @@ import type { Signature } from '../Signature/types.js'
 export function P256_sign(options: P256_sign.Options): Signature {
   const { hash, payload, privateKey } = options
   const { r, s, recovery } = secp256r1.sign(
-    payload instanceof Uint8Array ? payload : Bytes_fromHex(payload),
-    privateKey instanceof Uint8Array ? privateKey : Bytes_fromHex(privateKey),
+    payload instanceof Uint8Array ? payload : Bytes.fromHex(payload),
+    privateKey instanceof Uint8Array ? privateKey : Bytes.fromHex(privateKey),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
   return {
@@ -46,7 +45,7 @@ export declare namespace P256_sign {
     privateKey: Hex | Bytes
   }
 
-  type ErrorType = Bytes_fromHex.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
