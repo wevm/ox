@@ -2525,7 +2525,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Instantiating Transaction Envelopes
  *
- * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip2930.(from:function)}:
+ * Transaction Envelopes can be instantiated using {@link ox#(TransactionEnvelopeEip2930:namespace).(from:function)}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -2543,7 +2543,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Signing Transaction Envelopes
  *
- * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip2930.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ * Transaction Envelopes can be signed using {@link ox#(TransactionEnvelopeEip2930:namespace).(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip2930 } from 'ox'
@@ -2566,7 +2566,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Serializing Transaction Envelopes
  *
- * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip2930.(serialize:function)}:
+ * Transaction Envelopes can be serialized using {@link ox#(TransactionEnvelopeEip2930:namespace).(serialize:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip2930, Value } from 'ox'
@@ -2586,7 +2586,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Computing Transaction Hashes
  *
- * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip2930.(hash:function)}:
+ * Transaction Hashes can be computed using {@link ox#(TransactionEnvelopeEip2930:namespace).(hash:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip2930 } from 'ox'
@@ -2613,7 +2613,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
+export { TransactionEnvelopeEip2930 } from './TransactionEnvelopeEip2930.js'
 
 /**
  * Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844)
