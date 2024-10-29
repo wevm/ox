@@ -1,4 +1,4 @@
-import type { Hex } from '../../Hex/types.js'
+import type { Hex } from '../../../Hex.js'
 import type { Branded, Compute } from '../../types.js'
 import type { TransactionEnvelope_Base } from '../types.js'
 

@@ -1,5 +1,5 @@
 import type { Address } from 'abitype'
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import type {
   Transaction,
   Transaction_Rpc,

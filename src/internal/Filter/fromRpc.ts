@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_validate } from '../Hex/validate.js'
+import { Hex } from '../../Hex.js'
 import type { Filter, Filter_Rpc } from './types.js'
 
 /**
@@ -39,12 +39,12 @@ export function Filter_fromRpc(filter: Filter_Rpc): Filter {
   return {
     ...filter,
     ...(fromBlock && {
-      fromBlock: Hex_validate(fromBlock, { strict: false })
+      fromBlock: Hex.validate(fromBlock, { strict: false })
         ? BigInt(fromBlock)
         : fromBlock,
     }),
     ...(toBlock && {
-      toBlock: Hex_validate(toBlock, { strict: false })
+      toBlock: Hex.validate(toBlock, { strict: false })
         ? BigInt(toBlock)
         : toBlock,
     }),

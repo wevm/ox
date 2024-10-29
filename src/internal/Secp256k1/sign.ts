@@ -1,9 +1,9 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
 
 /**

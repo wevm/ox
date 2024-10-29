@@ -1,11 +1,9 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import type { Address } from '../Address/types.js'
 import { Address_validate } from '../Address/validate.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
 import type { UnionCompute } from '../types.js'
 import { AbiItem_AmbiguityError, AbiItem_NotFoundError } from './errors.js'
 import { AbiItem_getSelector } from './getSelector.js'
@@ -46,7 +44,7 @@ import type {
  * @example
  * ### Extracting by Selector
  *
- * ABI Items can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
+ * ABI Items can be extract by their selector when {@link ox#(Hex:type)} is provided to `name`.
  *
  * ```ts twoslash
  * import { Abi, AbiItem } from 'ox'
@@ -99,11 +97,11 @@ export function AbiItem_fromAbi<
   const { args = [], prepare = true } = (options ??
     {}) as unknown as AbiItem_fromAbi.Options
 
-  const isSelector = Hex_validate(name, { strict: false })
+  const isSelector = Hex.validate(name, { strict: false })
   const abiItems = (abi as Abi).filter((abiItem) => {
     if (isSelector) {
       if (abiItem.type === 'function' || abiItem.type === 'error')
-        return AbiItem_getSelector(abiItem) === Hex_slice(name, 0, 4)
+        return AbiItem_getSelector(abiItem) === Hex.slice(name, 0, 4)
       if (abiItem.type === 'event')
         return AbiItem_getSignatureHash(abiItem) === name
       return false

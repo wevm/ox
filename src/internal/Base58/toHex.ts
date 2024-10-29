@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 
 const alphabet = /* __PURE__ */ Object.freeze<Record<string, bigint>>({
   1: 0n,
@@ -63,7 +63,7 @@ const alphabet = /* __PURE__ */ Object.freeze<Record<string, bigint>>({
 })
 
 /**
- * Decodes a Base58-encoded string to {@link ox#Hex.Hex}.
+ * Decodes a Base58-encoded string to {@link ox#(Hex:type)}.
  *
  * @example
  * ```ts twoslash

@@ -400,13 +400,15 @@ function resolveErrorData(options: {
 
 function extractParameterDeclarations(data: Data) {
   const functionNameMatch = data.excerpt.match(
-    /export declare function (.*?)(\(|<)/,
+    /export( declare)? function (.*?)(\(|<)/,
   )
-  const functionName = functionNameMatch?.[1]
+  const functionName = functionNameMatch?.[2]
   const file = project.addSourceFileAtPath(data.file.path!)
-  const declaration = file.getFunctionOrThrow(functionName!)
-  const declarations = declaration.getParameters()
-  return declarations
+  const declaration = file
+    .getDescendantsOfKind(ts.SyntaxKind.FunctionDeclaration)
+    .find((x) => x.getName() === functionName)
+  const declarations = declaration?.getParameters()
+  return declarations ?? []
 }
 
 function extractParameterTypeNode(

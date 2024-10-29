@@ -1227,15 +1227,15 @@ export * as HdKey from './HdKey.js'
  * @example
  * ### Instantiating Hex
  *
- * Values can be instantiated as {@link ox#Hex.Hex} using:
+ * Values can be instantiated as {@link ox#(Hex:type)} using:
  *
- * - {@link ox#Hex.(fromBoolean:function)}
+ * - {@link ox#(Hex:namespace).(fromBoolean:function)}
  *
- * - {@link ox#Hex.(fromBytes:function)}
+ * - {@link ox#(Hex:namespace).(fromBytes:function)}
  *
- * - {@link ox#Hex.(fromNumber:function)}
+ * - {@link ox#(Hex:namespace).(fromNumber:function)}
  *
- * - {@link ox#Hex.(fromString:function)}
+ * - {@link ox#(Hex:namespace).(fromString:function)}
  *
  * ```ts twoslash
  * import { Bytes, Hex } from 'ox'
@@ -1256,15 +1256,15 @@ export * as HdKey from './HdKey.js'
  * @example
  * ### Converting from Hex
  *
- * Values can be converted from {@link ox#Hex.Hex} using:
+ * Values can be converted from {@link ox#(Hex:type)} using:
  *
- * - {@link ox#Hex.(toBoolean:function)}
+ * - {@link ox#(Hex:namespace).(toBoolean:function)}
  *
- * - {@link ox#Hex.(toBytes:function)}
+ * - {@link ox#(Hex:namespace).(toBytes:function)}
  *
- * - {@link ox#Hex.(toNumber:function)}
+ * - {@link ox#(Hex:namespace).(toNumber:function)}
  *
- * - {@link ox#Hex.(toString:function)}
+ * - {@link ox#(Hex:namespace).(toString:function)}
  *
  * ```ts twoslash
  * import { Hex } from 'ox'
@@ -1285,7 +1285,7 @@ export * as HdKey from './HdKey.js'
  * @example
  * ### Concatenating Hex
  *
- * Hex values can be concatenated using {@link ox#Hex.(concat:function)}:
+ * Hex values can be concatenated using {@link ox#(Hex:namespace).(concat:function)}:
  *
  * ```ts twoslash
  * import { Hex } from 'ox'
@@ -1299,7 +1299,7 @@ export * as HdKey from './HdKey.js'
  * @example
  * ### Slicing Hex
  *
- * Hex values can be sliced using {@link ox#Hex.(slice:function)}:
+ * Hex values can be sliced using {@link ox#(Hex:namespace).(slice:function)}:
  *
  * ```ts twoslash
  * import { Hex } from 'ox'
@@ -1311,7 +1311,7 @@ export * as HdKey from './HdKey.js'
  * @example
  * ### Padding Hex
  *
- * Hex values can be padded with zeroes using {@link ox#Hex.(padLeft:function)} or {@link ox#Hex.(padRight:function)}:
+ * Hex values can be padded with zeroes using {@link ox#(Hex:namespace).(padLeft:function)} or {@link ox#(Hex:namespace).(padRight:function)}:
  *
  * ```ts twoslash
  * import { Hex } from 'ox'
@@ -1323,7 +1323,7 @@ export * as HdKey from './HdKey.js'
  * @example
  * ### Trimming Hex
  *
- * Hex values can be trimmed of zeroes using {@link ox#Hex.(trimLeft:function)} or {@link ox#Hex.(trimRight:function)}:
+ * Hex values can be trimmed of zeroes using {@link ox#(Hex:namespace).(trimLeft:function)} or {@link ox#(Hex:namespace).(trimRight:function)}:
  *
  * ```ts twoslash
  * import { Hex } from 'ox'
@@ -1334,7 +1334,7 @@ export * as HdKey from './HdKey.js'
  *
  * @category Encoding
  */
-export * as Hex from './Hex.js'
+export { Hex } from './Hex.js'
 
 /**
  * @category Execution Spec

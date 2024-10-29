@@ -1,5 +1,5 @@
+import type { Hex } from '../../Hex.js'
 import type { Address } from '../Address/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
 import type { Compute, Undefined } from '../types.js'
 

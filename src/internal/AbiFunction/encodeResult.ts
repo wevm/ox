@@ -1,10 +1,10 @@
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type {
   AbiParameters_ToObject,
   AbiParameters_ToPrimitiveTypes,
 } from '../AbiParameters/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { AbiFunction } from './types.js'
 
 /**

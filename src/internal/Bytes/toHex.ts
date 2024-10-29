@@ -1,10 +1,9 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from './types.js'
 
 /**
- * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
+ * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#(Hex:type)} value.
  *
  * @example
  * ```ts twoslash
@@ -16,13 +15,13 @@ import type { Bytes } from './types.js'
  *
  * @param value - The {@link ox#Bytes.Bytes} to decode.
  * @param options - Options.
- * @returns Decoded {@link ox#Hex.Hex} value.
+ * @returns Decoded {@link ox#(Hex:type)} value.
  */
 export function Bytes_toHex(
   value: Bytes,
   options: Bytes_toHex.Options = {},
 ): Hex {
-  return Hex_fromBytes(value, options)
+  return Hex.fromBytes(value, options)
 }
 
 export declare namespace Bytes_toHex {
@@ -31,7 +30,7 @@ export declare namespace Bytes_toHex {
     size?: number | undefined
   }
 
-  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

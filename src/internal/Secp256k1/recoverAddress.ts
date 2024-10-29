@@ -1,8 +1,8 @@
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import { Address_fromPublicKey } from '../Address/fromPublicKey.js'
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { Signature } from '../Signature/types.js'
 import { Secp256k1_recoverPublicKey } from './recoverPublicKey.js'
 

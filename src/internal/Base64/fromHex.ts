@@ -1,10 +1,10 @@
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
-import type { Hex } from '../Hex/types.js'
 import { Base64_fromBytes } from './fromBytes.js'
 
 /**
- * Encodes a {@link ox#Hex.Hex} to a Base64-encoded string (with optional padding and/or URL-safe characters).
+ * Encodes a {@link ox#(Hex:type)} to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
  * @example
  * ```ts twoslash

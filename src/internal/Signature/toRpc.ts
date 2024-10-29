@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import type { Signature, Signature_Rpc } from './types.js'
 
 /**
@@ -22,8 +22,8 @@ import type { Signature, Signature_Rpc } from './types.js'
 export function Signature_toRpc(signature: Signature): Signature_Rpc {
   const { r, s, yParity } = signature
   return {
-    r: Hex_fromNumber(r, { size: 32 }),
-    s: Hex_fromNumber(s, { size: 32 }),
+    r: Hex.fromNumber(r, { size: 32 }),
+    s: Hex.fromNumber(s, { size: 32 }),
     yParity: yParity === 0 ? '0x0' : '0x1',
   }
 }

@@ -205,6 +205,6 @@ test('behavior: abi item contains hash', () => {
     'event Transfer(address indexed from, address indexed to, uint256 amount)',
   )
   expect(AbiItem.getSignatureHash(event)).toEqual(
-    (event as unknown as { hash: Hex.Hex }).hash,
+    (event as unknown as { hash: Hex }).hash,
   )
 })

@@ -1,8 +1,7 @@
 import { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import type { ExactPartial, RecursiveArray } from '../types.js'
 
@@ -12,7 +11,7 @@ type Encodable = {
 }
 
 /**
- * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link ox#Bytes.Bytes} or {@link ox#(Hex:type)} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -25,7 +24,7 @@ type Encodable = {
  * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
  * ```
  *
- * @param value - The {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to encode.
+ * @param value - The {@link ox#Bytes.Bytes} or {@link ox#(Hex:type)} value to encode.
  * @param options - Options.
  * @returns The RLP value.
  */
@@ -40,7 +39,7 @@ export function Rlp_from<as extends 'Hex' | 'Bytes'>(
   encodable.encode(cursor)
 
   if (as === 'Hex')
-    return Hex_fromBytes(cursor.bytes) as Rlp_from.ReturnType<as>
+    return Hex.fromBytes(cursor.bytes) as Rlp_from.ReturnType<as>
   return cursor.bytes as Rlp_from.ReturnType<as>
 }
 
@@ -56,7 +55,7 @@ export declare namespace Rlp_from {
 
   type ErrorType =
     | createCursor.ErrorType
-    | Hex_fromBytes.ErrorType
+    | Hex.fromBytes.ErrorType
     | Bytes_fromHex.ErrorType
     | Errors.GlobalErrorType
 }
@@ -104,7 +103,7 @@ Rlp_fromBytes.parseError = (error: unknown) =>
   error as Rlp_fromBytes.ErrorType
 
 /**
- * Encodes a {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
+ * Encodes a {@link ox#(Hex:type)} value into a Recursive-Length Prefix (RLP) value.
  *
  * @example
  * ```ts twoslash
@@ -114,7 +113,7 @@ Rlp_fromBytes.parseError = (error: unknown) =>
  * // @log: 0x8b68656c6c6f20776f726c64
  * ```
  *
- * @param hex - The {@link ox#Hex.Hex} value to encode.
+ * @param hex - The {@link ox#(Hex:type)} value to encode.
  * @param options - Options.
  * @returns The RLP value.
  */

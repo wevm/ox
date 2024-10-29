@@ -1,6 +1,6 @@
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { Hex } from '../Hex/types.js'
 import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 
 /**

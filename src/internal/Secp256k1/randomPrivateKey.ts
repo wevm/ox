@@ -1,9 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
 
 /**
  * Generates a random ECDSA private key on the secp256k1 curve.
@@ -23,7 +22,7 @@ export function Secp256k1_randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): Secp256k1_randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
   const bytes = secp256k1.utils.randomPrivateKey()
-  if (as === 'Hex') return Hex_fromBytes(bytes) as never
+  if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
 
@@ -40,5 +39,5 @@ export declare namespace Secp256k1_randomPrivateKey {
     | (as extends 'Bytes' ? Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
-  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }

@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import type { Log, Log_Rpc } from './types.js'
 
 /**
@@ -58,16 +58,16 @@ export function Log_toRpc<
     blockHash: log.blockHash,
     blockNumber:
       typeof log.blockNumber === 'bigint'
-        ? Hex_fromNumber(log.blockNumber)
+        ? Hex.fromNumber(log.blockNumber)
         : null,
     data: log.data,
     logIndex:
-      typeof log.logIndex === 'number' ? Hex_fromNumber(log.logIndex) : null,
+      typeof log.logIndex === 'number' ? Hex.fromNumber(log.logIndex) : null,
     topics: log.topics,
     transactionHash: log.transactionHash,
     transactionIndex:
       typeof log.transactionIndex === 'number'
-        ? Hex_fromNumber(log.transactionIndex)
+        ? Hex.fromNumber(log.transactionIndex)
         : null,
     removed: log.removed,
   } as Log_Rpc as never

@@ -1,13 +1,11 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
 import { PublicKey_InvalidSerializedSizeError } from './errors.js'
 import type { PublicKey } from './types.js'
 
 /**
- * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes} value.
+ * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#(Hex:type)} or {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -39,14 +37,14 @@ import type { PublicKey } from './types.js'
  */
 export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
   const hex =
-    typeof publicKey === 'string' ? publicKey : Hex_fromBytes(publicKey)
+    typeof publicKey === 'string' ? publicKey : Hex.fromBytes(publicKey)
 
   if (hex.length !== 132 && hex.length !== 130 && hex.length !== 68)
     throw new PublicKey_InvalidSerializedSizeError({ publicKey })
 
   if (hex.length === 130) {
-    const x = BigInt(Hex_slice(hex, 0, 32))
-    const y = BigInt(Hex_slice(hex, 32, 64))
+    const x = BigInt(Hex.slice(hex, 0, 32))
+    const y = BigInt(Hex.slice(hex, 32, 64))
     return {
       prefix: 4,
       x,
@@ -55,9 +53,9 @@ export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
   }
 
   if (hex.length === 132) {
-    const prefix = Number(Hex_slice(hex, 0, 1))
-    const x = BigInt(Hex_slice(hex, 1, 33))
-    const y = BigInt(Hex_slice(hex, 33, 65))
+    const prefix = Number(Hex.slice(hex, 0, 1))
+    const x = BigInt(Hex.slice(hex, 1, 33))
+    const y = BigInt(Hex.slice(hex, 33, 65))
     return {
       prefix,
       x,
@@ -65,8 +63,8 @@ export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
     } as never
   }
 
-  const prefix = Number(Hex_slice(hex, 0, 1))
-  const x = BigInt(Hex_slice(hex, 1, 33))
+  const prefix = Number(Hex.slice(hex, 0, 1))
+  const x = BigInt(Hex.slice(hex, 1, 33))
   return {
     prefix,
     x,
@@ -74,7 +72,7 @@ export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
 }
 
 export declare namespace PublicKey_deserialize {
-  type ErrorType = Hex_fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 PublicKey_deserialize.parseError = (error: unknown) =>

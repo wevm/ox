@@ -1,7 +1,6 @@
 import { type AbiParameter, formatAbiParameters } from 'abitype'
 import { Errors } from '../../Errors.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
+import { Hex } from '../../Hex.js'
 
 /**
  * Throws when the data size is too small for the given parameters.
@@ -145,7 +144,7 @@ export class AbiParameters_BytesSizeMismatchError extends Errors.BaseError {
   override readonly name = 'AbiParameters.BytesSizeMismatchError'
   constructor({ expectedSize, value }: { expectedSize: number; value: Hex }) {
     super(
-      `Size of bytes "${value}" (bytes${Hex_size(
+      `Size of bytes "${value}" (bytes${Hex.size(
         value,
       )}) does not match expected size (bytes${expectedSize}).`,
     )

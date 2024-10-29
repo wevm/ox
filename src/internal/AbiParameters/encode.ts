@@ -1,13 +1,6 @@
 import { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Address_assert } from '../Address/assert.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_fromBoolean } from '../Hex/fromBoolean.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
-import { Hex_fromString } from '../Hex/fromString.js'
-import { Hex_padLeft, Hex_padRight } from '../Hex/pad.js'
-import { Hex_size } from '../Hex/size.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
 import type { TupleAbiParameter } from './decode.js'
 import {
   AbiParameters_ArrayLengthMismatchError,
@@ -198,7 +191,7 @@ export function encode(preparedParameters: PreparedParameter[]): Hex {
   for (let i = 0; i < preparedParameters.length; i++) {
     const { dynamic, encoded } = preparedParameters[i]!
     if (dynamic) staticSize += 32
-    else staticSize += Hex_size(encoded)
+    else staticSize += Hex.size(encoded)
   }
 
   // 2. Split the parameters into static and dynamic parts.
@@ -209,25 +202,25 @@ export function encode(preparedParameters: PreparedParameter[]): Hex {
     const { dynamic, encoded } = preparedParameters[i]!
     if (dynamic) {
       staticParameters.push(
-        Hex_fromNumber(staticSize + dynamicSize, { size: 32 }),
+        Hex.fromNumber(staticSize + dynamicSize, { size: 32 }),
       )
       dynamicParameters.push(encoded)
-      dynamicSize += Hex_size(encoded)
+      dynamicSize += Hex.size(encoded)
     } else {
       staticParameters.push(encoded)
     }
   }
 
   // 3. Concatenate static and dynamic parts.
-  return Hex_concat(...staticParameters, ...dynamicParameters)
+  return Hex.concat(...staticParameters, ...dynamicParameters)
 }
 
 /** @internal */
 export declare namespace encode {
   type ErrorType =
-    | Hex_concat.ErrorType
-    | Hex_fromNumber.ErrorType
-    | Hex_size.ErrorType
+    | Hex.concat.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -236,14 +229,14 @@ export declare namespace encode {
 /** @internal */
 export function encodeAddress(value: Hex): PreparedParameter {
   Address_assert(value)
-  return { dynamic: false, encoded: Hex_padLeft(value.toLowerCase() as Hex) }
+  return { dynamic: false, encoded: Hex.padLeft(value.toLowerCase() as Hex) }
 }
 
 /** @internal */
 export declare namespace encodeAddress {
   type ErrorType =
     | Address_assert.ErrorType
-    | Hex_padLeft.ErrorType
+    | Hex.padLeft.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -279,18 +272,18 @@ export function encodeArray<const parameter extends AbiParameters_Parameter>(
   if (dynamic || dynamicChild) {
     const data = encode(preparedParameters)
     if (dynamic) {
-      const length = Hex_fromNumber(preparedParameters.length, { size: 32 })
+      const length = Hex.fromNumber(preparedParameters.length, { size: 32 })
       return {
         dynamic: true,
         encoded:
-          preparedParameters.length > 0 ? Hex_concat(length, data) : length,
+          preparedParameters.length > 0 ? Hex.concat(length, data) : length,
       }
     }
     if (dynamicChild) return { dynamic: true, encoded: data }
   }
   return {
     dynamic: false,
-    encoded: Hex_concat(...preparedParameters.map(({ encoded }) => encoded)),
+    encoded: Hex.concat(...preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 
@@ -299,8 +292,8 @@ export declare namespace encodeArray {
   type ErrorType =
     | AbiParameters_InvalidArrayError
     | AbiParameters_ArrayLengthMismatchError
-    | Hex_concat.ErrorType
-    | Hex_fromNumber.ErrorType
+    | Hex.concat.ErrorType
+    | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -310,17 +303,17 @@ export function encodeBytes(
   { type }: { type: string },
 ): PreparedParameter {
   const [, parametersize] = type.split('bytes')
-  const bytesSize = Hex_size(value)
+  const bytesSize = Hex.size(value)
   if (!parametersize) {
     let value_ = value
     // If the size is not divisible by 32 bytes, pad the end
     // with empty bytes to the ceiling 32 bytes.
     if (bytesSize % 32 !== 0)
-      value_ = Hex_padRight(value_, Math.ceil((value.length - 2) / 2 / 32) * 32)
+      value_ = Hex.padRight(value_, Math.ceil((value.length - 2) / 2 / 32) * 32)
     return {
       dynamic: true,
-      encoded: Hex_concat(
-        Hex_padLeft(Hex_fromNumber(bytesSize, { size: 32 })),
+      encoded: Hex.concat(
+        Hex.padLeft(Hex.fromNumber(bytesSize, { size: 32 })),
         value_,
       ),
     }
@@ -330,16 +323,16 @@ export function encodeBytes(
       expectedSize: Number.parseInt(parametersize),
       value,
     })
-  return { dynamic: false, encoded: Hex_padRight(value) }
+  return { dynamic: false, encoded: Hex.padRight(value) }
 }
 
 /** @internal */
 export declare namespace encodeBytes {
   type ErrorType =
-    | Hex_padLeft.ErrorType
-    | Hex_padRight.ErrorType
-    | Hex_fromNumber.ErrorType
-    | Hex_slice.ErrorType
+    | Hex.padLeft.ErrorType
+    | Hex.padRight.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -349,14 +342,14 @@ export function encodeBoolean(value: boolean): PreparedParameter {
     throw new Errors.BaseError(
       `Invalid boolean value: "${value}" (type: ${typeof value}). Expected: \`true\` or \`false\`.`,
     )
-  return { dynamic: false, encoded: Hex_padLeft(Hex_fromBoolean(value)) }
+  return { dynamic: false, encoded: Hex.padLeft(Hex.fromBoolean(value)) }
 }
 
 /** @internal */
 export declare namespace encodeBoolean {
   type ErrorType =
-    | Hex_padLeft.ErrorType
-    | Hex_fromBoolean.ErrorType
+    | Hex.padLeft.ErrorType
+    | Hex.fromBoolean.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -367,7 +360,7 @@ export function encodeNumber(
 ): PreparedParameter {
   return {
     dynamic: false,
-    encoded: Hex_fromNumber(value, {
+    encoded: Hex.fromNumber(value, {
       size: 32,
       signed,
     }),
@@ -376,21 +369,21 @@ export function encodeNumber(
 
 /** @internal */
 export declare namespace encodeNumber {
-  type ErrorType = Hex_fromNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */
 export function encodeString(value: string): PreparedParameter {
-  const hexValue = Hex_fromString(value)
-  const partsLength = Math.ceil(Hex_size(hexValue) / 32)
+  const hexValue = Hex.fromString(value)
+  const partsLength = Math.ceil(Hex.size(hexValue) / 32)
   const parts: Hex[] = []
   for (let i = 0; i < partsLength; i++) {
-    parts.push(Hex_padRight(Hex_slice(hexValue, i * 32, (i + 1) * 32)))
+    parts.push(Hex.padRight(Hex.slice(hexValue, i * 32, (i + 1) * 32)))
   }
   return {
     dynamic: true,
-    encoded: Hex_concat(
-      Hex_padRight(Hex_fromNumber(Hex_size(hexValue), { size: 32 })),
+    encoded: Hex.concat(
+      Hex.padRight(Hex.fromNumber(Hex.size(hexValue), { size: 32 })),
       ...parts,
     ),
   }
@@ -399,10 +392,10 @@ export function encodeString(value: string): PreparedParameter {
 /** @internal */
 export declare namespace encodeString {
   type ErrorType =
-    | Hex_fromNumber.ErrorType
-    | Hex_padRight.ErrorType
-    | Hex_slice.ErrorType
-    | Hex_size.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.padRight.ErrorType
+    | Hex.slice.ErrorType
+    | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -431,13 +424,13 @@ export function encodeTuple<
     dynamic,
     encoded: dynamic
       ? encode(preparedParameters)
-      : Hex_concat(...preparedParameters.map(({ encoded }) => encoded)),
+      : Hex.concat(...preparedParameters.map(({ encoded }) => encoded)),
   }
 }
 
 /** @internal */
 export declare namespace encodeTuple {
-  type ErrorType = Hex_concat.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.concat.ErrorType | Errors.GlobalErrorType
 }
 
 /** @internal */

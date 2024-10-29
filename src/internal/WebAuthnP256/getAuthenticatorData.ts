@@ -1,9 +1,6 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
-import { Hex_fromString } from '../Hex/fromString.js'
-import type { Hex } from '../Hex/types.js'
 
 /**
  * Gets the authenticator data which contains information about the
@@ -36,10 +33,10 @@ export function WebAuthnP256_getAuthenticatorData(
   options: WebAuthnP256_getAuthenticatorData.Options = {},
 ): Hex {
   const { flag = 5, rpId = window.location.hostname, signCount = 0 } = options
-  const rpIdHash = Hash_sha256(Hex_fromString(rpId))
-  const flag_bytes = Hex_fromNumber(flag, { size: 1 })
-  const signCount_bytes = Hex_fromNumber(signCount, { size: 4 })
-  return Hex_concat(rpIdHash, flag_bytes, signCount_bytes)
+  const rpIdHash = Hash_sha256(Hex.fromString(rpId))
+  const flag_bytes = Hex.fromNumber(flag, { size: 1 })
+  const signCount_bytes = Hex.fromNumber(signCount, { size: 4 })
+  return Hex.concat(rpIdHash, flag_bytes, signCount_bytes)
 }
 
 export declare namespace WebAuthnP256_getAuthenticatorData {

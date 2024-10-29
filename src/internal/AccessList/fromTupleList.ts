@@ -1,8 +1,7 @@
-import type * as Hex from '../../Hex.js'
+import { Hex } from '../../Hex.js'
 // TODO: public
 import { Address_assert } from '../Address/assert.js'
 import { Hash_validate } from '../Hash/validate.js'
-import { Hex_trimLeft } from '../Hex/trim.js'
 import type { Mutable } from '../types.js'
 import type { AccessList, AccessList_Tuple } from './types.js'
 
@@ -12,14 +11,14 @@ export function AccessList_fromTupleList(
 ): AccessList {
   const accessList: Mutable<AccessList> = []
   for (let i = 0; i < accessList_.length; i++) {
-    const [address, storageKeys] = accessList_[i] as [Hex.Hex, Hex.Hex[]]
+    const [address, storageKeys] = accessList_[i] as [Hex, Hex[]]
 
     if (address) Address_assert(address, { strict: false })
 
     accessList.push({
       address: address,
       storageKeys: storageKeys.map((key) =>
-        Hash_validate(key) ? key : Hex_trimLeft(key),
+        Hash_validate(key) ? key : Hex.trimLeft(key),
       ),
     })
   }

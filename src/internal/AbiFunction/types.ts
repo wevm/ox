@@ -4,12 +4,12 @@ import type {
   ExtractAbiFunctionNames,
   AbiFunction as abitype_AbiFunction,
 } from 'abitype'
+import type { Hex } from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import type {
   IsFunctionSignature,
   IsStructSignature,
 } from '../AbiItem/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { TypeErrorMessage } from '../types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `function` type. */

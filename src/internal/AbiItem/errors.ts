@@ -1,8 +1,7 @@
 import { type Abi, formatAbiItem } from 'abitype'
 import { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { normalizeSignature } from '../AbiItem/getSignature.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
 
 /**
  * Throws when ambiguous types are found on overloaded ABI items.
@@ -148,7 +147,7 @@ export class AbiItem_InvalidSelectorSizeError extends Errors.BaseError {
   override readonly name = 'AbiItem.InvalidSelectorSizeError'
   constructor({ data }: { data: Hex }) {
     super(
-      `Selector size is invalid. Expected 4 bytes. Received ${Hex_size(data)} bytes ("${data}").`,
+      `Selector size is invalid. Expected 4 bytes. Received ${Hex.size(data)} bytes ("${data}").`,
     )
   }
 }

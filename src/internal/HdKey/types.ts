@@ -1,5 +1,5 @@
 import type { Versions } from '@scure/bip32'
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import type { PublicKey } from '../PublicKey/types.js'
 
 /** Root type for a Hierarchical Deterministic (HD) Key. */

@@ -1,5 +1,5 @@
+import type { Hex } from '../../Hex.js'
 import type { Address } from '../Address/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
 
 /** Base properties of a Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */

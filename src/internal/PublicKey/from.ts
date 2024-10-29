@@ -1,8 +1,7 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
 import { Bytes_validate } from '../Bytes/validate.js'
-import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
 import type { Compute } from '../types.js'
 import { PublicKey_assert } from './assert.js'
 import { PublicKey_deserialize } from './deserialize.js'
@@ -17,7 +16,7 @@ export type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
 }
 
 /**
- * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
+ * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#(Hex:type)}.
  *
  * @example
  * ```ts twoslash
@@ -62,7 +61,7 @@ export function PublicKey_from<
   value: PublicKey_from.Value<publicKey>,
 ): PublicKey_from.ReturnType<publicKey> {
   const publicKey = (() => {
-    if (Hex_validate(value)) return PublicKey_deserialize(value)
+    if (Hex.validate(value)) return PublicKey_deserialize(value)
     if (Bytes_validate(value)) return PublicKey_deserialize(value)
 
     const { prefix, x, y } = value

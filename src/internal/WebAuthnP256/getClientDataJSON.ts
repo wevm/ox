@@ -1,6 +1,6 @@
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import { Base64_fromHex } from '../Base64/fromHex.js'
-import type { Hex } from '../Hex/types.js'
 
 /**
  * Constructs the Client Data in stringified JSON format which represents client data that

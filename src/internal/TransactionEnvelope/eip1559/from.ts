@@ -1,5 +1,5 @@
 import type { Errors } from '../../../Errors.js'
-import type { Hex } from '../../Hex/types.js'
+import type { Hex } from '../../../Hex.js'
 import { Signature_from } from '../../Signature/from.js'
 import type { Signature } from '../../Signature/types.js'
 import type { Assign, Compute, UnionPartialBy } from '../../types.js'

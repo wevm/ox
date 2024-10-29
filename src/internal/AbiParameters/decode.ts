@@ -1,4 +1,5 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_size } from '../Bytes/size.js'
 import { Bytes_slice } from '../Bytes/slice.js'
@@ -8,8 +9,6 @@ import { Bytes_toNumber } from '../Bytes/toNumber.js'
 import { Bytes_toString } from '../Bytes/toString.js'
 import { Bytes_trimLeft } from '../Bytes/trim.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { getArrayComponents } from './encode.js'
 import {
@@ -99,7 +98,7 @@ export function AbiParameters_decode(
     throw new AbiParameters_ZeroDataError()
   if (Bytes_size(bytes) && Bytes_size(bytes) < 32)
     throw new AbiParameters_DataSizeTooSmallError({
-      data: typeof data === 'string' ? data : Hex_fromBytes(data),
+      data: typeof data === 'string' ? data : Hex.fromBytes(data),
       parameters: parameters as readonly AbiParameters_Parameter[],
       size: Bytes_size(bytes),
     })
@@ -203,12 +202,12 @@ const sizeOfOffset = 32
 /** @internal */
 export function decodeAddress(cursor: Cursor) {
   const value = cursor.readBytes(32)
-  return [Hex_fromBytes(Bytes_slice(value, -20)), 32]
+  return [Hex.fromBytes(Bytes_slice(value, -20)), 32]
 }
 
 export declare namespace decodeAddress {
   type ErrorType =
-    | Hex_fromBytes.ErrorType
+    | Hex.fromBytes.ErrorType
     | Bytes_slice.ErrorType
     | Errors.GlobalErrorType
 }
@@ -333,16 +332,16 @@ export function decodeBytes(
 
     // As we have gone wondering, restore to the original position + next slot.
     cursor.setPosition(staticPosition + 32)
-    return [Hex_fromBytes(data), 32]
+    return [Hex.fromBytes(data), 32]
   }
 
-  const value = Hex_fromBytes(cursor.readBytes(Number.parseInt(size), 32))
+  const value = Hex.fromBytes(cursor.readBytes(Number.parseInt(size), 32))
   return [value, 32]
 }
 
 export declare namespace decodeBytes {
   type ErrorType =
-    | Hex_fromBytes.ErrorType
+    | Hex.fromBytes.ErrorType
     | Bytes_toNumber.ErrorType
     | Errors.GlobalErrorType
 }

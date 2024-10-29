@@ -1,11 +1,9 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
 import type { IsNarrowable, IsNever } from '../types.js'
 import {
   AbiError_solidityError,
@@ -45,7 +43,7 @@ import type { AbiError, AbiError_Name } from './types.js'
  * @example
  * ### Extracting by Selector
  *
- * ABI Errors can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
+ * ABI Errors can be extract by their selector when {@link ox#(Hex:type)} is provided to `name`.
  *
  * ```ts twoslash
  * import { Abi, AbiError } from 'ox'
@@ -97,8 +95,8 @@ export function AbiError_fromAbi<
 ): AbiError_fromAbi.ReturnType<abi, name, args> {
   if (name === 'Error') return AbiError_solidityError as never
   if (name === 'Panic') return AbiError_solidityPanic as never
-  if (Hex_validate(name, { strict: false })) {
-    const selector = Hex_slice(name, 0, 4)
+  if (Hex.validate(name, { strict: false })) {
+    const selector = Hex.slice(name, 0, 4)
     if (selector === AbiError_solidityErrorSelector)
       return AbiError_solidityError as never
     if (selector === AbiError_solidityPanicSelector)

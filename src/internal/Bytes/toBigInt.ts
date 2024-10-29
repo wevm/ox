@@ -1,6 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import { Hex_toBigInt } from '../Hex/toBigInt.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_assertSize } from './assertSize.js'
 import type { Bytes } from './types.js'
 
@@ -25,8 +24,8 @@ export function Bytes_toBigInt(
 ): bigint {
   const { size } = options
   if (typeof size !== 'undefined') Bytes_assertSize(bytes, size)
-  const hex = Hex_fromBytes(bytes, options)
-  return Hex_toBigInt(hex, options)
+  const hex = Hex.fromBytes(bytes, options)
+  return Hex.toBigInt(hex, options)
 }
 
 export declare namespace Bytes_toBigInt {
@@ -38,8 +37,8 @@ export declare namespace Bytes_toBigInt {
   }
 
   type ErrorType =
-    | Hex_fromBytes.ErrorType
-    | Hex_toBigInt.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Hex.toBigInt.ErrorType
     | Errors.GlobalErrorType
 }
 

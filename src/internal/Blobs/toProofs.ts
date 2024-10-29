@@ -1,8 +1,7 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Blobs } from './types.js'
 
@@ -57,7 +56,7 @@ export function Blobs_toProofs<
   }
 
   return (
-    as === 'Bytes' ? proofs : proofs.map((x) => Hex_fromBytes(x))
+    as === 'Bytes' ? proofs : proofs.map((x) => Hex.fromBytes(x))
   ) as never
 }
 
@@ -87,7 +86,7 @@ export declare namespace Blobs_toProofs {
     | (as extends 'Hex' ? readonly Hex[] : never)
 
   type ErrorType =
-    | Hex_fromBytes.ErrorType
+    | Hex.fromBytes.ErrorType
     | Bytes_fromHex.ErrorType
     | Errors.GlobalErrorType
 }

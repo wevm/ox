@@ -1,5 +1,5 @@
 import type { Errors } from '../../../Errors.js'
-import type { Hex } from '../../Hex/types.js'
+import type { Hex } from '../../../Hex.js'
 import { TransactionEnvelopeEip4844_hash } from './hash.js'
 import type { TransactionEnvelopeEip4844 } from './types.js'
 

@@ -124,7 +124,7 @@ describe('static', () => {
         AbiParameters.from('bytes8'),
         '0x0123456789abcdef000000000000000000000000000000000000000000000000',
       )
-      assertType<readonly [Hex.Hex]>(result)
+      assertType<readonly [Hex]>(result)
       expect(result).toEqual(['0x0123456789abcdef'])
     })
   })
@@ -135,7 +135,7 @@ describe('static', () => {
         AbiParameters.from('bytes16'),
         '0x0123456789abcdef0123456789abcdef00000000000000000000000000000000',
       )
-      assertType<readonly [Hex.Hex]>(result)
+      assertType<readonly [Hex]>(result)
       expect(result).toEqual(['0x0123456789abcdef0123456789abcdef'])
     })
   })
@@ -274,7 +274,7 @@ describe('static', () => {
           {
             x: bigint
             y: boolean
-            z: Hex.Hex
+            z: Hex
           },
         ]
       >(result)
@@ -290,7 +290,7 @@ describe('static', () => {
         AbiParameters.from('(uint256, bool, address)'),
         '0x00000000000000000000000000000000000000000000000000000000000001a40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
       )
-      assertType<readonly [readonly [bigint, boolean, Hex.Hex]]>(result)
+      assertType<readonly [readonly [bigint, boolean, Hex]]>(result)
       expect(result).toEqual([
         [420n, true, '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac'],
       ])
@@ -303,7 +303,7 @@ describe('static', () => {
         AbiParameters.from('(uint256 x, bool, address z)'),
         '0x00000000000000000000000000000000000000000000000000000000000001a40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
       )
-      assertType<readonly [readonly [bigint, boolean, Hex.Hex]]>(result)
+      assertType<readonly [readonly [bigint, boolean, Hex]]>(result)
       expect(result).toEqual([
         [420n, true, '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac'],
       ])
@@ -335,12 +335,12 @@ describe('static', () => {
             foo: {
               x: bigint
               y: boolean
-              z: Hex.Hex
+              z: Hex
             }
             baz: {
               x: bigint
               y: boolean
-              z: Hex.Hex
+              z: Hex
             }
             x: readonly [number, number]
           },
@@ -493,7 +493,7 @@ describe('dynamic', () => {
         AbiParameters.from('bytes'),
         '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000030420690000000000000000000000000000000000000000000000000000000000',
       )
-      assertType<readonly [Hex.Hex]>(result)
+      assertType<readonly [Hex]>(result)
       expect(result).toEqual(['0x042069'])
     })
   })
@@ -971,7 +971,7 @@ describe('dynamic', () => {
         AbiParameters.from('bytes[2]'),
         '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000002123400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044141414100000000000000000000000000000000000000000000000000000000',
       )
-      assertType<readonly [readonly [Hex.Hex, Hex.Hex]]>(result)
+      assertType<readonly [readonly [Hex, Hex]]>(result)
       expect(result).toEqual([['0x1234', '0x41414141']])
     })
   })

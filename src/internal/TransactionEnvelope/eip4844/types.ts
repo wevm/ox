@@ -1,6 +1,6 @@
+import type { Hex } from '../../../Hex.js'
 import type { AccessList } from '../../AccessList/types.js'
 import type { BlobSidecar } from '../../Blobs/types.js'
-import type { Hex } from '../../Hex/types.js'
 import type { Compute } from '../../types.js'
 import type { TransactionEnvelope_Base } from '../types.js'
 

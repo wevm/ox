@@ -1,9 +1,7 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Address } from '../Address/types.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_from } from '../Hex/from.js'
-import type { Hex } from '../Hex/types.js'
 
 /**
  * Encodes data with a validator in [EIP-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x00): `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`.
@@ -25,12 +23,12 @@ import type { Hex } from '../Hex/types.js'
  */
 export function ValidatorData_encode(value: ValidatorData_encode.Value): Hex {
   const { data, validator } = value
-  return Hex_concat(
+  return Hex.concat(
     // Validator Data Format: `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`
     '0x19',
     '0x00',
     validator,
-    Hex_from(data),
+    Hex.from(data),
   )
 }
 
@@ -41,8 +39,8 @@ export declare namespace ValidatorData_encode {
   }
 
   type ErrorType =
-    | Hex_concat.ErrorType
-    | Hex_from.ErrorType
+    | Hex.concat.ErrorType
+    | Hex.from.ErrorType
     | Errors.GlobalErrorType
 }
 

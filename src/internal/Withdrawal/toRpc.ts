@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import type { Withdrawal, Withdrawal_Rpc } from './types.js'
 
 /**
@@ -29,9 +29,9 @@ import type { Withdrawal, Withdrawal_Rpc } from './types.js'
 export function Withdrawal_toRpc(withdrawal: Withdrawal): Withdrawal_Rpc {
   return {
     address: withdrawal.address,
-    amount: Hex_fromNumber(withdrawal.amount),
-    index: Hex_fromNumber(withdrawal.index),
-    validatorIndex: Hex_fromNumber(withdrawal.validatorIndex),
+    amount: Hex.fromNumber(withdrawal.amount),
+    index: Hex.fromNumber(withdrawal.index),
+    validatorIndex: Hex.fromNumber(withdrawal.validatorIndex),
   }
 }
 

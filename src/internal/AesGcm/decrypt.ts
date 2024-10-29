@@ -1,8 +1,7 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_from } from '../Bytes/from.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
-import type { Hex } from '../Hex/types.js'
 import { AesGcm_ivLength } from './constants.js'
 
 /**
@@ -50,7 +49,7 @@ export async function AesGcm_decrypt<
   )
   const result = new Uint8Array(decrypted)
   if (as === 'Bytes') return result as never
-  return Hex_from(result) as never
+  return Hex.from(result) as never
 }
 
 export declare namespace AesGcm_decrypt {
@@ -65,7 +64,7 @@ export declare namespace AesGcm_decrypt {
 
   type ErrorType =
     | Bytes_from.ErrorType
-    | Hex_from.ErrorType
+    | Hex.from.ErrorType
     | Errors.GlobalErrorType
 }
 

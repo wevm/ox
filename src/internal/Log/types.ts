@@ -1,5 +1,5 @@
+import type { Hex } from '../../Hex.js'
 import type { Address } from '../Address/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
 
 /** A Log as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */

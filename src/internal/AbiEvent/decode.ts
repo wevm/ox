@@ -1,9 +1,8 @@
 import type { AbiParameter } from 'abitype'
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
 import { Cursor_PositionOutOfBoundsError } from '../cursor.js'
 import type { IsNarrowable } from '../types.js'
 import {
@@ -169,7 +168,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
             abiEvent,
             data: data,
             parameters: nonIndexedInputs,
-            size: Hex_size(data),
+            size: Hex.size(data),
           })
         throw err
       }

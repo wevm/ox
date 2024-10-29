@@ -1,8 +1,6 @@
 import { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
 import { Json_stringify } from '../Json/stringify.js'
 
 /**
@@ -76,7 +74,7 @@ export class PublicKey_InvalidSerializedSizeError extends Errors.BaseError {
     super(`Value \`${publicKey}\` is an invalid public key size.`, {
       metaMessages: [
         'Expected: 33 bytes (compressed + prefix), 64 bytes (uncompressed) or 65 bytes (uncompressed + prefix).',
-        `Received ${Hex_size(Hex_from(publicKey))} bytes.`,
+        `Received ${Hex.size(Hex.from(publicKey))} bytes.`,
       ],
     })
   }

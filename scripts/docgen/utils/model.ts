@@ -168,8 +168,11 @@ function getLinkForApiItem(item: model.ApiItem) {
   if (item.kind === model.ApiItemKind.Namespace) return baseLink
   if (item.kind === model.ApiItemKind.Function)
     return `${baseLink}/${item.displayName}`
-  if (item.kind === model.ApiItemKind.TypeAlias)
+  if (item.kind === model.ApiItemKind.TypeAlias) {
+    if (!parent.displayName)
+      return `/api/${item.displayName}/types#${item.displayName.toLowerCase()}`
     return `${baseLink}/types#${item.displayName.toLowerCase()}`
+  }
   if (
     item.kind === model.ApiItemKind.Class &&
     item.displayName.endsWith('Error')

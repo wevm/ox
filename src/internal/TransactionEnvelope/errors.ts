@@ -1,5 +1,5 @@
 import { Errors } from '../../Errors.js'
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import { Value_formatGwei } from '../Value/formatGwei.js'
 
 /**

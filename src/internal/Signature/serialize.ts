@@ -1,14 +1,12 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_concat } from '../Hex/concat.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
-import type { Hex } from '../Hex/types.js'
 import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'
 
 /**
- * Serializes a {@link ox#Signature.Signature} to {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}.
+ * Serializes a {@link ox#Signature.Signature} to {@link ox#(Hex:type)} or {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -36,12 +34,12 @@ export function Signature_serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const r = signature.r
   const s = signature.s
 
-  const signature_ = Hex_concat(
-    Hex_fromNumber(r, { size: 32 }),
-    Hex_fromNumber(s, { size: 32 }),
+  const signature_ = Hex.concat(
+    Hex.fromNumber(r, { size: 32 }),
+    Hex.fromNumber(s, { size: 32 }),
     // If the signature is recovered, add the recovery byte to the signature.
     typeof signature.yParity === 'number'
-      ? Hex_fromNumber(signature.yParity, { size: 1 })
+      ? Hex.fromNumber(signature.yParity, { size: 1 })
       : '0x',
   )
 

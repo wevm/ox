@@ -1,4 +1,4 @@
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import type { Compute } from '../types.js'
 
 /** Root type for an ECDSA signature. */

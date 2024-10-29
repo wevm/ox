@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import { Signature_toRpc } from '../Signature/toRpc.js'
 import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 
@@ -30,8 +30,8 @@ export function Authorization_toRpc(
 
   return {
     address,
-    chainId: Hex_fromNumber(chainId),
-    nonce: Hex_fromNumber(nonce),
+    chainId: Hex.fromNumber(chainId),
+    nonce: Hex.fromNumber(nonce),
     ...Signature_toRpc(signature),
   }
 }

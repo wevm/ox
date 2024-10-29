@@ -1,9 +1,9 @@
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { AbiEvent, AbiEvent_Name } from './types.js'
 
 /**
@@ -36,7 +36,7 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
  * @example
  * ### Extracting by Selector
  *
- * ABI Events can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
+ * ABI Events can be extract by their selector when {@link ox#(Hex:type)} is provided to `name`.
  *
  * ```ts twoslash
  * import { Abi, AbiEvent } from 'ox'

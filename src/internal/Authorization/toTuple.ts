@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import { Signature_extract } from '../Signature/extract.js'
 import { Signature_toTuple } from '../Signature/toTuple.js'
 import type { Signature } from '../Signature/types.js'
@@ -38,9 +38,9 @@ export function Authorization_toTuple<
   const { address, chainId, nonce } = authorization
   const signature = Signature_extract(authorization)
   return [
-    chainId ? Hex_fromNumber(chainId) : '0x',
+    chainId ? Hex.fromNumber(chainId) : '0x',
     address,
-    nonce ? Hex_fromNumber(nonce) : '0x',
+    nonce ? Hex.fromNumber(nonce) : '0x',
     ...(signature ? Signature_toTuple(signature) : []),
   ] as never
 }

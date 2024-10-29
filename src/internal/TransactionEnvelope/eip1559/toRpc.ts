@@ -1,5 +1,5 @@
 import type { Errors } from '../../../Errors.js'
-import { Hex_fromNumber } from '../../Hex/fromNumber.js'
+import { Hex } from '../../../Hex.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type {
@@ -41,23 +41,23 @@ export function TransactionEnvelopeEip1559_toRpc(
 
   return {
     ...envelope,
-    chainId: Hex_fromNumber(envelope.chainId),
+    chainId: Hex.fromNumber(envelope.chainId),
     data: envelope.data ?? envelope.input,
     type: '0x2',
     ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex_fromNumber(envelope.gas) }
+      ? { gas: Hex.fromNumber(envelope.gas) }
       : {}),
     ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex_fromNumber(envelope.nonce) }
+      ? { nonce: Hex.fromNumber(envelope.nonce) }
       : {}),
     ...(typeof envelope.value === 'bigint'
-      ? { value: Hex_fromNumber(envelope.value) }
+      ? { value: Hex.fromNumber(envelope.value) }
       : {}),
     ...(typeof envelope.maxFeePerGas === 'bigint'
-      ? { maxFeePerGas: Hex_fromNumber(envelope.maxFeePerGas) }
+      ? { maxFeePerGas: Hex.fromNumber(envelope.maxFeePerGas) }
       : {}),
     ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
-      ? { maxPriorityFeePerGas: Hex_fromNumber(envelope.maxPriorityFeePerGas) }
+      ? { maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas) }
       : {}),
     ...(signature ? Signature_toRpc(signature) : {}),
   } as never

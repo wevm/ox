@@ -1,9 +1,8 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_size } from '../Bytes/size.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
 import { createCursor } from '../cursor.js'
 import {
   Blobs_bytesPerBlob,
@@ -26,7 +25,7 @@ import { Blobs_BlobSizeTooLargeError, Blobs_EmptyBlobError } from './errors.js'
  * @example
  * ### Creating Blobs from a String
  *
- * An example of creating Blobs from a string using {@link ox#Hex.(from:function)}:
+ * An example of creating Blobs from a string using  {@link ox#(Hex:namespace).(from:function)}:
  *
  * ```ts twoslash
  * import { Blobs, Hex } from 'ox'
@@ -110,7 +109,7 @@ export function Blobs_from<
   return (
     as === 'Bytes'
       ? blobs.map((x) => x.bytes)
-      : blobs.map((x) => Hex_fromBytes(x.bytes))
+      : blobs.map((x) => Hex.fromBytes(x.bytes))
   ) as never
 }
 
@@ -128,7 +127,7 @@ export declare namespace Blobs_from {
     | Blobs_BlobSizeTooLargeError
     | Blobs_EmptyBlobError
     | Bytes_fromHex.ErrorType
-    | Hex_fromBytes.ErrorType
+    | Hex.fromBytes.ErrorType
     | createCursor.ErrorType
     | Bytes_size.ErrorType
     | Errors.GlobalErrorType

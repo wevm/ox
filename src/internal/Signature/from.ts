@@ -1,6 +1,6 @@
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'
 import { Signature_deserialize } from './deserialize.js'
@@ -14,7 +14,7 @@ import type {
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
- * Instantiates a typed {@link ox#Signature.Signature} object from a {@link ox#Signature.Signature}, {@link ox#Signature.Legacy}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
+ * Instantiates a typed {@link ox#Signature.Signature} object from a {@link ox#Signature.Signature}, {@link ox#Signature.Legacy}, {@link ox#Bytes.Bytes}, or {@link ox#(Hex:type)}.
  *
  * @example
  * ```ts twoslash

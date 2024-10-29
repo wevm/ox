@@ -1,6 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
+import { Hex } from '../../Hex.js'
 import { AbiItem_getSignatureHash } from './getSignatureHash.js'
 import type { AbiItem } from './types.js'
 
@@ -35,13 +34,13 @@ import type { AbiItem } from './types.js'
  * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the function signature.
  */
 export function AbiItem_getSelector(abiItem: string | AbiItem): Hex {
-  return Hex_slice(AbiItem_getSignatureHash(abiItem), 0, 4)
+  return Hex.slice(AbiItem_getSignatureHash(abiItem), 0, 4)
 }
 
 export declare namespace AbiItem_getSelector {
   type ErrorType =
     | AbiItem_getSignatureHash.ErrorType
-    | Hex_slice.ErrorType
+    | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
 

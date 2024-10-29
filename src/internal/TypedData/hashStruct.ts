@@ -1,10 +1,9 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_fromString } from '../Hex/fromString.js'
-import type { Hex } from '../Hex/types.js'
 import { TypedData_encodeType } from './encodeType.js'
 import type { TypedData } from './types.js'
 
@@ -108,7 +107,7 @@ export function hashType(value: {
   types: TypedData
 }): Hex {
   const { primaryType, types } = value
-  const encodedHashType = Hex_fromString(
+  const encodedHashType = Hex.fromString(
     TypedData_encodeType({ primaryType, types }),
   )
   return Hash_keccak256(encodedHashType)
@@ -117,7 +116,7 @@ export function hashType(value: {
 /** @internal */
 export declare namespace hashType {
   type ErrorType =
-    | Hex_fromString.ErrorType
+    | Hex.fromString.ErrorType
     | TypedData_encodeType.ErrorType
     | Hash_keccak256.ErrorType
     | Errors.GlobalErrorType

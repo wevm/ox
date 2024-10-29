@@ -1,9 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
-import type { Hex } from '../Hex/types.js'
 import { PublicKey_from } from '../PublicKey/from.js'
 import type { PublicKey } from '../PublicKey/types.js'
 
@@ -25,7 +24,7 @@ export function Secp256k1_getPublicKey(
 ): PublicKey {
   const { privateKey } = options
   const point = secp256k1.ProjectivePoint.fromPrivateKey(
-    Hex_from(privateKey).slice(2),
+    Hex.from(privateKey).slice(2),
   )
   return PublicKey_from(point)
 }
@@ -39,7 +38,7 @@ export declare namespace Secp256k1_getPublicKey {
   }
 
   type ErrorType =
-    | Hex_from.ErrorType
+    | Hex.from.ErrorType
     | PublicKey_from.ErrorType
     | Errors.GlobalErrorType
 }

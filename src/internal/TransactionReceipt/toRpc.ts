@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import { Log_toRpc } from '../Log/toRpc.js'
 import { TransactionReceipt_statusRpc } from './constants.js'
 import type { TransactionReceipt, TransactionReceipt_Rpc } from './types.js'
@@ -62,31 +62,31 @@ export function TransactionReceipt_toRpc(
 ): TransactionReceipt_Rpc {
   return {
     blobGasPrice: receipt.blobGasPrice
-      ? Hex_fromNumber(receipt.blobGasPrice)
+      ? Hex.fromNumber(receipt.blobGasPrice)
       : undefined,
     blobGasUsed: receipt.blobGasUsed
-      ? Hex_fromNumber(receipt.blobGasUsed)
+      ? Hex.fromNumber(receipt.blobGasUsed)
       : undefined,
     blockHash: receipt.blockHash,
-    blockNumber: Hex_fromNumber(receipt.blockNumber),
+    blockNumber: Hex.fromNumber(receipt.blockNumber),
     contractAddress: receipt.contractAddress,
-    cumulativeGasUsed: Hex_fromNumber(receipt.cumulativeGasUsed),
-    effectiveGasPrice: Hex_fromNumber(receipt.effectiveGasPrice),
+    cumulativeGasUsed: Hex.fromNumber(receipt.cumulativeGasUsed),
+    effectiveGasPrice: Hex.fromNumber(receipt.effectiveGasPrice),
     from: receipt.from,
-    gasUsed: Hex_fromNumber(receipt.gasUsed),
+    gasUsed: Hex.fromNumber(receipt.gasUsed),
     logs: receipt.logs.map(Log_toRpc as never),
     logsBloom: receipt.logsBloom,
     root: receipt.root,
     status: TransactionReceipt_statusRpc[receipt.status],
     to: receipt.to,
     transactionHash: receipt.transactionHash,
-    transactionIndex: Hex_fromNumber(receipt.transactionIndex),
+    transactionIndex: Hex.fromNumber(receipt.transactionIndex),
     type: receipt.type,
   }
 }
 
 export declare namespace TransactionReceipt_toRpc {
-  export type ErrorType = Hex_fromNumber.ErrorType | Errors.GlobalErrorType
+  export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
 
 TransactionReceipt_toRpc.parseError = (error: unknown) =>

@@ -1,7 +1,7 @@
 import type { AbiParameter, AbiParameterToPrimitiveType } from 'abitype'
 import type { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiFunction } from './types.js'
 

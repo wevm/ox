@@ -1,8 +1,8 @@
 import type { AbiParameter } from 'abitype'
 import { Errors } from '../../Errors.js'
+import type { Hex } from '../../Hex.js'
 import { AbiParameters_format } from '../AbiParameters/format.js'
 import { prettyPrint } from '../Errors/utils.js'
-import type { Hex } from '../Hex/types.js'
 import { AbiEvent_format } from './format.js'
 import type { AbiEvent } from './types.js'
 

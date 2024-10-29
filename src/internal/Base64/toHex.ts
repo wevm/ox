@@ -1,10 +1,9 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
+import { Hex } from '../../Hex.js'
 import { Base64_toBytes } from './toBytes.js'
 
 /**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Hex.Hex}.
+ * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#(Hex:type)}.
  *
  * @example
  * ```ts twoslash
@@ -15,10 +14,10 @@ import { Base64_toBytes } from './toBytes.js'
  * ```
  *
  * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded {@link ox#Hex.Hex}.
+ * @returns The Base64 decoded {@link ox#(Hex:type)}.
  */
 export function Base64_toHex(value: string): Hex {
-  return Hex_fromBytes(Base64_toBytes(value))
+  return Hex.fromBytes(Base64_toBytes(value))
 }
 
 export declare namespace Base64_toHex {

@@ -1,6 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_concat } from '../Hex/concat.js'
-import type { Hex } from '../Hex/types.js'
+import { Hex } from '../../Hex.js'
 import { TypedData_assert } from './assert.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
@@ -92,7 +91,7 @@ export function TypedData_encode<
       }),
     )
 
-  return Hex_concat(...parts)
+  return Hex.concat(...parts)
 }
 
 export declare namespace TypedData_encode {

@@ -1,6 +1,6 @@
 import type { Errors } from '../../../Errors.js'
+import type { Hex } from '../../../Hex.js'
 import { Hash_keccak256 } from '../../Hash/keccak256.js'
-import type { Hex } from '../../Hex/types.js'
 import { TransactionEnvelopeEip1559_serialize } from './serialize.js'
 import type { TransactionEnvelopeEip1559 } from './types.js'
 

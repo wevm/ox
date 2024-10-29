@@ -34,7 +34,8 @@
       "suspicious": {
         "noAssignInExpressions": "off",
         "noConsoleLog": "error",
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noShadowRestrictedNames": "off"
       }
     }
   },

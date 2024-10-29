@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import type { Filter, Filter_Rpc } from './types.js'
 
 /**
@@ -36,14 +36,14 @@ export function Filter_toRpc(filter: Filter): Filter_Rpc {
       ? {
           fromBlock:
             typeof fromBlock === 'bigint'
-              ? Hex_fromNumber(fromBlock)
+              ? Hex.fromNumber(fromBlock)
               : fromBlock,
         }
       : {}),
     ...(typeof toBlock !== 'undefined'
       ? {
           toBlock:
-            typeof toBlock === 'bigint' ? Hex_fromNumber(toBlock) : toBlock,
+            typeof toBlock === 'bigint' ? Hex.fromNumber(toBlock) : toBlock,
         }
       : {}),
   }

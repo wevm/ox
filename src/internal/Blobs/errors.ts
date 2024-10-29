@@ -1,4 +1,4 @@
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import { Kzg_versionedHashVersion } from '../Kzg/constants.js'
 
 import { Errors } from '../../Errors.js'

@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromNumber } from '../Hex/fromNumber.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_fromHex } from './fromHex.js'
 
 /**
@@ -29,15 +29,15 @@ export function Bytes_fromNumber(
   value: bigint | number,
   options?: Bytes_fromNumber.Options | undefined,
 ) {
-  const hex = Hex_fromNumber(value, options)
+  const hex = Hex.fromNumber(value, options)
   return Bytes_fromHex(hex)
 }
 
 export declare namespace Bytes_fromNumber {
-  export type Options = Hex_fromNumber.Options
+  export type Options = Hex.fromNumber.Options
 
   export type ErrorType =
-    | Hex_fromNumber.ErrorType
+    | Hex.fromNumber.ErrorType
     | Bytes_fromHex.ErrorType
     | Errors.GlobalErrorType
 }

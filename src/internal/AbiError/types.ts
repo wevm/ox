@@ -3,9 +3,9 @@ import type {
   ExtractAbiErrorNames,
   AbiError as abitype_AbiError,
 } from 'abitype'
+import type { Hex } from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import type { IsErrorSignature, IsStructSignature } from '../AbiItem/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { TypeErrorMessage } from '../types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `error` type. */

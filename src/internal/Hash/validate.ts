@@ -1,7 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
-import { Hex_validate } from '../Hex/validate.js'
+import { Hex } from '../../Hex.js'
 
 /**
  * Checks if a string is a valid hash value.
@@ -21,13 +19,13 @@ import { Hex_validate } from '../Hex/validate.js'
  * @returns Whether the value is a valid hash.
  */
 export function Hash_validate(value: string): value is Hex {
-  return Hex_validate(value) && Hex_size(value) === 32
+  return Hex.validate(value) && Hex.size(value) === 32
 }
 
 export declare namespace Hash_validate {
   type ErrorType =
-    | Hex_validate.ErrorType
-    | Hex_size.ErrorType
+    | Hex.validate.ErrorType
+    | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }
 

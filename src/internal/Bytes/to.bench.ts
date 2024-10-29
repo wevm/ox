@@ -2,14 +2,14 @@ import * as ethjs from '@ethereumjs/util'
 import { hexlify, toBigInt, toNumber, toUtf8String } from 'ethers'
 import { bench, describe } from 'vitest'
 
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_toBigInt } from './toBigInt.js'
 import { Bytes_toNumber } from './toNumber.js'
 import { Bytes_toString } from './toString.js'
 
 describe('Bytes to Hex', () => {
   bench('ox: `Hex.fromBytes`', () => {
-    Hex_fromBytes(
+    Hex.fromBytes(
       new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
     )
   })

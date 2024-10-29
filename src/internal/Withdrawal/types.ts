@@ -1,4 +1,4 @@
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 
 /** A Withdrawal as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/withdrawal.yaml). */
 export type Withdrawal<bigintType = bigint, numberType = number> = {

@@ -1,8 +1,6 @@
 import { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_from } from '../Hex/from.js'
-import { Hex_size } from '../Hex/size.js'
-import type { Hex } from '../Hex/types.js'
 import { Json_stringify } from '../Json/stringify.js'
 
 /** Thrown when the serialized signature is of an invalid size. */
@@ -13,7 +11,7 @@ export class Signature_InvalidSerializedSizeError extends Errors.BaseError {
     super(`Value \`${signature}\` is an invalid signature size.`, {
       metaMessages: [
         'Expected: 64 bytes or 65 bytes.',
-        `Received ${Hex_size(Hex_from(signature))} bytes.`,
+        `Received ${Hex.size(Hex.from(signature))} bytes.`,
       ],
     })
   }

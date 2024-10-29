@@ -1,9 +1,8 @@
 import { secp256r1 } from '@noble/curves/p256'
 
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from '../Bytes/types.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import type { Hex } from '../Hex/types.js'
 import { PublicKey_from } from '../PublicKey/from.js'
 import type { PublicKey } from '../PublicKey/types.js'
 
@@ -27,7 +26,7 @@ export function P256_getPublicKey(
   const point = secp256r1.ProjectivePoint.fromPrivateKey(
     typeof privateKey === 'string'
       ? privateKey.slice(2)
-      : Hex_fromBytes(privateKey).slice(2),
+      : Hex.fromBytes(privateKey).slice(2),
   )
   return PublicKey_from(point)
 }

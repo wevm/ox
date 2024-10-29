@@ -1,4 +1,4 @@
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Compute } from '../types.js'
 

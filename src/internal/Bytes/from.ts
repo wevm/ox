@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import { Bytes_fromArray } from './fromArray.js'
 import { Bytes_fromHex } from './fromHex.js'
 import type { Bytes } from './types.js'

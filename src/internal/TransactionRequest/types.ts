@@ -1,7 +1,7 @@
+import type { Hex } from '../../Hex.js'
 import type { AccessList } from '../AccessList/types.js'
 import type { Address } from '../Address/types.js'
 import type { Authorization_ListSigned } from '../Authorization/types.js'
-import type { Hex } from '../Hex/types.js'
 import type { Compute } from '../types.js'
 
 /** A Transaction Request that is generic to all transaction types, as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423). */

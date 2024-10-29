@@ -1,8 +1,5 @@
 import { Errors } from '../../Errors.js'
-import { Hex_assertSize } from '../Hex/assertSize.js'
-import { Hex_InvalidLengthError } from '../Hex/errors.js'
-import { Hex_padRight } from '../Hex/pad.js'
-import type { Hex } from '../Hex/types.js'
+import { Hex } from '../../Hex.js'
 import type { Bytes } from './types.js'
 
 // We use very optimized technique to convert hex string to byte array
@@ -26,7 +23,7 @@ function charCodeToBase16(char: number) {
 }
 
 /**
- * Encodes a {@link ox#Hex.Hex} value into {@link ox#Bytes.Bytes}.
+ * Encodes a {@link ox#(Hex:type)} value into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -44,7 +41,7 @@ function charCodeToBase16(char: number) {
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
  *
- * @param value - {@link ox#Hex.Hex} value to encode.
+ * @param value - {@link ox#(Hex:type)} value to encode.
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
@@ -54,12 +51,12 @@ export function Bytes_fromHex(
 ): Bytes {
   const { size } = options
 
-  if (value.length % 2) throw new Hex_InvalidLengthError(value)
+  if (value.length % 2) throw new Hex.InvalidLengthError(value)
 
   let hex = value
   if (size) {
-    Hex_assertSize(value, size)
-    hex = Hex_padRight(value, size)
+    Hex.assertSize(value, size)
+    hex = Hex.padRight(value, size)
   }
 
   const hexString = hex.slice(2) as string
@@ -86,9 +83,9 @@ export declare namespace Bytes_fromHex {
   }
 
   type ErrorType =
-    | Hex_assertSize.ErrorType
-    | Hex_padRight.ErrorType
-    | Hex_InvalidLengthError
+    | Hex.assertSize.ErrorType
+    | Hex.padRight.ErrorType
+    | Hex.InvalidLengthError
     | Errors.GlobalErrorType
 }
 

@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashStruct } from './hashStruct.js'
 import type { TypedData_Domain, TypedData_Parameter } from './types.js'

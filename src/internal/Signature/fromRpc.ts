@@ -1,5 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import type { Hex } from '../Hex/types.js'
+import type { Hex } from '../../Hex.js'
 import { Signature_InvalidYParityError } from './errors.js'
 import type { Signature } from './types.js'
 import { Signature_vToYParity } from './vToYParity.js'

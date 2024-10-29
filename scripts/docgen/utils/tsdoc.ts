@@ -28,8 +28,10 @@ export function extractNamespaceDocComments(
 
   const docComments: Record<string, ReturnType<typeof processDocComment>> = {}
   for (const node of nodes) {
-    const namespace = node
-      .getDescendantsOfKind(SyntaxKind.NamespaceExport)[0]
+    const namespace = (
+      node.getDescendantsOfKind(SyntaxKind.NamespaceExport)[0] ||
+      node.getDescendantsOfKind(SyntaxKind.ExportSpecifier)[0]
+    )
       ?.getDescendantsOfKind(SyntaxKind.Identifier)[0]
       ?.getText()
     if (!namespace) continue

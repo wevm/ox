@@ -1,9 +1,9 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_concat } from '../Bytes/concat.js'
 import { Bytes_fromHex } from '../Bytes/fromHex.js'
 import { Bytes_fromString } from '../Bytes/fromString.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
 import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
 
 /**
@@ -23,7 +23,7 @@ import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
  */
 export function Ens_namehash(name: string) {
   let result = new Uint8Array(32).fill(0)
-  if (!name) return Hex_fromBytes(result)
+  if (!name) return Hex.fromBytes(result)
 
   const labels = name.split('.')
   // Iterate in reverse order building up hash
@@ -35,12 +35,12 @@ export function Ens_namehash(name: string) {
     result = Hash_keccak256(Bytes_concat(result, hashed), { as: 'Bytes' })
   }
 
-  return Hex_fromBytes(result)
+  return Hex.fromBytes(result)
 }
 
 export declare namespace Ens_namehash {
   type ErrorType =
-    | Hex_fromBytes.ErrorType
+    | Hex.fromBytes.ErrorType
     | Ens_encodedLabelToLabelhash.ErrorType
     | Bytes_fromHex.ErrorType
     | Hash_keccak256.ErrorType

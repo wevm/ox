@@ -1,10 +1,8 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { AbiParameters_ToPrimitiveTypes } from '../AbiParameters/types.js'
-import { Hex_size } from '../Hex/size.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
 import type { IsNarrowable } from '../types.js'
 import { AbiFunction_fromAbi } from './fromAbi.js'
 import type { AbiFunction } from './types.js'
@@ -37,15 +35,15 @@ export function AbiFunction_decodeData<const abiItem extends AbiFunction>(
 ): AbiFunction_decodeData.ReturnType<abiItem> {
   const { overloads } = abiFunction
 
-  if (Hex_size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
+  if (Hex.size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
   if (abiFunction.inputs.length === 0) return undefined
 
   const item = overloads
     ? AbiFunction_fromAbi([abiFunction, ...overloads], data as never)
     : abiFunction
 
-  if (Hex_size(data) <= 4) return undefined
-  return AbiParameters_decode(item.inputs, Hex_slice(data, 4))
+  if (Hex.size(data) <= 4) return undefined
+  return AbiParameters_decode(item.inputs, Hex.slice(data, 4))
 }
 
 export declare namespace AbiFunction_decodeData {
@@ -67,7 +65,7 @@ export declare namespace AbiFunction_decodeData {
   type ErrorType =
     | AbiFunction_fromAbi.ErrorType
     | AbiParameters_decode.ErrorType
-    | Hex_size.ErrorType
-    | Hex_slice.ErrorType
+    | Hex.size.ErrorType
+    | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }

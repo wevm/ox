@@ -1,6 +1,5 @@
 import type { Errors } from '../../Errors.js'
-import { Hex_fromBytes } from '../Hex/fromBytes.js'
-import { Hex_toNumber } from '../Hex/toNumber.js'
+import { Hex } from '../../Hex.js'
 import { Bytes_assertSize } from './assertSize.js'
 import type { Bytes } from './types.js'
 
@@ -21,8 +20,8 @@ export function Bytes_toNumber(
 ): number {
   const { size } = options
   if (typeof size !== 'undefined') Bytes_assertSize(bytes, size)
-  const hex = Hex_fromBytes(bytes, options)
-  return Hex_toNumber(hex, options)
+  const hex = Hex.fromBytes(bytes, options)
+  return Hex.toNumber(hex, options)
 }
 
 export declare namespace Bytes_toNumber {
@@ -34,8 +33,8 @@ export declare namespace Bytes_toNumber {
   }
 
   type ErrorType =
-    | Hex_fromBytes.ErrorType
-    | Hex_toNumber.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Hex.toNumber.ErrorType
     | Errors.GlobalErrorType
 }
 

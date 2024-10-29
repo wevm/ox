@@ -1,8 +1,6 @@
 import type { Errors } from '../../../Errors.js'
+import { Hex } from '../../../Hex.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
-import { Hex_slice } from '../../Hex/slice.js'
-import type { Hex } from '../../Hex/types.js'
-import { Hex_validate } from '../../Hex/validate.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_fromTuple } from '../../Signature/fromTuple.js'
 import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
@@ -36,7 +34,7 @@ import type {
 export function TransactionEnvelopeEip2930_deserialize(
   serializedTransaction: TransactionEnvelopeEip2930_Serialized,
 ): TransactionEnvelopeEip2930 {
-  const transactionArray = Rlp_toHex(Hex_slice(serializedTransaction, 1))
+  const transactionArray = Rlp_toHex(Hex.slice(serializedTransaction, 1))
 
   const [
     chainId,
@@ -79,12 +77,12 @@ export function TransactionEnvelopeEip2930_deserialize(
     chainId: Number(chainId as Hex),
     type: 'eip2930',
   } as TransactionEnvelopeEip2930
-  if (Hex_validate(to) && to !== '0x') transaction.to = to
-  if (Hex_validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex_validate(data) && data !== '0x') transaction.data = data
-  if (Hex_validate(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
-  if (Hex_validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex_validate(gasPrice) && gasPrice !== '0x')
+  if (Hex.validate(to) && to !== '0x') transaction.to = to
+  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
+  if (Hex.validate(data) && data !== '0x') transaction.data = data
+  if (Hex.validate(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
+  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
+  if (Hex.validate(gasPrice) && gasPrice !== '0x')
     transaction.gasPrice = BigInt(gasPrice)
   if (accessList!.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList_fromTupleList(accessList as any)

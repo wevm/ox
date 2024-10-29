@@ -1,4 +1,5 @@
 import type { Errors } from '../../Errors.js'
+import { Hex } from '../../Hex.js'
 import { Address_from } from '../Address/from.js'
 import type { Address } from '../Address/types.js'
 import { Bytes_concat } from '../Bytes/concat.js'
@@ -7,8 +8,6 @@ import { Bytes_padLeft } from '../Bytes/pad.js'
 import type { Bytes } from '../Bytes/types.js'
 import { Bytes_validate } from '../Bytes/validate.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
-import { Hex_slice } from '../Hex/slice.js'
-import type { Hex } from '../Hex/types.js'
 
 /**
  * Computes contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
@@ -46,7 +45,7 @@ export function ContractAddress_fromCreate2(
   })()
 
   return Address_from(
-    Hex_slice(
+    Hex.slice(
       Hash_keccak256(
         Bytes_concat(Bytes_fromHex('0xff'), from, salt, bytecodeHash),
         { as: 'Hex' },
@@ -75,7 +74,7 @@ export declare namespace ContractAddress_fromCreate2 {
     | Bytes_validate.ErrorType
     | Bytes_padLeft.ErrorType
     | Hash_keccak256.ErrorType
-    | Hex_slice.ErrorType
+    | Hex.slice.ErrorType
     | Bytes_fromHex.ErrorType
     | Errors.GlobalErrorType
 }
