@@ -1,5 +1,7 @@
+import { expectTypeOf } from 'vitest'
+
 import { TransactionEnvelopeLegacy } from 'ox'
-import { expectTypeOf, test } from 'vitest'
+import { test } from 'vitest'
 
 test('default', () => {
   {
@@ -12,18 +14,14 @@ test('default', () => {
       readonly value: 69n
       readonly type: 'legacy'
     }>()
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelope>()
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
   }
 
   {
     const envelope = TransactionEnvelopeLegacy.from(
       '0x123' as TransactionEnvelopeLegacy.Serialized,
     )
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelope>()
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
   }
 
   {
@@ -42,9 +40,7 @@ test('default', () => {
       readonly v: 37
       readonly type: 'legacy'
     }>()
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelope>()
+    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
   }
 })
 
@@ -71,7 +67,5 @@ test('options: signature', () => {
     readonly yParity: 0
     readonly type: 'legacy'
   }>()
-  expectTypeOf(
-    envelope,
-  ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelope>()
+  expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
 })

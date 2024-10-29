@@ -2326,7 +2326,7 @@ export { TransactionEnvelope } from './TransactionEnvelope.js'
  * @example
  * ### Instantiating Transaction Envelopes
  *
- * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeLegacy.(from:function)}:
+ * Transaction Envelopes can be instantiated using {@link ox#(TransactionEnvelopeLegacy:namespace).(from:function)}:
  *
  * ```ts twoslash
  * import { TransactionEnvelopeLegacy, Value } from 'ox'
@@ -2341,7 +2341,7 @@ export { TransactionEnvelope } from './TransactionEnvelope.js'
  * * @example
  * ### Signing Transaction Envelopes
  *
- * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeLegacy.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ * Transaction Envelopes can be signed using {@link ox#(TransactionEnvelopeLegacy:namespace).(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -2366,7 +2366,7 @@ export { TransactionEnvelope } from './TransactionEnvelope.js'
  * @example
  * ### Serializing Transaction Envelopes
  *
- * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeLegacy.(serialize:function)}:
+ * Transaction Envelopes can be serialized using {@link ox#(TransactionEnvelopeLegacy:namespace).(serialize:function)}:
  *
  * ```ts twoslash
  * import { TransactionEnvelopeLegacy, Value } from 'ox'
@@ -2384,7 +2384,7 @@ export { TransactionEnvelope } from './TransactionEnvelope.js'
  * @example
  * ### Computing Transaction Hashes
  *
- * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeLegacy.(hash:function)}:
+ * Transaction Hashes can be computed using {@link ox#(TransactionEnvelopeLegacy:namespace).(hash:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
@@ -2411,7 +2411,7 @@ export { TransactionEnvelope } from './TransactionEnvelope.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
+export { TransactionEnvelopeLegacy } from './TransactionEnvelopeLegacy.js'
 
 /**
  * Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559)
