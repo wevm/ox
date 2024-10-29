@@ -189,7 +189,7 @@ export namespace Bytes {
    */
   export function fromBoolean(
     value: boolean,
-    options: fromBoolean.Options = {},
+    options: Bytes.fromBoolean.Options = {},
   ) {
     const { size } = options
     const bytes = new Uint8Array(1)
@@ -240,7 +240,10 @@ export namespace Bytes {
    * @param options - Encoding options.
    * @returns Encoded {@link ox#(Bytes:namespace).(Bytes:type)}.
    */
-  export function fromHex(value: Hex, options: fromHex.Options = {}): Bytes {
+  export function fromHex(
+    value: Hex,
+    options: Bytes.fromHex.Options = {},
+  ): Bytes {
     const { size } = options
 
     if (value.length % 2) throw new Hex.InvalidLengthError(value)
@@ -309,7 +312,7 @@ export namespace Bytes {
    */
   export function fromNumber(
     value: bigint | number,
-    options?: fromNumber.Options | undefined,
+    options?: Bytes.fromNumber.Options | undefined,
   ) {
     const hex = Hex.fromNumber(value, options)
     return Bytes.fromHex(hex)
@@ -353,7 +356,7 @@ export namespace Bytes {
    */
   export function fromString(
     value: string,
-    options: fromString.Options = {},
+    options: Bytes.fromString.Options = {},
   ): Bytes {
     const { size } = options
 
@@ -428,7 +431,7 @@ export namespace Bytes {
   export function padLeft(
     value: Bytes,
     size?: number | undefined,
-  ): padLeft.ReturnType {
+  ): Bytes.padLeft.ReturnType {
     return Bytes.pad(value, { dir: 'left', size })
   }
 
@@ -458,7 +461,7 @@ export namespace Bytes {
   export function padRight(
     value: Bytes,
     size?: number | undefined,
-  ): padRight.ReturnType {
+  ): Bytes.padRight.ReturnType {
     return Bytes.pad(value, { dir: 'right', size })
   }
 
@@ -545,7 +548,7 @@ export namespace Bytes {
     value: Bytes,
     start?: number | undefined,
     end?: number | undefined,
-    options: slice.Options = {},
+    options: Bytes.slice.Options = {},
   ): Bytes {
     const { strict } = options
     Bytes.assertStartOffset(value, start)
@@ -586,7 +589,7 @@ export namespace Bytes {
    */
   export function toBigInt(
     bytes: Bytes,
-    options: toBigInt.Options = {},
+    options: Bytes.toBigInt.Options = {},
   ): bigint {
     const { size } = options
     if (typeof size !== 'undefined') Bytes.assertSize(bytes, size)
@@ -629,7 +632,7 @@ export namespace Bytes {
    */
   export function toBoolean(
     bytes: Bytes,
-    options: toBoolean.Options = {},
+    options: Bytes.toBoolean.Options = {},
   ): boolean {
     const { size } = options
     let bytes_ = bytes
@@ -673,7 +676,7 @@ export namespace Bytes {
    * @param options - Options.
    * @returns Decoded {@link ox#(Hex:type)} value.
    */
-  export function toHex(value: Bytes, options: toHex.Options = {}): Hex {
+  export function toHex(value: Bytes, options: Bytes.toHex.Options = {}): Hex {
     return Hex.fromBytes(value, options)
   }
 
@@ -702,7 +705,7 @@ export namespace Bytes {
    */
   export function toNumber(
     bytes: Bytes,
-    options: toNumber.Options = {},
+    options: Bytes.toNumber.Options = {},
   ): number {
     const { size } = options
     if (typeof size !== 'undefined') Bytes.assertSize(bytes, size)
@@ -745,7 +748,7 @@ export namespace Bytes {
    */
   export function toString(
     bytes: Bytes,
-    options: toString.Options = {},
+    options: Bytes.toString.Options = {},
   ): string {
     const { size } = options
 
@@ -1077,7 +1080,7 @@ export namespace Bytes {
   }
 
   /** @internal */
-  export function pad(bytes: Bytes, options: pad.Options = {}) {
+  export function pad(bytes: Bytes, options: Bytes.pad.Options = {}) {
     const { dir, size = 32 } = options
     if (size === 0) return bytes
     if (bytes.length > size)
@@ -1109,8 +1112,8 @@ export namespace Bytes {
   /** @internal */
   export function trim(
     value: Bytes,
-    options: trim.Options = {},
-  ): trim.ReturnType {
+    options: Bytes.trim.Options = {},
+  ): Bytes.trim.ReturnType {
     const { dir = 'left' } = options
 
     let data = value
@@ -1126,7 +1129,7 @@ export namespace Bytes {
         ? data.slice(sliceLength)
         : data.slice(0, data.length - sliceLength)
 
-    return data as trim.ReturnType
+    return data as Bytes.trim.ReturnType
   }
 
   /** @internal */

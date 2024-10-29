@@ -299,8 +299,8 @@ export namespace TransactionEnvelopeEip1559 {
       | envelope
       | UnionPartialBy<TransactionEnvelopeEip1559, 'type'>
       | TransactionEnvelopeEip1559.Serialized,
-    options: from.Options<signature> = {},
-  ): from.ReturnType<envelope, signature> {
+    options: TransactionEnvelopeEip1559.from.Options<signature> = {},
+  ): TransactionEnvelopeEip1559.from.ReturnType<envelope, signature> {
     const { signature } = options
 
     const envelope_ = (
@@ -379,7 +379,7 @@ export namespace TransactionEnvelopeEip1559 {
    */
   export function getSignPayload(
     envelope: TransactionEnvelopeEip1559,
-  ): getSignPayload.ReturnType {
+  ): TransactionEnvelopeEip1559.getSignPayload.ReturnType {
     return TransactionEnvelopeEip1559.hash(envelope, { presign: true })
   }
 
@@ -427,8 +427,8 @@ export namespace TransactionEnvelopeEip1559 {
    */
   export function hash<presign extends boolean = false>(
     envelope: TransactionEnvelopeEip1559<presign extends true ? false : true>,
-    options: hash.Options<presign> = {},
-  ): hash.ReturnType {
+    options: TransactionEnvelopeEip1559.hash.Options<presign> = {},
+  ): TransactionEnvelopeEip1559.hash.ReturnType {
     const { presign } = options
     return Hash_keccak256(
       TransactionEnvelopeEip1559.serialize({
@@ -515,7 +515,7 @@ export namespace TransactionEnvelopeEip1559 {
    */
   export function serialize(
     envelope: PartialBy<TransactionEnvelopeEip1559, 'type'>,
-    options: serialize.Options = {},
+    options: TransactionEnvelopeEip1559.serialize.Options = {},
   ): TransactionEnvelopeEip1559.Serialized {
     const {
       chainId,

@@ -165,7 +165,7 @@ function renderParameters(options: {
 
     const link = getTypeLink({ dataLookup, type: parameter })
 
-    const c = `\`${type}\``
+    const c = `\`${type}\``.replace(/(<.*>)/, '')
     const listContent = link
       ? [`- **Type:** [${c}](${link})`]
       : [`- **Type:** ${c}`]
@@ -214,7 +214,10 @@ function renderProperties(options: {
       const comment = property.getJsDocs().at(0)?.getDescription()
       const tsDoc = getTsDoc(comment, apiItem)
 
-      if (type) content.push(`- **Type:** \`${type.replaceAll('`', '')}\``)
+      if (type)
+        content.push(
+          `- **Type:** \`${type.replaceAll('`', '').replace(/(<.*>)/, '')}\``,
+        )
       if (tsDoc?.default) content.push(`- **Default:** \`${tsDoc.default}\``)
       const questionToken = property.getQuestionTokenNode()
       if (questionToken) content.push('- **Optional**')
@@ -398,10 +401,8 @@ function resolveErrorData(options: {
 }
 
 function extractParameterDeclarations(data: Data) {
-  const functionNameMatch = data.excerpt.match(
-    /export( declare)? function (.*?)(\(|<)/,
-  )
-  const functionName = functionNameMatch?.[2]
+  const functionNameMatch = data.excerpt.match(/function (.*?)(\(|<)/)
+  const functionName = functionNameMatch?.[1]
   const file = project.addSourceFileAtPath(data.file.path!)
   const declaration = file
     .getDescendantsOfKind(ts.SyntaxKind.FunctionDeclaration)

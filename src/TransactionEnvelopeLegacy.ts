@@ -368,7 +368,7 @@ export namespace TransactionEnvelopeLegacy {
    */
   export function getSignPayload(
     envelope: TransactionEnvelopeLegacy<false>,
-  ): getSignPayload.ReturnType {
+  ): TransactionEnvelopeLegacy.getSignPayload.ReturnType {
     return TransactionEnvelopeLegacy.hash(envelope, { presign: true })
   }
 
@@ -416,8 +416,8 @@ export namespace TransactionEnvelopeLegacy {
    */
   export function hash<presign extends boolean = false>(
     envelope: TransactionEnvelopeLegacy<presign extends true ? false : true>,
-    options: hash.Options<presign> = {},
-  ): hash.ReturnType {
+    options: TransactionEnvelopeLegacy.hash.Options<presign> = {},
+  ): TransactionEnvelopeLegacy.hash.ReturnType {
     const { presign } = options
     return Hash_keccak256(
       TransactionEnvelopeLegacy.serialize({
@@ -504,7 +504,7 @@ export namespace TransactionEnvelopeLegacy {
    */
   export function serialize(
     envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
-    options: serialize.Options = {},
+    options: TransactionEnvelopeLegacy.serialize.Options = {},
   ): TransactionEnvelopeLegacy.Serialized {
     const {
       chainId = 0,

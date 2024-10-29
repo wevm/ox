@@ -38,7 +38,7 @@ export namespace Hex {
    */
   export function assert(
     value: unknown,
-    options: assert.Options = {},
+    options: Hex.assert.Options = {},
   ): asserts value is Hex {
     const { strict = true } = options
     if (!value) throw new Hex.InvalidHexTypeError(value)
@@ -203,7 +203,7 @@ export namespace Hex {
    */
   export function fromBytes(
     value: Bytes,
-    options: fromBytes.Options = {},
+    options: Hex.fromBytes.Options = {},
   ): Hex {
     let string = ''
     for (let i = 0; i < value.length; i++) string += hexes[value[i]!]
@@ -251,7 +251,7 @@ export namespace Hex {
    */
   export function fromNumber(
     value: number | bigint,
-    options: fromNumber.Options = {},
+    options: Hex.fromNumber.Options = {},
   ): Hex {
     const { signed, size } = options
 
@@ -331,7 +331,7 @@ export namespace Hex {
    */
   export function fromString(
     value: string,
-    options: fromString.Options = {},
+    options: Hex.fromString.Options = {},
   ): Hex {
     return Hex.fromBytes(encoder.encode(value), options)
   }
@@ -396,7 +396,7 @@ export namespace Hex {
   export function padLeft(
     value: Hex,
     size?: number | undefined,
-  ): padLeft.ReturnType {
+  ): Hex.padLeft.ReturnType {
     return pad(value, { dir: 'left', size })
   }
 
@@ -426,7 +426,7 @@ export namespace Hex {
   export function padRight(
     value: Hex,
     size?: number | undefined,
-  ): padRight.ReturnType {
+  ): Hex.padRight.ReturnType {
     return pad(value, { dir: 'right', size })
   }
 
@@ -483,7 +483,7 @@ export namespace Hex {
     value: Hex,
     start?: number | undefined,
     end?: number | undefined,
-    options: slice.Options = {},
+    options: Hex.slice.Options = {},
   ): Hex {
     const { strict } = options
     assertStartOffset(value, start)
@@ -548,7 +548,7 @@ export namespace Hex {
    * @param value - The {@link ox#(Hex:type)} value to trim.
    * @returns The trimmed {@link ox#(Hex:type)} value.
    */
-  export function trimLeft(value: Hex): trimLeft.ReturnType {
+  export function trimLeft(value: Hex): Hex.trimLeft.ReturnType {
     return trim(value, { dir: 'left' })
   }
 
@@ -575,7 +575,7 @@ export namespace Hex {
    * @param value - The {@link ox#(Hex:type)} value to trim.
    * @returns The trimmed {@link ox#(Hex:type)} value.
    */
-  export function trimRight(value: Hex): trimRight.ReturnType {
+  export function trimRight(value: Hex): Hex.trimRight.ReturnType {
     return trim(value, { dir: 'right' })
   }
 
@@ -606,7 +606,10 @@ export namespace Hex {
    * @param options - Options.
    * @returns The decoded BigInt.
    */
-  export function toBigInt(hex: Hex, options: toBigInt.Options = {}): bigint {
+  export function toBigInt(
+    hex: Hex,
+    options: Hex.toBigInt.Options = {},
+  ): bigint {
     const { signed } = options
 
     if (options.size) Hex.assertSize(hex, options.size)
@@ -657,7 +660,7 @@ export namespace Hex {
    */
   export function toBoolean(
     hex: Hex,
-    options: toBoolean.Options = {},
+    options: Hex.toBoolean.Options = {},
   ): boolean {
     let hex_ = hex
     if (options.size) {
@@ -700,7 +703,7 @@ export namespace Hex {
    * @param options - Options.
    * @returns The decoded {@link ox#(Bytes:namespace).(Bytes:type)}.
    */
-  export function toBytes(hex: Hex, options: toBytes.Options = {}): Bytes {
+  export function toBytes(hex: Hex, options: Hex.toBytes.Options = {}): Bytes {
     return Bytes.fromHex(hex, options)
   }
 
@@ -734,7 +737,10 @@ export namespace Hex {
    * @param options - Options.
    * @returns The decoded number.
    */
-  export function toNumber(hex: Hex, options: toNumber.Options = {}): number {
+  export function toNumber(
+    hex: Hex,
+    options: Hex.toNumber.Options = {},
+  ): number {
     const { signed, size } = options
     if (!signed && !size) return Number(hex)
     return Number(Hex.toBigInt(hex, options))
@@ -769,7 +775,10 @@ export namespace Hex {
    * @param options - Options.
    * @returns The decoded string.
    */
-  export function toString(hex: Hex, options: toString.Options = {}): string {
+  export function toString(
+    hex: Hex,
+    options: Hex.toString.Options = {},
+  ): string {
     const { size } = options
 
     let bytes = Bytes.fromHex(hex)
@@ -816,7 +825,7 @@ export namespace Hex {
    */
   export function validate(
     value: unknown,
-    options: validate.Options = {},
+    options: Hex.validate.Options = {},
   ): value is Hex {
     const { strict = true } = options
     try {
