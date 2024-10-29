@@ -271,8 +271,7 @@ function renderReturnType(options: {
   const content = ['## Return Type']
   if (comment) content.push(comment)
   const link = getTypeLink({ dataLookup, type: returnType })
-  const type = expandInlineType({ dataLookup, type: returnType })
-  const c = `\`${type}\``
+  const c = `\`${returnType.type}\``
   content.push(link ? `[${c}](${link})` : c)
 
   return content.join('\n\n')
@@ -304,9 +303,9 @@ function renderErrors(options: {
     for (const errorId of errorIds) {
       const errorData = dataLookup[errorId]
       if (!errorData) continue
-      const name = errorData.displayName.replace('_', '.')
+      const name = errorData.module + '.' + errorData.displayName
       errorsContent.push(
-        `- [\`${name}\`](/api/${name.split('.')[0]}/errors#${name.toLowerCase().replace('.', '')})`,
+        `- [\`${name}\`](/api/${errorData.module}/errors#${name.toLowerCase().replace('.', '')})`,
       )
     }
     content.push(errorsContent.join('\n'))
@@ -338,7 +337,7 @@ function resolveInlineParameterTypeForOverloads(options: {
       )
   }
 
-  return expandInlineType({ dataLookup, type: parameter })
+  return parameter.type
 }
 
 function resolveReturnTypeForOverloads(options: {
@@ -461,29 +460,9 @@ function getTypeLink(options: {
   })()
   if (!data) return
 
-  const displayNameWithNamespace = `${data.module}.${data.displayName}`
+  const displayNameWithNamespace = (() => {
+    if (data.module === data.displayName) return data.displayName
+    return `${data.module}.${data.displayName}`
+  })()
   return `/api/${data.module}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`
-}
-
-function expandInlineType(options: {
-  dataLookup: Record<string, Data>
-  type: Pick<
-    NonNullable<Data['returnType']>,
-    'primaryCanonicalReference' | 'primaryGenericArguments' | 'type'
-  >
-}) {
-  const { dataLookup, type } = options
-
-  // expand inline type to include namespace (e.g. `Address` => `Address.Address`)
-  const expandRegex = /^ox!(?<type>.+)(_2):type/
-  if (
-    type.primaryCanonicalReference &&
-    expandRegex.test(type.primaryCanonicalReference) &&
-    !type.primaryGenericArguments
-  ) {
-    const groups =
-      type.primaryCanonicalReference.match(expandRegex)?.groups ?? {}
-    if (groups.type) return groups.type
-  } else if (dataLookup[`ox!${type.type}:type`]) return type.type
-  return type.type
 }

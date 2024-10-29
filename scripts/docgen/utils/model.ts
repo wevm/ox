@@ -146,9 +146,11 @@ export function createResolveDeclarationReference(
     if (item) {
       const url = getLinkForApiItem(item)
       const namespaceName = item.parent?.displayName
-      const text = namespaceName
-        ? `${namespaceName}.${item.displayName}`
-        : item.displayName
+      const text = (() => {
+        if (namespaceName === item.displayName) return item.displayName
+        if (namespaceName) return `${namespaceName}.${item.displayName}`
+        return item.displayName
+      })()
       return { url, text }
     }
 

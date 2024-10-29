@@ -128,9 +128,14 @@ export function renderNamespaceTypes(options: {
     const data = dataLookup[id]
     if (!data) throw new Error(`Could not find type data for ${id}`)
 
-    const name = apiItem.parent?.displayName
-      ? `${apiItem.parent.displayName}.${data.displayName}`
-      : data.displayName
+    const name = (() => {
+      if (apiItem.parent?.displayName === data.displayName)
+        return data.displayName
+      if (apiItem.parent?.displayName)
+        return `${apiItem.parent.displayName}.${data.displayName}`
+      return data.displayName
+    })()
+
     content.push(`## \`${name}\``)
     content.push(data.comment?.summary ?? '')
     if (data.comment?.examples?.length) {

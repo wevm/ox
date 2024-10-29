@@ -94,7 +94,8 @@ for (const namespace of namespaces) {
     if (!data) throw new Error(`Could not find data for ${id}`)
 
     const { description, displayName } = data
-    const displayNameWithNamespace = `${name}.${displayName}`
+    const displayNameWithNamespace =
+      name === displayName ? displayName : `${name}.${displayName}`
 
     if (member.kind === model.ApiItemKind.Function) {
       // Resolve overloads for function
