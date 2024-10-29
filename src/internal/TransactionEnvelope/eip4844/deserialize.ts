@@ -1,11 +1,11 @@
 import type { Errors } from '../../../Errors.js'
 import { Hex } from '../../../Hex.js'
+import { TransactionEnvelope } from '../../../TransactionEnvelope.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../../Blobs/toSidecars.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_fromTuple } from '../../Signature/fromTuple.js'
 import type { Compute } from '../../types.js'
-import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
 import { TransactionEnvelopeEip4844_assert } from './assert.js'
 import type {
   TransactionEnvelopeEip4844,
@@ -69,7 +69,7 @@ export function TransactionEnvelopeEip4844_deserialize(
   const [blobs, commitments, proofs] = wrapperArray
 
   if (!(transactionArray.length === 11 || transactionArray.length === 14))
-    throw new TransactionEnvelope_InvalidSerializedError({
+    throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         chainId,
         nonce,

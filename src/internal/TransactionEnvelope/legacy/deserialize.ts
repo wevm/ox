@@ -1,10 +1,10 @@
 import type { Errors } from '../../../Errors.js'
 import { Hex } from '../../../Hex.js'
+import { TransactionEnvelope } from '../../../TransactionEnvelope.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_InvalidVError } from '../../Signature/errors.js'
 import { Signature_vToYParity } from '../../Signature/vToYParity.js'
 import type { Compute } from '../../types.js'
-import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
 import { TransactionEnvelopeLegacy_assert } from './assert.js'
 import type { TransactionEnvelopeLegacy } from './types.js'
 
@@ -38,7 +38,7 @@ export function TransactionEnvelopeLegacy_deserialize(
     tuple as readonly Hex[]
 
   if (!(tuple.length === 6 || tuple.length === 9))
-    throw new TransactionEnvelope_InvalidSerializedError({
+    throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         nonce,
         gasPrice,

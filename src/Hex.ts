@@ -11,10 +11,14 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 
 export type Hex = Hex.Hex
 export namespace Hex {
+  // #region Types
+
   /** Root type for a Hex string. */
   export type Hex = `0x${string}`
 
-  //#region Functions
+  // #endregion Types
+
+  // #region Functions
 
   /**
    * Asserts if the given value is {@link ox#(Hex:type)}.
@@ -835,9 +839,9 @@ export namespace Hex {
   /* v8 ignore next */
   validate.parseError = (error: unknown) => error as validate.ErrorType
 
-  //#endregion
+  // #endregion
 
-  //#region Errors
+  // #region Errors
 
   /**
    * Thrown when the provided integer is out of range, and cannot be represented as a hex value.
@@ -1052,9 +1056,9 @@ export namespace Hex {
     }
   }
 
-  //#endregion
+  // #endregion
 
-  //#region Internal
+  // #region Internal
 
   /** @internal */
   export function assertSize(hex: Hex, size_: number): void {
@@ -1177,5 +1181,5 @@ export namespace Hex {
     type ErrorType = Errors.GlobalErrorType
   }
 
-  //#endregion
+  // #endregion
 }

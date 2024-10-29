@@ -8,8 +8,12 @@ const encoder = /*#__PURE__*/ new TextEncoder()
 
 export type Bytes = Bytes.Bytes
 export namespace Bytes {
+  // #region Types
+
   /** Root type for a Bytes array. */
   export type Bytes = Uint8Array
+
+  // #endregion Types
 
   // #region Functions
 

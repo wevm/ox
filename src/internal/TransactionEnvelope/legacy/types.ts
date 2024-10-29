@@ -1,6 +1,6 @@
 import type { Hex } from '../../../Hex.js'
+import type { TransactionEnvelope } from '../../../TransactionEnvelope.js'
 import type { Branded, Compute } from '../../types.js'
-import type { TransactionEnvelope_Base } from '../types.js'
 
 export type TransactionEnvelopeLegacy<
   signed extends boolean = boolean,
@@ -8,7 +8,7 @@ export type TransactionEnvelopeLegacy<
   numberType = number,
   type extends string = TransactionEnvelopeLegacy_Type,
 > = Compute<
-  TransactionEnvelope_Base<type, signed, bigintType, numberType> & {
+  TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-155 Chain ID. */
     chainId?: numberType | undefined
     /** Base fee per gas. */

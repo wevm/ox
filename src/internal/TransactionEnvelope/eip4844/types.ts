@@ -1,8 +1,8 @@
 import type { Hex } from '../../../Hex.js'
+import type { TransactionEnvelope } from '../../../TransactionEnvelope.js'
 import type { AccessList } from '../../AccessList/types.js'
 import type { BlobSidecar } from '../../Blobs/types.js'
 import type { Compute } from '../../types.js'
-import type { TransactionEnvelope_Base } from '../types.js'
 
 export type TransactionEnvelopeEip4844<
   signed extends boolean = boolean,
@@ -10,7 +10,7 @@ export type TransactionEnvelopeEip4844<
   numberType = number,
   type extends string = TransactionEnvelopeEip4844_Type,
 > = Compute<
-  TransactionEnvelope_Base<type, signed, bigintType, numberType> & {
+  TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
     /** Versioned hashes of blobs to be included in the transaction. */

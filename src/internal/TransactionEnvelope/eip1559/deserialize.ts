@@ -1,10 +1,10 @@
 import type { Errors } from '../../../Errors.js'
 import { Hex } from '../../../Hex.js'
+import { TransactionEnvelope } from '../../../TransactionEnvelope.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
 import { Signature_fromTuple } from '../../Signature/fromTuple.js'
 import type { Compute } from '../../types.js'
-import { TransactionEnvelope_InvalidSerializedError } from '../errors.js'
 import { TransactionEnvelopeEip1559_assert } from './assert.js'
 import type {
   TransactionEnvelopeEip1559,
@@ -53,7 +53,7 @@ export function TransactionEnvelopeEip1559_deserialize(
   ] = transactionArray as readonly Hex[]
 
   if (!(transactionArray.length === 9 || transactionArray.length === 12))
-    throw new TransactionEnvelope_InvalidSerializedError({
+    throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         chainId,
         nonce,
