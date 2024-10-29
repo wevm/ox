@@ -1,9 +1,8 @@
 import type { Errors } from '../../../Errors.js'
 import { TransactionEnvelope } from '../../../TransactionEnvelope.js'
+import { TransactionEnvelopeEip1559 } from '../../../TransactionEnvelopeEip1559.js'
 import { Address_assert } from '../../Address/assert.js'
 import type { PartialBy } from '../../types.js'
-import { TransactionEnvelopeEip1559_assert } from '../eip1559/assert.js'
-import type { TransactionEnvelopeEip1559 } from '../eip1559/types.js'
 import type { TransactionEnvelopeEip7702 } from './types.js'
 
 /**
@@ -39,7 +38,7 @@ export function TransactionEnvelopeEip7702_assert(
         throw new TransactionEnvelope.InvalidChainIdError({ chainId })
     }
   }
-  TransactionEnvelopeEip1559_assert(
+  TransactionEnvelopeEip1559.assert(
     envelope as {} as TransactionEnvelopeEip1559,
   )
 }

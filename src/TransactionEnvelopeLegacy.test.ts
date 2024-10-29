@@ -987,7 +987,7 @@ describe('validate', () => {
 })
 
 test('exports', () => {
-  expect(Object.keys(exports)).toMatchInlineSnapshot(`
+  expect(Object.keys(TransactionEnvelopeLegacy)).toMatchInlineSnapshot(`
     [
       "type",
       "assert",

@@ -1,8 +1,8 @@
+import { TransactionEnvelope } from 'ox'
 import { expect, test } from 'vitest'
-import * as exports from './TransactionEnvelope.js'
 
 test('exports', () => {
-  expect(Object.keys(exports)).toMatchInlineSnapshot(`
+  expect(Object.keys(TransactionEnvelope)).toMatchInlineSnapshot(`
     [
       "FeeCapTooHighError",
       "GasPriceTooHighError",

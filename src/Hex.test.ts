@@ -447,7 +447,7 @@ describe('toBoolean', () => {
     expect(() => Hex.toBoolean('0xa')).toThrowErrorMatchingInlineSnapshot(
       `
       [Hex.InvalidHexBooleanError: Hex value \`"0xa"\` is not a valid boolean.
-  
+
       The hex value must be \`"0x0"\` (false) or \`"0x1"\` (true).]
     `,
     )
@@ -736,53 +736,53 @@ describe('trim', () => {
 
 describe('validate', () => {
   test('default', () => {
-    test('default', () => {
-      expect(Hex.validate('0x')).toBeTruthy()
-      expect(Hex.validate('0x0')).toBeTruthy()
-      expect(Hex.validate('0x0123456789abcdef')).toBeTruthy()
-      expect(Hex.validate('0x0123456789abcdefABCDEF')).toBeTruthy()
-      expect(Hex.validate('0x0123456789abcdefg')).toBeFalsy()
-      expect(
-        Hex.validate('0x0123456789abcdefg', { strict: false }),
-      ).toBeTruthy()
-      expect(Hex.validate({ foo: 'bar' })).toBeFalsy()
-      expect(Hex.validate(undefined)).toBeFalsy()
-    })
+    expect(Hex.validate('0x')).toBeTruthy()
+    expect(Hex.validate('0x0')).toBeTruthy()
+    expect(Hex.validate('0x0123456789abcdef')).toBeTruthy()
+    expect(Hex.validate('0x0123456789abcdefABCDEF')).toBeTruthy()
+    expect(Hex.validate('0x0123456789abcdefg')).toBeFalsy()
+    expect(Hex.validate('0x0123456789abcdefg', { strict: false })).toBeTruthy()
+    expect(Hex.validate({ foo: 'bar' })).toBeFalsy()
+    expect(Hex.validate(undefined)).toBeFalsy()
   })
 })
 
 test('exports', () => {
   expect(Object.keys(Hex)).toMatchInlineSnapshot(`
     [
-      "IntegerOutOfRangeError",
-      "InvalidHexBooleanError",
-      "InvalidHexTypeError",
-      "InvalidHexValueError",
-      "InvalidLengthError",
-      "SizeExceedsPaddingSizeError",
-      "SizeOverflowError",
-      "SliceOffsetOutOfBoundsError",
       "assert",
       "concat",
-      "isEqual",
-      "padLeft",
-      "padRight",
-      "slice",
-      "size",
-      "trimLeft",
-      "trimRight",
       "from",
       "fromBoolean",
       "fromBytes",
       "fromNumber",
       "fromString",
+      "isEqual",
+      "padLeft",
+      "padRight",
       "random",
+      "slice",
+      "size",
+      "trimLeft",
+      "trimRight",
       "toBigInt",
       "toBoolean",
       "toBytes",
       "toNumber",
       "toString",
       "validate",
+      "IntegerOutOfRangeError",
+      "InvalidHexBooleanError",
+      "InvalidHexTypeError",
+      "InvalidHexValueError",
+      "InvalidLengthError",
+      "SizeOverflowError",
+      "SliceOffsetOutOfBoundsError",
+      "SizeExceedsPaddingSizeError",
+      "assertSize",
+      "assertStartOffset",
+      "assertEndOffset",
+      "trim",
     ]
   `)
 })

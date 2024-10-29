@@ -8,22 +8,22 @@ describe('assert', () => {
       Bytes.assert(new Uint16Array([1])),
     ).toThrowErrorMatchingInlineSnapshot(`
       [Bytes.InvalidBytesTypeError: Value \`{"0":1}\` of type \`object\` is an invalid Bytes value.
-  
+
       Bytes values must be of type \`Bytes\`.]
     `)
     expect(() => Bytes.assert('0x1')).toThrowErrorMatchingInlineSnapshot(`
       [Bytes.InvalidBytesTypeError: Value \`0x1\` of type \`string\` is an invalid Bytes value.
-  
+
       Bytes values must be of type \`Bytes\`.]
     `)
     expect(() => Bytes.assert({})).toThrowErrorMatchingInlineSnapshot(`
       [Bytes.InvalidBytesTypeError: Value \`{}\` of type \`object\` is an invalid Bytes value.
-  
+
       Bytes values must be of type \`Bytes\`.]
     `)
     expect(() => Bytes.assert(undefined)).toThrowErrorMatchingInlineSnapshot(`
       [Bytes.InvalidBytesTypeError: Value \`undefined\` of type \`undefined\` is an invalid Bytes value.
-  
+
       Bytes values must be of type \`Bytes\`.]
     `)
   })
@@ -308,7 +308,7 @@ describe('fromHex', () => {
     expect(() => Bytes.fromHex('0xabcde')).toThrowErrorMatchingInlineSnapshot(
       `
       [Hex.InvalidLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
-  
+
       It must be an even length.]
     `,
     )
@@ -1431,7 +1431,7 @@ describe('toBoolean', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `
       [Bytes.InvalidBytesBooleanError: Bytes value \`69\` is not a valid boolean.
-  
+
       The bytes array must contain a single byte of either a \`0\` or \`1\` value.]
     `,
     )
@@ -1440,7 +1440,7 @@ describe('toBoolean', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `
       [Bytes.InvalidBytesBooleanError: Bytes value \`1,2\` is not a valid boolean.
-  
+
       The bytes array must contain a single byte of either a \`0\` or \`1\` value.]
     `,
     )
@@ -1682,35 +1682,5 @@ describe('validate', () => {
 })
 
 test('exports', () => {
-  expect(Object.keys(exports)).toMatchInlineSnapshot(`
-    [
-      "InvalidBytesBooleanError",
-      "InvalidBytesTypeError",
-      "SizeExceedsPaddingSizeError",
-      "SizeOverflowError",
-      "SliceOffsetOutOfBoundsError",
-      "assert",
-      "concat",
-      "from",
-      "fromArray",
-      "fromBoolean",
-      "fromHex",
-      "fromNumber",
-      "fromString",
-      "isEqual",
-      "padLeft",
-      "padRight",
-      "slice",
-      "size",
-      "trimLeft",
-      "trimRight",
-      "random",
-      "toBigInt",
-      "toBoolean",
-      "toHex",
-      "toNumber",
-      "toString",
-      "validate",
-    ]
-  `)
+  expect(Object.keys(exports)).toMatchInlineSnapshot('[]')
 })
