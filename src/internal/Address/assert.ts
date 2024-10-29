@@ -1,5 +1,5 @@
 import type * as Address from '../../Address.js'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { addressRegex } from '../regex.js'
 import { Address_checksum } from './checksum.js'
 import {

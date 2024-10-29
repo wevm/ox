@@ -1,6 +1,6 @@
 import type { Bytes } from '../../Bytes.js'
-import { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Json_stringify } from '../Json/stringify.js'
 
 /**
@@ -70,7 +70,7 @@ export class PublicKey_InvalidUncompressedPrefixError extends Errors.BaseError {
 export class PublicKey_InvalidSerializedSizeError extends Errors.BaseError {
   override readonly name = 'PublicKey.InvalidSerializedSizeError'
 
-  constructor({ publicKey }: { publicKey: Hex | Bytes }) {
+  constructor({ publicKey }: { publicKey: Hex.Hex | Bytes }) {
     super(`Value \`${publicKey}\` is an invalid public key size.`, {
       metaMessages: [
         'Expected: 33 bytes (compressed + prefix), 64 bytes (uncompressed) or 65 bytes (uncompressed + prefix).',

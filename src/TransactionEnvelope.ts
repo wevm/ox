@@ -1,5 +1,5 @@
 import type { Address } from './Address.js'
-import { Errors } from './Errors.js'
+import * as Errors from './Errors.js'
 import type { Hex } from './Hex.js'
 import { Value_formatGwei } from './internal/Value/formatGwei.js'
 import type { Compute } from './internal/types.js'

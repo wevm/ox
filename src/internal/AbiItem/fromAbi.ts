@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
 import type { Address } from '../Address/types.js'
@@ -91,7 +91,7 @@ export function AbiItem_fromAbi<
   allNames = AbiItem_Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
-  name: Hex | (name extends allNames ? name : never),
+  name: Hex.Hex | (name extends allNames ? name : never),
   options?: AbiItem_fromAbi.Options<abi, name, args>,
 ): AbiItem_fromAbi.ReturnType<abi, name, args> {
   const { args = [], prepare = true } = (options ??

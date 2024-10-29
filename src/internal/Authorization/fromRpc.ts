@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Signature_extract } from '../Signature/extract.js'
 import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 

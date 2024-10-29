@@ -1,8 +1,8 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /** @internal */
-export function Ens_encodedLabelToLabelhash(label: string): Hex | null {
+export function Ens_encodedLabelToLabelhash(label: string): Hex.Hex | null {
   if (label.length !== 66) return null
   if (label.indexOf('[') !== 0) return null
   if (label.indexOf(']') !== 65) return null

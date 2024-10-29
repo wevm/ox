@@ -1,8 +1,8 @@
 import { secp256r1 } from '@noble/curves/p256'
 
 import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { PublicKey_from } from '../PublicKey/from.js'
 import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
@@ -43,7 +43,7 @@ export function P256_recoverPublicKey(
 export declare namespace P256_recoverPublicKey {
   type Options = {
     /** Payload that was signed. */
-    payload: Hex | Bytes
+    payload: Hex.Hex | Bytes
     /** Signature of the payload. */
     signature: Signature
   }

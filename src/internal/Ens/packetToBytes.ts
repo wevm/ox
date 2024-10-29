@@ -1,6 +1,6 @@
 // Adapted from https://github.com/mafintosh/dns-packet
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import { Ens_encodeLabelhash } from './encodeLabelhash.js'
 import { Ens_labelhash } from './labelhash.js'
 
@@ -8,7 +8,7 @@ import { Ens_labelhash } from './labelhash.js'
  * @internal
  * Encodes a [DNS packet](https://docs.ens.domains/resolution/names#dns) into a ByteArray containing a UDP payload.
  */
-export function Ens_packetToBytes(packet: string): Bytes {
+export function Ens_packetToBytes(packet: string): Bytes.Bytes {
   // strip leading and trailing `.`
   const value = packet.replace(/^\.|\.$/gm, '')
   if (value.length === 0) return new Uint8Array(1)

@@ -1,4 +1,4 @@
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 
 /** Thrown when a WebAuthn P256 credential creation fails. */
 export class WebAuthnP256_CredentialCreationFailedError extends Errors.BaseError<Error> {

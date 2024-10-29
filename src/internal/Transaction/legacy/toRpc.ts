@@ -1,5 +1,5 @@
-import type { Errors } from '../../../Errors.js'
-import { Hex } from '../../../Hex.js'
+import type * as Errors from '../../../Errors.js'
+import * as Hex from '../../../Hex.js'
 import { Signature_extract } from '../../Signature/extract.js'
 import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'

@@ -1,6 +1,6 @@
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { PublicKey_InvalidSerializedSizeError } from './errors.js'
 import type { PublicKey } from './types.js'
 
@@ -35,7 +35,9 @@ import type { PublicKey } from './types.js'
  * @param publicKey - The serialized public key.
  * @returns The deserialized public key.
  */
-export function PublicKey_deserialize(publicKey: Bytes | Hex): PublicKey {
+export function PublicKey_deserialize(
+  publicKey: Bytes.Bytes | Hex.Hex,
+): PublicKey {
   const hex =
     typeof publicKey === 'string' ? publicKey : Hex.fromBytes(publicKey)
 

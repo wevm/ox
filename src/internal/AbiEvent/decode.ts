@@ -1,6 +1,6 @@
 import type { AbiParameter } from 'abitype'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
 import { Cursor_PositionOutOfBoundsError } from '../cursor.js'
@@ -187,8 +187,8 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
 
 export declare namespace AbiEvent_decode {
   type Log = {
-    data?: Hex | undefined
-    topics: readonly Hex[]
+    data?: Hex.Hex | undefined
+    topics: readonly Hex.Hex[]
   }
 
   type ReturnType<abiEvent extends AbiEvent = AbiEvent> = IsNarrowable<

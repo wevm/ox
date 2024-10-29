@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Base58_toHex } from './toHex.js'
 
 /**

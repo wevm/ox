@@ -1,5 +1,5 @@
-import type { Errors } from '../../../Errors.js'
-import { Hex } from '../../../Hex.js'
+import type * as Errors from '../../../Errors.js'
+import * as Hex from '../../../Hex.js'
 import { TransactionEnvelope } from '../../../TransactionEnvelope.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../../Blobs/toSidecars.js'
@@ -93,7 +93,7 @@ export function TransactionEnvelopeEip4844_deserialize(
     })
 
   let transaction = {
-    blobVersionedHashes: blobVersionedHashes as Hex[],
+    blobVersionedHashes: blobVersionedHashes as Hex.Hex[],
     chainId: Number(chainId),
     type: 'eip4844',
   } as TransactionEnvelopeEip4844
@@ -111,14 +111,14 @@ export function TransactionEnvelopeEip4844_deserialize(
   if (accessList?.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList_fromTupleList(accessList as any)
   if (blobs && commitments && proofs)
-    transaction.sidecars = Blobs_toSidecars(blobs as Hex[], {
-      commitments: commitments as Hex[],
-      proofs: proofs as Hex[],
+    transaction.sidecars = Blobs_toSidecars(blobs as Hex.Hex[], {
+      commitments: commitments as Hex.Hex[],
+      proofs: proofs as Hex.Hex[],
     })
 
   const signature =
     r && s && yParity
-      ? Signature_fromTuple([yParity as Hex, r as Hex, s as Hex])
+      ? Signature_fromTuple([yParity as Hex.Hex, r as Hex.Hex, s as Hex.Hex])
       : undefined
   if (signature)
     transaction = {

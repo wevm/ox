@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Compute } from '../types.js'
 import { PublicKey_assert } from './assert.js'
 import { PublicKey_deserialize } from './deserialize.js'
@@ -54,8 +54,8 @@ export function PublicKey_from<
   const publicKey extends
     | CompressedPublicKey
     | UncompressedPublicKey
-    | Hex
-    | Bytes,
+    | Hex.Hex
+    | Bytes.Bytes,
 >(
   value: PublicKey_from.Value<publicKey>,
 ): PublicKey_from.ReturnType<publicKey> {
@@ -79,16 +79,16 @@ export declare namespace PublicKey_from {
     publicKey extends
       | CompressedPublicKey
       | UncompressedPublicKey
-      | Hex
-      | Bytes = PublicKey,
+      | Hex.Hex
+      | Bytes.Bytes = PublicKey,
   > = publicKey | CompressedPublicKey | UncompressedPublicKey
 
   type ReturnType<
     publicKey extends
       | CompressedPublicKey
       | UncompressedPublicKey
-      | Hex
-      | Bytes = PublicKey,
+      | Hex.Hex
+      | Bytes.Bytes = PublicKey,
   > = publicKey extends CompressedPublicKey | UncompressedPublicKey
     ? publicKey extends UncompressedPublicKey
       ? Compute<publicKey & { readonly prefix: 0x04 }>

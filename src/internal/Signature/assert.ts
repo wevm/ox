@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Solidity_maxUint256 } from '../Solidity/constants.js'
 import type { ExactPartial } from '../types.js'
 import {

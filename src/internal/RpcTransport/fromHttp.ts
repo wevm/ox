@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Promise_withTimeout } from '../Promise/withTimeout.js'
 import { RpcTransport_create } from './create.js'
 import {

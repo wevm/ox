@@ -1,4 +1,4 @@
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 
 /** Thrown when an operation times out. */
 export class Promise_TimeoutError extends Errors.BaseError {

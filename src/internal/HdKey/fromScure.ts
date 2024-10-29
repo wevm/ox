@@ -1,7 +1,7 @@
 import type { HDKey } from '@scure/bip32'
 
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Secp256k1_getPublicKey } from '../Secp256k1/getPublicKey.js'
 import type { HdKey } from './types.js'
 

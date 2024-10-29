@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { Log, Log_Rpc } from './types.js'
 
 /**

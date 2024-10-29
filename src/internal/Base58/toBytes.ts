@@ -1,5 +1,5 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import { Base58_toHex } from './toHex.js'
 
 /**
@@ -16,7 +16,7 @@ import { Base58_toHex } from './toHex.js'
  * @param value - The Base58 encoded string.
  * @returns The decoded byte array.
  */
-export function Base58_toBytes(value: string): Bytes {
+export function Base58_toBytes(value: string): Bytes.Bytes {
   return Bytes.fromHex(Base58_toHex(value))
 }
 

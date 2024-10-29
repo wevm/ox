@@ -1,4 +1,4 @@
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 
 /** Thrown when the provider is undefined. */
 export class Provider_IsUndefinedError extends Errors.BaseError {

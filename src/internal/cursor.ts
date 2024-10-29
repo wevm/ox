@@ -1,5 +1,5 @@
 import type { Bytes } from '../Bytes.js'
-import { Errors } from '../Errors.js'
+import * as Errors from '../Errors.js'
 
 /** @internal */
 export type Cursor = {

@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { Base64_fromHex } from '../Base64/fromHex.js'
 

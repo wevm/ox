@@ -1,7 +1,7 @@
 import { p256 } from '@noble/curves/p256'
 
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import type { Signature } from '../Signature/types.js'
 
@@ -49,7 +49,7 @@ export async function WebCryptoP256_sign(
 export declare namespace WebCryptoP256_sign {
   type Options = {
     /** Payload to sign. */
-    payload: Hex | Bytes
+    payload: Hex | Bytes.Bytes
     /** ECDSA private key. */
     privateKey: CryptoKey
   }

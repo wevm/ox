@@ -1,6 +1,6 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiConstructor } from './types.js'
@@ -63,7 +63,7 @@ export function AbiConstructor_encode<
 >(
   abiConstructor: abiConstructor | AbiConstructor,
   options: AbiConstructor_encode.Options<abiConstructor>,
-): Hex {
+): Hex.Hex {
   const { bytecode, args } = options
   return Hex.concat(
     bytecode,
@@ -75,7 +75,7 @@ export function AbiConstructor_encode<
 
 export declare namespace AbiConstructor_encode {
   type Options<abiConstructor extends AbiConstructor = AbiConstructor> = {
-    bytecode: Hex
+    bytecode: Hex.Hex
   } & (IsNarrowable<abiConstructor, AbiConstructor> extends true
     ? AbiParametersToPrimitiveTypes<
         abiConstructor['inputs']

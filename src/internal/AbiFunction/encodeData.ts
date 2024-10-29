@@ -1,6 +1,6 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { IsNarrowable } from '../types.js'
 import { AbiFunction_fromAbi } from './fromAbi.js'
@@ -106,7 +106,7 @@ import type { AbiFunction } from './types.js'
 export function AbiFunction_encodeData<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
   ...args: AbiFunction_encodeData.Args<abiFunction>
-): Hex {
+): Hex.Hex {
   const { overloads } = abiFunction
 
   const item = overloads

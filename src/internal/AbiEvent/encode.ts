@@ -1,6 +1,6 @@
 import type { AbiParameter } from 'abitype'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { Compute, IsNarrowable } from '../types.js'
@@ -110,7 +110,7 @@ export function AbiEvent_encode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   ...[args]: AbiEvent_encode.Args<abiEvent>
 ): AbiEvent_encode.ReturnType {
-  let topics: (Hex | Hex[] | null)[] = []
+  let topics: (Hex.Hex | Hex.Hex[] | null)[] = []
   if (args && abiEvent.inputs) {
     const indexedInputs = abiEvent.inputs.filter(
       (param) => 'indexed' in param && param.indexed,
@@ -127,7 +127,7 @@ export function AbiEvent_encode<const abiEvent extends AbiEvent>(
       const encode = (param: AbiParameter, value: unknown) => {
         if (param.type === 'string')
           return Hash_keccak256(Hex.fromString(value as string))
-        if (param.type === 'bytes') return Hash_keccak256(value as Hex)
+        if (param.type === 'bytes') return Hash_keccak256(value as Hex.Hex)
         if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
           throw new AbiEvent_FilterTypeNotSupportedError(param.type)
         return AbiParameters_encode([param], [value])
@@ -169,7 +169,9 @@ export declare namespace AbiEvent_encode {
     : [readonly unknown[] | Record<string, unknown>] | []
 
   type ReturnType = {
-    topics: Compute<[selector: Hex, ...(Hex | readonly Hex[] | null)[]]>
+    topics: Compute<
+      [selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]
+    >
   }
 
   type ErrorType =

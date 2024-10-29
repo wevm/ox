@@ -1,6 +1,6 @@
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 
 /**
@@ -57,12 +57,12 @@ import { Hash_sha256 } from '../Hash/sha256.js'
  * @returns The Blob Versioned Hash.
  */
 export function Blobs_commitmentToVersionedHash<
-  const commitment extends Hex | Bytes,
+  const commitment extends Hex.Hex | Bytes.Bytes,
   as extends 'Hex' | 'Bytes' =
-    | (commitment extends Hex ? 'Hex' : never)
-    | (commitment extends Bytes ? 'Bytes' : never),
+    | (commitment extends Hex.Hex ? 'Hex' : never)
+    | (commitment extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  commitment: commitment | Hex | Bytes,
+  commitment: commitment | Hex.Hex | Bytes.Bytes,
   options: Blobs_commitmentToVersionedHash.Options<as> = {},
 ): Blobs_commitmentToVersionedHash.ReturnType<as> {
   const { version = 1 } = options
@@ -84,8 +84,8 @@ export declare namespace Blobs_commitmentToVersionedHash {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType = Errors.GlobalErrorType
 }

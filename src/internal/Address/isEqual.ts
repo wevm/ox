@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Address_assert } from './assert.js'
 import type { Address } from './types.js'
 

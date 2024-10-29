@@ -9,8 +9,8 @@ import type {
   SolidityString,
 } from 'abitype'
 
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Address_assert } from '../Address/assert.js'
 import type { Address } from '../Address/types.js'
 import {
@@ -44,14 +44,14 @@ import {
  */
 export function AbiParameters_encodePacked<
   const packedAbiTypes extends readonly PackedAbiType[] | readonly unknown[],
->(types: packedAbiTypes, values: EncodePackedValues<packedAbiTypes>): Hex {
+>(types: packedAbiTypes, values: EncodePackedValues<packedAbiTypes>): Hex.Hex {
   if (types.length !== values.length)
     throw new AbiParameters_LengthMismatchError({
       expectedLength: types.length as number,
       givenLength: values.length as number,
     })
 
-  const data: Hex[] = []
+  const data: Hex.Hex[] = []
   for (let i = 0; i < (types as unknown[]).length; i++) {
     const type = types[i]
     const value = values[i]
@@ -109,17 +109,17 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   type: packedAbiType,
   value: EncodePackedValues<[packedAbiType]>[0],
   isArray = false,
-): Hex {
+): Hex.Hex {
   if (type === 'address') {
     const address = value as Address
     Address_assert(address)
     return Hex.padLeft(
-      address.toLowerCase() as Hex,
+      address.toLowerCase() as Hex.Hex,
       isArray ? 32 : 0,
     ) as Address
   }
   if (type === 'string') return Hex.fromString(value as string)
-  if (type === 'bytes') return value as Hex
+  if (type === 'bytes') return value as Hex.Hex
   if (type === 'bool')
     return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
 
@@ -136,18 +136,18 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   const bytesMatch = (type as string).match(Solidity_bytesRegex)
   if (bytesMatch) {
     const [_type, size] = bytesMatch
-    if (Number.parseInt(size!) !== ((value as Hex).length - 2) / 2)
+    if (Number.parseInt(size!) !== ((value as Hex.Hex).length - 2) / 2)
       throw new AbiParameters_BytesSizeMismatchError({
         expectedSize: Number.parseInt(size!),
-        value: value as Hex,
+        value: value as Hex.Hex,
       })
-    return Hex.padRight(value as Hex, isArray ? 32 : 0) as Hex
+    return Hex.padRight(value as Hex.Hex, isArray ? 32 : 0) as Hex.Hex
   }
 
   const arrayMatch = (type as string).match(Solidity_arrayRegex)
   if (arrayMatch && Array.isArray(value)) {
     const [_type, childType] = arrayMatch
-    const data: Hex[] = []
+    const data: Hex.Hex[] = []
     for (let i = 0; i < value.length; i++) {
       data.push(encode(childType, value[i], true))
     }

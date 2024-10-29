@@ -1,6 +1,6 @@
 import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Address } from '../Address/types.js'
 
 /**
@@ -21,7 +21,9 @@ import type { Address } from '../Address/types.js'
  * @param value - The data to encode.
  * @returns The encoded personal sign message.
  */
-export function ValidatorData_encode(value: ValidatorData_encode.Value): Hex {
+export function ValidatorData_encode(
+  value: ValidatorData_encode.Value,
+): Hex.Hex {
   const { data, validator } = value
   return Hex.concat(
     // Validator Data Format: `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`
@@ -34,7 +36,7 @@ export function ValidatorData_encode(value: ValidatorData_encode.Value): Hex {
 
 export declare namespace ValidatorData_encode {
   type Value = {
-    data: Hex | Bytes
+    data: Hex.Hex | Bytes
     validator: Address
   }
 

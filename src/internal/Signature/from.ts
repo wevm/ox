@@ -1,5 +1,5 @@
 import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import type { OneOf } from '../types.js'
 import { Signature_assert } from './assert.js'

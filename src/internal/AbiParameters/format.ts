@@ -4,7 +4,7 @@ import {
   type FormatAbiParameters,
   formatAbiParameters,
 } from 'abitype'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Formats {@link ox#AbiParameters.AbiParameters} into **Human Readable ABI Parameters**.

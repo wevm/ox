@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Compute } from '../types.js'
 import type { Blobs } from './types.js'
@@ -41,12 +41,12 @@ import type { Blobs } from './types.js'
  * @returns The commitments.
  */
 export function Blobs_toCommitments<
-  const blobs extends Blobs<Bytes> | Blobs<Hex>,
+  const blobs extends Blobs<Bytes.Bytes> | Blobs<Hex.Hex>,
   as extends 'Hex' | 'Bytes' =
-    | (blobs extends Blobs<Hex> ? 'Hex' : never)
-    | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
+    | (blobs extends Blobs<Hex.Hex> ? 'Hex' : never)
+    | (blobs extends Blobs<Bytes.Bytes> ? 'Bytes' : never),
 >(
-  blobs: blobs | Blobs<Bytes> | Blobs<Hex>,
+  blobs: blobs | Blobs<Bytes.Bytes> | Blobs<Hex.Hex>,
   options: Blobs_toCommitments.Options<as>,
 ): Blobs_toCommitments.ReturnType<as> {
   const { kzg } = options
@@ -56,9 +56,9 @@ export function Blobs_toCommitments<
     typeof blobs[0] === 'string'
       ? blobs.map((x) => Bytes.fromHex(x as any))
       : blobs
-  ) as Bytes[]
+  ) as Bytes.Bytes[]
 
-  const commitments: Bytes[] = []
+  const commitments: Bytes.Bytes[] = []
   for (const blob of blobs_)
     commitments.push(Uint8Array.from(kzg.blobToKzgCommitment(blob)))
 
@@ -76,8 +76,8 @@ export declare namespace Blobs_toCommitments {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = Compute<
-    | (as extends 'Bytes' ? readonly Bytes[] : never)
-    | (as extends 'Hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes.Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex.Hex[] : never)
   >
 
   type ErrorType =

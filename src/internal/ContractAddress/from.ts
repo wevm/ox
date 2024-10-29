@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { Address } from '../Address/types.js'
 import type { OneOf } from '../types.js'
 import { ContractAddress_fromCreate } from './fromCreate.js'

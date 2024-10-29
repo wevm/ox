@@ -1,6 +1,6 @@
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import type { Hex } from '../../Hex.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import type * as Hex from '../../Hex.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Mutable, OneOf, UnionCompute } from '../types.js'
 import { Blobs_toCommitments } from './toCommitments.js'
@@ -40,7 +40,9 @@ import type { BlobSidecars, Blobs } from './types.js'
  * @param options - Options.
  * @returns The {@link ox#Blobs.BlobSidecars}.
  */
-export function Blobs_toSidecars<const blobs extends Blobs<Hex> | Blobs<Bytes>>(
+export function Blobs_toSidecars<
+  const blobs extends Blobs<Hex.Hex> | Blobs<Bytes.Bytes>,
+>(
   blobs: blobs,
   options: Blobs_toSidecars.Options<blobs>,
 ): Blobs_toSidecars.ReturnType<blobs> {
@@ -65,23 +67,26 @@ export function Blobs_toSidecars<const blobs extends Blobs<Hex> | Blobs<Bytes>>(
 
 export declare namespace Blobs_toSidecars {
   type Options<
-    blobs extends Blobs<Hex> | Blobs<Bytes> = Blobs<Hex> | Blobs<Bytes>,
+    blobs extends Blobs<Hex.Hex> | Blobs<Bytes.Bytes> =
+      | Blobs<Hex.Hex>
+      | Blobs<Bytes.Bytes>,
   > = {
     kzg?: Kzg | undefined
   } & OneOf<
     | {}
     | {
         /** Commitment for each blob. */
-        commitments: blobs | readonly Hex[] | readonly Bytes[]
+        commitments: blobs | readonly Hex.Hex[] | readonly Bytes.Bytes[]
         /** Proof for each blob. */
-        proofs: blobs | readonly Hex[] | readonly Bytes[]
+        proofs: blobs | readonly Hex.Hex[] | readonly Bytes.Bytes[]
       }
   >
 
-  type ReturnType<blobs extends Blobs<Hex> | Blobs<Bytes>> = UnionCompute<
-    | (blobs extends Blobs<Hex> ? BlobSidecars<Hex> : never)
-    | (blobs extends Blobs<Bytes> ? BlobSidecars<Bytes> : never)
-  >
+  type ReturnType<blobs extends Blobs<Hex.Hex> | Blobs<Bytes.Bytes>> =
+    UnionCompute<
+      | (blobs extends Blobs<Hex.Hex> ? BlobSidecars<Hex.Hex> : never)
+      | (blobs extends Blobs<Bytes.Bytes> ? BlobSidecars<Bytes.Bytes> : never)
+    >
 
   type ErrorType = Errors.GlobalErrorType
 }

@@ -1,5 +1,5 @@
 import { validateMnemonic } from '@scure/bip39'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Checks if a mnemonic is valid, given a wordlist.

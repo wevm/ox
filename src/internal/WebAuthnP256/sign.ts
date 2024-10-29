@@ -1,6 +1,6 @@
 import { p256 } from '@noble/curves/p256'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Signature } from '../Signature/types.js'
 import { WebAuthnP256_CredentialRequestFailedError } from './errors.js'
 import { WebAuthnP256_getCredentialRequestOptions } from './getCredentialRequestOptions.js'

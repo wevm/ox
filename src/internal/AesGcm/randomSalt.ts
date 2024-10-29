@@ -1,5 +1,5 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Generates a random salt of the specified size.
@@ -15,7 +15,7 @@ import type { Errors } from '../../Errors.js'
  * @param size - The size of the salt to generate. Defaults to `32`.
  * @returns A random salt of the specified size.
  */
-export function AesGcm_randomSalt(size = 32): Bytes {
+export function AesGcm_randomSalt(size = 32): Bytes.Bytes {
   return Bytes.random(size)
 }
 

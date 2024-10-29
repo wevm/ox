@@ -1,5 +1,5 @@
 import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()
 const lookup = /*#__PURE__*/ {

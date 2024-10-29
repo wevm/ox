@@ -1,7 +1,7 @@
 import { secp256r1 } from '@noble/curves/p256'
 
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import type { Signature } from '../Signature/types.js'
 
@@ -40,9 +40,9 @@ export declare namespace P256_sign {
     /** If set to `true`, the payload will be hashed (sha256) before being signed. */
     hash?: boolean | undefined
     /** Payload to sign. */
-    payload: Hex | Bytes
+    payload: Hex | Bytes.Bytes
     /** ECDSA private key. */
-    privateKey: Hex | Bytes
+    privateKey: Hex | Bytes.Bytes
   }
 
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType

@@ -1,4 +1,4 @@
-import { Hex } from '../../Hex.js'
+import * as Hex from '../../Hex.js'
 // TODO: public
 import { Address_assert } from '../Address/assert.js'
 import type { Compute, Mutable } from '../types.js'

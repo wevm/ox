@@ -1,5 +1,5 @@
-import type { Errors } from '../../../Errors.js'
-import { Hex } from '../../../Hex.js'
+import type * as Errors from '../../../Errors.js'
+import * as Hex from '../../../Hex.js'
 import { TransactionEnvelope } from '../../../TransactionEnvelope.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Authorization_fromTupleList } from '../../Authorization/fromTupleList.js'
@@ -53,7 +53,7 @@ export function TransactionEnvelopeEip7702_deserialize(
     yParity,
     r,
     s,
-  ] = transactionArray as readonly Hex[]
+  ] = transactionArray as readonly Hex.Hex[]
 
   if (!(transactionArray.length === 10 || transactionArray.length === 13))
     throw new TransactionEnvelope.InvalidSerializedError({

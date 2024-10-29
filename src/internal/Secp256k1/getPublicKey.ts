@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 
 import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { PublicKey_from } from '../PublicKey/from.js'
 import type { PublicKey } from '../PublicKey/types.js'
 
@@ -34,7 +34,7 @@ export declare namespace Secp256k1_getPublicKey {
     /**
      * Private key to compute the public key from.
      */
-    privateKey: Hex | Bytes
+    privateKey: Hex.Hex | Bytes
   }
 
   type ErrorType =

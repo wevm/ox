@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Rlp_fromHex } from '../Rlp/from.js'
 import { Authorization_toTuple } from './toTuple.js'
@@ -24,7 +24,7 @@ import type { Authorization } from './types.js'
  * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns The hash.
  */
-export function Authorization_hash(authorization: Authorization): Hex {
+export function Authorization_hash(authorization: Authorization): Hex.Hex {
   return Hash_keccak256(
     Hex.concat('0x05', Rlp_fromHex(Authorization_toTuple(authorization))),
   )

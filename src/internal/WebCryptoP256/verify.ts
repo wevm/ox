@@ -1,5 +1,5 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
 import type { PublicKey } from '../PublicKey/types.js'
@@ -58,7 +58,7 @@ export declare namespace WebCryptoP256_verify {
     /** Signature of the payload. */
     signature: Signature<false>
     /** Payload that was signed. */
-    payload: Hex | Bytes
+    payload: Hex | Bytes.Bytes
   }
 
   type ErrorType = Errors.GlobalErrorType

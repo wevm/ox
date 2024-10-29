@@ -1,6 +1,6 @@
 import { type AbiParameter, formatAbiParameters } from 'abitype'
-import { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Throws when the data size is too small for the given parameters.
@@ -33,7 +33,7 @@ export class AbiParameters_DataSizeTooSmallError extends Errors.BaseError {
     data,
     parameters,
     size,
-  }: { data: Hex; parameters: readonly AbiParameter[]; size: number }) {
+  }: { data: Hex.Hex; parameters: readonly AbiParameter[]; size: number }) {
     super(`Data size of ${size} bytes is too small for given parameters.`, {
       metaMessages: [
         `Params: (${formatAbiParameters(parameters as readonly [AbiParameter])})`,
@@ -142,7 +142,10 @@ export class AbiParameters_ArrayLengthMismatchError extends Errors.BaseError {
  */
 export class AbiParameters_BytesSizeMismatchError extends Errors.BaseError {
   override readonly name = 'AbiParameters.BytesSizeMismatchError'
-  constructor({ expectedSize, value }: { expectedSize: number; value: Hex }) {
+  constructor({
+    expectedSize,
+    value,
+  }: { expectedSize: number; value: Hex.Hex }) {
     super(
       `Size of bytes "${value}" (bytes${Hex.size(
         value,

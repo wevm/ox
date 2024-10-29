@@ -1,6 +1,6 @@
 import { encodeBase58 } from 'ethers'
 import { bench, describe } from 'vitest'
-import { Hex } from '../../Hex.js'
+import * as Hex from '../../Hex.js'
 import { Base58_fromBytes } from './fromBytes.js'
 import { Base58_fromHex } from './fromHex.js'
 

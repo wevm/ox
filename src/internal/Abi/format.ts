@@ -1,5 +1,5 @@
 import { type Abi, type FormatAbi, formatAbi } from 'abitype'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 
 /**
  * Formats an {@link ox#Abi.Abi} into a **Human Readable ABI**.

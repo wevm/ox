@@ -1,6 +1,6 @@
 import type * as Address from '../../Address.js'
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Caches_checksum } from '../caches.js'
 import { Address_assert } from './assert.js'

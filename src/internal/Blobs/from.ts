@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { createCursor } from '../cursor.js'
 import {
   Blobs_bytesPerBlob,
@@ -50,16 +50,18 @@ import { Blobs_BlobSizeTooLargeError, Blobs_EmptyBlobError } from './errors.js'
  * @returns The {@link ox#Blobs.Blobs}.
  */
 export function Blobs_from<
-  const data extends Hex | Bytes,
+  const data extends Hex.Hex | Bytes.Bytes,
   as extends 'Hex' | 'Bytes' =
-    | (data extends Hex ? 'Hex' : never)
-    | (data extends Bytes ? 'Bytes' : never),
+    | (data extends Hex.Hex ? 'Hex' : never)
+    | (data extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  data: data | Hex | Bytes,
+  data: data | Hex.Hex | Bytes.Bytes,
   options: Blobs_from.Options<as> = {},
 ): Blobs_from.ReturnType<as> {
   const as = options.as ?? (typeof data === 'string' ? 'Hex' : 'Bytes')
-  const data_ = (typeof data === 'string' ? Bytes.fromHex(data) : data) as Bytes
+  const data_ = (
+    typeof data === 'string' ? Bytes.fromHex(data) : data
+  ) as Bytes.Bytes
 
   const size_ = Bytes.size(data_)
   if (!size_) throw new Blobs_EmptyBlobError()
@@ -118,8 +120,8 @@ export declare namespace Blobs_from {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? readonly Bytes[] : never)
-    | (as extends 'Hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes.Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex.Hex[] : never)
 
   type ErrorType =
     | Blobs_BlobSizeTooLargeError

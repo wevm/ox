@@ -1,6 +1,6 @@
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import type { Hex } from '../../Hex.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import type * as Hex from '../../Hex.js'
 import { Blobs_commitmentToVersionedHash } from './commitmentToVersionedHash.js'
 import type { BlobSidecars } from './types.js'
 
@@ -59,8 +59,8 @@ import type { BlobSidecars } from './types.js'
 export function Blobs_sidecarsToVersionedHashes<
   const sidecars extends BlobSidecars,
   as extends 'Hex' | 'Bytes' =
-    | (sidecars extends BlobSidecars<Hex> ? 'Hex' : never)
-    | (sidecars extends BlobSidecars<Bytes> ? 'Bytes' : never),
+    | (sidecars extends BlobSidecars<Hex.Hex> ? 'Hex' : never)
+    | (sidecars extends BlobSidecars<Bytes.Bytes> ? 'Bytes' : never),
 >(
   sidecars: sidecars | BlobSidecars,
   options: Blobs_sidecarsToVersionedHashes.Options<as> = {},
@@ -70,7 +70,7 @@ export function Blobs_sidecarsToVersionedHashes<
   const as =
     options.as ?? (typeof sidecars[0]!.blob === 'string' ? 'Hex' : 'Bytes')
 
-  const hashes: Uint8Array[] | Hex[] = []
+  const hashes: Uint8Array[] | Hex.Hex[] = []
   for (const { commitment } of sidecars) {
     hashes.push(
       Blobs_commitmentToVersionedHash(commitment, {
@@ -91,8 +91,8 @@ export declare namespace Blobs_sidecarsToVersionedHashes {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? readonly Bytes[] : never)
-    | (as extends 'Hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes.Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex.Hex[] : never)
 
   type ErrorType =
     | Blobs_commitmentToVersionedHash.ErrorType

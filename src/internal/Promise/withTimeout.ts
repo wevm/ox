@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Promise_TimeoutError } from './errors.js'
 
 /** @internal */

@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Signature_extract } from '../Signature/extract.js'
 import { Signature_toTuple } from '../Signature/toTuple.js'
 import type { Signature } from '../Signature/types.js'

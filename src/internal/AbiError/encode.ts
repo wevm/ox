@@ -1,6 +1,6 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { IsNarrowable } from '../types.js'
 import { AbiError_getSelector } from './getSelector.js'
@@ -60,7 +60,7 @@ import type { AbiError } from './types.js'
 export function AbiError_encode<const abiError extends AbiError>(
   abiError: abiError | AbiError,
   ...args: AbiError_encode.Args<abiError>
-): Hex {
+): Hex.Hex {
   const selector = AbiError_getSelector(abiError)
 
   const data =

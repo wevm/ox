@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Base64_toBytes } from './toBytes.js'
 
 /**
@@ -16,7 +16,7 @@ import { Base64_toBytes } from './toBytes.js'
  * @param value - The string, hex value, or byte array to encode.
  * @returns The Base64 decoded {@link ox#(Hex:type)}.
  */
-export function Base64_toHex(value: string): Hex {
+export function Base64_toHex(value: string): Hex.Hex {
   return Hex.fromBytes(Base64_toBytes(value))
 }
 

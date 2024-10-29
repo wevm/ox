@@ -1,5 +1,5 @@
 import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Base58_from } from './from.js'
 
 /**

@@ -1,5 +1,5 @@
-import type { Errors } from './Errors.js'
-import { Hex } from './Hex.js'
+import type * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
 import type { Signature } from './Signature.js'
 import { TransactionEnvelope } from './TransactionEnvelope.js'
 import { AccessList_fromTupleList } from './internal/AccessList/fromTupleList.js'
@@ -42,7 +42,7 @@ export namespace TransactionEnvelopeEip1559 {
   // #region Types
 
   export type Rpc<signed extends boolean = boolean> =
-    TransactionEnvelopeEip1559<signed, Hex, Hex, '0x2'>
+    TransactionEnvelopeEip1559<signed, Hex.Hex, Hex.Hex, '0x2'>
 
   export type Serialized = `${SerializedType}${string}`
 
@@ -150,7 +150,7 @@ export namespace TransactionEnvelopeEip1559 {
       yParity,
       r,
       s,
-    ] = transactionArray as readonly Hex[]
+    ] = transactionArray as readonly Hex.Hex[]
 
     if (!(transactionArray.length === 9 || transactionArray.length === 12))
       throw new TransactionEnvelope.InvalidSerializedError({
@@ -326,10 +326,10 @@ export namespace TransactionEnvelopeEip1559 {
     type ReturnType<
       envelope extends
         | UnionPartialBy<TransactionEnvelopeEip1559, 'type'>
-        | Hex = TransactionEnvelopeEip1559 | Hex,
+        | Hex.Hex = TransactionEnvelopeEip1559 | Hex.Hex,
       signature extends Signature | undefined = undefined,
     > = Compute<
-      envelope extends Hex
+      envelope extends Hex.Hex
         ? TransactionEnvelopeEip1559
         : Assign<
             envelope,
@@ -384,7 +384,7 @@ export namespace TransactionEnvelopeEip1559 {
   }
 
   export declare namespace getSignPayload {
-    type ReturnType = Hex
+    type ReturnType = Hex.Hex
 
     type ErrorType =
       | TransactionEnvelopeEip1559.hash.ErrorType
@@ -451,7 +451,7 @@ export namespace TransactionEnvelopeEip1559 {
       presign?: presign | boolean | undefined
     }
 
-    type ReturnType = Hex
+    type ReturnType = Hex.Hex
 
     type ErrorType =
       | Hash_keccak256.ErrorType

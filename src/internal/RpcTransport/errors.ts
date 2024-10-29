@@ -1,4 +1,4 @@
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 import { getUrl } from '../Errors/utils.js'
 
 /** Thrown when a HTTP request fails. */

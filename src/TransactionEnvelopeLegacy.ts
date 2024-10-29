@@ -1,5 +1,5 @@
-import type { Errors } from './Errors.js'
-import { Hex } from './Hex.js'
+import type * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
 import type { Signature } from './Signature.js'
 import { TransactionEnvelope } from './TransactionEnvelope.js'
 import { Address_assert } from './internal/Address/assert.js'
@@ -37,8 +37,8 @@ export namespace TransactionEnvelopeLegacy {
 
   export type Rpc<signed extends boolean = boolean> = TransactionEnvelopeLegacy<
     signed,
-    Hex,
-    Hex,
+    Hex.Hex,
+    Hex.Hex,
     '0x0'
   >
 
@@ -118,12 +118,12 @@ export namespace TransactionEnvelopeLegacy {
    * @returns Deserialized Transaction Envelope.
    */
   export function deserialize(
-    serializedTransaction: Hex,
+    serializedTransaction: Hex.Hex,
   ): Compute<TransactionEnvelopeLegacy> {
     const tuple = Rlp_toHex(serializedTransaction)
 
     const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
-      tuple as readonly Hex[]
+      tuple as readonly Hex.Hex[]
 
     if (!(tuple.length === 6 || tuple.length === 9))
       throw new TransactionEnvelope.InvalidSerializedError({
@@ -161,7 +161,7 @@ export namespace TransactionEnvelopeLegacy {
 
     const chainIdOrV =
       Hex.validate(chainIdOrV_) && chainIdOrV_ !== '0x'
-        ? Number(chainIdOrV_ as Hex)
+        ? Number(chainIdOrV_ as Hex.Hex)
         : 0
 
     if (s === '0x' && r === '0x') {
@@ -268,13 +268,13 @@ export namespace TransactionEnvelopeLegacy {
   export function from<
     const envelope extends
       | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
-      | Hex,
+      | Hex.Hex,
     const signature extends Signature | undefined = undefined,
   >(
     envelope:
       | envelope
       | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
-      | Hex,
+      | Hex.Hex,
     options: from.Options<signature> = {},
   ): from.ReturnType<envelope, signature> {
     const { signature } = options
@@ -307,12 +307,12 @@ export namespace TransactionEnvelopeLegacy {
     }
 
     type ReturnType<
-      envelope extends UnionPartialBy<TransactionEnvelopeLegacy, 'type'> | Hex =
-        | TransactionEnvelopeLegacy
-        | Hex,
+      envelope extends
+        | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
+        | Hex.Hex = TransactionEnvelopeLegacy | Hex.Hex,
       signature extends Signature | undefined = undefined,
     > = Compute<
-      envelope extends Hex
+      envelope extends Hex.Hex
         ? TransactionEnvelopeLegacy
         : Assign<
             envelope,
@@ -373,7 +373,7 @@ export namespace TransactionEnvelopeLegacy {
   }
 
   export declare namespace getSignPayload {
-    type ReturnType = Hex
+    type ReturnType = Hex.Hex
 
     type ErrorType =
       | TransactionEnvelopeLegacy.hash.ErrorType
@@ -440,7 +440,7 @@ export namespace TransactionEnvelopeLegacy {
       presign?: presign | boolean | undefined
     }
 
-    type ReturnType = Hex
+    type ReturnType = Hex.Hex
 
     type ErrorType =
       | Hash_keccak256.ErrorType

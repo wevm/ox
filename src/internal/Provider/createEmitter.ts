@@ -1,5 +1,5 @@
 import { EventEmitter } from 'eventemitter3'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { Provider_Emitter, Provider_EventMap } from './types.js'
 
 /**

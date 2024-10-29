@@ -1,5 +1,5 @@
-import type { Errors } from '../../../Errors.js'
-import { Hex } from '../../../Hex.js'
+import type * as Errors from '../../../Errors.js'
+import * as Hex from '../../../Hex.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import type { BlobSidecars } from '../../Blobs/types.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
@@ -117,9 +117,9 @@ export function TransactionEnvelopeEip4844_serialize(
   ] as const
 
   const sidecars = options.sidecars || envelope.sidecars
-  const blobs: Hex[] = []
-  const commitments: Hex[] = []
-  const proofs: Hex[] = []
+  const blobs: Hex.Hex[] = []
+  const commitments: Hex.Hex[] = []
+  const proofs: Hex.Hex[] = []
   if (sidecars)
     for (let i = 0; i < sidecars.length; i++) {
       const { blob, commitment, proof } = sidecars[i]!
@@ -143,7 +143,7 @@ export declare namespace TransactionEnvelopeEip4844_serialize {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature | undefined
     /** Sidecars to append to the serialized Transaction Envelope. */
-    sidecars?: BlobSidecars<Hex> | undefined
+    sidecars?: BlobSidecars<Hex.Hex> | undefined
   }
 
   type ErrorType =

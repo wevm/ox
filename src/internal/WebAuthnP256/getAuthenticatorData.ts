@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 
 /**
@@ -31,7 +31,7 @@ import { Hash_sha256 } from '../Hash/sha256.js'
  */
 export function WebAuthnP256_getAuthenticatorData(
   options: WebAuthnP256_getAuthenticatorData.Options = {},
-): Hex {
+): Hex.Hex {
   const { flag = 5, rpId = window.location.hostname, signCount = 0 } = options
   const rpIdHash = Hash_sha256(Hex.fromString(rpId))
   const flag_bytes = Hex.fromNumber(flag, { size: 1 })

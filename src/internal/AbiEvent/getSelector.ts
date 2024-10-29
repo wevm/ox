@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { AbiItem_getSignatureHash } from '../AbiItem/getSignatureHash.js'
 import type { AbiEvent } from './types.js'

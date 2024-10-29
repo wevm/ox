@@ -1,5 +1,5 @@
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Compute } from '../types.js'
@@ -25,12 +25,12 @@ import type { Blobs } from './types.js'
  * @returns The Blob Versioned Hashes.
  */
 export function Blobs_toVersionedHashes<
-  const blobs extends Blobs<Bytes> | Blobs<Hex>,
+  const blobs extends Blobs<Bytes.Bytes> | Blobs<Hex>,
   as extends 'Hex' | 'Bytes' =
     | (blobs extends Blobs<Hex> ? 'Hex' : never)
-    | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
+    | (blobs extends Blobs<Bytes.Bytes> ? 'Bytes' : never),
 >(
-  blobs: blobs | Blobs<Bytes> | Blobs<Hex>,
+  blobs: blobs | Blobs<Bytes.Bytes> | Blobs<Hex>,
   options: Blobs_toVersionedHashes.Options<as>,
 ): Blobs_toVersionedHashes.ReturnType<as> {
   const commitments = Blobs_toCommitments(blobs, options)
@@ -46,7 +46,7 @@ export declare namespace Blobs_toVersionedHashes {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = Compute<
-    | (as extends 'Bytes' ? readonly Bytes[] : never)
+    | (as extends 'Bytes' ? readonly Bytes.Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex[] : never)
   >
 

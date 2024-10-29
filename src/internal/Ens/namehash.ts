@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
 

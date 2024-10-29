@@ -1,5 +1,5 @@
-import type { Errors } from './Errors.js'
-import { Hex } from './Hex.js'
+import type * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
 import type { Signature } from './Signature.js'
 import { TransactionEnvelope } from './TransactionEnvelope.js'
 import { AccessList_fromTupleList } from './internal/AccessList/fromTupleList.js'
@@ -40,7 +40,7 @@ export namespace TransactionEnvelopeEip2930 {
   // #region Types
 
   export type Rpc<signed extends boolean = boolean> =
-    TransactionEnvelopeEip2930<signed, Hex, Hex, '0x1'>
+    TransactionEnvelopeEip2930<signed, Hex.Hex, Hex.Hex, '0x1'>
 
   export type Serialized = `${SerializedType}${string}`
 
@@ -137,7 +137,7 @@ export namespace TransactionEnvelopeEip2930 {
       yParity,
       r,
       s,
-    ] = transactionArray as readonly Hex[]
+    ] = transactionArray as readonly Hex.Hex[]
 
     if (!(transactionArray.length === 8 || transactionArray.length === 11))
       throw new TransactionEnvelope.InvalidSerializedError({
@@ -163,7 +163,7 @@ export namespace TransactionEnvelopeEip2930 {
       })
 
     let transaction = {
-      chainId: Number(chainId as Hex),
+      chainId: Number(chainId as Hex.Hex),
       type: 'eip2930',
     } as TransactionEnvelopeEip2930
     if (Hex.validate(to) && to !== '0x') transaction.to = to
@@ -307,10 +307,10 @@ export namespace TransactionEnvelopeEip2930 {
     type ReturnType<
       envelope extends
         | UnionPartialBy<TransactionEnvelopeEip2930, 'type'>
-        | Hex = TransactionEnvelopeEip2930 | Hex,
+        | Hex.Hex = TransactionEnvelopeEip2930 | Hex.Hex,
       signature extends Signature | undefined = undefined,
     > = Compute<
-      envelope extends Hex
+      envelope extends Hex.Hex
         ? TransactionEnvelopeEip2930
         : Assign<
             envelope,
@@ -365,7 +365,7 @@ export namespace TransactionEnvelopeEip2930 {
   }
 
   export declare namespace getSignPayload {
-    type ReturnType = Hex
+    type ReturnType = Hex.Hex
 
     type ErrorType =
       | TransactionEnvelopeEip2930.hash.ErrorType
@@ -434,7 +434,7 @@ export namespace TransactionEnvelopeEip2930 {
       presign?: presign | boolean | undefined
     }
 
-    type ReturnType = Hex
+    type ReturnType = Hex.Hex
 
     type ErrorType =
       | Hash_keccak256.ErrorType

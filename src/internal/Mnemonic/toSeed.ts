@@ -1,6 +1,6 @@
 import { mnemonicToSeedSync } from '@scure/bip39'
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 
 /**
@@ -38,7 +38,7 @@ export declare namespace Mnemonic_toSeed {
   }
 
   type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
     | (as extends 'Hex' ? Hex : never)
 
   type ErrorType = Errors.GlobalErrorType

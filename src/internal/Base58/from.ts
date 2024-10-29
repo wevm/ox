@@ -1,11 +1,11 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 /** @internal */
-export function Base58_from(value: Hex | Bytes) {
+export function Base58_from(value: Hex.Hex | Bytes.Bytes) {
   let bytes = Bytes.from(value)
 
   let integer = (() => {

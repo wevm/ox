@@ -1,5 +1,5 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import { AesGcm_randomSalt } from './randomSalt.js'
 
 /**
@@ -53,7 +53,7 @@ export declare namespace AesGcm_getKey {
     /** Password to derive key from. */
     password: string
     /** Salt to use for key derivation. @default `AesGcm.randomSalt(32)` */
-    salt?: Bytes | undefined
+    salt?: Bytes.Bytes | undefined
   }
 
   type ErrorType = Errors.GlobalErrorType

@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Authorization_fromRpc } from './fromRpc.js'
 import type {
   Authorization_ListRpc,

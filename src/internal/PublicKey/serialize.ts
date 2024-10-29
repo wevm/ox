@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { PublicKey_assert } from './assert.js'
 import type { PublicKey } from './types.js'
 
@@ -59,8 +59,8 @@ export declare namespace PublicKey_serialize {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (as extends 'Hex' ? Hex : never)
-    | (as extends 'Bytes' ? Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
 
   type ErrorType =
     | Hex.fromNumber.ErrorType

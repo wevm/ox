@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { ExactPartial } from '../types.js'
 import { PublicKey_assert } from './assert.js'
 import type { PublicKey } from './types.js'

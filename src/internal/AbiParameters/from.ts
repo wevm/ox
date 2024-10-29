@@ -1,5 +1,5 @@
 import { type ParseAbiParameters, parseAbiParameters } from 'abitype'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { AbiParameters } from './types.js'
 
 /**

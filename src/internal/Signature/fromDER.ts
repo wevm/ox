@@ -1,7 +1,7 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
 import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Signature } from './types.js'
 
 /**
@@ -21,7 +21,9 @@ import type { Signature } from './types.js'
  * @param signature - The DER-encoded signature to convert.
  * @returns The {@link ox#Signature.Signature}.
  */
-export function Signature_fromDER(signature: Hex | Bytes): Signature<false> {
+export function Signature_fromDER(
+  signature: Hex.Hex | Bytes,
+): Signature<false> {
   const { r, s } = secp256k1.Signature.fromDER(Hex.from(signature).slice(2))
   return { r, s }
 }

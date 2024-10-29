@@ -1,5 +1,5 @@
-import { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Address_assert } from '../Address/assert.js'
 import type { TupleAbiParameter } from './decode.js'
 import {
@@ -58,7 +58,7 @@ export function AbiParameters_encode<
   values: parameters extends AbiParameters
     ? AbiParameters_ToPrimitiveTypes<parameters>
     : never,
-): Hex {
+): Hex.Hex {
   if (parameters.length !== values.length)
     throw new AbiParameters_LengthMismatchError({
       expectedLength: parameters.length as number,
@@ -91,7 +91,7 @@ AbiParameters_encode.parseError = (error: unknown) =>
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export type PreparedParameter = { dynamic: boolean; encoded: Hex }
+export type PreparedParameter = { dynamic: boolean; encoded: Hex.Hex }
 
 /** @internal */
 export type Tuple = AbiParameters_ParameterToPrimitiveType<TupleAbiParameter>
@@ -151,7 +151,7 @@ export function prepareParameter<
     })
   }
   if (parameter.type === 'address') {
-    return encodeAddress(value as unknown as Hex)
+    return encodeAddress(value as unknown as Hex.Hex)
   }
   if (parameter.type === 'bool') {
     return encodeBoolean(value as unknown as boolean)
@@ -161,7 +161,7 @@ export function prepareParameter<
     return encodeNumber(value as unknown as number, { signed })
   }
   if (parameter.type.startsWith('bytes')) {
-    return encodeBytes(value as unknown as Hex, { type: parameter.type })
+    return encodeBytes(value as unknown as Hex.Hex, { type: parameter.type })
   }
   if (parameter.type === 'string') {
     return encodeString(value as unknown as string)
@@ -185,7 +185,7 @@ export declare namespace prepareParameter {
 /////////////////////////////////////////////////////////////////
 
 /** @internal */
-export function encode(preparedParameters: PreparedParameter[]): Hex {
+export function encode(preparedParameters: PreparedParameter[]): Hex.Hex {
   // 1. Compute the size of the static part of the parameters.
   let staticSize = 0
   for (let i = 0; i < preparedParameters.length; i++) {
@@ -195,8 +195,8 @@ export function encode(preparedParameters: PreparedParameter[]): Hex {
   }
 
   // 2. Split the parameters into static and dynamic parts.
-  const staticParameters: Hex[] = []
-  const dynamicParameters: Hex[] = []
+  const staticParameters: Hex.Hex[] = []
+  const dynamicParameters: Hex.Hex[] = []
   let dynamicSize = 0
   for (let i = 0; i < preparedParameters.length; i++) {
     const { dynamic, encoded } = preparedParameters[i]!
@@ -227,9 +227,12 @@ export declare namespace encode {
 /////////////////////////////////////////////////////////////////
 
 /** @internal */
-export function encodeAddress(value: Hex): PreparedParameter {
+export function encodeAddress(value: Hex.Hex): PreparedParameter {
   Address_assert(value)
-  return { dynamic: false, encoded: Hex.padLeft(value.toLowerCase() as Hex) }
+  return {
+    dynamic: false,
+    encoded: Hex.padLeft(value.toLowerCase() as Hex.Hex),
+  }
 }
 
 /** @internal */
@@ -299,7 +302,7 @@ export declare namespace encodeArray {
 
 /** @internal */
 export function encodeBytes(
-  value: Hex,
+  value: Hex.Hex,
   { type }: { type: string },
 ): PreparedParameter {
   const [, parametersize] = type.split('bytes')
@@ -376,7 +379,7 @@ export declare namespace encodeNumber {
 export function encodeString(value: string): PreparedParameter {
   const hexValue = Hex.fromString(value)
   const partsLength = Math.ceil(Hex.size(hexValue) / 32)
-  const parts: Hex[] = []
+  const parts: Hex.Hex[] = []
   for (let i = 0; i < partsLength; i++) {
     parts.push(Hex.padRight(Hex.slice(hexValue, i * 32, (i + 1) * 32)))
   }

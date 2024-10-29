@@ -1,5 +1,5 @@
-import type { Errors } from '../../../Errors.js'
-import { Hex } from '../../../Hex.js'
+import type * as Errors from '../../../Errors.js'
+import * as Hex from '../../../Hex.js'
 import { TransactionEnvelopeEip1559 } from '../../../TransactionEnvelopeEip1559.js'
 import {
   Blobs_EmptyBlobVersionedHashesError,

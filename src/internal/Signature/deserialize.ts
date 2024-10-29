@@ -1,6 +1,6 @@
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import {
   Signature_InvalidSerializedSizeError,
   Signature_InvalidYParityError,
@@ -22,7 +22,9 @@ import { Signature_vToYParity } from './vToYParity.js'
  * @param serialized - The serialized signature.
  * @returns The deserialized {@link ox#Signature.Signature}.
  */
-export function Signature_deserialize(serialized: Bytes | Hex): Signature {
+export function Signature_deserialize(
+  serialized: Bytes.Bytes | Hex.Hex,
+): Signature {
   const hex = Hex.from(serialized)
 
   if (hex.length !== 130 && hex.length !== 132)

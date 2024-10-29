@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
 import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { AbiParameters_ToPrimitiveTypes } from '../AbiParameters/types.js'
@@ -31,7 +31,7 @@ import type { AbiFunction } from './types.js'
  */
 export function AbiFunction_decodeData<const abiItem extends AbiFunction>(
   abiFunction: abiItem | AbiFunction,
-  data: Hex,
+  data: Hex.Hex,
 ): AbiFunction_decodeData.ReturnType<abiItem> {
   const { overloads } = abiFunction
 

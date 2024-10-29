@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
@@ -85,7 +85,7 @@ export function AbiError_fromAbi<
   allNames = AbiError_Name<abi>,
 >(
   abi: abi | Abi | readonly unknown[],
-  name: Hex | (name extends allNames ? name : never),
+  name: Hex.Hex | (name extends allNames ? name : never),
   options?: AbiItem_fromAbi.Options<
     abi,
     name,

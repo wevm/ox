@@ -1,7 +1,7 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import type { Hex } from '../../Hex.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import type * as Hex from '../../Hex.js'
 import type { Signature } from './types.js'
 
 /**
@@ -45,8 +45,8 @@ export declare namespace Signature_toDER {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType = Errors.GlobalErrorType
 }

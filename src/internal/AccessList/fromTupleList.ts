@@ -1,4 +1,4 @@
-import { Hex } from '../../Hex.js'
+import * as Hex from '../../Hex.js'
 // TODO: public
 import { Address_assert } from '../Address/assert.js'
 import { Hash_validate } from '../Hash/validate.js'
@@ -11,7 +11,7 @@ export function AccessList_fromTupleList(
 ): AccessList {
   const accessList: Mutable<AccessList> = []
   for (let i = 0; i < accessList_.length; i++) {
-    const [address, storageKeys] = accessList_[i] as [Hex, Hex[]]
+    const [address, storageKeys] = accessList_[i] as [Hex.Hex, Hex.Hex[]]
 
     if (address) Address_assert(address, { strict: false })
 

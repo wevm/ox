@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 import { WebAuthnP256_getAuthenticatorData } from './getAuthenticatorData.js'
 import { WebAuthnP256_getClientDataJSON } from './getClientDataJSON.js'
@@ -97,7 +97,7 @@ export function WebAuthnP256_getSignPayload(
 export declare namespace WebAuthnP256_getSignPayload {
   type Options = {
     /** The challenge to sign. */
-    challenge: Hex
+    challenge: Hex.Hex
     /** If set to `true`, it means that the calling context is an `<iframe>` that is not same origin with its ancestor frames. */
     crossOrigin?: boolean | undefined
     /** Additional client data to include in the client data JSON. */
@@ -120,7 +120,7 @@ export declare namespace WebAuthnP256_getSignPayload {
 
   type ReturnType = {
     metadata: WebAuthnP256_SignMetadata
-    payload: Hex
+    payload: Hex.Hex
   }
 
   type ErrorType =

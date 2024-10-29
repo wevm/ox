@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { AbiItem_getSignature } from './getSignature.js'
 import type { AbiItem } from './types.js'
@@ -36,9 +36,9 @@ import type { AbiItem } from './types.js'
  * @param abiItem - The ABI Item to compute the signature hash for.
  * @returns The {@link ox#Hash.(keccak256:function)} hash of the ABI item's signature.
  */
-export function AbiItem_getSignatureHash(abiItem: string | AbiItem): Hex {
+export function AbiItem_getSignatureHash(abiItem: string | AbiItem): Hex.Hex {
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
-    return abiItem.hash as Hex
+    return abiItem.hash as Hex.Hex
   return Hash_keccak256(Hex.fromString(AbiItem_getSignature(abiItem)))
 }
 

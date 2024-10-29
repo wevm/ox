@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Transaction_toRpc } from '../Transaction/isomorphic/toRpc.js'
 import { Withdrawal_toRpc } from '../Withdrawal/toRpc.js'
 import type { Block, Block_Rpc, Block_Tag } from './types.js'

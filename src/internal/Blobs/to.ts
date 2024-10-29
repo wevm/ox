@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { createCursor } from '../cursor.js'
 import type { Blobs } from './types.js'
 
@@ -34,20 +34,20 @@ import type { Blobs } from './types.js'
  * @returns The originating data.
  */
 export function Blobs_to<
-  const blobs extends Blobs<Hex> | Blobs<Bytes>,
+  const blobs extends Blobs<Hex.Hex> | Blobs<Bytes.Bytes>,
   to extends 'Hex' | 'Bytes' =
-    | (blobs extends Blobs<Hex> ? 'Hex' : never)
-    | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
+    | (blobs extends Blobs<Hex.Hex> ? 'Hex' : never)
+    | (blobs extends Blobs<Bytes.Bytes> ? 'Bytes' : never),
 >(
-  blobs: blobs | Blobs<Hex> | Blobs<Bytes>,
+  blobs: blobs | Blobs<Hex.Hex> | Blobs<Bytes.Bytes>,
   to?: to | 'Hex' | 'Bytes' | undefined,
 ): Blobs_to.ReturnType<to> {
   const to_ = to ?? (typeof blobs[0] === 'string' ? 'Hex' : 'Bytes')
   const blobs_ = (
     typeof blobs[0] === 'string'
-      ? blobs.map((x) => Bytes.fromHex(x as Hex))
+      ? blobs.map((x) => Bytes.fromHex(x as Hex.Hex))
       : blobs
-  ) as Bytes[]
+  ) as Bytes.Bytes[]
 
   const length = blobs_.reduce((length, blob) => length + blob.length, 0)
   const data = createCursor(new Uint8Array(length))
@@ -82,8 +82,8 @@ export function Blobs_to<
 
 export declare namespace Blobs_to {
   type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (to extends 'Bytes' ? Bytes : never)
-    | (to extends 'Hex' ? Hex : never)
+    | (to extends 'Bytes' ? Bytes.Bytes : never)
+    | (to extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
     | Hex.fromBytes.ErrorType
@@ -108,7 +108,7 @@ Blobs_to.parseError = (error: unknown) => error as Blobs_to.ErrorType
  * ```
  */
 export function Blobs_toHex(
-  blobs: Blobs<Hex> | Blobs<Bytes>,
+  blobs: Blobs<Hex.Hex> | Blobs<Bytes.Bytes>,
 ): Blobs_toHex.ReturnType {
   return Blobs_to(blobs, 'Hex')
 }
@@ -134,7 +134,7 @@ Blobs_toHex.parseError = (error: unknown) => error as Blobs_toHex.ErrorType
  * ```
  */
 export function Blobs_toBytes(
-  blobs: Blobs<Hex> | Blobs<Bytes>,
+  blobs: Blobs<Hex.Hex> | Blobs<Bytes.Bytes>,
 ): Blobs_toBytes.ReturnType {
   return Blobs_to(blobs, 'Bytes')
 }

@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { AesGcm_ivLength } from './constants.js'
 
 /**
@@ -25,12 +25,12 @@ import { AesGcm_ivLength } from './constants.js'
  * @returns The decrypted data.
  */
 export async function AesGcm_decrypt<
-  value extends Hex | Bytes,
+  value extends Hex.Hex | Bytes.Bytes,
   as extends 'Hex' | 'Bytes' =
-    | (value extends Hex ? 'Hex' : never)
-    | (value extends Bytes ? 'Bytes' : never),
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  value: value | Bytes | Hex,
+  value: value | Bytes.Bytes | Hex.Hex,
   key: CryptoKey,
   options: AesGcm_decrypt.Options<as> = {},
 ): Promise<AesGcm_decrypt.ReturnType<as>> {
@@ -58,8 +58,8 @@ export declare namespace AesGcm_decrypt {
   }
 
   type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
     | Bytes.from.ErrorType

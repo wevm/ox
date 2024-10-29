@@ -1,4 +1,4 @@
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 import type { TypedData } from './types.js'
 
 /** Thrown when the bytes size of a typed data value does not match the expected size. */

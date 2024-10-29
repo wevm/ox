@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import type { Kzg } from '../Kzg/types.js'
 import type { Blobs } from './types.js'
 
@@ -23,13 +23,13 @@ import type { Blobs } from './types.js'
  * @returns The Blob proofs.
  */
 export function Blobs_toProofs<
-  const blobs extends readonly Bytes[] | readonly Hex[],
-  const commitments extends readonly Bytes[] | readonly Hex[],
+  const blobs extends readonly Bytes.Bytes[] | readonly Hex.Hex[],
+  const commitments extends readonly Bytes.Bytes[] | readonly Hex.Hex[],
   as extends 'Hex' | 'Bytes' =
-    | (blobs extends readonly Hex[] ? 'Hex' : never)
-    | (blobs extends readonly Bytes[] ? 'Bytes' : never),
+    | (blobs extends readonly Hex.Hex[] ? 'Hex' : never)
+    | (blobs extends readonly Bytes.Bytes[] ? 'Bytes' : never),
 >(
-  blobs: blobs | Blobs<Bytes> | Blobs<Hex>,
+  blobs: blobs | Blobs<Bytes.Bytes> | Blobs<Hex.Hex>,
   options: Blobs_toProofs.Options<blobs, commitments, as>,
 ): Blobs_toProofs.ReturnType<as> {
   const { kzg } = options
@@ -40,14 +40,14 @@ export function Blobs_toProofs<
     typeof blobs[0] === 'string'
       ? blobs.map((x) => Bytes.fromHex(x as any))
       : blobs
-  ) as Bytes[]
+  ) as Bytes.Bytes[]
   const commitments = (
     typeof options.commitments[0] === 'string'
       ? options.commitments.map((x) => Bytes.fromHex(x as any))
       : options.commitments
-  ) as Bytes[]
+  ) as Bytes.Bytes[]
 
-  const proofs: Bytes[] = []
+  const proofs: Bytes.Bytes[] = []
   for (let i = 0; i < blobs_.length; i++) {
     const blob = blobs_[i]!
     const commitment = commitments[i]!
@@ -61,16 +61,18 @@ export function Blobs_toProofs<
 
 export declare namespace Blobs_toProofs {
   type Options<
-    blobs extends Blobs<Bytes> | Blobs<Hex> = Blobs<Bytes> | Blobs<Hex>,
-    commitments extends readonly Bytes[] | readonly Hex[] =
-      | readonly Bytes[]
-      | readonly Hex[],
+    blobs extends Blobs<Bytes.Bytes> | Blobs<Hex.Hex> =
+      | Blobs<Bytes.Bytes>
+      | Blobs<Hex.Hex>,
+    commitments extends readonly Bytes.Bytes[] | readonly Hex.Hex[] =
+      | readonly Bytes.Bytes[]
+      | readonly Hex.Hex[],
     as extends 'Hex' | 'Bytes' =
-      | (blobs extends Blobs<Hex> ? 'Hex' : never)
-      | (blobs extends Blobs<Bytes> ? 'Bytes' : never),
+      | (blobs extends Blobs<Hex.Hex> ? 'Hex' : never)
+      | (blobs extends Blobs<Bytes.Bytes> ? 'Bytes' : never),
   > = {
     /** Commitments for the blobs. */
-    commitments: (commitments | readonly Bytes[] | readonly Hex[]) &
+    commitments: (commitments | readonly Bytes.Bytes[] | readonly Hex.Hex[]) &
       (commitments extends blobs
         ? {}
         : `commitments must be the same type as blobs`)
@@ -81,8 +83,8 @@ export declare namespace Blobs_toProofs {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? readonly Bytes[] : never)
-    | (as extends 'Hex' ? readonly Hex[] : never)
+    | (as extends 'Bytes' ? readonly Bytes.Bytes[] : never)
+    | (as extends 'Hex' ? readonly Hex.Hex[] : never)
 
   type ErrorType =
     | Hex.fromBytes.ErrorType

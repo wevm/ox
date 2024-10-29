@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { Compute, Mutable } from '../types.js'
 import { Authorization_toTuple } from './toTuple.js'
 import type { Authorization, Authorization_TupleList } from './types.js'

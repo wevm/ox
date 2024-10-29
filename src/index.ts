@@ -1108,7 +1108,7 @@ export * as Bloom from './Bloom.js'
  *
  * @category Encoding
  */
-export { Bytes } from './Bytes.js'
+export * as Bytes from './Bytes.js'
 
 export * as Caches from './Caches.js'
 
@@ -1183,7 +1183,7 @@ export * as ContractAddress from './ContractAddress.js'
  */
 export * as Ens from './Ens.js'
 
-export { Errors } from './Errors.js'
+export * as Errors from './Errors.js'
 
 /**
  * Utilities & types for working with Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml)
@@ -1334,7 +1334,9 @@ export * as HdKey from './HdKey.js'
  *
  * @category Encoding
  */
-export { Hex } from './Hex.js'
+export * as Hex from './Hex.js'
+import type * as Hex$ from './Hex.js'
+export type Hex = Hex$.Hex
 
 /**
  * @category Execution Spec

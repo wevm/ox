@@ -1,8 +1,8 @@
 import { secp256r1 } from '@noble/curves/p256'
 
-import type { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Generates a random P256 ECDSA private key.
@@ -36,8 +36,8 @@ export declare namespace P256_randomPrivateKey {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }

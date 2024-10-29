@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import type { ExactPartial, RecursiveArray } from '../types.js'
 
@@ -28,7 +28,7 @@ type Encodable = {
  * @returns The RLP value.
  */
 export function Rlp_from<as extends 'Hex' | 'Bytes'>(
-  value: RecursiveArray<Bytes> | RecursiveArray<Hex>,
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
   options: Rlp_from.Options<as>,
 ): Rlp_from.ReturnType<as> {
   const { as } = options
@@ -49,8 +49,8 @@ export declare namespace Rlp_from {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
     | createCursor.ErrorType
@@ -79,7 +79,7 @@ Rlp_from.parseError = (error: unknown) =>
  * @returns The RLP value.
  */
 export function Rlp_fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
-  bytes: RecursiveArray<Bytes>,
+  bytes: RecursiveArray<Bytes.Bytes>,
   options: Rlp_fromBytes.Options<as> = {},
 ): Rlp_fromBytes.ReturnType<as> {
   const { as = 'Bytes' } = options
@@ -117,7 +117,7 @@ Rlp_fromBytes.parseError = (error: unknown) =>
  * @returns The RLP value.
  */
 export function Rlp_fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  hex: RecursiveArray<Hex>,
+  hex: RecursiveArray<Hex.Hex>,
   options: Rlp_fromHex.Options<as> = {},
 ): Rlp_fromHex.ReturnType<as> {
   const { as = 'Hex' } = options
@@ -143,7 +143,7 @@ Rlp_fromHex.parseError = (error: unknown) =>
 /////////////////////////////////////////////////////////////////////////////////
 
 function getEncodable(
-  bytes: RecursiveArray<Bytes> | RecursiveArray<Hex>,
+  bytes: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
 ): Encodable {
   if (Array.isArray(bytes))
     return getEncodableList(bytes.map((x) => getEncodable(x)))
@@ -178,7 +178,7 @@ function getEncodableList(list: Encodable[]): Encodable {
   }
 }
 
-function getEncodableBytes(bytesOrHex: Bytes | Hex): Encodable {
+function getEncodableBytes(bytesOrHex: Bytes.Bytes | Hex.Hex): Encodable {
   const bytes =
     typeof bytesOrHex === 'string' ? Bytes.fromHex(bytesOrHex) : bytesOrHex
 

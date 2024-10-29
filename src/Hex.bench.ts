@@ -1,7 +1,7 @@
 import { bytesToHex as bytesToHex_ethjs } from '@ethereumjs/util'
 import * as ethers from 'ethers'
 import { bench, describe } from 'vitest'
-import { Hex } from './Hex.js'
+import * as Hex from './Hex.js'
 import { Bytes } from './index.js'
 
 // TODO: random hex

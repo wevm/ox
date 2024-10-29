@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import { Transaction_fromRpc } from '../Transaction/isomorphic/fromRpc.js'
 import { Withdrawal_fromRpc } from '../Withdrawal/fromRpc.js'
 import type { Block, Block_Rpc, Block_Tag } from './types.js'

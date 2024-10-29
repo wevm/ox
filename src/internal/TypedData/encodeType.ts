@@ -1,4 +1,4 @@
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { TypedData } from './types.js'
 
 // TODO: Add error for `primaryType` not in `types`

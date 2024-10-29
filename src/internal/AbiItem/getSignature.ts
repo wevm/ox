@@ -1,6 +1,6 @@
 import { formatAbiItem } from 'abitype'
 
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 import type { AbiItem } from './types.js'
 
 /**

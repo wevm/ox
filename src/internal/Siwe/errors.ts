@@ -1,4 +1,4 @@
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 
 /**
  * Thrown when a field in a SIWE Message is invalid.

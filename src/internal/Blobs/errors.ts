@@ -1,7 +1,7 @@
 import type { Hex } from '../../Hex.js'
 import { Kzg_versionedHashVersion } from '../Kzg/constants.js'
 
-import { Errors } from '../../Errors.js'
+import * as Errors from '../../Errors.js'
 
 /** Thrown when the blob size is too large. */
 export class Blobs_BlobSizeTooLargeError extends Errors.BaseError {

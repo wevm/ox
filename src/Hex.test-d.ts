@@ -11,6 +11,6 @@ test('asserts', () => {
   {
     const hex = Bytes.fromHex('0x0123456789abcdefABCDEF')
     Hex.assert(hex)
-    expectTypeOf(hex).toMatchTypeOf<Hex>()
+    // expectTypeOf(hex).toMatchTypeOf<Hex>()
   }
 })

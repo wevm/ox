@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import { getArrayComponents } from './encode.js'
 import {
@@ -20,7 +20,7 @@ export function AbiParameters_decode<
   as extends 'Object' | 'Array' = 'Array',
 >(
   parameters: parameters,
-  data: Bytes | Hex,
+  data: Bytes.Bytes | Hex.Hex,
   options?: AbiParameters_decode.Options<as>,
 ): AbiParameters_decode.ReturnType<parameters, as>
 
@@ -64,7 +64,7 @@ export function AbiParameters_decode<
  */
 export function AbiParameters_decode(
   parameters: AbiParameters,
-  data: Bytes | Hex,
+  data: Bytes.Bytes | Hex.Hex,
   options?: {
     /**
      * Whether the decoded values should be returned as an `Object` or `Array`.
@@ -78,7 +78,7 @@ export function AbiParameters_decode(
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function AbiParameters_decode(
   parameters: AbiParameters,
-  data: Bytes | Hex,
+  data: Bytes.Bytes | Hex.Hex,
   options: { as?: 'Array' | 'Object' | undefined } = {},
 ): readonly unknown[] | Record<string, unknown> {
   const { as = 'Array' } = options

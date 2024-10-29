@@ -1,6 +1,6 @@
 import { secp256r1 } from '@noble/curves/p256'
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { PublicKey_serialize } from '../PublicKey/serialize.js'
 import type { PublicKey } from '../PublicKey/types.js'
@@ -43,7 +43,7 @@ export declare namespace P256_verify {
     /** If set to `true`, the payload will be hashed (sha256) before being verified. */
     hash?: boolean | undefined
     /** Payload that was signed. */
-    payload: Hex | Bytes
+    payload: Hex | Bytes.Bytes
     /** Public key that signed the payload. */
     publicKey: PublicKey<boolean>
     /** Signature of the payload. */

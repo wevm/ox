@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'
 
@@ -56,8 +56,8 @@ export declare namespace Signature_serialize {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (as extends 'Hex' ? Hex : never)
-    | (as extends 'Bytes' ? Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
 
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }

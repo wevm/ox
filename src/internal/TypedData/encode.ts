@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { TypedData_assert } from './assert.js'
 import { TypedData_extractEip712DomainTypes } from './extractEip712DomainTypes.js'
 import { TypedData_hashDomain } from './hashDomain.js'
@@ -56,7 +56,7 @@ import type { TypedData, TypedData_Definition } from './types.js'
 export function TypedData_encode<
   const typedData extends TypedData | Record<string, unknown>,
   primaryType extends keyof typedData | 'EIP712Domain',
->(value: TypedData_encode.Value<typedData, primaryType>): Hex {
+>(value: TypedData_encode.Value<typedData, primaryType>): Hex.Hex {
   const { domain = {}, message, primaryType } = value as TypedData_encode.Value
 
   const types = {
@@ -74,7 +74,7 @@ export function TypedData_encode<
   })
 
   // Typed Data Format: `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`
-  const parts: Hex[] = ['0x19', '0x01']
+  const parts: Hex.Hex[] = ['0x19', '0x01']
   if (domain)
     parts.push(
       TypedData_hashDomain({

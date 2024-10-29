@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 import { P256_verify } from '../P256/verify.js'
@@ -99,7 +99,7 @@ export function WebAuthnP256_verify(
 export declare namespace WebAuthnP256_verify {
   type Options = {
     /** The challenge to verify. */
-    challenge: Hex
+    challenge: Hex.Hex
     /** If set to `true`, the payload will be hashed (sha256) before being verified. */
     hash?: boolean | undefined
     /** The public key to verify the signature with. */

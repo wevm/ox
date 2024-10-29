@@ -1,5 +1,5 @@
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import {
   Address_InvalidAddressError,
   Address_InvalidInputError,
@@ -94,10 +94,10 @@ export function TypedData_assert<
       const bytesMatch = type.match(Solidity_bytesRegex)
       if (bytesMatch) {
         const [, size] = bytesMatch
-        if (size && Hex.size(value as Hex) !== Number.parseInt(size))
+        if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size))
           throw new TypedData_BytesSizeMismatchError({
             expectedSize: Number.parseInt(size),
-            givenSize: Hex.size(value as Hex),
+            givenSize: Hex.size(value as Hex.Hex),
           })
       }
 

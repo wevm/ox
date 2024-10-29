@@ -1,6 +1,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { Address_isEqual } from '../Address/isEqual.js'
 import type { Address } from '../Address/types.js'
@@ -68,7 +68,7 @@ export declare namespace Secp256k1_verify {
     /** If set to `true`, the payload will be hashed (sha256) before being verified. */
     hash?: boolean | undefined
     /** Payload that was signed. */
-    payload: Hex | Bytes
+    payload: Hex | Bytes.Bytes
   } & OneOf<
     | {
         /** Address that signed the payload. */

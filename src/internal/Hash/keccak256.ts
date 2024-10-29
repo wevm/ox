@@ -1,8 +1,8 @@
 import { keccak_256 } from '@noble/hashes/sha3'
 
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 
 /**
  * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value.
@@ -42,12 +42,12 @@ import { Hex } from '../../Hex.js'
  * @returns Keccak256 hash.
  */
 export function Hash_keccak256<
-  value extends Hex | Bytes,
+  value extends Hex.Hex | Bytes.Bytes,
   as extends 'Hex' | 'Bytes' =
-    | (value extends Hex ? 'Hex' : never)
-    | (value extends Bytes ? 'Bytes' : never),
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
 >(
-  value: value | Hex | Bytes,
+  value: value | Hex.Hex | Bytes.Bytes,
   options: Hash_keccak256.Options<as> = {},
 ): Hash_keccak256.ReturnType<as> {
   const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
@@ -63,8 +63,8 @@ export declare namespace Hash_keccak256 {
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes : never)
-    | (as extends 'Hex' ? Hex : never)
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
     | Bytes.from.ErrorType

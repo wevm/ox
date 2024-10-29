@@ -1,5 +1,5 @@
 import { type Abi, type ParseAbi, parseAbi } from 'abitype'
-import type { Errors } from '../../Errors.js'
+import type * as Errors from '../../Errors.js'
 import type { AbiItem_Signatures } from '../AbiItem/types.js'
 
 /**

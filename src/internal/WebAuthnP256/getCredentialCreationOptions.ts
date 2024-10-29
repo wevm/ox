@@ -1,5 +1,5 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import type { OneOf } from '../types.js'

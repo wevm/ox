@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import type { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import type * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { Address_from } from '../Address/from.js'
 import type { Address } from '../Address/types.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
@@ -54,14 +54,14 @@ export function ContractAddress_fromCreate2(
 export declare namespace ContractAddress_fromCreate2 {
   type Options =
     | {
-        bytecode: Bytes | Hex
+        bytecode: Bytes.Bytes | Hex.Hex
         from: Address
-        salt: Bytes | Hex
+        salt: Bytes.Bytes | Hex.Hex
       }
     | {
-        bytecodeHash: Bytes | Hex
+        bytecodeHash: Bytes.Bytes | Hex.Hex
         from: Address
-        salt: Bytes | Hex
+        salt: Bytes.Bytes | Hex.Hex
       }
 
   type ErrorType =

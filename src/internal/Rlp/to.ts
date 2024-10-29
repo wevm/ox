@@ -1,6 +1,6 @@
-import { Bytes } from '../../Bytes.js'
-import { Errors } from '../../Errors.js'
-import { Hex } from '../../Hex.js'
+import * as Bytes from '../../Bytes.js'
+import * as Errors from '../../Errors.js'
+import * as Hex from '../../Hex.js'
 import { type Cursor, createCursor } from '../cursor.js'
 import type { RecursiveArray } from '../types.js'
 
@@ -17,7 +17,9 @@ import type { RecursiveArray } from '../types.js'
  * @param value - The value to decode.
  * @returns The decoded {@link ox#(Bytes:namespace).(Bytes:type)} value.
  */
-export function Rlp_toBytes(value: Bytes | Hex): RecursiveArray<Bytes> {
+export function Rlp_toBytes(
+  value: Bytes.Bytes | Hex.Hex,
+): RecursiveArray<Bytes.Bytes> {
   return Rlp_to(value, 'Bytes')
 }
 
@@ -42,7 +44,9 @@ Rlp_toBytes.parseError = (error: unknown) =>
  * @param value - The value to decode.
  * @returns The decoded {@link ox#(Hex:type)} value.
  */
-export function Rlp_toHex(value: Bytes | Hex): RecursiveArray<Hex> {
+export function Rlp_toHex(
+  value: Bytes.Bytes | Hex.Hex,
+): RecursiveArray<Hex.Hex> {
   return Rlp_to(value, 'Hex')
 }
 
@@ -59,10 +63,10 @@ Rlp_toHex.parseError = (error: unknown) =>
 /////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
-  value: value,
-  to: to | 'Hex' | 'Bytes',
-): Rlp_to.ReturnType<to> {
+export function Rlp_to<
+  value extends Bytes.Bytes | Hex.Hex,
+  to extends 'Hex' | 'Bytes',
+>(value: value, to: to | 'Hex' | 'Bytes'): Rlp_to.ReturnType<to> {
   const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
 
   const bytes = (() => {
@@ -71,7 +75,7 @@ export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
         throw new Hex.InvalidLengthError(value)
       return Bytes.fromHex(value)
     }
-    return value as Bytes
+    return value as Bytes.Bytes
   })()
 
   const cursor = createCursor(bytes, {
@@ -85,8 +89,8 @@ export function Rlp_to<value extends Bytes | Hex, to extends 'Hex' | 'Bytes'>(
 /** @internal */
 export declare namespace Rlp_to {
   type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (to extends 'Bytes' ? RecursiveArray<Bytes> : never)
-    | (to extends 'Hex' ? RecursiveArray<Hex> : never)
+    | (to extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
+    | (to extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
 
   type ErrorType =
     | Bytes.fromHex.ErrorType

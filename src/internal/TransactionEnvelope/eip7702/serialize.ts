@@ -1,5 +1,5 @@
-import type { Errors } from '../../../Errors.js'
-import { Hex } from '../../../Hex.js'
+import type * as Errors from '../../../Errors.js'
+import * as Hex from '../../../Hex.js'
 import { AccessList_toTupleList } from '../../AccessList/toTupleList.js'
 import { Authorization_toTupleList } from '../../Authorization/toTupleList.js'
 import { Rlp_fromHex } from '../../Rlp/from.js'
