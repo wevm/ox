@@ -109,7 +109,7 @@ export type Eip1559<
 
 /** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Eip1559Rpc<pending extends boolean = false> = Compute<
-  Eip1559<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip1559']>
+  Eip1559<pending, Hex.Hex, Hex.Hex, ToRpcType['eip1559']>
 >
 
 /** An [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
@@ -129,7 +129,7 @@ export type Eip2930<
 
 /** An RPC [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Eip2930Rpc<pending extends boolean = false> = Compute<
-  Eip2930<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip2930']>
+  Eip2930<pending, Hex.Hex, Hex.Hex, ToRpcType['eip2930']>
 >
 
 /** An [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
@@ -155,7 +155,7 @@ export type Eip4844<
 
 /** An RPC [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Eip4844Rpc<pending extends boolean = false> = Compute<
-  Eip4844<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip4844']>
+  Eip4844<pending, Hex.Hex, Hex.Hex, ToRpcType['eip4844']>
 >
 
 /** An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
@@ -179,7 +179,7 @@ export type Eip7702<
 
 /** An RPC [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Eip7702Rpc<pending extends boolean = false> = Compute<
-  Eip7702<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip7702']>
+  Eip7702<pending, Hex.Hex, Hex.Hex, ToRpcType['eip7702']>
 >
 
 /** An legacy Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
@@ -205,11 +205,11 @@ export type Legacy<
 
 /** A legacy RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type LegacyRpc<pending extends boolean = false> = Compute<
-  Legacy<pending, Hex.Hex, Hex.Hex, TypeToRpcType['legacy']>
+  Legacy<pending, Hex.Hex, Hex.Hex, ToRpcType['legacy']>
 >
 
 /** Type to RPC Type mapping. */
-export const typeToRpcType = {
+export const toRpcType = {
   legacy: '0x0',
   eip2930: '0x1',
   eip1559: '0x2',
@@ -218,12 +218,12 @@ export const typeToRpcType = {
 } as const
 
 /** Type to RPC Type mapping. */
-export type TypeToRpcType = typeof typeToRpcType & {
+export type ToRpcType = typeof toRpcType & {
   [type: string]: `0x${string}`
 }
 
 /** RPC Type to Type mapping. */
-export const rpcTypeToType = {
+export const fromRpcType = {
   '0x0': 'legacy',
   '0x1': 'eip2930',
   '0x2': 'eip1559',
@@ -233,7 +233,7 @@ export const rpcTypeToType = {
 
 /** RPC Type to Type mapping. */
 
-export type RpcTypeToType = typeof rpcTypeToType & {
+export type FromRpcType = typeof fromRpcType & {
   [type: `0x${string}`]: string
 }
 
@@ -312,7 +312,7 @@ export function fromRpc<
     transaction_.maxPriorityFeePerGas = BigInt(transaction.maxPriorityFeePerGas)
   if (transaction.type)
     transaction_.type =
-      (rpcTypeToType as any)[transaction.type] ?? transaction.type
+      (fromRpcType as any)[transaction.type] ?? transaction.type
   if (signature) transaction_.v = signature.yParity === 0 ? 27 : 28
 
   return transaction_ as never
@@ -385,7 +385,7 @@ export function toRpc<pending extends boolean = false>(
   rpc.transactionIndex = transaction.transactionIndex
     ? Hex.fromNumber(transaction.transactionIndex)
     : null
-  rpc.type = (typeToRpcType as any)[transaction.type] ?? transaction.type
+  rpc.type = (toRpcType as any)[transaction.type] ?? transaction.type
   rpc.value = Hex.fromNumber(transaction.value ?? 0n)
 
   if (transaction.accessList) rpc.accessList = transaction.accessList

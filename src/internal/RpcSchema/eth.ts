@@ -1,5 +1,6 @@
 import type { Hex } from '../../Hex.js'
 import type * as Transaction from '../../Transaction.js'
+import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
 import type { AccountProof_Rpc } from '../AccountProof/types.js'
 import type { Address } from '../Address/types.js'
@@ -12,7 +13,6 @@ import type {
 import type { FeeHistoryRpc } from '../Fee/types.js'
 import type { Filter_Rpc } from '../Filter/types.js'
 import type { Log_Rpc } from '../Log/types.js'
-import type { TransactionReceipt_Rpc } from '../TransactionReceipt/types.js'
 
 /**
  * Union of all JSON-RPC Methods for the `eth_` namespace.
@@ -513,7 +513,7 @@ export type RpcSchema_Eth = [
       method: 'eth_getTransactionReceipt'
       params: [hash: Hex]
     }
-    ReturnType: TransactionReceipt_Rpc | null
+    ReturnType: TransactionReceipt.Rpc | null
   },
   /**
    * Returns the number of uncles in a block specified by block hash

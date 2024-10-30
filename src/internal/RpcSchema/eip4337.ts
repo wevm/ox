@@ -1,7 +1,7 @@
 import type { Hex } from '../../Hex.js'
+import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type { Address } from '../Address/types.js'
 import type { Log_Rpc } from '../Log/types.js'
-import type { TransactionReceipt_Rpc } from '../TransactionReceipt/types.js'
 import type { OneOf, PartialBy } from '../types.js'
 
 /**
@@ -498,7 +498,7 @@ export type RpcSchema_UserOperationReceipt = {
   /** Revert reason, if unsuccessful. */
   reason?: string | undefined
   /** Transaction receipt of the user operation execution. */
-  receipt: TransactionReceipt_Rpc
+  receipt: TransactionReceipt.Rpc
   sender: Address
   /** If the user operation execution was successful. */
   success: boolean
