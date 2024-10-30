@@ -11,6 +11,7 @@ test('exports', () => {
       "AbiFunction",
       "AbiItem",
       "AbiParameters",
+      "AccessList",
       "AccountProof",
       "Address",
       "AesGcm",

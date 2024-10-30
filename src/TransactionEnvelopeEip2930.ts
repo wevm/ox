@@ -1,10 +1,8 @@
+import * as AccessList from './AccessList.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Signature } from './Signature.js'
 import * as TransactionEnvelope from './TransactionEnvelope.js'
-import { AccessList_fromTupleList } from './internal/AccessList/fromTupleList.js'
-import { AccessList_toTupleList } from './internal/AccessList/toTupleList.js'
-import type { AccessList } from './internal/AccessList/types.js'
 import { Address_assert } from './internal/Address/assert.js'
 import { Hash_keccak256 } from './internal/Hash/keccak256.js'
 import { Rlp_fromHex } from './internal/Rlp/from.js'
@@ -29,7 +27,7 @@ export type TransactionEnvelopeEip2930<
 > = Compute<
   TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
-    accessList?: AccessList | undefined
+    accessList?: AccessList.AccessList | undefined
     /** Base fee per gas. */
     gasPrice?: bigintType | undefined
   }
@@ -170,7 +168,7 @@ export function deserialize(
   if (Hex.validate(gasPrice) && gasPrice !== '0x')
     transaction.gasPrice = BigInt(gasPrice)
   if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList_fromTupleList(accessList as any)
+    transaction.accessList = AccessList.fromTupleList(accessList as any)
 
   const signature =
     r && s && yParity ? Signature_fromTuple([yParity, r, s]) : undefined
@@ -495,7 +493,7 @@ export function serialize(
 
   assert(envelope)
 
-  const accessTupleList = AccessList_toTupleList(accessList)
+  const accessTupleList = AccessList.toTupleList(accessList)
 
   const signature = Signature_extract(options.signature || (envelope as any))
 

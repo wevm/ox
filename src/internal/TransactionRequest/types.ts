@@ -1,5 +1,5 @@
+import type { AccessList } from '../../AccessList.js'
 import type { Hex } from '../../Hex.js'
-import type { AccessList } from '../AccessList/types.js'
 import type { Address } from '../Address/types.js'
 import type { Authorization_ListSigned } from '../Authorization/types.js'
 import type { Compute } from '../types.js'

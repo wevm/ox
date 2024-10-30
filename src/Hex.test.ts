@@ -779,10 +779,6 @@ test('exports', () => {
       "SizeOverflowError",
       "SliceOffsetOutOfBoundsError",
       "SizeExceedsPaddingSizeError",
-      "assertSize",
-      "assertStartOffset",
-      "assertEndOffset",
-      "trim",
     ]
   `)
 })

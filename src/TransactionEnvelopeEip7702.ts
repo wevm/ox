@@ -2,6 +2,7 @@ import type { Assign } from './internal/types.js'
 
 import type { PartialBy, UnionPartialBy } from './internal/types.js'
 
+import * as AccessList from './AccessList.js'
 import * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
@@ -11,9 +12,6 @@ import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
 import * as TransactionEnvelope from './TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
-import { AccessList_fromTupleList } from './internal/AccessList/fromTupleList.js'
-import { AccessList_toTupleList } from './internal/AccessList/toTupleList.js'
-import type { AccessList } from './internal/AccessList/types.js'
 import type { Compute } from './internal/types.js'
 
 export type TransactionEnvelopeEip7702<
@@ -24,7 +22,7 @@ export type TransactionEnvelopeEip7702<
 > = Compute<
   TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
-    accessList?: AccessList | undefined
+    accessList?: AccessList.AccessList | undefined
     /** EIP-7702 Authorization List. */
     authorizationList: Authorization.ListSigned<bigintType, numberType>
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
@@ -182,7 +180,7 @@ export function deserialize(
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList_fromTupleList(accessList as never)
+    transaction.accessList = AccessList.fromTupleList(accessList as never)
   if (authorizationList !== '0x')
     transaction.authorizationList = Authorization.fromTupleList(
       authorizationList as never,
@@ -561,7 +559,7 @@ export function serialize(
 
   assert(envelope)
 
-  const accessTupleList = AccessList_toTupleList(accessList)
+  const accessTupleList = AccessList.toTupleList(accessList)
   const authorizationTupleList = Authorization.toTupleList(authorizationList)
 
   const signature = Signature.extract(options.signature || envelope)

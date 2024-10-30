@@ -4,6 +4,7 @@ import * as exports from './Kzg.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
+      "versionedHashVersion",
       "from",
     ]
   `)

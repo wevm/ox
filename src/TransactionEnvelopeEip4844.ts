@@ -1,3 +1,4 @@
+import * as AccessList from './AccessList.js'
 import * as Blobs from './Blobs.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
@@ -7,9 +8,6 @@ import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
 import * as TransactionEnvelope from './TransactionEnvelope.js'
 import * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
-import { AccessList_fromTupleList } from './internal/AccessList/fromTupleList.js'
-import { AccessList_toTupleList } from './internal/AccessList/toTupleList.js'
-import type { AccessList } from './internal/AccessList/types.js'
 import type {
   Assign,
   Compute,
@@ -25,7 +23,7 @@ export type TransactionEnvelopeEip4844<
 > = Compute<
   TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
-    accessList?: AccessList | undefined
+    accessList?: AccessList.AccessList | undefined
     /** Versioned hashes of blobs to be included in the transaction. */
     blobVersionedHashes: readonly Hex.Hex[]
     /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
@@ -211,7 +209,7 @@ export function deserialize(
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList?.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList_fromTupleList(accessList as any)
+    transaction.accessList = AccessList.fromTupleList(accessList as any)
   if (blobs && commitments && proofs)
     transaction.sidecars = Blobs.toSidecars(blobs as Hex.Hex[], {
       commitments: commitments as Hex.Hex[],
@@ -596,7 +594,7 @@ export function serialize(
 
   assert(envelope)
 
-  const accessTupleList = AccessList_toTupleList(accessList)
+  const accessTupleList = AccessList.toTupleList(accessList)
 
   const signature = Signature.extract(options.signature || envelope)
 

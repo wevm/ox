@@ -655,6 +655,13 @@ export * as AbiItem from './AbiItem.js'
 export * as AbiParameters from './AbiParameters.js'
 
 /**
+ * Utilities & types for working with Access Lists as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4140e528360fea53c34a766d86a000c6c039100e/src/schemas/transaction.yaml#L73)
+ *
+ * @category Execution Spec
+ */
+export * as AccessList from './AccessList.js'
+
+/**
  * Utilities & types for working with Account Proofs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml)
  *
  * @category Execution Spec

@@ -1,5 +1,5 @@
+import type { AccessList } from '../../../AccessList.js'
 import type { Hex } from '../../../Hex.js'
-import type { AccessList } from '../../AccessList/types.js'
 import type { Compute } from '../../types.js'
 import type { Transaction_Base } from '../types.js'
 
