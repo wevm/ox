@@ -2,6 +2,8 @@ import { equalBytes } from '@noble/curves/abstract/utils'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import { Json_stringify } from './internal/Json/stringify.js'
+import * as internal from './internal/bytes.js'
+import * as internal_hex from './internal/hex.js'
 
 const decoder = /*#__PURE__*/ new TextDecoder()
 const encoder = /*#__PURE__*/ new TextEncoder()
@@ -180,7 +182,7 @@ export function fromBoolean(value: boolean, options: fromBoolean.Options = {}) {
   const bytes = new Uint8Array(1)
   bytes[0] = Number(value)
   if (typeof size === 'number') {
-    assertSize(bytes, size)
+    internal.assertSize(bytes, size)
     return padLeft(bytes, size)
   }
   return bytes
@@ -193,7 +195,7 @@ export declare namespace fromBoolean {
   }
 
   type ErrorType =
-    | assertSize.ErrorType
+    | internal.assertSize.ErrorType
     | padLeft.ErrorType
     | Errors.GlobalErrorType
 }
@@ -232,7 +234,7 @@ export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
 
   let hex = value
   if (size) {
-    Hex.assertSize(value, size)
+    internal_hex.assertSize(value, size)
     hex = Hex.padRight(value, size)
   }
 
@@ -241,8 +243,8 @@ export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const length = hexString.length / 2
   const bytes = new Uint8Array(length)
   for (let index = 0, j = 0; index < length; index++) {
-    const nibbleLeft = charCodeToBase16(hexString.charCodeAt(j++))
-    const nibbleRight = charCodeToBase16(hexString.charCodeAt(j++))
+    const nibbleLeft = internal.charCodeToBase16(hexString.charCodeAt(j++))
+    const nibbleRight = internal.charCodeToBase16(hexString.charCodeAt(j++))
     if (nibbleLeft === undefined || nibbleRight === undefined) {
       throw new Errors.BaseError(
         `Invalid byte sequence ("${hexString[j - 2]}${hexString[j - 1]}" in "${hexString}").`,
@@ -260,7 +262,7 @@ export declare namespace fromHex {
   }
 
   type ErrorType =
-    | Hex.assertSize.ErrorType
+    | internal_hex.assertSize.ErrorType
     | Hex.padRight.ErrorType
     | Hex.InvalidLengthError
     | Errors.GlobalErrorType
@@ -344,7 +346,7 @@ export function fromString(
 
   const bytes = encoder.encode(value)
   if (typeof size === 'number') {
-    assertSize(bytes, size)
+    internal.assertSize(bytes, size)
     return padRight(bytes, size)
   }
   return bytes
@@ -357,7 +359,7 @@ export declare namespace fromString {
   }
 
   type ErrorType =
-    | assertSize.ErrorType
+    | internal.assertSize.ErrorType
     | padRight.ErrorType
     | Errors.GlobalErrorType
 }
@@ -414,12 +416,12 @@ export function padLeft(
   value: Bytes,
   size?: number | undefined,
 ): padLeft.ReturnType {
-  return pad(value, { dir: 'left', size })
+  return internal.pad(value, { dir: 'left', size })
 }
 
 export declare namespace padLeft {
-  type ReturnType = pad.ReturnType
-  type ErrorType = pad.ErrorType | Errors.GlobalErrorType
+  type ReturnType = internal.pad.ReturnType
+  type ErrorType = internal.pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -444,12 +446,12 @@ export function padRight(
   value: Bytes,
   size?: number | undefined,
 ): padRight.ReturnType {
-  return pad(value, { dir: 'right', size })
+  return internal.pad(value, { dir: 'right', size })
 }
 
 export declare namespace padRight {
-  type ReturnType = pad.ReturnType
-  type ErrorType = pad.ErrorType | Errors.GlobalErrorType
+  type ReturnType = internal.pad.ReturnType
+  type ErrorType = internal.pad.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -533,9 +535,9 @@ export function slice(
   options: slice.Options = {},
 ): Bytes {
   const { strict } = options
-  assertStartOffset(value, start)
+  internal.assertStartOffset(value, start)
   const value_ = value.slice(start, end)
-  if (strict) assertEndOffset(value_, start, end)
+  if (strict) internal.assertEndOffset(value_, start, end)
   return value_
 }
 
@@ -546,8 +548,8 @@ export declare namespace slice {
   }
 
   export type ErrorType =
-    | assertStartOffset.ErrorType
-    | assertEndOffset.ErrorType
+    | internal.assertStartOffset.ErrorType
+    | internal.assertEndOffset.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -571,7 +573,7 @@ slice.parseError = (error: unknown) => error as slice.ErrorType
  */
 export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
   const { size } = options
-  if (typeof size !== 'undefined') assertSize(bytes, size)
+  if (typeof size !== 'undefined') internal.assertSize(bytes, size)
   const hex = Hex.fromBytes(bytes, options)
   return Hex.toBigInt(hex, options)
 }
@@ -616,7 +618,7 @@ export function toBoolean(
   const { size } = options
   let bytes_ = bytes
   if (typeof size !== 'undefined') {
-    assertSize(bytes_, size)
+    internal.assertSize(bytes_, size)
     bytes_ = trimLeft(bytes_)
   }
   if (bytes_.length > 1 || bytes_[0]! > 1)
@@ -631,7 +633,7 @@ export declare namespace toBoolean {
   }
 
   type ErrorType =
-    | assertSize.ErrorType
+    | internal.assertSize.ErrorType
     | trimLeft.ErrorType
     | Errors.GlobalErrorType
 }
@@ -684,7 +686,7 @@ toHex.parseError = (error: unknown) => error as toHex.ErrorType
  */
 export function toNumber(bytes: Bytes, options: toNumber.Options = {}): number {
   const { size } = options
-  if (typeof size !== 'undefined') assertSize(bytes, size)
+  if (typeof size !== 'undefined') internal.assertSize(bytes, size)
   const hex = Hex.fromBytes(bytes, options)
   return Hex.toNumber(hex, options)
 }
@@ -727,7 +729,7 @@ export function toString(bytes: Bytes, options: toString.Options = {}): string {
 
   let bytes_ = bytes
   if (typeof size !== 'undefined') {
-    assertSize(bytes_, size)
+    internal.assertSize(bytes_, size)
     bytes_ = trimRight(bytes_)
   }
   return decoder.decode(bytes_)
@@ -740,7 +742,7 @@ export declare namespace toString {
   }
 
   export type ErrorType =
-    | assertSize.ErrorType
+    | internal.assertSize.ErrorType
     | trimRight.ErrorType
     | Errors.GlobalErrorType
 }
@@ -764,11 +766,11 @@ toString.parseError = (error: unknown) =>
  * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
 export function trimLeft(value: Bytes): Bytes {
-  return trim(value, { dir: 'left' })
+  return internal.trim(value, { dir: 'left' })
 }
 
 export declare namespace trimLeft {
-  type ErrorType = trim.ErrorType | Errors.GlobalErrorType
+  type ErrorType = internal.trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -789,11 +791,11 @@ trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
  * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
 export function trimRight(value: Bytes): Bytes {
-  return trim(value, { dir: 'right' })
+  return internal.trim(value, { dir: 'right' })
 }
 
 export declare namespace trimRight {
-  export type ErrorType = trim.ErrorType | Errors.GlobalErrorType
+  export type ErrorType = internal.trim.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */
@@ -831,10 +833,6 @@ export declare namespace validate {
 
 /* v8 ignore next */
 validate.parseError = (error: unknown) => error as validate.ErrorType
-
-// #endregion
-
-// #region Errors
 
 /**
  * Thrown when the bytes value cannot be represented as a boolean.
@@ -962,150 +960,4 @@ export class SizeExceedsPaddingSizeError extends Errors.BaseError {
         .toLowerCase()} size (\`${size}\`) exceeds padding size (\`${targetSize}\`).`,
     )
   }
-}
-
-// #endregion
-
-// #region Internal
-
-/** @internal */
-export function assertSize(bytes: Bytes, size_: number): void {
-  if (size(bytes) > size_)
-    throw new SizeOverflowError({
-      givenSize: size(bytes),
-      maxSize: size_,
-    })
-}
-
-/** @internal */
-export declare namespace assertSize {
-  type ErrorType = size.ErrorType | SizeOverflowError | Errors.GlobalErrorType
-}
-
-/** @internal */
-export function assertStartOffset(value: Bytes, start?: number | undefined) {
-  if (typeof start === 'number' && start > 0 && start > size(value) - 1)
-    throw new SliceOffsetOutOfBoundsError({
-      offset: start,
-      position: 'start',
-      size: size(value),
-    })
-}
-
-export declare namespace assertStartOffset {
-  export type ErrorType =
-    | SliceOffsetOutOfBoundsError
-    | size.ErrorType
-    | Errors.GlobalErrorType
-}
-
-/** @internal */
-export function assertEndOffset(
-  value: Bytes,
-  start?: number | undefined,
-  end?: number | undefined,
-) {
-  if (
-    typeof start === 'number' &&
-    typeof end === 'number' &&
-    size(value) !== end - start
-  ) {
-    throw new SliceOffsetOutOfBoundsError({
-      offset: end,
-      position: 'end',
-      size: size(value),
-    })
-  }
-}
-
-export declare namespace assertEndOffset {
-  type ErrorType =
-    | SliceOffsetOutOfBoundsError
-    | size.ErrorType
-    | Errors.GlobalErrorType
-}
-
-/** @internal */
-const charCodeMap = {
-  zero: 48,
-  nine: 57,
-  A: 65,
-  F: 70,
-  a: 97,
-  f: 102,
-} as const
-
-/** @internal */
-function charCodeToBase16(char: number) {
-  if (char >= charCodeMap.zero && char <= charCodeMap.nine)
-    return char - charCodeMap.zero
-  if (char >= charCodeMap.A && char <= charCodeMap.F)
-    return char - (charCodeMap.A - 10)
-  if (char >= charCodeMap.a && char <= charCodeMap.f)
-    return char - (charCodeMap.a - 10)
-  return undefined
-}
-
-/** @internal */
-export function pad(bytes: Bytes, options: pad.Options = {}) {
-  const { dir, size = 32 } = options
-  if (size === 0) return bytes
-  if (bytes.length > size)
-    throw new SizeExceedsPaddingSizeError({
-      size: bytes.length,
-      targetSize: size,
-      type: 'Bytes',
-    })
-  const paddedBytes = new Uint8Array(size)
-  for (let i = 0; i < size; i++) {
-    const padEnd = dir === 'right'
-    paddedBytes[padEnd ? i : size - i - 1] =
-      bytes[padEnd ? i : bytes.length - i - 1]!
-  }
-  return paddedBytes
-}
-
-export declare namespace pad {
-  type Options = {
-    dir?: 'left' | 'right' | undefined
-    size?: number | undefined
-  }
-
-  type ReturnType = Bytes
-
-  type ErrorType = SizeExceedsPaddingSizeError | Errors.GlobalErrorType
-}
-
-/** @internal */
-export function trim(
-  value: Bytes,
-  options: trim.Options = {},
-): trim.ReturnType {
-  const { dir = 'left' } = options
-
-  let data = value
-
-  let sliceLength = 0
-  for (let i = 0; i < data.length - 1; i++) {
-    if (data[dir === 'left' ? i : data.length - i - 1]!.toString() === '0')
-      sliceLength++
-    else break
-  }
-  data =
-    dir === 'left'
-      ? data.slice(sliceLength)
-      : data.slice(0, data.length - sliceLength)
-
-  return data as trim.ReturnType
-}
-
-/** @internal */
-export declare namespace trim {
-  type Options = {
-    dir?: 'left' | 'right' | undefined
-  }
-
-  type ReturnType = Bytes
-
-  type ErrorType = Errors.GlobalErrorType
 }
