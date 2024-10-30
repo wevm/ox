@@ -1,17 +1,11 @@
 import * as AccessList from './AccessList.js'
+import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
+import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import type { Signature } from './Signature.js'
+import * as Rlp from './Rlp.js'
+import * as Signature from './Signature.js'
 import * as TransactionEnvelope from './TransactionEnvelope.js'
-import { Address_assert } from './internal/Address/assert.js'
-import { Hash_keccak256 } from './internal/Hash/keccak256.js'
-import { Rlp_fromHex } from './internal/Rlp/from.js'
-import { Rlp_toHex } from './internal/Rlp/to.js'
-import { Signature_extract } from './internal/Signature/extract.js'
-import { Signature_from } from './internal/Signature/from.js'
-import { Signature_fromTuple } from './internal/Signature/fromTuple.js'
-import { Signature_toRpc } from './internal/Signature/toRpc.js'
-import { Signature_toTuple } from './internal/Signature/toTuple.js'
 import type {
   Assign,
   Compute,
@@ -78,7 +72,7 @@ export function assert(
   const { chainId, maxPriorityFeePerGas, maxFeePerGas, to } = envelope
   if (chainId <= 0)
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
-  if (to) Address_assert(to, { strict: false })
+  if (to) Address.assert(to, { strict: false })
   if (maxFeePerGas && BigInt(maxFeePerGas) > 2n ** 256n - 1n)
     throw new TransactionEnvelope.FeeCapTooHighError({ feeCap: maxFeePerGas })
   if (
@@ -94,7 +88,7 @@ export function assert(
 
 export declare namespace assert {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | TransactionEnvelope.InvalidChainIdError
     | TransactionEnvelope.FeeCapTooHighError
     | TransactionEnvelope.TipAboveFeeCapError
@@ -123,13 +117,13 @@ assert.parseError = (error: unknown) =>
  * // @log: }
  * ```
  *
- * @param serializedTransaction - The serialized transaction.
+ * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(
-  serializedTransaction: Serialized,
+  serialized: Serialized,
 ): Compute<TransactionEnvelopeEip1559> {
-  const transactionArray = Rlp_toHex(Hex.slice(serializedTransaction, 1))
+  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const [
     chainId,
@@ -166,13 +160,13 @@ export function deserialize(
             }
           : {}),
       },
-      serializedTransaction,
-      type: 'eip1559',
+      serialized,
+      type,
     })
 
   let transaction = {
     chainId: Number(chainId),
-    type: 'eip1559',
+    type,
   } as TransactionEnvelopeEip1559
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
@@ -187,7 +181,7 @@ export function deserialize(
     transaction.accessList = AccessList.fromTupleList(accessList as any)
 
   const signature =
-    r && s && yParity ? Signature_fromTuple([yParity, r, s]) : undefined
+    r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
   if (signature)
     transaction = {
       ...transaction,
@@ -287,7 +281,7 @@ export function from<
   const envelope extends
     | UnionPartialBy<TransactionEnvelopeEip1559, 'type'>
     | Serialized,
-  const signature extends Signature | undefined = undefined,
+  const signature extends Signature.Signature | undefined = undefined,
 >(
   envelope:
     | envelope
@@ -305,27 +299,28 @@ export function from<
 
   return {
     ...envelope_,
-    ...(signature ? Signature_from(signature) : {}),
+    ...(signature ? Signature.from(signature) : {}),
     type: 'eip1559',
   } as never
 }
 
 export declare namespace from {
-  type Options<signature extends Signature | undefined = undefined> = {
-    signature?: signature | Signature | undefined
-  }
+  type Options<signature extends Signature.Signature | undefined = undefined> =
+    {
+      signature?: signature | Signature.Signature | undefined
+    }
 
   type ReturnType<
     envelope extends
       | UnionPartialBy<TransactionEnvelopeEip1559, 'type'>
       | Hex.Hex = TransactionEnvelopeEip1559 | Hex.Hex,
-    signature extends Signature | undefined = undefined,
+    signature extends Signature.Signature | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
       ? TransactionEnvelopeEip1559
       : Assign<
           envelope,
-          (signature extends Signature ? Readonly<signature> : {}) & {
+          (signature extends Signature.Signature ? Readonly<signature> : {}) & {
             readonly type: 'eip1559'
           }
         >
@@ -420,7 +415,7 @@ export function hash<presign extends boolean = false>(
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const { presign } = options
-  return Hash_keccak256(
+  return Hash.keccak256(
     serialize({
       ...envelope,
       ...(presign
@@ -444,7 +439,7 @@ export declare namespace hash {
   type ReturnType = Hex.Hex
 
   type ErrorType =
-    | Hash_keccak256.ErrorType
+    | Hash.keccak256.ErrorType
     | serialize.ErrorType
     | Errors.GlobalErrorType
 }
@@ -524,9 +519,9 @@ export function serialize(
 
   const accessTupleList = AccessList.toTupleList(accessList)
 
-  const signature = Signature_extract(options.signature || envelope)
+  const signature = Signature.extract(options.signature || envelope)
 
-  const serializedTransaction = [
+  const serialized = [
     Hex.fromNumber(chainId),
     nonce ? Hex.fromNumber(nonce) : '0x',
     maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
@@ -536,27 +531,24 @@ export function serialize(
     value ? Hex.fromNumber(value) : '0x',
     data ?? input ?? '0x',
     accessTupleList,
-    ...(signature ? Signature_toTuple(signature) : []),
+    ...(signature ? Signature.toTuple(signature) : []),
   ]
 
-  return Hex.concat(
-    serializedType,
-    Rlp_fromHex(serializedTransaction),
-  ) as Serialized
+  return Hex.concat(serializedType, Rlp.fromHex(serialized)) as Serialized
 }
 
 export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
-    signature?: Signature | undefined
+    signature?: Signature.Signature | undefined
   }
 
   type ErrorType =
     | assert.ErrorType
     | Hex.fromNumber.ErrorType
-    | Signature_toTuple.ErrorType
+    | Signature.toTuple.ErrorType
     | Hex.concat.ErrorType
-    | Rlp_fromHex.ErrorType
+    | Rlp.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -591,7 +583,7 @@ serialize.parseError = (error: unknown) => error as serialize.ErrorType
  * @returns An RPC-formatted EIP-1559 transaction envelope.
  */
 export function toRpc(envelope: Omit<TransactionEnvelopeEip1559, 'type'>): Rpc {
-  const signature = Signature_extract(envelope)
+  const signature = Signature.extract(envelope)
 
   return {
     ...envelope,
@@ -615,12 +607,12 @@ export function toRpc(envelope: Omit<TransactionEnvelopeEip1559, 'type'>): Rpc {
           maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas),
         }
       : {}),
-    ...(signature ? Signature_toRpc(signature) : {}),
+    ...(signature ? Signature.toRpc(signature) : {}),
   } as never
 }
 
 export declare namespace toRpc {
-  export type ErrorType = Signature_extract.ErrorType | Errors.GlobalErrorType
+  export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

@@ -131,15 +131,13 @@ assert.parseError = (error: unknown) =>
  * // @log: }
  * ```
  *
- * @param serializedTransaction - The serialized transaction.
+ * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(
-  serializedTransaction: Serialized,
+  serialized: Serialized,
 ): Compute<TransactionEnvelopeEip4844> {
-  const transactionOrWrapperArray = Rlp.toHex(
-    Hex.slice(serializedTransaction, 1),
-  )
+  const transactionOrWrapperArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const hasNetworkWrapper = transactionOrWrapperArray.length === 4
 
@@ -188,14 +186,14 @@ export function deserialize(
             }
           : {}),
       },
-      serializedTransaction,
-      type: 'eip4844',
+      serialized,
+      type,
     })
 
   let transaction = {
     blobVersionedHashes: blobVersionedHashes as Hex.Hex[],
     chainId: Number(chainId),
-    type: 'eip4844',
+    type,
   } as TransactionEnvelopeEip4844
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
@@ -598,7 +596,7 @@ export function serialize(
 
   const signature = Signature.extract(options.signature || envelope)
 
-  const serializedTransaction = [
+  const serialized = [
     Hex.fromNumber(chainId),
     nonce ? Hex.fromNumber(nonce) : '0x',
     maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
@@ -629,9 +627,9 @@ export function serialize(
     '0x03',
     sidecars
       ? // If sidecars are provided, envelope turns into a "network wrapper":
-        Rlp.fromHex([serializedTransaction, blobs, commitments, proofs])
+        Rlp.fromHex([serialized, blobs, commitments, proofs])
       : // Otherwise, standard envelope is used:
-        Rlp.fromHex(serializedTransaction),
+        Rlp.fromHex(serialized),
   ) as Serialized
 }
 

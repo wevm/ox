@@ -117,13 +117,13 @@ assert.parseError = (error: unknown) =>
  * // @log: }
  * ```
  *
- * @param serializedTransaction - The serialized transaction.
+ * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(
-  serializedTransaction: Serialized,
+  serialized: Serialized,
 ): Compute<TransactionEnvelopeEip7702> {
-  const transactionArray = Rlp.toHex(Hex.slice(serializedTransaction, 1))
+  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const [
     chainId,
@@ -162,13 +162,13 @@ export function deserialize(
             }
           : {}),
       },
-      serializedTransaction,
-      type: 'eip7702',
+      serialized,
+      type,
     })
 
   let transaction = {
     chainId: Number(chainId),
-    type: 'eip7702',
+    type,
   } as TransactionEnvelopeEip7702
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
@@ -564,7 +564,7 @@ export function serialize(
 
   const signature = Signature.extract(options.signature || envelope)
 
-  const serializedTransaction = [
+  const serialized = [
     Hex.fromNumber(chainId),
     nonce ? Hex.fromNumber(nonce) : '0x',
     maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
@@ -578,10 +578,7 @@ export function serialize(
     ...(signature ? Signature.toTuple(signature) : []),
   ]
 
-  return Hex.concat(
-    serializedType,
-    Rlp.fromHex(serializedTransaction),
-  ) as Serialized
+  return Hex.concat(serializedType, Rlp.fromHex(serialized)) as Serialized
 }
 
 export declare namespace serialize {

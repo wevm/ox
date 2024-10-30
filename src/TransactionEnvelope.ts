@@ -1,7 +1,7 @@
-import type { Address } from './Address.js'
+import type * as Address from './Address.js'
 import * as Errors from './Errors.js'
-import type { Hex } from './Hex.js'
-import { Value_formatGwei } from './internal/Value/formatGwei.js'
+import type * as Hex from './Hex.js'
+import * as Value from './Value.js'
 import type { Compute } from './internal/types.js'
 
 /** Base type for a Transaction Envelope. Transaction Envelopes inherit this type. */
@@ -15,17 +15,17 @@ export type Base<
     /** EIP-155 Chain ID. */
     chainId: numberType
     /** Contract code or a hashed method call with encoded args */
-    data?: Hex | undefined
+    data?: Hex.Hex | undefined
     /** @alias `data` – added for TransactionEnvelope - Transaction compatibility. */
-    input?: Hex | undefined
+    input?: Hex.Hex | undefined
     /** Sender of the transaction. */
-    from?: Address | undefined
+    from?: Address.Address | undefined
     /** Gas provided for transaction execution */
     gas?: bigintType | undefined
     /** Unique number identifying this transaction */
     nonce?: bigintType | undefined
     /** Transaction recipient */
-    to?: Address | null | undefined
+    to?: Address.Address | null | undefined
     /** Transaction type */
     type: type
     /** Value in wei sent with this transaction */
@@ -45,7 +45,7 @@ export type Base<
 export type BaseRpc<
   type extends string = string,
   signed extends boolean = boolean,
-> = Base<type, signed, Hex, Hex>
+> = Base<type, signed, Hex.Hex, Hex.Hex>
 
 /** Signed representation of a {@link ox#(TransactionEnvelope:namespace).Base}. */
 export type BaseSigned<type extends string = string> = Base<type, true>
@@ -73,7 +73,7 @@ export class FeeCapTooHighError extends Errors.BaseError {
   } = {}) {
     super(
       `The fee cap (\`maxFeePerGas\`/\`maxPriorityFeePerGas\`${
-        feeCap ? ` = ${Value_formatGwei(feeCap)} gwei` : ''
+        feeCap ? ` = ${Value.formatGwei(feeCap)} gwei` : ''
       }) cannot be higher than the maximum allowed value (2^256-1).`,
     )
   }
@@ -102,7 +102,7 @@ export class GasPriceTooHighError extends Errors.BaseError {
   } = {}) {
     super(
       `The gas price (\`gasPrice\`${
-        gasPrice ? ` = ${Value_formatGwei(gasPrice)} gwei` : ''
+        gasPrice ? ` = ${Value.formatGwei(gasPrice)} gwei` : ''
       }) cannot be higher than the maximum allowed value (2^256-1).`,
     )
   }
@@ -147,11 +147,11 @@ export class InvalidSerializedError extends Errors.BaseError {
   override readonly name = 'TransactionEnvelope.InvalidSerializedError'
   constructor({
     attributes,
-    serializedTransaction,
+    serialized,
     type,
   }: {
     attributes: Record<string, unknown>
-    serializedTransaction: Hex
+    serialized: Hex.Hex
     type: string
   }) {
     const missing = Object.entries(attributes)
@@ -159,7 +159,7 @@ export class InvalidSerializedError extends Errors.BaseError {
       .filter(Boolean)
     super(`Invalid serialized transaction of type "${type}" was provided.`, {
       metaMessages: [
-        `Serialized Transaction: "${serializedTransaction}"`,
+        `Serialized Transaction: "${serialized}"`,
         missing.length > 0 ? `Missing Attributes: ${missing.join(', ')}` : '',
       ].filter(Boolean),
     })
@@ -194,10 +194,10 @@ export class TipAboveFeeCapError extends Errors.BaseError {
       [
         `The provided tip (\`maxPriorityFeePerGas\`${
           maxPriorityFeePerGas
-            ? ` = ${Value_formatGwei(maxPriorityFeePerGas)} gwei`
+            ? ` = ${Value.formatGwei(maxPriorityFeePerGas)} gwei`
             : ''
         }) cannot be higher than the fee cap (\`maxFeePerGas\`${
-          maxFeePerGas ? ` = ${Value_formatGwei(maxFeePerGas)} gwei` : ''
+          maxFeePerGas ? ` = ${Value.formatGwei(maxFeePerGas)} gwei` : ''
         }).`,
       ].join('\n'),
     )

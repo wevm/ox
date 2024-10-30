@@ -107,13 +107,13 @@ assert.parseError = (error: unknown) =>
  * // @log: }
  * ```
  *
- * @param serializedTransaction - The serialized transaction.
+ * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(
-  serializedTransaction: Hex.Hex,
+  serialized: Hex.Hex,
 ): Compute<TransactionEnvelopeLegacy> {
-  const tuple = Rlp_toHex(serializedTransaction)
+  const tuple = Rlp_toHex(serialized)
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
     tuple as readonly Hex.Hex[]
@@ -135,12 +135,12 @@ export function deserialize(
             }
           : {}),
       },
-      serializedTransaction,
-      type: 'legacy',
+      serialized,
+      type,
     })
 
   const transaction = {
-    type: 'legacy',
+    type,
   } as TransactionEnvelopeLegacy
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
@@ -498,7 +498,7 @@ export function serialize(
 
   assert(envelope)
 
-  let serializedTransaction = [
+  let serialized = [
     nonce ? Hex.fromNumber(nonce) : '0x',
     gasPrice ? Hex.fromNumber(gasPrice) : '0x',
     gas ? Hex.fromNumber(gas) : '0x',
@@ -543,21 +543,16 @@ export function serialize(
       return v
     })()
 
-    serializedTransaction = [
-      ...serializedTransaction,
+    serialized = [
+      ...serialized,
       Hex.fromNumber(v),
       signature.r === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.r)),
       signature.s === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.s)),
     ]
   } else if (chainId > 0)
-    serializedTransaction = [
-      ...serializedTransaction,
-      Hex.fromNumber(chainId),
-      '0x',
-      '0x',
-    ]
+    serialized = [...serialized, Hex.fromNumber(chainId), '0x', '0x']
 
-  return Rlp_fromHex(serializedTransaction) as never
+  return Rlp_fromHex(serialized) as never
 }
 
 export declare namespace serialize {
