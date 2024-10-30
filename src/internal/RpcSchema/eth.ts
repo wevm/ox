@@ -1,5 +1,6 @@
 import type { Hex } from '../../Hex.js'
 import type * as Transaction from '../../Transaction.js'
+import type * as TransactionRequest from '../../TransactionRequest.js'
 import type { AccountProof_Rpc } from '../AccountProof/types.js'
 import type { Address } from '../Address/types.js'
 import type {
@@ -12,7 +13,6 @@ import type { FeeHistoryRpc } from '../Fee/types.js'
 import type { Filter_Rpc } from '../Filter/types.js'
 import type { Log_Rpc } from '../Log/types.js'
 import type { TransactionReceipt_Rpc } from '../TransactionReceipt/types.js'
-import type { TransactionRequest_Rpc } from '../TransactionRequest/types.js'
 
 /**
  * Union of all JSON-RPC Methods for the `eth_` namespace.
@@ -99,13 +99,13 @@ export type RpcSchema_Eth = [
     Request: {
       method: 'eth_call'
       params:
-        | [transaction: TransactionRequest_Rpc]
+        | [transaction: TransactionRequest.Rpc]
         | [
-            transaction: TransactionRequest_Rpc,
+            transaction: TransactionRequest.Rpc,
             block: Block_Number<Hex> | Block_Tag | Block_Hash,
           ]
         | [
-            transaction: TransactionRequest_Rpc,
+            transaction: TransactionRequest.Rpc,
             block: Block_Number<Hex> | Block_Tag | Block_Hash,
             // TODO: add type
             stateOverride: unknown,
@@ -161,13 +161,13 @@ export type RpcSchema_Eth = [
     Request: {
       method: 'eth_estimateGas'
       params:
-        | [transaction: TransactionRequest_Rpc]
+        | [transaction: TransactionRequest.Rpc]
         | [
-            transaction: TransactionRequest_Rpc,
+            transaction: TransactionRequest.Rpc,
             block: Block_Number<Hex> | Block_Tag | Block_Hash,
           ]
         | [
-            transaction: TransactionRequest_Rpc,
+            transaction: TransactionRequest.Rpc,
             block: Block_Number<Hex> | Block_Tag | Block_Hash,
             // TODO: add type
             stateOverride: unknown,
@@ -671,7 +671,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_sendTransaction'
-      params: [transaction: TransactionRequest_Rpc]
+      params: [transaction: TransactionRequest.Rpc]
     }
     ReturnType: Hex
   },
@@ -687,7 +687,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_signTransaction'
-      params: [request: TransactionRequest_Rpc]
+      params: [request: TransactionRequest.Rpc]
     }
     ReturnType: Hex
   },
