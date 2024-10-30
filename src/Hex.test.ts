@@ -4,13 +4,6 @@ import { describe, expect, test } from 'vitest'
 describe('assert', () => {
   test('default', () => {
     expect(() =>
-      Hex.assert('0x0123456789abcdefg'),
-    ).toThrowErrorMatchingInlineSnapshot(`
-    [Hex.InvalidHexValueError: Value \`0x0123456789abcdefg\` is an invalid hex value.
-
-    Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
-  `)
-    expect(() =>
       Hex.assert({ foo: 'bar' }),
     ).toThrowErrorMatchingInlineSnapshot(`
     [Hex.InvalidHexTypeError: Value \`{"foo":"bar"}\` of type \`object\` is an invalid hex type.
@@ -27,6 +20,13 @@ describe('assert', () => {
 
     Hex types must be represented as \`"0x\${string}"\`.]
   `)
+    expect(() =>
+      Hex.assert('0x0123456789abcdefg', { strict: true }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+  [Hex.InvalidHexValueError: Value \`0x0123456789abcdefg\` is an invalid hex value.
+
+  Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+`)
   })
 })
 
@@ -740,8 +740,8 @@ describe('validate', () => {
     expect(Hex.validate('0x0')).toBeTruthy()
     expect(Hex.validate('0x0123456789abcdef')).toBeTruthy()
     expect(Hex.validate('0x0123456789abcdefABCDEF')).toBeTruthy()
-    expect(Hex.validate('0x0123456789abcdefg')).toBeFalsy()
-    expect(Hex.validate('0x0123456789abcdefg', { strict: false })).toBeTruthy()
+    expect(Hex.validate('0x0123456789abcdefg', { strict: true })).toBeFalsy()
+    expect(Hex.validate('0x0123456789abcdefg')).toBeTruthy()
     expect(Hex.validate({ foo: 'bar' })).toBeFalsy()
     expect(Hex.validate(undefined)).toBeFalsy()
   })

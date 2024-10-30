@@ -34,7 +34,7 @@ export function assert(
   value: unknown,
   options: assert.Options = {},
 ): asserts value is Hex {
-  const { strict = true } = options
+  const { strict = false } = options
   if (!value) throw new InvalidHexTypeError(value)
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)
   if (strict) {
@@ -45,7 +45,7 @@ export function assert(
 
 export declare namespace assert {
   type Options = {
-    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
+    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default false */
     strict?: boolean | undefined
   }
 
@@ -808,7 +808,7 @@ export function validate(
   value: unknown,
   options: validate.Options = {},
 ): value is Hex {
-  const { strict = true } = options
+  const { strict = false } = options
   try {
     assert(value, { strict })
     return true
@@ -819,7 +819,7 @@ export function validate(
 
 export declare namespace validate {
   type Options = {
-    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
+    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default false */
     strict?: boolean | undefined
   }
 

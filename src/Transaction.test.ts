@@ -1948,8 +1948,8 @@ describe('toRpc', () => {
 test('exports', () => {
   expect(Object.keys(Transaction)).toMatchInlineSnapshot(`
     [
-      "typeToRpcType",
-      "rpcTypeToType",
+      "toRpcType",
+      "fromRpcType",
       "fromRpc",
       "toRpc",
     ]

@@ -95,7 +95,7 @@ describe('toRpc', () => {
 })
 
 test('exports', () => {
-  expect(Object.keys(exports)).toMatchInlineSnapshot(`
+  expect(Object.keys(TransactionRequest)).toMatchInlineSnapshot(`
     [
       "toRpc",
     ]

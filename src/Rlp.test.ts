@@ -6,6 +6,10 @@ test('exports', () => {
     [
       "toBytes",
       "toHex",
+      "to",
+      "decodeRlpCursor",
+      "readLength",
+      "readList",
       "from",
       "fromBytes",
       "fromHex",
