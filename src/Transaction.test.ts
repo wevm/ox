@@ -711,10 +711,11 @@ describe('toRpc', () => {
 })
 
 test('exports', () => {
-  expect(Object.keys(exports)).toMatchInlineSnapshot(`
+  expect(Object.keys(Transaction)).toMatchInlineSnapshot(`
     [
       "fromRpc",
       "toRpc",
+      "TypeNotImplementedError",
     ]
   `)
 })

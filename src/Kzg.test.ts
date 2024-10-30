@@ -10,13 +10,13 @@ import * as exports from './Kzg.js'
 describe('from', () => {
   const blobToKzgCommitmentCases = JSON.parse(
     readFileSync(
-      resolve(__dirname, '../../../test/kzg/blob-to-kzg-commitment.json'),
+      resolve(__dirname, '../test/kzg/blob-to-kzg-commitment.json'),
       'utf8',
     ),
   )
   const computeBlobKzgProofCases = JSON.parse(
     readFileSync(
-      resolve(__dirname, '../../../test/kzg/compute-blob-kzg-proof.json'),
+      resolve(__dirname, '../test/kzg/compute-blob-kzg-proof.json'),
       'utf8',
     ),
   )
