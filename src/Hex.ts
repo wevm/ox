@@ -460,7 +460,7 @@ random.parseError = (error: unknown) => error as random.ErrorType
  * ```ts twoslash
  * import { Hex } from 'ox'
  *
- * slice('0x0123456789', 1, 4)
+ * Hex.slice('0x0123456789', 1, 4)
  * // @log: '0x234567'
  * ```
  *
