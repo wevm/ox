@@ -1119,8 +1119,6 @@ export * as Bytes from './Bytes.js'
 
 export * as Caches from './Caches.js'
 
-export * as Constants from './Constants.js'
-
 /**
  * Utility functions for computing Contract Addresses.
  *
@@ -2067,6 +2065,8 @@ export * as Signature from './Signature.js'
  * @category Sign-In with Ethereum (EIP-4361)
  */
 export * as Siwe from './Siwe.js'
+
+export * as Solidity from './Solidity.js'
 
 /**
  * Utilities & types for working with **Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)

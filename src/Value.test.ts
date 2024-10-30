@@ -5,13 +5,13 @@ test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
       "InvalidDecimalNumberError",
-      "exponents",
       "formatEther",
       "formatGwei",
       "format",
       "fromEther",
       "fromGwei",
       "from",
+      "exponents",
     ]
   `)
 })

@@ -46,7 +46,7 @@ const moduleDocComments = extractNamespaceDocComments(
 )
 
 const testNamespaces: string[] = []
-const excludeNamespaces = ['Caches', 'Constants', 'Errors', 'Internal', 'Types']
+const excludeNamespaces = ['Caches', 'Errors', 'Solidity', 'Types']
 const namespaces = []
 for (const member of apiEntryPoint.members) {
   if (member.kind !== model.ApiItemKind.Namespace) continue

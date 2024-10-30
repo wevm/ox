@@ -1,4 +1,4 @@
-import { Constants, Signature } from 'ox'
+import { Signature, Solidity } from 'ox'
 import { expect, test } from 'vitest'
 
 test('default', () => {
@@ -100,7 +100,7 @@ test('behavior: rpc', () => {
 
 test('error: invalid sig', () => {
   const signature = {
-    r: Constants.Solidity_maxUint256 + 1n,
+    r: Solidity.maxUint256 + 1n,
     s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
     yParity: 1,
   } as const

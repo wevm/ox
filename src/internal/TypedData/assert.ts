@@ -1,14 +1,11 @@
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
+import * as Solidity from '../../Solidity.js'
 import {
   Address_InvalidAddressError,
   Address_InvalidInputError,
 } from '../Address/errors.js'
 import { Address_validate } from '../Address/validate.js'
-import {
-  Solidity_bytesRegex,
-  Solidity_integerRegex,
-} from '../Solidity/constants.js'
 import {
   TypedData_BytesSizeMismatchError,
   TypedData_InvalidPrimaryTypeError,
@@ -67,7 +64,7 @@ export function TypedData_assert<
       const { name, type } = param
       const value = data[name]
 
-      const integerMatch = type.match(Solidity_integerRegex)
+      const integerMatch = type.match(Solidity.integerRegex)
       if (
         integerMatch &&
         (typeof value === 'number' || typeof value === 'bigint')
@@ -91,7 +88,7 @@ export function TypedData_assert<
           cause: new Address_InvalidInputError(),
         })
 
-      const bytesMatch = type.match(Solidity_bytesRegex)
+      const bytesMatch = type.match(Solidity.bytesRegex)
       if (bytesMatch) {
         const [, size] = bytesMatch
         if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size))

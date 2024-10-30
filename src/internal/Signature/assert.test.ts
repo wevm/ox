@@ -1,4 +1,4 @@
-import { Constants, Signature } from 'ox'
+import { Signature, Solidity } from 'ox'
 import { expect, test } from 'vitest'
 
 test('default', () => {
@@ -34,7 +34,7 @@ test('default', () => {
 
   expect(() =>
     Signature.assert({
-      r: Constants.Solidity_maxUint256 + 1n,
+      r: Solidity.maxUint256 + 1n,
       s: 0n,
       yParity: 0,
     }),
@@ -51,7 +51,7 @@ test('default', () => {
   expect(() =>
     Signature.assert({
       r: 0n,
-      s: Constants.Solidity_maxUint256 + 1n,
+      s: Solidity.maxUint256 + 1n,
       yParity: 0,
     }),
   ).toThrowErrorMatchingInlineSnapshot(

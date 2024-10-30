@@ -11,13 +11,9 @@ import type {
 
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
+import * as Solidity from '../../Solidity.js'
 import { Address_assert } from '../Address/assert.js'
 import type { Address } from '../Address/types.js'
-import {
-  Solidity_arrayRegex,
-  Solidity_bytesRegex,
-  Solidity_integerRegex,
-} from '../Solidity/constants.js'
 import {
   AbiParameters_BytesSizeMismatchError,
   AbiParameters_InvalidTypeError,
@@ -123,7 +119,7 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   if (type === 'bool')
     return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
 
-  const intMatch = (type as string).match(Solidity_integerRegex)
+  const intMatch = (type as string).match(Solidity.integerRegex)
   if (intMatch) {
     const [_type, baseType, bits = '256'] = intMatch
     const size = Number.parseInt(bits) / 8
@@ -133,7 +129,7 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
     })
   }
 
-  const bytesMatch = (type as string).match(Solidity_bytesRegex)
+  const bytesMatch = (type as string).match(Solidity.bytesRegex)
   if (bytesMatch) {
     const [_type, size] = bytesMatch
     if (Number.parseInt(size!) !== ((value as Hex.Hex).length - 2) / 2)
@@ -144,7 +140,7 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
     return Hex.padRight(value as Hex.Hex, isArray ? 32 : 0) as Hex.Hex
   }
 
-  const arrayMatch = (type as string).match(Solidity_arrayRegex)
+  const arrayMatch = (type as string).match(Solidity.arrayRegex)
   if (arrayMatch && Array.isArray(value)) {
     const [_type, childType] = arrayMatch
     const data: Hex.Hex[] = []
