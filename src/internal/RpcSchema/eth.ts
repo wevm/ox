@@ -1,4 +1,5 @@
 import type { Hex } from '../../Hex.js'
+import type * as Log from '../../Log.js'
 import type * as Transaction from '../../Transaction.js'
 import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
@@ -12,7 +13,6 @@ import type {
 } from '../Block/types.js'
 import type { FeeHistoryRpc } from '../Fee/types.js'
 import type { Filter_Rpc } from '../Filter/types.js'
-import type { Log_Rpc } from '../Log/types.js'
 
 /**
  * Union of all JSON-RPC Methods for the `eth_` namespace.
@@ -353,7 +353,7 @@ export type RpcSchema_Eth = [
       method: 'eth_getFilterChanges'
       params: [filterId: Hex]
     }
-    ReturnType: readonly Log_Rpc[] | readonly Hex[]
+    ReturnType: readonly Log.Rpc[] | readonly Hex[]
   },
   /**
    * Returns a list of all logs based on filter ID
@@ -369,7 +369,7 @@ export type RpcSchema_Eth = [
       method: 'eth_getFilterLogs'
       params: [filterId: Hex]
     }
-    ReturnType: readonly Log_Rpc[]
+    ReturnType: readonly Log.Rpc[]
   },
   /**
    * Returns a list of all logs based on a filter object
@@ -385,7 +385,7 @@ export type RpcSchema_Eth = [
       method: 'eth_getLogs'
       params: [filter: Filter_Rpc]
     }
-    ReturnType: readonly Log_Rpc[]
+    ReturnType: readonly Log.Rpc[]
   },
   /**
    * Returns the account and storage values of the specified account including the Merkle-proof.

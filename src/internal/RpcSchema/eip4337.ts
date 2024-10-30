@@ -1,7 +1,7 @@
 import type { Hex } from '../../Hex.js'
+import type * as Log from '../../Log.js'
 import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type { Address } from '../Address/types.js'
-import type { Log_Rpc } from '../Log/types.js'
 import type { OneOf, PartialBy } from '../types.js'
 
 /**
@@ -490,7 +490,7 @@ export type RpcSchema_UserOperationReceipt = {
   /** Entrypoint address. */
   entryPoint: Address
   /** Logs emitted during execution. */
-  logs: Log_Rpc[]
+  logs: Log.Rpc[]
   /** Anti-replay parameter. */
   nonce: Hex
   /** Paymaster for the user operation. */
