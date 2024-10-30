@@ -30,8 +30,6 @@ export type TransactionEnvelopeEip1559<
   TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
-    /** EIP-155 Chain ID. */
-    chainId: numberType
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
     /** Max priority fee per gas (in wei). */

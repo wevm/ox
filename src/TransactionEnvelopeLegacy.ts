@@ -25,9 +25,10 @@ export type TransactionEnvelopeLegacy<
   numberType = number,
   type extends string = TransactionEnvelopeLegacy.Type,
 > = Compute<
-  TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
-    /** EIP-155 Chain ID. */
-    chainId?: numberType | undefined
+  PartialBy<
+    TransactionEnvelope.Base<type, signed, bigintType, numberType>,
+    'chainId'
+  > & {
     /** Base fee per gas. */
     gasPrice?: bigintType | undefined
   }

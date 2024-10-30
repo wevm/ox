@@ -30,6 +30,7 @@ const envelope = TransactionEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
@@ -49,6 +50,7 @@ const envelope = TransactionEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
@@ -91,6 +93,7 @@ const envelope = TransactionEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
@@ -112,7 +115,7 @@ const deserialized = TransactionEnvelopeEip1559.deserialize(serialized) // [!cod
 
 ### Sending
 
-We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then  broadcasting it over JSON-RPC with `eth_sendRawTransaction`. 
+We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`. 
 
 In this example, we will use [`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp) to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
 
@@ -125,6 +128,7 @@ const envelope = TransactionEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
+  nonce: 69n,
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
@@ -146,4 +150,34 @@ const hash = await transport.request({ // [!code focus]
   method: 'eth_sendRawTransaction', // [!code focus]
   params: [serialized], // [!code focus]
 }) // [!code focus]
+```
+
+### Wallets & Signing Servers
+
+The examples above demonstrate how to manually construct & sign a Transaction Envelope, and assumes that you will fill the Transaction
+with required properties (nonce, fees, signature, etc) to successfully execute the Transaction.
+
+If you are interacting with a Wallet, or more generally an entity that is responsible for filling & signing Transactions, this means
+you can skip the ceremony of manually filling the Transaction by using the `eth_sendTransaction` RPC method.
+
+The example below demonstrates how to send a Transaction Envelope with `eth_sendTransaction` using an [`EIP-1193 Provider`](/api/Provider) to
+interact with a Browser Extension Wallet. You could also use `RpcTransport.fromHttp` if your backend supports signing Transactions with `eth_sendTransaction`.
+
+```ts twoslash
+import 'ox/window'
+import { Provider, TransactionEnvelopeEip1559, Value } from 'ox'
+// Construct the Envelope.
+const envelope = TransactionEnvelopeEip1559.from({
+  chainId: 1,
+  to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+  value: Value.fromEther('1.5'),
+})
+// Convert the Envelope to an RPC-compatible format. 
+const envelope_rpc = TransactionEnvelopeEip1559.toRpc(envelope)
+// Broadcast the Envelope with `eth_sendTransaction`. 
+const provider = Provider.from(window.ethereum)
+const hash = await provider.request({ 
+  method: 'eth_sendTransaction', 
+  params: [envelope_rpc], 
+}) 
 ```

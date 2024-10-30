@@ -98,13 +98,13 @@ export function RpcTransport_fromHttp<safe extends boolean = false>(
         return data as never
       },
     },
-    { safe: options.safe },
+    { raw: options.raw },
   )
 }
 
 export declare namespace RpcTransport_fromHttp {
-  type Options<safe extends boolean = false> = RpcTransport_Options<
-    safe,
+  type Options<raw extends boolean = false> = RpcTransport_Options<
+    raw,
     RpcTransport_HttpOptions
   >
 

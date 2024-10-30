@@ -19,7 +19,7 @@ test('default', async () => {
   `)
 })
 
-test('behavior: safe', async () => {
+test('behavior: raw', async () => {
   const transport = RpcTransport_create(
     {
       request: async () => {
@@ -30,7 +30,7 @@ test('behavior: safe', async () => {
         }
       },
     },
-    { safe: true },
+    { raw: true },
   )
   const accounts = await transport.request({ method: 'eth_accounts' })
   expect(accounts).toMatchInlineSnapshot(`

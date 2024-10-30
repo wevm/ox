@@ -15,6 +15,8 @@ export namespace TransactionEnvelope {
     numberType = number,
   > = Compute<
     {
+      /** EIP-155 Chain ID. */
+      chainId: numberType
       /** Contract code or a hashed method call with encoded args */
       data?: Hex | undefined
       /** @alias `data` – added for TransactionEnvelope - Transaction compatibility. */

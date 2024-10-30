@@ -110,10 +110,23 @@ import type { RpcResponse } from './types.js'
  * @param options - Parsing options.
  * @returns Typed JSON-RPC result, or response object (if `safe` is `true`).
  */
-export function RpcResponse_parse<returnType, safe extends boolean = false>(
-  response: unknown,
+export function RpcResponse_parse<
+  const response extends RpcResponse | unknown,
+  returnType,
+  safe extends boolean = false,
+>(
+  response: response,
   options: RpcResponse_parse.Options<returnType, safe> = {},
-): RpcResponse_parse.ReturnType<returnType, safe> {
+): RpcResponse_parse.ReturnType<
+  unknown extends response
+    ? returnType
+    : response extends RpcResponse
+      ? response extends { result: infer result }
+        ? result
+        : never
+      : returnType,
+  safe
+> {
   const { safe = false } = options
   const response_ = response as RpcResponse
   if (safe) return response as never

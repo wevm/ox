@@ -6,7 +6,7 @@ import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { ValidatorData_encode } from './encode.js'
 
 /**
- * Gets the payload to use for signing [EIP-191 formatted](https://eips.ethereum.org/EIPS/eip-191#0x00) data with an intended validator.
+ * Gets the payload to use for signing [ERC-191 formatted](https://eips.ethereum.org/EIPS/eip-191#0x00) data with an intended validator.
  *
  * @example
  * ```ts twoslash

@@ -14,6 +14,26 @@ test('default', async () => {
         headers: {
           'Content-Type': 'application/json',
         },
+      }).then((res) => res.json())
+    },
+  })
+
+  const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+
+  expect(blockNumber).toMatchInlineSnapshot(`"0x12f2974"`)
+})
+
+test('behavior: pre-parsed', async () => {
+  const store = RpcRequest.createStore()
+
+  const provider = Provider.from({
+    async request(args) {
+      return await fetch(anvilMainnet.rpcUrl, {
+        body: JSON.stringify(store.prepare(args)),
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
         .then((res) => res.json())
         .then(RpcResponse.parse)

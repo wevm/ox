@@ -30,8 +30,6 @@ export type TransactionEnvelopeEip2930<
   TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList | undefined
-    /** EIP-155 Chain ID. */
-    chainId: numberType
     /** Base fee per gas. */
     gasPrice?: bigintType | undefined
   }

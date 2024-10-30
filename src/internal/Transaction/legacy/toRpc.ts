@@ -5,7 +5,7 @@ import { Signature_toRpc } from '../../Signature/toRpc.js'
 import type { TransactionLegacy, TransactionLegacy_Rpc } from './types.js'
 
 /**
- * Converts an {@link ox#Transaction.Legacy} to an {@link ox#Transaction.LegacyRpc}.
+ * Converts an {@link ox#TransactionLegacy.TransactionLegacy} to an {@link ox#TransactionLegacy.Rpc}.
  *
  * @example
  * ```ts twoslash

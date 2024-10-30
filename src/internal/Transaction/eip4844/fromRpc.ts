@@ -3,7 +3,7 @@ import { Signature_extract } from '../../Signature/extract.js'
 import type { TransactionEip4844, TransactionEip4844_Rpc } from './types.js'
 
 /**
- * Converts an {@link ox#Transaction.Eip4844Rpc} to an {@link ox#Transaction.Eip4844}.
+ * Converts an {@link ox#TransactionEip4844.Rpc} to an {@link ox#TransactionEip4844.TransactionEip4844}.
  *
  * @example
  * ```ts twoslash
@@ -36,7 +36,7 @@ import type { TransactionEip4844, TransactionEip4844_Rpc } from './types.js'
  * ```
  *
  * @param transaction - The EIP-4844 RPC transaction to convert.
- * @returns An instantiated {@link ox#Transaction.Eip4844}.
+ * @returns An instantiated {@link ox#TransactionEip4844.TransactionEip4844}.
  */
 export function TransactionEip4844_fromRpc<
   const transaction extends TransactionEip4844_Rpc<boolean> | null,

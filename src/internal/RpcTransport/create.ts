@@ -9,11 +9,11 @@ import type { RpcTransport, RpcTransport_Options } from './types.js'
 /** @internal */
 export function RpcTransport_create<
   options extends Record<string, unknown> = {},
-  safe extends boolean = false,
+  raw extends boolean = false,
 >(
   transport: RpcTransport_create.Transport<options>,
-  options_root: RpcTransport_create.Options<safe> = {},
-): RpcTransport<safe> {
+  options_root: RpcTransport_create.Options<raw> = {},
+): RpcTransport<raw> {
   const requestStore = RpcRequest_createStore()
 
   return {
@@ -23,7 +23,7 @@ export function RpcTransport_create<
       const data = await transport.request(body, options as never)
 
       return RpcResponse_parse(data, {
-        safe: options.safe ?? options_root.safe,
+        safe: options.raw ?? options_root.raw,
       }) as never
     },
   }
@@ -38,7 +38,7 @@ export declare namespace RpcTransport_create {
     ) => Promise<RpcResponse>
   }
 
-  type Options<safe extends boolean = false> = RpcTransport_Options<safe>
+  type Options<raw extends boolean = false> = RpcTransport_Options<raw>
 
   type ErrorType =
     | RpcRequest_createStore.ErrorType

@@ -30,6 +30,7 @@ import type {
   TransactionLegacy_Type,
   TransactionLegacy_TypeRpc,
 } from '../legacy/types.js'
+import type { Transaction_Base, Transaction_BaseRpc } from '../types.js'
 
 /**
  * An isomorphic Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
@@ -53,18 +54,8 @@ export type Transaction<
     | TransactionEip2930<pending, bigintType, numberType>
     | TransactionEip4844<pending, bigintType, numberType>
     | TransactionEip7702<pending, bigintType, numberType>
+    | (Transaction_Base & { type: Hex.Hex })
   >
->
-
-/**
- * A generic Transaction that supports any type.
- */
-export type Transaction_Generic<
-  pending extends boolean = false,
-  bigintType = bigint,
-  numberType = number,
-> = UnionCompute<
-  OneOf<Transaction<pending, bigintType, numberType> | { type: Hex.Hex }>
 >
 
 /**
@@ -85,6 +76,7 @@ export type Transaction_Rpc<pending extends boolean = false> = UnionCompute<
     | TransactionEip2930_Rpc<pending>
     | TransactionEip4844_Rpc<pending>
     | TransactionEip7702_Rpc<pending>
+    | (Transaction_BaseRpc & { type: Hex.Hex })
   >
 >
 

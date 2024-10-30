@@ -15,8 +15,6 @@ export type TransactionEnvelopeEip7702<
     accessList?: AccessList | undefined
     /** EIP-7702 Authorization List. */
     authorizationList: Authorization_ListSigned<bigintType, numberType>
-    /** EIP-155 Chain ID. */
-    chainId: numberType
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
     /** Max priority fee per gas (in wei). */

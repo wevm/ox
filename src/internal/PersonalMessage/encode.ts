@@ -3,7 +3,7 @@ import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 
 /**
- * Encodes a personal sign message in [EIP-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e): `0x19 ‖ "Ethereum Signed Message:\n" + message.length ‖ message`.
+ * Encodes a personal sign message in [ERC-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e): `0x19 ‖ "Ethereum Signed Message:\n" + message.length ‖ message`.
  *
  * @example
  * ```ts twoslash

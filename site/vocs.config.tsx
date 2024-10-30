@@ -62,10 +62,6 @@ export default defineConfig({
             link: '/guides/eip-1193',
           },
           {
-            text: 'EIP-1559 Transactions 🚧',
-            link: '/guides/eip-1559',
-          },
-          {
             text: 'EIP-4844 Blob Transactions 🚧',
             link: '/guides/eip-4844',
           },
@@ -85,16 +81,12 @@ export default defineConfig({
             link: '/guides/siwe',
           },
           {
-            text: 'Signed Data (EIP-191) 🚧',
+            text: 'Signed & Typed Data',
             link: '/guides/signed-data',
           },
           {
             text: 'Transaction Envelopes',
             link: '/guides/transaction-envelopes',
-          },
-          {
-            text: 'Typed Data (EIP-712) 🚧',
-            link: '/guides/typed-data',
           },
           { text: 'WebAuthn Signers', link: '/guides/webauthn' },
           { text: 'Using with Effect 🚧', link: '/guides/effect' },

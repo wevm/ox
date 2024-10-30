@@ -15,8 +15,6 @@ export type TransactionEnvelopeEip4844<
     accessList?: AccessList | undefined
     /** Versioned hashes of blobs to be included in the transaction. */
     blobVersionedHashes: readonly Hex[]
-    /** EIP-155 Chain ID. */
-    chainId: numberType
     /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
     maxFeePerBlobGas?: bigintType | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */

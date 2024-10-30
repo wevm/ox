@@ -5,7 +5,7 @@ import { TransactionEip2930_fromRpc } from '../eip2930/fromRpc.js'
 import { TransactionEip4844_fromRpc } from '../eip4844/fromRpc.js'
 import { TransactionEip7702_fromRpc } from '../eip7702/fromRpc.js'
 import { TransactionLegacy_fromRpc } from '../legacy/fromRpc.js'
-import type { Transaction_Generic, Transaction_Rpc } from './types.js'
+import type { Transaction, Transaction_Rpc } from './types.js'
 
 /**
  * Converts an {@link ox#Transaction.Rpc} to an {@link ox#Transaction.Transaction}.
@@ -47,27 +47,25 @@ export function Transaction_fromRpc<
 >(
   transaction: transaction | Transaction_Rpc | null,
   _options: Transaction_fromRpc.Options<pending> = {},
-): transaction extends Transaction_Rpc<pending>
-  ? Transaction_Generic<pending>
-  : null {
+): transaction extends Transaction_Rpc<pending> ? Transaction<pending> : null {
   if (!transaction) return null as never
   if ('type' in transaction) {
     if (transaction.type === '0x0')
-      return TransactionLegacy_fromRpc(transaction) as never
+      return TransactionLegacy_fromRpc(transaction as never)
     if (transaction.type === '0x1')
-      return TransactionEip2930_fromRpc(transaction) as never
+      return TransactionEip2930_fromRpc(transaction as never)
     if (transaction.type === '0x2')
-      return TransactionEip1559_fromRpc(transaction) as never
+      return TransactionEip1559_fromRpc(transaction as never)
     if (transaction.type === '0x3')
-      return TransactionEip4844_fromRpc(transaction) as never
+      return TransactionEip4844_fromRpc(transaction as never)
     if (transaction.type === '0x4')
-      return TransactionEip7702_fromRpc(transaction) as never
+      return TransactionEip7702_fromRpc(transaction as never)
     return {
       ...TransactionEip1559_fromRpc(transaction as any),
       ...(transaction as any),
     } as never
   }
-  return TransactionLegacy_fromRpc(transaction) as never
+  return TransactionLegacy_fromRpc(transaction)
 }
 
 export declare namespace Transaction_fromRpc {

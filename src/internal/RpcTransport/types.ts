@@ -9,15 +9,15 @@ import type { Compute } from '../types.js'
 
 /** Root type for an RPC Transport. */
 export type RpcTransport<
-  safe extends boolean = false,
+  raw extends boolean = false,
   options extends Record<string, unknown> = {},
 > = Compute<{
-  request: RpcTransport_RequestFn<safe, options>
+  request: RpcTransport_RequestFn<raw, options>
 }>
 
 /** HTTP-based RPC Transport. */
-export type RpcTransport_Http<safe extends boolean = false> = RpcTransport<
-  safe,
+export type RpcTransport_Http<raw extends boolean = false> = RpcTransport<
+  raw,
   RpcTransport_HttpOptions
 >
 
@@ -26,18 +26,18 @@ export type RpcTransport_Http<safe extends boolean = false> = RpcTransport<
 ////////////////////////////////////////////////////////////////////////
 
 export type RpcTransport_Options<
-  safe extends boolean | undefined = undefined,
+  raw extends boolean | undefined = undefined,
   options extends Record<string, unknown> = {},
 > = {
   /**
-   * Enables safe mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
+   * Enables raw mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
    *
    * - `true`: a JSON-RPC response object will be returned with `result` and `error` properties.
    * - `false`: the JSON-RPC response object's `result` property will be returned directly, and JSON-RPC Errors will be thrown.
    *
    * @default false
    */
-  safe?: safe | boolean | undefined
+  raw?: raw | boolean | undefined
 } & options
 
 export type RpcTransport_HttpOptions = {
@@ -59,20 +59,20 @@ export type RpcTransport_HttpOptions = {
 ////////////////////////////////////////////////////////////////////////
 
 export type RpcTransport_RequestFn<
-  safe extends boolean = false,
+  raw extends boolean = false,
   options extends Record<string, unknown> = {},
 > = <
   schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
-  safe_override extends boolean | undefined = undefined,
+  raw_override extends boolean | undefined = undefined,
 >(
   parameters: Compute<RpcSchema_ExtractRequest<schema>>,
-  options?: RpcTransport_Options<safe_override, options> | undefined,
+  options?: RpcTransport_Options<raw_override, options> | undefined,
 ) => Promise<
-  safe_override extends boolean
-    ? safe_override extends true
+  raw_override extends boolean
+    ? raw_override extends true
       ? RpcResponse<RpcSchema_ExtractReturnType<schema>>
       : RpcSchema_ExtractReturnType<schema>
-    : safe extends true
+    : raw extends true
       ? RpcResponse<RpcSchema_ExtractReturnType<schema>>
       : RpcSchema_ExtractReturnType<schema>
 >

@@ -25,8 +25,8 @@ test('default', async () => {
   `)
 })
 
-test('options: safe', async () => {
-  const transport = RpcTransport.fromHttp(anvilMainnet.rpcUrl, { safe: true })
+test('options: raw', async () => {
+  const transport = RpcTransport.fromHttp(anvilMainnet.rpcUrl, { raw: true })
 
   const blockNumber = await transport.request({ method: 'eth_accounts' })
 

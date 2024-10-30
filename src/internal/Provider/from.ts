@@ -1,4 +1,5 @@
 import type * as Errors from '../../Errors.js'
+import { RpcResponse_parse } from '../RpcResponse/parse.js'
 import { Provider_IsUndefinedError } from './errors.js'
 import type { Provider } from './types.js'
 
@@ -116,11 +117,24 @@ import type { Provider } from './types.js'
  * @param provider - The EIP-1193 provider to convert.
  * @returns An typed EIP-1193 Provider.
  */
-export function Provider_from<provider extends Provider | unknown>(
+export function Provider_from<const provider extends Provider | unknown>(
   provider: provider | Provider,
-): provider extends Provider ? provider : Provider {
+): Provider
+export function Provider_from(provider: Provider): Provider {
   if (!provider) throw new Provider_IsUndefinedError()
-  return provider as never
+  return {
+    on: provider.on?.bind(provider),
+    removeListener: provider.removeListener?.bind(provider),
+    async request(args) {
+      const result = await provider.request(args)
+      if (
+        typeof result === 'object' &&
+        'jsonrpc' in (result as { jsonrpc?: unknown })
+      )
+        return RpcResponse_parse(result) as never
+      return result
+    },
+  }
 }
 
 export declare namespace Provider_from {

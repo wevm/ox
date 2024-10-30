@@ -5,7 +5,7 @@ import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { PersonalMessage_encode } from './encode.js'
 
 /**
- * Gets the payload to use for signing an [EIP-191 formatted](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e) personal message.
+ * Gets the payload to use for signing an [ERC-191 formatted](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e) personal message.
  *
  * @example
  * ```ts twoslash

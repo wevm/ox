@@ -4,7 +4,7 @@ import * as Hex from '../../Hex.js'
 import type { Address } from '../Address/types.js'
 
 /**
- * Encodes data with a validator in [EIP-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x00): `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`.
+ * Encodes data with a validator in [ERC-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x00): `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`.
  *
  * @example
  * ```ts twoslash
