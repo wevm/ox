@@ -1,5 +1,5 @@
 export type {
-  TransactionLegacy as Transaction,
+  TransactionLegacy,
   TransactionLegacy_Rpc as Rpc,
   TransactionLegacy_Type as Type,
   TransactionLegacy_TypeRpc as TypeRpc,

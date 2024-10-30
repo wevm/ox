@@ -92,11 +92,9 @@ for (const namespace of namespaces) {
     const id = getId(member)
     const data = dataLookup[id]
     if (!data) throw new Error(`Could not find data for ${id}`)
-    // if (!id.includes('TransactionEnvelopeEip1559.getSignPayload')) continue
 
     const { description, displayName } = data
-    const displayNameWithNamespace =
-      name === displayName ? displayName : `${name}.${displayName}`
+    const displayNameWithNamespace = `${name}.${displayName}`
 
     if (member.kind === model.ApiItemKind.Function) {
       // Resolve overloads for function
