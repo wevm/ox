@@ -165,7 +165,7 @@ function renderParameters(options: {
 
     const link = getTypeLink({ dataLookup, type: parameter })
 
-    const c = `\`${type}\``.replace(/(<.*>)/, '')
+    const c = `\`${type}\``
     const listContent = link
       ? [`- **Type:** [${c}](${link})`]
       : [`- **Type:** ${c}`]
@@ -243,8 +243,14 @@ function renderProperties(options: {
 
     const nodes = references
       .map((x) => {
-        const identifier = x?.getFirstDescendantByKind(ts.SyntaxKind.Identifier)
+        const typeName = x?.getTypeName()
+
+        const identifier = typeName?.isKind(ts.SyntaxKind.QualifiedName)
+          ? typeName.getRight()
+          : typeName
+
         if (!identifier) return
+        if (!identifier.isKind(ts.SyntaxKind.Identifier)) return
         return identifier
           .getDefinitionNodes()
           .find((x) => x.isKind(ts.SyntaxKind.TypeAliasDeclaration))
@@ -423,8 +429,8 @@ function extractParameterTypeNode(
     ?.getDescendantsOfKind(ts.SyntaxKind.TypeReference)
     .at(0)
   const typeAliasDeclaration = reference
-    ?.getType()
-    .getAliasSymbol()
+    ?.getTypeName()
+    .getSymbol()
     ?.getDeclarations()
     .at(0)
   if (!typeAliasDeclaration?.isKind(ts.SyntaxKind.TypeAliasDeclaration)) return
@@ -483,7 +489,7 @@ function expandInlineType(options: {
   ) {
     const groups =
       type.primaryCanonicalReference.match(expandRegex)?.groups ?? {}
-    if (groups.type) return groups.type
+    if (groups.type) return groups.type.replace(/~(.*)_\d/, '$1')
   } else if (dataLookup[`ox!${type.type}:type`]) return type.type
   return type.type
 }
