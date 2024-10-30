@@ -1,5 +1,5 @@
 import type { Hex } from '../../Hex.js'
-import { Kzg_versionedHashVersion } from '../Kzg/constants.js'
+import * as Kzg from '../../Kzg.js'
 
 import * as Errors from '../../Errors.js'
 
@@ -57,7 +57,7 @@ export class Blobs_InvalidVersionedHashVersionError extends Errors.BaseError {
   }) {
     super(`Versioned hash "${hash}" version is invalid.`, {
       metaMessages: [
-        `Expected: ${Kzg_versionedHashVersion}`,
+        `Expected: ${Kzg.versionedHashVersion}`,
         `Received: ${version}`,
       ],
     })

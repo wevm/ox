@@ -1,7 +1,7 @@
 import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { Kzg } from '../Kzg/types.js'
+import type * as Kzg from '../../Kzg.js'
 import type { Blobs } from './types.js'
 
 /**
@@ -77,7 +77,7 @@ export declare namespace Blobs_toProofs {
         ? {}
         : `commitments must be the same type as blobs`)
     /** KZG implementation. */
-    kzg: Pick<Kzg, 'computeBlobKzgProof'>
+    kzg: Pick<Kzg.Kzg, 'computeBlobKzgProof'>
     /** Return type. */
     as?: as | 'Hex' | 'Bytes' | undefined
   }

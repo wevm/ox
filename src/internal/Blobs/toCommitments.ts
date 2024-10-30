@@ -1,7 +1,7 @@
 import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { Kzg } from '../Kzg/types.js'
+import type * as Kzg from '../../Kzg.js'
 import type { Compute } from '../types.js'
 import type { Blobs } from './types.js'
 
@@ -70,7 +70,7 @@ export function Blobs_toCommitments<
 export declare namespace Blobs_toCommitments {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** KZG implementation. */
-    kzg: Pick<Kzg, 'blobToKzgCommitment'>
+    kzg: Pick<Kzg.Kzg, 'blobToKzgCommitment'>
     /** Return type. */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
