@@ -1,6 +1,6 @@
 import type { Hex } from '../../../Hex.js'
+import type * as Transaction from '../../../Transaction.js'
 import type { Compute } from '../../types.js'
-import type { Transaction_Base } from '../types.js'
 
 /** An legacy Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type TransactionLegacy<
@@ -10,7 +10,7 @@ export type TransactionLegacy<
   type extends string = TransactionLegacy_Type,
 > = Compute<
   Omit<
-    Transaction_Base<type, pending, bigintType, numberType>,
+    Transaction.Base<type, pending, bigintType, numberType>,
     'chainId' | 'v' | 'yParity'
   > & {
     chainId?: numberType | undefined

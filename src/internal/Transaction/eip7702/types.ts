@@ -1,8 +1,8 @@
 import type { AccessList } from '../../../AccessList.js'
 import type { Hex } from '../../../Hex.js'
+import type * as Transaction from '../../../Transaction.js'
 import type { Authorization_ListSigned } from '../../Authorization/types.js'
 import type { Compute } from '../../types.js'
-import type { Transaction_Base } from '../types.js'
 
 /** An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type TransactionEip7702<
@@ -11,7 +11,7 @@ export type TransactionEip7702<
   numberType = number,
   type extends string = TransactionEip7702_Type,
 > = Compute<
-  Transaction_Base<type, pending, bigintType, numberType> & {
+  Transaction.Base<type, pending, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList: AccessList
     /** EIP-7702 Authorization list for the transaction. */

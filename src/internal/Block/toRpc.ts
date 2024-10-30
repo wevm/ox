@@ -1,6 +1,6 @@
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { Transaction_toRpc } from '../Transaction/isomorphic/toRpc.js'
+import * as Transaction from '../../Transaction.js'
 import { Withdrawal_toRpc } from '../Withdrawal/toRpc.js'
 import type { Block, Block_Rpc, Block_Tag } from './types.js'
 
@@ -42,7 +42,7 @@ export function Block_toRpc<
 ): Block_Rpc<boolean, blockTag> {
   const transactions = block.transactions.map((transaction) => {
     if (typeof transaction === 'string') return transaction
-    return Transaction_toRpc(transaction as any) as any
+    return Transaction.toRpc(transaction as any) as any
   })
   return {
     baseFeePerGas:

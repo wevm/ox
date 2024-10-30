@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Transaction_fromRpc } from '../Transaction/isomorphic/fromRpc.js'
+import * as Transaction from '../../Transaction.js'
 import { Withdrawal_fromRpc } from '../Withdrawal/fromRpc.js'
 import type { Block, Block_Rpc, Block_Tag } from './types.js'
 
@@ -76,7 +76,7 @@ export function Block_fromRpc<
 
   const transactions = block.transactions.map((transaction) => {
     if (typeof transaction === 'string') return transaction
-    return Transaction_fromRpc(transaction) as any
+    return Transaction.fromRpc(transaction) as any
   })
   return {
     ...block,

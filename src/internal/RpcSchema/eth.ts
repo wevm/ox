@@ -1,4 +1,5 @@
 import type { Hex } from '../../Hex.js'
+import type * as Transaction from '../../Transaction.js'
 import type { AccountProof_Rpc } from '../AccountProof/types.js'
 import type { Address } from '../Address/types.js'
 import type {
@@ -10,7 +11,6 @@ import type {
 import type { FeeHistoryRpc } from '../Fee/types.js'
 import type { Filter_Rpc } from '../Filter/types.js'
 import type { Log_Rpc } from '../Log/types.js'
-import type { Transaction_Rpc } from '../Transaction/isomorphic/types.js'
 import type { TransactionReceipt_Rpc } from '../TransactionReceipt/types.js'
 import type { TransactionRequest_Rpc } from '../TransactionRequest/types.js'
 
@@ -446,7 +446,7 @@ export type RpcSchema_Eth = [
       method: 'eth_getTransactionByBlockHashAndIndex'
       params: [hash: Hex, index: Hex]
     }
-    ReturnType: Transaction_Rpc | null
+    ReturnType: Transaction.Rpc | null
   },
   /**
    * Returns information about a transaction specified by block number and transaction index
@@ -462,7 +462,7 @@ export type RpcSchema_Eth = [
       method: 'eth_getTransactionByBlockNumberAndIndex'
       params: [block: Block_Number<Hex> | Block_Tag, index: Hex]
     }
-    ReturnType: Transaction_Rpc | null
+    ReturnType: Transaction.Rpc | null
   },
   /**
    * Returns information about a transaction specified by hash
@@ -478,7 +478,7 @@ export type RpcSchema_Eth = [
       method: 'eth_getTransactionByHash'
       params: [hash: Hex]
     }
-    ReturnType: Transaction_Rpc | null
+    ReturnType: Transaction.Rpc | null
   },
   /**
    * Returns the number of transactions sent from an address

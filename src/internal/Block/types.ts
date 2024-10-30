@@ -1,9 +1,6 @@
 import type { Address } from 'abitype'
 import type { Hex } from '../../Hex.js'
-import type {
-  Transaction,
-  Transaction_Rpc,
-} from '../Transaction/isomorphic/types.js'
+import type * as Transaction from '../../Transaction.js'
 import type { Withdrawal } from '../Withdrawal/types.js'
 import type { Compute } from '../types.js'
 
@@ -13,7 +10,7 @@ export type Block<
   blockTag extends Block_Tag = 'latest',
   bigintType = bigint,
   numberType = number,
-  transaction = Transaction<
+  transaction = Transaction.Transaction<
     blockTag extends 'pending' ? true : false,
     bigintType,
     numberType
@@ -85,7 +82,7 @@ export type Block_Number<bigintType = bigint> = bigintType
 export type Block_Rpc<
   includeTransactions extends boolean = boolean,
   blockTag extends Block_Tag = 'latest',
-  transaction = Transaction_Rpc<blockTag extends 'pending' ? true : false>,
+  transaction = Transaction.Rpc<blockTag extends 'pending' ? true : false>,
 > = Block<includeTransactions, blockTag, Hex, Hex, transaction>
 
 /**
