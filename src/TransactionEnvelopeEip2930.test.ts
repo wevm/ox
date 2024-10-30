@@ -54,7 +54,9 @@ describe('deserialize', () => {
   test('default', () => {
     const serialized = TransactionEnvelopeEip2930.serialize(transaction)
     const deserialized = TransactionEnvelopeEip2930.deserialize(serialized)
-    assertType<TransactionEnvelopeEip2930>(deserialized)
+    assertType<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>(
+      deserialized,
+    )
     expect(deserialized).toEqual(transaction)
   })
 
@@ -184,7 +186,9 @@ describe('from', () => {
         chainId: 1,
         gasPrice: 69420n,
       })
-      expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip2930>()
+      expectTypeOf(
+        envelope,
+      ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
       expect(envelope).toMatchInlineSnapshot(`
       {
         "accessList": [],

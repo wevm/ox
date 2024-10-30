@@ -1,6 +1,6 @@
 import type * as Errors from '../../../Errors.js'
 import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
-import { TransactionEnvelopeEip1559 } from '../../../TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import { Address_assert } from '../../Address/assert.js'
 import type { PartialBy } from '../../types.js'
 import type { TransactionEnvelopeEip7702 } from './types.js'
@@ -39,7 +39,7 @@ export function TransactionEnvelopeEip7702_assert(
     }
   }
   TransactionEnvelopeEip1559.assert(
-    envelope as {} as TransactionEnvelopeEip1559,
+    envelope as {} as TransactionEnvelopeEip1559.TransactionEnvelopeEip1559,
   )
 }
 

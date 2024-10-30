@@ -14,14 +14,18 @@ test('default', () => {
       readonly value: 69n
       readonly type: 'eip2930'
     }>()
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip2930>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
   }
 
   {
     const envelope = TransactionEnvelopeEip2930.from(
       '0x123' as TransactionEnvelopeEip2930.Serialized,
     )
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip2930>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
   }
 
   {
@@ -42,7 +46,9 @@ test('default', () => {
       readonly yParity: 0
       readonly type: 'eip2930'
     }>()
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip2930>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
   }
 })
 
@@ -70,5 +76,7 @@ test('options: signature', () => {
     readonly yParity: 0
     readonly type: 'eip2930'
   }>()
-  expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip2930>()
+  expectTypeOf(
+    envelope,
+  ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
 })

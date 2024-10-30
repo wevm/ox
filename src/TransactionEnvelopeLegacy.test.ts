@@ -45,7 +45,9 @@ describe('deserialize', () => {
   test('default', () => {
     const serialized = TransactionEnvelopeLegacy.serialize(transaction)
     const deserialized = TransactionEnvelopeLegacy.deserialize(serialized)
-    assertType<TransactionEnvelopeLegacy>(deserialized)
+    assertType<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>(
+      deserialized,
+    )
     expect(deserialized).toEqual(transaction)
   })
 
@@ -384,7 +386,9 @@ describe('from', () => {
   test('default', () => {
     {
       const envelope = TransactionEnvelopeLegacy.from({})
-      expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+      expectTypeOf(
+        envelope,
+      ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
       expect(envelope).toMatchInlineSnapshot(`
         {
           "type": "legacy",

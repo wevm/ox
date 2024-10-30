@@ -1,6 +1,6 @@
 import type * as Errors from '../../../Errors.js'
 import * as Hex from '../../../Hex.js'
-import { TransactionEnvelopeEip1559 } from '../../../TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelopeEip1559 from '../../../TransactionEnvelopeEip1559.js'
 import {
   Blobs_EmptyBlobVersionedHashesError,
   Blobs_InvalidVersionedHashSizeError,
@@ -48,7 +48,7 @@ export function TransactionEnvelopeEip4844_assert(
     }
   }
   TransactionEnvelopeEip1559.assert(
-    envelope as {} as TransactionEnvelopeEip1559,
+    envelope as {} as TransactionEnvelopeEip1559.TransactionEnvelopeEip1559,
   )
 }
 

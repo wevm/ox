@@ -59,7 +59,9 @@ describe('deserialize', () => {
   test('default', () => {
     const serialized = TransactionEnvelopeEip1559.serialize(transaction)
     const deserialized = TransactionEnvelopeEip1559.deserialize(serialized)
-    assertType<TransactionEnvelopeEip1559>(deserialized)
+    assertType<TransactionEnvelopeEip1559.TransactionEnvelopeEip1559>(
+      deserialized,
+    )
     expect(deserialized).toEqual(transaction)
   })
 
@@ -551,7 +553,7 @@ describe('serialize', () => {
     const transaction_data = {
       ...transaction,
       data: '0x1234',
-    } satisfies TransactionEnvelopeEip1559
+    } satisfies TransactionEnvelopeEip1559.TransactionEnvelopeEip1559
     const serialized = TransactionEnvelopeEip1559.serialize(transaction_data)
     expect(serialized).toEqual(
       '0x02f10182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a7640000821234c0',

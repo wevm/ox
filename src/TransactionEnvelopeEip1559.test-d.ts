@@ -14,14 +14,18 @@ test('default', () => {
       readonly value: 69n
       readonly type: 'eip1559'
     }>()
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeEip1559.TransactionEnvelopeEip1559>()
   }
 
   {
     const envelope = TransactionEnvelopeEip1559.from(
       '0x123' as TransactionEnvelopeEip1559.Serialized,
     )
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeEip1559.TransactionEnvelopeEip1559>()
   }
 
   {
@@ -42,6 +46,8 @@ test('default', () => {
       readonly yParity: 0
       readonly type: 'eip1559'
     }>()
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeEip1559>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeEip1559.TransactionEnvelopeEip1559>()
   }
 })

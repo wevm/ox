@@ -2326,7 +2326,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * @example
  * ### Instantiating Transaction Envelopes
  *
- * Transaction Envelopes can be instantiated using {@link ox#(TransactionEnvelopeLegacy:namespace).(from:function)}:
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeLegacy.(from:function)}:
  *
  * ```ts twoslash
  * import { TransactionEnvelopeLegacy, Value } from 'ox'
@@ -2341,7 +2341,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * * @example
  * ### Signing Transaction Envelopes
  *
- * Transaction Envelopes can be signed using {@link ox#(TransactionEnvelopeLegacy:namespace).(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeLegacy.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -2366,7 +2366,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * @example
  * ### Serializing Transaction Envelopes
  *
- * Transaction Envelopes can be serialized using {@link ox#(TransactionEnvelopeLegacy:namespace).(serialize:function)}:
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeLegacy.(serialize:function)}:
  *
  * ```ts twoslash
  * import { TransactionEnvelopeLegacy, Value } from 'ox'
@@ -2384,7 +2384,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * @example
  * ### Computing Transaction Hashes
  *
- * Transaction Hashes can be computed using {@link ox#(TransactionEnvelopeLegacy:namespace).(hash:function)}:
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeLegacy.(hash:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
@@ -2411,7 +2411,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  *
  * @category Transaction Envelopes
  */
-export { TransactionEnvelopeLegacy } from './TransactionEnvelopeLegacy.js'
+export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
 
 /**
  * Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559)
@@ -2419,7 +2419,7 @@ export { TransactionEnvelopeLegacy } from './TransactionEnvelopeLegacy.js'
  *  @example
  * ### Instantiating Transaction Envelopes
  *
- * Transaction Envelopes can be instantiated using {@link ox#(TransactionEnvelopeEip1559:namespace).(from:function)}:
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip1559.(from:function)}:
  *
  * ```ts twoslash
  * import { TransactionEnvelopeEip1559, Value } from 'ox'
@@ -2444,7 +2444,7 @@ export { TransactionEnvelopeLegacy } from './TransactionEnvelopeLegacy.js'
  * @example
  * ### Signing Transaction Envelopes
  *
- * Transaction Envelopes can be signed using {@link ox#(TransactionEnvelopeEip1559:namespace).(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip1559.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip1559 } from 'ox'
@@ -2469,7 +2469,7 @@ export { TransactionEnvelopeLegacy } from './TransactionEnvelopeLegacy.js'
  * @example
  * ### Serializing Transaction Envelopes
  *
- * Transaction Envelopes can be serialized using {@link ox#(TransactionEnvelopeEip1559:namespace).(serialize:function)}:
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip1559.(serialize:function)}:
  *
  * @example
  * ```ts twoslash
@@ -2489,7 +2489,7 @@ export { TransactionEnvelopeLegacy } from './TransactionEnvelopeLegacy.js'
  * @example
  * ### Computing Transaction Hashes
  *
- * Transaction Hashes can be computed using {@link ox#(TransactionEnvelopeEip1559:namespace).(hash:function)}:
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip1559.(hash:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
@@ -2517,7 +2517,7 @@ export { TransactionEnvelopeLegacy } from './TransactionEnvelopeLegacy.js'
  *
  * @category Transaction Envelopes
  */
-export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
+export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
 
 /**
  * Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930)
@@ -2525,7 +2525,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Instantiating Transaction Envelopes
  *
- * Transaction Envelopes can be instantiated using {@link ox#(TransactionEnvelopeEip2930:namespace).(from:function)}:
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip2930.(from:function)}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -2543,7 +2543,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Signing Transaction Envelopes
  *
- * Transaction Envelopes can be signed using {@link ox#(TransactionEnvelopeEip2930:namespace).(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip2930.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip2930 } from 'ox'
@@ -2566,7 +2566,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Serializing Transaction Envelopes
  *
- * Transaction Envelopes can be serialized using {@link ox#(TransactionEnvelopeEip2930:namespace).(serialize:function)}:
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip2930.(serialize:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip2930, Value } from 'ox'
@@ -2586,7 +2586,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  * @example
  * ### Computing Transaction Hashes
  *
- * Transaction Hashes can be computed using {@link ox#(TransactionEnvelopeEip2930:namespace).(hash:function)}:
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip2930.(hash:function)}:
  *
  * ```ts twoslash
  * import { Secp256k1, TransactionEnvelopeEip2930 } from 'ox'
@@ -2613,7 +2613,7 @@ export { TransactionEnvelopeEip1559 } from './TransactionEnvelopeEip1559.js'
  *
  * @category Transaction Envelopes
  */
-export { TransactionEnvelopeEip2930 } from './TransactionEnvelopeEip2930.js'
+export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
 
 /**
  * Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844)

@@ -14,14 +14,18 @@ test('default', () => {
       readonly value: 69n
       readonly type: 'legacy'
     }>()
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
   }
 
   {
     const envelope = TransactionEnvelopeLegacy.from(
       '0x123' as TransactionEnvelopeLegacy.Serialized,
     )
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
   }
 
   {
@@ -40,7 +44,9 @@ test('default', () => {
       readonly v: 37
       readonly type: 'legacy'
     }>()
-    expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+    expectTypeOf(
+      envelope,
+    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
   }
 })
 
@@ -67,5 +73,7 @@ test('options: signature', () => {
     readonly yParity: 0
     readonly type: 'legacy'
   }>()
-  expectTypeOf(envelope).toMatchTypeOf<TransactionEnvelopeLegacy>()
+  expectTypeOf(
+    envelope,
+  ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
 })
