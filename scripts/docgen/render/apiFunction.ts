@@ -313,9 +313,9 @@ function renderErrors(options: {
     for (const errorId of errorIds) {
       const errorData = dataLookup[errorId]
       if (!errorData) continue
-      const name = errorData.displayName.replace('_', '.')
+      const name = errorData.module + '.' + errorData.displayName
       errorsContent.push(
-        `- [\`${name}\`](/api/${name.split('.')[0]}/errors#${name.toLowerCase().replace('.', '')})`,
+        `- [\`${name}\`](/api/${errorData.module}/errors#${name.toLowerCase().replace('.', '')})`,
       )
     }
     content.push(errorsContent.join('\n'))
