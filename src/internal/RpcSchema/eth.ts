@@ -1,16 +1,11 @@
-import type { Hex } from '../../Hex.js'
+import type * as Block from '../../Block.js'
+import type * as Hex from '../../Hex.js'
 import type * as Log from '../../Log.js'
 import type * as Transaction from '../../Transaction.js'
 import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
 import type { AccountProof_Rpc } from '../AccountProof/types.js'
-import type { Address } from '../Address/types.js'
-import type {
-  Block_Hash,
-  Block_Number,
-  Block_Rpc,
-  Block_Tag,
-} from '../Block/types.js'
+import type * as Address from '../Address/types.js'
 import type { FeeHistoryRpc } from '../Fee/types.js'
 import type { Filter_Rpc } from '../Filter/types.js'
 
@@ -53,7 +48,7 @@ export type RpcSchema_Eth = [
       method: 'eth_accounts'
       params?: undefined
     }
-    ReturnType: Address[]
+    ReturnType: Address.Address[]
   },
   /**
    * Returns the base fee per blob gas in wei.
@@ -69,7 +64,7 @@ export type RpcSchema_Eth = [
       method: 'eth_blobBaseFee'
       params?: undefined
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the number of the most recent block seen by this client
@@ -85,7 +80,7 @@ export type RpcSchema_Eth = [
       method: 'eth_blockNumber'
       params?: undefined
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Executes a new message call immediately without submitting a transaction to the network
@@ -102,16 +97,16 @@ export type RpcSchema_Eth = [
         | [transaction: TransactionRequest.Rpc]
         | [
             transaction: TransactionRequest.Rpc,
-            block: Block_Number<Hex> | Block_Tag | Block_Hash,
+            block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
           ]
         | [
             transaction: TransactionRequest.Rpc,
-            block: Block_Number<Hex> | Block_Tag | Block_Hash,
+            block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
             // TODO: add type
             stateOverride: unknown,
           ]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the chain ID associated with the current network
@@ -127,7 +122,7 @@ export type RpcSchema_Eth = [
       method: 'eth_chainId'
       params?: undefined
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the client coinbase address.
@@ -143,7 +138,7 @@ export type RpcSchema_Eth = [
       method: 'eth_coinbase'
       params?: undefined
     }
-    ReturnType: Address
+    ReturnType: Address.Address
   },
   /**
    * Estimates the gas necessary to complete a transaction without submitting it to the network
@@ -164,16 +159,16 @@ export type RpcSchema_Eth = [
         | [transaction: TransactionRequest.Rpc]
         | [
             transaction: TransactionRequest.Rpc,
-            block: Block_Number<Hex> | Block_Tag | Block_Hash,
+            block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
           ]
         | [
             transaction: TransactionRequest.Rpc,
-            block: Block_Number<Hex> | Block_Tag | Block_Hash,
+            block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
             // TODO: add type
             stateOverride: unknown,
           ]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns a collection of historical gas information
@@ -196,9 +191,9 @@ export type RpcSchema_Eth = [
       method: 'eth_feeHistory'
       params: [
         /** Number of blocks in the requested range. Between 1 and 1024 blocks can be requested in a single query. Less than requested may be returned if not all blocks are available. */
-        blockCount: Hex,
+        blockCount: Hex.Hex,
         /** Highest number block of the requested range. */
-        newestBlock: Block_Number<Hex> | Block_Tag,
+        newestBlock: Block.Number<Hex.Hex> | Block.Tag,
         /** A monotonically increasing list of percentile values to sample from each block's effective priority fees per gas in ascending order, weighted by gas used. */
         rewardPercentiles: number[] | undefined,
       ]
@@ -218,7 +213,7 @@ export type RpcSchema_Eth = [
       method: 'eth_gasPrice'
       params?: undefined
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the balance of an address in wei
@@ -233,11 +228,11 @@ export type RpcSchema_Eth = [
     Request: {
       method: 'eth_getBalance'
       params: [
-        address: Address,
-        block: Block_Number<Hex> | Block_Tag | Block_Hash,
+        address: Address.Address,
+        block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
       ]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns information about a block specified by hash
@@ -257,12 +252,12 @@ export type RpcSchema_Eth = [
       method: 'eth_getBlockByHash'
       params: [
         /** hash of a block */
-        hash: Hex,
+        hash: Hex.Hex,
         /** true will pull full transaction objects, false will pull transaction hashes */
         includeTransactionObjects: boolean,
       ]
     }
-    ReturnType: Block_Rpc | null
+    ReturnType: Block.Rpc | null
   },
   /**
    * Returns information about a block specified by number
@@ -283,12 +278,12 @@ export type RpcSchema_Eth = [
       method: 'eth_getBlockByNumber'
       params: [
         /** block number, or one of "latest", "safe", "finalized", "earliest" or "pending" */
-        block: Block_Number<Hex> | Block_Tag,
+        block: Block.Number<Hex.Hex> | Block.Tag,
         /** true will pull full transaction objects, false will pull transaction hashes */
         includeTransactionObjects: boolean,
       ]
     }
-    ReturnType: Block_Rpc | null
+    ReturnType: Block.Rpc | null
   },
   /**
    * Returns the number of transactions in a block specified by block hash
@@ -301,9 +296,9 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getBlockTransactionCountByHash'
-      params: [hash: Hex]
+      params: [hash: Hex.Hex]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the number of transactions in a block specified by block number
@@ -316,9 +311,9 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getBlockTransactionCountByNumber'
-      params: [block: Block_Number<Hex> | Block_Tag]
+      params: [block: Block.Number<Hex.Hex> | Block.Tag]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the contract code stored at a given address
@@ -333,11 +328,11 @@ export type RpcSchema_Eth = [
     Request: {
       method: 'eth_getCode'
       params: [
-        address: Address,
-        block: Block_Number<Hex> | Block_Tag | Block_Hash,
+        address: Address.Address,
+        block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
       ]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns a list of all logs based on filter ID since the last log retrieval
@@ -351,9 +346,9 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getFilterChanges'
-      params: [filterId: Hex]
+      params: [filterId: Hex.Hex]
     }
-    ReturnType: readonly Log.Rpc[] | readonly Hex[]
+    ReturnType: readonly Log.Rpc[] | readonly Hex.Hex[]
   },
   /**
    * Returns a list of all logs based on filter ID
@@ -367,7 +362,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getFilterLogs'
-      params: [filterId: Hex]
+      params: [filterId: Hex.Hex]
     }
     ReturnType: readonly Log.Rpc[]
   },
@@ -403,11 +398,11 @@ export type RpcSchema_Eth = [
       method: 'eth_getProof'
       params: [
         /** Address of the account. */
-        address: Address,
+        address: Address.Address,
         /** An array of storage-keys that should be proofed and included. */
-        storageKeys: Hex[],
+        storageKeys: Hex.Hex[],
         /** Block identifier to pull the proof from. */
-        block: Block_Number<Hex> | Block_Tag | Block_Hash,
+        block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
       ]
     }
     ReturnType: AccountProof_Rpc
@@ -425,12 +420,12 @@ export type RpcSchema_Eth = [
     Request: {
       method: 'eth_getStorageAt'
       params: [
-        address: Address,
-        index: Hex,
-        block: Block_Number<Hex> | Block_Tag | Block_Hash,
+        address: Address.Address,
+        index: Hex.Hex,
+        block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
       ]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns information about a transaction specified by block hash and transaction index
@@ -444,7 +439,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getTransactionByBlockHashAndIndex'
-      params: [hash: Hex, index: Hex]
+      params: [hash: Hex.Hex, index: Hex.Hex]
     }
     ReturnType: Transaction.Rpc | null
   },
@@ -460,7 +455,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getTransactionByBlockNumberAndIndex'
-      params: [block: Block_Number<Hex> | Block_Tag, index: Hex]
+      params: [block: Block.Number<Hex.Hex> | Block.Tag, index: Hex.Hex]
     }
     ReturnType: Transaction.Rpc | null
   },
@@ -476,7 +471,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getTransactionByHash'
-      params: [hash: Hex]
+      params: [hash: Hex.Hex]
     }
     ReturnType: Transaction.Rpc | null
   },
@@ -493,11 +488,11 @@ export type RpcSchema_Eth = [
     Request: {
       method: 'eth_getTransactionCount'
       params: [
-        address: Address,
-        block: Block_Number<Hex> | Block_Tag | Block_Hash,
+        address: Address.Address,
+        block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
       ]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the receipt of a transaction specified by hash
@@ -511,7 +506,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getTransactionReceipt'
-      params: [hash: Hex]
+      params: [hash: Hex.Hex]
     }
     ReturnType: TransactionReceipt.Rpc | null
   },
@@ -527,9 +522,9 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getUncleCountByBlockHash'
-      params: [hash: Hex]
+      params: [hash: Hex.Hex]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the number of uncles in a block specified by block number
@@ -543,9 +538,9 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_getUncleCountByBlockNumber'
-      params: [block: Block_Number<Hex> | Block_Tag]
+      params: [block: Block.Number<Hex.Hex> | Block.Tag]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the current maxPriorityFeePerGas in wei.
@@ -561,7 +556,7 @@ export type RpcSchema_Eth = [
       method: 'eth_maxPriorityFeePerGas'
       params?: undefined
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Creates a filter to listen for new blocks that can be used with `eth_getFilterChanges`
@@ -577,7 +572,7 @@ export type RpcSchema_Eth = [
       method: 'eth_newBlockFilter'
       params?: undefined
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Creates a filter to listen for specific state changes that can then be used with `eth_getFilterChanges`
@@ -593,7 +588,7 @@ export type RpcSchema_Eth = [
       method: 'eth_newFilter'
       params: [filter: Filter_Rpc]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Creates a filter to listen for new pending transactions that can be used with `eth_getFilterChanges`
@@ -609,7 +604,7 @@ export type RpcSchema_Eth = [
       method: 'eth_newPendingTransactionFilter'
       params?: undefined
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Returns the current Ethereum protocol version
@@ -641,7 +636,7 @@ export type RpcSchema_Eth = [
       method: 'eth_requestAccounts'
       params?: undefined
     }
-    ReturnType: readonly Address[]
+    ReturnType: readonly Address.Address[]
   },
   /**
    * Sends a **signed** transaction to the network
@@ -655,9 +650,9 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_sendRawTransaction'
-      params: [serializedTransaction: Hex]
+      params: [serializedTransaction: Hex.Hex]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Creates, signs, and sends a new transaction to the network
@@ -673,7 +668,7 @@ export type RpcSchema_Eth = [
       method: 'eth_sendTransaction'
       params: [transaction: TransactionRequest.Rpc]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Signs a transaction that can be submitted to the network at a later time using with `eth_sendRawTransaction`
@@ -689,7 +684,7 @@ export type RpcSchema_Eth = [
       method: 'eth_signTransaction'
       params: [request: TransactionRequest.Rpc]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Calculates an Ethereum-specific signature in the form of `keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))`
@@ -705,12 +700,12 @@ export type RpcSchema_Eth = [
       method: 'eth_signTypedData_v4'
       params: [
         /** Address to use for signing */
-        address: Address,
+        address: Address.Address,
         /** Message to sign containing type information, a domain separator, and data */
         message: string,
       ]
     }
-    ReturnType: Hex
+    ReturnType: Hex.Hex
   },
   /**
    * Destroys a filter based on filter ID
@@ -724,7 +719,7 @@ export type RpcSchema_Eth = [
   {
     Request: {
       method: 'eth_uninstallFilter'
-      params: [filterId: Hex]
+      params: [filterId: Hex.Hex]
     }
     ReturnType: boolean
   },

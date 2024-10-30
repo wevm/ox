@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`behavior: network (with tx) 1`] = `
+exports[`fromRpc > behavior: network (with tx) 1`] = `
 {
   "baseFeePerGas": 8758571930n,
   "blobGasUsed": 0n,
