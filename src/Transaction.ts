@@ -1,25 +1,14 @@
+import type * as AccessList from './AccessList.js'
 import type * as Address from './Address.js'
-import * as Errors from './Errors.js'
-import type * as Hex from './Hex.js'
-import type * as Signature from './Signature.js'
-import * as TransactionEip1559 from './TransactionEip1559.js'
-import * as TransactionEip2930 from './TransactionEip2930.js'
-import * as TransactionEip4844 from './TransactionEip4844.js'
-import * as TransactionEip7702 from './TransactionEip7702.js'
-import * as TransactionLegacy from './TransactionLegacy.js'
+import * as Authorization from './Authorization.js'
+import type * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
+import * as Signature from './Signature.js'
 import type { Compute, UnionCompute } from './internal/types.js'
 import type { OneOf } from './internal/types.js'
 
 /**
- * An isomorphic Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
- *
- * Supports the following Transaction Types:
- *
- * - `legacy`
- * - `eip1559`
- * - `eip2930`
- * - `eip4844`
- * - `eip7702`
+ * A Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
  */
 export type Transaction<
   pending extends boolean = false,
@@ -27,12 +16,26 @@ export type Transaction<
   numberType = number,
 > = UnionCompute<
   OneOf<
-    | TransactionLegacy.TransactionLegacy<pending, bigintType, numberType>
-    | TransactionEip1559.TransactionEip1559<pending, bigintType, numberType>
-    | TransactionEip2930.TransactionEip2930<pending, bigintType, numberType>
-    | TransactionEip4844.TransactionEip4844<pending, bigintType, numberType>
-    | TransactionEip7702.TransactionEip7702<pending, bigintType, numberType>
+    | Legacy<pending, bigintType, numberType>
+    | Eip1559<pending, bigintType, numberType>
+    | Eip2930<pending, bigintType, numberType>
+    | Eip4844<pending, bigintType, numberType>
+    | Eip7702<pending, bigintType, numberType>
     | (Base & { type: Hex.Hex })
+  >
+>
+
+/**
+ * An RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
+ */
+export type Rpc<pending extends boolean = false> = UnionCompute<
+  OneOf<
+    | LegacyRpc<pending>
+    | Eip1559Rpc<pending>
+    | Eip2930Rpc<pending>
+    | Eip4844Rpc<pending>
+    | Eip7702Rpc<pending>
+    | (BaseRpc & { type: Hex.Hex })
   >
 >
 
@@ -85,63 +88,154 @@ export type BaseRpc<
   pending extends boolean = false,
 > = Base<type, pending, Hex.Hex, Hex.Hex>
 
-/**
- * An isomorphic RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
- *
- * Supports the following Transaction Types:
- *
- * - `0x0`: legacy transactions
- * - `0x1`: EIP-1559 transactions
- * - `0x2`: EIP-2930 transactions
- * - `0x3`: EIP-4844 transactions
- * - `0x4`: EIP-7702 transactions
- */
-export type Rpc<pending extends boolean = false> = UnionCompute<
-  OneOf<
-    | TransactionLegacy.Rpc<pending>
-    | TransactionEip1559.Rpc<pending>
-    | TransactionEip2930.Rpc<pending>
-    | TransactionEip4844.Rpc<pending>
-    | TransactionEip7702.Rpc<pending>
-    | (BaseRpc & { type: Hex.Hex })
-  >
+/** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip1559<
+  pending extends boolean = false,
+  bigintType = bigint,
+  numberType = number,
+  type extends string = 'eip1559',
+> = Compute<
+  Base<type, pending, bigintType, numberType> & {
+    /** EIP-2930 Access List. */
+    accessList: AccessList.AccessList
+    /** Effective gas price paid by the sender in wei. */
+    gasPrice?: bigintType | undefined
+    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
+    maxFeePerGas: bigintType
+    /** Max priority fee per gas (in wei). */
+    maxPriorityFeePerGas: bigintType
+  }
 >
 
-/**
- * Union of Transaction types.
- *
- * - `legacy`
- * - `eip1559`
- * - `eip2930`
- * - `eip4844`
- * - `eip7702`
- * - any other string
- */
-export type Type =
-  | TransactionLegacy.Type
-  | TransactionEip1559.Type
-  | TransactionEip2930.Type
-  | TransactionEip4844.Type
-  | TransactionEip7702.Type
-  | (string & {})
+/** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip1559Rpc<pending extends boolean = false> = Compute<
+  Eip1559<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip1559']>
+>
 
-/**
- * Union of RPC Transaction types.
- *
- * - `0x0`: legacy transactions
- * - `0x1`: EIP-1559 transactions
- * - `0x2`: EIP-2930 transactions
- * - `0x3`: EIP-4844 transactions
- * - `0x4`: EIP-7702 transactions
- * - any other string
- */
-export type TypeRpc =
-  | TransactionLegacy.TypeRpc
-  | TransactionEip1559.TypeRpc
-  | TransactionEip2930.TypeRpc
-  | TransactionEip4844.TypeRpc
-  | TransactionEip7702.TypeRpc
-  | (string & {})
+/** An [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip2930<
+  pending extends boolean = false,
+  bigintType = bigint,
+  numberType = number,
+  type extends string = 'eip2930',
+> = Compute<
+  Base<type, pending, bigintType, numberType> & {
+    /** EIP-2930 Access List. */
+    accessList: AccessList.AccessList
+    /** The gas price willing to be paid by the sender (in wei). */
+    gasPrice: bigintType
+  }
+>
+
+/** An RPC [EIP-2930](https://eips.ethereum.org/EIPS/eip-2930) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip2930Rpc<pending extends boolean = false> = Compute<
+  Eip2930<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip2930']>
+>
+
+/** An [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip4844<
+  pending extends boolean = false,
+  bigintType = bigint,
+  numberType = number,
+  type extends string = 'eip4844',
+> = Compute<
+  Base<type, pending, bigintType, numberType> & {
+    /** EIP-2930 Access List. */
+    accessList: AccessList.AccessList
+    /** List of versioned blob hashes associated with the transaction's blobs. */
+    blobVersionedHashes: readonly Hex.Hex[]
+    /** Total fee per blob gas in wei. */
+    maxFeePerBlobGas: bigintType
+    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
+    maxFeePerGas: bigintType
+    /** Max priority fee per gas (in wei). */
+    maxPriorityFeePerGas: bigintType
+  }
+>
+
+/** An RPC [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip4844Rpc<pending extends boolean = false> = Compute<
+  Eip4844<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip4844']>
+>
+
+/** An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip7702<
+  pending extends boolean = false,
+  bigintType = bigint,
+  numberType = number,
+  type extends string = 'eip7702',
+> = Compute<
+  Base<type, pending, bigintType, numberType> & {
+    /** EIP-2930 Access List. */
+    accessList: AccessList.AccessList
+    /** EIP-7702 Authorization list for the transaction. */
+    authorizationList: Authorization.ListSigned<bigintType, numberType>
+    /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
+    maxFeePerGas: bigintType
+    /** Max priority fee per gas (in wei). */
+    maxPriorityFeePerGas: bigintType
+  }
+>
+
+/** An RPC [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Eip7702Rpc<pending extends boolean = false> = Compute<
+  Eip7702<pending, Hex.Hex, Hex.Hex, TypeToRpcType['eip7702']>
+>
+
+/** An legacy Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type Legacy<
+  pending extends boolean = false,
+  bigintType = bigint,
+  numberType = number,
+  type extends string = 'legacy',
+> = Compute<
+  Omit<
+    Base<type, pending, bigintType, numberType>,
+    'chainId' | 'v' | 'yParity'
+  > & {
+    chainId?: numberType | undefined
+    /** The gas price willing to be paid by the sender (in wei). */
+    gasPrice: bigintType
+    /** ECDSA signature v. */
+    v: numberType
+    /** ECDSA signature yParity. */
+    yParity?: numberType | undefined
+  }
+>
+
+/** A legacy RPC Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
+export type LegacyRpc<pending extends boolean = false> = Compute<
+  Legacy<pending, Hex.Hex, Hex.Hex, TypeToRpcType['legacy']>
+>
+
+/** Type to RPC Type mapping. */
+export const typeToRpcType = {
+  legacy: '0x0',
+  eip2930: '0x1',
+  eip1559: '0x2',
+  eip4844: '0x3',
+  eip7702: '0x4',
+} as const
+
+/** Type to RPC Type mapping. */
+export type TypeToRpcType = typeof typeToRpcType & {
+  [type: string]: `0x${string}`
+}
+
+/** RPC Type to Type mapping. */
+export const rpcTypeToType = {
+  '0x0': 'legacy',
+  '0x1': 'eip2930',
+  '0x2': 'eip1559',
+  '0x3': 'eip4844',
+  '0x4': 'eip7702',
+} as const
+
+/** RPC Type to Type mapping. */
+
+export type RpcTypeToType = typeof rpcTypeToType & {
+  [type: `0x${string}`]: string
+}
 
 /**
  * Converts an {@link ox#Transaction.Rpc} to an {@link ox#Transaction.Transaction}.
@@ -181,27 +275,47 @@ export function fromRpc<
   const transaction extends Rpc | null,
   pending extends boolean = false,
 >(
-  transaction: transaction | Rpc | null,
+  transaction: transaction | Rpc<pending> | null,
   _options: fromRpc.Options<pending> = {},
 ): transaction extends Rpc<pending> ? Transaction<pending> : null {
   if (!transaction) return null as never
-  if ('type' in transaction) {
-    if (transaction.type === '0x0')
-      return TransactionLegacy.fromRpc(transaction as never)
-    if (transaction.type === '0x1')
-      return TransactionEip2930.fromRpc(transaction as never)
-    if (transaction.type === '0x2')
-      return TransactionEip1559.fromRpc(transaction as never)
-    if (transaction.type === '0x3')
-      return TransactionEip4844.fromRpc(transaction as never)
-    if (transaction.type === '0x4')
-      return TransactionEip7702.fromRpc(transaction as never)
-    return {
-      ...TransactionEip1559.fromRpc(transaction as any),
-      ...(transaction as any),
-    } as never
-  }
-  return TransactionLegacy.fromRpc(transaction)
+
+  const signature = Signature.extract(transaction)
+
+  const transaction_ = {
+    ...transaction,
+    ...signature,
+  } as unknown as Transaction<boolean>
+
+  transaction_.blockNumber = transaction.blockNumber
+    ? BigInt(transaction.blockNumber)
+    : null
+  transaction_.data = transaction.input
+  transaction_.gas = BigInt(transaction.gas ?? 0n)
+  transaction_.nonce = BigInt(transaction.nonce ?? 0n)
+  transaction_.transactionIndex = transaction.transactionIndex
+    ? Number(transaction.transactionIndex)
+    : null
+  transaction_.value = BigInt(transaction.value ?? 0n)
+
+  if (transaction.authorizationList)
+    transaction_.authorizationList = Authorization.fromRpcList(
+      transaction.authorizationList,
+    )
+  if (transaction.chainId) transaction_.chainId = Number(transaction.chainId)
+  if (transaction.gasPrice) transaction_.gasPrice = BigInt(transaction.gasPrice)
+  if (transaction.maxFeePerBlobGas)
+    transaction_.maxFeePerBlobGas = BigInt(transaction.maxFeePerBlobGas)
+  if (transaction.maxFeePerGas)
+    transaction_.maxFeePerGas = BigInt(transaction.maxFeePerGas)
+  if (transaction.maxPriorityFeePerGas)
+    transaction_.maxPriorityFeePerGas = BigInt(transaction.maxPriorityFeePerGas)
+  if (transaction.type)
+    transaction_.type =
+      (rpcTypeToType as any)[transaction.type] ?? transaction.type
+  if (signature) transaction_.v = signature.yParity === 0 ? 27 : 28
+
+  return transaction_ as never
 }
 
 export declare namespace fromRpc {
@@ -253,20 +367,53 @@ fromRpc.parseError = (error: unknown) =>
  */
 export function toRpc<pending extends boolean = false>(
   transaction: Transaction<pending>,
+  _options?: toRpc.Options<pending>,
 ): Rpc<pending> {
-  if (transaction.type === 'legacy')
-    return TransactionLegacy.toRpc(transaction as never) as never
-  if (transaction.type === 'eip2930')
-    return TransactionEip2930.toRpc(transaction as never) as never
-  if (transaction.type === 'eip1559')
-    return TransactionEip1559.toRpc(transaction as never) as never
-  if (transaction.type === 'eip4844')
-    return TransactionEip4844.toRpc(transaction as never) as never
-  if (transaction.type === 'eip7702')
-    return TransactionEip7702.toRpc(transaction as never) as never
-  throw new TypeNotImplementedError({
-    type: (transaction as any).type,
-  })
+  const rpc = {} as Rpc<boolean>
+
+  rpc.blockHash = transaction.blockHash
+  rpc.blockNumber =
+    typeof transaction.blockNumber === 'bigint'
+      ? Hex.fromNumber(transaction.blockNumber)
+      : null
+  rpc.from = transaction.from
+  rpc.gas = Hex.fromNumber(transaction.gas ?? 0n)
+  rpc.hash = transaction.hash
+  rpc.input = transaction.input
+  rpc.nonce = Hex.fromNumber(transaction.nonce ?? 0n)
+  rpc.to = transaction.to
+  rpc.transactionIndex = transaction.transactionIndex
+    ? Hex.fromNumber(transaction.transactionIndex)
+    : null
+  rpc.type = (typeToRpcType as any)[transaction.type] ?? transaction.type
+  rpc.value = Hex.fromNumber(transaction.value ?? 0n)
+
+  if (transaction.accessList) rpc.accessList = transaction.accessList
+  if (transaction.authorizationList)
+    rpc.authorizationList = Authorization.toRpcList(
+      transaction.authorizationList,
+    )
+  if (transaction.blobVersionedHashes)
+    rpc.blobVersionedHashes = transaction.blobVersionedHashes
+  if (transaction.chainId) rpc.chainId = Hex.fromNumber(transaction.chainId)
+  if (typeof transaction.gasPrice === 'bigint')
+    rpc.gasPrice = Hex.fromNumber(transaction.gasPrice)
+  if (typeof transaction.maxFeePerBlobGas === 'bigint')
+    rpc.maxFeePerBlobGas = Hex.fromNumber(transaction.maxFeePerBlobGas)
+  if (typeof transaction.maxFeePerGas === 'bigint')
+    rpc.maxFeePerGas = Hex.fromNumber(transaction.maxFeePerGas)
+  if (typeof transaction.maxPriorityFeePerGas === 'bigint')
+    rpc.maxPriorityFeePerGas = Hex.fromNumber(transaction.maxPriorityFeePerGas)
+  if (typeof transaction.r === 'bigint')
+    rpc.r = Hex.fromNumber(transaction.r, { size: 32 })
+  if (typeof transaction.s === 'bigint')
+    rpc.s = Hex.fromNumber(transaction.s, { size: 32 })
+  if (typeof transaction.v === 'number')
+    rpc.v = Hex.fromNumber(transaction.v, { size: 1 })
+  if (typeof transaction.yParity === 'number')
+    rpc.yParity = transaction.yParity === 0 ? '0x0' : '0x1'
+
+  return rpc as Rpc<pending>
 }
 
 export declare namespace toRpc {
@@ -280,22 +427,3 @@ export declare namespace toRpc {
 toRpc.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as toRpc.ErrorType
-
-/**
- * Thrown when a transaction type is not implemented.
- *
- * @example
- * ```ts twoslash
- * // @noErrors
- * import { Transaction } from 'ox'
- *
- * Transaction.toRpc({ type: 'foo' })
- * // @error: Transaction.TypeNotImplementedError: The provided transaction type `foo` is not implemented.
- * ```
- */
-export class TypeNotImplementedError extends Errors.BaseError {
-  override readonly name = 'Transaction.TypeNotImplementedError'
-  constructor({ type }: { type: string }) {
-    super(`The provided transaction type \`${type}\` is not implemented.`)
-  }
-}
