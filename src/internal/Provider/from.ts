@@ -3,6 +3,10 @@ import { RpcResponse_parse } from '../RpcResponse/parse.js'
 import { Provider_IsUndefinedError } from './errors.js'
 import type { Provider } from './types.js'
 
+export function Provider_from<const provider extends Provider | unknown>(
+  provider: provider | Provider,
+): Provider
+
 /**
  * Instantiates an [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) {@link ox#Provider.Provider}
  * from an arbitrary [EIP-1193 Provider](https://eips.ethereum.org/EIPS/eip-1193) interface.
@@ -117,9 +121,6 @@ import type { Provider } from './types.js'
  * @param provider - The EIP-1193 provider to convert.
  * @returns An typed EIP-1193 Provider.
  */
-export function Provider_from<const provider extends Provider | unknown>(
-  provider: provider | Provider,
-): Provider
 export function Provider_from(provider: Provider): Provider {
   if (!provider) throw new Provider_IsUndefinedError()
   return {
