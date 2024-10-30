@@ -28,7 +28,10 @@ export type Hex = `0x${string}`
  * @param value - The value to assert.
  * @param options - Options.
  */
-export function assert(value: unknown, options: assert.Options = {}) {
+export function assert(
+  value: unknown,
+  options: assert.Options = {},
+): asserts value is Hex {
   const { strict = true } = options
   if (!value) throw new InvalidHexTypeError(value)
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)

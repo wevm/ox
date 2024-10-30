@@ -79,7 +79,7 @@ test('options: request', async () => {
   const gas = RpcResponse.parse(raw, {
     request,
   })
-  assertType<Hex>(gas)
+  assertType<Hex.Hex>(gas)
 
   expect(gas).toMatchInlineSnapshot(`"0x5248"`)
 })
@@ -110,7 +110,7 @@ test('options: safe', async () => {
       request,
       safe: true,
     })
-    assertType<RpcResponse.RpcResponse<Hex>>(response)
+    assertType<RpcResponse.RpcResponse<Hex.Hex>>(response)
 
     expect(response).toMatchInlineSnapshot(`
       {
