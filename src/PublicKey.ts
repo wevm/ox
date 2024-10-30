@@ -128,7 +128,7 @@ compress.parseError = (error: unknown) =>
   error as compress.ErrorType
 
 /**
- * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -203,7 +203,7 @@ deserialize.parseError = (error: unknown) =>
   error as deserialize.ErrorType
 
 /**
- * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#(Bytes:namespace).(Bytes:type)}, or {@link ox#(Hex:type)}.
+ * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
@@ -297,7 +297,7 @@ export type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
 }
 
 /**
- * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash

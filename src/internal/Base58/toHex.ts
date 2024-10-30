@@ -63,7 +63,7 @@ const alphabet = /* __PURE__ */ Object.freeze<Record<string, bigint>>({
 })
 
 /**
- * Decodes a Base58-encoded string to {@link ox#(Hex:type)}.
+ * Decodes a Base58-encoded string to {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash

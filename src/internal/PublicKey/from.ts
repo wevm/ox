@@ -15,7 +15,7 @@ export type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
 }
 
 /**
- * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#(Bytes:namespace).(Bytes:type)}, or {@link ox#(Hex:type)}.
+ * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash

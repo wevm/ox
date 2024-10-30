@@ -14,7 +14,7 @@ import type {
 import { Signature_vToYParity } from './vToYParity.js'
 
 /**
- * Instantiates a typed {@link ox#Signature.Signature} object from a {@link ox#Signature.Signature}, {@link ox#Signature.Legacy}, {@link ox#(Bytes:namespace).(Bytes:type)}, or {@link ox#(Hex:type)}.
+ * Instantiates a typed {@link ox#Signature.Signature} object from a {@link ox#Signature.Signature}, {@link ox#Signature.Legacy}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash

@@ -5,7 +5,7 @@ import { type Cursor, createCursor } from '../cursor.js'
 import type { RecursiveArray } from '../types.js'
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -15,7 +15,7 @@ import type { RecursiveArray } from '../types.js'
  * ```
  *
  * @param value - The value to decode.
- * @returns The decoded {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @returns The decoded {@link ox#Bytes.Bytes} value.
  */
 export function Rlp_toBytes(
   value: Bytes.Bytes | Hex.Hex,
@@ -32,7 +32,7 @@ Rlp_toBytes.parseError = (error: unknown) =>
   error as Rlp_toBytes.ErrorType
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#(Hex:type)} value.
+ * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -42,7 +42,7 @@ Rlp_toBytes.parseError = (error: unknown) =>
  * ```
  *
  * @param value - The value to decode.
- * @returns The decoded {@link ox#(Hex:type)} value.
+ * @returns The decoded {@link ox#Hex.Hex} value.
  */
 export function Rlp_toHex(
   value: Bytes.Bytes | Hex.Hex,

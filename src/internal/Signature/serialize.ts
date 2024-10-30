@@ -5,7 +5,7 @@ import { Signature_assert } from './assert.js'
 import type { Signature } from './types.js'
 
 /**
- * Serializes a {@link ox#Signature.Signature} to {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Serializes a {@link ox#Signature.Signature} to {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash

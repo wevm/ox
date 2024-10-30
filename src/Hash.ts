@@ -6,7 +6,7 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 
 /**
- * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value.
+ * Calculates the [Keccak256](https://en.wikipedia.org/wiki/SHA-3) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
  * This function is a re-export of `keccak_256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
  *
@@ -38,7 +38,7 @@ import * as Hex from './Hex.js'
  * // @log: Uint8Array [...]
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  * @param options - Options.
  * @returns Keccak256 hash.
  */
@@ -77,7 +77,7 @@ export declare namespace keccak256 {
 keccak256.parseError = (error: unknown) => error as keccak256.ErrorType
 
 /**
- * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value.
+ * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
  * This function is a re-export of `ripemd160` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
  *
@@ -89,7 +89,7 @@ keccak256.parseError = (error: unknown) => error as keccak256.ErrorType
  * // '0x226821c2f5423e11fe9af68bd285c249db2e4b5a'
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  * @param options - Options.
  * @returns Ripemd160 hash.
  */
@@ -128,7 +128,7 @@ export declare namespace ripemd160 {
 ripemd160.parseError = (error: unknown) => error as ripemd160.ErrorType
 
 /**
- * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value.
+ * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
  * This function is a re-export of `sha256` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
  *
@@ -140,7 +140,7 @@ ripemd160.parseError = (error: unknown) => error as ripemd160.ErrorType
  * // '0x5f78c33274e43fa9de5659265c1d917e25c03722dcb0b8d27db8d5feaa813953'
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} or {@link ox#(Hex:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  * @param options - Options.
  * @returns Sha256 hash.
  */

@@ -3,7 +3,7 @@ import type * as Errors from '../../Errors.js'
 import { Base58_toHex } from './toHex.js'
 
 /**
- * Decodes a Base58-encoded string to a {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Decodes a Base58-encoded string to a {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash

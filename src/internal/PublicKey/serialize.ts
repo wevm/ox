@@ -5,7 +5,7 @@ import { PublicKey_assert } from './assert.js'
 import type { PublicKey } from './types.js'
 
 /**
- * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash

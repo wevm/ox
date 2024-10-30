@@ -13,7 +13,7 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 export type Hex = `0x${string}`
 
 /**
- * Asserts if the given value is {@link ox#(Hex:type)}.
+ * Asserts if the given value is {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
@@ -40,7 +40,7 @@ export function assert(value: unknown, options: assert.Options = {}) {
 
 export declare namespace assert {
   type Options = {
-    /** Checks if the {@link ox#(Hex:type)} value contains invalid hexadecimal characters. @default true */
+    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
   }
 
@@ -54,7 +54,7 @@ export declare namespace assert {
 assert.parseError = (error: unknown) => error as assert.ErrorType
 
 /**
- * Concatenates two or more {@link ox#(Hex:type)}.
+ * Concatenates two or more {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
@@ -64,8 +64,8 @@ assert.parseError = (error: unknown) => error as assert.ErrorType
  * // @log: '0x123456'
  * ```
  *
- * @param values - The {@link ox#(Hex:type)} values to concatenate.
- * @returns The concatenated {@link ox#(Hex:type)} value.
+ * @param values - The {@link ox#Hex.Hex} values to concatenate.
+ * @returns The concatenated {@link ox#Hex.Hex} value.
  */
 export function concat(...values: readonly Hex[]): Hex {
   return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
@@ -79,7 +79,7 @@ export declare namespace concat {
 concat.parseError = (error: unknown) => error as concat.ErrorType
 
 /**
- * Instantiates a {@link ox#(Hex:type)} value from a hex string or {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * Instantiates a {@link ox#Hex.Hex} value from a hex string or {@link ox#Bytes.Bytes} value.
  *
  * :::tip
  *
@@ -104,8 +104,8 @@ concat.parseError = (error: unknown) => error as concat.ErrorType
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
- * @param value - The {@link ox#(Bytes:namespace).(Bytes:type)} value to encode.
- * @returns The encoded {@link ox#(Hex:type)} value.
+ * @param value - The {@link ox#Bytes.Bytes} value to encode.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function from(value: Hex | Bytes.Bytes | readonly number[]): Hex {
   if (value instanceof Uint8Array) return fromBytes(value)
@@ -126,7 +126,7 @@ export declare namespace from {
 from.parseError = (error: unknown) => error as from.ErrorType
 
 /**
- * Encodes a boolean into a {@link ox#(Hex:type)} value.
+ * Encodes a boolean into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -144,7 +144,7 @@ from.parseError = (error: unknown) => error as from.ErrorType
  *
  * @param value - The boolean value to encode.
  * @param options - Options.
- * @returns The encoded {@link ox#(Hex:type)} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function fromBoolean(
   value: boolean,
@@ -175,7 +175,7 @@ fromBoolean.parseError = (error: unknown) =>
   error as fromBoolean.ErrorType
 
 /**
- * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} value into a {@link ox#(Hex:type)} value.
+ * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -185,9 +185,9 @@ fromBoolean.parseError = (error: unknown) =>
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
- * @param value - The {@link ox#(Bytes:namespace).(Bytes:type)} value to encode.
+ * @param value - The {@link ox#Bytes.Bytes} value to encode.
  * @param options - Options.
- * @returns The encoded {@link ox#(Hex:type)} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function fromBytes(
   value: Bytes.Bytes,
@@ -220,7 +220,7 @@ export declare namespace fromBytes {
 fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
 
 /**
- * Encodes a number or bigint into a {@link ox#(Hex:type)} value.
+ * Encodes a number or bigint into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -235,7 +235,7 @@ fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
  *
  * @param value - The number or bigint value to encode.
  * @param options - Options.
- * @returns The encoded {@link ox#(Hex:type)} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function fromNumber(
   value: number | bigint,
@@ -301,7 +301,7 @@ fromNumber.parseError = (error: unknown) =>
   error as fromNumber.ErrorType
 
 /**
- * Encodes a string into a {@link ox#(Hex:type)} value.
+ * Encodes a string into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -315,7 +315,7 @@ fromNumber.parseError = (error: unknown) =>
  *
  * @param value - The string value to encode.
  * @param options - Options.
- * @returns The encoded {@link ox#(Hex:type)} value.
+ * @returns The encoded {@link ox#Hex.Hex} value.
  */
 export function fromString(
   value: string,
@@ -338,7 +338,7 @@ fromString.parseError = (error: unknown) =>
   error as fromString.ErrorType
 
 /**
- * Checks if two {@link ox#(Hex:type)} values are equal.
+ * Checks if two {@link ox#Hex.Hex} values are equal.
  *
  * @example
  * ```ts twoslash
@@ -351,9 +351,9 @@ fromString.parseError = (error: unknown) =>
  * // @log: false
  * ```
  *
- * @param hexA - The first {@link ox#(Hex:type)} value.
- * @param hexB - The second {@link ox#(Hex:type)} value.
- * @returns `true` if the two {@link ox#(Hex:type)} values are equal, `false` otherwise.
+ * @param hexA - The first {@link ox#Hex.Hex} value.
+ * @param hexB - The second {@link ox#Hex.Hex} value.
+ * @returns `true` if the two {@link ox#Hex.Hex} values are equal, `false` otherwise.
  */
 export function isEqual(hexA: Hex, hexB: Hex) {
   return equalBytes(Bytes.fromHex(hexA), Bytes.fromHex(hexB))
@@ -367,7 +367,7 @@ export declare namespace isEqual {
 isEqual.parseError = (error: unknown) => error as isEqual.ErrorType
 
 /**
- * Pads a {@link ox#(Hex:type)} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link ox#Hex.Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts twoslash
@@ -377,9 +377,9 @@ isEqual.parseError = (error: unknown) => error as isEqual.ErrorType
  * // @log: '0x00001234'
  * ```
  *
- * @param value - The {@link ox#(Hex:type)} value to pad.
+ * @param value - The {@link ox#Hex.Hex} value to pad.
  * @param size - The size (in bytes) of the output hex value.
- * @returns The padded {@link ox#(Hex:type)} value.
+ * @returns The padded {@link ox#Hex.Hex} value.
  */
 export function padLeft(
   value: Hex,
@@ -397,7 +397,7 @@ export declare namespace padLeft {
 padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
 
 /**
- * Pads a {@link ox#(Hex:type)} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link ox#Hex.Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts
@@ -407,9 +407,9 @@ padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
  * // @log: '0x12340000'
  * ```
  *
- * @param value - The {@link ox#(Hex:type)} value to pad.
+ * @param value - The {@link ox#Hex.Hex} value to pad.
  * @param size - The size (in bytes) of the output hex value.
- * @returns The padded {@link ox#(Hex:type)} value.
+ * @returns The padded {@link ox#Hex.Hex} value.
  */
 export function padRight(
   value: Hex,
@@ -427,7 +427,7 @@ export declare namespace padRight {
 padRight.parseError = (error: unknown) => error as padRight.ErrorType
 
 /**
- * Generates a random {@link ox#(Hex:type)} value of the specified length.
+ * Generates a random {@link ox#Hex.Hex} value of the specified length.
  *
  * @example
  * ```ts twoslash
@@ -437,7 +437,7 @@ padRight.parseError = (error: unknown) => error as padRight.ErrorType
  * // @log: '0x...'
  * ```
  *
- * @returns Random {@link ox#(Hex:type)} value.
+ * @returns Random {@link ox#Hex.Hex} value.
  */
 export function random(length: number): Hex {
   return fromBytes(Bytes.random(length))
@@ -451,7 +451,7 @@ export declare namespace random {
 random.parseError = (error: unknown) => error as random.ErrorType
 
 /**
- * Returns a section of a {@link ox#(Bytes:namespace).(Bytes:type)} value given a start/end bytes offset.
+ * Returns a section of a {@link ox#Bytes.Bytes} value given a start/end bytes offset.
  *
  * @example
  * ```ts twoslash
@@ -461,11 +461,11 @@ random.parseError = (error: unknown) => error as random.ErrorType
  * // @log: '0x234567'
  * ```
  *
- * @param value - The {@link ox#(Hex:type)} value to slice.
+ * @param value - The {@link ox#Hex.Hex} value to slice.
  * @param start - The start offset (in bytes).
  * @param end - The end offset (in bytes).
  * @param options - Options.
- * @returns The sliced {@link ox#(Hex:type)} value.
+ * @returns The sliced {@link ox#Hex.Hex} value.
  */
 export function slice(
   value: Hex,
@@ -498,7 +498,7 @@ export declare namespace slice {
 slice.parseError = (error: unknown) => error as slice.ErrorType
 
 /**
- * Retrieves the size of a {@link ox#(Hex:type)} value (in bytes).
+ * Retrieves the size of a {@link ox#Hex.Hex} value (in bytes).
  *
  * @example
  * ```ts twoslash
@@ -508,8 +508,8 @@ slice.parseError = (error: unknown) => error as slice.ErrorType
  * // @log: 4
  * ```
  *
- * @param value - The {@link ox#(Hex:type)} value to get the size of.
- * @returns The size of the {@link ox#(Hex:type)} value (in bytes).
+ * @param value - The {@link ox#Hex.Hex} value to get the size of.
+ * @returns The size of the {@link ox#Hex.Hex} value (in bytes).
  */
 export function size(value: Hex): number {
   return Math.ceil((value.length - 2) / 2)
@@ -523,7 +523,7 @@ export declare namespace size {
 size.parseError = (error: unknown) => error as size.ErrorType
 
 /**
- * Trims leading zeros from a {@link ox#(Hex:type)} value.
+ * Trims leading zeros from a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -533,8 +533,8 @@ size.parseError = (error: unknown) => error as size.ErrorType
  * // @log: '0xdeadbeef'
  * ```
  *
- * @param value - The {@link ox#(Hex:type)} value to trim.
- * @returns The trimmed {@link ox#(Hex:type)} value.
+ * @param value - The {@link ox#Hex.Hex} value to trim.
+ * @returns The trimmed {@link ox#Hex.Hex} value.
  */
 export function trimLeft(value: Hex): trimLeft.ReturnType {
   return trim(value, { dir: 'left' })
@@ -550,7 +550,7 @@ export declare namespace trimLeft {
 trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
 
 /**
- * Trims trailing zeros from a {@link ox#(Hex:type)} value.
+ * Trims trailing zeros from a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -560,8 +560,8 @@ trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
  * // @log: '0xdeadbeef'
  * ```
  *
- * @param value - The {@link ox#(Hex:type)} value to trim.
- * @returns The trimmed {@link ox#(Hex:type)} value.
+ * @param value - The {@link ox#Hex.Hex} value to trim.
+ * @returns The trimmed {@link ox#Hex.Hex} value.
  */
 export function trimRight(value: Hex): trimRight.ReturnType {
   return trim(value, { dir: 'right' })
@@ -577,7 +577,7 @@ export declare namespace trimRight {
 trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 
 /**
- * Decodes a {@link ox#(Hex:type)} value into a BigInt.
+ * Decodes a {@link ox#Hex.Hex} value into a BigInt.
  *
  * @example
  * ```ts twoslash
@@ -590,7 +590,7 @@ trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
  * // @log: 420n
  * ```
  *
- * @param hex - The {@link ox#(Hex:type)} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options - Options.
  * @returns The decoded BigInt.
  */
@@ -626,7 +626,7 @@ export declare namespace toBigInt {
 toBigInt.parseError = (error: unknown) => error as toBigInt.ErrorType
 
 /**
- * Decodes a {@link ox#(Hex:type)} value into a boolean.
+ * Decodes a {@link ox#Hex.Hex} value into a boolean.
  *
  * @example
  * ```ts twoslash
@@ -639,7 +639,7 @@ toBigInt.parseError = (error: unknown) => error as toBigInt.ErrorType
  * // @log: true
  * ```
  *
- * @param hex - The {@link ox#(Hex:type)} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options - Options.
  * @returns The decoded boolean.
  */
@@ -671,7 +671,7 @@ export declare namespace toBoolean {
 toBoolean.parseError = (error: unknown) => error as toBoolean.ErrorType
 
 /**
- * Decodes a {@link ox#(Hex:type)} value into a {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Decodes a {@link ox#Hex.Hex} value into a {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -681,9 +681,9 @@ toBoolean.parseError = (error: unknown) => error as toBoolean.ErrorType
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33])
  * ```
  *
- * @param hex - The {@link ox#(Hex:type)} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options - Options.
- * @returns The decoded {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * @returns The decoded {@link ox#Bytes.Bytes}.
  */
 export function toBytes(hex: Hex, options: toBytes.Options = {}): Bytes.Bytes {
   return Bytes.fromHex(hex, options)
@@ -702,7 +702,7 @@ export declare namespace toBytes {
 toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
 
 /**
- * Decodes a {@link ox#(Hex:type)} value into a number.
+ * Decodes a {@link ox#Hex.Hex} value into a number.
  *
  * @example
  * ```ts twoslash
@@ -715,7 +715,7 @@ toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
  * // @log: 420
  * ```
  *
- * @param hex - The {@link ox#(Hex:type)} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options - Options.
  * @returns The decoded number.
  */
@@ -735,7 +735,7 @@ export declare namespace toNumber {
 toNumber.parseError = (error: unknown) => error as toNumber.ErrorType
 
 /**
- * Decodes a {@link ox#(Hex:type)} value into a string.
+ * Decodes a {@link ox#Hex.Hex} value into a string.
  *
  * @example
  * ```ts twoslash
@@ -750,7 +750,7 @@ toNumber.parseError = (error: unknown) => error as toNumber.ErrorType
  * // @log: 'Hello world'
  * ```
  *
- * @param hex - The {@link ox#(Hex:type)} value to decode.
+ * @param hex - The {@link ox#Hex.Hex} value to decode.
  * @param options - Options.
  * @returns The decoded string.
  */
@@ -782,7 +782,7 @@ export declare namespace toString {
 toString.parseError = (error: unknown) => error as toString.ErrorType
 
 /**
- * Checks if the given value is {@link ox#(Hex:type)}.
+ * Checks if the given value is {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
@@ -797,7 +797,7 @@ toString.parseError = (error: unknown) => error as toString.ErrorType
  *
  * @param value - The value to check.
  * @param options - Options.
- * @returns `true` if the value is a {@link ox#(Hex:type)}, `false` otherwise.
+ * @returns `true` if the value is a {@link ox#Hex.Hex}, `false` otherwise.
  */
 export function validate(
   value: unknown,
@@ -814,7 +814,7 @@ export function validate(
 
 export declare namespace validate {
   type Options = {
-    /** Checks if the {@link ox#(Hex:type)} value contains invalid hexadecimal characters. @default true */
+    /** Checks if the {@link ox#Hex.Hex} value contains invalid hexadecimal characters. @default true */
     strict?: boolean | undefined
   }
 

@@ -9,7 +9,7 @@ const lookup = /*#__PURE__*/ Object.fromEntries(
 )
 
 /**
- * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} to a Base64-encoded string (with optional padding and/or URL-safe characters).
+ * Encodes a {@link ox#Bytes.Bytes} to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
  * @example
  * ```ts twoslash

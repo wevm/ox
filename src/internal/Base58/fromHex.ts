@@ -3,7 +3,7 @@ import type { Hex } from '../../Hex.js'
 import { Base58_from } from './from.js'
 
 /**
- * Encodes a {@link ox#(Hex:type)} to a Base58-encoded string.
+ * Encodes a {@link ox#Hex.Hex} to a Base58-encoded string.
  *
  * @example
  * ```ts twoslash

@@ -43,7 +43,7 @@ import type { AbiError, AbiError_Name } from './types.js'
  * @example
  * ### Extracting by Selector
  *
- * ABI Errors can be extract by their selector when {@link ox#(Hex:type)} is provided to `name`.
+ * ABI Errors can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
  *
  * ```ts twoslash
  * import { Abi, AbiError } from 'ox'

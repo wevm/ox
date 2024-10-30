@@ -44,7 +44,7 @@ import type {
  * @example
  * ### Extracting by Selector
  *
- * ABI Items can be extract by their selector when {@link ox#(Hex:type)} is provided to `name`.
+ * ABI Items can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
  *
  * ```ts twoslash
  * import { Abi, AbiItem } from 'ox'

@@ -8,7 +8,7 @@ import type { Compute } from '../types.js'
  *
  * - a `privateKey` of type [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey)
  *
- * - a `publicKey` of type {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)}
+ * - a `publicKey` of type {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}
  *
  * @example
  * ```ts twoslash

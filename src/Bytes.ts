@@ -10,7 +10,7 @@ const encoder = /*#__PURE__*/ new TextEncoder()
 export type Bytes = Uint8Array
 
 /**
- * Asserts if the given value is {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Asserts if the given value is {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -41,7 +41,7 @@ export declare namespace assert {
 assert.parseError = (error: unknown) => error as assert.ErrorType
 
 /**
- * Concatenates two or more {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Concatenates two or more {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -56,7 +56,7 @@ assert.parseError = (error: unknown) => error as assert.ErrorType
  * ```
  *
  * @param values - Values to concatenate.
- * @returns Concatenated {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * @returns Concatenated {@link ox#Bytes.Bytes}.
  */
 export function concat(...values: readonly Bytes[]): Bytes {
   let length = 0
@@ -80,7 +80,7 @@ export declare namespace concat {
 concat.parseError = (error: unknown) => error as concat.ErrorType
 
 /**
- * Instantiates a {@link ox#(Bytes:namespace).(Bytes:type)} value from a `Uint8Array`, a hex string, or an array of unsigned 8-bit integers.
+ * Instantiates a {@link ox#Bytes.Bytes} value from a `Uint8Array`, a hex string, or an array of unsigned 8-bit integers.
  *
  * :::tip
  *
@@ -107,7 +107,7 @@ concat.parseError = (error: unknown) => error as concat.ErrorType
  * ```
  *
  * @param value - Value to convert.
- * @returns A {@link ox#(Bytes:namespace).(Bytes:type)} instance.
+ * @returns A {@link ox#Bytes.Bytes} instance.
  */
 export function from(value: Hex.Hex | Bytes | readonly number[]): Bytes {
   if (value instanceof Uint8Array) return value
@@ -127,7 +127,7 @@ from.parseError = (error: unknown) =>
   error as from.ErrorType
 
 /**
- * Converts an array of unsigned 8-bit integers into {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Converts an array of unsigned 8-bit integers into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -138,7 +138,7 @@ from.parseError = (error: unknown) =>
  * ```
  *
  * @param value - Value to convert.
- * @returns A {@link ox#(Bytes:namespace).(Bytes:type)} instance.
+ * @returns A {@link ox#Bytes.Bytes} instance.
  */
 export function fromArray(value: readonly number[] | Uint8Array): Bytes {
   return value instanceof Uint8Array ? value : new Uint8Array(value)
@@ -153,7 +153,7 @@ fromArray.parseError = (error: unknown) =>
   error as fromArray.ErrorType
 
 /**
- * Encodes a boolean value into {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Encodes a boolean value into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -173,7 +173,7 @@ fromArray.parseError = (error: unknown) =>
  *
  * @param value - Boolean value to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function fromBoolean(value: boolean, options: fromBoolean.Options = {}) {
   const { size } = options
@@ -203,7 +203,7 @@ fromBoolean.parseError = (error: unknown) =>
   error as fromBoolean.ErrorType
 
 /**
- * Encodes a {@link ox#(Hex:type)} value into {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Encodes a {@link ox#Hex.Hex} value into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -221,9 +221,9 @@ fromBoolean.parseError = (error: unknown) =>
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
  *
- * @param value - {@link ox#(Hex:type)} value to encode.
+ * @param value - {@link ox#Hex.Hex} value to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
@@ -270,7 +270,7 @@ export declare namespace fromHex {
 fromHex.parseError = (error: unknown) => error as fromHex.ErrorType
 
 /**
- * Encodes a number value into {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Encodes a number value into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -290,7 +290,7 @@ fromHex.parseError = (error: unknown) => error as fromHex.ErrorType
  *
  * @param value - Number value to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function fromNumber(
   value: bigint | number,
@@ -314,7 +314,7 @@ fromNumber.parseError = (error: unknown) =>
   error as fromNumber.ErrorType
 
 /**
- * Encodes a string into {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Encodes a string into {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -334,7 +334,7 @@ fromNumber.parseError = (error: unknown) =>
  *
  * @param value - String to encode.
  * @param options - Encoding options.
- * @returns Encoded {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * @returns Encoded {@link ox#Bytes.Bytes}.
  */
 export function fromString(
   value: string,
@@ -367,7 +367,7 @@ fromString.parseError = (error: unknown) =>
   error as fromString.ErrorType
 
 /**
- * Checks if two {@link ox#(Bytes:namespace).(Bytes:type)} values are equal.
+ * Checks if two {@link ox#Bytes.Bytes} values are equal.
  *
  * @example
  * ```ts twoslash
@@ -380,8 +380,8 @@ fromString.parseError = (error: unknown) =>
  * // @log: false
  * ```
  *
- * @param bytesA - First {@link ox#(Bytes:namespace).(Bytes:type)} value.
- * @param bytesB - Second {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @param bytesA - First {@link ox#Bytes.Bytes} value.
+ * @param bytesB - Second {@link ox#Bytes.Bytes} value.
  * @returns `true` if the two values are equal, otherwise `false`.
  */
 export function isEqual(bytesA: Bytes, bytesB: Bytes) {
@@ -396,7 +396,7 @@ export declare namespace isEqual {
 isEqual.parseError = (error: unknown) => error as isEqual.ErrorType
 
 /**
- * Pads a {@link ox#(Bytes:namespace).(Bytes:type)} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link ox#Bytes.Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts twoslash
@@ -406,9 +406,9 @@ isEqual.parseError = (error: unknown) => error as isEqual.ErrorType
  * // @log: Uint8Array([0, 0, 0, 1])
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} value to pad.
- * @param size - Size to pad the {@link ox#(Bytes:namespace).(Bytes:type)} value to.
- * @returns Padded {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} value to pad.
+ * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
+ * @returns Padded {@link ox#Bytes.Bytes} value.
  */
 export function padLeft(
   value: Bytes,
@@ -426,7 +426,7 @@ export declare namespace padLeft {
 padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
 
 /**
- * Pads a {@link ox#(Bytes:namespace).(Bytes:type)} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
+ * Pads a {@link ox#Bytes.Bytes} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
  * @example
  * ```ts twoslash
@@ -436,9 +436,9 @@ padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
  * // @log: Uint8Array([1, 0, 0, 0])
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} value to pad.
- * @param size - Size to pad the {@link ox#(Bytes:namespace).(Bytes:type)} value to.
- * @returns Padded {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} value to pad.
+ * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
+ * @returns Padded {@link ox#Bytes.Bytes} value.
  */
 export function padRight(
   value: Bytes,
@@ -456,7 +456,7 @@ export declare namespace padRight {
 padRight.parseError = (error: unknown) => error as padRight.ErrorType
 
 /**
- * Generates random {@link ox#(Bytes:namespace).(Bytes:type)} of the specified length.
+ * Generates random {@link ox#Bytes.Bytes} of the specified length.
  *
  * @example
  * ```ts twoslash
@@ -466,8 +466,8 @@ padRight.parseError = (error: unknown) => error as padRight.ErrorType
  * // @log: Uint8Array([... x32])
  * ```
  *
- * @param length - Length of the random {@link ox#(Bytes:namespace).(Bytes:type)} to generate.
- * @returns Random {@link ox#(Bytes:namespace).(Bytes:type)} of the specified length.
+ * @param length - Length of the random {@link ox#Bytes.Bytes} to generate.
+ * @returns Random {@link ox#Bytes.Bytes} of the specified length.
  */
 export function random(length: number): Bytes {
   return crypto.getRandomValues(new Uint8Array(length))
@@ -481,7 +481,7 @@ export declare namespace random {
 random.parseError = (error: unknown) => error as random.ErrorType
 
 /**
- * Retrieves the size of a {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * Retrieves the size of a {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -491,8 +491,8 @@ random.parseError = (error: unknown) => error as random.ErrorType
  * // @log: 4
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} value.
- * @returns Size of the {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} value.
+ * @returns Size of the {@link ox#Bytes.Bytes} value.
  */
 export function size(value: Bytes): number {
   return value.length
@@ -506,7 +506,7 @@ export declare namespace size {
 size.parseError = (error: unknown) => error as size.ErrorType
 
 /**
- * Returns a section of a {@link ox#(Bytes:namespace).(Bytes:type)} value given a start/end bytes offset.
+ * Returns a section of a {@link ox#Bytes.Bytes} value given a start/end bytes offset.
  *
  * @example
  * ```ts twoslash
@@ -520,11 +520,11 @@ size.parseError = (error: unknown) => error as size.ErrorType
  * // @log: Uint8Array([2, 3, 4])
  * ```
  *
- * @param value - The {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @param value - The {@link ox#Bytes.Bytes} value.
  * @param start - Start offset.
  * @param end - End offset.
  * @param options - Slice options.
- * @returns Sliced {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @returns Sliced {@link ox#Bytes.Bytes} value.
  */
 export function slice(
   value: Bytes,
@@ -555,7 +555,7 @@ export declare namespace slice {
 slice.parseError = (error: unknown) => error as slice.ErrorType
 
 /**
- * Decodes a {@link ox#(Bytes:namespace).(Bytes:type)} into a bigint.
+ * Decodes a {@link ox#Bytes.Bytes} into a bigint.
  *
  * @example
  * ```ts
@@ -565,7 +565,7 @@ slice.parseError = (error: unknown) => error as slice.ErrorType
  * // @log: 420n
  * ```
  *
- * @param bytes - The {@link ox#(Bytes:namespace).(Bytes:type)} to decode.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
  * @param options - Decoding options.
  * @returns Decoded bigint.
  */
@@ -595,7 +595,7 @@ toBigInt.parseError = (error: unknown) =>
   error as toBigInt.ErrorType
 
 /**
- * Decodes a {@link ox#(Bytes:namespace).(Bytes:type)} into a boolean.
+ * Decodes a {@link ox#Bytes.Bytes} into a boolean.
  *
  * @example
  * ```ts
@@ -605,7 +605,7 @@ toBigInt.parseError = (error: unknown) =>
  * // @log: true
  * ```
  *
- * @param bytes - The {@link ox#(Bytes:namespace).(Bytes:type)} to decode.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
  * @param options - Decoding options.
  * @returns Decoded boolean.
  */
@@ -641,7 +641,7 @@ toBoolean.parseError = (error: unknown) =>
   error as toBoolean.ErrorType
 
 /**
- * Encodes a {@link ox#(Bytes:namespace).(Bytes:type)} value into a {@link ox#(Hex:type)} value.
+ * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
  *
  * @example
  * ```ts twoslash
@@ -651,9 +651,9 @@ toBoolean.parseError = (error: unknown) =>
  * // '0x48656c6c6f20576f726c6421'
  * ```
  *
- * @param value - The {@link ox#(Bytes:namespace).(Bytes:type)} to decode.
+ * @param value - The {@link ox#Bytes.Bytes} to decode.
  * @param options - Options.
- * @returns Decoded {@link ox#(Hex:type)} value.
+ * @returns Decoded {@link ox#Hex.Hex} value.
  */
 export function toHex(value: Bytes, options: toHex.Options = {}): Hex.Hex {
   return Hex.fromBytes(value, options)
@@ -672,7 +672,7 @@ export declare namespace toHex {
 toHex.parseError = (error: unknown) => error as toHex.ErrorType
 
 /**
- * Decodes a {@link ox#(Bytes:namespace).(Bytes:type)} into a number.
+ * Decodes a {@link ox#Bytes.Bytes} into a number.
  *
  * @example
  * ```ts twoslash
@@ -708,7 +708,7 @@ toNumber.parseError = (error: unknown) =>
   error as toNumber.ErrorType
 
 /**
- * Decodes a {@link ox#(Bytes:namespace).(Bytes:type)} into a string.
+ * Decodes a {@link ox#Bytes.Bytes} into a string.
  *
  * @example
  * ```ts twoslash
@@ -718,7 +718,7 @@ toNumber.parseError = (error: unknown) =>
  * // @log: 'Hello world'
  * ```
  *
- * @param bytes - The {@link ox#(Bytes:namespace).(Bytes:type)} to decode.
+ * @param bytes - The {@link ox#Bytes.Bytes} to decode.
  * @param options - Options.
  * @returns Decoded string.
  */
@@ -750,7 +750,7 @@ toString.parseError = (error: unknown) =>
   error as toString.ErrorType
 
 /**
- * Trims leading zeros from a {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * Trims leading zeros from a {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -760,8 +760,8 @@ toString.parseError = (error: unknown) =>
  * // @log: Uint8Array([1, 2, 3])
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} value.
- * @returns Trimmed {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} value.
+ * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
 export function trimLeft(value: Bytes): Bytes {
   return trim(value, { dir: 'left' })
@@ -775,7 +775,7 @@ export declare namespace trimLeft {
 trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
 
 /**
- * Trims trailing zeros from a {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * Trims trailing zeros from a {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
@@ -785,8 +785,8 @@ trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
  * // @log: Uint8Array([1, 2, 3])
  * ```
  *
- * @param value - {@link ox#(Bytes:namespace).(Bytes:type)} value.
- * @returns Trimmed {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * @param value - {@link ox#Bytes.Bytes} value.
+ * @returns Trimmed {@link ox#Bytes.Bytes} value.
  */
 export function trimRight(value: Bytes): Bytes {
   return trim(value, { dir: 'right' })
@@ -800,7 +800,7 @@ export declare namespace trimRight {
 trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 
 /**
- * Checks if the given value is {@link ox#(Bytes:namespace).(Bytes:type)}.
+ * Checks if the given value is {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -814,7 +814,7 @@ trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
  * ```
  *
  * @param value - Value to check.
- * @returns `true` if the value is {@link ox#(Bytes:namespace).(Bytes:type)}, otherwise `false`.
+ * @returns `true` if the value is {@link ox#Bytes.Bytes}, otherwise `false`.
  */
 export function validate(value: unknown): value is Bytes {
   try {

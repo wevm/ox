@@ -5,7 +5,7 @@ import { PublicKey_InvalidSerializedSizeError } from './errors.js'
 import type { PublicKey } from './types.js'
 
 /**
- * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#(Hex:type)} or {@link ox#(Bytes:namespace).(Bytes:type)} value.
+ * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes} value.
  *
  * @example
  * ```ts twoslash
