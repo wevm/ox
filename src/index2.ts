@@ -2319,7 +2319,7 @@ export * as TransactionEip7702 from './TransactionEip7702.js'
  *
  * @category Transaction Envelopes
  */
-export { TransactionEnvelope } from './TransactionEnvelope.js'
+export * as TransactionEnvelope from './TransactionEnvelope.js'
 
 /**
  * Utility functions for working

@@ -1,7 +1,7 @@
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Signature } from './Signature.js'
-import { TransactionEnvelope } from './TransactionEnvelope.js'
+import * as TransactionEnvelope from './TransactionEnvelope.js'
 import { AccessList_fromTupleList } from './internal/AccessList/fromTupleList.js'
 import { AccessList_toTupleList } from './internal/AccessList/toTupleList.js'
 import type { AccessList } from './internal/AccessList/types.js'

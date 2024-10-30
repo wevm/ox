@@ -1,7 +1,7 @@
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Signature } from './Signature.js'
-import { TransactionEnvelope } from './TransactionEnvelope.js'
+import * as TransactionEnvelope from './TransactionEnvelope.js'
 import { Address_assert } from './internal/Address/assert.js'
 import { Hash_keccak256 } from './internal/Hash/keccak256.js'
 import { Rlp_fromHex } from './internal/Rlp/from.js'

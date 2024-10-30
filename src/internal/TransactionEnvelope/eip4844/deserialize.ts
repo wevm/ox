@@ -1,6 +1,6 @@
 import type * as Errors from '../../../Errors.js'
 import * as Hex from '../../../Hex.js'
-import { TransactionEnvelope } from '../../../TransactionEnvelope.js'
+import * as TransactionEnvelope from '../../../TransactionEnvelope.js'
 import { AccessList_fromTupleList } from '../../AccessList/fromTupleList.js'
 import { Blobs_toSidecars } from '../../Blobs/toSidecars.js'
 import { Rlp_toHex } from '../../Rlp/to.js'
