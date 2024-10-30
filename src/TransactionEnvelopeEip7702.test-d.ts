@@ -18,7 +18,7 @@ test('default', () => {
     }>()
     expectTypeOf(
       envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelope>()
+    ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelopeEip7702>()
   }
 
   {
@@ -27,7 +27,7 @@ test('default', () => {
     )
     expectTypeOf(
       envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelope>()
+    ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelopeEip7702>()
   }
 
   {
@@ -52,7 +52,7 @@ test('default', () => {
     }>()
     expectTypeOf(
       envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelope>()
+    ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelopeEip7702>()
   }
 })
 
@@ -84,5 +84,5 @@ test('options: signature', () => {
   }>()
   expectTypeOf(
     envelope,
-  ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelope>()
+  ).toMatchTypeOf<TransactionEnvelopeEip7702.TransactionEnvelopeEip7702>()
 })
