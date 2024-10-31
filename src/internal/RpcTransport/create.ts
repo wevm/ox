@@ -10,7 +10,7 @@ import type { RpcTransport, RpcTransport_Options } from './types.js'
 export function RpcTransport_create<
   options extends Record<string, unknown> = {},
   raw extends boolean = false,
-  schema extends RpcSchema.Generic = RpcSchema.All,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
 >(
   transport: RpcTransport_create.Transport<options>,
   options_root: RpcTransport_create.Options<raw, schema> = {},
@@ -41,7 +41,7 @@ export declare namespace RpcTransport_create {
 
   type Options<
     raw extends boolean = false,
-    schema extends RpcSchema.Generic = RpcSchema.All,
+    schema extends RpcSchema.Generic = RpcSchema.Default,
   > = RpcTransport_Options<raw, {}, schema>
 
   type ErrorType =

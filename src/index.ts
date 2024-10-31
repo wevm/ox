@@ -1654,6 +1654,8 @@ export * as Provider from './Provider.js'
  */
 export * as PublicKey from './PublicKey.js'
 
+export type { Register } from './internal/register.js'
+
 /**
  * Utility functions for encoding and decoding [Recursive Length Prefix](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) structures.
  *

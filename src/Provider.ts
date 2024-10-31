@@ -30,7 +30,7 @@ export type Provider<
     schema: infer schema extends RpcSchema.Generic
   }
     ? schema
-    : RpcSchema.All,
+    : RpcSchema.Default,
 > = Compute<
   {
     request: RequestFn<_schema>
@@ -155,14 +155,6 @@ createEmitter.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as createEmitter.ErrorType
 
-export function from<
-  const provider extends Provider | unknown,
-  options extends Options | undefined = undefined,
->(
-  provider: provider | Provider<{ schema: RpcSchema.Generic }>,
-  options?: options | Options,
-): Provider<options>
-
 /**
  * Instantiates an [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) {@link ox#Provider.Provider}
  * from an arbitrary [EIP-1193 Provider](https://eips.ethereum.org/EIPS/eip-1193) interface.
@@ -240,6 +232,45 @@ export function from<
  * ```
  *
  * @example
+ * ### Type-safe Custom Schemas
+ *
+ * It is possible to define your own type-safe schema by using the {@link ox#RpcSchema.(from:function)} type.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import 'ox/window'
+ * import { Provider, RpcSchema } from 'ox'
+ *
+ * const schema = RpcSchema.from<
+ *   | RpcSchema.Default
+ *   | {
+ *       Request: {
+ *         method: 'abe_foo',
+ *         params: [id: number],
+ *       }
+ *       ReturnType: string
+ *     }
+ *   | {
+ *       Request: {
+ *         method: 'abe_bar',
+ *         params: [id: string],
+ *       }
+ *       ReturnType: string
+ *     }
+ * >()
+ *
+ * const provider = Provider.from(window.ethereum, { schema })
+ *
+ * const blockNumber = await provider.request({ method: 'e' })
+ * //                                                    ^|
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
  * ### Instantiating a Provider with Events
  *
  * The example below demonstrates how to instantiate a Provider with your own EIP-1193 flavored event emitter.
@@ -277,6 +308,14 @@ export function from<
  * @param provider - The EIP-1193 provider to convert.
  * @returns An typed EIP-1193 Provider.
  */
+export function from<
+  const provider extends Provider | unknown,
+  options extends Options | undefined = undefined,
+>(
+  provider: provider | Provider<{ schema: RpcSchema.Generic }>,
+  options?: options | Options,
+): Provider<options>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function from(provider: any, options: Options = {}): Provider<Options> {
   const { includeEvents = true } = options
   if (!provider) throw new IsUndefinedError()

@@ -31,7 +31,7 @@ import type {
  */
 export function RpcTransport_fromHttp<
   safe extends boolean = false,
-  schema extends RpcSchema.Generic = RpcSchema.All,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
 >(
   url: string,
   options: RpcTransport_fromHttp.Options<safe, schema> = {},
@@ -109,7 +109,7 @@ export function RpcTransport_fromHttp<
 export declare namespace RpcTransport_fromHttp {
   type Options<
     raw extends boolean = false,
-    schema extends RpcSchema.Generic = RpcSchema.All,
+    schema extends RpcSchema.Generic = RpcSchema.Default,
   > = RpcTransport_Options<raw, RpcTransport_HttpOptions, schema>
 
   type ErrorType =

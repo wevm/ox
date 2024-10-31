@@ -23,7 +23,7 @@ export type Store<schema extends RpcSchema.Generic | undefined> = Compute<{
     parameters: Compute<
       RpcSchema.ExtractRequest<
         methodName,
-        schema extends RpcSchema.Generic ? schema : RpcSchema.All
+        schema extends RpcSchema.Generic ? schema : RpcSchema.Default
       >
     >,
   ) => Compute<RpcRequest<RpcSchema.ExtractMethod<methodName>>>

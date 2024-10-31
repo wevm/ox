@@ -6,7 +6,7 @@ import type { Compute } from '../types.js'
 export type RpcTransport<
   raw extends boolean = false,
   options extends Record<string, unknown> = {},
-  schema extends RpcSchema.Generic = RpcSchema.All,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
 > = Compute<{
   request: RpcTransport_RequestFn<raw, options, schema>
 }>
@@ -14,7 +14,7 @@ export type RpcTransport<
 /** HTTP-based RPC Transport. */
 export type RpcTransport_Http<
   raw extends boolean = false,
-  schema extends RpcSchema.Generic = RpcSchema.All,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
 > = RpcTransport<raw, RpcTransport_HttpOptions, schema>
 
 ////////////////////////////////////////////////////////////////////////
@@ -24,7 +24,7 @@ export type RpcTransport_Http<
 export type RpcTransport_Options<
   raw extends boolean | undefined = undefined,
   options extends Record<string, unknown> = {},
-  schema extends RpcSchema.Generic = RpcSchema.All,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
 > = {
   /**
    * Enables raw mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
@@ -39,9 +39,9 @@ export type RpcTransport_Options<
    * RPC Schema to use for the Transport's `request` function.
    * See {@link ox#RpcSchema.(from:function)} for more.
    *
-   * @default `RpcSchema.All`
+   * @default `RpcSchema.Default`
    */
-  schema?: schema | RpcSchema.All | undefined
+  schema?: schema | RpcSchema.Default | undefined
 } & options
 
 export type RpcTransport_HttpOptions = {
@@ -65,7 +65,7 @@ export type RpcTransport_HttpOptions = {
 export type RpcTransport_RequestFn<
   raw extends boolean = false,
   options extends Record<string, unknown> = {},
-  schema extends RpcSchema.Generic = RpcSchema.All,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
 > = <
   methodName extends
     | RpcSchema.Generic

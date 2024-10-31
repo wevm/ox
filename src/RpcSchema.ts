@@ -8,6 +8,7 @@ import type * as Log from './Log.js'
 import type * as Transaction from './Transaction.js'
 import type * as TransactionReceipt from './TransactionReceipt.js'
 import type * as TransactionRequest from './TransactionRequest.js'
+import type { ResolvedRegister } from './internal/register.js'
 import type * as internal from './internal/rpcSchema.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
 
@@ -24,24 +25,33 @@ import type { Compute, IsNarrowable } from './internal/types.js'
  * import 'ox/window'
  * import { Provider, RpcSchema } from 'ox'
  *
- * const schema = RpcSchema.from<{
- *   Request: {
- *     method: 'eth_foobar',
- *     params: [id: number],
- *   }
- *   ReturnType: string
- * } | {
- *   Request: {
- *     method: 'eth_barfoo',
- *     params: [id: string],
- *   }
- *   ReturnType: string
- * }>()
+ * const schema = RpcSchema.from<
+ *   | RpcSchema.Default
+ *   | {
+ *       Request: {
+ *         method: 'abe_foo',
+ *         params: [id: number],
+ *       }
+ *       ReturnType: string
+ *     }
+ *   | {
+ *       Request: {
+ *         method: 'abe_bar',
+ *         params: [id: string],
+ *       }
+ *       ReturnType: string
+ *     }
+ * >()
  *
  * const provider = Provider.from(window.ethereum, { schema })
  *
  * const blockNumber = await provider.request({ method: 'e' })
  * //                                                    ^|
+ *
+ *
+ *
+ *
+ *
  * ```
  */
 export function from<schema extends Generic>(): schema {
@@ -103,7 +113,7 @@ export type ExtractMethod<schema extends Generic | MethodNameGeneric> =
 // TODO: clean
 export type ExtractRequest<
   schemaOrMethodName extends Generic | MethodNameGeneric,
-  schema extends Generic = All,
+  schema extends Generic = Default,
 > = Compute<
   Omit<
     {
@@ -166,7 +176,7 @@ export type ExtractParams<schema extends Generic | MethodNameGeneric> =
  */
 export type ExtractReturnType<
   schemaOrMethodName extends Generic | MethodNameGeneric,
-  schema extends Generic = All,
+  schema extends Generic = Default,
 > = schemaOrMethodName extends Generic
   ? schemaOrMethodName['ReturnType']
   : schemaOrMethodName extends MethodName
@@ -258,7 +268,7 @@ export type MethodNameGeneric = MethodName | (string & {})
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Schema = RpcSchema.All
+ * type Schema = RpcSchema.Default
  * //   ^?
  *
  *
@@ -275,7 +285,7 @@ export type MethodNameGeneric = MethodName | (string & {})
  *
  * ```
  */
-export type All = Eth | Wallet
+export type Default = ResolvedRegister['RpcSchema']
 
 /**
  * Type-safe union of all JSON-RPC Method Names.
