@@ -272,12 +272,7 @@ export function from<
     if (typeof signature === 'string') return deserialize(signature)
     if (signature instanceof Uint8Array) return deserialize(signature)
     if (typeof signature.r === 'string') return fromRpc(signature)
-    if (signature.v)
-      return {
-        r: signature.r,
-        s: signature.s,
-        yParity: vToYParity(signature.v),
-      }
+    if (signature.v) return fromLegacy(signature)
     return {
       r: signature.r,
       s: signature.s,
@@ -336,6 +331,36 @@ export function fromDER(signature: Hex.Hex | Bytes.Bytes): Signature<false> {
 export declare namespace fromDER {
   type ErrorType = Errors.GlobalErrorType
 }
+
+/**
+ * Converts a {@link ox#Signature.Legacy} into a {@link ox#Signature.Signature}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const legacy = Signature.fromLegacy({ r: 1n, s: 2n, v: 28 })
+ * // @log: { r: 1n, s: 2n, yParity: 1 }
+ * ```
+ *
+ * @param signature - The {@link ox#Signature.Legacy} to convert.
+ * @returns The converted {@link ox#Signature.Signature}.
+ */
+export function fromLegacy(signature: Legacy): Signature {
+  return {
+    r: signature.r,
+    s: signature.s,
+    yParity: vToYParity(signature.v),
+  }
+}
+
+export declare namespace fromLegacy {
+  type ErrorType = vToYParity.ErrorType | Errors.GlobalErrorType
+}
+
+fromLegacy.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as fromLegacy.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Rpc} into a {@link ox#Signature.Signature}.
@@ -528,6 +553,36 @@ export declare namespace toDER {
 
   type ErrorType = Errors.GlobalErrorType
 }
+
+/**
+ * Converts a {@link ox#Signature.Signature} into a {@link ox#Signature.Legacy}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const legacy = Signature.toLegacy({ r: 1n, s: 2n, yParity: 1 })
+ * // @log: { r: 1n, s: 2n, v: 28 }
+ * ```
+ *
+ * @param signature - The {@link ox#Signature.Signature} to convert.
+ * @returns The converted {@link ox#Signature.Legacy}.
+ */
+export function toLegacy(signature: Signature): Legacy {
+  return {
+    r: signature.r,
+    s: signature.s,
+    v: yParityToV(signature.yParity),
+  }
+}
+
+export declare namespace toLegacy {
+  type ErrorType = yParityToV.ErrorType | Errors.GlobalErrorType
+}
+
+toLegacy.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as toLegacy.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Signature} into a {@link ox#Signature.Rpc}.

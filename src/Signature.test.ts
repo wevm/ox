@@ -644,6 +644,46 @@ describe('toDER', () => {
   })
 })
 
+describe('toLegacy', () => {
+  test('default', () => {
+    expect(
+      Signature.fromLegacy({ r: 1n, s: 2n, v: 28 }),
+    ).toMatchInlineSnapshot(`
+    {
+      "r": 1n,
+      "s": 2n,
+      "yParity": 1,
+    }
+  `)
+
+    expect(
+      Signature.fromLegacy({ r: 1n, s: 2n, v: 27 }),
+    ).toMatchInlineSnapshot(`
+      {
+        "r": 1n,
+        "s": 2n,
+        "yParity": 0,
+      }
+    `)
+
+    expect(
+      Signature.fromLegacy({ r: 1n, s: 2n, v: 35 }),
+    ).toMatchInlineSnapshot(`
+      {
+        "r": 1n,
+        "s": 2n,
+        "yParity": 0,
+      }
+    `)
+
+    expect(() =>
+      Signature.fromLegacy({ r: 1n, s: 2n, v: 30 }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Signature.InvalidVError: Value `30` is an invalid v value. v must be 27, 28 or >=35.]',
+    )
+  })
+})
+
 describe('toRpc', () => {
   test('default', () => {
     expect(
@@ -751,10 +791,12 @@ test('exports', () => {
       "extract",
       "from",
       "fromDER",
+      "fromLegacy",
       "fromRpc",
       "fromTuple",
       "serialize",
       "toDER",
+      "toLegacy",
       "toRpc",
       "toTuple",
       "validate",
