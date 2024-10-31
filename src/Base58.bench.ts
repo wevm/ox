@@ -1,8 +1,7 @@
 import { encodeBase58 } from 'ethers'
+import { Hex } from 'ox'
 import { bench, describe } from 'vitest'
-import * as Hex from '../../Hex.js'
-import { Base58_fromBytes } from './fromBytes.js'
-import { Base58_fromHex } from './fromHex.js'
+import { fromBytes, fromHex } from './Base58.js'
 
 const bytes = new Uint8Array([
   72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
@@ -15,7 +14,7 @@ describe('base58 encode (bytes)', () => {
   })
 
   bench('ox', () => {
-    Base58_fromBytes(bytes)
+    fromBytes(bytes)
   })
 })
 
@@ -25,6 +24,6 @@ describe('base58 encode (hex)', () => {
   })
 
   bench('ox', () => {
-    Base58_fromHex(hex)
+    fromHex(hex)
   })
 })
