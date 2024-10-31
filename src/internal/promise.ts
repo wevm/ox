@@ -1,16 +1,11 @@
-import type * as Errors from '../../Errors.js'
-import { Promise_TimeoutError } from './errors.js'
+import * as Errors from '../Errors.js'
 
 /** @internal */
-export function Promise_withTimeout<data>(
-  fn: Promise_withTimeout.Fn<data>,
-  options: Promise_withTimeout.Options,
+export function withTimeout<data>(
+  fn: withTimeout.Fn<data>,
+  options: withTimeout.Options,
 ): Promise<data> {
-  const {
-    errorInstance = new Promise_TimeoutError(),
-    timeout,
-    signal,
-  } = options
+  const { errorInstance = new TimeoutError(), timeout, signal } = options
   return new Promise((resolve, reject) => {
     ;(async () => {
       let timeoutId: any
@@ -36,7 +31,7 @@ export function Promise_withTimeout<data>(
 }
 
 /** @internal */
-export declare namespace Promise_withTimeout {
+export declare namespace withTimeout {
   type Fn<data> = ({
     signal,
   }: { signal: AbortController['signal'] | null }) => Promise<data>
@@ -50,10 +45,19 @@ export declare namespace Promise_withTimeout {
     signal?: boolean | undefined
   }
 
-  type ErrorType = Promise_TimeoutError | Errors.GlobalErrorType
+  type ErrorType = TimeoutError | Errors.GlobalErrorType
 }
 
 /** @internal */
-Promise_withTimeout.parseError = (error: unknown) =>
+withTimeout.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as Promise_withTimeout.ErrorType
+  error as withTimeout.ErrorType
+
+/** Thrown when an operation times out. */
+export class TimeoutError extends Errors.BaseError {
+  override readonly name = 'Promise.TimeoutError'
+
+  constructor() {
+    super('Operation timed out.')
+  }
+}

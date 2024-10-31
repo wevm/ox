@@ -2,7 +2,7 @@ import * as Errors from './Errors.js'
 import type * as RpcResponse from './RpcResponse.js'
 import type * as RpcSchema from './RpcSchema.js'
 import { getUrl } from './internal/Errors/utils.js'
-import { Promise_withTimeout } from './internal/Promise/withTimeout.js'
+import * as promise from './internal/promise.js'
 import * as internal from './internal/rpcTransport.js'
 import type { Compute } from './internal/types.js'
 
@@ -97,7 +97,7 @@ export function fromHttp<
             ? await fetchOptions_(body_)
             : fetchOptions_
 
-        const response = await Promise_withTimeout(
+        const response = await promise.withTimeout(
           ({ signal }) => {
             const init: RequestInit = {
               ...fetchOptions,
@@ -158,7 +158,7 @@ export declare namespace fromHttp {
   > = internal.Options<raw, HttpOptions, schema>
 
   type ErrorType =
-    | Promise_withTimeout.ErrorType
+    | promise.withTimeout.ErrorType
     | HttpError
     | Errors.GlobalErrorType
 }
