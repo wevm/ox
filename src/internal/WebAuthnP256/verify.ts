@@ -1,10 +1,10 @@
 import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
+import * as P256 from '../../P256.js'
 import type * as PublicKey from '../../PublicKey.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
-import { P256_verify } from '../P256/verify.js'
 import type { Signature } from '../Signature/types.js'
 import type { WebAuthnP256_SignMetadata } from './types.js'
 
@@ -88,7 +88,7 @@ export function WebAuthnP256_verify(
   })
   const payload = Bytes.concat(authenticatorDataBytes, clientDataJSONHash)
 
-  return P256_verify({
+  return P256.verify({
     hash,
     payload,
     publicKey,
@@ -114,7 +114,7 @@ export declare namespace WebAuthnP256_verify {
     | Base64_toBytes.ErrorType
     | Bytes.concat.ErrorType
     | Bytes.fromHex.ErrorType
-    | P256_verify.ErrorType
+    | P256.verify.ErrorType
     | Errors.GlobalErrorType
 }
 
