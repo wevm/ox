@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import type { RpcRequest } from '../RpcRequest/types.js'
+import type * as RpcRequest from '../../RpcRequest.js'
 import type { Compute } from '../types.js'
 import {
   RpcResponse_Error,
@@ -172,7 +172,7 @@ export declare namespace RpcResponse_parse {
       | {
           _returnType: returnType
         }
-      | RpcRequest
+      | RpcRequest.RpcRequest
       | undefined
     /**
      * Enables safe mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.

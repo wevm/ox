@@ -1,7 +1,6 @@
 import type * as Errors from '../../Errors.js'
+import * as RpcRequest from '../../RpcRequest.js'
 import type * as RpcSchema from '../../RpcSchema.js'
-import { RpcRequest_createStore } from '../RpcRequest/createStore.js'
-import type { RpcRequest } from '../RpcRequest/types.js'
 import { RpcResponse_parse } from '../RpcResponse/parse.js'
 import type { RpcResponse } from '../RpcResponse/types.js'
 import type { Compute } from '../types.js'
@@ -16,7 +15,7 @@ export function RpcTransport_create<
   transport: RpcTransport_create.Transport<options>,
   options_root: RpcTransport_create.Options<raw, schema> = {},
 ): RpcTransport<raw, {}, schema> {
-  const requestStore = RpcRequest_createStore()
+  const requestStore = RpcRequest.createStore()
 
   return {
     request: async ({ method, params }, options = {}) => {
@@ -35,7 +34,7 @@ export function RpcTransport_create<
 export declare namespace RpcTransport_create {
   type Transport<options extends Record<string, unknown> = {}> = {
     request: (
-      body: Compute<Omit<RpcRequest, '_returnType'>>,
+      body: Compute<Omit<RpcRequest.RpcRequest, '_returnType'>>,
       options: options,
     ) => Promise<RpcResponse>
   }
@@ -46,7 +45,7 @@ export declare namespace RpcTransport_create {
   > = RpcTransport_Options<raw, {}, schema>
 
   type ErrorType =
-    | RpcRequest_createStore.ErrorType
+    | RpcRequest.createStore.ErrorType
     | RpcResponse_parse.ErrorType
     | Errors.GlobalErrorType
 }
