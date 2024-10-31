@@ -313,7 +313,7 @@ export function fromRpc<
   if (transaction.type)
     transaction_.type =
       (fromRpcType as any)[transaction.type] ?? transaction.type
-  if (signature) transaction_.v = signature.yParity === 0 ? 27 : 28
+  if (signature) transaction_.v = Signature.yParityToV(signature.yParity)
 
   return transaction_ as never
 }

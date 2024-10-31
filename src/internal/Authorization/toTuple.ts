@@ -1,8 +1,6 @@
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { Signature_extract } from '../Signature/extract.js'
-import { Signature_toTuple } from '../Signature/toTuple.js'
-import type { Signature } from '../Signature/types.js'
+import * as Signature from '../../Signature.js'
 import type { Compute } from '../types.js'
 import type { Authorization, Authorization_Tuple } from './types.js'
 
@@ -36,18 +34,22 @@ export function Authorization_toTuple<
   authorization: authorization,
 ): Authorization_toTuple.ReturnType<authorization> {
   const { address, chainId, nonce } = authorization
-  const signature = Signature_extract(authorization)
+  const signature = Signature.extract(authorization)
   return [
     chainId ? Hex.fromNumber(chainId) : '0x',
     address,
     nonce ? Hex.fromNumber(nonce) : '0x',
-    ...(signature ? Signature_toTuple(signature) : []),
+    ...(signature ? Signature.toTuple(signature) : []),
   ] as never
 }
 
 export declare namespace Authorization_toTuple {
   type ReturnType<authorization extends Authorization = Authorization> =
-    Compute<Authorization_Tuple<authorization extends Signature ? true : false>>
+    Compute<
+      Authorization_Tuple<
+        authorization extends Signature.Signature ? true : false
+      >
+    >
 
   type ErrorType = Errors.GlobalErrorType
 }

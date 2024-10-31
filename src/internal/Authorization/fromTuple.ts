@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Signature_fromTuple } from '../Signature/fromTuple.js'
+import * as Signature from '../../Signature.js'
 import type { Compute } from '../types.js'
 import { Authorization_from } from './from.js'
 import type { Authorization, Authorization_Tuple } from './types.js'
@@ -55,7 +55,7 @@ export function Authorization_fromTuple<
 >(tuple: tuple): Authorization_fromTuple.ReturnType<tuple> {
   const [chainId, address, nonce, yParity, r, s] = tuple
   const signature =
-    yParity && r && s ? Signature_fromTuple([yParity, r, s]) : undefined
+    yParity && r && s ? Signature.fromTuple([yParity, r, s]) : undefined
   return Authorization_from({
     address,
     chainId: Number(chainId),

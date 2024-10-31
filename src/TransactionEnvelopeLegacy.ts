@@ -2,14 +2,9 @@ import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Rlp from './Rlp.js'
-import type { Signature } from './Signature.js'
+import * as Signature from './Signature.js'
 import * as TransactionEnvelope from './TransactionEnvelope.js'
 import { Hash_keccak256 } from './internal/Hash/keccak256.js'
-import { Signature_InvalidVError } from './internal/Signature/errors.js'
-import { Signature_extract } from './internal/Signature/extract.js'
-import { Signature_from } from './internal/Signature/from.js'
-import { Signature_toRpc } from './internal/Signature/toRpc.js'
-import { Signature_vToYParity } from './internal/Signature/vToYParity.js'
 import type {
   Assign,
   Branded,
@@ -164,9 +159,9 @@ export function deserialize(
   const v = chainIdOrV
   const chainId: number | undefined = Math.floor((v - 35) / 2)
   if (chainId > 0) transaction.chainId = chainId
-  else if (v !== 27 && v !== 28) throw new Signature_InvalidVError({ value: v })
+  else if (v !== 27 && v !== 28) throw new Signature.InvalidVError({ value: v })
 
-  transaction.yParity = Signature_vToYParity(v)
+  transaction.yParity = Signature.vToYParity(v)
   transaction.v = v
   transaction.s = s === '0x' ? 0n : BigInt(s!)
   transaction.r = r === '0x' ? 0n : BigInt(r!)
@@ -260,7 +255,7 @@ export function from<
   const envelope extends
     | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
     | Hex.Hex,
-  const signature extends Signature | undefined = undefined,
+  const signature extends Signature.Signature | undefined = undefined,
 >(
   envelope:
     | envelope
@@ -278,8 +273,8 @@ export function from<
 
   const signature_ = (() => {
     if (!signature) return {}
-    const s = Signature_from(signature) as any
-    s.v = s.yParity === 0 ? 27 : 28
+    const s = Signature.from(signature) as any
+    s.v = Signature.yParityToV(s.yParity)
     return s
   })()
 
@@ -291,21 +286,22 @@ export function from<
 }
 
 export declare namespace from {
-  type Options<signature extends Signature | undefined = undefined> = {
-    signature?: signature | Signature | undefined
-  }
+  type Options<signature extends Signature.Signature | undefined = undefined> =
+    {
+      signature?: signature | Signature.Signature | undefined
+    }
 
   type ReturnType<
     envelope extends
       | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
       | Hex.Hex = TransactionEnvelopeLegacy | Hex.Hex,
-    signature extends Signature | undefined = undefined,
+    signature extends Signature.Signature | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
       ? TransactionEnvelopeLegacy
       : Assign<
           envelope,
-          (signature extends Signature
+          (signature extends Signature.Signature
             ? Readonly<
                 signature & {
                   v: signature['yParity'] extends 0 ? 27 : 28
@@ -511,7 +507,7 @@ export function serialize(
       return {
         r: options.signature.r,
         s: options.signature.s,
-        v: options.signature.yParity === 0 ? 27 : 28,
+        v: Signature.yParityToV(options.signature.yParity),
       }
 
     if (typeof envelope.r === 'undefined' || typeof envelope.s === 'undefined')
@@ -538,7 +534,7 @@ export function serialize(
       // Pre-EIP-155 (no chainId)
       const v = 27 + (signature.v === 27 ? 0 : 1)
       if (signature.v !== v)
-        throw new Signature_InvalidVError({ value: signature.v })
+        throw new Signature.InvalidVError({ value: signature.v })
       return v
     })()
 
@@ -557,7 +553,7 @@ export function serialize(
 export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
-    signature?: Signature | undefined
+    signature?: Signature.Signature | undefined
   }
 
   type ErrorType =
@@ -565,7 +561,7 @@ export declare namespace serialize {
     | Hex.fromNumber.ErrorType
     | Hex.trimLeft.ErrorType
     | Rlp.fromHex.ErrorType
-    | Signature_InvalidVError
+    | Signature.InvalidVError
     | Errors.GlobalErrorType
 }
 
@@ -601,7 +597,7 @@ serialize.parseError = (error: unknown) =>
  * @returns An RPC-formatted legacy transaction envelope.
  */
 export function toRpc(envelope: Omit<TransactionEnvelopeLegacy, 'type'>): Rpc {
-  const signature = Signature_extract(envelope)!
+  const signature = Signature.extract(envelope)!
 
   return {
     ...envelope,
@@ -625,7 +621,7 @@ export function toRpc(envelope: Omit<TransactionEnvelopeLegacy, 'type'>): Rpc {
       : {}),
     ...(signature
       ? {
-          ...Signature_toRpc(signature),
+          ...Signature.toRpc(signature),
           v: signature.yParity === 0 ? '0x1b' : '0x1c',
         }
       : {}),
@@ -633,7 +629,7 @@ export function toRpc(envelope: Omit<TransactionEnvelopeLegacy, 'type'>): Rpc {
 }
 
 export declare namespace toRpc {
-  export type ErrorType = Signature_extract.ErrorType | Errors.GlobalErrorType
+  export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
 toRpc.parseError = (error: unknown) =>

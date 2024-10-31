@@ -1,7 +1,7 @@
 import { p256 } from '@noble/curves/p256'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { Signature } from '../Signature/types.js'
+import type * as Signature from '../../Signature.js'
 import { WebAuthnP256_CredentialRequestFailedError } from './errors.js'
 import { WebAuthnP256_getCredentialRequestOptions } from './getCredentialRequestOptions.js'
 import type {
@@ -102,7 +102,7 @@ export declare namespace WebAuthnP256_sign {
   type ReturnType = {
     metadata: WebAuthnP256_SignMetadata
     raw: PublicKeyCredential
-    signature: Signature<false>
+    signature: Signature.Signature<false>
   }
 
   type ErrorType =

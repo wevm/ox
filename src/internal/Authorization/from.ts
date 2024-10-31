@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import type { Signature } from '../Signature/types.js'
+import type * as Signature from '../../Signature.js'
 import type { Compute } from '../types.js'
 import { Authorization_fromRpc } from './fromRpc.js'
 import type {
@@ -53,7 +53,7 @@ import type {
  */
 export function Authorization_from<
   const authorization extends Authorization | Authorization_Rpc,
-  const signature extends Signature | undefined = undefined,
+  const signature extends Signature.Signature | undefined = undefined,
 >(
   authorization: authorization | Authorization,
   options: Authorization_from.Options<signature> = {},
@@ -65,19 +65,24 @@ export function Authorization_from<
 
 export declare namespace Authorization_from {
   type Options<
-    signature extends Signature | undefined = Signature | undefined,
+    signature extends Signature.Signature | undefined =
+      | Signature.Signature
+      | undefined,
   > = {
     /** The {@link ox#Signature.Signature} to attach to the Authorization. */
-    signature?: signature | Signature | undefined
+    signature?: signature | Signature.Signature | undefined
   }
 
   type ReturnType<
     authorization extends Authorization | Authorization_Rpc = Authorization,
-    signature extends Signature | undefined = Signature | undefined,
+    signature extends Signature.Signature | undefined =
+      | Signature.Signature
+      | undefined,
   > = Compute<
     authorization extends Authorization_Rpc
       ? Authorization_Signed
-      : authorization & (signature extends Signature ? Readonly<signature> : {})
+      : authorization &
+          (signature extends Signature.Signature ? Readonly<signature> : {})
   >
 
   type ErrorType = Errors.GlobalErrorType

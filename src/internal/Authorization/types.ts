@@ -1,6 +1,6 @@
 import type * as Address from '../../Address.js'
 import type { Hex } from '../../Hex.js'
-import type { Signature } from '../Signature/types.js'
+import type * as Signature from '../../Signature.js'
 import type { Compute, Undefined } from '../types.js'
 
 /** Root type for an EIP-7702 Authorization. */
@@ -17,8 +17,8 @@ export type Authorization<
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
   } & (signed extends true
-    ? Signature<true, bigintType, numberType>
-    : Undefined<Signature>)
+    ? Signature.Signature<true, bigintType, numberType>
+    : Undefined<Signature.Signature>)
 >
 
 /** RPC representation of an {@link ox#Authorization.Authorization}. */

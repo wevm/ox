@@ -3,7 +3,7 @@ import { p256 } from '@noble/curves/p256'
 import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import type { Signature } from '../Signature/types.js'
+import type * as Signature from '../../Signature.js'
 
 /**
  * Signs a payload with the provided `CryptoKey` private key and returns a P256 signature.
@@ -29,7 +29,7 @@ import type { Signature } from '../Signature/types.js'
  */
 export async function WebCryptoP256_sign(
   options: WebCryptoP256_sign.Options,
-): Promise<Signature<false>> {
+): Promise<Signature.Signature<false>> {
   const { payload, privateKey } = options
   const signature = await globalThis.crypto.subtle.sign(
     {

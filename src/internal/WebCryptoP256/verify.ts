@@ -2,7 +2,7 @@ import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import * as PublicKey from '../../PublicKey.js'
-import type { Signature } from '../Signature/types.js'
+import type * as Signature from '../../Signature.js'
 
 /**
  * Verifies a payload was signed by the provided public key.
@@ -55,7 +55,7 @@ export declare namespace WebCryptoP256_verify {
     /** Public key that signed the payload. */
     publicKey: PublicKey.PublicKey<boolean>
     /** Signature of the payload. */
-    signature: Signature<false>
+    signature: Signature.Signature<false>
     /** Payload that was signed. */
     payload: Hex | Bytes.Bytes
   }

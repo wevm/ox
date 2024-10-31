@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { Signature_extract } from '../Signature/extract.js'
+import * as Signature from '../../Signature.js'
 import type { Authorization_Rpc, Authorization_Signed } from './types.js'
 
 /**
@@ -26,7 +26,7 @@ export function Authorization_fromRpc(
   authorization: Authorization_Rpc,
 ): Authorization_Signed {
   const { address, chainId, nonce } = authorization
-  const signature = Signature_extract(authorization)!
+  const signature = Signature.extract(authorization)!
 
   return {
     address,
