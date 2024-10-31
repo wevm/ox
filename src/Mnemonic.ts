@@ -8,7 +8,7 @@ import type * as Errors from './Errors.js'
 import * as HdKey from './HdKey.js'
 import type * as Hex from './Hex.js'
 
-export { HdKey_path as path } from './internal/HdKey/path.js'
+export { path } from './HdKey.js'
 
 export {
   english,
