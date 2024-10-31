@@ -1,5 +1,5 @@
-import type { Bytes } from '../../Bytes.js'
 import type * as Address from '../../Address.js'
+import type { Bytes } from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'

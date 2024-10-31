@@ -1,5 +1,5 @@
-import type { Bytes } from '../../Bytes.js'
 import type * as Address from '../../Address.js'
+import type { Bytes } from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 

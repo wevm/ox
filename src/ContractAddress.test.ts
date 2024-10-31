@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest'
 import { AbiParameters, ContractAddress, Hash, Hex } from 'ox'
+import { describe, expect, test } from 'vitest'
 
 test('exports', () => {
   expect(Object.keys(ContractAddress)).toMatchInlineSnapshot(`

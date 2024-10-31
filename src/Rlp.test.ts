@@ -1,4 +1,4 @@
-import { Bytes, Rlp, Hex } from 'ox'
+import { Bytes, Hex, Rlp } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 test('exports', () => {

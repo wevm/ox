@@ -3,8 +3,8 @@ import { secp256r1 } from '@noble/curves/p256'
 import type { Bytes } from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { Signature } from '../Signature/types.js'
 import * as PublicKey from '../../PublicKey.js'
+import type { Signature } from '../Signature/types.js'
 
 /**
  * Recovers the signing public key from the signed payload and signature.

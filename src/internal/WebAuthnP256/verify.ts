@@ -1,7 +1,7 @@
 import * as Bytes from '../../Bytes.js'
-import type * as PublicKey from '../../PublicKey.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
+import type * as PublicKey from '../../PublicKey.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 import { P256_verify } from '../P256/verify.js'

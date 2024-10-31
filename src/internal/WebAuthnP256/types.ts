@@ -1,5 +1,5 @@
-import type * as PublicKey from '../../PublicKey.js'
 import type { Hex } from '../../Hex.js'
+import type * as PublicKey from '../../PublicKey.js'
 import type { Compute } from '../types.js'
 
 /** A WebAuthn-flavored P256 credential. */

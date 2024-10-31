@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
 import { Caches } from 'ox'
+import { expect, test } from 'vitest'
 
 test('exports', () => {
   expect(Object.keys(Caches)).toMatchInlineSnapshot(`

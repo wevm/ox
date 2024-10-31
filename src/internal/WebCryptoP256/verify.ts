@@ -1,7 +1,7 @@
-import * as PublicKey from '../../PublicKey.js'
 import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
+import * as PublicKey from '../../PublicKey.js'
 import type { Signature } from '../Signature/types.js'
 
 /**

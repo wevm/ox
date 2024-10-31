@@ -9,8 +9,8 @@ import type {
   SolidityString,
 } from 'abitype'
 
-import type * as Errors from '../../Errors.js'
 import * as Address from '../../Address.js'
+import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 import * as Solidity from '../../Solidity.js'
 import {

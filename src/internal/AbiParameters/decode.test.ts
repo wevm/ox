@@ -1,4 +1,4 @@
-import { AbiItem, type Address, AbiParameters, Bytes, type Hex } from 'ox'
+import { AbiItem, AbiParameters, type Address, Bytes, type Hex } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 
 import {

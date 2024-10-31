@@ -1,5 +1,5 @@
+import type * as RpcResponse from '../../RpcResponse.js'
 import type * as RpcSchema from '../../RpcSchema.js'
-import type { RpcResponse } from '../RpcResponse/types.js'
 import type { Compute } from '../types.js'
 
 /** Root type for an RPC Transport. */
@@ -77,9 +77,9 @@ export type RpcTransport_RequestFn<
 ) => Promise<
   raw_override extends boolean
     ? raw_override extends true
-      ? RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
+      ? RpcResponse.RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
       : RpcSchema.ExtractReturnType<methodName, schema>
     : raw extends true
-      ? RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
+      ? RpcResponse.RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
       : RpcSchema.ExtractReturnType<methodName, schema>
 >

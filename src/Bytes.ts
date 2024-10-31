@@ -924,7 +924,8 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
     size,
   }: { offset: number; position: 'start' | 'end'; size: number }) {
     super(
-      `Slice ${position === 'start' ? 'starting' : 'ending'
+      `Slice ${
+        position === 'start' ? 'starting' : 'ending'
       } at offset \`${offset}\` is out-of-bounds (size: \`${size}\`).`,
     )
   }

@@ -1,6 +1,6 @@
 import type { Bytes } from '../../Bytes.js'
-import * as PublicKey from '../../PublicKey.js'
 import type * as Errors from '../../Errors.js'
+import * as PublicKey from '../../PublicKey.js'
 import { WebAuthnP256_CredentialCreationFailedError } from './errors.js'
 import { WebAuthnP256_getCredentialCreationOptions } from './getCredentialCreationOptions.js'
 import type {

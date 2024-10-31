@@ -1,5 +1,5 @@
-import * as Json from '../../Json.js'
 import type * as Errors from '../../Errors.js'
+import * as Json from '../../Json.js'
 import type {
   TypedData,
   TypedData_Definition,
