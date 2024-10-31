@@ -1,7 +1,7 @@
 import * as Errors from './Errors.js'
 import type * as RpcResponse from './RpcResponse.js'
 import type * as RpcSchema from './RpcSchema.js'
-import { getUrl } from './internal/Errors/utils.js'
+import { getUrl } from './internal/errors.js'
 import * as promise from './internal/promise.js'
 import * as internal from './internal/rpcTransport.js'
 import type { Compute } from './internal/types.js'

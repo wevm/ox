@@ -1,4 +1,4 @@
-import { getVersion } from './internal/Errors/utils.js'
+import { getVersion } from './internal/errors.js'
 
 export type GlobalErrorType<name extends string = 'Error'> = Error & {
   name: name
