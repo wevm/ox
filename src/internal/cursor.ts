@@ -46,20 +46,20 @@ const staticCursor: Cursor = /*#__PURE__*/ {
   recursiveReadLimit: Number.POSITIVE_INFINITY,
   assertReadLimit() {
     if (this.recursiveReadCount >= this.recursiveReadLimit)
-      throw new Cursor_RecursiveReadLimitExceededError({
+      throw new RecursiveReadLimitExceededError({
         count: this.recursiveReadCount + 1,
         limit: this.recursiveReadLimit,
       })
   },
   assertPosition(position) {
     if (position < 0 || position > this.bytes.length - 1)
-      throw new Cursor_PositionOutOfBoundsError({
+      throw new PositionOutOfBoundsError({
         length: this.bytes.length,
         position,
       })
   },
   decrementPosition(offset) {
-    if (offset < 0) throw new Cursor_NegativeOffsetError({ offset })
+    if (offset < 0) throw new NegativeOffsetError({ offset })
     const position = this.position - offset
     this.assertPosition(position)
     this.position = position
@@ -68,7 +68,7 @@ const staticCursor: Cursor = /*#__PURE__*/ {
     return this.positionReadCount.get(position || this.position) || 0
   },
   incrementPosition(offset) {
-    if (offset < 0) throw new Cursor_NegativeOffsetError({ offset })
+    if (offset < 0) throw new NegativeOffsetError({ offset })
     const position = this.position + offset
     this.assertPosition(position)
     this.position = position
@@ -197,16 +197,9 @@ const staticCursor: Cursor = /*#__PURE__*/ {
 }
 
 /** @internal */
-export declare namespace createCursor {
-  type Config = { recursiveReadLimit?: number | undefined }
-
-  type ErrorType = Errors.GlobalErrorType
-}
-
-/** @internal */
-export function createCursor(
+export function create(
   bytes: Bytes,
-  { recursiveReadLimit = 8_192 }: createCursor.Config = {},
+  { recursiveReadLimit = 8_192 }: create.Config = {},
 ): Cursor {
   const cursor: Cursor = Object.create(staticCursor)
   cursor.bytes = bytes
@@ -220,7 +213,14 @@ export function createCursor(
   return cursor
 }
 
-export class Cursor_NegativeOffsetError extends Errors.BaseError {
+/** @internal */
+export declare namespace create {
+  type Config = { recursiveReadLimit?: number | undefined }
+
+  type ErrorType = Errors.GlobalErrorType
+}
+
+export class NegativeOffsetError extends Errors.BaseError {
   override readonly name = 'Cursor.NegativeOffsetError'
 
   constructor({ offset }: { offset: number }) {
@@ -228,7 +228,7 @@ export class Cursor_NegativeOffsetError extends Errors.BaseError {
   }
 }
 
-export class Cursor_PositionOutOfBoundsError extends Errors.BaseError {
+export class PositionOutOfBoundsError extends Errors.BaseError {
   override readonly name = 'Cursor.PositionOutOfBoundsError'
 
   constructor({ length, position }: { length: number; position: number }) {
@@ -238,7 +238,7 @@ export class Cursor_PositionOutOfBoundsError extends Errors.BaseError {
   }
 }
 
-export class Cursor_RecursiveReadLimitExceededError extends Errors.BaseError {
+export class RecursiveReadLimitExceededError extends Errors.BaseError {
   override readonly name = 'Cursor.RecursiveReadLimitExceededError'
 
   constructor({ count, limit }: { count: number; limit: number }) {

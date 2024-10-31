@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { createCursor } from './cursor.js'
+import * as Cursor from './cursor.js'
 
 const generateBytes = (length: number) => {
   const bytes = new Uint8Array(length)
@@ -8,12 +8,12 @@ const generateBytes = (length: number) => {
 }
 
 test('default', () => {
-  const cursor_1 = createCursor(new Uint8Array([0]))
+  const cursor_1 = Cursor.create(new Uint8Array([0]))
   expect(cursor_1.bytes).toEqual(new Uint8Array([0]))
   expect(cursor_1.dataView).toEqual(new DataView(new Uint8Array([0]).buffer))
   expect(cursor_1.position).toBe(0)
 
-  const cursor_2 = createCursor(new Uint8Array(generateBytes(420)))
+  const cursor_2 = Cursor.create(new Uint8Array(generateBytes(420)))
   expect(cursor_2.bytes).toEqual(new Uint8Array(generateBytes(420)))
   expect(cursor_2.dataView).toEqual(
     new DataView(new Uint8Array(generateBytes(420)).buffer),
@@ -23,7 +23,7 @@ test('default', () => {
 
 describe('setPosition', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(69)
     expect(cursor.position).toBe(69)
     expect(cursor.inspectByte()).toBe(69)
@@ -36,7 +36,7 @@ describe('setPosition', () => {
   })
 
   test('w/ increment/decrement/readByte/readBytes', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
 
     cursor.setPosition(69)
     expect(cursor.position).toBe(69)
@@ -62,19 +62,19 @@ describe('setPosition', () => {
   })
 
   test('overflow', () => {
-    const cursor_1 = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor_1 = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(() => cursor_1.setPosition(420)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `420` is out of bounds (`0 < position < 420`).]',
     )
 
-    const cursor_2 = createCursor(new Uint8Array(generateBytes(421)))
+    const cursor_2 = Cursor.create(new Uint8Array(generateBytes(421)))
     expect(() => cursor_2.setPosition(421)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `421` is out of bounds (`0 < position < 421`).]',
     )
   })
 
   test('underflow', () => {
-    const cursor_1 = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor_1 = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(() => cursor_1.setPosition(-1)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `-1` is out of bounds (`0 < position < 420`).]',
     )
@@ -83,7 +83,7 @@ describe('setPosition', () => {
 
 describe('incrementPosition', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.incrementPosition(69)
     expect(cursor.inspectByte()).toBe(69)
     expect(cursor.position).toBe(69)
@@ -96,14 +96,14 @@ describe('incrementPosition', () => {
   })
 
   test('overflow', () => {
-    const cursor_1 = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor_1 = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(() =>
       cursor_1.incrementPosition(420),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `420` is out of bounds (`0 < position < 420`).]',
     )
 
-    const cursor_2 = createCursor(new Uint8Array(generateBytes(421)))
+    const cursor_2 = Cursor.create(new Uint8Array(generateBytes(421)))
     expect(() =>
       cursor_2.incrementPosition(421),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -112,7 +112,7 @@ describe('incrementPosition', () => {
   })
 
   test('negative', () => {
-    const cursor_1 = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor_1 = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(() =>
       cursor_1.incrementPosition(-1),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -123,7 +123,7 @@ describe('incrementPosition', () => {
 
 describe('decrementPosition', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(419)
     cursor.decrementPosition(340)
     expect(cursor.inspectByte()).toBe(79)
@@ -137,7 +137,7 @@ describe('decrementPosition', () => {
   })
 
   test('underflow', () => {
-    const cursor_1 = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor_1 = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(() =>
       cursor_1.decrementPosition(1),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -146,7 +146,7 @@ describe('decrementPosition', () => {
   })
 
   test('negative', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(419)
     expect(() =>
       cursor.decrementPosition(-1),
@@ -158,7 +158,7 @@ describe('decrementPosition', () => {
 
 describe('inspectByte', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(419)
     expect(cursor.inspectByte()).toBe(163)
     expect(cursor.position).toBe(419)
@@ -167,7 +167,7 @@ describe('inspectByte', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(() => cursor.inspectByte(420)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `420` is out of bounds (`0 < position < 420`).]',
     )
@@ -176,21 +176,21 @@ describe('inspectByte', () => {
 
 describe('inspectBytes', () => {
   test('default', () => {
-    const cursor_1 = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor_1 = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor_1.setPosition(10)
     expect(cursor_1.inspectBytes(10)).toEqual(
       Uint8Array.from([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
     )
     expect(cursor_1.position).toBe(10)
 
-    const cursor_2 = createCursor(new Uint8Array(generateBytes(20)))
+    const cursor_2 = Cursor.create(new Uint8Array(generateBytes(20)))
     cursor_2.setPosition(10)
     expect(cursor_2.inspectBytes(10)).toEqual(
       Uint8Array.from([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
     )
     expect(cursor_2.position).toBe(10)
 
-    const cursor_3 = createCursor(new Uint8Array(generateBytes(20)))
+    const cursor_3 = Cursor.create(new Uint8Array(generateBytes(20)))
     expect(cursor_3.inspectBytes(10, 10)).toEqual(
       Uint8Array.from([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
     )
@@ -198,19 +198,19 @@ describe('inspectBytes', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(415)
     expect(() => cursor.inspectBytes(10)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `424` is out of bounds (`0 < position < 420`).]',
     )
 
-    const cursor_2 = createCursor(new Uint8Array(generateBytes(20)))
+    const cursor_2 = Cursor.create(new Uint8Array(generateBytes(20)))
     cursor_2.setPosition(10)
     expect(() => cursor_2.inspectBytes(11)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `20` is out of bounds (`0 < position < 20`).]',
     )
 
-    const cursor_3 = createCursor(new Uint8Array(generateBytes(20)))
+    const cursor_3 = Cursor.create(new Uint8Array(generateBytes(20)))
     expect(() =>
       cursor_3.inspectBytes(11, 10),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -221,7 +221,7 @@ describe('inspectBytes', () => {
 
 describe('inspectUint8', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(cursor.inspectUint8()).toBe(0)
     cursor.setPosition(10)
     expect(cursor.inspectUint8()).toBe(10)
@@ -230,7 +230,7 @@ describe('inspectUint8', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(() => cursor.inspectUint8(420)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `420` is out of bounds (`0 < position < 420`).]',
     )
@@ -239,14 +239,14 @@ describe('inspectUint8', () => {
 
 describe('inspectUint16', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 164]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 164]))
     expect(cursor.inspectUint16()).toBe(256)
     cursor.incrementPosition(2)
     expect(cursor.inspectUint16()).toBe(420)
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 164]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 164]))
     expect(cursor.inspectUint16()).toBe(256)
     cursor.incrementPosition(3)
     expect(() => cursor.inspectUint16()).toThrowErrorMatchingInlineSnapshot(
@@ -255,7 +255,7 @@ describe('inspectUint16', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 164]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 164]))
     expect(cursor.inspectUint16()).toBe(256)
     expect(() => cursor.inspectUint16(3)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `4` is out of bounds (`0 < position < 4`).]',
@@ -265,14 +265,14 @@ describe('inspectUint16', () => {
 
 describe('inspectUint24', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 0x0f, 0x2c]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 0x0f, 0x2c]))
     expect(cursor.inspectUint24()).toBe(65537)
     cursor.incrementPosition(2)
     expect(cursor.inspectUint24()).toBe(69420)
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 0xf2, 0xc0]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 0xf2, 0xc0]))
     expect(cursor.inspectUint24()).toBe(65537)
     cursor.incrementPosition(3)
     expect(() => cursor.inspectUint24()).toThrowErrorMatchingInlineSnapshot(
@@ -281,7 +281,7 @@ describe('inspectUint24', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 0xf2, 0xc0]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 0xf2, 0xc0]))
     expect(cursor.inspectUint24()).toBe(65537)
     expect(() => cursor.inspectUint24(3)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `5` is out of bounds (`0 < position < 5`).]',
@@ -291,7 +291,7 @@ describe('inspectUint24', () => {
 
 describe('inspectUint32', () => {
   test('default', () => {
-    const cursor = createCursor(
+    const cursor = Cursor.create(
       new Uint8Array([1, 0, 0, 0x29, 0x60, 0xc1, 0xde]),
     )
     expect(cursor.inspectUint32()).toBe(16777257)
@@ -300,7 +300,7 @@ describe('inspectUint32', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(
+    const cursor = Cursor.create(
       new Uint8Array([1, 0, 0, 0x29, 0x60, 0xc1, 0xde]),
     )
     expect(cursor.inspectUint32()).toBe(16777257)
@@ -311,7 +311,7 @@ describe('inspectUint32', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(
+    const cursor = Cursor.create(
       new Uint8Array([1, 0, 0, 0x29, 0x60, 0xc1, 0xde]),
     )
     expect(cursor.inspectUint32()).toBe(16777257)
@@ -323,7 +323,7 @@ describe('inspectUint32', () => {
 
 describe('pushByte', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     expect(cursor.inspectByte(0)).toBe(0)
     expect(cursor.position).toBe(0)
     cursor.pushByte(69)
@@ -332,7 +332,7 @@ describe('pushByte', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     cursor.setPosition(419)
     cursor.pushByte(1)
     expect(() => cursor.pushByte(2)).toThrowErrorMatchingInlineSnapshot(
@@ -343,7 +343,7 @@ describe('pushByte', () => {
 
 describe('pushBytes', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
 
     expect(cursor.inspectByte(0)).toBe(0)
     expect(cursor.position).toBe(0)
@@ -356,7 +356,7 @@ describe('pushBytes', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     cursor.setPosition(417)
     expect(() =>
       cursor.pushBytes(Uint8Array.from([69, 420, 69, 420])),
@@ -366,7 +366,7 @@ describe('pushBytes', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     cursor.setPosition(416)
     cursor.pushBytes(Uint8Array.from([69]))
     expect(() =>
@@ -379,7 +379,7 @@ describe('pushBytes', () => {
 
 describe('pushUint8', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     expect(cursor.inspectByte(0)).toBe(0)
     expect(cursor.position).toBe(0)
     cursor.pushUint8(69)
@@ -388,7 +388,7 @@ describe('pushUint8', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     cursor.setPosition(419)
     cursor.pushUint8(1)
     expect(() => cursor.pushUint8(2)).toThrowErrorMatchingInlineSnapshot(
@@ -399,7 +399,7 @@ describe('pushUint8', () => {
 
 describe('pushUint16', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
 
     expect(cursor.inspectByte(0)).toBe(0)
     expect(cursor.position).toBe(0)
@@ -414,7 +414,7 @@ describe('pushUint16', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     cursor.setPosition(417)
     cursor.pushUint16(420)
     expect(() => cursor.pushUint16(420)).toThrowErrorMatchingInlineSnapshot(
@@ -425,7 +425,7 @@ describe('pushUint16', () => {
 
 describe('pushUint24', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
 
     expect(cursor.inspectByte(0)).toBe(0)
     expect(cursor.position).toBe(0)
@@ -440,7 +440,7 @@ describe('pushUint24', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     cursor.setPosition(415)
     cursor.pushUint24(420)
     expect(() => cursor.pushUint24(420)).toThrowErrorMatchingInlineSnapshot(
@@ -451,7 +451,7 @@ describe('pushUint24', () => {
 
 describe('pushUint32', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
 
     expect(cursor.inspectByte(0)).toBe(0)
     expect(cursor.position).toBe(0)
@@ -466,7 +466,7 @@ describe('pushUint32', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(420))
+    const cursor = Cursor.create(new Uint8Array(420))
     cursor.setPosition(413)
     cursor.pushUint32(420)
     expect(() => cursor.pushUint32(420)).toThrowErrorMatchingInlineSnapshot(
@@ -477,7 +477,7 @@ describe('pushUint32', () => {
 
 describe('readByte', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(cursor.readByte()).toBe(0)
     expect(cursor.position).toBe(1)
     expect(cursor.readByte()).toBe(1)
@@ -488,7 +488,7 @@ describe('readByte', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(419)
     cursor.readByte()
     expect(() => cursor.readByte()).toThrowErrorMatchingInlineSnapshot(
@@ -499,7 +499,7 @@ describe('readByte', () => {
 
 describe('readBytes', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(cursor.readBytes(10)).toEqual(
       Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
     )
@@ -512,13 +512,13 @@ describe('readBytes', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(415)
     expect(() => cursor.readBytes(10)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `424` is out of bounds (`0 < position < 420`).]',
     )
 
-    const cursor_2 = createCursor(new Uint8Array(generateBytes(20)))
+    const cursor_2 = Cursor.create(new Uint8Array(generateBytes(20)))
     cursor_2.setPosition(10)
     expect(() => cursor_2.readBytes(11)).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `20` is out of bounds (`0 < position < 20`).]',
@@ -528,7 +528,7 @@ describe('readBytes', () => {
 
 describe('readUint8', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     expect(cursor.readUint8()).toBe(0)
     expect(cursor.readUint8()).toBe(1)
     cursor.setPosition(10)
@@ -540,7 +540,7 @@ describe('readUint8', () => {
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)))
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
     cursor.setPosition(419)
     cursor.readUint8()
     expect(() => cursor.readUint8()).toThrowErrorMatchingInlineSnapshot(
@@ -551,13 +551,13 @@ describe('readUint8', () => {
 
 describe('readUint16', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 164]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 164]))
     expect(cursor.readUint16()).toBe(256)
     expect(cursor.readUint16()).toBe(420)
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 164]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 164]))
     expect(cursor.readUint16()).toBe(256)
     expect(cursor.readUint16()).toBe(420)
     expect(() => cursor.readUint16()).toThrowErrorMatchingInlineSnapshot(
@@ -568,13 +568,13 @@ describe('readUint16', () => {
 
 describe('readUint24', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 33, 24, 33]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 33, 24, 33]))
     expect(cursor.readUint24()).toBe(65537)
     expect(cursor.readUint24()).toBe(2168865)
   })
 
   test('overflow', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 1, 0xf2, 0xc0]))
+    const cursor = Cursor.create(new Uint8Array([1, 0, 1, 0xf2, 0xc0]))
     expect(cursor.readUint24()).toBe(65537)
     expect(() => cursor.readUint24()).toThrowErrorMatchingInlineSnapshot(
       '[Cursor.PositionOutOfBoundsError: Position `5` is out of bounds (`0 < position < 5`).]',
@@ -584,13 +584,15 @@ describe('readUint24', () => {
 
 describe('readUint32', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array([1, 0, 0, 33, 64, 100, 99, 102]))
+    const cursor = Cursor.create(
+      new Uint8Array([1, 0, 0, 33, 64, 100, 99, 102]),
+    )
     expect(cursor.readUint32()).toBe(16777249)
     expect(cursor.readUint32()).toBe(1080320870)
   })
 
   test('overflow', () => {
-    const cursor = createCursor(
+    const cursor = Cursor.create(
       new Uint8Array([1, 0, 0, 0x29, 0x60, 0xc1, 0xde]),
     )
     expect(cursor.readUint32()).toBe(16777257)
@@ -601,7 +603,7 @@ describe('readUint32', () => {
 })
 
 test('remaining', () => {
-  const cursor = createCursor(new Uint8Array(generateBytes(420)))
+  const cursor = Cursor.create(new Uint8Array(generateBytes(420)))
   expect(cursor.remaining).toBe(420)
   cursor.readBytes(10)
   expect(cursor.remaining).toBe(410)
@@ -611,7 +613,7 @@ test('remaining', () => {
 
 describe('args: recursiveReadLimit', () => {
   test('default', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)), {
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)), {
       recursiveReadLimit: Number.POSITIVE_INFINITY,
     })
 
@@ -630,7 +632,7 @@ describe('args: recursiveReadLimit', () => {
   })
 
   test('=== 2', () => {
-    const cursor = createCursor(new Uint8Array(generateBytes(420)), {
+    const cursor = Cursor.create(new Uint8Array(generateBytes(420)), {
       recursiveReadLimit: 2,
     })
 

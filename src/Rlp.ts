@@ -1,7 +1,7 @@
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import { type Cursor, createCursor } from './internal/cursor.js'
+import * as Cursor from './internal/cursor.js'
 import type { ExactPartial, RecursiveArray } from './internal/types.js'
 
 /**
@@ -76,7 +76,7 @@ export function to<
     return value as Bytes.Bytes
   })()
 
-  const cursor = createCursor(bytes, {
+  const cursor = Cursor.create(bytes, {
     recursiveReadLimit: Number.POSITIVE_INFINITY,
   })
   const result = decodeRlpCursor(cursor, to_)
@@ -93,7 +93,7 @@ export declare namespace to {
   type ErrorType =
     | Bytes.fromHex.ErrorType
     | decodeRlpCursor.ErrorType
-    | createCursor.ErrorType
+    | Cursor.create.ErrorType
     | Hex.InvalidLengthError
     | Errors.GlobalErrorType
 }
@@ -105,7 +105,7 @@ to.parseError = (error: unknown) =>
 
 /** @internal */
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
-  cursor: Cursor,
+  cursor: Cursor.Cursor,
   to: to | 'Hex' | 'Bytes' | undefined = 'Hex',
 ): decodeRlpCursor.ReturnType<to> {
   if (cursor.bytes.length === 0)
@@ -141,7 +141,11 @@ export declare namespace decodeRlpCursor {
 }
 
 /** @internal */
-export function readLength(cursor: Cursor, prefix: number, offset: number) {
+export function readLength(
+  cursor: Cursor.Cursor,
+  prefix: number,
+  offset: number,
+) {
   if (offset === 0x80 && prefix < 0x80) return 1
   if (prefix <= offset + 55) return prefix - offset
   if (prefix === offset + 55 + 1) return cursor.readUint8()
@@ -158,7 +162,7 @@ export declare namespace readLength {
 
 /** @internal */
 export function readList<to extends 'Hex' | 'Bytes'>(
-  cursor: Cursor,
+  cursor: Cursor.Cursor,
   length: number,
   to: to | 'Hex' | 'Bytes',
 ) {
@@ -176,7 +180,7 @@ export declare namespace readList {
 
 type Encodable = {
   length: number
-  encode(cursor: Cursor): void
+  encode(cursor: Cursor.Cursor): void
 }
 
 /**
@@ -204,7 +208,7 @@ export function from<as extends 'Hex' | 'Bytes'>(
   const { as } = options
 
   const encodable = getEncodable(value)
-  const cursor = createCursor(new Uint8Array(encodable.length))
+  const cursor = Cursor.create(new Uint8Array(encodable.length))
   encodable.encode(cursor)
 
   if (as === 'Hex') return Hex.fromBytes(cursor.bytes) as from.ReturnType<as>
@@ -222,7 +226,7 @@ export declare namespace from {
     | (as extends 'Hex' ? Hex.Hex : never)
 
   type ErrorType =
-    | createCursor.ErrorType
+    | Cursor.create.ErrorType
     | Hex.fromBytes.ErrorType
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
@@ -329,7 +333,7 @@ function getEncodableList(list: Encodable[]): Encodable {
 
   return {
     length,
-    encode(cursor: Cursor) {
+    encode(cursor: Cursor.Cursor) {
       if (bodyLength <= 55) {
         cursor.pushByte(0xc0 + bodyLength)
       } else {
@@ -359,7 +363,7 @@ function getEncodableBytes(bytesOrHex: Bytes.Bytes | Hex.Hex): Encodable {
 
   return {
     length,
-    encode(cursor: Cursor) {
+    encode(cursor: Cursor.Cursor) {
       if (bytes.length === 1 && bytes[0]! < 0x80) {
         cursor.pushBytes(bytes)
       } else if (bytes.length <= 55) {

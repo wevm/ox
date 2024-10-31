@@ -1,7 +1,7 @@
 import * as Bytes from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { type Cursor, createCursor } from '../cursor.js'
+import * as Cursor from '../cursor.js'
 import { getArrayComponents } from './encode.js'
 import {
   AbiParameters_DataSizeTooSmallError,
@@ -84,7 +84,7 @@ export function AbiParameters_decode(
   const { as = 'Array' } = options
 
   const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
-  const cursor = createCursor(bytes)
+  const cursor = Cursor.create(bytes)
 
   if (Bytes.size(bytes) === 0 && parameters.length > 0)
     throw new AbiParameters_ZeroDataError()
@@ -149,7 +149,7 @@ AbiParameters_decode.parseError = (error: unknown) =>
 
 /** @internal */
 export function decodeParameter(
-  cursor: Cursor,
+  cursor: Cursor.Cursor,
   param: AbiParameters_Parameter,
   { staticPosition }: { staticPosition: number },
 ) {
@@ -192,7 +192,7 @@ const sizeOfLength = 32
 const sizeOfOffset = 32
 
 /** @internal */
-export function decodeAddress(cursor: Cursor) {
+export function decodeAddress(cursor: Cursor.Cursor) {
   const value = cursor.readBytes(32)
   return [Hex.fromBytes(Bytes.slice(value, -20)), 32]
 }
@@ -206,7 +206,7 @@ export declare namespace decodeAddress {
 
 /** @internal */
 export function decodeArray(
-  cursor: Cursor,
+  cursor: Cursor.Cursor,
   param: AbiParameters_Parameter,
   { length, staticPosition }: { length: number | null; staticPosition: number },
 ) {
@@ -289,7 +289,7 @@ export declare namespace decodeArray {
 }
 
 /** @internal */
-export function decodeBool(cursor: Cursor) {
+export function decodeBool(cursor: Cursor.Cursor) {
   return [Bytes.toBoolean(cursor.readBytes(32), { size: 32 }), 32]
 }
 
@@ -299,7 +299,7 @@ export declare namespace decodeBool {
 
 /** @internal */
 export function decodeBytes(
-  cursor: Cursor,
+  cursor: Cursor.Cursor,
   param: AbiParameters_Parameter,
   { staticPosition }: { staticPosition: number },
 ) {
@@ -339,7 +339,10 @@ export declare namespace decodeBytes {
 }
 
 /** @internal */
-export function decodeNumber(cursor: Cursor, param: AbiParameters_Parameter) {
+export function decodeNumber(
+  cursor: Cursor.Cursor,
+  param: AbiParameters_Parameter,
+) {
   const signed = param.type.startsWith('int')
   const size = Number.parseInt(param.type.split('int')[1] || '256')
   const value = cursor.readBytes(32)
@@ -365,7 +368,7 @@ export type TupleAbiParameter = AbiParameters_Parameter & {
 
 /** @internal */
 export function decodeTuple(
-  cursor: Cursor,
+  cursor: Cursor.Cursor,
   param: TupleAbiParameter,
   { staticPosition }: { staticPosition: number },
 ) {
@@ -424,7 +427,7 @@ export declare namespace decodeTuple {
 
 /** @internal */
 export function decodeString(
-  cursor: Cursor,
+  cursor: Cursor.Cursor,
   { staticPosition }: { staticPosition: number },
 ) {
   // Get offset to start of string data.

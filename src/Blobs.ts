@@ -3,7 +3,7 @@ import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as Kzg from './Kzg.js'
-import { createCursor } from './internal/cursor.js'
+import * as Cursor from './internal/cursor.js'
 import type { Compute, Mutable, OneOf, UnionCompute } from './internal/types.js'
 
 /** Blob limit per transaction. */
@@ -302,7 +302,7 @@ export function from<
   let active = true
   let position = 0
   while (active) {
-    const blob = createCursor(new Uint8Array(bytesPerBlob))
+    const blob = Cursor.create(new Uint8Array(bytesPerBlob))
 
     let size = 0
     while (size < fieldElementsPerBlob) {
@@ -351,7 +351,7 @@ export declare namespace from {
     | EmptyBlobError
     | Bytes.fromHex.ErrorType
     | Hex.fromBytes.ErrorType
-    | createCursor.ErrorType
+    | Cursor.create.ErrorType
     | Bytes.size.ErrorType
     | Errors.GlobalErrorType
 }
@@ -502,11 +502,11 @@ export function to<
   ) as Bytes.Bytes[]
 
   const length = blobs_.reduce((length, blob) => length + blob.length, 0)
-  const data = createCursor(new Uint8Array(length))
+  const data = Cursor.create(new Uint8Array(length))
   let active = true
 
   for (const blob of blobs_) {
-    const cursor = createCursor(blob)
+    const cursor = Cursor.create(blob)
     while (active && cursor.position < blob.length) {
       // First byte will be a zero 0x00 byte – we can skip.
       cursor.incrementPosition(1)
@@ -540,7 +540,7 @@ export declare namespace to {
   type ErrorType =
     | Hex.fromBytes.ErrorType
     | Bytes.fromHex.ErrorType
-    | createCursor.ErrorType
+    | Cursor.create.ErrorType
     | Errors.GlobalErrorType
 }
 
