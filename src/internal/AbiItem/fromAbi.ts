@@ -1,9 +1,8 @@
 import type * as Errors from '../../Errors.js'
+import * as Address from '../../Address.js'
 import * as Hex from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import type { AbiParameters_Parameter } from '../AbiParameters/types.js'
-import type { Address } from '../Address/types.js'
-import { Address_validate } from '../Address/validate.js'
 import type { UnionCompute } from '../types.js'
 import { AbiItem_AmbiguityError, AbiItem_NotFoundError } from './errors.js'
 import { AbiItem_getSelector } from './getSelector.js'
@@ -251,7 +250,7 @@ export function isArgOfType(
   const abiParameterType = abiParameter.type
   switch (abiParameterType) {
     case 'address':
-      return Address_validate(arg as Address, { strict: false })
+      return Address.validate(arg as Address.Address, { strict: false })
     case 'bool':
       return argType === 'boolean'
     case 'function':
@@ -330,11 +329,11 @@ export function getAmbiguousTypes(
     const ambiguous = (() => {
       if (types.includes('address') && types.includes('bytes20')) return true
       if (types.includes('address') && types.includes('string'))
-        return Address_validate(args[parameterIndex] as Address, {
+        return Address.validate(args[parameterIndex] as Address.Address, {
           strict: false,
         })
       if (types.includes('address') && types.includes('bytes'))
-        return Address_validate(args[parameterIndex] as Address, {
+        return Address.validate(args[parameterIndex] as Address.Address, {
           strict: false,
         })
       return false

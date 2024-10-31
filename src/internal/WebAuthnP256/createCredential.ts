@@ -1,7 +1,6 @@
 import type { Bytes } from '../../Bytes.js'
+import * as PublicKey from '../../PublicKey.js'
 import type * as Errors from '../../Errors.js'
-import { PublicKey_from } from '../PublicKey/from.js'
-import type { PublicKey } from '../PublicKey/types.js'
 import { WebAuthnP256_CredentialCreationFailedError } from './errors.js'
 import { WebAuthnP256_getCredentialCreationOptions } from './getCredentialCreationOptions.js'
 import type {
@@ -94,7 +93,7 @@ WebAuthnP256_createCredential.parseError = (error: unknown) =>
  */
 export async function parseCredentialPublicKey(
   cPublicKey: Bytes,
-): Promise<PublicKey> {
+): Promise<PublicKey.PublicKey> {
   const cryptoKey = await crypto.subtle.importKey(
     'spki',
     new Uint8Array(cPublicKey),
@@ -109,5 +108,5 @@ export async function parseCredentialPublicKey(
   const publicKey = new Uint8Array(
     await crypto.subtle.exportKey('raw', cryptoKey),
   )
-  return PublicKey_from(publicKey)
+  return PublicKey.from(publicKey)
 }

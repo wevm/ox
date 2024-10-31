@@ -1,7 +1,7 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import { Json_stringify } from './internal/Json/stringify.js'
+import * as Json from './Json.js'
 import * as internal from './internal/bytes.js'
 import * as internal_hex from './internal/hex.js'
 
@@ -875,7 +875,7 @@ export class InvalidBytesTypeError extends Errors.BaseError {
 
   constructor(value: unknown) {
     super(
-      `Value \`${typeof value === 'object' ? Json_stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`,
+      `Value \`${typeof value === 'object' ? Json.stringify(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`,
       {
         metaMessages: ['Bytes values must be of type `Bytes`.'],
       },
@@ -924,8 +924,7 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
     size,
   }: { offset: number; position: 'start' | 'end'; size: number }) {
     super(
-      `Slice ${
-        position === 'start' ? 'starting' : 'ending'
+      `Slice ${position === 'start' ? 'starting' : 'ending'
       } at offset \`${offset}\` is out-of-bounds (size: \`${size}\`).`,
     )
   }

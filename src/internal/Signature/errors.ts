@@ -1,7 +1,7 @@
 import type { Bytes } from '../../Bytes.js'
 import * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { Json_stringify } from '../Json/stringify.js'
+import * as Json from '../../Json.js'
 
 /** Thrown when the serialized signature is of an invalid size. */
 export class Signature_InvalidSerializedSizeError extends Errors.BaseError {
@@ -23,7 +23,7 @@ export class Signature_MissingPropertiesError extends Errors.BaseError {
 
   constructor({ signature }: { signature: unknown }) {
     super(
-      `Signature \`${Json_stringify(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`,
+      `Signature \`${Json.stringify(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`,
     )
   }
 }

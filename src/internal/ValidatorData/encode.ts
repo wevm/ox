@@ -1,7 +1,7 @@
 import type { Bytes } from '../../Bytes.js'
+import type * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { Address } from '../Address/types.js'
 
 /**
  * Encodes data with a validator in [ERC-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x00): `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`.
@@ -37,7 +37,7 @@ export function ValidatorData_encode(
 export declare namespace ValidatorData_encode {
   type Value = {
     data: Hex.Hex | Bytes
-    validator: Address
+    validator: Address.Address
   }
 
   type ErrorType =

@@ -1,11 +1,9 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
+import * as Address from '../../Address.js'
 import * as Bytes from '../../Bytes.js'
+import * as PublicKey from '../../PublicKey.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { Address_isEqual } from '../Address/isEqual.js'
-import type { Address } from '../Address/types.js'
-import { PublicKey_serialize } from '../PublicKey/serialize.js'
-import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
 import type { OneOf } from '../types.js'
 import { Secp256k1_recoverAddress } from './recoverAddress.js'
@@ -51,14 +49,14 @@ import { Secp256k1_recoverAddress } from './recoverAddress.js'
 export function Secp256k1_verify(options: Secp256k1_verify.Options): boolean {
   const { address, hash, payload, publicKey, signature } = options
   if (address)
-    return Address_isEqual(
+    return Address.isEqual(
       address,
       Secp256k1_recoverAddress({ payload, signature }),
     )
   return secp256k1.verify(
     signature,
     Bytes.from(payload),
-    PublicKey_serialize(publicKey, { as: 'Bytes' }),
+    PublicKey.serialize(publicKey, { as: 'Bytes' }),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
 }
@@ -72,13 +70,13 @@ export declare namespace Secp256k1_verify {
   } & OneOf<
     | {
         /** Address that signed the payload. */
-        address: Address
+        address: Address.Address
         /** Signature of the payload. */
         signature: Signature
       }
     | {
         /** Public key that signed the payload. */
-        publicKey: PublicKey<boolean>
+        publicKey: PublicKey.PublicKey<boolean>
         /** Signature of the payload. */
         signature: Signature<false>
       }

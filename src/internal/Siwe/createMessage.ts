@@ -1,5 +1,5 @@
+import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
-import { Address_from } from '../Address/from.js'
 import {
   Siwe_domainRegex,
   Siwe_ipRegex,
@@ -138,7 +138,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
   }
 
   // Construct message
-  const address = Address_from(value.address)
+  const address = Address.from(value.address)
   const origin = (() => {
     if (scheme) return `${scheme}://${domain}`
     return domain
@@ -178,7 +178,7 @@ export function Siwe_createMessage(value: Siwe_Message): string {
 
 export declare namespace Siwe_createMessage {
   type ErrorType =
-    | Address_from.ErrorType
+    | Address.from.ErrorType
     | Siwe_InvalidMessageFieldError
     | Errors.GlobalErrorType
 }

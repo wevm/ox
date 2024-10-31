@@ -1,11 +1,10 @@
 import type * as Errors from './Errors.js'
+import * as Address from './Address.js'
 import * as Hex from './Hex.js'
+import * as Rlp from './Rlp.js'
 import type { Signature } from './Signature.js'
 import * as TransactionEnvelope from './TransactionEnvelope.js'
-import { Address_assert } from './internal/Address/assert.js'
 import { Hash_keccak256 } from './internal/Hash/keccak256.js'
-import { Rlp_fromHex } from './internal/Rlp/from.js'
-import { Rlp_toHex } from './internal/Rlp/to.js'
 import { Signature_InvalidVError } from './internal/Signature/errors.js'
 import { Signature_extract } from './internal/Signature/extract.js'
 import { Signature_from } from './internal/Signature/from.js'
@@ -70,7 +69,7 @@ export type Type = typeof type
  */
 export function assert(envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>) {
   const { chainId, gasPrice, to } = envelope
-  if (to) Address_assert(to, { strict: false })
+  if (to) Address.assert(to, { strict: false })
   if (typeof chainId !== 'undefined' && chainId <= 0)
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
   if (gasPrice && BigInt(gasPrice) > 2n ** 256n - 1n)
@@ -79,7 +78,7 @@ export function assert(envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>) {
 
 export declare namespace assert {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | TransactionEnvelope.InvalidChainIdError
     | TransactionEnvelope.GasPriceTooHighError
     | Errors.GlobalErrorType
@@ -113,7 +112,7 @@ assert.parseError = (error: unknown) =>
 export function deserialize(
   serialized: Hex.Hex,
 ): Compute<TransactionEnvelopeLegacy> {
-  const tuple = Rlp_toHex(serialized)
+  const tuple = Rlp.toHex(serialized)
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
     tuple as readonly Hex.Hex[]
@@ -552,7 +551,7 @@ export function serialize(
   } else if (chainId > 0)
     serialized = [...serialized, Hex.fromNumber(chainId), '0x', '0x']
 
-  return Rlp_fromHex(serialized) as never
+  return Rlp.fromHex(serialized) as never
 }
 
 export declare namespace serialize {
@@ -565,7 +564,7 @@ export declare namespace serialize {
     | assert.ErrorType
     | Hex.fromNumber.ErrorType
     | Hex.trimLeft.ErrorType
-    | Rlp_fromHex.ErrorType
+    | Rlp.fromHex.ErrorType
     | Signature_InvalidVError
     | Errors.GlobalErrorType
 }

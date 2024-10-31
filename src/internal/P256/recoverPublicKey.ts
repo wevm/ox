@@ -3,9 +3,8 @@ import { secp256r1 } from '@noble/curves/p256'
 import type { Bytes } from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { PublicKey_from } from '../PublicKey/from.js'
-import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
+import * as PublicKey from '../../PublicKey.js'
 
 /**
  * Recovers the signing public key from the signed payload and signature.
@@ -27,7 +26,7 @@ import type { Signature } from '../Signature/types.js'
  */
 export function P256_recoverPublicKey(
   options: P256_recoverPublicKey.Options,
-): PublicKey {
+): PublicKey.PublicKey {
   const { payload, signature } = options
   const { r, s, yParity } = signature
   const signature_ = new secp256r1.Signature(
@@ -37,7 +36,7 @@ export function P256_recoverPublicKey(
   const payload_ =
     payload instanceof Uint8Array ? Hex.fromBytes(payload) : payload
   const point = signature_.recoverPublicKey(payload_.substring(2))
-  return PublicKey_from(point)
+  return PublicKey.from(point)
 }
 
 export declare namespace P256_recoverPublicKey {
@@ -49,7 +48,7 @@ export declare namespace P256_recoverPublicKey {
   }
 
   type ErrorType =
-    | PublicKey_from.ErrorType
+    | PublicKey.from.ErrorType
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }

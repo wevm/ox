@@ -3,8 +3,7 @@ import { secp256r1 } from '@noble/curves/p256'
 import type { Bytes } from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { PublicKey_from } from '../PublicKey/from.js'
-import type { PublicKey } from '../PublicKey/types.js'
+import * as PublicKey from '../../PublicKey.js'
 
 /**
  * Computes the P256 ECDSA public key from a provided private key.
@@ -21,14 +20,14 @@ import type { PublicKey } from '../PublicKey/types.js'
  */
 export function P256_getPublicKey(
   options: P256_getPublicKey.Options,
-): PublicKey {
+): PublicKey.PublicKey {
   const { privateKey } = options
   const point = secp256r1.ProjectivePoint.fromPrivateKey(
     typeof privateKey === 'string'
       ? privateKey.slice(2)
       : Hex.fromBytes(privateKey).slice(2),
   )
-  return PublicKey_from(point)
+  return PublicKey.from(point)
 }
 
 export declare namespace P256_getPublicKey {

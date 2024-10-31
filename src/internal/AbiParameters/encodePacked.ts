@@ -10,10 +10,9 @@ import type {
 } from 'abitype'
 
 import type * as Errors from '../../Errors.js'
+import * as Address from '../../Address.js'
 import * as Hex from '../../Hex.js'
 import * as Solidity from '../../Solidity.js'
-import { Address_assert } from '../Address/assert.js'
-import type { Address } from '../Address/types.js'
 import {
   AbiParameters_BytesSizeMismatchError,
   AbiParameters_InvalidTypeError,
@@ -91,7 +90,7 @@ export type EncodePackedValues<
 
 declare namespace encode {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | Hex.concat.ErrorType
     | Hex.padLeft.ErrorType
     | Hex.padRight.ErrorType
@@ -107,12 +106,12 @@ function encode<const packedAbiType extends PackedAbiType | unknown>(
   isArray = false,
 ): Hex.Hex {
   if (type === 'address') {
-    const address = value as Address
-    Address_assert(address)
+    const address = value as Address.Address
+    Address.assert(address)
     return Hex.padLeft(
       address.toLowerCase() as Hex.Hex,
       isArray ? 32 : 0,
-    ) as Address
+    ) as Address.Address
   }
   if (type === 'string') return Hex.fromString(value as string)
   if (type === 'bytes') return value as Hex.Hex

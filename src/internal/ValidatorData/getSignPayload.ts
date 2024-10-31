@@ -1,7 +1,7 @@
 import type { Bytes } from '../../Bytes.js'
+import type * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import type { Address } from '../Address/types.js'
 import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { ValidatorData_encode } from './encode.js'
 
@@ -32,7 +32,7 @@ export function ValidatorData_getSignPayload(
 export declare namespace ValidatorData_getSignPayload {
   type Value = {
     data: Hex | Bytes
-    validator: Address
+    validator: Address.Address
   }
 
   type ErrorType =

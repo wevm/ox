@@ -1,10 +1,10 @@
 import * as Bytes from '../../Bytes.js'
+import type * as PublicKey from '../../PublicKey.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 import { Base64_toBytes } from '../Base64/toBytes.js'
 import { Hash_sha256 } from '../Hash/sha256.js'
 import { P256_verify } from '../P256/verify.js'
-import type { PublicKey } from '../PublicKey/types.js'
 import type { Signature } from '../Signature/types.js'
 import type { WebAuthnP256_SignMetadata } from './types.js'
 
@@ -103,7 +103,7 @@ export declare namespace WebAuthnP256_verify {
     /** If set to `true`, the payload will be hashed (sha256) before being verified. */
     hash?: boolean | undefined
     /** The public key to verify the signature with. */
-    publicKey: PublicKey
+    publicKey: PublicKey.PublicKey
     /** The signature to verify. */
     signature: Signature<false>
     /** The metadata to verify the signature with. */

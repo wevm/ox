@@ -1,11 +1,7 @@
+import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
 import * as Solidity from '../../Solidity.js'
-import {
-  Address_InvalidAddressError,
-  Address_InvalidInputError,
-} from '../Address/errors.js'
-import { Address_validate } from '../Address/validate.js'
 import {
   TypedData_BytesSizeMismatchError,
   TypedData_InvalidPrimaryTypeError,
@@ -81,11 +77,11 @@ export function TypedData_assert<
       if (
         type === 'address' &&
         typeof value === 'string' &&
-        !Address_validate(value)
+        !Address.validate(value)
       )
-        throw new Address_InvalidAddressError({
+        throw new Address.InvalidAddressError({
           address: value,
-          cause: new Address_InvalidInputError(),
+          cause: new Address.InvalidInputError(),
         })
 
       const bytesMatch = type.match(Solidity.bytesRegex)
@@ -123,7 +119,7 @@ export declare namespace TypedData_assert {
   > = TypedData_Definition<typedData, primaryType>
 
   type ErrorType =
-    | Address_InvalidAddressError
+    | Address.InvalidAddressError
     | TypedData_BytesSizeMismatchError
     | TypedData_InvalidPrimaryTypeError
     | Hex.fromNumber.ErrorType

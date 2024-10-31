@@ -1,7 +1,7 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
-import { Json_stringify } from './internal/Json/stringify.js'
+import * as Json from './Json.js'
 import * as internal_bytes from './internal/bytes.js'
 import * as internal from './internal/hex.js'
 
@@ -904,7 +904,7 @@ export class InvalidHexTypeError extends Errors.BaseError {
 
   constructor(value: unknown) {
     super(
-      `Value \`${typeof value === 'object' ? Json_stringify(value) : value}\` of type \`${typeof value}\` is an invalid hex type.`,
+      `Value \`${typeof value === 'object' ? Json.stringify(value) : value}\` of type \`${typeof value}\` is an invalid hex type.`,
       {
         metaMessages: ['Hex types must be represented as `"0x${string}"`.'],
       },

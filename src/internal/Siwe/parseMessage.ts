@@ -1,4 +1,4 @@
-import type { Address } from '../Address/types.js'
+import type * as Address from '../../Address.js'
 import type { ExactPartial } from '../types.js'
 import { Siwe_prefixRegex, Siwe_suffixRegex } from './constants.js'
 import type { Siwe_Message } from './types.js'
@@ -38,11 +38,11 @@ import type { Siwe_Message } from './types.js'
 export function Siwe_parseMessage(message: string): ExactPartial<Siwe_Message> {
   const { scheme, statement, ...prefix } = (message.match(Siwe_prefixRegex)
     ?.groups ?? {}) as {
-    address: Address
-    domain: string
-    scheme?: string
-    statement?: string
-  }
+      address: Address.Address
+      domain: string
+      scheme?: string
+      statement?: string
+    }
   const { chainId, expirationTime, issuedAt, notBefore, requestId, ...suffix } =
     (message.match(Siwe_suffixRegex)?.groups ?? {}) as {
       chainId: string

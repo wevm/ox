@@ -1,11 +1,11 @@
+import type * as PublicKey from '../../PublicKey.js'
 import type { Hex } from '../../Hex.js'
-import type { PublicKey } from '../PublicKey/types.js'
 import type { Compute } from '../types.js'
 
 /** A WebAuthn-flavored P256 credential. */
 export type WebAuthnP256_P256Credential = {
   id: string
-  publicKey: PublicKey
+  publicKey: PublicKey.PublicKey
   raw: PublicKeyCredential
 }
 

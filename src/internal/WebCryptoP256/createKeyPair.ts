@@ -1,6 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import { PublicKey_from } from '../PublicKey/from.js'
-import type { PublicKey } from '../PublicKey/types.js'
+import * as PublicKey from '../../PublicKey.js'
 import type { Compute } from '../types.js'
 
 /**
@@ -44,7 +43,7 @@ export async function WebCryptoP256_createKeyPair(
     'raw',
     keypair.publicKey,
   )
-  const publicKey = PublicKey_from(new Uint8Array(publicKey_raw))
+  const publicKey = PublicKey.from(new Uint8Array(publicKey_raw))
   return {
     privateKey: keypair.privateKey,
     publicKey,
@@ -59,10 +58,10 @@ export declare namespace WebCryptoP256_createKeyPair {
 
   type ReturnType = Compute<{
     privateKey: CryptoKey
-    publicKey: PublicKey
+    publicKey: PublicKey.PublicKey
   }>
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = PublicKey.from.ErrorType | Errors.GlobalErrorType
 }
 
 WebCryptoP256_createKeyPair.parseError = (error: unknown) =>

@@ -1,6 +1,6 @@
+import * as Address from '../../Address.js'
 import * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { Address_assert } from '../Address/assert.js'
 import type { TupleAbiParameter } from './decode.js'
 import {
   AbiParameters_ArrayLengthMismatchError,
@@ -228,7 +228,7 @@ export declare namespace encode {
 
 /** @internal */
 export function encodeAddress(value: Hex.Hex): PreparedParameter {
-  Address_assert(value)
+  Address.assert(value)
   return {
     dynamic: false,
     encoded: Hex.padLeft(value.toLowerCase() as Hex.Hex),
@@ -238,7 +238,7 @@ export function encodeAddress(value: Hex.Hex): PreparedParameter {
 /** @internal */
 export declare namespace encodeAddress {
   type ErrorType =
-    | Address_assert.ErrorType
+    | Address.assert.ErrorType
     | Hex.padLeft.ErrorType
     | Errors.GlobalErrorType
 }

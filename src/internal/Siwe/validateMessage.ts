@@ -1,5 +1,4 @@
-import { Address_isEqual } from '../Address/isEqual.js'
-import type { Address } from '../Address/types.js'
+import * as Address from '../../Address.js'
 import type { ExactPartial } from '../types.js'
 import type { Siwe_Message } from './types.js'
 
@@ -43,7 +42,7 @@ export function Siwe_validateMessage(
 
   try {
     if (!message.address) return false
-    if (address && !Address_isEqual(message.address, address)) return false
+    if (address && !Address.isEqual(message.address, address)) return false
   } catch {
     return false
   }
@@ -56,7 +55,7 @@ export declare namespace Siwe_validateMessage {
     /**
      * Ethereum address to check against.
      */
-    address?: Address | undefined
+    address?: Address.Address | undefined
     /**
      * [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) authority to check against.
      */

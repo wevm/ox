@@ -1,6 +1,6 @@
 import type { Versions } from '@scure/bip32'
 import type { Hex } from '../../Hex.js'
-import type { PublicKey } from '../PublicKey/types.js'
+import type * as PublicKey from '../../PublicKey.js'
 
 /** Root type for a Hierarchical Deterministic (HD) Key. */
 export type HdKey = {
@@ -10,7 +10,7 @@ export type HdKey = {
   identifier: Hex
   privateKey: Hex
   privateExtendedKey: string
-  publicKey: PublicKey<false>
+  publicKey: PublicKey.PublicKey<false>
   publicExtendedKey: string
   versions: Versions
 }

@@ -1,12 +1,12 @@
+import type * as Address from '../../Address.js'
 import type * as Block from '../../Block.js'
 import type { Hex } from '../../Hex.js'
-import type { Address } from '../Address/types.js'
 import type { Compute } from '../types.js'
 
 /** A Filter as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml). */
 export type Filter<bigintType = bigint> = Compute<{
   /** Address to filter for logs. */
-  address?: Address | readonly Address[] | null | undefined
+  address?: Address.Address | readonly Address.Address[] | null | undefined
   /** Block number or tag to filter logs from. */
   fromBlock?: Block.Number<bigintType> | Block.Tag | undefined
   /** Block number or tag to filter logs to. */

@@ -1,5 +1,5 @@
+import type * as Address from '../../Address.js'
 import type { Hex } from '../../Hex.js'
-import type { Address } from '../Address/types.js'
 import type { Signature } from '../Signature/types.js'
 import type { Compute, Undefined } from '../types.js'
 
@@ -11,7 +11,7 @@ export type Authorization<
 > = Compute<
   {
     /** Address of the contract to set as code for the Authority. */
-    address: Address
+    address: Address.Address
     /** Chain ID to authorize. */
     chainId: numberType
     /** Nonce of the Authority to authorize. */

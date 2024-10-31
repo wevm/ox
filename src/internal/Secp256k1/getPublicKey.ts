@@ -3,8 +3,7 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 import type { Bytes } from '../../Bytes.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { PublicKey_from } from '../PublicKey/from.js'
-import type { PublicKey } from '../PublicKey/types.js'
+import * as PublicKey from '../../PublicKey.js'
 
 /**
  * Computes the secp256k1 ECDSA public key from a provided private key.
@@ -21,12 +20,12 @@ import type { PublicKey } from '../PublicKey/types.js'
  */
 export function Secp256k1_getPublicKey(
   options: Secp256k1_getPublicKey.Options,
-): PublicKey {
+): PublicKey.PublicKey {
   const { privateKey } = options
   const point = secp256k1.ProjectivePoint.fromPrivateKey(
     Hex.from(privateKey).slice(2),
   )
-  return PublicKey_from(point)
+  return PublicKey.from(point)
 }
 
 export declare namespace Secp256k1_getPublicKey {
@@ -39,6 +38,6 @@ export declare namespace Secp256k1_getPublicKey {
 
   type ErrorType =
     | Hex.from.ErrorType
-    | PublicKey_from.ErrorType
+    | PublicKey.from.ErrorType
     | Errors.GlobalErrorType
 }
