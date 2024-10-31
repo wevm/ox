@@ -1,6 +1,6 @@
 import * as Bytes from './Bytes.js'
-import * as Hex from './Hex.js'
 import type * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
 
 export const ivLength = 16
 
