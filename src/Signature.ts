@@ -258,24 +258,20 @@ extract.parseError = (error: unknown) =>
  */
 export function from<
   const signature extends
-    | OneOf<Signature<boolean> | Legacy | Rpc | LegacyRpc>
+    | OneOf<Signature<boolean> | Rpc<boolean> | Legacy | LegacyRpc>
     | Hex.Hex
     | Bytes.Bytes,
 >(
   signature:
     | signature
-    | OneOf<Signature<boolean> | Legacy | Rpc | LegacyRpc>
+    | OneOf<Signature<boolean> | Rpc<boolean> | Legacy | LegacyRpc>
     | Hex.Hex
     | Bytes.Bytes,
 ): from.ReturnType<signature> {
   const signature_ = (() => {
     if (typeof signature === 'string') return deserialize(signature)
     if (signature instanceof Uint8Array) return deserialize(signature)
-    if (
-      typeof signature.v === 'string' ||
-      typeof signature.yParity === 'string'
-    )
-      return fromRpc(signature)
+    if (typeof signature.r === 'string') return fromRpc(signature)
     if (signature.v)
       return {
         r: signature.r,
@@ -297,7 +293,7 @@ export function from<
 export declare namespace from {
   type ReturnType<
     signature extends
-      | OneOf<Signature<boolean> | Legacy | Rpc | LegacyRpc>
+      | OneOf<Signature<boolean> | Rpc<boolean> | Legacy | LegacyRpc>
       | Hex.Hex
       | Bytes.Bytes,
   > = signature extends Signature<boolean> & { v?: undefined }
