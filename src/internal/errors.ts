@@ -1,4 +1,4 @@
-import { version } from '../../version.js'
+import { version } from '../version.js'
 
 /** @internal */
 export function getUrl(url: string) {

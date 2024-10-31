@@ -21,7 +21,7 @@ export {
   simplifiedChinese,
   spanish,
   traditionalChinese,
-} from './internal/mnemonic2/wordlists.js'
+} from './internal/mnemonic/wordlists.js'
 
 /**
  * Generates a random mnemonic.
