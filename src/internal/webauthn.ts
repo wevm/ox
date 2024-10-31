@@ -1,26 +1,7 @@
-import type { Hex } from '../../Hex.js'
-import type * as PublicKey from '../../PublicKey.js'
-import type { Compute } from '../types.js'
-
-/** A WebAuthn-flavored P256 credential. */
-export type WebAuthnP256_P256Credential = {
-  id: string
-  publicKey: PublicKey.PublicKey
-  raw: PublicKeyCredential
-}
-
-/** Metadata for a WebAuthn P256 signature. */
-export type WebAuthnP256_SignMetadata = Compute<{
-  authenticatorData: Hex
-  challengeIndex: number
-  clientDataJSON: string
-  typeIndex: number
-  userVerificationRequired: boolean
-}>
-
-////////////////////////////////////////////////////////////////////////
-// Web Authentication API
-////////////////////////////////////////////////////////////////////////
+import { p256 } from '@noble/curves/p256'
+import type * as Bytes from '../Bytes.js'
+import * as Hex from '../Hex.js'
+import * as PublicKey from '../PublicKey.js'
 
 /** @internal */
 export type AttestationConveyancePreference =
@@ -169,4 +150,49 @@ export interface PublicKeyCredentialUserEntity
   extends PublicKeyCredentialEntity {
   displayName: string
   id: BufferSource
+}
+
+/**
+ * Parses an ASN.1 signature into a r and s value.
+ *
+ * @internal
+ */
+export function parseAsn1Signature(bytes: Uint8Array) {
+  const r_start = bytes[4] === 0 ? 5 : 4
+  const r_end = r_start + 32
+  const s_start = bytes[r_end + 2] === 0 ? r_end + 3 : r_end + 2
+
+  const r = BigInt(Hex.fromBytes(bytes.slice(r_start, r_end)))
+  const s = BigInt(Hex.fromBytes(bytes.slice(s_start)))
+
+  return {
+    r,
+    s: s > p256.CURVE.n / 2n ? p256.CURVE.n - s : s,
+  }
+}
+
+/**
+ * Parses a public key into x and y coordinates from the public key
+ * defined on the credential.
+ *
+ * @internal
+ */
+export async function parseCredentialPublicKey(
+  cPublicKey: Bytes.Bytes,
+): Promise<PublicKey.PublicKey> {
+  const cryptoKey = await crypto.subtle.importKey(
+    'spki',
+    new Uint8Array(cPublicKey),
+    {
+      name: 'ECDSA',
+      namedCurve: 'P-256',
+      hash: 'SHA-256',
+    },
+    true,
+    ['verify'],
+  )
+  const publicKey = new Uint8Array(
+    await crypto.subtle.exportKey('raw', cryptoKey),
+  )
+  return PublicKey.from(publicKey)
 }
