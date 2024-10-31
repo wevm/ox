@@ -1,4 +1,4 @@
-import type { Provider } from '../internal/Provider/types.js'
+import type { Provider } from '../Provider.js'
 
 declare global {
   interface Window {

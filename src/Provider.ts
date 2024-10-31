@@ -1,17 +1,316 @@
-export { Provider_IsUndefinedError as IsUndefinedError } from './internal/Provider/errors.js'
+import { EventEmitter } from 'eventemitter3'
+import type * as Address from './Address.js'
+import * as Errors from './Errors.js'
+import * as RpcResponse from './RpcResponse.js'
+import type * as RpcSchema from './RpcSchema.js'
+import type { Compute } from './internal/types.js'
 
-export { Provider_createEmitter as createEmitter } from './internal/Provider/createEmitter.js'
+/** Options for a {@link ox#Provider.Provider}. */
+export type Options = {
+  /**
+   * Whether to include event functions (`on`, `removeListener`) on the Provider.
+   *
+   * @default true
+   */
+  includeEvents?: boolean | undefined
+  /**
+   * RPC Schema to use for the Provider's `request` function.
+   * See {@link ox#RpcSchema.(from:function)} for more.
+   *
+   * @default `RpcSchema.Generic`
+   */
+  schema?: RpcSchema.Generic | undefined
+}
 
-export { Provider_from as from } from './internal/Provider/from.js'
+/** Root type for an EIP-1193 Provider. */
+export type Provider<
+  options extends Options | undefined = undefined,
+  ///
+  _schema extends RpcSchema.Generic = options extends {
+    schema: infer schema extends RpcSchema.Generic
+  }
+    ? schema
+    : RpcSchema.All,
+> = Compute<
+  {
+    request: RequestFn<_schema>
+  } & (options extends { includeEvents: true } | undefined
+    ? {
+        on: EventListenerFn
+        removeListener: EventListenerFn
+      }
+    : {})
+>
 
-export type {
-  Provider,
-  ProviderRpcError as RpcError,
-  Provider_ConnectInfo as ConnectInfo,
-  Provider_Emitter as Emitter,
-  Provider_EventListenerFn as EventListenerFn,
-  Provider_EventMap as EventMap,
-  Provider_Message as Message,
-  Provider_Options as Options,
-  Provider_RequestFn as RequestFn,
-} from './internal/Provider/types.js'
+/** Type for an EIP-1193 Provider's event emitter. */
+export type Emitter = Compute<EventEmitter<EventMap>>
+
+/** EIP-1193 Provider's `request` function. */
+export type RequestFn<schema extends RpcSchema.Generic = RpcSchema.Generic> = <
+  methodName extends
+    | RpcSchema.Generic
+    | RpcSchema.MethodNameGeneric = RpcSchema.MethodNameGeneric,
+>(
+  parameters: RpcSchema.ExtractRequest<methodName, schema>,
+) => Promise<RpcSchema.ExtractReturnType<methodName, schema>>
+
+/** Type for an EIP-1193 Provider's event listener functions (`on`, `removeListener`, etc). */
+export type EventListenerFn = <event extends keyof EventMap>(
+  event: event,
+  listener: EventMap[event],
+) => void
+
+export type ConnectInfo = {
+  chainId: string
+}
+
+export type Message = {
+  type: string
+  data: unknown
+}
+
+export class ProviderRpcError extends Error {
+  override readonly name = 'ProviderRpcError'
+
+  code: number
+  details: string
+
+  constructor(code: number, message: string) {
+    super(message)
+    this.code = code
+    this.details = message
+  }
+}
+
+export type EventMap = {
+  accountsChanged: (accounts: Address.Address[]) => void
+  chainChanged: (chainId: string) => void
+  connect: (connectInfo: ConnectInfo) => void
+  disconnect: (error: ProviderRpcError) => void
+  message: (message: Message) => void
+}
+
+/**
+ * Creates an EIP-1193 flavored event emitter to be injected onto a Provider.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Provider, RpcRequest, RpcResponse } from 'ox' // [!code focus]
+ *
+ * // 1. Instantiate a Provider Emitter. // [!code focus]
+ * const emitter = Provider.createEmitter() // [!code focus]
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const provider = Provider.from({
+ *   // 2. Pass the Emitter to the Provider. // [!code focus]
+ *   ...emitter, // [!code focus]
+ *   async request(args) {
+ *     return await fetch('https://1.rpc.thirdweb.com', {
+ *       body: JSON.stringify(store.prepare(args)),
+ *       method: 'POST',
+ *       headers: {
+ *         'Content-Type': 'application/json',
+ *       },
+ *     })
+ *       .then((res) => res.json())
+ *       .then(RpcResponse.parse)
+ *   },
+ * })
+ *
+ * // 3. Emit Provider Events. // [!code focus]
+ * emitter.emit('accountsChanged', ['0x...']) // [!code focus]
+ * ```
+ *
+ * @returns An event emitter.
+ */
+export function createEmitter(): Emitter {
+  const emitter = new EventEmitter<EventMap>()
+
+  return {
+    get eventNames() {
+      return emitter.eventNames.bind(emitter)
+    },
+    get listenerCount() {
+      return emitter.listenerCount.bind(emitter)
+    },
+    get listeners() {
+      return emitter.listeners.bind(emitter)
+    },
+    addListener: emitter.addListener.bind(emitter),
+    emit: emitter.emit.bind(emitter),
+    off: emitter.off.bind(emitter),
+    on: emitter.on.bind(emitter),
+    once: emitter.once.bind(emitter),
+    removeAllListeners: emitter.removeAllListeners.bind(emitter),
+    removeListener: emitter.removeListener.bind(emitter),
+  }
+}
+
+export declare namespace createEmitter {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+createEmitter.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as createEmitter.ErrorType
+
+export function from<
+  const provider extends Provider | unknown,
+  options extends Options | undefined = undefined,
+>(
+  provider: provider | Provider<{ schema: RpcSchema.Generic }>,
+  options?: options | Options,
+): Provider<options>
+
+/**
+ * Instantiates an [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) {@link ox#Provider.Provider}
+ * from an arbitrary [EIP-1193 Provider](https://eips.ethereum.org/EIPS/eip-1193) interface.
+ *
+ * @example
+ * ### Instantiating with RPC Transport
+ *
+ * Ox's {@link ox#RpcTransport} is EIP-1193 compliant, and can be used to instantiate an EIP-1193 Provider. This means you can use any HTTP RPC endpoint as an EIP-1193 Provider.
+ *
+ * ```ts twoslash
+ * import { Provider, RpcTransport } from 'ox'
+ *
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const provider = Provider.from(transport)
+ * ```
+ *
+ * @example
+ * ### Instantiating with External Providers
+ *
+ * The example below demonstrates how we can instantiate a typed EIP-1193 Provider from an
+ * external EIP-1193 Provider like `window.ethereum`.
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Provider } from 'ox'
+ *
+ * const provider = Provider.from(window.ethereum)
+ *
+ * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * ```
+ *
+ * :::tip
+ *
+ * There are also libraries that distribute EIP-1193 Provider objects that you can use with `Provider.from`:
+ *
+ * - [`@walletconnect/ethereum-provider`](https://www.npmjs.com/package/\@walletconnect/ethereum-provider)
+ *
+ * - [`@coinbase/wallet-sdk`](https://www.npmjs.com/package/\@coinbase/wallet-sdk)
+ *
+ * - [`@metamask/detect-provider`](https://www.npmjs.com/package/\@metamask/detect-provider)
+ *
+ * - [`@safe-global/safe-apps-provider`](https://github.com/safe-global/safe-apps-sdk/tree/main/packages/safe-apps-provider)
+ *
+ * - [`mipd`](https://github.com/wevm/mipd): EIP-6963 Multi Injected Providers
+ *
+ * :::
+ *
+ * @example
+ * ### Instantiating a Custom Provider
+ *
+ * The example below demonstrates how we can instantiate a typed EIP-1193 Provider from a
+ * HTTP `fetch` JSON-RPC request. You can use this pattern to integrate with any asynchronous JSON-RPC
+ * transport, including WebSockets and IPC.
+ *
+ * ```ts twoslash
+ * import { Provider, RpcRequest, RpcResponse } from 'ox'
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const provider = Provider.from({
+ *   async request(args) {
+ *     return await fetch('https://1.rpc.thirdweb.com', {
+ *       body: JSON.stringify(store.prepare(args)),
+ *       method: 'POST',
+ *       headers: {
+ *         'Content-Type': 'application/json',
+ *       },
+ *     })
+ *       .then((res) => res.json())
+ *       .then(RpcResponse.parse)
+ *   },
+ * })
+ *
+ * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * ```
+ *
+ * @example
+ * ### Instantiating a Provider with Events
+ *
+ * The example below demonstrates how to instantiate a Provider with your own EIP-1193 flavored event emitter.
+ *
+ * This example is useful for Wallets that distribute an EIP-1193 Provider (e.g. webpage injection via `window.ethereum`).
+ *
+ * ```ts twoslash
+ * import { Provider, RpcRequest, RpcResponse } from 'ox'
+ *
+ * // 1. Instantiate a Provider Emitter.
+ * const emitter = Provider.createEmitter() // [!code ++]
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const provider = Provider.from({
+ *   // 2. Pass the Emitter to the Provider.
+ *   ...emitter, // [!code ++]
+ *   async request(args) {
+ *     return await fetch('https://1.rpc.thirdweb.com', {
+ *       body: JSON.stringify(store.prepare(args)),
+ *       method: 'POST',
+ *       headers: {
+ *         'Content-Type': 'application/json',
+ *       },
+ *     })
+ *       .then((res) => res.json())
+ *       .then(RpcResponse.parse)
+ *   },
+ * })
+ *
+ * // 3. Emit Provider Events.
+ * emitter.emit('accountsChanged', ['0x...']) // [!code ++]
+ * ```
+ *
+ * @param provider - The EIP-1193 provider to convert.
+ * @returns An typed EIP-1193 Provider.
+ */
+export function from(provider: any, options: Options = {}): Provider<Options> {
+  const { includeEvents = true } = options
+  if (!provider) throw new IsUndefinedError()
+  return {
+    ...(includeEvents
+      ? {
+          on: provider.on?.bind(provider),
+          removeListener: provider.removeListener?.bind(provider),
+        }
+      : {}),
+    async request(args) {
+      const result = await provider.request(args)
+      if (
+        typeof result === 'object' &&
+        'jsonrpc' in (result as { jsonrpc?: unknown })
+      )
+        return RpcResponse.parse(result) as never
+      return result
+    },
+  }
+}
+
+export declare namespace from {
+  type ErrorType = IsUndefinedError | Errors.GlobalErrorType
+}
+
+/* v8 ignore next */
+from.parseError = (error: unknown) => error as from.ErrorType
+
+/** Thrown when the provider is undefined. */
+export class IsUndefinedError extends Errors.BaseError {
+  override readonly name = 'Provider.IsUndefinedError'
+
+  constructor() {
+    super('`provider` is undefined.')
+  }
+}
