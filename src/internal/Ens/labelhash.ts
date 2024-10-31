@@ -1,6 +1,6 @@
 import type * as Errors from '../../Errors.js'
+import * as Hash from '../../Hash.js'
 import * as Hex from '../../Hex.js'
-import { Hash_keccak256 } from '../Hash/keccak256.js'
 import { Ens_encodedLabelToLabelhash } from './encodedLabelToLabelhash.js'
 
 /**
@@ -22,7 +22,7 @@ export function Ens_labelhash(label: string) {
   const result = new Uint8Array(32).fill(0)
   if (!label) return Hex.fromBytes(result)
   return (
-    Ens_encodedLabelToLabelhash(label) || Hash_keccak256(Hex.fromString(label))
+    Ens_encodedLabelToLabelhash(label) || Hash.keccak256(Hex.fromString(label))
   )
 }
 
@@ -30,7 +30,7 @@ export declare namespace Ens_labelhash {
   type ErrorType =
     | Hex.fromBytes.ErrorType
     | Ens_encodedLabelToLabelhash.ErrorType
-    | Hash_keccak256.ErrorType
+    | Hash.keccak256.ErrorType
     | Hex.fromString.ErrorType
     | Errors.GlobalErrorType
 }

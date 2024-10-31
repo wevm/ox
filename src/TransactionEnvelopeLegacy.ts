@@ -1,10 +1,10 @@
 import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
+import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
 import * as TransactionEnvelope from './TransactionEnvelope.js'
-import { Hash_keccak256 } from './internal/Hash/keccak256.js'
 import type {
   Assign,
   Branded,
@@ -402,7 +402,7 @@ export function hash<presign extends boolean = false>(
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const { presign } = options
-  return Hash_keccak256(
+  return Hash.keccak256(
     serialize({
       ...envelope,
       ...(presign
@@ -426,7 +426,7 @@ export declare namespace hash {
   type ReturnType = Hex.Hex
 
   type ErrorType =
-    | Hash_keccak256.ErrorType
+    | Hash.keccak256.ErrorType
     | serialize.ErrorType
     | Errors.GlobalErrorType
 }
