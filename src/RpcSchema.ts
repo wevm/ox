@@ -704,7 +704,7 @@ export type Eth = [
         block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash,
       ]
     }
-    ReturnType: AccountProof.AccountProofRpc
+    ReturnType: AccountProof.Rpc
   },
   /**
    * Returns the value from a storage position at an address
