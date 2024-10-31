@@ -8,10 +8,10 @@ import type {
 import type { Hex } from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import type { IsEventSignature, IsStructSignature } from '../AbiItem/types.js'
-import type { Filter_Topic } from '../Filter/types.js'
+import type * as Filter from '../../Filter.js'
 import type {
   Compute,
-  Filter,
+  Filter as Filter_internal,
   MaybeRequired,
   TypeErrorMessage,
   UnionToIntersection,
@@ -126,7 +126,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
   // Remove non-indexed parameters based on `Options['IndexedOnly']`
 > = abiParameters extends readonly []
   ? readonly []
-  : Filter<
+  : Filter_internal<
         abiParameters,
         options['IndexedOnly'] extends true ? { indexed: true } : object
       > extends infer Filtered extends readonly AbiParameter[]
@@ -203,7 +203,7 @@ export type AbiEvent_ParameterToPrimitiveType<
 /** @internal */
 export type TopicType<
   primitiveType = Hex,
-  topic extends Filter_Topic = Filter_Topic,
+  topic extends Filter.Topic = Filter.Topic,
 > = topic extends Hex
   ? primitiveType
   : topic extends readonly Hex[]
