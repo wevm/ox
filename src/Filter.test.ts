@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest'
 import { Filter } from 'ox'
+import { describe, expect, test } from 'vitest'
 
 describe('fromRpc', () => {
   test('default', () => {

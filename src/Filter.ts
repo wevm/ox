@@ -1,8 +1,8 @@
-import * as Hex from './Hex.js'
 import type * as Address from './Address.js'
 import type * as Block from './Block.js'
-import type { Compute } from './internal/types.js'
 import type * as Errors from './Errors.js'
+import * as Hex from './Hex.js'
+import type { Compute } from './internal/types.js'
 
 /** A Filter as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml). */
 export type Filter<bigintType = bigint> = Compute<{

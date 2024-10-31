@@ -5,10 +5,10 @@ import type {
   ExtractAbiEventNames,
   AbiEvent as abitype_AbiEvent,
 } from 'abitype'
+import type * as Filter from '../../Filter.js'
 import type { Hex } from '../../Hex.js'
 import type { Abi } from '../Abi/types.js'
 import type { IsEventSignature, IsStructSignature } from '../AbiItem/types.js'
-import type * as Filter from '../../Filter.js'
 import type {
   Compute,
   Filter as Filter_internal,
