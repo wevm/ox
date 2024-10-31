@@ -7,9 +7,9 @@ import { createHttpServer } from '../../../test/http.js'
 test('default', async () => {
   const transport = RpcTransport.fromHttp(anvilMainnet.rpcUrl)
 
-  const blockNumber = await transport.request({ method: 'eth_accounts' })
+  const accounts = await transport.request({ method: 'eth_accounts' })
 
-  expect(blockNumber).toMatchInlineSnapshot(`
+  expect(accounts).toMatchInlineSnapshot(`
     [
       "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
       "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
@@ -28,9 +28,9 @@ test('default', async () => {
 test('options: raw', async () => {
   const transport = RpcTransport.fromHttp(anvilMainnet.rpcUrl, { raw: true })
 
-  const blockNumber = await transport.request({ method: 'eth_accounts' })
+  const accounts = await transport.request({ method: 'eth_accounts' })
 
-  expect(blockNumber).toMatchInlineSnapshot(`
+  expect(accounts).toMatchInlineSnapshot(`
     {
       "id": 0,
       "jsonrpc": "2.0",

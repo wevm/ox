@@ -1,5 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import type { RpcSchema_Generic } from '../RpcSchema/types.js'
+import type * as RpcSchema from '../../RpcSchema.js'
 import { RpcRequest_from } from './from.js'
 import type { RpcRequest_Store } from './types.js'
 
@@ -34,12 +34,12 @@ import type { RpcRequest_Store } from './types.js'
  * @example
  * ### Type-safe Custom Schemas
  *
- * It is possible to define your own type-safe schema by using the {@link ox#RpcSchema.Define} type.
+ * It is possible to define your own type-safe schema by using the {@link ox#RpcSchema.From} type.
  *
  * ```ts twoslash
  * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Schema = RpcSchema.Define<{ // [!code focus]
+ * type Schema = RpcSchema.From<{ // [!code focus]
  *   Request: { // [!code focus]
  *     method: 'eth_foobar' // [!code focus]
  *     params: [number] // [!code focus]
@@ -66,7 +66,7 @@ import type { RpcRequest_Store } from './types.js'
  * @returns The request store
  */
 export function RpcRequest_createStore<
-  schema extends RpcSchema_Generic | undefined = undefined,
+  schema extends RpcSchema.Generic | undefined = undefined,
 >(
   options: RpcRequest_createStore.Options = {},
 ): RpcRequest_createStore.ReturnType<schema> {
@@ -90,7 +90,7 @@ export declare namespace RpcRequest_createStore {
     id?: number
   }
 
-  type ReturnType<schema extends RpcSchema_Generic | undefined> =
+  type ReturnType<schema extends RpcSchema.Generic | undefined> =
     RpcRequest_Store<schema>
 
   type ErrorType = Errors.GlobalErrorType

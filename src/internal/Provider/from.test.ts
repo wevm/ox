@@ -18,7 +18,9 @@ test('default', async () => {
     },
   })
 
-  const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+  const blockNumber = await provider.request({
+    method: 'eth_blockNumber',
+  })
 
   expect(blockNumber).toMatchInlineSnapshot(`"0x12f2974"`)
 })

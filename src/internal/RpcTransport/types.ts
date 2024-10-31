@@ -1,25 +1,21 @@
+import type * as RpcSchema from '../../RpcSchema.js'
 import type { RpcResponse } from '../RpcResponse/types.js'
-import type {
-  RpcSchema_ExtractRequest,
-  RpcSchema_ExtractReturnType,
-  RpcSchema_Generic,
-  RpcSchema_MethodNameGeneric,
-} from '../RpcSchema/types.js'
 import type { Compute } from '../types.js'
 
 /** Root type for an RPC Transport. */
 export type RpcTransport<
   raw extends boolean = false,
   options extends Record<string, unknown> = {},
+  schema extends RpcSchema.Generic = RpcSchema.All,
 > = Compute<{
-  request: RpcTransport_RequestFn<raw, options>
+  request: RpcTransport_RequestFn<raw, options, schema>
 }>
 
 /** HTTP-based RPC Transport. */
-export type RpcTransport_Http<raw extends boolean = false> = RpcTransport<
-  raw,
-  RpcTransport_HttpOptions
->
+export type RpcTransport_Http<
+  raw extends boolean = false,
+  schema extends RpcSchema.Generic = RpcSchema.All,
+> = RpcTransport<raw, RpcTransport_HttpOptions, schema>
 
 ////////////////////////////////////////////////////////////////////////
 // Options
@@ -28,6 +24,7 @@ export type RpcTransport_Http<raw extends boolean = false> = RpcTransport<
 export type RpcTransport_Options<
   raw extends boolean | undefined = undefined,
   options extends Record<string, unknown> = {},
+  schema extends RpcSchema.Generic = RpcSchema.All,
 > = {
   /**
    * Enables raw mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
@@ -38,6 +35,13 @@ export type RpcTransport_Options<
    * @default false
    */
   raw?: raw | boolean | undefined
+  /**
+   * RPC Schema to use for the Transport's `request` function.
+   * See {@link ox#RpcSchema.(from:function)} for more.
+   *
+   * @default `RpcSchema.All`
+   */
+  schema?: schema | RpcSchema.All | undefined
 } & options
 
 export type RpcTransport_HttpOptions = {
@@ -45,7 +49,7 @@ export type RpcTransport_HttpOptions = {
   fetchOptions?:
     | Omit<RequestInit, 'body'>
     | ((
-        method: RpcSchema_Generic['Request'],
+        method: RpcSchema.Generic['Request'],
       ) => Omit<RequestInit, 'body'> | Promise<Omit<RequestInit, 'body'>>)
     | undefined
   /** Function to use to make the request. @default fetch */
@@ -61,18 +65,21 @@ export type RpcTransport_HttpOptions = {
 export type RpcTransport_RequestFn<
   raw extends boolean = false,
   options extends Record<string, unknown> = {},
+  schema extends RpcSchema.Generic = RpcSchema.All,
 > = <
-  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+  methodName extends
+    | RpcSchema.Generic
+    | RpcSchema.MethodNameGeneric = RpcSchema.MethodNameGeneric,
   raw_override extends boolean | undefined = undefined,
 >(
-  parameters: Compute<RpcSchema_ExtractRequest<schema>>,
-  options?: RpcTransport_Options<raw_override, options> | undefined,
+  parameters: Compute<RpcSchema.ExtractRequest<methodName, schema>>,
+  options?: RpcTransport_Options<raw_override, options, schema> | undefined,
 ) => Promise<
   raw_override extends boolean
     ? raw_override extends true
-      ? RpcResponse<RpcSchema_ExtractReturnType<schema>>
-      : RpcSchema_ExtractReturnType<schema>
+      ? RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
+      : RpcSchema.ExtractReturnType<methodName, schema>
     : raw extends true
-      ? RpcResponse<RpcSchema_ExtractReturnType<schema>>
-      : RpcSchema_ExtractReturnType<schema>
+      ? RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
+      : RpcSchema.ExtractReturnType<methodName, schema>
 >

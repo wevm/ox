@@ -1,30 +1,38 @@
 import type { EventEmitter } from 'eventemitter3'
+import type * as RpcSchema from '../../RpcSchema.js'
 import type { Address } from '../Address/types.js'
-import type {
-  RpcSchema_ExtractRequest,
-  RpcSchema_ExtractReturnType,
-  RpcSchema_Generic,
-  RpcSchema_MethodNameGeneric,
-} from '../RpcSchema/types.js'
 import type { Compute } from '../types.js'
 
 /** Options for a {@link ox#Provider.Provider}. */
 export type Provider_Options = {
-  includeEvents: boolean
-}
-
-/** Default options for a {@link ox#Provider.Provider}. */
-export type Provider_OptionsDefault = {
-  includeEvents: true
+  /**
+   * Whether to include event functions (`on`, `removeListener`) on the Provider.
+   *
+   * @default true
+   */
+  includeEvents?: boolean | undefined
+  /**
+   * RPC Schema to use for the Provider's `request` function.
+   * See {@link ox#RpcSchema.(from:function)} for more.
+   *
+   * @default `RpcSchema.Generic`
+   */
+  schema?: RpcSchema.Generic | undefined
 }
 
 /** Root type for an EIP-1193 Provider. */
 export type Provider<
-  options extends Provider_Options = Provider_OptionsDefault,
+  options extends Provider_Options | undefined = undefined,
+  ///
+  _schema extends RpcSchema.Generic = options extends {
+    schema: infer schema extends RpcSchema.Generic
+  }
+    ? schema
+    : RpcSchema.All,
 > = Compute<
   {
-    request: Provider_RequestFn
-  } & (options['includeEvents'] extends true
+    request: Provider_RequestFn<_schema>
+  } & (options extends { includeEvents: true } | undefined
     ? {
         on: Provider_EventListenerFn
         removeListener: Provider_EventListenerFn
@@ -36,11 +44,15 @@ export type Provider<
 export type Provider_Emitter = Compute<EventEmitter<Provider_EventMap>>
 
 /** EIP-1193 Provider's `request` function. */
-export type Provider_RequestFn = <
-  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+export type Provider_RequestFn<
+  schema extends RpcSchema.Generic = RpcSchema.Generic,
+> = <
+  methodName extends
+    | RpcSchema.Generic
+    | RpcSchema.MethodNameGeneric = RpcSchema.MethodNameGeneric,
 >(
-  parameters: RpcSchema_ExtractRequest<schema>,
-) => Promise<RpcSchema_ExtractReturnType<schema>>
+  parameters: RpcSchema.ExtractRequest<methodName, schema>,
+) => Promise<RpcSchema.ExtractReturnType<methodName, schema>>
 
 /** Type for an EIP-1193 Provider's event listener functions (`on`, `removeListener`, etc). */
 export type Provider_EventListenerFn = <event extends keyof Provider_EventMap>(

@@ -1,4 +1,5 @@
 import type * as Errors from '../../Errors.js'
+import type * as RpcSchema from '../../RpcSchema.js'
 import { Promise_withTimeout } from '../Promise/withTimeout.js'
 import { RpcTransport_create } from './create.js'
 import {
@@ -28,10 +29,13 @@ import type {
  * @param options - Transport options.
  * @returns HTTP JSON-RPC Transport.
  */
-export function RpcTransport_fromHttp<safe extends boolean = false>(
+export function RpcTransport_fromHttp<
+  safe extends boolean = false,
+  schema extends RpcSchema.Generic = RpcSchema.All,
+>(
   url: string,
-  options: RpcTransport_fromHttp.Options<safe> = {},
-): RpcTransport_Http<safe> {
+  options: RpcTransport_fromHttp.Options<safe, schema> = {},
+): RpcTransport_Http<safe, schema> {
   return RpcTransport_create<RpcTransport_HttpOptions>(
     {
       async request(body_, options_) {
@@ -103,10 +107,10 @@ export function RpcTransport_fromHttp<safe extends boolean = false>(
 }
 
 export declare namespace RpcTransport_fromHttp {
-  type Options<raw extends boolean = false> = RpcTransport_Options<
-    raw,
-    RpcTransport_HttpOptions
-  >
+  type Options<
+    raw extends boolean = false,
+    schema extends RpcSchema.Generic = RpcSchema.All,
+  > = RpcTransport_Options<raw, RpcTransport_HttpOptions, schema>
 
   type ErrorType =
     | Promise_withTimeout.ErrorType

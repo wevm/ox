@@ -1,11 +1,16 @@
 import type * as Errors from '../../Errors.js'
+import type * as RpcSchema from '../../RpcSchema.js'
 import { RpcResponse_parse } from '../RpcResponse/parse.js'
 import { Provider_IsUndefinedError } from './errors.js'
-import type { Provider } from './types.js'
+import type { Provider, Provider_Options } from './types.js'
 
-export function Provider_from<const provider extends Provider | unknown>(
-  provider: provider | Provider,
-): Provider
+export function Provider_from<
+  const provider extends Provider | unknown,
+  options extends Provider_Options | undefined = undefined,
+>(
+  provider: provider | Provider<{ schema: RpcSchema.Generic }>,
+  options?: options | Provider_Options,
+): Provider<options>
 
 /**
  * Instantiates an [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) {@link ox#Provider.Provider}
@@ -121,11 +126,19 @@ export function Provider_from<const provider extends Provider | unknown>(
  * @param provider - The EIP-1193 provider to convert.
  * @returns An typed EIP-1193 Provider.
  */
-export function Provider_from(provider: Provider): Provider {
+export function Provider_from(
+  provider: any,
+  options: Provider_Options = {},
+): Provider<Provider_Options> {
+  const { includeEvents = true } = options
   if (!provider) throw new Provider_IsUndefinedError()
   return {
-    on: provider.on?.bind(provider),
-    removeListener: provider.removeListener?.bind(provider),
+    ...(includeEvents
+      ? {
+          on: provider.on?.bind(provider),
+          removeListener: provider.removeListener?.bind(provider),
+        }
+      : {}),
     async request(args) {
       const result = await provider.request(args)
       if (

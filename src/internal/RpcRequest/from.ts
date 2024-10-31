@@ -1,10 +1,5 @@
 import type * as Errors from '../../Errors.js'
-import type {
-  RpcSchema_Extract,
-  RpcSchema_ExtractRequest,
-  RpcSchema_Generic,
-  RpcSchema_MethodNameGeneric,
-} from '../RpcSchema/types.js'
+import type * as RpcSchema from '../../RpcSchema.js'
 import type { Compute } from '../types.js'
 import type { RpcRequest } from './types.js'
 
@@ -50,12 +45,12 @@ import type { RpcRequest } from './types.js'
  * @example
  * ### Type-safe Custom Schemas
  *
- * It is possible to define your own type-safe RPC Schema by using the {@link ox#RpcSchema.Define} type.
+ * It is possible to define your own type-safe RPC Schema by using the {@link ox#RpcSchema.From} type.
  *
  * ```ts twoslash
  * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Schema = RpcSchema.Define<{ // [!code focus]
+ * type Schema = RpcSchema.From<{ // [!code focus]
  *   Request: { // [!code focus]
  *     method: 'eth_foobar' // [!code focus]
  *     params: [number] // [!code focus]
@@ -81,7 +76,7 @@ import type { RpcRequest } from './types.js'
  * @returns The fully-formed JSON-RPC request object.
  */
 export function RpcRequest_from<
-  schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+  schema extends RpcSchema.Generic | RpcSchema.MethodNameGeneric,
 >(
   options: RpcRequest_from.Options<schema>,
 ): RpcRequest_from.ReturnType<schema> {
@@ -92,14 +87,16 @@ export function RpcRequest_from<
 }
 
 export declare namespace RpcRequest_from {
-  type Options<schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric> =
-    Compute<RpcSchema_ExtractRequest<schema> & { id: number }>
+  type Options<schema extends RpcSchema.Generic | RpcSchema.MethodNameGeneric> =
+    Compute<RpcSchema.ExtractRequest<schema> & { id: number }>
 
   type ReturnType<
-    schema extends RpcSchema_Generic | RpcSchema_MethodNameGeneric,
+    schema extends RpcSchema.Generic | RpcSchema.MethodNameGeneric,
   > = Compute<
     RpcRequest<
-      schema extends RpcSchema_Generic ? schema : RpcSchema_Extract<schema>
+      schema extends RpcSchema.Generic
+        ? schema
+        : RpcSchema.ExtractMethod<schema>
     >
   >
 
