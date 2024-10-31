@@ -1,6 +1,5 @@
 import type * as RpcSchema from '../../RpcSchema.js'
 import type { Compute } from '../types.js'
-import type { RpcRequest_from } from './from.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
 export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =
@@ -17,15 +16,16 @@ export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =
 export type RpcRequest_Store<schema extends RpcSchema.Generic | undefined> =
   Compute<{
     prepare: <
-      method_inferred extends RpcSchema.Generic | RpcSchema.MethodNameGeneric,
+      methodName extends
+        | RpcSchema.Generic
+        | RpcSchema.MethodNameGeneric = RpcSchema.MethodNameGeneric,
     >(
       parameters: Compute<
         RpcSchema.ExtractRequest<
-          schema extends RpcSchema.Generic ? schema : method_inferred
+          methodName,
+          schema extends RpcSchema.Generic ? schema : RpcSchema.All
         >
       >,
-    ) => RpcRequest_from.ReturnType<
-      schema extends RpcSchema.Generic ? schema : method_inferred
-    >
+    ) => Compute<RpcRequest<RpcSchema.ExtractMethod<methodName>>>
     readonly id: number
   }>

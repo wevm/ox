@@ -42,36 +42,6 @@ import type { RpcRequest } from './types.js'
  *  .then((response) => RpcResponse.parse(response, { request }))
  * ```
  *
- * @example
- * ### Type-safe Custom Schemas
- *
- * It is possible to define your own type-safe RPC Schema by using the {@link ox#RpcSchema.From} type.
- *
- * ```ts twoslash
- * import { RpcSchema, RpcRequest } from 'ox'
- *
- * type Schema = RpcSchema.From<{ // [!code focus]
- *   Request: { // [!code focus]
- *     method: 'eth_foobar' // [!code focus]
- *     params: [number] // [!code focus]
- *   } // [!code focus]
- *   ReturnType: string // [!code focus]
- * } | { // [!code focus]
- *   Request: { // [!code focus]
- *     method: 'eth_foobaz' // [!code focus]
- *     params: [string] // [!code focus]
- *   } // [!code focus]
- *   ReturnType: string // [!code focus]
- * }> // [!code focus]
- *
- * const request = RpcRequest.from<Schema>({ // [!code focus]
- *   id: 0,
- *   method: 'eth_foobar', // [!code focus]
- *   // ^?
- *   params: [42],
- * })
- * ```
- *
  * @param options - JSON-RPC request options.
  * @returns The fully-formed JSON-RPC request object.
  */
@@ -92,13 +62,7 @@ export declare namespace RpcRequest_from {
 
   type ReturnType<
     schema extends RpcSchema.Generic | RpcSchema.MethodNameGeneric,
-  > = Compute<
-    RpcRequest<
-      schema extends RpcSchema.Generic
-        ? schema
-        : RpcSchema.ExtractMethod<schema>
-    >
-  >
+  > = Compute<RpcRequest<RpcSchema.ExtractMethod<schema>>>
 
   type ErrorType = Errors.GlobalErrorType
 }
