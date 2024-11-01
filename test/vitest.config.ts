@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -17,15 +17,17 @@ export default defineConfig({
       provider: 'v8',
       reporter: process.env.CI ? ['lcov'] : ['text', 'json', 'html'],
     },
+    globalSetup: process.env.TYPES
+      ? [join(__dirname, './globalSetup.types.ts')]
+      : [join(__dirname, './globalSetup.ts')],
     include: [
       ...(process.env.TYPES
         ? ['src/_test/**/*.snap-d.ts']
         : ['src/_test/**/*.test.ts']),
     ],
-    globalSetup: process.env.TYPES
-      ? [join(__dirname, './globalSetup.types.ts')]
-      : [join(__dirname, './globalSetup.ts')],
     passWithNoTests: true,
+    resolveSnapshotPath: (path, ext) =>
+      join(join(dirname(path), '_snap'), `${basename(path)}${ext}`),
     setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
   },
 })
