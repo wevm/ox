@@ -3,8 +3,8 @@ import type {
   ExtractAbiErrorNames,
   AbiError as abitype_AbiError,
 } from 'abitype'
+import type * as Abi from '../../Abi.js'
 import type { Hex } from '../../Hex.js'
-import type { Abi } from '../Abi/types.js'
 import type { IsErrorSignature, IsStructSignature } from '../AbiItem/types.js'
 import type { TypeErrorMessage } from '../types.js'
 
@@ -39,7 +39,7 @@ export type AbiError = abitype_AbiError & {
  * ```
  */
 export type AbiError_Extract<
-  abi extends Abi,
+  abi extends Abi.Abi,
   name extends AbiError_ExtractNames<abi>,
 > = ExtractAbiError<abi, name>
 
@@ -59,10 +59,10 @@ export type AbiError_Extract<
  * //   ^?
  * ```
  */
-export type AbiError_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiError_ExtractNames<abi> : string
+export type AbiError_Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
+  abi extends Abi.Abi ? AbiError_ExtractNames<abi> : string
 
-export type AbiError_ExtractNames<abi extends Abi> =
+export type AbiError_ExtractNames<abi extends Abi.Abi> =
   | ExtractAbiErrorNames<abi>
   | 'Panic'
   | 'Error'

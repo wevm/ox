@@ -4,7 +4,7 @@ import type {
   AbiStateMutability,
   ResolvedRegister,
 } from 'abitype'
-import type { Abi } from '../Abi/types.js'
+import type * as Abi from '../../Abi.js'
 import type {
   Compute,
   IsNever,
@@ -14,7 +14,7 @@ import type {
 } from '../types.js'
 
 /** Root type for an item on an {@link ox#Abi.Abi}. */
-export type AbiItem = Abi[number]
+export type AbiItem = Abi.Abi[number]
 
 /**
  * Extracts an {@link ox#AbiItem.AbiItem} item from an {@link ox#Abi.Abi}, given a name.
@@ -42,7 +42,7 @@ export type AbiItem = Abi[number]
  * ```
  */
 export type AbiItem_Extract<
-  abi extends Abi,
+  abi extends Abi.Abi,
   name extends AbiItem_ExtractNames<abi>,
 > = Extract<abi[number], { name: name }>
 
@@ -64,10 +64,10 @@ export type AbiItem_Extract<
  *
  * ```
  */
-export type AbiItem_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiItem_ExtractNames<abi> : string
+export type AbiItem_Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
+  abi extends Abi.Abi ? AbiItem_ExtractNames<abi> : string
 
-export type AbiItem_ExtractNames<abi extends Abi> = Extract<
+export type AbiItem_ExtractNames<abi extends Abi.Abi> = Extract<
   abi[number],
   { name: string }
 >['name']
@@ -78,10 +78,10 @@ export type AbiItem_ExtractNames<abi extends Abi> = Extract<
 
 /** @internal */
 export type AbiItem_ExtractArgs<
-  abi extends Abi | readonly unknown[] = Abi,
+  abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
   name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
 > = AbiParametersToPrimitiveTypes<
-  AbiItem_Extract<abi extends Abi ? abi : Abi, name>['inputs'],
+  AbiItem_Extract<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
   'inputs'
 > extends infer args
   ? [args] extends [never]
@@ -91,7 +91,7 @@ export type AbiItem_ExtractArgs<
 
 /** @internal */
 export type AbiItem_ExtractForArgs<
-  abi extends Abi,
+  abi extends Abi.Abi,
   name extends AbiItem_Name<abi>,
   args extends AbiItem_ExtractArgs<abi, name>,
 > = IsUnion<name> extends true
@@ -124,7 +124,7 @@ export type TupleToUnion<
   abiItems extends readonly {
     inputs: readonly AbiParameter[]
   }[],
-  abi extends Abi,
+  abi extends Abi.Abi,
   name extends AbiItem_Name<abi>,
   args extends AbiItem_ExtractArgs<abi, name>,
 > = {

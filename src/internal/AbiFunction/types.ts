@@ -4,8 +4,8 @@ import type {
   ExtractAbiFunctionNames,
   AbiFunction as abitype_AbiFunction,
 } from 'abitype'
+import type * as Abi from '../../Abi.js'
 import type { Hex } from '../../Hex.js'
-import type { Abi } from '../Abi/types.js'
 import type {
   IsFunctionSignature,
   IsStructSignature,
@@ -43,7 +43,7 @@ export type AbiFunction = abitype_AbiFunction & {
  * ```
  */
 export type AbiFunction_Extract<
-  abi extends Abi,
+  abi extends Abi.Abi,
   name extends AbiFunction_ExtractNames<abi>,
 > = ExtractAbiFunction<abi, name>
 
@@ -65,11 +65,12 @@ export type AbiFunction_Extract<
  *
  * ```
  */
-export type AbiFunction_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiFunction_ExtractNames<abi> : string
+export type AbiFunction_Name<
+  abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
+> = abi extends Abi.Abi ? AbiFunction_ExtractNames<abi> : string
 
 export type AbiFunction_ExtractNames<
-  abi extends Abi,
+  abi extends Abi.Abi,
   abiStateMutability extends AbiStateMutability = AbiStateMutability,
 > = ExtractAbiFunctionNames<abi, abiStateMutability>
 

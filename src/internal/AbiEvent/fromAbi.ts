@@ -1,6 +1,6 @@
+import type * as Abi from '../../Abi.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
@@ -71,13 +71,13 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
  * @returns The ABI item.
  */
 export function AbiEvent_fromAbi<
-  const abi extends Abi | readonly unknown[],
+  const abi extends Abi.Abi | readonly unknown[],
   name extends AbiEvent_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
   //
   allNames = AbiEvent_Name<abi>,
 >(
-  abi: abi | Abi | readonly unknown[],
+  abi: abi | Abi.Abi | readonly unknown[],
   name: Hex | (name extends allNames ? name : never),
   options?: AbiItem_fromAbi.Options<
     abi,

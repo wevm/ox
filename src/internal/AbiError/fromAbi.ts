@@ -1,6 +1,6 @@
+import type * as Abi from '../../Abi.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { Abi } from '../Abi/types.js'
 import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
 import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
 import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
@@ -78,13 +78,13 @@ import type { AbiError, AbiError_Name } from './types.js'
  * @returns The ABI item.
  */
 export function AbiError_fromAbi<
-  const abi extends Abi | readonly unknown[],
+  const abi extends Abi.Abi | readonly unknown[],
   name extends AbiError_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
   //
   allNames = AbiError_Name<abi>,
 >(
-  abi: abi | Abi | readonly unknown[],
+  abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   options?: AbiItem_fromAbi.Options<
     abi,
@@ -111,7 +111,7 @@ export function AbiError_fromAbi<
 
 export declare namespace AbiError_fromAbi {
   type ReturnType<
-    abi extends Abi | readonly unknown[] = Abi,
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends AbiError_Name<abi> = AbiError_Name<abi>,
     args extends
       | AbiItem_ExtractArgs<abi, name>

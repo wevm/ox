@@ -1,8 +1,8 @@
+import type * as Abi from '../../Abi.js'
 import type * as AbiParameters from '../../AbiParameters.js'
 import * as Address from '../../Address.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import type { Abi } from '../Abi/types.js'
 import type { UnionCompute } from '../types.js'
 import { AbiItem_AmbiguityError, AbiItem_NotFoundError } from './errors.js'
 import { AbiItem_getSelector } from './getSelector.js'
@@ -83,13 +83,13 @@ import type {
  * @returns The ABI item.
  */
 export function AbiItem_fromAbi<
-  const abi extends Abi | readonly unknown[],
+  const abi extends Abi.Abi | readonly unknown[],
   name extends AbiItem_Name<abi>,
   const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
   //
   allNames = AbiItem_Name<abi>,
 >(
-  abi: abi | Abi | readonly unknown[],
+  abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   options?: AbiItem_fromAbi.Options<abi, name, args>,
 ): AbiItem_fromAbi.ReturnType<abi, name, args> {
@@ -97,7 +97,7 @@ export function AbiItem_fromAbi<
     {}) as unknown as AbiItem_fromAbi.Options
 
   const isSelector = Hex.validate(name, { strict: false })
-  const abiItems = (abi as Abi).filter((abiItem) => {
+  const abiItems = (abi as Abi.Abi).filter((abiItem) => {
     if (isSelector) {
       if (abiItem.type === 'function' || abiItem.type === 'error')
         return AbiItem_getSelector(abiItem) === Hex.slice(name, 0, 4)
@@ -179,7 +179,7 @@ export function AbiItem_fromAbi<
 
 export declare namespace AbiItem_fromAbi {
   type Options<
-    abi extends Abi | readonly unknown[] = Abi,
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
     args extends
       | AbiItem_ExtractArgs<abi, name>
@@ -200,7 +200,7 @@ export declare namespace AbiItem_fromAbi {
           args?:
             | allArgs // show all options
             // infer value, widen inferred value of `args` conditionally to match `allArgs`
-            | (abi extends Abi
+            | (abi extends Abi.Abi
                 ? args extends allArgs
                   ? Widen<args>
                   : never
@@ -216,14 +216,14 @@ export declare namespace AbiItem_fromAbi {
   >
 
   type ReturnType<
-    abi extends Abi | readonly unknown[] = Abi,
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends AbiItem_Name<abi> = AbiItem_Name<abi>,
     args extends
       | AbiItem_ExtractArgs<abi, name>
       | undefined = AbiItem_ExtractArgs<abi, name>,
     fallback = AbiItem,
-  > = abi extends Abi
-    ? Abi extends abi
+  > = abi extends Abi.Abi
+    ? Abi.Abi extends abi
       ? fallback
       : AbiItem_ExtractForArgs<
           abi,

@@ -5,9 +5,9 @@ import type {
   ExtractAbiEventNames,
   AbiEvent as abitype_AbiEvent,
 } from 'abitype'
+import type * as Abi from '../../Abi.js'
 import type * as Filter from '../../Filter.js'
 import type { Hex } from '../../Hex.js'
-import type { Abi } from '../Abi/types.js'
 import type { IsEventSignature, IsStructSignature } from '../AbiItem/types.js'
 import type {
   Compute,
@@ -48,7 +48,7 @@ export type AbiEvent = abitype_AbiEvent & {
  * ```
  */
 export type AbiEvent_Extract<
-  abi extends Abi,
+  abi extends Abi.Abi,
   name extends AbiEvent_ExtractNames<abi>,
 > = ExtractAbiEvent<abi, name>
 
@@ -68,10 +68,11 @@ export type AbiEvent_Extract<
  * //   ^?
  * ```
  */
-export type AbiEvent_Name<abi extends Abi | readonly unknown[] = Abi> =
-  abi extends Abi ? AbiEvent_ExtractNames<abi> : string
+export type AbiEvent_Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
+  abi extends Abi.Abi ? AbiEvent_ExtractNames<abi> : string
 
-export type AbiEvent_ExtractNames<abi extends Abi> = ExtractAbiEventNames<abi>
+export type AbiEvent_ExtractNames<abi extends Abi.Abi> =
+  ExtractAbiEventNames<abi>
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal
