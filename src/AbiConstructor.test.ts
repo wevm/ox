@@ -58,6 +58,11 @@ describe('decode', () => {
       ],
     })
 
+    await anvilMainnet.request({
+      method: 'evm_mine',
+      params: { blocks: '0x1' },
+    })
+
     const { input } = (await anvilMainnet.request({
       method: 'eth_getTransactionByHash',
       params: [hash],
@@ -116,6 +121,11 @@ describe('encode', () => {
           data,
         },
       ],
+    })
+
+    await anvilMainnet.request({
+      method: 'evm_mine',
+      params: { blocks: '0x1' },
     })
 
     const { contractAddress } = (await anvilMainnet.request({
