@@ -22,15 +22,6 @@ export type PackedAbiType =
   | abitype.SolidityString
   | abitype.SolidityArrayWithoutTuple
 
-export function decode<
-  const parameters extends AbiParameters,
-  as extends 'Object' | 'Array' = 'Array',
->(
-  parameters: parameters,
-  data: Bytes.Bytes | Hex.Hex,
-  options?: decode.Options<as>,
-): decode.ReturnType<parameters, as>
-
 /**
  * Decodes ABI-encoded data into its respective primitive values based on ABI Parameters.
  *
@@ -69,18 +60,14 @@ export function decode<
  * @param options - Decoding options.
  * @returns Array of decoded values.
  */
-export function decode(
-  parameters: AbiParameters,
+export function decode<
+  const parameters extends AbiParameters,
+  as extends 'Object' | 'Array' = 'Array',
+>(
+  parameters: parameters,
   data: Bytes.Bytes | Hex.Hex,
-  options?: {
-    /**
-     * Whether the decoded values should be returned as an `Object` or `Array`.
-     *
-     * @default "Array"
-     */
-    as?: 'Array' | 'Object' | undefined
-  },
-): readonly unknown[] | Record<string, unknown>
+  options?: decode.Options<as>,
+): decode.ReturnType<parameters, as>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function decode(
