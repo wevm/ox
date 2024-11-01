@@ -1,7 +1,7 @@
 import type { AbiParameter, AbiParameterToPrimitiveType } from 'abitype'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiFunction } from './types.js'
 
@@ -109,7 +109,7 @@ export function AbiFunction_decodeResult<
   data: Hex,
   options: AbiFunction_decodeResult.Options<as> = {},
 ): AbiFunction_decodeResult.ReturnType<abiFunction, as> {
-  const values = AbiParameters_decode(abiFunction.outputs, data, options)
+  const values = AbiParameters.decode(abiFunction.outputs, data, options)
   if (values && Object.keys(values).length === 0) return undefined
   if (values && Object.keys(values).length === 1) {
     if (Array.isArray(values)) return values[0]
@@ -138,7 +138,7 @@ export declare namespace AbiFunction_decodeResult {
             infer type extends AbiParameter,
           ]
         ? AbiParameterToPrimitiveType<type>
-        : AbiParameters_decode.ReturnType<
+        : AbiParameters.decode.ReturnType<
               abiFunction['outputs'],
               as
             > extends infer types
@@ -150,5 +150,5 @@ export declare namespace AbiFunction_decodeResult {
           : never
     : unknown
 
-  type ErrorType = AbiParameters_decode.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AbiParameters.decode.ErrorType | Errors.GlobalErrorType
 }

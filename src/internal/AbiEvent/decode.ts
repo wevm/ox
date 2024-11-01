@@ -1,8 +1,7 @@
 import type { AbiParameter } from 'abitype'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
-import { AbiParameters_DataSizeTooSmallError } from '../AbiParameters/errors.js'
 import * as Cursor from '../cursor.js'
 import type { IsNarrowable } from '../types.js'
 import {
@@ -139,7 +138,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
         param.type.match(/^(.*)\[(\d+)?\]$/)
       )
         return topic
-      const decoded = AbiParameters_decode([param], topic) || []
+      const decoded = AbiParameters.decode([param], topic) || []
       return decoded[0]
     })()
   }
@@ -149,7 +148,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
   if (nonIndexedInputs.length > 0) {
     if (data && data !== '0x') {
       try {
-        const decodedData = AbiParameters_decode(nonIndexedInputs, data)
+        const decodedData = AbiParameters.decode(nonIndexedInputs, data)
         if (decodedData) {
           if (isUnnamed) args = [...args, ...decodedData]
           else {
@@ -161,7 +160,7 @@ export function AbiEvent_decode<const abiEvent extends AbiEvent>(
         }
       } catch (err) {
         if (
-          err instanceof AbiParameters_DataSizeTooSmallError ||
+          err instanceof AbiParameters.DataSizeTooSmallError ||
           err instanceof Cursor.PositionOutOfBoundsError
         )
           throw new AbiEvent_DataMismatchError({
@@ -204,7 +203,7 @@ export declare namespace AbiEvent_decode {
     : unknown
 
   type ErrorType =
-    | AbiParameters_decode.ErrorType
+    | AbiParameters.decode.ErrorType
     | AbiEvent_getSelector.ErrorType
     | AbiEvent_DataMismatchError
     | AbiEvent_SelectorTopicMismatchError

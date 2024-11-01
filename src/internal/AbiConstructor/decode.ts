@@ -1,7 +1,7 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { AbiParameters_decode } from '../AbiParameters/decode.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiConstructor } from './types.js'
 
@@ -39,7 +39,7 @@ export function AbiConstructor_decode<
 ): Hex {
   const { bytecode } = options
   const data = options.data.replace(bytecode, '0x')
-  const decoded = AbiParameters_decode(abiConstructor.inputs, data as Hex)
+  const decoded = AbiParameters.decode(abiConstructor.inputs, data as Hex)
   if (decoded.length === 0) return undefined as never
   return decoded as never
 }

@@ -1,9 +1,9 @@
 import { AbiItem, AbiParameters } from 'ox'
 import { describe, expect, test } from 'vitest'
 
-import { seaportContractConfig } from '../../../test/constants/abis.js'
-import { address } from '../../../test/constants/addresses.js'
-import { getArrayComponents } from './encode.js'
+import { seaportContractConfig } from '../test/constants/abis.js'
+import { address } from '../test/constants/addresses.js'
+import { getArrayComponents } from './internal/abiParameters.js'
 
 describe('static', () => {
   test('blank', () => {

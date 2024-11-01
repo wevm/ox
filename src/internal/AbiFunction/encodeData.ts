@@ -1,7 +1,7 @@
 import type { AbiParametersToPrimitiveTypes } from 'abitype'
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { AbiParameters_encode } from '../AbiParameters/encode.js'
 import type { IsNarrowable } from '../types.js'
 import { AbiFunction_fromAbi } from './fromAbi.js'
 import { AbiFunction_getSelector } from './getSelector.js'
@@ -123,7 +123,7 @@ export function AbiFunction_encodeData<const abiFunction extends AbiFunction>(
 
   const data =
     args.length > 0
-      ? AbiParameters_encode(item.inputs, (args as any)[0])
+      ? AbiParameters.encode(item.inputs, (args as any)[0])
       : undefined
 
   return data ? Hex.concat(selector, data) : selector

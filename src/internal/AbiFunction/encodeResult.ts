@@ -1,10 +1,7 @@
+import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { AbiParameters_encode } from '../AbiParameters/encode.js'
-import type {
-  AbiParameters_ToObject,
-  AbiParameters_ToPrimitiveTypes,
-} from '../AbiParameters/types.js'
+import type * as AbiParameters_internal from '../abiParameters.js'
 import type { AbiFunction } from './types.js'
 
 /**
@@ -44,7 +41,7 @@ export function AbiFunction_encodeResult<
     return [output]
   })()
 
-  return AbiParameters_encode(abiFunction.outputs, values)
+  return AbiParameters.encode(abiFunction.outputs, values)
 }
 
 export declare namespace AbiFunction_encodeResult {
@@ -54,14 +51,14 @@ export declare namespace AbiFunction_encodeResult {
   > = abiFunction['outputs'] extends readonly []
     ? never
     : abiFunction['outputs']['length'] extends 1
-      ? AbiParameters_ToPrimitiveTypes<abiFunction['outputs']>[0]
+      ? AbiParameters_internal.ToPrimitiveTypes<abiFunction['outputs']>[0]
       : as extends 'Object'
-        ? AbiParameters_ToObject<abiFunction['outputs']>
-        : AbiParameters_ToPrimitiveTypes<abiFunction['outputs']>
+        ? AbiParameters_internal.ToObject<abiFunction['outputs']>
+        : AbiParameters_internal.ToPrimitiveTypes<abiFunction['outputs']>
 
   type Options<as extends 'Object' | 'Array'> = {
     as?: as | 'Object' | 'Array' | undefined
   }
 
-  type ErrorType = AbiParameters_encode.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AbiParameters.encode.ErrorType | Errors.GlobalErrorType
 }

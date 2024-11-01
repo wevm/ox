@@ -1,11 +1,8 @@
 import { AbiItem, AbiParameters, type Address, Bytes, type Hex } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 
-import {
-  multicall3Abi,
-  seaportContractConfig,
-} from '../../../test/constants/abis.js'
-import { address } from '../../../test/constants/addresses.js'
+import { multicall3Abi, seaportContractConfig } from '../test/constants/abis.js'
+import { address } from '../test/constants/addresses.js'
 
 describe('static', () => {
   test('blank', () => {
