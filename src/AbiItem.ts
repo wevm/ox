@@ -1,8 +1,8 @@
 import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
 import * as Errors from './Errors.js'
+import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import { Hash } from './index.js'
 import * as internal from './internal/abiItem.js'
 import type { UnionCompute } from './internal/types.js'
 
