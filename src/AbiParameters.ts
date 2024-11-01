@@ -257,6 +257,7 @@ export namespace encodePacked {
       : unknown
   }
 
+  // eslint-disable-next-line jsdoc/require-jsdoc
   export function encode<const packedAbiType extends PackedAbiType | unknown>(
     type: packedAbiType,
     value: Values<[packedAbiType]>[0],
