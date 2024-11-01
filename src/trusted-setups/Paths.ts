@@ -1,1 +1,3 @@
-export { Paths_mainnet as mainnet } from './internal/paths.js'
+import { path } from './internal/paths.js'
+
+export const mainnet = path('mainnet')

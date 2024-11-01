@@ -102,6 +102,7 @@ describe('randomSalt', () => {
 test('exports', () => {
   expect(Object.keys(AesGcm)).toMatchInlineSnapshot(`
     [
+      "ivLength",
       "decrypt",
       "encrypt",
       "getKey",

@@ -1366,12 +1366,6 @@ describe('getSelector', () => {
 test('exports', () => {
   expect(Object.keys(AbiEvent)).toMatchInlineSnapshot(`
     [
-      "ArgsMismatchError",
-      "DataMismatchError",
-      "FilterTypeNotSupportedError",
-      "InputNotFoundError",
-      "SelectorTopicMismatchError",
-      "TopicsMismatchError",
       "assertArgs",
       "decode",
       "encode",
@@ -1379,6 +1373,12 @@ test('exports', () => {
       "from",
       "fromAbi",
       "getSelector",
+      "ArgsMismatchError",
+      "InputNotFoundError",
+      "DataMismatchError",
+      "TopicsMismatchError",
+      "SelectorTopicMismatchError",
+      "FilterTypeNotSupportedError",
     ]
   `)
 })
