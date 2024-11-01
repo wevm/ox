@@ -3,8 +3,6 @@
 import { join } from 'node:path'
 import { AbiParameters, Hex, Json, Solidity } from '../../src/index.js'
 
-generateAbiVectors()
-
 export async function generateAbiVectors() {
   const generatedPath = join(import.meta.dir, './abi.json')
   Bun.write(generatedPath, '')
@@ -19,7 +17,17 @@ export async function generateAbiVectors() {
     const parameters = generateParameters(10)
     const values = generateValues(parameters)
     const encoded = AbiParameters.encode(parameters, values)
-    writer.write(Json.stringify({ parameters, values, encoded }, null, 2))
+    writer.write(
+      Json.stringify(
+        {
+          parameters: Json.stringify(parameters),
+          values: Json.stringify(values),
+          encoded,
+        },
+        null,
+        2,
+      ),
+    )
   }
 
   writer.write(']\n')
@@ -72,14 +80,16 @@ function generateValues(parameters: AbiParameters.Parameter[]) {
     if (parameter.type.startsWith('int') || parameter.type.startsWith('uint')) {
       const intMatch = parameter.type.match(Solidity.integerRegex)
       if (!intMatch) continue
-      const [_, type, size = '256'] = intMatch
+      const [_, type, size_str = '256'] = intMatch
+      const size = Number.parseInt(size_str)
       const max =
         type === 'int'
           ? Math.random() > 0.5
-            ? -(2n ** (BigInt(Number.parseInt(size)) - 1n))
-            : 2n ** (BigInt(Number.parseInt(size)) - 1n) - 1n
-          : 2n ** BigInt(Number.parseInt(size)) - 1n
-      values.push(generateBigInt(max))
+            ? -(2n ** (BigInt(size) - 1n))
+            : 2n ** (BigInt(size) - 1n) - 1n
+          : 2n ** BigInt(size) - 1n
+      const int = generateBigInt(max)
+      values.push(size > 48 ? int : Number(int))
       continue
     }
     if (parameter.type === 'bool') {

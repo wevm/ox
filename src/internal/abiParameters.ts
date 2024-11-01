@@ -499,7 +499,7 @@ export declare namespace encode {
 
 /** @internal */
 export function encodeAddress(value: Hex.Hex): PreparedParameter {
-  Address.assert(value)
+  Address.assert(value, { strict: false })
   return {
     dynamic: false,
     encoded: Hex.padLeft(value.toLowerCase() as Hex.Hex),
