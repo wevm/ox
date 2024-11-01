@@ -1,82 +1,14 @@
-import type {
-  AbiParameter,
-  AbiParameterToPrimitiveType,
-  ExtractAbiEvent,
-  ExtractAbiEventNames,
-  AbiEvent as abitype_AbiEvent,
-} from 'abitype'
-import type * as Abi from '../../Abi.js'
-import type * as Filter from '../../Filter.js'
-import type { Hex } from '../../Hex.js'
-import type * as AbiItem from '../../internal/abiItem.js'
+import type * as abitype from 'abitype'
+import type * as Filter from '../Filter.js'
+import type * as Hex from '../Hex.js'
+import type * as AbiItem_internal from './abiItem.js'
 import type {
   Compute,
   Filter as Filter_internal,
   MaybeRequired,
   TypeErrorMessage,
   UnionToIntersection,
-} from '../types.js'
-
-/** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
-export type AbiEvent = abitype_AbiEvent & {
-  hash?: Hex | undefined
-  overloads?: readonly AbiEvent[] | undefined
-}
-
-/**
- * Extracts an {@link ox#AbiEvent.AbiEvent} item from an {@link ox#Abi.Abi}, given a name.
- *
- * @example
- * ```ts twoslash
- * import { Abi, AbiEvent } from 'ox'
- *
- * const abi = Abi.from([
- *   'event Foo(string)',
- *   'event Bar(uint256)',
- * ])
- *
- * type Foo = AbiEvent.Extract<typeof abi, 'Foo'>
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- */
-export type AbiEvent_Extract<
-  abi extends Abi.Abi,
-  name extends AbiEvent_ExtractNames<abi>,
-> = ExtractAbiEvent<abi, name>
-
-/**
- * Extracts the names of all {@link ox#AbiError.AbiError} items in an {@link ox#Abi.Abi}.
- *
- * @example
- * ```ts twoslash
- * import { Abi, AbiEvent } from 'ox'
- *
- * const abi = Abi.from([
- *   'event Foo(string)',
- *   'event Bar(uint256)',
- * ])
- *
- * type names = AbiEvent.Name<typeof abi>
- * //   ^?
- * ```
- */
-export type AbiEvent_Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
-  abi extends Abi.Abi ? AbiEvent_ExtractNames<abi> : string
-
-export type AbiEvent_ExtractNames<abi extends Abi.Abi> =
-  ExtractAbiEventNames<abi>
-
-/////////////////////////////////////////////////////////////////////////////////
-// Internal
-/////////////////////////////////////////////////////////////////////////////////
+} from './types.js'
 
 /** @internal */
 export type EventParameterOptions = {
@@ -93,9 +25,9 @@ export type DefaultEventParameterOptions = {
 }
 
 /** @internal */
-export type AbiEvent_IsSignature<signature extends string> =
-  | (AbiItem.IsEventSignature<signature> extends true ? true : never)
-  | (AbiItem.IsStructSignature<signature> extends true
+export type IsSignature<signature extends string> =
+  | (AbiItem_internal.IsEventSignature<signature> extends true ? true : never)
+  | (AbiItem_internal.IsStructSignature<signature> extends true
       ? true
       : never) extends infer condition
   ? [condition] extends [never]
@@ -104,10 +36,10 @@ export type AbiEvent_IsSignature<signature extends string> =
   : false
 
 /** @internal */
-export type AbiEvent_Signature<
+export type Signature<
   signature extends string,
   key extends string | unknown = unknown,
-> = AbiEvent_IsSignature<signature> extends true
+> = IsSignature<signature> extends true
   ? signature
   : string extends signature // if exactly `string` (not narrowed), then pass through as valid
     ? signature
@@ -116,13 +48,13 @@ export type AbiEvent_Signature<
         : ''}.`>
 
 /** @internal */
-export type AbiEvent_Signatures<signatures extends readonly string[]> = {
-  [key in keyof signatures]: AbiEvent_Signature<signatures[key], key>
+export type Signatures<signatures extends readonly string[]> = {
+  [key in keyof signatures]: Signature<signatures[key], key>
 }
 
 /** @internal */
-export type AbiEvent_ParametersToPrimitiveTypes<
-  abiParameters extends readonly AbiParameter[],
+export type ParametersToPrimitiveTypes<
+  abiParameters extends readonly abitype.AbiParameter[],
   options extends EventParameterOptions = DefaultEventParameterOptions,
   // Remove non-indexed parameters based on `Options['IndexedOnly']`
 > = abiParameters extends readonly []
@@ -130,7 +62,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
   : Filter_internal<
         abiParameters,
         options['IndexedOnly'] extends true ? { indexed: true } : object
-      > extends infer Filtered extends readonly AbiParameter[]
+      > extends infer Filtered extends readonly abitype.AbiParameter[]
     ? Filtered extends readonly []
       ? readonly []
       : HasNamedAbiParameter<Filtered> extends true
@@ -142,18 +74,12 @@ export type AbiEvent_ParametersToPrimitiveTypes<
               }
                 ? {
                     [key in name]?:
-                      | AbiEvent_ParameterToPrimitiveType<
-                          Filtered[index],
-                          options
-                        >
+                      | ParameterToPrimitiveType<Filtered[index], options>
                       | undefined
                   }
                 : {
                     [key in index]?:
-                      | AbiEvent_ParameterToPrimitiveType<
-                          Filtered[index],
-                          options
-                        >
+                      | ParameterToPrimitiveType<Filtered[index], options>
                       | undefined
                   }
             }[number]
@@ -170,7 +96,7 @@ export type AbiEvent_ParametersToPrimitiveTypes<
         : // Has unnamed tuple parameters so return as array
             | readonly [
                 ...{
-                  [K in keyof Filtered]: AbiEvent_ParameterToPrimitiveType<
+                  [K in keyof Filtered]: ParameterToPrimitiveType<
                     Filtered[K],
                     options
                   >
@@ -181,10 +107,10 @@ export type AbiEvent_ParametersToPrimitiveTypes<
                 ? never
                 : // Distribute over tuple to represent optional parameters
                   Filtered extends readonly [
-                      ...infer Head extends readonly AbiParameter[],
+                      ...infer Head extends readonly abitype.AbiParameter[],
                       infer _,
                     ]
-                  ? AbiEvent_ParametersToPrimitiveTypes<
+                  ? ParametersToPrimitiveTypes<
                       readonly [
                         ...{ [K in keyof Head]: Omit<Head[K], 'name'> },
                       ],
@@ -194,20 +120,20 @@ export type AbiEvent_ParametersToPrimitiveTypes<
     : never
 
 /** @internal */
-export type AbiEvent_ParameterToPrimitiveType<
-  abiParameter extends AbiParameter,
+export type ParameterToPrimitiveType<
+  abiParameter extends abitype.AbiParameter,
   //
   options extends EventParameterOptions = DefaultEventParameterOptions,
-  _type = AbiParameterToPrimitiveType<abiParameter>,
+  _type = abitype.AbiParameterToPrimitiveType<abiParameter>,
 > = options['EnableUnion'] extends true ? TopicType<_type> : _type
 
 /** @internal */
 export type TopicType<
-  primitiveType = Hex,
+  primitiveType = Hex.Hex,
   topic extends Filter.Topic = Filter.Topic,
-> = topic extends Hex
+> = topic extends Hex.Hex
   ? primitiveType
-  : topic extends readonly Hex[]
+  : topic extends readonly Hex.Hex[]
     ? primitiveType[]
     : topic extends null
       ? null
@@ -215,10 +141,10 @@ export type TopicType<
 
 /** @internal */
 export type HasNamedAbiParameter<
-  abiParameters extends readonly AbiParameter[],
+  abiParameters extends readonly abitype.AbiParameter[],
 > = abiParameters extends readonly [
-  infer Head extends AbiParameter,
-  ...infer Tail extends readonly AbiParameter[],
+  infer Head extends abitype.AbiParameter,
+  ...infer Tail extends readonly abitype.AbiParameter[],
 ]
   ? Head extends { name: string }
     ? Head['name'] extends ''
