@@ -17,7 +17,7 @@ export type ExtractArgs<
   abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
   name extends AbiItem.Name<abi> = AbiItem.Name<abi>,
 > = abitype.AbiParametersToPrimitiveTypes<
-  AbiItem.ExtractByName<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
+  AbiItem.FromAbi<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
   'inputs'
 > extends infer args
   ? [args] extends [never]
@@ -34,10 +34,9 @@ export type ExtractForArgs<
   ? {
       [key in keyof abi]: abi[key] extends { name: name } ? abi[key] : never
     }[number]
-  : AbiItem.ExtractByName<abi, name> extends infer abiItem extends
-        AbiItem.AbiItem & {
-          inputs: readonly abitype.AbiParameter[]
-        }
+  : AbiItem.FromAbi<abi, name> extends infer abiItem extends AbiItem.AbiItem & {
+        inputs: readonly abitype.AbiParameter[]
+      }
     ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
       ? UnionToTuple<abiItem> extends infer abiItems extends
           readonly (AbiItem.AbiItem & {

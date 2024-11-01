@@ -65,7 +65,7 @@ export type AbiError = abitype.AbiError & {
  *   'error Bar(uint256)',
  * ])
  *
- * type Foo = AbiError.Extract<typeof abi, 'Foo'>
+ * type Foo = AbiError.FromAbi<typeof abi, 'Foo'>
  * //   ^?
  *
  *
@@ -77,7 +77,7 @@ export type AbiError = abitype.AbiError & {
  *
  * ```
  */
-export type Extract<
+export type FromAbi<
   abi extends Abi.Abi,
   name extends ExtractNames<abi>,
 > = abitype.ExtractAbiError<abi, name>

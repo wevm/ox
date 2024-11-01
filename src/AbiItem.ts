@@ -22,7 +22,7 @@ export type AbiItem = Abi.Abi[number]
  *   'event Bar(uint256)',
  * ])
  *
- * type Foo = AbiItem.Extract<typeof abi, 'Foo'>
+ * type Foo = AbiItem.FromAbi<typeof abi, 'Foo'>
  * //   ^?
  *
  *
@@ -34,7 +34,7 @@ export type AbiItem = Abi.Abi[number]
  *
  * ```
  */
-export type ExtractByName<
+export type FromAbi<
   abi extends Abi.Abi,
   name extends ExtractNames<abi>,
 > = Extract<abi[number], { name: name }>
