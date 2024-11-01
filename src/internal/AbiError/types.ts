@@ -5,7 +5,7 @@ import type {
 } from 'abitype'
 import type * as Abi from '../../Abi.js'
 import type { Hex } from '../../Hex.js'
-import type { IsErrorSignature, IsStructSignature } from '../AbiItem/types.js'
+import type * as AbiItem_internal from '../../internal/abiItem.js'
 import type { TypeErrorMessage } from '../types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `error` type. */
@@ -73,8 +73,8 @@ export type AbiError_ExtractNames<abi extends Abi.Abi> =
 
 /** @internal */
 export type AbiError_IsSignature<signature extends string> =
-  | (IsErrorSignature<signature> extends true ? true : never)
-  | (IsStructSignature<signature> extends true
+  | (AbiItem_internal.IsErrorSignature<signature> extends true ? true : never)
+  | (AbiItem_internal.IsStructSignature<signature> extends true
       ? true
       : never) extends infer condition
   ? [condition] extends [never]

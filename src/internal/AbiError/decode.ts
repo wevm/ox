@@ -1,8 +1,8 @@
 import type { AbiParameter, AbiParameterToPrimitiveType } from 'abitype'
+import * as AbiItem from '../../AbiItem.js'
 import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
 import type { IsNarrowable } from '../types.js'
 import type { AbiError } from './types.js'
 
@@ -130,7 +130,7 @@ export function AbiError_decode<
   data: Hex.Hex,
   options: AbiError_decode.Options<as> = {},
 ): AbiError_decode.ReturnType<abiError, as> {
-  if (Hex.size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
   if (abiError.inputs.length === 0) return undefined
 
   const values = AbiParameters.decode(
@@ -178,6 +178,6 @@ export declare namespace AbiError_decode {
   type ErrorType =
     | AbiParameters.decode.ErrorType
     | Hex.size.ErrorType
-    | AbiItem_InvalidSelectorSizeError
+    | AbiItem.InvalidSelectorSizeError
     | Errors.GlobalErrorType
 }

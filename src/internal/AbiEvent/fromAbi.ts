@@ -1,9 +1,8 @@
 import type * as Abi from '../../Abi.js'
+import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { AbiItem_NotFoundError } from '../AbiItem/errors.js'
-import { AbiItem_fromAbi } from '../AbiItem/fromAbi.js'
-import type { AbiItem_ExtractArgs } from '../AbiItem/types.js'
+import type * as AbiItem_internal from '../../internal/abiItem.js'
 import type { AbiEvent, AbiEvent_Name } from './types.js'
 
 /**
@@ -73,27 +72,29 @@ import type { AbiEvent, AbiEvent_Name } from './types.js'
 export function AbiEvent_fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
   name extends AbiEvent_Name<abi>,
-  const args extends AbiItem_ExtractArgs<abi, name> | undefined = undefined,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
   //
   allNames = AbiEvent_Name<abi>,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex | (name extends allNames ? name : never),
-  options?: AbiItem_fromAbi.Options<
+  options?: AbiItem.fromAbi.Options<
     abi,
     name,
     args,
-    AbiItem_ExtractArgs<abi, name>
+    AbiItem_internal.ExtractArgs<abi, name>
   >,
-): AbiItem_fromAbi.ReturnType<abi, name, args, AbiEvent> {
-  const item = AbiItem_fromAbi(abi, name, options as any)
+): AbiItem.fromAbi.ReturnType<abi, name, args, AbiEvent> {
+  const item = AbiItem.fromAbi(abi, name, options as any)
   if (item.type !== 'event')
-    throw new AbiItem_NotFoundError({ name, type: 'event' })
+    throw new AbiItem.NotFoundError({ name, type: 'event' })
   return item as never
 }
 
 export declare namespace AbiEvent_fromAbi {
-  type ErrorType = AbiItem_fromAbi.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
 }
 
 AbiEvent_fromAbi.parseError = (error: unknown) =>

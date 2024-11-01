@@ -8,7 +8,7 @@ import type {
 import type * as Abi from '../../Abi.js'
 import type * as Filter from '../../Filter.js'
 import type { Hex } from '../../Hex.js'
-import type { IsEventSignature, IsStructSignature } from '../AbiItem/types.js'
+import type * as AbiItem from '../../internal/abiItem.js'
 import type {
   Compute,
   Filter as Filter_internal,
@@ -94,8 +94,8 @@ export type DefaultEventParameterOptions = {
 
 /** @internal */
 export type AbiEvent_IsSignature<signature extends string> =
-  | (IsEventSignature<signature> extends true ? true : never)
-  | (IsStructSignature<signature> extends true
+  | (AbiItem.IsEventSignature<signature> extends true ? true : never)
+  | (AbiItem.IsStructSignature<signature> extends true
       ? true
       : never) extends infer condition
   ? [condition] extends [never]

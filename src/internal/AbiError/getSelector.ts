@@ -1,6 +1,6 @@
+import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
 import type { Hex } from '../../Hex.js'
-import { AbiItem_getSelector } from '../AbiItem/getSelector.js'
 import type { AbiError } from './types.js'
 
 /**
@@ -30,11 +30,11 @@ import type { AbiError } from './types.js'
  * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the error signature.
  */
 export function AbiError_getSelector(abiItem: string | AbiError): Hex {
-  return AbiItem_getSelector(abiItem)
+  return AbiItem.getSelector(abiItem)
 }
 
 export declare namespace AbiError_getSelector {
-  type ErrorType = AbiItem_getSelector.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AbiItem.getSelector.ErrorType | Errors.GlobalErrorType
 }
 
 /* v8 ignore next */

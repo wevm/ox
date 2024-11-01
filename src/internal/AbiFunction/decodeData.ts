@@ -1,7 +1,7 @@
+import * as AbiItem from '../../AbiItem.js'
 import * as AbiParameters from '../../AbiParameters.js'
 import type * as Errors from '../../Errors.js'
 import * as Hex from '../../Hex.js'
-import { AbiItem_InvalidSelectorSizeError } from '../AbiItem/errors.js'
 import type * as AbiParameters_internal from '../abiParameters.js'
 import type { IsNarrowable } from '../types.js'
 import { AbiFunction_fromAbi } from './fromAbi.js'
@@ -35,7 +35,7 @@ export function AbiFunction_decodeData<const abiItem extends AbiFunction>(
 ): AbiFunction_decodeData.ReturnType<abiItem> {
   const { overloads } = abiFunction
 
-  if (Hex.size(data) < 4) throw new AbiItem_InvalidSelectorSizeError({ data })
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
   if (abiFunction.inputs.length === 0) return undefined
 
   const item = overloads

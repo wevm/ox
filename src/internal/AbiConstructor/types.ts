@@ -1,8 +1,5 @@
 import type { AbiConstructor as abitype_AbiConstructor } from 'abitype'
-import type {
-  IsConstructorSignature,
-  IsStructSignature,
-} from '../AbiItem/types.js'
+import type * as AbiItem_internal from '../abiItem.js'
 import type { TypeErrorMessage } from '../types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
@@ -14,8 +11,10 @@ export type AbiConstructor = abitype_AbiConstructor
 
 /** @internal */
 export type AbiConstructor_IsSignature<signature extends string> =
-  | (IsConstructorSignature<signature> extends true ? true : never)
-  | (IsStructSignature<signature> extends true
+  | (AbiItem_internal.IsConstructorSignature<signature> extends true
+      ? true
+      : never)
+  | (AbiItem_internal.IsStructSignature<signature> extends true
       ? true
       : never) extends infer condition
   ? [condition] extends [never]

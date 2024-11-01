@@ -1,6 +1,6 @@
 import * as abitype from 'abitype'
 import type * as Errors from './Errors.js'
-import type { AbiItem_Signatures } from './internal/AbiItem/types.js'
+import type * as AbiItem_internal from './internal/abiItem.js'
 
 /** Root type for an ABI. */
 export type Abi = abitype.Abi
@@ -133,7 +133,7 @@ export function from<
   const abi extends Abi | readonly string[] | readonly unknown[],
 >(
   abi: (abi | Abi | readonly string[] | readonly unknown[]) &
-    (abi extends readonly string[] ? AbiItem_Signatures<abi> : Abi),
+    (abi extends readonly string[] ? AbiItem_internal.Signatures<abi> : Abi),
 ): from.ReturnType<abi> {
   if (typeof abi[0] === 'string') return abitype.parseAbi(abi as never)
   return abi as never

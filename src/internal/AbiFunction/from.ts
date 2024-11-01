@@ -1,5 +1,5 @@
+import * as AbiItem from '../../AbiItem.js'
 import type * as Errors from '../../Errors.js'
-import { AbiItem_from } from '../AbiItem/from.js'
 import type {
   AbiFunction,
   AbiFunction_Signature,
@@ -124,7 +124,7 @@ export function AbiFunction_from<
     ),
   options: AbiFunction_from.Options = {},
 ): AbiFunction_from.ReturnType<abiFunction> {
-  return AbiItem_from(abiFunction as AbiFunction, options) as never
+  return AbiItem.from(abiFunction as AbiFunction, options) as never
 }
 
 export declare namespace AbiFunction_from {
@@ -140,9 +140,9 @@ export declare namespace AbiFunction_from {
 
   type ReturnType<
     abiFunction extends AbiFunction | string | readonly string[],
-  > = AbiItem_from.ReturnType<abiFunction>
+  > = AbiItem.from.ReturnType<abiFunction>
 
-  type ErrorType = AbiItem_from.ErrorType | Errors.GlobalErrorType
+  type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
 AbiFunction_from.parseError = (error: unknown) =>
