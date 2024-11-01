@@ -9,6 +9,7 @@ export type ResolvedRegister = {
     : DefaultRegister['RpcSchema']
 }
 
+/** @internal */
 export type DefaultRegister = {
   RpcSchema: RpcSchema.Eth | RpcSchema.Wallet
 }

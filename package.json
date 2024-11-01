@@ -87,7 +87,10 @@
   "knip": {
     "ignore": [
       ".github/**",
+      "contracts/**",
       "scripts/**",
+      "src/_test/**",
+      "site/**",
       "test/**",
       "vectors/**",
       "src/package.json",
@@ -101,7 +104,7 @@
     },
     "workspaces": {
       "src": {
-        "entry": ["index.ts!", "node/index.ts!"]
+        "entry": ["index.ts!", "trusted-setups/index.ts!", "window/index.ts!"]
       }
     }
   },

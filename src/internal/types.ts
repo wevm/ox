@@ -262,27 +262,21 @@ export type TypeErrorMessage<messages extends string | string[]> =
           : never
       }
 
-/**
- * Creates a type that extracts the values of T.
- *
- * @example
- * ```ts
- * ValueOf<{ a: string, b: number }>
- * // string | number
- * ```
- */
-export type ValueOf<T> = T[keyof T]
-
+/** @internal */
 export type UnionToTuple<
   union,
   ///
   last = LastInUnion<union>,
 > = [union] extends [never] ? [] : [...UnionToTuple<Exclude<union, last>>, last]
+
+/** @internal */
 export type LastInUnion<U> = UnionToIntersection<
   U extends unknown ? (x: U) => 0 : never
 > extends (x: infer l) => 0
   ? l
   : never
+
+/** @internal */
 export type UnionToIntersection<union> = (
   union extends unknown
     ? (arg: union) => 0
@@ -329,6 +323,8 @@ export type OneOf<
       }
     >
   : never
+
+/** @internal */
 export type KeyofUnion<type> = type extends type ? keyof type : never
 
 /** @internal */

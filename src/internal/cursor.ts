@@ -220,6 +220,7 @@ export declare namespace create {
   type ErrorType = Errors.GlobalErrorType
 }
 
+/** @internal */
 export class NegativeOffsetError extends Errors.BaseError {
   override readonly name = 'Cursor.NegativeOffsetError'
 
@@ -228,6 +229,7 @@ export class NegativeOffsetError extends Errors.BaseError {
   }
 }
 
+/** @internal */
 export class PositionOutOfBoundsError extends Errors.BaseError {
   override readonly name = 'Cursor.PositionOutOfBoundsError'
 
@@ -238,6 +240,7 @@ export class PositionOutOfBoundsError extends Errors.BaseError {
   }
 }
 
+/** @internal */
 export class RecursiveReadLimitExceededError extends Errors.BaseError {
   override readonly name = 'Cursor.RecursiveReadLimitExceededError'
 

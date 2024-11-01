@@ -313,6 +313,7 @@ export type IsValidCharacter<character extends string> =
     : false
 
 // biome-ignore format: no formatting
+/** @internal */
 export type ValidCharacters =
   // uppercase letters
   | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
@@ -327,11 +328,14 @@ export type ValidCharacters =
 // type Result = `function foo(string) return s (uint256)` extends `function ${string}(${infer Parameters})` ? Parameters : never
 // //   ^? type Result = "string ) return s (uint256"
 // So we need to validate against `returns` keyword with all combinations of whitespace
+/** @internal */
 export type InvalidFunctionParameters =
   | `${string}${MangledReturns} (${string}`
   | `${string}) ${MangledReturns}${string}`
   | `${string})${string}${MangledReturns}${string}(${string}`
+
 // r_e_t_u_r_n_s
+/** @internal */
 export type MangledReturns =
   // Single
   | `r${string}eturns`

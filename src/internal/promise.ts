@@ -53,7 +53,10 @@ withTimeout.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as withTimeout.ErrorType
 
-/** Thrown when an operation times out. */
+/**
+ * Thrown when an operation times out.
+ * @internal
+ */
 export class TimeoutError extends Errors.BaseError {
   override readonly name = 'Promise.TimeoutError'
 
