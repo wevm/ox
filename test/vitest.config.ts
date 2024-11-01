@@ -13,13 +13,14 @@ export default defineConfig({
     },
     coverage: {
       all: false,
-      exclude: ['**/_types/**', '**/_esm/**', '**/_cjs/**'],
       include: ['**/src/**'],
       provider: 'v8',
       reporter: process.env.CI ? ['lcov'] : ['text', 'json', 'html'],
     },
     include: [
-      ...(process.env.TYPES ? ['src/**/*.snap-d.ts'] : ['src/**/*.test.ts']),
+      ...(process.env.TYPES
+        ? ['src/_test/**/*.snap-d.ts']
+        : ['src/_test/**/*.test.ts']),
     ],
     globalSetup: process.env.TYPES
       ? [join(__dirname, './globalSetup.types.ts')]
