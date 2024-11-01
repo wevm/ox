@@ -885,7 +885,7 @@ export * as Authorization from './Authorization.js'
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
- * @category Encoding
+ * @category Data
  */
 export * as Base58 from './Base58.js'
 
@@ -939,7 +939,7 @@ export * as Base58 from './Base58.js'
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
- * @category Encoding
+ * @category Data
  */
 export * as Base64 from './Base64.js'
 
@@ -1113,7 +1113,7 @@ export * as Bloom from './Bloom.js'
  * // @log: Uint8Array [1, 2, 3]
  * ```
  *
- * @category Encoding
+ * @category Data
  */
 export * as Bytes from './Bytes.js'
 
@@ -1222,7 +1222,7 @@ export * as Hash from './Hash.js'
  * :::
  *
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as HdKey from './HdKey.js'
 
@@ -1337,7 +1337,7 @@ export * as HdKey from './HdKey.js'
  * // @log: '0x1234567890abcdef'
  * ```
  *
- * @category Encoding
+ * @category Data
  */
 export * as Hex from './Hex.js'
 
@@ -1505,7 +1505,7 @@ export * as Log from './Log.js'
  * // @log: Uint8Array [...64 bytes]
  * ```
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as Mnemonic from './Mnemonic.js'
 
@@ -1650,7 +1650,7 @@ export * as Provider from './Provider.js'
  * // @log: }
  * ```
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as PublicKey from './PublicKey.js'
 
@@ -1670,7 +1670,7 @@ export type { Register } from './internal/register.js'
  * // @log: [Hex.fromString('hello'), Hex.fromString('world')]
  * ```
  *
- * @category Encoding
+ * @category Data
  */
 export * as Rlp from './Rlp.js'
 
@@ -1855,7 +1855,7 @@ export * as RpcTransport from './RpcTransport.js'
  * // @log: true
  * ```
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as Secp256k1 from './Secp256k1.js'
 
@@ -1928,7 +1928,7 @@ export * as Secp256k1 from './Secp256k1.js'
  * // @log: true
  * ```
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as P256 from './P256.js'
 
@@ -1963,7 +1963,7 @@ export * as P256 from './P256.js'
  * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
  * ```
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as Signature from './Signature.js'
 
@@ -2776,7 +2776,7 @@ export * as ValidatorData from './ValidatorData.js'
  * // @log: 1_000_000n
  * ```
  *
- * @category Encoding
+ * @category Data
  */
 export * as Value from './Value.js'
 
@@ -2858,7 +2858,7 @@ export * as Value from './Value.js'
  * // @log: true
  * ```
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as WebAuthnP256 from './WebAuthnP256.js'
 
@@ -2923,7 +2923,7 @@ export * as WebAuthnP256 from './WebAuthnP256.js'
  * // @log: true
  * ```
  *
- * @category Crypto
+ * @category ECDSA
  */
 export * as WebCryptoP256 from './WebCryptoP256.js'
 
