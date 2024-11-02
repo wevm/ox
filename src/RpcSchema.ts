@@ -74,11 +74,13 @@ export function from<schema extends Generic>(): schema {
  *
  * ```
  */
-export type ExtractMethod<schema extends Generic | MethodNameGeneric> =
-  Compute<{
-    Request: ExtractRequest<schema>
-    ReturnType: ExtractReturnType<schema>
-  }>
+export type ExtractMethod<
+  methodName extends MethodNameGeneric,
+  schema extends Generic = Default,
+> = Compute<{
+  Request: ExtractRequest<methodName, schema>
+  ReturnType: ExtractReturnType<methodName, schema>
+}>
 
 /**
  * Extracts request from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
@@ -102,25 +104,17 @@ export type ExtractMethod<schema extends Generic | MethodNameGeneric> =
  *
  * ```
  */
-// TODO: clean
 export type ExtractRequest<
-  schemaOrMethodName extends Generic | MethodNameGeneric,
+  methodName extends MethodNameGeneric,
   schema extends Generic = Default,
 > = Compute<
   Omit<
     {
-      method: schemaOrMethodName extends Generic
-        ? schemaOrMethodName['Request']['method']
-        : schemaOrMethodName | MethodName
+      method: methodName | schema['Request']['method']
       params?: unknown
-    } & (schemaOrMethodName extends Generic
-      ? schemaOrMethodName['Request']
-      : IsNarrowable<schemaOrMethodName, MethodName> extends true
-        ? Extract<
-            schema,
-            { Request: { method: schemaOrMethodName } }
-          >['Request']
-        : {}),
+    } & (IsNarrowable<methodName, schema['Request']['method']> extends true
+      ? Extract<schema, { Request: { method: methodName } }>['Request']
+      : {}),
     ''
   >
 >
@@ -141,8 +135,10 @@ export type ExtractRequest<
  *
  * ```
  */
-export type ExtractParams<schema extends Generic | MethodNameGeneric> =
-  ExtractRequest<schema>['params']
+export type ExtractParams<
+  methodName extends MethodNameGeneric,
+  schema extends Generic,
+> = ExtractRequest<methodName, schema>['params']
 
 /**
  * Extracts return type from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
@@ -167,13 +163,11 @@ export type ExtractParams<schema extends Generic | MethodNameGeneric> =
  * ```
  */
 export type ExtractReturnType<
-  schemaOrMethodName extends Generic | MethodNameGeneric,
+  methodName extends MethodNameGeneric,
   schema extends Generic = Default,
-> = schemaOrMethodName extends Generic
-  ? schemaOrMethodName['ReturnType']
-  : schemaOrMethodName extends MethodName
-    ? Extract<schema, { Request: { method: schemaOrMethodName } }>['ReturnType']
-    : unknown
+> = methodName extends schema['Request']['method']
+  ? Extract<schema, { Request: { method: methodName } }>['ReturnType']
+  : unknown
 
 /**
  * Type to define a custom type-safe JSON-RPC Schema to be used with {@link ox#RpcRequest.(from:function)}.

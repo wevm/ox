@@ -3,7 +3,7 @@ import type { Errors } from './index.js'
 import type { Compute } from './internal/types.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
-export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =
+export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Default> =
   Compute<
     schema['Request'] & {
       id: number
@@ -14,21 +14,13 @@ export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =
   >
 
 /** JSON-RPC request store type. */
-export type Store<schema extends RpcSchema.Generic | undefined> = Compute<{
-  prepare: <
-    methodName extends
-      | RpcSchema.Generic
-      | RpcSchema.MethodNameGeneric = RpcSchema.MethodNameGeneric,
-  >(
-    parameters: Compute<
-      RpcSchema.ExtractRequest<
-        methodName,
-        schema extends RpcSchema.Generic ? schema : RpcSchema.Default
-      >
-    >,
-  ) => Compute<RpcRequest<RpcSchema.ExtractMethod<methodName>>>
-  readonly id: number
-}>
+export type Store<schema extends RpcSchema.Generic = RpcSchema.Default> =
+  Compute<{
+    prepare: <methodName extends RpcSchema.MethodNameGeneric>(
+      parameters: Compute<RpcSchema.ExtractRequest<methodName, schema>>,
+    ) => Compute<RpcRequest<RpcSchema.ExtractMethod<methodName, schema>>>
+    readonly id: number
+  }>
 
 /**
  * Creates a JSON-RPC request store to build requests with an incrementing `id`.
@@ -93,7 +85,7 @@ export type Store<schema extends RpcSchema.Generic | undefined> = Compute<{
  * @returns The request store
  */
 export function createStore<
-  schema extends RpcSchema.Generic | undefined = undefined,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
 >(options: createStore.Options = {}): createStore.ReturnType<schema> {
   let id = options.id ?? 0
   return {
@@ -115,7 +107,8 @@ export declare namespace createStore {
     id?: number
   }
 
-  type ReturnType<schema extends RpcSchema.Generic | undefined> = Store<schema>
+  type ReturnType<schema extends RpcSchema.Generic = RpcSchema.Default> =
+    Store<schema>
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -166,9 +159,9 @@ createStore.parseError = (error: unknown) =>
  * @param options - JSON-RPC request options.
  * @returns The fully-formed JSON-RPC request object.
  */
-export function from<
-  schema extends RpcSchema.Generic | RpcSchema.MethodNameGeneric,
->(options: from.Options<schema>): from.ReturnType<schema> {
+export function from<methodName extends RpcSchema.MethodNameGeneric>(
+  options: from.Options<methodName>,
+): from.ReturnType<methodName> {
   return {
     ...options,
     jsonrpc: '2.0',
@@ -176,12 +169,13 @@ export function from<
 }
 
 export declare namespace from {
-  type Options<schema extends RpcSchema.Generic | RpcSchema.MethodNameGeneric> =
-    Compute<RpcSchema.ExtractRequest<schema> & { id: number }>
+  type Options<methodName extends RpcSchema.MethodNameGeneric> = Compute<
+    RpcSchema.ExtractRequest<methodName> & { id: number }
+  >
 
-  type ReturnType<
-    schema extends RpcSchema.Generic | RpcSchema.MethodNameGeneric,
-  > = Compute<RpcRequest<RpcSchema.ExtractMethod<schema>>>
+  type ReturnType<methodName extends RpcSchema.MethodNameGeneric> = Compute<
+    RpcRequest<RpcSchema.ExtractMethod<methodName>>
+  >
 
   type ErrorType = Errors.GlobalErrorType
 }

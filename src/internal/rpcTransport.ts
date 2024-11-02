@@ -32,8 +32,8 @@ export type Options<
 /** @internal */
 export function create<
   options extends Record<string, unknown> = {},
-  raw extends boolean = false,
   schema extends RpcSchema.Generic = RpcSchema.Default,
+  raw extends boolean = false,
 >(
   transport: create.Transport<options>,
   options_root?: Options<raw, options, schema>,

@@ -40,9 +40,7 @@ export type RequestFn<
   options extends Record<string, unknown> = {},
   schema extends RpcSchema.Generic = RpcSchema.Default,
 > = <
-  methodName extends
-    | RpcSchema.Generic
-    | RpcSchema.MethodNameGeneric = RpcSchema.MethodNameGeneric,
+  methodName extends RpcSchema.MethodNameGeneric,
   raw_override extends boolean | undefined = undefined,
 >(
   parameters: Compute<RpcSchema.ExtractRequest<methodName, schema>>,
@@ -81,7 +79,7 @@ export function fromHttp<
   url: string,
   options: fromHttp.Options<safe, schema> = {},
 ): Http<safe, schema> {
-  return internal.create<HttpOptions>(
+  return internal.create<HttpOptions, schema, safe>(
     {
       async request(body_, options_) {
         const {

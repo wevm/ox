@@ -47,9 +47,7 @@ export type Emitter = Compute<EventEmitter<EventMap>>
 
 /** EIP-1193 Provider's `request` function. */
 export type RequestFn<schema extends RpcSchema.Generic = RpcSchema.Generic> = <
-  methodName extends
-    | RpcSchema.Generic
-    | RpcSchema.MethodNameGeneric = RpcSchema.MethodNameGeneric,
+  methodName extends RpcSchema.MethodNameGeneric,
 >(
   parameters: RpcSchema.ExtractRequest<methodName, schema>,
 ) => Promise<RpcSchema.ExtractReturnType<methodName, schema>>
