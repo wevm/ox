@@ -1222,7 +1222,7 @@ export * as Hash from './Hash.js'
  * :::
  *
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as HdKey from './HdKey.js'
 
@@ -1505,7 +1505,7 @@ export * as Log from './Log.js'
  * // @log: Uint8Array [...64 bytes]
  * ```
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as Mnemonic from './Mnemonic.js'
 
@@ -1650,7 +1650,7 @@ export * as Provider from './Provider.js'
  * // @log: }
  * ```
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as PublicKey from './PublicKey.js'
 
@@ -1855,7 +1855,7 @@ export * as RpcTransport from './RpcTransport.js'
  * // @log: true
  * ```
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as Secp256k1 from './Secp256k1.js'
 
@@ -1928,7 +1928,7 @@ export * as Secp256k1 from './Secp256k1.js'
  * // @log: true
  * ```
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as P256 from './P256.js'
 
@@ -1963,7 +1963,7 @@ export * as P256 from './P256.js'
  * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
  * ```
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as Signature from './Signature.js'
 
@@ -2858,7 +2858,7 @@ export * as Value from './Value.js'
  * // @log: true
  * ```
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as WebAuthnP256 from './WebAuthnP256.js'
 
@@ -2923,7 +2923,7 @@ export * as WebAuthnP256 from './WebAuthnP256.js'
  * // @log: true
  * ```
  *
- * @category ECDSA
+ * @category Crypto
  */
 export * as WebCryptoP256 from './WebCryptoP256.js'
 
