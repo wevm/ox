@@ -2,6 +2,41 @@ import { type Hex, RpcRequest, RpcResponse } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 import { anvilMainnet } from '../../test/anvil.js'
 
+describe('from', () => {
+  test('default', () => {
+    const response = RpcResponse.from({
+      id: 0,
+      jsonrpc: '2.0',
+      result: '0xdeadbeef',
+    })
+    expect(response).toMatchInlineSnapshot(`
+      {
+        "id": 0,
+        "jsonrpc": "2.0",
+        "result": "0xdeadbeef",
+      }
+    `)
+  })
+
+  test('behavior: with request', () => {
+    const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
+
+    const response = RpcResponse.from(
+      {
+        result: '0xdeadbeef',
+      },
+      { request },
+    )
+    expect(response).toMatchInlineSnapshot(`
+      {
+        "id": 0,
+        "jsonrpc": "2.0",
+        "result": "0xdeadbeef",
+      }
+    `)
+  })
+})
+
 describe('parse', () => {
   test('default', async () => {
     const request = RpcRequest.from({
@@ -327,6 +362,7 @@ describe('parse', () => {
 test('exports', () => {
   expect(Object.keys(RpcResponse)).toMatchInlineSnapshot(`
     [
+      "from",
       "parse",
       "BaseError",
       "InvalidInputError",

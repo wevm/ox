@@ -3,14 +3,16 @@ import type { Errors } from './index.js'
 import type { Compute } from './internal/types.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
-export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Default> =
+export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =
   Compute<
-    schema['Request'] & {
-      id: number
-      jsonrpc: '2.0'
-      /** @deprecated internal */
-      _returnType: schema['ReturnType']
-    }
+    schema extends any
+      ? schema['Request'] & {
+          id: number
+          jsonrpc: '2.0'
+          /** @deprecated internal */
+          _returnType: schema['ReturnType']
+        }
+      : never
   >
 
 /** JSON-RPC request store type. */

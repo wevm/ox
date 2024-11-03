@@ -1,5 +1,5 @@
 import type { Errors, RpcRequest } from './index.js'
-import type { Compute, OneOf } from './internal/types.js'
+import type { Compute, OneOf, UnionOmit } from './internal/types.js'
 
 /** A JSON-RPC response object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
 export type RpcResponse<
@@ -17,6 +17,74 @@ export type ErrorObject = {
   code: number
   message: string
   data?: unknown | undefined
+}
+
+/**
+ * A type-safe interface to instantiate a JSON-RPC response object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#response_object).
+ *
+ * @example
+ * ### Instantiating a Response Object
+ *
+ * ```ts twoslash
+ * import { RpcResponse } from 'ox'
+ *
+ * const response = RpcResponse.from({
+ *   id: 0,
+ *   jsonrpc: '2.0',
+ *   result: '0x69420',
+ * })
+ * ```
+ *
+ * @example
+ * ### Type-safe Instantiation
+ *
+ * If you have a JSON-RPC request object, you can use it to strongly-type the response. If a `request` is provided,
+ * then the `id` and `jsonrpc` properties will be overridden with the values from the request.
+ *
+ * ```ts twoslash
+ * import { RpcRequest, RpcResponse } from 'ox'
+ *
+ * const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
+ *
+ * const response = RpcResponse.from(
+ *   { result: '0x69420' },
+ *   { request },
+ * )
+ * ```
+ *
+ * @param response - Opaque JSON-RPC response object.
+ * @param options - Parsing options.
+ * @returns Typed JSON-RPC result, or response object (if `safe` is `true`).
+ */
+export function from<
+  request extends RpcRequest.RpcRequest | undefined = undefined,
+  const response = request extends RpcRequest.RpcRequest
+    ? request['_returnType']
+    : RpcResponse,
+>(
+  response: response &
+    (request extends RpcRequest.RpcRequest
+      ? UnionOmit<RpcResponse<request['_returnType']>, 'id' | 'jsonrpc'>
+      : RpcResponse),
+  options?: from.Options<request>,
+): Compute<response & Readonly<{ id: number; jsonrpc: '2.0' }>>
+export function from(response: RpcResponse, options: any = {}): RpcResponse {
+  const { request } = options
+  return {
+    ...response,
+    id: response.id ?? request?.id,
+    jsonrpc: response.jsonrpc ?? request.jsonrpc,
+  }
+}
+
+export declare namespace from {
+  type Options<
+    request extends RpcRequest.RpcRequest | undefined =
+      | RpcRequest.RpcRequest
+      | undefined,
+  > = {
+    request?: request | RpcRequest.RpcRequest | undefined
+  }
 }
 
 /**

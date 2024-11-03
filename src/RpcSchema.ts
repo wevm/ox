@@ -113,7 +113,9 @@ export type ExtractRequest<
       method: methodName | schema['Request']['method']
       params?: unknown
     } & (IsNarrowable<methodName, schema['Request']['method']> extends true
-      ? Extract<schema, { Request: { method: methodName } }>['Request']
+      ? IsNarrowable<schema, Generic> extends true
+        ? Extract<schema, { Request: { method: methodName } }>['Request']
+        : {}
       : {}),
     ''
   >
@@ -137,7 +139,7 @@ export type ExtractRequest<
  */
 export type ExtractParams<
   methodName extends MethodNameGeneric,
-  schema extends Generic,
+  schema extends Generic = Default,
 > = ExtractRequest<methodName, schema>['params']
 
 /**
@@ -166,11 +168,13 @@ export type ExtractReturnType<
   methodName extends MethodNameGeneric,
   schema extends Generic = Default,
 > = methodName extends schema['Request']['method']
-  ? Extract<schema, { Request: { method: methodName } }>['ReturnType']
+  ? IsNarrowable<schema, Generic> extends true
+    ? Extract<schema, { Request: { method: methodName } }>['ReturnType']
+    : unknown
   : unknown
 
 /**
- * Type to define a custom type-safe JSON-RPC Schema to be used with {@link ox#RpcRequest.(from:function)}.
+ * Type to define a custom type-safe JSON-RPC Schema.
  *
  * @example
  * ```ts twoslash
@@ -183,11 +187,6 @@ export type ExtractReturnType<
  *   }
  *   ReturnType: string
  * }>
- * const request = RpcRequest.from<Schema>({
- *   id: 0,
- *   method: 'eth_foobar',
- *   params: [0],
- * })
  * ```
  */
 export type From<schema extends Generic> = schema

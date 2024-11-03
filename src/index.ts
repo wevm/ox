@@ -1720,6 +1720,38 @@ export * as RpcRequest from './RpcRequest.js'
  * Utility types & functions for working with [JSON-RPC 2.0 Responses](https://www.jsonrpc.org/specification#response_object)
  *
  * @example
+ * ### Instantiating an RPC Response
+ *
+ * RPC Responses can be instantiated using {@link ox#RpcResponse.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { RpcResponse } from 'ox'
+ *
+ * const response = RpcResponse.from({
+ *   id: 0,
+ *   jsonrpc: '2.0',
+ *   result: '0x69420',
+ * })
+ * ```
+ *
+ * :::note
+ *
+ * Type-safe instantiation from a `request` object is also supported. If a `request` is provided, then the `id` and `jsonrpc` properties will be overridden with the values from the request.
+ *
+ * ```ts twoslash
+ * import { RpcRequest, RpcResponse } from 'ox'
+ *
+ * const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
+ *
+ * const response = RpcResponse.from(
+ *   { result: '0x69420' },
+ *   { request },
+ * )
+ * ```
+ *
+ * :::
+ *
+ * @example
  * ### Parsing an RPC Response
  *
  * RPC Responses can be parsed using {@link ox#RpcResponse.(parse:function)}:
