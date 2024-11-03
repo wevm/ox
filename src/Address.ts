@@ -200,7 +200,7 @@ export function fromPublicKey(
   options: fromPublicKey.Options = {},
 ): Address {
   const address = Hash.keccak256(
-    `0x${PublicKey.serialize(publicKey).slice(4)}`,
+    `0x${PublicKey.toHex(publicKey).slice(4)}`,
   ).substring(26)
   return from(`0x${address}`, options)
 }
@@ -217,7 +217,7 @@ export declare namespace fromPublicKey {
 
   type ErrorType =
     | Hash.keccak256.ErrorType
-    | PublicKey.serialize.ErrorType
+    | PublicKey.toHex.ErrorType
     | Errors.GlobalErrorType
 }
 

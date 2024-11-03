@@ -101,30 +101,55 @@ export declare namespace assert {
 }
 
 /**
- * Deserializes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} signature into a structured {@link ox#Signature.Signature}.
+ * Deserializes a {@link ox#Bytes.Bytes} signature into a structured {@link ox#Signature.Signature}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Signature } from 'ox'
+ *
+ * Signature.fromBytes(new Uint8Array([128, 3, 131, ...]))
+ * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
+ * ```
+ *
+ * @param signature - The serialized signature.
+ * @returns The deserialized {@link ox#Signature.Signature}.
+ */
+export function fromBytes(signature: Bytes.Bytes): Signature {
+  return fromHex(Hex.fromBytes(signature))
+}
+
+export declare namespace fromBytes {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+fromBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as fromBytes.ErrorType
+
+/**
+ * Deserializes a {@link ox#Hex.Hex} signature into a structured {@link ox#Signature.Signature}.
  *
  * @example
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * Signature.deserialize('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
+ * Signature.fromHex('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
  * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
  * ```
  *
  * @param serialized - The serialized signature.
  * @returns The deserialized {@link ox#Signature.Signature}.
  */
-export function deserialize(serialized: Bytes.Bytes | Hex.Hex): Signature {
-  const hex = Hex.from(serialized)
+export function fromHex(signature: Hex.Hex): Signature {
+  if (signature.length !== 130 && signature.length !== 132)
+    throw new InvalidSerializedSizeError({ signature })
 
-  if (hex.length !== 130 && hex.length !== 132)
-    throw new InvalidSerializedSizeError({ signature: hex })
-
-  const r = BigInt(Hex.slice(hex, 0, 32))
-  const s = BigInt(Hex.slice(hex, 32, 64))
+  const r = BigInt(Hex.slice(signature, 0, 32))
+  const s = BigInt(Hex.slice(signature, 32, 64))
 
   const yParity = (() => {
-    const yParity = Number(`0x${hex.slice(130)}`)
+    const yParity = Number(`0x${signature.slice(130)}`)
     if (Number.isNaN(yParity)) return undefined
     try {
       return vToYParity(yParity)
@@ -145,16 +170,16 @@ export function deserialize(serialized: Bytes.Bytes | Hex.Hex): Signature {
   } as never
 }
 
-export declare namespace deserialize {
+export declare namespace fromHex {
   type ErrorType =
     | Hex.from.ErrorType
     | InvalidSerializedSizeError
     | Errors.GlobalErrorType
 }
 
-deserialize.parseError = (error: unknown) =>
+fromHex.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as deserialize.ErrorType
+  error as fromHex.ErrorType
 
 /**
  * Extracts a {@link ox#Signature.Signature} from an arbitrary object that may include signature properties.
@@ -269,8 +294,8 @@ export function from<
     | Bytes.Bytes,
 ): from.ReturnType<signature> {
   const signature_ = (() => {
-    if (typeof signature === 'string') return deserialize(signature)
-    if (signature instanceof Uint8Array) return deserialize(signature)
+    if (typeof signature === 'string') return fromHex(signature)
+    if (signature instanceof Uint8Array) return fromBytes(signature)
     if (typeof signature.r === 'string') return fromRpc(signature)
     if (signature.v) return fromLegacy(signature)
     return {
@@ -297,7 +322,8 @@ export declare namespace from {
 
   type ErrorType =
     | assert.ErrorType
-    | deserialize.ErrorType
+    | fromBytes.ErrorType
+    | fromHex.ErrorType
     | vToYParity.ErrorType
     | Errors.GlobalErrorType
 }
@@ -311,9 +337,10 @@ from.parseError = (error: unknown) =>
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Signature } from 'ox'
  *
- * const signature = Signature.fromDER('0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8')
+ * const signature = Signature.fromDerBytes(new Uint8Array([132, 51, 23, ...]))
  * // @log: {
  * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
  * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
@@ -323,14 +350,47 @@ from.parseError = (error: unknown) =>
  * @param signature - The DER-encoded signature to convert.
  * @returns The {@link ox#Signature.Signature}.
  */
-export function fromDER(signature: Hex.Hex | Bytes.Bytes): Signature<false> {
+export function fromDerBytes(signature: Bytes.Bytes): Signature<false> {
+  return fromDerHex(Hex.fromBytes(signature))
+}
+
+export declare namespace fromDerBytes {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+fromDerBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as fromDerBytes.ErrorType
+
+/**
+ * Converts a DER-encoded signature to a {@link ox#Signature.Signature}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const signature = Signature.fromDerHex('0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8')
+ * // @log: {
+ * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * // @log: }
+ * ```
+ *
+ * @param signature - The DER-encoded signature to convert.
+ * @returns The {@link ox#Signature.Signature}.
+ */
+export function fromDerHex(signature: Hex.Hex): Signature<false> {
   const { r, s } = secp256k1.Signature.fromDER(Hex.from(signature).slice(2))
   return { r, s }
 }
 
-export declare namespace fromDER {
+export declare namespace fromDerHex {
   type ErrorType = Errors.GlobalErrorType
 }
+
+fromDerHex.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as fromDerHex.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Legacy} into a {@link ox#Signature.Signature}.
@@ -446,13 +506,46 @@ fromTuple.parseError = (error: unknown) =>
   error as fromTuple.ErrorType
 
 /**
- * Serializes a {@link ox#Signature.Signature} to {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}.
+ * Serializes a {@link ox#Signature.Signature} to {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const signature = Signature.serialize({
+ * const signature = Signature.toBytes({
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   yParity: 1
+ * })
+ * // @log: Uint8Array [102, 16, 10, ...]
+ * ```
+ *
+ * @param signature - The signature to serialize.
+ * @returns The serialized signature.
+ */
+export function toBytes(signature: Signature<boolean>): Bytes.Bytes {
+  return Bytes.fromHex(toHex(signature))
+}
+
+export declare namespace toBytes {
+  type ErrorType =
+    | toHex.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+toBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as toBytes.ErrorType
+
+/**
+ * Serializes a {@link ox#Signature.Signature} to {@link ox#Hex.Hex}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const signature = Signature.toHex({
  *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
  *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
  *   yParity: 1
@@ -463,12 +556,7 @@ fromTuple.parseError = (error: unknown) =>
  * @param signature - The signature to serialize.
  * @returns The serialized signature.
  */
-export function serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  signature: Signature<boolean>,
-  options: serialize.Options<as> = {},
-): serialize.ReturnType<as> {
-  const { as = 'Hex' } = options
-
+export function toHex(signature: Signature<boolean>): Hex.Hex {
   assert(signature)
 
   const r = signature.r
@@ -483,29 +571,19 @@ export function serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
       : '0x',
   )
 
-  if (as === 'Hex') return signature_ as serialize.ReturnType<as>
-  return Bytes.fromHex(signature_) as serialize.ReturnType<as>
+  return signature_
 }
 
-export declare namespace serialize {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
-    /**
-     * Type to serialize the signature as.
-     * @default 'Hex'
-     */
-    as?: as | 'Hex' | 'Bytes' | undefined
-  }
-
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-
-  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
+export declare namespace toHex {
+  type ErrorType =
+    | Hex.concat.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Errors.GlobalErrorType
 }
 
-serialize.parseError = (error: unknown) =>
+toHex.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as serialize.ErrorType
+  error as toHex.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Signature} to DER-encoded format.
@@ -519,40 +597,57 @@ serialize.parseError = (error: unknown) =>
  *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
  * })
  *
- * const signature_der = Signature.toDER(signature)
+ * const signature_der = Signature.toDerBytes(signature)
+ * // @log: Uint8Array [132, 51, 23, ...]
+ * ```
+ *
+ * @param signature - The signature to convert.
+ * @returns The DER-encoded signature.
+ */
+export function toDerBytes(signature: Signature<boolean>): Bytes.Bytes {
+  const sig = new secp256k1.Signature(signature.r, signature.s)
+  return sig.toDERRawBytes()
+}
+
+export declare namespace toDerBytes {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+toDerBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as toDerBytes.ErrorType
+
+/**
+ * Converts a {@link ox#Signature.Signature} to DER-encoded format.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const signature = Signature.from({
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * })
+ *
+ * const signature_der = Signature.toDerHex(signature)
  * // @log: '0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
  * ```
  *
  * @param signature - The signature to convert.
- * @param options - Conversion options.
  * @returns The DER-encoded signature.
  */
-export function toDER<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  signature: Signature<boolean>,
-  options: toDER.Options<as> = {},
-): toDER.ReturnType<as> {
-  const { as = 'Hex' } = options
+export function toDerHex(signature: Signature<boolean>): Hex.Hex {
   const sig = new secp256k1.Signature(signature.r, signature.s)
-  return as === 'Hex'
-    ? (`0x${sig.toDERHex()}` as never)
-    : (sig.toDERRawBytes() as never)
+  return `0x${sig.toDERHex()}`
 }
 
-export declare namespace toDER {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
-    /**
-     * Format of the returned signature.
-     * @default 'Hex'
-     */
-    as?: as | 'Hex' | 'Bytes' | undefined
-  }
-
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-
+export declare namespace toDerHex {
   type ErrorType = Errors.GlobalErrorType
 }
+
+toDerHex.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as toDerHex.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Signature} into a {@link ox#Signature.Legacy}.

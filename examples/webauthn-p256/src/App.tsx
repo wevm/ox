@@ -37,7 +37,7 @@ export function App() {
           <pre>{Json.stringify(credential.publicKey, null, 2)}</pre>
           <strong>Public Key (serialized): </strong>
           <br />
-          <pre>{PublicKey.serialize(credential.publicKey)}</pre>
+          <pre>{PublicKey.toHex(credential.publicKey)}</pre>
         </div>
       )}
       <br />

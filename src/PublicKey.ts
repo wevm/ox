@@ -4,7 +4,7 @@ import * as Hex from './Hex.js'
 import * as Json from './Json.js'
 import type { Compute, ExactPartial } from './internal/types.js'
 
-/** Root type for Address. */
+/** Root type for a Public Key. */
 export type PublicKey<
   compressed extends boolean = false,
   bigintType = bigint,
@@ -128,81 +128,6 @@ compress.parseError = (error: unknown) =>
   error as compress.ErrorType
 
 /**
- * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes} value.
- *
- * @example
- * ```ts twoslash
- * import { PublicKey } from 'ox'
- *
- * const publicKey = PublicKey.deserialize('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
- * // @log: {
- * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * // @log: }
- * ```
- *
- * @example
- * ### Deserializing a Compressed Public Key
- *
- * ```ts twoslash
- * import { PublicKey } from 'ox'
- *
- * const publicKey = PublicKey.deserialize('0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75')
- * // @log: {
- * // @log:   prefix: 3,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log: }
- * ```
- *
- * @param publicKey - The serialized public key.
- * @returns The deserialized public key.
- */
-export function deserialize(publicKey: Bytes.Bytes | Hex.Hex): PublicKey {
-  const hex =
-    typeof publicKey === 'string' ? publicKey : Hex.fromBytes(publicKey)
-
-  if (hex.length !== 132 && hex.length !== 130 && hex.length !== 68)
-    throw new InvalidSerializedSizeError({ publicKey })
-
-  if (hex.length === 130) {
-    const x = BigInt(Hex.slice(hex, 0, 32))
-    const y = BigInt(Hex.slice(hex, 32, 64))
-    return {
-      prefix: 4,
-      x,
-      y,
-    } as never
-  }
-
-  if (hex.length === 132) {
-    const prefix = Number(Hex.slice(hex, 0, 1))
-    const x = BigInt(Hex.slice(hex, 1, 33))
-    const y = BigInt(Hex.slice(hex, 33, 65))
-    return {
-      prefix,
-      x,
-      y,
-    } as never
-  }
-
-  const prefix = Number(Hex.slice(hex, 0, 1))
-  const x = BigInt(Hex.slice(hex, 1, 33))
-  return {
-    prefix,
-    x,
-  } as never
-}
-
-export declare namespace deserialize {
-  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
-}
-
-deserialize.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as deserialize.ErrorType
-
-/**
  * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
  *
  * @example
@@ -246,8 +171,8 @@ export function from<
     | Bytes.Bytes,
 >(value: from.Value<publicKey>): from.ReturnType<publicKey> {
   const publicKey = (() => {
-    if (Hex.validate(value)) return deserialize(value)
-    if (Bytes.validate(value)) return deserialize(value)
+    if (Hex.validate(value)) return fromHex(value)
+    if (Bytes.validate(value)) return fromBytes(value)
 
     const { prefix, x, y } = value
     if (typeof x === 'bigint' && typeof y === 'bigint')
@@ -258,6 +183,14 @@ export function from<
   assert(publicKey)
 
   return publicKey as never
+}
+
+/** @internal */
+type CompressedPublicKey = PublicKey<true>
+
+/** @internal */
+type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
+  prefix?: PublicKey['prefix'] | undefined
 }
 
 export declare namespace from {
@@ -288,16 +221,118 @@ from.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as from.ErrorType
 
-/** @internal */
-export type CompressedPublicKey = PublicKey<true>
-
-/** @internal */
-export type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
-  prefix?: PublicKey['prefix'] | undefined
+/**
+ * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Bytes.Bytes} value.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.fromBytes(new Uint8Array([128, 3, 131, ...]))
+ * // @log: {
+ * // @log:   prefix: 4,
+ * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log: }
+ * ```
+ *
+ * @param publicKey - The serialized public key.
+ * @returns The deserialized public key.
+ */
+export function fromBytes(publicKey: Bytes.Bytes): PublicKey {
+  return fromHex(Hex.fromBytes(publicKey))
 }
 
+export declare namespace fromBytes {
+  type ErrorType =
+    | fromHex.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
+}
+
+fromBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as fromBytes.ErrorType
+
 /**
- * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}.
+ * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} value.
+ *
+ * @example
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * // @log: {
+ * // @log:   prefix: 4,
+ * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log: }
+ * ```
+ *
+ * @example
+ * ### Deserializing a Compressed Public Key
+ *
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.fromHex('0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75')
+ * // @log: {
+ * // @log:   prefix: 3,
+ * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log: }
+ * ```
+ *
+ * @param publicKey - The serialized public key.
+ * @returns The deserialized public key.
+ */
+export function fromHex(publicKey: Hex.Hex): PublicKey {
+  if (
+    publicKey.length !== 132 &&
+    publicKey.length !== 130 &&
+    publicKey.length !== 68
+  )
+    throw new InvalidSerializedSizeError({ publicKey })
+
+  if (publicKey.length === 130) {
+    const x = BigInt(Hex.slice(publicKey, 0, 32))
+    const y = BigInt(Hex.slice(publicKey, 32, 64))
+    return {
+      prefix: 4,
+      x,
+      y,
+    } as never
+  }
+
+  if (publicKey.length === 132) {
+    const prefix = Number(Hex.slice(publicKey, 0, 1))
+    const x = BigInt(Hex.slice(publicKey, 1, 33))
+    const y = BigInt(Hex.slice(publicKey, 33, 65))
+    return {
+      prefix,
+      x,
+      y,
+    } as never
+  }
+
+  const prefix = Number(Hex.slice(publicKey, 0, 1))
+  const x = BigInt(Hex.slice(publicKey, 1, 33))
+  return {
+    prefix,
+    x,
+  } as never
+}
+
+export declare namespace fromHex {
+  type ErrorType = Hex.slice.ErrorType | Errors.GlobalErrorType
+}
+
+fromHex.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as fromHex.ErrorType
+
+/**
+ * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Bytes.Bytes}.
  *
  * @example
  * ```ts twoslash
@@ -309,21 +344,67 @@ export type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
  *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
  * })
  *
- * const serialized = PublicKey.serialize(publicKey) // [!code focus]
+ * const bytes = PublicKey.toBytes(publicKey) // [!code focus]
+ * // @log: Uint8Array [128, 3, 131, ...]
+ * ```
+ *
+ * @param publicKey - The public key to serialize.
+ * @returns The serialized public key.
+ */
+export function toBytes(
+  publicKey: PublicKey<boolean>,
+  options: toBytes.Options = {},
+): Bytes.Bytes {
+  return Bytes.fromHex(toHex(publicKey, options))
+}
+
+export declare namespace toBytes {
+  type Options = {
+    /**
+     * Whether to include the prefix in the serialized public key.
+     * @default true
+     */
+    includePrefix?: boolean | undefined
+  }
+
+  type ErrorType =
+    | Hex.fromNumber.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+toBytes.parseError = (error: unknown) =>
+  /* v8 ignore next */
+  error as toBytes.ErrorType
+
+/**
+ * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Hex.Hex}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.from({
+ *   prefix: 4,
+ *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * })
+ *
+ * const hex = PublicKey.toHex(publicKey) // [!code focus]
  * // @log: '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
  * ```
  *
  * @param publicKey - The public key to serialize.
  * @returns The serialized public key.
  */
-export function serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
+export function toHex(
   publicKey: PublicKey<boolean>,
-  options: serialize.Options<as> = {},
-): serialize.ReturnType<as> {
+  options: toHex.Options = {},
+): Hex.Hex {
   assert(publicKey)
 
   const { prefix, x, y } = publicKey
-  const { as = 'Hex', includePrefix = true } = options
+  const { includePrefix = true } = options
 
   const publicKey_ = Hex.concat(
     includePrefix ? Hex.fromNumber(prefix, { size: 1 }) : '0x',
@@ -332,17 +413,11 @@ export function serialize<as extends 'Hex' | 'Bytes' = 'Hex'>(
     typeof y === 'bigint' ? Hex.fromNumber(y, { size: 32 }) : '0x',
   )
 
-  if (as === 'Hex') return publicKey_ as never
-  return Bytes.fromHex(publicKey_) as never
+  return publicKey_
 }
 
-export declare namespace serialize {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
-    /**
-     * Type to serialize the public key as.
-     * @default 'Hex'
-     */
-    as?: as | 'Hex' | 'Bytes' | undefined
+export declare namespace toHex {
+  type Options = {
     /**
      * Whether to include the prefix in the serialized public key.
      * @default true
@@ -350,19 +425,12 @@ export declare namespace serialize {
     includePrefix?: boolean | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> =
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-
-  type ErrorType =
-    | Hex.fromNumber.ErrorType
-    | Bytes.fromHex.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
 
-serialize.parseError = (error: unknown) =>
+toHex.parseError = (error: unknown) =>
   /* v8 ignore next */
-  error as serialize.ErrorType
+  error as toHex.ErrorType
 
 /**
  * Validates a {@link ox#PublicKey.PublicKey}. Returns `true` if valid, `false` otherwise.

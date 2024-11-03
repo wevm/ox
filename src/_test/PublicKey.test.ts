@@ -6,9 +6,11 @@ test('exports', () => {
     [
       "assert",
       "compress",
-      "deserialize",
       "from",
-      "serialize",
+      "fromBytes",
+      "fromHex",
+      "toBytes",
+      "toHex",
       "validate",
       "InvalidError",
       "InvalidPrefixError",
@@ -115,11 +117,11 @@ describe('PublicKey.compress', () => {
   })
 })
 
-describe('PublicKey.deserialize', () => {
+describe('PublicKey.fromHex', () => {
   test('default', () => {
     const serialized =
       '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
-    const publicKey = PublicKey.deserialize(serialized)
+    const publicKey = PublicKey.fromHex(serialized)
     expect(publicKey).toMatchInlineSnapshot(`
     {
       "prefix": 4,
@@ -132,7 +134,7 @@ describe('PublicKey.deserialize', () => {
   test('behavior: prefix', () => {
     const serialized =
       '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
-    const publicKey = PublicKey.deserialize(serialized)
+    const publicKey = PublicKey.fromHex(serialized)
     expect(publicKey).toMatchInlineSnapshot(`
     {
       "prefix": 4,
@@ -145,7 +147,7 @@ describe('PublicKey.deserialize', () => {
   test('behavior: compressed', () => {
     const serialized =
       '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75'
-    const publicKey = PublicKey.deserialize(serialized)
+    const publicKey = PublicKey.fromHex(serialized)
     expect(publicKey).toMatchInlineSnapshot(`
     {
       "prefix": 3,
@@ -154,23 +156,9 @@ describe('PublicKey.deserialize', () => {
   `)
   })
 
-  test('behavior: bytes', () => {
-    const serialized = Bytes.fromHex(
-      '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    )
-    const publicKey = PublicKey.deserialize(serialized)
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 4,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    }
-  `)
-  })
-
   test('error: invalid size', () => {
     expect(() =>
-      PublicKey.deserialize(
+      PublicKey.fromHex(
         '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2a',
       ),
     ).toThrowErrorMatchingInlineSnapshot(`
@@ -178,6 +166,22 @@ describe('PublicKey.deserialize', () => {
 
     Expected: 33 bytes (compressed + prefix), 64 bytes (uncompressed) or 65 bytes (uncompressed + prefix).
     Received 63 bytes.]
+  `)
+  })
+})
+
+describe('PublicKey.fromBytes', () => {
+  test('default', () => {
+    const serialized = Bytes.fromHex(
+      '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+    )
+    const publicKey = PublicKey.fromBytes(serialized)
+    expect(publicKey).toMatchInlineSnapshot(`
+    {
+      "prefix": 4,
+      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+      "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+    }
   `)
   })
 })
@@ -306,13 +310,13 @@ describe('PublicKey.from', () => {
   })
 })
 
-describe('PublicKey.serialize', () => {
+describe('PublicKey.toHex', () => {
   test('default', () => {
     const publicKey = PublicKey.from({
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
-    const serialized = PublicKey.serialize(publicKey)
+    const serialized = PublicKey.toHex(publicKey)
     expect(serialized).toMatchInlineSnapshot(
       `"0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5"`,
     )
@@ -324,7 +328,7 @@ describe('PublicKey.serialize', () => {
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
-    const serialized = PublicKey.serialize(publicKey)
+    const serialized = PublicKey.toHex(publicKey)
     expect(serialized).toMatchInlineSnapshot(
       `"0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5"`,
     )
@@ -335,7 +339,7 @@ describe('PublicKey.serialize', () => {
       prefix: 3,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
     })
-    const serialized = PublicKey.serialize(publicKey)
+    const serialized = PublicKey.toHex(publicKey)
     expect(serialized).toMatchInlineSnapshot(
       `"0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75"`,
     )
@@ -346,18 +350,20 @@ describe('PublicKey.serialize', () => {
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
-    const serialized = PublicKey.serialize(publicKey, { includePrefix: false })
+    const serialized = PublicKey.toHex(publicKey, { includePrefix: false })
     expect(serialized).toMatchInlineSnapshot(
       `"0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5"`,
     )
   })
+})
 
-  test('option: as', () => {
+describe('PublicKey.toBytes', () => {
+  test('default', () => {
     const publicKey = PublicKey.from({
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
-    const serialized = PublicKey.serialize(publicKey, { as: 'Bytes' })
+    const serialized = PublicKey.toBytes(publicKey)
     expect(serialized).toMatchInlineSnapshot(
       `
     Uint8Array [

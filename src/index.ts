@@ -1619,7 +1619,7 @@ export * as Provider from './Provider.js'
  * @example
  * ### Serializing Public Keys
  *
- * Public Keys can be serialized to Hex or Bytes using {@link ox#PublicKey.(serialize:function)}:
+ * Public Keys can be serialized to Hex or Bytes using {@link ox#PublicKey.(toHex:function)}:
  *
  * ```ts twoslash
  * import { PublicKey } from 'ox'
@@ -1630,19 +1630,19 @@ export * as Provider from './Provider.js'
  *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
  * })
  *
- * const serialized = PublicKey.serialize(publicKey) // [!code focus]
+ * const serialized = PublicKey.toHex(publicKey) // [!code focus]
  * // @log: '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
  * ```
  *
  * @example
  * ### Deserializing Public Keys
  *
- * Public Keys can be deserialized from Hex or Bytes using {@link ox#PublicKey.(deserialize:function)}:
+ * Public Keys can be deserialized from Hex or Bytes using {@link ox#PublicKey.(fromHex:function)}:
  *
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.deserialize('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
  * // @log: {
  * // @log:   prefix: 4,
  * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -1938,12 +1938,12 @@ export * as P256 from './P256.js'
  * @example
  * ### Serializing a Signature
  *
- * Signatures can be serialized to Hex or Bytes using {@link ox#Signature.(serialize:function)}:
+ * Signatures can be serialized to Hex or Bytes using {@link ox#Signature.(toHex:function)}:
  *
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const signature = Signature.serialize({
+ * const signature = Signature.toHex({
  *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
  *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
  *   yParity: 1
@@ -1954,12 +1954,12 @@ export * as P256 from './P256.js'
  * @example
  * ### Deserializing a Signature
  *
- * Signatures can be deserialized from Hex or Bytes using {@link ox#Signature.(deserialize:function)}:
+ * Signatures can be deserialized from Hex or Bytes using {@link ox#Signature.(fromHex:function)}:
  *
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * Signature.deserialize('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
+ * Signature.fromHex('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
  * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
  * ```
  *

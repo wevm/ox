@@ -155,7 +155,7 @@ export async function verify(options: verify.Options): Promise<boolean> {
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
-    PublicKey.serialize(options.publicKey, { as: 'Bytes' }),
+    PublicKey.toBytes(options.publicKey),
     { name: 'ECDSA', namedCurve: 'P-256' },
     true,
     ['verify'],

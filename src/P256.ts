@@ -203,7 +203,7 @@ export function verify(options: verify.Options): boolean {
   return secp256r1.verify(
     signature,
     payload instanceof Uint8Array ? payload : Bytes.fromHex(payload),
-    PublicKey.serialize(publicKey).substring(2),
+    PublicKey.toHex(publicKey).substring(2),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
 }

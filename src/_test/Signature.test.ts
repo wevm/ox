@@ -61,10 +61,10 @@ describe('assert', () => {
   })
 })
 
-describe('deserialize', () => {
+describe('fromHex', () => {
   test('default', () => {
     expect(
-      Signature.deserialize(
+      Signature.fromHex(
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c',
       ),
     ).toEqual({
@@ -74,7 +74,7 @@ describe('deserialize', () => {
     })
 
     expect(
-      Signature.deserialize(
+      Signature.fromHex(
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81b',
       ),
     ).toEqual({
@@ -84,7 +84,7 @@ describe('deserialize', () => {
     })
 
     expect(
-      Signature.deserialize(
+      Signature.fromHex(
         '0x602381e57b70f1ada20bd56a806291cfc5cb5088f00f0e791510fd8b8cf05cc40dea7b983e0c7d204f3dc511b1f19a2787a5c82cd72f3bd38da58f10969907841b',
       ),
     ).toEqual({
@@ -94,31 +94,7 @@ describe('deserialize', () => {
     })
 
     expect(
-      Signature.deserialize(
-        Bytes.fromHex(
-          '0xa461f509887bd19e312c0c58467ce8ff8e300d3c1a90b608a760c5b80318eaf15fe57c96f9175d6cd4daad4663763baa7e78836e067d0163e9a2ccf2ff753f5b00',
-        ),
-      ),
-    ).toEqual({
-      r: 74352382517807082440778846078252240710763999160569457624520311883943391062769n,
-      s: 43375188480015931414505591342117068151247353833881461609019650667261881302875n,
-      yParity: 0,
-    })
-
-    expect(
-      Signature.deserialize(
-        Bytes.fromHex(
-          '0xc4d8bcda762d35ea79d9542b23200f46c2c1899db15bf929bbacaf609581db0831538374a01206517edd934e474212a0f1e2d62e9a01cd64f1cf94ea2e09884901',
-        ),
-      ),
-    ).toEqual({
-      r: 89036260706339362183898531363310683680162157132496689422406521430939707497224n,
-      s: 22310885159939283473640002814069314990500333570711854513358211093549688653897n,
-      yParity: 1,
-    })
-
-    expect(
-      Signature.deserialize(
+      Signature.fromHex(
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       ),
     ).toMatchInlineSnapshot(`
@@ -131,7 +107,7 @@ describe('deserialize', () => {
 
   test('error: invalid signature', async () => {
     expect(() =>
-      Signature.deserialize('0xdeadbeef'),
+      Signature.fromHex('0xdeadbeef'),
     ).toThrowErrorMatchingInlineSnapshot(
       `
     [Signature.InvalidSerializedSizeError: Value \`0xdeadbeef\` is an invalid signature size.
@@ -144,26 +120,54 @@ describe('deserialize', () => {
 
   test('error: invalid yParity', async () => {
     expect(() =>
-      Signature.deserialize(
+      Signature.fromHex(
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81d',
       ),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Signature.InvalidYParityError: Value `29` is an invalid y-parity value. Y-parity must be 0 or 1.]',
     )
     expect(() =>
-      Signature.deserialize(
+      Signature.fromHex(
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db802',
       ),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Signature.InvalidYParityError: Value `2` is an invalid y-parity value. Y-parity must be 0 or 1.]',
     )
     expect(() =>
-      Signature.deserialize(
+      Signature.fromHex(
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81a',
       ),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Signature.InvalidYParityError: Value `26` is an invalid y-parity value. Y-parity must be 0 or 1.]',
     )
+  })
+})
+
+describe('fromBytes', () => {
+  test('default', () => {
+    expect(
+      Signature.fromBytes(
+        Bytes.fromHex(
+          '0xa461f509887bd19e312c0c58467ce8ff8e300d3c1a90b608a760c5b80318eaf15fe57c96f9175d6cd4daad4663763baa7e78836e067d0163e9a2ccf2ff753f5b00',
+        ),
+      ),
+    ).toEqual({
+      r: 74352382517807082440778846078252240710763999160569457624520311883943391062769n,
+      s: 43375188480015931414505591342117068151247353833881461609019650667261881302875n,
+      yParity: 0,
+    })
+
+    expect(
+      Signature.fromBytes(
+        Bytes.fromHex(
+          '0xc4d8bcda762d35ea79d9542b23200f46c2c1899db15bf929bbacaf609581db0831538374a01206517edd934e474212a0f1e2d62e9a01cd64f1cf94ea2e09884901',
+        ),
+      ),
+    ).toEqual({
+      r: 89036260706339362183898531363310683680162157132496689422406521430939707497224n,
+      s: 22310885159939283473640002814069314990500333570711854513358211093549688653897n,
+      yParity: 1,
+    })
   })
 })
 
@@ -217,10 +221,8 @@ describe('from', () => {
     }
   `)
 
-    expect(Signature.from(Signature.serialize(signature))).toEqual(signature)
-    expect(
-      Signature.from(Signature.serialize(signature, { as: 'Bytes' })),
-    ).toEqual(signature)
+    expect(Signature.from(Signature.toHex(signature))).toEqual(signature)
+    expect(Signature.from(Signature.toBytes(signature))).toEqual(signature)
   })
 
   test('behavior: unrecovered', () => {
@@ -235,10 +237,8 @@ describe('from', () => {
     }
   `)
 
-    expect(Signature.from(Signature.serialize(signature))).toEqual(signature)
-    expect(
-      Signature.from(Signature.serialize(signature, { as: 'Bytes' })),
-    ).toEqual(signature)
+    expect(Signature.from(Signature.toHex(signature))).toEqual(signature)
+    expect(Signature.from(Signature.toBytes(signature))).toEqual(signature)
   })
 
   test('behavior: legacy', () => {
@@ -312,10 +312,10 @@ describe('from', () => {
   })
 })
 
-describe('fromDER', () => {
+describe('fromDerHex', () => {
   test('default', () => {
     expect(
-      Signature.fromDER(
+      Signature.fromDerHex(
         '0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       ),
     ).toMatchInlineSnapshot(
@@ -327,14 +327,16 @@ describe('fromDER', () => {
   `,
     )
   })
+})
 
-  test('behavior: bytes', () => {
+describe('fromDerBytes', () => {
+  test('default', () => {
     const signature = Signature.from({
       r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
       s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
     })
-    const signature_der = Signature.toDER(signature, { as: 'Bytes' })
-    expect(Signature.fromDER(signature_der)).toEqual(signature)
+    const signature_der = Signature.toDerBytes(signature)
+    expect(Signature.fromDerBytes(signature_der)).toEqual(signature)
   })
 })
 
@@ -436,7 +438,7 @@ describe('fromTuple', () => {
 describe('serialize', () => {
   test('default', () => {
     expect(
-      Signature.serialize({
+      Signature.toHex({
         r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
         s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
         yParity: 1,
@@ -446,7 +448,7 @@ describe('serialize', () => {
     )
 
     expect(
-      Signature.serialize({
+      Signature.toHex({
         r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
         s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
         yParity: 0,
@@ -456,7 +458,7 @@ describe('serialize', () => {
     )
 
     expect(
-      Signature.serialize({
+      Signature.toHex({
         r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
         s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
       }),
@@ -464,17 +466,16 @@ describe('serialize', () => {
       `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"`,
     )
   })
+})
 
+describe('toBytes', () => {
   test('args: as (bytes)', () => {
     expect(
-      Signature.serialize(
-        {
-          r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-          s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
-          yParity: 1,
-        },
-        { as: 'Bytes' },
-      ),
+      Signature.toBytes({
+        r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+        s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+        yParity: 1,
+      }),
     ).toMatchInlineSnapshot(
       `
     Uint8Array [
@@ -549,23 +550,25 @@ describe('serialize', () => {
   })
 })
 
-describe('toDER', () => {
+describe('toDerHex', () => {
   test('default', () => {
     const signature = Signature.from({
       r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
       s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
     })
-    expect(Signature.toDER(signature)).toMatchInlineSnapshot(
+    expect(Signature.toDerHex(signature)).toMatchInlineSnapshot(
       `"0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"`,
     )
   })
+})
 
+describe('toDerBytes', () => {
   test('options: as: bytes', () => {
     const signature = Signature.from({
       r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
       s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
     })
-    expect(Signature.toDER(signature, { as: 'Bytes' })).toMatchInlineSnapshot(
+    expect(Signature.toDerBytes(signature)).toMatchInlineSnapshot(
       `
     Uint8Array [
       48,
@@ -787,15 +790,19 @@ test('exports', () => {
   expect(Object.keys(Signature)).toMatchInlineSnapshot(`
     [
       "assert",
-      "deserialize",
+      "fromBytes",
+      "fromHex",
       "extract",
       "from",
-      "fromDER",
+      "fromDerBytes",
+      "fromDerHex",
       "fromLegacy",
       "fromRpc",
       "fromTuple",
-      "serialize",
-      "toDER",
+      "toBytes",
+      "toHex",
+      "toDerBytes",
+      "toDerHex",
       "toLegacy",
       "toRpc",
       "toTuple",

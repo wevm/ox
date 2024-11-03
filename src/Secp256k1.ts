@@ -267,7 +267,7 @@ export function verify(options: verify.Options): boolean {
   return secp256k1.verify(
     signature,
     Bytes.from(payload),
-    PublicKey.serialize(publicKey, { as: 'Bytes' }),
+    PublicKey.toBytes(publicKey),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
 }

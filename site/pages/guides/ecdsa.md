@@ -226,7 +226,7 @@ It is important to note that `yParity` (recovery bit) may not be present in _all
 
 ### Serializing
 
-You may need to serialize a Signature into Hex or Bytes format for specific use cases. You can do this using the [`Signature.serialize`](/api/Signature/serialize) function:
+You may need to serialize a Signature into Hex or Bytes format for specific use cases. You can do this using the [`Signature.toHex`](/api/Signature/toHex) or [`Signature.toBytes`](/api/Signature/toBytes) functions:
 
 ```ts twoslash
 import { Signature } from 'ox'
@@ -236,11 +236,11 @@ const signature = Signature.from({
   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
   yParity: 0,
 })
-const serialized = Signature.serialize(signature)
+const serialized = Signature.toHex(signature)
 //    ^?
 
 
-const serialized_bytes = Signature.serialize(signature, { as: 'Bytes' })
+const serialized_bytes = Signature.toBytes(signature)
 //    ^?
 
 
@@ -277,7 +277,7 @@ const publicKey_2 = PublicKey.from({
 
 ### Serializing
 
-You may need to serialize a Public Key into Hex or Bytes format for specific use cases. You can do this using the [`PublicKey.serialize`](/api/PublicKey/serialize) function:
+You may need to serialize a Public Key into Hex or Bytes format for specific use cases. You can do this using the [`PublicKey.toHex`](/api/PublicKey/toHex) or [`PublicKey.toBytes`](/api/PublicKey/toBytes) functions:
 
 ```ts twoslash
 import { PublicKey } from 'ox'
@@ -286,11 +286,11 @@ const publicKey = PublicKey.from({
   x: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
 })
-const serialized = PublicKey.serialize(publicKey)
+const serialized = PublicKey.toHex(publicKey)
 //    ^?
 
 
-const serialized_bytes = PublicKey.serialize(publicKey, { as: 'Bytes' })
+const serialized_bytes = PublicKey.toBytes(publicKey)
 //    ^?
 
 
