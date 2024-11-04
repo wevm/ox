@@ -72,6 +72,7 @@ export function from<
   response: from.Response<request, response>,
   options?: from.Options<request>,
 ): Compute<from.ReturnType<response>>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function from(response: RpcResponse, options: any = {}): RpcResponse {
   const { request } = options
   return {

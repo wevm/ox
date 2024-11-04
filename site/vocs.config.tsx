@@ -61,18 +61,9 @@ export default defineConfig({
             text: 'EIP-1193 Providers',
             link: '/guides/eip-1193',
           },
-          {
-            text: 'EIP-4844 Blob Transactions 🚧',
-            link: '/guides/eip-4844',
-          },
-          {
-            text: 'EIP-7702 Auth Transactions 🚧',
-            link: '/guides/eip-7702',
-          },
-          { text: 'ENS 🚧', link: '/guides/ens' },
           { text: 'JSON-RPC', link: '/guides/json-rpc' },
           {
-            text: 'Mnemonics 🚧',
+            text: 'Mnemonics',
             link: '/guides/mnemonics',
           },
           { text: 'Recursive Length Prefix (RLP)', link: '/guides/rlp' },
