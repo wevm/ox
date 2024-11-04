@@ -120,7 +120,6 @@ We can send a Transaction Envelope to the network by serializing the signed enve
 In this example, we will use [`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp) to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
 
 ```ts twoslash
-import 'ox/window'
 import { RpcTransport, TransactionEnvelopeEip1559, Secp256k1, Value } from 'ox'
 
 // Construct the Envelope.
@@ -166,14 +165,17 @@ interact with a Browser Extension Wallet. You could also use `RpcTransport.fromH
 ```ts twoslash
 import 'ox/window'
 import { Provider, TransactionEnvelopeEip1559, Value } from 'ox'
+
 // Construct the Envelope.
 const envelope = TransactionEnvelopeEip1559.from({
   chainId: 1,
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
+
 // Convert the Envelope to an RPC-compatible format. 
 const envelope_rpc = TransactionEnvelopeEip1559.toRpc(envelope)
+
 // Broadcast the Envelope with `eth_sendTransaction`. 
 const provider = Provider.from(window.ethereum)
 const hash = await provider.request({ 

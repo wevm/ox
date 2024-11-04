@@ -2162,7 +2162,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * with **Legacy Transaction Envelopes**.
  *
  * @example
- * ### Instantiating Transaction Envelopes
+ * ### Instantiating
  *
  * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeLegacy.(from:function)}:
  *
@@ -2177,7 +2177,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * ```
  *
  * * @example
- * ### Signing Transaction Envelopes
+ * ### Signing
  *
  * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeLegacy.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
@@ -2202,7 +2202,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * ```
  *
  * @example
- * ### Serializing Transaction Envelopes
+ * ### Serializing
  *
  * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeLegacy.(serialize:function)}:
  *
@@ -2220,7 +2220,68 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  * ```
  *
  * @example
- * ### Computing Transaction Hashes
+ * ### Sending
+ *
+ * We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`.
+ *
+ * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
+ *
+ * ```ts twoslash
+ * import { RpcTransport, TransactionEnvelopeLegacy, Secp256k1, Value } from 'ox'
+ *
+ * // Construct the Envelope.
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
+ *   nonce: 69n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * // Sign over the Envelope.
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * // Serialize the Envelope with the Signature. // [!code focus]
+ * const serialized = TransactionEnvelopeLegacy.serialize(envelope, { // [!code focus]
+ *   signature  // [!code focus]
+ * }) // [!code focus]
+ *
+ * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+ * const hash = await transport.request({ // [!code focus]
+ *   method: 'eth_sendRawTransaction', // [!code focus]
+ *   params: [serialized], // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * If you are interfacing with an RPC that supports `eth_sendTransaction`, you can also use
+ * {@link ox#TransactionEnvelopeLegacy.(toRpc:function)} to convert an Envelope to an RPC-compatible format.
+ * This means you can skip the ceremony of manually filling & signing the Transaction.
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Provider, TransactionEnvelopeLegacy, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * const envelope_rpc = TransactionEnvelopeLegacy.toRpc(envelope)
+ *
+ * const provider = Provider.from(window.ethereum)
+ * const hash = await provider.request({
+ *   method: 'eth_sendTransaction',
+ *   params: [envelope_rpc],
+ * })
+ * ```
+ *
+ * @example
+ * ### Computing Hashes
  *
  * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeLegacy.(hash:function)}:
  *
@@ -2255,7 +2316,7 @@ export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
  * Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559)
  *
  *  @example
- * ### Instantiating Transaction Envelopes
+ * ### Instantiating
  *
  * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip1559.(from:function)}:
  *
@@ -2280,7 +2341,7 @@ export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
  * ```
  *
  * @example
- * ### Signing Transaction Envelopes
+ * ### Signing
  *
  * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip1559.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
@@ -2305,11 +2366,10 @@ export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
  * ```
  *
  * @example
- * ### Serializing Transaction Envelopes
+ * ### Serializing
  *
  * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip1559.(serialize:function)}:
  *
- * @example
  * ```ts twoslash
  * import { TransactionEnvelopeEip1559, Value } from 'ox'
  *
@@ -2325,7 +2385,69 @@ export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
  * ```
  *
  * @example
- * ### Computing Transaction Hashes
+ * ### Sending
+ *
+ * We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`.
+ *
+ * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
+ *
+ * ```ts twoslash
+ * import { RpcTransport, TransactionEnvelopeEip1559, Secp256k1, Value } from 'ox'
+ *
+ * // Construct the Envelope.
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   nonce: 69n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * // Sign over the Envelope.
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * // Serialize the Envelope with the Signature. // [!code focus]
+ * const serialized = TransactionEnvelopeEip1559.serialize(envelope, { // [!code focus]
+ *   signature  // [!code focus]
+ * }) // [!code focus]
+ *
+ * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+ * const hash = await transport.request({ // [!code focus]
+ *   method: 'eth_sendRawTransaction', // [!code focus]
+ *   params: [serialized], // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * If you are interfacing with an RPC that supports `eth_sendTransaction`, you can also use
+ * {@link ox#TransactionEnvelopeEip1559.(toRpc:function)} to convert an Envelope to an RPC-compatible format.
+ * This means you can skip the ceremony of manually filling & signing the Transaction.
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Provider, TransactionEnvelopeEip1559, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * const envelope_rpc = TransactionEnvelopeEip1559.toRpc(envelope)
+ *
+ * const provider = Provider.from(window.ethereum)
+ * const hash = await provider.request({
+ *   method: 'eth_sendTransaction',
+ *   params: [envelope_rpc],
+ * })
+ * ```
+ *
+ * @example
+ * ### Computing Hashes
  *
  * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip1559.(hash:function)}:
  *
@@ -2361,7 +2483,7 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  * Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930)
  *
  * @example
- * ### Instantiating Transaction Envelopes
+ * ### Instantiating
  *
  * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip2930.(from:function)}:
  *
@@ -2379,7 +2501,7 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  * ```
  *
  * @example
- * ### Signing Transaction Envelopes
+ * ### Signing
  *
  * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip2930.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
@@ -2402,7 +2524,7 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  * ```
  *
  * @example
- * ### Serializing Transaction Envelopes
+ * ### Serializing
  *
  * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip2930.(serialize:function)}:
  *
@@ -2422,7 +2544,70 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  * ```
  *
  * @example
- * ### Computing Transaction Hashes
+ * ### Sending
+ *
+ * We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`.
+ *
+ * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
+ *
+ * ```ts twoslash
+ * import { RpcTransport, TransactionEnvelopeEip2930, Secp256k1, Value } from 'ox'
+ *
+ * // Construct the Envelope.
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   accessList: [],
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
+ *   nonce: 69n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * // Sign over the Envelope.
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip2930.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * // Serialize the Envelope with the Signature. // [!code focus]
+ * const serialized = TransactionEnvelopeEip2930.serialize(envelope, { // [!code focus]
+ *   signature  // [!code focus]
+ * }) // [!code focus]
+ *
+ * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+ * const hash = await transport.request({ // [!code focus]
+ *   method: 'eth_sendRawTransaction', // [!code focus]
+ *   params: [serialized], // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * If you are interfacing with an RPC that supports `eth_sendTransaction`, you can also use
+ * {@link ox#TransactionEnvelopeEip2930.(toRpc:function)} to convert an Envelope to an RPC-compatible format.
+ * This means you can skip the ceremony of manually filling & signing the Transaction.
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Provider, TransactionEnvelopeEip2930, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeEip2930.from({
+ *   accessList: [],
+ *   chainId: 1,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * const envelope_rpc = TransactionEnvelopeEip2930.toRpc(envelope)
+ *
+ * const provider = Provider.from(window.ethereum)
+ * const hash = await provider.request({
+ *   method: 'eth_sendTransaction',
+ *   params: [envelope_rpc],
+ * })
+ * ```
+ *
+ * @example
+ * ### Computing Hashes
  *
  * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip2930.(hash:function)}:
  *
@@ -2468,7 +2653,7 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  * ```
  *
  * @example
- * ### Instantiating Transaction Envelopes
+ * ### Instantiating
  *
  * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip4844.(from:function)}:
  *
@@ -2492,7 +2677,7 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  * ```
  *
  * @example
- * ### Signing Transaction Envelopes
+ * ### Signing
  *
  * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip4844.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
@@ -2503,15 +2688,17 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const sidecars = Blobs.toSidecars(blobs, { kzg })
  *
  * const envelope = TransactionEnvelopeEip4844.from({
  *   blobVersionedHashes,
  *   chainId: 1,
  *   nonce: 0n,
- *   maxFeePerGas: 1000000000n,
- *   gas: 21000n,
+ *   maxFeePerBlobGas: Value.fromGwei('3'),
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: Value.fromEther('1'),
  * })
  *
  * const signature = Secp256k1.sign({ // [!code focus]
@@ -2519,11 +2706,14 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
  *
- * const envelope_signed = TransactionEnvelopeEip4844.from(envelope, { signature })
+ * const envelope_signed = TransactionEnvelopeEip4844.from(envelope, {
+ *   sidecars,
+ *   signature
+ * })
  * ```
  *
  * @example
- * ### Serializing Transaction Envelopes
+ * ### Serializing
  *
  * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeEip4844.(serialize:function)}:
  *
@@ -2538,7 +2728,9 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  * const envelope = TransactionEnvelopeEip4844.from({
  *   blobVersionedHashes,
  *   chainId: 1,
+ *   maxFeePerBlobGas: Value.fromGwei('3'),
  *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
  *   value: Value.fromEther('1'),
  * })
@@ -2547,7 +2739,56 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  * ```
  *
  * @example
- * ### Computing Transaction Hashes
+ * ### Sending
+ *
+ * We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`.
+ *
+ * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs, RpcTransport, TransactionEnvelopeEip4844, Secp256k1, Value } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * // Compute the Blob Versioned Hashes.
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const sidecars = Blobs.toSidecars(blobs, { kzg })
+ *
+ * // Construct the Envelope.
+ * const envelope = TransactionEnvelopeEip4844.from({
+ *   chainId: 1,
+ *   blobVersionedHashes,
+ *   maxFeePerBlobGas: Value.fromGwei('3'),
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   nonce: 0n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * // Sign over the Envelope.
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip4844.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * // Serialize the Envelope with the Signature. // [!code focus]
+ * const serialized = TransactionEnvelopeEip4844.serialize(envelope, { // [!code focus]
+ *   sidecars, // [!code focus]
+ *   signature  // [!code focus]
+ * }) // [!code focus]
+ *
+ * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+ * const hash = await transport.request({ // [!code focus]
+ *   method: 'eth_sendRawTransaction', // [!code focus]
+ *   params: [serialized], // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Computing Hashes
  *
  * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeEip4844.(hash:function)}:
  *
@@ -2585,7 +2826,7 @@ export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
  * Utility functions for working with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702)
  *
  * @example
- * ### Instantiating Transaction Envelopes
+ * ### Instantiating
  *
  * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeEip7702.(from:function)}:
  *
@@ -2622,7 +2863,7 @@ export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
  * :::
  *
  * @example
- * ### Signing Transaction Envelopes
+ * ### Signing
  *
  * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeEip7702.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
@@ -2657,6 +2898,57 @@ export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
  * })
  *
  * const envelope_signed = TransactionEnvelopeEip7702.from(envelope, { signature })
+ * ```
+ *
+ * @example
+ * ### Sending
+ *
+ * We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`.
+ *
+ * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
+ *
+ * ```ts twoslash
+ * import { Authorization, RpcTransport, TransactionEnvelopeEip7702, Secp256k1, Value } from 'ox'
+ *
+ * const authorization = Authorization.from({
+ *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   chainId: 1,
+ *   nonce: 0n,
+ * })
+ *
+ * const signature_auth = Secp256k1.sign({
+ *   payload: Authorization.getSignPayload(authorization),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const authorizationList = [Authorization.from(authorization, { signature: signature_auth })]
+ *
+ * const envelope = TransactionEnvelopeEip7702.from({
+ *   authorizationList,
+ *   chainId: 1,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   nonce: 69n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeEip7702.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * // Serialize the Envelope with the Signature. // [!code focus]
+ * const serialized = TransactionEnvelopeEip7702.serialize(envelope, { // [!code focus]
+ *   signature  // [!code focus]
+ * }) // [!code focus]
+ *
+ * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+ * const hash = await transport.request({ // [!code focus]
+ *   method: 'eth_sendRawTransaction', // [!code focus]
+ *   params: [serialized], // [!code focus]
+ * }) // [!code focus]
  * ```
  *
  * @category Transaction Envelopes
