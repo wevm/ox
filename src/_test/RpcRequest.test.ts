@@ -190,7 +190,7 @@ describe('from', () => {
       method: 'POST',
     })
       .then((res) => res.json())
-      .then((res) => RpcResponse.parse(res, { safe: true, request }))
+      .then((res) => RpcResponse.parse(res, { raw: true, request }))
 
     expect(response).toMatchInlineSnapshot(`
     {

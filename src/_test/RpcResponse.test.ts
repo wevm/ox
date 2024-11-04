@@ -18,11 +18,14 @@ describe('from', () => {
   test('behavior: with request', () => {
     const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
 
-    const response = RpcResponse.from({
-      id: 0,
-      jsonrpc: '2.0',
-      result: '0xdeadbeef',
-    })
+    const response = RpcResponse.from(
+      {
+        id: 0,
+        jsonrpc: '2.0',
+        result: '0xdeadbeef',
+      },
+      { request },
+    )
     expect(response).toMatchInlineSnapshot(`
       {
         "id": 0,
