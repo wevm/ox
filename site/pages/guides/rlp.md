@@ -42,3 +42,9 @@ const rlp = Rlp.fromHex([
 const values = Rlp.toHex(rlp) // [!code focus]
 // @log: [Hex.fromString('hello'), Hex.fromNumber(1337), [Hex.fromString('foo'), Hex.fromString('bar')]]
 ```
+
+## Related Modules
+
+| Module          | Description                                    |
+| --------------- | ---------------------------------------------- |
+| [Rlp](/api/Rlp) | Utility functions for RLP encoding & decoding. |

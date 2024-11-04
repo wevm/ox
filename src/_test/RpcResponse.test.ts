@@ -3,12 +3,9 @@ import { assertType, describe, expect, test } from 'vitest'
 import { anvilMainnet } from '../../test/anvil.js'
 
 describe('from', () => {
-  test('default', () => {
-    const response = RpcResponse.from({
-      id: 0,
-      jsonrpc: '2.0',
-      result: '0xdeadbeef',
-    })
+  test('default', async () => {
+    const a = await fetch('a').then((x) => x.json())
+    const response = RpcResponse.from(a)
     expect(response).toMatchInlineSnapshot(`
       {
         "id": 0,
@@ -21,12 +18,11 @@ describe('from', () => {
   test('behavior: with request', () => {
     const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
 
-    const response = RpcResponse.from(
-      {
-        result: '0xdeadbeef',
-      },
-      { request },
-    )
+    const response = RpcResponse.from({
+      id: 0,
+      jsonrpc: '2.0',
+      result: '0xdeadbeef',
+    })
     expect(response).toMatchInlineSnapshot(`
       {
         "id": 0,
@@ -144,7 +140,7 @@ describe('parse', () => {
     {
       const response = RpcResponse.parse(json, {
         request,
-        safe: true,
+        raw: true,
       })
       assertType<RpcResponse.RpcResponse<Hex.Hex>>(response)
 
@@ -159,7 +155,7 @@ describe('parse', () => {
 
     {
       const response = RpcResponse.parse(json, {
-        safe: true,
+        raw: true,
       })
       assertType<RpcResponse.RpcResponse<unknown>>(response)
     }

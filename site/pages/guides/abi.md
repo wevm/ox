@@ -32,6 +32,20 @@ console.log(encoded)
 // @log: '0x000000000000000000000000cb98643b8786950f0461f3b0edf99d88f274574d00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003'
 ```
 
+:::note
+**Tip:** You can also provide Human Readable parameters with [`AbiParameters.from`](/api/AbiParameters/from#human-readable-parameters):
+
+```ts twoslash
+import { AbiParameters } from 'ox';
+
+const encoded = AbiParameters.encode(
+  AbiParameters.from(['address', 'uint32[]']), 
+  ['0xcb98643b8786950F0461f3B0edf99D88F274574D', [1, 2, 3]]
+)
+```
+
+:::
+
 The `encoded` variable now contains the ABI-encoded representation of the values we passed with the `address` and `uint32[]` parameters. We won't go into detail on how the encoding works, but you can read more about it [here](https://docs.soliditylang.org/en/latest/abi-spec.html#argument-encoding).
 
 ### Decoding
@@ -58,6 +72,20 @@ const decoded = AbiParameters.decode( // [!code focus]
 console.log(decoded) // [!code focus]
 // @log: ['0xcb98643b8786950f0461f3b0edf99d88f274574d', [1, 2, 3]]
 ```
+
+:::note
+**Tip:** You can also provide Human Readable parameters with [`AbiParameters.from`](/api/AbiParameters/from#human-readable-parameters):
+
+```ts twoslash
+import { AbiParameters } from 'ox';
+
+const encoded = AbiParameters.decode(
+  AbiParameters.from(['address', 'uint32[]']), 
+  '0x...'
+)
+```
+
+:::
 
 Now that we are aware of how to encode and decode primitive types & values, let's take a look at how ABI coding is applied in real-world scenarios.
 
@@ -495,3 +523,15 @@ const hash = await transport.request({ // [!code focus]
 :::
 
 ::::
+
+## Related Modules
+
+| Module                                | Description                                                                                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| [Abi](/api/Abi)                       | Utilities & types for working with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html)         |
+| [AbiConstructor](/api/AbiConstructor) | Utilities & types for working with [Constructors](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.                   |
+| [AbiError](/api/AbiError)             | Utilities & types for working with [Errors](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.                         |
+| [AbiEvent](/api/AbiEvent)             | Utilities & types for working with [Events](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.                         |
+| [AbiFunction](/api/AbiFunction)       | Utilities & types for working with [Functions](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.                      |
+| [AbiItem](/api/AbiItem)               | Utilities & types for working with [ABI Items](https://docs.soliditylang.org/en/latest/abi-spec.html#json)                               |
+| [AbiParameters](/api/AbiParameters)   | Utilities & types for encoding, decoding, and working with [ABI Parameters](https://docs.soliditylang.org/en/latest/abi-spec.html#types) |

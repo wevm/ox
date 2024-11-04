@@ -1,5 +1,12 @@
 import type { Errors, RpcRequest } from './index.js'
-import type { Compute, OneOf, UnionOmit } from './internal/types.js'
+import type {
+  Compute,
+  IsNarrowable,
+  OneOf,
+  PartialBy,
+  UnionOmit,
+  UnionPartialBy,
+} from './internal/types.js'
 
 /** A JSON-RPC response object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
 export type RpcResponse<
@@ -54,20 +61,19 @@ export type ErrorObject = {
  *
  * @param response - Opaque JSON-RPC response object.
  * @param options - Parsing options.
- * @returns Typed JSON-RPC result, or response object (if `safe` is `true`).
+ * @returns Typed JSON-RPC result, or response object (if `raw` is `true`).
  */
 export function from<
   request extends RpcRequest.RpcRequest | undefined = undefined,
-  const response = request extends RpcRequest.RpcRequest
-    ? request['_returnType']
-    : RpcResponse,
+  const response =
+    | (request extends RpcRequest.RpcRequest
+        ? request['_returnType']
+        : RpcResponse)
+    | unknown,
 >(
-  response: response &
-    (request extends RpcRequest.RpcRequest
-      ? UnionOmit<RpcResponse<request['_returnType']>, 'id' | 'jsonrpc'>
-      : RpcResponse),
+  response: from.Response<request, response>,
   options?: from.Options<request>,
-): Compute<response & Readonly<{ id: number; jsonrpc: '2.0' }>>
+): Compute<from.ReturnType<response>>
 export function from(response: RpcResponse, options: any = {}): RpcResponse {
   const { request } = options
   return {
@@ -78,6 +84,14 @@ export function from(response: RpcResponse, options: any = {}): RpcResponse {
 }
 
 export declare namespace from {
+  type Response<
+    request extends RpcRequest.RpcRequest | undefined = undefined,
+    response = unknown,
+  > = response &
+    (request extends RpcRequest.RpcRequest
+      ? UnionPartialBy<RpcResponse<request['_returnType']>, 'id' | 'jsonrpc'>
+      : RpcResponse)
+
   type Options<
     request extends RpcRequest.RpcRequest | undefined =
       | RpcRequest.RpcRequest
@@ -85,6 +99,10 @@ export declare namespace from {
   > = {
     request?: request | RpcRequest.RpcRequest | undefined
   }
+
+  type ReturnType<response> = IsNarrowable<response, RpcResponse> extends true
+    ? RpcResponse
+    : response & Readonly<{ id: number; jsonrpc: '2.0' }>
 }
 
 /**
@@ -146,9 +164,9 @@ export declare namespace from {
  * :::
  *
  * @example
- * ### Safe Mode
+ * ### Raw Mode
  *
- * If `safe` is `true`, the response will be returned as an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
+ * If `raw` is `true`, the response will be returned as an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
  *
  * ```ts twoslash
  * import { RpcRequest, RpcResponse } from 'ox'
@@ -161,7 +179,7 @@ export declare namespace from {
  *
  * const response = RpcResponse.parse({}, {
  *   request,
- *   safe: true, // [!code hl]
+ *   raw: true, // [!code hl]
  * })
  *
  * response.result
@@ -176,15 +194,15 @@ export declare namespace from {
  *
  * @param response - Opaque JSON-RPC response object.
  * @param options - Parsing options.
- * @returns Typed JSON-RPC result, or response object (if `safe` is `true`).
+ * @returns Typed JSON-RPC result, or response object (if `raw` is `true`).
  */
 export function parse<
   const response extends RpcResponse | unknown,
   returnType,
-  safe extends boolean = false,
+  raw extends boolean = false,
 >(
   response: response,
-  options: parse.Options<returnType, safe> = {},
+  options: parse.Options<returnType, raw> = {},
 ): parse.ReturnType<
   unknown extends response
     ? returnType
@@ -193,11 +211,11 @@ export function parse<
         ? result
         : never
       : returnType,
-  safe
+  raw
 > {
-  const { safe = false } = options
+  const { raw = false } = options
   const response_ = response as RpcResponse
-  if (safe) return response as never
+  if (raw) return response as never
   if (response_.error) {
     const { code } = response_.error
     const JsonRpcError = (() => {
@@ -224,7 +242,7 @@ export function parse<
 }
 
 export declare namespace parse {
-  type Options<returnType, safe extends boolean = false> = {
+  type Options<returnType, raw extends boolean = false> = {
     /**
      * JSON-RPC Method that was used to make the request. Used for typing the response.
      */
@@ -235,18 +253,18 @@ export declare namespace parse {
       | RpcRequest.RpcRequest
       | undefined
     /**
-     * Enables safe mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
+     * Enables raw mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.
      *
      * - `true`: a JSON-RPC response object will be returned with `result` and `error` properties.
      * - `false`: the JSON-RPC response object's `result` property will be returned directly, and JSON-RPC Errors will be thrown.
      *
      * @default false
      */
-    safe?: safe | boolean | undefined
+    raw?: raw | boolean | undefined
   }
 
-  type ReturnType<returnType, safe extends boolean = false> = Compute<
-    safe extends true ? RpcResponse<returnType> : returnType
+  type ReturnType<returnType, raw extends boolean = false> = Compute<
+    raw extends true ? RpcResponse<returnType> : returnType
   >
 
   type ErrorType =

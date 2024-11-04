@@ -47,7 +47,7 @@ export function create<
       const data = await transport.request(body as never, options as never)
 
       return RpcResponse.parse(data, {
-        safe: options.raw ?? options_root?.raw,
+        raw: options.raw ?? options_root?.raw,
       }) as never
     },
   }

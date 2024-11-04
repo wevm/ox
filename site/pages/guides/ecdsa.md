@@ -295,3 +295,14 @@ const serialized_bytes = PublicKey.toBytes(publicKey)
 
 
 ```
+
+## Related Modules
+
+| Module                              | Description                                                                                                                                                                                                                                                                                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [P256](/api/P256)                   | Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography.                                                                                                            |
+| [PublicKey](/api/PublicKey)         | Utility functions for working with ECDSA public keys.                                                                                                                                                                                                                                                    |
+| [Secp256k1](/api/Secp256k1)         | Utility functions for [secp256k1](https://www.secg.org/sec2-v2.pdf) ECDSA cryptography.                                                                                                                                                                                                                  |
+| [Signature](/api/Signature)         | Utility functions for working with ECDSA signatures.                                                                                                                                                                                                                                                     |
+| [WebAuthnP256](/api/WebAuthnP256)   | Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) |
+| [WebCryptoP256](/api/WebCryptoP256) | Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)                 |

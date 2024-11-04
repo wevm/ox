@@ -70,7 +70,7 @@ export default defineConfig({
             link: '/guides/eip-7702',
           },
           { text: 'ENS 🚧', link: '/guides/ens' },
-          { text: 'JSON-RPC & Execution API 🚧', link: '/guides/json-rpc' },
+          { text: 'JSON-RPC', link: '/guides/json-rpc' },
           {
             text: 'Mnemonics 🚧',
             link: '/guides/mnemonics',
@@ -89,12 +89,6 @@ export default defineConfig({
             link: '/guides/transaction-envelopes',
           },
           { text: 'WebAuthn Signers', link: '/guides/webauthn' },
-          { text: 'Using with Effect 🚧', link: '/guides/effect' },
-          { text: 'Using with NeverThrow 🚧', link: '/guides/neverthrow' },
-          {
-            text: 'Using with Validators 🚧',
-            link: '/guides/validators',
-          },
         ],
       },
       {

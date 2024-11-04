@@ -181,3 +181,14 @@ const hash = await provider.request({
   params: [envelope_rpc], 
 }) 
 ```
+
+## Related Modules
+
+| Module                                                        | Description                                                                                                         |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [TransactionEnvelope](/api/TransactionEnvelope)               | Errors & Types for working with Transaction Envelopes.                                                              |
+| [TransactionEnvelopeEip1559](/api/TransactionEnvelopeEip1559) | Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559). |
+| [TransactionEnvelopeEip2930](/api/TransactionEnvelopeEip2930) | Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930). |
+| [TransactionEnvelopeEip4844](/api/TransactionEnvelopeEip4844) | Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844). |
+| [TransactionEnvelopeEip7702](/api/TransactionEnvelopeEip7702) | Utility functions for working with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702). |
+| [TransactionEnvelopeLegacy](/api/TransactionEnvelopeLegacy)   | Utility functions for working with **Legacy Transaction Envelopes**.                                                |

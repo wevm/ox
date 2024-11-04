@@ -88,5 +88,8 @@ const verified = await WebAuthnP256.verify({ // [!code focus]
 }) // [!code focus]
 ```
 
+## Related Modules
 
-
+| Module                            | Description                                               |
+| --------------------------------- | --------------------------------------------------------- |
+| [WebAuthnP256](/api/WebAuthnP256) | Utility functions for working with WebAuthn-P256 Signers. |

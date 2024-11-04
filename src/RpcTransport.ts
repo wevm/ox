@@ -73,13 +73,10 @@ export type RequestFn<
  * @returns HTTP JSON-RPC Transport.
  */
 export function fromHttp<
-  safe extends boolean = false,
+  raw extends boolean = false,
   schema extends RpcSchema.Generic = RpcSchema.Default,
->(
-  url: string,
-  options: fromHttp.Options<safe, schema> = {},
-): Http<safe, schema> {
-  return internal.create<HttpOptions, schema, safe>(
+>(url: string, options: fromHttp.Options<raw, schema> = {}): Http<raw, schema> {
+  return internal.create<HttpOptions, schema, raw>(
     {
       async request(body_, options_) {
         const {

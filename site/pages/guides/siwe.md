@@ -145,3 +145,9 @@ function handler() {
 }
 ```
 
+
+## Related Modules
+
+| Module            | Description                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| [Siwe](/api/Siwe) | Utility functions for working with [Sign-In with Ethereum (EIP-4361)](https://eips.ethereum.org/EIPS/eip-4361). |

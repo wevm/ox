@@ -218,3 +218,11 @@ Hex.assert('abc')
 Bytes.assert(Bytes.from([0xde, 0xad, 0xbe, 0xef]))
 // @log: no error :)
 ```
+
+## Related Modules
+
+| Module              | Description                                                                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Bytes](/api/Bytes) | A set of Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances. |
+| [Hex](/api/Hex)     | A set of Ethereum-related utility functions for working with hexadecimal string values (e.g. `"0xdeadbeef"`).                                                                       |
+

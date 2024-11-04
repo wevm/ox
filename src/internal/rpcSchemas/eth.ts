@@ -49,7 +49,7 @@ export type Eth = RpcSchema.From<
         method: 'eth_accounts'
         params?: undefined
       }
-      ReturnType: Address.Address[]
+      ReturnType: readonly Address.Address[]
     }
   /**
    * Returns the base fee per blob gas in wei.

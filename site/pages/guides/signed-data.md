@@ -168,3 +168,11 @@ const signature = await provider.request({ // [!code focus]
   params: [address, payload], // [!code focus]
 }) // [!code focus]
 ```
+
+## Related Modules
+
+| Module                                  | Description                                                                                                           |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [PersonalMessage](/api/PersonalMessage) | Utilities & types for working with [EIP-191 Personal Messages](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e) |
+| [TypedData](/api/TypedData)             | Utility functions for working with [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712)                       |
+| [ValidatorData](/api/ValidatorData)     | Utilities & types for working with [EIP-191 Validator Data](https://eips.ethereum.org/EIPS/eip-191#0x00)              |

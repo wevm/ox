@@ -69,3 +69,9 @@ const decrypted = await AesGcm.decrypt(encrypted, key) // [!code focus]
 ```
 
 ::::
+
+## Related Modules
+
+| Module                | Description                               |
+| --------------------- | ----------------------------------------- |
+| [AesGcm](/api/AesGcm) | Utility functions for AES-GCM encryption. |
