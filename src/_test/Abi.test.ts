@@ -1,5 +1,5 @@
 import { Abi } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 
 describe('format', () => {
   test('default', () => {
@@ -23,10 +23,15 @@ describe('format', () => {
     ])
     const formatted = Abi.format(abi)
     expect(formatted).toMatchInlineSnapshot(`
-    [
-      "function approve(address spender, uint256 amount) returns (bool)",
-    ]
-  `)
+      [
+        "function approve(address spender, uint256 amount) returns (bool)",
+      ]
+    `)
+    expectTypeOf(formatted).toEqualTypeOf<
+      readonly [
+        'function approve(address spender, uint256 amount) returns (bool)',
+      ]
+    >()
   })
 })
 

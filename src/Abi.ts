@@ -1,10 +1,12 @@
 import * as abitype from 'abitype'
 import type * as Errors from './Errors.js'
+import * as internal from './internal/abi.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
 
 /** Root type for an ABI. */
 export type Abi = abitype.Abi
 
+export function format<const abi extends Abi>(abi: abi): format.ReturnType<abi>
 /**
  * Formats an {@link ox#Abi.Abi} into a **Human Readable ABI**.
  *
@@ -33,18 +35,21 @@ export type Abi = abitype.Abi
  * //    ^?
  *
  *
+ *
  * ```
  *
  * @param abi - The ABI to format.
  * @returns The formatted ABI.
  */
-export function format<const abi extends Abi | readonly unknown[]>(
-  abi: abi | Abi | readonly unknown[],
-): abitype.FormatAbi<abi> {
+export function format(abi: Abi | readonly unknown[]): readonly string[]
+export function format(abi: Abi | readonly unknown[]): readonly string[] {
   return abitype.formatAbi(abi) as never
 }
 
 export declare namespace format {
+  type ReturnType<abi extends Abi | readonly unknown[] = Abi> =
+    abitype.FormatAbi<abi>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -52,6 +57,12 @@ format.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as format.ErrorType
 
+export function from<const abi extends Abi | readonly string[]>(
+  abi: abi &
+    (abi extends readonly string[]
+      ? AbiItem_internal.Signatures<abi>
+      : unknown),
+): from.ReturnType<abi>
 /**
  * Parses an arbitrary **JSON ABI** or **Human Readable ABI** into a typed {@link ox#Abi.Abi}.
  *
@@ -129,14 +140,10 @@ format.parseError = (error: unknown) =>
  * @param abi - The ABI to parse.
  * @returns The typed ABI.
  */
-export function from<
-  const abi extends Abi | readonly string[] | readonly unknown[],
->(
-  abi: (abi | Abi | readonly string[] | readonly unknown[]) &
-    (abi extends readonly string[] ? AbiItem_internal.Signatures<abi> : Abi),
-): from.ReturnType<abi> {
-  if (typeof abi[0] === 'string') return abitype.parseAbi(abi as never)
-  return abi as never
+export function from(abi: Abi | readonly string[]): Abi
+export function from(abi: Abi | readonly string[]): Abi {
+  if (internal.isSignatures(abi)) return abitype.parseAbi(abi)
+  return abi
 }
 
 export declare namespace from {

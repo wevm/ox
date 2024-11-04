@@ -355,20 +355,20 @@ function resolveReturnTypeForOverloads(options: {
   overloads: string[]
   returnType: Data['returnType']
 }) {
-  const { dataLookup, overloads, returnType } = options
+  const { returnType } = options
 
-  if (overloads.length && returnType) {
-    const overload = overloads.find(
-      (x) => dataLookup[x]?.returnType?.type !== returnType.type,
-    )
-    if (overload)
-      return (
-        dataLookup[overload]?.returnType?.type.replace(
-          /(<.*>)$/, // remove type params from type
-          '',
-        ) ?? returnType.type
-      )
-  }
+  // if (overloads.length && returnType) {
+  //   const overload = overloads.find(
+  //     (x) => dataLookup[x]?.returnType?.type !== returnType.type,
+  //   )
+  //   if (overload)
+  //     return (
+  //       dataLookup[overload]?.returnType?.type.replace(
+  //         /(<.*>)$/, // remove type params from type
+  //         '',
+  //       ) ?? returnType.type
+  //     )
+  // }
 
   return returnType?.type
 }
