@@ -3,8 +3,6 @@ import type {
   Compute,
   IsNarrowable,
   OneOf,
-  PartialBy,
-  UnionOmit,
   UnionPartialBy,
 } from './internal/types.js'
 
