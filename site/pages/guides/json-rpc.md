@@ -25,6 +25,7 @@ const request = store.prepare({
   method: 'eth_getBlockByNumber',
   params: ['latest', false],
 })
+// @log: { id: 0, jsonrpc: '2.0', method: 'eth_getBlockByNumber', params: ['latest', false] }
 
 // 3. Send the request to an Ethereum Node.
 const response = await fetch('https://1.rpc.thirdweb.com', {
