@@ -4,7 +4,6 @@ import { anvilMainnet } from '../../test/anvil.js'
 
 describe('from', () => {
   test('default', async () => {
-    const a = await fetch('a').then((x) => x.json())
     const response = RpcResponse.from(a)
     expect(response).toMatchInlineSnapshot(`
       {
