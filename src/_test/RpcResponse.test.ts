@@ -4,7 +4,11 @@ import { anvilMainnet } from '../../test/anvil.js'
 
 describe('from', () => {
   test('default', async () => {
-    const response = RpcResponse.from(a)
+    const response = RpcResponse.from({
+      id: 0,
+      jsonrpc: '2.0',
+      result: '0xdeadbeef',
+    })
     expect(response).toMatchInlineSnapshot(`
       {
         "id": 0,
