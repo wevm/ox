@@ -37,6 +37,11 @@ describe('AbiConstructor.encode', () => {
       ...options,
       args: ['0x', 123n],
     })
+    AbiConstructor.encode(abiConstructor, {
+      ...options,
+      // @ts-expect-error invalid types
+      args: ['x', 123],
+    })
     expectTypeOf(AbiConstructor.encode<typeof abiConstructor>)
       .parameter(1)
       .toHaveProperty('args')

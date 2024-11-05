@@ -256,9 +256,9 @@ export declare namespace decode {
  * @returns ABI-encoded error name and arguments
  */
 export function encode<const abiError extends AbiError>(
-  abiError: abiError | AbiError,
+  abiError: abiError,
   ...args: encode.Args<abiError>
-): Hex.Hex {
+): encode.ReturnType {
   const selector = getSelector(abiError)
 
   const data =
@@ -280,6 +280,8 @@ export declare namespace encode {
       ? []
       : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
     : readonly unknown[]
+
+  type ReturnType = Hex.Hex
 
   type ErrorType = Errors.GlobalErrorType
 }

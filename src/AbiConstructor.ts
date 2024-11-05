@@ -79,11 +79,6 @@ decode.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as decode.ErrorType
 
-/** @internal */
-export function encode<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor,
-  options: encode.Options<abiConstructor>,
-): encode.ReturnType
 /**
  * ABI-encodes the provided constructor input (`inputs`).
  *
@@ -137,14 +132,9 @@ export function encode<const abiConstructor extends AbiConstructor>(
  * @param options - Encoding options.
  * @returns The encoded constructor.
  */
-export function encode(
-  abiConstructor: AbiConstructor,
-  options: encode.Options,
-): Hex.Hex
-/** @internal */
-export function encode(
-  abiConstructor: AbiConstructor,
-  options: encode.Options,
+export function encode<const abiConstructor extends AbiConstructor>(
+  abiConstructor: abiConstructor,
+  options: encode.Options<abiConstructor>,
 ): encode.ReturnType {
   const { bytecode, args } = options
   return Hex.concat(

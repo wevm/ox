@@ -44,3 +44,28 @@ describe('AbiError.decode', () => {
     >()
   })
 })
+
+describe('AbiError.encode', () => {
+  test('default', () => {
+    const error = AbiError.from('error Example()')
+    AbiError.encode(error)
+  })
+
+  test('behavior: with args', () => {
+    const error = AbiError.from('error Example(uint256)')
+    AbiError.encode(error, [69420n])
+    // @ts-expect-error invalid args
+    AbiError.encode(error)
+    // @ts-expect-error invalid args
+    AbiError.encode(error, [])
+    // @ts-expect-error invalid args
+    AbiError.encode(error, [69420])
+    // @ts-expect-error invalid args
+    AbiError.encode(error, [69420n, 123n])
+  })
+
+  test('behavior: no hash', () => {
+    const error = AbiError.from('error Example()')
+    AbiError.encode({ ...error, hash: undefined })
+  })
+})

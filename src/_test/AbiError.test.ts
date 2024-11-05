@@ -908,17 +908,17 @@ describe('getSelector', () => {
 test('exports', () => {
   expect(Object.keys(AbiError)).toMatchInlineSnapshot(`
     [
-      "panicReasons",
-      "solidityError",
-      "solidityErrorSelector",
-      "solidityPanic",
-      "solidityPanicSelector",
       "decode",
       "encode",
       "format",
       "from",
       "fromAbi",
       "getSelector",
+      "panicReasons",
+      "solidityError",
+      "solidityErrorSelector",
+      "solidityPanic",
+      "solidityPanicSelector",
     ]
   `)
 })
