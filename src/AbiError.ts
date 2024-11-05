@@ -8,104 +8,21 @@ import type * as internal from './internal/abiError.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
 import type { IsNarrowable, IsNever } from './internal/types.js'
 
-// https://docs.soliditylang.org/en/v0.8.16/control-structures.html#panic-via-assert-and-error-via-require
-export const panicReasons = {
-  1: 'An `assert` condition failed.',
-  17: 'Arithmetic operation resulted in underflow or overflow.',
-  18: 'Division or modulo by zero (e.g. `5 / 0` or `23 % 0`).',
-  33: 'Attempted to convert to an invalid type.',
-  34: 'Attempted to access a storage byte array that is incorrectly encoded.',
-  49: 'Performed `.pop()` on an empty array',
-  50: 'Array index is out of bounds.',
-  65: 'Allocated too much memory or created an array which is too large.',
-  81: 'Attempted to call a zero-initialized variable of internal function type.',
-} as Record<number, string>
-
-export const solidityError = /*#__PURE__*/ from({
-  inputs: [
-    {
-      name: 'message',
-      type: 'string',
-    },
-  ],
-  name: 'Error',
-  type: 'error',
-})
-
-export const solidityErrorSelector = '0x08c379a0'
-
-export const solidityPanic = /*#__PURE__*/ from({
-  inputs: [
-    {
-      name: 'reason',
-      type: 'uint8',
-    },
-  ],
-  name: 'Panic',
-  type: 'error',
-})
-
-export const solidityPanicSelector = '0x4e487b71'
-
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `error` type. */
 export type AbiError = abitype.AbiError & {
   hash?: Hex.Hex | undefined
   overloads?: readonly AbiError[] | undefined
 }
 
-/**
- * Extracts an {@link ox#AbiError.AbiError} item from an {@link ox#Abi.Abi}, given a name.
- *
- * @example
- * ```ts twoslash
- * import { Abi, AbiError } from 'ox'
- *
- * const abi = Abi.from([
- *   'error Foo(string)',
- *   'error Bar(uint256)',
- * ])
- *
- * type Foo = AbiError.FromAbi<typeof abi, 'Foo'>
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- */
-export type FromAbi<
-  abi extends Abi.Abi,
-  name extends ExtractNames<abi>,
-> = abitype.ExtractAbiError<abi, name>
-
-/**
- * Extracts the names of all {@link ox#AbiError.AbiError} items in an {@link ox#Abi.Abi}.
- *
- * @example
- * ```ts twoslash
- * import { Abi, AbiError } from 'ox'
- *
- * const abi = Abi.from([
- *   'error Foo(string)',
- *   'error Bar(uint256)',
- * ])
- *
- * type names = AbiError.Name<typeof abi>
- * //   ^?
- * ```
- */
-export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
-  abi extends Abi.Abi ? ExtractNames<abi> : string
-
-export type ExtractNames<abi extends Abi.Abi> =
-  | abitype.ExtractAbiErrorNames<abi>
-  | 'Panic'
-  | 'Error'
-
+/** @internal */
+export function decode<
+  const abiError extends AbiError,
+  as extends 'Object' | 'Array' = 'Array',
+>(
+  abiError: abiError,
+  data: Hex.Hex,
+  options?: decode.Options<as> | undefined,
+): decode.ReturnType<abiError, as>
 /**
  * ABI-decodes the provided error input (`inputs`).
  *
@@ -222,14 +139,17 @@ export type ExtractNames<abi extends Abi.Abi> =
  * @param options - Decoding options.
  * @returns The decoded error.
  */
-export function decode<
-  const abiError extends AbiError,
-  as extends 'Object' | 'Array' = 'Array',
->(
-  abiError: abiError | AbiError,
+export function decode(
+  abiError: AbiError,
   data: Hex.Hex,
-  options: decode.Options<as> = {},
-): decode.ReturnType<abiError, as> {
+  options?: decode.Options | undefined,
+): unknown | readonly unknown[] | undefined
+/** @internal */
+export function decode(
+  abiError: AbiError,
+  data: Hex.Hex,
+  options: decode.Options = {},
+): decode.ReturnType {
   if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
   if (abiError.inputs.length === 0) return undefined
 
@@ -246,7 +166,7 @@ export function decode<
 }
 
 export declare namespace decode {
-  type Options<as extends 'Object' | 'Array'> = {
+  type Options<as extends 'Object' | 'Array' = 'Array'> = {
     /**
      * Whether the decoded values should be returned as an `Object` or `Array`.
      *
@@ -275,7 +195,7 @@ export declare namespace decode {
               ? type
               : types
           : never
-    : unknown
+    : unknown | readonly unknown[] | undefined
 
   type ErrorType =
     | AbiParameters.decode.ErrorType
@@ -703,3 +623,95 @@ export declare namespace getSelector {
 
 /* v8 ignore next */
 getSelector.parseError = (error: unknown) => error as getSelector.ErrorType
+
+// https://docs.soliditylang.org/en/v0.8.16/control-structures.html#panic-via-assert-and-error-via-require
+export const panicReasons = {
+  1: 'An `assert` condition failed.',
+  17: 'Arithmetic operation resulted in underflow or overflow.',
+  18: 'Division or modulo by zero (e.g. `5 / 0` or `23 % 0`).',
+  33: 'Attempted to convert to an invalid type.',
+  34: 'Attempted to access a storage byte array that is incorrectly encoded.',
+  49: 'Performed `.pop()` on an empty array',
+  50: 'Array index is out of bounds.',
+  65: 'Allocated too much memory or created an array which is too large.',
+  81: 'Attempted to call a zero-initialized variable of internal function type.',
+} as Record<number, string>
+
+export const solidityError = /*#__PURE__*/ from({
+  inputs: [
+    {
+      name: 'message',
+      type: 'string',
+    },
+  ],
+  name: 'Error',
+  type: 'error',
+})
+
+export const solidityErrorSelector = '0x08c379a0'
+
+export const solidityPanic = /*#__PURE__*/ from({
+  inputs: [
+    {
+      name: 'reason',
+      type: 'uint8',
+    },
+  ],
+  name: 'Panic',
+  type: 'error',
+})
+
+export const solidityPanicSelector = '0x4e487b71'
+
+/**
+ * Extracts an {@link ox#AbiError.AbiError} item from an {@link ox#Abi.Abi}, given a name.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error Foo(string)',
+ *   'error Bar(uint256)',
+ * ])
+ *
+ * type Foo = AbiError.FromAbi<typeof abi, 'Foo'>
+ * //   ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ */
+export type FromAbi<
+  abi extends Abi.Abi,
+  name extends ExtractNames<abi>,
+> = abitype.ExtractAbiError<abi, name>
+
+/**
+ * Extracts the names of all {@link ox#AbiError.AbiError} items in an {@link ox#Abi.Abi}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error Foo(string)',
+ *   'error Bar(uint256)',
+ * ])
+ *
+ * type names = AbiError.Name<typeof abi>
+ * //   ^?
+ * ```
+ */
+export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
+  abi extends Abi.Abi ? ExtractNames<abi> : string
+
+export type ExtractNames<abi extends Abi.Abi> =
+  | abitype.ExtractAbiErrorNames<abi>
+  | 'Panic'
+  | 'Error'
