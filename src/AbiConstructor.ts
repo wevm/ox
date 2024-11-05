@@ -66,11 +66,11 @@ export declare namespace decode {
 
   type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
     | (abiConstructor['inputs']['length'] extends 0
-      ? undefined
-      : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>)
+        ? undefined
+        : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>)
     | (IsNarrowable<abiConstructor, AbiConstructor> extends true
-      ? never
-      : undefined)
+        ? never
+        : undefined)
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -170,9 +170,9 @@ export declare namespace encode {
   } & (readonly [] extends args
     ? {}
     : {
-      /** The constructor arguments to encode. */
-      args: args
-    })
+        /** The constructor arguments to encode. */
+        args: args
+      })
 
   type ReturnType = Hex.Hex
 
@@ -239,11 +239,11 @@ export function from<
   abiConstructor: (abiConstructor | string | readonly string[]) &
     (
       | (abiConstructor extends string
-        ? internal.Signature<abiConstructor>
-        : never)
+          ? internal.Signature<abiConstructor>
+          : never)
       | (abiConstructor extends readonly string[]
-        ? internal.Signatures<abiConstructor>
-        : never)
+          ? internal.Signatures<abiConstructor>
+          : never)
       | AbiConstructor
     ),
 ): from.ReturnType<abiConstructor>
@@ -355,9 +355,9 @@ export function from(
 export declare namespace from {
   type ReturnType<
     abiConstructor extends
-    | AbiConstructor
-    | string
-    | readonly string[] = AbiConstructor,
+      | AbiConstructor
+      | string
+      | readonly string[] = AbiConstructor,
   > = AbiItem.from.ReturnType<abiConstructor>
 
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
