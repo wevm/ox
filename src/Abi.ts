@@ -6,6 +6,7 @@ import type * as AbiItem_internal from './internal/abiItem.js'
 /** Root type for an ABI. */
 export type Abi = abitype.Abi
 
+/** @internal */
 export function format<const abi extends Abi>(abi: abi): format.ReturnType<abi>
 /**
  * Formats an {@link ox#Abi.Abi} into a **Human Readable ABI**.
@@ -42,6 +43,7 @@ export function format<const abi extends Abi>(abi: abi): format.ReturnType<abi>
  * @returns The formatted ABI.
  */
 export function format(abi: Abi | readonly unknown[]): readonly string[]
+/** @internal */
 export function format(abi: Abi | readonly unknown[]): readonly string[] {
   return abitype.formatAbi(abi) as never
 }
@@ -57,6 +59,7 @@ format.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as format.ErrorType
 
+/** @internal */
 export function from<const abi extends Abi | readonly string[]>(
   abi: abi &
     (abi extends readonly string[]
@@ -141,6 +144,7 @@ export function from<const abi extends Abi | readonly string[]>(
  * @returns The typed ABI.
  */
 export function from(abi: Abi | readonly string[]): Abi
+/** @internal */
 export function from(abi: Abi | readonly string[]): Abi {
   if (internal.isSignatures(abi)) return abitype.parseAbi(abi)
   return abi
