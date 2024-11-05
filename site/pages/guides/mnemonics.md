@@ -8,7 +8,7 @@ We can combine a mnemonic phrase (or seed) with an Ethereum-specific derivation 
 
 ### Generating a Random Mnemonic
 
-We can generate a random mnemonic phrase using [`Mnemonic.random`](/api/mnemonic#random).
+We can generate a random mnemonic phrase using [`Mnemonic.random`](/api/mnemonic/random).
 
 ```ts twoslash
 import { Mnemonic } from 'ox'
@@ -33,7 +33,7 @@ Ox supports the following languages:
 
 ### Deriving a Private Key
 
-Here is an example of deriving a private key from a mnemonic phrase using [`Mnemonic.toPrivateKey`](/api/mnemonic#toprivatekey). This will use the default path of `m/44'/60'/0/0/0`.
+Here is an example of deriving a private key from a mnemonic phrase using [`Mnemonic.toPrivateKey`](/api/mnemonic/toPrivateKey). This will use the default path of `m/44'/60'/0/0/0`.
 
 ```ts twoslash
 import { Mnemonic } from 'ox'
@@ -42,7 +42,7 @@ const mnemonic = Mnemonic.random(Mnemonic.english)
 const privateKey = Mnemonic.toPrivateKey(mnemonic)
 ```
 
-We can also specify a custom path using the [`Mnemonic.path`](/api/mnemonic#path) function.
+We can also specify a custom path using the [`Mnemonic.path`](/api/mnemonic/path) function.
 
 ```ts twoslash
 import { Mnemonic } from 'ox'
@@ -58,7 +58,7 @@ const privateKey_2 = Mnemonic.toPrivateKey(mnemonic, { path: 'm/44/60/1/0/2' }) 
 
 ### Deriving Public Keys & Addresses
 
-Mnemonic private keys are derived from the secp256k1 curve. This means we can derive a public key using [`Secp256k1.getPublicKey`](/api/secp256k1#getpublickey), and an Ethereum address from a public key using [`Address.fromPublicKey`](/api/address#frompublickey).
+Mnemonic private keys are derived from the secp256k1 curve. This means we can derive a public key using [`Secp256k1.getPublicKey`](/api/secp256k1/getPublicKey), and an Ethereum address from a public key using [`Address.fromPublicKey`](/api/address/fromPublicKey).
 
 ```ts twoslash
 import { Address, Mnemonic, Secp256k1 } from 'ox'
