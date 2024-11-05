@@ -1,7 +1,7 @@
 import { Abi } from 'ox'
 import { describe, expectTypeOf, test } from 'vitest'
 
-describe('format', () => {
+describe('Abi.format', () => {
   test('infers abi', () => {
     const formatted = Abi.format(value)
     expectTypeOf(formatted).toEqualTypeOf([
@@ -35,7 +35,7 @@ describe('format', () => {
   ] as const
 })
 
-describe('from', () => {
+describe('Abi.from', () => {
   test('infers abi', () => {
     const abi = Abi.from(value)
     expectTypeOf(abi).toEqualTypeOf(value)

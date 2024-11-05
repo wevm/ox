@@ -8,13 +8,13 @@ import { address } from '../../test/constants/addresses.js'
 
 describe('decode', () => {
   test('default', () => {
-    const constructor_ = AbiConstructor.from('constructor()')
-    const encoded = AbiConstructor.encode(constructor_, {
+    const abiConstructor = AbiConstructor.from('constructor()')
+    const encoded = AbiConstructor.encode(abiConstructor, {
       bytecode: Constructor.bytecode.object,
     })
 
     expect(
-      AbiConstructor.decode(constructor_, {
+      AbiConstructor.decode(abiConstructor, {
         bytecode: Constructor.bytecode.object,
         data: encoded,
       }),
@@ -22,14 +22,14 @@ describe('decode', () => {
   })
 
   test('behavior: args', () => {
-    const constructor_ = AbiConstructor.from('constructor(address, uint256)')
-    const encoded = AbiConstructor.encode(constructor_, {
+    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
+    const encoded = AbiConstructor.encode(abiConstructor, {
       bytecode: Constructor.bytecode.object,
       args: [address.vitalik, 123n],
     })
 
     expect(
-      AbiConstructor.decode(constructor_, {
+      AbiConstructor.decode(abiConstructor, {
         bytecode: Constructor.bytecode.object,
         data: encoded,
       }),
@@ -42,9 +42,9 @@ describe('decode', () => {
   })
 
   test('behavior: network', async () => {
-    const constructor_ = AbiConstructor.fromAbi(Constructor.abi)
+    const abiConstructor = AbiConstructor.fromAbi(Constructor.abi)
 
-    const data = AbiConstructor.encode(constructor_, {
+    const data = AbiConstructor.encode(abiConstructor, {
       bytecode: Constructor.bytecode.object,
       args: [address.vitalik, 123n],
     })
@@ -69,7 +69,7 @@ describe('decode', () => {
     }))!
 
     expect(
-      AbiConstructor.decode(constructor_, {
+      AbiConstructor.decode(abiConstructor, {
         bytecode: Constructor.bytecode.object,
         data: input,
       }),
@@ -84,20 +84,20 @@ describe('decode', () => {
 
 describe('encode', () => {
   test('default', () => {
-    const constructor_ = AbiConstructor.from('constructor()')
+    const abiConstructor = AbiConstructor.from('constructor()')
 
     expect(
-      AbiConstructor.encode(constructor_, {
+      AbiConstructor.encode(abiConstructor, {
         bytecode: '0xdeadbeef',
       }),
     ).toBe('0xdeadbeef')
   })
 
   test('behavior: args', () => {
-    const constructor_ = AbiConstructor.from('constructor(address, uint256)')
+    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
 
     expect(
-      AbiConstructor.encode(constructor_, {
+      AbiConstructor.encode(abiConstructor, {
         bytecode: '0xdeadbeef',
         args: [address.vitalik, 123n],
       }),
@@ -107,9 +107,9 @@ describe('encode', () => {
   })
 
   test('behavior: network', async () => {
-    const constructor_ = AbiConstructor.fromAbi(Constructor.abi)
+    const abiConstructor = AbiConstructor.fromAbi(Constructor.abi)
 
-    const data = AbiConstructor.encode(constructor_, {
+    const data = AbiConstructor.encode(abiConstructor, {
       bytecode: Constructor.bytecode.object,
       args: [address.vitalik, 123n],
     })
@@ -152,14 +152,14 @@ describe('format', () => {
 
 describe('from', () => {
   test('default', () => {
-    const constructor_ = AbiConstructor.from({
+    const abiConstructor = AbiConstructor.from({
       inputs: [{ name: 'owner', type: 'address' }],
       payable: false,
       stateMutability: 'nonpayable',
       type: 'constructor',
     })
 
-    expect(constructor_).toMatchInlineSnapshot(`
+    expect(abiConstructor).toMatchInlineSnapshot(`
     {
       "hash": "0xf8a6c595894ab588edd59e406425331fe9ad3266445da35ab4aa27007b7a602a",
       "inputs": [
@@ -176,9 +176,9 @@ describe('from', () => {
   })
 
   test('behavior: human readable', () => {
-    const constructor_ = AbiConstructor.from('constructor(address owner)')
+    const abiConstructor = AbiConstructor.from('constructor(address owner)')
 
-    expect(constructor_).toMatchInlineSnapshot(`
+    expect(abiConstructor).toMatchInlineSnapshot(`
     {
       "hash": "0xf8a6c595894ab588edd59e406425331fe9ad3266445da35ab4aa27007b7a602a",
       "inputs": [
@@ -194,12 +194,12 @@ describe('from', () => {
   })
 
   test('behavior: human readable (struct)', () => {
-    const constructor_ = AbiConstructor.from([
+    const abiConstructor = AbiConstructor.from([
       'struct Foo { address owner }',
       'constructor(Foo foo)',
     ])
 
-    expect(constructor_).toMatchInlineSnapshot(`
+    expect(abiConstructor).toMatchInlineSnapshot(`
     {
       "hash": "0x046f6226ce02998a10b2101bbeb1a3bd095efb55989b57f3781e659a4a2a8011",
       "inputs": [
@@ -223,8 +223,8 @@ describe('from', () => {
 
 describe('fromAbi', () => {
   test('default', () => {
-    const constructor_ = AbiConstructor.fromAbi(seaportContractConfig.abi)
-    expect(constructor_).toMatchInlineSnapshot(`
+    const abiConstructor = AbiConstructor.fromAbi(seaportContractConfig.abi)
+    expect(abiConstructor).toMatchInlineSnapshot(`
     {
       "inputs": [
         {

@@ -44,7 +44,7 @@ export function format<const abi extends Abi>(abi: abi): format.ReturnType<abi>
  */
 export function format(abi: Abi | readonly unknown[]): readonly string[]
 /** @internal */
-export function format(abi: Abi | readonly unknown[]): readonly string[] {
+export function format(abi: Abi | readonly unknown[]): format.ReturnType {
   return abitype.formatAbi(abi) as never
 }
 
@@ -145,14 +145,15 @@ export function from<const abi extends Abi | readonly string[]>(
  */
 export function from(abi: Abi | readonly string[]): Abi
 /** @internal */
-export function from(abi: Abi | readonly string[]): Abi {
+export function from(abi: Abi | readonly string[]): from.ReturnType {
   if (internal.isSignatures(abi)) return abitype.parseAbi(abi)
   return abi
 }
 
 export declare namespace from {
-  type ReturnType<abi extends Abi | readonly string[] | readonly unknown[]> =
-    abi extends readonly string[] ? abitype.ParseAbi<abi> : abi
+  type ReturnType<
+    abi extends Abi | readonly string[] | readonly unknown[] = Abi,
+  > = abi extends readonly string[] ? abitype.ParseAbi<abi> : abi
 
   type ErrorType = Errors.GlobalErrorType
 }

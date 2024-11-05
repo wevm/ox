@@ -10,6 +10,11 @@ import type { IsNarrowable } from './internal/types.js'
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
 export type AbiConstructor = abitype.AbiConstructor
 
+/** @internal */
+export function decode<const abiConstructor extends AbiConstructor>(
+  abiConstructor: abiConstructor,
+  options: decode.Options,
+): decode.ReturnType<abiConstructor>
 /**
  * ABI-decodes the provided constructor input (`inputs`).
  *
@@ -36,31 +41,36 @@ export type AbiConstructor = abitype.AbiConstructor
  * @param options - Decoding options.
  * @returns The decoded constructor inputs.
  */
-export function decode<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor | AbiConstructor,
+export function decode(
+  abiConstructor: AbiConstructor,
   options: decode.Options,
-): Hex.Hex {
+): readonly unknown[] | undefined
+/** @internal */
+export function decode(
+  abiConstructor: AbiConstructor,
+  options: decode.Options,
+): decode.ReturnType {
   const { bytecode } = options
-  const data = options.data.replace(bytecode, '0x')
-  const decoded = AbiParameters.decode(abiConstructor.inputs, data as Hex.Hex)
-  if (decoded.length === 0) return undefined as never
-  return decoded as never
+  if (abiConstructor.inputs.length === 0) return undefined
+  const data = options.data.replace(bytecode, '0x') as Hex.Hex
+  return AbiParameters.decode(abiConstructor.inputs, data)
 }
 
 export declare namespace decode {
-  type Options = {
+  interface Options {
+    /** The bytecode of the contract. */
     bytecode: Hex.Hex
+    /** The encoded constructor. */
     data: Hex.Hex
   }
 
   type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
-    IsNarrowable<abiConstructor, AbiConstructor> extends true
-      ? abitype.AbiParametersToPrimitiveTypes<
-          abiConstructor['inputs']
-        > extends readonly []
-        ? undefined
-        : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
-      : readonly unknown[]
+    | (abiConstructor['inputs']['length'] extends 0
+      ? undefined
+      : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>)
+    | (IsNarrowable<abiConstructor, AbiConstructor> extends true
+      ? never
+      : undefined)
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -69,6 +79,11 @@ decode.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as decode.ErrorType
 
+/** @internal */
+export function encode<const abiConstructor extends AbiConstructor>(
+  abiConstructor: abiConstructor,
+  options: encode.Options<abiConstructor>,
+): encode.ReturnType
 /**
  * ABI-encodes the provided constructor input (`inputs`).
  *
@@ -122,10 +137,15 @@ decode.parseError = (error: unknown) =>
  * @param options - Encoding options.
  * @returns The encoded constructor.
  */
-export function encode<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor | AbiConstructor,
-  options: encode.Options<abiConstructor>,
-): Hex.Hex {
+export function encode(
+  abiConstructor: AbiConstructor,
+  options: encode.Options,
+): Hex.Hex
+/** @internal */
+export function encode(
+  abiConstructor: AbiConstructor,
+  options: encode.Options,
+): encode.ReturnType {
   const { bytecode, args } = options
   return Hex.concat(
     bytecode,
@@ -136,25 +156,40 @@ export function encode<const abiConstructor extends AbiConstructor>(
 }
 
 export declare namespace encode {
-  type Options<abiConstructor extends AbiConstructor = AbiConstructor> = {
+  type Options<
+    abiConstructor extends AbiConstructor = AbiConstructor,
+    ///
+    args extends abitype.AbiParametersToPrimitiveTypes<
+      abiConstructor['inputs']
+    > = abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>,
+  > = {
+    /** The bytecode of the contract. */
     bytecode: Hex.Hex
-  } & (IsNarrowable<abiConstructor, AbiConstructor> extends true
-    ? abitype.AbiParametersToPrimitiveTypes<
-        abiConstructor['inputs']
-      > extends readonly []
-      ? { args?: undefined }
-      : {
-          args: abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
-        }
-    : { args?: readonly unknown[] | undefined })
+    /** The constructor arguments to encode. */
+    args?: args | undefined
+  } & (readonly [] extends args
+    ? {}
+    : {
+      /** The constructor arguments to encode. */
+      args: args
+    })
 
-  type ErrorType = Errors.GlobalErrorType
+  type ReturnType = Hex.Hex
+
+  type ErrorType =
+    | Hex.concat.ErrorType
+    | AbiParameters.encode.ErrorType
+    | Errors.GlobalErrorType
 }
 
 encode.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as encode.ErrorType
 
+/** @internal */
+export function format<const abiConstructor extends AbiConstructor>(
+  abiConstructor: abiConstructor,
+): format.ReturnType<abiConstructor>
 /**
  * Formats an {@link ox#AbiConstructor.AbiConstructor} into a **Human Readable ABI Function**.
  *
@@ -180,13 +215,16 @@ encode.parseError = (error: unknown) =>
  * @param abiConstructor - The ABI Constructor to format.
  * @returns The formatted ABI Constructor.
  */
-export function format<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor | AbiConstructor,
-): abitype.FormatAbiItem<abiConstructor> {
-  return abitype.formatAbiItem(abiConstructor) as never
+export function format(abiConstructor: AbiConstructor): string
+/** @internal */
+export function format(abiConstructor: AbiConstructor): format.ReturnType {
+  return abitype.formatAbiItem(abiConstructor)
 }
 
 export declare namespace format {
+  type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
+    abitype.FormatAbiItem<abiConstructor>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -194,6 +232,21 @@ format.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as format.ErrorType
 
+/** @internal */
+export function from<
+  const abiConstructor extends AbiConstructor | string | readonly string[],
+>(
+  abiConstructor: (abiConstructor | string | readonly string[]) &
+    (
+      | (abiConstructor extends string
+        ? internal.Signature<abiConstructor>
+        : never)
+      | (abiConstructor extends readonly string[]
+        ? internal.Signatures<abiConstructor>
+        : never)
+      | AbiConstructor
+    ),
+): from.ReturnType<abiConstructor>
 /**
  * Parses an arbitrary **JSON ABI Constructor** or **Human Readable ABI Constructor** into a typed {@link ox#AbiConstructor.AbiConstructor}.
  *
@@ -289,31 +342,22 @@ format.parseError = (error: unknown) =>
  * @param abiConstructor - The ABI Constructor to parse.
  * @returns Typed ABI Constructor.
  */
-export function from<
-  const abiConstructor extends AbiConstructor | string | readonly string[],
->(
-  abiConstructor: (
-    | abiConstructor
-    | AbiConstructor
-    | string
-    | readonly string[]
-  ) &
-    (
-      | (abiConstructor extends string
-          ? internal.Signature<abiConstructor>
-          : never)
-      | (abiConstructor extends readonly string[]
-          ? internal.Signatures<abiConstructor>
-          : never)
-      | AbiConstructor
-    ),
-): from.ReturnType<abiConstructor> {
-  return AbiItem.from(abiConstructor as AbiConstructor) as never
+export function from(
+  abiConstructor: AbiConstructor | string | readonly string[],
+): AbiConstructor
+/** @internal */
+export function from(
+  abiConstructor: AbiConstructor | string | readonly string[],
+): from.ReturnType {
+  return AbiItem.from(abiConstructor as AbiConstructor)
 }
 
 export declare namespace from {
   type ReturnType<
-    abiConstructor extends AbiConstructor | string | readonly string[],
+    abiConstructor extends
+    | AbiConstructor
+    | string
+    | readonly string[] = AbiConstructor,
   > = AbiItem.from.ReturnType<abiConstructor>
 
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
@@ -323,6 +367,10 @@ from.parseError = (error: unknown) =>
   /* v8 ignore next */
   error as from.ErrorType
 
+/** @internal */
+export function fromAbi<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+): fromAbi.ReturnType<abi>
 /**
  * Extracts an {@link ox#AbiConstructor.AbiConstructor} from an {@link ox#Abi.Abi} given a name and optional arguments.
  *
@@ -353,21 +401,19 @@ from.parseError = (error: unknown) =>
  *
  * @returns The ABI constructor.
  */
-export function fromAbi<const abi extends Abi.Abi | readonly unknown[]>(
-  abi: abi | Abi.Abi | readonly unknown[],
-): fromAbi.ReturnType<abi> {
+export function fromAbi(abi: Abi.Abi | readonly unknown[]): AbiConstructor
+/** @internal */
+export function fromAbi(abi: Abi.Abi | readonly unknown[]): fromAbi.ReturnType {
   const item = (abi as Abi.Abi).find((item) => item.type === 'constructor')
   if (!item) throw new AbiItem.NotFoundError({ name: 'constructor' })
   return item
 }
 
 export declare namespace fromAbi {
-  type ReturnType<abi extends Abi.Abi | readonly unknown[]> = IsNarrowable<
-    abi,
-    Abi.Abi
-  > extends true
-    ? Extract<abi[number], { type: 'constructor' }>
-    : AbiConstructor
+  type ReturnType<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> = Extract<
+    abi[number],
+    { type: 'constructor' }
+  >
 
   type ErrorType = AbiItem.NotFoundError | Errors.GlobalErrorType
 }
