@@ -1,5 +1,6 @@
 import type * as RpcSchema from './RpcSchema.js'
 import type { Errors } from './index.js'
+import type * as RpcSchema_internal from './internal/rpcSchema.js'
 import type { Compute } from './internal/types.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
@@ -19,8 +20,10 @@ export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =
 export type Store<schema extends RpcSchema.Generic = RpcSchema.Default> =
   Compute<{
     prepare: <methodName extends RpcSchema.MethodNameGeneric>(
-      parameters: Compute<RpcSchema.ExtractRequest<methodName, schema>>,
-    ) => Compute<RpcRequest<RpcSchema.ExtractMethod<methodName, schema>>>
+      parameters: Compute<
+        RpcSchema_internal.ExtractRequestOpaque<schema, methodName>
+      >,
+    ) => Compute<RpcRequest<RpcSchema.ExtractItem<schema, methodName>>>
     readonly id: number
   }>
 
@@ -172,11 +175,13 @@ export function from<methodName extends RpcSchema.MethodNameGeneric>(
 
 export declare namespace from {
   type Options<methodName extends RpcSchema.MethodNameGeneric> = Compute<
-    RpcSchema.ExtractRequest<methodName> & { id: number }
+    RpcSchema_internal.ExtractRequestOpaque<RpcSchema.Default, methodName> & {
+      id: number
+    }
   >
 
   type ReturnType<methodName extends RpcSchema.MethodNameGeneric> = Compute<
-    RpcRequest<RpcSchema.ExtractMethod<methodName>>
+    RpcRequest<RpcSchema.ExtractItem<RpcSchema.Default, methodName>>
   >
 
   type ErrorType = Errors.GlobalErrorType

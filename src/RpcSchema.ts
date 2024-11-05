@@ -51,13 +51,13 @@ export function from<schema extends Generic>(): schema {
 }
 
 /**
- * Extracts a method from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
+ * Extracts a schema item from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
  *
  * @example
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Eth_GetBlockByNumber = RpcSchema.ExtractMethod<'eth_getBlockByNumber'>
+ * type Item = RpcSchema.ExtractItem<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  *
  *
@@ -74,12 +74,12 @@ export function from<schema extends Generic>(): schema {
  *
  * ```
  */
-export type ExtractMethod<
-  methodName extends MethodNameGeneric,
-  schema extends Generic = Default,
+export type ExtractItem<
+  schema extends Generic,
+  methodName extends MethodNameGeneric<schema> = MethodNameGeneric<schema>,
 > = Compute<{
-  Request: ExtractRequest<methodName, schema>
-  ReturnType: ExtractReturnType<methodName, schema>
+  Request: ExtractRequest<schema, methodName>
+  ReturnType: ExtractReturnType<schema, methodName>
 }>
 
 /**
@@ -89,7 +89,7 @@ export type ExtractMethod<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Eth_GetBlockByNumber = RpcSchema.ExtractRequest<'eth_getBlockByNumber'>
+ * type Request = RpcSchema.ExtractRequest<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  *
  *
@@ -105,21 +105,31 @@ export type ExtractMethod<
  * ```
  */
 export type ExtractRequest<
-  methodName extends MethodNameGeneric,
-  schema extends Generic = Default,
-> = Compute<
-  Omit<
-    {
-      method: methodName | schema['Request']['method']
-      params?: unknown
-    } & (IsNarrowable<methodName, schema['Request']['method']> extends true
-      ? IsNarrowable<schema, Generic> extends true
-        ? Extract<schema, { Request: { method: methodName } }>['Request']
-        : {}
-      : {}),
-    ''
-  >
->
+  schema extends Generic,
+  methodName extends MethodNameGeneric<schema> = MethodNameGeneric<schema>,
+> = Extract<schema['Request'], { method: methodName }>
+
+/**
+ * Type-safe union of all JSON-RPC Method Names.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ *
+ * type MethodName = RpcSchema.ExtractMethodName<RpcSchema.Default>
+ * //   ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ */
+export type ExtractMethodName<schema extends Generic> =
+  schema['Request']['method']
 
 /**
  * Extracts parameters from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
@@ -128,7 +138,7 @@ export type ExtractRequest<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<'eth_getBlockByNumber'>
+ * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  *
  *
@@ -138,9 +148,9 @@ export type ExtractRequest<
  * ```
  */
 export type ExtractParams<
-  methodName extends MethodNameGeneric,
-  schema extends Generic = Default,
-> = ExtractRequest<methodName, schema>['params']
+  schema extends Generic,
+  methodName extends MethodNameGeneric<schema> = MethodNameGeneric<schema>,
+> = ExtractRequest<schema, methodName>['params']
 
 /**
  * Extracts return type from a {@link ox#RpcSchema.Generic} or {@link ox#RpcSchema.MethodNameGeneric}.
@@ -149,7 +159,7 @@ export type ExtractParams<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Eth_GetBlockByNumber = RpcSchema.ExtractReturnType<'eth_getBlockByNumber'>
+ * type ReturnType = RpcSchema.ExtractReturnType<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  *
  *
@@ -165,8 +175,8 @@ export type ExtractParams<
  * ```
  */
 export type ExtractReturnType<
-  methodName extends MethodNameGeneric,
-  schema extends Generic = Default,
+  schema extends Generic,
+  methodName extends MethodNameGeneric<schema> = MethodNameGeneric<schema>,
 > = methodName extends schema['Request']['method']
   ? IsNarrowable<schema, Generic> extends true
     ? Extract<schema, { Request: { method: methodName } }>['ReturnType']
@@ -258,25 +268,6 @@ export type Default = ResolvedRegister['RpcSchema']
  *
  * ```
  */
-export type MethodNameGeneric = MethodName | (string & {})
-
-/**
- * Type-safe union of all JSON-RPC Method Names.
- *
- * @example
- * ```ts twoslash
- * import { RpcSchema } from 'ox'
- *
- * type MethodName = RpcSchema.MethodName
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- */
-export type MethodName = Default['Request']['method']
+export type MethodNameGeneric<schema extends Generic = Generic> =
+  | schema['Request']['method']
+  | (string & {})

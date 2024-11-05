@@ -3,6 +3,7 @@ import type * as Address from './Address.js'
 import * as Errors from './Errors.js'
 import * as RpcResponse from './RpcResponse.js'
 import type * as RpcSchema from './RpcSchema.js'
+import type * as RpcSchema_internal from './internal/rpcSchema.js'
 import type { Compute } from './internal/types.js'
 
 /** Options for a {@link ox#Provider.Provider}. */
@@ -49,8 +50,8 @@ export type Emitter = Compute<EventEmitter<EventMap>>
 export type RequestFn<schema extends RpcSchema.Generic = RpcSchema.Generic> = <
   methodName extends RpcSchema.MethodNameGeneric,
 >(
-  parameters: RpcSchema.ExtractRequest<methodName, schema>,
-) => Promise<RpcSchema.ExtractReturnType<methodName, schema>>
+  parameters: RpcSchema_internal.ExtractRequestOpaque<schema, methodName>,
+) => Promise<RpcSchema.ExtractReturnType<schema, methodName>>
 
 /** Type for an EIP-1193 Provider's event listener functions (`on`, `removeListener`, etc). */
 export type EventListenerFn = <event extends keyof EventMap>(

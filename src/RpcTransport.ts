@@ -3,6 +3,7 @@ import type * as RpcResponse from './RpcResponse.js'
 import type * as RpcSchema from './RpcSchema.js'
 import { getUrl } from './internal/errors.js'
 import * as promise from './internal/promise.js'
+import type * as RpcSchema_internal from './internal/rpcSchema.js'
 import * as internal from './internal/rpcTransport.js'
 import type { Compute } from './internal/types.js'
 
@@ -43,16 +44,18 @@ export type RequestFn<
   methodName extends RpcSchema.MethodNameGeneric,
   raw_override extends boolean | undefined = undefined,
 >(
-  parameters: Compute<RpcSchema.ExtractRequest<methodName, schema>>,
+  parameters: Compute<
+    RpcSchema_internal.ExtractRequestOpaque<schema, methodName>
+  >,
   options?: internal.Options<raw_override, options, schema> | undefined,
 ) => Promise<
   raw_override extends boolean
     ? raw_override extends true
-      ? RpcResponse.RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
-      : RpcSchema.ExtractReturnType<methodName, schema>
+      ? RpcResponse.RpcResponse<RpcSchema.ExtractReturnType<schema, methodName>>
+      : RpcSchema.ExtractReturnType<schema, methodName>
     : raw extends true
-      ? RpcResponse.RpcResponse<RpcSchema.ExtractReturnType<methodName, schema>>
-      : RpcSchema.ExtractReturnType<methodName, schema>
+      ? RpcResponse.RpcResponse<RpcSchema.ExtractReturnType<schema, methodName>>
+      : RpcSchema.ExtractReturnType<schema, methodName>
 >
 
 /**
