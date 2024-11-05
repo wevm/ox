@@ -64,7 +64,6 @@ describe('createCredential', () => {
         "publicKey": {
           "attestation": "none",
           "authenticatorSelection": {
-            "authenticatorAttachment": "platform",
             "requireResidentKey": false,
             "residentKey": "preferred",
             "userVerification": "required",
@@ -238,7 +237,6 @@ describe('getCredentialCreationOptions', () => {
         "publicKey": {
           "attestation": "none",
           "authenticatorSelection": {
-            "authenticatorAttachment": "platform",
             "requireResidentKey": false,
             "residentKey": "preferred",
             "userVerification": "required",
@@ -326,7 +324,6 @@ describe('getCredentialCreationOptions', () => {
         "publicKey": {
           "attestation": "none",
           "authenticatorSelection": {
-            "authenticatorAttachment": "platform",
             "requireResidentKey": false,
             "residentKey": "preferred",
             "userVerification": "required",
@@ -454,7 +451,6 @@ describe('getCredentialCreationOptions', () => {
         "publicKey": {
           "attestation": "none",
           "authenticatorSelection": {
-            "authenticatorAttachment": "platform",
             "requireResidentKey": false,
             "residentKey": "preferred",
             "userVerification": "required",

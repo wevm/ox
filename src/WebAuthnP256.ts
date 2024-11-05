@@ -245,7 +245,6 @@ export function getCredentialCreationOptions(
   const {
     attestation = 'none',
     authenticatorSelection = {
-      authenticatorAttachment: 'platform',
       residentKey: 'preferred',
       requireResidentKey: false,
       userVerification: 'required',
