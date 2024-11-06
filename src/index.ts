@@ -990,6 +990,167 @@ export * as Block from './Block.js'
 export * as Bloom from './Bloom.js'
 
 /**
+ * Utility functions for [BLS12-381](https://hackmd.io/@benjaminion/bls12-381) cryptography.
+ *
+ * :::info
+ *
+ * The `Bls` module is a friendly wrapper over [`@noble/curves/bls12-381`](https://github.com/paulmillr/noble-curves), an **audited** implementation of BLS12-381.
+ *
+ * :::
+ *
+ * @example
+ * ### Computing a Random Private Key
+ *
+ * A random private key can be computed using {@link ox#Bls.(randomPrivateKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const privateKey = Bls.randomPrivateKey()
+ * // @log: '0x...'
+ * ```
+ *
+ * @example
+ * ### Getting a Public Key
+ *
+ * A public key can be derived from a private key using {@link ox#Bls.(getPublicKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const privateKey = Bls.randomPrivateKey()
+ * const publicKey = Bls.getPublicKey({ privateKey })
+ * // @log: { x: 3251...5152n, y: 1251...5152n, z: 1n }
+ * ```
+ *
+ * @example
+ * ### Signing a Payload
+ *
+ * A payload can be signed using {@link ox#Bls.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const privateKey = Bls.randomPrivateKey()
+ * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey })
+ * // @log: { x: 1251...5152n, y: 1251...5152n, z: 1n }
+ * ```
+ *
+ * @example
+ * ### Verifying a Signature
+ *
+ * A signature can be verified using {@link ox#Secp256k1.(verify:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const privateKey = Bls.randomPrivateKey()
+ * const publicKey = Bls.getPublicKey({ privateKey })
+ * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const isValid = Bls.verify({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   publicKey, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * // @log: true
+ * ```
+ *
+ * @example
+ * ### Aggregating Public Keys & Signatures
+ *
+ * Public keys and signatures can be aggregated using {@link ox#Bls.(aggregate:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const publicKeys = [
+ *   Bls.getPublicKey({ privateKey: '0x...' }),
+ *   Bls.getPublicKey({ privateKey: '0x...' }),
+ * ]
+ * const publicKey = Bls.aggregate(publicKeys)
+ *
+ * const signatures = [
+ *   Bls.sign({ payload: '0x...', privateKey: '0x...' }),
+ *   Bls.sign({ payload: '0x...', privateKey: '0x...' }),
+ * ]
+ * const signature = Bls.aggregate(signatures)
+ * ```
+ *
+ * @example
+ * ### Verify Aggregated Signatures
+ *
+ * We can also pass a public key and signature that was aggregated with {@link ox#Bls.(aggregate:function)} to `Bls.verify`.
+ *
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const payload = Hex.random(32)
+ * const privateKeys = Array.from({ length: 100 }, () => Bls.randomPrivateKey())
+ *
+ * const publicKeys = privateKeys.map((privateKey) =>
+ *   Bls.getPublicKey({ privateKey }),
+ * )
+ * const signatures = privateKeys.map((privateKey) =>
+ *   Bls.sign({ payload, privateKey }),
+ * )
+ *
+ * const publicKey = Bls.aggregate(publicKeys) // [!code focus]
+ * const signature = Bls.aggregate(signatures) // [!code focus]
+ *
+ * const valid = Bls.verify({ payload, publicKey, signature }) // [!code focus]
+ * ```
+ *
+ * @category Crypto
+ */
+export * as Bls from './Bls.js'
+
+/**
+ * Utility functions for working with BLS12-381 points.
+ *
+ * :::info
+ *
+ * The `BlsPoint` module is a friendly wrapper over [`@noble/curves/bls12-381`](https://github.com/paulmillr/noble-curves), an **audited** implementation of BLS12-381.
+ *
+ * :::
+ *
+ * @example
+ * ### Public Keys or Signatures to Hex
+ *
+ * BLS points can be converted to hex using {@link ox#BlsPoint.(toHex:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
+ * const publicKeyHex = BlsPoint.toHex(publicKey)
+ * // @log: '0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66'
+ *
+ * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
+ * const signatureHex = BlsPoint.toHex(signature)
+ * // @log: '0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c'
+ * ```
+ *
+ * @example
+ * ### Hex to Public Keys or Signatures
+ *
+ * BLS points can be converted from hex using {@link ox#BlsPoint.(fromHex:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const publicKey = BlsPoint.fromHex('0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66', 'G1')
+ * // @log: { x: 172...514n, y: 175...235n, z: 1n }
+ *
+ * const signature = BlsPoint.fromHex('0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c', 'G2')
+ * // @log: { x: 1251...5152n, y: 1251...5152n, z: 1n }
+ * ```
+ *
+ * @category Crypto
+ */
+export * as BlsPoint from './BlsPoint.js'
+
+/**
  * A set of Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances.
  *
  * @example
@@ -1801,6 +1962,13 @@ export * as RpcResponse from './RpcResponse.js'
 
 /**
  * Utility functions for working with JSON-RPC Transports.
+ *
+ * :::note
+ * This is a convenience module distributed for experimenting with network connectivity on Ox.
+ *
+ * Consider using networking functionality from a higher-level library such as [Viem's Transports](https://viem.sh/docs/clients/transports/http)
+ * if you need more features such as: retry logic, WebSockets/IPC, middleware, batch JSON-RPC, etc.
+ * :::
  *
  * @example
  * ### HTTP Instantiation

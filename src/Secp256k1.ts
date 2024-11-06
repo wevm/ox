@@ -7,6 +7,9 @@ import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 import type { OneOf } from './internal/types.js'
 
+/** Re-export of noble/curves secp256k1 utilities. */
+export const noble = secp256k1
+
 /**
  * Computes the secp256k1 ECDSA public key from a provided private key.
  *
