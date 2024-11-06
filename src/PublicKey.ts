@@ -4,7 +4,7 @@ import * as Hex from './Hex.js'
 import * as Json from './Json.js'
 import type { Compute, ExactPartial } from './internal/types.js'
 
-/** Root type for a Public Key. */
+/** Root type for an ECDSA Public Key. */
 export type PublicKey<
   compressed extends boolean = false,
   bigintType = bigint,

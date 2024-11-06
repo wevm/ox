@@ -990,6 +990,31 @@ export * as Block from './Block.js'
 export * as Bloom from './Bloom.js'
 
 /**
+ * Utility functions for [BLS12-381](https://hackmd.io/@benjaminion/bls12-381) cryptography.
+ *
+ * :::info
+ *
+ * The `Bls` module is a friendly wrapper over [`@noble/curves/bls12-381`](https://github.com/paulmillr/noble-curves), an **audited** implementation of BLS12-381.
+ *
+ * :::
+ *
+ * @example
+ * ### Computing a Random Private Key
+ *
+ * A random private key can be computed using {@link ox#Bls.(randomPrivateKey:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const privateKey = Bls.randomPrivateKey()
+ * // @log: '0x...'
+ * ```
+ *
+ * @category Crypto
+ */
+export * as Bls from './Bls.js'
+
+/**
  * A set of Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances.
  *
  * @example
