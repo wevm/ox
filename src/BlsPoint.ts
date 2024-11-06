@@ -106,6 +106,7 @@ toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
 export function toHex<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Hex : G2Hex
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function toHex(point: G1 | G2): Hex.Hex {
   return Hex.fromBytes(toBytes(point))
 }
@@ -157,6 +158,7 @@ export function fromBytes<group extends 'G1' | 'G2'>(
   bytes: Bytes.Bytes,
   group: group,
 ): group extends 'G1' ? G1 : G2
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function fromBytes(bytes: Bytes.Bytes): BlsPoint<any> {
   const group = bytes.length === 48 ? bls.G1 : bls.G2
   const point = group.ProjectivePoint.fromHex(bytes)
@@ -217,6 +219,7 @@ export function fromHex<group extends 'G1' | 'G2'>(
   hex: Hex.Hex,
   group: group,
 ): group extends 'G1' ? G1 : G2
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function fromHex(hex: Hex.Hex, group: 'G1' | 'G2'): BlsPoint<any> {
   return fromBytes(Hex.toBytes(hex), group)
 }

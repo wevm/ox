@@ -47,7 +47,7 @@ export const noble = bls
 export function aggregate<const points extends readonly BlsPoint.BlsPoint[]>(
   points: points,
 ): points extends readonly BlsPoint.G1[] ? BlsPoint.G1 : BlsPoint.G2
-//
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function aggregate(
   points: readonly BlsPoint.BlsPoint[],
 ): BlsPoint.BlsPoint {
@@ -215,6 +215,7 @@ export declare namespace randomPrivateKey {
 export function sign<size extends Size = 'short-key:long-sig'>(
   options: sign.Options<size>,
 ): size extends 'short-key:long-sig' ? BlsPoint.G2 : BlsPoint.G1
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function sign(options: sign.Options): BlsPoint.BlsPoint {
   const { payload, privateKey, suite, size = 'short-key:long-sig' } = options
 
