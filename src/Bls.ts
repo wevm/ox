@@ -1,23 +1,11 @@
 import type { ProjPointType } from '@noble/curves/abstract/weierstrass'
 import { bls12_381 as bls } from '@noble/curves/bls12-381'
 
+import type * as BlsPoint from './BlsPoint.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { OneOf } from './internal/types.js'
-
-export type Fp = bigint
-export type Fp2 = { c0: Fp; c1: Fp }
-
-// TODO: move to a `BlsPoint` module?
-export type Point<F = Fp> = {
-  x: F
-  y: F
-  z: F
-}
-
-export type G1Point = Point<Fp>
-export type G2Point = Point<Fp2>
 
 export type Size = 'short-key:long-sig' | 'long-key:short-sig'
 
@@ -56,11 +44,13 @@ export const noble = bls
  * @param points - The points to aggregate.
  * @returns The aggregated point.
  */
-export function aggregate<const points extends readonly Point<Fp | Fp2>[]>(
+export function aggregate<const points extends readonly BlsPoint.BlsPoint[]>(
   points: points,
-): points extends readonly Point<Fp>[] ? G1Point : G2Point
+): points extends readonly BlsPoint.G1[] ? BlsPoint.G1 : BlsPoint.G2
 //
-export function aggregate(points: readonly Point<Fp | Fp2>[]): Point<Fp | Fp2> {
+export function aggregate(
+  points: readonly BlsPoint.BlsPoint[],
+): BlsPoint.BlsPoint {
   const group = typeof points[0]?.x === 'bigint' ? bls.G1 : bls.G2
   const point = points.reduce(
     (acc, point) =>
@@ -137,9 +127,9 @@ aggregate.parseError = (error: unknown) =>
  */
 export function getPublicKey<size extends Size = 'short-key:long-sig'>(
   options: getPublicKey.Options<size>,
-): size extends 'short-key:long-sig' ? G1Point : G2Point
+): size extends 'short-key:long-sig' ? BlsPoint.G1 : BlsPoint.G2
 // eslint-disable-next-line jsdoc/require-jsdoc
-export function getPublicKey(options: getPublicKey.Options): Point<Fp | Fp2> {
+export function getPublicKey(options: getPublicKey.Options): BlsPoint.BlsPoint {
   const { privateKey, size = 'short-key:long-sig' } = options
   const group = size === 'short-key:long-sig' ? bls.G1 : bls.G2
   const { px, py, pz } = group.ProjectivePoint.fromPrivateKey(
@@ -224,8 +214,8 @@ export declare namespace randomPrivateKey {
  */
 export function sign<size extends Size = 'short-key:long-sig'>(
   options: sign.Options<size>,
-): size extends 'short-key:long-sig' ? G2Point : G1Point
-export function sign(options: sign.Options): Point<Fp | Fp2> {
+): size extends 'short-key:long-sig' ? BlsPoint.G2 : BlsPoint.G1
+export function sign(options: sign.Options): BlsPoint.BlsPoint {
   const { payload, privateKey, suite, size = 'short-key:long-sig' } = options
 
   const payloadGroup = size === 'short-key:long-sig' ? bls.G2 : bls.G1
@@ -237,7 +227,7 @@ export function sign(options: sign.Options): Point<Fp | Fp2> {
   const privateKeyGroup = size === 'short-key:long-sig' ? bls.G1 : bls.G2
   const signature = payloadPoint.multiply(
     privateKeyGroup.normPrivateKeyToScalar(privateKey.slice(2)),
-  ) as ProjPointType<Fp | Fp2>
+  ) as ProjPointType<any>
 
   return {
     x: signature.px,
@@ -282,7 +272,7 @@ sign.parseError = (error: unknown) =>
   error as sign.ErrorType
 
 /**
- * Verifies a payload was signed by the provided public key.
+ * Verifies a payload was signed by the provided public key(s).
  *
  * @example
  *
@@ -294,20 +284,44 @@ sign.parseError = (error: unknown) =>
  * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey })
  *
  * const verified = Bls.verify({ // [!code focus]
- *   publicKey, // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
+ *   publicKey, // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  * ```
  *
- * @param options - The verification options.
+ * @example
+ * ### Verify Aggregated Signatures
+ *
+ * We can also pass a public key and signature that was aggregated with {@link ox#Bls.(aggregate:function)} to `Bls.verify`.
+ *
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const payload = Hex.random(32)
+ * const privateKeys = Array.from({ length: 100 }, () => Bls.randomPrivateKey())
+ *
+ * const publicKeys = privateKeys.map((privateKey) =>
+ *   Bls.getPublicKey({ privateKey }),
+ * )
+ * const signatures = privateKeys.map((privateKey) =>
+ *   Bls.sign({ payload, privateKey }),
+ * )
+ *
+ * const publicKey = Bls.aggregate(publicKeys) // [!code focus]
+ * const signature = Bls.aggregate(signatures) // [!code focus]
+ *
+ * const valid = Bls.verify({ payload, publicKey, signature }) // [!code focus]
+ * ```
+ *
+ * @param options - Verification options.
  * @returns Whether the payload was signed by the provided public key.
  */
 export function verify(options: verify.Options): boolean {
   const { payload, suite } = options
 
-  const publicKey = options.publicKey as unknown as Point<any>
-  const signature = options.signature as unknown as Point<any>
+  const publicKey = options.publicKey as unknown as BlsPoint.BlsPoint<any>
+  const signature = options.signature as unknown as BlsPoint.BlsPoint<any>
 
   const isShortSig = typeof signature.x === 'bigint'
 
@@ -366,12 +380,12 @@ export declare namespace verify {
     suite?: string | undefined
   } & OneOf<
     | {
-        publicKey: G1Point
-        signature: G2Point
+        publicKey: BlsPoint.G1
+        signature: BlsPoint.G2
       }
     | {
-        publicKey: G2Point
-        signature: G1Point
+        publicKey: BlsPoint.G2
+        signature: BlsPoint.G1
       }
   >
 

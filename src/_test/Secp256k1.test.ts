@@ -218,6 +218,7 @@ describe('verify', () => {
 test('exports', () => {
   expect(Object.keys(Secp256k1)).toMatchInlineSnapshot(`
     [
+      "noble",
       "getPublicKey",
       "randomPrivateKey",
       "recoverAddress",

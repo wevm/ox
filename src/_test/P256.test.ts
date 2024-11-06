@@ -208,6 +208,7 @@ describe('verify', () => {
 test('exports', () => {
   expect(Object.keys(P256)).toMatchInlineSnapshot(`
     [
+      "noble",
       "getPublicKey",
       "randomPrivateKey",
       "recoverPublicKey",

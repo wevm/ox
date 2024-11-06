@@ -5,6 +5,9 @@ import * as Hex from './Hex.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 
+/** Re-export of noble/curves P256 utilities. */
+export const noble = secp256r1
+
 /**
  * Computes the P256 ECDSA public key from a provided private key.
  *

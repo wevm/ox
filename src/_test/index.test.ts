@@ -21,6 +21,8 @@ test('exports', () => {
       "Blobs",
       "Block",
       "Bloom",
+      "Bls",
+      "BlsPoint",
       "Bytes",
       "Caches",
       "ContractAddress",
