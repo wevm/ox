@@ -19,11 +19,13 @@ export const noble = bls
  * ### Aggregating Signatures
  *
  * ```ts twoslash
- * import { Bls } from 'ox'
+ * import { Bls, Hex } from 'ox'
+ *
+ * const payload = Hex.random(32)
  *
  * const signatures = [
- *   Bls.sign({ payload: '0x...', privateKey: '0x...' }),
- *   Bls.sign({ payload: '0x...', privateKey: '0x...' }),
+ *   Bls.sign({ payload, privateKey: '0x...' }),
+ *   Bls.sign({ payload, privateKey: '0x...' }),
  * ]
  * const signature = Bls.aggregate(signatures)
  * ```
@@ -96,12 +98,15 @@ aggregate.parseError = (error: unknown) =>
  *
  *
  *
+ *
+ *
+ *
  * ```
  *
  * @example
  * ### Long G2 Public Keys
  *
- * A G2 Public Key can be derived as a G2 point (96 bytes) using `size: 'long'`.
+ * A G2 Public Key can be derived as a G2 point (96 bytes) using `size: 'long-key:short-sig'`.
  *
  * This will allow you to compute G1 Signatures (48 bytes) with {@link ox#Bls.(sign:function)}.
  *
@@ -115,6 +120,53 @@ aggregate.parseError = (error: unknown) =>
  *
  * publicKey
  * // ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * ### Serializing
+ *
+ * Public Keys can be serialized to hex or bytes using {@link ox#BlsPoint.(toHex:function)} or {@link ox#BlsPoint.(toBytes:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
+ *
+ * const publicKeyHex = BlsPoint.toHex(publicKey)
+ * //    ^?
+ *
+ *
+ * const publicKeyBytes = BlsPoint.toBytes(publicKey)
+ * //    ^?
+ *
+ * ```
+ *
+ * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const publicKeyHex = '0x...'
+ *
+ * const publicKey = BlsPoint.fromHex(publicKeyHex, 'G1')
+ * //    ^?
+ *
+ *
  *
  *
  *
@@ -201,12 +253,57 @@ export declare namespace randomPrivateKey {
  *
  * @example
  * ```ts twoslash
- * import { Bls } from 'ox'
+ * import { Bls, Hex } from 'ox'
  *
  * const signature = Bls.sign({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
+ *   payload: Hex.random(32), // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Serializing
+ *
+ * Signatures can be serialized to hex or bytes using {@link ox#BlsPoint.(toHex:function)} or {@link ox#BlsPoint.(toBytes:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint, Hex } from 'ox'
+ *
+ * const signature = Bls.sign({ payload: Hex.random(32), privateKey: '0x...' })
+ *
+ * const signatureHex = BlsPoint.toHex(signature)
+ * //    ^?
+ *
+ *
+ *
+ * const signatureBytes = BlsPoint.toBytes(signature)
+ * //    ^?
+ *
+ *
+ * ```
+ *
+ * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const signatureHex = '0x...'
+ *
+ * const signature = BlsPoint.fromHex(signatureHex, 'G2')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * ```
  *
  * @param options - The signing options.
@@ -278,14 +375,16 @@ sign.parseError = (error: unknown) =>
  * @example
  *
  * ```ts twoslash
- * import { Bls } from 'ox'
+ * import { Bls, Hex } from 'ox'
  *
+ * const payload = Hex.random(32)
  * const privateKey = Bls.randomPrivateKey()
+ *
  * const publicKey = Bls.getPublicKey({ privateKey })
- * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Bls.sign({ payload, privateKey })
  *
  * const verified = Bls.verify({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
+ *   payload, // [!code focus]
  *   publicKey, // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]

@@ -3,19 +3,19 @@ import { bls12_381 as bls } from '@noble/curves/bls12-381'
 import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import type { Branded } from './internal/types.js'
+import type { Branded, Compute } from './internal/types.js'
 
 /** Type for a field element in the base field of the BLS12-381 curve. */
 export type Fp = bigint
 /** Type for a field element in the extension field of the BLS12-381 curve. */
-export type Fp2 = { c0: Fp; c1: Fp }
+export type Fp2 = Compute<{ c0: bigint; c1: bigint }>
 
 /** Root type for a BLS point on the G1 or G2 curve. */
-export type BlsPoint<type = Fp | Fp2> = {
+export type BlsPoint<type = Fp | Fp2> = Compute<{
   x: type
   y: type
   z: type
-}
+}>
 
 /** Type for a BLS point on the G1 curve. */
 export type G1 = BlsPoint<Fp>
