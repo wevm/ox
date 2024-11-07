@@ -64,10 +64,10 @@ export default defineConfig({
             link: '/guides/mnemonics',
           },
           { text: 'Recursive Length Prefix (RLP)', link: '/guides/rlp' },
-          {
-            text: 'Sign-In With Ethereum (SIWE) 🚧',
-            link: '/guides/siwe',
-          },
+          // {
+          //   text: 'Sign-In With Ethereum (SIWE) 🚧',
+          //   link: '/guides/siwe',
+          // },
           {
             text: 'Signed & Typed Data',
             link: '/guides/signed-data',
