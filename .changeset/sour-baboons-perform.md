@@ -1,5 +1,0 @@
----
-"ox": minor
----
-
-Initial release.
