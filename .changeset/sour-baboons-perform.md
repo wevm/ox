@@ -1,5 +1,5 @@
 ---
-"ox": patch
+"ox": minor
 ---
 
-Initial release
+Initial release.
