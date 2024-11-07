@@ -33,8 +33,6 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
-        with: 
-          node-version: 22
 
       - name: PR or publish
         uses: changesets/action@v1

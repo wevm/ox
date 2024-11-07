@@ -17,8 +17,6 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
-        with: 
-          node-version: 22
 
       - name: Check code
         run: pnpm check
@@ -52,8 +50,6 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
-        with: 
-          node-version: 22
 
       - name: Run tests
         run: pnpm test:ci --shard=${{ matrix.shard }}/${{ matrix.total-shards }}
@@ -71,8 +67,6 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
-        with: 
-          node-version: 22
 
       - name: Run tests
         run: pnpm test:types
@@ -88,8 +82,6 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
-        with: 
-          node-version: 22
 
       - name: Run test vectors
         shell: bash
