@@ -22,6 +22,8 @@ export default defineConfig({
   },
   ogImageUrl: {
     '/': '/og-image.png',
+    '/api': 'https://og.oxlib.sh?title=%title&description=%description',
+    '/guides': 'https://og.oxlib.sh?title=%title&description=%description',
   },
   iconUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   logoUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
