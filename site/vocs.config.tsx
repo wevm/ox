@@ -1,3 +1,4 @@
+import React from 'react'
 import { defineConfig } from 'vocs'
 import pkg from '../src/package.json'
 import { sidebar } from './sidebar-generated'
@@ -10,24 +11,18 @@ export default defineConfig({
   title: 'Ox',
   titleTemplate: '%s · Ox',
   description: 'Ethereum Standard Library',
-  editLink: {
-    pattern: 'https://github.com/wevm/ox/edit/main/site/pages/:path',
-    text: 'Suggest changes to this page',
+  head() {
+    return (
+      <script
+        src="https://cdn.usefathom.com/script.js"
+        data-site="ZMZAZRME"
+        defer
+      />
+    )
   },
-  // head() {
-  // 	return (
-  // 		<>
-  // 			<script
-  // 				src="https://cdn.usefathom.com/script.js"
-  // 				data-site="BYCJMNBD"
-  // 				defer
-  // 			/>
-  // 		</>
-  // 	);
-  // },
-  // ogImageUrl: {
-  //   '/': '/og-image.png',
-  // },
+  ogImageUrl: {
+    '/': '/og-image.png',
+  },
   iconUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   logoUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   markdown: {
