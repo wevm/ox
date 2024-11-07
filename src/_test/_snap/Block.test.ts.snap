@@ -22,7 +22,7 @@ exports[`fromRpc > behavior: network (with tx) 1`] = `
   "size": 56024n,
   "stateRoot": "0x115fd5eac921e6728825958b2b87da8aaf17edc0085164f11de798f6ed00abbd",
   "timestamp": 1715686979n,
-  "totalDifficulty": 58750003716598352816469n,
+  "totalDifficulty": 0n,
   "transactions": [
     {
       "accessList": [],
