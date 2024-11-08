@@ -31,7 +31,7 @@ describe('from', () => {
     const provider = Provider.from({
       async request(args) {
         return await fetch(anvilMainnet.rpcUrl, {
-          body: JSON.stringify(store.prepare(args)),
+          body: JSON.stringify(store.prepare(args as never)),
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ describe('from', () => {
     const provider = Provider.from({
       async request(args) {
         return await fetch(anvilMainnet.rpcUrl, {
-          body: JSON.stringify(store.prepare(args)),
+          body: JSON.stringify(store.prepare(args as never)),
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ describe('from', () => {
       ...emitter,
       async request(args) {
         return await fetch(anvilMainnet.rpcUrl, {
-          body: JSON.stringify(store.prepare(args)),
+          body: JSON.stringify(store.prepare(args as never)),
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

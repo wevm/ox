@@ -10,7 +10,7 @@ export type ExtractRequestOpaque<
     {
       method: methodName | schema['Request']['method']
       params?: unknown
-    } & (IsNarrowable<methodName, schema['Request']['method']> extends true
+    } & (methodName extends schema['Request']['method']
       ? IsNarrowable<schema, Generic> extends true
         ? Extract<schema, { Request: { method: methodName } }>['Request']
         : {}
