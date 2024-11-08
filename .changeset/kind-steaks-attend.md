@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Fixed \`RpcSchema\` inference on \`params\`.
+Fixed `RpcSchema` inference on `params`.
