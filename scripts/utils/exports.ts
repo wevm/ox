@@ -27,6 +27,7 @@ export function getExports({
     if (!parentEntry.isDirectory()) {
       if (parentEntry.name.endsWith('test.ts')) continue
       if (parentEntry.name === 'jsr.json') continue
+      if (parentEntry.name === 'tsdoc.json') continue
       if (
         !parentEntry.name.endsWith('.ts') &&
         !parentEntry.name.endsWith('.json')
