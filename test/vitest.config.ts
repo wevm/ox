@@ -21,9 +21,7 @@ export default defineConfig({
       ? [join(__dirname, './globalSetup.types.ts')]
       : [join(__dirname, './globalSetup.ts')],
     include: [
-      ...(process.env.TYPES
-        ? ['src/_test/**/*.snap-d.ts']
-        : ['src/_test/**/*.test.ts']),
+      ...(process.env.TYPES ? ['src/**/*.snap-d.ts'] : ['src/**/*.test.ts']),
     ],
     passWithNoTests: true,
     resolveSnapshotPath: (path, ext) =>

@@ -20,15 +20,16 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Setup .npmrc file
-        uses: actions/setup-node@v4
-        with:
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Publish to npm
-        run: | 
-          cd src && pnpm version $(npm pkg get version | sed 's/"//g')-$(date +'%Y%m%dT%H%M%S') && cd ../ 
-          pnpm changeset:prepublish
-          cd src && pnpm publish --no-git-checks --provenance false && cd ../
+      - name: Publish Snapshots
+        continue-on-error: true
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          snapshot=$(git branch --show-current | tr -cs '[:alnum:]-' '-' | tr '[:upper:]' '[:lower:]' | sed 's/-$//')
+          npm config set "//registry.npmjs.org/:_authToken" "$NPM_TOKEN"
+          pnpm clean
+          pnpm changeset version --no-git-tag --snapshot $snapshot
+          pnpm changeset:prepublish
+          pnpm changeset publish --no-git-tag --snapshot $snapshot --tag $snapshot
+

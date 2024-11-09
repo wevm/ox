@@ -113,7 +113,7 @@
  *
  * @category ABI
  */
-export * as Abi from './Abi.js'
+export * as Abi from './core/Abi.js'
 
 /**
  * Utilities & types for working with [Constructors](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.
@@ -189,7 +189,7 @@ export * as Abi from './Abi.js'
  *
  * @category ABI
  */
-export * as AbiConstructor from './AbiConstructor.js'
+export * as AbiConstructor from './core/AbiConstructor.js'
 
 /**
  * Utilities & types for working with [Errors](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.
@@ -261,7 +261,7 @@ export * as AbiConstructor from './AbiConstructor.js'
  *
  * @category ABI
  */
-export * as AbiError from './AbiError.js'
+export * as AbiError from './core/AbiError.js'
 
 /**
  * Utilities & types for working with [Events](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.
@@ -376,7 +376,7 @@ export * as AbiError from './AbiError.js'
  *
  * @category ABI
  */
-export * as AbiEvent from './AbiEvent.js'
+export * as AbiEvent from './core/AbiEvent.js'
 
 /**
  * Utilities & types for working with [Functions](https://docs.soliditylang.org/en/latest/abi-spec.html#json) on ABIs.
@@ -470,7 +470,7 @@ export * as AbiEvent from './AbiEvent.js'
  *
  * @category ABI
  */
-export * as AbiFunction from './AbiFunction.js'
+export * as AbiFunction from './core/AbiFunction.js'
 
 /**
  * Utilities & types for working with [ABI Items](https://docs.soliditylang.org/en/latest/abi-spec.html#json)
@@ -548,7 +548,7 @@ export * as AbiFunction from './AbiFunction.js'
  *
  * @category ABI
  */
-export * as AbiItem from './AbiItem.js'
+export * as AbiItem from './core/AbiItem.js'
 
 /**
  * Utilities & types for encoding, decoding, and working with [ABI Parameters](https://docs.soliditylang.org/en/latest/abi-spec.html#types)
@@ -652,21 +652,21 @@ export * as AbiItem from './AbiItem.js'
  *
  * @category ABI
  */
-export * as AbiParameters from './AbiParameters.js'
+export * as AbiParameters from './core/AbiParameters.js'
 
 /**
  * Utilities & types for working with Access Lists as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4140e528360fea53c34a766d86a000c6c039100e/src/schemas/transaction.yaml#L73)
  *
  * @category Execution Spec
  */
-export * as AccessList from './AccessList.js'
+export * as AccessList from './core/AccessList.js'
 
 /**
  * Utilities & types for working with Account Proofs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/state.yaml)
  *
  * @category Execution Spec
  */
-export * as AccountProof from './AccountProof.js'
+export * as AccountProof from './core/AccountProof.js'
 
 /**
  * Utility functions for working with Ethereum addresses.
@@ -721,7 +721,7 @@ export * as AccountProof from './AccountProof.js'
  *
  * @category Addresses
  */
-export * as Address from './Address.js'
+export * as Address from './core/Address.js'
 
 /**
  * Utilities & types for working with AES-GCM encryption. Internally uses the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API).
@@ -758,7 +758,7 @@ export * as Address from './Address.js'
  *
  * @category Crypto
  */
-export * as AesGcm from './AesGcm.js'
+export * as AesGcm from './core/AesGcm.js'
 
 /**
  * Utility functions for working with [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Authorization lists & tuples.
@@ -832,7 +832,7 @@ export * as AesGcm from './AesGcm.js'
  *
  * @category Authorization (EIP-7702)
  */
-export * as Authorization from './Authorization.js'
+export * as Authorization from './core/Authorization.js'
 
 /**
  * Utility functions for working with [Base58](https://digitalbazaar.github.io/base58-spec/) values.
@@ -887,7 +887,7 @@ export * as Authorization from './Authorization.js'
  *
  * @category Data
  */
-export * as Base58 from './Base58.js'
+export * as Base58 from './core/Base58.js'
 
 /**
  * Utility functions for working with [RFC-4648](https://datatracker.ietf.org/doc/html/rfc4648) Base64.
@@ -941,14 +941,14 @@ export * as Base58 from './Base58.js'
  *
  * @category Data
  */
-export * as Base64 from './Base64.js'
+export * as Base64 from './core/Base64.js'
 
 /**
  * Utility functions for working with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
  *
  * @category Blobs (EIP-4844)
  */
-export * as Blobs from './Blobs.js'
+export * as Blobs from './core/Blobs.js'
 
 /**
  * Utilities & types for working with Blocks as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml)
@@ -980,14 +980,14 @@ export * as Blobs from './Blobs.js'
  *
  * @category Execution Spec
  */
-export * as Block from './Block.js'
+export * as Block from './core/Block.js'
 
 /**
  * Utility functions for working with Bloom Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml)
  *
  * @category Execution Spec
  */
-export * as Bloom from './Bloom.js'
+export * as Bloom from './core/Bloom.js'
 
 /**
  * Utility functions for [BLS12-381](https://hackmd.io/@benjaminion/bls12-381) cryptography.
@@ -1103,7 +1103,7 @@ export * as Bloom from './Bloom.js'
  *
  * @category Crypto
  */
-export * as Bls from './Bls.js'
+export * as Bls from './core/Bls.js'
 
 /**
  * Utility functions for working with BLS12-381 points.
@@ -1148,7 +1148,7 @@ export * as Bls from './Bls.js'
  *
  * @category Crypto
  */
-export * as BlsPoint from './BlsPoint.js'
+export * as BlsPoint from './core/BlsPoint.js'
 
 /**
  * A set of Ethereum-related utility functions for working with [`Uint8Array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) instances.
@@ -1276,9 +1276,9 @@ export * as BlsPoint from './BlsPoint.js'
  *
  * @category Data
  */
-export * as Bytes from './Bytes.js'
+export * as Bytes from './core/Bytes.js'
 
-export * as Caches from './Caches.js'
+export * as Caches from './core/Caches.js'
 
 /**
  * Utility functions for computing Contract Addresses.
@@ -1316,7 +1316,7 @@ export * as Caches from './Caches.js'
  *
  * @category Addresses
  */
-export * as ContractAddress from './ContractAddress.js'
+export * as ContractAddress from './core/ContractAddress.js'
 
 /**
  * Utility functions for working with ENS names.
@@ -1347,16 +1347,16 @@ export * as ContractAddress from './ContractAddress.js'
  *
  * @category ENS
  */
-export * as Ens from './Ens.js'
+export * as Ens from './core/Ens.js'
 
-export * as Errors from './Errors.js'
+export * as Errors from './core/Errors.js'
 
 /**
  * Utilities & types for working with Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml)
  *
  * @category Execution Spec
  */
-export * as Filter from './Filter.js'
+export * as Filter from './core/Filter.js'
 
 /**
  * Utility functions for hashing (keccak256, sha256, etc).
@@ -1371,7 +1371,7 @@ export * as Filter from './Filter.js'
  *
  * @category Crypto
  */
-export * as Hash from './Hash.js'
+export * as Hash from './core/Hash.js'
 
 /**
  * Utility functions for generating and working with [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD Wallets.
@@ -1385,7 +1385,7 @@ export * as Hash from './Hash.js'
  *
  * @category Crypto
  */
-export * as HdKey from './HdKey.js'
+export * as HdKey from './core/HdKey.js'
 
 /**
  * A set of Ethereum-related utility functions for working with hexadecimal string values (e.g. `"0xdeadbeef"`).
@@ -1500,12 +1500,12 @@ export * as HdKey from './HdKey.js'
  *
  * @category Data
  */
-export * as Hex from './Hex.js'
+export * as Hex from './core/Hex.js'
 
 /**
  * @category Execution Spec
  */
-export * as Fee from './Fee.js'
+export * as Fee from './core/Fee.js'
 
 /**
  * Utility functions for working with JSON (with support for `bigint`).
@@ -1539,7 +1539,7 @@ export * as Fee from './Fee.js'
  *
  * @category JSON
  */
-export * as Json from './Json.js'
+export * as Json from './core/Json.js'
 
 /**
  * Utility functions for working with KZG Commitments.
@@ -1548,7 +1548,7 @@ export * as Json from './Json.js'
  *
  * @category Blobs (EIP-4844)
  */
-export * as Kzg from './Kzg.js'
+export * as Kzg from './core/Kzg.js'
 
 /**
  * Utilities & types for working with Logs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml)
@@ -1607,7 +1607,7 @@ export * as Kzg from './Kzg.js'
  *
  * @category Execution Spec
  */
-export * as Log from './Log.js'
+export * as Log from './core/Log.js'
 
 /**
  * Utility functions for generating and working with [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics.
@@ -1668,7 +1668,7 @@ export * as Log from './Log.js'
  *
  * @category Crypto
  */
-export * as Mnemonic from './Mnemonic.js'
+export * as Mnemonic from './core/Mnemonic.js'
 
 /**
  * Utilities & types for working with [EIP-191 Personal Messages](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e)
@@ -1688,7 +1688,7 @@ export * as Mnemonic from './Mnemonic.js'
  *
  * @category Signed & Typed Data
  */
-export * as PersonalMessage from './PersonalMessage.js'
+export * as PersonalMessage from './core/PersonalMessage.js'
 
 /**
  * Utilities & types for working with [EIP-1193 Providers](https://eips.ethereum.org/EIPS/eip-1193)
@@ -1772,7 +1772,7 @@ export * as PersonalMessage from './PersonalMessage.js'
  *
  * @category Providers (EIP-1193)
  */
-export * as Provider from './Provider.js'
+export * as Provider from './core/Provider.js'
 
 /**
  * Utility functions for working with ECDSA public keys.
@@ -1813,9 +1813,9 @@ export * as Provider from './Provider.js'
  *
  * @category Crypto
  */
-export * as PublicKey from './PublicKey.js'
+export * as PublicKey from './core/PublicKey.js'
 
-export type { Register } from './internal/register.js'
+export type { Register } from './core/internal/register.js'
 
 /**
  * Utility functions for encoding and decoding [Recursive Length Prefix](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) structures.
@@ -1833,14 +1833,14 @@ export type { Register } from './internal/register.js'
  *
  * @category Data
  */
-export * as Rlp from './Rlp.js'
+export * as Rlp from './core/Rlp.js'
 
 /**
  * Utility types for working with Ethereum JSON-RPC namespaces & schemas.
  *
  * @category JSON-RPC
  */
-export * as RpcSchema from './RpcSchema.js'
+export * as RpcSchema from './core/RpcSchema.js'
 
 /**
  * Utility types & functions for working with [JSON-RPC 2.0 Requests](https://www.jsonrpc.org/specification#request_object) and Ethereum JSON-RPC methods as
@@ -1875,7 +1875,7 @@ export * as RpcSchema from './RpcSchema.js'
  *
  * @category JSON-RPC
  */
-export * as RpcRequest from './RpcRequest.js'
+export * as RpcRequest from './core/RpcRequest.js'
 
 /**
  * Utility types & functions for working with [JSON-RPC 2.0 Responses](https://www.jsonrpc.org/specification#response_object)
@@ -1958,7 +1958,7 @@ export * as RpcRequest from './RpcRequest.js'
  *
  * @category JSON-RPC
  */
-export * as RpcResponse from './RpcResponse.js'
+export * as RpcResponse from './core/RpcResponse.js'
 
 /**
  * Utility functions for working with JSON-RPC Transports.
@@ -1984,7 +1984,7 @@ export * as RpcResponse from './RpcResponse.js'
  *
  * @category JSON-RPC
  */
-export * as RpcTransport from './RpcTransport.js'
+export * as RpcTransport from './core/RpcTransport.js'
 
 /**
  * Utility functions for [secp256k1](https://www.secg.org/sec2-v2.pdf) ECDSA cryptography.
@@ -2057,7 +2057,7 @@ export * as RpcTransport from './RpcTransport.js'
  *
  * @category Crypto
  */
-export * as Secp256k1 from './Secp256k1.js'
+export * as Secp256k1 from './core/Secp256k1.js'
 
 /**
  * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography.
@@ -2130,7 +2130,7 @@ export * as Secp256k1 from './Secp256k1.js'
  *
  * @category Crypto
  */
-export * as P256 from './P256.js'
+export * as P256 from './core/P256.js'
 
 /**
  * Utility functions for working with ECDSA signatures.
@@ -2165,7 +2165,7 @@ export * as P256 from './P256.js'
  *
  * @category Crypto
  */
-export * as Signature from './Signature.js'
+export * as Signature from './core/Signature.js'
 
 /**
  * Utility functions for working with
@@ -2266,9 +2266,9 @@ export * as Signature from './Signature.js'
  *
  * @category Sign-In with Ethereum (EIP-4361)
  */
-export * as Siwe from './Siwe.js'
+export * as Siwe from './core/Siwe.js'
 
-export * as Solidity from './Solidity.js'
+export * as Solidity from './core/Solidity.js'
 
 /**
  * Utilities & types for working with **Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)
@@ -2307,7 +2307,7 @@ export * as Solidity from './Solidity.js'
  *
  * @category Execution Spec
  */
-export * as Transaction from './Transaction.js'
+export * as Transaction from './core/Transaction.js'
 
 /**
  * Errors & Types for working with Transaction Envelopes.
@@ -2323,7 +2323,7 @@ export * as Transaction from './Transaction.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelope from './TransactionEnvelope.js'
+export * as TransactionEnvelope from './core/TransactionEnvelope.js'
 
 /**
  * Utility functions for working
@@ -2478,7 +2478,7 @@ export * as TransactionEnvelope from './TransactionEnvelope.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
+export * as TransactionEnvelopeLegacy from './core/TransactionEnvelopeLegacy.js'
 
 /**
  * Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559)
@@ -2645,7 +2645,7 @@ export * as TransactionEnvelopeLegacy from './TransactionEnvelopeLegacy.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
+export * as TransactionEnvelopeEip1559 from './core/TransactionEnvelopeEip1559.js'
 
 /**
  * Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930)
@@ -2804,7 +2804,7 @@ export * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
+export * as TransactionEnvelopeEip2930 from './core/TransactionEnvelopeEip2930.js'
 
 /**
  * Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844)
@@ -2988,7 +2988,7 @@ export * as TransactionEnvelopeEip2930 from './TransactionEnvelopeEip2930.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
+export * as TransactionEnvelopeEip4844 from './core/TransactionEnvelopeEip4844.js'
 
 /**
  * Utility functions for working with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702)
@@ -3121,7 +3121,7 @@ export * as TransactionEnvelopeEip4844 from './TransactionEnvelopeEip4844.js'
  *
  * @category Transaction Envelopes
  */
-export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
+export * as TransactionEnvelopeEip7702 from './core/TransactionEnvelopeEip7702.js'
 
 /**
  * Utilities & types for working with **Transaction Receipts** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml)
@@ -3166,7 +3166,7 @@ export * as TransactionEnvelopeEip7702 from './TransactionEnvelopeEip7702.js'
  *
  * @category Execution Spec
  */
-export * as TransactionReceipt from './TransactionReceipt.js'
+export * as TransactionReceipt from './core/TransactionReceipt.js'
 
 /**
  * Utilities & types for working with **Transaction Requests** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423)
@@ -3191,7 +3191,7 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  *
  * @category Execution Spec
  */
-export * as TransactionRequest from './TransactionRequest.js'
+export * as TransactionRequest from './core/TransactionRequest.js'
 
 /**
  * Utility functions for working with [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712)
@@ -3241,14 +3241,14 @@ export * as TransactionRequest from './TransactionRequest.js'
  *
  * @category Signed & Typed Data
  */
-export * as TypedData from './TypedData.js'
+export * as TypedData from './core/TypedData.js'
 
 /**
  * Utilities & types for working with [EIP-191 Validator Data](https://eips.ethereum.org/EIPS/eip-191#0x00)
  *
  * @category Signed & Typed Data
  */
-export * as ValidatorData from './ValidatorData.js'
+export * as ValidatorData from './core/ValidatorData.js'
 
 /**
  * Utility functions for displaying and parsing Ethereum Values as defined under **2.1. Value** in the [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
@@ -3270,7 +3270,7 @@ export * as ValidatorData from './ValidatorData.js'
  *
  * @category Data
  */
-export * as Value from './Value.js'
+export * as Value from './core/Value.js'
 
 /**
  * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
@@ -3352,7 +3352,7 @@ export * as Value from './Value.js'
  *
  * @category Crypto
  */
-export * as WebAuthnP256 from './WebAuthnP256.js'
+export * as WebAuthnP256 from './core/WebAuthnP256.js'
 
 /**
  * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography using the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
@@ -3417,11 +3417,11 @@ export * as WebAuthnP256 from './WebAuthnP256.js'
  *
  * @category Crypto
  */
-export * as WebCryptoP256 from './WebCryptoP256.js'
+export * as WebCryptoP256 from './core/WebCryptoP256.js'
 
 /**
  * Utilities & types for working with Withdrawals as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/withdrawal.yaml)
  *
  * @category Execution Spec
  */
-export * as Withdrawal from './Withdrawal.js'
+export * as Withdrawal from './core/Withdrawal.js'
