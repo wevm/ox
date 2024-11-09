@@ -1,5 +1,11 @@
 # ox
 
+## 0.1.2
+
+### Patch Changes
+
+- [#17](https://github.com/wevm/ox/pull/17) [`f438faf`](https://github.com/wevm/ox/commit/f438fafbd396248283876eba220f4c661c47bfd2) Thanks [@jxom](https://github.com/jxom)! - Moved modules to `core/`.
+
 ## 0.1.1
 
 ### Patch Changes
