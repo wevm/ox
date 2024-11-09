@@ -10,7 +10,7 @@
   "sideEffects": false,
   "files": [
     "*",
-    "!_test",
+    "!**/_test/**",
     "!**/*.tsbuildinfo",
     "!tsconfig.build.json",
     "!jsr.json"
