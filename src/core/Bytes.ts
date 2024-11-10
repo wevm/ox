@@ -230,15 +230,14 @@ fromBoolean.parseError = (error: unknown) =>
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
 
-  if (value.length % 2) throw new Hex.InvalidLengthError(value)
-
   let hex = value
   if (size) {
     internal_hex.assertSize(value, size)
     hex = Hex.padRight(value, size)
   }
 
-  const hexString = hex.slice(2) as string
+  let hexString = hex.slice(2) as string
+  if (hexString.length % 2) hexString = `0${hexString}`
 
   const length = hexString.length / 2
   const bytes = new Uint8Array(length)
@@ -264,7 +263,6 @@ export declare namespace fromHex {
   type ErrorType =
     | internal_hex.assertSize.ErrorType
     | Hex.padRight.ErrorType
-    | Hex.InvalidLengthError
     | Errors.GlobalErrorType
 }
 

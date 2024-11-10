@@ -155,7 +155,7 @@ export function fromBoolean(
   value: boolean,
   options: fromBoolean.Options = {},
 ): Hex {
-  const hex: Hex = `0x0${Number(value)}`
+  const hex: Hex = `0x${Number(value)}`
   if (typeof options.size === 'number') {
     internal.assertSize(hex, options.size)
     return padLeft(hex, options.size)
@@ -275,8 +275,7 @@ export function fromNumber(
     signed && value_ < 0 ? (1n << BigInt(size * 8)) + BigInt(value_) : value_
   ).toString(16)
 
-  const hex =
-    `0x${stringValue.length % 2 === 0 ? stringValue : `0${stringValue}`}` as Hex
+  const hex = `0x${stringValue}` as Hex
   if (size) return padLeft(hex, size) as Hex
   return hex
 }

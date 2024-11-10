@@ -337,10 +337,10 @@ describe('deserialize', () => {
           ]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.InvalidLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
+        [Address.InvalidAddressError: Address "0x123456" is invalid.
 
-      It must be an even length.]
-    `)
+        Details: Address is not a 20 byte (40 hexadecimal character) value.]
+      `)
     })
 
     test('invalid transaction (all missing)', () => {

@@ -36,30 +36,30 @@ describe('toRpc', () => {
       value: 1000000000n,
     })
     expect(request).toMatchInlineSnapshot(`
-    {
-      "accessList": [],
-      "authorizationList": [],
-      "blobVersionedHashes": [
-        "0xdeadbeef",
-      ],
-      "blobs": [
-        "0xdeadbeef",
-      ],
-      "chainId": "0x01",
-      "data": "0xdeadbeef",
-      "from": "0x0000000000000000000000000000000000000000",
-      "gas": "0x0f4240",
-      "gasPrice": "0x3b9aca00",
-      "input": "0xdeadbeef",
-      "maxFeePerBlobGas": "0x3b9aca00",
-      "maxFeePerGas": "0x3b9aca00",
-      "maxPriorityFeePerGas": "0x3b9aca00",
-      "nonce": "0x01",
-      "to": "0x0000000000000000000000000000000000000000",
-      "type": "0x2",
-      "value": "0x3b9aca00",
-    }
-  `)
+      {
+        "accessList": [],
+        "authorizationList": [],
+        "blobVersionedHashes": [
+          "0xdeadbeef",
+        ],
+        "blobs": [
+          "0xdeadbeef",
+        ],
+        "chainId": "0x1",
+        "data": "0xdeadbeef",
+        "from": "0x0000000000000000000000000000000000000000",
+        "gas": "0xf4240",
+        "gasPrice": "0x3b9aca00",
+        "input": "0xdeadbeef",
+        "maxFeePerBlobGas": "0x3b9aca00",
+        "maxFeePerGas": "0x3b9aca00",
+        "maxPriorityFeePerGas": "0x3b9aca00",
+        "nonce": "0x1",
+        "to": "0x0000000000000000000000000000000000000000",
+        "type": "0x2",
+        "value": "0x3b9aca00",
+      }
+    `)
   })
 
   test('behavior: input', () => {

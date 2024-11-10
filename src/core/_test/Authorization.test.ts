@@ -363,15 +363,15 @@ describe('toRpc', () => {
         yParity: 0,
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "address": "0x0000000000000000000000000000000000000000",
-      "chainId": "0x01",
-      "nonce": "0x01",
-      "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
-      "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
-      "yParity": "0x0",
-    }
-  `)
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": "0x1",
+        "nonce": "0x1",
+        "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+        "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+        "yParity": "0x0",
+      }
+    `)
   })
 })
 
@@ -389,17 +389,17 @@ describe('toRpcList', () => {
         },
       ]),
     ).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": "0x01",
-        "nonce": "0x01",
-        "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
-        "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
-        "yParity": "0x0",
-      },
-    ]
-  `)
+      [
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": "0x1",
+          "nonce": "0x1",
+          "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+          "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+          "yParity": "0x0",
+        },
+      ]
+    `)
   })
 })
 
@@ -413,12 +413,12 @@ describe('toTuple', () => {
       })
       const tuple = Authorization.toTuple(authorization)
       expect(tuple).toMatchInlineSnapshot(`
-    [
-      "0x01",
-      "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-      "0x28",
-    ]
-  `)
+        [
+          "0x1",
+          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "0x28",
+        ]
+      `)
     }
 
     {
@@ -432,15 +432,15 @@ describe('toTuple', () => {
       })
       const tuple = Authorization.toTuple(authorization)
       expect(tuple).toMatchInlineSnapshot(`
-      [
-        "0x01",
-        "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "0x28",
-        "0x",
-        "0x01",
-        "0x02",
-      ]
-    `)
+        [
+          "0x1",
+          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "0x28",
+          "0x",
+          "0x01",
+          "0x02",
+        ]
+      `)
     }
 
     {
@@ -484,19 +484,19 @@ describe('toTupleList', () => {
         authorization_2,
       ])
       expect(tuple).toMatchInlineSnapshot(`
-      [
         [
-          "0x01",
-          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-          "0x28",
-        ],
-        [
-          "0x03",
-          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-          "0x14",
-        ],
-      ]
-    `)
+          [
+            "0x1",
+            "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+            "0x28",
+          ],
+          [
+            "0x3",
+            "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+            "0x14",
+          ],
+        ]
+      `)
     }
 
     {
@@ -521,25 +521,25 @@ describe('toTupleList', () => {
         authorization_4,
       ])
       expect(tuple).toMatchInlineSnapshot(`
-      [
         [
-          "0x05",
-          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-          "0x2a",
-          "0x",
-          "0x01",
-          "0x02",
-        ],
-        [
-          "0x02",
-          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-          "0x2b",
-          "0x",
-          "0x04",
-          "0x05",
-        ],
-      ]
-    `)
+          [
+            "0x5",
+            "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+            "0x2a",
+            "0x",
+            "0x01",
+            "0x02",
+          ],
+          [
+            "0x2",
+            "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+            "0x2b",
+            "0x",
+            "0x04",
+            "0x05",
+          ],
+        ]
+      `)
     }
   })
 })

@@ -52,8 +52,8 @@ describe('from', () => {
 
 describe('fromBoolean', () => {
   test('default', () => {
-    expect(Hex.fromBoolean(true)).toMatchInlineSnapshot(`"0x01"`)
-    expect(Hex.fromBoolean(false)).toMatchInlineSnapshot(`"0x00"`)
+    expect(Hex.fromBoolean(true)).toMatchInlineSnapshot(`"0x1"`)
+    expect(Hex.fromBoolean(false)).toMatchInlineSnapshot(`"0x0"`)
   })
 
   test('args: size', () => {
@@ -133,10 +133,10 @@ describe('fromBytes', () => {
 
 describe('fromNumber', () => {
   test('default', () => {
-    expect(Hex.fromNumber(0)).toMatchInlineSnapshot(`"0x00"`)
-    expect(Hex.fromNumber(7)).toMatchInlineSnapshot(`"0x07"`)
+    expect(Hex.fromNumber(0)).toMatchInlineSnapshot(`"0x0"`)
+    expect(Hex.fromNumber(7)).toMatchInlineSnapshot(`"0x7"`)
     expect(Hex.fromNumber(69)).toMatchInlineSnapshot('"0x45"')
-    expect(Hex.fromNumber(420)).toMatchInlineSnapshot(`"0x01a4"`)
+    expect(Hex.fromNumber(420)).toMatchInlineSnapshot(`"0x1a4"`)
 
     expect(() =>
       // biome-ignore lint/correctness/noPrecisionLoss: precision loss expected for test

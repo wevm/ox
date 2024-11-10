@@ -506,20 +506,20 @@ describe('toRpc', () => {
       yParity: 0,
     })
     expect(transaction).toMatchInlineSnapshot(`
-    {
-      "chainId": "0x01",
-      "data": undefined,
-      "gas": "0x5208",
-      "gasPrice": "0x02540be400",
-      "nonce": "0x00",
-      "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "0x1",
-      "value": "0x0de0b6b3a7640000",
-      "yParity": "0x0",
-    }
-  `)
+      {
+        "chainId": "0x1",
+        "data": undefined,
+        "gas": "0x5208",
+        "gasPrice": "0x2540be400",
+        "nonce": "0x0",
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "0x1",
+        "value": "0xde0b6b3a7640000",
+        "yParity": "0x0",
+      }
+    `)
   })
 
   test('behavior: nullish', () => {
@@ -528,13 +528,13 @@ describe('toRpc', () => {
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
     })
     expect(transaction).toMatchInlineSnapshot(`
-    {
-      "chainId": "0x01",
-      "data": undefined,
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "0x1",
-    }
-  `)
+      {
+        "chainId": "0x1",
+        "data": undefined,
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "0x1",
+      }
+    `)
   })
 
   test('behavior: network', async () => {

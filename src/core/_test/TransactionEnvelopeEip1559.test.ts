@@ -275,10 +275,10 @@ describe('deserialize', () => {
           ]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
-      [Hex.InvalidLengthError: Hex value \`"0x0"\` is an odd length (1 nibbles).
+        [Address.InvalidAddressError: Address "0x123456" is invalid.
 
-      It must be an even length.]
-    `)
+        Details: Address is not a 20 byte (40 hexadecimal character) value.]
+      `)
     })
 
     test('invalid transaction (all missing)', () => {
@@ -721,21 +721,21 @@ describe('toRpc', () => {
       yParity: 0,
     })
     expect(transaction).toMatchInlineSnapshot(`
-    {
-      "chainId": "0x01",
-      "data": undefined,
-      "gas": "0x5208",
-      "maxFeePerGas": "0x3b9aca00",
-      "maxPriorityFeePerGas": "0x05f5e100",
-      "nonce": "0x00",
-      "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "0x2",
-      "value": "0x0de0b6b3a7640000",
-      "yParity": "0x0",
-    }
-  `)
+      {
+        "chainId": "0x1",
+        "data": undefined,
+        "gas": "0x5208",
+        "maxFeePerGas": "0x3b9aca00",
+        "maxPriorityFeePerGas": "0x5f5e100",
+        "nonce": "0x0",
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "0x2",
+        "value": "0xde0b6b3a7640000",
+        "yParity": "0x0",
+      }
+    `)
   })
 
   test('behavior: nullish', () => {
@@ -744,13 +744,13 @@ describe('toRpc', () => {
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
     })
     expect(transaction).toMatchInlineSnapshot(`
-    {
-      "chainId": "0x01",
-      "data": undefined,
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "0x2",
-    }
-  `)
+      {
+        "chainId": "0x1",
+        "data": undefined,
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "0x2",
+      }
+    `)
   })
 
   test('behavior: network', async () => {

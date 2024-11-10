@@ -86,16 +86,16 @@ describe('toRpc', () => {
         ],
       })
       expect(filter).toMatchInlineSnapshot(`
-      {
-        "fromBlock": "latest",
-        "toBlock": "0x010f2c",
-        "topics": [
-          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-          null,
-          "0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1",
-        ],
-      }
-    `)
+        {
+          "fromBlock": "latest",
+          "toBlock": "0x10f2c",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            null,
+            "0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1",
+          ],
+        }
+      `)
     }
 
     {
@@ -109,16 +109,16 @@ describe('toRpc', () => {
         ],
       })
       expect(filter).toMatchInlineSnapshot(`
-      {
-        "fromBlock": "0x010f2c",
-        "toBlock": "latest",
-        "topics": [
-          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-          null,
-          "0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1",
-        ],
-      }
-    `)
+        {
+          "fromBlock": "0x10f2c",
+          "toBlock": "latest",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            null,
+            "0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1",
+          ],
+        }
+      `)
     }
   })
 })

@@ -196,6 +196,15 @@ describe('fromHex', () => {
             97,
           ]
         `)
+    expect(Bytes.fromHex('0xabcde')).toMatchInlineSnapshot(
+      `
+      Uint8Array [
+        10,
+        188,
+        222,
+      ]
+    `,
+    )
     expect(Bytes.fromHex('0x616263')).toMatchInlineSnapshot(
       `
           Uint8Array [
@@ -301,16 +310,6 @@ describe('fromHex', () => {
       Bytes.fromHex('0xabcdefgh'),
     ).toThrowErrorMatchingInlineSnapshot(
       `[BaseError: Invalid byte sequence ("gh" in "abcdefgh").]`,
-    )
-  })
-
-  test('error: invalid length', () => {
-    expect(() => Bytes.fromHex('0xabcde')).toThrowErrorMatchingInlineSnapshot(
-      `
-      [Hex.InvalidLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
-
-      It must be an even length.]
-    `,
     )
   })
 })
