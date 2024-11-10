@@ -1,5 +1,11 @@
 # ox
 
+## 0.1.3
+
+### Patch Changes
+
+- [`868d431`](https://github.com/wevm/ox/commit/868d4319a8cda77345f85f9f2e88ca786f0c8cfe) Thanks [@jxom](https://github.com/jxom)! - Added handling for odd-length hex values.
+
 ## 0.1.2
 
 ### Patch Changes
