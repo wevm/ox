@@ -107,8 +107,9 @@ export function trim(
       ? data.slice(sliceLength)
       : data.slice(0, data.length - sliceLength)
 
-  if (data.length === 1 && dir === 'right') data = `${data}0`
-  return `0x${data.length % 2 === 1 ? `0${data}` : data}` as trim.ReturnType
+  if (data === '0') return '0x'
+  if (dir === 'right' && data.length % 2 === 1) return `0x${data}0`
+  return `0x${data}` as trim.ReturnType
 }
 
 /** @internal */

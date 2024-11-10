@@ -653,8 +653,8 @@ export function toBoolean(hex: Hex, options: toBoolean.Options = {}): boolean {
     internal.assertSize(hex, options.size)
     hex_ = trimLeft(hex_)
   }
-  if (trimLeft(hex_) === '0x00') return false
-  if (trimLeft(hex_) === '0x01') return true
+  if (trimLeft(hex_) === '0x') return false
+  if (trimLeft(hex_) === '0x1') return true
   throw new InvalidHexBooleanError(hex_)
 }
 

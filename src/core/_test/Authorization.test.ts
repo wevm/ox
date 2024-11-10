@@ -437,8 +437,8 @@ describe('toTuple', () => {
           "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
           "0x28",
           "0x",
-          "0x01",
-          "0x02",
+          "0x1",
+          "0x2",
         ]
       `)
     }
@@ -527,16 +527,16 @@ describe('toTupleList', () => {
             "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
             "0x2a",
             "0x",
-            "0x01",
-            "0x02",
+            "0x1",
+            "0x2",
           ],
           [
             "0x2",
             "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
             "0x2b",
             "0x",
-            "0x04",
-            "0x05",
+            "0x4",
+            "0x5",
           ],
         ]
       `)
