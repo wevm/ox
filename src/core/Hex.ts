@@ -648,14 +648,11 @@ toBigInt.parseError = (error: unknown) => error as toBigInt.ErrorType
  * @returns The decoded boolean.
  */
 export function toBoolean(hex: Hex, options: toBoolean.Options = {}): boolean {
-  let hex_ = hex
-  if (options.size) {
-    internal.assertSize(hex, options.size)
-    hex_ = trimLeft(hex_)
-  }
-  if (trimLeft(hex_) === '0x') return false
-  if (trimLeft(hex_) === '0x1') return true
-  throw new InvalidHexBooleanError(hex_)
+  if (options.size) internal.assertSize(hex, options.size)
+  const hex_ = trimLeft(hex)
+  if (hex_ === '0x') return false
+  if (hex_ === '0x1') return true
+  throw new InvalidHexBooleanError(hex)
 }
 
 export declare namespace toBoolean {
