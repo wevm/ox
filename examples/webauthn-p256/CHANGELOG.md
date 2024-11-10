@@ -1,5 +1,12 @@
 # webauthn-p256
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`777fe42`](https://github.com/wevm/ox/commit/777fe4249c5225c676ff690fda58c5fcfb35d1f0)]:
+  - ox@0.1.4
+
 ## 0.0.4
 
 ### Patch Changes

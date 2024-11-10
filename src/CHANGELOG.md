@@ -1,5 +1,11 @@
 # ox
 
+## 0.1.4
+
+### Patch Changes
+
+- [`777fe42`](https://github.com/wevm/ox/commit/777fe4249c5225c676ff690fda58c5fcfb35d1f0) Thanks [@jxom](https://github.com/jxom)! - Tweaked `trimLeft` to remove all leading zeros.
+
 ## 0.1.3
 
 ### Patch Changes
