@@ -1,5 +1,11 @@
 # ox
 
+## 0.1.5
+
+### Patch Changes
+
+- [`644b96a`](https://github.com/wevm/ox/commit/644b96a169a118c6f0606eda5354785523ed099b) Thanks [@jxom](https://github.com/jxom)! - Added additional guard for `result` in `Provider.from`.
+
 ## 0.1.4
 
 ### Patch Changes
