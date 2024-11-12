@@ -1,5 +1,11 @@
 # ox
 
+## 0.1.7
+
+### Patch Changes
+
+- [`33b5123`](https://github.com/wevm/ox/commit/33b51236908f17cb8644a47e222995e1800853db) Thanks [@tmm](https://github.com/tmm)! - Updated Provider errors.
+
 ## 0.1.6
 
 ### Patch Changes
