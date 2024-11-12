@@ -1,5 +1,13 @@
 # ox
 
+## 0.1.6
+
+### Patch Changes
+
+- [`4405c4b`](https://github.com/wevm/ox/commit/4405c4bd2bff3f9f222a90de7323cce77c94b5f3) Thanks [@jxom](https://github.com/jxom)! - Amended `accountsChanged` parameter to be `readonly`.
+
+- [#22](https://github.com/wevm/ox/pull/22) [`23f2d61`](https://github.com/wevm/ox/commit/23f2d61f817c5d33f0053cb154447f0b26244cc1) Thanks [@tmm](https://github.com/tmm)! - Added EIP 1193 errors.
+
 ## 0.1.5
 
 ### Patch Changes
