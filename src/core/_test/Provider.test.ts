@@ -118,6 +118,11 @@ test('exports', () => {
   expect(Object.keys(Provider)).toMatchInlineSnapshot(`
     [
       "ProviderRpcError",
+      "UserRejectedRequestError",
+      "UnauthorizedError",
+      "UnsupportedMethodError",
+      "DisconnectedError",
+      "ChainDisconnectedError",
       "createEmitter",
       "from",
       "IsUndefinedError",
