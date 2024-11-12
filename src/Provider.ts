@@ -69,7 +69,7 @@ export type Message = {
 }
 
 export class ProviderRpcError extends Error {
-  override readonly name = 'ProviderRpcError'
+  override name = 'ProviderRpcError'
 
   code: number
   details: string
@@ -93,35 +93,43 @@ export type EventMap = {
 export class UserRejectedRequestError extends ProviderRpcError {
   static readonly code = 4001
   override readonly code = 4001
-  override readonly message = 'User Rejected Request'
+  override readonly name = 'Provider.UserRejectedRequestError'
+  override readonly message = 'The user rejected the request.'
 }
 
 /** The requested method and/or account has not been authorized by the user. */
 export class UnauthorizedError extends ProviderRpcError {
   static readonly code = 4100
   override readonly code = 4100
-  override readonly message = 'Unauthorized'
+  override readonly name = 'Provider.UnauthorizedError'
+  override readonly message =
+    'The requested method and/or account has not been authorized by the user.'
 }
 
 /** The Provider does not support the requested method. */
 export class UnsupportedMethodError extends ProviderRpcError {
   static readonly code = 4200
   override readonly code = 4200
-  override readonly message = 'Unsupported Method'
+  override readonly name = 'Provider.UnsupportedMethodError'
+  override readonly message =
+    'The provider does not support the requested method.'
 }
 
 /** The Provider is disconnected from all chains. */
 export class DisconnectedError extends ProviderRpcError {
   static readonly code = 4900
   override readonly code = 4900
-  override readonly message = 'Disconnected'
+  override readonly name = 'Provider.DisconnectedError'
+  override readonly message = 'The provider is disconnected from all chains.'
 }
 
 /** The Provider is not connected to the requested chain. */
 export class ChainDisconnectedError extends ProviderRpcError {
   static readonly code = 4901
   override readonly code = 4901
-  override readonly message = 'Chain Disconnected'
+  override readonly name = 'Provider.ChainDisconnectedError'
+  override readonly message =
+    'The provider is disconnected from the requested chain.'
 }
 
 /**
