@@ -328,6 +328,7 @@ export function from(provider: any, options: Options = {}): Provider<Options> {
     async request(args) {
       const result = await provider.request(args)
       if (
+        result &&
         typeof result === 'object' &&
         'jsonrpc' in (result as { jsonrpc?: unknown })
       )
