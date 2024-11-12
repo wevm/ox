@@ -157,7 +157,10 @@ export function assert<
   }
 
   // Validate domain types.
-  if (types.EIP712Domain && domain) validateData(types.EIP712Domain, domain)
+  if (types.EIP712Domain && domain) {
+    if (typeof domain !== 'object') throw new InvalidDomainError({ domain })
+    validateData(types.EIP712Domain, domain)
+  }
 
   // Validate message types.
   if (primaryType !== 'EIP712Domain') {
@@ -746,6 +749,17 @@ export class BytesSizeMismatchError extends Errors.BaseError {
     givenSize,
   }: { expectedSize: number; givenSize: number }) {
     super(`Expected bytes${expectedSize}, got bytes${givenSize}.`)
+  }
+}
+
+/** Thrown when the domain is invalid. */
+export class InvalidDomainError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidDomainError'
+
+  constructor({ domain }: { domain: unknown }) {
+    super(`Invalid domain "${Json.stringify(domain)}".`, {
+      metaMessages: ['Must be a valid EIP-712 domain.'],
+    })
   }
 }
 

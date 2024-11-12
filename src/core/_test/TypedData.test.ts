@@ -200,6 +200,49 @@ describe('assert', () => {
     )
   })
 
+  test('domain: invalid', () => {
+    expect(() =>
+      TypedData.assert({
+        domain: 'foo' as never,
+        primaryType: 'Mail',
+        types: {
+          EIP712Domain: [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+          ],
+          Mail: [
+            { name: 'from', type: 'Person' },
+            { name: 'to', type: 'Person' },
+            { name: 'contents', type: 'string' },
+          ],
+          Person: [
+            { name: 'name', type: 'string' },
+            { name: 'wallet', type: 'address' },
+          ],
+        },
+        message: {
+          from: {
+            name: 'Cow',
+            wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+          },
+          to: {
+            name: 'Bob',
+            wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+          },
+          contents: 'Hello, Bob!',
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `
+      [TypedData.InvalidDomainError: Invalid domain ""foo"".
+
+      Must be a valid EIP-712 domain.]
+    `,
+    )
+  })
+
   test('domain: invalid chainId', () => {
     expect(() =>
       TypedData.assert({
@@ -1412,6 +1455,7 @@ test('exports', () => {
       "serialize",
       "validate",
       "BytesSizeMismatchError",
+      "InvalidDomainError",
       "InvalidPrimaryTypeError",
       "InvalidStructTypeError",
       "encodeData",
