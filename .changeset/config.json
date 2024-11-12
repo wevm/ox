@@ -5,7 +5,7 @@
   "changelog": ["@changesets/changelog-github", { "repo": "wevm/ox" }],
   "commit": false,
   "fixed": [],
-  "ignore": [],
+  "ignore": ["webauthn-p256"],
   "linked": [],
   "updateInternalDependencies": "patch"
 }

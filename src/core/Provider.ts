@@ -82,7 +82,7 @@ export class ProviderRpcError extends Error {
 }
 
 export type EventMap = {
-  accountsChanged: (accounts: Address.Address[]) => void
+  accountsChanged: (accounts: readonly Address.Address[]) => void
   chainChanged: (chainId: string) => void
   connect: (connectInfo: ConnectInfo) => void
   disconnect: (error: ProviderRpcError) => void
