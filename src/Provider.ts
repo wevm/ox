@@ -106,7 +106,7 @@ export class UnauthorizedError extends ProviderRpcError {
     'The requested method and/or account has not been authorized by the user.'
 }
 
-/** The Provider does not support the requested method. */
+/** The provider does not support the requested method. */
 export class UnsupportedMethodError extends ProviderRpcError {
   static readonly code = 4200
   override readonly code = 4200
@@ -115,7 +115,7 @@ export class UnsupportedMethodError extends ProviderRpcError {
     'The provider does not support the requested method.'
 }
 
-/** The Provider is disconnected from all chains. */
+/** The provider is disconnected from all chains. */
 export class DisconnectedError extends ProviderRpcError {
   static readonly code = 4900
   override readonly code = 4900
@@ -123,7 +123,7 @@ export class DisconnectedError extends ProviderRpcError {
   override readonly message = 'The provider is disconnected from all chains.'
 }
 
-/** The Provider is not connected to the requested chain. */
+/** The provider is not connected to the requested chain. */
 export class ChainDisconnectedError extends ProviderRpcError {
   static readonly code = 4901
   override readonly code = 4901
