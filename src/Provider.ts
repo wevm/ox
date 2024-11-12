@@ -89,6 +89,41 @@ export type EventMap = {
   message: (message: Message) => void
 }
 
+/** The user rejected the request. */
+export class UserRejectedRequestError extends ProviderRpcError {
+  static readonly code = 4001
+  override readonly code = 4001
+  override readonly message = 'User Rejected Request'
+}
+
+/** The requested method and/or account has not been authorized by the user. */
+export class UnauthorizedError extends ProviderRpcError {
+  static readonly code = 4100
+  override readonly code = 4100
+  override readonly message = 'Unauthorized'
+}
+
+/** The Provider does not support the requested method. */
+export class UnsupportedMethodError extends ProviderRpcError {
+  static readonly code = 4200
+  override readonly code = 4200
+  override readonly message = 'Unsupported Method'
+}
+
+/** The Provider is disconnected from all chains. */
+export class DisconnectedError extends ProviderRpcError {
+  static readonly code = 4900
+  override readonly code = 4900
+  override readonly message = 'Disconnected'
+}
+
+/** The Provider is not connected to the requested chain. */
+export class ChainDisconnectedError extends ProviderRpcError {
+  static readonly code = 4901
+  override readonly code = 4901
+  override readonly message = 'Chain Disconnected'
+}
+
 /**
  * Creates an EIP-1193 flavored event emitter to be injected onto a Provider.
  *
