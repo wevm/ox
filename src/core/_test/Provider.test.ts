@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { anvilMainnet } from '../../../test/anvil.js'
 import { address } from '../../../test/constants/addresses.js'
 
-describe('createEmitter', () => {
+describe('Provider.createEmitter', () => {
   test('default', () => {
     const emitter = Provider.createEmitter()
 
@@ -24,7 +24,7 @@ describe('createEmitter', () => {
   })
 })
 
-describe('from', () => {
+describe('Provider.from', () => {
   test('default', async () => {
     const store = RpcRequest.createStore()
 
@@ -112,6 +112,36 @@ describe('from', () => {
       '[Provider.IsUndefinedError: `provider` is undefined.]',
     )
   })
+})
+
+test('Provider.InvalidMessageFieldError', () => {
+  expect(new Provider.UserRejectedRequestError()).toMatchInlineSnapshot(
+    '[Provider.UserRejectedRequestError: The user rejected the request.]',
+  )
+})
+
+test('Provider.UnauthorizedError', () => {
+  expect(new Provider.UnauthorizedError()).toMatchInlineSnapshot(
+    '[Provider.UnauthorizedError: The requested method and/or account has not been authorized by the user.]',
+  )
+})
+
+test('Provider.UnsupportedMethodError', () => {
+  expect(new Provider.UnsupportedMethodError()).toMatchInlineSnapshot(
+    '[Provider.UnsupportedMethodError: The provider does not support the requested method.]',
+  )
+})
+
+test('Provider.DisconnectedError', () => {
+  expect(new Provider.DisconnectedError()).toMatchInlineSnapshot(
+    '[Provider.DisconnectedError: The provider is disconnected from all chains.]',
+  )
+})
+
+test('Provider.ChainDisconnectedError', () => {
+  expect(new Provider.ChainDisconnectedError()).toMatchInlineSnapshot(
+    '[Provider.ChainDisconnectedError: The provider is not connected to the requested chain.]',
+  )
 })
 
 test('exports', () => {
