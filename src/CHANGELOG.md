@@ -1,5 +1,11 @@
 # ox
 
+## 0.1.8
+
+### Patch Changes
+
+- [#25](https://github.com/wevm/ox/pull/25) [`5da9efb`](https://github.com/wevm/ox/commit/5da9efbfebfa738ee0f78927e90b3fab61cbb2e8) Thanks [@tmm](https://github.com/tmm)! - Shimmed `WebAuthnP256.createCredential` for 1Password Firefox Add-on.
+
 ## 0.1.7
 
 ### Patch Changes
