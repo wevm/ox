@@ -181,10 +181,10 @@ export function parseAsn1Signature(bytes: Uint8Array) {
 export async function parseCredentialPublicKey(
   response: AuthenticatorAttestationResponse,
 ): Promise<PublicKey.PublicKey> {
-  const publicKeyBuffer = response.getPublicKey()
-  if (!publicKeyBuffer) throw new CredentialCreationFailedError()
-
   try {
+    const publicKeyBuffer = response.getPublicKey()
+    if (!publicKeyBuffer) throw new CredentialCreationFailedError()
+
     // Converting `publicKeyBuffer` throws when credential is created by 1Password Firefox Add-on
     const publicKeyBytes = new Uint8Array(publicKeyBuffer)
     const cryptoKey = await crypto.subtle.importKey(

@@ -169,6 +169,67 @@ describe('createCredential', () => {
       Details: foo]
     `)
   })
+
+  test('behavior: firefox workaround', async () => {
+    const credential = await WebAuthnP256.createCredential({
+      createFn(_options) {
+        return Promise.resolve({
+          id: 'DxRcX5C6BRQ-q-CO7XEFwrnmKlk',
+          response: {
+            attestationObject: new Uint8Array([
+              163, 99, 102, 109, 116, 100, 110, 111, 110, 101, 103, 97, 116,
+              116, 83, 116, 109, 116, 160, 104, 97, 117, 116, 104, 68, 97, 116,
+              97, 88, 152, 73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15,
+              100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153, 92,
+              243, 186, 131, 29, 151, 99, 93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 15, 20, 92, 95, 144, 186, 5, 20,
+              62, 171, 224, 142, 237, 113, 5, 194, 185, 230, 42, 89, 165, 1, 2,
+              3, 38, 32, 1, 33, 88, 32, 98, 163, 23, 104, 212, 79, 94, 255, 34,
+              47, 141, 112, 196, 203, 97, 171, 210, 132, 11, 39, 214, 23, 167,
+              254, 141, 17, 183, 45, 213, 232, 111, 193, 34, 88, 32, 102, 17,
+              186, 227, 241, 226, 205, 56, 228, 5, 21, 55, 118, 167, 220, 182,
+              153, 91, 130, 84, 161, 65, 110, 173, 16, 42, 9, 108, 176, 216, 6,
+              24,
+            ]),
+            getPublicKey() {
+              throw new Error('Permission denied to access object')
+            },
+          },
+        } as any)
+      },
+      name: 'Example',
+    })
+
+    const publicKey = credential.publicKey
+    expect(publicKey).toMatchInlineSnapshot(`
+      {
+        "prefix": 4,
+        "x": 44614816799078269475358047303051634413161263247311473071495733982312972971969n,
+        "y": 46167236825796363714760407637183215339795593866991122305568923653847108814360n,
+      }
+    `)
+
+    expect(
+      WebAuthnP256.verify({
+        metadata: {
+          authenticatorData:
+            '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631d00000000',
+          clientDataJSON:
+            '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173"}',
+          challengeIndex: 23,
+          typeIndex: 1,
+          userVerificationRequired: true,
+        },
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature: {
+          r: 113791849669138837781667788757552147501372344687388971338283671717487200515057n,
+          s: 5390836038580862917709632535460377625750500964730124261384576347991859205326n,
+        },
+      }),
+    ).toBeTruthy()
+  })
 })
 
 describe('getAuthenticatorData', () => {
