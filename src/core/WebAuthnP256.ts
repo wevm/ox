@@ -67,9 +67,10 @@ export async function createCredential(
       creationOptions,
     )) as internal.PublicKeyCredential
     if (!credential) throw new CredentialCreationFailedError()
-    const publicKey = await internal.parseCredentialPublicKey(
-      new Uint8Array((credential.response as any).getPublicKey()),
-    )
+
+    const response = credential.response as AuthenticatorAttestationResponse
+    const publicKey = await internal.parseCredentialPublicKey(response)
+
     return {
       id: credential.id,
       publicKey,
@@ -99,6 +100,7 @@ export declare namespace createCredential {
 
   type ErrorType =
     | getCredentialCreationOptions.ErrorType
+    | internal.parseCredentialPublicKey.ErrorType
     | Errors.GlobalErrorType
 }
 
