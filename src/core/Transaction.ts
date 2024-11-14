@@ -326,10 +326,6 @@ export declare namespace fromRpc {
   type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
-fromRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpc.ErrorType
-
 /**
  * Converts an {@link ox#Transaction.Transaction} to an {@link ox#Transaction.Rpc}.
  *
@@ -423,7 +419,3 @@ export declare namespace toRpc {
 
   type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
-
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType

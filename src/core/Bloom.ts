@@ -44,10 +44,6 @@ export declare namespace contains {
     | Errors.GlobalErrorType
 }
 
-contains.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as contains.ErrorType
-
 /**
  * Checks if a string is a valid bloom filter value.
  *
@@ -75,6 +71,3 @@ export declare namespace validate {
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-validate.parseError = (error: unknown) => error as validate.ErrorType

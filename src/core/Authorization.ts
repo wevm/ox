@@ -153,10 +153,6 @@ export declare namespace from {
   type ErrorType = Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Converts an {@link ox#Authorization.Rpc} to an {@link ox#Authorization.Authorization}.
  *
@@ -193,10 +189,6 @@ export declare namespace fromRpc {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpc.ErrorType
-
 /**
  * Converts an {@link ox#Authorization.ListRpc} to an {@link ox#Authorization.List}.
  *
@@ -224,10 +216,6 @@ export function fromRpcList(authorizationList: ListRpc): ListSigned {
 export declare namespace fromRpcList {
   type ErrorType = Errors.GlobalErrorType
 }
-
-fromRpcList.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpcList.ErrorType
 
 /**
  * Converts an {@link ox#Authorization.Tuple} to an {@link ox#Authorization.Authorization}.
@@ -296,10 +284,6 @@ export declare namespace fromTuple {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-fromTuple.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromTuple.ErrorType
 
 /**
  * Converts an {@link ox#Authorization.TupleList} to an {@link ox#Authorization.List}.
@@ -375,10 +359,6 @@ export declare namespace fromTupleList {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromTupleList.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromTupleList.ErrorType
-
 /**
  * Computes the sign payload for an {@link ox#Authorization.Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
  *
@@ -414,10 +394,6 @@ export declare namespace getSignPayload {
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType
 }
 
-getSignPayload.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getSignPayload.ErrorType
-
 /**
  * Computes the hash for an {@link ox#Authorization.Authorization} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
  *
@@ -449,10 +425,6 @@ export declare namespace hash {
     | Rlp.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
-
-hash.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as hash.ErrorType
 
 /**
  * Converts an {@link ox#Authorization.Authorization} to an {@link ox#Authorization.Rpc}.
@@ -489,10 +461,6 @@ export declare namespace toRpc {
   type ErrorType = Errors.GlobalErrorType
 }
 
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType
-
 /**
  * Converts an {@link ox#Authorization.List} to an {@link ox#Authorization.ListRpc}.
  *
@@ -520,10 +488,6 @@ export function toRpcList(authorizationList: ListSigned): ListRpc {
 export declare namespace toRpcList {
   type ErrorType = Errors.GlobalErrorType
 }
-
-toRpcList.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpcList.ErrorType
 
 /**
  * Converts an {@link ox#Authorization.Authorization} to an {@link ox#Authorization.Tuple}.
@@ -568,10 +532,6 @@ export declare namespace toTuple {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-toTuple.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toTuple.ErrorType
 
 /**
  * Converts an {@link ox#Authorization.List} to an {@link ox#Authorization.TupleList}.
@@ -633,7 +593,3 @@ export declare namespace toTupleList {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-toTupleList.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toTupleList.ErrorType

@@ -37,10 +37,6 @@ export declare namespace labelhash {
     | Errors.GlobalErrorType
 }
 
-labelhash.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as labelhash.ErrorType
-
 /**
  * Hashes ENS name.
  *
@@ -84,10 +80,6 @@ export declare namespace namehash {
     | Errors.GlobalErrorType
 }
 
-namehash.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as namehash.ErrorType
-
 /**
  * Normalizes ENS name according to [ENSIP-15](https://github.com/ensdomains/docs/blob/9edf9443de4333a0ea7ec658a870672d5d180d53/ens-improvement-proposals/ensip-15-normalization-standard.md).
  *
@@ -110,7 +102,3 @@ export function normalize(name: string): string {
 export declare namespace normalize {
   type ErrorType = Errors.GlobalErrorType
 }
-
-normalize.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as normalize.ErrorType

@@ -160,10 +160,6 @@ export declare namespace fromRpc {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpc.ErrorType
-
 /**
  * Converts a {@link ox#Log.Log} to a {@link ox#Log.Rpc}.
  *
@@ -242,7 +238,3 @@ export declare namespace toRpc {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType

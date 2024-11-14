@@ -68,10 +68,6 @@ export declare namespace decrypt {
     | Errors.GlobalErrorType
 }
 
-decrypt.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as decrypt.ErrorType
-
 /**
  * Encrypts data using AES-GCM.
  *
@@ -134,10 +130,6 @@ export declare namespace encrypt {
     | Errors.GlobalErrorType
 }
 
-encrypt.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as encrypt.ErrorType
-
 /**
  * Derives an AES-GCM key from a password using PBKDF2.
  *
@@ -189,10 +181,6 @@ export declare namespace getKey {
   type ErrorType = Errors.GlobalErrorType
 }
 
-getKey.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getKey.ErrorType
-
 /**
  * Generates a random salt of the specified size.
  *
@@ -214,7 +202,3 @@ export function randomSalt(size = 32): Bytes.Bytes {
 export declare namespace randomSalt {
   type ErrorType = Bytes.random.ErrorType | Errors.GlobalErrorType
 }
-
-Bytes.random.parseError = (error) =>
-  /* v8 ignore next */
-  error as randomSalt.ErrorType

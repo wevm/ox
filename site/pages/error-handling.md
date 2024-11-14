@@ -42,7 +42,7 @@ try {
 
 ## Usage with `neverthrow`
 
-You can utilize Ox's `parseError` property into custom type-safe error handling libraries like [`neverthrow`](https://github.com/supermacro/neverthrow).
+You can utilize Ox's `.ErrorType` property into custom type-safe error handling libraries like [`neverthrow`](https://github.com/supermacro/neverthrow).
 
 ```ts twoslash
 // @noErrors
@@ -51,7 +51,7 @@ import { fromThrowable } from 'neverthrow';
 
 const encode = fromThrowable( // [!code hl]
   AbiParameters.encode, // [!code hl]
-  AbiParameters.encode.parseError // [!code hl]
+  e => e as AbiParameters.encode.ErrorType // [!code hl]
 ) // [!code hl]
 
 const result = encode(AbiParameters.from('bytes'), ['0xdeadbeef'])

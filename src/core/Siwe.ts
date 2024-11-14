@@ -251,10 +251,6 @@ export declare namespace createMessage {
     | Errors.GlobalErrorType
 }
 
-createMessage.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as createMessage.ErrorType
-
 /**
  * Generates random [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) nonce.
  *

@@ -123,10 +123,6 @@ export declare namespace compress {
   type ErrorType = Errors.GlobalErrorType
 }
 
-compress.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as compress.ErrorType
-
 /**
  * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
  *
@@ -217,10 +213,6 @@ export declare namespace from {
   type ErrorType = assert.ErrorType | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Bytes.Bytes} value.
  *
@@ -250,10 +242,6 @@ export declare namespace fromBytes {
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
-
-fromBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromBytes.ErrorType
 
 /**
  * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} value.
@@ -327,10 +315,6 @@ export declare namespace fromHex {
   type ErrorType = Hex.slice.ErrorType | Errors.GlobalErrorType
 }
 
-fromHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromHex.ErrorType
-
 /**
  * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Bytes.Bytes}.
  *
@@ -372,10 +356,6 @@ export declare namespace toBytes {
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
-
-toBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toBytes.ErrorType
 
 /**
  * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Hex.Hex}.
@@ -427,10 +407,6 @@ export declare namespace toHex {
 
   type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
-
-toHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toHex.ErrorType
 
 /**
  * Validates a {@link ox#PublicKey.PublicKey}. Returns `true` if valid, `false` otherwise.

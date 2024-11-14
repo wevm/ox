@@ -49,10 +49,6 @@ export declare namespace fromRpc {
   export type ErrorType = Errors.GlobalErrorType
 }
 
-fromRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpc.ErrorType
-
 /**
  * Converts a {@link ox#Withdrawal.Withdrawal} to an {@link ox#Withdrawal.Rpc}.
  *
@@ -89,7 +85,3 @@ export function toRpc(withdrawal: Withdrawal): Rpc {
 export declare namespace toRpc {
   export type ErrorType = Errors.GlobalErrorType
 }
-
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType

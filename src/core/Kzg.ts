@@ -46,6 +46,3 @@ export function from(value: Kzg): Kzg {
 export declare namespace from {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-from.parseError = (error: unknown) => error as from.ErrorType

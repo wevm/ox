@@ -46,9 +46,6 @@ export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-format.parseError = (error: unknown) => error as format.ErrorType
-
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Ether.
  *
@@ -75,9 +72,6 @@ export declare namespace formatEther {
   type ErrorType = format.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-formatEther.parseError = (error: unknown) => error as formatEther.ErrorType
-
 /**
  * Formats a `bigint` Value (default: wei) to a string representation of Gwei.
  *
@@ -100,9 +94,6 @@ export function formatGwei(wei: bigint, unit: 'wei' = 'wei') {
 export declare namespace formatGwei {
   type ErrorType = format.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-formatGwei.parseError = (error: unknown) => error as formatGwei.ErrorType
 
 /**
  * Parses a `string` representation of a Value to `bigint` (multiplied by the given exponent).
@@ -165,9 +156,6 @@ export declare namespace from {
   type ErrorType = Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-from.parseError = (error: unknown) => error as from.ErrorType
-
 /**
  * Parses a string representation of Ether to a `bigint` Value (default: wei).
  *
@@ -194,9 +182,6 @@ export declare namespace fromEther {
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-fromEther.parseError = (error: unknown) => error as fromEther.ErrorType
-
 /**
  * Parses a string representation of Gwei to a `bigint` Value (default: wei).
  *
@@ -219,9 +204,6 @@ export function fromGwei(gwei: string, unit: 'wei' = 'wei') {
 export declare namespace fromGwei {
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-fromGwei.parseError = (error: unknown) => error as fromGwei.ErrorType
 
 /**
  * Thrown when a value is not a valid decimal number.

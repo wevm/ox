@@ -184,10 +184,6 @@ export declare namespace assert {
     | Errors.GlobalErrorType
 }
 
-assert.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as assert.ErrorType
-
 /**
  * Creates [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) [`domainSeparator`](https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator) for the provided domain.
  *
@@ -216,10 +212,6 @@ export function domainSeparator(domain: Domain): Hex.Hex {
 export declare namespace domainSeparator {
   type ErrorType = hashDomain.ErrorType | Errors.GlobalErrorType
 }
-
-domainSeparator.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as domainSeparator.ErrorType
 
 /**
  * Encodes typed data in [EIP-712 format](https://eips.ethereum.org/EIPS/eip-712): `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`.
@@ -323,9 +315,6 @@ export declare namespace encode {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-encode.parseError = (error: unknown) => error as encode.ErrorType
-
 /**
  * Encodes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for the provided primaryType.
  *
@@ -375,9 +364,6 @@ export declare namespace encodeType {
   type ErrorType = findTypeDependencies.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-encodeType.parseError = (error: unknown) => error as encodeType.ErrorType
-
 /**
  * Gets [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema for EIP-721 domain.
  *
@@ -423,10 +409,6 @@ export function extractEip712DomainTypes(
 export declare namespace extractEip712DomainTypes {
   type ErrorType = Errors.GlobalErrorType
 }
-
-extractEip712DomainTypes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as extractEip712DomainTypes.ErrorType
 
 /**
  * Gets the payload to use for signing typed data in [EIP-712 format](https://eips.ethereum.org/EIPS/eip-712).
@@ -487,10 +469,6 @@ export declare namespace getSignPayload {
     | Errors.GlobalErrorType
 }
 
-getSignPayload.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getSignPayload.ErrorType
-
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) domain.
  *
@@ -539,9 +517,6 @@ export declare namespace hashDomain {
 
   type ErrorType = hashStruct.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-hashDomain.parseError = (error: unknown) => error as hashDomain.ErrorType
 
 /**
  * Hashes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) struct.
@@ -596,9 +571,6 @@ export declare namespace hashStruct {
     | Hash.keccak256.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-hashStruct.parseError = (error: unknown) => error as hashStruct.ErrorType
 
 /**
  * Serializes [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) schema into string.
@@ -684,10 +656,6 @@ export declare namespace serialize {
   type ErrorType = Json.stringify.ErrorType | Errors.GlobalErrorType
 }
 
-serialize.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as serialize.ErrorType
-
 /**
  * Checks if [EIP-712 Typed Data](https://eips.ethereum.org/EIPS/eip-712) is valid.
  *
@@ -736,9 +704,6 @@ export function validate<
 export declare namespace validate {
   type ErrorType = assert.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-validate.parseError = (error: unknown) => error as validate.ErrorType
 
 /** Thrown when the bytes size of a typed data value does not match the expected size. */
 export class BytesSizeMismatchError extends Errors.BaseError {

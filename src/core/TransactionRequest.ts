@@ -145,7 +145,3 @@ export declare namespace toRpc {
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
 }
-
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType

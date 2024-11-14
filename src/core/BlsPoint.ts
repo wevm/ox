@@ -72,9 +72,6 @@ export declare namespace toBytes {
   type ErrorType = Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
-
 /**
  * Converts a BLS point to {@link ox#Hex.Hex}.
  *
@@ -114,9 +111,6 @@ export function toHex(point: G1 | G2): Hex.Hex {
 export declare namespace toHex {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-toHex.parseError = (error: unknown) => error as toHex.ErrorType
 
 /**
  * Converts {@link ox#Bytes.Bytes} to a BLS point.
@@ -173,9 +167,6 @@ export declare namespace fromBytes {
   type ErrorType = Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
-
 /**
  * Converts {@link ox#Hex.Hex} to a BLS point.
  *
@@ -227,6 +218,3 @@ export function fromHex(hex: Hex.Hex, group: 'G1' | 'G2'): BlsPoint<any> {
 export declare namespace fromHex {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-fromHex.parseError = (error: unknown) => error as fromHex.ErrorType

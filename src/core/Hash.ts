@@ -73,9 +73,6 @@ export declare namespace keccak256 {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-keccak256.parseError = (error: unknown) => error as keccak256.ErrorType
-
 /**
  * Calculates the [Ripemd160](https://en.wikipedia.org/wiki/RIPEMD) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
  *
@@ -123,9 +120,6 @@ export declare namespace ripemd160 {
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-ripemd160.parseError = (error: unknown) => error as ripemd160.ErrorType
 
 /**
  * Calculates the [Sha256](https://en.wikipedia.org/wiki/SHA-256) hash of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
@@ -175,9 +169,6 @@ export declare namespace sha256 {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-sha256.parseError = (error: unknown) => error as sha256.ErrorType
-
 /**
  * Checks if a string is a valid hash value.
  *
@@ -205,6 +196,3 @@ export declare namespace validate {
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-validate.parseError = (error: unknown) => error as validate.ErrorType

@@ -55,10 +55,6 @@ export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
 
-format.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as format.ErrorType
-
 /** @internal */
 export function from<const abi extends Abi | readonly string[]>(
   abi: abi &
@@ -157,7 +153,3 @@ export declare namespace from {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType

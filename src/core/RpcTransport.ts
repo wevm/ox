@@ -161,10 +161,6 @@ export declare namespace fromHttp {
     | Errors.GlobalErrorType
 }
 
-fromHttp.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromHttp.ErrorType
-
 /** Thrown when a HTTP request fails. */
 export class HttpError extends Errors.BaseError {
   override readonly name = 'RpcTransport.HttpError'

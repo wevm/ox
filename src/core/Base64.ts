@@ -101,10 +101,6 @@ export declare namespace fromBytes {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromBytes.ErrorType
-
 /**
  * Encodes a {@link ox#Hex.Hex} to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
@@ -165,10 +161,6 @@ export declare namespace fromHex {
 
   type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
 }
-
-fromHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromHex.ErrorType
 
 /**
  * Encodes a string to a Base64-encoded string (with optional padding and/or URL-safe characters).
@@ -231,10 +223,6 @@ export declare namespace fromString {
   type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
-fromString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromString.ErrorType
-
 /**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Bytes.Bytes}.
  *
@@ -276,10 +264,6 @@ export declare namespace toBytes {
   type ErrorType = Errors.GlobalErrorType
 }
 
-toBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toBytes.ErrorType
-
 /**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Hex.Hex}.
  *
@@ -302,10 +286,6 @@ export declare namespace toHex {
   type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
 }
 
-toHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toHex.ErrorType
-
 /**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a string.
  *
@@ -327,7 +307,3 @@ export function toString(value: string): string {
 export declare namespace toString {
   type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
 }
-
-toString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toString.ErrorType

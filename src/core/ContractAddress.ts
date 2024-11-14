@@ -55,10 +55,6 @@ export declare namespace from {
     | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Computes contract address via [CREATE](https://ethereum.stackexchange.com/questions/68943/create-opcode-what-does-it-really-do/68945#68945) opcode.
  *
@@ -103,10 +99,6 @@ export declare namespace fromCreate {
     | Rlp.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
-
-fromCreate.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromCreate.ErrorType
 
 /**
  * Computes contract address via [CREATE2](https://eips.ethereum.org/EIPS/eip-1014) opcode.
@@ -175,7 +167,3 @@ export declare namespace fromCreate2 {
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
-
-fromCreate2.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromCreate2.ErrorType

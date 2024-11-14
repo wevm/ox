@@ -75,10 +75,6 @@ export declare namespace decode {
   type ErrorType = Errors.GlobalErrorType
 }
 
-decode.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as decode.ErrorType
-
 /**
  * ABI-encodes the provided constructor input (`inputs`).
  *
@@ -172,10 +168,6 @@ export declare namespace encode {
     | Errors.GlobalErrorType
 }
 
-encode.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as encode.ErrorType
-
 /** @internal */
 export function format<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor,
@@ -217,10 +209,6 @@ export declare namespace format {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-format.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as format.ErrorType
 
 /** @internal */
 export function from<
@@ -353,10 +341,6 @@ export declare namespace from {
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /** @internal */
 export function fromAbi<const abi extends Abi.Abi | readonly unknown[]>(
   abi: abi | Abi.Abi | readonly unknown[],
@@ -407,7 +391,3 @@ export declare namespace fromAbi {
 
   type ErrorType = AbiItem.NotFoundError | Errors.GlobalErrorType
 }
-
-fromAbi.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromAbi.ErrorType

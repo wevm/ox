@@ -118,10 +118,6 @@ export declare namespace createStore {
   type ErrorType = Errors.GlobalErrorType
 }
 
-createStore.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as createStore.ErrorType
-
 /**
  * A type-safe interface to build a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
  *
@@ -186,7 +182,3 @@ export declare namespace from {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType

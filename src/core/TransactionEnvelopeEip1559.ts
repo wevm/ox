@@ -95,10 +95,6 @@ export declare namespace assert {
     | Errors.GlobalErrorType
 }
 
-assert.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as assert.ErrorType
-
 /**
  * Deserializes a {@link ox#TransactionEnvelopeEip1559.TransactionEnvelopeEip1559} from its serialized form.
  *
@@ -196,10 +192,6 @@ export function deserialize(
 export declare namespace deserialize {
   type ErrorType = Errors.GlobalErrorType
 }
-
-deserialize.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as deserialize.ErrorType
 
 /**
  * Converts an arbitrary transaction object into an EIP-1559 Transaction Envelope.
@@ -332,10 +324,6 @@ export declare namespace from {
     | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Returns the payload to sign for a {@link ox#TransactionEnvelopeEip1559.TransactionEnvelopeEip1559}.
  *
@@ -375,10 +363,6 @@ export declare namespace getSignPayload {
 
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType
 }
-
-getSignPayload.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getSignPayload.ErrorType
 
 /**
  * Hashes a {@link ox#TransactionEnvelopeEip1559.TransactionEnvelopeEip1559}. This is the "transaction hash".
@@ -443,10 +427,6 @@ export declare namespace hash {
     | serialize.ErrorType
     | Errors.GlobalErrorType
 }
-
-hash.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as hash.ErrorType
 
 /**
  * Serializes a {@link ox#TransactionEnvelopeEip1559.TransactionEnvelopeEip1559}.
@@ -552,9 +532,6 @@ export declare namespace serialize {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-serialize.parseError = (error: unknown) => error as serialize.ErrorType
-
 /**
  * Converts an {@link ox#TransactionEnvelopeEip1559.TransactionEnvelopeEip1559} to an {@link ox#TransactionEnvelopeEip1559.Rpc}.
  *
@@ -615,9 +592,6 @@ export declare namespace toRpc {
   export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-toRpc.parseError = (error: unknown) => error as toRpc.ErrorType
-
 /**
  * Validates a {@link ox#TransactionEnvelopeEip1559.TransactionEnvelopeEip1559}. Returns `true` if the envelope is valid, `false` otherwise.
  *
@@ -650,7 +624,3 @@ export function validate(
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
 }
-
-validate.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as validate.ErrorType

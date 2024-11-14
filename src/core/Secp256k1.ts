@@ -125,10 +125,6 @@ export declare namespace recoverAddress {
     | Errors.GlobalErrorType
 }
 
-recoverAddress.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as recoverAddress.ErrorType
-
 /**
  * Recovers the signing public key from the signed payload and signature.
  *
@@ -174,10 +170,6 @@ export declare namespace recoverPublicKey {
     | Errors.GlobalErrorType
 }
 
-recoverPublicKey.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as recoverPublicKey.ErrorType
-
 /**
  * Signs the payload with the provided private key.
  *
@@ -220,10 +212,6 @@ export declare namespace sign {
 
   type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
 }
-
-sign.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as sign.ErrorType
 
 /**
  * Verifies a payload was signed by the provided address.
@@ -298,7 +286,3 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-verify.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as verify.ErrorType

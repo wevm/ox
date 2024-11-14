@@ -129,10 +129,6 @@ export declare namespace recoverPublicKey {
     | Errors.GlobalErrorType
 }
 
-recoverPublicKey.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as recoverPublicKey.ErrorType
-
 /**
  * Signs the payload with the provided private key and returns a P256 signature.
  *
@@ -175,9 +171,6 @@ export declare namespace sign {
 
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-sign.parseError = (error: unknown) => error as sign.ErrorType
 
 /**
  * Verifies a payload was signed by the provided public key.
@@ -225,6 +218,3 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-verify.parseError = (error: unknown) => error as verify.ErrorType

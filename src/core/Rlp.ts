@@ -27,10 +27,6 @@ export declare namespace toBytes {
   type ErrorType = to.ErrorType
 }
 
-toBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toBytes.ErrorType
-
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Hex.Hex} value.
  *
@@ -51,10 +47,6 @@ export function toHex(value: Bytes.Bytes | Hex.Hex): RecursiveArray<Hex.Hex> {
 export declare namespace toHex {
   type ErrorType = to.ErrorType
 }
-
-toHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toHex.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal
@@ -99,9 +91,6 @@ export declare namespace to {
 }
 
 /** @internal */
-to.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as to.ErrorType
 
 /** @internal */
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
@@ -232,10 +221,6 @@ export declare namespace from {
     | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Encodes a {@link ox#Bytes.Bytes} value into a Recursive-Length Prefix (RLP) value.
  *
@@ -269,10 +254,6 @@ export declare namespace fromBytes {
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }
 
-fromBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromBytes.ErrorType
-
 /**
  * Encodes a {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
  *
@@ -305,10 +286,6 @@ export declare namespace fromHex {
 
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }
-
-fromHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromHex.ErrorType
 
 /////////////////////////////////////////////////////////////////////////////////
 // Internal

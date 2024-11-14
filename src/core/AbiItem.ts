@@ -108,10 +108,6 @@ export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
 
-format.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as format.ErrorType
-
 /**
  * Parses an arbitrary **JSON ABI Item** or **Human Readable ABI Item** into a typed {@link ox#AbiItem.AbiItem}.
  *
@@ -261,10 +257,6 @@ export declare namespace from {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
 
 /**
  * Extracts an {@link ox#AbiItem.AbiItem} from an {@link ox#Abi.Abi} given a name and optional arguments.
@@ -486,10 +478,6 @@ export declare namespace fromAbi {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromAbi.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromAbi.ErrorType
-
 /**
  * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link ox#AbiItem.AbiItem}.
  *
@@ -530,9 +518,6 @@ export declare namespace getSelector {
     | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-getSelector.parseError = (error: unknown) => error as getSelector.ErrorType
 
 /**
  * Computes the stringified signature for a given {@link ox#AbiItem.AbiItem}.
@@ -575,9 +560,6 @@ export declare namespace getSignature {
     | internal.normalizeSignature.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-getSignature.parseError = (error: unknown) => error as getSignature.ErrorType
 
 /**
  * Computes the signature hash for an {@link ox#AbiItem.AbiItem}.
@@ -624,10 +606,6 @@ export declare namespace getSignatureHash {
     | Hex.fromString.ErrorType
     | Errors.GlobalErrorType
 }
-
-getSignatureHash.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getSignatureHash.ErrorType
 
 /**
  * Throws when ambiguous types are found on overloaded ABI items.

@@ -55,9 +55,6 @@ export declare namespace assert {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-assert.parseError = (error: unknown) => error as assert.ErrorType
-
 /**
  * Concatenates two or more {@link ox#Hex.Hex}.
  *
@@ -79,9 +76,6 @@ export function concat(...values: readonly Hex[]): Hex {
 export declare namespace concat {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-concat.parseError = (error: unknown) => error as concat.ErrorType
 
 /**
  * Instantiates a {@link ox#Hex.Hex} value from a hex string or {@link ox#Bytes.Bytes} value.
@@ -126,9 +120,6 @@ export declare namespace from {
 
   type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-from.parseError = (error: unknown) => error as from.ErrorType
 
 /**
  * Encodes a boolean into a {@link ox#Hex.Hex} value.
@@ -175,10 +166,6 @@ export declare namespace fromBoolean {
     | Errors.GlobalErrorType
 }
 
-fromBoolean.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromBoolean.ErrorType
-
 /**
  * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
  *
@@ -220,9 +207,6 @@ export declare namespace fromBytes {
     | padRight.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-fromBytes.parseError = (error: unknown) => error as fromBytes.ErrorType
 
 /**
  * Encodes a number or bigint into a {@link ox#Hex.Hex} value.
@@ -300,10 +284,6 @@ export declare namespace fromNumber {
     | Errors.GlobalErrorType
 }
 
-fromNumber.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromNumber.ErrorType
-
 /**
  * Encodes a string into a {@link ox#Hex.Hex} value.
  *
@@ -337,10 +317,6 @@ export declare namespace fromString {
   type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
-fromString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromString.ErrorType
-
 /**
  * Checks if two {@link ox#Hex.Hex} values are equal.
  *
@@ -366,9 +342,6 @@ export function isEqual(hexA: Hex, hexB: Hex) {
 export declare namespace isEqual {
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-isEqual.parseError = (error: unknown) => error as isEqual.ErrorType
 
 /**
  * Pads a {@link ox#Hex.Hex} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
@@ -397,9 +370,6 @@ export declare namespace padLeft {
   type ErrorType = internal.pad.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
-
 /**
  * Pads a {@link ox#Hex.Hex} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
@@ -427,9 +397,6 @@ export declare namespace padRight {
   type ErrorType = internal.pad.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-padRight.parseError = (error: unknown) => error as padRight.ErrorType
-
 /**
  * Generates a random {@link ox#Hex.Hex} value of the specified length.
  *
@@ -450,9 +417,6 @@ export function random(length: number): Hex {
 export declare namespace random {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-random.parseError = (error: unknown) => error as random.ErrorType
 
 /**
  * Returns a section of a {@link ox#Bytes.Bytes} value given a start/end bytes offset.
@@ -498,9 +462,6 @@ export declare namespace slice {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-slice.parseError = (error: unknown) => error as slice.ErrorType
-
 /**
  * Retrieves the size of a {@link ox#Hex.Hex} value (in bytes).
  *
@@ -522,9 +483,6 @@ export function size(value: Hex): number {
 export declare namespace size {
   export type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-size.parseError = (error: unknown) => error as size.ErrorType
 
 /**
  * Trims leading zeros from a {@link ox#Hex.Hex} value.
@@ -550,9 +508,6 @@ export declare namespace trimLeft {
   type ErrorType = internal.trim.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
-
 /**
  * Trims trailing zeros from a {@link ox#Hex.Hex} value.
  *
@@ -576,9 +531,6 @@ export declare namespace trimRight {
 
   type ErrorType = internal.trim.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a BigInt.
@@ -626,9 +578,6 @@ export declare namespace toBigInt {
   type ErrorType = internal.assertSize.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-toBigInt.parseError = (error: unknown) => error as toBigInt.ErrorType
-
 /**
  * Decodes a {@link ox#Hex.Hex} value into a boolean.
  *
@@ -668,9 +617,6 @@ export declare namespace toBoolean {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-toBoolean.parseError = (error: unknown) => error as toBoolean.ErrorType
-
 /**
  * Decodes a {@link ox#Hex.Hex} value into a {@link ox#Bytes.Bytes}.
  *
@@ -698,9 +644,6 @@ export declare namespace toBytes {
 
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a number.
@@ -731,9 +674,6 @@ export declare namespace toNumber {
 
   type ErrorType = toBigInt.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-toNumber.parseError = (error: unknown) => error as toNumber.ErrorType
 
 /**
  * Decodes a {@link ox#Hex.Hex} value into a string.
@@ -779,9 +719,6 @@ export declare namespace toString {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-toString.parseError = (error: unknown) => error as toString.ErrorType
-
 /**
  * Checks if the given value is {@link ox#Hex.Hex}.
  *
@@ -821,9 +758,6 @@ export declare namespace validate {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-validate.parseError = (error: unknown) => error as validate.ErrorType
 
 /**
  * Thrown when the provided integer is out of range, and cannot be represented as a hex value.

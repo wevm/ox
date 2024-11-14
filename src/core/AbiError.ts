@@ -200,7 +200,7 @@ export declare namespace decode {
   type ErrorType =
     | AbiParameters.decode.ErrorType
     | Hex.size.ErrorType
-    | AbiItem.InvalidSelectorSizeError
+    | typeof AbiItem.InvalidSelectorSizeError
     | Errors.GlobalErrorType
 }
 
@@ -286,10 +286,6 @@ export declare namespace encode {
   type ErrorType = Errors.GlobalErrorType
 }
 
-encode.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as encode.ErrorType
-
 /**
  * Formats an {@link ox#AbiError.AbiError} into a **Human Readable ABI Error**.
  *
@@ -330,10 +326,6 @@ export function format<const abiError extends AbiError>(
 export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
-
-format.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as format.ErrorType
 
 /**
  * Parses an arbitrary **JSON ABI Error** or **Human Readable ABI Error** into a typed {@link ox#AbiError.AbiError}.
@@ -460,10 +452,6 @@ export declare namespace from {
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Extracts an {@link ox#AbiError.AbiError} from an {@link ox#Abi.Abi} given a name and optional arguments.
  *
@@ -585,10 +573,6 @@ export declare namespace fromAbi {
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
 }
 
-fromAbi.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromAbi.ErrorType
-
 /**
  * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link ox#AbiError.AbiError}.
  *
@@ -622,9 +606,6 @@ export function getSelector(abiItem: string | AbiError): Hex.Hex {
 export declare namespace getSelector {
   type ErrorType = AbiItem.getSelector.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-getSelector.parseError = (error: unknown) => error as getSelector.ErrorType
 
 // https://docs.soliditylang.org/en/v0.8.16/control-structures.html#panic-via-assert-and-error-via-require
 export const panicReasons = {

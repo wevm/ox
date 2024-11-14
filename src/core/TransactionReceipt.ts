@@ -249,10 +249,6 @@ export declare namespace fromRpc {
   export type ErrorType = Log.fromRpc.ErrorType | Errors.GlobalErrorType
 }
 
-fromRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpc.ErrorType
-
 /**
  * Converts a {@link ox#TransactionReceipt.TransactionReceipt} to a {@link ox#TransactionReceipt.Rpc}.
  *
@@ -335,7 +331,3 @@ export function toRpc(receipt: TransactionReceipt): Rpc {
 export declare namespace toRpc {
   export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
-
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType

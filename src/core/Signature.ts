@@ -123,10 +123,6 @@ export declare namespace fromBytes {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromBytes.ErrorType
-
 /**
  * Deserializes a {@link ox#Hex.Hex} signature into a structured {@link ox#Signature.Signature}.
  *
@@ -177,10 +173,6 @@ export declare namespace fromHex {
     | Errors.GlobalErrorType
 }
 
-fromHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromHex.ErrorType
-
 /**
  * Extracts a {@link ox#Signature.Signature} from an arbitrary object that may include signature properties.
  *
@@ -222,10 +214,6 @@ export declare namespace extract {
   }
   type ErrorType = Errors.GlobalErrorType
 }
-
-extract.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as extract.ErrorType
 
 /**
  * Instantiates a typed {@link ox#Signature.Signature} object from a {@link ox#Signature.Signature}, {@link ox#Signature.Legacy}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
@@ -328,10 +316,6 @@ export declare namespace from {
     | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Converts a DER-encoded signature to a {@link ox#Signature.Signature}.
  *
@@ -357,10 +341,6 @@ export function fromDerBytes(signature: Bytes.Bytes): Signature<false> {
 export declare namespace fromDerBytes {
   type ErrorType = Errors.GlobalErrorType
 }
-
-fromDerBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromDerBytes.ErrorType
 
 /**
  * Converts a DER-encoded signature to a {@link ox#Signature.Signature}.
@@ -388,10 +368,6 @@ export declare namespace fromDerHex {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromDerHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromDerHex.ErrorType
-
 /**
  * Converts a {@link ox#Signature.Legacy} into a {@link ox#Signature.Signature}.
  *
@@ -417,10 +393,6 @@ export function fromLegacy(signature: Legacy): Signature {
 export declare namespace fromLegacy {
   type ErrorType = vToYParity.ErrorType | Errors.GlobalErrorType
 }
-
-fromLegacy.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromLegacy.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Rpc} into a {@link ox#Signature.Signature}.
@@ -466,10 +438,6 @@ export declare namespace fromRpc {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpc.ErrorType
-
 /**
  * Converts a {@link ox#Signature.Tuple} to a {@link ox#Signature.Signature}.
  *
@@ -501,10 +469,6 @@ export declare namespace fromTuple {
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }
 
-fromTuple.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromTuple.ErrorType
-
 /**
  * Serializes a {@link ox#Signature.Signature} to {@link ox#Bytes.Bytes}.
  *
@@ -533,10 +497,6 @@ export declare namespace toBytes {
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
-
-toBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toBytes.ErrorType
 
 /**
  * Serializes a {@link ox#Signature.Signature} to {@link ox#Hex.Hex}.
@@ -581,10 +541,6 @@ export declare namespace toHex {
     | Errors.GlobalErrorType
 }
 
-toHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toHex.ErrorType
-
 /**
  * Converts a {@link ox#Signature.Signature} to DER-encoded format.
  *
@@ -612,10 +568,6 @@ export function toDerBytes(signature: Signature<boolean>): Bytes.Bytes {
 export declare namespace toDerBytes {
   type ErrorType = Errors.GlobalErrorType
 }
-
-toDerBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toDerBytes.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Signature} to DER-encoded format.
@@ -645,10 +597,6 @@ export declare namespace toDerHex {
   type ErrorType = Errors.GlobalErrorType
 }
 
-toDerHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toDerHex.ErrorType
-
 /**
  * Converts a {@link ox#Signature.Signature} into a {@link ox#Signature.Legacy}.
  *
@@ -674,10 +622,6 @@ export function toLegacy(signature: Signature): Legacy {
 export declare namespace toLegacy {
   type ErrorType = yParityToV.ErrorType | Errors.GlobalErrorType
 }
-
-toLegacy.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toLegacy.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Signature} into a {@link ox#Signature.Rpc}.
@@ -708,10 +652,6 @@ export function toRpc(signature: Signature): Rpc {
 export declare namespace toRpc {
   type ErrorType = Errors.GlobalErrorType
 }
-
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType
 
 /**
  * Converts a {@link ox#Signature.Signature} to a serialized {@link ox#Signature.Tuple} to be used for signatures in Transaction Envelopes, EIP-7702 Authorization Lists, etc.
@@ -811,9 +751,6 @@ export declare namespace vToYParity {
   type ErrorType = InvalidVError | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-vToYParity.parseError = (error: unknown) => error as vToYParity.ErrorType
-
 /**
  * Converts a ECDSA `v` value to a `yParity` value.
  *
@@ -837,9 +774,6 @@ export function yParityToV(yParity: number): number {
 export declare namespace yParityToV {
   type ErrorType = InvalidVError | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-yParityToV.parseError = (error: unknown) => error as yParityToV.ErrorType
 
 /** Thrown when the serialized signature is of an invalid size. */
 export class InvalidSerializedSizeError extends Errors.BaseError {

@@ -104,10 +104,6 @@ export declare namespace createCredential {
     | Errors.GlobalErrorType
 }
 
-createCredential.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as createCredential.ErrorType
-
 /**
  * Gets the authenticator data which contains information about the
  * processing of an authenticator request (ie. from `WebAuthnP256.sign`).
@@ -157,10 +153,6 @@ export declare namespace getAuthenticatorData {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-getAuthenticatorData.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getAuthenticatorData.ErrorType
 
 /**
  * Constructs the Client Data in stringified JSON format which represents client data that
@@ -220,10 +212,6 @@ export declare namespace getClientDataJSON {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-getClientDataJSON.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getClientDataJSON.ErrorType
 
 /**
  * Returns the creation options for a P256 WebAuthn Credential to be used with
@@ -363,10 +351,6 @@ export declare namespace getCredentialCreationOptions {
     | Errors.GlobalErrorType
 }
 
-getCredentialCreationOptions.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getCredentialCreationOptions.ErrorType
-
 /**
  * Returns the request options to sign a challenge with the Web Authentication API.
  *
@@ -431,9 +415,6 @@ export declare namespace getCredentialRequestOptions {
     | Base64.toBytes.ErrorType
     | Errors.GlobalErrorType
 }
-
-getCredentialRequestOptions.parseError = (error: unknown) =>
-  error as getCredentialRequestOptions.ErrorType
 
 /**
  * Constructs the final digest that was signed and computed by the authenticator. This payload includes
@@ -559,10 +540,6 @@ export declare namespace getSignPayload {
     | Errors.GlobalErrorType
 }
 
-getSignPayload.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as getSignPayload.ErrorType
-
 /**
  * Signs a challenge using a stored WebAuthn P256 Credential. If no Credential is provided,
  * a prompt will be displayed for the user to select an existing Credential
@@ -665,10 +642,6 @@ export declare namespace sign {
     | getCredentialRequestOptions.ErrorType
     | Errors.GlobalErrorType
 }
-
-sign.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as sign.ErrorType
 
 /**
  * Verifies a signature using the Credential's public key and the challenge which was signed.
@@ -777,10 +750,6 @@ export declare namespace verify {
     | P256.verify.ErrorType
     | Errors.GlobalErrorType
 }
-
-verify.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as verify.ErrorType
 
 /** Thrown when a WebAuthn P256 credential creation fails. */
 export class CredentialCreationFailedError extends Errors.BaseError<Error> {

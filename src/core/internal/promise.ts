@@ -49,9 +49,6 @@ export declare namespace withTimeout {
 }
 
 /** @internal */
-withTimeout.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as withTimeout.ErrorType
 
 /**
  * Thrown when an operation times out.

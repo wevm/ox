@@ -70,10 +70,6 @@ export declare namespace aggregate {
   type ErrorType = Errors.GlobalErrorType
 }
 
-aggregate.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as aggregate.ErrorType
-
 /**
  * Computes the BLS12-381 public key from a provided private key.
  *
@@ -365,10 +361,6 @@ export declare namespace sign {
   type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
 }
 
-sign.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as sign.ErrorType
-
 /**
  * Verifies a payload was signed by the provided public key(s).
  *
@@ -491,6 +483,3 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-verify.parseError = (error: unknown) => error as verify.ErrorType

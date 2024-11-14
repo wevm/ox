@@ -133,10 +133,6 @@ export declare namespace decode {
     | Errors.GlobalErrorType
 }
 
-decode.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as decode.ErrorType
-
 /**
  * Encodes primitive values into ABI encoded data as per the [Application Binary Interface (ABI) Specification](https://docs.soliditylang.org/en/latest/abi-spec).
  *
@@ -202,10 +198,6 @@ export declare namespace encode {
     | internal.prepareParameters.ErrorType
     | Errors.GlobalErrorType
 }
-
-encode.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as encode.ErrorType
 
 /**
  * Encodes an array of primitive values to a [packed ABI encoding](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode).
@@ -312,9 +304,6 @@ export namespace encodePacked {
   }
 }
 
-/* v8 ignore next */
-encodePacked.parseError = (error: unknown) => error as encodePacked.ErrorType
-
 /**
  * Formats {@link ox#AbiParameters.AbiParameters} into **Human Readable ABI Parameters**.
  *
@@ -361,10 +350,6 @@ export function format<
 export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
-
-format.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as format.ErrorType
 
 /**
  * Parses arbitrary **JSON ABI Parameters** or **Human Readable ABI Parameters** into typed {@link ox#AbiParameters.AbiParameters}.
@@ -473,10 +458,6 @@ export declare namespace from {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
 
 /**
  * Throws when the data size is too small for the given parameters.

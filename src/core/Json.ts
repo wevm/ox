@@ -36,10 +36,6 @@ export declare namespace parse {
   type ErrorType = Errors.GlobalErrorType
 }
 
-parse.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as parse.ErrorType
-
 /**
  * Stringifies a value to its JSON representation, with support for `bigint`.
  *
@@ -78,7 +74,3 @@ export function stringify(
 export declare namespace stringify {
   type ErrorType = Errors.GlobalErrorType
 }
-
-stringify.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as stringify.ErrorType

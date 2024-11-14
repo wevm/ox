@@ -25,10 +25,6 @@ export declare namespace fromBytes {
   type ErrorType = internal.from.ErrorType | Errors.GlobalErrorType
 }
 
-fromBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromBytes.ErrorType
-
 /**
  * Encodes a {@link ox#Hex.Hex} to a Base58-encoded string.
  *
@@ -50,10 +46,6 @@ export function fromHex(value: Hex.Hex) {
 export declare namespace fromHex {
   type ErrorType = internal.from.ErrorType | Errors.GlobalErrorType
 }
-
-fromHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromHex.ErrorType
 
 /**
  * Encodes a string to a Base58-encoded string.
@@ -77,10 +69,6 @@ export declare namespace fromString {
   type ErrorType = internal.from.ErrorType | Errors.GlobalErrorType
 }
 
-fromString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromString.ErrorType
-
 /**
  * Decodes a Base58-encoded string to a {@link ox#Bytes.Bytes}.
  *
@@ -102,10 +90,6 @@ export function toBytes(value: string): Bytes.Bytes {
 export declare namespace toBytes {
   type ErrorType = Errors.GlobalErrorType
 }
-
-toBytes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toBytes.ErrorType
 
 /**
  * Decodes a Base58-encoded string to {@link ox#Hex.Hex}.
@@ -149,10 +133,6 @@ export declare namespace toHex {
   type ErrorType = Errors.GlobalErrorType
 }
 
-toHex.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toHex.ErrorType
-
 /**
  * Decodes a Base58-encoded string to a string.
  *
@@ -174,7 +154,3 @@ export function toString(value: string): string {
 export declare namespace toString {
   type ErrorType = Errors.GlobalErrorType
 }
-
-toString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toString.ErrorType

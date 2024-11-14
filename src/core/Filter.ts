@@ -84,10 +84,6 @@ export declare namespace fromRpc {
   type ErrorType = Errors.GlobalErrorType
 }
 
-fromRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromRpc.ErrorType
-
 /**
  * Converts a {@link ox#Filter.Filter} to a {@link ox#Filter.Rpc}.
  *
@@ -138,7 +134,3 @@ export function toRpc(filter: Filter): Rpc {
 export declare namespace toRpc {
   type ErrorType = Errors.GlobalErrorType
 }
-
-toRpc.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toRpc.ErrorType

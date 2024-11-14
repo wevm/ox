@@ -423,10 +423,6 @@ export declare namespace encodeData {
   type ErrorType = Errors.GlobalErrorType
 }
 
-encodeData.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as encodeData.ErrorType
-
 /**
  * ABI-encodes a function's result (`outputs`).
  *
@@ -528,10 +524,6 @@ export function format<const abiFunction extends AbiFunction>(
 export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
-
-format.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as format.ErrorType
 
 /**
  * Parses an arbitrary **JSON ABI Function** or **Human Readable ABI Function** into a typed {@link ox#AbiFunction.AbiFunction}.
@@ -670,10 +662,6 @@ export declare namespace from {
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Extracts an {@link ox#AbiFunction.AbiFunction} from an {@link ox#Abi.Abi} given a name and optional arguments.
  *
@@ -767,10 +755,6 @@ export declare namespace fromAbi {
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
 }
 
-fromAbi.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromAbi.ErrorType
-
 /**
  * Computes the [4-byte selector](https://solidity-by-example.org/function-selector/) for an {@link ox#AbiFunction.AbiFunction}.
  *
@@ -808,6 +792,3 @@ export function getSelector(abiItem: string | AbiFunction): Hex.Hex {
 export declare namespace getSelector {
   type ErrorType = AbiItem.getSelector.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-getSelector.parseError = (error: unknown) => error as getSelector.ErrorType

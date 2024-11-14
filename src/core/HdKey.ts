@@ -43,10 +43,6 @@ export declare namespace fromExtendedKey {
   type ErrorType = internal.fromScure.ErrorType | Errors.GlobalErrorType
 }
 
-fromExtendedKey.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromExtendedKey.ErrorType
-
 /**
  * Creates a HD Key from a JSON object containing an extended private key (`xpriv`).
  *
@@ -70,10 +66,6 @@ export function fromJson(json: { xpriv: string }): HdKey {
 export declare namespace fromJson {
   type ErrorType = internal.fromScure.ErrorType | Errors.GlobalErrorType
 }
-
-fromJson.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromJson.ErrorType
 
 /**
  * Creates a HD Key from a master seed.
@@ -126,10 +118,6 @@ export declare namespace fromSeed {
     | Errors.GlobalErrorType
 }
 
-fromSeed.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromSeed.ErrorType
-
 /**
  * Creates an Ethereum-based BIP-44 HD path.
  *
@@ -170,6 +158,3 @@ export declare namespace path {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-path.parseError = (error: unknown) => error as path.ErrorType

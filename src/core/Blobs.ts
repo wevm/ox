@@ -141,10 +141,6 @@ export declare namespace commitmentsToVersionedHashes {
   type ErrorType = Errors.GlobalErrorType
 }
 
-commitmentsToVersionedHashes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as commitmentsToVersionedHashes.ErrorType
-
 /**
  * Transform a Commitment to its Blob Versioned Hash.
  *
@@ -231,10 +227,6 @@ export declare namespace commitmentToVersionedHash {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-commitmentToVersionedHash.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as commitmentToVersionedHash.ErrorType
 
 /**
  * Transforms arbitrary data to {@link ox#Blobs.Blobs}.
@@ -356,9 +348,6 @@ export declare namespace from {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-from.parseError = (error: unknown) => error as from.ErrorType
-
 /**
  * Transforms a list of {@link ox#Blobs.BlobSidecars} to their Blob Versioned Hashes.
  *
@@ -452,10 +441,6 @@ export declare namespace sidecarsToVersionedHashes {
   type ErrorType = commitmentToVersionedHash.ErrorType | Errors.GlobalErrorType
 }
 
-sidecarsToVersionedHashes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as sidecarsToVersionedHashes.ErrorType
-
 /**
  * Transforms Ox-shaped {@link ox#Blobs.Blobs} into the originating data.
  *
@@ -544,9 +529,6 @@ export declare namespace to {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-to.parseError = (error: unknown) => error as to.ErrorType
-
 /**
  * Transforms Ox-shaped {@link ox#Blobs.Blobs} into the originating data.
  *
@@ -570,9 +552,6 @@ export declare namespace toHex {
   type ErrorType = to.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-toHex.parseError = (error: unknown) => error as toHex.ErrorType
-
 /**
  * Transforms Ox-shaped {@link ox#Blobs.Blobs} into the originating data.
  *
@@ -590,9 +569,6 @@ export function toBytes(
 ): toBytes.ReturnType {
   return to(blobs, 'Bytes')
 }
-
-/* v8 ignore next */
-toBytes.parseError = (error: unknown) => error as toBytes.ErrorType
 
 /**
  * Compute commitments from a list of {@link ox#Blobs.Blobs}.
@@ -674,10 +650,6 @@ export declare namespace toCommitments {
     | Hex.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
-
-toCommitments.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toCommitments.ErrorType
 
 export declare namespace toBytes {
   type ReturnType = to.ReturnType<'Bytes'>
@@ -772,9 +744,6 @@ export declare namespace toProofs {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-toProofs.parseError = (error: unknown) => error as toProofs.ErrorType
-
 /**
  * Transforms {@link ox#Blobs.Blobs} into a {@link ox#Blobs.BlobSidecars} array.
  *
@@ -858,10 +827,6 @@ export declare namespace toSidecars {
   type ErrorType = Errors.GlobalErrorType
 }
 
-toSidecars.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toSidecars.ErrorType
-
 /**
  * Compute Blob Versioned Hashes from a list of {@link ox#Blobs.Blobs}.
  *
@@ -910,10 +875,6 @@ export declare namespace toVersionedHashes {
     | commitmentsToVersionedHashes.ErrorType
     | Errors.GlobalErrorType
 }
-
-toVersionedHashes.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toVersionedHashes.ErrorType
 
 /** A list of {@link ox#Blobs.BlobSidecar}. */
 export type BlobSidecars<

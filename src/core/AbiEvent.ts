@@ -200,10 +200,6 @@ export declare namespace assertArgs {
     | Errors.GlobalErrorType
 }
 
-assertArgs.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as assertArgs.ErrorType
-
 /**
  * ABI-Decodes the provided [Log Topics and Data](https://info.etherscan.com/what-is-event-logs/) according to the ABI Event's parameter types (`input`).
  *
@@ -403,10 +399,6 @@ export declare namespace decode {
     | Errors.GlobalErrorType
 }
 
-decode.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as decode.ErrorType
-
 /**
  * ABI-encodes the provided event input (`inputs`) into an array of [Event Topics](https://info.etherscan.com/what-is-event-logs/).
  *
@@ -581,10 +573,6 @@ export declare namespace encode {
     | Errors.GlobalErrorType
 }
 
-encode.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as encode.ErrorType
-
 /**
  * Formats an {@link ox#AbiEvent.AbiEvent} into a **Human Readable ABI Error**.
  *
@@ -620,10 +608,6 @@ export function format<const abiEvent extends AbiEvent>(
 export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
-
-format.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as format.ErrorType
 
 /**
  * Parses an arbitrary **JSON ABI Event** or **Human Readable ABI Event** into a typed {@link ox#AbiEvent.AbiEvent}.
@@ -725,10 +709,6 @@ export declare namespace from {
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
-from.parseEvent = (Event: unknown) =>
-  /* v8 ignore next */
-  Event as from.ErrorType
-
 /**
  * Extracts an {@link ox#AbiEvent.AbiEvent} from an {@link ox#Abi.Abi} given a name and optional arguments.
  *
@@ -821,10 +801,6 @@ export declare namespace fromAbi {
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
 }
 
-fromAbi.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromAbi.ErrorType
-
 /**
  * Computes the event selector (hash of event signature) for an {@link ox#AbiEvent.AbiEvent}.
  *
@@ -862,9 +838,6 @@ export function getSelector(abiItem: string | AbiEvent): Hex.Hex {
 export declare namespace getSelector {
   type ErrorType = AbiItem.getSignatureHash.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-getSelector.parseError = (error: unknown) => error as getSelector.ErrorType
 
 /**
  * Thrown when the provided arguments do not match the expected arguments.

@@ -283,10 +283,6 @@ export declare namespace parse {
     | Errors.GlobalErrorType
 }
 
-parse.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as parse.ErrorType
-
 export type BaseErrorType = BaseError & { name: 'BaseError' }
 
 /** Thrown when a JSON-RPC error has occurred. */

@@ -101,6 +101,3 @@ export declare namespace from {
 }
 
 /** @internal */
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType

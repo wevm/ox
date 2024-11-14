@@ -67,8 +67,3 @@ export declare namespace create {
     | RpcResponse.parse.ErrorType
     | Errors.GlobalErrorType
 }
-
-/** @internal */
-create.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as create.ErrorType

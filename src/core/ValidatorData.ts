@@ -45,9 +45,6 @@ export declare namespace encode {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-encode.parseError = (error: unknown) => error as encode.ErrorType
-
 /**
  * Gets the payload to use for signing [ERC-191 formatted](https://eips.ethereum.org/EIPS/eip-191#0x00) data with an intended validator.
  *
@@ -81,7 +78,3 @@ export declare namespace getSignPayload {
     | encode.ErrorType
     | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-getSignPayload.parseError = (error: unknown) =>
-  error as getSignPayload.ErrorType

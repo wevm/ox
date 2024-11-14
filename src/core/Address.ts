@@ -66,9 +66,6 @@ export declare namespace assert {
   type ErrorType = InvalidAddressError | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-assert.parseError = (error: unknown) => error as assert.ErrorType
-
 /**
  * Computes the checksum address for the given {@link ox#Address.Address}.
  *
@@ -113,10 +110,6 @@ export declare namespace checksum {
     | Bytes.fromString.ErrorType
     | Errors.GlobalErrorType
 }
-
-checksum.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as checksum.ErrorType
 
 /**
  * Converts a stringified address to a typed (checksummed) {@link ox#Address.Address}.
@@ -174,9 +167,6 @@ export declare namespace from {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-from.parseError = (error: unknown) => error as from.ErrorType
-
 /**
  * Converts an ECDSA public key to an {@link ox#Address.Address}.
  *
@@ -221,10 +211,6 @@ export declare namespace fromPublicKey {
     | Errors.GlobalErrorType
 }
 
-fromPublicKey.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromPublicKey.ErrorType
-
 /**
  * Checks if two {@link ox#Address.Address} are equal.
  *
@@ -263,10 +249,6 @@ export function isEqual(addressA: Address, addressB: Address): boolean {
 export declare namespace isEqual {
   type ErrorType = assert.ErrorType | Errors.GlobalErrorType
 }
-
-isEqual.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as isEqual.ErrorType
 
 /**
  * Checks if the given address is a valid {@link ox#Address.Address}.

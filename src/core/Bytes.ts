@@ -39,9 +39,6 @@ export declare namespace assert {
   type ErrorType = InvalidBytesTypeError | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-assert.parseError = (error: unknown) => error as assert.ErrorType
-
 /**
  * Concatenates two or more {@link ox#Bytes.Bytes}.
  *
@@ -77,9 +74,6 @@ export function concat(...values: readonly Bytes[]): Bytes {
 export declare namespace concat {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-concat.parseError = (error: unknown) => error as concat.ErrorType
 
 /**
  * Instantiates a {@link ox#Bytes.Bytes} value from a `Uint8Array`, a hex string, or an array of unsigned 8-bit integers.
@@ -124,10 +118,6 @@ export declare namespace from {
     | Errors.GlobalErrorType
 }
 
-from.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as from.ErrorType
-
 /**
  * Converts an array of unsigned 8-bit integers into {@link ox#Bytes.Bytes}.
  *
@@ -149,10 +139,6 @@ export function fromArray(value: readonly number[] | Uint8Array): Bytes {
 export declare namespace fromArray {
   type ErrorType = Errors.GlobalErrorType
 }
-
-fromArray.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromArray.ErrorType
 
 /**
  * Encodes a boolean value into {@link ox#Bytes.Bytes}.
@@ -199,10 +185,6 @@ export declare namespace fromBoolean {
     | padLeft.ErrorType
     | Errors.GlobalErrorType
 }
-
-fromBoolean.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromBoolean.ErrorType
 
 /**
  * Encodes a {@link ox#Hex.Hex} value into {@link ox#Bytes.Bytes}.
@@ -266,9 +248,6 @@ export declare namespace fromHex {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-fromHex.parseError = (error: unknown) => error as fromHex.ErrorType
-
 /**
  * Encodes a number value into {@link ox#Bytes.Bytes}.
  *
@@ -308,10 +287,6 @@ export declare namespace fromNumber {
     | fromHex.ErrorType
     | Errors.GlobalErrorType
 }
-
-fromNumber.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromNumber.ErrorType
 
 /**
  * Encodes a string into {@link ox#Bytes.Bytes}.
@@ -362,10 +337,6 @@ export declare namespace fromString {
     | Errors.GlobalErrorType
 }
 
-fromString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as fromString.ErrorType
-
 /**
  * Checks if two {@link ox#Bytes.Bytes} values are equal.
  *
@@ -391,9 +362,6 @@ export function isEqual(bytesA: Bytes, bytesB: Bytes) {
 export declare namespace isEqual {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-isEqual.parseError = (error: unknown) => error as isEqual.ErrorType
 
 /**
  * Pads a {@link ox#Bytes.Bytes} value to the left with zero bytes until it reaches the given `size` (default: 32 bytes).
@@ -422,9 +390,6 @@ export declare namespace padLeft {
   type ErrorType = internal.pad.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-padLeft.parseError = (error: unknown) => error as padLeft.ErrorType
-
 /**
  * Pads a {@link ox#Bytes.Bytes} value to the right with zero bytes until it reaches the given `size` (default: 32 bytes).
  *
@@ -452,9 +417,6 @@ export declare namespace padRight {
   type ErrorType = internal.pad.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-padRight.parseError = (error: unknown) => error as padRight.ErrorType
-
 /**
  * Generates random {@link ox#Bytes.Bytes} of the specified length.
  *
@@ -477,9 +439,6 @@ export declare namespace random {
   type ErrorType = Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-random.parseError = (error: unknown) => error as random.ErrorType
-
 /**
  * Retrieves the size of a {@link ox#Bytes.Bytes} value.
  *
@@ -501,9 +460,6 @@ export function size(value: Bytes): number {
 export declare namespace size {
   export type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-size.parseError = (error: unknown) => error as size.ErrorType
 
 /**
  * Returns a section of a {@link ox#Bytes.Bytes} value given a start/end bytes offset.
@@ -551,9 +507,6 @@ export declare namespace slice {
     | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-slice.parseError = (error: unknown) => error as slice.ErrorType
-
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a bigint.
  *
@@ -589,10 +542,6 @@ export declare namespace toBigInt {
     | Hex.toBigInt.ErrorType
     | Errors.GlobalErrorType
 }
-
-toBigInt.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toBigInt.ErrorType
 
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a boolean.
@@ -636,10 +585,6 @@ export declare namespace toBoolean {
     | Errors.GlobalErrorType
 }
 
-toBoolean.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toBoolean.ErrorType
-
 /**
  * Encodes a {@link ox#Bytes.Bytes} value into a {@link ox#Hex.Hex} value.
  *
@@ -667,9 +612,6 @@ export declare namespace toHex {
 
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-toHex.parseError = (error: unknown) => error as toHex.ErrorType
 
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a number.
@@ -702,10 +644,6 @@ export declare namespace toNumber {
     | Hex.toNumber.ErrorType
     | Errors.GlobalErrorType
 }
-
-toNumber.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toNumber.ErrorType
 
 /**
  * Decodes a {@link ox#Bytes.Bytes} into a string.
@@ -745,10 +683,6 @@ export declare namespace toString {
     | Errors.GlobalErrorType
 }
 
-toString.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toString.ErrorType
-
 /**
  * Trims leading zeros from a {@link ox#Bytes.Bytes} value.
  *
@@ -771,9 +705,6 @@ export declare namespace trimLeft {
   type ErrorType = internal.trim.ErrorType | Errors.GlobalErrorType
 }
 
-/* v8 ignore next */
-trimLeft.parseError = (error: unknown) => error as trimLeft.ErrorType
-
 /**
  * Trims trailing zeros from a {@link ox#Bytes.Bytes} value.
  *
@@ -795,9 +726,6 @@ export function trimRight(value: Bytes): Bytes {
 export declare namespace trimRight {
   export type ErrorType = internal.trim.ErrorType | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-trimRight.parseError = (error: unknown) => error as trimRight.ErrorType
 
 /**
  * Checks if the given value is {@link ox#Bytes.Bytes}.
@@ -828,9 +756,6 @@ export function validate(value: unknown): value is Bytes {
 export declare namespace validate {
   export type ErrorType = Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-validate.parseError = (error: unknown) => error as validate.ErrorType
 
 /**
  * Thrown when the bytes value cannot be represented as a boolean.

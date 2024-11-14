@@ -203,10 +203,6 @@ export declare namespace createEmitter {
   type ErrorType = Errors.GlobalErrorType
 }
 
-createEmitter.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as createEmitter.ErrorType
-
 /**
  * Instantiates an [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) {@link ox#Provider.Provider}
  * from an arbitrary [EIP-1193 Provider](https://eips.ethereum.org/EIPS/eip-1193) interface.
@@ -394,9 +390,6 @@ export function from(provider: any, options: Options = {}): Provider<Options> {
 export declare namespace from {
   type ErrorType = IsUndefinedError | Errors.GlobalErrorType
 }
-
-/* v8 ignore next */
-from.parseError = (error: unknown) => error as from.ErrorType
 
 /** Thrown when the provider is undefined. */
 export class IsUndefinedError extends Errors.BaseError {

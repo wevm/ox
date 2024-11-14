@@ -58,10 +58,6 @@ export declare namespace random {
   type ErrorType = Errors.GlobalErrorType
 }
 
-random.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as random.ErrorType
-
 /**
  * Converts a mnemonic to a HD Key.
  *
@@ -106,10 +102,6 @@ export declare namespace toHdKey {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-toHdKey.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toHdKey.ErrorType
 
 /**
  * Converts a mnemonic to a private key.
@@ -169,10 +161,6 @@ export declare namespace toPrivateKey {
   type ErrorType = Errors.GlobalErrorType
 }
 
-toPrivateKey.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toPrivateKey.ErrorType
-
 /**
  * Converts a mnemonic to a master seed.
  *
@@ -214,10 +202,6 @@ export declare namespace toSeed {
   type ErrorType = Errors.GlobalErrorType
 }
 
-toSeed.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as toSeed.ErrorType
-
 /**
  * Checks if a mnemonic is valid, given a wordlist.
  *
@@ -243,7 +227,3 @@ export function validate(mnemonic: string, wordlist: string[]): boolean {
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
 }
-
-validate.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as validate.ErrorType

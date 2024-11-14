@@ -68,10 +68,6 @@ export declare namespace createKeyPair {
   type ErrorType = PublicKey.from.ErrorType | Errors.GlobalErrorType
 }
 
-createKeyPair.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as createKeyPair.ErrorType
-
 /**
  * Signs a payload with the provided `CryptoKey` private key and returns a P256 signature.
  *
@@ -123,10 +119,6 @@ export declare namespace sign {
 
   type ErrorType = Bytes.fromArray.ErrorType | Errors.GlobalErrorType
 }
-
-sign.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as sign.ErrorType
 
 /**
  * Verifies a payload was signed by the provided public key.
@@ -184,7 +176,3 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
-
-verify.parseError = (error: unknown) =>
-  /* v8 ignore next */
-  error as verify.ErrorType
