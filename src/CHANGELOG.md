@@ -1,5 +1,15 @@
 # ox
 
+## 0.2.0
+
+### Minor Changes
+
+- [`2f0fc9b`](https://github.com/wevm/ox/commit/2f0fc9b66ff70bf03a3ecf146ed1a62433f53eb8) Thanks [@jxom](https://github.com/jxom)! - **Breaking:** Removed `.parseError` property on functions. Use the `.ErrorType` property instead. [Example](https://oxlib.sh/error-handling#usage-with-neverthrow)
+
+### Patch Changes
+
+- [`af01579`](https://github.com/wevm/ox/commit/af01579951b898ebd659cd6b64aaa56f7733c191) Thanks [@jxom](https://github.com/jxom)! - Assert that EIP-712 domains are valid.
+
 ## 0.1.8
 
 ### Patch Changes
