@@ -1,5 +1,11 @@
 # ox
 
+## 0.2.1
+
+### Patch Changes
+
+- [`6e4b635`](https://github.com/wevm/ox/commit/6e4b635ee720312be6631dee4f24fdd3c066f2eb) Thanks [@jxom](https://github.com/jxom)! - Derive EIP-712 Domain type if not provided in `TypedData.serialize`.
+
 ## 0.2.0
 
 ### Minor Changes
