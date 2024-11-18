@@ -979,7 +979,7 @@ describe('serialize', () => {
         },
       }),
     ).toMatchInlineSnapshot(
-      `"{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"`,
+      `"{"domain":{"name":"Ether!","version":"1","chainId":1,"verifyingContract":"0xcccccccccccccccccccccccccccccccccccccccc"},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"`,
     )
   })
 
@@ -1444,6 +1444,10 @@ test('InvalidPrimaryTypeError', () => {
 test('exports', () => {
   expect(Object.keys(TypedData)).toMatchInlineSnapshot(`
     [
+      "BytesSizeMismatchError",
+      "InvalidDomainError",
+      "InvalidPrimaryTypeError",
+      "InvalidStructTypeError",
       "assert",
       "domainSeparator",
       "encode",
@@ -1454,10 +1458,6 @@ test('exports', () => {
       "hashStruct",
       "serialize",
       "validate",
-      "BytesSizeMismatchError",
-      "InvalidDomainError",
-      "InvalidPrimaryTypeError",
-      "InvalidStructTypeError",
       "encodeData",
       "hashType",
       "encodeField",

@@ -630,9 +630,9 @@ export function serialize<
   }
 
   const domain = (() => {
-    if (!types.EIP712Domain) return {}
     if (!domain_) return {}
-    return normalizeData(types.EIP712Domain, domain_)
+    const type = types.EIP712Domain ?? extractEip712DomainTypes(domain_)
+    return normalizeData(type, domain_)
   })()
 
   const message = (() => {
