@@ -94,8 +94,10 @@ export class UserRejectedRequestError extends ProviderRpcError {
   static readonly code = 4001
   override readonly name = 'Provider.UserRejectedRequestError'
 
-  constructor() {
-    super(4001, 'The user rejected the request.')
+  constructor({
+    message = 'The user rejected the request.',
+  }: { message?: string | undefined } = {}) {
+    super(4001, message)
   }
 }
 
@@ -104,11 +106,10 @@ export class UnauthorizedError extends ProviderRpcError {
   static readonly code = 4100
   override readonly name = 'Provider.UnauthorizedError'
 
-  constructor() {
-    super(
-      4100,
-      'The requested method and/or account has not been authorized by the user.',
-    )
+  constructor({
+    message = 'The requested method and/or account has not been authorized by the user.',
+  }: { message?: string | undefined } = {}) {
+    super(4100, message)
   }
 }
 
@@ -117,8 +118,10 @@ export class UnsupportedMethodError extends ProviderRpcError {
   static readonly code = 4200
   override readonly name = 'Provider.UnsupportedMethodError'
 
-  constructor() {
-    super(4200, 'The provider does not support the requested method.')
+  constructor({
+    message = 'The provider does not support the requested method.',
+  }: { message?: string | undefined } = {}) {
+    super(4200, message)
   }
 }
 
@@ -127,8 +130,10 @@ export class DisconnectedError extends ProviderRpcError {
   static readonly code = 4900
   override readonly name = 'Provider.DisconnectedError'
 
-  constructor() {
-    super(4900, 'The provider is disconnected from all chains.')
+  constructor({
+    message = 'The provider is disconnected from all chains.',
+  }: { message?: string | undefined } = {}) {
+    super(4900, message)
   }
 }
 
@@ -137,8 +142,10 @@ export class ChainDisconnectedError extends ProviderRpcError {
   static readonly code = 4901
   override readonly name = 'Provider.ChainDisconnectedError'
 
-  constructor() {
-    super(4901, 'The provider is not connected to the requested chain.')
+  constructor({
+    message = 'The provider is not connected to the requested chain.',
+  }: { message?: string | undefined } = {}) {
+    super(4901, message)
   }
 }
 

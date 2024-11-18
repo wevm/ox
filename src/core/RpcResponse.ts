@@ -305,6 +305,14 @@ export class InvalidInputError extends BaseError {
   static readonly code = -32000
   override readonly code = -32000
   override readonly name = 'RpcResponse.InvalidInputError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Missing or invalid parameters.',
+      ...parameters,
+      code: InvalidInputError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC resource is not found. */
@@ -312,6 +320,14 @@ export class ResourceNotFoundError extends BaseError {
   static readonly code = -32001
   override readonly code = -32001
   override readonly name = 'RpcResponse.ResourceNotFoundError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Requested resource not found.',
+      ...parameters,
+      code: ResourceNotFoundError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC resource is unavailable. */
@@ -319,6 +335,14 @@ export class ResourceUnavailableError extends BaseError {
   static readonly code = -32002
   override readonly code = -32002
   override readonly name = 'RpcResponse.ResourceUnavailableError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Requested resource not available.',
+      ...parameters,
+      code: ResourceUnavailableError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC transaction is rejected. */
@@ -326,6 +350,14 @@ export class TransactionRejectedError extends BaseError {
   static readonly code = -32003
   override readonly code = -32003
   override readonly name = 'RpcResponse.TransactionRejectedError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Transaction creation failed.',
+      ...parameters,
+      code: TransactionRejectedError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC method is not supported. */
@@ -333,6 +365,14 @@ export class MethodNotSupportedError extends BaseError {
   static readonly code = -32004
   override readonly code = -32004
   override readonly name = 'RpcResponse.MethodNotSupportedError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Method is not implemented.',
+      ...parameters,
+      code: MethodNotSupportedError.code,
+    })
+  }
 }
 
 /** Thrown when a rate-limit is exceeded. */
@@ -340,6 +380,14 @@ export class LimitExceededError extends BaseError {
   static readonly code = -32005
   override readonly code = -32005
   override readonly name = 'RpcResponse.LimitExceededError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Rate limit exceeded.',
+      ...parameters,
+      code: LimitExceededError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC version is not supported. */
@@ -347,6 +395,14 @@ export class VersionNotSupportedError extends BaseError {
   static readonly code = -32006
   override readonly code = -32006
   override readonly name = 'RpcResponse.VersionNotSupportedError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'JSON-RPC version not supported.',
+      ...parameters,
+      code: VersionNotSupportedError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC request is invalid. */
@@ -354,6 +410,14 @@ export class InvalidRequestError extends BaseError {
   static readonly code = -32600
   override readonly code = -32600
   override readonly name = 'RpcResponse.InvalidRequestError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Input is not a valid JSON-RPC request.',
+      ...parameters,
+      code: InvalidRequestError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC method is not found. */
@@ -361,6 +425,14 @@ export class MethodNotFoundError extends BaseError {
   static readonly code = -32601
   override readonly code = -32601
   override readonly name = 'RpcResponse.MethodNotFoundError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Method does not exist.',
+      ...parameters,
+      code: MethodNotFoundError.code,
+    })
+  }
 }
 
 /** Thrown when the parameters to a JSON-RPC method are invalid. */
@@ -368,6 +440,14 @@ export class InvalidParamsError extends BaseError {
   static readonly code = -32602
   override readonly code = -32602
   override readonly name = 'RpcResponse.InvalidParamsError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Invalid method parameters.',
+      ...parameters,
+      code: InvalidParamsError.code,
+    })
+  }
 }
 
 /** Thrown when an internal JSON-RPC error has occurred. */
@@ -375,6 +455,14 @@ export class InternalError extends BaseError {
   static readonly code = -32603
   override readonly code = -32603
   override readonly name = 'RpcResponse.InternalErrorError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Internal JSON-RPC error.',
+      ...parameters,
+      code: InternalError.code,
+    })
+  }
 }
 
 /** Thrown when a JSON-RPC response is invalid. */
@@ -382,4 +470,12 @@ export class ParseError extends BaseError {
   static readonly code = -32700
   override readonly code = -32700
   override readonly name = 'RpcResponse.ParseError'
+
+  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+    super({
+      message: 'Failed to parse JSON-RPC response.',
+      ...parameters,
+      code: ParseError.code,
+    })
+  }
 }

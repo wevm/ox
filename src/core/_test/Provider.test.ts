@@ -118,11 +118,27 @@ test('Provider.InvalidMessageFieldError', () => {
   expect(new Provider.UserRejectedRequestError()).toMatchInlineSnapshot(
     '[Provider.UserRejectedRequestError: The user rejected the request.]',
   )
+  expect(
+    new Provider.UserRejectedRequestError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[Provider.UserRejectedRequestError: foo]')
+  expect(
+    JSON.stringify(new Provider.UserRejectedRequestError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"Provider.UserRejectedRequestError","code":4001,"details":"The user rejected the request."}"`,
+  )
 })
 
 test('Provider.UnauthorizedError', () => {
   expect(new Provider.UnauthorizedError()).toMatchInlineSnapshot(
     '[Provider.UnauthorizedError: The requested method and/or account has not been authorized by the user.]',
+  )
+  expect(
+    new Provider.UnauthorizedError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[Provider.UnauthorizedError: foo]')
+  expect(
+    JSON.stringify(new Provider.UnauthorizedError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"Provider.UnauthorizedError","code":4100,"details":"The requested method and/or account has not been authorized by the user."}"`,
   )
 })
 
@@ -130,17 +146,41 @@ test('Provider.UnsupportedMethodError', () => {
   expect(new Provider.UnsupportedMethodError()).toMatchInlineSnapshot(
     '[Provider.UnsupportedMethodError: The provider does not support the requested method.]',
   )
+  expect(
+    new Provider.UnsupportedMethodError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[Provider.UnsupportedMethodError: foo]')
+  expect(
+    JSON.stringify(new Provider.UnsupportedMethodError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"Provider.UnsupportedMethodError","code":4200,"details":"The provider does not support the requested method."}"`,
+  )
 })
 
 test('Provider.DisconnectedError', () => {
   expect(new Provider.DisconnectedError()).toMatchInlineSnapshot(
     '[Provider.DisconnectedError: The provider is disconnected from all chains.]',
   )
+  expect(
+    new Provider.DisconnectedError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[Provider.DisconnectedError: foo]')
+  expect(
+    JSON.stringify(new Provider.DisconnectedError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"Provider.DisconnectedError","code":4900,"details":"The provider is disconnected from all chains."}"`,
+  )
 })
 
 test('Provider.ChainDisconnectedError', () => {
   expect(new Provider.ChainDisconnectedError()).toMatchInlineSnapshot(
     '[Provider.ChainDisconnectedError: The provider is not connected to the requested chain.]',
+  )
+  expect(
+    new Provider.ChainDisconnectedError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[Provider.ChainDisconnectedError: foo]')
+  expect(
+    JSON.stringify(new Provider.ChainDisconnectedError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"Provider.ChainDisconnectedError","code":4901,"details":"The provider is not connected to the requested chain."}"`,
   )
 })
 

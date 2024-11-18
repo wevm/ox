@@ -361,6 +361,170 @@ describe('parse', () => {
   })
 })
 
+test('InvalidInputError', () => {
+  expect(new RpcResponse.InvalidInputError()).toMatchInlineSnapshot(
+    '[RpcResponse.InvalidInputError: Missing or invalid parameters.]',
+  )
+  expect(
+    new RpcResponse.InvalidInputError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.InvalidInputError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.InvalidInputError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.InvalidInputError","code":-32000}"`,
+  )
+})
+
+test('ResourceNotFoundError', () => {
+  expect(new RpcResponse.ResourceNotFoundError()).toMatchInlineSnapshot(
+    '[RpcResponse.ResourceNotFoundError: Requested resource not found.]',
+  )
+  expect(
+    new RpcResponse.ResourceNotFoundError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.ResourceNotFoundError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.ResourceNotFoundError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.ResourceNotFoundError","code":-32001}"`,
+  )
+})
+
+test('ResourceUnavailableError', () => {
+  expect(new RpcResponse.ResourceUnavailableError()).toMatchInlineSnapshot(
+    '[RpcResponse.ResourceUnavailableError: Requested resource not available.]',
+  )
+  expect(
+    new RpcResponse.ResourceUnavailableError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.ResourceUnavailableError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.ResourceUnavailableError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.ResourceUnavailableError","code":-32002}"`,
+  )
+})
+
+test('TransactionRejectedError', () => {
+  expect(new RpcResponse.TransactionRejectedError()).toMatchInlineSnapshot(
+    '[RpcResponse.TransactionRejectedError: Transaction creation failed.]',
+  )
+  expect(
+    new RpcResponse.TransactionRejectedError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.TransactionRejectedError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.TransactionRejectedError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.TransactionRejectedError","code":-32003}"`,
+  )
+})
+
+test('MethodNotSupportedError', () => {
+  expect(new RpcResponse.MethodNotSupportedError()).toMatchInlineSnapshot(
+    '[RpcResponse.MethodNotSupportedError: Method is not implemented.]',
+  )
+  expect(
+    new RpcResponse.MethodNotSupportedError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.MethodNotSupportedError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.MethodNotSupportedError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.MethodNotSupportedError","code":-32004}"`,
+  )
+})
+
+test('LimitExceededError', () => {
+  expect(new RpcResponse.LimitExceededError()).toMatchInlineSnapshot(
+    '[RpcResponse.LimitExceededError: Rate limit exceeded.]',
+  )
+  expect(
+    new RpcResponse.LimitExceededError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.LimitExceededError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.LimitExceededError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.LimitExceededError","code":-32005}"`,
+  )
+})
+
+test('VersionNotSupportedError', () => {
+  expect(new RpcResponse.VersionNotSupportedError()).toMatchInlineSnapshot(
+    '[RpcResponse.VersionNotSupportedError: JSON-RPC version not supported.]',
+  )
+  expect(
+    new RpcResponse.VersionNotSupportedError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.VersionNotSupportedError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.VersionNotSupportedError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.VersionNotSupportedError","code":-32006}"`,
+  )
+})
+
+test('InvalidRequestError', () => {
+  expect(new RpcResponse.InvalidRequestError()).toMatchInlineSnapshot(
+    '[RpcResponse.InvalidRequestError: Input is not a valid JSON-RPC request.]',
+  )
+  expect(
+    new RpcResponse.InvalidRequestError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.InvalidRequestError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.InvalidRequestError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.InvalidRequestError","code":-32600}"`,
+  )
+})
+
+test('MethodNotFoundError', () => {
+  expect(new RpcResponse.MethodNotFoundError()).toMatchInlineSnapshot(
+    '[RpcResponse.MethodNotFoundError: Method does not exist.]',
+  )
+  expect(
+    new RpcResponse.MethodNotFoundError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.MethodNotFoundError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.MethodNotFoundError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.MethodNotFoundError","code":-32601}"`,
+  )
+})
+
+test('InvalidParamsError', () => {
+  expect(new RpcResponse.InvalidParamsError()).toMatchInlineSnapshot(
+    '[RpcResponse.InvalidParamsError: Invalid method parameters.]',
+  )
+  expect(
+    new RpcResponse.InvalidParamsError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.InvalidParamsError: foo]')
+  expect(
+    JSON.stringify(new RpcResponse.InvalidParamsError()),
+  ).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.InvalidParamsError","code":-32602}"`,
+  )
+})
+
+test('InternalError', () => {
+  expect(new RpcResponse.InternalError()).toMatchInlineSnapshot(
+    '[RpcResponse.InternalErrorError: Internal JSON-RPC error.]',
+  )
+  expect(
+    new RpcResponse.InternalError({ message: 'foo' }),
+  ).toMatchInlineSnapshot('[RpcResponse.InternalErrorError: foo]')
+  expect(JSON.stringify(new RpcResponse.InternalError())).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.InternalErrorError","code":-32603}"`,
+  )
+})
+
+test('ParseError', () => {
+  expect(new RpcResponse.ParseError()).toMatchInlineSnapshot(
+    '[RpcResponse.ParseError: Failed to parse JSON-RPC response.]',
+  )
+  expect(new RpcResponse.ParseError({ message: 'foo' })).toMatchInlineSnapshot(
+    '[RpcResponse.ParseError: foo]',
+  )
+  expect(JSON.stringify(new RpcResponse.ParseError())).toMatchInlineSnapshot(
+    `"{"name":"RpcResponse.ParseError","code":-32700}"`,
+  )
+})
+
 test('exports', () => {
   expect(Object.keys(RpcResponse)).toMatchInlineSnapshot(`
     [
