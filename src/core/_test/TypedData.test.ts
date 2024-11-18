@@ -1444,10 +1444,6 @@ test('InvalidPrimaryTypeError', () => {
 test('exports', () => {
   expect(Object.keys(TypedData)).toMatchInlineSnapshot(`
     [
-      "BytesSizeMismatchError",
-      "InvalidDomainError",
-      "InvalidPrimaryTypeError",
-      "InvalidStructTypeError",
       "assert",
       "domainSeparator",
       "encode",
@@ -1458,6 +1454,10 @@ test('exports', () => {
       "hashStruct",
       "serialize",
       "validate",
+      "BytesSizeMismatchError",
+      "InvalidDomainError",
+      "InvalidPrimaryTypeError",
+      "InvalidStructTypeError",
       "encodeData",
       "hashType",
       "encodeField",
