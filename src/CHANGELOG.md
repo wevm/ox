@@ -1,5 +1,11 @@
 # ox
 
+## 0.2.2
+
+### Patch Changes
+
+- [`4f40358`](https://github.com/wevm/ox/commit/4f4035826313dce974b7c7fa64ba4ea20d1f7f61) Thanks [@jxom](https://github.com/jxom)! - Tweaked `RpcResponse` and `Provider` errors to have optional parameters.
+
 ## 0.2.1
 
 ### Patch Changes
