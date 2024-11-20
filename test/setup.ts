@@ -1,7 +1,7 @@
 import { Caches } from 'ox'
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest'
-import * as instances from './anvil.js'
 import * as Entropy from '../src/core/internal/entropy.js'
+import * as instances from './anvil.js'
 
 Entropy.setExtraEntropy(false)
 
