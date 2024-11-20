@@ -4,6 +4,7 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
+import * as Entropy from './internal/entropy.js'
 
 /** Re-export of noble/curves P256 utilities. */
 export const noble = secp256r1
@@ -150,7 +151,11 @@ export function sign(options: sign.Options): Signature.Signature {
   const { r, s, recovery } = secp256r1.sign(
     payload instanceof Uint8Array ? payload : Bytes.fromHex(payload),
     privateKey instanceof Uint8Array ? privateKey : Bytes.fromHex(privateKey),
-    ...(hash ? [{ prehash: true, lowS: true }] : []),
+    {
+      extraEntropy: Entropy.extraEntropy,
+      lowS: true,
+      ...(hash ? { prehash: true } : {}),
+    },
   )
   return {
     r,

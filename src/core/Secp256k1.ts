@@ -5,6 +5,7 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
+import * as Entropy from './internal/entropy.js'
 import type { OneOf } from './internal/types.js'
 
 /** Re-export of noble/curves secp256k1 utilities. */
@@ -191,7 +192,11 @@ export function sign(options: sign.Options): Signature.Signature {
   const { r, s, recovery } = secp256k1.sign(
     Bytes.from(payload),
     Bytes.from(privateKey),
-    ...(hash ? [{ prehash: true, lowS: true }] : []),
+    {
+      extraEntropy: Entropy.extraEntropy,
+      lowS: true,
+      ...(hash ? { prehash: true } : {}),
+    },
   )
   return {
     r,

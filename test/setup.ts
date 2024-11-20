@@ -1,6 +1,9 @@
 import { Caches } from 'ox'
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest'
 import * as instances from './anvil.js'
+import * as Entropy from '../src/core/internal/entropy.js'
+
+Entropy.setExtraEntropy(false)
 
 beforeAll(() => {
   vi.mock('../src/core/internal/errors.ts', async () => ({
