@@ -1,5 +1,5 @@
 ---
-"ox": patch
+"ox": minor
 ---
 
-Added non-deterministic signature generation.
+Added extra entropy to signature generation.
