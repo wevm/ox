@@ -38,10 +38,6 @@ jobs:
   test:
     name: Test Runtime
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        shard: [1, 2, 3]
-        total-shards: [3]
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -52,7 +48,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Run tests
-        run: pnpm test:ci --shard=${{ matrix.shard }}/${{ matrix.total-shards }}
+        run: pnpm test:ci
         env: 
           VITE_ANVIL_FORK_URL: ${{ secrets.VITE_ANVIL_FORK_URL }}
 
