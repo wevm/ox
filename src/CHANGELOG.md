@@ -1,5 +1,11 @@
 # ox
 
+## 0.3.0
+
+### Minor Changes
+
+- [`9ad0d2c`](https://github.com/wevm/ox/commit/9ad0d2c9777b5c6a8c1cd64ad8742f9c05706606) Thanks [@jxom](https://github.com/jxom)! - Added extra entropy to signature generation.
+
 ## 0.2.2
 
 ### Patch Changes
