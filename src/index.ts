@@ -1743,6 +1743,7 @@ export * as PersonalMessage from './core/PersonalMessage.js'
  * Useful for Wallets that distribute an EIP-1193 Provider (e.g. webpage injection via `window.ethereum`).
  *
  * ```ts twoslash
+ * // @noErrors
  * import { Provider, RpcRequest, RpcResponse } from 'ox'
  *
  * // 1. Instantiate a Provider Emitter.

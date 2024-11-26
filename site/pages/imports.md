@@ -26,6 +26,7 @@ Bundlers known to support Deep Scope Analysis include: [Vite](https://vitejs.dev
 If your bundler does not support Deep Scope Analysis, you are also able to import modules via their respective entrypoint:
 
 ```ts twoslash
+// @noErrors
 import * as Hex from 'ox/Hex'
 import * as Rlp from 'ox/Rlp'
 

@@ -69,10 +69,10 @@ function renderImports(options: {
     '## Imports',
     [
       ':::code-group',
-      '```ts twoslash [Named]',
+      '```ts [Named]',
       `import { ${module} } from 'ox'`,
       '```',
-      '```ts twoslash [Entrypoint]',
+      '```ts [Entrypoint]',
       `import * as ${module} from 'ox/${module}'`,
       '```',
       ':::',

@@ -154,6 +154,7 @@ export class ChainDisconnectedError extends ProviderRpcError {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Provider, RpcRequest, RpcResponse } from 'ox' // [!code focus]
  *
  * // 1. Instantiate a Provider Emitter. // [!code focus]
@@ -265,6 +266,7 @@ export declare namespace createEmitter {
  * transport, including WebSockets and IPC.
  *
  * ```ts twoslash
+ * // @noErrors
  * import { Provider, RpcRequest, RpcResponse } from 'ox'
  *
  * const store = RpcRequest.createStore()
@@ -333,6 +335,7 @@ export declare namespace createEmitter {
  * This example is useful for Wallets that distribute an EIP-1193 Provider (e.g. webpage injection via `window.ethereum`).
  *
  * ```ts twoslash
+ * // @noErrors
  * import { Provider, RpcRequest, RpcResponse } from 'ox'
  *
  * // 1. Instantiate a Provider Emitter.
