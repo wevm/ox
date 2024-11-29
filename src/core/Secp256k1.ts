@@ -188,12 +188,20 @@ export declare namespace recoverPublicKey {
  * @returns The ECDSA {@link ox#Signature.Signature}.
  */
 export function sign(options: sign.Options): Signature.Signature {
-  const { hash, payload, privateKey } = options
+  const {
+    extraEntropy = Entropy.extraEntropy,
+    hash,
+    payload,
+    privateKey,
+  } = options
   const { r, s, recovery } = secp256k1.sign(
     Bytes.from(payload),
     Bytes.from(privateKey),
     {
-      extraEntropy: Entropy.extraEntropy,
+      extraEntropy:
+        typeof extraEntropy === 'boolean'
+          ? extraEntropy
+          : Hex.from(extraEntropy).slice(2),
       lowS: true,
       ...(hash ? { prehash: true } : {}),
     },
@@ -207,11 +215,22 @@ export function sign(options: sign.Options): Signature.Signature {
 
 export declare namespace sign {
   type Options = {
-    /** If set to `true`, the payload will be hashed (sha256) before being signed. */
+    /**
+     * Extra entropy to add to the signing process. Setting to `false` will disable it.
+     * @default true
+     */
+    extraEntropy?: boolean | Hex.Hex | Bytes.Bytes | undefined
+    /**
+     *  If set to `true`, the payload will be hashed (sha256) before being signed.
+     */
     hash?: boolean | undefined
-    /** Payload to sign. */
+    /**
+     * Payload to sign.
+     */
     payload: Hex.Hex | Bytes.Bytes
-    /** ECDSA private key. */
+    /**
+     * ECDSA private key.
+     */
     privateKey: Hex.Hex | Bytes.Bytes
   }
 

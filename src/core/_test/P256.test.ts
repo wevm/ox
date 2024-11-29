@@ -1,4 +1,4 @@
-import { Bytes, P256 } from 'ox'
+import { Bytes, Hex, P256 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -169,6 +169,56 @@ describe('sign', () => {
         signature,
       }),
     ).toBe(false)
+  })
+
+  test('options: extraEntropy', () => {
+    {
+      const signature_1 = P256.sign({
+        extraEntropy: false,
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        privateKey: accounts[0].privateKey,
+      })
+      const signature_2 = P256.sign({
+        extraEntropy: false,
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        privateKey: accounts[0].privateKey,
+      })
+      expect(signature_1).toEqual(signature_2)
+    }
+
+    {
+      const signature_1 = P256.sign({
+        extraEntropy: Hex.random(32),
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        privateKey: accounts[0].privateKey,
+      })
+      const signature_2 = P256.sign({
+        extraEntropy: Hex.random(32),
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        privateKey: accounts[0].privateKey,
+      })
+      expect(signature_1).not.toEqual(signature_2)
+    }
+
+    {
+      const signature_1 = P256.sign({
+        extraEntropy: Bytes.random(32),
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        privateKey: accounts[0].privateKey,
+      })
+      const signature_2 = P256.sign({
+        extraEntropy: Bytes.random(32),
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        privateKey: accounts[0].privateKey,
+      })
+      expect(signature_1).not.toEqual(signature_2)
+    }
   })
 })
 
