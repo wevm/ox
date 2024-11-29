@@ -1,5 +1,11 @@
 # ox
 
+## 0.3.1
+
+### Patch Changes
+
+- [`e4104cd`](https://github.com/wevm/ox/commit/e4104cdb217de1fa30480b40060eb0fb0f7ad8d5) Thanks [@jxom](https://github.com/jxom)! - Added `extraEntropy` option to `Secp256k1.sign` & `P256.sign`.
+
 ## 0.3.0
 
 ### Minor Changes
