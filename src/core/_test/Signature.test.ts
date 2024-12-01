@@ -444,7 +444,7 @@ describe('serialize', () => {
         yParity: 1,
       }),
     ).toMatchInlineSnapshot(
-      `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db801"`,
+      `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c"`,
     )
 
     expect(
@@ -454,7 +454,7 @@ describe('serialize', () => {
         yParity: 0,
       }),
     ).toMatchInlineSnapshot(
-      `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db800"`,
+      `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81b"`,
     )
 
     expect(
@@ -543,7 +543,7 @@ describe('toBytes', () => {
       215,
       109,
       184,
-      1,
+      28,
     ]
   `,
     )
