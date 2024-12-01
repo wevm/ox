@@ -527,7 +527,7 @@ export function toHex(signature: Signature<boolean>): Hex.Hex {
     Hex.fromNumber(s, { size: 32 }),
     // If the signature is recovered, add the recovery byte to the signature.
     typeof signature.yParity === 'number'
-      ? Hex.fromNumber(signature.yParity, { size: 1 })
+      ? Hex.fromNumber(yParityToV(signature.yParity), { size: 1 })
       : '0x',
   )
 
