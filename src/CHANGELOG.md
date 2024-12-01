@@ -1,5 +1,17 @@
 # ox
 
+## 0.4.0
+
+### Minor Changes
+
+- [#35](https://github.com/wevm/ox/pull/35) [`4680b06`](https://github.com/wevm/ox/commit/4680b06d4715b1b62d903f45490d325506a1e959) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Updated `Signature.toHex` to serialize the last byte as `v` instead of `yParity` for widened compatibility.
+
+### Patch Changes
+
+- [`15f9863`](https://github.com/wevm/ox/commit/15f98630c46ec0c09998162a92a5e8bac709e32d) Thanks [@jxom](https://github.com/jxom)! - Added assertion for ABI-encoding integer ranges.
+
+- [`2e0d4af`](https://github.com/wevm/ox/commit/2e0d4af5c6e26c09a9b83971be0fc06415ee4976) Thanks [@jxom](https://github.com/jxom)! - Added support for block identifiers.
+
 ## 0.3.1
 
 ### Patch Changes
