@@ -3,7 +3,7 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Transaction from './Transaction.js'
 import * as Withdrawal from './Withdrawal.js'
-import type { Compute } from './internal/types.js'
+import type { Compute, OneOf } from './internal/types.js'
 
 /** A Block as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml). */
 export type Block<
@@ -77,6 +77,21 @@ export type Block<
 
 /** A Block hash. */
 export type Hash = Hex.Hex
+
+/** A Block identifier. */
+export type Identifier<bigintType = bigint> = {
+  /** Whether or not to throw an error if the block is not in the canonical chain as described below. Only allowed in conjunction with the blockHash tag. Defaults to false. */
+  requireCanonical?: boolean | undefined
+} & OneOf<
+  | {
+      /** The block in the canonical chain with this number */
+      blockNumber: Number<bigintType>
+    }
+  | {
+      /** The block uniquely identified by this hash. The `blockNumber` and `blockHash` properties are mutually exclusive; exactly one of them must be set. */
+      blockHash: Hash
+    }
+>
 
 /** A Block number. */
 export type Number<bigintType = bigint> = bigintType
