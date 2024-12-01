@@ -1,4 +1,4 @@
-export let extraEntropy: boolean
+export let extraEntropy = false
 
 /** @internal */
 export function setExtraEntropy(entropy: boolean) {
