@@ -1,4 +1,4 @@
-import { AbiItem, AbiParameters } from 'ox'
+import { AbiItem, AbiParameters, Solidity } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 import { seaportContractConfig } from '../../../test/constants/abis.js'
@@ -229,7 +229,7 @@ describe('static', () => {
           [
             {
               name: 'xIn',
-              type: 'int8',
+              type: 'int32',
             },
           ],
           [-2147483648],
@@ -1786,6 +1786,119 @@ test('invalid bytes', () => {
     AbiParameters.encode([{ name: 'x', type: 'bytes8' }], ['0x111']),
   ).toThrowErrorMatchingInlineSnapshot(
     `[AbiParameters.BytesSizeMismatchError: Size of bytes "0x111" (bytes2) does not match expected size (bytes8).]`,
+  )
+})
+
+test('integer out of range', () => {
+  expect(() =>
+    AbiParameters.encode(
+      [
+        {
+          type: 'uint128',
+        },
+        {
+          type: 'int128',
+        },
+        {
+          type: 'int128',
+        },
+        {
+          type: 'uint',
+        },
+        {
+          type: 'int',
+        },
+        {
+          type: 'int',
+        },
+      ],
+      [
+        Solidity.maxUint128,
+        Solidity.maxInt128,
+        Solidity.minInt128,
+        Solidity.maxUint256,
+        Solidity.maxInt256,
+        Solidity.minInt256,
+      ],
+    ),
+  ).not.toThrow()
+
+  expect(() =>
+    AbiParameters.encode(
+      [
+        {
+          type: 'uint128',
+        },
+      ],
+      [Solidity.maxUint128 + 1n],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `340282366920938463463374607431768211456` is not in safe 128-bit unsigned integer range (`0` to `340282366920938463463374607431768211455`)]',
+  )
+
+  expect(() =>
+    AbiParameters.encode(
+      [
+        {
+          type: 'uint128',
+        },
+      ],
+      [-1n],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `-1` is not in safe 128-bit unsigned integer range (`0` to `340282366920938463463374607431768211455`)]',
+  )
+
+  expect(() =>
+    AbiParameters.encode(
+      [
+        {
+          type: 'int128',
+        },
+      ],
+      [Solidity.maxInt128 + 1n],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `170141183460469231731687303715884105728` is not in safe 128-bit signed integer range (`-170141183460469231731687303715884105728` to `170141183460469231731687303715884105727`)]',
+  )
+
+  expect(() =>
+    AbiParameters.encode(
+      [
+        {
+          type: 'int128',
+        },
+      ],
+      [Solidity.minInt128 - 1n],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `-170141183460469231731687303715884105729` is not in safe 128-bit signed integer range (`-170141183460469231731687303715884105728` to `170141183460469231731687303715884105727`)]',
+  )
+
+  expect(() =>
+    AbiParameters.encode(
+      [
+        {
+          type: 'uint',
+        },
+      ],
+      [Solidity.maxUint256 + 1n],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `115792089237316195423570985008687907853269984665640564039457584007913129639936` is not in safe 256-bit unsigned integer range (`0` to `115792089237316195423570985008687907853269984665640564039457584007913129639935`)]',
+  )
+
+  expect(() =>
+    AbiParameters.encode(
+      [
+        {
+          type: 'uint',
+        },
+      ],
+      [-1n],
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(
+    '[Hex.IntegerOutOfRangeError: Number `-1` is not in safe 256-bit unsigned integer range (`0` to `115792089237316195423570985008687907853269984665640564039457584007913129639935`)]',
   )
 })
 

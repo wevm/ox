@@ -9,6 +9,7 @@ import * as Address from '../Address.js'
 import * as Bytes from '../Bytes.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
+import { integerRegex } from '../Solidity.js'
 import type * as Cursor from './cursor.js'
 import type { Compute, IsNarrowable, UnionToIntersection } from './types.js'
 
@@ -433,7 +434,11 @@ export function prepareParameter<
   }
   if (parameter.type.startsWith('uint') || parameter.type.startsWith('int')) {
     const signed = parameter.type.startsWith('int')
-    return encodeNumber(value as unknown as number, { signed })
+    const [, , size = '256'] = integerRegex.exec(parameter.type) ?? []
+    return encodeNumber(value as unknown as number, {
+      signed,
+      size: Number(size),
+    })
   }
   if (parameter.type.startsWith('bytes')) {
     return encodeBytes(value as unknown as Hex.Hex, { type: parameter.type })
@@ -630,8 +635,20 @@ export declare namespace encodeBoolean {
 /** @internal */
 export function encodeNumber(
   value: number,
-  { signed }: { signed: boolean },
+  { signed, size }: { signed: boolean; size: number },
 ): PreparedParameter {
+  if (typeof size === 'number') {
+    const max = 2n ** (BigInt(size) - (signed ? 1n : 0n)) - 1n
+    const min = signed ? -max - 1n : 0n
+    if (value > max || value < min)
+      throw new Hex.IntegerOutOfRangeError({
+        max: max.toString(),
+        min: min.toString(),
+        signed,
+        size: size / 8,
+        value: value.toString(),
+      })
+  }
   return {
     dynamic: false,
     encoded: Hex.fromNumber(value, {
