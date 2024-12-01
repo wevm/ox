@@ -2,4 +2,4 @@
 "ox": minor
 ---
 
-BREAKING CHANGE: Updates Signature toHex to use `v` rather than `yParity`
+Updated `Signature.toHex` to serialize the last byte as `v` instead of `yParity` for widened compatibility.
