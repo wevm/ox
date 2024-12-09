@@ -35,7 +35,7 @@ fs.writeFileSync(
 )
 
 ////////////////////////////////////////////////////////////
-/// Get API entrypoint and namespaces
+/// Get API entrypoints and namespaces
 ////////////////////////////////////////////////////////////
 
 const apiEntryPoint = apiPackage.members.find(
@@ -44,20 +44,6 @@ const apiEntryPoint = apiPackage.members.find(
     x.canonicalReference.toString() === 'ox!',
 ) as model.ApiEntryPoint
 if (!apiEntryPoint) throw new Error('Could not find api entrypoint')
-
-const exports = getExports()
-const moduleDocComments = Object.values(exports.src).reduce(
-  (comments, path) => {
-    if (!path.endsWith('index.ts')) return comments
-    const docComments = extractNamespaceDocComments(
-      resolve(import.meta.dirname, '../../src', path),
-      apiPackage,
-    )
-    if (!docComments) return comments
-    return Object.assign(comments, docComments)
-  },
-  {},
-) as ReturnType<typeof extractNamespaceDocComments>
 
 const testNamespaces: string[] = []
 const excludeNamespaces = ['Caches', 'Errors', 'Solidity', 'Types']
@@ -69,6 +55,23 @@ for (const member of apiEntryPoint.members) {
   if (testNamespaces.length && !testNamespaces.includes(member.displayName))
     continue
   namespaces.push(member)
+}
+
+////////////////////////////////////////////////////////////
+/// Get namespace doc comments
+////////////////////////////////////////////////////////////
+
+const exports = getExports()
+
+let namespaceDocComments: ReturnType<typeof extractNamespaceDocComments> = {}
+for (const path of Object.values(exports.src)) {
+  if (!path.endsWith('index.ts')) continue
+  const comments = extractNamespaceDocComments(
+    resolve(import.meta.dirname, '../../src', path),
+    apiPackage,
+  )
+  if (!comments) continue
+  namespaceDocComments = { ...namespaceDocComments, ...comments }
 }
 
 ////////////////////////////////////////////////////////////
@@ -88,7 +91,7 @@ const namespaceMap: Record<Entrypoint, Record<Category, NamespaceItem>> = {}
 
 for (const namespace of namespaces) {
   const name = namespace.displayName
-  const docComment = moduleDocComments[name]
+  const docComment = namespaceDocComments[name]
   const basePath = docComment ? getPath(docComment) : '/'
   const baseLink = `${basePath}/${name}`
   const dir = `${pagesDir}${baseLink}`
@@ -169,13 +172,13 @@ for (const namespace of namespaces) {
     fs.writeFileSync(`${dir}/types.md`, content)
   }
 
-  const category = moduleDocComments[name]?.category
+  const category = namespaceDocComments[name]?.category
   if (!category)
     throw new Error(
       `Could not find category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
     )
 
-  const entrypointCategory = moduleDocComments[name]?.entrypoint
+  const entrypointCategory = namespaceDocComments[name]?.entrypoint
   if (!entrypointCategory)
     throw new Error(
       `Could not find entrypoint for namespace: ${name}. Please add a TSDoc \`@entrypoint\` tag.`,
