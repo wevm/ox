@@ -26,7 +26,7 @@ export function extractNamespaceDocComments(
 
   const entrypoint = entrypointAst
     .getDescendantsOfKind(SyntaxKind.JSDocTag)
-    .find((x) => x.getTagName() === 'entrypoint')
+    .find((x) => x.getTagName() === 'entrypointCategory')
     ?.getComment() as string
 
   const nodes = entrypointAst.getDescendantsOfKind(SyntaxKind.ExportDeclaration)
