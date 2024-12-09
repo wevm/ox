@@ -75,6 +75,7 @@
     "viem": "^2.21.9",
     "vite-tsconfig-paths": "^5.0.1",
     "vitest": "1.0.4",
+    "vocs": "1.0.0-alpha.62",
     "web3": "^4.12.1"
   },
   "packageManager": "pnpm@9.7.0",

@@ -1,3 +1,7 @@
+/** @entrypointCategory Core */
+// biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
+export type {}
+
 /**
  * Utilities & types for working with [Application Binary Interfaces (ABIs)](https://docs.soliditylang.org/en/latest/abi-spec.html)
  *
@@ -990,7 +994,7 @@ export * as Block from './core/Block.js'
 export * as Bloom from './core/Bloom.js'
 
 /**
- * Utility functions for [BLS12-381](https://hackmd.io/@benjaminion/bls12-381) cryptography.
+ * Utility functions for [BLS12-381](https://hackmd.io/\@benjaminion/bls12-381) cryptography.
  *
  * :::info
  *

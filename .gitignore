@@ -15,7 +15,8 @@ tsdoc.d.tson
 
 ox.api.json
 lookup.json
-sidebar-generated.ts
+config-generated.ts
 site/pages/api
+site/pages/ercs
 site/pages/glossary
 tsdoc-metadata.json

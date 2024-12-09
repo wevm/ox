@@ -1,10 +1,10 @@
 import { expect, test } from 'vitest'
-import * as Module from './Paths.js'
+import * as Module from '../index.js'
 
 test('exports', () => {
   expect(Object.keys(Module)).toMatchInlineSnapshot(`
     [
-      "mainnet",
+      "Paths",
     ]
   `)
 })

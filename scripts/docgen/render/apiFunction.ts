@@ -7,18 +7,20 @@ import { project } from '../utils/tsmorph.js'
 
 export function renderApiFunction(options: {
   apiItem: model.ApiItem
+  basePath: string
   data: Data
   dataLookup: Record<string, Data>
+  entrypoint: string
   overloads: string[]
 }) {
-  const { apiItem, data, dataLookup, overloads } = options
+  const { apiItem, basePath, data, dataLookup, entrypoint, overloads } = options
   const { comment, displayName, module } = data
   if (!module) throw new Error('Module not found')
 
   const content = [`# ${module}.${displayName}`]
   if (comment?.summary) content.push(comment.summary)
 
-  content.push(renderImports({ module }))
+  content.push(renderImports({ entrypoint, module }))
 
   if (comment?.examples)
     content.push(renderExamples({ examples: comment.examples }))
@@ -29,6 +31,7 @@ export function renderApiFunction(options: {
     content.push(
       renderParameters({
         apiItem,
+        basePath,
         data,
         dataLookup,
         overloads,
@@ -39,6 +42,7 @@ export function renderApiFunction(options: {
   if (data.returnType && !data.returnType.type.startsWith('asserts '))
     content.push(
       renderReturnType({
+        basePath,
         comment: comment?.returns,
         dataLookup,
         returnType: data.returnType,
@@ -52,6 +56,7 @@ export function renderApiFunction(options: {
   if (errorIds.size)
     content.push(
       renderErrors({
+        basePath,
         data,
         dataLookup,
         errorIds: Array.from(errorIds).sort((a, b) => (a > b ? 1 : -1)),
@@ -62,18 +67,19 @@ export function renderApiFunction(options: {
 }
 
 function renderImports(options: {
+  entrypoint: string
   module: string
 }) {
-  const { module } = options
+  const { entrypoint, module } = options
   const content = [
     '## Imports',
     [
       ':::code-group',
       '```ts [Named]',
-      `import { ${module} } from 'ox'`,
+      `import { ${module} } from 'ox${entrypoint ? `/${entrypoint}` : ''}'`,
       '```',
       '```ts [Entrypoint]',
-      `import * as ${module} from 'ox/${module}'`,
+      `import * as ${module} from 'ox/${entrypoint ? `${entrypoint}/` : ''}${module}'`,
       '```',
       ':::',
     ].join('\n'),
@@ -136,12 +142,13 @@ function renderSignature(options: {
 
 function renderParameters(options: {
   apiItem: model.ApiItem
+  basePath: string
   data: Data
   dataLookup: Record<string, Data>
   overloads: string[]
   parameters: NonNullable<Data['parameters']>
 }) {
-  const { apiItem, data, dataLookup, overloads, parameters } = options
+  const { apiItem, basePath, data, dataLookup, overloads, parameters } = options
 
   const parameterDeclarations = extractParameterDeclarations(data)
 
@@ -163,7 +170,7 @@ function renderParameters(options: {
     })
     parameterIndex += 1
 
-    const link = getTypeLink({ dataLookup, type: parameter })
+    const link = getTypeLink({ basePath, dataLookup, type: parameter })
 
     const c = `\`${type}\``
     const listContent = link
@@ -271,15 +278,16 @@ function renderProperties(options: {
 }
 
 function renderReturnType(options: {
+  basePath: string
   comment: NonNullable<Data['comment']>['returns'] | undefined
   dataLookup: Record<string, Data>
   returnType: NonNullable<Data['returnType']>
 }) {
-  const { comment, dataLookup, returnType } = options
+  const { basePath, comment, dataLookup, returnType } = options
 
   const content = ['## Return Type']
   if (comment) content.push(comment)
-  const link = getTypeLink({ dataLookup, type: returnType })
+  const link = getTypeLink({ basePath, dataLookup, type: returnType })
   const type = expandInlineType({ dataLookup, type: returnType })
   const c = `\`${type}\``
   content.push(link ? `[${c}](${link})` : c)
@@ -288,11 +296,12 @@ function renderReturnType(options: {
 }
 
 function renderErrors(options: {
+  basePath: string
   data: Data
   dataLookup: Record<string, Data>
   errorIds: string[]
 }) {
-  const { errorIds, data, dataLookup } = options
+  const { basePath, errorIds, data, dataLookup } = options
 
   const namespaceMemberId = data.canonicalReference.split(':')[0]
   const errorTypeData = dataLookup[`${namespaceMemberId}.ErrorType:type`]
@@ -315,7 +324,7 @@ function renderErrors(options: {
       if (!errorData) continue
       const name = errorData.module + '.' + errorData.displayName
       errorsContent.push(
-        `- [\`${name}\`](/api/${errorData.module}/errors#${name.toLowerCase().replace('.', '')})`,
+        `- [\`${name}\`](${basePath}/${errorData.module}/errors#${name.toLowerCase().replace('.', '')})`,
       )
     }
     content.push(errorsContent.join('\n'))
@@ -447,13 +456,14 @@ function getTsDoc(comment: string | undefined, apiItem: model.ApiItem) {
 }
 
 function getTypeLink(options: {
+  basePath: string
   dataLookup: Record<string, Data>
   type: Pick<
     NonNullable<Data['returnType']>,
     'primaryCanonicalReference' | 'primaryGenericArguments' | 'type'
   >
 }) {
-  const { dataLookup, type } = options
+  const { basePath, dataLookup, type } = options
 
   const data = (() => {
     // TODO: fix `type` link resolution.
@@ -469,7 +479,7 @@ function getTypeLink(options: {
   if (!data) return
 
   const displayNameWithNamespace = `${data.module}.${data.displayName}`
-  return `/api/${data.module}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`
+  return `${basePath}/${data.module}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`
 }
 
 function expandInlineType(options: {

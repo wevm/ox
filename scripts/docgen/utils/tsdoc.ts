@@ -24,6 +24,11 @@ export function extractNamespaceDocComments(
 ) {
   const entrypointAst = project.addSourceFileAtPath(file)
 
+  const entrypoint = entrypointAst
+    .getDescendantsOfKind(SyntaxKind.JSDocTag)
+    .find((x) => x.getTagName() === 'entrypointCategory')
+    ?.getComment() as string
+
   const nodes = entrypointAst.getDescendantsOfKind(SyntaxKind.ExportDeclaration)
 
   const docComments: Record<string, ReturnType<typeof processDocComment>> = {}
@@ -43,17 +48,20 @@ export function extractNamespaceDocComments(
     const docComment = processDocComment(
       parserContext.docComment,
       createResolveDeclarationReference(apiItem),
+      entrypoint,
     )
     if (!docComment) continue
 
     docComments[namespace] = docComment
   }
+
   return docComments
 }
 
 export function processDocComment(
   docComment?: tsdoc.DocComment | undefined,
   resolveDeclarationReference?: ResolveDeclarationReference,
+  entrypointCategory?: string | undefined,
 ) {
   if (!docComment) return
 
@@ -93,6 +101,7 @@ export function processDocComment(
       ),
       '@docGroup',
     ),
+    entrypointCategory,
     examples: docComment?.customBlocks
       .filter((v) => v.blockTag.tagName === '@example')
       .map((v) => renderDocNode(v, resolveDeclarationReference))

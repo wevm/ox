@@ -1,6 +1,9 @@
+import { relative, resolve } from 'node:path'
 import * as model from '@microsoft/api-extractor-model'
 import fs from 'fs-extra'
+import type { SidebarItem, TopNav } from 'vocs'
 
+import { getExports } from '../utils/exports.js'
 import { renderApiFunction } from './render/apiFunction.js'
 import {
   type ModuleItem,
@@ -21,6 +24,7 @@ console.log('Generating API docs.')
 ////////////////////////////////////////////////////////////
 /// Load API Model and construct lookup
 ////////////////////////////////////////////////////////////
+
 const fileName = './scripts/docgen/ox.api.json'
 const apiPackage = new model.ApiModel().loadPackage(fileName)
 const dataLookup = createDataLookup(apiPackage)
@@ -31,19 +35,15 @@ fs.writeFileSync(
 )
 
 ////////////////////////////////////////////////////////////
-/// Get API entrypoint and namespaces
+/// Get API entrypoints and namespaces
 ////////////////////////////////////////////////////////////
+
 const apiEntryPoint = apiPackage.members.find(
   (x) =>
     x.kind === model.ApiItemKind.EntryPoint &&
     x.canonicalReference.toString() === 'ox!',
 ) as model.ApiEntryPoint
 if (!apiEntryPoint) throw new Error('Could not find api entrypoint')
-
-const moduleDocComments = extractNamespaceDocComments(
-  './src/index.ts',
-  apiPackage,
-)
 
 const testNamespaces: string[] = []
 const excludeNamespaces = ['Caches', 'Errors', 'Solidity', 'Types']
@@ -58,30 +58,54 @@ for (const member of apiEntryPoint.members) {
 }
 
 ////////////////////////////////////////////////////////////
-/// Generate sidebar and markdown files
+/// Get namespace doc comments
 ////////////////////////////////////////////////////////////
 
+const exports = getExports()
+
+let namespaceDocComments: ReturnType<typeof extractNamespaceDocComments> = {}
+for (const path of Object.values(exports.src)) {
+  if (!path.endsWith('index.ts')) continue
+  const comments = extractNamespaceDocComments(
+    resolve(import.meta.dirname, '../../src', path),
+    apiPackage,
+  )
+  if (!comments) continue
+  namespaceDocComments = { ...namespaceDocComments, ...comments }
+}
+
+////////////////////////////////////////////////////////////
+/// Build markdown files
+////////////////////////////////////////////////////////////
+
+type EntrypointCategory = string
+type NamespaceCategory = string
+type NamespaceItem = {
+  docComment: ReturnType<typeof processDocComment>
+  name: string
+  sidebarItem: SidebarItem
+}[]
+
 const pagesDir = './site/pages'
-const namespaceMap = new Map<
-  string,
-  {
-    baseLink: string
-    category: string
-    docComment: ReturnType<typeof processDocComment>
-    name: string
-    sidebarItem: {
-      items: { text: string; link: string }[]
-      link: string
-      text: string
-    }
-  }[]
->()
+const namespaceMap: Record<
+  EntrypointCategory,
+  Record<NamespaceCategory, NamespaceItem>
+> = {}
 
 for (const namespace of namespaces) {
   const name = namespace.displayName
-  const baseLink = `/api/${name}`
-  const dir = `${pagesDir}/api/${name}`
+  const docComment = namespaceDocComments[name]
+  const basePath = docComment ? getPath(docComment) : '/'
+  const baseLink = `${basePath}/${name}`
+  const dir = `${pagesDir}${baseLink}`
   fs.ensureDirSync(dir)
+
+  const data = dataLookup[getId(namespace)]
+  const filePath = data?.file.path ?? ''
+  const entrypoint = relative(
+    resolve(import.meta.dirname, '../../src'),
+    filePath,
+  ).replace(/\/?index\.ts?$/, '')
 
   const items = []
   const errors: ModuleItem[] = []
@@ -115,8 +139,10 @@ for (const namespace of namespaces) {
 
       const content = renderApiFunction({
         apiItem: apiPackage,
+        basePath,
         data,
         dataLookup,
+        entrypoint,
         overloads,
       })
       fs.writeFileSync(`${dir}/${displayName}.md`, content)
@@ -149,26 +175,34 @@ for (const namespace of namespaces) {
     fs.writeFileSync(`${dir}/types.md`, content)
   }
 
-  const category = moduleDocComments[name]?.category
+  const category = namespaceDocComments[name]?.category
   if (!category)
     throw new Error(
-      `Could not find sidebar category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
+      `Could not find category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
     )
 
-  const item = {
-    baseLink,
-    category,
-    docComment: moduleDocComments[name],
-    name,
-    sidebarItem: { collapsed: true, items, link: baseLink, text: name },
-  }
+  const entrypointCategory = namespaceDocComments[name]?.entrypointCategory
+  if (!entrypointCategory)
+    throw new Error(
+      `Could not find entrypoint for namespace: ${name}. Please add a TSDoc \`@entrypointCategory\` tag.`,
+    )
 
-  if (namespaceMap.has(category)) namespaceMap.get(category)?.push(item)
-  else namespaceMap.set(category, [item])
+  namespaceMap[entrypointCategory] ??= {}
+  namespaceMap[entrypointCategory][category] ??= []
+  namespaceMap[entrypointCategory][category].push({
+    docComment,
+    name,
+    sidebarItem: {
+      collapsed: true,
+      items,
+      link: baseLink,
+      text: name,
+    },
+  })
 
   const content = renderNamespace({
     apiItem: namespace,
-    docComment: moduleDocComments[name],
+    docComment,
     errors,
     functions,
     types,
@@ -176,53 +210,103 @@ for (const namespace of namespaces) {
   fs.writeFileSync(`${dir}/index.md`, content)
 }
 
-const alphabetizedNamespaceMap = new Map(
-  [...namespaceMap].sort(([categoryA], [categoryB]) =>
-    categoryA.localeCompare(categoryB),
-  ),
-)
-
-const namespaceSidebarItems = []
-for (const [category, items] of alphabetizedNamespaceMap)
-  namespaceSidebarItems.push({
-    text: category,
-    items: items.map((item) => item.sidebarItem),
-  })
-
-const sidebar = [
-  {
-    text: 'Overview',
-    link: '/api',
-  },
-  ...namespaceSidebarItems,
-]
-fs.writeFileSync(
-  './site/sidebar-generated.ts',
-  `export const sidebar = ${JSON.stringify(sidebar, null, 2)}`,
-)
-
 ////////////////////////////////////////////////////////////
-/// Generate "API Reference" page
+/// Build sidebar & top nav
 ////////////////////////////////////////////////////////////
 
-let content = '# API Reference\n\n'
+const namespaceEntries: {
+  entrypointCategory: EntrypointCategory
+  categories: {
+    category: NamespaceCategory
+    items: NamespaceItem
+  }[]
+}[] = []
 
-content += '<table className="vocs_Table">\n'
-content += '<tbody>\n'
+for (const [entrypointCategory, categories] of Object.entries(namespaceMap)) {
+  let alphabetized = []
+  for (const [category, items] of Object.entries(categories)) {
+    alphabetized.push({ category, items })
+  }
+  alphabetized = alphabetized.toSorted((a, b) =>
+    a.category.localeCompare(b.category),
+  )
+  namespaceEntries.push({ entrypointCategory, categories: alphabetized })
+}
 
-for (const [category, items] of alphabetizedNamespaceMap) {
-  content += `<tr><td className="vocs_TableCell" colSpan="2" style={{ backgroundColor: 'var(--vocs-color_background2)' }}>**${category}**</td></tr>\n`
-  for (const item of items) {
-    const description = item.docComment?.summary
-      .split('\n\n')[0]
-      ?.replace('\n', ' ')
-    content += `<tr><td className="vocs_TableCell"><a className="vocs_Anchor vocs_Link vocs_Link_accent_underlined" href="/api/${item.name}">${item.name}</a></td><td className="vocs_TableCell">${description}</td></tr>\n`
+const sidebar: Record<string, { backLink: true; items: SidebarItem[] }> = {}
+for (const { entrypointCategory, categories } of namespaceEntries) {
+  const path = getPath({ entrypointCategory })
+  sidebar[path] = {
+    backLink: true,
+    items: [
+      {
+        text: 'Overview',
+        link: path,
+      },
+      ...categories.map(({ category, items }) => ({
+        text: category,
+        items: items.map(({ sidebarItem }) => sidebarItem),
+      })),
+    ],
   }
 }
-content += '</tbody>\n'
-content += '</table>\n'
 
-fs.writeFileSync(`${pagesDir}/api/index.mdx`, content)
+const topNav: TopNav = namespaceEntries.map(({ entrypointCategory }) => ({
+  text: entrypointCategory,
+  link: getPath({ entrypointCategory }),
+})) satisfies TopNav
+
+fs.writeFileSync(
+  './site/config-generated.ts',
+  `export const sidebar = ${JSON.stringify(sidebar, null, 2)}\n` +
+    `export const topNav = ${JSON.stringify(topNav, null, 2)}`,
+)
+
+////////////////////////////////////////////////////////////
+/// Generate "API Reference" pages
+////////////////////////////////////////////////////////////
+
+for (const namespace of namespaceEntries) {
+  let content = '# API Reference\n\n'
+
+  content += '<table className="vocs_Table">\n'
+  content += '<tbody>\n'
+
+  for (const { category, items } of namespace.categories) {
+    content += `<tr><td className="vocs_TableCell" colSpan="2" style={{ backgroundColor: 'var(--vocs-color_background2)' }}>**${category}**</td></tr>\n`
+    for (const item of items) {
+      const description = item.docComment?.summary
+        .split('\n\n')[0]
+        ?.replace('\n', ' ')
+      content += `<tr><td className="vocs_TableCell"><a className="vocs_Anchor vocs_Link vocs_Link_accent_underlined" href="/api/${item.name}">${item.name}</a></td><td className="vocs_TableCell">${description}</td></tr>\n`
+    }
+  }
+  content += '</tbody>\n'
+  content += '</table>\n'
+
+  const path = `${pagesDir}${getPath(namespace)}`
+  fs.writeFileSync(`${path}/index.mdx`, content)
+}
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Done.')
+
+////////////////////////////////////////////////////////////
+/// Helpers
+////////////////////////////////////////////////////////////
+
+function sanitizePath(name: string) {
+  return name.toLowerCase().replaceAll(/-|\s/g, '')
+}
+
+function getPath({
+  entrypointCategory,
+  category,
+}: { entrypointCategory?: string | undefined; category?: string | undefined }) {
+  const isCore = entrypointCategory === 'Core'
+  let path = '/'
+  if (entrypointCategory)
+    path = `/${isCore ? 'api' : `${sanitizePath(entrypointCategory)}`}`
+  if (category && !isCore) path += `/${sanitizePath(category)}`
+  return path
+}
