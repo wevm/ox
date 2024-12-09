@@ -7,8 +7,7 @@
     "src/**/*.bench-d.ts",
     "src/**/*.snap-d.ts",
     "src/**/*.test.ts",
-    "src/**/*.test-d.ts",
-    "src/index.docs.ts"
+    "src/**/*.test-d.ts"
   ],
   "compilerOptions": {
     "moduleResolution": "node",
