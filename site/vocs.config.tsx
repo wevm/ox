@@ -1,7 +1,7 @@
 import React from 'react'
 import { defineConfig } from 'vocs'
 import pkg from '../src/package.json'
-import { sidebar } from './sidebar-generated'
+import { sidebar, topNav } from './config-generated'
 
 export default defineConfig({
   baseUrl:
@@ -45,7 +45,6 @@ export default defineConfig({
       { text: 'Platform Compatibility', link: '/platform-compatibility' },
       {
         text: 'Guides',
-        // collapsed: true,
         items: [
           { text: 'AES-GCM Encryption', link: '/guides/encryption' },
           {
@@ -64,10 +63,6 @@ export default defineConfig({
             link: '/guides/mnemonics',
           },
           { text: 'Recursive Length Prefix (RLP)', link: '/guides/rlp' },
-          // {
-          //   text: 'Sign-In With Ethereum (SIWE) 🚧',
-          //   link: '/guides/siwe',
-          // },
           {
             text: 'Signed & Typed Data',
             link: '/guides/signed-data',
@@ -81,11 +76,19 @@ export default defineConfig({
       },
       {
         text: 'API Reference',
-        link: '/api',
-        items: [],
+        items: [
+          {
+            text: 'Core',
+            link: '/api',
+          },
+          {
+            text: 'ERCs',
+            link: '/ercs',
+          },
+        ],
       },
     ],
-    '/api': { backLink: true, items: sidebar },
+    ...sidebar,
   },
   socials: [
     {
@@ -291,10 +294,7 @@ export default defineConfig({
     },
   },
   topNav: [
-    {
-      text: 'API Reference',
-      link: '/api',
-    },
+    ...topNav,
     {
       text: pkg.version,
       items: [
