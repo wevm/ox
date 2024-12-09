@@ -78,8 +78,8 @@ for (const path of Object.values(exports.src)) {
 /// Build markdown files
 ////////////////////////////////////////////////////////////
 
-type Entrypoint = string
-type Category = string
+type EntrypointCategory = string
+type NamespaceCategory = string
 type NamespaceItem = {
   docComment: ReturnType<typeof processDocComment>
   name: string
@@ -87,7 +87,10 @@ type NamespaceItem = {
 }[]
 
 const pagesDir = './site/pages'
-const namespaceMap: Record<Entrypoint, Record<Category, NamespaceItem>> = {}
+const namespaceMap: Record<
+  EntrypointCategory,
+  Record<NamespaceCategory, NamespaceItem>
+> = {}
 
 for (const namespace of namespaces) {
   const name = namespace.displayName
@@ -212,14 +215,14 @@ for (const namespace of namespaces) {
 ////////////////////////////////////////////////////////////
 
 const namespaceEntries: {
-  entrypoint: Entrypoint
+  entrypointCategory: EntrypointCategory
   categories: {
-    category: Category
+    category: NamespaceCategory
     items: NamespaceItem
   }[]
 }[] = []
 
-for (const [entrypoint, categories] of Object.entries(namespaceMap)) {
+for (const [entrypointCategory, categories] of Object.entries(namespaceMap)) {
   let alphabetized = []
   for (const [category, items] of Object.entries(categories)) {
     alphabetized.push({ category, items })
@@ -227,12 +230,12 @@ for (const [entrypoint, categories] of Object.entries(namespaceMap)) {
   alphabetized = alphabetized.toSorted((a, b) =>
     a.category.localeCompare(b.category),
   )
-  namespaceEntries.push({ entrypoint, categories: alphabetized })
+  namespaceEntries.push({ entrypointCategory, categories: alphabetized })
 }
 
 const sidebar: Record<string, { backLink: true; items: SidebarItem[] }> = {}
-for (const { entrypoint, categories } of namespaceEntries) {
-  const path = getPath({ entrypoint })
+for (const { entrypointCategory, categories } of namespaceEntries) {
+  const path = getPath({ entrypointCategory })
   sidebar[path] = {
     backLink: true,
     items: [
@@ -248,9 +251,9 @@ for (const { entrypoint, categories } of namespaceEntries) {
   }
 }
 
-const topNav: TopNav = namespaceEntries.map(({ entrypoint }) => ({
-  text: entrypoint,
-  link: getPath({ entrypoint }),
+const topNav: TopNav = namespaceEntries.map(({ entrypointCategory }) => ({
+  text: entrypointCategory,
+  link: getPath({ entrypointCategory }),
 })) satisfies TopNav
 
 fs.writeFileSync(
@@ -297,12 +300,13 @@ function sanitizePath(name: string) {
 }
 
 function getPath({
-  entrypoint,
+  entrypointCategory,
   category,
-}: { entrypoint?: string | undefined; category?: string | undefined }) {
-  const isCore = entrypoint === 'Core'
+}: { entrypointCategory?: string | undefined; category?: string | undefined }) {
+  const isCore = entrypointCategory === 'Core'
   let path = '/'
-  if (entrypoint) path = `/${isCore ? 'api' : `${sanitizePath(entrypoint)}`}`
+  if (entrypointCategory)
+    path = `/${isCore ? 'api' : `${sanitizePath(entrypointCategory)}`}`
   if (category && !isCore) path += `/${sanitizePath(category)}`
   return path
 }
