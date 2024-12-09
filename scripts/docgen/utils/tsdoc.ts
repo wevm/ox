@@ -61,7 +61,7 @@ export function extractNamespaceDocComments(
 export function processDocComment(
   docComment?: tsdoc.DocComment | undefined,
   resolveDeclarationReference?: ResolveDeclarationReference,
-  entrypoint?: string | undefined,
+  entrypointCategory?: string | undefined,
 ) {
   if (!docComment) return
 
@@ -101,7 +101,7 @@ export function processDocComment(
       ),
       '@docGroup',
     ),
-    entrypoint,
+    entrypointCategory,
     examples: docComment?.customBlocks
       .filter((v) => v.blockTag.tagName === '@example')
       .map((v) => renderDocNode(v, resolveDeclarationReference))

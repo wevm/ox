@@ -20,6 +20,11 @@
       "allowMultiple": false
     },
     {
+      "tagName": "@entrypointCategory",
+      "syntaxKind": "block",
+      "allowMultiple": false
+    },
+    {
       "tagName": "@since",
       "syntaxKind": "block",
       "allowMultiple": false
@@ -35,6 +40,7 @@
     "@alias": true,
     "@category": true,
     "@default": true,
+    "@entrypointCategory": true,
     "@since": true,
     "@docGroup": true
   }

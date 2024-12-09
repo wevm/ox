@@ -1,4 +1,4 @@
-/** @entrypoint Core */
+/** @entrypointCategory Core */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
 export type {}
 
@@ -994,7 +994,7 @@ export * as Block from './core/Block.js'
 export * as Bloom from './core/Bloom.js'
 
 /**
- * Utility functions for [BLS12-381](https://hackmd.io/@benjaminion/bls12-381) cryptography.
+ * Utility functions for [BLS12-381](https://hackmd.io/\@benjaminion/bls12-381) cryptography.
  *
  * :::info
  *

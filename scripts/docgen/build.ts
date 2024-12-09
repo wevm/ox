@@ -178,10 +178,10 @@ for (const namespace of namespaces) {
       `Could not find category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
     )
 
-  const entrypointCategory = namespaceDocComments[name]?.entrypoint
+  const entrypointCategory = namespaceDocComments[name]?.entrypointCategory
   if (!entrypointCategory)
     throw new Error(
-      `Could not find entrypoint for namespace: ${name}. Please add a TSDoc \`@entrypoint\` tag.`,
+      `Could not find entrypoint for namespace: ${name}. Please add a TSDoc \`@entrypointCategory\` tag.`,
     )
 
   namespaceMap[entrypointCategory] ??= {}

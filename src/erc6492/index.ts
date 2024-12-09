@@ -1,4 +1,4 @@
-/** @entrypoint ERCs */
+/** @entrypointCategory ERCs */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
 export type {}
 
