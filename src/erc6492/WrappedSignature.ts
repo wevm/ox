@@ -3,7 +3,6 @@ import type * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import * as Signature from '../core/Signature.js'
-import type { OneOf } from '../core/internal/types.js'
 
 /** ERC-6492 Wrapped Signature. */
 export type WrappedSignature = {
@@ -48,7 +47,6 @@ export declare namespace assert {
 
 /**
  * Parses an [ERC-6492 wrapped signature](https://eips.ethereum.org/EIPS/eip-6492#specification) into its constituent parts.
- * If the signature is not in ERC-6492 format, then the underlying (original) signature is returned.
  *
  * @example
  * ```ts twoslash
@@ -77,18 +75,13 @@ export declare namespace assert {
  * @param wrapped - Wrapped signature to parse.
  * @returns Wrapped signature.
  */
-export function from(wrapped: WrappedSignature | Hex.Hex): from.ReturnType {
+export function from(wrapped: WrappedSignature | Hex.Hex): WrappedSignature {
   if (typeof wrapped === 'string') return fromHex(wrapped)
   return wrapped
 }
 
 export declare namespace from {
-  type ReturnType = OneOf<
-    | WrappedSignature
-    | {
-        signature: Signature.Signature
-      }
-  >
+  type ReturnType = WrappedSignature
 
   type ErrorType =
     | AbiParameters.from.ErrorType
@@ -99,7 +92,6 @@ export declare namespace from {
 
 /**
  * Parses an [ERC-6492 wrapped signature](https://eips.ethereum.org/EIPS/eip-6492#specification) into its constituent parts.
- * If the signature is not in ERC-6492 format, then the underlying (original) signature is returned.
  *
  * @example
  * ```ts twoslash
@@ -111,8 +103,8 @@ export declare namespace from {
  * @param wrapped - Wrapped signature to parse.
  * @returns Wrapped signature.
  */
-export function fromHex(wrapped: Hex.Hex): fromHex.ReturnType {
-  if (!validate(wrapped)) return { signature: Signature.fromHex(wrapped) }
+export function fromHex(wrapped: Hex.Hex): WrappedSignature {
+  assert(wrapped)
 
   const [to, data, signature_hex] = AbiParameters.decode(
     AbiParameters.from('address, bytes, bytes'),
@@ -125,13 +117,6 @@ export function fromHex(wrapped: Hex.Hex): fromHex.ReturnType {
 }
 
 export declare namespace fromHex {
-  type ReturnType = OneOf<
-    | WrappedSignature
-    | {
-        signature: Signature.Signature
-      }
-  >
-
   type ErrorType =
     | AbiParameters.from.ErrorType
     | AbiParameters.decode.ErrorType

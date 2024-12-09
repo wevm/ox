@@ -1,4 +1,4 @@
-import { Secp256k1, Signature } from 'ox'
+import { Secp256k1 } from 'ox'
 import { WrappedSignature } from 'ox/erc6492'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
@@ -77,16 +77,6 @@ describe('from', () => {
     const wrapped = WrappedSignature.from(serialized)
     expect(wrapped).toEqual(args)
   })
-
-  test('behavior: hex (plain sig)', () => {
-    const signature = Secp256k1.sign({
-      payload: '0xdeadbeef',
-      privateKey: accounts[0].privateKey,
-    })
-
-    const wrapped = WrappedSignature.from(Signature.toHex(signature))
-    expect(wrapped).toEqual({ signature })
-  })
 })
 
 describe('fromHex', () => {
@@ -105,16 +95,6 @@ describe('fromHex', () => {
     const serialized = WrappedSignature.toHex(args)
     const wrapped = WrappedSignature.fromHex(serialized)
     expect(wrapped).toEqual(args)
-  })
-
-  test('behavior: plain sig', () => {
-    const signature = Secp256k1.sign({
-      payload: '0xdeadbeef',
-      privateKey: accounts[0].privateKey,
-    })
-
-    const wrapped = WrappedSignature.fromHex(Signature.toHex(signature))
-    expect(wrapped).toEqual({ signature })
   })
 })
 
