@@ -1,5 +1,15 @@
-import { resolve } from 'node:path'
+import { matchesGlob, resolve } from 'node:path'
 import fs from 'fs-extra'
+
+const exclude = [
+  '_types',
+  '_esm',
+  '_cjs',
+  'node_modules',
+  'jsr.json',
+  'tsdoc.json',
+  'version.ts',
+]
 
 export function getExports({
   onEntry,
@@ -16,18 +26,15 @@ export function getExports({
   >
   const src = {} as Record<string, string>
 
-  const entries = fs.readdirSync(resolve(import.meta.dirname, '../../src'), {
-    withFileTypes: true,
-  })
+  const entries = fs
+    .readdirSync(resolve(import.meta.dirname, '../../src'), {
+      withFileTypes: true,
+    })
+    .filter((entry) => !exclude.some((x) => matchesGlob(entry.name, x)))
 
   for (const parentEntry of entries) {
-    if (['node_modules', '_types', '_esm', '_cjs'].includes(parentEntry.name))
-      continue
-
     if (!parentEntry.isDirectory()) {
       if (parentEntry.name.endsWith('test.ts')) continue
-      if (parentEntry.name === 'jsr.json') continue
-      if (parentEntry.name === 'tsdoc.json') continue
       if (
         !parentEntry.name.endsWith('.ts') &&
         !parentEntry.name.endsWith('.json')
@@ -63,8 +70,6 @@ export function getExports({
       },
     )
     for (const entry of entries) {
-      if (['node_modules', '_types', '_esm', '_cjs'].includes(entry.name))
-        continue
       if (entry.name.endsWith('test.ts')) continue
       if (entry.isDirectory()) continue
 

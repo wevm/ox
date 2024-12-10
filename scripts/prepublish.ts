@@ -10,10 +10,14 @@ const jsrJson = fs.readJsonSync(jsrJsonPath)
 
 const exports = getExports({
   onEntry: ({ entryName, name, parentEntryName }) => {
-    const distBasePath = (type: string) =>
-      parentEntryName
-        ? `./${type}/${parentEntryName}/${name}`
-        : `./${type}/${name}`
+    const modulePath = (dist?: string) => {
+      let path = './'
+      if (dist) path += `${dist}/`
+      if (dist || (parentEntryName && parentEntryName !== 'core'))
+        path += `${parentEntryName}/`
+      if (dist || name !== 'index') path += name
+      return path
+    }
 
     try {
       fs.mkdirSync(resolve(import.meta.dirname, '../src', entryName))
@@ -22,18 +26,9 @@ const exports = getExports({
       resolve(import.meta.dirname, '../src', entryName, 'package.json'),
       {
         type: 'module',
-        types: relative(
-          resolve(import.meta.dirname, '../src'),
-          `${distBasePath('_types')}.d.ts`,
-        ),
-        main: relative(
-          resolve(import.meta.dirname, '../src'),
-          `${distBasePath('_cjs')}.js`,
-        ),
-        module: relative(
-          resolve(import.meta.dirname, '../src'),
-          `${distBasePath('_esm')}.js`,
-        ),
+        types: relative(modulePath(), modulePath('_types')) + '.d.ts',
+        main: relative(modulePath(), modulePath('_cjs')) + '.js',
+        module: relative(modulePath(), modulePath('_esm')) + '.js',
       },
       { spaces: 2 },
     )
