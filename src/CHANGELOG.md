@@ -1,5 +1,11 @@
 # ox
 
+## 0.4.1
+
+### Patch Changes
+
+- [#37](https://github.com/wevm/ox/pull/37) [`39604df`](https://github.com/wevm/ox/commit/39604df9f84b810322e12f767ef450c0c2ced308) Thanks [@jxom](https://github.com/jxom)! - Added `ox/erc6492` entrypoint.
+
 ## 0.4.0
 
 ### Minor Changes
