@@ -1,5 +1,11 @@
 # ox
 
+## 0.4.2
+
+### Patch Changes
+
+- [#40](https://github.com/wevm/ox/pull/40) [`47e306d`](https://github.com/wevm/ox/commit/47e306d8ab95140eb7e2589c05351d1663a507ae) Thanks [@jxom](https://github.com/jxom)! - **ox/erc6492:** Added universal signature verification exports.
+
 ## 0.4.1
 
 ### Patch Changes
