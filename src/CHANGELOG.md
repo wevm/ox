@@ -1,5 +1,11 @@
 # ox
 
+## 0.4.3
+
+### Patch Changes
+
+- [`c09d165`](https://github.com/wevm/ox/commit/c09d1655a1fa65be33d0dfb86d14cfe0dad7bdc3) Thanks [@jxom](https://github.com/jxom)! - Added `checksumAddress` as an option to `AbiParameters.{encode|decode}`.
+
 ## 0.4.2
 
 ### Patch Changes
