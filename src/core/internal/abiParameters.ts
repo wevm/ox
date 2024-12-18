@@ -102,7 +102,7 @@ const sizeOfOffset = 32
 /** @internal */
 export function decodeAddress(cursor: Cursor.Cursor) {
   const value = cursor.readBytes(32)
-  return [Hex.fromBytes(Bytes.slice(value, -20)), 32]
+  return [Address.checksum(Hex.fromBytes(Bytes.slice(value, -20))), 32]
 }
 
 export declare namespace decodeAddress {
