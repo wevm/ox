@@ -1725,6 +1725,42 @@ describe('seaport', () => {
   })
 })
 
+test('options: checksumAddress = true', () => {
+  expect(
+    AbiParameters.encode(
+      AbiParameters.from('(uint256 x, bool y, address z)'),
+      [
+        {
+          x: 420n,
+          y: true,
+          z: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+        },
+      ],
+      { checksumAddress: true },
+    ),
+  ).toMatchInlineSnapshot(
+    '"0x00000000000000000000000000000000000000000000000000000000000001a40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac"',
+  )
+
+  expect(() =>
+    AbiParameters.encode(
+      AbiParameters.from('(uint256 x, bool y, address z)'),
+      [
+        {
+          x: 420n,
+          y: true,
+          z: '0xa5cC3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+        },
+      ],
+      { checksumAddress: true },
+    ),
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [Address.InvalidAddressError: Address "0xa5cC3c03994DB5b0d9A5eEdD10CabaB0813678AC" is invalid.
+
+    Details: Address does not match its checksum counterpart.]
+  `)
+})
+
 test('invalid type', () => {
   expect(() =>
     AbiParameters.encode([{ name: 'x', type: 'lol' }], [69]),

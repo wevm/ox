@@ -63,17 +63,25 @@ export type Tuple = ParameterToPrimitiveType<TupleAbiParameter>
 export function decodeParameter(
   cursor: Cursor.Cursor,
   param: AbiParameters.Parameter,
-  { staticPosition }: { staticPosition: number },
+  options: { checksumAddress?: boolean | undefined; staticPosition: number },
 ) {
+  const { checksumAddress, staticPosition } = options
   const arrayComponents = getArrayComponents(param.type)
   if (arrayComponents) {
     const [length, type] = arrayComponents
-    return decodeArray(cursor, { ...param, type }, { length, staticPosition })
+    return decodeArray(
+      cursor,
+      { ...param, type },
+      { checksumAddress, length, staticPosition },
+    )
   }
   if (param.type === 'tuple')
-    return decodeTuple(cursor, param as TupleAbiParameter, { staticPosition })
-
-  if (param.type === 'address') return decodeAddress(cursor)
+    return decodeTuple(cursor, param as TupleAbiParameter, {
+      checksumAddress,
+      staticPosition,
+    })
+  if (param.type === 'address')
+    return decodeAddress(cursor, { checksum: checksumAddress })
   if (param.type === 'bool') return decodeBool(cursor)
   if (param.type.startsWith('bytes'))
     return decodeBytes(cursor, param, { staticPosition })
@@ -100,9 +108,15 @@ const sizeOfLength = 32
 const sizeOfOffset = 32
 
 /** @internal */
-export function decodeAddress(cursor: Cursor.Cursor) {
+export function decodeAddress(
+  cursor: Cursor.Cursor,
+  options: { checksum?: boolean | undefined } = {},
+) {
+  const { checksum = false } = options
   const value = cursor.readBytes(32)
-  return [Hex.fromBytes(Bytes.slice(value, -20)), 32]
+  const wrap = (address: Hex.Hex) =>
+    checksum ? Address.checksum(address) : address
+  return [wrap(Hex.fromBytes(Bytes.slice(value, -20))), 32]
 }
 
 export declare namespace decodeAddress {
@@ -116,8 +130,14 @@ export declare namespace decodeAddress {
 export function decodeArray(
   cursor: Cursor.Cursor,
   param: AbiParameters.Parameter,
-  { length, staticPosition }: { length: number | null; staticPosition: number },
+  options: {
+    checksumAddress?: boolean | undefined
+    length: number | null
+    staticPosition: number
+  },
 ) {
+  const { checksumAddress, length, staticPosition } = options
+
   // If the length of the array is not known in advance (dynamic array),
   // this means we will need to wonder off to the pointer and decode.
   if (!length) {
@@ -142,6 +162,7 @@ export function decodeArray(
       // Otherwise, elements will be the size of their encoding (consumed bytes).
       cursor.setPosition(startOfData + (dynamicChild ? i * 32 : consumed))
       const [data, consumed_] = decodeParameter(cursor, param, {
+        checksumAddress,
         staticPosition: startOfData,
       })
       consumed += consumed_
@@ -168,6 +189,7 @@ export function decodeArray(
       // Move cursor along to the next slot (next offset pointer).
       cursor.setPosition(start + i * 32)
       const [data] = decodeParameter(cursor, param, {
+        checksumAddress,
         staticPosition: start,
       })
       value.push(data)
@@ -184,6 +206,7 @@ export function decodeArray(
   const value: unknown[] = []
   for (let i = 0; i < length; ++i) {
     const [data, consumed_] = decodeParameter(cursor, param, {
+      checksumAddress,
       staticPosition: staticPosition + consumed,
     })
     consumed += consumed_
@@ -278,8 +301,10 @@ export type TupleAbiParameter = AbiParameters.Parameter & {
 export function decodeTuple(
   cursor: Cursor.Cursor,
   param: TupleAbiParameter,
-  { staticPosition }: { staticPosition: number },
+  options: { checksumAddress?: boolean | undefined; staticPosition: number },
 ) {
+  const { checksumAddress, staticPosition } = options
+
   // Tuples can have unnamed components (i.e. they are arrays), so we must
   // determine whether the tuple is named or unnamed. In the case of a named
   // tuple, the value will be an object where each property is the name of the
@@ -305,6 +330,7 @@ export function decodeTuple(
       const component = param.components[i]!
       cursor.setPosition(start + consumed)
       const [data, consumed_] = decodeParameter(cursor, component, {
+        checksumAddress,
         staticPosition: start,
       })
       consumed += consumed_
@@ -321,6 +347,7 @@ export function decodeTuple(
   for (let i = 0; i < param.components.length; ++i) {
     const component = param.components[i]!
     const [data, consumed_] = decodeParameter(cursor, component, {
+      checksumAddress,
       staticPosition,
     })
     value[hasUnnamedChild ? i : component?.name!] = data
@@ -374,9 +401,11 @@ export declare namespace decodeString {
 export function prepareParameters<
   const parameters extends AbiParameters.AbiParameters,
 >({
+  checksumAddress,
   parameters,
   values,
 }: {
+  checksumAddress?: boolean | undefined
   parameters: parameters
   values: parameters extends AbiParameters.AbiParameters
     ? ToPrimitiveTypes<parameters>
@@ -385,7 +414,11 @@ export function prepareParameters<
   const preparedParameters: PreparedParameter[] = []
   for (let i = 0; i < parameters.length; i++) {
     preparedParameters.push(
-      prepareParameter({ parameter: parameters[i]!, value: values[i] }),
+      prepareParameter({
+        checksumAddress,
+        parameter: parameters[i]!,
+        value: values[i],
+      }),
     )
   }
   return preparedParameters
@@ -400,6 +433,7 @@ export declare namespace prepareParameters {
 export function prepareParameter<
   const parameter extends AbiParameters.Parameter,
 >({
+  checksumAddress = false,
   parameter: parameter_,
   value,
 }: {
@@ -407,6 +441,7 @@ export function prepareParameter<
   value: parameter extends AbiParameters.Parameter
     ? ParameterToPrimitiveType<parameter>
     : never
+  checksumAddress?: boolean | undefined
 }): PreparedParameter {
   const parameter = parameter_ as AbiParameters.Parameter
 
@@ -414,6 +449,7 @@ export function prepareParameter<
   if (arrayComponents) {
     const [length, type] = arrayComponents
     return encodeArray(value, {
+      checksumAddress,
       length,
       parameter: {
         ...parameter,
@@ -423,11 +459,14 @@ export function prepareParameter<
   }
   if (parameter.type === 'tuple') {
     return encodeTuple(value as unknown as Tuple, {
+      checksumAddress,
       parameter: parameter as TupleAbiParameter,
     })
   }
   if (parameter.type === 'address') {
-    return encodeAddress(value as unknown as Hex.Hex)
+    return encodeAddress(value as unknown as Hex.Hex, {
+      checksum: checksumAddress,
+    })
   }
   if (parameter.type === 'bool') {
     return encodeBoolean(value as unknown as boolean)
@@ -503,8 +542,12 @@ export declare namespace encode {
 }
 
 /** @internal */
-export function encodeAddress(value: Hex.Hex): PreparedParameter {
-  Address.assert(value, { strict: false })
+export function encodeAddress(
+  value: Hex.Hex,
+  options: { checksum: boolean },
+): PreparedParameter {
+  const { checksum = false } = options
+  Address.assert(value, { strict: checksum })
   return {
     dynamic: false,
     encoded: Hex.padLeft(value.toLowerCase() as Hex.Hex),
@@ -522,14 +565,14 @@ export declare namespace encodeAddress {
 /** @internal */
 export function encodeArray<const parameter extends AbiParameters.Parameter>(
   value: ParameterToPrimitiveType<parameter>,
-  {
-    length,
-    parameter,
-  }: {
+  options: {
+    checksumAddress?: boolean | undefined
     length: number | null
     parameter: parameter
   },
 ): PreparedParameter {
+  const { checksumAddress, length, parameter } = options
+
   const dynamic = length === null
 
   if (!Array.isArray(value)) throw new AbiParameters.InvalidArrayError(value)
@@ -543,7 +586,11 @@ export function encodeArray<const parameter extends AbiParameters.Parameter>(
   let dynamicChild = false
   const preparedParameters: PreparedParameter[] = []
   for (let i = 0; i < value.length; i++) {
-    const preparedParam = prepareParameter({ parameter, value: value[i] })
+    const preparedParam = prepareParameter({
+      checksumAddress,
+      parameter,
+      value: value[i],
+    })
     if (preparedParam.dynamic) dynamicChild = true
     preparedParameters.push(preparedParam)
   }
@@ -697,14 +744,20 @@ export function encodeTuple<
   },
 >(
   value: ParameterToPrimitiveType<parameter>,
-  { parameter }: { parameter: parameter },
+  options: {
+    checksumAddress?: boolean | undefined
+    parameter: parameter
+  },
 ): PreparedParameter {
+  const { checksumAddress, parameter } = options
+
   let dynamic = false
   const preparedParameters: PreparedParameter[] = []
   for (let i = 0; i < parameter.components.length; i++) {
     const param_ = parameter.components[i]!
     const index = Array.isArray(value) ? i : param_.name
     const preparedParam = prepareParameter({
+      checksumAddress,
       parameter: param_,
       value: (value as any)[index!] as readonly unknown[],
     })

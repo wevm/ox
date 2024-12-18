@@ -73,9 +73,12 @@ export function decode<
 export function decode(
   parameters: AbiParameters,
   data: Bytes.Bytes | Hex.Hex,
-  options: { as?: 'Array' | 'Object' | undefined } = {},
+  options: {
+    as?: 'Array' | 'Object' | undefined
+    checksumAddress?: boolean | undefined
+  } = {},
 ): readonly unknown[] | Record<string, unknown> {
-  const { as = 'Array' } = options
+  const { as = 'Array', checksumAddress = false } = options
 
   const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
   const cursor = Cursor.create(bytes)
@@ -95,6 +98,7 @@ export function decode(
     const param = parameters[i] as Parameter
     cursor.setPosition(consumed)
     const [data, consumed_] = internal.decodeParameter(cursor, param, {
+      checksumAddress,
       staticPosition: 0,
     })
     consumed += consumed_
@@ -112,6 +116,12 @@ export declare namespace decode {
      * @default "Array"
      */
     as?: as | 'Object' | 'Array' | undefined
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default false
+     */
+    checksumAddress?: boolean | undefined
   }
 
   type ReturnType<
@@ -175,7 +185,10 @@ export function encode<
   values: parameters extends AbiParameters
     ? internal.ToPrimitiveTypes<parameters>
     : never,
+  options?: encode.Options,
 ): Hex.Hex {
+  const { checksumAddress = false } = options ?? {}
+
   if (parameters.length !== values.length)
     throw new LengthMismatchError({
       expectedLength: parameters.length as number,
@@ -183,6 +196,7 @@ export function encode<
     })
   // Prepare the parameters to determine dynamic types to encode.
   const preparedParameters = internal.prepareParameters({
+    checksumAddress,
     parameters: parameters as readonly Parameter[],
     values: values as any,
   })
@@ -197,6 +211,15 @@ export declare namespace encode {
     | internal.encode.ErrorType
     | internal.prepareParameters.ErrorType
     | Errors.GlobalErrorType
+
+  type Options = {
+    /**
+     * Whether addresses should be checked against their checksum.
+     *
+     * @default false
+     */
+    checksumAddress?: boolean | undefined
+  }
 }
 
 /**

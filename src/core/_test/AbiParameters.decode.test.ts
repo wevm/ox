@@ -1178,6 +1178,17 @@ test('options: as = Object', () => {
   }
 })
 
+test('options: checksumAddress = true', () => {
+  const result = AbiParameters.decode(
+    AbiParameters.from('(uint256 x, bool y, address z)'),
+    '0x00000000000000000000000000000000000000000000000000000000000001a40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+    { checksumAddress: true },
+  )
+  expect(result).toEqual([
+    { x: 420n, y: true, z: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC' },
+  ])
+})
+
 describe('seaport', () => {
   test('cancel', () => {
     const cancel = AbiItem.fromAbi(seaportContractConfig.abi, 'cancel')
