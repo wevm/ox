@@ -206,7 +206,7 @@ export function createMessage(value: Message): string {
   }
 
   // Construct message
-  const address = Address.from(value.address)
+  const address = Address.from(value.address, { checksum: true })
   const origin = (() => {
     if (scheme) return `${scheme}://${domain}`
     return domain
