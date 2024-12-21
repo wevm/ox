@@ -243,6 +243,30 @@ describe('createMessage', () => {
     vi.useRealTimers()
   })
 
+  test('behavior: non-checksummed address', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2023, 1, 1)))
+
+    expect(
+      Siwe.createMessage({
+        ...message,
+        address: '0xa0cf798816d4b9b9866b5330eea46a18382f251e',
+      }),
+    ).toMatchInlineSnapshot(`
+        "example.com wants you to sign in with your Ethereum account:
+        0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
+
+
+        URI: https://example.com/path
+        Version: 1
+        Chain ID: 1
+        Nonce: foobarbaz
+        Issued At: 2023-02-01T00:00:00.000Z"
+      `)
+
+    vi.useRealTimers()
+  })
+
   test('behavior: invalid address', () => {
     expect(() =>
       Siwe.createMessage({ ...message, address: '0xfoobarbaz' }),
