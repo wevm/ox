@@ -1,5 +1,11 @@
 # ox
 
+## 0.4.4
+
+### Patch Changes
+
+- [#45](https://github.com/wevm/ox/pull/45) [`48b896f`](https://github.com/wevm/ox/commit/48b896f3c491bcf9e0d8460857b278ede74eaf9e) Thanks [@deodad](https://github.com/deodad)! - Ensured addresses are checksummed when creating SIWE messages
+
 ## 0.4.3
 
 ### Patch Changes
