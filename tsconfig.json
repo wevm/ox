@@ -8,6 +8,7 @@
     "paths": {
       "~test/*": ["./test/*"],
       "ox": ["src/index.ts"],
+      "ox/erc4337": ["src/erc4337/index.ts"],
       "ox/erc6492": ["src/erc6492/index.ts"],
       "ox/trusted-setups": ["src/trusted-setups/index.ts"],
       "ox/window": ["src/window/index.ts"]
