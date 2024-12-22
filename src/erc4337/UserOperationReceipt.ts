@@ -7,7 +7,7 @@ import type * as EntryPoint from './EntryPoint.js'
 /**
  * User Operation Receipt type.
  *
- * @link https://eips.ethereum.org/EIPS/eip-4337#-eth_getuseroperationreceipt
+ * @see https://eips.ethereum.org/EIPS/eip-4337#-eth_getuseroperationreceipt
  */
 export type UserOperationReceipt<
   _entryPointVersion extends EntryPoint.Version = EntryPoint.Version,

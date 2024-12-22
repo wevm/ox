@@ -1,7 +1,7 @@
 /**
  * EntryPoint version.
  *
- * @link https://github.com/eth-infinitism/account-abstraction/releases
+ * @see https://github.com/eth-infinitism/account-abstraction/releases
  */
 export type Version = '0.6' | '0.7'
 

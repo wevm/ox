@@ -24,6 +24,13 @@ export * as RpcSchema from './RpcSchema.js'
 export * as UserOperation from './UserOperation.js'
 
 /**
+ * Utility functions and types for working with [ERC-4337 User Operation Gas](https://eips.ethereum.org/EIPS/eip-4337).
+ *
+ * @category ERC-4337
+ */
+export * as UserOperationGas from './UserOperationGas.js'
+
+/**
  * Utility functions and types for working with [ERC-4337 User Operation Receipts](https://eips.ethereum.org/EIPS/eip-4337).
  *
  * @category ERC-4337
