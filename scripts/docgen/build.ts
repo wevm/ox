@@ -278,7 +278,7 @@ for (const namespace of namespaceEntries) {
       const description = item.docComment?.summary
         .split('\n\n')[0]
         ?.replace('\n', ' ')
-      content += `<tr><td className="vocs_TableCell"><a className="vocs_Anchor vocs_Link vocs_Link_accent_underlined" href="/api/${item.name}">${item.name}</a></td><td className="vocs_TableCell">${description}</td></tr>\n`
+      content += `<tr><td className="vocs_TableCell"><a className="vocs_Anchor vocs_Link vocs_Link_accent_underlined" href="${item.sidebarItem.link}">${item.name}</a></td><td className="vocs_TableCell">${description}</td></tr>\n`
     }
   }
   content += '</tbody>\n'
