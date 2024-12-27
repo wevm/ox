@@ -11,7 +11,7 @@ import {
   renderNamespaceErrors,
   renderNamespaceTypes,
 } from './render/apiNamespace.js'
-import { createDataLookup, getId } from './utils/model.js'
+import { createDataLookup, getId, getPath } from './utils/model.js'
 import { namespaceRegex } from './utils/regex.js'
 import {
   extractNamespaceDocComments,
@@ -22,11 +22,35 @@ import {
 console.log('Generating API docs.')
 
 ////////////////////////////////////////////////////////////
-/// Load API Model and construct lookup
+/// Load API Model
 ////////////////////////////////////////////////////////////
 
 const fileName = './scripts/docgen/ox.api.json'
 const apiPackage = new model.ApiModel().loadPackage(fileName)
+
+////////////////////////////////////////////////////////////
+/// Get namespace doc comments
+////////////////////////////////////////////////////////////
+
+const exports = getExports()
+
+export let namespaceDocComments: ReturnType<
+  typeof extractNamespaceDocComments
+> = {}
+for (const path of Object.values(exports.src)) {
+  if (!path.endsWith('index.ts')) continue
+  const comments = extractNamespaceDocComments(
+    resolve(import.meta.dirname, '../../src', path),
+    apiPackage,
+  )
+  if (!comments) continue
+  namespaceDocComments = { ...namespaceDocComments, ...comments }
+}
+
+////////////////////////////////////////////////////////////
+/// Construct lookup
+////////////////////////////////////////////////////////////
+
 const dataLookup = createDataLookup(apiPackage)
 
 fs.writeFileSync(
@@ -55,23 +79,6 @@ for (const member of apiEntryPoint.members) {
   if (testNamespaces.length && !testNamespaces.includes(member.displayName))
     continue
   namespaces.push(member)
-}
-
-////////////////////////////////////////////////////////////
-/// Get namespace doc comments
-////////////////////////////////////////////////////////////
-
-const exports = getExports()
-
-let namespaceDocComments: ReturnType<typeof extractNamespaceDocComments> = {}
-for (const path of Object.values(exports.src)) {
-  if (!path.endsWith('index.ts')) continue
-  const comments = extractNamespaceDocComments(
-    resolve(import.meta.dirname, '../../src', path),
-    apiPackage,
-  )
-  if (!comments) continue
-  namespaceDocComments = { ...namespaceDocComments, ...comments }
 }
 
 ////////////////////////////////////////////////////////////
@@ -290,23 +297,3 @@ for (const namespace of namespaceEntries) {
 
 // biome-ignore lint/suspicious/noConsoleLog:
 console.log('Done.')
-
-////////////////////////////////////////////////////////////
-/// Helpers
-////////////////////////////////////////////////////////////
-
-function sanitizePath(name: string) {
-  return name.toLowerCase().replaceAll(/-|\s/g, '')
-}
-
-function getPath({
-  entrypointCategory,
-  category,
-}: { entrypointCategory?: string | undefined; category?: string | undefined }) {
-  const isCore = entrypointCategory === 'Core'
-  let path = '/'
-  if (entrypointCategory)
-    path = `/${isCore ? 'api' : `${sanitizePath(entrypointCategory)}`}`
-  if (category && !isCore) path += `/${sanitizePath(category)}`
-  return path
-}

@@ -415,6 +415,7 @@ export declare namespace hash {
  *
  * @example
  * ```ts twoslash
+ * import { Value } from 'ox'
  * import { UserOperation } from 'ox/erc4337'
  *
  * const packed = UserOperation.toPacked({

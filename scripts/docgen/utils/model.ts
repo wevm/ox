@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import * as model from '@microsoft/api-extractor-model'
 import type { DocDeclarationReference } from '@microsoft/tsdoc'
 
+import { namespaceDocComments } from '../build.js'
 import { moduleNameRegex, namespaceRegex } from './regex.js'
 import { processDocComment, renderDocNode } from './tsdoc.js'
 
@@ -160,17 +161,37 @@ export type ResolveDeclarationReference = ReturnType<
   typeof createResolveDeclarationReference
 >
 
+function sanitizePath(name: string) {
+  return name.toLowerCase().replaceAll(/-|\s/g, '')
+}
+
+export function getPath({
+  entrypointCategory,
+  category,
+}: { entrypointCategory?: string | undefined; category?: string | undefined }) {
+  const isCore = entrypointCategory === 'Core'
+  let path = '/'
+  if (entrypointCategory)
+    path = `/${isCore ? 'api' : `${sanitizePath(entrypointCategory)}`}`
+  if (category && !isCore) path += `/${sanitizePath(category)}`
+  return path
+}
+
 function getLinkForApiItem(item: model.ApiItem) {
   const parent = item.parent
   if (!parent) throw new Error('Parent not found')
 
-  const baseLink = `/api/${parent.displayName}`
+  const { entrypointCategory, category } =
+    namespaceDocComments[parent.displayName] || {}
+  const basePath = getPath({ category, entrypointCategory })
+
+  const baseLink = `${basePath === '/' ? '/api' : basePath}/${parent.displayName}`
   if (item.kind === model.ApiItemKind.Namespace) return baseLink
   if (item.kind === model.ApiItemKind.Function)
     return `${baseLink}/${item.displayName}`
   if (item.kind === model.ApiItemKind.TypeAlias) {
     if (!parent.displayName)
-      return `/api/${item.displayName}/types#${item.displayName.toLowerCase()}`
+      return `${basePath}/${item.displayName}/types#${item.displayName.toLowerCase()}`
     return `${baseLink}/types#${item.displayName.toLowerCase()}`
   }
   if (
