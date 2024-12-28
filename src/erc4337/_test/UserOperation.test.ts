@@ -450,3 +450,71 @@ describe('toPacked', () => {
     `)
   })
 })
+
+describe('toRpc', () => {
+  test('default', () => {
+    expect(
+      UserOperation.toRpc({
+        callData: '0xdeadbeef',
+        callGasLimit: 300_000n,
+        maxFeePerGas: 100_000n,
+        maxPriorityFeePerGas: 100_000n,
+        nonce: 0n,
+        preVerificationGas: 100_000n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 100_000n,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": "0x493e0",
+        "maxFeePerGas": "0x186a0",
+        "maxPriorityFeePerGas": "0x186a0",
+        "nonce": "0x0",
+        "preVerificationGas": "0x186a0",
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": "0x186a0",
+      }
+    `)
+
+    expect(
+      UserOperation.toRpc({
+        callData: '0xdeadbeef',
+        callGasLimit: 300_000n,
+        factory: '0x1234567890123456789012345678901234567890',
+        factoryData: '0xdeadbeef',
+        maxFeePerGas: 100_000n,
+        maxPriorityFeePerGas: 100_000n,
+        nonce: 0n,
+        paymaster: '0x1234567890123456789012345678901234567890',
+        paymasterData: '0xdeadbeef',
+        paymasterPostOpGasLimit: 100_000n,
+        paymasterVerificationGasLimit: 100_000n,
+        preVerificationGas: 100_000n,
+        sender: '0x1234567890123456789012345678901234567890',
+        signature: '0x',
+        verificationGasLimit: 100_000n,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": "0x493e0",
+        "factory": "0x1234567890123456789012345678901234567890",
+        "factoryData": "0xdeadbeef",
+        "maxFeePerGas": "0x186a0",
+        "maxPriorityFeePerGas": "0x186a0",
+        "nonce": "0x0",
+        "paymaster": "0x1234567890123456789012345678901234567890",
+        "paymasterData": "0xdeadbeef",
+        "paymasterPostOpGasLimit": "0x186a0",
+        "paymasterVerificationGasLimit": "0x186a0",
+        "preVerificationGas": "0x186a0",
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": "0x186a0",
+      }
+    `)
+  })
+})

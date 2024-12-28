@@ -158,7 +158,31 @@ export type RpcV07<signed extends boolean = true> = V07<signed, Hex.Hex>
  * @example
  * ### Attaching Signatures
  *
- * TODO: add after `getSignPayload` is implemented.
+ * ```ts twoslash
+ * import { Secp256k1, Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOperation = UserOperation.from({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * })
+ *
+ * const payload = UserOperation.getSignPayload(userOperation, {
+ *   chainId: 1,
+ *   entryPointAddress: '0x1234567890123456789012345678901234567890',
+ *   entryPointVersion: '0.7',
+ * })
+ *
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ *
+ * const userOperation_signed = UserOperation.from(userOperation, { signature }) // [!code focus]
+ * ```
  *
  * @param userOperation - The user operation to instantiate.
  * @returns User Operation.
@@ -487,4 +511,62 @@ export function toPacked(userOperation: UserOperation<'0.7', true>): Packed {
 
 export declare namespace toPacked {
   export type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#UserOperation.UserOperation} to a {@link ox#UserOperation.Rpc}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOperation = UserOperation.toRpc({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * })
+ * ```
+ *
+ * @param userOperation - The user operation to convert.
+ * @returns An RPC-formatted user operation.
+ */
+export function toRpc(userOperation: UserOperation): Rpc {
+  const rpc = {} as Rpc
+
+  rpc.callData = userOperation.callData
+  rpc.callGasLimit = Hex.fromNumber(userOperation.callGasLimit)
+  rpc.maxFeePerGas = Hex.fromNumber(userOperation.maxFeePerGas)
+  rpc.maxPriorityFeePerGas = Hex.fromNumber(userOperation.maxPriorityFeePerGas)
+  rpc.nonce = Hex.fromNumber(userOperation.nonce)
+  rpc.preVerificationGas = Hex.fromNumber(userOperation.preVerificationGas)
+  rpc.sender = userOperation.sender
+  rpc.verificationGasLimit = Hex.fromNumber(userOperation.verificationGasLimit)
+
+  if (userOperation.factory) rpc.factory = userOperation.factory
+  if (userOperation.factoryData) rpc.factoryData = userOperation.factoryData
+  if (userOperation.initCode) rpc.initCode = userOperation.initCode
+  if (userOperation.paymaster) rpc.paymaster = userOperation.paymaster
+  if (userOperation.paymasterData)
+    rpc.paymasterData = userOperation.paymasterData
+  if (userOperation.paymasterPostOpGasLimit)
+    rpc.paymasterPostOpGasLimit = Hex.fromNumber(
+      userOperation.paymasterPostOpGasLimit,
+    )
+  if (userOperation.paymasterVerificationGasLimit)
+    rpc.paymasterVerificationGasLimit = Hex.fromNumber(
+      userOperation.paymasterVerificationGasLimit,
+    )
+  if (userOperation.signature) rpc.signature = userOperation.signature
+
+  return rpc
+}
+
+export declare namespace toRpc {
+  export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
