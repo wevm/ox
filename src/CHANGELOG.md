@@ -1,5 +1,11 @@
 # ox
 
+## 0.5.0
+
+### Minor Changes
+
+- [`1406e22`](https://github.com/wevm/ox/commit/1406e224d0527732885fdb7737ed2f0dc41929ef) Thanks [@jxom](https://github.com/jxom)! - Added ERC-4337 utilities.
+
 ## 0.4.4
 
 ### Patch Changes
