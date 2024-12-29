@@ -58,6 +58,66 @@ describe('from', () => {
   })
 })
 
+describe('fromRpc', () => {
+  test('default', () => {
+    expect(
+      UserOperation.fromRpc({
+        callData: '0xdeadbeef',
+        callGasLimit: '0x69420',
+        maxFeePerGas: '0x2ca6ae494',
+        maxPriorityFeePerGas: '0x2ca6ae494',
+        nonce: '0x0',
+        preVerificationGas: '0x69420',
+        signature: '0x',
+        sender: '0x1234567890123456789012345678901234567890',
+        verificationGasLimit: '0x69420',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": 431136n,
+        "maxFeePerGas": 11985937556n,
+        "maxPriorityFeePerGas": 11985937556n,
+        "nonce": 0n,
+        "preVerificationGas": 431136n,
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": 431136n,
+      }
+    `)
+
+    expect(
+      UserOperation.fromRpc({
+        callData: '0xdeadbeef',
+        callGasLimit: '0x69420',
+        maxFeePerGas: '0x2ca6ae494',
+        maxPriorityFeePerGas: '0x2ca6ae494',
+        nonce: '0x0',
+        preVerificationGas: '0x69420',
+        signature: '0x',
+        sender: '0x1234567890123456789012345678901234567890',
+        verificationGasLimit: '0x69420',
+        paymasterPostOpGasLimit: '0x69420',
+        paymasterVerificationGasLimit: '0x69420',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": 431136n,
+        "maxFeePerGas": 11985937556n,
+        "maxPriorityFeePerGas": 11985937556n,
+        "nonce": 0n,
+        "paymasterPostOpGasLimit": 431136n,
+        "paymasterVerificationGasLimit": 431136n,
+        "preVerificationGas": 431136n,
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": 431136n,
+      }
+    `)
+  })
+})
+
 describe('getSignPayload', () => {
   test('default', () => {
     expect(

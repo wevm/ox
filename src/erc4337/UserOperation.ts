@@ -225,6 +225,50 @@ export declare namespace from {
 }
 
 /**
+ * Converts an {@link ox#UserOperation.Rpc} to an {@link ox#UserOperation.UserOperation}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOperation = UserOperation.fromRpc({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: '0x69420',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   nonce: '0x357',
+ *   preVerificationGas: '0x69420',
+ *   sender: '0x1234567890123456789012345678901234567890',
+ *   verificationGasLimit: '0x69420',
+ * })
+ * ```
+ *
+ * @param rpc - The RPC user operation to convert.
+ * @returns An instantiated {@link ox#UserOperation.UserOperation}.
+ */
+export function fromRpc(rpc: Rpc): UserOperation {
+  return {
+    ...rpc,
+    callGasLimit: BigInt(rpc.callGasLimit),
+    maxFeePerGas: BigInt(rpc.maxFeePerGas),
+    maxPriorityFeePerGas: BigInt(rpc.maxPriorityFeePerGas),
+    nonce: BigInt(rpc.nonce),
+    preVerificationGas: BigInt(rpc.preVerificationGas),
+    verificationGasLimit: BigInt(rpc.verificationGasLimit),
+    ...(rpc.paymasterPostOpGasLimit && {
+      paymasterPostOpGasLimit: BigInt(rpc.paymasterPostOpGasLimit),
+    }),
+    ...(rpc.paymasterVerificationGasLimit && {
+      paymasterVerificationGasLimit: BigInt(rpc.paymasterVerificationGasLimit),
+    }),
+  } as UserOperation
+}
+
+export declare namespace fromRpc {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
  * Obtains the signing payload for a {@link ox#UserOperation.UserOperation}.
  *
  * @example
