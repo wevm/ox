@@ -238,6 +238,7 @@ export declare namespace from {
  *   maxPriorityFeePerGas: '0x41cc3c0',
  *   nonce: '0x357',
  *   preVerificationGas: '0x69420',
+ *   signature: '0x',
  *   sender: '0x1234567890123456789012345678901234567890',
  *   verificationGasLimit: '0x69420',
  * })
@@ -598,11 +599,11 @@ export function toRpc(userOperation: UserOperation): Rpc {
   if (userOperation.paymaster) rpc.paymaster = userOperation.paymaster
   if (userOperation.paymasterData)
     rpc.paymasterData = userOperation.paymasterData
-  if (userOperation.paymasterPostOpGasLimit)
+  if (typeof userOperation.paymasterPostOpGasLimit === 'bigint')
     rpc.paymasterPostOpGasLimit = Hex.fromNumber(
       userOperation.paymasterPostOpGasLimit,
     )
-  if (userOperation.paymasterVerificationGasLimit)
+  if (typeof userOperation.paymasterVerificationGasLimit === 'bigint')
     rpc.paymasterVerificationGasLimit = Hex.fromNumber(
       userOperation.paymasterVerificationGasLimit,
     )
