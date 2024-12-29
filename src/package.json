@@ -1,7 +1,7 @@
 {
   "name": "ox",
   "description": "Ethereum Standard Library",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "type": "module",
   "main": "./_cjs/index.js",
   "module": "./_esm/index.js",
