@@ -987,6 +987,13 @@ export * as Blobs from './core/Blobs.js'
 export * as Block from './core/Block.js'
 
 /**
+ * Utilities & types for working with **Block Overrides**.
+ *
+ * @category Execution Spec
+ */
+export * as BlockOverrides from './core/BlockOverrides.js'
+
+/**
  * Utility functions for working with Bloom Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml)
  *
  * @category Execution Spec
@@ -2274,6 +2281,13 @@ export * as Signature from './core/Signature.js'
 export * as Siwe from './core/Siwe.js'
 
 export * as Solidity from './core/Solidity.js'
+
+/**
+ * Utilities & types for working with **State Overrides**.
+ *
+ * @category Execution Spec
+ */
+export * as StateOverrides from './core/StateOverrides.js'
 
 /**
  * Utilities & types for working with **Transactions** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml)

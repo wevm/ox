@@ -1,6 +1,7 @@
 import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
 import type * as RpcSchema from '../core/RpcSchema.js'
+import type * as StateOverrides from '../core/StateOverrides.js'
 import type * as EntryPoint from './EntryPoint.js'
 import type * as UserOperation from './UserOperation.js'
 import type * as UserOperationGas from './UserOperationGas.js'
@@ -49,8 +50,7 @@ export type Bundler<
           | [
               userOperation: UserOperation.Rpc<entryPointVersion>,
               entrypoint: Address.Address,
-              /** TODO: Add type. */
-              stateOverrides: unknown,
+              stateOverrides: StateOverrides.Rpc,
             ]
       }
       ReturnType: UserOperationGas.Rpc<entryPointVersion>

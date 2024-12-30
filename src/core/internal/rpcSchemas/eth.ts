@@ -1,11 +1,13 @@
 import type * as AccountProof from '../../AccountProof.js'
 import type * as Address from '../../Address.js'
 import type * as Block from '../../Block.js'
+import type * as BlockOverrides from '../../BlockOverrides.js'
 import type * as Fee from '../../Fee.js'
 import type * as Filter from '../../Filter.js'
 import type * as Hex from '../../Hex.js'
 import type * as Log from '../../Log.js'
 import type * as RpcSchema from '../../RpcSchema.js'
+import type * as StateOverrides from '../../StateOverrides.js'
 import type * as Transaction from '../../Transaction.js'
 import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
@@ -111,8 +113,7 @@ export type Eth = RpcSchema.From<
                 | Block.Tag
                 | Block.Hash
                 | Block.Identifier,
-              // TODO: add type
-              stateOverride: unknown,
+              stateOverrides: StateOverrides.Rpc,
             ]
       }
       ReturnType: Hex.Hex
@@ -181,8 +182,7 @@ export type Eth = RpcSchema.From<
                 | Block.Tag
                 | Block.Hash
                 | Block.Identifier,
-              // TODO: add type
-              stateOverride: unknown,
+              stateOverrides: StateOverrides.Rpc,
             ]
       }
       ReturnType: Hex.Hex
@@ -706,6 +706,45 @@ export type Eth = RpcSchema.From<
         params: [transaction: TransactionRequest.Rpc]
       }
       ReturnType: Hex.Hex
+    }
+  | {
+      Request: {
+        method: 'eth_simulateV1'
+        params: [
+          {
+            blockStateCalls: readonly {
+              blockOverrides?: BlockOverrides.Rpc | undefined
+              calls?: readonly TransactionRequest.Rpc[] | undefined
+              stateOverrides?: StateOverrides.Rpc | undefined
+            }[]
+            returnFullTransactions?: boolean | undefined
+            traceTransfers?: boolean | undefined
+            validation?: boolean | undefined
+          },
+          block:
+            | Block.Number<Hex.Hex>
+            | Block.Tag
+            | Block.Hash
+            | Block.Identifier,
+        ]
+      }
+      ReturnType: readonly (Block.Rpc & {
+        calls?:
+          | readonly {
+              error?:
+                | {
+                    data?: Hex.Hex | undefined
+                    code: number
+                    message: string
+                  }
+                | undefined
+              logs?: readonly Log.Rpc[] | undefined
+              gasUsed: Hex.Hex
+              returnData: Hex.Hex
+              status: Hex.Hex
+            }[]
+          | undefined
+      })[]
     }
   /**
    * Signs a transaction that can be submitted to the network at a later time using with `eth_sendRawTransaction`
