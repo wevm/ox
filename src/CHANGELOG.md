@@ -1,5 +1,13 @@
 # ox
 
+## 0.6.0
+
+### Minor Changes
+
+- [`94ec558`](https://github.com/wevm/ox/commit/94ec558c3f56d3254080be520a0d257e8b5d42c2) Thanks [@jxom](https://github.com/jxom)! - Added `BlockOverrides` & `StateOverrides` modules.
+
+- [`94ec558`](https://github.com/wevm/ox/commit/94ec558c3f56d3254080be520a0d257e8b5d42c2) Thanks [@jxom](https://github.com/jxom)! - Added `eth_simulateV1` to `eth_` RPC schema.
+
 ## 0.5.0
 
 ### Minor Changes
