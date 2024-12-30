@@ -2,4 +2,4 @@
 "ox": minor
 ---
 
-Added `eth_simulateV1` to eth\_ rpc schema.
+Added `eth_simulateV1` to `eth_` RPC schema.
