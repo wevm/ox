@@ -90,3 +90,12 @@ Check out the following places for more Ox-related content:
 - [GitHub Sponsors](https://github.com/sponsors/wevm?metadata_campaign=docs_support)
 - [Gitcoin Grant](https://wagmi.sh/gitcoin)
 - [wevm.eth](https://etherscan.io/enslookup-search?search=wevm.eth)
+
+
+<br />
+<br />
+
+<a href="https://vercel.com/?utm_source=wevm&utm_campaign=oss">
+  <img src="https://www.datocms-assets.com/31049/1618983297-powered-by-vercel.svg" alt="Powered by Vercel" height="35">
+</a>
+
