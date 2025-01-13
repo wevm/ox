@@ -310,7 +310,10 @@ export function parseErrorObject<
     return new TransactionRejectedError(errorObject_) as never
   if (code === VersionNotSupportedError.code)
     return new VersionNotSupportedError(errorObject_) as never
-  return new BaseError(errorObject_) as never
+  return new InternalError({
+    data: errorObject_,
+    message: errorObject_.message,
+  }) as never
 }
 
 export declare namespace parseErrorObject {
@@ -569,7 +572,7 @@ export class InvalidParamsError extends BaseError {
 export class InternalError extends BaseError {
   static readonly code = -32603
   override readonly code = -32603
-  override readonly name = 'RpcResponse.InternalErrorError'
+  override readonly name = 'RpcResponse.InternalError'
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({

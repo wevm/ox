@@ -320,11 +320,11 @@ describe('parse', () => {
         id: 0,
         error: {
           code: -32603,
-          message: 'Method not found',
+          message: 'Internal JSON-RPC error.',
         },
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      '[RpcResponse.InternalErrorError: Method not found]',
+      '[RpcResponse.InternalError: Internal JSON-RPC error.]',
     )
   })
 
@@ -353,7 +353,7 @@ describe('parse', () => {
           message: 'oh no',
         },
       }),
-    ).toThrowErrorMatchingInlineSnapshot('[RpcResponse.BaseError: oh no]')
+    ).toThrowErrorMatchingInlineSnapshot('[RpcResponse.InternalError: oh no]')
   })
 })
 
@@ -363,7 +363,7 @@ describe('parseErrorObject', () => {
       code: -32603,
       message: 'foo',
     })
-    expect(error).toMatchInlineSnapshot('[RpcResponse.InternalErrorError: foo]')
+    expect(error).toMatchInlineSnapshot('[RpcResponse.InternalError: foo]')
   })
 
   test('InvalidInputError', () => {
@@ -473,7 +473,10 @@ describe('parseErrorObject', () => {
       code: -69420,
       message: 'foo',
     })
-    expect(error).toMatchInlineSnapshot('[RpcResponse.BaseError: foo]')
+    const { code, message } = error.data as RpcResponse.ErrorObject
+    expect(code).toBe(-69420)
+    expect(message).toBe('foo')
+    expect(error).toMatchInlineSnapshot('[RpcResponse.InternalError: foo]')
   })
 })
 
@@ -619,13 +622,13 @@ test('InvalidParamsError', () => {
 
 test('InternalError', () => {
   expect(new RpcResponse.InternalError()).toMatchInlineSnapshot(
-    '[RpcResponse.InternalErrorError: Internal JSON-RPC error.]',
+    '[RpcResponse.InternalError: Internal JSON-RPC error.]',
   )
   expect(
     new RpcResponse.InternalError({ message: 'foo' }),
-  ).toMatchInlineSnapshot('[RpcResponse.InternalErrorError: foo]')
+  ).toMatchInlineSnapshot('[RpcResponse.InternalError: foo]')
   expect(JSON.stringify(new RpcResponse.InternalError())).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.InternalErrorError","code":-32603}"`,
+    `"{"name":"RpcResponse.InternalError","code":-32603}"`,
   )
 })
 

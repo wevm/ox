@@ -313,7 +313,9 @@ describe('Provider.from', () => {
       provider.request({
         method: 'eth_blockNumber',
       }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('[RpcResponse.BaseError: foo]')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.InternalError: foo]',
+    )
   })
 
   test('behavior: BaseError (raw)', async () => {
@@ -334,7 +336,9 @@ describe('Provider.from', () => {
       provider.request({
         method: 'eth_blockNumber',
       }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('[RpcResponse.BaseError: foo]')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.InternalError: foo]',
+    )
   })
 
   test('behavior: network rpc error', async () => {

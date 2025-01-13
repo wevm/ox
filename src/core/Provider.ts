@@ -434,17 +434,22 @@ export function parseErrorObject<
 ): parseErrorObject.ReturnType<errorObject> {
   const errorObject_ = errorObject as RpcResponse.ErrorObject
   const error = RpcResponse.parseErrorObject(errorObject_)
-  if (error instanceof RpcResponse.BaseError) {
-    if (error.code === DisconnectedError.code)
+  if (error instanceof RpcResponse.InternalError) {
+    const { code } = error.data as RpcResponse.ErrorObject
+    if (code === DisconnectedError.code)
       return new DisconnectedError(errorObject_) as never
-    if (error.code === ChainDisconnectedError.code)
+    if (code === ChainDisconnectedError.code)
       return new ChainDisconnectedError(errorObject_) as never
-    if (error.code === UserRejectedRequestError.code)
+    if (code === UserRejectedRequestError.code)
       return new UserRejectedRequestError(errorObject_) as never
-    if (error.code === UnauthorizedError.code)
+    if (code === UnauthorizedError.code)
       return new UnauthorizedError(errorObject_) as never
-    if (error.code === UnsupportedMethodError.code)
+    if (code === UnsupportedMethodError.code)
       return new UnsupportedMethodError(errorObject_) as never
+    return new RpcResponse.InternalError({
+      data: errorObject_,
+      message: errorObject_.message,
+    }) as never
   }
   return error as never
 }
