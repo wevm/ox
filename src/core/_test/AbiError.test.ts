@@ -107,8 +107,8 @@ describe('decode', () => {
           ],
         })
         .catch((error) => {
-          const errorItem = AbiError.fromAbi(abi, error.data)
-          const value = AbiError.decode(errorItem, error.data)
+          const errorItem = AbiError.fromAbi(abi, error.data.data)
+          const value = AbiError.decode(errorItem, error.data.data)
           return [errorItem, value]
         })
 
@@ -144,8 +144,8 @@ describe('decode', () => {
           ],
         })
         .catch((error) => {
-          const errorItem = AbiError.fromAbi(abi, error.data)
-          const value = AbiError.decode(errorItem, error.data)
+          const errorItem = AbiError.fromAbi(abi, error.data.data)
+          const value = AbiError.decode(errorItem, error.data.data)
           if (typeof value !== 'number') return
           return [errorItem, value, AbiError.panicReasons[value]]
         })
@@ -183,8 +183,8 @@ describe('decode', () => {
           ],
         })
         .catch((error) => {
-          const errorItem = AbiError.fromAbi(abi, error.data)
-          const value = AbiError.decode(errorItem, error.data)
+          const errorItem = AbiError.fromAbi(abi, error.data.data)
+          const value = AbiError.decode(errorItem, error.data.data)
           if (typeof value !== 'number') return
           return [errorItem, value, AbiError.panicReasons[value]]
         })
@@ -222,8 +222,8 @@ describe('decode', () => {
           ],
         })
         .catch((error) => {
-          const errorItem = AbiError.fromAbi(abi, error.data)
-          const value = AbiError.decode(errorItem, error.data)
+          const errorItem = AbiError.fromAbi(abi, error.data.data)
+          const value = AbiError.decode(errorItem, error.data.data)
           return [errorItem, value]
         })
 
