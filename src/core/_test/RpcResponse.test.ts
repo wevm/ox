@@ -646,7 +646,7 @@ test('exports', () => {
     [
       "from",
       "parse",
-      "parseError",
+      "parseErrorObject",
       "BaseError",
       "InvalidInputError",
       "ResourceNotFoundError",

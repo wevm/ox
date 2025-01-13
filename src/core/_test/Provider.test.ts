@@ -455,7 +455,7 @@ test('exports', () => {
       "ChainDisconnectedError",
       "createEmitter",
       "from",
-      "parseError",
+      "parseErrorObject",
       "IsUndefinedError",
     ]
   `)
