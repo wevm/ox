@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.2
+
+### Patch Changes
+
+- [`e541cec`](https://github.com/wevm/ox/commit/e541ceca3c00f0d0b2fbd239696476934dc13ea3) Thanks [@jxom](https://github.com/jxom)! - Modified fallback RPC Errors to `RpcResponse.InternalError`.
+
 ## 0.6.1
 
 ### Patch Changes
