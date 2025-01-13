@@ -4,7 +4,7 @@ import * as Errors from './Errors.js'
 import * as RpcResponse from './RpcResponse.js'
 import type * as RpcSchema from './RpcSchema.js'
 import type * as RpcSchema_internal from './internal/rpcSchema.js'
-import type { Compute } from './internal/types.js'
+import type { Compute, IsNarrowable, IsNever } from './internal/types.js'
 
 /** Options for a {@link ox#Provider.Provider}. */
 export type Options = {
@@ -92,6 +92,7 @@ export type EventMap = {
 /** The user rejected the request. */
 export class UserRejectedRequestError extends ProviderRpcError {
   static readonly code = 4001
+  override readonly code = 4001
   override readonly name = 'Provider.UserRejectedRequestError'
 
   constructor({
@@ -104,6 +105,7 @@ export class UserRejectedRequestError extends ProviderRpcError {
 /** The requested method and/or account has not been authorized by the user. */
 export class UnauthorizedError extends ProviderRpcError {
   static readonly code = 4100
+  override readonly code = 4100
   override readonly name = 'Provider.UnauthorizedError'
 
   constructor({
@@ -116,6 +118,7 @@ export class UnauthorizedError extends ProviderRpcError {
 /** The provider does not support the requested method. */
 export class UnsupportedMethodError extends ProviderRpcError {
   static readonly code = 4200
+  override readonly code = 4200
   override readonly name = 'Provider.UnsupportedMethodError'
 
   constructor({
@@ -128,6 +131,7 @@ export class UnsupportedMethodError extends ProviderRpcError {
 /** The provider is disconnected from all chains. */
 export class DisconnectedError extends ProviderRpcError {
   static readonly code = 4900
+  override readonly code = 4900
   override readonly name = 'Provider.DisconnectedError'
 
   constructor({
@@ -140,6 +144,7 @@ export class DisconnectedError extends ProviderRpcError {
 /** The provider is not connected to the requested chain. */
 export class ChainDisconnectedError extends ProviderRpcError {
   static readonly code = 4901
+  override readonly code = 4901
   override readonly name = 'Provider.ChainDisconnectedError'
 
   constructor({
@@ -385,20 +390,105 @@ export function from(provider: any, options: Options = {}): Provider<Options> {
         }
       : {}),
     async request(args) {
-      const result = await provider.request(args)
-      if (
-        result &&
-        typeof result === 'object' &&
-        'jsonrpc' in (result as { jsonrpc?: unknown })
-      )
-        return RpcResponse.parse(result) as never
-      return result
+      try {
+        const result = await provider.request(args)
+        if (
+          result &&
+          typeof result === 'object' &&
+          'jsonrpc' in (result as { jsonrpc?: unknown })
+        )
+          return RpcResponse.parse(result) as never
+        return result
+      } catch (error) {
+        throw parseErrorObject(error)
+      }
     },
   }
 }
 
 export declare namespace from {
   type ErrorType = IsUndefinedError | Errors.GlobalErrorType
+}
+
+/**
+ * Parses an error object into an error instance.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Provider } from 'ox'
+ *
+ * const error = Provider.parseErrorObject({ code: 4200, message: 'foo' })
+ *
+ * error
+ * // ^?
+ *
+ * ```
+ *
+ * @param errorObject - The error object to parse.
+ * @returns An error instance.
+ */
+export function parseErrorObject<
+  const errorObject extends RpcResponse.ErrorObject | unknown,
+>(
+  errorObject: errorObject | RpcResponse.ErrorObject,
+): parseErrorObject.ReturnType<errorObject> {
+  const errorObject_ = errorObject as RpcResponse.ErrorObject
+  const error = RpcResponse.parseErrorObject(errorObject_)
+  if (error instanceof RpcResponse.BaseError) {
+    if (error.code === DisconnectedError.code)
+      return new DisconnectedError(errorObject_) as never
+    if (error.code === ChainDisconnectedError.code)
+      return new ChainDisconnectedError(errorObject_) as never
+    if (error.code === UserRejectedRequestError.code)
+      return new UserRejectedRequestError(errorObject_) as never
+    if (error.code === UnauthorizedError.code)
+      return new UnauthorizedError(errorObject_) as never
+    if (error.code === UnsupportedMethodError.code)
+      return new UnsupportedMethodError(errorObject_) as never
+  }
+  return error as never
+}
+
+export declare namespace parseErrorObject {
+  type ReturnType<
+    errorObject extends RpcResponse.ErrorObject | unknown,
+    //
+    error = errorObject extends RpcResponse.ErrorObject
+      ?
+          | (errorObject['code'] extends DisconnectedError['code']
+              ? DisconnectedError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? DisconnectedError
+              : never)
+          | (errorObject['code'] extends ChainDisconnectedError['code']
+              ? ChainDisconnectedError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? ChainDisconnectedError
+              : never)
+          | (errorObject['code'] extends UserRejectedRequestError['code']
+              ? UserRejectedRequestError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? UserRejectedRequestError
+              : never)
+          | (errorObject['code'] extends UnauthorizedError['code']
+              ? UnauthorizedError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? UnauthorizedError
+              : never)
+          | (errorObject['code'] extends UnsupportedMethodError['code']
+              ? UnsupportedMethodError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? UnsupportedMethodError
+              : never)
+      : RpcResponse.parseErrorObject.ReturnType<RpcResponse.ErrorObject>,
+  > = IsNever<error> extends true
+    ? RpcResponse.parseErrorObject.ReturnType<errorObject>
+    : error
 }
 
 /** Thrown when the provider is undefined. */

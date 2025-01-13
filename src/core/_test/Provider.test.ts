@@ -107,6 +107,266 @@ describe('Provider.from', () => {
   `)
   })
 
+  test('behavior: UnauthorizedError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.UnauthorizedError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnauthorizedError: The requested method and/or account has not been authorized by the user.]',
+    )
+  })
+
+  test('behavior: UnauthorizedError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.UnauthorizedError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnauthorizedError: foo]',
+    )
+  })
+
+  test('behavior: UserRejectedRequestError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.UserRejectedRequestError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UserRejectedRequestError: The user rejected the request.]',
+    )
+  })
+
+  test('behavior: UserRejectedRequestError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.UserRejectedRequestError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UserRejectedRequestError: foo]',
+    )
+  })
+
+  test('behavior: UnsupportedMethodError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.UnsupportedMethodError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnsupportedMethodError: The provider does not support the requested method.]',
+    )
+  })
+
+  test('behavior: UnsupportedMethodError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.UnsupportedMethodError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnsupportedMethodError: foo]',
+    )
+  })
+
+  test('behavior: DisconnectedError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.DisconnectedError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.DisconnectedError: The provider is disconnected from all chains.]',
+    )
+  })
+
+  test('behavior: DisconnectedError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.DisconnectedError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.DisconnectedError: foo]',
+    )
+  })
+
+  test('behavior: ChainDisconnectedError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.ChainDisconnectedError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.ChainDisconnectedError: The provider is not connected to the requested chain.]',
+    )
+  })
+
+  test('behavior: ChainDisconnectedError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.ChainDisconnectedError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.ChainDisconnectedError: foo]',
+    )
+  })
+
+  test('behavior: BaseError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Error('foo')
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot('[RpcResponse.BaseError: foo]')
+  })
+
+  test('behavior: BaseError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: 1000,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot('[RpcResponse.BaseError: foo]')
+  })
+
+  test('behavior: network rpc error', async () => {
+    const store = RpcRequest.createStore()
+
+    const provider = Provider.from({
+      async request(args) {
+        return await fetch(anvilMainnet.rpcUrl, {
+          body: JSON.stringify(store.prepare(args as never)),
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).then((res) => res.json())
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+            to: '0x0000000000000000000000000000000000000000',
+          },
+        ],
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.InvalidParamsError: Invalid method parameters.]',
+    )
+  })
+
   test('error: undefined', () => {
     expect(() => Provider.from(undefined)).toThrowErrorMatchingInlineSnapshot(
       '[Provider.IsUndefinedError: `provider` is undefined.]',
@@ -195,6 +455,7 @@ test('exports', () => {
       "ChainDisconnectedError",
       "createEmitter",
       "from",
+      "parseError",
       "IsUndefinedError",
     ]
   `)

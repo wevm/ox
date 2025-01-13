@@ -45,9 +45,8 @@ describe('parse', () => {
       method: 'eth_estimateGas',
       params: [
         {
-          from: '0x0000000000000000000000000000000000000000',
+          from: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
           to: '0x0000000000000000000000000000000000000000',
-          data: '0xdeadbeef',
         },
       ],
       id: 0,
@@ -64,7 +63,7 @@ describe('parse', () => {
     const gas = RpcResponse.parse(raw)
     assertType<unknown>(gas)
 
-    expect(gas).toMatchInlineSnapshot(`"0x5248"`)
+    expect(gas).toMatchInlineSnapshot(`"0x5208"`)
   })
 
   test('error', async () => {
@@ -72,9 +71,8 @@ describe('parse', () => {
       method: 'eth_sendTransaction',
       params: [
         {
-          from: '0x0000000000000000000000000000000000000000',
+          from: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
           to: '0x0000000000000000000000000000000000000000',
-          data: '0xdeadbeef',
         },
       ],
       id: 0,
@@ -98,9 +96,8 @@ describe('parse', () => {
       method: 'eth_estimateGas',
       params: [
         {
-          from: '0x0000000000000000000000000000000000000000',
+          from: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
           to: '0x0000000000000000000000000000000000000000',
-          data: '0xdeadbeef',
         },
       ],
       id: 0,
@@ -119,7 +116,7 @@ describe('parse', () => {
     })
     assertType<Hex.Hex>(gas)
 
-    expect(gas).toMatchInlineSnapshot(`"0x5248"`)
+    expect(gas).toMatchInlineSnapshot(`"0x5208"`)
   })
 
   test('options: safe', async () => {
@@ -127,9 +124,8 @@ describe('parse', () => {
       method: 'eth_estimateGas',
       params: [
         {
-          from: '0x0000000000000000000000000000000000000000',
+          from: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
           to: '0x0000000000000000000000000000000000000000',
-          data: '0xdeadbeef',
         },
       ],
       id: 0,
@@ -151,12 +147,12 @@ describe('parse', () => {
       assertType<RpcResponse.RpcResponse<Hex.Hex>>(response)
 
       expect(response).toMatchInlineSnapshot(`
-      {
-        "id": 0,
-        "jsonrpc": "2.0",
-        "result": "0x5248",
-      }
-    `)
+        {
+          "id": 0,
+          "jsonrpc": "2.0",
+          "result": "0x5208",
+        }
+      `)
     }
 
     {
@@ -361,6 +357,126 @@ describe('parse', () => {
   })
 })
 
+describe('parseErrorObject', () => {
+  test('InternalError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32603,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot('[RpcResponse.InternalErrorError: foo]')
+  })
+
+  test('InvalidInputError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32000,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot('[RpcResponse.InvalidInputError: foo]')
+  })
+
+  test('InvalidParamsError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32602,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot('[RpcResponse.InvalidParamsError: foo]')
+  })
+
+  test('InvalidRequestError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32600,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot(
+      '[RpcResponse.InvalidRequestError: foo]',
+    )
+  })
+
+  test('LimitExceededError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32005,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot('[RpcResponse.LimitExceededError: foo]')
+  })
+
+  test('MethodNotFoundError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32601,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot(
+      '[RpcResponse.MethodNotFoundError: foo]',
+    )
+  })
+
+  test('MethodNotSupportedError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32004,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot(
+      '[RpcResponse.MethodNotSupportedError: foo]',
+    )
+  })
+
+  test('ParseError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32700,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot('[RpcResponse.ParseError: foo]')
+  })
+
+  test('ResourceNotFoundError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32001,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot(
+      '[RpcResponse.ResourceNotFoundError: foo]',
+    )
+  })
+
+  test('ResourceUnavailableError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32002,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot(
+      '[RpcResponse.ResourceUnavailableError: foo]',
+    )
+  })
+
+  test('TransactionRejectedError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32003,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot(
+      '[RpcResponse.TransactionRejectedError: foo]',
+    )
+  })
+
+  test('VersionNotSupportedError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -32006,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot(
+      '[RpcResponse.VersionNotSupportedError: foo]',
+    )
+  })
+
+  test('BaseError', () => {
+    const error = RpcResponse.parseErrorObject({
+      code: -69420,
+      message: 'foo',
+    })
+    expect(error).toMatchInlineSnapshot('[RpcResponse.BaseError: foo]')
+  })
+})
+
 test('InvalidInputError', () => {
   expect(new RpcResponse.InvalidInputError()).toMatchInlineSnapshot(
     '[RpcResponse.InvalidInputError: Missing or invalid parameters.]',
@@ -530,6 +646,7 @@ test('exports', () => {
     [
       "from",
       "parse",
+      "parseError",
       "BaseError",
       "InvalidInputError",
       "ResourceNotFoundError",

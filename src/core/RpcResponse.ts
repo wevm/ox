@@ -2,6 +2,7 @@ import type { Errors, RpcRequest } from '../index.js'
 import type {
   Compute,
   IsNarrowable,
+  IsNever,
   OneOf,
   UnionPartialBy,
 } from './internal/types.js'
@@ -215,28 +216,7 @@ export function parse<
   const { raw = false } = options
   const response_ = response as RpcResponse
   if (raw) return response as never
-  if (response_.error) {
-    const { code } = response_.error
-    const JsonRpcError = (() => {
-      if (code === InternalError.code) return InternalError
-      if (code === InvalidInputError.code) return InvalidInputError
-      if (code === InvalidParamsError.code) return InvalidParamsError
-      if (code === InvalidRequestError.code) return InvalidRequestError
-      if (code === LimitExceededError.code) return LimitExceededError
-      if (code === MethodNotFoundError.code) return MethodNotFoundError
-      if (code === MethodNotSupportedError.code) return MethodNotSupportedError
-      if (code === ParseError.code) return ParseError
-      if (code === ResourceNotFoundError.code) return ResourceNotFoundError
-      if (code === ResourceUnavailableError.code)
-        return ResourceUnavailableError
-      if (code === TransactionRejectedError.code)
-        return TransactionRejectedError
-      if (code === VersionNotSupportedError.code)
-        return VersionNotSupportedError
-      return BaseError
-    })()
-    throw new JsonRpcError(response_.error)
-  }
+  if (response_.error) throw parseErrorObject(response_.error)
   return response_.result as never
 }
 
@@ -281,6 +261,141 @@ export declare namespace parse {
     | InternalError
     | BaseErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Parses a JSON-RPC error object into an error instance.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcResponse } from 'ox'
+ *
+ * const error = RpcResponse.parseError({ code: -32000, message: 'unsupported method' })
+ *
+ * error
+ * // ^?
+ *
+ * ```
+ *
+ * @param errorObject - JSON-RPC error object.
+ * @returns Error instance.
+ */
+export function parseErrorObject<
+  const errorObject extends ErrorObject | unknown,
+>(
+  errorObject: errorObject | ErrorObject,
+): parseErrorObject.ReturnType<errorObject> {
+  const errorObject_ = errorObject as ErrorObject
+  const { code } = errorObject_
+  if (code === InternalError.code)
+    return new InternalError(errorObject_) as never
+  if (code === InvalidInputError.code)
+    return new InvalidInputError(errorObject_) as never
+  if (code === InvalidParamsError.code)
+    return new InvalidParamsError(errorObject_) as never
+  if (code === InvalidRequestError.code)
+    return new InvalidRequestError(errorObject_) as never
+  if (code === LimitExceededError.code)
+    return new LimitExceededError(errorObject_) as never
+  if (code === MethodNotFoundError.code)
+    return new MethodNotFoundError(errorObject_) as never
+  if (code === MethodNotSupportedError.code)
+    return new MethodNotSupportedError(errorObject_) as never
+  if (code === ParseError.code) return new ParseError(errorObject_) as never
+  if (code === ResourceNotFoundError.code)
+    return new ResourceNotFoundError(errorObject_) as never
+  if (code === ResourceUnavailableError.code)
+    return new ResourceUnavailableError(errorObject_) as never
+  if (code === TransactionRejectedError.code)
+    return new TransactionRejectedError(errorObject_) as never
+  if (code === VersionNotSupportedError.code)
+    return new VersionNotSupportedError(errorObject_) as never
+  return new BaseError(errorObject_) as never
+}
+
+export declare namespace parseErrorObject {
+  type ReturnType<
+    errorObject extends ErrorObject | unknown,
+    //
+    error = errorObject extends ErrorObject
+      ?
+          | (errorObject['code'] extends InternalError['code']
+              ? InternalError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? InternalError
+              : never)
+          | (errorObject['code'] extends InvalidInputError['code']
+              ? InvalidInputError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? InvalidInputError
+              : never)
+          | (errorObject['code'] extends ResourceNotFoundError['code']
+              ? ResourceNotFoundError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? ResourceNotFoundError
+              : never)
+          | (errorObject['code'] extends ResourceUnavailableError['code']
+              ? ResourceUnavailableError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? ResourceUnavailableError
+              : never)
+          | (errorObject['code'] extends TransactionRejectedError['code']
+              ? TransactionRejectedError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? TransactionRejectedError
+              : never)
+          | (errorObject['code'] extends ParseError['code']
+              ? ParseError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? ParseError
+              : never)
+          | (errorObject['code'] extends MethodNotSupportedError['code']
+              ? MethodNotSupportedError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? MethodNotSupportedError
+              : never)
+          | (errorObject['code'] extends LimitExceededError['code']
+              ? LimitExceededError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? LimitExceededError
+              : never)
+          | (errorObject['code'] extends VersionNotSupportedError['code']
+              ? VersionNotSupportedError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? VersionNotSupportedError
+              : never)
+          | (errorObject['code'] extends InvalidRequestError['code']
+              ? InvalidRequestError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? InvalidRequestError
+              : never)
+          | (errorObject['code'] extends MethodNotFoundError['code']
+              ? MethodNotFoundError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? MethodNotFoundError
+              : never)
+          | (errorObject['code'] extends InvalidParamsError['code']
+              ? InvalidParamsError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? InvalidParamsError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? BaseError
+              : never)
+      : parseErrorObject.ReturnType<ErrorObject>,
+  > = IsNever<error> extends true ? BaseError : error
 }
 
 export type BaseErrorType = BaseError & { name: 'BaseError' }
