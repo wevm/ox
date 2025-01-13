@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.1
+
+### Patch Changes
+
+- [`5d007ae`](https://github.com/wevm/ox/commit/5d007aebab4a7fe6acc8eb3cfecbce59fe79a00b) Thanks [@jxom](https://github.com/jxom)! - Added `RpcResponse.parseErrorObject` and `Provider.parseErrorObject`.
+
 ## 0.6.0
 
 ### Minor Changes
