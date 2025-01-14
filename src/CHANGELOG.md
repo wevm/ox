@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.3
+
+### Patch Changes
+
+- [`ddaed51`](https://github.com/wevm/ox/commit/ddaed51550308eceda3c9a080503cf1fdfac6ac0) Thanks [@jxom](https://github.com/jxom)! - Fixed parsing of Provider RPC errors.
+
 ## 0.6.2
 
 ### Patch Changes
