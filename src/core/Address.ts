@@ -4,8 +4,7 @@ import * as Caches from './Caches.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as PublicKey from './PublicKey.js'
-
-const addressRegex = /*#__PURE__*/ /^0x[a-fA-F0-9]{40}$/
+import * as internal_regex from './internal/regex.js'
 
 /** Root type for Address. */
 export type Address = abitype_Address
@@ -37,7 +36,7 @@ export function assert(
 ): asserts value is Address {
   const { strict = true } = options
 
-  if (!addressRegex.test(value))
+  if (!internal_regex.address.test(value))
     throw new InvalidAddressError({
       address: value,
       cause: new InvalidInputError(),

@@ -63,6 +63,44 @@ export type IsNarrowable<T, U> = IsNever<
 export type IsNever<T> = [T] extends [never] ? true : false
 
 /**
+ * Joins array into string
+ *
+ * @param array - Array to join
+ * @param separator - Separator
+ * @returns string
+ *
+ * @example
+ * type Result = Join<['a', 'b', 'c'], '-'>
+ * //   ^? type Result = 'a-b-c'
+ *
+ * @internal
+ */
+export type Join<
+  array extends readonly unknown[],
+  separator extends string | number,
+> = array extends readonly [infer head, ...infer tail]
+  ? tail['length'] extends 0
+    ? `${head & string}`
+    : `${head & string}${separator}${Join<tail, separator>}`
+  : never
+
+/**
+ * Merges two object types into new type
+ *
+ * @param object1 - Object to merge into
+ * @param object2 - Object to merge and override keys from {@link object1}
+ * @returns New object type with keys from {@link object1} and {@link object2}. If a key exists in both {@link object1} and {@link object2}, the key from {@link object2} will be used.
+ *
+ * @example
+ * type Result = Merge<{ foo: string }, { foo: number; bar: string }>
+ * //   ^? type Result = { foo: number; bar: string }
+ *
+ * @internal
+ */
+export type Merge<object1, object2> = LooseOmit<object1, keyof object2> &
+  object2
+
+/**
  * Removes `readonly` from all properties of an object.
  *
  * @internal
@@ -96,6 +134,18 @@ export type Or<T extends readonly unknown[]> = T extends readonly [
     ? true
     : Or<Tail>
   : false
+
+/**
+ * Combines members of an intersection into a readable type.
+ *
+ * @link https://twitter.com/mattpocockuk/status/1622730173446557697?s=20&t=NdpAcmEFXY01xkqU3KO0Mg
+ * @example
+ * type Result = Evaluate<{ a: string } | { b: string } | { c: number, d: bigint }>
+ * //   ^? type Result = { a: string; b: string; c: number; d: bigint }
+ *
+ * @internal
+ */
+export type Evaluate<type> = { [key in keyof type]: type[key] } & unknown
 
 /**
  * Checks if `T` is `undefined`
@@ -236,6 +286,29 @@ export type Some<
   : array extends readonly [unknown, ...infer rest]
     ? Some<rest, value>
     : false
+
+/**
+ * Trims empty space from type {@link t}.
+ *
+ * @param t - Type to trim
+ * @param chars - Characters to trim
+ * @returns Trimmed type
+ *
+ * @example
+ * type Result = Trim<'      foo  '>
+ * //   ^? type Result = "foo"
+ */
+export type Trim<type, chars extends string = ' '> = TrimLeft<
+  TrimRight<type, chars>,
+  chars
+>
+type TrimLeft<t, chars extends string = ' '> = t extends `${chars}${infer tail}`
+  ? TrimLeft<tail>
+  : t
+type TrimRight<
+  t,
+  chars extends string = ' ',
+> = t extends `${infer head}${chars}` ? TrimRight<head> : t
 
 /**
  * Prints custom error message
