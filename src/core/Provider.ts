@@ -435,6 +435,8 @@ export function parseErrorObject<
   const errorObject_ = errorObject as RpcResponse.ErrorObject
   const error = RpcResponse.parseErrorObject(errorObject_)
   if (error instanceof RpcResponse.InternalError) {
+    if (!error.data) return error as never
+
     const { code } = error.data as RpcResponse.ErrorObject
     if (code === DisconnectedError.code)
       return new DisconnectedError(errorObject_) as never

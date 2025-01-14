@@ -318,6 +318,24 @@ describe('Provider.from', () => {
     )
   })
 
+  test('behavior: InternalError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new RpcResponse.InternalError({
+          message: 'foo',
+        })
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.InternalError: Internal JSON-RPC error.]',
+    )
+  })
+
   test('behavior: BaseError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
