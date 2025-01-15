@@ -3,6 +3,7 @@
 .attest
 .env
 .local
+.pnpm-store
 _esm
 _cjs
 _types

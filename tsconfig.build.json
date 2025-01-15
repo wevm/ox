@@ -10,7 +10,6 @@
     "src/**/*.test-d.ts"
   ],
   "compilerOptions": {
-    "moduleResolution": "node",
     "sourceMap": true,
     "rootDir": "./src"
   }
