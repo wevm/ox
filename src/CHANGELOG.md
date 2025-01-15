@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.4
+
+### Patch Changes
+
+- [`74ceae4`](https://github.com/wevm/ox/commit/74ceae4089663ebae18690a44fd98accc28b9b5c) Thanks [@jxom](https://github.com/jxom)! - Fixed `Provider.parseError` behavior.
+
 ## 0.6.3
 
 ### Patch Changes
