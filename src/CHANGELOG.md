@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.5
+
+### Patch Changes
+
+- [`0b5182f`](https://github.com/wevm/ox/commit/0b5182f94821715c227dc8b0c891d4548b30fa0e) Thanks [@jxom](https://github.com/jxom)! - Fixed build process for typedef generation.
+
 ## 0.6.4
 
 ### Patch Changes
