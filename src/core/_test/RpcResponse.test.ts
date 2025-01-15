@@ -357,9 +357,9 @@ describe('parse', () => {
   })
 })
 
-describe('parseErrorObject', () => {
+describe('parseError', () => {
   test('InternalError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32603,
       message: 'foo',
     })
@@ -367,7 +367,7 @@ describe('parseErrorObject', () => {
   })
 
   test('InvalidInputError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32000,
       message: 'foo',
     })
@@ -375,7 +375,7 @@ describe('parseErrorObject', () => {
   })
 
   test('InvalidParamsError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32602,
       message: 'foo',
     })
@@ -383,7 +383,7 @@ describe('parseErrorObject', () => {
   })
 
   test('InvalidRequestError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32600,
       message: 'foo',
     })
@@ -393,7 +393,7 @@ describe('parseErrorObject', () => {
   })
 
   test('LimitExceededError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32005,
       message: 'foo',
     })
@@ -401,7 +401,7 @@ describe('parseErrorObject', () => {
   })
 
   test('MethodNotFoundError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32601,
       message: 'foo',
     })
@@ -411,7 +411,7 @@ describe('parseErrorObject', () => {
   })
 
   test('MethodNotSupportedError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32004,
       message: 'foo',
     })
@@ -421,7 +421,7 @@ describe('parseErrorObject', () => {
   })
 
   test('ParseError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32700,
       message: 'foo',
     })
@@ -429,7 +429,7 @@ describe('parseErrorObject', () => {
   })
 
   test('ResourceNotFoundError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32001,
       message: 'foo',
     })
@@ -439,7 +439,7 @@ describe('parseErrorObject', () => {
   })
 
   test('ResourceUnavailableError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32002,
       message: 'foo',
     })
@@ -449,7 +449,7 @@ describe('parseErrorObject', () => {
   })
 
   test('TransactionRejectedError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32003,
       message: 'foo',
     })
@@ -459,7 +459,7 @@ describe('parseErrorObject', () => {
   })
 
   test('VersionNotSupportedError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -32006,
       message: 'foo',
     })
@@ -469,7 +469,7 @@ describe('parseErrorObject', () => {
   })
 
   test('BaseError', () => {
-    const error = RpcResponse.parseErrorObject({
+    const error = RpcResponse.parseError({
       code: -69420,
       message: 'foo',
     })
@@ -649,7 +649,7 @@ test('exports', () => {
     [
       "from",
       "parse",
-      "parseErrorObject",
+      "parseError",
       "BaseError",
       "InvalidInputError",
       "ResourceNotFoundError",

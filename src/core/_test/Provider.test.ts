@@ -332,7 +332,7 @@ describe('Provider.from', () => {
         method: 'eth_blockNumber',
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      '[RpcResponse.InternalError: Internal JSON-RPC error.]',
+      '[RpcResponse.InternalError: foo]',
     )
   })
 
@@ -385,7 +385,7 @@ describe('Provider.from', () => {
         ],
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      '[RpcResponse.InvalidParamsError: Invalid method parameters.]',
+      '[RpcResponse.InvalidParamsError: No Signer available]',
     )
   })
 
@@ -477,7 +477,7 @@ test('exports', () => {
       "ChainDisconnectedError",
       "createEmitter",
       "from",
-      "parseErrorObject",
+      "parseError",
       "IsUndefinedError",
     ]
   `)

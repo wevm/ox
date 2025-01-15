@@ -216,7 +216,7 @@ export function parse<
   const { raw = false } = options
   const response_ = response as RpcResponse
   if (raw) return response as never
-  if (response_.error) throw parseErrorObject(response_.error)
+  if (response_.error) throw parseError(response_.error)
   return response_.result as never
 }
 
@@ -280,11 +280,9 @@ export declare namespace parse {
  * @param errorObject - JSON-RPC error object.
  * @returns Error instance.
  */
-export function parseErrorObject<
-  const errorObject extends ErrorObject | unknown,
->(
+export function parseError<const errorObject extends ErrorObject | unknown>(
   errorObject: errorObject | ErrorObject,
-): parseErrorObject.ReturnType<errorObject> {
+): parseError.ReturnType<errorObject> {
   const errorObject_ = errorObject as ErrorObject
   const { code } = errorObject_
   if (code === InternalError.code)
@@ -316,7 +314,7 @@ export function parseErrorObject<
   }) as never
 }
 
-export declare namespace parseErrorObject {
+export declare namespace parseError {
   type ReturnType<
     errorObject extends ErrorObject | unknown,
     //
@@ -397,7 +395,7 @@ export declare namespace parseErrorObject {
           | (IsNarrowable<errorObject['code'], number> extends false
               ? BaseError
               : never)
-      : parseErrorObject.ReturnType<ErrorObject>,
+      : parseError.ReturnType<ErrorObject>,
   > = IsNever<error> extends true ? BaseError : error
 }
 
@@ -426,9 +424,9 @@ export class InvalidInputError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Missing or invalid parameters.',
-      ...parameters,
       code: InvalidInputError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Missing or invalid parameters.',
     })
   }
 }
@@ -441,9 +439,9 @@ export class ResourceNotFoundError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Requested resource not found.',
-      ...parameters,
       code: ResourceNotFoundError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Requested resource not found.',
     })
   }
 }
@@ -456,9 +454,9 @@ export class ResourceUnavailableError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Requested resource not available.',
-      ...parameters,
       code: ResourceUnavailableError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Requested resource not available.',
     })
   }
 }
@@ -471,9 +469,9 @@ export class TransactionRejectedError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Transaction creation failed.',
-      ...parameters,
       code: TransactionRejectedError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Transaction creation failed.',
     })
   }
 }
@@ -486,9 +484,9 @@ export class MethodNotSupportedError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Method is not implemented.',
-      ...parameters,
       code: MethodNotSupportedError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Method is not implemented.',
     })
   }
 }
@@ -501,9 +499,9 @@ export class LimitExceededError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Rate limit exceeded.',
-      ...parameters,
       code: LimitExceededError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Rate limit exceeded.',
     })
   }
 }
@@ -516,9 +514,9 @@ export class VersionNotSupportedError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'JSON-RPC version not supported.',
-      ...parameters,
       code: VersionNotSupportedError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'JSON-RPC version not supported.',
     })
   }
 }
@@ -531,9 +529,9 @@ export class InvalidRequestError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Input is not a valid JSON-RPC request.',
-      ...parameters,
       code: InvalidRequestError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Input is not a valid JSON-RPC request.',
     })
   }
 }
@@ -546,9 +544,9 @@ export class MethodNotFoundError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Method does not exist.',
-      ...parameters,
       code: MethodNotFoundError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Method does not exist.',
     })
   }
 }
@@ -561,9 +559,9 @@ export class InvalidParamsError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Invalid method parameters.',
-      ...parameters,
       code: InvalidParamsError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Invalid method parameters.',
     })
   }
 }
@@ -576,9 +574,9 @@ export class InternalError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Internal JSON-RPC error.',
-      ...parameters,
       code: InternalError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Internal JSON-RPC error.',
     })
   }
 }
@@ -591,9 +589,9 @@ export class ParseError extends BaseError {
 
   constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
     super({
-      message: 'Failed to parse JSON-RPC response.',
-      ...parameters,
       code: ParseError.code,
+      data: parameters.data,
+      message: parameters.message ?? 'Failed to parse JSON-RPC response.',
     })
   }
 }
