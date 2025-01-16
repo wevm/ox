@@ -132,7 +132,7 @@ describe('from', () => {
   test('AbiParameter.from', () => {
     // @ts-expect-error invalid signature type
     expect(() => AbiParameter.from('')).toThrowErrorMatchingInlineSnapshot(
-      `[AbiParameter.InvalidParameterError: Invalid ABI parameter.]`,
+      '[AbiParameter.InvalidParameterError: Invalid ABI parameter.]',
     )
     // @ts-expect-error invalid signature type
     expect(() => AbiParameter.from([])).toThrowErrorMatchingInlineSnapshot(

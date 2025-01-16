@@ -47,8 +47,10 @@ export type AbiItem = Abi.Abi[number]
  */
 export function format<const abiItem extends AbiItem>(
   abiItem: abiItem | AbiItem,
-): abitype.FormatAbiItem<abiItem> {
-  type Result = format.ReturnType<abiItem>
+): format.ReturnType<abiItem>
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function format(abiItem: AbiItem): string {
   type Params = readonly [
     AbiParameter.AbiParameter | abitype.AbiEventParameter,
     ...(readonly (AbiParameter.AbiParameter | abitype.AbiEventParameter)[]),
@@ -81,8 +83,8 @@ export function format<const abiItem extends AbiItem>(
   if (abiItem.type === 'fallback')
     return `fallback() external${
       abiItem.stateMutability === 'payable' ? ' payable' : ''
-    }` as Result
-  return 'receive() external payable' as Result
+    }`
+  return 'receive() external payable'
 }
 
 export declare namespace format {
@@ -586,7 +588,7 @@ export declare namespace getSelector {
 export function getSignature(abiItem: string | AbiItem): string {
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
-    return abitype.formatAbiItem(abiItem)
+    return format(abiItem)
   })()
   return internal.normalizeSignature(signature)
 }
@@ -747,8 +749,8 @@ export class AmbiguityError extends Errors.BaseError {
     super('Found ambiguous types in overloaded ABI Items.', {
       metaMessages: [
         // TODO: abitype to add support for signature-formatted ABI items.
-        `\`${x.type}\` in \`${internal.normalizeSignature(abitype.formatAbiItem(x.abiItem))}\`, and`,
-        `\`${y.type}\` in \`${internal.normalizeSignature(abitype.formatAbiItem(y.abiItem))}\``,
+        `\`${x.type}\` in \`${internal.normalizeSignature(format(x.abiItem))}\`, and`,
+        `\`${y.type}\` in \`${internal.normalizeSignature(format(y.abiItem))}\``,
         '',
         'These types encode differently and cannot be distinguished at runtime.',
         'Remove one of the ambiguous items in the ABI.',

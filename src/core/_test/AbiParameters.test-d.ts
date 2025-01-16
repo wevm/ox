@@ -1,7 +1,7 @@
 import { type AbiParameter, AbiParameters } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
-test('formatAbiParameter', () => {
+test('AbiParameters.format', () => {
   expectTypeOf(
     AbiParameters.format([
       {
