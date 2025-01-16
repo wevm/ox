@@ -6,7 +6,7 @@ import type {
   ParseStructs,
   ResolveStructs,
   StructLookup,
-} from '../../../../internal/humanReadable/types/structs.js'
+} from '../../../../internal/humanReadable/structs.js'
 
 test('ParseStructs', () => {
   type Result = ParseStructs<

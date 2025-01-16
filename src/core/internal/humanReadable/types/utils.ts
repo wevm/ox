@@ -1,13 +1,12 @@
 import type * as abitype from 'abitype'
 
-import type * as AbiParameter from '../../../AbiParameter.js'
 import type {
-  Evaluate,
-  IsUnknown,
-  Merge,
-  Trim,
-  TypeErrorMessage,
-} from '../../types.js'
+  DefaultParseOptions,
+  ParseAbiParameter,
+  ParseOptions,
+  SplitParameters,
+} from '../../abiParameter.js'
+import type { Evaluate, Trim } from '../../types.js'
 import type {
   ErrorSignature,
   EventModifier,
@@ -22,9 +21,8 @@ import type {
   Modifier,
   ReceiveSignature,
   Scope,
-  ValidateName,
-} from './signatures.js'
-import type { StructLookup } from './structs.js'
+} from '../signatures.js'
+import type { StructLookup } from '../structs.js'
 
 export type ParseSignature<
   signature extends string,
@@ -107,12 +105,6 @@ export type ParseSignature<
         }
       : never)
 
-type ParseOptions = {
-  modifier?: Modifier
-  structs?: StructLookup | unknown
-}
-type DefaultParseOptions = object
-
 export type ParseAbiParameters<
   signatures extends readonly string[],
   options extends ParseOptions = DefaultParseOptions,
@@ -123,130 +115,6 @@ export type ParseAbiParameters<
         [key in keyof signatures]: ParseAbiParameter<signatures[key], options>
       },
     ]
-
-export type ParseAbiParameter<
-  signature extends string,
-  options extends ParseOptions = DefaultParseOptions,
-> = (
-  signature extends `(${string})${string}`
-    ? _ParseTuple<signature, options>
-    : // Convert string to shallow AbiParameter (structs resolved yet)
-      // Check for `${Type} ${nameOrModifier}` format (e.g. `uint256 foo`, `uint256 indexed`, `uint256 indexed foo`)
-      signature extends `${infer type} ${infer tail}`
-      ? Trim<tail> extends infer trimmed extends string
-        ? // TODO: data location modifiers only allowed for struct/array types
-          { readonly type: Trim<type> } & _SplitNameOrModifier<trimmed, options>
-        : never
-      : // Must be `${Type}` format (e.g. `uint256`)
-        { readonly type: signature }
-) extends infer shallowParameter extends AbiParameter.AbiParameter & {
-  type: string
-  indexed?: boolean
-}
-  ? // Resolve struct types
-    // Starting with plain struct types (e.g. `Foo`)
-    (
-      shallowParameter['type'] extends keyof options['structs']
-        ? {
-            readonly type: 'tuple'
-            readonly components: options['structs'][shallowParameter['type']]
-          } & (IsUnknown<shallowParameter['name']> extends false
-            ? { readonly name: shallowParameter['name'] }
-            : object) &
-            (shallowParameter['indexed'] extends true
-              ? { readonly indexed: true }
-              : object)
-        : // Resolve tuple structs (e.g. `Foo[]`, `Foo[2]`, `Foo[][2]`, etc.)
-          shallowParameter['type'] extends `${infer type extends string &
-              keyof options['structs']}[${infer tail}]`
-          ? {
-              readonly type: `tuple[${tail}]`
-              readonly components: options['structs'][type]
-            } & (IsUnknown<shallowParameter['name']> extends false
-              ? { readonly name: shallowParameter['name'] }
-              : object) &
-              (shallowParameter['indexed'] extends true
-                ? { readonly indexed: true }
-                : object)
-          : // Not a struct, just return
-            shallowParameter
-    ) extends infer Parameter extends AbiParameter.AbiParameter & {
-      type: string
-      indexed?: boolean
-    }
-    ? Evaluate<_ValidateAbiParameter<Parameter>>
-    : never
-  : never
-
-export type SplitParameters<
-  signature extends string,
-  result extends unknown[] = [],
-  current extends string = '',
-  depth extends readonly number[] = [],
-> = signature extends ''
-  ? current extends ''
-    ? [...result] // empty string was passed in to `SplitParameters`
-    : depth['length'] extends 0
-      ? [...result, Trim<current>]
-      : TypeErrorMessage<`Unbalanced parentheses. "${current}" has too many opening parentheses.`>
-  : signature extends `${infer char}${infer tail}`
-    ? char extends ','
-      ? depth['length'] extends 0
-        ? SplitParameters<tail, [...result, Trim<current>], ''>
-        : SplitParameters<tail, result, `${current}${char}`, depth>
-      : char extends '('
-        ? SplitParameters<tail, result, `${current}${char}`, [...depth, 1]>
-        : char extends ')'
-          ? depth['length'] extends 0
-            ? TypeErrorMessage<`Unbalanced parentheses. "${current}" has too many closing parentheses.`>
-            : SplitParameters<tail, result, `${current}${char}`, Pop<depth>>
-          : SplitParameters<tail, result, `${current}${char}`, depth>
-    : []
-type Pop<type extends readonly number[]> = type extends [...infer head, any]
-  ? head
-  : []
-
-export type _ValidateAbiParameter<
-  abiParameter extends AbiParameter.AbiParameter,
-> =
-  // Validate `name`
-  (
-    abiParameter extends { name: string }
-      ? ValidateName<abiParameter['name']> extends infer name
-        ? name extends abiParameter['name']
-          ? abiParameter
-          : // Add `Error` as `name`
-            Merge<abiParameter, { readonly name: name }>
-        : never
-      : abiParameter
-  ) extends infer parameter
-    ? // Validate `type` against `AbiType`
-      (
-        abitype.ResolvedRegister['strictAbiType'] extends true
-          ? parameter extends { type: abitype.AbiType }
-            ? parameter
-            : Merge<
-                parameter,
-                {
-                  readonly type: TypeErrorMessage<`Type "${parameter extends {
-                    type: string
-                  }
-                    ? parameter['type']
-                    : string}" is not a valid ABI type.`>
-                }
-              >
-          : parameter
-      ) extends infer parameter2 extends { type: unknown }
-      ? // Convert `(u)int` to `(u)int256`
-        parameter2['type'] extends `${infer prefix extends
-          | 'u'
-          | ''}int${infer suffix extends `[${string}]` | ''}`
-        ? Evaluate<
-            Merge<parameter2, { readonly type: `${prefix}int256${suffix}` }>
-          >
-        : parameter2
-      : never
-    : never
 
 export type _ParseFunctionParametersAndStateMutability<
   signature extends string,

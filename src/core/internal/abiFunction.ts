@@ -1,12 +1,12 @@
-import type * as AbiItem_internal from './abiItem.js'
+import type * as internal_signatures from './humanReadable/signatures.js'
 import type { TypeErrorMessage } from './types.js'
 
 /** @internal */
 export type IsSignature<signature extends string> =
-  | (AbiItem_internal.IsFunctionSignature<signature> extends true
+  | (internal_signatures.IsFunctionSignature<signature> extends true
       ? true
       : never)
-  | (AbiItem_internal.IsStructSignature<signature> extends true
+  | (internal_signatures.IsStructSignature<signature> extends true
       ? true
       : never) extends infer condition
   ? [condition] extends [never]

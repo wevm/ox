@@ -1,4 +1,5 @@
 import * as abitype from 'abitype'
+import * as AbiParameter from './AbiParameter.js'
 import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
@@ -6,6 +7,7 @@ import * as Hex from './Hex.js'
 import * as Solidity from './Solidity.js'
 import * as internal from './internal/abiParameters.js'
 import * as Cursor from './internal/cursor.js'
+import type { Join } from './internal/types.js'
 
 /** Root type for ABI parameters. */
 export type AbiParameters = readonly abitype.AbiParameter[]
@@ -367,10 +369,31 @@ export function format<
         ...(readonly (Parameter | abitype.AbiEventParameter)[]),
       ],
 ): abitype.FormatAbiParameters<parameters> {
-  return abitype.formatAbiParameters(parameters)
+  let params = ''
+  const length = parameters.length
+  for (let i = 0; i < length; i++) {
+    const abiParameter = parameters[i]!
+    params += AbiParameter.format(abiParameter)
+    if (i !== length - 1) params += ', '
+  }
+  return params as abitype.FormatAbiParameters<parameters>
 }
 
 export declare namespace format {
+  type ReturnType<
+    abiParameters extends readonly [
+      AbiParameter.AbiParameter | abitype.AbiEventParameter,
+      ...(readonly (AbiParameter.AbiParameter | abitype.AbiEventParameter)[]),
+    ],
+  > = Join<
+    {
+      [key in keyof abiParameters]: AbiParameter.format.ReturnType<
+        abiParameters[key]
+      >
+    },
+    ', '
+  >
+
   type ErrorType = Errors.GlobalErrorType
 }
 

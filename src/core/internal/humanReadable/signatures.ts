@@ -1,23 +1,133 @@
 import type { AbiStateMutability } from 'abitype'
-import type { TypeErrorMessage } from '../../types.js'
 
+import { execTyped } from '../regex.js'
+import type { TypeErrorMessage } from '../types.js'
+
+// https://regexr.com/7gmok
+const errorSignatureRegex =
+  /^error (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*)\((?<parameters>.*?)\)$/
+export function isErrorSignature(signature: string) {
+  return errorSignatureRegex.test(signature)
+}
+export function execErrorSignature(signature: string) {
+  return execTyped<{ name: string; parameters: string }>(
+    errorSignatureRegex,
+    signature,
+  )
+}
+
+// https://regexr.com/7gmoq
+const eventSignatureRegex =
+  /^event (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*)\((?<parameters>.*?)\)$/
+export function isEventSignature(signature: string) {
+  return eventSignatureRegex.test(signature)
+}
+export function execEventSignature(signature: string) {
+  return execTyped<{ name: string; parameters: string }>(
+    eventSignatureRegex,
+    signature,
+  )
+}
+
+// https://regexr.com/7gmot
+const functionSignatureRegex =
+  /^function (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*)\((?<parameters>.*?)\)(?: (?<scope>external|public{1}))?(?: (?<stateMutability>pure|view|nonpayable|payable{1}))?(?: returns\s?\((?<returns>.*?)\))?$/
+export function isFunctionSignature(signature: string) {
+  return functionSignatureRegex.test(signature)
+}
+export function execFunctionSignature(signature: string) {
+  return execTyped<{
+    name: string
+    parameters: string
+    stateMutability?: AbiStateMutability
+    returns?: string
+  }>(functionSignatureRegex, signature)
+}
+
+// https://regexr.com/7gmp3
+const structSignatureRegex =
+  /^struct (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*) \{(?<properties>.*?)\}$/
+export function isStructSignature(signature: string) {
+  return structSignatureRegex.test(signature)
+}
+export function execStructSignature(signature: string) {
+  return execTyped<{ name: string; properties: string }>(
+    structSignatureRegex,
+    signature,
+  )
+}
+
+// https://regexr.com/78u01
+const constructorSignatureRegex =
+  /^constructor\((?<parameters>.*?)\)(?:\s(?<stateMutability>payable{1}))?$/
+export function isConstructorSignature(signature: string) {
+  return constructorSignatureRegex.test(signature)
+}
+export function execConstructorSignature(signature: string) {
+  return execTyped<{
+    parameters: string
+    stateMutability?: Extract<AbiStateMutability, 'payable'>
+  }>(constructorSignatureRegex, signature)
+}
+
+// https://regexr.com/7srtn
+const fallbackSignatureRegex =
+  /^fallback\(\) external(?:\s(?<stateMutability>payable{1}))?$/
+export function isFallbackSignature(signature: string) {
+  return fallbackSignatureRegex.test(signature)
+}
+export function execFallbackSignature(signature: string) {
+  return execTyped<{
+    parameters: string
+    stateMutability?: Extract<AbiStateMutability, 'payable'>
+  }>(fallbackSignatureRegex, signature)
+}
+
+// https://regexr.com/78u1k
+const receiveSignatureRegex = /^receive\(\) external payable$/
+export function isReceiveSignature(signature: string) {
+  return receiveSignatureRegex.test(signature)
+}
+
+export const modifiers = new Set<Modifier>([
+  'memory',
+  'indexed',
+  'storage',
+  'calldata',
+])
+export const eventModifiers = new Set<EventModifier>(['indexed'])
+export const functionModifiers = new Set<FunctionModifier>([
+  'calldata',
+  'memory',
+  'storage',
+])
+
+/// Types
+
+/** @internal */
 export type ErrorSignature<
   name extends string = string,
   parameters extends string = string,
 > = `error ${name}(${parameters})`
+/** @internal */
 export type IsErrorSignature<signature extends string> =
   signature extends ErrorSignature<infer name> ? IsName<name> : false
+
+/** @internal */
 export type EventSignature<
   name extends string = string,
   parameters extends string = string,
 > = `event ${name}(${parameters})`
+/** @internal */
 export type IsEventSignature<signature extends string> =
   signature extends EventSignature<infer name> ? IsName<name> : false
 
+/** @internal */
 export type FunctionSignature<
   name extends string = string,
   tail extends string = string,
 > = `function ${name}(${tail}`
+/** @internal */
 export type IsFunctionSignature<signature> =
   signature extends FunctionSignature<infer name>
     ? IsName<name> extends true
@@ -31,6 +141,7 @@ export type IsFunctionSignature<signature> =
           : false
       : false
     : false
+/** @internal */
 export type Scope = 'public' | 'external' // `internal` or `private` functions wouldn't make it to ABI so can ignore
 type Returns = `returns (${string})` | `returns(${string})`
 // Almost all valid function signatures, except `function ${string}(${infer parameters})` since `parameters` can absorb returns
@@ -54,14 +165,17 @@ type ValidFunctionSignatures =
   | `function ${string}(${string}) ${Scope} ${AbiStateMutability}`
   | `function ${string}(${string}) ${Scope} ${AbiStateMutability} ${Returns}`
 
+/** @internal */
 export type StructSignature<
   name extends string = string,
   properties extends string = string,
 > = `struct ${name} {${properties}}`
+/** @internal */
 export type IsStructSignature<signature extends string> =
   signature extends StructSignature<infer name> ? IsName<name> : false
 
 type ConstructorSignature<tail extends string = string> = `constructor(${tail}`
+/** @internal */
 export type IsConstructorSignature<signature> =
   signature extends ConstructorSignature
     ? signature extends ValidConstructorSignatures
@@ -72,19 +186,23 @@ type ValidConstructorSignatures =
   | `constructor(${string})`
   | `constructor(${string}) payable`
 
+/** @internal */
 export type FallbackSignature<
   abiStateMutability extends '' | ' payable' = '' | ' payable',
 > = `fallback() external${abiStateMutability}`
+/** @internal */
 export type IsFallbackSignature<signature extends string> = signature extends
   | FallbackSignature<''>
   | FallbackSignature<' payable'>
   ? true
   : false
 
+/** @internal */
 export type ReceiveSignature = 'receive() external payable'
 
 // TODO: Maybe use this for signature validation one day
 // https://twitter.com/devanshj__/status/1610423724708343808
+/** @internal */
 export type IsSignature<type extends string> =
   | (IsErrorSignature<type> extends true ? true : never)
   | (IsEventSignature<type> extends true ? true : never)
@@ -98,6 +216,7 @@ export type IsSignature<type extends string> =
     : true
   : false
 
+/** @internal */
 export type Signature<
   string1 extends string,
   string2 extends string | unknown = unknown,
@@ -109,28 +228,35 @@ export type Signature<
         ? ` at position ${string2}`
         : ''}.`>
 
+/** @internal */
 export type Signatures<signatures extends readonly string[]> = {
   [key in keyof signatures]: Signature<signatures[key], key>
 }
 
+/** @internal */
 export type Modifier = 'calldata' | 'indexed' | 'memory' | 'storage'
+/** @internal */
 export type FunctionModifier = Extract<
   Modifier,
   'calldata' | 'memory' | 'storage'
 >
+/** @internal */
 export type EventModifier = Extract<Modifier, 'indexed'>
 
+/** @internal */
 export type IsName<name extends string> = name extends ''
   ? false
   : ValidateName<name> extends name
     ? true
     : false
 
+/** @internal */
 export type AssertName<name extends string> =
   ValidateName<name> extends infer invalidName extends string[]
     ? `[${invalidName[number]}]`
     : name
 
+/** @internal */
 export type ValidateName<
   name extends string,
   checkCharacters extends boolean = false,
@@ -148,9 +274,11 @@ export type ValidateName<
             : TypeErrorMessage<`"${name}" contains invalid character.`>
           : name
 
+/** @internal */
 export type IsSolidityKeyword<type extends string> =
   type extends SolidityKeywords ? true : false
 
+/** @internal */
 export type SolidityKeywords =
   | 'after'
   | 'alias'
@@ -216,6 +344,7 @@ export type SolidityKeywords =
   | `bytes${number | ''}${`[${string}]` | ''}`
   | `${'u' | ''}int${number | ''}${`[${string}]` | ''}`
 
+/** @internal */
 export type IsValidCharacter<character extends string> =
   character extends `${ValidCharacters}${infer tail}`
     ? tail extends ''

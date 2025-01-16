@@ -1,69 +1,16 @@
 import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
+import type * as AbiParameter from './AbiParameter.js'
+import * as AbiParameters from './AbiParameters.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as internal from './internal/abiItem.js'
+import type * as internal_signatures from './internal/humanReadable/signatures.js'
 import type { UnionCompute } from './internal/types.js'
 
 /** Root type for an item on an {@link ox#Abi.Abi}. */
 export type AbiItem = Abi.Abi[number]
-
-/**
- * Extracts an {@link ox#AbiItem.AbiItem} item from an {@link ox#Abi.Abi}, given a name.
- *
- * @example
- * ```ts twoslash
- * import { Abi, AbiItem } from 'ox'
- *
- * const abi = Abi.from([
- *   'error Foo(string)',
- *   'function foo(string)',
- *   'event Bar(uint256)',
- * ])
- *
- * type Foo = AbiItem.FromAbi<typeof abi, 'Foo'>
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- */
-export type FromAbi<
-  abi extends Abi.Abi,
-  name extends ExtractNames<abi>,
-> = Extract<abi[number], { name: name }>
-
-/**
- * Extracts the names of all {@link ox#AbiItem.AbiItem} items in an {@link ox#Abi.Abi}.
- *
- * @example
- * ```ts twoslash
- * import { Abi, AbiItem } from 'ox'
- *
- * const abi = Abi.from([
- *   'error Foo(string)',
- *   'function foo(string)',
- *   'event Bar(uint256)',
- * ])
- *
- * type names = AbiItem.Name<typeof abi>
- * //   ^?
- *
- * ```
- */
-export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
-  abi extends Abi.Abi ? ExtractNames<abi> : string
-
-export type ExtractNames<abi extends Abi.Abi> = Extract<
-  abi[number],
-  { name: string }
->['name']
 
 /**
  * Formats an {@link ox#AbiItem.AbiItem} into a **Human Readable ABI Item**.
@@ -101,10 +48,97 @@ export type ExtractNames<abi extends Abi.Abi> = Extract<
 export function format<const abiItem extends AbiItem>(
   abiItem: abiItem | AbiItem,
 ): abitype.FormatAbiItem<abiItem> {
-  return abitype.formatAbiItem(abiItem) as never
+  type Result = format.ReturnType<abiItem>
+  type Params = readonly [
+    AbiParameter.AbiParameter | abitype.AbiEventParameter,
+    ...(readonly (AbiParameter.AbiParameter | abitype.AbiEventParameter)[]),
+  ]
+
+  if (abiItem.type === 'function')
+    return `function ${abiItem.name}(${AbiParameters.format(
+      abiItem.inputs as Params,
+    )})${
+      abiItem.stateMutability && abiItem.stateMutability !== 'nonpayable'
+        ? ` ${abiItem.stateMutability}`
+        : ''
+    }${
+      abiItem.outputs?.length
+        ? ` returns (${AbiParameters.format(abiItem.outputs as Params)})`
+        : ''
+    }`
+  if (abiItem.type === 'event')
+    return `event ${abiItem.name}(${AbiParameters.format(
+      abiItem.inputs as Params,
+    )})`
+  if (abiItem.type === 'error')
+    return `error ${abiItem.name}(${AbiParameters.format(
+      abiItem.inputs as Params,
+    )})`
+  if (abiItem.type === 'constructor')
+    return `constructor(${AbiParameters.format(abiItem.inputs as Params)})${
+      abiItem.stateMutability === 'payable' ? ' payable' : ''
+    }`
+  if (abiItem.type === 'fallback')
+    return `fallback() external${
+      abiItem.stateMutability === 'payable' ? ' payable' : ''
+    }` as Result
+  return 'receive() external payable' as Result
 }
 
 export declare namespace format {
+  type ReturnType<abiItem extends AbiItem> = AbiItem extends abiItem
+    ? string
+    :
+        | (abiItem extends abitype.AbiFunction
+            ? abitype.AbiFunction extends abiItem
+              ? string
+              : `function ${internal_signatures.AssertName<abiItem['name']>}(${AbiParameters.format.ReturnType<
+                  abiItem['inputs']
+                >})${abiItem['stateMutability'] extends Exclude<
+                  abitype.AbiStateMutability,
+                  'nonpayable'
+                >
+                  ? ` ${abiItem['stateMutability']}`
+                  : ''}${abiItem['outputs']['length'] extends 0
+                  ? ''
+                  : ` returns (${AbiParameters.format.ReturnType<abiItem['outputs']>})`}`
+            : never)
+        | (abiItem extends abitype.AbiEvent
+            ? abitype.AbiEvent extends abiItem
+              ? string
+              : `event ${internal_signatures.AssertName<abiItem['name']>}(${AbiParameters.format.ReturnType<
+                  abiItem['inputs']
+                >})`
+            : never)
+        | (abiItem extends abitype.AbiError
+            ? abitype.AbiError extends abiItem
+              ? string
+              : `error ${internal_signatures.AssertName<abiItem['name']>}(${AbiParameters.format.ReturnType<
+                  abiItem['inputs']
+                >})`
+            : never)
+        | (abiItem extends abitype.AbiConstructor
+            ? abitype.AbiConstructor extends abiItem
+              ? string
+              : `constructor(${AbiParameters.format.ReturnType<
+                  abiItem['inputs']
+                >})${abiItem['stateMutability'] extends 'payable'
+                  ? ' payable'
+                  : ''}`
+            : never)
+        | (abiItem extends abitype.AbiFallback
+            ? abitype.AbiFallback extends abiItem
+              ? string
+              : `fallback() external${abiItem['stateMutability'] extends 'payable'
+                  ? ' payable'
+                  : ''}`
+            : never)
+        | (abiItem extends abitype.AbiReceive
+            ? abitype.AbiReceive extends abiItem
+              ? string
+              : 'receive() external payable'
+            : never)
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -216,9 +250,11 @@ export function from<
 >(
   abiItem: (abiItem | AbiItem | string | readonly string[]) &
     (
-      | (abiItem extends string ? internal.Signature<abiItem> : never)
+      | (abiItem extends string
+          ? internal_signatures.Signature<abiItem>
+          : never)
       | (abiItem extends readonly string[]
-          ? internal.Signatures<abiItem>
+          ? internal_signatures.Signatures<abiItem>
           : never)
       | AbiItem
     ),
@@ -606,6 +642,62 @@ export declare namespace getSignatureHash {
     | Hex.fromString.ErrorType
     | Errors.GlobalErrorType
 }
+
+/**
+ * Extracts an {@link ox#AbiItem.AbiItem} item from an {@link ox#Abi.Abi}, given a name.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error Foo(string)',
+ *   'function foo(string)',
+ *   'event Bar(uint256)',
+ * ])
+ *
+ * type Foo = AbiItem.FromAbi<typeof abi, 'Foo'>
+ * //   ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ */
+export type FromAbi<
+  abi extends Abi.Abi,
+  name extends ExtractNames<abi>,
+> = Extract<abi[number], { name: name }>
+
+/**
+ * Extracts the names of all {@link ox#AbiItem.AbiItem} items in an {@link ox#Abi.Abi}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error Foo(string)',
+ *   'function foo(string)',
+ *   'event Bar(uint256)',
+ * ])
+ *
+ * type names = AbiItem.Name<typeof abi>
+ * //   ^?
+ *
+ * ```
+ */
+export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
+  abi extends Abi.Abi ? ExtractNames<abi> : string
+
+export type ExtractNames<abi extends Abi.Abi> = Extract<
+  abi[number],
+  { name: string }
+>['name']
 
 /**
  * Throws when ambiguous types are found on overloaded ABI items.
