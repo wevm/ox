@@ -1,7 +1,7 @@
 import * as abitype from 'abitype'
 import type * as Errors from './Errors.js'
 import * as internal from './internal/abi.js'
-import type * as AbiItem_internal from './internal/abiItem.js'
+import type * as internal_signatures from './internal/humanReadable/signatures.js'
 
 /** Root type for an ABI. */
 export type Abi = abitype.Abi
@@ -59,7 +59,7 @@ export declare namespace format {
 export function from<const abi extends Abi | readonly string[]>(
   abi: abi &
     (abi extends readonly string[]
-      ? AbiItem_internal.Signatures<abi>
+      ? internal_signatures.Signatures<abi>
       : unknown),
 ): from.ReturnType<abi>
 /**

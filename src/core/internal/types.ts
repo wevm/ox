@@ -27,14 +27,31 @@ export type Branded<T, U> = T & { [symbol]: U }
  * @internal
  */
 export type Filter<
-  T extends readonly unknown[],
-  P,
-  Acc extends readonly unknown[] = [],
-> = T extends readonly [infer F, ...infer Rest extends readonly unknown[]]
-  ? [F] extends [P]
-    ? Filter<Rest, P, [...Acc, F]>
-    : Filter<Rest, P, Acc>
-  : readonly [...Acc]
+  items extends readonly unknown[],
+  item,
+  acc extends readonly unknown[] = [],
+> = items extends readonly [
+  infer head,
+  ...infer tail extends readonly unknown[],
+]
+  ? [head] extends [item]
+    ? Filter<tail, item, [...acc, head]>
+    : Filter<tail, item, acc>
+  : readonly [...acc]
+
+export type FilterReverse<
+  items extends readonly unknown[],
+  item,
+  ///
+  acc extends readonly unknown[] = [],
+> = items extends readonly [
+  infer head,
+  ...infer tail extends readonly unknown[],
+]
+  ? [head] extends [item]
+    ? Filter<tail, item, acc>
+    : Filter<tail, item, [...acc, head]>
+  : readonly [...acc]
 
 /**
  * Checks if `T` can be narrowed further than `U`
@@ -50,6 +67,15 @@ export type IsNarrowable<T, U> = IsNever<
 > extends true
   ? false
   : true
+export type IsNarrowableIncludingNever<type, type2> =
+  IsUnknown<type> extends true
+    ? false
+    : IsNever<
+          (type extends type2 ? true : false) &
+            (type2 extends type ? false : true)
+        > extends true
+      ? false
+      : true
 
 /**
  * Checks if `T` is `never`
@@ -61,6 +87,43 @@ export type IsNarrowable<T, U> = IsNever<
  * ```
  */
 export type IsNever<T> = [T] extends [never] ? true : false
+
+/**
+ * Joins array into string
+ *
+ * @param array - Array to join
+ * @param separator - Separator
+ * @returns string
+ *
+ * @example
+ * type Result = Join<['a', 'b', 'c'], '-'>
+ * //   ^? type Result = 'a-b-c'
+ *
+ * @internal
+ */
+export type Join<
+  array extends readonly unknown[],
+  separator extends string | number,
+> = array extends readonly [infer head, ...infer tail]
+  ? tail['length'] extends 0
+    ? `${head & string}`
+    : `${head & string}${separator}${Join<tail, separator>}`
+  : never
+
+/**
+ * Merges two object types into new type
+ *
+ * @param object1 - Object to merge into
+ * @param object2 - Object to merge and override keys from {@link object1}
+ * @returns New object type with keys from {@link object1} and {@link object2}. If a key exists in both {@link object1} and {@link object2}, the key from {@link object2} will be used.
+ *
+ * @example
+ * type Result = Merge<{ foo: string }, { foo: number; bar: string }>
+ * //   ^? type Result = { foo: number; bar: string }
+ *
+ * @internal
+ */
+export type Merge<object1, object2> = Omit<object1, keyof object2> & object2
 
 /**
  * Removes `readonly` from all properties of an object.
@@ -96,6 +159,18 @@ export type Or<T extends readonly unknown[]> = T extends readonly [
     ? true
     : Or<Tail>
   : false
+
+/**
+ * Combines members of an intersection into a readable type.
+ *
+ * @link https://twitter.com/mattpocockuk/status/1622730173446557697?s=20&t=NdpAcmEFXY01xkqU3KO0Mg
+ * @example
+ * type Result = Evaluate<{ a: string } | { b: string } | { c: number, d: bigint }>
+ * //   ^? type Result = { a: string; b: string; c: number; d: bigint }
+ *
+ * @internal
+ */
+export type Evaluate<type> = { [key in keyof type]: type[key] } & unknown
 
 /**
  * Checks if `T` is `undefined`
@@ -182,7 +257,7 @@ export type NoUndefined<T> = T extends undefined ? never : T
  *
  * @internal
  */
-export type Omit<type, keys extends keyof type> = Pick<
+export type StrictOmit<type, keys extends keyof type> = Pick<
   type,
   Exclude<keyof type, keys>
 >
@@ -198,7 +273,7 @@ export type Omit<type, keys extends keyof type> = Pick<
  *
  * @internal
  */
-export type PartialBy<T, K extends keyof T> = Omit<T, K> &
+export type PartialBy<T, K extends keyof T> = StrictOmit<T, K> &
   ExactPartial<Pick<T, K>>
 
 export type RecursiveArray<T> = T | readonly RecursiveArray<T>[]
@@ -214,7 +289,7 @@ export type RecursiveArray<T> = T | readonly RecursiveArray<T>[]
  *
  * @internal
  */
-export type RequiredBy<T, K extends keyof T> = Omit<T, K> &
+export type RequiredBy<T, K extends keyof T> = StrictOmit<T, K> &
   ExactRequired<Pick<T, K>>
 
 /**
@@ -236,6 +311,29 @@ export type Some<
   : array extends readonly [unknown, ...infer rest]
     ? Some<rest, value>
     : false
+
+/**
+ * Trims empty space from type {@link t}.
+ *
+ * @param t - Type to trim
+ * @param chars - Characters to trim
+ * @returns Trimmed type
+ *
+ * @example
+ * type Result = Trim<'      foo  '>
+ * //   ^? type Result = "foo"
+ */
+export type Trim<type, chars extends string = ' '> = TrimLeft<
+  TrimRight<type, chars>,
+  chars
+>
+type TrimLeft<t, chars extends string = ' '> = t extends `${chars}${infer tail}`
+  ? TrimLeft<tail>
+  : t
+type TrimRight<
+  t,
+  chars extends string = ' ',
+> = t extends `${infer head}${chars}` ? TrimRight<head> : t
 
 /**
  * Prints custom error message
@@ -336,7 +434,7 @@ export type Undefined<type> = {
 // Loose types
 
 /**
- * Loose version of {@link Omit}
+ * Loose version of {@link StrictOmit}
  * @internal
  */
 export type LooseOmit<type, keys extends string> = Pick<
@@ -366,7 +464,7 @@ export type UnionLooseOmit<type, keys extends string> = type extends any
  * @internal
  */
 export type UnionOmit<type, keys extends keyof type> = type extends any
-  ? Omit<type, keys>
+  ? StrictOmit<type, keys>
   : never
 
 /**

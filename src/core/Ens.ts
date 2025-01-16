@@ -63,7 +63,9 @@ export function namehash(name: string) {
     const hashed = hashFromEncodedLabel
       ? Bytes.fromHex(hashFromEncodedLabel)
       : Hash.keccak256(Bytes.fromString(labels[i]!), { as: 'Bytes' })
-    result = Hash.keccak256(Bytes.concat(result, hashed), { as: 'Bytes' })
+    result = Hash.keccak256(Bytes.concat(result, hashed), {
+      as: 'Bytes',
+    }) as typeof result
   }
 
   return Hex.fromBytes(result)

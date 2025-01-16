@@ -1,5 +1,5 @@
 import { AbiParameters } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 import { address } from '../../../test/constants/addresses.js'
 
 describe('encodePacked', () => {
@@ -334,18 +334,32 @@ describe('from', () => {
 
 describe('format', () => {
   test('default', () => {
-    const parameters = AbiParameters.from([
-      {
-        name: 'spender',
-        type: 'address',
-      },
-      {
-        name: 'amount',
-        type: 'uint256',
-      },
+    const result = AbiParameters.format([
+      { type: 'address', name: 'foo' },
+      { type: 'uint256', name: 'bar' },
     ])
-    const formatted = AbiParameters.format(parameters)
-    expect(formatted).toMatchInlineSnapshot(`"address spender, uint256 amount"`)
+    expect(result).toEqual('address foo, uint256 bar')
+    expectTypeOf(result).toEqualTypeOf<'address foo, uint256 bar'>()
+  })
+
+  test('tuple', () => {
+    const result = AbiParameters.format([
+      {
+        type: 'tuple',
+        components: [
+          { type: 'string', name: 'bar' },
+          { type: 'string', name: 'baz' },
+        ],
+        name: 'foo',
+      },
+      { type: 'uint256', name: 'bar' },
+    ])
+    expect(result).toMatchInlineSnapshot(
+      '"(string bar, string baz) foo, uint256 bar"',
+    )
+    expectTypeOf(
+      result,
+    ).toEqualTypeOf<'(string bar, string baz) foo, uint256 bar'>()
   })
 })
 

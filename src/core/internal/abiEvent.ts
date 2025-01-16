@@ -1,7 +1,7 @@
 import type * as abitype from 'abitype'
 import type * as Filter from '../Filter.js'
 import type * as Hex from '../Hex.js'
-import type * as AbiItem_internal from './abiItem.js'
+import type * as internal_signatures from './humanReadable/signatures.js'
 import type {
   Compute,
   Filter as Filter_internal,
@@ -26,8 +26,10 @@ export type DefaultEventParameterOptions = {
 
 /** @internal */
 export type IsSignature<signature extends string> =
-  | (AbiItem_internal.IsEventSignature<signature> extends true ? true : never)
-  | (AbiItem_internal.IsStructSignature<signature> extends true
+  | (internal_signatures.IsEventSignature<signature> extends true
+      ? true
+      : never)
+  | (internal_signatures.IsStructSignature<signature> extends true
       ? true
       : never) extends infer condition
   ? [condition] extends [never]
