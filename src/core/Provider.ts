@@ -417,7 +417,7 @@ export declare namespace from {
  * ```ts twoslash
  * import { Provider } from 'ox'
  *
- * const error = Provider.parseErrorObject({ code: 4200, message: 'foo' })
+ * const error = Provider.parseError({ code: 4200, message: 'foo' })
  *
  * error
  * // ^?
