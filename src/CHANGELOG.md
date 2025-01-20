@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.6
+
+### Patch Changes
+
+- [`980f0e2`](https://github.com/wevm/ox/commit/980f0e269cca1ef3c564aba75055fef867ca3e6f) Thanks [@jxom](https://github.com/jxom)! - Fixed TSDoc.
+
 ## 0.6.5
 
 ### Patch Changes
