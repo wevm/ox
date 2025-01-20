@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.7
+
+### Patch Changes
+
+- [`076c6a2`](https://github.com/wevm/ox/commit/076c6a260bfd42d6e66a7490bfb36425f91099d7) Thanks [@jxom](https://github.com/jxom)! - Removed redundant pure annotation.
+
 ## 0.6.6
 
 ### Patch Changes
