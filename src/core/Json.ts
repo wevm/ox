@@ -1,6 +1,6 @@
 import type * as Errors from './Errors.js'
 
-const bigIntSuffix = /*#__PURE__*/ '#__bigint'
+const bigIntSuffix = '#__bigint'
 
 /**
  * Parses a JSON string, with support for `bigint`.
