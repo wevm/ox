@@ -96,18 +96,18 @@ export function merkelize(tree: BinaryStateTree): Bytes.Bytes {
   function inner(node: Node): Bytes.Bytes {
     if (node.type === 'empty') return new Uint8Array(32).fill(0)
     if (node.type === 'internal') {
-      const left_hash = inner(node.left)
-      const right_hash = inner(node.right)
-      return hash(Bytes.concat(left_hash, right_hash))
+      const hash_left = inner(node.left)
+      const hash_right = inner(node.right)
+      return hash(Bytes.concat(hash_left, hash_right))
     }
 
     let level = node.values.map(hash)
     while (level.length > 1) {
-      const new_level = []
+      const level_ = []
       for (let i = 0; i < level.length; i += 2) {
-        new_level.push(hash(Bytes.concat(level[i]!, level[i + 1]!)))
+        level_.push(hash(Bytes.concat(level[i]!, level[i + 1]!)))
       }
-      level = new_level
+      level = level_
     }
 
     return hash(Bytes.concat(node.stem, new Uint8Array(1).fill(0), level[0]!))
@@ -129,10 +129,10 @@ function splitLeaf(
   depth: number,
 ): Node {
   if (stem_bits[depth] === existingStem_bits[depth]) {
-    const new_internal = internalNode()
+    const internal = internalNode()
     const bit = stem_bits[depth]
     if (bit === 0) {
-      new_internal.left = splitLeaf(
+      internal.left = splitLeaf(
         leaf,
         stem_bits,
         existingStem_bits,
@@ -141,7 +141,7 @@ function splitLeaf(
         depth + 1,
       )
     } else {
-      new_internal.right = splitLeaf(
+      internal.right = splitLeaf(
         leaf,
         stem_bits,
         existingStem_bits,
@@ -150,22 +150,22 @@ function splitLeaf(
         depth + 1,
       )
     }
-    return new_internal
+    return internal
   }
 
-  const new_internal = internalNode()
+  const internal = internalNode()
   const bit = stem_bits[depth]
   const stem = bitsToBytes(stem_bits)
   if (bit === 0) {
-    new_internal.left = stemNode(stem)
-    new_internal.left.values[subIndex] = value
-    new_internal.right = leaf
+    internal.left = stemNode(stem)
+    internal.left.values[subIndex] = value
+    internal.right = leaf
   } else {
-    new_internal.right = stemNode(stem)
-    new_internal.right.values[subIndex] = value
-    new_internal.left = leaf
+    internal.right = stemNode(stem)
+    internal.right.values[subIndex] = value
+    internal.left = leaf
   }
-  return new_internal
+  return internal
 }
 
 function emptyNode(): EmptyNode {
