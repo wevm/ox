@@ -948,6 +948,13 @@ export * as Base58 from './core/Base58.js'
 export * as Base64 from './core/Base64.js'
 
 /**
+ * Utility functions for working with [EIP-7864](https://eips.ethereum.org/EIPS/eip-7864) Binary State Trees.
+ *
+ * @category Binary State Tree (EIP-7864)
+ */
+export * as BinaryStateTree from './core/BinaryStateTree.js'
+
+/**
  * Utility functions for working with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
  *
  * @category Blobs (EIP-4844)
