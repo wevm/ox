@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.8
+
+### Patch Changes
+
+- [#60](https://github.com/wevm/ox/pull/60) [`7ff54a2`](https://github.com/wevm/ox/commit/7ff54a2d0a77e2af5a2cc0e1095f0f8d952510c8) Thanks [@jxom](https://github.com/jxom)! - Added `BinaryStateTree` (EIP-7864) module.
+
 ## 0.6.7
 
 ### Patch Changes
