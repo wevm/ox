@@ -948,7 +948,7 @@ export * as Base58 from './core/Base58.js'
 export * as Base64 from './core/Base64.js'
 
 /**
- * TODO
+ * Utility functions for working with [EIP-7864](https://eips.ethereum.org/EIPS/eip-7864) Binary State Trees.
  *
  * @category Binary State Tree (EIP-7864)
  */

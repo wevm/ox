@@ -3,34 +3,50 @@ import { blake3 } from '@noble/hashes/blake3'
 import * as Bytes from './Bytes.js'
 import type { OneOf } from './internal/types.js'
 
+/** Type that defines a Binary State Tree instance. */
 export type BinaryStateTree = {
   root: Node
 }
 
+/** Type defining a node of the BST. */
 export type Node = OneOf<EmptyNode | StemNode | InternalNode>
 
-export type EmptyNode = {
-  type: 'empty'
-}
-
-export type InternalNode = {
-  left: Node
-  right: Node
-  type: 'internal'
-}
-
-export type StemNode = {
-  stem: Bytes.Bytes
-  values: (Bytes.Bytes | undefined)[]
-  type: 'stem'
-}
-
+/**
+ * Creates a new Binary State Tree instance.
+ *
+ * ```ts twoslash
+ * import { BinaryStateTree } from 'ox'
+ *
+ * const tree = BinaryStateTree.create()
+ * ```
+ *
+ * @returns A Binary State Tree.
+ */
 export function create(): BinaryStateTree {
   return {
     root: emptyNode(),
   }
 }
 
+/**
+ * Inserts a key-value pair into the Binary State Tree.
+ *
+ * ```ts twoslash
+ * import { BinaryStateTree } from 'ox'
+ *
+ * const tree = BinaryStateTree.create()
+ *
+ * BinaryStateTree.insert( // [!code focus]
+ *   tree, // [!code focus]
+ *   Bytes.fromHex('0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54'), // [!code focus]
+ *   Bytes.fromHex('0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1') // [!code focus]
+ * ) // [!code focus]
+ * ```
+ *
+ * @param tree - Binary State Tree instance.
+ * @param key - Key to insert.
+ * @param value - Value to insert.
+ */
 export function insert(
   tree: BinaryStateTree,
   key: Bytes.Bytes,
@@ -46,13 +62,13 @@ export function insert(
   }
 
   function inner(
-    n: Node,
+    node_: Node,
     stem: Bytes.Bytes,
     subIndex: number,
     value: Bytes.Bytes,
     depth: number,
   ): Node {
-    let node = n
+    let node = node_
 
     if (node.type === 'empty') {
       node = stemNode(stem)
@@ -60,25 +76,18 @@ export function insert(
       return node
     }
 
-    const stem_bits = bytesToBits(stem)
+    const stemBits = bytesToBits(stem)
     if (node.type === 'stem') {
       if (Bytes.isEqual(node.stem, stem)) {
         node.values[subIndex!] = value
         return node
       }
-      const existingStem_bits = bytesToBits(node.stem)
-      return splitLeaf(
-        node,
-        stem_bits,
-        existingStem_bits,
-        subIndex,
-        value,
-        depth,
-      )
+      const existingStemBits = bytesToBits(node.stem)
+      return splitLeaf(node, stemBits, existingStemBits, subIndex, value, depth)
     }
 
     if (node.type === 'internal') {
-      const bit = stem_bits[depth]
+      const bit = stemBits[depth]
       if (bit === 0) {
         node.left = inner(node.left, stem, subIndex, value, depth + 1)
       } else {
@@ -92,6 +101,26 @@ export function insert(
   tree.root = inner(tree.root, stem, subIndex, value, 0)
 }
 
+/**
+ * Merkelizes a Binary State Tree.
+ *
+ * ```ts twoslash
+ * import { BinaryStateTree } from 'ox'
+ *
+ * const tree = BinaryStateTree.create()
+ *
+ * BinaryStateTree.insert(
+ *   tree,
+ *   Bytes.fromHex('0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54'),
+ *   Bytes.fromHex('0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1')
+ * )
+ *
+ * const hash = BinaryStateTree.merkelize(tree) // [!code focus]
+ * ```
+ *
+ * @param tree - Binary State Tree instance.
+ * @returns Merkle hash.
+ */
 export function merkelize(tree: BinaryStateTree): Bytes.Bytes {
   function inner(node: Node): Bytes.Bytes {
     if (node.type === 'empty') return new Uint8Array(32).fill(0)
@@ -104,9 +133,8 @@ export function merkelize(tree: BinaryStateTree): Bytes.Bytes {
     let level = node.values.map(hash)
     while (level.length > 1) {
       const level_ = []
-      for (let i = 0; i < level.length; i += 2) {
+      for (let i = 0; i < level.length; i += 2)
         level_.push(hash(Bytes.concat(level[i]!, level[i + 1]!)))
-      }
       level = level_
     }
 
@@ -120,22 +148,42 @@ export function merkelize(tree: BinaryStateTree): Bytes.Bytes {
 // Internal
 //////////////////////////////////////////////////////////////////////////////
 
+/** @internal */
+type EmptyNode = {
+  type: 'empty'
+}
+
+/** @internal */
+type InternalNode = {
+  left: Node
+  right: Node
+  type: 'internal'
+}
+
+/** @internal */
+type StemNode = {
+  stem: Bytes.Bytes
+  values: (Bytes.Bytes | undefined)[]
+  type: 'stem'
+}
+
+/** @internal */
 function splitLeaf(
   leaf: Node,
-  stem_bits: number[],
-  existingStem_bits: number[],
+  stemBits: number[],
+  existingStemBits: number[],
   subIndex: number,
   value: Bytes.Bytes,
   depth: number,
 ): Node {
-  if (stem_bits[depth] === existingStem_bits[depth]) {
+  if (stemBits[depth] === existingStemBits[depth]) {
     const internal = internalNode()
-    const bit = stem_bits[depth]
+    const bit = stemBits[depth]
     if (bit === 0) {
       internal.left = splitLeaf(
         leaf,
-        stem_bits,
-        existingStem_bits,
+        stemBits,
+        existingStemBits,
         subIndex,
         value,
         depth + 1,
@@ -143,8 +191,8 @@ function splitLeaf(
     } else {
       internal.right = splitLeaf(
         leaf,
-        stem_bits,
-        existingStem_bits,
+        stemBits,
+        existingStemBits,
         subIndex,
         value,
         depth + 1,
@@ -154,8 +202,8 @@ function splitLeaf(
   }
 
   const internal = internalNode()
-  const bit = stem_bits[depth]
-  const stem = bitsToBytes(stem_bits)
+  const bit = stemBits[depth]
+  const stem = bitsToBytes(stemBits)
   if (bit === 0) {
     internal.left = stemNode(stem)
     internal.left.values[subIndex] = value
@@ -168,12 +216,14 @@ function splitLeaf(
   return internal
 }
 
+/** @internal */
 function emptyNode(): EmptyNode {
   return {
     type: 'empty',
   }
 }
 
+/** @internal */
 function internalNode(): InternalNode {
   return {
     left: emptyNode(),
@@ -182,6 +232,7 @@ function internalNode(): InternalNode {
   }
 }
 
+/** @internal */
 function stemNode(stem: Bytes.Bytes): StemNode {
   return {
     stem,
@@ -190,6 +241,7 @@ function stemNode(stem: Bytes.Bytes): StemNode {
   }
 }
 
+/** @internal */
 function bytesToBits(bytes: Bytes.Bytes): number[] {
   const bits = []
   for (const byte of bytes)
@@ -197,6 +249,7 @@ function bytesToBits(bytes: Bytes.Bytes): number[] {
   return bits
 }
 
+/** @internal */
 function bitsToBytes(bits: number[]): Bytes.Bytes {
   const byte_data = new Uint8Array(bits.length / 8)
   for (let i = 0; i < bits.length; i += 8) {
@@ -207,6 +260,7 @@ function bitsToBytes(bits: number[]): Bytes.Bytes {
   return byte_data
 }
 
+/** @internal */
 function hash(bytes: Bytes.Bytes | undefined): Bytes.Bytes {
   if (!bytes) return new Uint8Array(32).fill(0)
   if (!bytes.some((byte) => byte !== 0)) return new Uint8Array(32).fill(0)
