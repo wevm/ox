@@ -14,6 +14,7 @@ export type Node = OneOf<EmptyNode | StemNode | InternalNode>
 /**
  * Creates a new Binary State Tree instance.
  *
+ * @example
  * ```ts twoslash
  * import { BinaryStateTree } from 'ox'
  *
@@ -31,8 +32,9 @@ export function create(): BinaryStateTree {
 /**
  * Inserts a key-value pair into the Binary State Tree.
  *
+ * @example
  * ```ts twoslash
- * import { BinaryStateTree } from 'ox'
+ * import { BinaryStateTree, Bytes } from 'ox'
  *
  * const tree = BinaryStateTree.create()
  *
@@ -104,8 +106,9 @@ export function insert(
 /**
  * Merkelizes a Binary State Tree.
  *
+ * @example
  * ```ts twoslash
- * import { BinaryStateTree } from 'ox'
+ * import { BinaryStateTree, Bytes } from 'ox'
  *
  * const tree = BinaryStateTree.create()
  *
