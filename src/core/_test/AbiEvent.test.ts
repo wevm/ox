@@ -863,6 +863,22 @@ describe('encode', () => {
     }
   `)
   })
+
+  test('https://github.com/wevm/viem/issues/3278', () => {
+    const event = AbiEvent.from('event test(uint32 indexed val)')
+    expect(
+      AbiEvent.encode(event, {
+        val: 0,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "topics": [
+          "0xe3cff634ef3ac1857ee74821b8b4103c803384af6152771eef3a2a92bdda6db6",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ],
+      }
+    `)
+  })
 })
 
 describe('format', () => {
