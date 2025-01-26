@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.9
+
+### Patch Changes
+
+- [`6480607`](https://github.com/wevm/ox/commit/6480607767387a64f720e0fa3abbc26ea9409990) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.encode` for zeroish arguments.
+
 ## 0.6.8
 
 ### Patch Changes
