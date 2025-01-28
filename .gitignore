@@ -20,3 +20,4 @@ site/pages/api
 site/pages/ercs
 site/pages/glossary
 tsdoc-metadata.json
+*.timestamp*
