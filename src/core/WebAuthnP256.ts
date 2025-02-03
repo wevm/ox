@@ -259,7 +259,7 @@ export function getCredentialCreationOptions(
         ? {
             excludeCredentials: excludeCredentialIds?.map((id) => ({
               id: Base64.toBytes(id),
-              type: 'public-key' as const,
+              type: 'public-key',
             })),
           }
         : {}),
@@ -383,11 +383,11 @@ export function getCredentialRequestOptions(
         allowCredentials: Array.isArray(credentialId)
           ? credentialId.map((id) => ({
               id: Base64.toBytes(id),
-              type: 'public-key' as const,
+              type: 'public-key',
             }))
           : [{
               id: Base64.toBytes(credentialId),
-              type: 'public-key' as const,
+              type: 'public-key',
             }]
       } : {}),
       challenge: Bytes.fromHex(challenge),
