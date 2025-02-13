@@ -530,7 +530,9 @@ export function encode<const abiEvent extends AbiEvent>(
             return args_[i].map((_: any, j: number) =>
               encode(param, args_[i][j]),
             )
-          return args_[i] ? encode(param, args_[i]) : null
+          return typeof args_[i] !== 'undefined' && args_[i] !== null
+            ? encode(param, args_[i])
+            : null
         }) ?? []
     }
   }

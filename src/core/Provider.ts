@@ -400,7 +400,7 @@ export function from(provider: any, options: Options = {}): Provider<Options> {
           return RpcResponse.parse(result) as never
         return result
       } catch (error) {
-        throw parseErrorObject(error)
+        throw parseError(error)
       }
     },
   }
@@ -417,7 +417,7 @@ export declare namespace from {
  * ```ts twoslash
  * import { Provider } from 'ox'
  *
- * const error = Provider.parseErrorObject({ code: 4200, message: 'foo' })
+ * const error = Provider.parseError({ code: 4200, message: 'foo' })
  *
  * error
  * // ^?
@@ -427,13 +427,13 @@ export declare namespace from {
  * @param errorObject - The error object to parse.
  * @returns An error instance.
  */
-export function parseErrorObject<
+export function parseError<
   const errorObject extends RpcResponse.ErrorObject | unknown,
 >(
   errorObject: errorObject | RpcResponse.ErrorObject,
-): parseErrorObject.ReturnType<errorObject> {
+): parseError.ReturnType<errorObject> {
   const errorObject_ = errorObject as RpcResponse.ErrorObject
-  const error = RpcResponse.parseErrorObject(errorObject_)
+  const error = RpcResponse.parseError(errorObject_)
   if (error instanceof RpcResponse.InternalError) {
     if (!error.data) return error as never
 
@@ -448,15 +448,11 @@ export function parseErrorObject<
       return new UnauthorizedError(errorObject_) as never
     if (code === UnsupportedMethodError.code)
       return new UnsupportedMethodError(errorObject_) as never
-    return new RpcResponse.InternalError({
-      data: errorObject_,
-      message: errorObject_.message,
-    }) as never
   }
   return error as never
 }
 
-export declare namespace parseErrorObject {
+export declare namespace parseError {
   type ReturnType<
     errorObject extends RpcResponse.ErrorObject | unknown,
     //
@@ -492,9 +488,9 @@ export declare namespace parseErrorObject {
           | (IsNarrowable<errorObject['code'], number> extends false
               ? UnsupportedMethodError
               : never)
-      : RpcResponse.parseErrorObject.ReturnType<RpcResponse.ErrorObject>,
+      : RpcResponse.parseError.ReturnType<RpcResponse.ErrorObject>,
   > = IsNever<error> extends true
-    ? RpcResponse.parseErrorObject.ReturnType<errorObject>
+    ? RpcResponse.parseError.ReturnType<errorObject>
     : error
 }
 

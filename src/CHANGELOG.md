@@ -1,5 +1,41 @@
 # ox
 
+## 0.6.9
+
+### Patch Changes
+
+- [`6480607`](https://github.com/wevm/ox/commit/6480607767387a64f720e0fa3abbc26ea9409990) Thanks [@jxom](https://github.com/jxom)! - Fixed `AbiEvent.encode` for zeroish arguments.
+
+## 0.6.8
+
+### Patch Changes
+
+- [#60](https://github.com/wevm/ox/pull/60) [`7ff54a2`](https://github.com/wevm/ox/commit/7ff54a2d0a77e2af5a2cc0e1095f0f8d952510c8) Thanks [@jxom](https://github.com/jxom)! - Added `BinaryStateTree` (EIP-7864) module.
+
+## 0.6.7
+
+### Patch Changes
+
+- [`076c6a2`](https://github.com/wevm/ox/commit/076c6a260bfd42d6e66a7490bfb36425f91099d7) Thanks [@jxom](https://github.com/jxom)! - Removed redundant pure annotation.
+
+## 0.6.6
+
+### Patch Changes
+
+- [`980f0e2`](https://github.com/wevm/ox/commit/980f0e269cca1ef3c564aba75055fef867ca3e6f) Thanks [@jxom](https://github.com/jxom)! - Fixed TSDoc.
+
+## 0.6.5
+
+### Patch Changes
+
+- [`0b5182f`](https://github.com/wevm/ox/commit/0b5182f94821715c227dc8b0c891d4548b30fa0e) Thanks [@jxom](https://github.com/jxom)! - Fixed build process for typedef generation.
+
+## 0.6.4
+
+### Patch Changes
+
+- [`74ceae4`](https://github.com/wevm/ox/commit/74ceae4089663ebae18690a44fd98accc28b9b5c) Thanks [@jxom](https://github.com/jxom)! - Fixed `Provider.parseError` behavior.
+
 ## 0.6.3
 
 ### Patch Changes

@@ -18,6 +18,7 @@ test('exports', () => {
       "Authorization",
       "Base58",
       "Base64",
+      "BinaryStateTree",
       "Blobs",
       "Block",
       "BlockOverrides",

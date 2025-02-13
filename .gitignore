@@ -3,6 +3,7 @@
 .attest
 .env
 .local
+.pnpm-store
 _esm
 _cjs
 _types
@@ -20,3 +21,4 @@ site/pages/api
 site/pages/ercs
 site/pages/glossary
 tsdoc-metadata.json
+*.timestamp*
