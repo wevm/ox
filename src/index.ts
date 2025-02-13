@@ -477,6 +477,13 @@ export * as AbiEvent from './core/AbiEvent.js'
 export * as AbiFunction from './core/AbiFunction.js'
 
 /**
+ * @category ABI
+ *
+ * TODO
+ */
+export * as AbiParameter from './core/AbiParameter.js'
+
+/**
  * Utilities & types for working with [ABI Items](https://docs.soliditylang.org/en/latest/abi-spec.html#json)
  *
  * The `AbiItem` type is a super-type of:
