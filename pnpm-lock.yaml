@@ -184,8 +184,8 @@ importers:
         specifier: ^19
         version: 19.0.0(react@19.0.0)
       vocs:
-        specifier: 1.0.0-next.20250217T012932
-        version: 1.0.0-next.20250217T012932(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0)
+        specifier: 1.0.0-next.20250217T102122
+        version: 1.0.0-next.20250217T102122(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0)
 
   src:
     dependencies:
@@ -6165,8 +6165,8 @@ packages:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  vocs@1.0.0-next.20250217T012932:
-    resolution: {integrity: sha512-Y+RyKaJpKsduINbNOG/mxOUNsJKNVlvWbW/4z9ghJZSfB3EQmAQeZ2RVkK/+A2mkeotVud6wXqueAxUZOsVCSg==}
+  vocs@1.0.0-next.20250217T102122:
+    resolution: {integrity: sha512-f31yZyzzCxvPve/RhQBH4/FO3MXchesB3AG6nzPnP58d8ABMPLBV4nYLhuOEMZLMhHqgfj8jfqr/pT9oU3vT9g==}
     hasBin: true
     peerDependencies:
       react: ^19
@@ -6438,7 +6438,7 @@ snapshots:
     dependencies:
       '@babel/helper-validator-identifier': 7.25.9
       js-tokens: 4.0.0
-      picocolors: 1.1.0
+      picocolors: 1.1.1
 
   '@babel/compat-data@7.25.2': {}
 
@@ -6477,7 +6477,7 @@ snapshots:
       '@babel/traverse': 7.26.9
       '@babel/types': 7.26.9
       convert-source-map: 2.0.0
-      debug: 4.3.6
+      debug: 4.4.0
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -6601,6 +6601,11 @@ snapshots:
       '@babel/core': 7.25.2
       '@babel/helper-plugin-utils': 7.24.8
 
+  '@babel/plugin-syntax-typescript@7.24.7(@babel/core@7.26.9)':
+    dependencies:
+      '@babel/core': 7.26.9
+      '@babel/helper-plugin-utils': 7.24.8
+
   '@babel/plugin-transform-react-jsx-self@7.24.7(@babel/core@7.25.2)':
     dependencies:
       '@babel/core': 7.25.2
@@ -6656,7 +6661,7 @@ snapshots:
       '@babel/parser': 7.26.9
       '@babel/template': 7.26.9
       '@babel/types': 7.26.9
-      debug: 4.3.6
+      debug: 4.4.0
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -8773,7 +8778,7 @@ snapshots:
 
   '@vanilla-extract/babel-plugin-debug-ids@1.2.0':
     dependencies:
-      '@babel/core': 7.25.2
+      '@babel/core': 7.26.9
     transitivePeerDependencies:
       - supports-color
 
@@ -8825,7 +8830,7 @@ snapshots:
       lru-cache: 10.4.3
       media-query-parser: 2.0.2
       modern-ahocorasick: 1.0.1
-      picocolors: 1.1.0
+      picocolors: 1.1.1
     transitivePeerDependencies:
       - babel-plugin-macros
 
@@ -8862,12 +8867,12 @@ snapshots:
 
   '@vanilla-extract/integration@8.0.1':
     dependencies:
-      '@babel/core': 7.25.2
-      '@babel/plugin-syntax-typescript': 7.24.7(@babel/core@7.25.2)
+      '@babel/core': 7.26.9
+      '@babel/plugin-syntax-typescript': 7.24.7(@babel/core@7.26.9)
       '@vanilla-extract/babel-plugin-debug-ids': 1.2.0
       '@vanilla-extract/css': 1.17.1
       dedent: 1.5.3
-      esbuild: 0.23.0
+      esbuild: 0.24.2
       eval: 0.1.8
       find-up: 5.0.0
       javascript-stringify: 2.1.0
@@ -13180,7 +13185,7 @@ snapshots:
       - ts-node
       - typescript
 
-  vocs@1.0.0-next.20250217T012932(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0):
+  vocs@1.0.0-next.20250217T102122(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0):
     dependencies:
       '@floating-ui/react': 0.27.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@hono/node-server': 1.13.8(hono@4.7.1)
