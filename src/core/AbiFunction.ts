@@ -1,6 +1,7 @@
 import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
 import * as AbiItem from './AbiItem.js'
+import type * as AbiParameter from './AbiParameter.js'
 import * as AbiParameters from './AbiParameters.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -264,7 +265,7 @@ export declare namespace decodeResult {
     ? abiFunction['outputs'] extends readonly []
       ? undefined
       : abiFunction['outputs'] extends readonly [
-            infer type extends abitype.AbiParameter,
+            infer type extends AbiParameter.AbiParameter,
           ]
         ? abitype.AbiParameterToPrimitiveType<type>
         : AbiParameters.decode.ReturnType<
