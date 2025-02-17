@@ -93,8 +93,8 @@ importers:
         specifier: ^5.27.2
         version: 5.27.2(@types/node@22.5.4)(typescript@5.5.4)
       prool:
-        specifier: ^0.0.16
-        version: 0.0.16
+        specifier: ^0.0.17
+        version: 0.0.17
       rimraf:
         specifier: ^5.0.10
         version: 5.0.10
@@ -5012,8 +5012,8 @@ packages:
     resolution: {integrity: sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==}
     engines: {node: '>=0.4.0'}
 
-  prool@0.0.16:
-    resolution: {integrity: sha512-s+i66jsINIJQd8w5iGunT8hCeM6RSXjL8qgXDTvcIuaAOjVRVMh0/PgbJ90KR3JAprXWXpa5XQnDEc4fLnvy1Q==}
+  prool@0.0.17:
+    resolution: {integrity: sha512-wSEoXcsJflqnrqAcJy3XAsJceF0qN2W4UTCQIpAvsf0g9WOrdA9/zgIGeaFUG87PrcYZ3i5Bdw/Fv30o4NmXBA==}
     engines: {node: '>=22'}
     peerDependencies:
       '@pimlico/alto': '*'
@@ -10025,7 +10025,7 @@ snapshots:
 
   execa@5.1.1:
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       get-stream: 6.0.1
       human-signals: 2.1.0
       is-stream: 2.0.1
@@ -10050,7 +10050,7 @@ snapshots:
   execa@9.3.1:
     dependencies:
       '@sindresorhus/merge-streams': 4.0.0
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       figures: 6.1.0
       get-stream: 9.0.1
       human-signals: 8.0.0
@@ -10174,7 +10174,7 @@ snapshots:
 
   foreground-child@3.3.0:
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
   format@0.2.2: {}
@@ -11807,7 +11807,7 @@ snapshots:
 
   progress@2.0.3: {}
 
-  prool@0.0.16:
+  prool@0.0.17:
     dependencies:
       change-case: 5.4.4
       eventemitter3: 5.0.1
