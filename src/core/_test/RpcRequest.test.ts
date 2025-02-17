@@ -80,24 +80,27 @@ describe('createStore', () => {
       ),
     )
     expect(responses).toMatchInlineSnapshot(`
-    [
-      {
-        "id": 0,
-        "jsonrpc": "2.0",
-        "result": "0x12f2974",
-      },
-      {
-        "id": 1,
-        "jsonrpc": "2.0",
-        "result": "0x",
-      },
-      {
-        "id": 2,
-        "jsonrpc": "2.0",
-        "result": "0x5248",
-      },
-    ]
-  `)
+      [
+        {
+          "id": 0,
+          "jsonrpc": "2.0",
+          "result": "0x12f2974",
+        },
+        {
+          "id": 1,
+          "jsonrpc": "2.0",
+          "result": "0x",
+        },
+        {
+          "error": {
+            "code": -32003,
+            "message": "gas floor exceeds the gas limit",
+          },
+          "id": 2,
+          "jsonrpc": "2.0",
+        },
+      ]
+    `)
   })
 
   test('options: id', async () => {

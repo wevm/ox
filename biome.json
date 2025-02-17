@@ -1,7 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
   "files": {
-    "ignore": ["contracts/", "test/kzg", "tsconfig.json", "tsconfig.*.json"]
+    "ignore": [
+      "contracts/",
+      "contracts/generated.ts",
+      "test/kzg",
+      "tsconfig.json",
+      "tsconfig.*.json"
+    ]
   },
   "organizeImports": {
     "enabled": true
