@@ -379,16 +379,17 @@ export function getCredentialRequestOptions(
   } = options
   return {
     publicKey: {
-      ...(credentialId
-        ? {
-            allowCredentials: [
-              {
-                id: Base64.toBytes(credentialId),
-                type: 'public-key',
-              },
-            ],
-          }
-        : {}),
+      ...(credentialId ? {
+        allowCredentials: Array.isArray(credentialId)
+          ? credentialId.map((id) => ({
+              id: Base64.toBytes(id),
+              type: 'public-key',
+            }))
+          : [{
+              id: Base64.toBytes(credentialId),
+              type: 'public-key',
+            }]
+      } : {}),
       challenge: Bytes.fromHex(challenge),
       rpId,
       userVerification,
@@ -399,7 +400,7 @@ export function getCredentialRequestOptions(
 export declare namespace getCredentialRequestOptions {
   type Options = {
     /** The credential ID to use. */
-    credentialId?: string | undefined
+    credentialId?: string | string[] | undefined
     /** The challenge to sign. */
     challenge: Hex.Hex
     /** The relying party identifier to use. */
