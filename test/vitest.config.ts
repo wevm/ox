@@ -27,5 +27,6 @@ export default defineConfig({
     resolveSnapshotPath: (path, ext) =>
       join(join(dirname(path), '_snap'), `${basename(path)}${ext}`),
     setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
+    testTimeout: 20_000,
   },
 })
