@@ -184,8 +184,8 @@ importers:
         specifier: ^19
         version: 19.0.0(react@19.0.0)
       vocs:
-        specifier: 1.0.0-next.20250217T102122
-        version: 1.0.0-next.20250217T102122(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0)
+        specifier: 1.0.0-next.20250218T010232
+        version: 1.0.0-next.20250218T010232(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0)
 
   src:
     dependencies:
@@ -4432,6 +4432,9 @@ packages:
   mdast-util-mdx-jsx@3.1.2:
     resolution: {integrity: sha512-eKMQDeywY2wlHc97k5eD8VC+9ASMjN8ItEZQNGwJ6E0XWKiW/Z0V5/H8pvoXUf+y+Mj0VIgeRRbujBmFn4FTyA==}
 
+  mdast-util-mdx-jsx@3.2.0:
+    resolution: {integrity: sha512-lj/z8v0r6ZtsN/cGNNtemmmfoLAFZnjMbNyLzBafjzikOM+glrjNHPlf6lQDOTccj9n5b0PPihEBbhneMyGs1Q==}
+
   mdast-util-mdx@3.0.0:
     resolution: {integrity: sha512-JfbYLAW7XnYTTbUsmpu0kdBUVe+yKVJZBItEjwyYJiDJuZ9w4eeaqks4HQO+R7objWgS2ymV60GYpI14Ug554w==}
 
@@ -4446,6 +4449,9 @@ packages:
 
   mdast-util-to-markdown@2.1.0:
     resolution: {integrity: sha512-SR2VnIEdVNCJbP6y7kVTJgPLifdr8WEU440fQec7qHoHOUz/oJ2jmNRqdDQ3rbiStOXb2mCDGTuwsK5OPUgYlQ==}
+
+  mdast-util-to-markdown@2.1.2:
+    resolution: {integrity: sha512-xj68wMTvGXVOKonmog6LwyJKrYXZPvlwabaryTjLh9LuvovB/KAH+kvi8Gjj+7rJjsFi23nkUxRQv1KqSroMqA==}
 
   mdast-util-to-string@4.0.0:
     resolution: {integrity: sha512-0H44vDimn51F0YwvxSJSm0eCDOJTRlmN0R1yBh4HLj9wiV1Dn0QoXGbvFAWj2hSItVTlCmBF1hqKlIyUBVFLPg==}
@@ -5275,6 +5281,9 @@ packages:
 
   remark-mdx@3.0.1:
     resolution: {integrity: sha512-3Pz3yPQ5Rht2pM5R+0J2MrGoBSrzf+tJG94N+t/ilfdh8YLyyKYtidAYwTveB20BoHAcwIopOUqhcmh2F7hGYA==}
+
+  remark-mdx@3.1.0:
+    resolution: {integrity: sha512-Ngl/H3YXyBV9RcRNdlYsZujAmhsxwzxpDzpDEhFBVAGthS4GDgnctpDjgFl/ULx5UEDzqtW1cyBSNKqYYrqLBA==}
 
   remark-parse@11.0.0:
     resolution: {integrity: sha512-FCxlKLNGknS5ba/1lmpYijMUzX2esxW5xQqjWxw2eHFfS2MSdaHVINFmhjo+qN1WhZhNimq0dZATN9pH0IDrpA==}
@@ -6165,8 +6174,8 @@ packages:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  vocs@1.0.0-next.20250217T102122:
-    resolution: {integrity: sha512-f31yZyzzCxvPve/RhQBH4/FO3MXchesB3AG6nzPnP58d8ABMPLBV4nYLhuOEMZLMhHqgfj8jfqr/pT9oU3vT9g==}
+  vocs@1.0.0-next.20250218T010232:
+    resolution: {integrity: sha512-2CRv3e+oAOKhoJc/xVqgnRh/YKdFWrPGfxq8imMI9Ol4hFZmt5PXKburRZGO8lfluBNko4y04DZjbOafkcJofw==}
     hasBin: true
     peerDependencies:
       react: ^19
@@ -10930,7 +10939,7 @@ snapshots:
       ccount: 2.0.1
       devlop: 1.1.0
       mdast-util-from-markdown: 2.0.2
-      mdast-util-to-markdown: 2.1.0
+      mdast-util-to-markdown: 2.1.2
       parse-entities: 4.0.1
       stringify-entities: 4.0.4
       unist-util-visit-parents: 6.0.1
@@ -11054,7 +11063,7 @@ snapshots:
       mdast-util-gfm-strikethrough: 2.0.0
       mdast-util-gfm-table: 2.0.0
       mdast-util-gfm-task-list-item: 2.0.0
-      mdast-util-to-markdown: 2.1.0
+      mdast-util-to-markdown: 2.1.2
     transitivePeerDependencies:
       - supports-color
 
@@ -11082,6 +11091,23 @@ snapshots:
       parse-entities: 4.0.1
       stringify-entities: 4.0.4
       unist-util-remove-position: 5.0.0
+      unist-util-stringify-position: 4.0.0
+      vfile-message: 4.0.2
+    transitivePeerDependencies:
+      - supports-color
+
+  mdast-util-mdx-jsx@3.2.0:
+    dependencies:
+      '@types/estree-jsx': 1.0.5
+      '@types/hast': 3.0.4
+      '@types/mdast': 4.0.4
+      '@types/unist': 3.0.2
+      ccount: 2.0.1
+      devlop: 1.1.0
+      mdast-util-from-markdown: 2.0.2
+      mdast-util-to-markdown: 2.1.2
+      parse-entities: 4.0.1
+      stringify-entities: 4.0.4
       unist-util-stringify-position: 4.0.0
       vfile-message: 4.0.2
     transitivePeerDependencies:
@@ -11132,6 +11158,18 @@ snapshots:
       longest-streak: 3.1.0
       mdast-util-phrasing: 4.1.0
       mdast-util-to-string: 4.0.0
+      micromark-util-decode-string: 2.0.0
+      unist-util-visit: 5.0.0
+      zwitch: 2.0.4
+
+  mdast-util-to-markdown@2.1.2:
+    dependencies:
+      '@types/mdast': 4.0.4
+      '@types/unist': 3.0.2
+      longest-streak: 3.1.0
+      mdast-util-phrasing: 4.1.0
+      mdast-util-to-string: 4.0.0
+      micromark-util-classify-character: 2.0.0
       micromark-util-decode-string: 2.0.0
       unist-util-visit: 5.0.0
       zwitch: 2.0.4
@@ -12143,6 +12181,13 @@ snapshots:
       yaml: 2.5.0
 
   remark-mdx@3.0.1:
+    dependencies:
+      mdast-util-mdx: 3.0.0
+      micromark-extension-mdxjs: 3.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  remark-mdx@3.1.0:
     dependencies:
       mdast-util-mdx: 3.0.0
       micromark-extension-mdxjs: 3.0.0
@@ -13185,7 +13230,7 @@ snapshots:
       - ts-node
       - typescript
 
-  vocs@1.0.0-next.20250217T102122(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0):
+  vocs@1.0.0-next.20250218T010232(@types/node@22.5.4)(@types/react-dom@18.3.0)(@types/react@19.0.9)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(rollup@4.34.7)(terser@5.31.5)(tsx@4.17.0)(typescript@5.5.4)(yaml@2.5.0):
     dependencies:
       '@floating-ui/react': 0.27.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@hono/node-server': 1.13.8(hono@4.7.1)
@@ -13222,8 +13267,12 @@ snapshots:
       mark.js: 8.11.1
       mdast-util-directive: 3.1.0
       mdast-util-from-markdown: 2.0.2
+      mdast-util-frontmatter: 2.0.1
       mdast-util-gfm: 3.1.0
+      mdast-util-mdx: 3.0.0
+      mdast-util-mdx-jsx: 3.2.0
       mdast-util-to-hast: 13.2.0
+      mdast-util-to-markdown: 2.1.2
       minimatch: 9.0.5
       minisearch: 6.3.0
       ora: 7.0.1
@@ -13240,6 +13289,7 @@ snapshots:
       remark-directive: 3.0.1
       remark-frontmatter: 5.0.0
       remark-gfm: 4.0.1
+      remark-mdx: 3.1.0
       remark-mdx-frontmatter: 5.0.0
       remark-parse: 11.0.0
       serve-static: 1.16.2
