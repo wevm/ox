@@ -23,9 +23,7 @@ function getEnv(key: string, fallback: string): string {
 
 function defineAnvil(parameters: AnvilParameters) {
   const { port } = parameters
-  const poolId =
-    Number(process.env.VITEST_POOL_ID ?? 1) *
-    Number(process.env.VITEST_SHARD_ID ?? 1)
+  const poolId = Math.floor(Math.random() * 10000)
   const rpcUrl = `http://127.0.0.1:${port}/${poolId}`
 
   const config = {
