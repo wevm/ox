@@ -1,5 +1,5 @@
 ---
-"ox": minor
+"ox": patch
 ---
 
-support multiple allowCredentials
+Added support for multiple `credentialId`s in `WebAuthnP256`.
