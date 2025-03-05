@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.10
+
+### Patch Changes
+
+- [#65](https://github.com/wevm/ox/pull/65) [`33712a5`](https://github.com/wevm/ox/commit/33712a5680e4b2ad6be0513e70049160628287a0) Thanks [@thomas779](https://github.com/thomas779)! - Added support for multiple `credentialId`s in `WebAuthnP256`.
+
 ## 0.6.9
 
 ### Patch Changes
