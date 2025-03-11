@@ -379,17 +379,21 @@ export function getCredentialRequestOptions(
   } = options
   return {
     publicKey: {
-      ...(credentialId ? {
-        allowCredentials: Array.isArray(credentialId)
-          ? credentialId.map((id) => ({
-              id: Base64.toBytes(id),
-              type: 'public-key',
-            }))
-          : [{
-              id: Base64.toBytes(credentialId),
-              type: 'public-key',
-            }]
-      } : {}),
+      ...(credentialId
+        ? {
+            allowCredentials: Array.isArray(credentialId)
+              ? credentialId.map((id) => ({
+                  id: Base64.toBytes(id),
+                  type: 'public-key',
+                }))
+              : [
+                  {
+                    id: Base64.toBytes(credentialId),
+                    type: 'public-key',
+                  },
+                ],
+          }
+        : {}),
       challenge: Bytes.fromHex(challenge),
       rpId,
       userVerification,
