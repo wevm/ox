@@ -93,8 +93,8 @@ importers:
         specifier: ^5.27.2
         version: 5.27.2(@types/node@22.5.4)(typescript@5.5.4)
       prool:
-        specifier: ^0.0.20
-        version: 0.0.20
+        specifier: ^0.0.23
+        version: 0.0.23
       rimraf:
         specifier: ^5.0.10
         version: 5.0.10
@@ -5018,8 +5018,8 @@ packages:
     resolution: {integrity: sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==}
     engines: {node: '>=0.4.0'}
 
-  prool@0.0.20:
-    resolution: {integrity: sha512-gWTO+1Y8D4MNawcekprkDSIzPGpYtfpB4fDWo5XQPW8jX/UffY9gKV7blveuwQ/hFYftKuGDEZ5SF7W7OFwGdg==}
+  prool@0.0.23:
+    resolution: {integrity: sha512-r1d0DIiVsp7aXqGiNGKmgrqJZa8GjMGEjsgjQO22DEClYYvK+HMPZTQ9diBqleGuwfiRk3lnsWRMbFTRmFbk9g==}
     engines: {node: '>=22'}
     peerDependencies:
       '@pimlico/alto': '*'
@@ -11850,7 +11850,7 @@ snapshots:
 
   progress@2.0.3: {}
 
-  prool@0.0.20:
+  prool@0.0.23:
     dependencies:
       change-case: 5.4.4
       eventemitter3: 5.0.1
