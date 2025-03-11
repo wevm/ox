@@ -112,6 +112,25 @@ describe('BaseError', () => {
     `)
   })
 
+  test('inherited Error (w/ details)', () => {
+    class Custom extends Error {
+      details = 'details'
+    }
+    const err = new Custom()
+
+    expect(
+      new Errors.BaseError('An internal error occurred.', {
+        cause: err,
+        docsPath: '/lol',
+      }),
+    ).toMatchInlineSnapshot(`
+      [BaseError: An internal error occurred.
+
+      Details: details
+      See: https://oxlib.sh/lol]
+    `)
+  })
+
   test('metaMessages', () => {
     expect(
       new Errors.BaseError('An internal error occurred.', {

@@ -32,6 +32,12 @@ export class BaseError<
         if (options.cause.details) return options.cause.details
         if (options.cause.shortMessage) return options.cause.shortMessage
       }
+      if (
+        options.cause &&
+        'details' in options.cause &&
+        typeof options.cause.details === 'string'
+      )
+        return options.cause.details
       if (options.cause?.message) return options.cause.message
       return options.details!
     })()
