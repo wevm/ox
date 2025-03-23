@@ -88,7 +88,7 @@ Check out the following places for more Ox-related content:
 ## Support
 
 - [GitHub Sponsors](https://github.com/sponsors/wevm?metadata_campaign=docs_support)
-- [Gitcoin Grant](https://wagmi.sh/gitcoin)
+- [Gitcoin Grant](https://checker.gitcoin.co/public/project/show/wagmi-2)
 - [wevm.eth](https://etherscan.io/enslookup-search?search=wevm.eth)
 
 
