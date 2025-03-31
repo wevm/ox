@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.11
+
+### Patch Changes
+
+- [`ba67f11`](https://github.com/wevm/ox/commit/ba67f11bb377f132583a3eb04ae761bd36a08387) Thanks [@jxom](https://github.com/jxom)! - Enhanced handling of arbitrary Provider errors.
+
 ## 0.6.10
 
 ### Patch Changes
