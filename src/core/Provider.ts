@@ -411,7 +411,7 @@ export declare namespace from {
 }
 
 /**
- * Parses an error object into an error instance.
+ * Parses an error into a Provider error instance.
  *
  * @example
  * ```ts twoslash
@@ -424,32 +424,31 @@ export declare namespace from {
  *
  * ```
  *
- * @param errorObject - The error object to parse.
+ * @param error - The error object to parse.
  * @returns An error instance.
  */
 export function parseError<
-  const errorObject extends RpcResponse.ErrorObject | unknown,
+  const error extends RpcResponse.ErrorObject | Error | unknown,
 >(
-  errorObject: errorObject | RpcResponse.ErrorObject,
-): parseError.ReturnType<errorObject> {
-  const errorObject_ = errorObject as RpcResponse.ErrorObject
-  const error = RpcResponse.parseError(errorObject_)
-  if (error instanceof RpcResponse.InternalError) {
-    if (!error.data) return error as never
+  error: error | Error | RpcResponse.ErrorObject,
+): parseError.ReturnType<error> {
+  const error_ = RpcResponse.parseError(error)
+  if (error_ instanceof RpcResponse.InternalError) {
+    if (!error_.data) return error as never
 
-    const { code } = error.data as RpcResponse.ErrorObject
+    const { code } = error_.data as RpcResponse.ErrorObject
     if (code === DisconnectedError.code)
-      return new DisconnectedError(errorObject_) as never
+      return new DisconnectedError(error_) as never
     if (code === ChainDisconnectedError.code)
-      return new ChainDisconnectedError(errorObject_) as never
+      return new ChainDisconnectedError(error_) as never
     if (code === UserRejectedRequestError.code)
-      return new UserRejectedRequestError(errorObject_) as never
+      return new UserRejectedRequestError(error_) as never
     if (code === UnauthorizedError.code)
-      return new UnauthorizedError(errorObject_) as never
+      return new UnauthorizedError(error_) as never
     if (code === UnsupportedMethodError.code)
-      return new UnsupportedMethodError(errorObject_) as never
+      return new UnsupportedMethodError(error_) as never
   }
-  return error as never
+  return error_ as never
 }
 
 export declare namespace parseError {

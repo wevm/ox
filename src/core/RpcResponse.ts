@@ -264,7 +264,7 @@ export declare namespace parse {
 }
 
 /**
- * Parses a JSON-RPC error object into an error instance.
+ * Parses an error into a RPC Error instance.
  *
  * @example
  * ```ts twoslash
@@ -277,40 +277,49 @@ export declare namespace parse {
  *
  * ```
  *
- * @param errorObject - JSON-RPC error object.
- * @returns Error instance.
+ * @param error - Error.
+ * @returns RPC Error instance.
  */
-export function parseError<const errorObject extends ErrorObject | unknown>(
-  errorObject: errorObject | ErrorObject,
-): parseError.ReturnType<errorObject> {
-  const errorObject_ = errorObject as ErrorObject
-  const { code } = errorObject_
+export function parseError<const error extends Error | ErrorObject | unknown>(
+  error: error | Error | ErrorObject,
+): parseError.ReturnType<error> {
+  const error_ = error as Error | ErrorObject
+
+  if (error_ instanceof Error && !('code' in error_))
+    return new InternalError({
+      cause: error_,
+      data: error_,
+      message: error_.message,
+    }) as never
+
+  const { code } = error_
   if (code === InternalError.code)
-    return new InternalError(errorObject_) as never
+    return new InternalError(error_ as never) as never
   if (code === InvalidInputError.code)
-    return new InvalidInputError(errorObject_) as never
+    return new InvalidInputError(error_) as never
   if (code === InvalidParamsError.code)
-    return new InvalidParamsError(errorObject_) as never
+    return new InvalidParamsError(error_) as never
   if (code === InvalidRequestError.code)
-    return new InvalidRequestError(errorObject_) as never
+    return new InvalidRequestError(error_) as never
   if (code === LimitExceededError.code)
-    return new LimitExceededError(errorObject_) as never
+    return new LimitExceededError(error_) as never
   if (code === MethodNotFoundError.code)
-    return new MethodNotFoundError(errorObject_) as never
+    return new MethodNotFoundError(error_) as never
   if (code === MethodNotSupportedError.code)
-    return new MethodNotSupportedError(errorObject_) as never
-  if (code === ParseError.code) return new ParseError(errorObject_) as never
+    return new MethodNotSupportedError(error_) as never
+  if (code === ParseError.code) return new ParseError(error_) as never
   if (code === ResourceNotFoundError.code)
-    return new ResourceNotFoundError(errorObject_) as never
+    return new ResourceNotFoundError(error_) as never
   if (code === ResourceUnavailableError.code)
-    return new ResourceUnavailableError(errorObject_) as never
+    return new ResourceUnavailableError(error_) as never
   if (code === TransactionRejectedError.code)
-    return new TransactionRejectedError(errorObject_) as never
+    return new TransactionRejectedError(error_) as never
   if (code === VersionNotSupportedError.code)
-    return new VersionNotSupportedError(errorObject_) as never
+    return new VersionNotSupportedError(error_) as never
   return new InternalError({
-    data: errorObject_,
-    message: errorObject_.message,
+    cause: error_ instanceof Error ? error_ : undefined,
+    data: error_,
+    message: error_.message,
   }) as never
 }
 
@@ -405,12 +414,16 @@ export type BaseErrorType = BaseError & { name: 'BaseError' }
 export class BaseError extends Error {
   override name = 'RpcResponse.BaseError'
 
+  override readonly cause: Error | undefined
   readonly code: number
   readonly data?: unknown | undefined
 
-  constructor(errorObject: ErrorObject) {
-    const { code, message, data } = errorObject
-    super(message)
+  constructor(errorObject: ErrorObject & { cause?: Error | undefined }) {
+    const { cause, code, message, data } = errorObject
+
+    super(message, { cause })
+
+    this.cause = cause
     this.code = code
     this.data = data
   }
@@ -572,8 +585,13 @@ export class InternalError extends BaseError {
   override readonly code = -32603
   override readonly name = 'RpcResponse.InternalError'
 
-  constructor(parameters: Partial<Omit<ErrorObject, 'code'>> = {}) {
+  constructor(
+    parameters: Partial<Omit<ErrorObject, 'code'>> & {
+      cause?: Error | undefined
+    } = {},
+  ) {
     super({
+      cause: parameters.cause,
       code: InternalError.code,
       data: parameters.data,
       message: parameters.message ?? 'Internal JSON-RPC error.',

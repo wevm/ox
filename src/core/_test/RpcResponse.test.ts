@@ -366,6 +366,11 @@ describe('parseError', () => {
     expect(error).toMatchInlineSnapshot('[RpcResponse.InternalError: foo]')
   })
 
+  test('InternalError (cause)', () => {
+    const error = RpcResponse.parseError(new Error('lol'))
+    expect(error).toMatchInlineSnapshot('[RpcResponse.InternalError: lol]')
+  })
+
   test('InvalidInputError', () => {
     const error = RpcResponse.parseError({
       code: -32000,

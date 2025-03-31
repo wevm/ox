@@ -336,6 +336,22 @@ describe('Provider.from', () => {
     )
   })
 
+  test('behavior: InternalError (cause)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Error('lol')
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.InternalError: lol]',
+    )
+  })
+
   test('behavior: BaseError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
