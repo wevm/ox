@@ -1,5 +1,11 @@
 # ox
 
+## 0.6.12
+
+### Patch Changes
+
+- [`5247546`](https://github.com/wevm/ox/commit/5247546f0400a3edb3c99f90be7696ab7d3fd7d9) Thanks [@jxom](https://github.com/jxom)! - Fixed `Provider.parseError` case.
+
 ## 0.6.11
 
 ### Patch Changes
