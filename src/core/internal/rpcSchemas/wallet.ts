@@ -157,7 +157,7 @@ export type Wallet = RpcSchema.From<
   | {
       Request: {
         method: 'wallet_getCapabilities'
-        params?: [Address.Address]
+        params?: [Address.Address | undefined] | undefined
       }
       ReturnType: Compute<WalletCapabilitiesMap>
     }
@@ -219,7 +219,7 @@ export type Wallet = RpcSchema.From<
         method: 'wallet_sendCalls'
         params: Compute<WalletSendCallsParameters>
       }
-      ReturnType: string
+      ReturnType: WalletSendCallsReturnType
     }
   /**
    * Requests for the wallet to show information about a call batch
@@ -303,7 +303,10 @@ type WalletCapabilitiesMap = {
  * @internal
  */
 type WalletGetCallsStatusReturnType = {
-  status: 'PENDING' | 'CONFIRMED'
+  atomic: boolean
+  capabilities?: WalletCapabilities | undefined
+  chainId: Hex.Hex
+  id: string
   receipts?:
     | readonly {
         logs: {
@@ -318,6 +321,8 @@ type WalletGetCallsStatusReturnType = {
         transactionHash: Hex.Hex
       }[]
     | undefined
+  status: number
+  version: string
 }
 
 /**
@@ -396,17 +401,29 @@ type WalletGrantPermissionsReturnType = {
  */
 type WalletSendCallsParameters = [
   {
+    atomicRequired: boolean
     calls: readonly {
+      capabilities?: WalletCapabilities | undefined
       to?: Address.Address | undefined
       data?: Hex.Hex | undefined
       value?: Hex.Hex | undefined
     }[]
     capabilities?: WalletCapabilities | undefined
     chainId?: Hex.Hex | undefined
-    from: Address.Address
+    id?: string | undefined
+    from?: Address.Address | undefined
     version: string
   },
 ]
+
+/**
+ * Return type for `wallet_sendCalls`. [See more](https://eips.ethereum.org/EIPS/eip-5792#wallet_sendcalls).
+ * @internal
+ */
+type WalletSendCallsReturnType = {
+  capabilities?: WalletCapabilities | undefined
+  id: string
+}
 
 /**
  * Parameters for `wallet_watchAsset`. [See more](https://eips.ethereum.org/EIPS/eip-747).
