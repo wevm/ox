@@ -1,5 +1,15 @@
 # ox
 
+## 0.7.0
+
+### Minor Changes
+
+- [`09f72cb`](https://github.com/wevm/ox/commit/09f72cb33f076151e3437cf42b1cad775148a2bb) Thanks [@jxom](https://github.com/jxom)! - Updated EIP-5792 APIs to the latest spec on `RpcSchema`.
+
+### Patch Changes
+
+- [`61a9c57`](https://github.com/wevm/ox/commit/61a9c5798b8072b9c16691463742835b15c17468) Thanks [@jxom](https://github.com/jxom)! - Added EIP-5792 provider errors.
+
 ## 0.6.12
 
 ### Patch Changes
