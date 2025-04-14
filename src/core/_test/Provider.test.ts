@@ -302,6 +302,318 @@ describe('Provider.from', () => {
     )
   })
 
+  test('behavior: SwitchChainError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.SwitchChainError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.SwitchChainError: An error occurred when attempting to switch chain.]',
+    )
+  })
+
+  test('behavior: SwitchChainError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.SwitchChainError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.SwitchChainError: foo]',
+    )
+  })
+
+  test('behavior: UnsupportedNonOptionalCapabilityError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.UnsupportedNonOptionalCapabilityError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnsupportedNonOptionalCapabilityError: This Wallet does not support a capability that was not marked as optional.]',
+    )
+  })
+
+  test('behavior: UnsupportedNonOptionalCapabilityError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.UnsupportedNonOptionalCapabilityError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnsupportedNonOptionalCapabilityError: foo]',
+    )
+  })
+
+  test('behavior: UnsupportedChainIdError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.UnsupportedChainIdError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnsupportedChainIdError: This Wallet does not support the requested chain ID.]',
+    )
+  })
+
+  test('behavior: UnsupportedChainIdError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.UnsupportedChainIdError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnsupportedChainIdError: foo]',
+    )
+  })
+
+  test('behavior: DuplicateIdError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.DuplicateIdError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.DuplicateIdError: There is already a bundle submitted with this ID.]',
+    )
+  })
+
+  test('behavior: DuplicateIdError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.DuplicateIdError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.DuplicateIdError: foo]',
+    )
+  })
+
+  test('behavior: UnknownBundleIdError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.UnknownBundleIdError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnknownBundleIdError: This bundle id is unknown / has not been submitted.]',
+    )
+  })
+
+  test('behavior: UnknownBundleIdError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.UnknownBundleIdError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.UnknownBundleIdError: foo]',
+    )
+  })
+
+  test('behavior: BundleTooLargeError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.BundleTooLargeError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.BundleTooLargeError: The call bundle is too large for the Wallet to process.]',
+    )
+  })
+
+  test('behavior: BundleTooLargeError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.BundleTooLargeError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.BundleTooLargeError: foo]',
+    )
+  })
+
+  test('behavior: AtomicReadyWalletRejectedUpgradeError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.AtomicReadyWalletRejectedUpgradeError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.AtomicReadyWalletRejectedUpgradeError: The Wallet can support atomicity after an upgrade, but the user rejected the upgrade.]',
+    )
+  })
+
+  test('behavior: AtomicReadyWalletRejectedUpgradeError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.AtomicReadyWalletRejectedUpgradeError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.AtomicReadyWalletRejectedUpgradeError: foo]',
+    )
+  })
+
+  test('behavior: AtomicityNotSupportedError', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        throw new Provider.AtomicityNotSupportedError()
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.AtomicityNotSupportedError: The wallet does not support atomic execution but the request requires it.]',
+    )
+  })
+
+  test('behavior: AtomicityNotSupportedError (raw)', async () => {
+    const provider = Provider.from({
+      async request(_) {
+        return {
+          jsonrpc: '2.0',
+          id: 0,
+          error: {
+            code: Provider.AtomicityNotSupportedError.code,
+            message: 'foo',
+          },
+        }
+      },
+    })
+
+    await expect(() =>
+      provider.request({
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Provider.AtomicityNotSupportedError: foo]',
+    )
+  })
+
   test('behavior: BaseError', async () => {
     const provider = Provider.from({
       async request(_) {
@@ -491,6 +803,14 @@ test('exports', () => {
       "UnsupportedMethodError",
       "DisconnectedError",
       "ChainDisconnectedError",
+      "SwitchChainError",
+      "UnsupportedNonOptionalCapabilityError",
+      "UnsupportedChainIdError",
+      "DuplicateIdError",
+      "UnknownBundleIdError",
+      "BundleTooLargeError",
+      "AtomicReadyWalletRejectedUpgradeError",
+      "AtomicityNotSupportedError",
       "createEmitter",
       "from",
       "parseError",

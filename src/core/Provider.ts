@@ -154,6 +154,110 @@ export class ChainDisconnectedError extends ProviderRpcError {
   }
 }
 
+/** An error occurred when attempting to switch chain. */
+export class SwitchChainError extends ProviderRpcError {
+  static readonly code = 4902
+  override readonly code = 4902
+  override readonly name = 'Provider.SwitchChainError'
+
+  constructor({
+    message = 'An error occurred when attempting to switch chain.',
+  }: { message?: string | undefined } = {}) {
+    super(4902, message)
+  }
+}
+
+/** This Wallet does not support a capability that was not marked as optional. */
+export class UnsupportedNonOptionalCapabilityError extends ProviderRpcError {
+  static readonly code = 5700
+  override readonly code = 5700
+  override readonly name = 'Provider.UnsupportedNonOptionalCapabilityError'
+
+  constructor({
+    message = 'This Wallet does not support a capability that was not marked as optional.',
+  }: { message?: string | undefined } = {}) {
+    super(5700, message)
+  }
+}
+
+/** This Wallet does not support the requested chain ID. */
+export class UnsupportedChainIdError extends ProviderRpcError {
+  static readonly code = 5710
+  override readonly code = 5710
+  override readonly name = 'Provider.UnsupportedChainIdError'
+
+  constructor({
+    message = 'This Wallet does not support the requested chain ID.',
+  }: { message?: string | undefined } = {}) {
+    super(5710, message)
+  }
+}
+
+/** There is already a bundle submitted with this ID. */
+export class DuplicateIdError extends ProviderRpcError {
+  static readonly code = 5720
+  override readonly code = 5720
+  override readonly name = 'Provider.DuplicateIdError'
+
+  constructor({
+    message = 'There is already a bundle submitted with this ID.',
+  }: { message?: string | undefined } = {}) {
+    super(5720, message)
+  }
+}
+
+/** This bundle id is unknown / has not been submitted. */
+export class UnknownBundleIdError extends ProviderRpcError {
+  static readonly code = 5730
+  override readonly code = 5730
+  override readonly name = 'Provider.UnknownBundleIdError'
+
+  constructor({
+    message = 'This bundle id is unknown / has not been submitted.',
+  }: { message?: string | undefined } = {}) {
+    super(5730, message)
+  }
+}
+
+/** The call bundle is too large for the Wallet to process. */
+export class BundleTooLargeError extends ProviderRpcError {
+  static readonly code = 5740
+  override readonly code = 5740
+  override readonly name = 'Provider.BundleTooLargeError'
+
+  constructor({
+    message = 'The call bundle is too large for the Wallet to process.',
+  }: { message?: string | undefined } = {}) {
+    super(5740, message)
+  }
+}
+
+/** The Wallet can support atomicity after an upgrade, but the user rejected the upgrade. */
+export class AtomicReadyWalletRejectedUpgradeError extends ProviderRpcError {
+  static readonly code = 5750
+  override readonly code = 5750
+  override readonly name = 'Provider.AtomicReadyWalletRejectedUpgradeError'
+
+  constructor({
+    message = 'The Wallet can support atomicity after an upgrade, but the user rejected the upgrade.',
+  }: { message?: string | undefined } = {}) {
+    super(5750, message)
+  }
+}
+
+/** The wallet does not support atomic execution but the request requires it. */
+export class AtomicityNotSupportedError extends ProviderRpcError {
+  static readonly code = 5760
+  override readonly code = 5760
+  override readonly name = 'Provider.AtomicityNotSupportedError'
+
+  constructor({
+    message = 'The wallet does not support atomic execution but the request requires it.',
+  }: { message?: string | undefined } = {}) {
+    super(5760, message)
+  }
+}
+
 /**
  * Creates an EIP-1193 flavored event emitter to be injected onto a Provider.
  *
@@ -447,6 +551,22 @@ export function parseError<
       return new UnauthorizedError(error_) as never
     if (code === UnsupportedMethodError.code)
       return new UnsupportedMethodError(error_) as never
+    if (code === SwitchChainError.code)
+      return new SwitchChainError(error_) as never
+    if (code === AtomicReadyWalletRejectedUpgradeError.code)
+      return new AtomicReadyWalletRejectedUpgradeError(error_) as never
+    if (code === AtomicityNotSupportedError.code)
+      return new AtomicityNotSupportedError(error_) as never
+    if (code === BundleTooLargeError.code)
+      return new BundleTooLargeError(error_) as never
+    if (code === UnknownBundleIdError.code)
+      return new UnknownBundleIdError(error_) as never
+    if (code === DuplicateIdError.code)
+      return new DuplicateIdError(error_) as never
+    if (code === UnsupportedChainIdError.code)
+      return new UnsupportedChainIdError(error_) as never
+    if (code === UnsupportedNonOptionalCapabilityError.code)
+      return new UnsupportedNonOptionalCapabilityError(error_) as never
   }
   return error_ as never
 }
@@ -486,6 +606,54 @@ export declare namespace parseError {
               : never)
           | (IsNarrowable<errorObject['code'], number> extends false
               ? UnsupportedMethodError
+              : never)
+          | (errorObject['code'] extends SwitchChainError['code']
+              ? SwitchChainError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? SwitchChainError
+              : never)
+          | (errorObject['code'] extends AtomicReadyWalletRejectedUpgradeError['code']
+              ? AtomicReadyWalletRejectedUpgradeError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? AtomicReadyWalletRejectedUpgradeError
+              : never)
+          | (errorObject['code'] extends AtomicityNotSupportedError['code']
+              ? AtomicityNotSupportedError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? AtomicityNotSupportedError
+              : never)
+          | (errorObject['code'] extends BundleTooLargeError['code']
+              ? BundleTooLargeError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? BundleTooLargeError
+              : never)
+          | (errorObject['code'] extends UnknownBundleIdError['code']
+              ? UnknownBundleIdError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? UnknownBundleIdError
+              : never)
+          | (errorObject['code'] extends DuplicateIdError['code']
+              ? DuplicateIdError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? DuplicateIdError
+              : never)
+          | (errorObject['code'] extends UnsupportedChainIdError['code']
+              ? UnsupportedChainIdError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? UnsupportedChainIdError
+              : never)
+          | (errorObject['code'] extends UnsupportedNonOptionalCapabilityError['code']
+              ? UnsupportedNonOptionalCapabilityError
+              : never)
+          | (IsNarrowable<errorObject['code'], number> extends false
+              ? UnsupportedNonOptionalCapabilityError
               : never)
       : RpcResponse.parseError.ReturnType<RpcResponse.ErrorObject>,
   > = IsNever<error> extends true
