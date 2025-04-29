@@ -376,6 +376,7 @@ export function getCredentialRequestOptions(
     challenge,
     rpId = window.location.hostname,
     userVerification = 'required',
+    extensions,
   } = options
   return {
     publicKey: {
@@ -397,8 +398,9 @@ export function getCredentialRequestOptions(
       challenge: Bytes.fromHex(challenge),
       rpId,
       userVerification,
+      extensions,
     },
-  }
+  } as internal.CredentialRequestOptions
 }
 
 export declare namespace getCredentialRequestOptions {
@@ -407,6 +409,10 @@ export declare namespace getCredentialRequestOptions {
     credentialId?: string | string[] | undefined
     /** The challenge to sign. */
     challenge: Hex.Hex
+    /** List of Web Authentication API credentials to use during creation or authentication. */
+    extensions?:
+      | internal.PublicKeyCredentialRequestOptions['extensions']
+      | undefined
     /** The relying party identifier to use. */
     rpId?: internal.PublicKeyCredentialRequestOptions['rpId'] | undefined
     /** The user verification requirement. */
