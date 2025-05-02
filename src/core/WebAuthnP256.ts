@@ -374,9 +374,9 @@ export function getCredentialRequestOptions(
   const {
     credentialId,
     challenge,
+    extensions,
     rpId = window.location.hostname,
     userVerification = 'required',
-    extensions,
   } = options
   return {
     publicKey: {
@@ -396,11 +396,11 @@ export function getCredentialRequestOptions(
           }
         : {}),
       challenge: Bytes.fromHex(challenge),
+      ...(extensions && { extensions }),
       rpId,
       userVerification,
-      extensions,
     },
-  } as internal.CredentialRequestOptions
+  }
 }
 
 export declare namespace getCredentialRequestOptions {
