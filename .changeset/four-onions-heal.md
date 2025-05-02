@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-**Breaking:** Adjust `extension` behavior in `getCredentialCreationOptions`
+**Breaking:** Changed `extension` behavior in `getCredentialCreationOptions`
