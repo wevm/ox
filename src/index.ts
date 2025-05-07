@@ -1560,6 +1560,16 @@ export * as Fee from './core/Fee.js'
 export * as Json from './core/Json.js'
 
 /**
+ * Utilities & types for working with [Keystores](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage).
+ *
+ * @example
+ * TODO
+ *
+ * @category Crypto
+ */
+export * as Keystore from './core/Keystore.js'
+
+/**
  * Utility functions for working with KZG Commitments.
  *
  * Mainly for [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.

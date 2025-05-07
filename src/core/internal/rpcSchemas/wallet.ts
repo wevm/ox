@@ -157,7 +157,14 @@ export type Wallet = RpcSchema.From<
   | {
       Request: {
         method: 'wallet_getCapabilities'
-        params?: [Address.Address | undefined] | undefined
+        params?:
+          | readonly []
+          | readonly [Address.Address | undefined]
+          | readonly [
+              Address.Address | undefined,
+              readonly Hex.Hex[] | undefined,
+            ]
+          | undefined
       }
       ReturnType: Compute<WalletCapabilitiesMap>
     }
