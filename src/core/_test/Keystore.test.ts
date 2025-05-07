@@ -3,19 +3,18 @@
 import { describe, expect, test } from 'vitest'
 import * as Keystore from '../Keystore.js'
 
-describe('encrypt', () => {
+describe('encrypt/decrypt', () => {
   test('behavior: pbkdf2', async () => {
     const key = Keystore.pbkdf2({
+      iv: '0x6087dab2f9fdbbfaddc31a909735c1e6',
       salt: '0xae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd',
       password: 'testpassword',
     })
-    const encrypted = await Keystore.encrypt(
-      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d',
-      key,
-      {
-        iv: '0x6087dab2f9fdbbfaddc31a909735c1e6',
-      },
-    )
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = await Keystore.encrypt(secret, key)
     expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
       {
         "crypto": {
@@ -37,20 +36,22 @@ describe('encrypt', () => {
         "version": 3,
       }
     `)
+
+    const decrypted = await Keystore.decrypt(encrypted, key)
+    expect(decrypted).toEqual(secret)
   })
 
   test('behavior: scrypt', async () => {
     const key = Keystore.scrypt({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
       salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
       password: 'testpassword',
     })
-    const encrypted = await Keystore.encrypt(
-      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d',
-      key,
-      {
-        iv: '0x83dbcc02d8ccb40e466191a123791e0e',
-      },
-    )
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = await Keystore.encrypt(secret, key)
     expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
       {
         "crypto": {
@@ -73,6 +74,9 @@ describe('encrypt', () => {
         "version": 3,
       }
     `)
+
+    const decrypted = await Keystore.decrypt(encrypted, key)
+    expect(decrypted).toEqual(secret)
   })
 })
 
@@ -87,6 +91,24 @@ describe('pbkdf2', () => {
     `)
     expect(key).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          125,
+          141,
+          103,
+          241,
+          142,
+          220,
+          70,
+          145,
+          2,
+          20,
+          96,
+          110,
+          176,
+          90,
+          115,
+          66,
+        ],
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -111,6 +133,24 @@ describe('pbkdf2', () => {
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          48,
+          19,
+          42,
+          209,
+          98,
+          40,
+          61,
+          20,
+          107,
+          163,
+          216,
+          73,
+          32,
+          98,
+          73,
+          247,
+        ],
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -135,6 +175,24 @@ describe('pbkdf2Async', () => {
     `)
     expect(key).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          182,
+          75,
+          16,
+          90,
+          242,
+          0,
+          135,
+          208,
+          38,
+          94,
+          7,
+          144,
+          19,
+          183,
+          239,
+          10,
+        ],
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -159,6 +217,24 @@ describe('pbkdf2Async', () => {
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          248,
+          22,
+          159,
+          15,
+          114,
+          217,
+          230,
+          225,
+          98,
+          49,
+          169,
+          138,
+          46,
+          53,
+          161,
+          35,
+        ],
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -183,6 +259,24 @@ describe('scrypt', () => {
     )
     expect(key).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          77,
+          216,
+          239,
+          144,
+          34,
+          0,
+          253,
+          246,
+          153,
+          99,
+          74,
+          62,
+          68,
+          26,
+          221,
+          228,
+        ],
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
@@ -208,12 +302,30 @@ describe('scrypt', () => {
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          29,
+          246,
+          126,
+          215,
+          176,
+          156,
+          31,
+          42,
+          129,
+          239,
+          212,
+          39,
+          174,
+          145,
+          25,
+          207,
+        ],
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
           "n": 262144,
-          "p": 1,
-          "r": 8,
+          "p": 8,
+          "r": 1,
           "salt": null,
         },
         "key": null,
@@ -233,6 +345,24 @@ describe('scryptAsync', () => {
     )
     expect(key).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          93,
+          194,
+          131,
+          222,
+          92,
+          159,
+          230,
+          148,
+          47,
+          80,
+          154,
+          47,
+          203,
+          39,
+          231,
+          220,
+        ],
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
@@ -258,12 +388,30 @@ describe('scryptAsync', () => {
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
+        "iv": Uint8Array [
+          218,
+          3,
+          219,
+          229,
+          180,
+          116,
+          86,
+          251,
+          204,
+          105,
+          175,
+          222,
+          196,
+          63,
+          251,
+          115,
+        ],
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
           "n": 262144,
-          "p": 1,
-          "r": 8,
+          "p": 8,
+          "r": 1,
           "salt": null,
         },
         "key": null,
