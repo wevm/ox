@@ -169,7 +169,7 @@ export declare namespace encrypt {
 export function pbkdf2(options: pbkdf2.Options) {
   const { iv, iterations = 262_144, password } = options
 
-  const salt = options.salt ? Bytes.from(options.salt) : randomSalt(32)
+  const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
     pbkdf2_noble(sha256, password, salt, { c: iterations, dkLen: 32 }),
   ).slice(2)
@@ -195,7 +195,7 @@ export declare namespace pbkdf2 {
     iterations?: number | undefined
     /** Password to derive key from. */
     password: string
-    /** Salt to use for key derivation. @default `Keystore.randomSalt(32)` */
+    /** Salt to use for key derivation. @default `Bytes.random(32)` */
     salt?: Bytes.Bytes | Hex.Hex | undefined
   }
 }
@@ -212,7 +212,7 @@ export declare namespace pbkdf2 {
 export async function pbkdf2Async(options: pbkdf2.Options) {
   const { iv, iterations = 262_144, password } = options
 
-  const salt = options.salt ? Bytes.from(options.salt) : randomSalt(32)
+  const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
     await pbkdf2Async_noble(sha256, password, salt, {
       c: iterations,
@@ -252,7 +252,7 @@ export function scrypt(options: scrypt.Options) {
   const p = 8
   const r = 1
 
-  const salt = options.salt ? Bytes.from(options.salt) : randomSalt(32)
+  const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
     scrypt_noble(password, salt, { N: n, dkLen: 32, r, p }),
   ).slice(2)
@@ -279,7 +279,7 @@ export declare namespace scrypt {
     n?: number | undefined
     /** Password to derive key from. */
     password: string
-    /** Salt to use for key derivation. @default `Keystore.randomSalt(32)` */
+    /** Salt to use for key derivation. @default `Bytes.random(32)` */
     salt?: Bytes.Bytes | Hex.Hex | undefined
   }
 }
@@ -299,7 +299,7 @@ export async function scryptAsync(options: scrypt.Options) {
   const p = 8
   const r = 1
 
-  const salt = options.salt ? Bytes.from(options.salt) : randomSalt(32)
+  const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
     await scryptAsync_noble(password, salt, { N: n, dkLen: 32, r, p }),
   ).slice(2)
@@ -320,28 +320,6 @@ export async function scryptAsync(options: scrypt.Options) {
 
 export declare namespace scryptAsync {
   type Options = scrypt.Options
-}
-
-/**
- * Generates a random salt of the specified size.
- *
- * @example
- * ```ts twoslash
- * import { AesGcm } from 'ox'
- *
- * const salt = AesGcm.randomSalt()
- * // @log: Uint8Array [123, 79, 183, 167, 163, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166, 136, 136, 16, 168, 126, 13, 165, 170, 166]
- * ```
- *
- * @param size - The size of the salt to generate. Defaults to `32`.
- * @returns A random salt of the specified size.
- */
-export function randomSalt(size = 32): Bytes.Bytes {
-  return Bytes.random(size)
-}
-
-export declare namespace randomSalt {
-  type ErrorType = Bytes.random.ErrorType | Errors.GlobalErrorType
 }
 
 ///////////////////////////////////////////////////////////////////////////
