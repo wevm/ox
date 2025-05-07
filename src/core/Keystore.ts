@@ -12,7 +12,7 @@ import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import type * as Hex from './Hex.js'
-import type { OneOf, PartialBy } from './internal/types.js'
+import type { OneOf } from './internal/types.js'
 
 /** Base Key. */
 type BaseKey<
@@ -34,9 +34,7 @@ export type Keystore = {
       iv: string
     }
     mac: string
-  } & OneOf<
-    Pick<Pbkdf2Key, 'kdf' | 'kdfparams'> | Pick<ScryptKey, 'kdf' | 'kdfparams'>
-  >
+  } & Pick<Key, 'kdf' | 'kdfparams'>
   id: string
   version: 3
 }
