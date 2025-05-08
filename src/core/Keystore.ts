@@ -12,7 +12,6 @@ import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import type * as Hex from './Hex.js'
-import type { OneOf } from './internal/types.js'
 
 /** Base Key. */
 type BaseKey<
@@ -66,14 +65,33 @@ export type ScryptKey = BaseKey<
 >
 
 /**
- * TODO
+ * Decrypts a [JSON keystore](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/)
+ * into a private key.
+ *
+ * Supports the following key derivation functions (KDFs):
+ * - {@link ox#Keystore.(pbkdf2:function)}
+ * - {@link ox#Keystore.(scrypt:function)}
  *
  * @example
- * TODO
+ * ```ts twoslash
+ * // @noErrors
+ * import { Keystore, Secp256k1 } from 'ox'
  *
- * @param keystore - Keystore to decrypt.
+ * // JSON keystore.
+ * const keystore = { crypto: { ... }, id: '...', version: 3 }
+ *
+ * // Derive key from password.
+ * const key = Keystore.pbkdf2({ password: 'testpassword' })
+ *
+ * // Decrypt the private key.
+ * const privateKey = await Keystore.decrypt(keystore, key)
+ * // @log: "0x..."
+ * ```
+ *
+ * @param keystore - JSON keystore.
  * @param key - Key to use for decryption.
- * @returns Decrypted value.
+ * @param options - Decryption options.
+ * @returns Decrypted private key.
  */
 export async function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
   keystore: Keystore,
@@ -110,25 +128,60 @@ export declare namespace decrypt {
 }
 
 /**
- * TODO
+ * Encrypts a private key as a [JSON keystore](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/)
+ * using a derived key.
+ *
+ * Supports the following key derivation functions (KDFs):
+ * - {@link ox#Keystore.(pbkdf2:function)}
+ * - {@link ox#Keystore.(scrypt:function)}
  *
  * @example
- * TODO
+ * ```ts twoslash
+ * import { Keystore, Secp256k1 } from 'ox'
  *
- * @param value - Value to encrypt.
+ * // Generate a random private key.
+ * const privateKey = Secp256k1.randomPrivateKey()
+ *
+ * // Derive key from password.
+ * const key = Keystore.pbkdf2({ password: 'testpassword' })
+ *
+ * // Encrypt the private key.
+ * const encrypted = await Keystore.encrypt(privateKey, key)
+ * // @log: {
+ * // @log:   "crypto": {
+ * // @log:     "cipher": "aes-128-ctr",
+ * // @log:     "ciphertext": "...",
+ * // @log:     "cipherparams": {
+ * // @log:       "iv": "...",
+ * // @log:     },
+ * // @log:     "kdf": "pbkdf2",
+ * // @log:     "kdfparams": {
+ * // @log:       "salt": "...",
+ * // @log:       "dklen": 32,
+ * // @log:       "prf": "hmac-sha256",
+ * // @log:       "c": 262144,
+ * // @log:     },
+ * // @log:     "mac": "...",
+ * // @log:   },
+ * // @log:   "id": "...",
+ * // @log:   "version": 3,
+ * // @log: }
+ * ```
+ *
+ * @param privateKey - Private key to encrypt.
  * @param key - Key to use for encryption.
  * @param options - Encryption options.
  * @returns Encrypted keystore.
  */
 export async function encrypt(
-  value: Bytes.Bytes | Hex.Hex,
+  privateKey: Bytes.Bytes | Hex.Hex,
   key: Key,
   options: encrypt.Options = {},
 ): Promise<Keystore> {
   const { id = crypto.randomUUID() } = options
 
   const key_ = Bytes.from(`0x${key.key()}`)
-  const value_ = Bytes.from(value)
+  const value_ = Bytes.from(privateKey)
 
   const encKey = Bytes.slice(key_, 0, 16)
   const macKey = Bytes.slice(key_, 16, 32)
@@ -158,10 +211,14 @@ export declare namespace encrypt {
 }
 
 /**
- * TODO
+ * Derives a key from a password using [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2).
  *
  * @example
- * TODO
+ * ```ts twoslash
+ * import { Keystore } from 'ox'
+ *
+ * const key = Keystore.pbkdf2({ password: 'testpassword' })
+ * ```
  *
  * @param options - PBKDF2 options.
  * @returns PBKDF2 key.
@@ -201,10 +258,14 @@ export declare namespace pbkdf2 {
 }
 
 /**
- * TODO
+ * Derives a key from a password using [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2).
  *
  * @example
- * TODO
+ * ```ts twoslash
+ * import { Keystore } from 'ox'
+ *
+ * const key = await Keystore.pbkdf2Async({ password: 'testpassword' })
+ * ```
  *
  * @param options - PBKDF2 options.
  * @returns PBKDF2 key.
@@ -238,10 +299,14 @@ export declare namespace pbkdf2Async {
 }
 
 /**
- * TODO
+ * Derives a key from a password using [scrypt](https://en.wikipedia.org/wiki/Scrypt).
  *
  * @example
- * TODO
+ * ```ts twoslash
+ * import { Keystore } from 'ox'
+ *
+ * const key = Keystore.scrypt({ password: 'testpassword' })
+ * ```
  *
  * @param options - Scrypt options.
  * @returns Scrypt key.
@@ -285,10 +350,14 @@ export declare namespace scrypt {
 }
 
 /**
- * TODO
+ * Derives a key from a password using [scrypt](https://en.wikipedia.org/wiki/Scrypt).
  *
  * @example
- * TODO
+ * ```ts twoslash
+ * import { Keystore } from 'ox'
+ *
+ * const key = await Keystore.scryptAsync({ password: 'testpassword' })
+ * ```
  *
  * @param options - Scrypt options.
  * @returns Scrypt key.

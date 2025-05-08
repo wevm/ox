@@ -1,7 +1,7 @@
 // Vectors from https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
 
+import { Bytes, Keystore } from 'ox'
 import { describe, expect, test } from 'vitest'
-import * as Keystore from '../Keystore.js'
 
 describe('encrypt/decrypt', () => {
   test('behavior: pbkdf2', async () => {
@@ -39,6 +39,43 @@ describe('encrypt/decrypt', () => {
 
     const decrypted = await Keystore.decrypt(encrypted, key)
     expect(decrypted).toEqual(secret)
+  })
+
+  test('behavior: pbkdf2 (decrypted as bytes)', async () => {
+    const key = Keystore.pbkdf2({
+      iv: '0x6087dab2f9fdbbfaddc31a909735c1e6',
+      salt: '0xae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd',
+      password: 'testpassword',
+    })
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = await Keystore.encrypt(secret, key)
+    expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
+      {
+        "crypto": {
+          "cipher": "aes-128-ctr",
+          "cipherparams": {
+            "iv": "6087dab2f9fdbbfaddc31a909735c1e6",
+          },
+          "ciphertext": "5318b4d5bcd28de64ee5559e671353e16f075ecae9f99c7a79a38af5f869aa46",
+          "kdf": "pbkdf2",
+          "kdfparams": {
+            "c": 262144,
+            "dklen": 32,
+            "prf": "hmac-sha256",
+            "salt": "ae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd",
+          },
+          "mac": "517ead924a9d0dc3124507e3393d175ce3ff7c1e96529c6c555ce9e51205e9b2",
+        },
+        "id": null,
+        "version": 3,
+      }
+    `)
+
+    const decrypted = await Keystore.decrypt(encrypted, key, { as: 'Bytes' })
+    expect(decrypted).toEqual(Bytes.fromHex(secret))
   })
 
   test('behavior: scrypt', async () => {
@@ -89,26 +126,10 @@ describe('pbkdf2', () => {
     expect(key.key()).toMatchInlineSnapshot(`
       "f06d69cdc7da0faffb1008270bca38f5e31891a3a773950e6d0fea48a7188551"
     `)
-    expect(key).toMatchInlineSnapshot(`
+    expect(key.iv).toBeDefined()
+    expect({ ...key, iv: null }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          125,
-          141,
-          103,
-          241,
-          142,
-          220,
-          70,
-          145,
-          2,
-          20,
-          96,
-          110,
-          176,
-          90,
-          115,
-          66,
-        ],
+        "iv": null,
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -126,31 +147,16 @@ describe('pbkdf2', () => {
       password: 'testpassword',
     })
     expect(key.key()).toBeDefined()
+    expect(key.iv).toBeDefined()
     expect(key.kdfparams.salt).toBeDefined()
     expect({
       ...key,
+      iv: null,
       key: null,
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          48,
-          19,
-          42,
-          209,
-          98,
-          40,
-          61,
-          20,
-          107,
-          163,
-          216,
-          73,
-          32,
-          98,
-          73,
-          247,
-        ],
+        "iv": null,
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -173,26 +179,10 @@ describe('pbkdf2Async', () => {
     expect(key.key()).toMatchInlineSnapshot(`
       "f06d69cdc7da0faffb1008270bca38f5e31891a3a773950e6d0fea48a7188551"
     `)
-    expect(key).toMatchInlineSnapshot(`
+    expect(key.iv).toBeDefined()
+    expect({ ...key, iv: null }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          182,
-          75,
-          16,
-          90,
-          242,
-          0,
-          135,
-          208,
-          38,
-          94,
-          7,
-          144,
-          19,
-          183,
-          239,
-          10,
-        ],
+        "iv": null,
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -210,31 +200,16 @@ describe('pbkdf2Async', () => {
       password: 'testpassword',
     })
     expect(key.key()).toBeDefined()
+    expect(key.iv).toBeDefined()
     expect(key.kdfparams.salt).toBeDefined()
     expect({
       ...key,
+      iv: null,
       key: null,
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          248,
-          22,
-          159,
-          15,
-          114,
-          217,
-          230,
-          225,
-          98,
-          49,
-          169,
-          138,
-          46,
-          53,
-          161,
-          35,
-        ],
+        "iv": null,
         "kdf": "pbkdf2",
         "kdfparams": {
           "c": 262144,
@@ -257,26 +232,10 @@ describe('scrypt', () => {
     expect(key.key()).toMatchInlineSnapshot(
       `"fac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd"`,
     )
-    expect(key).toMatchInlineSnapshot(`
+    expect(key.iv).toBeDefined()
+    expect({ ...key, iv: null }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          77,
-          216,
-          239,
-          144,
-          34,
-          0,
-          253,
-          246,
-          153,
-          99,
-          74,
-          62,
-          68,
-          26,
-          221,
-          228,
-        ],
+        "iv": null,
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
@@ -296,30 +255,15 @@ describe('scrypt', () => {
     })
     expect(key.key()).toBeDefined()
     expect(key.kdfparams.salt).toBeDefined()
+    expect(key.iv).toBeDefined()
     expect({
       ...key,
+      iv: null,
       key: null,
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          29,
-          246,
-          126,
-          215,
-          176,
-          156,
-          31,
-          42,
-          129,
-          239,
-          212,
-          39,
-          174,
-          145,
-          25,
-          207,
-        ],
+        "iv": null,
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
@@ -343,26 +287,10 @@ describe('scryptAsync', () => {
     expect(key.key()).toMatchInlineSnapshot(
       `"fac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd"`,
     )
-    expect(key).toMatchInlineSnapshot(`
+    expect(key.iv).toBeDefined()
+    expect({ ...key, iv: null }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          93,
-          194,
-          131,
-          222,
-          92,
-          159,
-          230,
-          148,
-          47,
-          80,
-          154,
-          47,
-          203,
-          39,
-          231,
-          220,
-        ],
+        "iv": null,
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
@@ -382,30 +310,15 @@ describe('scryptAsync', () => {
     })
     expect(key.key()).toBeDefined()
     expect(key.kdfparams.salt).toBeDefined()
+    expect(key.iv).toBeDefined()
     expect({
       ...key,
+      iv: null,
       key: null,
       kdfparams: { ...key.kdfparams, salt: null },
     }).toMatchInlineSnapshot(`
       {
-        "iv": Uint8Array [
-          218,
-          3,
-          219,
-          229,
-          180,
-          116,
-          86,
-          251,
-          204,
-          105,
-          175,
-          222,
-          196,
-          63,
-          251,
-          115,
-        ],
+        "iv": null,
         "kdf": "scrypt",
         "kdfparams": {
           "dklen": 32,
