@@ -36,6 +36,7 @@ test('exports', () => {
       "Hex",
       "Fee",
       "Json",
+      "Keystore",
       "Kzg",
       "Log",
       "Mnemonic",
