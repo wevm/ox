@@ -1,5 +1,11 @@
 # ox
 
+## 0.7.1
+
+### Patch Changes
+
+- [#75](https://github.com/wevm/ox/pull/75) [`27a1e28`](https://github.com/wevm/ox/commit/27a1e28e1f403ca18d428611fc3b88dcb5a4503e) Thanks [@jxom](https://github.com/jxom)! - Added `Keystore` module.
+
 ## 0.7.0
 
 ### Minor Changes
