@@ -86,7 +86,6 @@ describe('createCredential', () => {
             186,
             233,
           ],
-          "extensions": undefined,
           "pubKeyCredParams": [
             {
               "alg": -7,
@@ -320,7 +319,6 @@ describe('getCredentialCreationOptions', () => {
             186,
             233,
           ],
-          "extensions": undefined,
           "pubKeyCredParams": [
             {
               "alg": -7,
@@ -446,7 +444,6 @@ describe('getCredentialCreationOptions', () => {
               "type": "public-key",
             },
           ],
-          "extensions": undefined,
           "pubKeyCredParams": [
             {
               "alg": -7,
@@ -534,7 +531,6 @@ describe('getCredentialCreationOptions', () => {
             186,
             233,
           ],
-          "extensions": undefined,
           "pubKeyCredParams": [
             {
               "alg": -7,
