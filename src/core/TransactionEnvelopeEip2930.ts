@@ -153,7 +153,8 @@ export function deserialize(
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
   if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce) && nonce !== '0x') transaction.nonce = BigInt(nonce)
+  if (Hex.validate(nonce))
+    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
   if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
   if (Hex.validate(gasPrice) && gasPrice !== '0x')
     transaction.gasPrice = BigInt(gasPrice)

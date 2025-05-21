@@ -69,6 +69,7 @@ describe('deserialize', () => {
     const transaction = TransactionEnvelopeEip1559.from({
       chainId: 1,
       maxFeePerGas: 1n,
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip1559.serialize(transaction)
     expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual(
@@ -116,6 +117,17 @@ describe('deserialize', () => {
     const serialized = TransactionEnvelopeEip1559.serialize(transaction_data)
     expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual(
       transaction_data,
+    )
+  })
+
+  test('zeroish nonce', () => {
+    const transaction_nonce = TransactionEnvelopeEip1559.from({
+      ...transaction,
+      nonce: 0n,
+    })
+    const serialized = TransactionEnvelopeEip1559.serialize(transaction_nonce)
+    expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual(
+      transaction_nonce,
     )
   })
 
@@ -339,22 +351,25 @@ describe('from', () => {
       const envelope = TransactionEnvelopeEip1559.from({
         chainId: 1,
         maxFeePerGas: 69420n,
+        nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
       })
       expect(envelope).toMatchInlineSnapshot(`
-      {
-        "chainId": 1,
-        "maxFeePerGas": 69420n,
-        "to": "0x0000000000000000000000000000000000000000",
-        "type": "eip1559",
-      }
-    `)
+        {
+          "chainId": 1,
+          "maxFeePerGas": 69420n,
+          "nonce": 0n,
+          "to": "0x0000000000000000000000000000000000000000",
+          "type": "eip1559",
+        }
+      `)
     }
 
     {
       const envelope = TransactionEnvelopeEip1559.from({
         chainId: 1,
         maxFeePerGas: 69420n,
+        nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
       })
       const serialized = TransactionEnvelopeEip1559.serialize(envelope)
@@ -366,6 +381,7 @@ describe('from', () => {
       const envelope = TransactionEnvelopeEip1559.from({
         chainId: 1,
         maxFeePerGas: 69420n,
+        nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
         r: 0n,
         s: 1n,
@@ -483,6 +499,7 @@ describe('serialize', () => {
     )
     expect(TransactionEnvelopeEip1559.deserialize(serialized)).toEqual({
       chainId: 1,
+      nonce: 0n,
       to: accounts[1].address,
       type: 'eip1559',
     })
@@ -491,6 +508,7 @@ describe('serialize', () => {
   test('minimal (w/ type)', () => {
     const transaction = TransactionEnvelopeEip1559.from({
       chainId: 1,
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip1559.serialize(transaction)
     expect(serialized).toEqual('0x02c90180808080808080c0')
@@ -503,6 +521,7 @@ describe('serialize', () => {
     const transaction = TransactionEnvelopeEip1559.from({
       chainId: 1,
       maxFeePerGas: 1n,
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip1559.serialize(transaction)
     expect(serialized).toEqual('0x02c90180800180808080c0')

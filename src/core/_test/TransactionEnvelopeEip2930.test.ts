@@ -64,6 +64,7 @@ describe('deserialize', () => {
     const transaction = TransactionEnvelopeEip2930.from({
       chainId: 1,
       gasPrice: 1n,
+      nonce: 0n,
       accessList: [
         {
           address: '0x0000000000000000000000000000000000000000',
@@ -185,24 +186,27 @@ describe('from', () => {
         accessList: [],
         chainId: 1,
         gasPrice: 69420n,
+        nonce: 0n,
       })
       expectTypeOf(
         envelope,
       ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
       expect(envelope).toMatchInlineSnapshot(`
-      {
-        "accessList": [],
-        "chainId": 1,
-        "gasPrice": 69420n,
-        "type": "eip2930",
-      }
-    `)
+        {
+          "accessList": [],
+          "chainId": 1,
+          "gasPrice": 69420n,
+          "nonce": 0n,
+          "type": "eip2930",
+        }
+      `)
     }
 
     {
       const envelope = TransactionEnvelopeEip2930.from({
         chainId: 1,
         gasPrice: 69420n,
+        nonce: 0n,
       })
       const serialized = TransactionEnvelopeEip2930.serialize(envelope)
       expect(TransactionEnvelopeEip2930.from(serialized)).toEqual(envelope)
@@ -215,6 +219,7 @@ describe('from', () => {
         r: 0n,
         s: 1n,
         yParity: 0,
+        nonce: 0n,
       })
       const serialized = TransactionEnvelopeEip2930.serialize(envelope)
       const envelope2 = TransactionEnvelopeEip2930.from(serialized)
@@ -227,6 +232,7 @@ describe('from', () => {
       {
         chainId: 1,
         to: '0x0000000000000000000000000000000000000000',
+        nonce: 0n,
         value: 69n,
       },
       {
@@ -238,16 +244,17 @@ describe('from', () => {
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
-    {
-      "chainId": 1,
-      "r": 0n,
-      "s": 1n,
-      "to": "0x0000000000000000000000000000000000000000",
-      "type": "eip2930",
-      "value": 69n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "chainId": 1,
+        "nonce": 0n,
+        "r": 0n,
+        "s": 1n,
+        "to": "0x0000000000000000000000000000000000000000",
+        "type": "eip2930",
+        "value": 69n,
+        "yParity": 0,
+      }
+    `)
     const serialized = TransactionEnvelopeEip2930.serialize(envelope)
     const envelope2 = TransactionEnvelopeEip2930.from(serialized)
     expect(envelope2).toEqual(envelope)
@@ -374,6 +381,7 @@ describe('serialize', () => {
     )
     expect(TransactionEnvelopeEip2930.deserialize(serialized)).toEqual({
       chainId: 1,
+      nonce: 0n,
       to: accounts[1].address,
       type: 'eip2930',
     })
@@ -382,11 +390,13 @@ describe('serialize', () => {
   test('minimal', () => {
     const transaction = TransactionEnvelopeEip2930.from({
       chainId: 1,
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip2930.serialize(transaction)
     expect(serialized).toEqual('0x01c801808080808080c0')
     expect(TransactionEnvelopeEip2930.deserialize(serialized)).toEqual({
       chainId: 1,
+      nonce: 0n,
       type: 'eip2930',
     })
   })
@@ -403,6 +413,7 @@ describe('serialize', () => {
         },
       ],
       gasPrice: Value.fromGwei('2'),
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip2930.serialize(transaction)
     expect(serialized).toEqual(

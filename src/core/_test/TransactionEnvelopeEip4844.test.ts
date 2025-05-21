@@ -98,6 +98,7 @@ describe('deserialize', () => {
       blobVersionedHashes: [
         '0x01adbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       ],
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip4844.serialize(transaction)
     const deserialized = TransactionEnvelopeEip4844.deserialize(serialized)
@@ -299,16 +300,18 @@ describe('from', () => {
           '0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe',
         ],
         chainId: 1,
+        nonce: 0n,
       })
       expect(envelope).toMatchInlineSnapshot(`
-      {
-        "blobVersionedHashes": [
-          "0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe",
-        ],
-        "chainId": 1,
-        "type": "eip4844",
-      }
-    `)
+        {
+          "blobVersionedHashes": [
+            "0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe",
+          ],
+          "chainId": 1,
+          "nonce": 0n,
+          "type": "eip4844",
+        }
+      `)
       const serialized = TransactionEnvelopeEip4844.serialize(envelope)
       const envelope2 = TransactionEnvelopeEip4844.from(serialized)
       expect(envelope2).toEqual(envelope)
@@ -320,22 +323,24 @@ describe('from', () => {
           '0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe',
         ],
         chainId: 1,
+        nonce: 0n,
         r: 0n,
         s: 1n,
         yParity: 0,
       })
       expect(envelope).toMatchInlineSnapshot(`
-      {
-        "blobVersionedHashes": [
-          "0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe",
-        ],
-        "chainId": 1,
-        "r": 0n,
-        "s": 1n,
-        "type": "eip4844",
-        "yParity": 0,
-      }
-    `)
+        {
+          "blobVersionedHashes": [
+            "0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe",
+          ],
+          "chainId": 1,
+          "nonce": 0n,
+          "r": 0n,
+          "s": 1n,
+          "type": "eip4844",
+          "yParity": 0,
+        }
+      `)
       const serialized = TransactionEnvelopeEip4844.serialize(envelope)
       const envelope2 = TransactionEnvelopeEip4844.from(serialized)
       expect(envelope2).toEqual(envelope)
@@ -349,6 +354,7 @@ describe('from', () => {
           '0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe',
         ],
         chainId: 1,
+        nonce: 0n,
       },
       {
         signature: {
@@ -359,17 +365,18 @@ describe('from', () => {
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
-    {
-      "blobVersionedHashes": [
-        "0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe",
-      ],
-      "chainId": 1,
-      "r": 0n,
-      "s": 1n,
-      "type": "eip4844",
-      "yParity": 0,
-    }
-  `)
+      {
+        "blobVersionedHashes": [
+          "0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe",
+        ],
+        "chainId": 1,
+        "nonce": 0n,
+        "r": 0n,
+        "s": 1n,
+        "type": "eip4844",
+        "yParity": 0,
+      }
+    `)
     const serialized = TransactionEnvelopeEip4844.serialize(envelope)
     const envelope2 = TransactionEnvelopeEip4844.from(serialized)
     expect(envelope2).toEqual(envelope)
@@ -476,6 +483,7 @@ describe('serialize', () => {
     const transaction = TransactionEnvelopeEip4844.from({
       blobVersionedHashes,
       chainId: 1,
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip4844.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
@@ -493,6 +501,7 @@ describe('serialize', () => {
       maxFeePerBlobGas: Value.fromGwei('20'),
       maxFeePerGas: Value.fromGwei('20'),
       maxPriorityFeePerGas: Value.fromGwei('1'),
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip4844.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
@@ -508,6 +517,7 @@ describe('serialize', () => {
       chainId: 1,
       blobVersionedHashes,
       gas: 69420n,
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip4844.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
@@ -522,6 +532,7 @@ describe('serialize', () => {
     // @ts-expect-error
     const transaction = TransactionEnvelopeEip4844.from({
       chainId: 1,
+      nonce: 0n,
     })
     const serialized = TransactionEnvelopeEip4844.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(`"0x03cb0180808080808080c080c0"`)

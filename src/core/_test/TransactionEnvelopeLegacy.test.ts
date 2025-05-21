@@ -84,6 +84,17 @@ describe('deserialize', () => {
     )
   })
 
+  test('zeroish nonce', () => {
+    const transaction_nonce = TransactionEnvelopeLegacy.from({
+      ...transaction,
+      nonce: 0n,
+    })
+    const serialized = TransactionEnvelopeLegacy.serialize(transaction_nonce)
+    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
+      transaction_nonce,
+    )
+  })
+
   test('signature', async () => {
     const signature = Secp256k1.sign({
       payload: TransactionEnvelopeLegacy.getSignPayload(transaction),
@@ -398,6 +409,7 @@ describe('from', () => {
 
     {
       const envelope = TransactionEnvelopeLegacy.from({
+        nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
         value: 69n,
       })
@@ -416,13 +428,14 @@ describe('from', () => {
       })
       const serialized = TransactionEnvelopeLegacy.serialize(envelope)
       const envelope2 = TransactionEnvelopeLegacy.from(serialized)
-      expect(envelope2).toEqual({ ...envelope, yParity: 0 })
+      expect(envelope2).toEqual({ ...envelope, nonce: 0n, yParity: 0 })
     }
   })
 
   test('options: signature', () => {
     const envelope = TransactionEnvelopeLegacy.from(
       {
+        nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
         value: 69n,
         type: 'legacy',
@@ -437,6 +450,7 @@ describe('from', () => {
     )
     expect(envelope).toMatchInlineSnapshot(`
       {
+        "nonce": 0n,
         "r": 0n,
         "s": 1n,
         "to": "0x0000000000000000000000000000000000000000",
@@ -563,6 +577,7 @@ describe('serialize', () => {
     ).toMatchInlineSnapshot(
       `
       {
+        "nonce": 0n,
         "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
         "type": "legacy",
       }
@@ -579,6 +594,7 @@ describe('serialize', () => {
     ).toMatchInlineSnapshot(
       `
       {
+        "nonce": 0n,
         "type": "legacy",
       }
     `,
@@ -587,6 +603,7 @@ describe('serialize', () => {
 
   test('minimal (w/ gasPrice)', () => {
     const transaction = TransactionEnvelopeLegacy.from({
+      nonce: 0n,
       gasPrice: Value.fromGwei('2'),
     })
     const serialized = TransactionEnvelopeLegacy.serialize(transaction)
