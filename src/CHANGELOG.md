@@ -1,5 +1,13 @@
 # ox
 
+## 0.7.2
+
+### Patch Changes
+
+- [`6090531`](https://github.com/wevm/ox/commit/6090531e29be96d2bd1eda1f85f3e7322b48ff18) Thanks [@jxom](https://github.com/jxom)! - Updated dependencies.
+
+- [`c4c7070`](https://github.com/wevm/ox/commit/c4c7070c7d50fd8d745e5f881305bdf4aa5362d0) Thanks [@jxom](https://github.com/jxom)! - Fixed parsing of zeroish nonces.
+
 ## 0.7.1
 
 ### Patch Changes
