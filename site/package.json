@@ -14,5 +14,6 @@
     "react": "^19",
     "react-dom": "^19",
     "vocs": "^1.0.7"
-  }
+  },
+  "packageManager": "pnpm@10.11.0"
 }
