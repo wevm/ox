@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import cKzg from 'c-kzg'
-import { Hex, Kzg } from 'ox'
-import { Paths } from 'ox/trusted-setups'
+import { trustedSetup as fastSetup } from '@paulmillr/trusted-setups/fast-kzg.js'
+import { KZG } from 'micro-eth-signer/kzg.js'
+import { Bytes, Hex, Kzg } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('from', () => {
@@ -22,10 +22,22 @@ describe('from', () => {
   let kzg: Kzg.Kzg
 
   test('defineKzg', () => {
-    kzg = Kzg.from(cKzg)
-    try {
-      cKzg.loadTrustedSetup(Paths.mainnet)
-    } catch {}
+    const k = new KZG(fastSetup)
+    kzg = Kzg.from({
+      blobToKzgCommitment(blob) {
+        return Hex.toBytes(
+          k.blobToKzgCommitment(Bytes.toHex(blob)) as `0x${string}`,
+        )
+      },
+      computeBlobKzgProof(blob, commitment) {
+        return Hex.toBytes(
+          k.computeBlobProof(
+            Bytes.toHex(blob),
+            Bytes.toHex(commitment),
+          ) as `0x${string}`,
+        )
+      },
+    })
 
     expect(kzg).toMatchInlineSnapshot(`
     {
