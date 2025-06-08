@@ -1574,10 +1574,10 @@ export * as Json from './core/Json.js'
  * const privateKey = Secp256k1.randomPrivateKey()
  *
  * // Derive a key from a password.
- * const key = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
  *
  * // Encrypt the private key.
- * const encrypted = await Keystore.encrypt(privateKey, key)
+ * const encrypted = await Keystore.encrypt(privateKey, key, opts)
  * // @log: {
  * // @log:   "crypto": {
  * // @log:     "cipher": "aes-128-ctr",

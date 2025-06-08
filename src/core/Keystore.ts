@@ -13,13 +13,12 @@ import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import type * as Hex from './Hex.js'
 
-/** Base Key. */
-type BaseKey<
+/** Base Derivation Options. */
+type BaseDeriveOpts<
   kdf extends string = string,
   kdfparams extends Record<string, unknown> = Record<string, unknown>,
 > = {
   iv: Bytes.Bytes
-  key: () => string
   kdfparams: kdfparams
   kdf: kdf
 }
@@ -33,16 +32,19 @@ export type Keystore = {
       iv: string
     }
     mac: string
-  } & Pick<Key, 'kdf' | 'kdfparams'>
+  } & Pick<DeriveOpts, 'kdf' | 'kdfparams'>
   id: string
   version: 3
 }
 
 /** Key. */
-export type Key = Pbkdf2Key | ScryptKey
+export type Key = (() => Hex.Hex) | Hex.Hex
 
-/** PBKDF2 Key. */
-export type Pbkdf2Key = BaseKey<
+/** Derivation Options. */
+export type DeriveOpts = Pbkdf2DeriveOpts | ScryptDeriveOpts
+
+/** PBKDF2 Derivation Options. */
+export type Pbkdf2DeriveOpts = BaseDeriveOpts<
   'pbkdf2',
   {
     c: number
@@ -52,8 +54,8 @@ export type Pbkdf2Key = BaseKey<
   }
 >
 
-/** Scrypt Key. */
-export type ScryptKey = BaseKey<
+/** Scrypt Derivation Options. */
+export type ScryptDeriveOpts = BaseDeriveOpts<
   'scrypt',
   {
     dklen: number
@@ -80,8 +82,8 @@ export type ScryptKey = BaseKey<
  * // JSON keystore.
  * const keystore = { crypto: { ... }, id: '...', version: 3 }
  *
- * // Derive key from password.
- * const key = Keystore.pbkdf2({ password: 'testpassword' })
+ * // Key that was previously derived from `Keystore.scrypt` or `Keystore.pbkdf2`.
+ * const key = "0x..."
  *
  * // Decrypt the private key.
  * const privateKey = await Keystore.decrypt(keystore, key)
@@ -99,7 +101,7 @@ export async function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: decrypt.Options<as> = {},
 ): Promise<decrypt.ReturnType<as>> {
   const { as = 'Hex' } = options
-  const key_ = Bytes.from(`0x${key.key()}`)
+  const key_ = Bytes.from(typeof key === 'function' ? key() : key)
 
   const encKey = Bytes.slice(key_, 0, 16)
   const macKey = Bytes.slice(key_, 16, 32)
@@ -110,7 +112,10 @@ export async function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
   if (!Bytes.isEqual(mac, Bytes.from(`0x${keystore.crypto.mac}`)))
     throw new Error('corrupt keystore')
 
-  const data = ctr(encKey, key.iv).decrypt(ciphertext)
+  const data = ctr(
+    encKey,
+    Bytes.from(`0x${keystore.crypto.cipherparams.iv}`),
+  ).decrypt(ciphertext)
 
   if (as === 'Hex') return Bytes.toHex(data) as never
   return data as never
@@ -143,10 +148,10 @@ export declare namespace decrypt {
  * const privateKey = Secp256k1.randomPrivateKey()
  *
  * // Derive key from password.
- * const key = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
  *
  * // Encrypt the private key.
- * const encrypted = await Keystore.encrypt(privateKey, key)
+ * const encrypted = await Keystore.encrypt(privateKey, key, opts)
  * // @log: {
  * // @log:   "crypto": {
  * // @log:     "cipher": "aes-128-ctr",
@@ -176,26 +181,26 @@ export declare namespace decrypt {
 export async function encrypt(
   privateKey: Bytes.Bytes | Hex.Hex,
   key: Key,
-  options: encrypt.Options = {},
+  options: encrypt.Options,
 ): Promise<Keystore> {
-  const { id = crypto.randomUUID() } = options
+  const { id = crypto.randomUUID(), kdf, kdfparams, iv } = options
 
-  const key_ = Bytes.from(`0x${key.key()}`)
+  const key_ = Bytes.from(typeof key === 'function' ? key() : key)
   const value_ = Bytes.from(privateKey)
 
   const encKey = Bytes.slice(key_, 0, 16)
   const macKey = Bytes.slice(key_, 16, 32)
 
-  const ciphertext = ctr(encKey, key.iv).encrypt(value_)
+  const ciphertext = ctr(encKey, iv).encrypt(value_)
   const mac = Hash.keccak256(Bytes.concat(macKey, ciphertext))
 
   return {
     crypto: {
       cipher: 'aes-128-ctr',
       ciphertext: Bytes.toHex(ciphertext).slice(2),
-      cipherparams: { iv: Bytes.toHex(key.iv).slice(2) },
-      kdf: key.kdf,
-      kdfparams: key.kdfparams,
+      cipherparams: { iv: Bytes.toHex(iv).slice(2) },
+      kdf,
+      kdfparams,
       mac: Bytes.toHex(mac).slice(2),
     } as Keystore['crypto'],
     id,
@@ -204,7 +209,7 @@ export async function encrypt(
 }
 
 export declare namespace encrypt {
-  type Options = {
+  type Options = DeriveOpts & {
     /** UUID. */
     id?: string | undefined
   }
@@ -217,7 +222,7 @@ export declare namespace encrypt {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const key = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
  * ```
  *
  * @param options - PBKDF2 options.
@@ -229,11 +234,10 @@ export function pbkdf2(options: pbkdf2.Options) {
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
     pbkdf2_noble(sha256, password, salt, { c: iterations, dkLen: 32 }),
-  ).slice(2)
+  )
 
-  return defineKey({
+  return defineKey(() => key, {
     iv,
-    key: () => key,
     kdfparams: {
       c: iterations,
       dklen: 32,
@@ -241,7 +245,7 @@ export function pbkdf2(options: pbkdf2.Options) {
       salt: Bytes.toHex(salt).slice(2),
     },
     kdf: 'pbkdf2',
-  }) satisfies Pbkdf2Key
+  }) satisfies [Key, Pbkdf2DeriveOpts]
 }
 
 export declare namespace pbkdf2 {
@@ -264,7 +268,7 @@ export declare namespace pbkdf2 {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const key = await Keystore.pbkdf2Async({ password: 'testpassword' })
+ * const [key, opts] = await Keystore.pbkdf2Async({ password: 'testpassword' })
  * ```
  *
  * @param options - PBKDF2 options.
@@ -279,11 +283,10 @@ export async function pbkdf2Async(options: pbkdf2.Options) {
       c: iterations,
       dkLen: 32,
     }),
-  ).slice(2)
+  )
 
-  return defineKey({
+  return defineKey(() => key, {
     iv,
-    key: () => key,
     kdfparams: {
       c: iterations,
       dklen: 32,
@@ -291,7 +294,7 @@ export async function pbkdf2Async(options: pbkdf2.Options) {
       salt: Bytes.toHex(salt).slice(2),
     },
     kdf: 'pbkdf2',
-  }) satisfies Pbkdf2Key
+  }) satisfies [Key, Pbkdf2DeriveOpts]
 }
 
 export declare namespace pbkdf2Async {
@@ -305,7 +308,7 @@ export declare namespace pbkdf2Async {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const key = Keystore.scrypt({ password: 'testpassword' })
+ * const [key, opts] = Keystore.scrypt({ password: 'testpassword' })
  * ```
  *
  * @param options - Scrypt options.
@@ -320,11 +323,10 @@ export function scrypt(options: scrypt.Options) {
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
     scrypt_noble(password, salt, { N: n, dkLen: 32, r, p }),
-  ).slice(2)
+  )
 
-  return defineKey({
+  return defineKey(() => key, {
     iv,
-    key: () => key,
     kdfparams: {
       dklen: 32,
       n,
@@ -333,7 +335,7 @@ export function scrypt(options: scrypt.Options) {
       salt: Bytes.toHex(salt).slice(2),
     },
     kdf: 'scrypt',
-  }) satisfies ScryptKey
+  }) satisfies [Key, ScryptDeriveOpts]
 }
 
 export declare namespace scrypt {
@@ -356,7 +358,7 @@ export declare namespace scrypt {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const key = await Keystore.scryptAsync({ password: 'testpassword' })
+ * const [key, opts] = await Keystore.scryptAsync({ password: 'testpassword' })
  * ```
  *
  * @param options - Scrypt options.
@@ -371,11 +373,10 @@ export async function scryptAsync(options: scrypt.Options) {
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
     await scryptAsync_noble(password, salt, { N: n, dkLen: 32, r, p }),
-  ).slice(2)
+  )
 
-  return defineKey({
+  return defineKey(() => key, {
     iv,
-    key: () => key,
     kdfparams: {
       dklen: 32,
       n,
@@ -384,7 +385,7 @@ export async function scryptAsync(options: scrypt.Options) {
       salt: Bytes.toHex(salt).slice(2),
     },
     kdf: 'scrypt',
-  }) satisfies ScryptKey
+  }) satisfies [Key, ScryptDeriveOpts]
 }
 
 export declare namespace scryptAsync {
@@ -394,19 +395,20 @@ export declare namespace scryptAsync {
 ///////////////////////////////////////////////////////////////////////////
 
 /** @internal */
-function defineKey<const key extends defineKey.Value>(
-  key: key,
-): key & { iv: Bytes.Bytes } {
-  const iv = key.iv ? Bytes.from(key.iv) : Bytes.random(16)
-  return { ...key, iv }
+function defineKey<
+  const key extends Key,
+  const options extends defineKey.Options,
+>(key: key, options: options): [key, options & { iv: Bytes.Bytes }] {
+  const iv = options.iv ? Bytes.from(options.iv) : Bytes.random(16)
+  return [key, { ...options, iv }] as never
 }
 
 /** @internal */
 declare namespace defineKey {
-  type Value<
+  type Options<
     kdf extends string = string,
     kdfparams extends Record<string, unknown> = Record<string, unknown>,
-  > = Omit<BaseKey<kdf, kdfparams>, 'iv'> & {
+  > = Omit<BaseDeriveOpts<kdf, kdfparams>, 'iv'> & {
     iv?: Bytes.Bytes | Hex.Hex | undefined
   }
 
