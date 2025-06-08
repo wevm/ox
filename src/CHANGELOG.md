@@ -1,5 +1,42 @@
 # ox
 
+## 0.8.0
+
+### Minor Changes
+
+- [`7fc1da0`](https://github.com/wevm/ox/commit/7fc1da0717a17dbac0e4effed2ea3911c7ca3236) Thanks [@jxom](https://github.com/jxom)! - **Breaking(`Keystore`):** Keystore derivation functions (e.g. `Keystore.pbkdf2`) now return a tuple of the key and derivation options,
+  instead of an object with the key and options.
+
+  ```diff
+  import { Keystore } from 'ox'
+
+  - const key = Keystore.pbkdf2({ password: 'testpassword' })
+  + const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+  ```
+
+- [`7fc1da0`](https://github.com/wevm/ox/commit/7fc1da0717a17dbac0e4effed2ea3911c7ca3236) Thanks [@jxom](https://github.com/jxom)! - **Breaking(`Keystore`):** `Keystore.decrypt` function interface no longer requires an object as the second parameter, now it only requires the key itself.
+
+  ```diff
+  import { Keystore } from 'ox'
+
+  const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+
+  const encrypted = await Keystore.encrypt(secret, key, opts)
+
+  + const decrypted = await Keystore.decrypt(encrypted, key)
+  ```
+
+- [`7fc1da0`](https://github.com/wevm/ox/commit/7fc1da0717a17dbac0e4effed2ea3911c7ca3236) Thanks [@jxom](https://github.com/jxom)! - **Breaking(`Keystore`):** `Keystore.encrypt` function interface has changed to require derivation options (`opts`).
+
+  ```diff
+  import { Keystore } from 'ox'
+
+  const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+
+  - const encrypted = await Keystore.encrypt(secret, key)
+  + const encrypted = await Keystore.encrypt(secret, key, opts)
+  ```
+
 ## 0.7.2
 
 ### Patch Changes
