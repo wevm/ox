@@ -1563,9 +1563,9 @@ export * as Json from './core/Json.js'
  * Utilities & types for working with [Keystores](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage).
  *
  * @example
- * ### Encrypting & Decrypting Private Keys
+ * ### Encrypting Private Keys
  *
- * Private keys can be encrypted into a JSON keystore using {@link ox#Keystore.(encrypt:function)} and decrypted using {@link ox#Keystore.(decrypt:function)}:
+ * Private keys can be encrypted into a JSON keystore using {@link ox#Keystore.(encrypt:function)}:
  *
  * ```ts twoslash
  * import { Keystore, Secp256k1 } from 'ox'
@@ -1577,7 +1577,7 @@ export * as Json from './core/Json.js'
  * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
  *
  * // Encrypt the private key.
- * const encrypted = await Keystore.encrypt(privateKey, key, opts)
+ * const keystore = Keystore.encrypt(privateKey, key, opts)
  * // @log: {
  * // @log:   "crypto": {
  * // @log:     "cipher": "aes-128-ctr",
@@ -1597,10 +1597,26 @@ export * as Json from './core/Json.js'
  * // @log:   "id": "...",
  * // @log:   "version": 3,
  * // @log: }
+ * ```
+ *
+ * @example
+ * ### Decrypting Private Keys
+ *
+ * Private keys can be decrypted from a JSON keystore using {@link ox#Keystore.(decrypt:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Keystore, Secp256k1 } from 'ox'
+ *
+ * const keystore = { crypto: { ... }, id: '...', version: 3 }
+ *
+ * // Derive the key.
+ * const key = Keystore.toKey(keystore, { password: 'testpassword' })
  *
  * // Decrypt the private key.
- * const decrypted = await Keystore.decrypt(encrypted, key)
+ * const decrypted = Keystore.decrypt(keystore, key)
  * // @log: "0x..."
+ *
  * ```
  *
  * @category Crypto

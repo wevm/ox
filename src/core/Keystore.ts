@@ -12,6 +12,7 @@ import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import type * as Hex from './Hex.js'
+import type { OneOf } from './internal/types.js'
 
 /** Base Derivation Options. */
 type BaseDeriveOpts<
@@ -82,11 +83,11 @@ export type ScryptDeriveOpts = BaseDeriveOpts<
  * // JSON keystore.
  * const keystore = { crypto: { ... }, id: '...', version: 3 }
  *
- * // Key that was previously derived from `Keystore.scrypt` or `Keystore.pbkdf2`.
- * const key = "0x..."
+ * // Derive the key using your password.
+ * const key = Keystore.toKey(keystore, { password: 'hunter2' })
  *
  * // Decrypt the private key.
- * const privateKey = await Keystore.decrypt(keystore, key)
+ * const privateKey = Keystore.decrypt(keystore, key)
  * // @log: "0x..."
  * ```
  *
@@ -95,11 +96,11 @@ export type ScryptDeriveOpts = BaseDeriveOpts<
  * @param options - Decryption options.
  * @returns Decrypted private key.
  */
-export async function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
+export function decrypt<as extends 'Hex' | 'Bytes' = 'Hex'>(
   keystore: Keystore,
   key: Key,
   options: decrypt.Options<as> = {},
-): Promise<decrypt.ReturnType<as>> {
+): decrypt.ReturnType<as> {
   const { as = 'Hex' } = options
   const key_ = Bytes.from(typeof key === 'function' ? key() : key)
 
@@ -151,7 +152,7 @@ export declare namespace decrypt {
  * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
  *
  * // Encrypt the private key.
- * const encrypted = await Keystore.encrypt(privateKey, key, opts)
+ * const encrypted = Keystore.encrypt(privateKey, key, opts)
  * // @log: {
  * // @log:   "crypto": {
  * // @log:     "cipher": "aes-128-ctr",
@@ -178,11 +179,11 @@ export declare namespace decrypt {
  * @param options - Encryption options.
  * @returns Encrypted keystore.
  */
-export async function encrypt(
+export function encrypt(
   privateKey: Bytes.Bytes | Hex.Hex,
   key: Key,
   options: encrypt.Options,
-): Promise<Keystore> {
+): Keystore {
   const { id = crypto.randomUUID(), kdf, kdfparams, iv } = options
 
   const key_ = Bytes.from(typeof key === 'function' ? key() : key)
@@ -315,10 +316,7 @@ export declare namespace pbkdf2Async {
  * @returns Scrypt key.
  */
 export function scrypt(options: scrypt.Options) {
-  const { iv, n = 262_144, password } = options
-
-  const p = 8
-  const r = 1
+  const { iv, n = 262_144, password, p = 8, r = 1 } = options
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -344,6 +342,10 @@ export declare namespace scrypt {
     iv?: Bytes.Bytes | Hex.Hex | undefined
     /** Cost factor. @default 262_144 */
     n?: number | undefined
+    /** Parallelization factor. @default 8 */
+    p?: number | undefined
+    /** Block size. @default 1 */
+    r?: number | undefined
     /** Password to derive key from. */
     password: string
     /** Salt to use for key derivation. @default `Bytes.random(32)` */
@@ -390,6 +392,133 @@ export async function scryptAsync(options: scrypt.Options) {
 
 export declare namespace scryptAsync {
   type Options = scrypt.Options
+}
+
+/**
+ * Extracts a Key from a JSON Keystore to use for decryption.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Keystore } from 'ox'
+ *
+ * // JSON keystore.
+ * const keystore = { crypto: { ... }, id: '...', version: 3 }
+ *
+ * const key = Keystore.toKey(keystore, { password: 'hunter2' }) // [!code focus]
+ *
+ * const decrypted = Keystore.decrypt(keystore, key)
+ * ```
+ *
+ * @param keystore - JSON Keystore
+ * @param options - Options
+ * @returns Key
+ */
+export function toKey(keystore: Keystore, options: toKey.Options): Key {
+  const { crypto } = keystore
+  const { password } = options
+  const { cipherparams, kdf, kdfparams } = crypto
+  const { iv } = cipherparams
+  const { c, n, p, r, salt } = kdfparams as OneOf<
+    Pbkdf2DeriveOpts['kdfparams'] | ScryptDeriveOpts['kdfparams']
+  >
+
+  const [key] = (() => {
+    switch (kdf) {
+      case 'scrypt':
+        return scrypt({
+          iv: Bytes.from(`0x${iv}`),
+          n,
+          p,
+          r,
+          salt: Bytes.from(`0x${salt}`),
+          password,
+        })
+      case 'pbkdf2':
+        return pbkdf2({
+          iv: Bytes.from(`0x${iv}`),
+          iterations: c,
+          password,
+          salt: Bytes.from(`0x${salt}`),
+        })
+      default:
+        throw new Error('unsupported kdf')
+    }
+  })()
+
+  return key
+}
+
+export declare namespace toKey {
+  type Options = {
+    /** Password to derive key from. */
+    password: string
+  }
+}
+
+/**
+ * Extracts a Key asynchronously from a JSON Keystore to use for decryption.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Keystore } from 'ox'
+ *
+ * // JSON keystore.
+ * const keystore = { crypto: { ... }, id: '...', version: 3 }
+ *
+ * const key = await Keystore.toKeyAsync(keystore, { password: 'hunter2' }) // [!code focus]
+ *
+ * const decrypted = Keystore.decrypt(keystore, key)
+ * ```
+ *
+ * @param keystore - JSON Keystore
+ * @param options - Options
+ * @returns Key
+ */
+export async function toKeyAsync(
+  keystore: Keystore,
+  options: toKeyAsync.Options,
+): Promise<Key> {
+  const { crypto } = keystore
+  const { password } = options
+  const { cipherparams, kdf, kdfparams } = crypto
+  const { iv } = cipherparams
+  const { c, n, p, r, salt } = kdfparams as OneOf<
+    Pbkdf2DeriveOpts['kdfparams'] | ScryptDeriveOpts['kdfparams']
+  >
+
+  const [key] = await (async () => {
+    switch (kdf) {
+      case 'scrypt':
+        return await scryptAsync({
+          iv: Bytes.from(`0x${iv}`),
+          n,
+          p,
+          r,
+          salt: Bytes.from(`0x${salt}`),
+          password,
+        })
+      case 'pbkdf2':
+        return await pbkdf2({
+          iv: Bytes.from(`0x${iv}`),
+          iterations: c,
+          password,
+          salt: Bytes.from(`0x${salt}`),
+        })
+      default:
+        throw new Error('unsupported kdf')
+    }
+  })()
+
+  return key
+}
+
+export declare namespace toKeyAsync {
+  type Options = {
+    /** Password to derive key from. */
+    password: string
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////

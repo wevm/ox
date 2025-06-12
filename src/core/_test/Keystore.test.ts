@@ -14,7 +14,7 @@ describe('encrypt/decrypt', () => {
     const secret =
       '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
 
-    const encrypted = await Keystore.encrypt(secret, key, opts)
+    const encrypted = Keystore.encrypt(secret, key, opts)
     expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
       {
         "crypto": {
@@ -37,7 +37,89 @@ describe('encrypt/decrypt', () => {
       }
     `)
 
-    const decrypted = await Keystore.decrypt(encrypted, key)
+    const decrypted = Keystore.decrypt(encrypted, key)
+    expect(decrypted).toEqual(secret)
+  })
+
+  test('behavior: pbkdf2 (decrypt with toKey)', async () => {
+    const [key, opts] = Keystore.pbkdf2({
+      iv: '0x6087dab2f9fdbbfaddc31a909735c1e6',
+      salt: '0xae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd',
+      password: 'testpassword',
+      iterations: 8192,
+    })
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = Keystore.encrypt(secret, key, opts)
+    expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
+      {
+        "crypto": {
+          "cipher": "aes-128-ctr",
+          "cipherparams": {
+            "iv": "6087dab2f9fdbbfaddc31a909735c1e6",
+          },
+          "ciphertext": "583d14406889943bd38ddbb3207d966f4e797e1064a5ee9761b859c68d5e9c70",
+          "kdf": "pbkdf2",
+          "kdfparams": {
+            "c": 8192,
+            "dklen": 32,
+            "prf": "hmac-sha256",
+            "salt": "ae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd",
+          },
+          "mac": "ba98d7d25b0be12a943cb75a0689e33bbc6781c53ccc2cd708a3b41f4ede72d8",
+        },
+        "id": null,
+        "version": 3,
+      }
+    `)
+
+    const key2 = Keystore.toKey(encrypted, {
+      password: 'testpassword',
+    })
+    const decrypted = Keystore.decrypt(encrypted, key2)
+    expect(decrypted).toEqual(secret)
+  })
+
+  test('behavior: pbkdf2 (decrypt with toKeyAsync)', async () => {
+    const [key, opts] = Keystore.pbkdf2({
+      iv: '0x6087dab2f9fdbbfaddc31a909735c1e6',
+      salt: '0xae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd',
+      password: 'testpassword',
+      iterations: 8192,
+    })
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = Keystore.encrypt(secret, key, opts)
+    expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
+      {
+        "crypto": {
+          "cipher": "aes-128-ctr",
+          "cipherparams": {
+            "iv": "6087dab2f9fdbbfaddc31a909735c1e6",
+          },
+          "ciphertext": "583d14406889943bd38ddbb3207d966f4e797e1064a5ee9761b859c68d5e9c70",
+          "kdf": "pbkdf2",
+          "kdfparams": {
+            "c": 8192,
+            "dklen": 32,
+            "prf": "hmac-sha256",
+            "salt": "ae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd",
+          },
+          "mac": "ba98d7d25b0be12a943cb75a0689e33bbc6781c53ccc2cd708a3b41f4ede72d8",
+        },
+        "id": null,
+        "version": 3,
+      }
+    `)
+
+    const key2 = await Keystore.toKeyAsync(encrypted, {
+      password: 'testpassword',
+    })
+    const decrypted = Keystore.decrypt(encrypted, key2)
     expect(decrypted).toEqual(secret)
   })
 
@@ -51,7 +133,7 @@ describe('encrypt/decrypt', () => {
     const secret =
       '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
 
-    const encrypted = await Keystore.encrypt(secret, key, opts)
+    const encrypted = Keystore.encrypt(secret, key, opts)
     expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
       {
         "crypto": {
@@ -74,7 +156,7 @@ describe('encrypt/decrypt', () => {
       }
     `)
 
-    const decrypted = await Keystore.decrypt(encrypted, key, { as: 'Bytes' })
+    const decrypted = Keystore.decrypt(encrypted, key, { as: 'Bytes' })
     expect(decrypted).toEqual(Bytes.fromHex(secret))
   })
 
@@ -88,7 +170,7 @@ describe('encrypt/decrypt', () => {
     const secret =
       '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
 
-    const encrypted = await Keystore.encrypt(secret, key, opts)
+    const encrypted = Keystore.encrypt(secret, key, opts)
     expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
       {
         "crypto": {
@@ -112,7 +194,91 @@ describe('encrypt/decrypt', () => {
       }
     `)
 
-    const decrypted = await Keystore.decrypt(encrypted, key)
+    const decrypted = Keystore.decrypt(encrypted, key)
+    expect(decrypted).toEqual(secret)
+  })
+
+  test('behavior: scrypt (decrypt as toKey)', async () => {
+    const [key, opts] = Keystore.scrypt({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 8192,
+    })
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = Keystore.encrypt(secret, key, opts)
+    expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
+      {
+        "crypto": {
+          "cipher": "aes-128-ctr",
+          "cipherparams": {
+            "iv": "83dbcc02d8ccb40e466191a123791e0e",
+          },
+          "ciphertext": "643fe2fae9b78bbfe3dd5ccfc0f5588941f054b5c4832a6a880c923f1594ee49",
+          "kdf": "scrypt",
+          "kdfparams": {
+            "dklen": 32,
+            "n": 8192,
+            "p": 8,
+            "r": 1,
+            "salt": "ab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19",
+          },
+          "mac": "8424b23693b3492c074e9dd6366507739725640a62f1f41565b7b2c5f8db6253",
+        },
+        "id": null,
+        "version": 3,
+      }
+    `)
+
+    const key2 = Keystore.toKey(encrypted, {
+      password: 'testpassword',
+    })
+    const decrypted = Keystore.decrypt(encrypted, key2)
+    expect(decrypted).toEqual(secret)
+  })
+
+  test('behavior: scrypt (decrypt as toKeyAsync)', async () => {
+    const [key, opts] = Keystore.scrypt({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 8192,
+    })
+
+    const secret =
+      '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
+
+    const encrypted = Keystore.encrypt(secret, key, opts)
+    expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
+      {
+        "crypto": {
+          "cipher": "aes-128-ctr",
+          "cipherparams": {
+            "iv": "83dbcc02d8ccb40e466191a123791e0e",
+          },
+          "ciphertext": "643fe2fae9b78bbfe3dd5ccfc0f5588941f054b5c4832a6a880c923f1594ee49",
+          "kdf": "scrypt",
+          "kdfparams": {
+            "dklen": 32,
+            "n": 8192,
+            "p": 8,
+            "r": 1,
+            "salt": "ab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19",
+          },
+          "mac": "8424b23693b3492c074e9dd6366507739725640a62f1f41565b7b2c5f8db6253",
+        },
+        "id": null,
+        "version": 3,
+      }
+    `)
+
+    const key2 = await Keystore.toKeyAsync(encrypted, {
+      password: 'testpassword',
+    })
+    const decrypted = Keystore.decrypt(encrypted, key2)
     expect(decrypted).toEqual(secret)
   })
 
@@ -127,7 +293,7 @@ describe('encrypt/decrypt', () => {
     const secret =
       '0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d'
 
-    const encrypted = await Keystore.encrypt(secret, key(), opts)
+    const encrypted = Keystore.encrypt(secret, key(), opts)
     expect({ ...encrypted, id: null }).toMatchInlineSnapshot(`
       {
         "crypto": {
@@ -151,7 +317,7 @@ describe('encrypt/decrypt', () => {
       }
     `)
 
-    const decrypted = await Keystore.decrypt(encrypted, key())
+    const decrypted = Keystore.decrypt(encrypted, key())
     expect(decrypted).toEqual(secret)
   })
 })
