@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.1
+
+### Patch Changes
+
+- [`74e47c5`](https://github.com/wevm/ox/commit/74e47c5df471a48f4fb389f0684ca52f841fbc11) Thanks [@jxom](https://github.com/jxom)! - Added `Keystore.toKey` and `Keystore.toKeyAsync` to derive a key from a JSON Keystore using a password.
+
 ## 0.8.0
 
 ### Minor Changes
