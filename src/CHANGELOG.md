@@ -1,5 +1,19 @@
 # ox
 
+## 0.8.2
+
+### Patch Changes
+
+- [`9fd0bf0`](https://github.com/wevm/ox/commit/9fd0bf0460694709566805bc29f50cad25816620) Thanks [@jxom](https://github.com/jxom)! - Added [ECDH (Elliptic Curve Diffie-Hellman)](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#ecdh) shared secrets to `P256`, `Secp256k1`, and `WebCryptoP256` modules. This enables secure key agreement between parties using elliptic curve cryptography for both secp256k1 and secp256r1 (P256) curves, with support for both `@noble/curves` (for `P256` and `Secp256k1`) implementation and Web Crypto APIs (`WebCryptoP256`).
+
+  - `P256.getSharedSecret`
+  - `Secp256k1.getSharedSecret`
+  - `WebCryptoP256.getSharedSecret`
+
+- [`9fd0bf0`](https://github.com/wevm/ox/commit/9fd0bf0460694709566805bc29f50cad25816620) Thanks [@jxom](https://github.com/jxom)! - Added `createKeyPair` helper functions for `Bls`, `P256`, and `Secp256k1` modules. These functions provide a convenient way to generate complete key pairs (private key + public key) in a single operation, simplifying key generation workflows and reducing the need for separate `randomPrivateKey` and `getPublicKey` calls.
+
+- [`9fd0bf0`](https://github.com/wevm/ox/commit/9fd0bf0460694709566805bc29f50cad25816620) Thanks [@jxom](https://github.com/jxom)! - Added `Ed25519` and `X25519` modules. The `Ed25519` module provides functionality for creating key pairs, signing messages, and verifying signatures using the Ed25519 signature scheme. The `X25519` module enables Elliptic Curve Diffie-Hellman (ECDH) key agreement operations for secure shared secret derivation.
+
 ## 0.8.1
 
 ### Patch Changes
