@@ -44,13 +44,13 @@ describe('getPublicKey', () => {
 describe('createKeyPair', () => {
   test('default', () => {
     const keyPair = P256.createKeyPair()
-    
+
     expect(keyPair).toHaveProperty('privateKey')
     expect(keyPair).toHaveProperty('publicKey')
     expect(typeof keyPair.privateKey).toBe('string')
     expect(keyPair.privateKey).toMatch(/^0x[0-9a-f]{64}$/)
     expect(keyPair.privateKey.length).toBe(66)
-    
+
     expect(keyPair.publicKey).toHaveProperty('prefix')
     expect(keyPair.publicKey).toHaveProperty('x')
     expect(keyPair.publicKey).toHaveProperty('y')
@@ -61,15 +61,17 @@ describe('createKeyPair', () => {
 
   test('behavior: deterministic public key derivation', () => {
     const keyPair = P256.createKeyPair()
-    const derivedPublicKey = P256.getPublicKey({ privateKey: keyPair.privateKey })
-    
+    const derivedPublicKey = P256.getPublicKey({
+      privateKey: keyPair.privateKey,
+    })
+
     expect(keyPair.publicKey).toEqual(derivedPublicKey)
   })
 
   test('behavior: unique key pairs', () => {
     const keyPair1 = P256.createKeyPair()
     const keyPair2 = P256.createKeyPair()
-    
+
     expect(keyPair1.privateKey).not.toEqual(keyPair2.privateKey)
     expect(keyPair1.publicKey).not.toEqual(keyPair2.publicKey)
   })
@@ -77,27 +79,31 @@ describe('createKeyPair', () => {
   test('behavior: valid for signing and verification', () => {
     const keyPair = P256.createKeyPair()
     const payload = '0xdeadbeef'
-    
+
     const signature = P256.sign({ payload, privateKey: keyPair.privateKey })
-    const isValid = P256.verify({ publicKey: keyPair.publicKey, payload, signature })
-    
+    const isValid = P256.verify({
+      publicKey: keyPair.publicKey,
+      payload,
+      signature,
+    })
+
     expect(isValid).toBe(true)
   })
 
   test('behavior: valid for ECDH key agreement', () => {
     const keyPairA = P256.createKeyPair()
     const keyPairB = P256.createKeyPair()
-    
+
     const sharedSecretA = P256.getSharedSecret({
       privateKey: keyPairA.privateKey,
       publicKey: keyPairB.publicKey,
     })
-    
+
     const sharedSecretB = P256.getSharedSecret({
       privateKey: keyPairB.privateKey,
       publicKey: keyPairA.publicKey,
     })
-    
+
     expect(sharedSecretA).toEqual(sharedSecretB)
     expect(typeof sharedSecretA).toBe('string')
     expect(sharedSecretA).toMatch(/^0x[0-9a-f]{66}$/)
@@ -105,7 +111,7 @@ describe('createKeyPair', () => {
 
   test('options: as (Hex)', () => {
     const keyPair = P256.createKeyPair({ as: 'Hex' })
-    
+
     expect(typeof keyPair.privateKey).toBe('string')
     expect(keyPair.privateKey).toMatch(/^0x[0-9a-f]{64}$/)
     expect(keyPair.privateKey.length).toBe(66)
@@ -113,7 +119,7 @@ describe('createKeyPair', () => {
 
   test('options: as (Bytes)', () => {
     const keyPair = P256.createKeyPair({ as: 'Bytes' })
-    
+
     expect(keyPair.privateKey).toBeInstanceOf(Uint8Array)
     expect(keyPair.privateKey.length).toBe(32)
     expect(keyPair.publicKey).toHaveProperty('prefix')
@@ -122,8 +128,10 @@ describe('createKeyPair', () => {
 
   test('behavior: bytes format works with other functions', () => {
     const keyPair = P256.createKeyPair({ as: 'Bytes' })
-    const derivedPublicKey = P256.getPublicKey({ privateKey: keyPair.privateKey })
-    
+    const derivedPublicKey = P256.getPublicKey({
+      privateKey: keyPair.privateKey,
+    })
+
     expect(keyPair.publicKey).toEqual(derivedPublicKey)
   })
 
@@ -132,15 +140,17 @@ describe('createKeyPair', () => {
     const payload = '0xdeadbeef'
     const signature = P256.sign({ payload, privateKey: keyPair.privateKey })
     const recoveredPublicKey = P256.recoverPublicKey({ payload, signature })
-    
+
     expect(recoveredPublicKey).toEqual(keyPair.publicKey)
   })
 })
 
 describe('getSharedSecret', () => {
   test('default', () => {
-    const { privateKey: privateKeyA, publicKey: publicKeyA } = P256.createKeyPair()
-    const { privateKey: privateKeyB, publicKey: publicKeyB } = P256.createKeyPair()
+    const { privateKey: privateKeyA, publicKey: publicKeyA } =
+      P256.createKeyPair()
+    const { privateKey: privateKeyB, publicKey: publicKeyB } =
+      P256.createKeyPair()
 
     // Compute shared secret from A's perspective
     const sharedSecretA = P256.getSharedSecret({
@@ -187,7 +197,8 @@ describe('getSharedSecret', () => {
 
   test('behavior: different input types', () => {
     const { privateKey: privateKeyA } = P256.createKeyPair()
-    const { privateKey: privateKeyB, publicKey: publicKeyB } = P256.createKeyPair()
+    const { privateKey: privateKeyB, publicKey: publicKeyB } =
+      P256.createKeyPair()
 
     // Test with Hex private key
     const sharedSecret1 = P256.getSharedSecret({

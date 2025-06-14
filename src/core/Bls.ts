@@ -72,7 +72,7 @@ export declare namespace aggregate {
 
 /**
  * Creates a new BLS12-381 key pair consisting of a private key and its corresponding public key.
- * 
+ *
  * - G1 Point (Default):
  *   - short (48 bytes)
  *   - computes longer G2 Signatures (96 bytes)
@@ -172,14 +172,14 @@ export declare namespace aggregate {
  */
 export function createKeyPair<
   as extends 'Hex' | 'Bytes' = 'Hex',
-  size extends Size = 'short-key:long-sig'
+  size extends Size = 'short-key:long-sig',
 >(
   options: createKeyPair.Options<as, size> = {},
 ): createKeyPair.ReturnType<as, size> {
   const { as = 'Hex', size = 'short-key:long-sig' } = options
   const privateKey = randomPrivateKey({ as })
   const publicKey = getPublicKey({ privateKey, size })
-  
+
   return {
     privateKey: privateKey as never,
     publicKey: publicKey as never,
@@ -189,7 +189,7 @@ export function createKeyPair<
 export declare namespace createKeyPair {
   type Options<
     as extends 'Hex' | 'Bytes' = 'Hex',
-    size extends Size = 'short-key:long-sig'
+    size extends Size = 'short-key:long-sig',
   > = {
     /**
      * Format of the returned private key.
@@ -207,18 +207,15 @@ export declare namespace createKeyPair {
     size?: size | Size | undefined
   }
 
-  type ReturnType<
-    as extends 'Hex' | 'Bytes',
-    size extends Size
-  > = {
+  type ReturnType<as extends 'Hex' | 'Bytes', size extends Size> = {
     privateKey:
       | (as extends 'Bytes' ? Bytes.Bytes : never)
       | (as extends 'Hex' ? Hex.Hex : never)
     publicKey: size extends 'short-key:long-sig' ? BlsPoint.G1 : BlsPoint.G2
   }
 
-  type ErrorType = 
-    | Hex.fromBytes.ErrorType 
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
     | getPublicKey.ErrorType
     | Errors.GlobalErrorType
 }

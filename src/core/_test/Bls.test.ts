@@ -90,10 +90,10 @@ describe('createKeyPair', () => {
   it('should create functional key pair', () => {
     const { privateKey, publicKey } = Bls.createKeyPair()
     const payload = Hex.fromString('test message')
-    
+
     const signature = Bls.sign({ payload, privateKey })
     const verified = Bls.verify({ payload, publicKey, signature })
-    
+
     expect(verified).toBe(true)
   })
 
@@ -102,10 +102,14 @@ describe('createKeyPair', () => {
       size: 'long-key:short-sig',
     })
     const payload = Hex.fromString('test message')
-    
-    const signature = Bls.sign({ payload, privateKey, size: 'long-key:short-sig' })
+
+    const signature = Bls.sign({
+      payload,
+      privateKey,
+      size: 'long-key:short-sig',
+    })
     const verified = Bls.verify({ payload, publicKey, signature })
-    
+
     expect(verified).toBe(true)
   })
 })

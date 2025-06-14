@@ -30,7 +30,7 @@ export function createKeyPair<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { as = 'Hex' } = options
   const privateKey = randomPrivateKey({ as })
   const publicKey = getPublicKey({ privateKey })
-  
+
   return {
     privateKey: privateKey as never,
     publicKey,
@@ -53,8 +53,8 @@ export declare namespace createKeyPair {
     publicKey: PublicKey.PublicKey
   }
 
-  type ErrorType = 
-    | Hex.fromBytes.ErrorType 
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
     | PublicKey.from.ErrorType
     | Errors.GlobalErrorType
 }

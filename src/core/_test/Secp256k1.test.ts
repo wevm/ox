@@ -47,13 +47,13 @@ describe('getPublicKey', () => {
 describe('createKeyPair', () => {
   test('default', () => {
     const keyPair = Secp256k1.createKeyPair()
-    
+
     expect(keyPair).toHaveProperty('privateKey')
     expect(keyPair).toHaveProperty('publicKey')
     expect(typeof keyPair.privateKey).toBe('string')
     expect(keyPair.privateKey).toMatch(/^0x[0-9a-f]{64}$/)
     expect(keyPair.privateKey.length).toBe(66)
-    
+
     expect(keyPair.publicKey).toHaveProperty('prefix')
     expect(keyPair.publicKey).toHaveProperty('x')
     expect(keyPair.publicKey).toHaveProperty('y')
@@ -64,15 +64,17 @@ describe('createKeyPair', () => {
 
   test('behavior: deterministic public key derivation', () => {
     const keyPair = Secp256k1.createKeyPair()
-    const derivedPublicKey = Secp256k1.getPublicKey({ privateKey: keyPair.privateKey })
-    
+    const derivedPublicKey = Secp256k1.getPublicKey({
+      privateKey: keyPair.privateKey,
+    })
+
     expect(keyPair.publicKey).toEqual(derivedPublicKey)
   })
 
   test('behavior: unique key pairs', () => {
     const keyPair1 = Secp256k1.createKeyPair()
     const keyPair2 = Secp256k1.createKeyPair()
-    
+
     expect(keyPair1.privateKey).not.toEqual(keyPair2.privateKey)
     expect(keyPair1.publicKey).not.toEqual(keyPair2.publicKey)
   })
@@ -80,16 +82,23 @@ describe('createKeyPair', () => {
   test('behavior: valid for signing and verification', () => {
     const keyPair = Secp256k1.createKeyPair()
     const payload = '0xdeadbeef'
-    
-    const signature = Secp256k1.sign({ payload, privateKey: keyPair.privateKey })
-    const isValid = Secp256k1.verify({ publicKey: keyPair.publicKey, payload, signature })
-    
+
+    const signature = Secp256k1.sign({
+      payload,
+      privateKey: keyPair.privateKey,
+    })
+    const isValid = Secp256k1.verify({
+      publicKey: keyPair.publicKey,
+      payload,
+      signature,
+    })
+
     expect(isValid).toBe(true)
   })
 
   test('options: as (Hex)', () => {
     const keyPair = Secp256k1.createKeyPair({ as: 'Hex' })
-    
+
     expect(typeof keyPair.privateKey).toBe('string')
     expect(keyPair.privateKey).toMatch(/^0x[0-9a-f]{64}$/)
     expect(keyPair.privateKey.length).toBe(66)
@@ -97,7 +106,7 @@ describe('createKeyPair', () => {
 
   test('options: as (Bytes)', () => {
     const keyPair = Secp256k1.createKeyPair({ as: 'Bytes' })
-    
+
     expect(keyPair.privateKey).toBeInstanceOf(Uint8Array)
     expect(keyPair.privateKey.length).toBe(32)
     expect(keyPair.publicKey).toHaveProperty('prefix')
@@ -106,8 +115,10 @@ describe('createKeyPair', () => {
 
   test('behavior: bytes format works with other functions', () => {
     const keyPair = Secp256k1.createKeyPair({ as: 'Bytes' })
-    const derivedPublicKey = Secp256k1.getPublicKey({ privateKey: keyPair.privateKey })
-    
+    const derivedPublicKey = Secp256k1.getPublicKey({
+      privateKey: keyPair.privateKey,
+    })
+
     expect(keyPair.publicKey).toEqual(derivedPublicKey)
   })
 })
