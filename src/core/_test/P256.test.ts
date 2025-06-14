@@ -41,6 +41,187 @@ describe('getPublicKey', () => {
   })
 })
 
+describe('getSharedSecret', () => {
+  test('default', () => {
+    const privateKeyA = P256.randomPrivateKey()
+    const privateKeyB = P256.randomPrivateKey()
+    const publicKeyA = P256.getPublicKey({ privateKey: privateKeyA })
+    const publicKeyB = P256.getPublicKey({ privateKey: privateKeyB })
+
+    // Compute shared secret from A's perspective
+    const sharedSecretA = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Compute shared secret from B's perspective
+    const sharedSecretB = P256.getSharedSecret({
+      privateKey: privateKeyB,
+      publicKey: publicKeyA,
+    })
+
+    // ECDH property: both should be equal
+    expect(sharedSecretA).toEqual(sharedSecretB)
+    expect(typeof sharedSecretA).toBe('string')
+    expect(sharedSecretA).toMatch(/^0x[0-9a-f]{66}$/)
+  })
+
+  test('behavior: known test vectors', () => {
+    // Use fixed keys for deterministic testing
+    const privateKeyA =
+      '0xdde57ae9b9ed6f76fa5358c24d5ca2057ebc1ece18b7273121450a29c96ec8e5'
+    const privateKeyB =
+      '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+    const publicKeyA = P256.getPublicKey({ privateKey: privateKeyA })
+    const publicKeyB = P256.getPublicKey({ privateKey: privateKeyB })
+
+    const sharedSecretA = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    const sharedSecretB = P256.getSharedSecret({
+      privateKey: privateKeyB,
+      publicKey: publicKeyA,
+    })
+
+    expect(sharedSecretA).toEqual(sharedSecretB)
+    expect(sharedSecretA).toMatchInlineSnapshot(
+      '"0x02e0ad69b35f127c5d81d1aababa10ec6b3579ba9413d9b561203ddfa1df257af6"',
+    )
+  })
+
+  test('behavior: different input types', () => {
+    const privateKeyA = P256.randomPrivateKey()
+    const privateKeyB = P256.randomPrivateKey()
+    const publicKeyB = P256.getPublicKey({ privateKey: privateKeyB })
+
+    // Test with Hex private key
+    const sharedSecret1 = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Test with Bytes private key
+    const sharedSecret2 = P256.getSharedSecret({
+      privateKey: Bytes.fromHex(privateKeyA),
+      publicKey: publicKeyB,
+    })
+
+    expect(sharedSecret1).toEqual(sharedSecret2)
+  })
+
+  test('behavior: uncompressed public key', () => {
+    const privateKeyA = P256.randomPrivateKey()
+    const privateKeyB = P256.randomPrivateKey()
+    const publicKeyB = P256.getPublicKey({ privateKey: privateKeyB })
+
+    // Ensure the public key is uncompressed (prefix 4)
+    expect(publicKeyB.prefix).toBe(4)
+
+    const sharedSecret = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    expect(typeof sharedSecret).toBe('string')
+    expect(sharedSecret).toMatch(/^0x[0-9a-f]{66}$/)
+  })
+
+  test('options: as', () => {
+    const privateKeyA = P256.randomPrivateKey()
+    const privateKeyB = P256.randomPrivateKey()
+    const publicKeyB = P256.getPublicKey({ privateKey: privateKeyB })
+
+    // Test Hex output (default)
+    const sharedSecretHex = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Test Bytes output
+    const sharedSecretBytes = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+      as: 'Bytes',
+    })
+
+    // Verify formats
+    expect(typeof sharedSecretHex).toBe('string')
+    expect(sharedSecretHex).toMatch(/^0x[0-9a-f]{66}$/)
+    expect(sharedSecretBytes).toBeInstanceOf(Uint8Array)
+    expect(sharedSecretBytes.length).toBe(33) // 33 bytes for compressed point
+
+    // Verify they represent the same data
+    expect(Hex.fromBytes(sharedSecretBytes)).toEqual(sharedSecretHex)
+  })
+
+  test('behavior: deterministic', () => {
+    const privateKeyA = P256.randomPrivateKey()
+    const privateKeyB = P256.randomPrivateKey()
+    const publicKeyB = P256.getPublicKey({ privateKey: privateKeyB })
+
+    const sharedSecret1 = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    const sharedSecret2 = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Should be deterministic - same inputs produce same output
+    expect(sharedSecret1).toEqual(sharedSecret2)
+  })
+
+  test('behavior: different key pairs produce different secrets', () => {
+    const privateKeyA = P256.randomPrivateKey()
+    const privateKeyB = P256.randomPrivateKey()
+    const privateKeyC = P256.randomPrivateKey()
+    const publicKeyB = P256.getPublicKey({ privateKey: privateKeyB })
+    const publicKeyC = P256.getPublicKey({ privateKey: privateKeyC })
+
+    const sharedSecretAB = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    const sharedSecretAC = P256.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyC,
+    })
+
+    // Different key pairs should produce different shared secrets
+    expect(sharedSecretAB).not.toEqual(sharedSecretAC)
+  })
+
+  test('error: invalid private key', () => {
+    const publicKeyB = P256.getPublicKey({
+      privateKey: P256.randomPrivateKey(),
+    })
+
+    expect(() =>
+      P256.getSharedSecret({
+        privateKey: '0x00',
+        publicKey: publicKeyB,
+      }),
+    ).toThrow()
+  })
+
+  test('error: invalid public key', () => {
+    const privateKeyA = P256.randomPrivateKey()
+    const invalidPublicKey = { prefix: 4, x: 0n, y: 0n } as const
+
+    expect(() =>
+      P256.getSharedSecret({
+        privateKey: privateKeyA,
+        publicKey: invalidPublicKey,
+      }),
+    ).toThrow()
+  })
+})
+
 describe('randomPrivateKey', () => {
   test('default', () => {
     const privateKey = P256.randomPrivateKey()
@@ -260,6 +441,7 @@ test('exports', () => {
     [
       "noble",
       "getPublicKey",
+      "getSharedSecret",
       "randomPrivateKey",
       "recoverPublicKey",
       "sign",

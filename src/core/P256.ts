@@ -46,6 +46,71 @@ export declare namespace getPublicKey {
 }
 
 /**
+ * Computes a shared secret using ECDH (Elliptic Curve Diffie-Hellman) between a private key and a public key.
+ *
+ * @example
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKeyA = P256.randomPrivateKey()
+ * const publicKeyB = P256.getPublicKey({ privateKey: '0x...' })
+ *
+ * const sharedSecret = P256.getSharedSecret({
+ *   privateKey: privateKeyA,
+ *   publicKey: publicKeyB
+ * })
+ * ```
+ *
+ * @param options - The options to compute the shared secret.
+ * @returns The computed shared secret.
+ */
+export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: getSharedSecret.Options<as>,
+): getSharedSecret.ReturnType<as> {
+  const { as = 'Hex', privateKey, publicKey } = options
+  const point = secp256r1.ProjectivePoint.fromHex(
+    PublicKey.toHex(publicKey).slice(2),
+  )
+  const privateKeyHex =
+    typeof privateKey === 'string'
+      ? privateKey.slice(2)
+      : Hex.fromBytes(privateKey).slice(2)
+  const sharedPoint = point.multiply(
+    secp256r1.utils.normPrivateKeyToScalar(privateKeyHex),
+  )
+  const sharedSecret = sharedPoint.toRawBytes(true) // compressed format
+  if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
+  return sharedSecret as never
+}
+
+export declare namespace getSharedSecret {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned shared secret.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /**
+     * Private key to use for the shared secret computation.
+     */
+    privateKey: Hex.Hex | Bytes.Bytes
+    /**
+     * Public key to use for the shared secret computation.
+     */
+    publicKey: PublicKey.PublicKey<boolean>
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
+    | PublicKey.toHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Generates a random P256 ECDSA private key.
  *
  * @example

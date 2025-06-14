@@ -49,6 +49,68 @@ export declare namespace getPublicKey {
 }
 
 /**
+ * Computes a shared secret using ECDH (Elliptic Curve Diffie-Hellman) between a private key and a public key.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKeyA = Secp256k1.randomPrivateKey()
+ * const publicKeyB = Secp256k1.getPublicKey({ privateKey: '0x...' })
+ *
+ * const sharedSecret = Secp256k1.getSharedSecret({
+ *   privateKey: privateKeyA,
+ *   publicKey: publicKeyB
+ * })
+ * ```
+ *
+ * @param options - The options to compute the shared secret.
+ * @returns The computed shared secret.
+ */
+export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: getSharedSecret.Options<as>,
+): getSharedSecret.ReturnType<as> {
+  const { as = 'Hex', privateKey, publicKey } = options
+  const point = secp256k1.ProjectivePoint.fromHex(
+    PublicKey.toHex(publicKey).slice(2),
+  )
+  const sharedPoint = point.multiply(
+    secp256k1.utils.normPrivateKeyToScalar(Hex.from(privateKey).slice(2)),
+  )
+  const sharedSecret = sharedPoint.toRawBytes(true) // compressed format
+  if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
+  return sharedSecret as never
+}
+
+export declare namespace getSharedSecret {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned shared secret.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /**
+     * Private key to use for the shared secret computation.
+     */
+    privateKey: Hex.Hex | Bytes.Bytes
+    /**
+     * Public key to use for the shared secret computation.
+     */
+    publicKey: PublicKey.PublicKey<boolean>
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Hex.from.ErrorType
+    | PublicKey.toHex.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Generates a random ECDSA private key on the secp256k1 curve.
  *
  * @example

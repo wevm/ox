@@ -44,6 +44,140 @@ describe('getPublicKey', () => {
   })
 })
 
+describe('getSharedSecret', () => {
+  test('default', () => {
+    const privateKeyA = accounts[0].privateKey
+    const privateKeyB = accounts[1].privateKey
+    const publicKeyA = Secp256k1.getPublicKey({ privateKey: privateKeyA })
+    const publicKeyB = Secp256k1.getPublicKey({ privateKey: privateKeyB })
+
+    // Compute shared secret from A's perspective
+    const sharedSecretA = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Compute shared secret from B's perspective
+    const sharedSecretB = Secp256k1.getSharedSecret({
+      privateKey: privateKeyB,
+      publicKey: publicKeyA,
+    })
+
+    // ECDH property: both should be equal
+    expect(sharedSecretA).toEqual(sharedSecretB)
+    expect(typeof sharedSecretA).toBe('string')
+    expect(sharedSecretA).toMatch(/^0x[0-9a-f]{66}$/)
+  })
+
+  test('behavior: different input types', () => {
+    const privateKeyA = accounts[0].privateKey
+    const privateKeyB = accounts[1].privateKey
+    const publicKeyB = Secp256k1.getPublicKey({ privateKey: privateKeyB })
+
+    // Test with Hex private key
+    const sharedSecret1 = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Test with Bytes private key
+    const sharedSecret2 = Secp256k1.getSharedSecret({
+      privateKey: Bytes.fromHex(privateKeyA),
+      publicKey: publicKeyB,
+    })
+
+    expect(sharedSecret1).toEqual(sharedSecret2)
+  })
+
+  test('behavior: compressed public key', () => {
+    const privateKeyA = accounts[0].privateKey
+    const privateKeyB = accounts[1].privateKey
+    const publicKeyB = Secp256k1.getPublicKey({ privateKey: privateKeyB })
+    const compressedPublicKeyB = PublicKey.compress(publicKeyB)
+
+    const sharedSecret1 = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    const sharedSecret2 = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: compressedPublicKeyB,
+    })
+
+    expect(sharedSecret1).toEqual(sharedSecret2)
+  })
+
+  test('options: as', () => {
+    const privateKeyA = accounts[0].privateKey
+    const privateKeyB = accounts[1].privateKey
+    const publicKeyB = Secp256k1.getPublicKey({ privateKey: privateKeyB })
+
+    // Test Hex output (default)
+    const sharedSecretHex = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Test Bytes output
+    const sharedSecretBytes = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+      as: 'Bytes',
+    })
+
+    // Verify formats
+    expect(typeof sharedSecretHex).toBe('string')
+    expect(sharedSecretHex).toMatch(/^0x[0-9a-f]{66}$/)
+    expect(sharedSecretBytes).toBeInstanceOf(Uint8Array)
+    expect(sharedSecretBytes.length).toBe(33) // 33 bytes for compressed point
+
+    // Verify they represent the same data
+    expect(Hex.fromBytes(sharedSecretBytes)).toEqual(sharedSecretHex)
+  })
+
+  test('behavior: deterministic', () => {
+    const privateKeyA = accounts[0].privateKey
+    const privateKeyB = accounts[1].privateKey
+    const publicKeyB = Secp256k1.getPublicKey({ privateKey: privateKeyB })
+
+    const sharedSecret1 = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    const sharedSecret2 = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    // Should be deterministic - same inputs produce same output
+    expect(sharedSecret1).toEqual(sharedSecret2)
+  })
+
+  test('behavior: different key pairs produce different secrets', () => {
+    const privateKeyA = accounts[0].privateKey
+    const privateKeyB = accounts[1].privateKey
+    // Generate a third private key for testing
+    const privateKeyC = Secp256k1.randomPrivateKey()
+    const publicKeyB = Secp256k1.getPublicKey({ privateKey: privateKeyB })
+    const publicKeyC = Secp256k1.getPublicKey({ privateKey: privateKeyC })
+
+    const sharedSecretAB = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyB,
+    })
+
+    const sharedSecretAC = Secp256k1.getSharedSecret({
+      privateKey: privateKeyA,
+      publicKey: publicKeyC,
+    })
+
+    // Different key pairs should produce different shared secrets
+    expect(sharedSecretAB).not.toEqual(sharedSecretAC)
+  })
+})
+
 describe('randomPrivateKey', () => {
   test('default', () => {
     const privateKey = Secp256k1.randomPrivateKey()
@@ -270,6 +404,7 @@ test('exports', () => {
     [
       "noble",
       "getPublicKey",
+      "getSharedSecret",
       "randomPrivateKey",
       "recoverAddress",
       "recoverPublicKey",

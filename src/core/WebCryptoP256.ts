@@ -1,7 +1,7 @@
 import { p256 } from '@noble/curves/p256'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
-import type * as Hex from './Hex.js'
+import * as Hex from './Hex.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 import type { Compute } from './internal/types.js'
@@ -66,6 +66,146 @@ export declare namespace createKeyPair {
   }>
 
   type ErrorType = PublicKey.from.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Generates an ECDH P256 key pair for key agreement that includes:
+ *
+ * - a `privateKey` of type [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey)
+ * - a `publicKey` of type {@link ox#PublicKey.PublicKey}
+ *
+ * @example
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { publicKey, privateKey } = await WebCryptoP256.createKeyPairECDH()
+ * // @log: {
+ * // @log:   privateKey: CryptoKey {},
+ * // @log:   publicKey: {
+ * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:     prefix: 4,
+ * // @log:   },
+ * // @log: }
+ * ```
+ *
+ * @param options - Options for creating the key pair.
+ * @returns The key pair.
+ */
+export async function createKeyPairECDH(
+  options: createKeyPairECDH.Options = {},
+): Promise<createKeyPairECDH.ReturnType> {
+  const { extractable = false } = options
+  const keypair = await globalThis.crypto.subtle.generateKey(
+    {
+      name: 'ECDH',
+      namedCurve: 'P-256',
+    },
+    extractable,
+    ['deriveKey', 'deriveBits'],
+  )
+  const publicKey_raw = await globalThis.crypto.subtle.exportKey(
+    'raw',
+    keypair.publicKey,
+  )
+  const publicKey = PublicKey.from(new Uint8Array(publicKey_raw))
+  return {
+    privateKey: keypair.privateKey,
+    publicKey,
+  }
+}
+
+export declare namespace createKeyPairECDH {
+  type Options = {
+    /** A boolean value indicating whether it will be possible to export the private key using `globalThis.crypto.subtle.exportKey()`. */
+    extractable?: boolean | undefined
+  }
+
+  type ReturnType = Compute<{
+    privateKey: CryptoKey
+    publicKey: PublicKey.PublicKey
+  }>
+
+  type ErrorType = PublicKey.from.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Computes a shared secret using ECDH (Elliptic Curve Diffie-Hellman) between a private key and a public key using Web Crypto APIs.
+ *
+ * @example
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { privateKey: privateKeyA } = await WebCryptoP256.createKeyPairECDH()
+ * const { publicKey: publicKeyB } = await WebCryptoP256.createKeyPairECDH()
+ *
+ * const sharedSecret = await WebCryptoP256.getSharedSecret({
+ *   privateKey: privateKeyA,
+ *   publicKey: publicKeyB
+ * })
+ * ```
+ *
+ * @param options - The options to compute the shared secret.
+ * @returns The computed shared secret.
+ */
+export async function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: getSharedSecret.Options<as>,
+): Promise<getSharedSecret.ReturnType<as>> {
+  const { as = 'Hex', privateKey, publicKey } = options
+
+  if (privateKey.algorithm.name === 'ECDSA') {
+    throw new Error(
+      'privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.',
+    )
+  }
+
+  const publicKeyCrypto = await globalThis.crypto.subtle.importKey(
+    'raw',
+    PublicKey.toBytes(publicKey),
+    { name: 'ECDH', namedCurve: 'P-256' },
+    false,
+    [],
+  )
+
+  const sharedSecretBuffer = await globalThis.crypto.subtle.deriveBits(
+    {
+      name: 'ECDH',
+      public: publicKeyCrypto,
+    },
+    privateKey,
+    256, // 32 bytes * 8 bits/byte
+  )
+
+  const sharedSecret = new Uint8Array(sharedSecretBuffer)
+  if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
+  return sharedSecret as never
+}
+
+export declare namespace getSharedSecret {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned shared secret.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /**
+     * Private key to use for the shared secret computation (must be a CryptoKey for ECDH).
+     */
+    privateKey: CryptoKey
+    /**
+     * Public key to use for the shared secret computation.
+     */
+    publicKey: PublicKey.PublicKey<boolean>
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | PublicKey.toBytes.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
