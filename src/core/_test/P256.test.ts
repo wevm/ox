@@ -197,8 +197,7 @@ describe('getSharedSecret', () => {
 
   test('behavior: different input types', () => {
     const { privateKey: privateKeyA } = P256.createKeyPair()
-    const { privateKey: privateKeyB, publicKey: publicKeyB } =
-      P256.createKeyPair()
+    const { publicKey: publicKeyB } = P256.createKeyPair()
 
     // Test with Hex private key
     const sharedSecret1 = P256.getSharedSecret({
