@@ -541,9 +541,9 @@ test('exports', () => {
   expect(Object.keys(P256)).toMatchInlineSnapshot(`
     [
       "noble",
+      "createKeyPair",
       "getPublicKey",
       "getSharedSecret",
-      "createKeyPair",
       "randomPrivateKey",
       "recoverPublicKey",
       "sign",

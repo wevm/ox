@@ -482,9 +482,9 @@ test('exports', () => {
   expect(Object.keys(Secp256k1)).toMatchInlineSnapshot(`
     [
       "noble",
+      "createKeyPair",
       "getPublicKey",
       "getSharedSecret",
-      "createKeyPair",
       "randomPrivateKey",
       "recoverAddress",
       "recoverPublicKey",
