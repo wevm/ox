@@ -71,6 +71,156 @@ export declare namespace aggregate {
 }
 
 /**
+ * Creates a new BLS12-381 key pair consisting of a private key and its corresponding public key.
+ *
+ * - G1 Point (Default):
+ *   - short (48 bytes)
+ *   - computes longer G2 Signatures (96 bytes)
+ * - G2 Point:
+ *   - long (96 bytes)
+ *   - computes short G1 Signatures (48 bytes)
+ *
+ * @example
+ * ### Short G1 Public Keys (Default)
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const { publicKey } = Bls.createKeyPair()
+ * //      ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * ### Long G2 Public Keys
+ *
+ * A G2 Public Key can be derived as a G2 point (96 bytes) using `size: 'long-key:short-sig'`.
+ *
+ * This will allow you to compute G1 Signatures (48 bytes) with {@link ox#Bls.(sign:function)}.
+ *
+ * ```ts twoslash
+ * import { Bls } from 'ox'
+ *
+ * const { publicKey } = Bls.createKeyPair({
+ *   size: 'long-key:short-sig',
+ * })
+ *
+ * publicKey
+ * // ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * ### Serializing
+ *
+ * Public Keys can be serialized to hex or bytes using {@link ox#BlsPoint.(toHex:function)} or {@link ox#BlsPoint.(toBytes:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const { publicKey } = Bls.createKeyPair()
+ *
+ * const publicKeyHex = BlsPoint.toHex(publicKey)
+ * //    ^?
+ *
+ *
+ * const publicKeyBytes = BlsPoint.toBytes(publicKey)
+ * //    ^?
+ *
+ * ```
+ *
+ * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const publicKeyHex = '0x...'
+ *
+ * const publicKey = BlsPoint.fromHex(publicKeyHex, 'G1')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param options - The options to generate the key pair.
+ * @returns The generated key pair containing both private and public keys.
+ */
+export function createKeyPair<
+  as extends 'Hex' | 'Bytes' = 'Hex',
+  size extends Size = 'short-key:long-sig',
+>(
+  options: createKeyPair.Options<as, size> = {},
+): createKeyPair.ReturnType<as, size> {
+  const { as = 'Hex', size = 'short-key:long-sig' } = options
+  const privateKey = randomPrivateKey({ as })
+  const publicKey = getPublicKey({ privateKey, size })
+
+  return {
+    privateKey: privateKey as never,
+    publicKey: publicKey as never,
+  }
+}
+
+export declare namespace createKeyPair {
+  type Options<
+    as extends 'Hex' | 'Bytes' = 'Hex',
+    size extends Size = 'short-key:long-sig',
+  > = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /**
+     * Size of the public key to compute.
+     *
+     * - `'short-key:long-sig'`: 48 bytes; computes long signatures (96 bytes)
+     * - `'long-key:short-sig'`: 96 bytes; computes short signatures (48 bytes)
+     *
+     * @default 'short-key:long-sig'
+     */
+    size?: size | Size | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes', size extends Size> = {
+    privateKey:
+      | (as extends 'Bytes' ? Bytes.Bytes : never)
+      | (as extends 'Hex' ? Hex.Hex : never)
+    publicKey: size extends 'short-key:long-sig' ? BlsPoint.G1 : BlsPoint.G2
+  }
+
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
+    | getPublicKey.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Computes the BLS12-381 public key from a provided private key.
  *
  * Public Keys can be derived as a point on one of the BLS12-381 groups:

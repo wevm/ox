@@ -54,6 +54,66 @@ describe('aggregate', () => {
   })
 })
 
+describe('createKeyPair', () => {
+  it('default', () => {
+    const { privateKey, publicKey } = Bls.createKeyPair()
+    expect(privateKey).toBeDefined()
+    expect(privateKey.length).toBe(66)
+    expect(publicKey).toBeDefined()
+    expect(typeof publicKey.x).toBe('bigint')
+    expect(typeof publicKey.y).toBe('bigint')
+    expect(typeof publicKey.z).toBe('bigint')
+  })
+
+  it('as: bytes', () => {
+    const { privateKey, publicKey } = Bls.createKeyPair({ as: 'Bytes' })
+    expect(privateKey).toBeDefined()
+    expect(privateKey.length).toBe(32)
+    expect(publicKey).toBeDefined()
+    expect(typeof publicKey.x).toBe('bigint')
+    expect(typeof publicKey.y).toBe('bigint')
+    expect(typeof publicKey.z).toBe('bigint')
+  })
+
+  it('size: "long-key:short-sig"', () => {
+    const { privateKey, publicKey } = Bls.createKeyPair({
+      size: 'long-key:short-sig',
+    })
+    expect(privateKey).toBeDefined()
+    expect(privateKey.length).toBe(66)
+    expect(publicKey).toBeDefined()
+    expect(typeof publicKey.x).toBe('object')
+    expect(typeof publicKey.y).toBe('object')
+    expect(typeof publicKey.z).toBe('object')
+  })
+
+  it('should create functional key pair', () => {
+    const { privateKey, publicKey } = Bls.createKeyPair()
+    const payload = Hex.fromString('test message')
+
+    const signature = Bls.sign({ payload, privateKey })
+    const verified = Bls.verify({ payload, publicKey, signature })
+
+    expect(verified).toBe(true)
+  })
+
+  it('should create functional key pair with long-key:short-sig', () => {
+    const { privateKey, publicKey } = Bls.createKeyPair({
+      size: 'long-key:short-sig',
+    })
+    const payload = Hex.fromString('test message')
+
+    const signature = Bls.sign({
+      payload,
+      privateKey,
+      size: 'long-key:short-sig',
+    })
+    const verified = Bls.verify({ payload, publicKey, signature })
+
+    expect(verified).toBe(true)
+  })
+})
+
 describe('getPublicKey', () => {
   it('default', () => {
     const publicKey = Bls.getPublicKey({ privateKey })
