@@ -762,8 +762,7 @@ describe('getSignPayload', () => {
   })
 
   test('behavior: P256.sign + WebAuthnP256.verify', async () => {
-    const privateKey = P256.randomPrivateKey()
-    const publicKey = P256.getPublicKey({ privateKey })
+    const { privateKey, publicKey } = P256.createKeyPair()
 
     const challenge =
       '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' as const

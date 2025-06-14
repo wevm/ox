@@ -10,6 +10,54 @@ import * as Entropy from './internal/entropy.js'
 export const noble = secp256r1
 
 /**
+ * Creates a new P256 ECDSA key pair consisting of a private key and its corresponding public key.
+ *
+ * @example
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const { privateKey, publicKey } = P256.createKeyPair()
+ * ```
+ *
+ * @param options - The options to generate the key pair.
+ * @returns The generated key pair containing both private and public keys.
+ */
+export function createKeyPair<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: createKeyPair.Options<as> = {},
+): createKeyPair.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const privateKey = randomPrivateKey({ as })
+  const publicKey = getPublicKey({ privateKey })
+  
+  return {
+    privateKey: privateKey as never,
+    publicKey,
+  }
+}
+
+export declare namespace createKeyPair {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    privateKey:
+      | (as extends 'Bytes' ? Bytes.Bytes : never)
+      | (as extends 'Hex' ? Hex.Hex : never)
+    publicKey: PublicKey.PublicKey
+  }
+
+  type ErrorType = 
+    | Hex.fromBytes.ErrorType 
+    | PublicKey.from.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Computes the P256 ECDSA public key from a provided private key.
  *
  * @example
@@ -52,8 +100,8 @@ export declare namespace getPublicKey {
  * ```ts twoslash
  * import { P256 } from 'ox'
  *
- * const privateKeyA = P256.randomPrivateKey()
- * const publicKeyB = P256.getPublicKey({ privateKey: '0x...' })
+ * const { privateKey: privateKeyA } = P256.createKeyPair()
+ * const { publicKey: publicKeyB } = P256.createKeyPair()
  *
  * const sharedSecret = P256.getSharedSecret({
  *   privateKey: privateKeyA,
@@ -269,8 +317,7 @@ export declare namespace sign {
  * ```ts twoslash
  * import { P256 } from 'ox'
  *
- * const privateKey = P256.randomPrivateKey()
- * const publicKey = P256.getPublicKey({ privateKey })
+ * const { privateKey, publicKey } = P256.createKeyPair()
  * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
  *
  * const verified = P256.verify({ // [!code focus]

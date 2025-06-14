@@ -12,6 +12,54 @@ import type { OneOf } from './internal/types.js'
 export const noble = secp256k1
 
 /**
+ * Creates a new secp256k1 ECDSA key pair consisting of a private key and its corresponding public key.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ *
+ * const { privateKey, publicKey } = Secp256k1.createKeyPair()
+ * ```
+ *
+ * @param options - The options to generate the key pair.
+ * @returns The generated key pair containing both private and public keys.
+ */
+export function createKeyPair<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: createKeyPair.Options<as> = {},
+): createKeyPair.ReturnType<as> {
+  const { as = 'Hex' } = options
+  const privateKey = randomPrivateKey({ as })
+  const publicKey = getPublicKey({ privateKey })
+  
+  return {
+    privateKey: privateKey as never,
+    publicKey,
+  }
+}
+
+export declare namespace createKeyPair {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> = {
+    privateKey:
+      | (as extends 'Bytes' ? Bytes.Bytes : never)
+      | (as extends 'Hex' ? Hex.Hex : never)
+    publicKey: PublicKey.PublicKey
+  }
+
+  type ErrorType = 
+    | Hex.fromBytes.ErrorType 
+    | PublicKey.from.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Computes the secp256k1 ECDSA public key from a provided private key.
  *
  * @example
@@ -55,8 +103,8 @@ export declare namespace getPublicKey {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const privateKeyA = Secp256k1.randomPrivateKey()
- * const publicKeyB = Secp256k1.getPublicKey({ privateKey: '0x...' })
+ * const { privateKey: privateKeyA } = Secp256k1.createKeyPair()
+ * const { publicKey: publicKeyB } = Secp256k1.createKeyPair()
  *
  * const sharedSecret = Secp256k1.getSharedSecret({
  *   privateKey: privateKeyA,
