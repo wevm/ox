@@ -241,13 +241,13 @@ export function getCredentialCreationOptions(
     },
     challenge = createChallenge,
     excludeCredentialIds,
+    extensions,
     name: name_,
     rp = {
       id: window.location.hostname,
       name: window.document.title,
     },
     user,
-    extensions,
   } = options
   const name = (user?.name ?? name_)!
   return {
@@ -269,15 +269,15 @@ export function getCredentialCreationOptions(
           alg: -7, // p256
         },
       ],
+      ...(extensions && { extensions }),
       rp,
       user: {
         id: user?.id ?? Hash.keccak256(Bytes.fromString(name), { as: 'Bytes' }),
         name,
         displayName: user?.displayName ?? name,
       },
-      extensions,
     },
-  } as internal.CredentialCreationOptions
+  }
 }
 
 export declare namespace getCredentialCreationOptions {
@@ -374,6 +374,7 @@ export function getCredentialRequestOptions(
   const {
     credentialId,
     challenge,
+    extensions,
     rpId = window.location.hostname,
     userVerification = 'required',
   } = options
@@ -395,6 +396,7 @@ export function getCredentialRequestOptions(
           }
         : {}),
       challenge: Bytes.fromHex(challenge),
+      ...(extensions && { extensions }),
       rpId,
       userVerification,
     },
@@ -407,6 +409,10 @@ export declare namespace getCredentialRequestOptions {
     credentialId?: string | string[] | undefined
     /** The challenge to sign. */
     challenge: Hex.Hex
+    /** List of Web Authentication API credentials to use during creation or authentication. */
+    extensions?:
+      | internal.PublicKeyCredentialRequestOptions['extensions']
+      | undefined
     /** The relying party identifier to use. */
     rpId?: internal.PublicKeyCredentialRequestOptions['rpId'] | undefined
     /** The user verification requirement. */
