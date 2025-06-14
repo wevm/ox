@@ -154,7 +154,9 @@ export async function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { as = 'Hex', privateKey, publicKey } = options
 
   if (privateKey.algorithm.name === 'ECDSA') {
-    throw new Error('privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.')
+    throw new Error(
+      'privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.',
+    )
   }
 
   const publicKeyCrypto = await globalThis.crypto.subtle.importKey(

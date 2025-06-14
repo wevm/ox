@@ -155,7 +155,7 @@ describe('getSharedSecret', () => {
         publicKey: publicKeyB,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[Error: privateKey is not compatible with ECDH. please use \`createKeyPairECDH\` to create an ECDH key.]`,
+      '[Error: privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.]',
     )
   })
 
