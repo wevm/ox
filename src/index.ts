@@ -1364,7 +1364,7 @@ export * as ContractAddress from './core/ContractAddress.js'
  * const isValid = Ed25519.verify({ payload, publicKey, signature })
  * ```
  *
- * @category Cryptography
+ * @category Crypto
  */
 export * as Ed25519 from './core/Ed25519.js'
 
@@ -3579,6 +3579,6 @@ export * as Withdrawal from './core/Withdrawal.js'
  * })
  * ```
  *
- * @category Cryptography
+ * @category Crypto
  */
 export * as X25519 from './core/X25519.js'
