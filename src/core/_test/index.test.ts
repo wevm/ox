@@ -28,6 +28,7 @@ test('exports', () => {
       "Bytes",
       "Caches",
       "ContractAddress",
+      "Ed25519",
       "Ens",
       "Errors",
       "Filter",
@@ -69,6 +70,7 @@ test('exports', () => {
       "WebAuthnP256",
       "WebCryptoP256",
       "Withdrawal",
+      "X25519",
     ]
   `)
 })
