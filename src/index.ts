@@ -1337,6 +1337,38 @@ export * as Caches from './core/Caches.js'
 export * as ContractAddress from './core/ContractAddress.js'
 
 /**
+ * Utilities for working with Ed25519 signatures and key pairs.
+ *
+ * Ed25519 is a modern elliptic curve signature scheme that provides strong security
+ * guarantees and high performance. It is widely used in various cryptographic applications.
+ *
+ * @example
+ * ### Creating Key Pairs
+ *
+ * ```ts twoslash
+ * import { Ed25519 } from 'ox'
+ *
+ * const { privateKey, publicKey } = Ed25519.createKeyPair()
+ * ```
+ *
+ * @example
+ * ### Signing & Verifying
+ *
+ * ```ts twoslash
+ * import { Ed25519 } from 'ox'
+ *
+ * const { privateKey, publicKey } = Ed25519.createKeyPair()
+ * const payload = '0xdeadbeef'
+ *
+ * const signature = Ed25519.sign({ payload, privateKey })
+ * const isValid = Ed25519.verify({ payload, publicKey, signature })
+ * ```
+ *
+ * @category Cryptography
+ */
+export * as Ed25519 from './core/Ed25519.js'
+
+/**
  * Utility functions for working with ENS names.
  *
  * @example
@@ -3515,3 +3547,38 @@ export * as WebCryptoP256 from './core/WebCryptoP256.js'
  * @category Execution Spec
  */
 export * as Withdrawal from './core/Withdrawal.js'
+
+/**
+ * Utilities for working with X25519 elliptic curve Diffie-Hellman key agreement.
+ *
+ * X25519 is a high-performance elliptic curve that can be used to perform
+ * Diffie-Hellman key agreement to derive shared secrets between parties.
+ * It is designed for use with the elliptic curve Diffie-Hellman (ECDH) key agreement scheme.
+ *
+ * @example
+ * ### Creating Key Pairs
+ *
+ * ```ts twoslash
+ * import { X25519 } from 'ox'
+ *
+ * const { privateKey, publicKey } = X25519.createKeyPair()
+ * ```
+ *
+ * @example
+ * ### Deriving Shared Secrets
+ *
+ * ```ts twoslash
+ * import { X25519 } from 'ox'
+ *
+ * const { privateKey: privateKeyA } = X25519.createKeyPair()
+ * const { publicKey: publicKeyB } = X25519.createKeyPair()
+ *
+ * const sharedSecret = X25519.getSharedSecret({
+ *   privateKey: privateKeyA,
+ *   publicKey: publicKeyB
+ * })
+ * ```
+ *
+ * @category Cryptography
+ */
+export * as X25519 from './core/X25519.js'
