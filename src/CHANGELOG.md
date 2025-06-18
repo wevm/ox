@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.3
+
+### Patch Changes
+
+- [#74](https://github.com/wevm/ox/pull/74) [`72209ef`](https://github.com/wevm/ox/commit/72209efaf2bf6dd5d71274db8df7416532ebe9cb) Thanks [@danpopenko](https://github.com/danpopenko)! - Added extensions support for `WebAuthnP256.sign`.
+
 ## 0.8.2
 
 ### Patch Changes
