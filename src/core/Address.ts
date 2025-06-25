@@ -5,7 +5,7 @@ import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as PublicKey from './PublicKey.js'
 
-const addressRegex = /*#__PURE__*/ /^0x[a-fA-F0-9]{40}$/
+const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
 /** Root type for Address. */
 export type Address = abitype_Address

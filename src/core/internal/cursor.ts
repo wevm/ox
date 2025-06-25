@@ -37,7 +37,7 @@ export type Cursor = {
   _touch(): void
 }
 
-const staticCursor: Cursor = /*#__PURE__*/ {
+const staticCursor: Cursor = {
   bytes: new Uint8Array(),
   dataView: new DataView(new ArrayBuffer(0)),
   position: 0,
