@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.4
+
+### Patch Changes
+
+- [`ce19a08`](https://github.com/wevm/ox/commit/ce19a087bffaa205067fca530532fb05cc02c792) Thanks [@jxom](https://github.com/jxom)! - Added `stack` to `Provider.InternalError`.
+
 ## 0.8.3
 
 ### Patch Changes
