@@ -290,6 +290,7 @@ export function parseError<const error extends Error | ErrorObject | unknown>(
       cause: error_,
       data: error_,
       message: error_.message,
+      stack: error_.stack,
     }) as never
 
   const { code } = error_
@@ -320,6 +321,7 @@ export function parseError<const error extends Error | ErrorObject | unknown>(
     cause: error_ instanceof Error ? error_ : undefined,
     data: error_,
     message: error_.message,
+    stack: error_ instanceof Error ? error_.stack : undefined,
   }) as never
 }
 
@@ -415,17 +417,24 @@ export class BaseError extends Error {
   override name = 'RpcResponse.BaseError'
 
   override readonly cause: Error | undefined
+  override readonly stack: string
   readonly code: number
   readonly data?: unknown | undefined
 
-  constructor(errorObject: ErrorObject & { cause?: Error | undefined }) {
-    const { cause, code, message, data } = errorObject
+  constructor(
+    errorObject: ErrorObject & {
+      cause?: Error | undefined
+      stack?: string | undefined
+    },
+  ) {
+    const { cause, code, message, data, stack } = errorObject
 
     super(message, { cause })
 
     this.cause = cause
     this.code = code
     this.data = data
+    this.stack = stack ?? ''
   }
 }
 
@@ -588,6 +597,7 @@ export class InternalError extends BaseError {
   constructor(
     parameters: Partial<Omit<ErrorObject, 'code'>> & {
       cause?: Error | undefined
+      stack?: string | undefined
     } = {},
   ) {
     super({
@@ -595,6 +605,7 @@ export class InternalError extends BaseError {
       code: InternalError.code,
       data: parameters.data,
       message: parameters.message ?? 'Internal JSON-RPC error.',
+      stack: parameters.stack,
     })
   }
 }
