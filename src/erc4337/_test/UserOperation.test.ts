@@ -145,6 +145,245 @@ describe('getSignPayload', () => {
 })
 
 describe('hash', () => {
+  describe('v0.8', () => {
+    test('default', () => {
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0xa2224e732a1d4e2f923c7c05d586a0aa6cbc42172ec02f31d35fa9a2b8ba9208"`,
+      )
+    })
+
+    test('args: factory + factoryData', () => {
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            factory: '0x1234567890123456789012345678901234567890',
+            factoryData: '0xdeadbeef',
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0x3146c70a9ef7538e9b9aca8b00ad4b127ca7eef7817a557f1801acbf8d68c206"`,
+      )
+    })
+
+    test('args: paymaster', () => {
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0x364bff8f9104a3854dce4f61f8479ce3019a3bd23e1c8db4da0d7c22850835b9"`,
+      )
+    })
+
+    test('args: paymasterVerificationGasLimit', () => {
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+            paymasterVerificationGasLimit: 6942069n,
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0x9cb735eb4278caf0a9f53ad81e5f592e965c9d034f6e2780befa4cd09a990b04"`,
+      )
+    })
+
+    test('args: paymasterPostOpGasLimit', () => {
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+            paymasterVerificationGasLimit: 6942069n,
+            paymasterPostOpGasLimit: 6942069n,
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0x745602113988c3a6f18215d96eecc85775998dcb190e374a0955e637d40fe018"`,
+      )
+    })
+
+    test('args: paymasterData', () => {
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+            paymasterVerificationGasLimit: 6942069n,
+            paymasterPostOpGasLimit: 6942069n,
+            paymasterData: '0xdeadbeef',
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0xf10ef9afcf27a4fd17e477cd19f37e588e3ff7d48eade07ab5b7eb8caf75667f"`,
+      )
+    })
+
+    test('args: authorization', () => {
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+            paymasterVerificationGasLimit: 6942069n,
+            paymasterPostOpGasLimit: 6942069n,
+            paymasterData: '0xdeadbeef',
+            factory: '0x7702',
+            factoryData: '0xdeadbeef',
+            authorization: {
+              address: '0x1234567890123456789012345678901234567890',
+              chainId: 1,
+              nonce: 0n,
+              yParity: 0,
+              r: 0n,
+              s: 0n,
+            },
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0xd96232eb5d02f483166b9b23dca3ec2b963d70f09b961fce348c51d306278462"`,
+      )
+
+      expect(
+        UserOperation.hash(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+            paymasterVerificationGasLimit: 6942069n,
+            paymasterPostOpGasLimit: 6942069n,
+            paymasterData: '0xdeadbeef',
+            factory: '0x7702',
+            authorization: {
+              address: '0x1234567890123456789012345678901234567890',
+              chainId: 1,
+              nonce: 0n,
+              yParity: 0,
+              r: 0n,
+              s: 0n,
+            },
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+            entryPointVersion: '0.8',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `"0x66fe6eaaaf1d6727d404384354a720cb24694c697bfbab77b3d02345c2d6e1da"`,
+      )
+    })
+  })
+
   describe('v0.7', () => {
     test('default', () => {
       const hash = UserOperation.hash(
@@ -511,6 +750,109 @@ describe('toPacked', () => {
   })
 })
 
+describe('toInitCode', () => {
+  test('behavior: no factory', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: undefined,
+        factoryData: undefined,
+        authorization: undefined,
+      }),
+    ).toBe('0x')
+  })
+
+  test('behavior: regular factory without factoryData', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: '0x1234567890123456789012345678901234567890',
+        factoryData: undefined,
+        authorization: undefined,
+      }),
+    ).toBe('0x1234567890123456789012345678901234567890')
+  })
+
+  test('behavior: regular factory with factoryData', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: '0x1234567890123456789012345678901234567890',
+        factoryData: '0xdeadbeef',
+        authorization: undefined,
+      }),
+    ).toBe('0x1234567890123456789012345678901234567890deadbeef')
+  })
+
+  test('behavior: ERC-7702 factory (short form) without authorization', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: '0x7702',
+        factoryData: undefined,
+        authorization: undefined,
+      }),
+    ).toBe('0x7702000000000000000000000000000000000000')
+  })
+
+  test('behavior: ERC-7702 factory (full form) without authorization', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: '0x7702000000000000000000000000000000000000',
+        factoryData: undefined,
+        authorization: undefined,
+      }),
+    ).toBe('0x7702000000000000000000000000000000000000')
+  })
+
+  test('behavior: ERC-7702 factory with authorization and no factoryData', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: '0x7702',
+        factoryData: undefined,
+        authorization: {
+          address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+          chainId: 1,
+          nonce: 69n,
+          yParity: 0,
+          r: 1n,
+          s: 2n,
+        },
+      }),
+    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
+  })
+
+  test('behavior: ERC-7702 factory with authorization and factoryData', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: '0x7702',
+        factoryData: '0xdeadbeef',
+        authorization: {
+          address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+          chainId: 1,
+          nonce: 69n,
+          yParity: 0,
+          r: 1n,
+          s: 2n,
+        },
+      }),
+    ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
+  })
+
+  test('behavior: ERC-7702 factory (full form) with authorization and factoryData', () => {
+    expect(
+      UserOperation.toInitCode({
+        factory: '0x7702000000000000000000000000000000000000',
+        factoryData: '0xcafebabe',
+        authorization: {
+          address: '0x1234567890123456789012345678901234567890',
+          chainId: 1,
+          nonce: 42n,
+          yParity: 1,
+          r: 123n,
+          s: 456n,
+        },
+      }),
+    ).toBe('0x1234567890123456789012345678901234567890cafebabe')
+  })
+})
+
 describe('toRpc', () => {
   test('default', () => {
     expect(
@@ -576,5 +918,277 @@ describe('toRpc', () => {
         "verificationGasLimit": "0x186a0",
       }
     `)
+  })
+})
+
+describe('toTypedData', () => {
+  describe('v0.8', () => {
+    test('default', () => {
+      expect(
+        UserOperation.toTypedData(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `
+        {
+          "domain": {
+            "chainId": 1,
+            "name": "ERC4337",
+            "verifyingContract": "0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108",
+            "version": "1",
+          },
+          "message": {
+            "accountGasLimits": "0x0000000000000000000000000069ed750000000000000000000000000069ed75",
+            "callData": "0x",
+            "gasFees": "0x0000000000000000000000000000004500000000000000000000000000010f2c",
+            "initCode": "0x",
+            "nonce": 0n,
+            "paymasterAndData": "0x",
+            "preVerificationGas": 6942069n,
+            "sender": "0x1234567890123456789012345678901234567890",
+            "signature": "0x",
+          },
+          "primaryType": "PackedUserOperation",
+          "types": {
+            "PackedUserOperation": [
+              {
+                "name": "sender",
+                "type": "address",
+              },
+              {
+                "name": "nonce",
+                "type": "uint256",
+              },
+              {
+                "name": "initCode",
+                "type": "bytes",
+              },
+              {
+                "name": "callData",
+                "type": "bytes",
+              },
+              {
+                "name": "accountGasLimits",
+                "type": "bytes32",
+              },
+              {
+                "name": "preVerificationGas",
+                "type": "uint256",
+              },
+              {
+                "name": "gasFees",
+                "type": "bytes32",
+              },
+              {
+                "name": "paymasterAndData",
+                "type": "bytes",
+              },
+            ],
+          },
+        }
+      `,
+      )
+    })
+
+    test('args: authorization', () => {
+      expect(
+        UserOperation.toTypedData(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+            paymasterVerificationGasLimit: 6942069n,
+            paymasterPostOpGasLimit: 6942069n,
+            paymasterData: '0xdeadbeef',
+            factory: '0x7702',
+            factoryData: '0xdeadbeef',
+            authorization: {
+              address: '0x1234567890123456789012345678901234567890',
+              chainId: 1,
+              nonce: 0n,
+              yParity: 0,
+              r: 1n,
+              s: 2n,
+            },
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `
+        {
+          "domain": {
+            "chainId": 1,
+            "name": "ERC4337",
+            "verifyingContract": "0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108",
+            "version": "1",
+          },
+          "message": {
+            "accountGasLimits": "0x0000000000000000000000000069ed750000000000000000000000000069ed75",
+            "callData": "0x",
+            "gasFees": "0x0000000000000000000000000000004500000000000000000000000000010f2c",
+            "initCode": "0x1234567890123456789012345678901234567890deadbeef",
+            "nonce": 0n,
+            "paymasterAndData": "0x12345678901234567890123456789012345678900000000000000000000000000069ed750000000000000000000000000069ed75deadbeef",
+            "preVerificationGas": 6942069n,
+            "sender": "0x1234567890123456789012345678901234567890",
+            "signature": "0x",
+          },
+          "primaryType": "PackedUserOperation",
+          "types": {
+            "PackedUserOperation": [
+              {
+                "name": "sender",
+                "type": "address",
+              },
+              {
+                "name": "nonce",
+                "type": "uint256",
+              },
+              {
+                "name": "initCode",
+                "type": "bytes",
+              },
+              {
+                "name": "callData",
+                "type": "bytes",
+              },
+              {
+                "name": "accountGasLimits",
+                "type": "bytes32",
+              },
+              {
+                "name": "preVerificationGas",
+                "type": "uint256",
+              },
+              {
+                "name": "gasFees",
+                "type": "bytes32",
+              },
+              {
+                "name": "paymasterAndData",
+                "type": "bytes",
+              },
+            ],
+          },
+        }
+      `,
+      )
+
+      expect(
+        UserOperation.toTypedData(
+          {
+            callData: '0x',
+            callGasLimit: 6942069n,
+            maxFeePerGas: 69420n,
+            maxPriorityFeePerGas: 69n,
+            nonce: 0n,
+            preVerificationGas: 6942069n,
+            sender: '0x1234567890123456789012345678901234567890',
+            signature: '0x',
+            verificationGasLimit: 6942069n,
+            paymaster: '0x1234567890123456789012345678901234567890',
+            paymasterVerificationGasLimit: 6942069n,
+            paymasterPostOpGasLimit: 6942069n,
+            paymasterData: '0xdeadbeef',
+            factory: '0x7702',
+            authorization: {
+              address: '0x1234567890123456789012345678901234567890',
+              chainId: 1,
+              nonce: 0n,
+              yParity: 0,
+              r: 1n,
+              s: 2n,
+            },
+          },
+          {
+            chainId: 1,
+            entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+          },
+        ),
+      ).toMatchInlineSnapshot(
+        `
+        {
+          "domain": {
+            "chainId": 1,
+            "name": "ERC4337",
+            "verifyingContract": "0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108",
+            "version": "1",
+          },
+          "message": {
+            "accountGasLimits": "0x0000000000000000000000000069ed750000000000000000000000000069ed75",
+            "callData": "0x",
+            "gasFees": "0x0000000000000000000000000000004500000000000000000000000000010f2c",
+            "initCode": "0x1234567890123456789012345678901234567890",
+            "nonce": 0n,
+            "paymasterAndData": "0x12345678901234567890123456789012345678900000000000000000000000000069ed750000000000000000000000000069ed75deadbeef",
+            "preVerificationGas": 6942069n,
+            "sender": "0x1234567890123456789012345678901234567890",
+            "signature": "0x",
+          },
+          "primaryType": "PackedUserOperation",
+          "types": {
+            "PackedUserOperation": [
+              {
+                "name": "sender",
+                "type": "address",
+              },
+              {
+                "name": "nonce",
+                "type": "uint256",
+              },
+              {
+                "name": "initCode",
+                "type": "bytes",
+              },
+              {
+                "name": "callData",
+                "type": "bytes",
+              },
+              {
+                "name": "accountGasLimits",
+                "type": "bytes32",
+              },
+              {
+                "name": "preVerificationGas",
+                "type": "uint256",
+              },
+              {
+                "name": "gasFees",
+                "type": "bytes32",
+              },
+              {
+                "name": "paymasterAndData",
+                "type": "bytes",
+              },
+            ],
+          },
+        }
+      `,
+      )
+    })
   })
 })
