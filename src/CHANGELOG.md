@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.5
+
+### Patch Changes
+
+- [#92](https://github.com/wevm/ox/pull/92) [`b6eaa05`](https://github.com/wevm/ox/commit/b6eaa055ce415cd24f802b8bfa5bdbbd53480ab8) Thanks [@jxom](https://github.com/jxom)! - Added support for EntryPoint 0.8.
+
 ## 0.8.4
 
 ### Patch Changes
