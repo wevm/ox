@@ -1,9 +1,11 @@
 import * as AbiParameters from '../core/AbiParameters.js'
 import type * as Address from '../core/Address.js'
+import type * as Authorization from '../core/Authorization.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as Signature from '../core/Signature.js'
+import * as TypedData from '../core/TypedData.js'
 import type { Assign, Compute, OneOf } from '../core/internal/types.js'
 import type * as EntryPoint from './EntryPoint.js'
 
@@ -12,9 +14,13 @@ export type UserOperation<
   entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
   signed extends boolean = boolean,
   bigintType = bigint,
+  numberType = number,
 > = OneOf<
   | (entryPointVersion extends '0.6' ? V06<signed, bigintType> : never)
   | (entryPointVersion extends '0.7' ? V07<signed, bigintType> : never)
+  | (entryPointVersion extends '0.8'
+      ? V08<signed, bigintType, numberType>
+      : never)
 >
 
 /**
@@ -50,6 +56,7 @@ export type Rpc<
 > = OneOf<
   | (entryPointVersion extends '0.6' ? V06<signed, Hex.Hex> : never)
   | (entryPointVersion extends '0.7' ? V07<signed, Hex.Hex> : never)
+  | (entryPointVersion extends '0.8' ? V08<signed, Hex.Hex, Hex.Hex> : never)
 >
 
 /** Transaction Info. */
@@ -134,6 +141,53 @@ export type V07<signed extends boolean = boolean, bigintType = bigint> = {
 
 /** RPC User Operation on EntryPoint 0.7 */
 export type RpcV07<signed extends boolean = true> = V07<signed, Hex.Hex>
+
+/** Type for User Operation on EntryPoint 0.8 */
+export type V08<
+  signed extends boolean = boolean,
+  bigintType = bigint,
+  numberType = number,
+> = {
+  /** Authorization data. */
+  authorization?: Authorization.Signed<bigintType, numberType> | undefined
+  /** The data to pass to the `sender` during the main execution call. */
+  callData: Hex.Hex
+  /** The amount of gas to allocate the main execution call */
+  callGasLimit: bigintType
+  /** Account factory. Only for new accounts. */
+  factory?: Address.Address | undefined
+  /** Data for account factory. */
+  factoryData?: Hex.Hex | undefined
+  /** Maximum fee per gas. */
+  maxFeePerGas: bigintType
+  /** Maximum priority fee per gas. */
+  maxPriorityFeePerGas: bigintType
+  /** Anti-replay parameter. */
+  nonce: bigintType
+  /** Address of paymaster contract. */
+  paymaster?: Address.Address | undefined
+  /** Data for paymaster. */
+  paymasterData?: Hex.Hex | undefined
+  /** The amount of gas to allocate for the paymaster post-operation code. */
+  paymasterPostOpGasLimit?: bigintType | undefined
+  /** The amount of gas to allocate for the paymaster validation code. */
+  paymasterVerificationGasLimit?: bigintType | undefined
+  /** Extra gas to pay the Bundler. */
+  preVerificationGas: bigintType
+  /** The account making the operation. */
+  sender: Address.Address
+  /** Data passed into the account to verify authorization. */
+  signature?: Hex.Hex | undefined
+  /** The amount of gas to allocate for the verification step. */
+  verificationGasLimit: bigintType
+} & (signed extends true ? { signature: Hex.Hex } : {})
+
+/** RPC User Operation on EntryPoint 0.8 */
+export type RpcV08<signed extends boolean = true> = V08<
+  signed,
+  Hex.Hex,
+  Hex.Hex
+>
 
 /**
  * Instantiates a {@link ox#UserOperation.UserOperation} from a provided input.
@@ -370,6 +424,14 @@ export function hash<
     verificationGasLimit,
   } = userOperation as UserOperation
 
+  if (entryPointVersion === '0.8') {
+    const typedData = toTypedData(userOperation as UserOperation<'0.8', true>, {
+      chainId,
+      entryPointAddress,
+    })
+    return TypedData.getSignPayload(typedData)
+  }
+
   const packedUserOp = (() => {
     if (entryPointVersion === '0.6') {
       return AbiParameters.encode(
@@ -480,6 +542,56 @@ export declare namespace hash {
 }
 
 /**
+ * Converts a {@link ox#UserOperation.UserOperation} to `initCode`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const initCode = UserOperation.toInitCode({
+ *   authorization: {
+ *     address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *     chainId: 1,
+ *     nonce: 69n,
+ *     yParity: 0n,
+ *     r: 1n,
+ *     s: 2n,
+ *   },
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   factory: '0x7702',
+ *   factoryData: '0xdeadbeef',
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ * })
+ * ```
+ *
+ * @param userOperation - The user operation to convert.
+ * @returns The init code.
+ */
+export function toInitCode(
+  userOperation: Pick<
+    UserOperation,
+    'authorization' | 'factory' | 'factoryData'
+  >,
+): Hex.Hex {
+  const { authorization, factory, factoryData } = userOperation
+  if (
+    factory === '0x7702' ||
+    factory === '0x7702000000000000000000000000000000000000'
+  ) {
+    if (!authorization) return '0x7702000000000000000000000000000000000000'
+    const delegation = authorization.address
+    return Hex.concat(delegation, factoryData ?? '0x')
+  }
+  if (!factory) return '0x'
+  return Hex.concat(factory, factoryData ?? '0x')
+}
+
+/**
  * Transforms a User Operation into "packed" format.
  *
  * @example
@@ -503,12 +615,12 @@ export declare namespace hash {
  * @param userOperation - The user operation to transform.
  * @returns The packed user operation.
  */
-export function toPacked(userOperation: UserOperation<'0.7', true>): Packed {
+export function toPacked(
+  userOperation: UserOperation<'0.7' | '0.8', true>,
+): Packed {
   const {
     callGasLimit,
     callData,
-    factory,
-    factoryData,
     maxPriorityFeePerGas,
     maxFeePerGas,
     nonce,
@@ -525,8 +637,7 @@ export function toPacked(userOperation: UserOperation<'0.7', true>): Packed {
     Hex.padLeft(Hex.fromNumber(verificationGasLimit || 0n), 16),
     Hex.padLeft(Hex.fromNumber(callGasLimit || 0n), 16),
   )
-  const initCode =
-    factory && factoryData ? Hex.concat(factory, factoryData) : '0x'
+  const initCode = toInitCode(userOperation)
   const gasFees = Hex.concat(
     Hex.padLeft(Hex.fromNumber(maxPriorityFeePerGas || 0n), 16),
     Hex.padLeft(Hex.fromNumber(maxFeePerGas || 0n), 16),
@@ -614,4 +725,78 @@ export function toRpc(userOperation: UserOperation): Rpc {
 
 export declare namespace toRpc {
   export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a signed {@link ox#UserOperation.UserOperation} to a {@link ox#TypedData.Definition}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const typedData = UserOperation.toTypedData({
+ *   authorization: {
+ *     chainId: 1,
+ *     address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *     nonce: 69n,
+ *     yParity: 0n,
+ *     r: 1n,
+ *     s: 2n,
+ *   },
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * })
+ * ```
+ *
+ * @param userOperation - The user operation to convert.
+ * @returns A Typed Data definition.
+ */
+export function toTypedData(
+  userOperation: UserOperation<'0.8', true>,
+  options: toTypedData.Options,
+): TypedData.Definition<typeof toTypedData.types, 'PackedUserOperation'> {
+  const { chainId, entryPointAddress } = options
+
+  const packedUserOp = toPacked(userOperation)
+
+  return {
+    domain: {
+      name: 'ERC4337',
+      version: '1',
+      chainId,
+      verifyingContract: entryPointAddress,
+    },
+    message: packedUserOp,
+    primaryType: 'PackedUserOperation',
+    types: toTypedData.types,
+  }
+}
+
+export namespace toTypedData {
+  export type Options = {
+    chainId: number
+    entryPointAddress: Address.Address
+  }
+
+  export type ErrorType = Errors.GlobalErrorType
+
+  export const types = {
+    PackedUserOperation: [
+      { type: 'address', name: 'sender' },
+      { type: 'uint256', name: 'nonce' },
+      { type: 'bytes', name: 'initCode' },
+      { type: 'bytes', name: 'callData' },
+      { type: 'bytes32', name: 'accountGasLimits' },
+      { type: 'uint256', name: 'preVerificationGas' },
+      { type: 'bytes32', name: 'gasFees' },
+      { type: 'bytes', name: 'paymasterAndData' },
+    ],
+  } as const
 }
