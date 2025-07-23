@@ -546,6 +546,7 @@ export declare namespace hash {
  *
  * @example
  * ```ts twoslash
+ * import { Value } from 'ox'
  * import { UserOperation } from 'ox/erc4337'
  *
  * const initCode = UserOperation.toInitCode({
@@ -553,7 +554,7 @@ export declare namespace hash {
  *     address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
  *     chainId: 1,
  *     nonce: 69n,
- *     yParity: 0n,
+ *     yParity: 0,
  *     r: 1n,
  *     s: 2n,
  *   },
@@ -572,12 +573,7 @@ export declare namespace hash {
  * @param userOperation - The user operation to convert.
  * @returns The init code.
  */
-export function toInitCode(
-  userOperation: Pick<
-    UserOperation,
-    'authorization' | 'factory' | 'factoryData'
-  >,
-): Hex.Hex {
+export function toInitCode(userOperation: Partial<UserOperation>): Hex.Hex {
   const { authorization, factory, factoryData } = userOperation
   if (
     factory === '0x7702' ||
@@ -740,7 +736,7 @@ export declare namespace toRpc {
  *     chainId: 1,
  *     address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
  *     nonce: 69n,
- *     yParity: 0n,
+ *     yParity: 0,
  *     r: 1n,
  *     s: 2n,
  *   },
@@ -751,7 +747,11 @@ export declare namespace toRpc {
  *   nonce: 69n,
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   signature: '0x...',
  *   verificationGasLimit: 100_000n,
+ * }, {
+ *   chainId: 1,
+ *   entryPointAddress: '0x1234567890123456789012345678901234567890',
  * })
  * ```
  *
