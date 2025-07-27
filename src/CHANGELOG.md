@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.6
+
+### Patch Changes
+
+- [#94](https://github.com/wevm/ox/pull/94) [`301c319`](https://github.com/wevm/ox/commit/301c319fafab25b1a3a85bcf6bc81c3c9dee72d9) Thanks [@jxom](https://github.com/jxom)! - **ERC-4337**: Added `UserOperation.fromPacked`.
+
 ## 0.8.5
 
 ### Patch Changes
