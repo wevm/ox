@@ -735,7 +735,7 @@ export function fromPacked(packed: Packed): UserOperation<'0.7' | '0.8', true> {
   const callGasLimit = BigInt(Hex.slice(accountGasLimits, 16, 32))
 
   const { factory, factoryData } = (() => {
-    if (initCode === '0x') return {}
+    if (initCode === '0x') return { factory: undefined, factoryData: undefined }
 
     const factory = Hex.slice(initCode, 0, 20)
     const factoryData =
@@ -753,7 +753,13 @@ export function fromPacked(packed: Packed): UserOperation<'0.7' | '0.8', true> {
     paymasterPostOpGasLimit,
     paymasterData,
   } = (() => {
-    if (paymasterAndData === '0x') return {}
+    if (paymasterAndData === '0x')
+      return {
+        paymaster: undefined,
+        paymasterVerificationGasLimit: undefined,
+        paymasterPostOpGasLimit: undefined,
+        paymasterData: undefined,
+      }
 
     const paymaster = Hex.slice(paymasterAndData, 0, 20)
     const paymasterVerificationGasLimit = BigInt(
