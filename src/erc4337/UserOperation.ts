@@ -210,6 +210,27 @@ export type RpcV08<signed extends boolean = true> = V08<
  * ```
  *
  * @example
+ * ### From Packed User Operation
+ *
+ * ```ts twoslash
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const packed: UserOperation.Packed = {
+ *   accountGasLimits: '0x...',
+ *   callData: '0xdeadbeef',
+ *   initCode: '0x',
+ *   gasFees: '0x...',
+ *   nonce: 69n,
+ *   paymasterAndData: '0x',
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   signature: '0x',
+ * }
+ *
+ * const userOperation = UserOperation.from(packed)
+ * ```
+ *
+ * @example
  * ### Attaching Signatures
  *
  * ```ts twoslash
@@ -238,22 +259,29 @@ export type RpcV08<signed extends boolean = true> = V08<
  * const userOperation_signed = UserOperation.from(userOperation, { signature }) // [!code focus]
  * ```
  *
- * @param userOperation - The user operation to instantiate.
+ * @param userOperation - The user operation to instantiate (structured or packed format).
  * @returns User Operation.
  */
 export function from<
-  const userOperation extends UserOperation,
+  const userOperation extends UserOperation | Packed,
   const signature extends Hex.Hex | undefined = undefined,
 >(
-  userOperation: userOperation | UserOperation,
+  userOperation: userOperation | UserOperation | Packed,
   options: from.Options<signature> = {},
 ): from.ReturnType<userOperation, signature> {
   const signature = (() => {
-    if (!options.signature) return undefined
     if (typeof options.signature === 'string') return options.signature
-    return Signature.toHex(options.signature)
+    if (typeof options.signature === 'object')
+      return Signature.toHex(options.signature)
+    if (userOperation.signature) return userOperation.signature
+    return undefined
   })()
-  return { ...userOperation, signature } as never
+
+  const packed =
+    'accountGasLimits' in userOperation && 'gasFees' in userOperation
+
+  const userOp = packed ? fromPacked(userOperation) : userOperation
+  return { ...userOp, signature } as never
 }
 
 export declare namespace from {
@@ -264,7 +292,7 @@ export declare namespace from {
   }
 
   export type ReturnType<
-    userOperation extends UserOperation = UserOperation,
+    userOperation extends UserOperation | Packed = UserOperation | Packed,
     signature extends Signature.Signature | Hex.Hex | undefined = undefined,
   > = Compute<
     Assign<
@@ -663,6 +691,113 @@ export function toPacked(
 
 export declare namespace toPacked {
   export type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Transforms a "packed" User Operation into a structured {@link ox#UserOperation.UserOperation}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const packed: UserOperation.Packed = {
+ *   accountGasLimits: '0x...',
+ *   callData: '0xdeadbeef',
+ *   initCode: '0x...',
+ *   gasFees: '0x...',
+ *   nonce: 69n,
+ *   paymasterAndData: '0x',
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   signature: '0x...',
+ * }
+ *
+ * const userOperation = UserOperation.fromPacked(packed)
+ * ```
+ *
+ * @param packed - The packed user operation to transform.
+ * @returns The structured user operation.
+ */
+export function fromPacked(packed: Packed): UserOperation<'0.7' | '0.8', true> {
+  const {
+    accountGasLimits,
+    callData,
+    initCode,
+    gasFees,
+    nonce,
+    paymasterAndData,
+    preVerificationGas,
+    sender,
+    signature,
+  } = packed
+
+  const verificationGasLimit = BigInt(Hex.slice(accountGasLimits, 0, 16))
+  const callGasLimit = BigInt(Hex.slice(accountGasLimits, 16, 32))
+
+  const { factory, factoryData } = (() => {
+    if (initCode === '0x') return {}
+
+    const factory = Hex.slice(initCode, 0, 20)
+    const factoryData =
+      Hex.size(initCode) > 20 ? Hex.slice(initCode, 20) : undefined
+
+    return { factory, factoryData }
+  })()
+
+  const maxPriorityFeePerGas = BigInt(Hex.slice(gasFees, 0, 16))
+  const maxFeePerGas = BigInt(Hex.slice(gasFees, 16, 32))
+
+  const {
+    paymaster,
+    paymasterVerificationGasLimit,
+    paymasterPostOpGasLimit,
+    paymasterData,
+  } = (() => {
+    if (paymasterAndData === '0x') return {}
+
+    const paymaster = Hex.slice(paymasterAndData, 0, 20)
+    const paymasterVerificationGasLimit = BigInt(
+      Hex.slice(paymasterAndData, 20, 36),
+    )
+    const paymasterPostOpGasLimit = BigInt(Hex.slice(paymasterAndData, 36, 52))
+    const paymasterData =
+      Hex.size(paymasterAndData) > 52
+        ? Hex.slice(paymasterAndData, 52)
+        : undefined
+
+    return {
+      paymaster,
+      paymasterVerificationGasLimit,
+      paymasterPostOpGasLimit,
+      paymasterData,
+    }
+  })()
+
+  return {
+    callData,
+    callGasLimit,
+    ...(factory && { factory }),
+    ...(factoryData && { factoryData }),
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+    nonce,
+    ...(paymaster && { paymaster }),
+    ...(paymasterData && { paymasterData }),
+    ...(typeof paymasterPostOpGasLimit === 'bigint' && {
+      paymasterPostOpGasLimit,
+    }),
+    ...(typeof paymasterVerificationGasLimit === 'bigint' && {
+      paymasterVerificationGasLimit,
+    }),
+    preVerificationGas,
+    sender,
+    signature,
+    verificationGasLimit,
+  }
+}
+
+export declare namespace fromPacked {
+  export type ErrorType = Hex.slice.ErrorType | Errors.GlobalErrorType
 }
 
 /**

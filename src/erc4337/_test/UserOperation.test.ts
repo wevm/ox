@@ -56,6 +56,76 @@ describe('from', () => {
     const userOperation = UserOperation.from(input, { signature })
     expect(userOperation).toEqual({ ...input, signature })
   })
+
+  test('behavior: packed user operation', () => {
+    const packed = {
+      accountGasLimits:
+        '0x000000000000000000000000000186a0000000000000000000000000000493e0',
+      callData: '0xdeadbeef',
+      gasFees:
+        '0x000000000000000000000000000186a0000000000000000000000000000186a0',
+      initCode: '0x1234567890123456789012345678901234567890deadbeef',
+      nonce: 42n,
+      paymasterAndData:
+        '0x12345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000000deadbeef',
+      preVerificationGas: 100_000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0xabcdef',
+    } as const satisfies UserOperation.Packed
+
+    const userOperation = UserOperation.from(packed)
+
+    expect(userOperation).toEqual({
+      callData: '0xdeadbeef',
+      callGasLimit: 300_000n,
+      factory: '0x1234567890123456789012345678901234567890',
+      factoryData: '0xdeadbeef',
+      maxFeePerGas: 100_000n,
+      maxPriorityFeePerGas: 100_000n,
+      nonce: 42n,
+      paymaster: '0x1234567890123456789012345678901234567890',
+      paymasterData: '0xdeadbeef',
+      paymasterPostOpGasLimit: 0n,
+      paymasterVerificationGasLimit: 0n,
+      preVerificationGas: 100_000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0xabcdef',
+      verificationGasLimit: 100_000n,
+    })
+  })
+
+  test('behavior: packed user operation with signature override', () => {
+    const packed = {
+      accountGasLimits:
+        '0x000000000000000000000000000186a0000000000000000000000000000493e0',
+      callData: '0xdeadbeef',
+      gasFees:
+        '0x000000000000000000000000000186a0000000000000000000000000000186a0',
+      initCode: '0x',
+      nonce: 42n,
+      paymasterAndData: '0x',
+      preVerificationGas: 100_000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0xdeadbeef',
+    } as const satisfies UserOperation.Packed
+
+    const newSignature = '0xcafebabe'
+    const userOperation = UserOperation.from(packed, {
+      signature: newSignature,
+    })
+
+    expect(userOperation).toEqual({
+      callData: '0xdeadbeef',
+      callGasLimit: 300_000n,
+      maxFeePerGas: 100_000n,
+      maxPriorityFeePerGas: 100_000n,
+      nonce: 42n,
+      preVerificationGas: 100_000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: newSignature,
+      verificationGasLimit: 100_000n,
+    })
+  })
 })
 
 describe('fromRpc', () => {
@@ -781,7 +851,7 @@ describe('toInitCode', () => {
     ).toBe('0x1234567890123456789012345678901234567890deadbeef')
   })
 
-  test('behavior: ERC-7702 factory (short form) without authorization', () => {
+  test('behavior: EIP-7702 factory (short form) without authorization', () => {
     expect(
       UserOperation.toInitCode({
         factory: '0x7702',
@@ -791,7 +861,7 @@ describe('toInitCode', () => {
     ).toBe('0x7702000000000000000000000000000000000000')
   })
 
-  test('behavior: ERC-7702 factory (full form) without authorization', () => {
+  test('behavior: EIP-7702 factory (full form) without authorization', () => {
     expect(
       UserOperation.toInitCode({
         factory: '0x7702000000000000000000000000000000000000',
@@ -801,7 +871,7 @@ describe('toInitCode', () => {
     ).toBe('0x7702000000000000000000000000000000000000')
   })
 
-  test('behavior: ERC-7702 factory with authorization and no factoryData', () => {
+  test('behavior: EIP-7702 factory with authorization and no factoryData', () => {
     expect(
       UserOperation.toInitCode({
         factory: '0x7702',
@@ -818,7 +888,7 @@ describe('toInitCode', () => {
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
   })
 
-  test('behavior: ERC-7702 factory with authorization and factoryData', () => {
+  test('behavior: EIP-7702 factory with authorization and factoryData', () => {
     expect(
       UserOperation.toInitCode({
         factory: '0x7702',
@@ -835,7 +905,7 @@ describe('toInitCode', () => {
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
   })
 
-  test('behavior: ERC-7702 factory (full form) with authorization and factoryData', () => {
+  test('behavior: EIP-7702 factory (full form) with authorization and factoryData', () => {
     expect(
       UserOperation.toInitCode({
         factory: '0x7702000000000000000000000000000000000000',
@@ -850,6 +920,187 @@ describe('toInitCode', () => {
         },
       }),
     ).toBe('0x1234567890123456789012345678901234567890cafebabe')
+  })
+})
+
+describe('fromPacked', () => {
+  test('default', () => {
+    const packed = {
+      accountGasLimits:
+        '0x000000000000000000000000000186a0000000000000000000000000000493e0',
+      callData: '0xdeadbeef',
+      gasFees:
+        '0x000000000000000000000000000186a0000000000000000000000000000186a0',
+      initCode: '0x',
+      nonce: 0n,
+      paymasterAndData: '0x',
+      preVerificationGas: 100000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+    } as const satisfies UserOperation.Packed
+
+    expect(UserOperation.fromPacked(packed)).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": 300000n,
+        "maxFeePerGas": 100000n,
+        "maxPriorityFeePerGas": 100000n,
+        "nonce": 0n,
+        "preVerificationGas": 100000n,
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": 100000n,
+      }
+    `)
+  })
+
+  test('args: factory + factoryData', () => {
+    const packed = {
+      accountGasLimits:
+        '0x000000000000000000000000000186a0000000000000000000000000000493e0',
+      callData: '0xdeadbeef',
+      gasFees:
+        '0x000000000000000000000000000186a0000000000000000000000000000186a0',
+      initCode: '0x1234567890123456789012345678901234567890deadbeef',
+      nonce: 0n,
+      paymasterAndData: '0x',
+      preVerificationGas: 100000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+    } as const satisfies UserOperation.Packed
+
+    expect(UserOperation.fromPacked(packed)).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": 300000n,
+        "factory": "0x1234567890123456789012345678901234567890",
+        "factoryData": "0xdeadbeef",
+        "maxFeePerGas": 100000n,
+        "maxPriorityFeePerGas": 100000n,
+        "nonce": 0n,
+        "preVerificationGas": 100000n,
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": 100000n,
+      }
+    `)
+  })
+
+  test('args: paymaster', () => {
+    const packed = {
+      accountGasLimits:
+        '0x000000000000000000000000000186a0000000000000000000000000000493e0',
+      callData: '0xdeadbeef',
+      gasFees:
+        '0x000000000000000000000000000186a0000000000000000000000000000186a0',
+      initCode: '0x1234567890123456789012345678901234567890deadbeef',
+      nonce: 0n,
+      paymasterAndData:
+        '0x12345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000000',
+      preVerificationGas: 100000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+    } as const satisfies UserOperation.Packed
+
+    expect(UserOperation.fromPacked(packed)).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": 300000n,
+        "factory": "0x1234567890123456789012345678901234567890",
+        "factoryData": "0xdeadbeef",
+        "maxFeePerGas": 100000n,
+        "maxPriorityFeePerGas": 100000n,
+        "nonce": 0n,
+        "paymaster": "0x1234567890123456789012345678901234567890",
+        "paymasterPostOpGasLimit": 0n,
+        "paymasterVerificationGasLimit": 0n,
+        "preVerificationGas": 100000n,
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": 100000n,
+      }
+    `)
+  })
+
+  test('args: paymaster, paymasterData', () => {
+    const packed = {
+      accountGasLimits:
+        '0x000000000000000000000000000186a0000000000000000000000000000493e0',
+      callData: '0xdeadbeef',
+      gasFees:
+        '0x000000000000000000000000000186a0000000000000000000000000000186a0',
+      initCode: '0x1234567890123456789012345678901234567890deadbeef',
+      nonce: 0n,
+      paymasterAndData:
+        '0x12345678901234567890123456789012345678900000000000000000000000000000000000000000000000000000000000000000deadbeef',
+      preVerificationGas: 100000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+    } as const satisfies UserOperation.Packed
+
+    expect(UserOperation.fromPacked(packed)).toMatchInlineSnapshot(`
+      {
+        "callData": "0xdeadbeef",
+        "callGasLimit": 300000n,
+        "factory": "0x1234567890123456789012345678901234567890",
+        "factoryData": "0xdeadbeef",
+        "maxFeePerGas": 100000n,
+        "maxPriorityFeePerGas": 100000n,
+        "nonce": 0n,
+        "paymaster": "0x1234567890123456789012345678901234567890",
+        "paymasterData": "0xdeadbeef",
+        "paymasterPostOpGasLimit": 0n,
+        "paymasterVerificationGasLimit": 0n,
+        "preVerificationGas": 100000n,
+        "sender": "0x1234567890123456789012345678901234567890",
+        "signature": "0x",
+        "verificationGasLimit": 100000n,
+      }
+    `)
+  })
+
+  test('behavior: round-trip: fromPacked(toPacked(userOperation)) === userOperation', () => {
+    const userOperation = {
+      callData: '0xdeadbeef',
+      callGasLimit: 300_000n,
+      factory: '0x1234567890123456789012345678901234567890',
+      factoryData: '0xdeadbeef',
+      maxFeePerGas: 100_000n,
+      maxPriorityFeePerGas: 50_000n,
+      nonce: 42n,
+      paymaster: '0x9876543210987654321098765432109876543210',
+      paymasterData: '0xcafebabe',
+      paymasterPostOpGasLimit: 150_000n,
+      paymasterVerificationGasLimit: 200_000n,
+      preVerificationGas: 100_000n,
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0xabcdef',
+      verificationGasLimit: 250_000n,
+    } as const satisfies UserOperation.UserOperation<'0.7', true>
+
+    const packed = UserOperation.toPacked(userOperation)
+    const unpacked = UserOperation.fromPacked(packed)
+
+    expect(unpacked).toEqual(userOperation)
+  })
+
+  test('behavior: round-trip: minimal userOperation', () => {
+    const userOperation = {
+      callData: '0x',
+      callGasLimit: 0n,
+      maxFeePerGas: 0n,
+      maxPriorityFeePerGas: 0n,
+      nonce: 0n,
+      preVerificationGas: 0n,
+      sender: '0x0000000000000000000000000000000000000000',
+      signature: '0x',
+      verificationGasLimit: 0n,
+    } as const satisfies UserOperation.UserOperation<'0.7', true>
+
+    const packed = UserOperation.toPacked(userOperation)
+    const unpacked = UserOperation.fromPacked(packed)
+
+    expect(unpacked).toEqual(userOperation)
   })
 })
 
