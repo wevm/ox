@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Added `UserOperation.fromPacked`.
+**ERC-4337**: Added `UserOperation.fromPacked`.
