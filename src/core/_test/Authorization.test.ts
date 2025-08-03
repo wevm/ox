@@ -214,6 +214,22 @@ describe('fromTuple', () => {
   `)
   })
 
+  test('behavior: zeroish nonce + chainId', () => {
+    const tuple = [
+      '0x',
+      '0x0000000000000000000000000000000000000000',
+      '0x',
+    ] as const satisfies Authorization.Tuple
+    const authorization = Authorization.fromTuple(tuple)
+    expect(authorization).toMatchInlineSnapshot(`
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 0,
+        "nonce": 0n,
+      }
+    `)
+  })
+
   test('behavior: signature', () => {
     const tuple = [
       '0x1',

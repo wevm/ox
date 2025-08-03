@@ -271,8 +271,8 @@ export function fromTuple<const tuple extends Tuple>(
     yParity && r && s ? Signature.fromTuple([yParity, r, s]) : undefined
   return from({
     address,
-    chainId: Number(chainId),
-    nonce: BigInt(nonce),
+    chainId: chainId === '0x' ? 0 : Number(chainId),
+    nonce: nonce === '0x' ? 0n : BigInt(nonce),
     ...signature,
   }) as never
 }
