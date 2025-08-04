@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.7
+
+### Patch Changes
+
+- [`9a9ef21`](https://github.com/wevm/ox/commit/9a9ef21e17f982fa6f7b76d5ad615b68d200d9eb) Thanks [@jxom](https://github.com/jxom)! - Fixed zeroish conversion of `chainId` and `nonce` in `Authorization.fromTuple`.
+
 ## 0.8.6
 
 ### Patch Changes
