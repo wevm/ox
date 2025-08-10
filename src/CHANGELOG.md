@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.8
+
+### Patch Changes
+
+- [#98](https://github.com/wevm/ox/pull/98) [`96c2046`](https://github.com/wevm/ox/commit/96c20462420a3e6be1301cccb4b66afe1bccc3f8) Thanks [@mmv08](https://github.com/mmv08)! - Added handling for `bigint` chain IDs in `TypedData.extractEip712DomainTypes`.
+
 ## 0.8.7
 
 ### Patch Changes
