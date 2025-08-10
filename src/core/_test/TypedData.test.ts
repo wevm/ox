@@ -780,6 +780,37 @@ describe('getSignPayload', () => {
     )
   })
 
+  test('domain: bigint chainId produces same hash as number chainId', () => {
+    const typedDataWithNumberChainId = {
+      domain: {
+        name: 'Test',
+        version: '1',
+        chainId: 1,
+        verifyingContract: '0x0000000000000000000000000000000000000000',
+      },
+      types: {
+        Message: [{ name: 'content', type: 'string' }],
+      },
+      primaryType: 'Message',
+      message: {
+        content: 'Hello World',
+      },
+    } as const
+
+    const typedDataWithBigintChainId = {
+      ...typedDataWithNumberChainId,
+      domain: {
+        ...typedDataWithNumberChainId.domain,
+        chainId: 1n,
+      },
+    }
+
+    const hashWithNumber = TypedData.getSignPayload(typedDataWithNumberChainId)
+    const hashWithBigint = TypedData.getSignPayload(typedDataWithBigintChainId)
+
+    expect(hashWithNumber).toBe(hashWithBigint)
+  })
+
   test('minimal valid typed message', () => {
     const payload = TypedData.getSignPayload({
       types: {
