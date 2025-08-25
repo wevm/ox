@@ -267,14 +267,14 @@ export function fromTuple<const tuple extends Tuple>(
   tuple: tuple,
 ): fromTuple.ReturnType<tuple> {
   const [chainId, address, nonce, yParity, r, s] = tuple
-  const signature =
-    yParity && r && s ? Signature.fromTuple([yParity, r, s]) : undefined
-  return from({
+  let args = {
     address,
     chainId: chainId === '0x' ? 0 : Number(chainId),
     nonce: nonce === '0x' ? 0n : BigInt(nonce),
-    ...signature,
-  }) as never
+  }
+  if (yParity && r && s)
+    args = { ...args, ...Signature.fromTuple([yParity, r, s]) }
+  return from(args) as never
 }
 
 export declare namespace fromTuple {
