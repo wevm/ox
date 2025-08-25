@@ -1400,14 +1400,16 @@ export * as Ed25519 from './core/Ed25519.js'
 export * as Ens from './core/Ens.js'
 
 export * as Errors from './core/Errors.js'
-
+/**
+ * @category Execution Spec
+ */
+export * as Fee from './core/Fee.js'
 /**
  * Utilities & types for working with Filters as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml)
  *
  * @category Execution Spec
  */
 export * as Filter from './core/Filter.js'
-
 /**
  * Utility functions for hashing (keccak256, sha256, etc).
  *
@@ -1422,7 +1424,6 @@ export * as Filter from './core/Filter.js'
  * @category Crypto
  */
 export * as Hash from './core/Hash.js'
-
 /**
  * Utility functions for generating and working with [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) HD Wallets.
  *
@@ -1436,7 +1437,6 @@ export * as Hash from './core/Hash.js'
  * @category Crypto
  */
 export * as HdKey from './core/HdKey.js'
-
 /**
  * A set of Ethereum-related utility functions for working with hexadecimal string values (e.g. `"0xdeadbeef"`).
  *
@@ -1551,12 +1551,7 @@ export * as HdKey from './core/HdKey.js'
  * @category Data
  */
 export * as Hex from './core/Hex.js'
-
-/**
- * @category Execution Spec
- */
-export * as Fee from './core/Fee.js'
-
+export type { Register } from './core/internal/register.js'
 /**
  * Utility functions for working with JSON (with support for `bigint`).
  *
@@ -1590,7 +1585,6 @@ export * as Fee from './core/Fee.js'
  * @category JSON
  */
 export * as Json from './core/Json.js'
-
 /**
  * Utilities & types for working with [Keystores](https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage).
  *
@@ -1654,7 +1648,6 @@ export * as Json from './core/Json.js'
  * @category Crypto
  */
 export * as Keystore from './core/Keystore.js'
-
 /**
  * Utility functions for working with KZG Commitments.
  *
@@ -1663,7 +1656,6 @@ export * as Keystore from './core/Keystore.js'
  * @category Blobs (EIP-4844)
  */
 export * as Kzg from './core/Kzg.js'
-
 /**
  * Utilities & types for working with Logs as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml)
  *
@@ -1722,7 +1714,6 @@ export * as Kzg from './core/Kzg.js'
  * @category Execution Spec
  */
 export * as Log from './core/Log.js'
-
 /**
  * Utility functions for generating and working with [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics.
  *
@@ -1783,7 +1774,78 @@ export * as Log from './core/Log.js'
  * @category Crypto
  */
 export * as Mnemonic from './core/Mnemonic.js'
-
+/**
+ * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography.
+ *
+ * :::info
+ *
+ * The `P256` module is a friendly wrapper over [`@noble/curves/p256`](https://github.com/paulmillr/noble-curves), an **audited** implementation of [P256](https://www.secg.org/sec2-v2.pdf)
+ *
+ * :::
+ *
+ * @example
+ * ### Computing a Random Private Key
+ *
+ * A random private key can be computed using {@link ox#P256.(randomPrivateKey:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ * // @log: '0x...'
+ * ```
+ *
+ * @example
+ * ### Getting a Public Key
+ *
+ * A public key can be derived from a private key using {@link ox#P256.(getPublicKey:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ *
+ * const publicKey = P256.getPublicKey({ privateKey }) // [!code focus]
+ * // @log: { x: 3251...5152n, y: 1251...5152n }
+ * ```
+ *
+ * @example
+ * ### Signing a Payload
+ *
+ * A payload can be signed using {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ *
+ * const signature = P256.sign({ payload: '0xdeadbeef', privateKey }) // [!code focus]
+ * // @log: { r: 1251...5152n, s: 1251...5152n, yParity: 1 }
+ * ```
+ *
+ * @example
+ * ### Verifying a Signature
+ *
+ * A signature can be verified using {@link ox#P256.(verify:function)}:
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ * const publicKey = P256.getPublicKey({ privateKey })
+ * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const isValid = P256.verify({ // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ *   publicKey, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * // @log: true
+ * ```
+ *
+ * @category Crypto
+ */
+export * as P256 from './core/P256.js'
 /**
  * Utilities & types for working with [EIP-191 Personal Messages](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e)
  *
@@ -1803,7 +1865,6 @@ export * as Mnemonic from './core/Mnemonic.js'
  * @category Signed & Typed Data
  */
 export * as PersonalMessage from './core/PersonalMessage.js'
-
 /**
  * Utilities & types for working with [EIP-1193 Providers](https://eips.ethereum.org/EIPS/eip-1193)
  *
@@ -1888,7 +1949,6 @@ export * as PersonalMessage from './core/PersonalMessage.js'
  * @category Providers (EIP-1193)
  */
 export * as Provider from './core/Provider.js'
-
 /**
  * Utility functions for working with ECDSA public keys.
  *
@@ -1929,9 +1989,6 @@ export * as Provider from './core/Provider.js'
  * @category Crypto
  */
 export * as PublicKey from './core/PublicKey.js'
-
-export type { Register } from './core/internal/register.js'
-
 /**
  * Utility functions for encoding and decoding [Recursive Length Prefix](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) structures.
  *
@@ -1949,13 +2006,6 @@ export type { Register } from './core/internal/register.js'
  * @category Data
  */
 export * as Rlp from './core/Rlp.js'
-
-/**
- * Utility types for working with Ethereum JSON-RPC namespaces & schemas.
- *
- * @category JSON-RPC
- */
-export * as RpcSchema from './core/RpcSchema.js'
 
 /**
  * Utility types & functions for working with [JSON-RPC 2.0 Requests](https://www.jsonrpc.org/specification#request_object) and Ethereum JSON-RPC methods as
@@ -2074,7 +2124,12 @@ export * as RpcRequest from './core/RpcRequest.js'
  * @category JSON-RPC
  */
 export * as RpcResponse from './core/RpcResponse.js'
-
+/**
+ * Utility types for working with Ethereum JSON-RPC namespaces & schemas.
+ *
+ * @category JSON-RPC
+ */
+export * as RpcSchema from './core/RpcSchema.js'
 /**
  * Utility functions for working with JSON-RPC Transports.
  *
@@ -2100,7 +2155,6 @@ export * as RpcResponse from './core/RpcResponse.js'
  * @category JSON-RPC
  */
 export * as RpcTransport from './core/RpcTransport.js'
-
 /**
  * Utility functions for [secp256k1](https://www.secg.org/sec2-v2.pdf) ECDSA cryptography.
  *
@@ -2173,79 +2227,6 @@ export * as RpcTransport from './core/RpcTransport.js'
  * @category Crypto
  */
 export * as Secp256k1 from './core/Secp256k1.js'
-
-/**
- * Utility functions for [NIST P256](https://csrc.nist.gov/csrc/media/events/workshop-on-elliptic-curve-cryptography-standards/documents/papers/session6-adalier-mehmet.pdf) ECDSA cryptography.
- *
- * :::info
- *
- * The `P256` module is a friendly wrapper over [`@noble/curves/p256`](https://github.com/paulmillr/noble-curves), an **audited** implementation of [P256](https://www.secg.org/sec2-v2.pdf)
- *
- * :::
- *
- * @example
- * ### Computing a Random Private Key
- *
- * A random private key can be computed using {@link ox#P256.(randomPrivateKey:function)}:
- *
- * ```ts twoslash
- * import { P256 } from 'ox'
- *
- * const privateKey = P256.randomPrivateKey()
- * // @log: '0x...'
- * ```
- *
- * @example
- * ### Getting a Public Key
- *
- * A public key can be derived from a private key using {@link ox#P256.(getPublicKey:function)}:
- *
- * ```ts twoslash
- * import { P256 } from 'ox'
- *
- * const privateKey = P256.randomPrivateKey()
- *
- * const publicKey = P256.getPublicKey({ privateKey }) // [!code focus]
- * // @log: { x: 3251...5152n, y: 1251...5152n }
- * ```
- *
- * @example
- * ### Signing a Payload
- *
- * A payload can be signed using {@link ox#P256.(sign:function)}:
- *
- * ```ts twoslash
- * import { P256 } from 'ox'
- *
- * const privateKey = P256.randomPrivateKey()
- *
- * const signature = P256.sign({ payload: '0xdeadbeef', privateKey }) // [!code focus]
- * // @log: { r: 1251...5152n, s: 1251...5152n, yParity: 1 }
- * ```
- *
- * @example
- * ### Verifying a Signature
- *
- * A signature can be verified using {@link ox#P256.(verify:function)}:
- *
- * ```ts twoslash
- * import { P256 } from 'ox'
- *
- * const privateKey = P256.randomPrivateKey()
- * const publicKey = P256.getPublicKey({ privateKey })
- * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
- *
- * const isValid = P256.verify({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   publicKey, // [!code focus]
- *   signature, // [!code focus]
- * }) // [!code focus]
- * // @log: true
- * ```
- *
- * @category Crypto
- */
-export * as P256 from './core/P256.js'
 
 /**
  * Utility functions for working with ECDSA signatures.
@@ -2446,162 +2427,6 @@ export * as Transaction from './core/Transaction.js'
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelope from './core/TransactionEnvelope.js'
-
-/**
- * Utility functions for working
- * with **Legacy Transaction Envelopes**.
- *
- * @example
- * ### Instantiating
- *
- * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeLegacy.(from:function)}:
- *
- * ```ts twoslash
- * import { TransactionEnvelopeLegacy, Value } from 'ox'
- *
- * const envelope = TransactionEnvelopeLegacy.from({
- *   gasPrice: Value.fromGwei('10'),
- *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
- * })
- * ```
- *
- * * @example
- * ### Signing
- *
- * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeLegacy.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
- *
- * ```ts twoslash
- * // @noErrors
- * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
- *
- * const envelope = TransactionEnvelopeLegacy.from({
- *   nonce: 0n,
- *   gasPrice: 1000000000n,
- *   gas: 21000n,
- *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
- * })
- *
- * const signature = Secp256k1.sign({ // [!code focus]
- *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope), // [!code focus]
- *   privateKey: '0x...' // [!code focus]
- * }) // [!code focus]
- *
- * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
- * ```
- *
- * @example
- * ### Serializing
- *
- * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeLegacy.(serialize:function)}:
- *
- * ```ts twoslash
- * import { TransactionEnvelopeLegacy, Value } from 'ox'
- *
- * const envelope = TransactionEnvelopeLegacy.from({
- *   chainId: 1,
- *   gasPrice: Value.fromGwei('10'),
- *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
- * })
- *
- * const serialized = TransactionEnvelopeLegacy.serialize(envelope) // [!code focus]
- * ```
- *
- * @example
- * ### Sending
- *
- * We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`.
- *
- * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
- *
- * ```ts twoslash
- * import { RpcTransport, TransactionEnvelopeLegacy, Secp256k1, Value } from 'ox'
- *
- * // Construct the Envelope.
- * const envelope = TransactionEnvelopeLegacy.from({
- *   chainId: 1,
- *   gasPrice: Value.fromGwei('10'),
- *   nonce: 69n,
- *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
- * })
- *
- * // Sign over the Envelope.
- * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
- *   privateKey: '0x...',
- * })
- *
- * // Serialize the Envelope with the Signature. // [!code focus]
- * const serialized = TransactionEnvelopeLegacy.serialize(envelope, { // [!code focus]
- *   signature  // [!code focus]
- * }) // [!code focus]
- *
- * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
- * const hash = await transport.request({ // [!code focus]
- *   method: 'eth_sendRawTransaction', // [!code focus]
- *   params: [serialized], // [!code focus]
- * }) // [!code focus]
- * ```
- *
- * If you are interfacing with an RPC that supports `eth_sendTransaction`, you can also use
- * {@link ox#TransactionEnvelopeLegacy.(toRpc:function)} to convert an Envelope to an RPC-compatible format.
- * This means you can skip the ceremony of manually filling & signing the Transaction.
- *
- * ```ts twoslash
- * import 'ox/window'
- * import { Provider, TransactionEnvelopeLegacy, Value } from 'ox'
- *
- * const envelope = TransactionEnvelopeLegacy.from({
- *   chainId: 1,
- *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
- * })
- *
- * const envelope_rpc = TransactionEnvelopeLegacy.toRpc(envelope)
- *
- * const provider = Provider.from(window.ethereum)
- * const hash = await provider.request({
- *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
- * })
- * ```
- *
- * @example
- * ### Computing Hashes
- *
- * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeLegacy.(hash:function)}:
- *
- * ```ts twoslash
- * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
- *
- * const envelope = TransactionEnvelopeLegacy.from({
- *   chainId: 1,
- *   nonce: 0n,
- *   gasPrice: 1000000000n,
- *   gas: 21000n,
- *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
- *   data: '0x',
- * })
- *
- * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
- *   privateKey: '0x...'
- * })
- *
- * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
- *
- * const hash = TransactionEnvelopeLegacy.hash(envelope_signed) // [!code focus]
- * ```
- *
- * @category Transaction Envelopes
- */
-export * as TransactionEnvelopeLegacy from './core/TransactionEnvelopeLegacy.js'
-
 /**
  * Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559)
  *
@@ -2768,7 +2593,6 @@ export * as TransactionEnvelopeLegacy from './core/TransactionEnvelopeLegacy.js'
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelopeEip1559 from './core/TransactionEnvelopeEip1559.js'
-
 /**
  * Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930)
  *
@@ -2927,7 +2751,6 @@ export * as TransactionEnvelopeEip1559 from './core/TransactionEnvelopeEip1559.j
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelopeEip2930 from './core/TransactionEnvelopeEip2930.js'
-
 /**
  * Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844)
  *
@@ -3111,7 +2934,6 @@ export * as TransactionEnvelopeEip2930 from './core/TransactionEnvelopeEip2930.j
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelopeEip4844 from './core/TransactionEnvelopeEip4844.js'
-
 /**
  * Utility functions for working with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702)
  *
@@ -3244,6 +3066,160 @@ export * as TransactionEnvelopeEip4844 from './core/TransactionEnvelopeEip4844.j
  * @category Transaction Envelopes
  */
 export * as TransactionEnvelopeEip7702 from './core/TransactionEnvelopeEip7702.js'
+/**
+ * Utility functions for working
+ * with **Legacy Transaction Envelopes**.
+ *
+ * @example
+ * ### Instantiating
+ *
+ * Transaction Envelopes can be instantiated using {@link ox#TransactionEnvelopeLegacy.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelopeLegacy, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   gasPrice: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ * ```
+ *
+ * * @example
+ * ### Signing
+ *
+ * Transaction Envelopes can be signed using {@link ox#TransactionEnvelopeLegacy.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ * })
+ *
+ * const signature = Secp256k1.sign({ // [!code focus]
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope), // [!code focus]
+ *   privateKey: '0x...' // [!code focus]
+ * }) // [!code focus]
+ *
+ * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
+ * ```
+ *
+ * @example
+ * ### Serializing
+ *
+ * Transaction Envelopes can be serialized using {@link ox#TransactionEnvelopeLegacy.(serialize:function)}:
+ *
+ * ```ts twoslash
+ * import { TransactionEnvelopeLegacy, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const serialized = TransactionEnvelopeLegacy.serialize(envelope) // [!code focus]
+ * ```
+ *
+ * @example
+ * ### Sending
+ *
+ * We can send a Transaction Envelope to the network by serializing the signed envelope with `.serialize`, and then broadcasting it over JSON-RPC with `eth_sendRawTransaction`.
+ *
+ * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
+ *
+ * ```ts twoslash
+ * import { RpcTransport, TransactionEnvelopeLegacy, Secp256k1, Value } from 'ox'
+ *
+ * // Construct the Envelope.
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   gasPrice: Value.fromGwei('10'),
+ *   nonce: 69n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * // Sign over the Envelope.
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   privateKey: '0x...',
+ * })
+ *
+ * // Serialize the Envelope with the Signature. // [!code focus]
+ * const serialized = TransactionEnvelopeLegacy.serialize(envelope, { // [!code focus]
+ *   signature  // [!code focus]
+ * }) // [!code focus]
+ *
+ * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
+ * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
+ * const hash = await transport.request({ // [!code focus]
+ *   method: 'eth_sendRawTransaction', // [!code focus]
+ *   params: [serialized], // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * If you are interfacing with an RPC that supports `eth_sendTransaction`, you can also use
+ * {@link ox#TransactionEnvelopeLegacy.(toRpc:function)} to convert an Envelope to an RPC-compatible format.
+ * This means you can skip the ceremony of manually filling & signing the Transaction.
+ *
+ * ```ts twoslash
+ * import 'ox/window'
+ * import { Provider, TransactionEnvelopeLegacy, Value } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1.5'),
+ * })
+ *
+ * const envelope_rpc = TransactionEnvelopeLegacy.toRpc(envelope)
+ *
+ * const provider = Provider.from(window.ethereum)
+ * const hash = await provider.request({
+ *   method: 'eth_sendTransaction',
+ *   params: [envelope_rpc],
+ * })
+ * ```
+ *
+ * @example
+ * ### Computing Hashes
+ *
+ * Transaction Hashes can be computed using {@link ox#TransactionEnvelopeLegacy.(hash:function)}:
+ *
+ * ```ts twoslash
+ * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
+ *
+ * const envelope = TransactionEnvelopeLegacy.from({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   gas: 21000n,
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: 1000000000000000000n,
+ *   data: '0x',
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
+ *
+ * const hash = TransactionEnvelopeLegacy.hash(envelope_signed) // [!code focus]
+ * ```
+ *
+ * @category Transaction Envelopes
+ */
+export * as TransactionEnvelopeLegacy from './core/TransactionEnvelopeLegacy.js'
 
 /**
  * Utilities & types for working with **Transaction Receipts** as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml)

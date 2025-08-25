@@ -1,6 +1,5 @@
 import { Address, PublicKey } from 'ox'
-import { describe } from 'vitest'
-import { expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 
 test('exports', () => {
   expect(Object.keys(Address)).toMatchInlineSnapshot(`

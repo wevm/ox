@@ -2,9 +2,9 @@ import { p256 } from '@noble/curves/p256'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
-import type { Compute } from './internal/types.js'
 
 /**
  * Generates an ECDSA P256 key pair that includes:

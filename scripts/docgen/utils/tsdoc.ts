@@ -5,8 +5,8 @@ import { TSDocConfigFile } from '@microsoft/tsdoc-config'
 import { SyntaxKind } from 'ts-morph'
 
 import {
-  type ResolveDeclarationReference,
   createResolveDeclarationReference,
+  type ResolveDeclarationReference,
 } from './model.js'
 import { project } from './tsmorph.js'
 

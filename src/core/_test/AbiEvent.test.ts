@@ -188,7 +188,7 @@ describe('assertArgs', () => {
       ],
     })
     expect(() =>
-      // @ts-ignore
+      // @ts-expect-error
       AbiEvent.assertArgs(abiEvent, args, {
         from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678az',
         to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',

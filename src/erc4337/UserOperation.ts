@@ -4,9 +4,9 @@ import type * as Authorization from '../core/Authorization.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import type { Assign, Compute, OneOf } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as TypedData from '../core/TypedData.js'
-import type { Assign, Compute, OneOf } from '../core/internal/types.js'
 import type * as EntryPoint from './EntryPoint.js'
 
 /** User Operation. */

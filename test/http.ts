@@ -1,4 +1,4 @@
-import { type RequestListener, createServer } from 'node:http'
+import { createServer, type RequestListener } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
 export function createHttpServer(

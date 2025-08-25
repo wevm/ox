@@ -4,7 +4,7 @@ import type { ExactPartial } from './internal/types.js'
 import { uid } from './internal/uid.js'
 
 export const domainRegex =
-  /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:[0-9]{1,5})?$/
+  /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:[0-9]{1,5})?$/
 
 export const ipRegex =
   /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]{1,5})?$/
@@ -285,8 +285,7 @@ export function generateNonce(): string {
 // based on https://github.com/ogt/valid-url
 export function isUri(value: string): false | string {
   // check for illegal characters
-  if (/[^a-z0-9\:\/\?\#\[\]\@\!\$\&\'\(\)\*\+\,\;\=\.\-\_\~\%]/i.test(value))
-    return false
+  if (/[^a-z0-9:/?#[\]@!$&'()*+,;=.\-_~%]/i.test(value)) return false
 
   // check for hex escapes that aren't complete
   if (/%[^0-9a-f]/i.test(value)) return false
@@ -312,7 +311,7 @@ export function isUri(value: string): false | string {
   }
 
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
-  if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return false
+  if (!/^[a-z][a-z0-9+\-.]*$/.test(scheme.toLowerCase())) return false
 
   let out = ''
   // re-assemble the URL per section 5.3 in RFC 3986
@@ -329,7 +328,7 @@ export function isUri(value: string): false | string {
 
 function splitUri(value: string) {
   return value.match(
-    /(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/,
+    /(?:([^:/?#]+):)?(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/,
   )!
 }
 

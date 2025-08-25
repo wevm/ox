@@ -65,12 +65,12 @@ function generateValues(parameters: AbiParameters.Parameter[]) {
       if (!arrayMatch) continue
       const [_, type, size] = arrayMatch
       const length = size
-        ? Number.parseInt(size)
+        ? Number.parseInt(size, 10)
         : Math.floor(Math.random() * 8)
       const nested = []
       for (let i = 0; i < length; i++) {
         nested.push(
-          // @ts-ignore
+          // @ts-expect-error
           generateValues([{ components: parameter.components, type }])[0],
         )
       }
@@ -81,7 +81,7 @@ function generateValues(parameters: AbiParameters.Parameter[]) {
       const intMatch = parameter.type.match(Solidity.integerRegex)
       if (!intMatch) continue
       const [_, type, size_str = '256'] = intMatch
-      const size = Number.parseInt(size_str)
+      const size = Number.parseInt(size_str, 10)
       const max =
         type === 'int'
           ? Math.random() > 0.5
@@ -105,7 +105,7 @@ function generateValues(parameters: AbiParameters.Parameter[]) {
       const bytesMatch = parameter.type.match(Solidity.bytesRegex)
       if (!bytesMatch) continue
       const [_, size = '32'] = bytesMatch
-      const value = Hex.fromBytes(generateBytes(Number.parseInt(size)))
+      const value = Hex.fromBytes(generateBytes(Number.parseInt(size, 10)))
       values.push(value)
       continue
     }

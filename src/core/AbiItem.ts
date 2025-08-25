@@ -357,7 +357,7 @@ export function fromAbi<
       ...(prepare ? { hash: getSignatureHash(abiItems[0]!) } : {}),
     } as never
 
-  let matchedAbiItem: AbiItem | undefined = undefined
+  let matchedAbiItem: AbiItem | undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {

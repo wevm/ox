@@ -1,4 +1,3 @@
-import React from 'react'
 import { defineConfig } from 'vocs'
 import pkg from '../src/package.json'
 import { sidebar, topNav } from './config-generated'

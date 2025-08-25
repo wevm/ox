@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 export function path(name: string) {
   const __filename = fileURLToPath(
     // import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', or 'nodenext'
+    // biome-ignore lint/suspicious/noTsIgnore: _
     // @ts-ignore
     import.meta.url,
   )

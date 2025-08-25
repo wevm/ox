@@ -1,7 +1,5 @@
-import { expectTypeOf } from 'vitest'
-
 import { TransactionEnvelopeLegacy } from 'ox'
-import { test } from 'vitest'
+import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
   {

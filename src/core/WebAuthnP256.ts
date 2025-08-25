@@ -3,11 +3,11 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import type { Compute, OneOf } from './internal/types.js'
+import * as internal from './internal/webauthn.js'
 import * as P256 from './P256.js'
 import type * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
-import type { Compute, OneOf } from './internal/types.js'
-import * as internal from './internal/webauthn.js'
 
 /** A WebAuthn-flavored P256 credential. */
 export type P256Credential = {

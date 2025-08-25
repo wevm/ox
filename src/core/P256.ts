@@ -2,9 +2,9 @@ import { secp256r1 } from '@noble/curves/p256'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as Entropy from './internal/entropy.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
-import * as Entropy from './internal/entropy.js'
 
 /** Re-export of noble/curves P256 utilities. */
 export const noble = secp256r1

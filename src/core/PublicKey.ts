@@ -1,8 +1,8 @@
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import * as Json from './Json.js'
 import type { Compute, ExactPartial } from './internal/types.js'
+import * as Json from './Json.js'
 
 /** Root type for an ECDSA Public Key. */
 export type PublicKey<
@@ -431,7 +431,7 @@ export function validate(
   try {
     assert(publicKey, options)
     return true
-  } catch (error) {
+  } catch (_error) {
     return false
   }
 }

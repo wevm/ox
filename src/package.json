@@ -36,12 +36,21 @@
   "license": "MIT",
   "homepage": "https://wevm.dev",
   "repository": "wevm/ox",
-  "authors": ["awkweb", "jxom"],
+  "authors": [
+    "awkweb",
+    "jxom"
+  ],
   "funding": [
     {
       "type": "github",
       "url": "https://github.com/sponsors/wevm"
     }
   ],
-  "keywords": ["ethereum", "standard", "library", "typescript", "evm"]
+  "keywords": [
+    "ethereum",
+    "standard",
+    "library",
+    "typescript",
+    "evm"
+  ]
 }

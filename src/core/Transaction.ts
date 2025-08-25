@@ -3,9 +3,8 @@ import type * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import type { Compute, OneOf, UnionCompute } from './internal/types.js'
 import * as Signature from './Signature.js'
-import type { Compute, UnionCompute } from './internal/types.js'
-import type { OneOf } from './internal/types.js'
 
 /**
  * A Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).

@@ -1,9 +1,9 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
-import * as Json from './Json.js'
 import * as internal_bytes from './internal/bytes.js'
 import * as internal from './internal/hex.js'
+import * as Json from './Json.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()
 

@@ -1,17 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
   "files": {
-    "ignore": [
-      "contracts/",
-      "contracts/generated.ts",
-      "test/kzg",
-      "tsconfig.json",
-      "tsconfig.*.json"
+    "includes": [
+      "**",
+      "!**/contracts/",
+      "!**/contracts/generated.ts",
+      "!**/test/kzg",
+      "!**/tsconfig.json",
+      "!**/tsconfig.*.json"
     ]
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -33,9 +32,10 @@
       },
       "suspicious": {
         "noAssignInExpressions": "off",
-        "noConsoleLog": "error",
         "noExplicitAny": "off",
-        "noShadowRestrictedNames": "off"
+        "noShadowRestrictedNames": "off",
+        "noTemplateCurlyInString": "off",
+        "noConsole": { "level": "error", "options": { "allow": ["log"] } }
       }
     }
   },

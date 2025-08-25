@@ -18,7 +18,6 @@ import {
   type processDocComment,
 } from './utils/tsdoc.js'
 
-// biome-ignore lint/suspicious/noConsoleLog:
 console.log('Generating API docs.')
 
 ////////////////////////////////////////////////////////////
@@ -295,5 +294,4 @@ for (const namespace of namespaceEntries) {
   fs.writeFileSync(`${path}/index.mdx`, content)
 }
 
-// biome-ignore lint/suspicious/noConsoleLog:
 console.log('Done.')

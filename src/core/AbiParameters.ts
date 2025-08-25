@@ -3,9 +3,9 @@ import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import * as Solidity from './Solidity.js'
 import * as internal from './internal/abiParameters.js'
 import * as Cursor from './internal/cursor.js'
+import * as Solidity from './Solidity.js'
 
 /** Root type for ABI parameters. */
 export type AbiParameters = readonly abitype.AbiParameter[]
@@ -294,7 +294,7 @@ export namespace encodePacked {
     const intMatch = (type as string).match(Solidity.integerRegex)
     if (intMatch) {
       const [_type, baseType, bits = '256'] = intMatch
-      const size = Number.parseInt(bits) / 8
+      const size = Number.parseInt(bits, 10) / 8
       return Hex.fromNumber(value as number, {
         size: isArray ? 32 : size,
         signed: baseType === 'int',
@@ -304,9 +304,9 @@ export namespace encodePacked {
     const bytesMatch = (type as string).match(Solidity.bytesRegex)
     if (bytesMatch) {
       const [_type, size] = bytesMatch
-      if (Number.parseInt(size!) !== ((value as Hex.Hex).length - 2) / 2)
+      if (Number.parseInt(size!, 10) !== ((value as Hex.Hex).length - 2) / 2)
         throw new BytesSizeMismatchError({
-          expectedSize: Number.parseInt(size!),
+          expectedSize: Number.parseInt(size!, 10),
           value: value as Hex.Hex,
         })
       return Hex.padRight(value as Hex.Hex, isArray ? 32 : 0) as Hex.Hex

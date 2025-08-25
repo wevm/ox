@@ -1,11 +1,11 @@
 import * as Errors from './Errors.js'
-import type * as RpcResponse from './RpcResponse.js'
-import type * as RpcSchema from './RpcSchema.js'
 import { getUrl } from './internal/errors.js'
 import * as promise from './internal/promise.js'
 import type * as RpcSchema_internal from './internal/rpcSchema.js'
 import * as internal from './internal/rpcTransport.js'
 import type { Compute } from './internal/types.js'
+import type * as RpcResponse from './RpcResponse.js'
+import type * as RpcSchema from './RpcSchema.js'
 
 /** Root type for an RPC Transport. */
 export type RpcTransport<
@@ -124,7 +124,7 @@ export function fromHttp<
           return response.text().then((data) => {
             try {
               return JSON.parse(data || '{}')
-            } catch (err) {
+            } catch (_err) {
               if (response.ok)
                 throw new MalformedResponseError({
                   response: data,

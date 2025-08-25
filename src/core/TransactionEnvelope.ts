@@ -1,8 +1,8 @@
 import type * as Address from './Address.js'
 import * as Errors from './Errors.js'
 import type * as Hex from './Hex.js'
-import * as Value from './Value.js'
 import type { Compute } from './internal/types.js'
+import * as Value from './Value.js'
 
 /** Base type for a Transaction Envelope. Transaction Envelopes inherit this type. */
 export type Base<

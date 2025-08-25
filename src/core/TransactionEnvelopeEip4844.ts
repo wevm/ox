@@ -3,17 +3,17 @@ import * as Blobs from './Blobs.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import * as Kzg from './Kzg.js'
-import * as Rlp from './Rlp.js'
-import * as Signature from './Signature.js'
-import * as TransactionEnvelope from './TransactionEnvelope.js'
-import * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
 import type {
   Assign,
   Compute,
   PartialBy,
   UnionPartialBy,
 } from './internal/types.js'
+import * as Kzg from './Kzg.js'
+import * as Rlp from './Rlp.js'
+import * as Signature from './Signature.js'
+import * as TransactionEnvelope from './TransactionEnvelope.js'
+import * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
 
 export type TransactionEnvelopeEip4844<
   signed extends boolean = boolean,

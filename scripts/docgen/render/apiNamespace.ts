@@ -27,7 +27,7 @@ export function renderNamespace(options: {
 
   const headings = [...examples]
     .map((x) => {
-      if (!x.includes('###')) return
+      if (!x.includes('###')) return undefined
       const header = x.split('\n')[0]!.replaceAll('#', '').trim()
       return { header, slug: header.toLowerCase().replaceAll(' ', '-') }
     })

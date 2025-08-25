@@ -1,7 +1,7 @@
 import type { Errors } from '../index.js'
-import type * as RpcSchema from './RpcSchema.js'
 import type * as RpcSchema_internal from './internal/rpcSchema.js'
 import type { Compute } from './internal/types.js'
+import type * as RpcSchema from './RpcSchema.js'
 
 /** A JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object). */
 export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =

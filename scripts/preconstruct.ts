@@ -2,13 +2,11 @@ import { basename, dirname, resolve } from 'node:path'
 import fs from 'fs-extra'
 import { getExports } from './utils/exports.js'
 
-// biome-ignore lint/suspicious/noConsoleLog:
 console.log('Setting up packages for development.')
 
 const packagePath = resolve(import.meta.dirname, '../src/package.json')
 const packageJson = fs.readJsonSync(packagePath)
 
-// biome-ignore lint/suspicious/noConsoleLog:
 console.log(`${packageJson.name} — ${dirname(packagePath)}`)
 
 const dir = resolve(dirname(packagePath))
@@ -53,5 +51,4 @@ for (const [key, distExports] of Object.entries(exports.dist ?? {})) {
   }
 }
 
-// biome-ignore lint/suspicious/noConsoleLog:
 console.log('Done.')

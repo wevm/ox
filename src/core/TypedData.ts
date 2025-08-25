@@ -5,9 +5,9 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import type { Compute } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
-import type { Compute } from './internal/types.js'
 
 export type TypedData = abitype.TypedData
 export type Domain = abitype.TypedDataDomain
@@ -124,7 +124,7 @@ export function assert<
         // and will throw.
         Hex.fromNumber(value, {
           signed: base === 'int',
-          size: Number.parseInt(size_ ?? '') / 8,
+          size: Number.parseInt(size_ ?? '', 10) / 8,
         })
       }
 
@@ -141,9 +141,9 @@ export function assert<
       const bytesMatch = type.match(Solidity.bytesRegex)
       if (bytesMatch) {
         const [, size] = bytesMatch
-        if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size))
+        if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
           throw new BytesSizeMismatchError({
-            expectedSize: Number.parseInt(size),
+            expectedSize: Number.parseInt(size, 10),
             givenSize: Hex.size(value as Hex.Hex),
           })
       }

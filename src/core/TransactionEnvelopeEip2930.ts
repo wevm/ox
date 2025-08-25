@@ -3,15 +3,15 @@ import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import * as Rlp from './Rlp.js'
-import * as Signature from './Signature.js'
-import * as TransactionEnvelope from './TransactionEnvelope.js'
 import type {
   Assign,
   Compute,
   PartialBy,
   UnionPartialBy,
 } from './internal/types.js'
+import * as Rlp from './Rlp.js'
+import * as Signature from './Signature.js'
+import * as TransactionEnvelope from './TransactionEnvelope.js'
 
 export type TransactionEnvelopeEip2930<
   signed extends boolean = boolean,

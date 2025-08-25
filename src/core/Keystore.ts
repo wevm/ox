@@ -1,11 +1,11 @@
 import { ctr } from '@noble/ciphers/aes'
 import {
-  pbkdf2Async as pbkdf2Async_noble,
   pbkdf2 as pbkdf2_noble,
+  pbkdf2Async as pbkdf2Async_noble,
 } from '@noble/hashes/pbkdf2'
 import {
-  scryptAsync as scryptAsync_noble,
   scrypt as scrypt_noble,
+  scryptAsync as scryptAsync_noble,
 } from '@noble/hashes/scrypt'
 import { sha256 } from '@noble/hashes/sha2'
 import * as Bytes from './Bytes.js'
@@ -524,6 +524,7 @@ export declare namespace toKeyAsync {
 ///////////////////////////////////////////////////////////////////////////
 
 /** @internal */
+// biome-ignore lint/correctness/noUnusedVariables: _
 function defineKey<
   const key extends Key,
   const options extends defineKey.Options,

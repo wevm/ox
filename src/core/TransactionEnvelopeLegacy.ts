@@ -2,9 +2,6 @@ import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import * as Rlp from './Rlp.js'
-import * as Signature from './Signature.js'
-import * as TransactionEnvelope from './TransactionEnvelope.js'
 import type {
   Assign,
   Branded,
@@ -12,6 +9,9 @@ import type {
   PartialBy,
   UnionPartialBy,
 } from './internal/types.js'
+import * as Rlp from './Rlp.js'
+import * as Signature from './Signature.js'
+import * as TransactionEnvelope from './TransactionEnvelope.js'
 
 export type TransactionEnvelopeLegacy<
   signed extends boolean = boolean,

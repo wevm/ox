@@ -1,8 +1,8 @@
 import type {
   AbiParameter,
   AbiParameterKind,
-  AbiParameterToPrimitiveType,
   AbiParametersToPrimitiveTypes,
+  AbiParameterToPrimitiveType,
 } from 'abitype'
 import * as AbiParameters from '../AbiParameters.js'
 import * as Address from '../Address.js'
@@ -258,7 +258,7 @@ export function decodeBytes(
     return [Hex.fromBytes(data), 32]
   }
 
-  const value = Hex.fromBytes(cursor.readBytes(Number.parseInt(size), 32))
+  const value = Hex.fromBytes(cursor.readBytes(Number.parseInt(size, 10), 32))
   return [value, 32]
 }
 
@@ -275,7 +275,7 @@ export function decodeNumber(
   param: AbiParameters.Parameter,
 ) {
   const signed = param.type.startsWith('int')
-  const size = Number.parseInt(param.type.split('int')[1] || '256')
+  const size = Number.parseInt(param.type.split('int')[1] || '256', 10)
   const value = cursor.readBytes(32)
   return [
     size > 48
@@ -644,9 +644,9 @@ export function encodeBytes(
       ),
     }
   }
-  if (bytesSize !== Number.parseInt(parametersize))
+  if (bytesSize !== Number.parseInt(parametersize, 10))
     throw new AbiParameters.BytesSizeMismatchError({
-      expectedSize: Number.parseInt(parametersize),
+      expectedSize: Number.parseInt(parametersize, 10),
       value,
     })
   return { dynamic: false, encoded: Hex.padRight(value) }

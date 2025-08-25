@@ -141,7 +141,9 @@ describe('decode', () => {
       ],
     })
 
-    attest(decoded).type.toString.snap(`  | { newCounter: bigint; offerer: \`0x\${string}\` }
+    attest(
+      decoded,
+    ).type.toString.snap(`  | { newCounter: bigint; offerer: \`0x\${string}\` }
     | {
         orderHash: \`0x\${string}\`
         offerer: \`0x\${string}\`

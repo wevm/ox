@@ -3,10 +3,10 @@ import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import * as PublicKey from './PublicKey.js'
-import type * as Signature from './Signature.js'
 import * as Entropy from './internal/entropy.js'
 import type { OneOf } from './internal/types.js'
+import * as PublicKey from './PublicKey.js'
+import type * as Signature from './Signature.js'
 
 /** Re-export of noble/curves secp256k1 utilities. */
 export const noble = secp256k1

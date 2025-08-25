@@ -2,9 +2,9 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import type { Compute, ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
-import type { Compute, ExactPartial, OneOf } from './internal/types.js'
 
 /** Root type for an ECDSA signature. */
 export type Signature<

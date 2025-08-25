@@ -34,7 +34,9 @@ export function withTimeout<data>(
 export declare namespace withTimeout {
   type Fn<data> = ({
     signal,
-  }: { signal: AbortController['signal'] | null }) => Promise<data>
+  }: {
+    signal: AbortController['signal'] | null
+  }) => Promise<data>
 
   type Options = {
     // The error instance to throw when the timeout is reached.

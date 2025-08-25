@@ -1,8 +1,8 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import * as Log from './Log.js'
 import type { Compute } from './internal/types.js'
+import * as Log from './Log.js'
 
 /** An Transaction Receipt as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
 export type TransactionReceipt<

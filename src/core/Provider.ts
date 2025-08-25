@@ -1,10 +1,10 @@
 import { EventEmitter } from 'eventemitter3'
 import type * as Address from './Address.js'
 import * as Errors from './Errors.js'
-import * as RpcResponse from './RpcResponse.js'
-import type * as RpcSchema from './RpcSchema.js'
 import type * as RpcSchema_internal from './internal/rpcSchema.js'
 import type { Compute, IsNarrowable, IsNever } from './internal/types.js'
+import * as RpcResponse from './RpcResponse.js'
+import type * as RpcSchema from './RpcSchema.js'
 
 /** Options for a {@link ox#Provider.Provider}. */
 export type Options = {

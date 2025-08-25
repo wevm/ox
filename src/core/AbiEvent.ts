@@ -11,8 +11,7 @@ import type * as internal from './internal/abiEvent.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
 import * as Cursor from './internal/cursor.js'
 import { prettyPrint } from './internal/errors.js'
-import type { Compute } from './internal/types.js'
-import type { IsNarrowable } from './internal/types.js'
+import type { Compute, IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
 export type AbiEvent = abitype.AbiEvent & {
@@ -509,9 +508,9 @@ export function encode<const abiEvent extends AbiEvent>(
     const args_ = Array.isArray(args)
       ? args
       : Object.values(args).length > 0
-        ? indexedInputs?.map(
+        ? (indexedInputs?.map(
             (x: any, i: number) => (args as any)[x.name ?? i],
-          ) ?? []
+          ) ?? [])
         : []
 
     if (args_.length > 0) {

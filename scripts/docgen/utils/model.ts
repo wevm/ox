@@ -168,7 +168,10 @@ function sanitizePath(name: string) {
 export function getPath({
   entrypointCategory,
   category,
-}: { entrypointCategory?: string | undefined; category?: string | undefined }) {
+}: {
+  entrypointCategory?: string | undefined
+  category?: string | undefined
+}) {
   const isCore = entrypointCategory === 'Core'
   let path = '/'
   if (entrypointCategory)
@@ -716,6 +719,7 @@ function parseAst(code: string) {
      * This might leave single parts of the API documentation without the right "primary reference type",
      * but it won't make the docs unusable in any way, so we only log it and don't fail.
      */
+    // biome-ignore lint/suspicious/noConsole: _
     console.warn(
       'Encountered error while parsing expression %s. ',
       code,

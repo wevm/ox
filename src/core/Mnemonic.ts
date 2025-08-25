@@ -11,8 +11,8 @@ import type * as Hex from './Hex.js'
 export { path } from './HdKey.js'
 
 export {
-  english,
   czech,
+  english,
   french,
   italian,
   japanese,

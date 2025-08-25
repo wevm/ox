@@ -2,9 +2,9 @@ import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import type { Compute, Mutable, Undefined } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
-import type { Compute, Mutable, Undefined } from './internal/types.js'
 
 /** Root type for an EIP-7702 Authorization. */
 export type Authorization<

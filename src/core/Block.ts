@@ -1,9 +1,9 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import type { Compute, OneOf } from './internal/types.js'
 import * as Transaction from './Transaction.js'
 import * as Withdrawal from './Withdrawal.js'
-import type { Compute, OneOf } from './internal/types.js'
 
 /** A Block as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/block.yaml). */
 export type Block<

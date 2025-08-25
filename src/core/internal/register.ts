@@ -1,7 +1,6 @@
 import type * as RpcSchema from '../RpcSchema.js'
 
-// biome-ignore lint/suspicious/noEmptyInterface:
-export interface Register {}
+export type Register = {}
 
 export type ResolvedRegister = {
   RpcSchema: Register extends { RpcSchema: infer schema }

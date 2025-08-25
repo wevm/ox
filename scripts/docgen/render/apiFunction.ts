@@ -1,7 +1,7 @@
 import * as model from '@microsoft/api-extractor-model'
 import * as ts from 'ts-morph'
 
-import { type Data, createResolveDeclarationReference } from '../utils/model.js'
+import { createResolveDeclarationReference, type Data } from '../utils/model.js'
 import { processDocComment, tsdocParser } from '../utils/tsdoc.js'
 import { project } from '../utils/tsmorph.js'
 
@@ -66,10 +66,7 @@ export function renderApiFunction(options: {
   return content.join('\n\n').trim()
 }
 
-function renderImports(options: {
-  entrypoint: string
-  module: string
-}) {
+function renderImports(options: { entrypoint: string; module: string }) {
   const { entrypoint, module } = options
   const content = [
     '## Imports',
@@ -256,8 +253,8 @@ function renderProperties(options: {
           ? typeName.getRight()
           : typeName
 
-        if (!identifier) return
-        if (!identifier.isKind(ts.SyntaxKind.Identifier)) return
+        if (!identifier) return undefined
+        if (!identifier.isKind(ts.SyntaxKind.Identifier)) return undefined
         return identifier
           .getDefinitionNodes()
           .find((x) => x.isKind(ts.SyntaxKind.TypeAliasDeclaration))

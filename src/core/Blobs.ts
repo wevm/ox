@@ -2,9 +2,9 @@ import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
-import * as Kzg from './Kzg.js'
 import * as Cursor from './internal/cursor.js'
 import type { Compute, Mutable, OneOf, UnionCompute } from './internal/types.js'
+import * as Kzg from './Kzg.js'
 
 /** Blob limit per transaction. */
 const blobsPerTransaction = 6

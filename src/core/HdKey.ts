@@ -2,8 +2,8 @@ import { HDKey, type Versions } from '@scure/bip32'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import type * as Hex from './Hex.js'
-import type * as PublicKey from './PublicKey.js'
 import * as internal from './internal/hdKey.js'
+import type * as PublicKey from './PublicKey.js'
 
 /** Root type for a Hierarchical Deterministic (HD) Key. */
 export type HdKey = {
