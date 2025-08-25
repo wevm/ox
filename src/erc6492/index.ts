@@ -15,7 +15,7 @@ export type {}
  *   privateKey: '0x...',
  * })
  *
- * const wrapped = WrappedSignature.toHex({ // [!code focus]
+ * const wrapped = WrappedSignature.wrap({ // [!code focus]
  *   data: '0xcafebabe', // [!code focus]
  *   signature, // [!code focus]
  *   to: '0xcafebabecafebabecafebabecafebabecafebabe', // [!code focus]

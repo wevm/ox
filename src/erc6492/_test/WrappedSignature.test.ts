@@ -10,7 +10,7 @@ describe('assert', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const wrapped = WrappedSignature.toHex({
+    const wrapped = WrappedSignature.wrap({
       data: '0xdeadbeef',
       signature,
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
@@ -25,7 +25,7 @@ describe('assert', () => {
   })
 })
 
-describe('toHex', () => {
+describe('wrap', () => {
   test('default', () => {
     const signature = Secp256k1.sign({
       payload: '0xdeadbeef',
@@ -33,7 +33,7 @@ describe('toHex', () => {
     })
 
     expect(
-      WrappedSignature.toHex({
+      WrappedSignature.wrap({
         data: '0xdeadbeef',
         signature,
         to: '0xcafebabecafebabecafebabecafebabecafebabe',
@@ -73,13 +73,13 @@ describe('from', () => {
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
-    const serialized = WrappedSignature.toHex(args)
+    const serialized = WrappedSignature.wrap(args)
     const wrapped = WrappedSignature.from(serialized)
     expect(wrapped).toEqual(args)
   })
 })
 
-describe('fromHex', () => {
+describe('unwrap', () => {
   test('default', () => {
     const signature = Secp256k1.sign({
       payload: '0xdeadbeef',
@@ -92,9 +92,9 @@ describe('fromHex', () => {
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
-    const serialized = WrappedSignature.toHex(args)
-    const wrapped = WrappedSignature.fromHex(serialized)
-    expect(wrapped).toEqual(args)
+    const wrapped = WrappedSignature.wrap(args)
+    const unwrapped = WrappedSignature.unwrap(wrapped)
+    expect(unwrapped).toEqual(args)
   })
 })
 
@@ -105,7 +105,7 @@ describe('validate', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const wrapped = WrappedSignature.toHex({
+    const wrapped = WrappedSignature.wrap({
       data: '0xdeadbeef',
       signature,
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
