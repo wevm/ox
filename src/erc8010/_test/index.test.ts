@@ -4,7 +4,7 @@ import * as exports from '../index.js'
 test('exports', () => {
   expect(Object.keys(exports)).toMatchInlineSnapshot(`
     [
-      "WrappedSignature",
+      "SignatureErc8010",
     ]
   `)
 })

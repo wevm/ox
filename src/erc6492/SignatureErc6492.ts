@@ -85,9 +85,9 @@ export const universalSignatureValidatorAbi = [
  *
  * @example
  * ```ts twoslash
- * import { WrappedSignature } from 'ox/erc6492'
+ * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * WrappedSignature.assert('0xdeadbeef')
+ * SignatureErc6492.assert('0xdeadbeef')
  * // @error: InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-6492 wrapped signature.
  * ```
  *
@@ -112,7 +112,7 @@ export declare namespace assert {
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1 } from 'ox'
- * import { WrappedSignature } from 'ox/erc6492' // [!code focus]
+ * import { SignatureErc6492 } from 'ox/erc6492' // [!code focus]
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
@@ -120,11 +120,11 @@ export declare namespace assert {
  * })
  *
  * // Instantiate from serialized format. // [!code focus]
- * const wrapped = WrappedSignature.from('0x...') // [!code focus]
+ * const wrapped = SignatureErc6492.from('0x...') // [!code focus]
  * // @log: { data: '0x...', signature: { ... }, to: '0x...', } // [!code focus]
  *
  * // Instantiate from constituent parts. // [!code focus]
- * const wrapped = WrappedSignature.from({ // [!code focus]
+ * const wrapped = SignatureErc6492.from({ // [!code focus]
  *   data: '0x...', // [!code focus]
  *   signature, // [!code focus]
  *   to: '0x...', // [!code focus]
@@ -155,9 +155,9 @@ export declare namespace from {
  *
  * @example
  * ```ts twoslash
- * import { WrappedSignature } from 'ox/erc6492'
+ * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * const { data, signature, to } = WrappedSignature.unwrap('0x...')
+ * const { data, signature, to } = SignatureErc6492.unwrap('0x...')
  * ```
  *
  * @param wrapped - Wrapped signature to parse.
@@ -190,14 +190,14 @@ export declare namespace unwrap {
  * @example
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
- * import { WrappedSignature } from 'ox/erc6492' // [!code focus]
+ * import { SignatureErc6492 } from 'ox/erc6492' // [!code focus]
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
  *   privateKey: '0x...',
  * })
  *
- * const wrapped = WrappedSignature.wrap({ // [!code focus]
+ * const wrapped = SignatureErc6492.wrap({ // [!code focus]
  *   data: '0xdeadbeef', // [!code focus]
  *   signature, // [!code focus]
  *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa', // [!code focus]
@@ -233,9 +233,9 @@ export declare namespace wrap {
  *
  * @example
  * ```ts twoslash
- * import { WrappedSignature } from 'ox/erc6492'
+ * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * const valid = WrappedSignature.validate('0xdeadbeef')
+ * const valid = SignatureErc6492.validate('0xdeadbeef')
  * // @log: false
  * ```
  *
@@ -257,7 +257,7 @@ export declare namespace validate {
 
 /** Thrown when the ERC-6492 wrapped signature is invalid. */
 export class InvalidWrappedSignatureError extends Errors.BaseError {
-  override readonly name = 'WrappedSignature.InvalidWrappedSignatureError'
+  override readonly name = 'SignatureErc6492.InvalidWrappedSignatureError'
 
   constructor(wrapped: Wrapped) {
     super(`Value \`${wrapped}\` is an invalid ERC-6492 wrapped signature.`)

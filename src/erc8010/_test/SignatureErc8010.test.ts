@@ -1,5 +1,5 @@
 import { Authorization, Secp256k1 } from 'ox'
-import { WrappedSignature } from 'ox/erc8010'
+import { SignatureErc8010 } from 'ox/erc8010'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -10,7 +10,7 @@ describe('assert', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const wrapped = WrappedSignature.wrap({
+    const wrapped = SignatureErc8010.wrap({
       authorization: Authorization.from({
         address: '0x0000000000000000000000000000000000000000',
         chainId: 1,
@@ -23,11 +23,11 @@ describe('assert', () => {
       signature,
     })
 
-    WrappedSignature.assert(wrapped)
+    SignatureErc8010.assert(wrapped)
     expect(() =>
-      WrappedSignature.assert('0xdeadbeef'),
+      SignatureErc8010.assert('0xdeadbeef'),
     ).toThrowErrorMatchingInlineSnapshot(
-      '[WrappedSignature.InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-8010 wrapped signature.]',
+      '[SignatureErc8010.InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-8010 wrapped signature.]',
     )
   })
 })
@@ -55,7 +55,7 @@ describe('wrap', () => {
     })
 
     expect(
-      WrappedSignature.wrap({
+      SignatureErc8010.wrap({
         authorization: authorization_signed,
         data: '0xdeadbeef',
         signature,
@@ -87,7 +87,7 @@ describe('wrap', () => {
     })
 
     expect(
-      WrappedSignature.wrap({
+      SignatureErc8010.wrap({
         authorization: authorization_signed,
         signature,
       }),
@@ -103,7 +103,7 @@ describe('wrap', () => {
     })
 
     expect(() =>
-      WrappedSignature.wrap({
+      SignatureErc8010.wrap({
         authorization: {
           address: '0x1234567890abcdef1234567890abcdef12345678',
           chainId: 1,
@@ -122,7 +122,7 @@ describe('wrap', () => {
 
   test('behavior: invalid signature', () => {
     expect(() =>
-      WrappedSignature.wrap({
+      SignatureErc8010.wrap({
         authorization: {
           address: '0x1234567890abcdef1234567890abcdef12345678',
           chainId: 1,
@@ -172,7 +172,7 @@ describe('from', () => {
       signature,
     } as const
 
-    const wrapped = WrappedSignature.from(args)
+    const wrapped = SignatureErc8010.from(args)
     expect(wrapped).toEqual(args)
   })
 
@@ -203,8 +203,8 @@ describe('from', () => {
       signature,
     } as const
 
-    const serialized = WrappedSignature.wrap(args)
-    const wrapped = WrappedSignature.from(serialized)
+    const serialized = SignatureErc8010.wrap(args)
+    const wrapped = SignatureErc8010.from(serialized)
     expect(wrapped).toEqual(args)
   })
 })
@@ -237,8 +237,8 @@ describe('unwrap', () => {
       signature,
     } as const
 
-    const wrapped = WrappedSignature.wrap(args)
-    const unwrapped = WrappedSignature.unwrap(wrapped)
+    const wrapped = SignatureErc8010.wrap(args)
+    const unwrapped = SignatureErc8010.unwrap(wrapped)
     expect(unwrapped).toEqual(args)
   })
 
@@ -268,8 +268,8 @@ describe('unwrap', () => {
       signature,
     } as const
 
-    const wrapped = WrappedSignature.wrap(args)
-    const unwrapped = WrappedSignature.unwrap(wrapped)
+    const wrapped = SignatureErc8010.wrap(args)
+    const unwrapped = SignatureErc8010.unwrap(wrapped)
     expect(unwrapped).toEqual(args)
   })
 })
@@ -296,14 +296,14 @@ describe('validate', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const wrapped = WrappedSignature.wrap({
+    const wrapped = SignatureErc8010.wrap({
       authorization: authorization_signed,
       data: '0xdeadbeef',
       signature,
     })
 
-    const valid = WrappedSignature.validate(wrapped)
+    const valid = SignatureErc8010.validate(wrapped)
     expect(valid).toBe(true)
-    expect(WrappedSignature.validate('0xdeadbeef')).toBe(false)
+    expect(SignatureErc8010.validate('0xdeadbeef')).toBe(false)
   })
 })

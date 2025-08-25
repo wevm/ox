@@ -4,6 +4,6 @@
 
 **Breaking(`ox/erc6492`:** 
 
-- Renamed `WrappedSignature.WrappedSignature` to `WrappedSignature.Unwrapped`
-- Renamed `WrappedSignature.toHex` to `WrappedSignature.wrap`
-- Renamed `WrappedSignature.fromHex` to `WrappedSignature.unwrap`
+- Renamed `WrappedSignature.WrappedSignature` to `SignatureErc6492.Unwrapped`
+- Renamed `WrappedSignature.toHex` to `SignatureErc6492.wrap`
+- Renamed `WrappedSignature.fromHex` to `SignatureErc6492.unwrap`
