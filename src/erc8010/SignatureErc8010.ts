@@ -147,6 +147,7 @@ export declare namespace unwrap {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Secp256k1 } from 'ox'
  * import { SignatureErc8010 } from 'ox/erc8010' // [!code focus]
  *
@@ -156,9 +157,9 @@ export declare namespace unwrap {
  * })
  *
  * const wrapped = SignatureErc8010.wrap({ // [!code focus]
+ *   authorization: { ... }, // [!code focus]
  *   data: '0xdeadbeef', // [!code focus]
  *   signature, // [!code focus]
- *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa', // [!code focus]
  * }) // [!code focus]
  * ```
  *
