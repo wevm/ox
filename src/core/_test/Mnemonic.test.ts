@@ -273,8 +273,8 @@ test('exports', () => {
   expect(Object.keys(Mnemonic)).toMatchInlineSnapshot(`
     [
       "path",
-      "english",
       "czech",
+      "english",
       "french",
       "italian",
       "japanese",
