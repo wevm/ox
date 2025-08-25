@@ -1,5 +1,5 @@
 import { Secp256k1 } from 'ox'
-import { WrappedSignature } from 'ox/erc6492'
+import { SignatureErc6492 } from 'ox/erc6492'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -10,22 +10,22 @@ describe('assert', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const wrapped = WrappedSignature.toHex({
+    const wrapped = SignatureErc6492.wrap({
       data: '0xdeadbeef',
       signature,
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     })
 
-    WrappedSignature.assert(wrapped)
+    SignatureErc6492.assert(wrapped)
     expect(() =>
-      WrappedSignature.assert('0xdeadbeef'),
+      SignatureErc6492.assert('0xdeadbeef'),
     ).toThrowErrorMatchingInlineSnapshot(
-      '[WrappedSignature.InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-6492 wrapped signature.]',
+      '[SignatureErc6492.InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-6492 wrapped signature.]',
     )
   })
 })
 
-describe('toHex', () => {
+describe('wrap', () => {
   test('default', () => {
     const signature = Secp256k1.sign({
       payload: '0xdeadbeef',
@@ -33,7 +33,7 @@ describe('toHex', () => {
     })
 
     expect(
-      WrappedSignature.toHex({
+      SignatureErc6492.wrap({
         data: '0xdeadbeef',
         signature,
         to: '0xcafebabecafebabecafebabecafebabecafebabe',
@@ -57,7 +57,7 @@ describe('from', () => {
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
-    const wrapped = WrappedSignature.from(args)
+    const wrapped = SignatureErc6492.from(args)
     expect(wrapped).toEqual(args)
   })
 
@@ -73,13 +73,13 @@ describe('from', () => {
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
-    const serialized = WrappedSignature.toHex(args)
-    const wrapped = WrappedSignature.from(serialized)
+    const serialized = SignatureErc6492.wrap(args)
+    const wrapped = SignatureErc6492.from(serialized)
     expect(wrapped).toEqual(args)
   })
 })
 
-describe('fromHex', () => {
+describe('unwrap', () => {
   test('default', () => {
     const signature = Secp256k1.sign({
       payload: '0xdeadbeef',
@@ -92,9 +92,9 @@ describe('fromHex', () => {
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
-    const serialized = WrappedSignature.toHex(args)
-    const wrapped = WrappedSignature.fromHex(serialized)
-    expect(wrapped).toEqual(args)
+    const wrapped = SignatureErc6492.wrap(args)
+    const unwrapped = SignatureErc6492.unwrap(wrapped)
+    expect(unwrapped).toEqual(args)
   })
 })
 
@@ -105,14 +105,14 @@ describe('validate', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const wrapped = WrappedSignature.toHex({
+    const wrapped = SignatureErc6492.wrap({
       data: '0xdeadbeef',
       signature,
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     })
 
-    const valid = WrappedSignature.validate(wrapped)
+    const valid = SignatureErc6492.validate(wrapped)
     expect(valid).toBe(true)
-    expect(WrappedSignature.validate('0xdeadbeef')).toBe(false)
+    expect(SignatureErc6492.validate('0xdeadbeef')).toBe(false)
   })
 })

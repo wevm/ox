@@ -8,14 +8,14 @@ export type {}
  * @example
  * ```ts twoslash
  * import { Secp256k1, PersonalMessage } from 'ox'
- * import { WrappedSignature } from 'ox/erc6492' // [!code focus]
+ * import { SignatureErc6492 } from 'ox/erc6492' // [!code focus]
  *
  * const signature = Secp256k1.sign({
  *   payload: PersonalMessage.getSignPayload('0xdeadbeef'),
  *   privateKey: '0x...',
  * })
  *
- * const wrapped = WrappedSignature.toHex({ // [!code focus]
+ * const wrapped = SignatureErc6492.wrap({ // [!code focus]
  *   data: '0xcafebabe', // [!code focus]
  *   signature, // [!code focus]
  *   to: '0xcafebabecafebabecafebabecafebabecafebabe', // [!code focus]
@@ -25,4 +25,4 @@ export type {}
  *
  * @category ERC-6492
  */
-export * as WrappedSignature from './WrappedSignature.js'
+export * as SignatureErc6492 from './SignatureErc6492.js'

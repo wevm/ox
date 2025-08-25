@@ -5,8 +5,8 @@ import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import * as Signature from '../core/Signature.js'
 
-/** ERC-6492 Wrapped Signature. */
-export type WrappedSignature = {
+/** Unwrapped ERC-6492 signature. */
+export type Unwrapped = {
   /** Calldata to pass to the target address for counterfactual verification. */
   data: Hex.Hex
   /** The original signature. */
@@ -14,6 +14,9 @@ export type WrappedSignature = {
   /** The target address to use for counterfactual verification. */
   to: Address.Address
 }
+
+/** Wrapped ERC-6492 signature. */
+export type Wrapped = Hex.Hex
 
 /**
  * Magic bytes used to identify ERC-6492 wrapped signatures.
@@ -82,15 +85,15 @@ export const universalSignatureValidatorAbi = [
  *
  * @example
  * ```ts twoslash
- * import { WrappedSignature } from 'ox/erc6492'
+ * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * WrappedSignature.assert('0xdeadbeef')
+ * SignatureErc6492.assert('0xdeadbeef')
  * // @error: InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-6492 wrapped signature.
  * ```
  *
  * @param wrapped - The wrapped signature to assert.
  */
-export function assert(wrapped: Hex.Hex) {
+export function assert(wrapped: Wrapped) {
   if (Hex.slice(wrapped, -32) !== magicBytes)
     throw new InvalidWrappedSignatureError(wrapped)
 }
@@ -109,7 +112,7 @@ export declare namespace assert {
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1 } from 'ox'
- * import { WrappedSignature } from 'ox/erc6492' // [!code focus]
+ * import { SignatureErc6492 } from 'ox/erc6492' // [!code focus]
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
@@ -117,11 +120,11 @@ export declare namespace assert {
  * })
  *
  * // Instantiate from serialized format. // [!code focus]
- * const wrapped = WrappedSignature.from('0x...') // [!code focus]
+ * const wrapped = SignatureErc6492.from('0x...') // [!code focus]
  * // @log: { data: '0x...', signature: { ... }, to: '0x...', } // [!code focus]
  *
  * // Instantiate from constituent parts. // [!code focus]
- * const wrapped = WrappedSignature.from({ // [!code focus]
+ * const wrapped = SignatureErc6492.from({ // [!code focus]
  *   data: '0x...', // [!code focus]
  *   signature, // [!code focus]
  *   to: '0x...', // [!code focus]
@@ -132,13 +135,13 @@ export declare namespace assert {
  * @param wrapped - Wrapped signature to parse.
  * @returns Wrapped signature.
  */
-export function from(wrapped: WrappedSignature | Hex.Hex): WrappedSignature {
-  if (typeof wrapped === 'string') return fromHex(wrapped)
+export function from(wrapped: Unwrapped | Wrapped): Unwrapped {
+  if (typeof wrapped === 'string') return unwrap(wrapped)
   return wrapped
 }
 
 export declare namespace from {
-  type ReturnType = WrappedSignature
+  type ReturnType = Unwrapped
 
   type ErrorType =
     | AbiParameters.from.ErrorType
@@ -152,15 +155,15 @@ export declare namespace from {
  *
  * @example
  * ```ts twoslash
- * import { WrappedSignature } from 'ox/erc6492'
+ * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * const { data, signature, to } = WrappedSignature.fromHex('0x...')
+ * const { data, signature, to } = SignatureErc6492.unwrap('0x...')
  * ```
  *
  * @param wrapped - Wrapped signature to parse.
  * @returns Wrapped signature.
  */
-export function fromHex(wrapped: Hex.Hex): WrappedSignature {
+export function unwrap(wrapped: Wrapped): Unwrapped {
   assert(wrapped)
 
   const [to, data, signature_hex] = AbiParameters.decode(
@@ -168,12 +171,12 @@ export function fromHex(wrapped: Hex.Hex): WrappedSignature {
     wrapped,
   )
 
-  const signature = Signature.fromHex(signature_hex)
+  const signature = Signature.from(signature_hex)
 
   return { data, signature, to }
 }
 
-export declare namespace fromHex {
+export declare namespace unwrap {
   type ErrorType =
     | AbiParameters.from.ErrorType
     | AbiParameters.decode.ErrorType
@@ -187,14 +190,14 @@ export declare namespace fromHex {
  * @example
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
- * import { WrappedSignature } from 'ox/erc6492' // [!code focus]
+ * import { SignatureErc6492 } from 'ox/erc6492' // [!code focus]
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
  *   privateKey: '0x...',
  * })
  *
- * const wrapped = WrappedSignature.toHex({ // [!code focus]
+ * const wrapped = SignatureErc6492.wrap({ // [!code focus]
  *   data: '0xdeadbeef', // [!code focus]
  *   signature, // [!code focus]
  *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa', // [!code focus]
@@ -204,7 +207,7 @@ export declare namespace fromHex {
  * @param value - Wrapped signature to serialize.
  * @returns Serialized wrapped signature.
  */
-export function toHex(value: WrappedSignature): Hex.Hex {
+export function wrap(value: Unwrapped): Wrapped {
   const { data, signature, to } = value
 
   return Hex.concat(
@@ -217,7 +220,7 @@ export function toHex(value: WrappedSignature): Hex.Hex {
   )
 }
 
-export declare namespace toHex {
+export declare namespace wrap {
   type ErrorType =
     | AbiParameters.encode.ErrorType
     | Hex.concat.ErrorType
@@ -230,16 +233,16 @@ export declare namespace toHex {
  *
  * @example
  * ```ts twoslash
- * import { WrappedSignature } from 'ox/erc6492'
+ * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * const valid = WrappedSignature.validate('0xdeadbeef')
+ * const valid = SignatureErc6492.validate('0xdeadbeef')
  * // @log: false
  * ```
  *
  * @param wrapped - The wrapped signature to validate.
  * @returns `true` if the wrapped signature is valid, `false` otherwise.
  */
-export function validate(wrapped: Hex.Hex): boolean {
+export function validate(wrapped: Wrapped): boolean {
   try {
     assert(wrapped)
     return true
@@ -254,9 +257,9 @@ export declare namespace validate {
 
 /** Thrown when the ERC-6492 wrapped signature is invalid. */
 export class InvalidWrappedSignatureError extends Errors.BaseError {
-  override readonly name = 'WrappedSignature.InvalidWrappedSignatureError'
+  override readonly name = 'SignatureErc6492.InvalidWrappedSignatureError'
 
-  constructor(wrapped: Hex.Hex) {
+  constructor(wrapped: Wrapped) {
     super(`Value \`${wrapped}\` is an invalid ERC-6492 wrapped signature.`)
   }
 }
