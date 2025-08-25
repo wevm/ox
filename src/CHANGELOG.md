@@ -1,5 +1,18 @@
 # ox
 
+## 0.9.0
+
+### Minor Changes
+
+- [#104](https://github.com/wevm/ox/pull/104) [`4f4b635`](https://github.com/wevm/ox/commit/4f4b635dfb399ca9df07bab843857743f389639e) Thanks [@jxom](https://github.com/jxom)! - **Breaking(`ox/erc6492`:**
+
+  - Renamed `WrappedSignature` to `SignatureErc6492`
+  - Renamed `WrappedSignature.WrappedSignature` to `SignatureErc6492.Unwrapped`
+  - Renamed `WrappedSignature.toHex` to `SignatureErc6492.wrap`
+  - Renamed `WrappedSignature.fromHex` to `SignatureErc6492.unwrap`
+
+- [#104](https://github.com/wevm/ox/pull/104) [`4f4b635`](https://github.com/wevm/ox/commit/4f4b635dfb399ca9df07bab843857743f389639e) Thanks [@jxom](https://github.com/jxom)! - Added `ox/erc8010` entrypoint with `SignatureErc8010` module.
+
 ## 0.8.9
 
 ### Patch Changes
