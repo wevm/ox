@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-fix: destructuring from undefined signature
+Fixed signature destructuring on `Authorization.fromTuple`.
