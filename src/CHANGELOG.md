@@ -1,5 +1,11 @@
 # ox
 
+## 0.8.9
+
+### Patch Changes
+
+- [#102](https://github.com/wevm/ox/pull/102) [`5796d6d`](https://github.com/wevm/ox/commit/5796d6dbebff719c84b4658de37e3240adbc87e1) Thanks [@dan1kov](https://github.com/dan1kov)! - Fixed signature destructuring on `Authorization.fromTuple`.
+
 ## 0.8.8
 
 ### Patch Changes
