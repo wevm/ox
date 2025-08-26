@@ -11,7 +11,7 @@ export type Unwrapped = {
   /** Data to initialize the delegation. */
   data?: Hex.Hex | undefined
   /** The original signature. */
-  signature: Signature.Signature
+  signature: Hex.Hex
 }
 
 /** Wrapped ERC-8010 signature. */
@@ -40,10 +40,7 @@ export function assert(value: Unwrapped | Wrapped) {
   if (typeof value === 'string') {
     if (Hex.slice(value, -32) !== magicBytes)
       throw new InvalidWrappedSignatureError(value)
-  } else {
-    Signature.assert(value.authorization)
-    Signature.assert(value.signature)
-  }
+  } else Signature.assert(value.authorization)
 }
 
 export declare namespace assert {
@@ -110,7 +107,7 @@ export function unwrap(wrapped: Wrapped): Unwrapped {
 
   const suffixLength = Hex.toNumber(Hex.slice(wrapped, -64, -32))
   const suffix = Hex.slice(wrapped, -suffixLength - 64, -64)
-  const signature = Signature.from(Hex.slice(wrapped, 0, -suffixLength - 64))
+  const signature = Hex.slice(wrapped, 0, -suffixLength - 64)
 
   const chainId = Hex.toNumber(Hex.slice(suffix, 0, 32))
   const delegation = Hex.slice(suffix, 32, 52)
@@ -186,12 +183,7 @@ export function wrap(value: Unwrapped): Wrapped {
     [authorization, data ?? '0x'],
   )
   const suffixLength = Hex.fromNumber(Hex.size(suffix), { size: 32 })
-  return Hex.concat(
-    Signature.toHex(signature),
-    suffix,
-    suffixLength,
-    magicBytes,
-  )
+  return Hex.concat(signature, suffix, suffixLength, magicBytes)
 }
 
 export declare namespace wrap {

@@ -10,7 +10,7 @@ export type Unwrapped = {
   /** Calldata to pass to the target address for counterfactual verification. */
   data: Hex.Hex
   /** The original signature. */
-  signature: Signature.Signature
+  signature: Hex.Hex
   /** The target address to use for counterfactual verification. */
   to: Address.Address
 }
@@ -166,12 +166,10 @@ export declare namespace from {
 export function unwrap(wrapped: Wrapped): Unwrapped {
   assert(wrapped)
 
-  const [to, data, signature_hex] = AbiParameters.decode(
+  const [to, data, signature] = AbiParameters.decode(
     AbiParameters.from('address, bytes, bytes'),
     wrapped,
   )
-
-  const signature = Signature.from(signature_hex)
 
   return { data, signature, to }
 }
@@ -214,7 +212,7 @@ export function wrap(value: Unwrapped): Wrapped {
     AbiParameters.encode(AbiParameters.from('address, bytes, bytes'), [
       to,
       data,
-      Signature.toHex(signature),
+      signature,
     ]),
     magicBytes,
   )

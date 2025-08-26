@@ -1,4 +1,4 @@
-import { Authorization, Secp256k1 } from 'ox'
+import { Authorization, Secp256k1, Signature } from 'ox'
 import { SignatureErc8010 } from 'ox/erc8010'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
@@ -20,7 +20,7 @@ describe('assert', () => {
         yParity: 0,
       }),
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
     })
 
     SignatureErc8010.assert(wrapped)
@@ -58,7 +58,7 @@ describe('wrap', () => {
       SignatureErc8010.wrap({
         authorization: authorization_signed,
         data: '0xdeadbeef',
-        signature,
+        signature: Signature.toHex(signature),
       }),
     ).toMatchInlineSnapshot(
       `"0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c00000000000000000000000000000000000000000000000000000000000000011234567890abcdef1234567890abcdef1234567800000000000000000000000000000000000000000000000000000000000000450150e4d1c9f1fbef7bf3395ae64397eaec481b0681c672bcb2b065b8ffeba5447a12bb4d8aafb175d1ca067c15b71f16cac997a8ef267e03d1e91e9593b2d2b78cdeadbeef00000000000000000000000000000000000000000000000000000000000000998010801080108010801080108010801080108010801080108010801080108010"`,
@@ -89,7 +89,7 @@ describe('wrap', () => {
     expect(
       SignatureErc8010.wrap({
         authorization: authorization_signed,
-        signature,
+        signature: Signature.toHex(signature),
       }),
     ).toMatchInlineSnapshot(
       `"0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c00000000000000000000000000000000000000000000000000000000000000011234567890abcdef1234567890abcdef1234567800000000000000000000000000000000000000000000000000000000000000450150e4d1c9f1fbef7bf3395ae64397eaec481b0681c672bcb2b065b8ffeba5447a12bb4d8aafb175d1ca067c15b71f16cac997a8ef267e03d1e91e9593b2d2b78c00000000000000000000000000000000000000000000000000000000000000958010801080108010801080108010801080108010801080108010801080108010"`,
@@ -113,30 +113,7 @@ describe('wrap', () => {
           yParity: -1,
         },
         data: '0xdeadbeef',
-        signature,
-      }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `[Signature.InvalidYParityError: Value \`-1\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
-    )
-  })
-
-  test('behavior: invalid signature', () => {
-    expect(() =>
-      SignatureErc8010.wrap({
-        authorization: {
-          address: '0x1234567890abcdef1234567890abcdef12345678',
-          chainId: 1,
-          nonce: 69n,
-          r: 0n,
-          s: 0n,
-          yParity: 0,
-        },
-        data: '0xdeadbeef',
-        signature: {
-          r: 0n,
-          s: 0n,
-          yParity: -1,
-        },
+        signature: Signature.toHex(signature),
       }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[Signature.InvalidYParityError: Value \`-1\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
@@ -169,7 +146,7 @@ describe('from', () => {
     const args = {
       authorization: authorization_signed,
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
     } as const
 
     const wrapped = SignatureErc8010.from(args)
@@ -200,7 +177,7 @@ describe('from', () => {
     const args = {
       authorization: authorization_signed,
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
     } as const
 
     const serialized = SignatureErc8010.wrap(args)
@@ -234,7 +211,7 @@ describe('unwrap', () => {
     const args = {
       authorization: authorization_signed,
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
     } as const
 
     const wrapped = SignatureErc8010.wrap(args)
@@ -265,7 +242,7 @@ describe('unwrap', () => {
 
     const args = {
       authorization: authorization_signed,
-      signature,
+      signature: Signature.toHex(signature),
     } as const
 
     const wrapped = SignatureErc8010.wrap(args)
@@ -299,7 +276,7 @@ describe('validate', () => {
     const wrapped = SignatureErc8010.wrap({
       authorization: authorization_signed,
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
     })
 
     const valid = SignatureErc8010.validate(wrapped)

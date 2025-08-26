@@ -1,4 +1,4 @@
-import { Secp256k1 } from 'ox'
+import { Secp256k1, Signature } from 'ox'
 import { SignatureErc6492 } from 'ox/erc6492'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
@@ -12,7 +12,7 @@ describe('assert', () => {
 
     const wrapped = SignatureErc6492.wrap({
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     })
 
@@ -35,7 +35,7 @@ describe('wrap', () => {
     expect(
       SignatureErc6492.wrap({
         data: '0xdeadbeef',
-        signature,
+        signature: Signature.toHex(signature),
         to: '0xcafebabecafebabecafebabecafebabecafebabe',
       }),
     ).toMatchInlineSnapshot(
@@ -53,7 +53,7 @@ describe('from', () => {
 
     const args = {
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
@@ -69,7 +69,7 @@ describe('from', () => {
 
     const args = {
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
@@ -88,7 +88,7 @@ describe('unwrap', () => {
 
     const args = {
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     } as const
 
@@ -107,7 +107,7 @@ describe('validate', () => {
 
     const wrapped = SignatureErc6492.wrap({
       data: '0xdeadbeef',
-      signature,
+      signature: Signature.toHex(signature),
       to: '0xcafebabecafebabecafebabecafebabecafebabe',
     })
 
