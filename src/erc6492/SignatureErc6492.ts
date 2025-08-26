@@ -3,7 +3,7 @@ import * as AbiParameters from '../core/AbiParameters.js'
 import type * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
-import * as Signature from '../core/Signature.js'
+import type * as Signature from '../core/Signature.js'
 
 /** Unwrapped ERC-6492 signature. */
 export type Unwrapped = {
