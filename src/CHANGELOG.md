@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.1
+
+### Patch Changes
+
+- [`dec161a`](https://github.com/wevm/ox/commit/dec161ac7b3089bd6a0647d91e02f174ac421d65) Thanks [@jxom](https://github.com/jxom)! - Fixed `signature` type on ERC-6492 and ERC-8010.
+
 ## 0.9.0
 
 ### Minor Changes
