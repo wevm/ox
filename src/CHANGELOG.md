@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.2
+
+### Patch Changes
+
+- [`9be7919`](https://github.com/wevm/ox/commit/9be791906d9496111a1607344ddb02077f02f6a6) Thanks [@jxom](https://github.com/jxom)! - Updated `ox/erc8010` to latest spec changes.
+
 ## 0.9.1
 
 ### Patch Changes
