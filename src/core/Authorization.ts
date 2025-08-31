@@ -387,7 +387,7 @@ export declare namespace fromTupleList {
  * @returns The sign payload.
  */
 export function getSignPayload(authorization: Authorization): Hex.Hex {
-  return hash(authorization)
+  return hash(authorization, { presign: true })
 }
 
 export declare namespace getSignPayload {
@@ -413,8 +413,27 @@ export declare namespace getSignPayload {
  * @param authorization - The {@link ox#Authorization.Authorization}.
  * @returns The hash.
  */
-export function hash(authorization: Authorization): Hex.Hex {
-  return Hash.keccak256(Hex.concat('0x05', Rlp.fromHex(toTuple(authorization))))
+export function hash(
+  authorization: Authorization,
+  options: hash.Options = {},
+): Hex.Hex {
+  const { presign } = options
+  return Hash.keccak256(
+    Hex.concat(
+      '0x05',
+      Rlp.fromHex(
+        toTuple(
+          presign
+            ? {
+                address: authorization.address,
+                chainId: authorization.chainId,
+                nonce: authorization.nonce,
+              }
+            : authorization,
+        ),
+      ),
+    ),
+  )
 }
 
 export declare namespace hash {
@@ -424,6 +443,11 @@ export declare namespace hash {
     | Hex.concat.ErrorType
     | Rlp.fromHex.ErrorType
     | Errors.GlobalErrorType
+
+  type Options = {
+    /** Whether to hash this authorization for signing. @default false */
+    presign?: boolean | undefined
+  }
 }
 
 /**

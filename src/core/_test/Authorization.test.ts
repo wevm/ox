@@ -365,6 +365,41 @@ describe('hash', () => {
       `"0x7bdd120f6437316be99b11232d472bb0209d20d7c564f4dfbad855189e830b15"`,
     )
   })
+
+  test('options: presign equals getSignPayload', () => {
+    const authorization = {
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      chainId: 1,
+      nonce: 40n,
+    } as const
+    const payload = Authorization.getSignPayload(authorization)
+    const hash_presign = Authorization.hash(authorization, { presign: true })
+    expect(hash_presign).toEqual(payload)
+  })
+
+  test('behavior: signed vs presign', () => {
+    const authorization = Authorization.from({
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      chainId: 1,
+      nonce: 40n,
+    })
+    const signature = Secp256k1.sign({
+      payload: Authorization.getSignPayload(authorization),
+      privateKey: accounts[0].privateKey,
+    })
+    const signed = Authorization.from(authorization, { signature })
+
+    const hash_default = Authorization.hash(signed)
+    const hash_presign = Authorization.hash(signed, { presign: true })
+    expect(hash_default).not.toEqual(hash_presign)
+    expect(hash_presign).toEqual(Authorization.getSignPayload(authorization))
+    expect(
+      Secp256k1.recoverAddress({
+        payload: Authorization.hash(authorization, { presign: true }),
+        signature,
+      }),
+    ).toEqual(accounts[0].address)
+  })
 })
 
 describe('toRpc', () => {
@@ -557,6 +592,12 @@ describe('toTupleList', () => {
         ]
       `)
     }
+  })
+
+  test('behavior: undefined input returns empty', () => {
+    // Explicitly call without an argument to exercise optional parameter path.
+    const tuple = Authorization.toTupleList()
+    expect(tuple).toMatchInlineSnapshot('[]')
   })
 })
 

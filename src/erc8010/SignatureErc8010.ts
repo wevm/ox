@@ -1,7 +1,9 @@
 import * as AbiParameters from '../core/AbiParameters.js'
+import type * as Address from '../core/Address.js'
 import * as Authorization from '../core/Authorization.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
+import * as Secp256k1 from '../core/Secp256k1.js'
 import * as Signature from '../core/Signature.js'
 
 /** Unwrapped ERC-8010 signature. */
@@ -12,6 +14,8 @@ export type Unwrapped = {
   data?: Hex.Hex | undefined
   /** The original signature. */
   signature: Hex.Hex
+  /** Address of the initializer. */
+  to?: Address.Address | undefined
 }
 
 /** Wrapped ERC-8010 signature. */
@@ -22,6 +26,11 @@ export type Wrapped = Hex.Hex
  */
 export const magicBytes =
   '0x8010801080108010801080108010801080108010801080108010801080108010' as const
+
+/** Suffix ABI parameters for the ERC-8010 wrapped signature. */
+export const suffixParameters = AbiParameters.from(
+  '(uint256 chainId, address delegation, uint256 nonce, uint8 yParity, uint256 r, uint256 s), address to, bytes data',
+)
 
 /**
  * Asserts that the wrapped signature is valid.
@@ -109,30 +118,22 @@ export function unwrap(wrapped: Wrapped): Unwrapped {
   const suffix = Hex.slice(wrapped, -suffixLength - 64, -64)
   const signature = Hex.slice(wrapped, 0, -suffixLength - 64)
 
-  const chainId = Hex.toNumber(Hex.slice(suffix, 0, 32))
-  const delegation = Hex.slice(suffix, 32, 52)
-  const nonce = Hex.toBigInt(Hex.slice(suffix, 52, 84))
-  const yParity = Hex.toNumber(Hex.slice(suffix, 84, 85))
-  const r = Hex.toBigInt(Hex.slice(suffix, 85, 117))
-  const s = Hex.toBigInt(Hex.slice(suffix, 117, 149))
+  const [auth, to, data] = AbiParameters.decode(suffixParameters, suffix)
 
   const authorization = Authorization.from({
-    address: delegation,
-    chainId,
-    nonce,
-    yParity,
-    r,
-    s,
+    address: auth.delegation,
+    chainId: Number(auth.chainId),
+    nonce: auth.nonce,
+    yParity: auth.yParity,
+    r: auth.r,
+    s: auth.s,
   })
-  const data = (() => {
-    try {
-      return Hex.slice(suffix, 149)
-    } catch {
-      return undefined
-    }
-  })()
 
-  return { authorization, data, signature }
+  return {
+    authorization,
+    signature,
+    ...(data && data !== '0x' ? { data, to } : {}),
+  }
 }
 
 export declare namespace unwrap {
@@ -164,24 +165,24 @@ export declare namespace unwrap {
  * @returns Wrapped signature.
  */
 export function wrap(value: Unwrapped): Wrapped {
+  const { data, signature } = value
+
   assert(value)
 
-  const { data, signature } = value
-  const authorization = AbiParameters.encodePacked(
-    ['uint256', 'address', 'uint256', 'uint8', 'uint256', 'uint256'],
-    [
-      BigInt(value.authorization.chainId),
-      value.authorization.address,
-      BigInt(value.authorization.nonce),
-      value.authorization.yParity,
-      value.authorization.r,
-      value.authorization.s,
-    ],
-  )
-  const suffix = AbiParameters.encodePacked(
-    ['bytes', 'bytes'],
-    [authorization, data ?? '0x'],
-  )
+  const self = Secp256k1.recoverAddress({
+    payload: Authorization.getSignPayload(value.authorization),
+    signature: Signature.from(value.authorization),
+  })
+
+  const suffix = AbiParameters.encode(suffixParameters, [
+    {
+      ...value.authorization,
+      delegation: value.authorization.address,
+      chainId: BigInt(value.authorization.chainId),
+    },
+    value.to ?? self,
+    data ?? '0x',
+  ])
   const suffixLength = Hex.fromNumber(Hex.size(suffix), { size: 32 })
   return Hex.concat(signature, suffix, suffixLength, magicBytes)
 }
