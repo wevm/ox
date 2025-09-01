@@ -199,7 +199,7 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       '@noble/curves':
-        specifier: ^1.9.1
+        specifier: 1.9.1
         version: 1.9.1
       '@noble/hashes':
         specifier: ^1.8.0
@@ -211,8 +211,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       abitype:
-        specifier: ^1.0.8
-        version: 1.0.8(typescript@5.5.4)(zod@3.23.8)
+        specifier: ^1.0.9
+        version: 1.0.9(typescript@5.5.4)(zod@3.23.8)
       eventemitter3:
         specifier: 5.0.1
         version: 5.0.1
@@ -2648,8 +2648,8 @@ packages:
       zod:
         optional: true
 
-  abitype@1.0.8:
-    resolution: {integrity: sha512-ZeiI6h3GnW06uYDLx0etQtX/p8E24UaHHBj57RSjK7YBFe7iuVn07EDpOeP451D06sF27VOz9JJPlIKJmXgkEg==}
+  abitype@1.0.9:
+    resolution: {integrity: sha512-oN0S++TQmlwWuB+rkA6aiEefLv3SP+2l/tC5mux/TLj6qdA6rF15Vbpex4fHovLsMkwLwTIRj8/Q8vXCS3GfOg==}
     peerDependencies:
       typescript: '>=5.0.4'
       zod: ^3 >=3.22.0
@@ -8986,7 +8986,7 @@ snapshots:
       typescript: 5.5.4
       zod: 3.23.8
 
-  abitype@1.0.8(typescript@5.5.4)(zod@3.23.8):
+  abitype@1.0.9(typescript@5.5.4)(zod@3.23.8):
     optionalDependencies:
       typescript: 5.5.4
       zod: 3.23.8
