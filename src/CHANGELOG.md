@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.3
+
+### Patch Changes
+
+- [`1cd8943`](https://github.com/wevm/ox/commit/1cd894336fb0a4cef8b0879cc214a7997fea1042) Thanks [@jxom](https://github.com/jxom)! - Updated dependencies.
+
 ## 0.9.2
 
 ### Patch Changes
