@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.4
+
+### Patch Changes
+
+- [`8aaf1a4`](https://github.com/wevm/ox/commit/8aaf1a4c4aedf654abf9319932eb57b560186d43) Thanks [@jxom](https://github.com/jxom)! - Removed proxy packages. Metro (the problematic bundler) now respects `package.json#exports`.
+
 ## 0.9.3
 
 ### Patch Changes
