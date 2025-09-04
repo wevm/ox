@@ -275,6 +275,40 @@ describe('decode', () => {
     `)
     })
   })
+
+  test('behavior: overload with abi', () => {
+    const abi = Abi.from([
+      'error InvalidSignature(uint r, uint s, uint8 yParity)',
+    ])
+    const data =
+      '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+
+    // Test both overload patterns
+    const abiError = AbiError.fromAbi(abi, 'InvalidSignature')
+    const decoded1 = AbiError.decode(abiError, data)
+    const decoded2 = AbiError.decode(abi, 'InvalidSignature', data)
+
+    expect(decoded1).toEqual(decoded2)
+    expect(decoded2).toEqual([420n, 69n, 1])
+  })
+
+  test('behavior: overload with options', () => {
+    const abi = Abi.from([
+      'error InvalidSignature(uint r, uint s, uint8 yParity)',
+    ])
+    const data =
+      '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+
+    // Test both overload patterns with options
+    const abiError = AbiError.fromAbi(abi, 'InvalidSignature')
+    const decoded1 = AbiError.decode(abiError, data, { as: 'Object' })
+    const decoded2 = AbiError.decode(abi, 'InvalidSignature', data, {
+      as: 'Object',
+    })
+
+    expect(decoded1).toEqual(decoded2)
+    expect(decoded2).toEqual({ r: 420n, s: 69n, yParity: 1 })
+  })
 })
 
 describe('encode', () => {
@@ -295,6 +329,34 @@ describe('encode', () => {
     expect(
       AbiError.encode({ ...error, hash: undefined }),
     ).toMatchInlineSnapshot(`"0xb085b9a5"`)
+  })
+
+  test('behavior: overload with abi', () => {
+    const abi = Abi.from([
+      'error InvalidSignature(uint r, uint s, uint8 yParity)',
+    ])
+
+    // Test both overload patterns
+    const abiError = AbiError.fromAbi(abi, 'InvalidSignature')
+    const encoded1 = AbiError.encode(abiError, [420n, 69n, 1])
+    const encoded2 = AbiError.encode(abi, 'InvalidSignature', [420n, 69n, 1])
+
+    expect(encoded1).toEqual(encoded2)
+    expect(encoded2).toMatchInlineSnapshot(
+      `"0xe466f0a500000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001"`,
+    )
+  })
+
+  test('behavior: overload with abi - no args', () => {
+    const abi = Abi.from(['error Example()'])
+
+    // Test both overload patterns
+    const abiError = AbiError.fromAbi(abi, 'Example')
+    const encoded1 = AbiError.encode(abiError)
+    const encoded2 = AbiError.encode(abi, 'Example')
+
+    expect(encoded1).toEqual(encoded2)
+    expect(encoded2).toMatchInlineSnapshot(`"0xb085b9a5"`)
   })
 })
 

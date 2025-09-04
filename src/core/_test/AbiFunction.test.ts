@@ -10,7 +10,9 @@ describe('decodeData', () => {
     const abiItem = AbiFunction.fromAbi(erc20Abi, 'decimals')
     const data = AbiFunction.encodeData(abiItem)
     const input = AbiFunction.decodeData(abiItem, data)
+    const input2 = AbiFunction.decodeData(erc20Abi, 'decimals', data)
     expect(input).toEqual(undefined)
+    expect(input2).toEqual(undefined)
   })
 
   test('behavior: with data', () => {
@@ -19,7 +21,9 @@ describe('decodeData', () => {
     })
     const data = AbiFunction.encodeData(abiItem, [address.vitalik, 1n])
     const input = AbiFunction.decodeData(abiItem, data)
+    const input2 = AbiFunction.decodeData(erc20Abi, 'approve', data)
     expect(input).toEqual([address.vitalik, 1n])
+    expect(input2).toEqual([address.vitalik, 1n])
   })
 
   test('behavior: with overloads', () => {
@@ -135,8 +139,12 @@ describe('decodeResult', () => {
 
 describe('encodeData', () => {
   test('default', () => {
-    const abiFunction = AbiFunction.fromAbi(erc20Abi, 'decimals')
-    expect(AbiFunction.encodeData(abiFunction)).toEqual('0x313ce567')
+    {
+      const abiFunction = AbiFunction.fromAbi(erc20Abi, 'decimals')
+      expect(AbiFunction.encodeData(abiFunction)).toEqual('0x313ce567')
+    }
+
+    AbiFunction.encodeData(erc20Abi, 'decimals')
   })
 
   test('behavior: abiFunction not prepared', () => {
@@ -147,10 +155,20 @@ describe('encodeData', () => {
   })
 
   test('behavior: with data', () => {
-    const abiFunction = AbiFunction.fromAbi(erc20Abi, 'approve', {
-      prepare: false,
-    })
-    expect(AbiFunction.encodeData(abiFunction, [address.vitalik, 1n])).toEqual(
+    {
+      const abiFunction = AbiFunction.fromAbi(erc20Abi, 'approve', {
+        prepare: false,
+      })
+      expect(
+        AbiFunction.encodeData(abiFunction, [address.vitalik, 1n]),
+      ).toEqual(
+        '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001',
+      )
+    }
+
+    expect(
+      AbiFunction.encodeData(erc20Abi, 'approve', [address.vitalik, 1n]),
+    ).toEqual(
       '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001',
     )
   })
@@ -177,6 +195,13 @@ describe('encodeData', () => {
       '0x9cc7f7080000000000000000000000000000000000000000000000000000000000000001',
     )
     expect(AbiFunction.encodeData(abiFunction, ['0xdeadbeef'])).toEqual(
+      '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
+    )
+
+    expect(AbiFunction.encodeData(abi, 'balanceOf', [1n])).toEqual(
+      '0x9cc7f7080000000000000000000000000000000000000000000000000000000000000001',
+    )
+    expect(AbiFunction.encodeData(abi, 'balanceOf', ['0xdeadbeef'])).toEqual(
       '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
     )
   })
@@ -232,6 +257,63 @@ describe('encodeResult', () => {
     )
     expect(result).toMatchInlineSnapshot(
       `"0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000036c6f6c0000000000000000000000000000000000000000000000000000000000"`,
+    )
+  })
+
+  test('behavior: overload with abi', () => {
+    const abi = Abi.from([
+      'function test() returns (uint a, (uint x, string y) b)',
+    ])
+    const output = [420n, { x: 420n, y: 'lol' }] as const
+
+    // Test both overload patterns
+    const abiItem = AbiFunction.fromAbi(abi, 'test')
+    const result1 = AbiFunction.encodeResult(abiItem, output)
+    const result2 = AbiFunction.encodeResult(abi, 'test', output)
+
+    expect(result1).toEqual(result2)
+    expect(AbiFunction.decodeResult(abi, 'test', result2)).toEqual(output)
+    expect(result2).toMatchInlineSnapshot(
+      `"0x00000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000036c6f6c0000000000000000000000000000000000000000000000000000000000"`,
+    )
+  })
+
+  test('behavior: overload with abi and options', () => {
+    const abi = Abi.from([
+      'function test() returns (uint a, (uint x, string y) b)',
+    ])
+    const output = { a: 420n, b: { x: 420n, y: 'lol' } } as const
+
+    // Test both overload patterns with options
+    const abiItem = AbiFunction.fromAbi(abi, 'test')
+    const result1 = AbiFunction.encodeResult(abiItem, output, { as: 'Object' })
+    const result2 = AbiFunction.encodeResult(abi, 'test', output, {
+      as: 'Object',
+    })
+
+    expect(result1).toEqual(result2)
+    expect(
+      AbiFunction.decodeResult(abi, 'test', result2, { as: 'Object' }),
+    ).toEqual(output)
+    expect(result2).toMatchInlineSnapshot(
+      `"0x00000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000036c6f6c0000000000000000000000000000000000000000000000000000000000"`,
+    )
+  })
+
+  test('behavior: overload with erc20 abi', () => {
+    const abiItem = AbiFunction.fromAbi(erc20Abi, 'totalSupply')
+    const output = 69420n
+
+    // Test both overload patterns
+    const result1 = AbiFunction.encodeResult(abiItem, output)
+    const result2 = AbiFunction.encodeResult(erc20Abi, 'totalSupply', output)
+
+    expect(result1).toEqual(result2)
+    expect(AbiFunction.decodeResult(erc20Abi, 'totalSupply', result2)).toEqual(
+      output,
+    )
+    expect(result2).toMatchInlineSnapshot(
+      `"0x0000000000000000000000000000000000000000000000000000000000010f2c"`,
     )
   })
 })
