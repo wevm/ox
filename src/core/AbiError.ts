@@ -69,7 +69,7 @@ export function decode<
  * const value = AbiError.decode(
  *   abi, // [!code hl]
  *   'InvalidSignature', // [!code hl]
- *   data
+ *   '0x...'
  * )
  * // @log: [420n, 69n, 1]
  * ```
