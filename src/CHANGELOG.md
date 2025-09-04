@@ -1,5 +1,27 @@
 # ox
 
+## 0.9.5
+
+### Patch Changes
+
+- [#113](https://github.com/wevm/ox/pull/113) [`e21cb3c`](https://github.com/wevm/ox/commit/e21cb3cf0b7412f9ca72824247d22ba25e8be4c9) Thanks [@jxom](https://github.com/jxom)! - Added support for specifying the ABI and signature name to:
+
+  - `AbiFunction.{encodeData,encodeResult,decodeData,decodeResult}`
+  - `AbiError.{encode,decode}`
+  - `AbiEvent.{encode,decode}`
+
+  Example:
+
+  ```ts twoslash
+  import { AbiFunction } from "ox";
+  import { abi } from "./abi";
+
+  const data = AbiFunction.encodeData(abi, "approve", [
+    "0x0000000000000000000000000000000000000000",
+    1n,
+  ]);
+  ```
+
 ## 0.9.4
 
 ### Patch Changes
