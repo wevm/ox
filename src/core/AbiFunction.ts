@@ -93,10 +93,46 @@ export type ExtractNames<
  * @param abiFunction - The ABI Item to decode.
  * @param data - The data to decode.
  */
+export function decodeData<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiFunction
+  >,
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
+  data: Hex.Hex,
+): decodeData.ReturnType<abiFunction>
 export function decodeData<const abiItem extends AbiFunction>(
   abiFunction: abiItem | AbiFunction,
   data: Hex.Hex,
-): decodeData.ReturnType<abiItem> {
+): decodeData.ReturnType<abiItem>
+export function decodeData(
+  ...parameters:
+    | [abi: Abi.Abi | readonly unknown[], name: Hex.Hex | string, data: Hex.Hex]
+    | [abiFunction: AbiFunction, data: Hex.Hex]
+) {
+  const [abiFunction, data] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, data] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        Hex.Hex,
+      ]
+      return [fromAbi(abi, name), data]
+    }
+    return parameters as [AbiFunction, Hex.Hex]
+  })()
+
   const { overloads } = abiFunction
 
   if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
@@ -174,6 +210,25 @@ export declare namespace decodeData {
  * ```
  *
  * @example
+ * Or define the ABI and function name as parameters to {@link ox#AbiFunction.(decodeResult:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
+ *
+ * const erc20Abi = Abi.from([...])
+ *
+ * const output = AbiFunction.decodeResult(
+ *   erc20Abi, // [!code hl]
+ *   'totalSupply', // [!code hl]
+ *   data
+ * )
+ * // @log: 42n
+ * ```
+ *
+ * @example
  * ### End-to-end
  *
  * Below is an end-to-end example of using `AbiFunction.decodeResult` to decode the result of a `balanceOf` contract call on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
@@ -231,13 +286,65 @@ export declare namespace decodeData {
  * @returns Decoded function output
  */
 export function decodeResult<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiFunction
+  >,
+  allNames = Name<abi>,
+  as extends 'Object' | 'Array' = 'Array',
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
+  data: Hex.Hex,
+  options?: decodeResult.Options<as> | undefined,
+): decodeResult.ReturnType<abiFunction, as>
+export function decodeResult<
   const abiFunction extends AbiFunction,
   as extends 'Object' | 'Array' = 'Array',
 >(
   abiFunction: abiFunction | AbiFunction,
   data: Hex.Hex,
-  options: decodeResult.Options<as> = {},
-): decodeResult.ReturnType<abiFunction, as> {
+  options?: decodeResult.Options<as> | undefined,
+): decodeResult.ReturnType<abiFunction, as>
+export function decodeResult(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        data: Hex.Hex,
+        options?: decodeResult.Options | undefined,
+      ]
+    | [
+        abiFunction: AbiFunction,
+        data: Hex.Hex,
+        options?: decodeResult.Options | undefined,
+      ]
+) {
+  const [abiFunction, data, options = {}] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, data, options] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        Hex.Hex,
+        decodeResult.Options | undefined,
+      ]
+      return [fromAbi(abi, name), data, options]
+    }
+    return parameters as [
+      AbiFunction,
+      Hex.Hex,
+      decodeResult.Options | undefined,
+    ]
+  })()
+
   const values = AbiParameters.decode(abiFunction.outputs, data, options)
   if (values && Object.keys(values).length === 0) return undefined
   if (values && Object.keys(values).length === 1) {
@@ -248,7 +355,7 @@ export function decodeResult<
 }
 
 export declare namespace decodeResult {
-  type Options<as extends 'Object' | 'Array'> = {
+  type Options<as extends 'Object' | 'Array' = 'Array'> = {
     /**
      * Whether the decoded values should be returned as an `Object` or `Array`.
      *
@@ -324,6 +431,22 @@ export declare namespace decodeResult {
  * ```
  *
  * @example
+ * Or define the ABI and function name as parameters to {@link ox#AbiFunction.(encodeData:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const erc20Abi = Abi.from([...])
+ *
+ * const data = AbiFunction.encodeData(
+ *   erc20Abi, // [!code hl]
+ *   'approve', // [!code hl]
+ *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * )
+ * ```
+ *
+ * @example
  * ### End-to-end
  *
  * Below is an end-to-end example of using `AbiFunction.encodeData` to encode the input of a `balanceOf` contract call on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
@@ -378,24 +501,63 @@ export declare namespace decodeResult {
  * @param args - Function arguments
  * @returns ABI-encoded function name and arguments
  */
+export function encodeData<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiFunction
+  >,
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
+  ...args: encodeData.Args<abiFunction>
+): Hex.Hex
 export function encodeData<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
   ...args: encodeData.Args<abiFunction>
-): Hex.Hex {
+): Hex.Hex
+export function encodeData(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        ...args: readonly unknown[],
+      ]
+    | [abiFunction: AbiFunction, ...args: readonly unknown[]]
+) {
+  const [abiFunction, args = []] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, args] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        readonly unknown[],
+      ]
+      return [fromAbi(abi, name, { args }), args]
+    }
+    const [abiFunction, args] = parameters as [AbiFunction, readonly unknown[]]
+    return [abiFunction, args]
+  })()
+
   const { overloads } = abiFunction
 
   const item = overloads
     ? (fromAbi([abiFunction as AbiFunction, ...overloads], abiFunction.name, {
-        args: (args as any)[0],
+        args,
       }) as AbiFunction)
     : abiFunction
 
   const selector = getSelector(item)
 
   const data =
-    args.length > 0
-      ? AbiParameters.encode(item.inputs, (args as any)[0])
-      : undefined
+    args.length > 0 ? AbiParameters.encode(item.inputs, args) : undefined
 
   return data ? Hex.concat(selector, data) : selector
 }
@@ -444,13 +606,65 @@ export declare namespace encodeData {
  * @returns The encoded function output.
  */
 export function encodeResult<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  as extends 'Object' | 'Array' = 'Array',
+  //
+  abiFunction extends AbiFunction = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiFunction
+  >,
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
+  output: encodeResult.Output<abiFunction, as>,
+  options?: encodeResult.Options<as>,
+): Hex.Hex
+export function encodeResult<
   const abiFunction extends AbiFunction,
   as extends 'Object' | 'Array' = 'Array',
 >(
   abiFunction: abiFunction | AbiFunction,
   output: encodeResult.Output<abiFunction, as>,
-  options: encodeResult.Options<as> = {},
-): Hex.Hex {
+  options?: encodeResult.Options<as>,
+): Hex.Hex
+export function encodeResult(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        output: any,
+        options?: encodeResult.Options<any> | undefined,
+      ]
+    | [
+        abiFunction: AbiFunction,
+        output: any,
+        options?: encodeResult.Options<any> | undefined,
+      ]
+) {
+  const [abiFunction, output, options = {}] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, output, options] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        any,
+        encodeResult.Options<any> | undefined,
+      ]
+      return [fromAbi(abi, name), output, options]
+    }
+    return parameters as [
+      AbiFunction,
+      any,
+      encodeResult.Options<any> | undefined,
+    ]
+  })()
+
   const { as = 'Array' } = options
 
   const values = (() => {

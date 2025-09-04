@@ -59,6 +59,22 @@ export function decode<
  * ```
  *
  * @example
+ * Or define the ABI and error name as parameters to {@link ox#AbiError.(decode:function)}:
+ *
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ *
+ * const value = AbiError.decode(
+ *   abi, // [!code hl]
+ *   'InvalidSignature', // [!code hl]
+ *   data
+ * )
+ * // @log: [420n, 69n, 1]
+ * ```
+ *
+ * @example
  * You can pass the error `data` to the `name` property of {@link ox#AbiError.(fromAbi:function)} to extract and infer the error by its 4-byte selector:
  *
  * ```ts twoslash
@@ -139,17 +155,57 @@ export function decode<
  * @param options - Decoding options.
  * @returns The decoded error.
  */
-export function decode(
-  abiError: AbiError,
+export function decode<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  as extends 'Object' | 'Array' = 'Array',
+  //
+  abiError extends AbiError = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiError
+  >,
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
   data: Hex.Hex,
-  options?: decode.Options | undefined,
-): unknown | readonly unknown[] | undefined
-/** @internal */
-export function decode(
-  abiError: AbiError,
+  options?: decode.Options<as> | undefined,
+): decode.ReturnType<abiError, as>
+export function decode<
+  const abiError extends AbiError,
+  as extends 'Object' | 'Array' = 'Array',
+>(
+  abiError: abiError | AbiError,
   data: Hex.Hex,
-  options: decode.Options = {},
+  options?: decode.Options<as> | undefined,
+): decode.ReturnType<abiError, as>
+export function decode(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        data: Hex.Hex,
+        options?: decode.Options | undefined,
+      ]
+    | [abiError: AbiError, data: Hex.Hex, options?: decode.Options | undefined]
 ): decode.ReturnType {
+  const [abiError, data, options = {}] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, data, options] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        Hex.Hex,
+        decode.Options | undefined,
+      ]
+      return [fromAbi(abi, name), data, options]
+    }
+    return parameters as [AbiError, Hex.Hex, decode.Options | undefined]
+  })()
   if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
   if (abiError.inputs.length === 0) return undefined
 
@@ -255,10 +311,54 @@ export declare namespace decode {
  * @param args - Error arguments
  * @returns ABI-encoded error name and arguments
  */
+export function encode<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  abiError extends AbiError = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiError
+  >,
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
+  ...args: encode.Args<abiError>
+): encode.ReturnType
 export function encode<const abiError extends AbiError>(
   abiError: abiError,
   ...args: encode.Args<abiError>
-): encode.ReturnType {
+): encode.ReturnType
+export function encode(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        ...args: readonly unknown[],
+      ]
+    | [abiError: AbiError, ...args: readonly unknown[]]
+) {
+  const [abiError, args] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, ...args] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        ...(readonly unknown[]),
+      ]
+      return [fromAbi(abi, name), args]
+    }
+    const [abiError, ...args] = parameters as [
+      AbiError,
+      ...(readonly unknown[]),
+    ]
+    return [abiError, args]
+  })()
+
   const selector = getSelector(abiError)
 
   const data =

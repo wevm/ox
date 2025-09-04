@@ -286,10 +286,50 @@ export declare namespace assertArgs {
  * @param log - `topics` & `data` to decode.
  * @returns The decoded event.
  */
+export function decode<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  abiEvent extends AbiEvent = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiEvent
+  >,
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
+  log: decode.Log,
+): decode.ReturnType<abiEvent>
 export function decode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   log: decode.Log,
-): decode.ReturnType<abiEvent> {
+): decode.ReturnType<abiEvent>
+export function decode(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        log: decode.Log,
+      ]
+    | [abiEvent: AbiEvent, log: decode.Log]
+): decode.ReturnType {
+  const [abiEvent, log] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, log] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        decode.Log,
+      ]
+      return [fromAbi(abi, name), log]
+    }
+    return parameters as [AbiEvent, decode.Log]
+  })()
+
   const { data, topics } = log
 
   const [selector_, ...argTopics] = topics
@@ -496,10 +536,54 @@ export declare namespace decode {
  * @param args - The arguments to encode.
  * @returns The encoded event topics.
  */
+export function encode<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  abiEvent extends AbiEvent = AbiItem.fromAbi.ReturnType<
+    abi,
+    name,
+    args,
+    AbiEvent
+  >,
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: Hex.Hex | (name extends allNames ? name : never),
+  ...[args]: encode.Args<abiEvent>
+): encode.ReturnType
 export function encode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   ...[args]: encode.Args<abiEvent>
+): encode.ReturnType
+export function encode(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        args?: readonly unknown[] | Record<string, unknown>,
+      ]
+    | [abiEvent: AbiEvent, args?: readonly unknown[] | Record<string, unknown>]
 ): encode.ReturnType {
+  const [abiEvent, args] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name, args] = parameters as [
+        Abi.Abi | readonly unknown[],
+        Hex.Hex | string,
+        readonly unknown[] | Record<string, unknown> | undefined,
+      ]
+      return [fromAbi(abi, name), args]
+    }
+    const [abiEvent, args] = parameters as [
+      AbiEvent,
+      readonly unknown[] | Record<string, unknown> | undefined,
+    ]
+    return [abiEvent, args]
+  })()
+
   let topics: (Hex.Hex | Hex.Hex[] | null)[] = []
   if (args && abiEvent.inputs) {
     const indexedInputs = abiEvent.inputs.filter(

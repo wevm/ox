@@ -481,6 +481,63 @@ describe('decode', () => {
   `,
     )
   })
+
+  test('behavior: overload with abi', () => {
+    const abi = Abi.from([
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    ])
+    const log = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+
+    // Test both overload patterns
+    const abiEvent = AbiEvent.fromAbi(abi, 'Transfer')
+    const decoded1 = AbiEvent.decode(abiEvent, log)
+    const decoded2 = AbiEvent.decode(abi, 'Transfer', log)
+
+    expect(decoded1).toEqual(decoded2)
+    expect(decoded2).toMatchInlineSnapshot(`
+      {
+        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "value": 1n,
+      }
+    `)
+  })
+
+  test('behavior: overload with hex selector', () => {
+    const abi = Abi.from([
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    ])
+    const log = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+
+    // Test with hex selector
+    const decoded = AbiEvent.decode(
+      abi,
+      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      log,
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`
+      {
+        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "value": 1n,
+      }
+    `)
+  })
 })
 
 describe('encode', () => {
@@ -875,6 +932,80 @@ describe('encode', () => {
         "topics": [
           "0xe3cff634ef3ac1857ee74821b8b4103c803384af6152771eef3a2a92bdda6db6",
           "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ],
+      }
+    `)
+  })
+
+  test('behavior: overload with abi', () => {
+    const abi = Abi.from([
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    ])
+
+    // Test both overload patterns
+    const abiEvent = AbiEvent.fromAbi(abi, 'Transfer')
+    const result1 = AbiEvent.encode(abiEvent, {
+      from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+    })
+    const result2 = AbiEvent.encode(abi, 'Transfer', {
+      from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+    })
+
+    expect(result1).toEqual(result2)
+    expect(result2).toMatchInlineSnapshot(`
+      {
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+          "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8",
+        ],
+      }
+    `)
+  })
+
+  test('behavior: overload with abi - no args', () => {
+    const abi = Abi.from(['event Transfer()'])
+
+    // Test both overload patterns
+    const abiEvent = AbiEvent.fromAbi(abi, 'Transfer')
+    const result1 = AbiEvent.encode(abiEvent)
+    const result2 = AbiEvent.encode(abi, 'Transfer')
+
+    expect(result1).toEqual(result2)
+    expect(result2).toMatchInlineSnapshot(`
+      {
+        "topics": [
+          "0x406dade31f7ae4b5dbc276258c28dde5ae6d5c2773c5745802c493a2360e55e0",
+        ],
+      }
+    `)
+  })
+
+  test('behavior: overload with array args', () => {
+    const abi = Abi.from([
+      'event Transfer(address indexed, address indexed, uint256)',
+    ])
+
+    // Test both overload patterns with unnamed args
+    const abiEvent = AbiEvent.fromAbi(abi, 'Transfer')
+    const result1 = AbiEvent.encode(abiEvent, [
+      '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+    ])
+    const result2 = AbiEvent.encode(abi, 'Transfer', [
+      '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+    ])
+
+    expect(result1).toEqual(result2)
+    expect(result2).toMatchInlineSnapshot(`
+      {
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+          "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8",
         ],
       }
     `)
