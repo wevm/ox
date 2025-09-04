@@ -116,6 +116,7 @@ export function decodeData<const abiItem extends AbiFunction>(
   abiFunction: abiItem | AbiFunction,
   data: Hex.Hex,
 ): decodeData.ReturnType<abiItem>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function decodeData(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: Hex.Hex | string, data: Hex.Hex]
@@ -314,6 +315,7 @@ export function decodeResult<
   data: Hex.Hex,
   options?: decodeResult.Options<as> | undefined,
 ): decodeResult.ReturnType<abiFunction, as>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function decodeResult(
   ...parameters:
     | [
@@ -524,6 +526,7 @@ export function encodeData<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
   ...args: encodeData.Args<abiFunction>
 ): Hex.Hex
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function encodeData(
   ...parameters:
     | [
@@ -634,6 +637,7 @@ export function encodeResult<
   output: encodeResult.Output<abiFunction, as>,
   options?: encodeResult.Options<as>,
 ): Hex.Hex
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function encodeResult(
   ...parameters:
     | [

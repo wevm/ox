@@ -62,6 +62,7 @@ export function decode<
  * Or define the ABI and error name as parameters to {@link ox#AbiError.(decode:function)}:
  *
  * ```ts twoslash
+ * // @noErrors
  * import { Abi, AbiError } from 'ox'
  *
  * const abi = Abi.from([...])
@@ -184,6 +185,7 @@ export function decode<
   data: Hex.Hex,
   options?: decode.Options<as> | undefined,
 ): decode.ReturnType<abiError, as>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function decode(
   ...parameters:
     | [
@@ -334,6 +336,7 @@ export function encode<const abiError extends AbiError>(
   abiError: abiError,
   ...args: encode.Args<abiError>
 ): encode.ReturnType
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function encode(
   ...parameters:
     | [

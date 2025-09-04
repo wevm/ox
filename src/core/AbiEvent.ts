@@ -309,6 +309,7 @@ export function decode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   log: decode.Log,
 ): decode.ReturnType<abiEvent>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function decode(
   ...parameters:
     | [
@@ -559,6 +560,7 @@ export function encode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   ...[args]: encode.Args<abiEvent>
 ): encode.ReturnType
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function encode(
   ...parameters:
     | [
