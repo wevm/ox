@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.6
+
+### Patch Changes
+
+- [`c154290`](https://github.com/wevm/ox/commit/c154290c6958702f854bece58309a15694589f22) Thanks [@jxom](https://github.com/jxom)! - Added ABI-shorthand for `AbiItem.{getSelector,getSignature,getSignatureHash}`
+
 ## 0.9.5
 
 ### Patch Changes
