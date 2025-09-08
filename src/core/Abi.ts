@@ -43,6 +43,7 @@ export function format<const abi extends Abi>(abi: abi): format.ReturnType<abi>
  * @returns The formatted ABI.
  */
 export function format(abi: Abi | readonly unknown[]): readonly string[]
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function format(abi: Abi | readonly unknown[]): format.ReturnType {
   return abitype.formatAbi(abi) as never
 }
@@ -139,6 +140,7 @@ export function from<const abi extends Abi | readonly string[]>(
  * @returns The typed ABI.
  */
 export function from(abi: Abi | readonly string[]): Abi
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function from(abi: Abi | readonly string[]): from.ReturnType {
   if (internal.isSignatures(abi)) return abitype.parseAbi(abi)
   return abi

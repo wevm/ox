@@ -524,6 +524,7 @@ export function getSelector<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
 export function getSelector(abiItem: string | AbiItem): Hex.Hex
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function getSelector(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
@@ -590,6 +591,7 @@ export function getSignature<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): string
 export function getSignature(abiItem: string | AbiItem): string
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function getSignature(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
@@ -663,6 +665,7 @@ export function getSignatureHash<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
 export function getSignatureHash(abiItem: string | AbiItem): Hex.Hex
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function getSignatureHash(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
