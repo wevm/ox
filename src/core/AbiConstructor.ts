@@ -58,19 +58,25 @@ export type AbiConstructor = abitype.AbiConstructor
  * @param options - Decoding options.
  * @returns The decoded constructor inputs.
  */
-export function decode<const abi extends Abi.Abi | readonly unknown[]>(
+export function decode<
+  const abi extends Abi.Abi | readonly unknown[],
+  abiConstructor extends
+    AbiConstructor = fromAbi.ReturnType<abi> extends AbiConstructor
+    ? fromAbi.ReturnType<abi>
+    : never,
+>(
   abi: abi | Abi.Abi | readonly unknown[],
   options: decode.Options,
-): readonly unknown[] | undefined
-export function decode(
-  abiConstructor: AbiConstructor,
+): decode.ReturnType<abiConstructor>
+export function decode<const abiConstructor extends AbiConstructor>(
+  abiConstructor: abiConstructor | AbiConstructor,
   options: decode.Options,
-): readonly unknown[] | undefined
+): decode.ReturnType<abiConstructor>
 export function decode(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], options: decode.Options]
     | [abiConstructor: AbiConstructor, options: decode.Options]
-): readonly unknown[] | undefined {
+): decode.ReturnType {
   const [abiConstructor, options] = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, options] = parameters as [
@@ -188,30 +194,24 @@ export function encode<
   options: encode.Options<abiConstructor>,
 ): encode.ReturnType
 export function encode<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor,
+  abiConstructor: abiConstructor | AbiConstructor,
   options: encode.Options<abiConstructor>,
 ): encode.ReturnType
-export function encode<const abiConstructor extends AbiConstructor>(
+export function encode(
   ...parameters:
-    | [
-        abi: Abi.Abi | readonly unknown[],
-        options: encode.Options<abiConstructor>,
-      ]
-    | [abiConstructor: AbiConstructor, options: encode.Options<abiConstructor>]
+    | [abi: Abi.Abi | readonly unknown[], options: encode.Options]
+    | [abiConstructor: AbiConstructor, options: encode.Options]
 ): encode.ReturnType {
   const [abiConstructor, options] = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, options] = parameters as [
         Abi.Abi | readonly unknown[],
-        encode.Options<abiConstructor>,
+        encode.Options,
       ]
-      return [fromAbi(abi), options] as [
-        AbiConstructor,
-        encode.Options<abiConstructor>,
-      ]
+      return [fromAbi(abi), options] as [AbiConstructor, encode.Options]
     }
 
-    return parameters as [AbiConstructor, encode.Options<abiConstructor>]
+    return parameters as [AbiConstructor, encode.Options]
   })()
 
   const { bytecode, args } = options

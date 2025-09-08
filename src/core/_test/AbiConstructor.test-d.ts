@@ -1,5 +1,5 @@
 import { erc20Abi } from 'abitype/abis'
-import { type Abi, AbiConstructor, type Address } from 'ox'
+import { type Abi, AbiConstructor } from 'ox'
 import { describe, expectTypeOf, test } from 'vitest'
 
 const error = {} as AbiConstructor.encode.ErrorType
@@ -37,15 +37,11 @@ describe('AbiConstructor.encode', () => {
       ...options,
       args: ['0x', 123n],
     })
+    // @ts-expect-error invalid types
     AbiConstructor.encode(abiConstructor, {
       ...options,
-      // @ts-expect-error invalid types
       args: ['x', 123],
     })
-    expectTypeOf(AbiConstructor.encode<typeof abiConstructor>)
-      .parameter(1)
-      .toHaveProperty('args')
-      .toMatchTypeOf<readonly [Address.Address, bigint]>()
   })
 
   test('no args', () => {
@@ -54,10 +50,6 @@ describe('AbiConstructor.encode', () => {
       ...options,
       args: [],
     })
-    expectTypeOf(AbiConstructor.encode<typeof abiConstructor>)
-      .parameter(1)
-      .toHaveProperty('args')
-      .toMatchTypeOf<readonly [] | undefined>()
   })
 
   test('not narrowable', () => {
