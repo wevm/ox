@@ -9,6 +9,7 @@ import {
 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import {
+  erc20Abi,
   seaportContractConfig,
   wagmiContractConfig,
 } from '../../../test/constants/abis.js'
@@ -1278,6 +1279,9 @@ describe('getSignature', () => {
     )
     expect(AbiItem.getSignature('claimed()')).toEqual('claimed()')
     expect(AbiItem.getSignature('function claimed()')).toEqual('claimed()')
+    expect(AbiItem.getSignature(erc20Abi, 'approve')).toEqual(
+      'approve(address,uint256)',
+    )
   })
 
   test('creates function signature from `AbiFunction`', () => {
@@ -1956,6 +1960,9 @@ describe('getSignatureHash', () => {
     )
     expect(AbiItem.getSignatureHash('function ownerOf(uint256 tokenId)')).toBe(
       '0x6352211e6566aa027e75ac9dbf2423197fbd9b82b9d981a3ab367d355866aa1c',
+    )
+    expect(AbiItem.getSignatureHash(erc20Abi, 'approve')).toBe(
+      '0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba',
     )
   })
 

@@ -493,6 +493,17 @@ export declare namespace fromAbi {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const erc20Abi = Abi.from([...])
+ *
+ * const selector = AbiItem.getSelector(erc20Abi, 'ownerOf')
+ * // @log: '0x6352211e'
+ * ```
+ *
+ * @example
+ * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
  * const selector = AbiItem.getSelector({
@@ -508,7 +519,23 @@ export declare namespace fromAbi {
  * @param abiItem - The ABI item to compute the selector for. Can be a signature or an ABI item for an error, event, function, etc.
  * @returns The first 4 bytes of the {@link ox#Hash.(keccak256:function)} hash of the function signature.
  */
-export function getSelector(abiItem: string | AbiItem): Hex.Hex {
+export function getSelector<
+  abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+>(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
+export function getSelector(abiItem: string | AbiItem): Hex.Hex
+export function getSelector(
+  ...parameters:
+    | [abi: Abi.Abi | readonly unknown[], name: string]
+    | [string | AbiItem]
+): Hex.Hex {
+  const abiItem = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
+      return fromAbi(abi, name)
+    }
+    return parameters[0] as string | AbiItem
+  })()
   return Hex.slice(getSignatureHash(abiItem), 0, 4)
 }
 
@@ -532,6 +559,17 @@ export declare namespace getSelector {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const erc20Abi = Abi.from([...])
+ *
+ * const signature = AbiItem.getSignature(erc20Abi, 'ownerOf')
+ * // @log: 'ownerOf(uint256)'
+ * ```
+ *
+ * @example
+ * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
  * const signature = AbiItem.getSignature({
@@ -547,7 +585,23 @@ export declare namespace getSelector {
  * @param abiItem - The ABI Item to compute the signature for.
  * @returns The stringified signature of the ABI Item.
  */
-export function getSignature(abiItem: string | AbiItem): string {
+export function getSignature<
+  abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+>(abi: abi | Abi.Abi | readonly unknown[], name: name): string
+export function getSignature(abiItem: string | AbiItem): string
+export function getSignature(
+  ...parameters:
+    | [abi: Abi.Abi | readonly unknown[], name: string]
+    | [string | AbiItem]
+): string {
+  const abiItem = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
+      return fromAbi(abi, name)
+    }
+    return parameters[0] as string | AbiItem
+  })()
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
     return abitype.formatAbiItem(abiItem)
@@ -576,6 +630,17 @@ export declare namespace getSignature {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const erc20Abi = Abi.from([...])
+ *
+ * const hash = AbiItem.getSignatureHash(erc20Abi, 'Transfer')
+ * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * ```
+ *
+ * @example
+ * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
  * const hash = AbiItem.getSignatureHash({
@@ -593,7 +658,23 @@ export declare namespace getSignature {
  * @param abiItem - The ABI Item to compute the signature hash for.
  * @returns The {@link ox#Hash.(keccak256:function)} hash of the ABI item's signature.
  */
-export function getSignatureHash(abiItem: string | AbiItem): Hex.Hex {
+export function getSignatureHash<
+  abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+>(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
+export function getSignatureHash(abiItem: string | AbiItem): Hex.Hex
+export function getSignatureHash(
+  ...parameters:
+    | [abi: Abi.Abi | readonly unknown[], name: string]
+    | [string | AbiItem]
+): Hex.Hex {
+  const abiItem = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
+      return fromAbi(abi, name)
+    }
+    return parameters[0] as string | AbiItem
+  })()
   if (typeof abiItem !== 'string' && 'hash' in abiItem && abiItem.hash)
     return abiItem.hash as Hex.Hex
   return Hash.keccak256(Hex.fromString(getSignature(abiItem)))

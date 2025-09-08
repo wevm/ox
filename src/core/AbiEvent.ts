@@ -237,6 +237,38 @@ export declare namespace assertArgs {
  * ```
  *
  * @example
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object and an event name as parameters to {@link ox#AbiEvent.(decode:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ * const log = {
+ *   // ...
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *   ],
+ * } as const
+ *
+ * const decoded = AbiEvent.decode(
+ *   abi, // [!code focus]
+ *   'Transfer', // [!code focus]
+ *   log
+ * )
+ * // @log: {
+ * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   value: 1n
+ * // @log: }
+ * ```
+ *
+ * @example
  * ### End-to-end
  *
  * Below is an end-to-end example of using `AbiEvent.decode` to decode the topics of a `Transfer` event on the [Wagmi Mint Example contract](https://etherscan.io/address/0xfba3912ca04dd458c843e2ee08967fc04f3579c2).
@@ -482,6 +514,32 @@ export declare namespace decode {
  *   from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code hl]
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' // [!code hl]
  * })
+ * // @log: [
+ * // @log:   '0x406dade31f7ae4b5dbc276258c28dde5ae6d5c2773c5745802c493a2360e55e0',
+ * // @log:   '0x00000000000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+ * // @log:   '0x0000000000000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8'
+ * // @log: ]
+ * ```
+ *
+ * @example
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object and an event name as parameters to {@link ox#AbiEvent.(encode:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ *
+ * const { topics } = AbiEvent.encode(
+ *   abi, // [!code focus]
+ *   'Transfer', // [!code focus]
+ *   {
+ *     from: '0xf39fd6e51aad88f6f4ce6ab882779cfffb92266', // [!code focus]
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   }
+ * )
  * // @log: [
  * // @log:   '0x406dade31f7ae4b5dbc276258c28dde5ae6d5c2773c5745802c493a2360e55e0',
  * // @log:   '0x00000000000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',

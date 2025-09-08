@@ -10,11 +10,6 @@ import type { IsNarrowable } from './internal/types.js'
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
 export type AbiConstructor = abitype.AbiConstructor
 
-/** @internal */
-export function decode<const abiConstructor extends AbiConstructor>(
-  abiConstructor: abiConstructor,
-  options: decode.Options,
-): decode.ReturnType<abiConstructor>
 /**
  * ABI-decodes the provided constructor input (`inputs`).
  *
@@ -37,19 +32,56 @@ export function decode<const abiConstructor extends AbiConstructor>(
  * }) // [!code focus]
  * ```
  *
+ * @example
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object as a parameter to `AbiConstructor.decode`.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiConstructor } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ *
+ * const data = AbiConstructor.encode(abi, {
+ *   bytecode: '0x...',
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
+ * })
+ *
+ * const decoded = AbiConstructor.decode(abi, { // [!code focus]
+ *   bytecode: '0x...', // [!code focus]
+ *   data, // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
  * @param abiConstructor - The ABI Constructor to decode.
  * @param options - Decoding options.
  * @returns The decoded constructor inputs.
  */
+export function decode<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  options: decode.Options,
+): readonly unknown[] | undefined
 export function decode(
   abiConstructor: AbiConstructor,
   options: decode.Options,
 ): readonly unknown[] | undefined
-/** @internal */
 export function decode(
-  abiConstructor: AbiConstructor,
-  options: decode.Options,
-): decode.ReturnType {
+  ...parameters:
+    | [abi: Abi.Abi | readonly unknown[], options: decode.Options]
+    | [abiConstructor: AbiConstructor, options: decode.Options]
+): readonly unknown[] | undefined {
+  const [abiConstructor, options] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, options] = parameters as [
+        Abi.Abi | readonly unknown[],
+        decode.Options,
+      ]
+      return [fromAbi(abi), options] as [AbiConstructor, decode.Options]
+    }
+    return parameters as [AbiConstructor, decode.Options]
+  })()
+
   const { bytecode } = options
   if (abiConstructor.inputs.length === 0) return undefined
   const data = options.data.replace(bytecode, '0x') as Hex.Hex
@@ -91,6 +123,23 @@ export declare namespace decode {
  * ```
  *
  * @example
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object as a parameter to `AbiConstructor.encode`.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiConstructor } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ *
+ * const data = AbiConstructor.encode(abi, { // [!code focus]
+ *   bytecode: '0x...', // [!code focus]
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n], // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @example
  * ### End-to-end
  *
  * Below is an end-to-end example of using `AbiConstructor.encode` to encode the constructor of a contract and deploy it.
@@ -128,10 +177,43 @@ export declare namespace decode {
  * @param options - Encoding options.
  * @returns The encoded constructor.
  */
+export function encode<
+  const abi extends Abi.Abi | readonly unknown[],
+  abiConstructor extends
+    AbiConstructor = fromAbi.ReturnType<abi> extends AbiConstructor
+    ? fromAbi.ReturnType<abi>
+    : never,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  options: encode.Options<abiConstructor>,
+): encode.ReturnType
 export function encode<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor,
   options: encode.Options<abiConstructor>,
+): encode.ReturnType
+export function encode<const abiConstructor extends AbiConstructor>(
+  ...parameters:
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        options: encode.Options<abiConstructor>,
+      ]
+    | [abiConstructor: AbiConstructor, options: encode.Options<abiConstructor>]
 ): encode.ReturnType {
+  const [abiConstructor, options] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi, options] = parameters as [
+        Abi.Abi | readonly unknown[],
+        encode.Options<abiConstructor>,
+      ]
+      return [fromAbi(abi), options] as [
+        AbiConstructor,
+        encode.Options<abiConstructor>,
+      ]
+    }
+
+    return parameters as [AbiConstructor, encode.Options<abiConstructor>]
+  })()
+
   const { bytecode, args } = options
   return Hex.concat(
     bytecode,

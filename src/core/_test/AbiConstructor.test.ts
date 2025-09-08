@@ -1,6 +1,5 @@
 import { AbiConstructor } from 'ox'
 import { describe, expect, test } from 'vitest'
-
 import { Constructor } from '../../../contracts/generated.js'
 import { anvilMainnet } from '../../../test/anvil.js'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
@@ -8,37 +7,78 @@ import { address } from '../../../test/constants/addresses.js'
 
 describe('decode', () => {
   test('default', () => {
-    const abiConstructor = AbiConstructor.from('constructor()')
-    const encoded = AbiConstructor.encode(abiConstructor, {
-      bytecode: Constructor.bytecode.object,
-    })
-
-    expect(
-      AbiConstructor.decode(abiConstructor, {
+    {
+      const abiConstructor = AbiConstructor.from('constructor()')
+      const encoded = AbiConstructor.encode(abiConstructor, {
         bytecode: Constructor.bytecode.object,
-        data: encoded,
-      }),
-    ).toBe(undefined)
+      })
+
+      expect(
+        AbiConstructor.decode(abiConstructor, {
+          bytecode: Constructor.bytecode.object,
+          data: encoded,
+        }),
+      ).toBe(undefined)
+    }
+
+    {
+      const encoded = AbiConstructor.encode(
+        [AbiConstructor.from('constructor()')],
+        {
+          bytecode: Constructor.bytecode.object,
+        },
+      )
+
+      expect(
+        AbiConstructor.decode([AbiConstructor.from('constructor()')], {
+          bytecode: Constructor.bytecode.object,
+          data: encoded,
+        }),
+      ).toBe(undefined)
+    }
   })
 
   test('behavior: args', () => {
-    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
-    const encoded = AbiConstructor.encode(abiConstructor, {
-      bytecode: Constructor.bytecode.object,
-      args: [address.vitalik, 123n],
-    })
-
-    expect(
-      AbiConstructor.decode(abiConstructor, {
+    {
+      const abiConstructor = AbiConstructor.from(
+        'constructor(address, uint256)',
+      )
+      const encoded = AbiConstructor.encode(abiConstructor, {
         bytecode: Constructor.bytecode.object,
-        data: encoded,
-      }),
-    ).toMatchInlineSnapshot(`
+        args: [address.vitalik, 123n],
+      })
+
+      expect(
+        AbiConstructor.decode(abiConstructor, {
+          bytecode: Constructor.bytecode.object,
+          data: encoded,
+        }),
+      ).toMatchInlineSnapshot(`
       [
         "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
         123n,
       ]
     `)
+    }
+
+    {
+      const encoded = AbiConstructor.encode(Constructor.abi, {
+        bytecode: Constructor.bytecode.object,
+        args: [address.vitalik, 123n],
+      })
+
+      expect(
+        AbiConstructor.decode(Constructor.abi, {
+          bytecode: Constructor.bytecode.object,
+          data: encoded,
+        }),
+      ).toMatchInlineSnapshot(`
+      [
+        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        123n,
+      ]
+    `)
+    }
   })
 
   test('behavior: network', async () => {
@@ -84,20 +124,41 @@ describe('decode', () => {
 
 describe('encode', () => {
   test('default', () => {
-    const abiConstructor = AbiConstructor.from('constructor()')
+    {
+      const abiConstructor = AbiConstructor.from('constructor()')
+
+      expect(
+        AbiConstructor.encode(abiConstructor, {
+          bytecode: '0xdeadbeef',
+        }),
+      ).toBe('0xdeadbeef')
+    }
 
     expect(
-      AbiConstructor.encode(abiConstructor, {
+      AbiConstructor.encode([AbiConstructor.from('constructor()')], {
         bytecode: '0xdeadbeef',
       }),
     ).toBe('0xdeadbeef')
   })
 
   test('behavior: args', () => {
-    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
+    {
+      const abiConstructor = AbiConstructor.from(
+        'constructor(address, uint256)',
+      )
+
+      expect(
+        AbiConstructor.encode(abiConstructor, {
+          bytecode: '0xdeadbeef',
+          args: [address.vitalik, 123n],
+        }),
+      ).toBe(
+        '0xdeadbeef000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000000000000000000000000000000000000000007b',
+      )
+    }
 
     expect(
-      AbiConstructor.encode(abiConstructor, {
+      AbiConstructor.encode(Constructor.abi, {
         bytecode: '0xdeadbeef',
         args: [address.vitalik, 123n],
       }),

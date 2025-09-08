@@ -7,7 +7,7 @@ export type {}
  *
  * @example
  * ```ts twoslash
- * import { Authorization, Secp256k1, PersonalMessage } from 'ox'
+ * import { Authorization, PersonalMessage, Secp256k1, Signature } from 'ox'
  * import { SignatureErc8010 } from 'ox/erc8010' // [!code focus]
  *
  * const authorization = Authorization.from({
@@ -33,7 +33,7 @@ export type {}
  * const wrapped = SignatureErc8010.wrap({ // [!code focus]
  *   authorization: authorizationSigned, // [!code focus]
  *   data: '0xcafebabe', // [!code focus]
- *   signature, // [!code focus]
+ *   signature: Signature.toHex(signature), // [!code focus]
  * }) // [!code focus]
  * // @log: '0x000000000000000000000000cafebabecafebabecafebabecafebabecafebabe000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000004deadbeef000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041fa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c000000000000000000000000000000000000000000000000000000000000008010801080108010801080108010801080108010801080108010801080108010'
  * ```

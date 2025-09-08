@@ -187,7 +187,7 @@ export declare namespace unwrap {
  *
  * @example
  * ```ts twoslash
- * import { Secp256k1 } from 'ox'
+ * import { Secp256k1, Signature } from 'ox'
  * import { SignatureErc6492 } from 'ox/erc6492' // [!code focus]
  *
  * const signature = Secp256k1.sign({
@@ -197,7 +197,7 @@ export declare namespace unwrap {
  *
  * const wrapped = SignatureErc6492.wrap({ // [!code focus]
  *   data: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature: Signature.toHex(signature), // [!code focus]
  *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa', // [!code focus]
  * }) // [!code focus]
  * ```

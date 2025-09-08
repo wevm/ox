@@ -59,23 +59,6 @@ export function decode<
  * ```
  *
  * @example
- * Or define the ABI and error name as parameters to {@link ox#AbiError.(decode:function)}:
- *
- * ```ts twoslash
- * // @noErrors
- * import { Abi, AbiError } from 'ox'
- *
- * const abi = Abi.from([...])
- *
- * const value = AbiError.decode(
- *   abi, // [!code hl]
- *   'InvalidSignature', // [!code hl]
- *   '0x...'
- * )
- * // @log: [420n, 69n, 1]
- * ```
- *
- * @example
  * You can pass the error `data` to the `name` property of {@link ox#AbiError.(fromAbi:function)} to extract and infer the error by its 4-byte selector:
  *
  * ```ts twoslash
@@ -88,6 +71,25 @@ export function decode<
  * const error = AbiError.fromAbi(abi, data) // [!code hl]
  *
  * const value = AbiError.decode(error, data)
+ * // @log: [420n, 69n, 1]
+ * ```
+ *
+ * @example
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object as a parameter to {@link ox#AbiError.(decode:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ *
+ * const value = AbiError.decode(
+ *   abi, // [!code hl]
+ *   'InvalidSignature', // [!code hl]
+ *   '0x...'
+ * )
  * // @log: [420n, 69n, 1]
  * ```
  *
@@ -281,32 +283,21 @@ export declare namespace decode {
  * ```
  *
  * @example
- * You can extract an ABI Error from a JSON ABI with {@link ox#AbiError.(fromAbi:function)}:
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object and an error name as parameters to `AbiError.encode`.
  *
  * ```ts twoslash
  * // @noErrors
  * import { Abi, AbiError } from 'ox'
  *
- * const abi = Abi.from([ // [!code hl]
- *   // ... // [!code hl]
- *   { // [!code hl]
- *     name: 'InvalidSignature', // [!code hl]
- *     type: 'error', // [!code hl]
- *     inputs: [ // [!code hl]
- *       { name: 'r', type: 'uint256' }, // [!code hl]
- *       { name: 's', type: 'uint256' }, // [!code hl]
- *       { name: 'yParity', type: 'uint8' }, // [!code hl]
- *     ], // [!code hl]
- *   }, // [!code hl]
- *   // ... // [!code hl]
- * ]) // [!code hl]
- * const error = AbiError.fromAbi(abi, 'InvalidSignature') // [!code hl]
+ * const abi = Abi.from([...])
  *
  * const data = AbiError.encode(
- *   error,
- *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ *   abi, // [!code hl]
+ *   'InvalidSignature', // [!code hl]
+ *   [1n, 2n, 0]
  * )
- * // @log: '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
  * ```
  *
  * @param abiError - ABI Error to encode

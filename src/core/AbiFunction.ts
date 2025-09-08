@@ -90,6 +90,26 @@ export type ExtractNames<
  * // @log: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * ```
  *
+ * @example
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object and a function name as parameters to {@link ox#AbiFunction.(decodeData:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ * const data = '0x...
+ *
+ * const input = AbiFunction.decodeData(
+ *   abi, // [!code focus]
+ *   'approve', // [!code focus]
+ *   data
+ * )
+ * // @log: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * ```
+ *
  * @param abiFunction - The ABI Item to decode.
  * @param data - The data to decode.
  */
@@ -211,7 +231,9 @@ export declare namespace decodeData {
  * ```
  *
  * @example
- * Or define the ABI and function name as parameters to {@link ox#AbiFunction.(decodeResult:function)}:
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object and a function name as parameters to {@link ox#AbiFunction.(decodeResult:function)}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -222,8 +244,8 @@ export declare namespace decodeData {
  * const erc20Abi = Abi.from([...])
  *
  * const output = AbiFunction.decodeResult(
- *   erc20Abi, // [!code hl]
- *   'totalSupply', // [!code hl]
+ *   erc20Abi, // [!code focus]
+ *   'totalSupply', // [!code focus]
  *   data
  * )
  * // @log: 42n
@@ -433,7 +455,9 @@ export declare namespace decodeResult {
  * ```
  *
  * @example
- * Or define the ABI and function name as parameters to {@link ox#AbiFunction.(encodeData:function)}:
+ * ### ABI-shorthand
+ *
+ * You can specify an entire ABI object and a function name as parameters to {@link ox#AbiFunction.(encodeData:function)}:
  *
  * ```ts twoslash
  * // @noErrors
@@ -442,8 +466,8 @@ export declare namespace decodeResult {
  * const erc20Abi = Abi.from([...])
  *
  * const data = AbiFunction.encodeData(
- *   erc20Abi, // [!code hl]
- *   'approve', // [!code hl]
+ *   erc20Abi, // [!code focus]
+ *   'approve', // [!code focus]
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
  * )
  * ```
@@ -600,6 +624,25 @@ export declare namespace encodeData {
  * // 42n
  *
  * const data = AbiFunction.encodeResult(totalSupply, 42n) // [!code focus]
+ * // @log: '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * ```
+ *
+ * @example
+ * ### ABI-shorthand
+ *
+ * You can also specify an entire ABI object and a function name as parameters to {@link ox#AbiFunction.(encodeResult:function)}:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ *
+ * const data = AbiFunction.encodeResult(
+ *   abi, // [!code focus]
+ *   'totalSupply', // [!code focus]
+ *   42n
+ * )
  * // @log: '0x000000000000000000000000000000000000000000000000000000000000002a'
  * ```
  *
