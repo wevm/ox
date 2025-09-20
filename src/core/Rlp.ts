@@ -359,9 +359,9 @@ function getEncodableBytes(bytesOrHex: Bytes.Bytes | Hex.Hex): Encodable {
 }
 
 function getSizeOfLength(length: number) {
-  if (length < 2 ** 8) return 1
-  if (length < 2 ** 16) return 2
-  if (length < 2 ** 24) return 3
-  if (length < 2 ** 32) return 4
+  if (length <= 0xff) return 1
+  if (length <= 0xff_ff) return 2
+  if (length <= 0xff_ff_ff) return 3
+  if (length <= 0xff_ff_ff_ff) return 4
   throw new Errors.BaseError('Length is too large.')
 }

@@ -231,7 +231,7 @@ export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
         `Invalid byte sequence ("${hexString[j - 2]}${hexString[j - 1]}" in "${hexString}").`,
       )
     }
-    bytes[index] = nibbleLeft * 16 + nibbleRight
+    bytes[index] = (nibbleLeft << 4) | nibbleRight
   }
   return bytes
 }
