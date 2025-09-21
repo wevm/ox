@@ -256,7 +256,7 @@ export function fromNumber(
   }
 
   const stringValue = (
-    signed && value_ < 0 ? (1n << BigInt(size * 8)) + BigInt(value_) : value_
+    signed && value_ < 0 ? BigInt.asUintN(size * 8, BigInt(value_)) : value_
   ).toString(16)
 
   const hex = `0x${stringValue}` as Hex
