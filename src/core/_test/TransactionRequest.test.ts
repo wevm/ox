@@ -32,7 +32,7 @@ describe('toRpc', () => {
       maxPriorityFeePerGas: 1000000000n,
       nonce: 1n,
       to: '0x0000000000000000000000000000000000000000',
-      type: '0x2',
+      type: 'eip1559',
       value: 1000000000n,
     })
     expect(request).toMatchInlineSnapshot(`

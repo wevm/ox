@@ -4,6 +4,7 @@ import * as Authorization from './Authorization.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Compute } from './internal/types.js'
+import * as Transaction from './Transaction.js'
 
 /** A Transaction Request that is generic to all transaction types, as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423). */
 export type TransactionRequest<
@@ -132,7 +133,11 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (typeof request.nonce !== 'undefined')
     request_rpc.nonce = Hex.fromNumber(request.nonce)
   if (typeof request.to !== 'undefined') request_rpc.to = request.to
-  if (typeof request.type !== 'undefined') request_rpc.type = request.type
+  if (typeof request.type !== 'undefined')
+    request_rpc.type =
+      Transaction.toRpcType[
+        request.type as keyof typeof Transaction.toRpcType
+      ] || request.type
   if (typeof request.value !== 'undefined')
     request_rpc.value = Hex.fromNumber(request.value)
 
