@@ -1,5 +1,13 @@
 # ox
 
+## 0.9.7
+
+### Patch Changes
+
+- [`8a08b24`](https://github.com/wevm/ox/commit/8a08b243bd255a2e35cd24a3d5d1bb3342b1f672) Thanks [@jxom](https://github.com/jxom)! - Serialize `type` on `TransactionRequest.toRpc`.
+
+- [`5e1c0df`](https://github.com/wevm/ox/commit/5e1c0df66d429aa43a1e90b56a3daba788cedd6d) Thanks [@jxom](https://github.com/jxom)! - Added micro-optimizations.
+
 ## 0.9.6
 
 ### Patch Changes
