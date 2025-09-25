@@ -495,7 +495,7 @@ test('InvalidInputError', () => {
   expect(
     JSON.stringify(new RpcResponse.InvalidInputError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.InvalidInputError","code":-32000}"`,
+    `"{"stack":"","name":"RpcResponse.InvalidInputError","code":-32000}"`,
   )
 })
 
@@ -509,7 +509,7 @@ test('ResourceNotFoundError', () => {
   expect(
     JSON.stringify(new RpcResponse.ResourceNotFoundError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.ResourceNotFoundError","code":-32001}"`,
+    `"{"stack":"","name":"RpcResponse.ResourceNotFoundError","code":-32001}"`,
   )
 })
 
@@ -523,7 +523,7 @@ test('ResourceUnavailableError', () => {
   expect(
     JSON.stringify(new RpcResponse.ResourceUnavailableError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.ResourceUnavailableError","code":-32002}"`,
+    `"{"stack":"","name":"RpcResponse.ResourceUnavailableError","code":-32002}"`,
   )
 })
 
@@ -537,7 +537,7 @@ test('TransactionRejectedError', () => {
   expect(
     JSON.stringify(new RpcResponse.TransactionRejectedError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.TransactionRejectedError","code":-32003}"`,
+    `"{"stack":"","name":"RpcResponse.TransactionRejectedError","code":-32003}"`,
   )
 })
 
@@ -551,7 +551,7 @@ test('MethodNotSupportedError', () => {
   expect(
     JSON.stringify(new RpcResponse.MethodNotSupportedError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.MethodNotSupportedError","code":-32004}"`,
+    `"{"stack":"","name":"RpcResponse.MethodNotSupportedError","code":-32004}"`,
   )
 })
 
@@ -565,7 +565,7 @@ test('LimitExceededError', () => {
   expect(
     JSON.stringify(new RpcResponse.LimitExceededError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.LimitExceededError","code":-32005}"`,
+    `"{"stack":"","name":"RpcResponse.LimitExceededError","code":-32005}"`,
   )
 })
 
@@ -579,7 +579,7 @@ test('VersionNotSupportedError', () => {
   expect(
     JSON.stringify(new RpcResponse.VersionNotSupportedError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.VersionNotSupportedError","code":-32006}"`,
+    `"{"stack":"","name":"RpcResponse.VersionNotSupportedError","code":-32006}"`,
   )
 })
 
@@ -593,7 +593,7 @@ test('InvalidRequestError', () => {
   expect(
     JSON.stringify(new RpcResponse.InvalidRequestError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.InvalidRequestError","code":-32600}"`,
+    `"{"stack":"","name":"RpcResponse.InvalidRequestError","code":-32600}"`,
   )
 })
 
@@ -607,7 +607,7 @@ test('MethodNotFoundError', () => {
   expect(
     JSON.stringify(new RpcResponse.MethodNotFoundError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.MethodNotFoundError","code":-32601}"`,
+    `"{"stack":"","name":"RpcResponse.MethodNotFoundError","code":-32601}"`,
   )
 })
 
@@ -621,7 +621,7 @@ test('InvalidParamsError', () => {
   expect(
     JSON.stringify(new RpcResponse.InvalidParamsError()),
   ).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.InvalidParamsError","code":-32602}"`,
+    `"{"stack":"","name":"RpcResponse.InvalidParamsError","code":-32602}"`,
   )
 })
 
@@ -633,7 +633,7 @@ test('InternalError', () => {
     new RpcResponse.InternalError({ message: 'foo' }),
   ).toMatchInlineSnapshot('[RpcResponse.InternalError: foo]')
   expect(JSON.stringify(new RpcResponse.InternalError())).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.InternalError","code":-32603}"`,
+    `"{"stack":"","name":"RpcResponse.InternalError","code":-32603}"`,
   )
 })
 
@@ -645,7 +645,7 @@ test('ParseError', () => {
     '[RpcResponse.ParseError: foo]',
   )
   expect(JSON.stringify(new RpcResponse.ParseError())).toMatchInlineSnapshot(
-    `"{"name":"RpcResponse.ParseError","code":-32700}"`,
+    `"{"stack":"","name":"RpcResponse.ParseError","code":-32700}"`,
   )
 })
 
