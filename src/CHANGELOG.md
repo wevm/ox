@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.8
+
+### Patch Changes
+
+- [#119](https://github.com/wevm/ox/pull/119) [`447e386`](https://github.com/wevm/ox/commit/447e386a50fe514cf2abd472bace0a934d068358) Thanks [@jxom](https://github.com/jxom)! - Added [ERC-7821](https://eips.ethereum.org/EIPS/eip-7821) modules.
+
 ## 0.9.7
 
 ### Patch Changes
