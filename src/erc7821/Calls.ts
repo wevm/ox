@@ -53,7 +53,21 @@ export declare namespace encode {
   }
 }
 
-export function getAbiParameters({ opData }: getAbiParameters.Options = {}) {
+/**
+ * Gets the ABI parameters for the ERC-7821 calls.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Calls } from 'ox/erc7821'
+ *
+ * const abiParameters = Calls.getAbiParameters({ opData: true })
+ * ```
+ *
+ * @param options - Options.
+ * @returns The ABI parameters.
+ */
+export function getAbiParameters(options: getAbiParameters.Options = {}) {
+  const { opData } = options
   return AbiParameters.from([
     'struct Call { address target; uint256 value; bytes data; }',
     'Call[] calls',
