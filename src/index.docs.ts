@@ -4,4 +4,5 @@
 export * from './index.js'
 export * from './erc4337/index.js'
 export * from './erc6492/index.js'
+export * from './erc7821/index.js'
 export * from './erc8010/index.js'
