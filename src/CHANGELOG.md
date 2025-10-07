@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.9
+
+### Patch Changes
+
+- [`a1c8a43`](https://github.com/wevm/ox/commit/a1c8a43d0d6549c1be8aa86d32a10e8ee327ffcf) Thanks [@jxom](https://github.com/jxom)! - Added `eth_sendRawTransactionSync` to types.
+
 ## 0.9.8
 
 ### Patch Changes
