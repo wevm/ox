@@ -692,6 +692,24 @@ export type Eth = RpcSchema.From<
       ReturnType: Hex.Hex
     }
   /**
+   * Sends a **signed** transaction to the network, and waits for the transaction to be included.
+   *
+   * @example
+   * ```
+   * request({ method: 'eth_sendRawTransactionSync', params: ['0x...'] })
+   * // => '0x...'
+   * ```
+   */
+  | {
+      Request: {
+        method: 'eth_sendRawTransactionSync'
+        params:
+          | [serializedTransaction: Hex.Hex]
+          | [serializedTransaction: Hex.Hex, timeout: number]
+      }
+      ReturnType: TransactionReceipt.Rpc
+    }
+  /**
    * Creates, signs, and sends a new transaction to the network
    *
    * @example

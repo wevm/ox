@@ -1,6 +1,7 @@
 import type * as Address from '../../Address.js'
 import type * as Hex from '../../Hex.js'
 import type * as RpcSchema from '../../RpcSchema.js'
+import type * as TransactionReceipt from '../../TransactionReceipt.js'
 import type * as TransactionRequest from '../../TransactionRequest.js'
 import type { Compute } from '../types.js'
 
@@ -54,6 +55,24 @@ export type Wallet = RpcSchema.From<
         params: [serializedTransaction: Hex.Hex]
       }
       ReturnType: Hex.Hex
+    }
+  /**
+   * Sends a **signed** transaction to the network, and waits for the transaction to be included.
+   *
+   * @example
+   * ```
+   * request({ method: 'eth_sendRawTransactionSync', params: ['0x...'] })
+   * // => '0x...'
+   * ```
+   */
+  | {
+      Request: {
+        method: 'eth_sendRawTransactionSync'
+        params:
+          | [serializedTransaction: Hex.Hex]
+          | [serializedTransaction: Hex.Hex, timeout: number]
+      }
+      ReturnType: TransactionReceipt.Rpc
     }
   /**
    * Creates, signs, and sends a new transaction to the network
