@@ -112,14 +112,14 @@ export declare namespace checksum {
 }
 
 /**
- * Converts a stringified address to a typed (checksummed) {@link ox#Address.Address}.
+ * Converts a stringified address to a typed (optionally checksummed) {@link ox#Address.Address}.
  *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
  *
  * Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
- * // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+ * // @log: '0xa0cf798816d4b9b9866b5330eea46a18382f251e'
  * ```
  *
  * @example
@@ -127,9 +127,9 @@ export declare namespace checksum {
  * import { Address } from 'ox'
  *
  * Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e', {
- *   checksum: false
+ *   checksum: true
  * })
- * // @log: '0xa0cf798816d4b9b9866b5330eea46a18382f251e'
+ * // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * ```
  *
  * @example
