@@ -145,7 +145,7 @@ export declare namespace checksum {
  * @returns The typed Address.
  */
 export function from(address: string, options: from.Options = {}): Address {
-  const { checksum: checksumVal = false } = options
+  const { checksum: checksumVal = true } = options
   assert(address)
   if (checksumVal) return checksum(address)
   return address as Address
