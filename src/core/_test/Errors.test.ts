@@ -252,7 +252,7 @@ describe('BaseError', () => {
         "docsPath": "/lol",
         "name": "BaseError",
         "shortMessage": "test1",
-        "version": undefined,
+        "version": "ox@x.y.z",
       }
     `)
   })
