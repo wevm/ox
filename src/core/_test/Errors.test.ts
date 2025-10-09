@@ -12,7 +12,7 @@ test('exports', () => {
 describe('BaseError', () => {
   test('BaseError', () => {
     expect(new Errors.BaseError('An error occurred.')).toMatchInlineSnapshot(
-      '[BaseError: An error occurred.]',
+      `[BaseError: An error occurred.]`,
     )
 
     expect(
@@ -159,7 +159,7 @@ describe('BaseError', () => {
     const err = new Errors.BaseError('test1', {
       cause: new FooError('test2', { cause: new BarError('test3') }),
     })
-    expect(err.walk()).toMatchInlineSnapshot('[BaseError: test3]')
+    expect(err.walk()).toMatchInlineSnapshot(`[BaseError: test3]`)
   })
 
   test('walk: predicate fn', () => {
@@ -190,6 +190,50 @@ describe('BaseError', () => {
     expect(err.walk((err) => err instanceof FooError)).toBeNull()
   })
 
+  test('behavior: override docsBaseUrl', () => {
+    class CustomError extends Errors.BaseError<Error> {
+      constructor(message: string, options: Errors.BaseError.Options<Error>) {
+        super(message, {
+          ...options,
+          docsOrigin: 'https://viem.sh',
+        })
+      }
+    }
+    const err = new CustomError('test1', {
+      cause: new Error('test2'),
+      docsPath: '/lol',
+    })
+    expect(err.message).toMatchInlineSnapshot(`
+      "test1
+
+      Details: test2
+      See: https://viem.sh/lol"
+    `)
+  })
+
+  test('behavior: override version', () => {
+    class CustomError extends Errors.BaseError<Error> {
+      constructor(message: string, options: Errors.BaseError.Options<Error>) {
+        super(message, {
+          ...options,
+          version: 'viem@1.2.3',
+        })
+      }
+    }
+    const err = new CustomError('test1', {
+      cause: new Error('test2'),
+      docsPath: '/lol',
+    })
+    expect(err.message).toMatchInlineSnapshot(`
+      "test1
+
+      Details: test2
+      See: https://oxlib.sh/lol
+      Version: viem@1.2.3"
+    `)
+    expect(err.version).toBe('viem@1.2.3')
+  })
+
   test('properties', () => {
     const err = new Errors.BaseError('test1', {
       cause: new Error('test2'),
@@ -208,7 +252,7 @@ describe('BaseError', () => {
         "docsPath": "/lol",
         "name": "BaseError",
         "shortMessage": "test1",
-        "version": "ox@x.y.z",
+        "version": undefined,
       }
     `)
   })

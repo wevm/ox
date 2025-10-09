@@ -1,5 +1,3 @@
-import { getVersion } from './internal/errors.js'
-
 export type GlobalErrorType<name extends string = 'Error'> = Error & {
   name: name
 }
@@ -20,11 +18,10 @@ export class BaseError<
   docs?: string | undefined
   docsPath?: string | undefined
   shortMessage: string
+  version?: string | undefined
 
   override cause: cause
   override name = 'BaseError'
-
-  version = `ox@${getVersion()}`
 
   constructor(shortMessage: string, options: BaseError.Options<cause> = {}) {
     const details = (() => {
@@ -47,7 +44,7 @@ export class BaseError<
       return options.docsPath
     })()
 
-    const docsBaseUrl = 'https://oxlib.sh'
+    const docsBaseUrl = options.docsOrigin ?? 'https://oxlib.sh'
     const docs = `${docsBaseUrl}${docsPath ?? ''}`
 
     const message = [
@@ -60,6 +57,7 @@ export class BaseError<
             docsPath ? `See: ${docs}` : undefined,
           ]
         : []),
+      ...(options.version ? [`Version: ${options.version}`] : []),
     ]
       .filter((x) => typeof x === 'string')
       .join('\n')
@@ -71,6 +69,7 @@ export class BaseError<
     this.docs = docs
     this.docsPath = docsPath
     this.shortMessage = shortMessage
+    if (options.version) this.version = options.version
   }
 
   walk(): Error
@@ -84,8 +83,10 @@ export declare namespace BaseError {
   type Options<cause extends Error | undefined = Error | undefined> = {
     cause?: cause | undefined
     details?: string | undefined
+    docsOrigin?: string | undefined
     docsPath?: string | undefined
     metaMessages?: (string | undefined)[] | undefined
+    version?: string | undefined
   }
 }
 
