@@ -1,3 +1,5 @@
+import { getVersion } from './internal/errors.js'
+
 export type GlobalErrorType<name extends string = 'Error'> = Error & {
   name: name
 }
@@ -69,7 +71,7 @@ export class BaseError<
     this.docs = docs
     this.docsPath = docsPath
     this.shortMessage = shortMessage
-    if (options.version) this.version = options.version
+    this.version = options.version ?? `ox@${getVersion()}`
   }
 
   walk(): Error
