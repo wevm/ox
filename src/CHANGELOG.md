@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.10
+
+### Patch Changes
+
+- [`f61d713`](https://github.com/wevm/ox/commit/f61d713d6dd5387b5f4d1c71643b28e77e1aaff8) Thanks [@jxom](https://github.com/jxom)! - Added `version` and `docsOrigin` to `Errors.BaseError`.
+
 ## 0.9.9
 
 ### Patch Changes
