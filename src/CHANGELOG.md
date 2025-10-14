@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.11
+
+### Patch Changes
+
+- [#126](https://github.com/wevm/ox/pull/126) [`b4572ed`](https://github.com/wevm/ox/commit/b4572ed6feaed7ee1063f8b710d98e928d848016) Thanks [@jxom](https://github.com/jxom)! - Added `ox/erc8021` entrypoint.
+
 ## 0.9.10
 
 ### Patch Changes
