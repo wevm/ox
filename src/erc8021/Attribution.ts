@@ -179,13 +179,13 @@ export declare namespace toDataSuffix {
  * import { Attribution } from 'ox/erc8021'
  *
  * const attribution = Attribution.fromData(
- *   '0xdddddddd626173656170702c6d6f7270686f0ecccccccccccccccccccccccccccccccccccccccc0180218021802180218021802180218021'
+ *   '0xddddddddcccccccccccccccccccccccccccccccccccccccc626173656170702c6d6f7270686f0e0180218021802180218021802180218021'
  * )
  * // @log: {
- * //   codes: ['baseapp', 'morpho'],
- * //   codeRegistryAddress: '0xcccccccccccccccccccccccccccccccccccccccc',
- * //   id: 1
- * // }
+ * // @log:   codes: ['baseapp', 'morpho'],
+ * // @log:   codeRegistryAddress: '0xcccccccccccccccccccccccccccccccccccccccc',
+ * // @log:   id: 1
+ * // @log: }
  * ```
  *
  * @param data - The transaction calldata containing the attribution suffix.
