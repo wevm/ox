@@ -12,6 +12,7 @@
       "ox/erc6492": ["src/erc6492/index.ts"],
       "ox/erc7821": ["src/erc7821/index.ts"],
       "ox/erc8010": ["src/erc8010/index.ts"],
+      "ox/erc8021": ["src/erc8021/index.ts"],
       "ox/trusted-setups": ["src/trusted-setups/index.ts"],
       "ox/window": ["src/window/index.ts"]
     }
