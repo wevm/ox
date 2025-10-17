@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.12
+
+### Patch Changes
+
+- [`242558a`](https://github.com/wevm/ox/commit/242558a745169931b08030f7e4b41f21b2d65e24) Thanks [@jxom](https://github.com/jxom)! - Fixed formatting between metadata and version on `BaseError`.
+
 ## 0.9.11
 
 ### Patch Changes
