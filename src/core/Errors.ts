@@ -52,14 +52,14 @@ export class BaseError<
     const message = [
       shortMessage || 'An error occurred.',
       ...(options.metaMessages ? ['', ...options.metaMessages] : []),
-      ...(details || docsPath
+      ...(details || docsPath || options.version
         ? [
             '',
             details ? `Details: ${details}` : undefined,
             docsPath ? `See: ${docs}` : undefined,
+            options.version ? `Version: ${options.version}` : undefined,
           ]
         : []),
-      ...(options.version ? [`Version: ${options.version}`] : []),
     ]
       .filter((x) => typeof x === 'string')
       .join('\n')

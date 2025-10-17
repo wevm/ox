@@ -223,9 +223,16 @@ describe('BaseError', () => {
     const err = new CustomError('test1', {
       cause: new Error('test2'),
       docsPath: '/lol',
+      metaMessages: [
+        '- Address must be 20 bytes long',
+        '- Address must match its checksum counterpart',
+      ],
     })
     expect(err.message).toMatchInlineSnapshot(`
       "test1
+
+      - Address must be 20 bytes long
+      - Address must match its checksum counterpart
 
       Details: test2
       See: https://oxlib.sh/lol
