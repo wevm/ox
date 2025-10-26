@@ -107,6 +107,54 @@ describe('Provider.from', () => {
   `)
   })
 
+  test('behavior: methods work without explicit binding', () => {
+    const emitter = Provider.createEmitter()
+
+    const provider = Provider.from({
+      ...emitter,
+      async request(args) {
+        return args
+      },
+    })
+
+    // Test that destructured methods still work correctly
+    const { on, emit, off, once } = provider
+    const calls: any = []
+
+    // Methods should work when called independently
+    on('accountsChanged', (accounts) => calls.push(['on', accounts]))
+    once('chainChanged', (chainId) => calls.push(['once', chainId]))
+
+    emit('accountsChanged', [address.vitalik])
+    emit('accountsChanged', [address.usdcHolder])
+    emit('chainChanged', '0x1')
+    emit('chainChanged', '0x89') // Should not be captured by 'once'
+
+    expect(calls).toMatchInlineSnapshot(`
+    [
+      [
+        "on",
+        [
+          "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        ],
+      ],
+      [
+        "on",
+        [
+          "0x5414d89a8bf7e99d732bc52f3e6a3ef461c0c078",
+        ],
+      ],
+      [
+        "once",
+        "0x1",
+      ],
+    ]
+  `)
+
+    // Clean up
+    off('accountsChanged')
+  })
+
   test('behavior: UnauthorizedError', async () => {
     const provider = Provider.from({
       async request(_) {

@@ -17,13 +17,25 @@ export type RpcRequest<schema extends RpcSchema.Generic = RpcSchema.Generic> =
   >
 
 /** JSON-RPC request store type. */
-export type Store<schema extends RpcSchema.Generic = RpcSchema.Default> =
+export type Store<schema extends RpcSchema.Generic | undefined = undefined> =
   Compute<{
     prepare: <methodName extends RpcSchema.MethodNameGeneric>(
       parameters: Compute<
-        RpcSchema_internal.ExtractRequestOpaque<schema, methodName>
+        schema extends RpcSchema.Generic
+          ? RpcSchema.ExtractRequest<schema, methodName>
+          : RpcSchema_internal.ExtractRequestOpaque<
+              RpcSchema.Default,
+              methodName
+            >
       >,
-    ) => Compute<RpcRequest<RpcSchema.ExtractItem<schema, methodName>>>
+    ) => Compute<
+      RpcRequest<
+        RpcSchema.ExtractItem<
+          schema extends RpcSchema.Generic ? schema : RpcSchema.Default,
+          methodName
+        >
+      >
+    >
     readonly id: number
   }>
 
@@ -58,12 +70,12 @@ export type Store<schema extends RpcSchema.Generic = RpcSchema.Default> =
  * @example
  * ### Type-safe Custom Schemas
  *
- * It is possible to define your own type-safe schema by using the {@link ox#RpcSchema.From} type.
+ * It is possible to define your own type-safe schema by using {@link ox#RpcSchema.from}.
  *
  * ```ts twoslash
  * import { RpcSchema, RpcRequest } from 'ox'
  *
- * type Schema = RpcSchema.From<{ // [!code focus]
+ * const schema = RpcSchema.from<{ // [!code focus]
  *   Request: { // [!code focus]
  *     method: 'eth_foobar' // [!code focus]
  *     params: [number] // [!code focus]
@@ -75,9 +87,9 @@ export type Store<schema extends RpcSchema.Generic = RpcSchema.Default> =
  *     params: [string] // [!code focus]
  *   } // [!code focus]
  *   ReturnType: string // [!code focus]
- * }> // [!code focus]
+ * }>() // [!code focus]
  *
- * const store = RpcRequest.createStore<Schema>() // [!code focus]
+ * const store = RpcRequest.createStore({ schema }) // [!code focus]
  *
  * const request = store.prepare({
  *   method: 'eth_foobar', // [!code focus]
@@ -90,8 +102,8 @@ export type Store<schema extends RpcSchema.Generic = RpcSchema.Default> =
  * @returns The request store
  */
 export function createStore<
-  schema extends RpcSchema.Generic = RpcSchema.Default,
->(options: createStore.Options = {}): createStore.ReturnType<schema> {
+  schema extends RpcSchema.Generic | undefined = undefined,
+>(options: createStore.Options<schema> = {}): createStore.ReturnType<schema> {
   let id = options.id ?? 0
   return {
     prepare(options) {
@@ -107,12 +119,14 @@ export function createStore<
 }
 
 export declare namespace createStore {
-  type Options = {
+  type Options<schema extends RpcSchema.Generic | undefined = undefined> = {
     /** The initial request ID. */
     id?: number
+    /** RPC Schema to use for the request store. */
+    schema?: schema | RpcSchema.Generic | undefined
   }
 
-  type ReturnType<schema extends RpcSchema.Generic = RpcSchema.Default> =
+  type ReturnType<schema extends RpcSchema.Generic | undefined = undefined> =
     Store<schema>
 
   type ErrorType = Errors.GlobalErrorType

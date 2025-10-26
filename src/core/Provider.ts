@@ -9,12 +9,6 @@ import type * as RpcSchema from './RpcSchema.js'
 /** Options for a {@link ox#Provider.Provider}. */
 export type Options = {
   /**
-   * Whether to include event functions (`on`, `removeListener`) on the Provider.
-   *
-   * @default true
-   */
-  includeEvents?: boolean | undefined
-  /**
    * RPC Schema to use for the Provider's `request` function.
    * See {@link ox#RpcSchema.(from:function)} for more.
    *
@@ -26,6 +20,7 @@ export type Options = {
 /** Root type for an EIP-1193 Provider. */
 export type Provider<
   options extends Options | undefined = undefined,
+  eventMap extends boolean | Record<string, unknown> = false,
   ///
   _schema extends RpcSchema.Generic = options extends {
     schema: infer schema extends RpcSchema.Generic
@@ -35,16 +30,17 @@ export type Provider<
 > = Compute<
   {
     request: RequestFn<_schema>
-  } & (options extends { includeEvents: true } | undefined
-    ? {
-        on: EventListenerFn
-        removeListener: EventListenerFn
-      }
-    : {})
+  } & (
+    | (eventMap extends true ? Emitter<EventMap> : never)
+    | (eventMap extends false ? Partial<Emitter<EventMap>> : never)
+    | (eventMap extends Record<string, unknown> ? Emitter<eventMap> : never)
+  )
 >
 
 /** Type for an EIP-1193 Provider's event emitter. */
-export type Emitter = Compute<EventEmitter<EventMap>>
+export type Emitter<
+  eventMap extends Record<string, unknown> | undefined = undefined,
+> = Compute<EventEmitter<EventMap<eventMap>>>
 
 /** EIP-1193 Provider's `request` function. */
 export type RequestFn<schema extends RpcSchema.Generic = RpcSchema.Generic> = <
@@ -52,12 +48,6 @@ export type RequestFn<schema extends RpcSchema.Generic = RpcSchema.Generic> = <
 >(
   parameters: RpcSchema_internal.ExtractRequestOpaque<schema, methodName>,
 ) => Promise<RpcSchema.ExtractReturnType<schema, methodName>>
-
-/** Type for an EIP-1193 Provider's event listener functions (`on`, `removeListener`, etc). */
-export type EventListenerFn = <event extends keyof EventMap>(
-  event: event,
-  listener: EventMap[event],
-) => void
 
 export type ConnectInfo = {
   chainId: string
@@ -81,13 +71,15 @@ export class ProviderRpcError extends Error {
   }
 }
 
-export type EventMap = {
+export type EventMap<
+  eventMap extends Record<string, unknown> | undefined = undefined,
+> = {
   accountsChanged: (accounts: readonly Address.Address[]) => void
   chainChanged: (chainId: string) => void
   connect: (connectInfo: ConnectInfo) => void
   disconnect: (error: ProviderRpcError) => void
   message: (message: Message) => void
-}
+} & (eventMap extends Record<string, unknown> ? eventMap : {})
 
 /** The user rejected the request. */
 export class UserRejectedRequestError extends ProviderRpcError {
@@ -293,8 +285,10 @@ export class AtomicityNotSupportedError extends ProviderRpcError {
  *
  * @returns An event emitter.
  */
-export function createEmitter(): Emitter {
-  const emitter = new EventEmitter<EventMap>()
+export function createEmitter<
+  eventMap extends Record<string, unknown> = Record<string, unknown>,
+>(): Emitter<eventMap> {
+  const emitter = new EventEmitter<EventMap<eventMap>>()
 
   return {
     get eventNames() {
@@ -476,23 +470,18 @@ export declare namespace createEmitter {
  * @returns An typed EIP-1193 Provider.
  */
 export function from<
-  const provider extends Provider | unknown,
-  options extends Options | undefined = undefined,
+  options extends Options | undefined,
+  //
+  provider extends from.Value<options> | undefined = undefined,
 >(
-  provider: provider | Provider<{ schema: RpcSchema.Generic }>,
+  provider: provider | from.Value<options> | undefined,
   options?: options | Options,
-): Provider<options>
+): from.ReturnType<options, provider>
 // eslint-disable-next-line jsdoc/require-jsdoc
-export function from(provider: any, options: Options = {}): Provider<Options> {
-  const { includeEvents = true } = options
+export function from(provider: any, _options: Options = {}): Provider {
   if (!provider) throw new IsUndefinedError()
   return {
-    ...(includeEvents
-      ? {
-          on: provider.on?.bind(provider),
-          removeListener: provider.removeListener?.bind(provider),
-        }
-      : {}),
+    ...provider,
     async request(args) {
       try {
         const result = await provider.request(args)
@@ -511,6 +500,31 @@ export function from(provider: any, options: Options = {}): Provider<Options> {
 }
 
 export declare namespace from {
+  type Value<options extends Options | undefined = undefined> = Partial<
+    Emitter<any>
+  > & {
+    request: (
+      parameters: options extends {
+        schema: infer schema extends RpcSchema.Generic
+      }
+        ? schema['Request']
+        : RpcSchema.Generic['Request'],
+    ) => unknown
+  }
+
+  type ReturnType<
+    options extends Options | undefined = Options | undefined,
+    provider extends from.Value<options> | undefined =
+      | from.Value<options>
+      | undefined,
+  > = Omit<provider, 'request'> & {
+    request: RequestFn<
+      options extends { schema: infer schema extends RpcSchema.Generic }
+        ? schema
+        : RpcSchema.Default
+    >
+  }
+
   type ErrorType = IsUndefinedError | Errors.GlobalErrorType
 }
 
