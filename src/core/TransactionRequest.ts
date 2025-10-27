@@ -54,6 +54,62 @@ export type TransactionRequest<
 export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
 
 /**
+ * Converts a {@link ox#TransactionRequest.Rpc} to a {@link ox#TransactionRequest.TransactionRequest}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionRequest } from 'ox'
+ *
+ * const request = TransactionRequest.fromRpc({
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: '0x2386f26fc10000',
+ * })
+ * ```
+ *
+ * @param request - The RPC request to convert.
+ * @returns A transaction request.
+ */
+export function fromRpc(request: Rpc): TransactionRequest {
+  const request_ = request as TransactionRequest
+
+  if (typeof request.authorizationList !== 'undefined')
+    request_.authorizationList = Authorization.fromRpcList(
+      request.authorizationList,
+    )
+  if (typeof request.chainId !== 'undefined')
+    request_.chainId = Hex.toNumber(request.chainId)
+  if (typeof request.gas !== 'undefined')
+    request_.gas = Hex.toBigInt(request.gas)
+  if (typeof request.gasPrice !== 'undefined')
+    request_.gasPrice = Hex.toBigInt(request.gasPrice)
+  if (typeof request.maxFeePerBlobGas !== 'undefined')
+    request_.maxFeePerBlobGas = Hex.toBigInt(request.maxFeePerBlobGas)
+  if (typeof request.maxFeePerGas !== 'undefined')
+    request_.maxFeePerGas = Hex.toBigInt(request.maxFeePerGas)
+  if (typeof request.maxPriorityFeePerGas !== 'undefined')
+    request_.maxPriorityFeePerGas = Hex.toBigInt(request.maxPriorityFeePerGas)
+  if (typeof request.nonce !== 'undefined')
+    request_.nonce = Hex.toBigInt(request.nonce)
+  if (typeof request.type !== 'undefined')
+    request_.type =
+      Transaction.fromRpcType[
+        request.type as keyof typeof Transaction.fromRpcType
+      ] || request.type
+  if (typeof request.value !== 'undefined')
+    request_.value = Hex.toBigInt(request.value)
+
+  return request_
+}
+
+export declare namespace fromRpc {
+  export type ErrorType =
+    | Authorization.fromRpcList.ErrorType
+    | Hex.toNumber.ErrorType
+    | Hex.toBigInt.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Converts a {@link ox#TransactionRequest.TransactionRequest} to a {@link ox#TransactionRequest.Rpc}.
  *
  * @example
