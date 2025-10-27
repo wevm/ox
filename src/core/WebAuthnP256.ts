@@ -783,3 +783,6 @@ export class CredentialRequestFailedError extends Errors.BaseError<Error> {
     })
   }
 }
+
+// Export types required for inference.
+export type * from './internal/webauthn.js'
