@@ -1,5 +1,15 @@
 # ox
 
+## 0.9.13
+
+### Patch Changes
+
+- [`95458ee`](https://github.com/wevm/ox/commit/95458ee13dc1b9333deb948791225e3883fb8b82) Thanks [@jxom](https://github.com/jxom)! - Added `TransactionRequest.fromRpc`
+
+- [`c165694`](https://github.com/wevm/ox/commit/c1656940e959b9e904c3ec497b720e1315f390e2) Thanks [@jxom](https://github.com/jxom)! - Added ability to pass custom event map to `Provider.createEmitter`.
+
+- [`c165694`](https://github.com/wevm/ox/commit/c1656940e959b9e904c3ec497b720e1315f390e2) Thanks [@jxom](https://github.com/jxom)! - Added ability to pass `schema` to `RpcRequest.createStore`
+
 ## 0.9.12
 
 ### Patch Changes
