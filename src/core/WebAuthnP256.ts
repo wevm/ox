@@ -785,4 +785,29 @@ export class CredentialRequestFailedError extends Errors.BaseError<Error> {
 }
 
 // Export types required for inference.
-export type * from './internal/webauthn.js'
+export type {
+  AttestationConveyancePreference,
+  AuthenticationExtensionsClientInputs,
+  AuthenticatorAttachment,
+  AuthenticatorSelectionCriteria,
+  AuthenticatorTransport,
+  BufferSource,
+  COSEAlgorithmIdentifier,
+  Credential,
+  CredentialCreationOptions,
+  CredentialMediationRequirement,
+  CredentialRequestOptions,
+  LargeBlobSupport,
+  PrfExtension,
+  PublicKeyCredential,
+  PublicKeyCredentialCreationOptions,
+  PublicKeyCredentialDescriptor,
+  PublicKeyCredentialEntity,
+  PublicKeyCredentialParameters,
+  PublicKeyCredentialRequestOptions,
+  PublicKeyCredentialRpEntity,
+  PublicKeyCredentialType,
+  PublicKeyCredentialUserEntity,
+  ResidentKeyRequirement,
+  UserVerificationRequirement,
+} from './internal/webauthn.js'
