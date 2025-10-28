@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.14
+
+### Patch Changes
+
+- [`896096d`](https://github.com/wevm/ox/commit/896096d17516f686321b9353807bdaa63e7544cc) Thanks [@jxom](https://github.com/jxom)! - Exported types required for inference.
+
 ## 0.9.13
 
 ### Patch Changes
