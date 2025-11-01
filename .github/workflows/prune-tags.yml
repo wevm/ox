@@ -15,7 +15,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Setup .npmrc file
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           registry-url: 'https://registry.npmjs.org'
 
