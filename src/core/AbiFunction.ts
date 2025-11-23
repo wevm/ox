@@ -157,7 +157,7 @@ export function decodeData(
   const { overloads } = abiFunction
 
   if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
-  if (abiFunction.inputs.length === 0) return undefined
+  if (abiFunction.inputs?.length === 0) return undefined
 
   const item = overloads
     ? fromAbi([abiFunction, ...overloads], data as never)

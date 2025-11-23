@@ -90,7 +90,7 @@ export function decode(
   })()
 
   const { bytecode } = options
-  if (abiConstructor.inputs.length === 0) return undefined
+  if (abiConstructor.inputs?.length === 0) return undefined
   const data = options.data.replace(bytecode, '0x') as Hex.Hex
   return AbiParameters.decode(abiConstructor.inputs, data)
 }

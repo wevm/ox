@@ -211,7 +211,7 @@ export function decode(
     return parameters as [AbiError, Hex.Hex, decode.Options | undefined]
   })()
   if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
-  if (abiError.inputs.length === 0) return undefined
+  if (abiError.inputs?.length === 0) return undefined
 
   const values = AbiParameters.decode(
     abiError.inputs,
