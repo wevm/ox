@@ -256,11 +256,31 @@ describe('BaseError', () => {
         "cause": [Error: test2],
         "details": "test2",
         "docs": "https://oxlib.sh/lol",
+        "docsOrigin": "https://oxlib.sh",
         "docsPath": "/lol",
         "name": "BaseError",
         "shortMessage": "test1",
+        "showVersion": false,
         "version": "ox@x.y.z",
       }
+    `)
+  })
+
+  test('global overrides', () => {
+    Errors.BaseError.prototype.docsOrigin = 'https://viem.sh'
+    Errors.BaseError.prototype.showVersion = true
+    Errors.BaseError.prototype.version = 'viem@1.2.3'
+    const err = new Errors.BaseError('test1', {
+      cause: new Error('test2'),
+      docsPath: '/lol',
+    })
+
+    expect(err.message).toMatchInlineSnapshot(`
+      "test1
+
+      Details: test2
+      See: https://viem.sh/lol
+      Version: viem@1.2.3"
     `)
   })
 })

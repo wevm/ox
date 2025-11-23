@@ -18,12 +18,30 @@ export class BaseError<
 > extends Error {
   details: string
   docs?: string | undefined
+  docsOrigin?: string | undefined
   docsPath?: string | undefined
   shortMessage: string
+  showVersion?: boolean | undefined
   version?: string | undefined
 
   override cause: cause
   override name = 'BaseError'
+
+  static defaultStaticOptions = {
+    docsOrigin: 'https://oxlib.sh',
+    showVersion: false,
+    version: `ox@${getVersion()}`,
+  } satisfies BaseError.GlobalOptions
+
+  static setStaticOptions(options: BaseError.GlobalOptions) {
+    BaseError.prototype.docsOrigin = options.docsOrigin
+    BaseError.prototype.showVersion = options.showVersion
+    BaseError.prototype.version = options.version
+  }
+
+  static {
+    BaseError.setStaticOptions(BaseError.defaultStaticOptions)
+  }
 
   constructor(shortMessage: string, options: BaseError.Options<cause> = {}) {
     const details = (() => {
@@ -46,18 +64,22 @@ export class BaseError<
       return options.docsPath
     })()
 
-    const docsBaseUrl = options.docsOrigin ?? 'https://oxlib.sh'
+    const docsBaseUrl = options.docsOrigin ?? BaseError.prototype.docsOrigin
     const docs = `${docsBaseUrl}${docsPath ?? ''}`
+    const showVersion = Boolean(
+      options.version ?? BaseError.prototype.showVersion,
+    )
+    const version = options.version ?? BaseError.prototype.version
 
     const message = [
       shortMessage || 'An error occurred.',
       ...(options.metaMessages ? ['', ...options.metaMessages] : []),
-      ...(details || docsPath || options.version
+      ...(details || docsPath || showVersion
         ? [
             '',
             details ? `Details: ${details}` : undefined,
             docsPath ? `See: ${docs}` : undefined,
-            options.version ? `Version: ${options.version}` : undefined,
+            showVersion ? `Version: ${version}` : undefined,
           ]
         : []),
     ]
@@ -69,9 +91,11 @@ export class BaseError<
     this.cause = options.cause as any
     this.details = details
     this.docs = docs
+    this.docsOrigin = docsBaseUrl
     this.docsPath = docsPath
     this.shortMessage = shortMessage
-    this.version = options.version ?? `ox@${getVersion()}`
+    this.showVersion = showVersion
+    this.version = version
   }
 
   walk(): Error
@@ -83,11 +107,26 @@ export class BaseError<
 
 export declare namespace BaseError {
   type Options<cause extends Error | undefined = Error | undefined> = {
+    /** Cause of the error. */
     cause?: cause | undefined
+    /** Details of the error. */
     details?: string | undefined
+    /** Origin of the docs. */
     docsOrigin?: string | undefined
+    /** Path of the docs. */
     docsPath?: string | undefined
+    /** Meta messages to add to the error. */
     metaMessages?: (string | undefined)[] | undefined
+    /** Version of the library to attribute the error to. */
+    version?: string | undefined
+  }
+
+  type GlobalOptions = {
+    /** Origin of the docs. */
+    docsOrigin?: string | undefined
+    /** Whether to show the version of the library in the error message. */
+    showVersion?: boolean | undefined
+    /** Version of the library to attribute the error to. */
     version?: string | undefined
   }
 }
