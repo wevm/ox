@@ -27,6 +27,7 @@ test('exports', () => {
       "BlsPoint",
       "Bytes",
       "Caches",
+      "Cbor",
       "ContractAddress",
       "Ed25519",
       "Ens",

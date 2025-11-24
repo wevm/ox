@@ -262,6 +262,7 @@ function getEncodable(value: unknown): Encodable {
 
 /** @internal */
 namespace getEncodable {
+  /** @internal */
   export function number(value: number): Encodable {
     // Handle non-safe integers (floats, NaN, Infinity)
     if (!Number.isSafeInteger(value)) {
