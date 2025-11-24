@@ -1299,6 +1299,39 @@ export * as Bytes from './core/Bytes.js'
 export * as Caches from './core/Caches.js'
 
 /**
+ * Functions for encoding and decoding CBOR (Concise Binary Object Representation) data.
+ *
+ * CBOR is a binary data format designed for compact data representation and efficient parsing.
+ * It supports all JSON data types plus additional types like byte strings, tags, and simple values.
+ *
+ * @example
+ * ### Encoding Values to CBOR
+ *
+ * Values can be encoded to CBOR using {@link ox#Cbor.(encode:function)}:
+ *
+ * ```ts twoslash
+ * import { Cbor } from 'ox'
+ *
+ * Cbor.encode({ foo: 'bar', baz: [1, 2, 3] })
+ * // @log: '0xa263666f6f636261726362617a83010203'
+ * ```
+ *
+ * ### Decoding CBOR to Values
+ *
+ * Values can be decoded from CBOR using {@link ox#Cbor.(decode:function)}:
+ *
+ * ```ts twoslash
+ * import { Cbor } from 'ox'
+ *
+ * Cbor.decode('0xa263666f6f636261726362617a83010203')
+ * // @log: { foo: 'bar', baz: [1, 2, 3] }
+ * ```
+ *
+ * @category Data
+ */
+export * as Cbor from './core/Cbor.js'
+
+/**
  * Utility functions for computing Contract Addresses.
  *
  * @example
