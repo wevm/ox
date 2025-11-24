@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.16
+
+### Patch Changes
+
+- [`d11e1fb`](https://github.com/wevm/ox/commit/d11e1fbd2554194a67d37c4da34dcf9f749e3698) Thanks [@jxom](https://github.com/jxom)! - Modified `WebAuthnP256.verify` to work with only `clientDataJSON` and `authenticatorData`
+
 ## 0.9.15
 
 ### Patch Changes
