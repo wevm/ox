@@ -1,5 +1,5 @@
+import { Bytes, Cbor, Hash, Hex, PublicKey } from 'ox'
 import { describe, expect, test } from 'vitest'
-import { Cbor, Hex, Bytes, Hash, PublicKey } from 'ox'
 
 describe('encode', () => {
   test.each([
