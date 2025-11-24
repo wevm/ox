@@ -1662,6 +1662,154 @@ describe('verify', () => {
       }),
     ).toBeFalsy()
   })
+
+  test('options: minimal metadata', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    } as const
+
+    expect(
+      WebAuthnP256.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: challengeIndex omitted', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      WebAuthnP256.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: typeIndex omitted', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      challengeIndex: 23,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      WebAuthnP256.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: challengeIndex and typeIndex omitted', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      WebAuthnP256.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeTruthy()
+  })
+
+  test('behavior: invalid challenge when challengeIndex omitted', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM9","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    // Should extract challenge automatically and fail validation
+    expect(
+      WebAuthnP256.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeFalsy()
+  })
 })
 
 test('exports', () => {

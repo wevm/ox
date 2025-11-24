@@ -19,10 +19,10 @@ export type P256Credential = {
 /** Metadata for a WebAuthn P256 signature. */
 export type SignMetadata = Compute<{
   authenticatorData: Hex.Hex
-  challengeIndex: number
+  challengeIndex?: number | undefined
   clientDataJSON: string
-  typeIndex: number
-  userVerificationRequired: boolean
+  typeIndex?: number | undefined
+  userVerificationRequired?: boolean | undefined
 }>
 
 export const createChallenge = Uint8Array.from([
@@ -711,19 +711,24 @@ export function verify(options: verify.Options): boolean {
   // the BS bit is not set.
   if ((flag & 0x08) !== 0x08 && (flag & 0x10) === 0x10) return false
 
-  // Check that response is for an authentication assertion
-  const type = '"type":"webauthn.get"'
-  if (type !== clientDataJSON.slice(Number(typeIndex), type.length + 1))
-    return false
+  // Check that response is for an authentication assertion (if typeIndex is provided)
+  if (typeIndex !== undefined) {
+    const type = '"type":"webauthn.get"'
+    if (type !== clientDataJSON.slice(Number(typeIndex), type.length + 1))
+      return false
+  }
 
-  // Check that hash is in the clientDataJSON.
-  const match = clientDataJSON
-    .slice(Number(challengeIndex))
-    .match(/^"challenge":"(.*?)"/)
-  if (!match) return false
+  // Extract and validate the challenge from clientDataJSON
+  const challengeMatch =
+    challengeIndex !== undefined
+      ? clientDataJSON
+          .slice(Number(challengeIndex))
+          .match(/^"challenge":"(.*?)"/)
+      : clientDataJSON.match(/"challenge":"(.*?)"/)
+  if (!challengeMatch) return false
 
   // Validate the challenge in the clientDataJSON.
-  const [_, challenge_extracted] = match
+  const [_, challenge_extracted] = challengeMatch
   if (Hex.fromBytes(Base64.toBytes(challenge_extracted!)) !== challenge)
     return false
 
