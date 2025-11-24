@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.15
+
+### Patch Changes
+
+- [#133](https://github.com/wevm/ox/pull/133) [`07a7bb0`](https://github.com/wevm/ox/commit/07a7bb0110e38062c000d9e403e61621547eda7f) Thanks [@jxom](https://github.com/jxom)! - Added `Cbor` module.
+
 ## 0.9.14
 
 ### Patch Changes
