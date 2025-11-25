@@ -254,7 +254,8 @@ export function getCredentialCreationOptions(
     publicKey: {
       attestation,
       authenticatorSelection,
-      challenge,
+      challenge:
+        typeof challenge === 'string' ? Bytes.fromHex(challenge) : challenge,
       ...(excludeCredentialIds
         ? {
             excludeCredentials: excludeCredentialIds?.map((id) => ({
@@ -301,6 +302,7 @@ export declare namespace getCredentialCreationOptions {
      * An `ArrayBuffer`, `TypedArray`, or `DataView` used as a cryptographic challenge.
      */
     challenge?:
+      | Hex.Hex
       | internal.PublicKeyCredentialCreationOptions['challenge']
       | undefined
     /**
