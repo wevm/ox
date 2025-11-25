@@ -1,5 +1,11 @@
 # ox
 
+## 0.9.17
+
+### Patch Changes
+
+- [`e63c3b2`](https://github.com/wevm/ox/commit/e63c3b254371473becc918b7efc8ce89d0eeb5bb) Thanks [@jxom](https://github.com/jxom)! - Tweaked `WebAuthnP256.createCredential` to accept `challenge` of type `Hex`.
+
 ## 0.9.16
 
 ### Patch Changes
