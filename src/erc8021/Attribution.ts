@@ -31,10 +31,18 @@ export type AttributionSchemaId0 = {
 export type AttributionSchemaId1 = {
   /** Attribution codes identifying entities involved in the transaction. */
   codes: readonly string[]
-  /** Address of the custom code registry contract. */
-  codeRegistryAddress: Address.Address
+  /* The custom code registry contract. */
+  codeRegistry: AttributionScehamId1Registry
   /** Schema identifier (1 for custom registry). */
   id?: 1 | undefined
+}
+
+export type AttributionScehamId1Registry = {
+  /** Address of the custom code registry contract. */
+  address: Address.Address
+
+  /** Chain Id of the chain the custom code registry contract is deployed on. */
+  chainId: number
 }
 
 /**
@@ -80,7 +88,7 @@ export const ercSuffixSize = /*#__PURE__*/ Hex.size(ercSuffix)
  * @returns The schema ID (0 for canonical registry, 1 for custom registry).
  */
 export function getSchemaId(attribution: Attribution): SchemaId {
-  if ('codeRegistryAddress' in attribution) return 1
+  if ('codeRegistry' in attribution) return 1
   return 0
 }
 
@@ -133,15 +141,17 @@ export function toDataSuffix(attribution: Attribution): Hex.Hex {
   const schemaIdHex = Hex.fromNumber(schemaId, { size: 1 })
 
   // Build the suffix based on schema
-  if (schemaId === 1)
+  if (schemaId === 1) {
+    const schema1 = attribution as AttributionSchemaId1
     // Schema 1: codeRegistryAddress ∥ codes ∥ codesLength ∥ schemaId ∥ ercSuffix
     return Hex.concat(
-      attribution.codeRegistryAddress!.toLowerCase() as Address.Address,
+      registryToData(schema1.codeRegistry),
       codesHex,
       codesLengthHex,
       schemaIdHex,
       ercSuffix,
     )
+  }
 
   // Schema 0: codes ∥ codesLength ∥ schemaId ∥ ercSuffix
   return Hex.concat(codesHex, codesLengthHex, schemaIdHex, ercSuffix)
@@ -225,7 +235,7 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
   }
 
   // Schema 1: Custom registry
-  // Format: codeRegistryAddress (20 bytes) ∥ codes ∥ codesLength (1 byte) ∥ schemaId (1 byte) ∥ ercSuffix
+  // Format: codeRegistryAddress (20 bytes) ∥ chainId ∥ chainIdLength (1 byte) ∥ codes ∥ codesLength (1 byte) ∥ schemaId (1 byte) ∥ ercSuffix
   if (schemaId === 1) {
     // Extract codes length (1 byte before schema ID)
     const codesLengthHex = Hex.slice(
@@ -242,19 +252,63 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
     const codesString = Hex.toString(codesHex)
     const codes = codesString.length > 0 ? codesString.split(',') : []
 
-    // Extract registry address (20 bytes before codes)
-    const registryStart = codesStart - 20
-    const codeRegistryAddress = Hex.slice(data, registryStart, codesStart)
+    // Extract registry by reading backwards from just before codes
+    const codeRegistry = registryFromData(Hex.slice(data, 0, codesStart))
+    if (codeRegistry === undefined) return undefined
 
     return {
       codes,
-      codeRegistryAddress,
+      codeRegistry,
       id: 1,
     }
   }
 
   // Unknown schema ID
   return undefined
+}
+
+function registryFromData(
+  data: Hex.Hex,
+): AttributionScehamId1Registry | undefined {
+  // Expect at least: address (20 bytes) + chainIdLen (1 byte)
+  const minRegistrySize = 20 + 1
+  if (Hex.size(data) < minRegistrySize) return undefined
+
+  // Read chainId length from the last byte of the registry segment
+  const chainIdLenHex = Hex.slice(data, -1)
+  const chainIdLen = Hex.toNumber(chainIdLenHex)
+
+  if (chainIdLen === 0) return undefined
+
+  // Validate we have enough bytes to cover address + chainId + chainIdLen
+  const totalRegistrySize = 20 + chainIdLen + 1
+  if (Hex.size(data) < totalRegistrySize) return undefined
+
+  // Address is located immediately before chainId and chainIdLen (read from back)
+  const addressStart = -(chainIdLen + 1 + 20)
+  const addressEnd = -(chainIdLen + 1)
+  const addressHex = Hex.slice(data, addressStart, addressEnd)
+  // Chain ID occupies the bytes preceding the final length byte (read from back)
+  const chainIdHex = Hex.slice(data, -(chainIdLen + 1), -1)
+
+  const codeRegistry: AttributionScehamId1Registry = {
+    address: addressHex as Address.Address,
+    chainId: Hex.toNumber(chainIdHex),
+  }
+
+  return codeRegistry
+}
+
+function registryToData(registry: AttributionScehamId1Registry): Hex.Hex {
+  const chainIdAsHex = Hex.fromNumber(registry.chainId)
+  const chainIdLen = Hex.size(chainIdAsHex)
+  // Need to padleft because the output of size may not be a full byte (1 -> 0x1 vs 0x01)
+  const paddedChainId = Hex.padLeft(chainIdAsHex, chainIdLen)
+  return Hex.concat(
+    registry.address as Hex.Hex,
+    paddedChainId,
+    Hex.fromNumber(chainIdLen, { size: 1 }),
+  )
 }
 
 export declare namespace fromData {
