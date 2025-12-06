@@ -329,6 +329,23 @@ describe('fromData', () => {
   })
 
   describe('schema 1 (custom registry)', () => {
+    test('example from eip', () => {
+      const encoded =
+        '0xddddddddcccccccccccccccccccccccccccccccccccccccc210502626173656170702C6D6F7270686F0E0180218021802180218021802180218021' as const
+
+      const expected = {
+        codes: ['baseapp', 'morpho'],
+        codeRegistry: {
+          address: '0xcccccccccccccccccccccccccccccccccccccccc',
+          chainId: 8453,
+        },
+        id: 1,
+      } as Attribution.AttributionSchemaId1
+
+      const decoded = Attribution.fromData(encoded)
+      expect(decoded).toEqual(expected)
+    })
+
     test('multiple entities', () => {
       const suffix = Attribution.toDataSuffix({
         codes: ['baseapp', 'morpho'],
