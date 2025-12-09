@@ -2,7 +2,7 @@ import { Attribution } from 'ox/erc8021'
 import { describe, expect, test } from 'vitest'
 
 describe('getSchemaId', () => {
-  test('returns 0 for canonical registry (no codeRegistryAddress)', () => {
+  test('returns 0 for canonical registry (no codeRegistry)', () => {
     const schemaId = Attribution.getSchemaId({
       codes: ['baseapp'],
     })
@@ -22,7 +22,10 @@ describe('getSchemaId', () => {
   test('returns 1 for custom registry', () => {
     const schemaId = Attribution.getSchemaId({
       codes: ['baseapp'],
-      codeRegistryAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+      codeRegistry: {
+        address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+        chainId: 1,
+      },
     })
 
     expect(schemaId).toBe(1)
@@ -31,7 +34,10 @@ describe('getSchemaId', () => {
   test('returns 1 for custom registry (explicit id: 1)', () => {
     const schemaId = Attribution.getSchemaId({
       codes: ['baseapp'],
-      codeRegistryAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+      codeRegistry: {
+        address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+        chainId: 1,
+      },
       id: 1,
     })
 
@@ -157,66 +163,118 @@ describe('toDataSuffix', () => {
 
   describe('schema 1 (custom registry)', () => {
     test('single code', () => {
-      const suffix = Attribution.toDataSuffix({
+      const input = {
         codes: ['baseapp'],
-        codeRegistryAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-      })
-
-      // Expected: address (20 bytes) + 'baseapp' (7 bytes) + length (1 byte: 0x07) + schema id (1 byte: 0x01) + erc suffix (16 bytes)
-      expect(suffix).toBe(
-        '0xd8da6bf26964af9d7eed9e03e53415d37aa9604562617365617070070180218021802180218021802180218021',
+        codeRegistry: {
+          address: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045' as const,
+          chainId: 1,
+        },
+        id: 1 as const,
+      }
+      const suffix = Attribution.toDataSuffix(input)
+      const parsed = Attribution.fromData(
+        `0xdddddddd${suffix.slice(2)}` as const,
       )
+      expect(parsed).toEqual({
+        codes: ['baseapp'],
+        codeRegistry: {
+          address: input.codeRegistry.address.toLowerCase(),
+          chainId: 1,
+        },
+        id: 1,
+      })
     })
 
     test('multiple codes', () => {
-      const suffix = Attribution.toDataSuffix({
+      const input = {
         codes: ['baseapp', 'morpho'],
-        codeRegistryAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+        codeRegistry: {
+          address: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045' as const,
+          chainId: 8453,
+        },
+        id: 1 as const,
+      }
+      const suffix = Attribution.toDataSuffix(input)
+      const parsed = Attribution.fromData(
+        `0xeeeeeeee${suffix.slice(2)}` as const,
+      )
+      expect(parsed).toEqual({
+        codes: ['baseapp', 'morpho'],
+        codeRegistry: {
+          address: input.codeRegistry.address.toLowerCase(),
+          chainId: 8453,
+        },
         id: 1,
       })
-
-      // Expected: address (20 bytes) + 'baseapp,morpho' (14 bytes) + length (1 byte: 0x0e) + schema id (1 byte: 0x01) + erc suffix (16 bytes)
-      expect(suffix).toBe(
-        '0xd8da6bf26964af9d7eed9e03e53415d37aa96045626173656170702c6d6f7270686f0e0180218021802180218021802180218021',
-      )
     })
 
     test('single character code', () => {
-      const suffix = Attribution.toDataSuffix({
+      const input = {
         codes: ['x'],
-        codeRegistryAddress: '0x1234567890123456789012345678901234567890',
-      })
-
-      // address (20 bytes) + 'x' (1 byte) + codesLength (1 byte: 0x01) + schemaId (1 byte: 0x01) + ercSuffix
-      expect(suffix).toBe(
-        '0x123456789012345678901234567890123456789078010180218021802180218021802180218021',
+        codeRegistry: {
+          address: '0x1234567890123456789012345678901234567890' as const,
+          chainId: 10,
+        },
+        id: 1 as const,
+      }
+      const suffix = Attribution.toDataSuffix(input)
+      const parsed = Attribution.fromData(
+        `0xcccccccc${suffix.slice(2)}` as const,
       )
+      expect(parsed).toEqual({
+        codes: ['x'],
+        codeRegistry: {
+          address: input.codeRegistry.address.toLowerCase(),
+          chainId: 10,
+        },
+        id: 1,
+      })
     })
 
     test('long codes', () => {
-      const suffix = Attribution.toDataSuffix({
+      const input = {
         codes: ['verylongapplicationname', 'anotherlongcode'],
-        codeRegistryAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-      })
-
-      // address (20 bytes) + 'verylongapplicationname,anotherlongcode' (39 bytes) + length (0x27) + schemaId (0x01) + ercSuffix
-      expect(suffix).toBe(
-        '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd766572796c6f6e676170706c69636174696f6e6e616d652c616e6f746865726c6f6e67636f6465270180218021802180218021802180218021',
+        codeRegistry: {
+          address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as const,
+          chainId: 42161,
+        },
+        id: 1 as const,
+      }
+      const suffix = Attribution.toDataSuffix(input)
+      const parsed = Attribution.fromData(
+        `0xbbbbbbbb${suffix.slice(2)}` as const,
       )
+      expect(parsed).toEqual({
+        codes: ['verylongapplicationname', 'anotherlongcode'],
+        codeRegistry: {
+          address: input.codeRegistry.address.toLowerCase(),
+          chainId: 42161,
+        },
+        id: 1,
+      })
     })
 
     test('spec example: multiple entities', () => {
-      const suffix = Attribution.toDataSuffix({
+      const input = {
         codes: ['baseapp', 'morpho'],
-        codeRegistryAddress: '0xcccccccccccccccccccccccccccccccccccccccc',
+        codeRegistry: {
+          address: '0xcccccccccccccccccccccccccccccccccccccccc' as const,
+          chainId: 1,
+        },
+        id: 1 as const,
+      }
+      const suffix = Attribution.toDataSuffix(input)
+      const parsed = Attribution.fromData(
+        `0xdddddddd${suffix.slice(2)}` as const,
+      )
+      expect(parsed).toEqual({
+        codes: ['baseapp', 'morpho'],
+        codeRegistry: {
+          address: input.codeRegistry.address.toLowerCase(),
+          chainId: 1,
+        },
         id: 1,
       })
-
-      // Expected segment after txData (0xdddddddd)
-      // registry address (20 bytes) + 'baseapp,morpho' (14 bytes) + length (0x0e) + schema ID (0x01) + ERC suffix
-      expect(suffix).toBe(
-        '0xcccccccccccccccccccccccccccccccccccccccc626173656170702c6d6f7270686f0e0180218021802180218021802180218021',
-      )
     })
   })
 })
@@ -249,9 +307,13 @@ describe('fromData', () => {
       })
     })
 
-    test('roundtrip', () => {
-      const original = {
-        codes: ['baseapp', 'morpho', 'uniswap'],
+    test.each([
+      [['baseapp']],
+      [['baseapp', 'morpho']],
+      [['baseapp', 'morpho', 'uniswap']],
+    ])('roundtrip{codes=%s}', (codes) => {
+      const original: Attribution.Attribution = {
+        codes: codes,
       }
 
       const suffix = Attribution.toDataSuffix(original)
@@ -267,39 +329,80 @@ describe('fromData', () => {
   })
 
   describe('schema 1 (custom registry)', () => {
+    test('example from eip', () => {
+      const encoded =
+        '0xddddddddcccccccccccccccccccccccccccccccccccccccc210502626173656170702C6D6F7270686F0E0180218021802180218021802180218021' as const
+
+      const expected = {
+        codes: ['baseapp', 'morpho'],
+        codeRegistry: {
+          address: '0xcccccccccccccccccccccccccccccccccccccccc',
+          chainId: 8453,
+        },
+        id: 1,
+      } as Attribution.AttributionSchemaId1
+
+      const decoded = Attribution.fromData(encoded)
+      expect(decoded).toEqual(expected)
+    })
+
     test('multiple entities', () => {
-      // Input: transaction data + registry address (20 bytes) + 'baseapp,morpho' (14 bytes) + length (0x0e) + schema ID (0x01) + ERC suffix
-      const input =
-        '0xddddddddcccccccccccccccccccccccccccccccccccccccc626173656170702c6d6f7270686f0e0180218021802180218021802180218021'
-
-      const result = Attribution.fromData(input)
-
+      const suffix = Attribution.toDataSuffix({
+        codes: ['baseapp', 'morpho'],
+        codeRegistry: {
+          address: '0xcccccccccccccccccccccccccccccccccccccccc',
+          chainId: 1,
+        },
+        id: 1,
+      })
+      const result = Attribution.fromData(
+        `0xdddddddd${suffix.slice(2)}` as const,
+      )
       expect(result).toEqual({
         codes: ['baseapp', 'morpho'],
-        codeRegistryAddress: '0xcccccccccccccccccccccccccccccccccccccccc',
+        codeRegistry: {
+          address: '0xcccccccccccccccccccccccccccccccccccccccc',
+          chainId: 1,
+        },
         id: 1,
       })
     })
 
     test('single code', () => {
-      // Input: transaction data + registry address (20 bytes) + 'x' (1 byte) + length (0x01) + schema ID (0x01) + ERC suffix
-      const input =
-        '0xdddddddd123456789012345678901234567890123456789078010180218021802180218021802180218021'
-
-      const result = Attribution.fromData(input)
+      const suffix = Attribution.toDataSuffix({
+        codes: ['x'],
+        codeRegistry: {
+          address: '0x1234567890123456789012345678901234567890',
+          chainId: 10,
+        },
+        id: 1,
+      })
+      const result = Attribution.fromData(
+        `0xdddddddd${suffix.slice(2)}` as const,
+      )
 
       expect(result).toEqual({
         codes: ['x'],
-        codeRegistryAddress: '0x1234567890123456789012345678901234567890',
+        codeRegistry: {
+          address: '0x1234567890123456789012345678901234567890',
+          chainId: 10,
+        },
         id: 1,
       })
     })
 
-    test('roundtrip', () => {
+    test.each([
+      1, // 1 byte
+      8453, // 2 byte
+      84532, // 3 byte
+    ])('roundtrip with different chain ids{chainId=%i}', (chainId) => {
       const original = {
         codes: ['baseapp', 'morpho'],
-        codeRegistryAddress:
-          '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045' as const,
+        codeRegistry: {
+          address: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045' as const,
+          chainId,
+        },
+        id: 1 as const,
       }
 
       const suffix = Attribution.toDataSuffix(original)
@@ -307,11 +410,7 @@ describe('fromData', () => {
 
       const parsed = Attribution.fromData(fullData)
 
-      expect(parsed).toEqual({
-        codes: original.codes,
-        codeRegistryAddress: original.codeRegistryAddress.toLowerCase(),
-        id: 1,
-      })
+      expect(parsed).toEqual(original)
     })
   })
 
