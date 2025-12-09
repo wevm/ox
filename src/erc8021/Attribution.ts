@@ -79,7 +79,10 @@ export const ercSuffixSize = /*#__PURE__*/ Hex.size(ercSuffix)
  *
  * const schemaId2 = Attribution.getSchemaId({
  *   codes: ['baseapp'],
- *   codeRegistryAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+ *   codeRegistry: {
+ *      address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+ *      chainId: 8453,
+ *   }
  * })
  * // @log: 1
  * ```
@@ -119,7 +122,10 @@ export declare namespace getSchemaId {
  *
  * const suffix = Attribution.toDataSuffix({
  *   codes: ['baseapp'],
- *   codeRegistryAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+ *   codeRegistry: {
+ *      address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+ *      chainId: 8453,
+ *   }
  * })
  * ```
  *
@@ -143,7 +149,7 @@ export function toDataSuffix(attribution: Attribution): Hex.Hex {
   // Build the suffix based on schema
   if (schemaId === 1) {
     const schema1 = attribution as AttributionSchemaId1
-    // Schema 1: codeRegistryAddress ∥ codes ∥ codesLength ∥ schemaId ∥ ercSuffix
+    // Schema 1: codeRegistryAddress (20 bytes) ∥ chainId ∥ chainIdLength (1 byte) ∥ codes ∥ codesLength (1 byte) ∥ schemaId (1 byte) ∥ ercSuffix
     return Hex.concat(
       registryToData(schema1.codeRegistry),
       codesHex,
@@ -189,11 +195,14 @@ export declare namespace toDataSuffix {
  * import { Attribution } from 'ox/erc8021'
  *
  * const attribution = Attribution.fromData(
- *   '0xddddddddcccccccccccccccccccccccccccccccccccccccc626173656170702c6d6f7270686f0e0180218021802180218021802180218021'
+ *   '0xddddddddcccccccccccccccccccccccccccccccccccccccc210502626173656170702C6D6F7270686F0E0180218021802180218021802180218021'
  * )
  * // @log: {
  * // @log:   codes: ['baseapp', 'morpho'],
- * // @log:   codeRegistryAddress: '0xcccccccccccccccccccccccccccccccccccccccc',
+ * // @log:   registry: {
+ * // @log:       address: '0xcccccccccccccccccccccccccccccccccccccccc`
+ * // @log:       chainId: 8453,
+ * // @log:   }
  * // @log:   id: 1
  * // @log: }
  * ```

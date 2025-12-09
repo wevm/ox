@@ -2,7 +2,7 @@ import { Attribution } from 'ox/erc8021'
 import { describe, expect, test } from 'vitest'
 
 describe('getSchemaId', () => {
-  test('returns 0 for canonical registry (no codeRegistryAddress)', () => {
+  test('returns 0 for canonical registry (no codeRegistry)', () => {
     const schemaId = Attribution.getSchemaId({
       codes: ['baseapp'],
     })
