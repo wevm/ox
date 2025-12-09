@@ -40,7 +40,6 @@ export type AttributionSchemaId1 = {
 export type AttributionSchemaId1Registry = {
   /** Address of the custom code registry contract. */
   address: Address.Address
-
   /** Chain Id of the chain the custom code registry contract is deployed on. */
   chainId: number
 }
