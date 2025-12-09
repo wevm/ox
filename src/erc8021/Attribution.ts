@@ -32,12 +32,12 @@ export type AttributionSchemaId1 = {
   /** Attribution codes identifying entities involved in the transaction. */
   codes: readonly string[]
   /* The custom code registry contract. */
-  codeRegistry: AttributionScehamId1Registry
+  codeRegistry: AttributionSchemaId1Registry
   /** Schema identifier (1 for custom registry). */
   id?: 1 | undefined
 }
 
-export type AttributionScehamId1Registry = {
+export type AttributionSchemaId1Registry = {
   /** Address of the custom code registry contract. */
   address: Address.Address
 
@@ -269,7 +269,7 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
 
 function registryFromData(
   data: Hex.Hex,
-): AttributionScehamId1Registry | undefined {
+): AttributionSchemaId1Registry | undefined {
   // Expect at least: address (20 bytes) + chainIdLen (1 byte)
   const minRegistrySize = 20 + 1
   if (Hex.size(data) < minRegistrySize) return undefined
@@ -291,7 +291,7 @@ function registryFromData(
   // Chain ID occupies the bytes preceding the final length byte (read from back)
   const chainIdHex = Hex.slice(data, -(chainIdLen + 1), -1)
 
-  const codeRegistry: AttributionScehamId1Registry = {
+  const codeRegistry: AttributionSchemaId1Registry = {
     address: addressHex as Address.Address,
     chainId: Hex.toNumber(chainIdHex),
   }
@@ -299,7 +299,7 @@ function registryFromData(
   return codeRegistry
 }
 
-function registryToData(registry: AttributionScehamId1Registry): Hex.Hex {
+function registryToData(registry: AttributionSchemaId1Registry): Hex.Hex {
   const chainIdAsHex = Hex.fromNumber(registry.chainId)
   const chainIdLen = Hex.size(chainIdAsHex)
   // Need to padleft because the output of size may not be a full byte (1 -> 0x1 vs 0x01)
