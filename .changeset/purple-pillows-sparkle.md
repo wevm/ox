@@ -1,10 +1,11 @@
 ---
-"ox": major
+"ox": minor
 ---
 
-**`Attribution.toData` Migration**
+**Breaking:** Aligned to latest ERC-8021 specification. Modified `Attribution.toDataSuffix` parameters to include `codeRegistry` instead of `registryAddress`.
+
 ```diff ts twoslash
-Attribution.toData({
+Attribution.toDataSuffix({
     codes: ['baseapp', 'morpho'],
 -   registryAddress: '0xcccccccccccccccccccccccccccccccccccccccc',
 +   codeRegistry: {
@@ -13,28 +14,3 @@ Attribution.toData({
 +   }
 })
 ```
-
-**`Attribution.fromData` Migration**
-``` diff ts twoslash
-const attribution = Attribution.fromData(
-    '0xddddddddcccccccccccccccccccccccccccccccccccccccc210502626173656170702C6D6F7270686F0E0180218021802180218021802180218021'
-)
-
-
-{
-    codes: ['baseapp', 'morpho'],
-- registryAddress: 0xcccccccccccccccccccccccccccccccccccccccc
-+   registry: {
-+       address: '0xcccccccccccccccccccccccccccccccccccccccc`
-+       chainId: 8453,
-+   }
-    id: 1
-}
-
-```
-
-Aligned ERC‑8021 Schema 1 serialization, deserialization with EIP‑8021 (variable‑length chainId)
-
-* Updates `Attribution.fromData` to deserialize the variable length registry section from schema 1
-* Updates `Attribution.toDataSuffix` to serialize the variable length registry section when schema 1
-j
