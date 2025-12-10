@@ -1,7 +1,7 @@
 import type * as Address from '../core/Address.js'
 import type * as Hex from '../core/Hex.js'
-import * as ox_TransactionReceipt from '../core/TransactionReceipt.js'
 import type { Compute } from '../core/internal/types.js'
+import * as ox_TransactionReceipt from '../core/TransactionReceipt.js'
 
 export type TransactionReceipt<
   status = ox_TransactionReceipt.Status,

@@ -1,10 +1,6 @@
 import type * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
-import * as Json from '../core/Json.js'
-import type * as PublicKey from '../core/PublicKey.js'
-import * as Signature from '../core/Signature.js'
-import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 import type {
   Assign,
   Compute,
@@ -13,6 +9,10 @@ import type {
   PartialBy,
   UnionPartialBy,
 } from '../core/internal/types.js'
+import * as Json from '../core/Json.js'
+import type * as PublicKey from '../core/PublicKey.js'
+import * as Signature from '../core/Signature.js'
+import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 
 /** Signature type identifiers for encoding/decoding */
 const serializedP256Type = '0x01'

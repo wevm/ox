@@ -2,8 +2,8 @@ import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import * as Rlp from '../core/Rlp.js'
 import type { Compute, Mutable } from '../core/internal/types.js'
+import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 /** Root type for an AA Authorization. */

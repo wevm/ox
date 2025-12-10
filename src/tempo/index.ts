@@ -106,17 +106,6 @@ export * as Transaction from './Transaction.js'
  * @category Reference
  */
 export * as TransactionEnvelopeTempo from './TransactionEnvelopeTempo.js'
-
-/**
- * TODO
- *
- * @example
- * TODO
- *
- * @category Reference
- */
-export * as TransactionRequest from './TransactionRequest.js'
-
 /**
  * TODO
  *
@@ -126,3 +115,12 @@ export * as TransactionRequest from './TransactionRequest.js'
  * @category Reference
  */
 export * as TransactionReceipt from './TransactionReceipt.js'
+/**
+ * TODO
+ *
+ * @example
+ * TODO
+ *
+ * @category Reference
+ */
+export * as TransactionRequest from './TransactionRequest.js'

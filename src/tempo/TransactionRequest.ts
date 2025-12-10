@@ -1,7 +1,7 @@
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
-import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import type { Compute } from '../core/internal/types.js'
+import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as TokenId from './TokenId.js'
