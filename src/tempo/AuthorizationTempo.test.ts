@@ -94,6 +94,46 @@ describe('from', () => {
       payload: AuthorizationTempo.getSignPayload(authorization),
       privateKey: testPrivateKey,
     })
+    const authorization_signed = AuthorizationTempo.from(authorization, {
+      signature,
+    })
+    expectTypeOf(authorization_signed).toExtend<{
+      readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+      readonly chainId: 1
+      readonly nonce: 40n
+    }>()
+    expectTypeOf(authorization_signed).toExtend<
+      AuthorizationTempo.AuthorizationTempo<true>
+    >()
+    expect(authorization_signed).toMatchInlineSnapshot(
+      `
+    {
+      "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+      "chainId": 1,
+      "nonce": 40n,
+      "signature": {
+        "signature": {
+          "r": 74666311849961653398815470296948700361392062371901161364182304079113687952627n,
+          "s": 24912990662134805731506157958890440652926649106845286943280690489391727501383n,
+          "yParity": 1,
+        },
+        "type": "secp256k1",
+      },
+    }
+  `,
+    )
+  })
+
+  test('options: signature (secp256k1)', () => {
+    const authorization = AuthorizationTempo.from({
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      chainId: 1,
+      nonce: 40n,
+    })
+    const signature = Secp256k1.sign({
+      payload: AuthorizationTempo.getSignPayload(authorization),
+      privateKey: testPrivateKey,
+    })
     const signatureEnvelope = SignatureEnvelope.from({
       signature,
       type: 'secp256k1',

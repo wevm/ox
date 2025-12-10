@@ -87,6 +87,47 @@ describe('from', () => {
         ],
       },
       {
+        signature: signature_secp256k1,
+      },
+    )
+
+    expect(authorization).toMatchInlineSnapshot(`
+      {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "expiry": 1234567890,
+        "limits": [
+          {
+            "limit": 10000000n,
+            "token": "0x20c0000000000000000000000000000000000001",
+          },
+        ],
+        "signature": {
+          "signature": {
+            "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
+            "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
+            "yParity": 1,
+          },
+          "type": "secp256k1",
+        },
+        "type": "secp256k1",
+      }
+    `)
+  })
+
+  test('with signature (secp256k1)', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        expiry,
+        type: 'secp256k1',
+        limits: [
+          {
+            token,
+            limit: Value.from('10', 6),
+          },
+        ],
+      },
+      {
         signature: SignatureEnvelope.from(signature_secp256k1),
       },
     )

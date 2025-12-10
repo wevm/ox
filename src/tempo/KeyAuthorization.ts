@@ -123,7 +123,7 @@ export type TokenLimit<bigintType = bigint> = {
  * a Key Authorization with {@link ox#Secp256k1.(sign:function)}.
  *
  * ```ts twoslash
- * import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+ * import { KeyAuthorization } from 'ox/tempo'
  * import { Secp256k1, Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
@@ -136,12 +136,10 @@ export type TokenLimit<bigintType = bigint> = {
  *   }],
  * })
  *
- * const signature = SignatureEnvelope.from(
- *   Secp256k1.sign({
- *     payload: KeyAuthorization.getSignPayload(authorization),
- *     privateKey: '0x...',
- *   }),
- * )
+ * const signature = Secp256k1.sign({
+ *   payload: KeyAuthorization.getSignPayload(authorization),
+ *   privateKey: '0x...',
+ * })
  *
  * const authorization_signed = KeyAuthorization.from(authorization, { signature }) // [!code focus]
  * ```
@@ -152,9 +150,7 @@ export type TokenLimit<bigintType = bigint> = {
  */
 export function from<
   const authorization extends KeyAuthorization | Rpc,
-  const signature extends
-    | SignatureEnvelope.SignatureEnvelope
-    | undefined = undefined,
+  const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
   authorization: authorization | KeyAuthorization,
   options: from.Options<signature> = {},
@@ -162,14 +158,17 @@ export function from<
   if (typeof authorization.expiry === 'string')
     return fromRpc(authorization as Rpc) as never
   if (options.signature)
-    return { ...authorization, signature: options.signature } as never
+    return {
+      ...authorization,
+      signature: SignatureEnvelope.from(options.signature),
+    } as never
   return authorization as never
 }
 
 export declare namespace from {
   type Options<
-    signature extends SignatureEnvelope.SignatureEnvelope | undefined =
-      | SignatureEnvelope.SignatureEnvelope
+    signature extends SignatureEnvelope.from.Value | undefined =
+      | SignatureEnvelope.from.Value
       | undefined,
   > = {
     /** The {@link ox#SignatureEnvelope.SignatureEnvelope} to attach to the Key Authorization. */
@@ -178,14 +177,14 @@ export declare namespace from {
 
   type ReturnType<
     authorization extends KeyAuthorization | Rpc = KeyAuthorization,
-    signature extends SignatureEnvelope.SignatureEnvelope | undefined =
-      | SignatureEnvelope.SignatureEnvelope
+    signature extends SignatureEnvelope.from.Value | undefined =
+      | SignatureEnvelope.from.Value
       | undefined,
   > = Compute<
     authorization extends Rpc
       ? Signed
       : authorization &
-          (signature extends SignatureEnvelope.SignatureEnvelope
+          (signature extends SignatureEnvelope.from.Value
             ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
             : {})
   >

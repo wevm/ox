@@ -103,7 +103,7 @@ export type TupleListSigned = TupleList<true>
  *
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
- * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
@@ -111,12 +111,10 @@ export type TupleListSigned = TupleList<true>
  *   nonce: 40n,
  * })
  *
- * const signature = SignatureEnvelope.from(
- *   Secp256k1.sign({
- *     payload: AuthorizationTempo.getSignPayload(authorization),
- *     privateKey: '0x...',
- *   }),
- * )
+ * const signature = Secp256k1.sign({
+ *   payload: AuthorizationTempo.getSignPayload(authorization),
+ *   privateKey: '0x...',
+ * })
  *
  * const authorization_signed = AuthorizationTempo.from(authorization, { signature }) // [!code focus]
  * ```
@@ -127,9 +125,7 @@ export type TupleListSigned = TupleList<true>
  */
 export function from<
   const authorization extends AuthorizationTempo | Rpc,
-  const signature extends
-    | SignatureEnvelope.SignatureEnvelope
-    | undefined = undefined,
+  const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
   authorization: authorization | AuthorizationTempo,
   options: from.Options<signature> = {},
@@ -144,8 +140,8 @@ export function from<
 
 export declare namespace from {
   type Options<
-    signature extends SignatureEnvelope.SignatureEnvelope | undefined =
-      | SignatureEnvelope.SignatureEnvelope
+    signature extends SignatureEnvelope.from.Value | undefined =
+      | SignatureEnvelope.from.Value
       | undefined,
   > = {
     /** The {@link ox#SignatureEnvelope.SignatureEnvelope} to attach to the AA Authorization. */
@@ -154,14 +150,14 @@ export declare namespace from {
 
   type ReturnType<
     authorization extends AuthorizationTempo | Rpc = AuthorizationTempo,
-    signature extends SignatureEnvelope.SignatureEnvelope | undefined =
-      | SignatureEnvelope.SignatureEnvelope
+    signature extends SignatureEnvelope.from.Value | undefined =
+      | SignatureEnvelope.from.Value
       | undefined,
   > = Compute<
     authorization extends Rpc
       ? Signed
       : authorization &
-          (signature extends SignatureEnvelope.SignatureEnvelope
+          (signature extends SignatureEnvelope.from.Value
             ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
             : {})
   >
