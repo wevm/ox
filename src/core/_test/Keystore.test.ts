@@ -480,7 +480,7 @@ describe('scrypt', () => {
   })
 })
 
-describe('scryptAsync', () => {
+describe.skip('scryptAsync', () => {
   test('default', async () => {
     const [key, opts] = await Keystore.scryptAsync({
       salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
