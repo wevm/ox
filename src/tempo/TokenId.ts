@@ -1,0 +1,50 @@
+import * as Address from '../core/Address.js'
+import * as Hex from '../core/Hex.js'
+
+const tip20Prefix = '0x20c0'
+
+export type TokenId = bigint
+export type TokenIdOrAddress = TokenId | Address.Address
+
+/**
+ * Converts a token ID or address to a token ID.
+ *
+ * @param tokenIdOrAddress - The token ID or address.
+ * @returns The token ID.
+ */
+export function from(tokenIdOrAddress: TokenIdOrAddress | number): TokenId {
+  if (
+    typeof tokenIdOrAddress === 'bigint' ||
+    typeof tokenIdOrAddress === 'number'
+  )
+    return BigInt(tokenIdOrAddress)
+  return fromAddress(tokenIdOrAddress)
+}
+
+/**
+ * Converts a TIP20 token address to a token ID.
+ *
+ * @param address - The token address.
+ * @returns The token ID.
+ */
+export function fromAddress(address: Address.Address): TokenId {
+  if (!address.toLowerCase().startsWith(tip20Prefix))
+    throw new Error('invalid tip20 address.')
+  return Hex.toBigInt(Hex.slice(address, tip20Prefix.length))
+}
+
+/**
+ * Converts a TIP20 token ID to an address.
+ *
+ * @param tokenId - The token ID.
+ * @returns The address.
+ */
+export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
+  if (typeof tokenId === 'string') {
+    Address.assert(tokenId)
+    return tokenId
+  }
+
+  const tokenIdHex = Hex.fromNumber(tokenId, { size: 18 })
+  return Hex.concat(tip20Prefix, tokenIdHex)
+}

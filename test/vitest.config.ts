@@ -12,7 +12,6 @@ export default defineConfig({
       outputFile: './.bench/report.json',
     },
     coverage: {
-      all: false,
       include: ['**/src/**'],
       provider: 'v8',
       reporter: process.env.CI ? ['lcov'] : ['text', 'json', 'html'],
