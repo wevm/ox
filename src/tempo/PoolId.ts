@@ -5,6 +5,16 @@ import * as TokenId from './TokenId.js'
 /**
  * Converts a user token and validator token to a pool ID.
  *
+ * @example
+ * ```ts twoslash
+ * import { PoolId } from 'ox/tempo'
+ *
+ * const poolId = PoolId.from({
+ *   userToken: 1n,
+ *   validatorToken: 2n,
+ * })
+ * ```
+ *
  * @param value - User token and validator token.
  * @returns The pool ID.
  */

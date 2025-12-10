@@ -18,6 +18,19 @@ export const toPreHashed = {
   burnBlocked: 'BURN_BLOCKED_ROLE',
 } as const satisfies Record<TokenRole, string>
 
+/**
+ * Serializes a token role to its keccak256 hash representation.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TokenRole } from 'ox/tempo'
+ *
+ * const hash = TokenRole.serialize('issuer')
+ * ```
+ *
+ * @param role - The token role to serialize.
+ * @returns The keccak256 hash of the role.
+ */
 export function serialize(role: TokenRole) {
   if (role === 'defaultAdmin')
     return '0x0000000000000000000000000000000000000000000000000000000000000000'

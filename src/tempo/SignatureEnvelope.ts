@@ -255,6 +255,13 @@ export declare namespace assert {
  * - 130 bytes: P256 signature (1 byte type + 129 bytes data)
  * - 129+ bytes: WebAuthn signature (1 byte type + variable data)
  *
+ * @example
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const envelope = SignatureEnvelope.deserialize('0x...')
+ * ```
+ *
  * @param serialized - The hex-encoded signature envelope to deserialize.
  * @returns The deserialized signature envelope.
  * @throws `CoercionError` if the serialized value cannot be coerced to a valid signature envelope.
@@ -383,6 +390,17 @@ export function deserialize(serialized: Serialized): SignatureEnvelope {
  *
  * Accepts either a serialized hex string or an existing signature envelope object.
  *
+ * @example
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const envelope = SignatureEnvelope.from({
+ *   r: 0n,
+ *   s: 0n,
+ *   yParity: 0,
+ * })
+ * ```
+ *
  * @param value - The value to coerce (either a hex string or signature envelope).
  * @returns The signature envelope.
  */
@@ -424,7 +442,19 @@ export declare namespace from {
 }
 
 /**
- * Converts an {@link ox#SignatureEnvelope.SignatureEnvelopeRpc} to a {@link ox#SignatureEnvelope.SignatureEnvelope}.
+ * Converts an RPC-formatted signature envelope to a typed signature envelope.
+ *
+ * @example
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const envelope = SignatureEnvelope.fromRpc({
+ *   r: '0x0',
+ *   s: '0x0',
+ *   yParity: '0x0',
+ *   type: 'secp256k1',
+ * })
+ * ```
  *
  * @param envelope - The RPC signature envelope to convert.
  * @returns The signature envelope with bigint values.
@@ -522,6 +552,16 @@ export declare namespace fromRpc {
 /**
  * Determines the signature type of an envelope.
  *
+ * @example
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const type = SignatureEnvelope.getType({
+ *   signature: { r: 0n, s: 0n, yParity: 0 },
+ * })
+ * // @log: 'secp256k1'
+ * ```
+ *
  * @param envelope - The signature envelope to inspect.
  * @returns The signature type ('secp256k1', 'p256', or 'webAuthn').
  * @throws `CoercionError` if the envelope type cannot be determined.
@@ -587,9 +627,19 @@ export function getType<
  * - P256: encoded WITH type identifier prefix (130 bytes)
  * - WebAuthn: encoded WITH type identifier prefix (variable length)
  *
+ * @example
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const serialized = SignatureEnvelope.serialize({
+ *   signature: { r: 0n, s: 0n, yParity: 0 },
+ *   type: 'secp256k1',
+ * })
+ * ```
+ *
  * @param envelope - The signature envelope to serialize.
  * @returns The hex-encoded serialized signature.
- * @throws `CoercionError` If the envelope cannot be serialized.
+ * @throws `CoercionError` if the envelope cannot be serialized.
  */
 export function serialize(
   envelope: UnionPartialBy<SignatureEnvelope, 'prehash'>,
@@ -646,7 +696,17 @@ export function serialize(
 }
 
 /**
- * Converts a {@link ox#SignatureEnvelope.SignatureEnvelope} to an {@link ox#SignatureEnvelope.SignatureEnvelopeRpc}.
+ * Converts a signature envelope to RPC format.
+ *
+ * @example
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const rpc = SignatureEnvelope.toRpc({
+ *   signature: { r: 0n, s: 0n, yParity: 0 },
+ *   type: 'secp256k1',
+ * })
+ * ```
  *
  * @param envelope - The signature envelope to convert.
  * @returns The RPC signature envelope with hex values.

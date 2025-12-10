@@ -9,6 +9,13 @@ export type TokenIdOrAddress = TokenId | Address.Address
 /**
  * Converts a token ID or address to a token ID.
  *
+ * @example
+ * ```ts twoslash
+ * import { TokenId } from 'ox/tempo'
+ *
+ * const tokenId = TokenId.from(1n)
+ * ```
+ *
  * @param tokenIdOrAddress - The token ID or address.
  * @returns The token ID.
  */
@@ -24,6 +31,13 @@ export function from(tokenIdOrAddress: TokenIdOrAddress | number): TokenId {
 /**
  * Converts a TIP20 token address to a token ID.
  *
+ * @example
+ * ```ts twoslash
+ * import { TokenId } from 'ox/tempo'
+ *
+ * const tokenId = TokenId.fromAddress('0x20c00000000000000000000000000000000000000001')
+ * ```
+ *
  * @param address - The token address.
  * @returns The token ID.
  */
@@ -35,6 +49,13 @@ export function fromAddress(address: Address.Address): TokenId {
 
 /**
  * Converts a TIP20 token ID to an address.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TokenId } from 'ox/tempo'
+ *
+ * const address = TokenId.toAddress(1n)
+ * ```
  *
  * @param tokenId - The token ID.
  * @returns The address.
