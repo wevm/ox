@@ -15,7 +15,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { accounts } from '../constants/accounts.js'
 import { rpcUrl } from './prool.js'
 
-export const nodeEnv = import.meta.env.VITE_TEMPO_NODE_ENV || 'localnet'
+export const nodeEnv = import.meta.env.VITE_TEMPO_ENV || 'localnet'
 
 export const chain = (() => {
   if (nodeEnv === 'testnet') return tempoTestnet()

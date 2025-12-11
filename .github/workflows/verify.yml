@@ -66,14 +66,14 @@ jobs:
       - name: Run tests
         run: pnpm test --project tempo --bail=1 --coverage
         env: 
-          VITE_TEMPO_NODE_TAG: ${{ matrix.tag }}
+          VITE_TEMPO_TAG: ${{ matrix.tag }}
 
   test-tempo-e2e:
-    name: 'Test Runtime (tempo, env: ${{ matrix.node-env }}, e2e)'
+    name: 'Test Runtime (tempo, env: ${{ matrix.tempo-env }}, e2e)'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-env: 
+        tempo-env: 
           - testnet
 
     steps:
@@ -88,7 +88,7 @@ jobs:
       - name: Run tests
         run: pnpm test --project tempo e2e --bail=1
         env:
-          VITE_NODE_ENV: ${{ matrix.node-env }}
+          VITE_TEMPO_ENV: ${{ matrix.tempo-env }}
 
   vectors:
     name: Vectors
