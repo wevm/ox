@@ -9,7 +9,7 @@ export type {}
  * enabling passkey-based account delegation. Authorizations delegate an account to a specified
  * implementation contract.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list Tempo Authorization Specification}
+ * [Tempo Authorization Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list)
  *
  * @example
  * ```ts twoslash
@@ -43,7 +43,7 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  * keys with customizable permissions including expiry timestamps and per-TIP-20 token spending
  * limits. This enables a user to sign transactions without repeated passkey prompts.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys Access Keys Specification}
+ * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  *
  * @example
  * ```ts twoslash
@@ -82,7 +82,7 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  * Pool IDs are deterministic keys derived from two token addresses (order-independent)
  * used to identify trading pairs on Tempo's enshrined stablecoin DEX.
  *
- * @see {@link https://docs.tempo.xyz/protocol/exchange/spec Stablecoin DEX Specification}
+ * [Stablecoin DEX Specification](https://docs.tempo.xyz/protocol/exchange/spec)
  *
  * @example
  * ```ts twoslash
@@ -104,7 +104,7 @@ export * as PoolId from './PoolId.js'
  * Tempo transactions support multiple signature types: secp256k1 (65 bytes), P256 for passkeys
  * (type `0x01`), WebAuthn (type `0x02`), and Keychain for access keys (type `0x03`).
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types Signature Types Specification}
+ * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
  * @example
  * ```ts twoslash
@@ -128,7 +128,7 @@ export * as SignatureEnvelope from './SignatureEnvelope.js'
  * (where `price = PRICE_SCALE + tick` and `PRICE_SCALE = 100_000`). Orders must be placed at ticks
  * divisible by `TICK_SPACING = 10` (1 bp grid), within bounds of ±2000 ticks (±2%).
  *
- * @see {@link https://docs.tempo.xyz/protocol/exchange/spec#key-concepts Stablecoin DEX Pricing}
+ * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
  *
  * @example
  * ```ts twoslash
@@ -149,7 +149,7 @@ export * as Tick from './Tick.js'
  * derived from sequential token IDs. TIP-20 extends ERC-20 with payment features like
  * configurable fee tokens, transfer memos, and built-in role-based access control.
  *
- * @see {@link https://docs.tempo.xyz/protocol/tip20/overview TIP-20 Token Standard}
+ * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
  *
  * @example
  * ```ts twoslash
@@ -170,7 +170,7 @@ export * as TokenId from './TokenId.js'
  * TIP-20 includes a built-in RBAC system with roles like `ISSUER_ROLE` (mint/burn),
  * `PAUSE_ROLE`/`UNPAUSE_ROLE` (emergency controls), and `BURN_BLOCKED_ROLE` (compliance).
  *
- * @see {@link https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac TIP-20 RBAC}
+ * [TIP-20 RBAC](https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac)
  *
  * @example
  * ```ts twoslash
@@ -189,7 +189,7 @@ export * as TokenRole from './TokenRole.js'
  * Tempo Transactions (type `0x76`) are a new EIP-2718 transaction type with native support
  * for passkeys, call batching, fee sponsorship, parallelizable nonces, and scheduled execution.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * [Tempo Transactions](https://docs.tempo.xyz/protocol/transactions)
  *
  * @example
  * ```ts twoslash
@@ -239,7 +239,7 @@ export * as Transaction from './Transaction.js'
  * Tempo receipts include additional fields like `feePayer` (the address that paid fees)
  * and `feeToken` (the TIP-20 token used for fee payment).
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * [Tempo Transactions](https://docs.tempo.xyz/protocol/transactions)
  *
  * @example
  * ```ts twoslash
@@ -262,7 +262,7 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * Convert structured transaction requests to RPC format for submission to Tempo nodes,
  * including support for batched calls and fee token specification.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * [Tempo Transactions](https://docs.tempo.xyz/protocol/transactions)
  *
  * @example
  * ```ts twoslash
@@ -283,7 +283,7 @@ export * as TransactionRequest from './TransactionRequest.js'
  * Create, sign, and serialize Tempo transactions with support for configurable fee tokens,
  * call batching, fee sponsorship, access keys, and scheduled execution via `validAfter`/`validBefore`.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction Tempo Transaction Specification}
+ * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
  *
  * @example
  * ```ts twoslash
