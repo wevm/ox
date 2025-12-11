@@ -1,6 +1,6 @@
 import { type Hex, RpcRequest, RpcResponse } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
-import { anvilMainnet } from '../../../test/anvil.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('from', () => {
   test('default', async () => {

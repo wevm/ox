@@ -52,7 +52,7 @@ export type BlobSidecar<
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -68,7 +68,7 @@ export type BlobSidecar<
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -86,7 +86,7 @@ export type BlobSidecar<
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -162,7 +162,7 @@ export declare namespace commitmentsToVersionedHashes {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -180,7 +180,7 @@ export declare namespace commitmentsToVersionedHashes {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -368,7 +368,7 @@ export declare namespace from {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -386,7 +386,7 @@ export declare namespace from {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
@@ -662,7 +662,7 @@ export declare namespace toBytes {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Blobs } from 'viem'
+ * import { Blobs } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')

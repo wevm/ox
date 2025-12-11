@@ -7,7 +7,7 @@ import {
   Value,
 } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
-import { anvilMainnet } from '../../../test/anvil.js'
+import { anvilMainnet } from '../../../test/prool.js'
 import { accounts } from '../../../test/constants/accounts.js'
 import { kzg } from '../../../test/kzg.js'
 

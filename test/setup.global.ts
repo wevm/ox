@@ -1,4 +1,4 @@
-import * as instances from './anvil.js'
+import * as instances from './prool.js'
 
 export default async function () {
   // Set up Anvil instances

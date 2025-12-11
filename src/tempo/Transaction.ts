@@ -138,7 +138,7 @@ export type FromRpcType = typeof fromRpcType & {
  *
  * @example
  * ```ts twoslash
- * import { Transaction } from '../core/tempo.js'
+ * import { Transaction } from 'ox/tempo'
  *
  * const transaction = Transaction.fromRpc({
  *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
@@ -242,7 +242,7 @@ export declare namespace fromRpc {
  *
  * @example
  * ```ts twoslash
- * import { Transaction } from '../core/tempo.js'
+ * import { Transaction } from 'ox/tempo'
  *
  * const transaction = Transaction.toRpc({
  *   accessList: [],

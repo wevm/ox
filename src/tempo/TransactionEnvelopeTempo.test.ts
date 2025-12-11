@@ -354,6 +354,20 @@ describe('deserialize', () => {
         privateKey,
       })
       const serialized = TransactionEnvelopeTempo.serialize(transaction, {
+        signature,
+      })
+      expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual({
+        ...transaction,
+        signature: { signature, type: 'secp256k1' },
+      })
+    })
+
+    test('secp256k1', () => {
+      const signature = Secp256k1.sign({
+        payload: TransactionEnvelopeTempo.getSignPayload(transaction),
+        privateKey,
+      })
+      const serialized = TransactionEnvelopeTempo.serialize(transaction, {
         signature: SignatureEnvelope.from(signature),
       })
       expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual({
@@ -708,6 +722,42 @@ describe('from', () => {
           s: 1n,
           yParity: 0,
         }),
+      },
+    )
+    expect(envelope).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {},
+        ],
+        "chainId": 1,
+        "nonce": 0n,
+        "nonceKey": 0n,
+        "signature": {
+          "signature": {
+            "r": 0n,
+            "s": 1n,
+            "yParity": 0,
+          },
+          "type": "secp256k1",
+        },
+        "type": "tempo",
+      }
+    `)
+    const serialized = TransactionEnvelopeTempo.serialize(envelope)
+    const envelope2 = TransactionEnvelopeTempo.from(serialized)
+    expect(envelope2).toEqual(envelope)
+  })
+
+  test('options: signature', () => {
+    const envelope = TransactionEnvelopeTempo.from(
+      {
+        chainId: 1,
+        calls: [{}],
+        nonce: 0n,
+        nonceKey: 0n,
+      },
+      {
+        signature: { r: 0n, s: 1n, yParity: 0 },
       },
     )
     expect(envelope).toMatchInlineSnapshot(`

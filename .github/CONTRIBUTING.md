@@ -16,12 +16,12 @@ This guide is intended to help you get started with contributing. By following t
 
 1. [Cloning the repository](#cloning-the-repository)
 2. [Installing Node.js and pnpm](#installing-nodejs-and-pnpm)
-3. [Installing Foundry](#installing-foundry)
-4. [Installing dependencies](#installing-dependencies)
-5. [Running the test suite](#running-the-test-suite)
-6. [Writing documentation](#writing-documentation)
-7. [Submitting a pull request](#submitting-a-pull-request)
-8. [Versioning](#versioning)
+3. [Installing Foundry & Tempo](#installing-foundry--tempo)
+5. [Installing dependencies](#installing-dependencies)
+6. [Running the test suite](#running-the-test-suite)
+7. [Writing documentation](#writing-documentation)
+8. [Submitting a pull request](#submitting-a-pull-request)
+9. [Versioning](#versioning)
 
 ---
 
@@ -67,14 +67,17 @@ If the versions are not correct or you don't have Node.js or pnpm installed, dow
 
 ---
 
-### Installing Foundry
+### Installing Foundry & Tempo
 
-Ox uses [Foundry](https://book.getfoundry.sh/) for testing. We run a local [Anvil](https://github.com/foundry-rs/foundry/tree/master/anvil) instance against a forked Ethereum node, where we can also use tools like [Forge](https://book.getfoundry.sh/forge/) to deploy test contracts to it.
+Ox uses [Foundry](https://book.getfoundry.sh/) & [Tempo](https://github.com/tempoxyz/tempo) for testing. 
 
-Install Foundry using the following command:
+We run a local [Anvil](https://github.com/foundry-rs/foundry/tree/master/anvil) instance against a forked Ethereum node, where we can also use tools like [Forge](https://book.getfoundry.sh/forge/) to deploy test contracts to it.
+
+Install Foundry & Tempo using the following command:
 
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
+curl -L https://tempo.xyz/install | bash
 ```
 
 <div align="right">

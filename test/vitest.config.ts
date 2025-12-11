@@ -16,17 +16,39 @@ export default defineConfig({
       provider: 'v8',
       reporter: process.env.CI ? ['lcov'] : ['text', 'json', 'html'],
     },
-    globalSetup: process.env.TYPES
-      ? [join(__dirname, './globalSetup.types.ts')]
-      : [join(__dirname, './globalSetup.ts')],
-    include: [
-      ...(process.env.TYPES ? ['src/**/*.snap-d.ts'] : ['src/**/*.test.ts']),
-    ],
     passWithNoTests: true,
+    retry: 3,
     resolveSnapshotPath: (path, ext) =>
       join(join(dirname(path), '_snap'), `${basename(path)}${ext}`),
-    setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
     hookTimeout: 20_000,
     testTimeout: 20_000,
+
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'core,ercs',
+          globalSetup: process.env.TYPES
+            ? [join(__dirname, './setup.global.types.ts')]
+            : [join(__dirname, './setup.global.ts')],
+          include: [
+            ...(process.env.TYPES
+              ? ['src/**/*.snap-d.ts']
+              : ['src/**/*.test.ts']),
+            '!src/tempo/**',
+          ],
+          setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'tempo',
+          include: ['src/tempo/**/*.test.ts'],
+          setupFiles: [join(__dirname, './tempo/setup.ts')],
+          globalSetup: [join(__dirname, './tempo/setup.global.ts')],
+        },
+      },
+    ],
   },
 })

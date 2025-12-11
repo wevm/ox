@@ -107,20 +107,17 @@ describe('from', () => {
     >()
     expect(authorization_signed).toMatchInlineSnapshot(
       `
-    {
-      "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-      "chainId": 1,
-      "nonce": 40n,
-      "signature": {
+      {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1,
+        "nonce": 40n,
         "signature": {
           "r": 74666311849961653398815470296948700361392062371901161364182304079113687952627n,
           "s": 24912990662134805731506157958890440652926649106845286943280690489391727501383n,
           "yParity": 1,
         },
-        "type": "secp256k1",
-      },
-    }
-  `,
+      }
+    `,
     )
   })
 

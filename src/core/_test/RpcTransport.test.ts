@@ -2,7 +2,7 @@ import { setTimeout } from 'node:timers/promises'
 import { RpcTransport } from 'ox'
 import { describe, expect, test } from 'vitest'
 
-import { anvilMainnet } from '../../../test/anvil.js'
+import { anvilMainnet } from '../../../test/prool.js'
 import { createHttpServer } from '../../../test/http.js'
 
 describe('fromHttp', () => {

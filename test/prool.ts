@@ -1,6 +1,5 @@
 import { RpcTransport } from 'ox'
-import { createServer } from 'prool'
-import { type AnvilParameters, anvil } from 'prool/instances'
+import { Instance, Server } from 'prool'
 
 export const anvilMainnet = defineAnvil({
   forkUrl: getEnv('VITE_ANVIL_FORK_URL', 'https://1.rpc.thirdweb.com'),
@@ -22,7 +21,7 @@ function getEnv(key: string, fallback: string): string {
   return fallback
 }
 
-function defineAnvil(parameters: AnvilParameters) {
+function defineAnvil(parameters: Instance.anvil.Parameters) {
   const { port } = parameters
   const poolId = Math.floor(Math.random() * 10000)
   const rpcUrl = `http://127.0.0.1:${port}/${poolId}`
@@ -42,8 +41,8 @@ function defineAnvil(parameters: AnvilParameters) {
     },
     rpcUrl,
     async start() {
-      return await createServer({
-        instance: anvil(config),
+      return await Server.create({
+        instance: Instance.anvil(config),
         port,
       }).start()
     },

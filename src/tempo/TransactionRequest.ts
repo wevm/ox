@@ -53,9 +53,11 @@ export type Rpc = Omit<
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const request = TransactionRequest.toRpc({
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *   }],
  *   feeToken: '0x20c0000000000000000000000000000000000000',
- *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('0.01'),
  * })
  * ```
  *
@@ -73,9 +75,11 @@ export type Rpc = Omit<
  * const provider = Provider.from(window.ethereum!)
  *
  * const request = TransactionRequest.toRpc({
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *   }],
  *   feeToken: '0x20c0000000000000000000000000000000000000',
- *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('0.01'),
  * })
  *
  * const hash = await provider.request({ // [!code focus]

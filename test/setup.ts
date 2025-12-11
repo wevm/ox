@@ -1,6 +1,6 @@
 import { Caches } from 'ox'
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest'
-import * as instances from './anvil.js'
+import * as instances from './prool.js'
 
 beforeAll(() => {
   vi.mock('../src/core/internal/errors.ts', async () => ({

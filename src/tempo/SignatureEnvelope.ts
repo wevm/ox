@@ -391,13 +391,104 @@ export function deserialize(serialized: Serialized): SignatureEnvelope {
  * Accepts either a serialized hex string or an existing signature envelope object.
  *
  * @example
+ * ### Secp256k1
+ *
+ * Standard Ethereum ECDSA signature using the secp256k1 curve.
+ *
  * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
  * import { SignatureEnvelope } from 'ox/tempo'
  *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const envelope = SignatureEnvelope.from(signature)
+ * ```
+ *
+ * @example
+ * ### P256
+ *
+ * ECDSA signature using the P-256 (secp256r1) curve. Requires embedding the
+ * public key.
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const { privateKey, publicKey } = P256.createKeyPair()
+ * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+ *
  * const envelope = SignatureEnvelope.from({
- *   r: 0n,
- *   s: 0n,
- *   yParity: 0,
+ *   signature,
+ *   publicKey,
+ * })
+ * ```
+ *
+ * @example
+ * ### P256 (WebCrypto)
+ *
+ * When using WebCrypto keys, `prehash` must be `true` since WebCrypto always
+ * SHA256 hashes the digest before signing.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { WebCryptoP256 } from 'ox'
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const envelope = SignatureEnvelope.from({
+ *   signature,
+ *   publicKey,
+ *   prehash: true,
+ * })
+ * ```
+ *
+ * @example
+ * ### WebAuthn
+ *
+ * Passkey-based signature using WebAuthn. Includes authenticator metadata
+ * (authenticatorData and clientDataJSON) along with the P-256 signature and
+ * public key.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { WebAuthnP256 } from 'ox'
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example',
+ * })
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   challenge: '0xdeadbeef',
+ *   credentialId: credential.id,
+ * })
+ *
+ * const envelope = SignatureEnvelope.from({
+ *   signature,
+ *   publicKey: credential.publicKey,
+ *   metadata,
+ * })
+ * ```
+ *
+ * @example
+ * ### Keychain
+ *
+ * Wraps another signature type with a user address, used for delegated signing
+ * via access keys on behalf of a root account.
+ *
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const envelope = SignatureEnvelope.from({
+ *   userAddress: '0x1234567890123456789012345678901234567890',
+ *   inner: SignatureEnvelope.from(signature),
  * })
  * ```
  *
@@ -419,12 +510,16 @@ export function from<const value extends from.Value>(
     return { signature: value, type: 'secp256k1' } as never
 
   const type = getType(value)
-  return { ...value, type } as never
+  return {
+    ...value,
+    ...(type === 'p256' ? { prehash: value.prehash } : {}),
+    type,
+  } as never
 }
 
 export declare namespace from {
   type Value =
-    | UnionPartialBy<SignatureEnvelope, 'type'>
+    | UnionPartialBy<SignatureEnvelope, 'prehash' | 'type'>
     | Secp256k1Flat
     | Serialized
 

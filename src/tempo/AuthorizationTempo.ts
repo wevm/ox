@@ -96,14 +96,15 @@ export type TupleListSigned = TupleList<true>
  * ```
  *
  * @example
- * ### Attaching Signatures
+ * ### Attaching Signatures (Secp256k1)
  *
- * A {@link ox#SignatureEnvelope.SignatureEnvelope} can be attached with the `signature` option. The example below demonstrates signing
- * an AA Authorization with {@link ox#Secp256k1.(sign:function)}.
+ * Standard Ethereum ECDSA signature using the secp256k1 curve.
  *
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  * import { AuthorizationTempo } from 'ox/tempo'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
@@ -113,10 +114,119 @@ export type TupleListSigned = TupleList<true>
  *
  * const signature = Secp256k1.sign({
  *   payload: AuthorizationTempo.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey,
  * })
  *
- * const authorization_signed = AuthorizationTempo.from(authorization, { signature }) // [!code focus]
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature }, // [!code focus]
+ * )
+ * ```
+ *
+ * @example
+ * ### Attaching Signatures (P256)
+ *
+ * ECDSA signature using the P-256 (secp256r1) curve. Requires embedding the
+ * public key and a `prehash` flag indicating whether the payload was hashed
+ * before signing.
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const { privateKey, publicKey } = P256.createKeyPair()
+ *
+ * const authorization = AuthorizationTempo.from({
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 1,
+ *   nonce: 40n,
+ * })
+ *
+ * const signature = P256.sign({
+ *   payload: AuthorizationTempo.getSignPayload(authorization),
+ *   privateKey,
+ * })
+ * const signatureEnvelope = SignatureEnvelope.from({
+ *   signature,
+ *   publicKey,
+ *   prehash: false,
+ * })
+ *
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature: signatureEnvelope }, // [!code focus]
+ * )
+ * ```
+ *
+ * @example
+ * ### Attaching Signatures (P256 WebCrypto)
+ *
+ * When using WebCrypto keys, `prehash` must be `true` since WebCrypto always
+ * hashes the payload internally before signing.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { WebCryptoP256 } from 'ox'
+ * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ *
+ * const authorization = AuthorizationTempo.from({
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 1,
+ *   nonce: 40n,
+ * })
+ *
+ * const signature = await WebCryptoP256.sign({
+ *   payload: AuthorizationTempo.getSignPayload(authorization),
+ *   privateKey,
+ * })
+ * const signatureEnvelope = SignatureEnvelope.from({
+ *   signature,
+ *   publicKey,
+ *   prehash: true,
+ * })
+ *
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature: signatureEnvelope }, // [!code focus]
+ * )
+ * ```
+ *
+ * @example
+ * ### Attaching Signatures (WebAuthn)
+ *
+ * Passkey-based signature using WebAuthn. Includes authenticator metadata
+ * (authenticatorData and clientDataJSON) along with the P-256 signature and
+ * public key.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { WebAuthnP256 } from 'ox'
+ * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ *
+ * const authorization = AuthorizationTempo.from({
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 1,
+ *   nonce: 40n,
+ * })
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   challenge: AuthorizationTempo.getSignPayload(authorization),
+ *   credentialId: credential.id,
+ * })
+ * const signatureEnvelope = SignatureEnvelope.from({
+ *   signature,
+ *   publicKey: credential.publicKey,
+ *   metadata,
+ * })
+ *
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature: signatureEnvelope }, // [!code focus]
+ * )
  * ```
  *
  * @param authorization - An [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) AA Authorization tuple in object format.
@@ -384,12 +494,15 @@ export declare namespace fromTupleList {
  * Computes the sign payload for an {@link ox#AuthorizationTempo.AuthorizationTempo} in [EIP-7702 format](https://eips.ethereum.org/EIPS/eip-7702): `keccak256('0x05' || rlp([chain_id, address, nonce]))`.
  *
  * @example
- * The example below demonstrates computing the sign payload for an {@link ox#AuthorizationTempo.AuthorizationTempo}. This payload
- * can then be passed to signing functions like {@link ox#Secp256k1.(sign:function)}.
+ * ### Secp256k1
+ *
+ * Standard Ethereum ECDSA signature using the secp256k1 curve.
  *
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  * import { AuthorizationTempo } from 'ox/tempo'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
@@ -399,10 +512,114 @@ export declare namespace fromTupleList {
  *
  * const payload = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
  *
- * const signature = Secp256k1.sign({
- *   payload,
- *   privateKey: '0x...',
+ * const signature = Secp256k1.sign({ payload, privateKey })
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature }
+ * )
+ * ```
+ *
+ * @example
+ * ### P256
+ *
+ * ECDSA signature using the P-256 (secp256r1) curve. Requires embedding the
+ * public key and a `prehash` flag indicating whether the payload was hashed
+ * before signing.
+ *
+ * ```ts twoslash
+ * import { P256 } from 'ox'
+ * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const { privateKey, publicKey } = P256.createKeyPair()
+ *
+ * const authorization = AuthorizationTempo.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
+ *   chainId: 1,
+ *   nonce: 69n,
  * })
+ *
+ * const payload = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ *
+ * const signature = P256.sign({ payload, privateKey })
+ * const signatureEnvelope = SignatureEnvelope.from({
+ *   prehash: false,
+ *   publicKey,
+ *   signature,
+ * })
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature: signatureEnvelope }
+ * )
+ * ```
+ *
+ * @example
+ * ### P256 (WebCrypto)
+ *
+ * When using WebCrypto keys, `prehash` must be `true` since WebCrypto always
+ * hashes the payload internally before signing.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { WebCryptoP256 } from 'ox'
+ * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ *
+ * const authorization = AuthorizationTempo.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
+ *   chainId: 1,
+ *   nonce: 69n,
+ * })
+ *
+ * const payload = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ *
+ * const signature = await WebCryptoP256.sign({ payload, privateKey })
+ * const signatureEnvelope = SignatureEnvelope.from({
+ *   prehash: true,
+ *   publicKey,
+ *   signature,
+ * })
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature: signatureEnvelope }
+ * )
+ * ```
+ *
+ * @example
+ * ### WebAuthn
+ *
+ * Passkey-based signature using WebAuthn. Includes authenticator metadata
+ * (authenticatorData and clientDataJSON) along with the P-256 signature and
+ * public key.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { WebAuthnP256 } from 'ox'
+ * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ *
+ * const authorization = AuthorizationTempo.from({
+ *   address: '0x1234567890abcdef1234567890abcdef12345678',
+ *   chainId: 1,
+ *   nonce: 69n,
+ * })
+ *
+ * const challenge = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   challenge,
+ *   credentialId: credential.id,
+ * })
+ * const signatureEnvelope = SignatureEnvelope.from({
+ *   signature,
+ *   publicKey: credential.publicKey,
+ *   metadata,
+ * })
+ * const authorization_signed = AuthorizationTempo.from(
+ *   authorization,
+ *   { signature: signatureEnvelope }
+ * )
  * ```
  *
  * @param authorization - The {@link ox#AuthorizationTempo.AuthorizationTempo}.

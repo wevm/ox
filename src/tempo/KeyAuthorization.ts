@@ -99,49 +99,121 @@ export type TokenLimit<bigintType = bigint> = {
  * Converts a Key Authorization object into a typed {@link ox#KeyAuthorization.KeyAuthorization}.
  *
  * @example
- * A Key Authorization can be instantiated from a Key Authorization tuple in object format.
+ * ### Secp256k1 Key
+ *
+ * Standard Ethereum ECDSA key using the secp256k1 curve.
  *
  * ```ts twoslash
+ * import { Address, Secp256k1, Value } from 'ox'
  * import { KeyAuthorization } from 'ox/tempo'
- * import { Value } from 'ox'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
  *
  * const authorization = KeyAuthorization.from({
+ *   address,
  *   expiry: 1234567890,
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
+ *     limit: Value.from('10', 6),
  *   }],
  * })
  * ```
  *
  * @example
- * ### Attaching Signatures
- *
- * A {@link ox#SignatureEnvelope.SignatureEnvelope} can be attached with the `signature` option. The example below demonstrates signing
- * a Key Authorization with {@link ox#Secp256k1.(sign:function)}.
+ * ### WebCryptoP256 Key
  *
  * ```ts twoslash
+ * import { Address, WebCryptoP256, Value } from 'ox'
  * import { KeyAuthorization } from 'ox/tempo'
- * import { Secp256k1, Value } from 'ox'
+ *
+ * const keyPair = await WebCryptoP256.createKeyPair()
+ * const address = Address.fromPublicKey(keyPair.publicKey)
  *
  * const authorization = KeyAuthorization.from({
+ *   address,
  *   expiry: 1234567890,
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   type: 'p256',
+ *   limits: [{
+ *     token: '0x20c0000000000000000000000000000000000001',
+ *     limit: Value.from('10', 6),
+ *   }],
+ * })
+ * ```
+ *
+ * @example
+ * ### Attaching Signatures (Secp256k1)
+ *
+ * Attach a signature to a Key Authorization using a Secp256k1 private key to
+ * authorize another Secp256k1 key on the account.
+ *
+ * ```ts twoslash
+ * import { Address, Secp256k1, Value } from 'ox'
+ * import { KeyAuthorization } from 'ox/tempo'
+ *
+ * const privateKey = '0x...'
+ * const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
+ *
+ * const authorization = KeyAuthorization.from({
+ *   address,
+ *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
+ *     limit: Value.from('10', 6),
  *   }],
  * })
  *
+ * const rootPrivateKey = '0x...'
  * const signature = Secp256k1.sign({
  *   payload: KeyAuthorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: rootPrivateKey,
  * })
  *
- * const authorization_signed = KeyAuthorization.from(authorization, { signature }) // [!code focus]
+ * const authorization_signed = KeyAuthorization.from(authorization, { signature })
+ * ```
+ *
+ * @example
+ * ### Attaching Signatures (WebAuthn)
+ *
+ * Attach a signature to a Key Authorization using a WebAuthn credential to
+ * authorize a new WebCryptoP256 key on the account.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Address, Value, WebCryptoP256, WebAuthnP256 } from 'ox'
+ * import { KeyAuthorization, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const keyPair = await WebCryptoP256.createKeyPair()
+ * const address = Address.fromPublicKey(keyPair.publicKey)
+ *
+ * const authorization = KeyAuthorization.from({
+ *   address,
+ *   expiry: 1234567890,
+ *   type: 'p256',
+ *   limits: [{
+ *     token: '0x20c0000000000000000000000000000000000001',
+ *     limit: Value.from('10', 6),
+ *   }],
+ * })
+ *
+ * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   challenge: KeyAuthorization.getSignPayload(authorization),
+ *   credentialId: credential.id,
+ * })
+ *
+ * const signatureEnvelope = SignatureEnvelope.from({ // [!code focus]
+ *   signature, // [!code focus]
+ *   publicKey: credential.publicKey, // [!code focus]
+ *   metadata, // [!code focus]
+ * })
+ * const authorization_signed = KeyAuthorization.from(
+ *   authorization,
+ *   { signature: signatureEnvelope }, // [!code focus]
+ * )
  * ```
  *
  * @param authorization - A Key Authorization tuple in object format.
@@ -325,29 +397,24 @@ export declare namespace fromTuple {
  * Computes the sign payload for an {@link ox#KeyAuthorization.KeyAuthorization}.
  *
  * @example
- * The example below demonstrates computing the sign payload for an {@link ox#KeyAuthorization.KeyAuthorization}. This payload
- * can then be passed to signing functions like {@link ox#Secp256k1.(sign:function)}.
- *
  * ```ts twoslash
+ * import { Address, Secp256k1, Value } from 'ox'
  * import { KeyAuthorization } from 'ox/tempo'
- * import { Secp256k1, Value } from 'ox'
+ *
+ * const privateKey = '0x...'
+ * const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
  *
  * const authorization = KeyAuthorization.from({
+ *   address,
  *   expiry: 1234567890,
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
- *     limit: Value.from('10', 6)
+ *     limit: Value.from('10', 6),
  *   }],
  * })
  *
  * const payload = KeyAuthorization.getSignPayload(authorization) // [!code focus]
- *
- * const signature = Secp256k1.sign({
- *   payload,
- *   privateKey: '0x...',
- * })
  * ```
  *
  * @param authorization - The {@link ox#KeyAuthorization.KeyAuthorization}.

@@ -1,4 +1,3 @@
-import type { OneOf } from 'viem'
 import * as AccessList from '../core/AccessList.js'
 import * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
@@ -7,6 +6,7 @@ import * as Hex from '../core/Hex.js'
 import type {
   Assign,
   Compute,
+  OneOf,
   PartialBy,
   UnionPartialBy,
 } from '../core/internal/types.js'
@@ -361,7 +361,10 @@ export declare namespace deserialize {
  *
  * const envelope = TransactionEnvelopeTempo.from({ // [!code focus]
  *   chainId: 1, // [!code focus]
- *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: Value.fromEther('1') }], // [!code focus]
+ *   calls: [{ // [!code focus]
+ *     data: '0xdeadbeef', // [!code focus]
+ *     to: '0x0000000000000000000000000000000000000000', // [!code focus]
+ *   }], // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
  *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
  * }) // [!code focus]
@@ -379,7 +382,10 @@ export declare namespace deserialize {
  *
  * const envelope = TransactionEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: Value.fromEther('1') }],
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x0000000000000000000000000000000000000000',
+ *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  * })
@@ -415,7 +421,10 @@ export declare namespace deserialize {
  * const envelope = TransactionEnvelopeTempo.from('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
  * // @log: {
  * // @log:   chainId: 1,
- * // @log:   calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', value: 1000000000000000000n }],
+ * // @log:   calls: [{
+ * // @log:     data: '0xdeadbeef',
+ * // @log:     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ * // @log:   }],
  * // @log:   maxFeePerGas: 10000000000n,
  * // @log:   type: 'tempo',
  * // @log: }
@@ -429,9 +438,7 @@ export function from<
   const envelope extends
     | UnionPartialBy<TransactionEnvelopeTempo, 'type'>
     | Serialized,
-  const signature extends
-    | SignatureEnvelope.SignatureEnvelope
-    | undefined = undefined,
+  const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
   envelope:
     | envelope
@@ -459,27 +466,23 @@ export function from<
 
 export declare namespace from {
   type Options<
-    signature extends
-      | SignatureEnvelope.SignatureEnvelope
-      | undefined = undefined,
+    signature extends SignatureEnvelope.from.Value | undefined = undefined,
   > = {
     feePayerSignature?: Signature.Signature | null | undefined
-    signature?: signature | SignatureEnvelope.SignatureEnvelope | undefined
+    signature?: signature | SignatureEnvelope.from.Value | undefined
   }
 
   type ReturnValue<
     envelope extends
       | UnionPartialBy<TransactionEnvelopeTempo, 'type'>
       | Hex.Hex = TransactionEnvelopeTempo | Hex.Hex,
-    signature extends
-      | SignatureEnvelope.SignatureEnvelope
-      | undefined = undefined,
+    signature extends SignatureEnvelope.from.Value | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
       ? TransactionEnvelopeTempo
       : Assign<
           envelope,
-          (signature extends SignatureEnvelope.SignatureEnvelope
+          (signature extends SignatureEnvelope.from.Value
             ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
             : {}) & {
             readonly type: 'tempo'
@@ -504,7 +507,10 @@ export declare namespace from {
  *
  * const envelope = TransactionEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: Value.fromEther('1') }],
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x0000000000000000000000000000000000000000',
+ *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
  *
@@ -523,7 +529,10 @@ export declare namespace from {
  *
  * const envelope = TransactionEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: Value.fromEther('1') }],
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x0000000000000000000000000000000000000000',
+ *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
  *
@@ -622,7 +631,7 @@ export declare namespace serialize {
     /**
      * Sender signature to append to the serialized envelope.
      */
-    signature?: SignatureEnvelope.SignatureEnvelope | undefined
+    signature?: SignatureEnvelope.from.Value | undefined
   } & OneOf<
     | {
         /**
@@ -672,7 +681,10 @@ export declare namespace serialize {
  *
  * const envelope = TransactionEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', value: 1000000000000000000n }],
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
@@ -710,7 +722,10 @@ export declare namespace getSignPayload {
  *
  * const envelope = TransactionEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', value: 1000000000000000000n }],
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
@@ -774,7 +789,10 @@ export declare namespace hash {
  *
  * const envelope = TransactionEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', value: 1000000000000000000n }],
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
@@ -828,7 +846,10 @@ export declare namespace getFeePayerSignPayload {
  * import { TransactionEnvelopeTempo } from 'ox/tempo'
  *
  * const valid = TransactionEnvelopeTempo.validate({
- *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: 0n }],
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x0000000000000000000000000000000000000000',
+ *   }],
  *   chainId: 1,
  *   maxFeePerGas: 1000000000n,
  * })

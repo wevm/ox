@@ -1,7 +1,7 @@
 import { Abi, AbiError, AbiFunction, AbiItem } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { Errors } from '../../../contracts/generated.js'
-import { anvilMainnet } from '../../../test/anvil.js'
+import { anvilMainnet } from '../../../test/prool.js'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 
 describe('decode', () => {

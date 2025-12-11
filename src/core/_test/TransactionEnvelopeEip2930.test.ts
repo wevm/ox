@@ -1,6 +1,6 @@
 import { Rlp, Secp256k1, TransactionEnvelopeEip2930, Value } from 'ox'
 import { assertType, describe, expect, expectTypeOf, test } from 'vitest'
-import { anvilMainnet } from '../../../test/anvil.js'
+import { anvilMainnet } from '../../../test/prool.js'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('assert', () => {
