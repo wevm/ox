@@ -12,7 +12,7 @@ import * as SignatureEnvelope from './SignatureEnvelope.js'
  * Tempo extends EIP-7702 to support secp256k1, P256, and WebAuthn signature types,
  * enabling passkey-based account delegation.
  *
- * @see [Tempo Authorization Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list)
+ * [Tempo Authorization Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list)
  */
 export type AuthorizationTempo<
   signed extends boolean = boolean,
@@ -91,7 +91,7 @@ export type TupleListSigned = TupleList<true>
  *
  * Tempo extends EIP-7702 to support secp256k1, P256, and WebAuthn signature types.
  *
- * @see [Tempo Authorization Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list)
+ * [Tempo Authorization Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list)
  *
  * @example
  * An Authorization can be instantiated from an EIP-7702 Authorization tuple in object format.

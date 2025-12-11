@@ -82,7 +82,7 @@ export type GetType<
  *   p256, or webAuthn). Format: `0x03` + user_address (20 bytes) + inner signature. The
  *   protocol validates the access key authorization via the AccountKeychain precompile.
  *
- * @see [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
+ * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
 export type SignatureEnvelope<bigintType = bigint, numberType = number> = OneOf<
   | Secp256k1<bigintType, numberType>
@@ -270,7 +270,7 @@ export declare namespace assert {
  * - Type `0x02` + variable: WebAuthn signature (webauthnData, r, s, pubKeyX, pubKeyY)
  * - Type `0x03` + 20 bytes + inner: Keychain signature (userAddress + inner signature)
  *
- * @see [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
+ * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
  * @example
  * ```ts twoslash
@@ -410,7 +410,7 @@ export function deserialize(serialized: Serialized): SignatureEnvelope {
  * {@link ox#WebCryptoP256.(sign:function)}, or {@link ox#WebAuthnP256.(sign:function)} into the envelope format
  * required by Tempo transactions.
  *
- * @see [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
+ * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
  * @example
  * ### Secp256k1
@@ -745,7 +745,7 @@ export function getType<
  * - WebAuthn: `0x02` + webauthnData (variable) + r (32) + s (32) + pubKeyX (32) + pubKeyY (32)
  * - Keychain: `0x03` + userAddress (20) + inner signature (recursive)
  *
- * @see [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
+ * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
  * @example
  * ```ts twoslash

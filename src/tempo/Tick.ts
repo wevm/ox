@@ -3,14 +3,14 @@ import * as Errors from '../core/Errors.js'
 /**
  * Minimum allowed tick value (-2% from peg).
  *
- * @see [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
+ * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
  */
 export const minTick = -2000
 
 /**
  * Maximum allowed tick value (+2% from peg).
  *
- * @see [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
+ * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
  */
 export const maxTick = 2000
 
@@ -20,7 +20,7 @@ export const maxTick = 2000
  * The DEX uses a tick-based pricing system where `price = PRICE_SCALE + tick`.
  * Orders must be placed at ticks divisible by `TICK_SPACING = 10` (1 bp grid).
  *
- * @see [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
+ * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
  */
 export const priceScale = 100_000
 
@@ -32,7 +32,7 @@ export type Tick = number
 /**
  * Converts a tick to a price string.
  *
- * @see [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
+ * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
  *
  * @example
  * ```ts
@@ -75,7 +75,7 @@ export declare namespace toPrice {
 /**
  * Converts a price string to a tick.
  *
- * @see [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
+ * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
  *
  * @example
  * ```ts

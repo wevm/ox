@@ -25,7 +25,7 @@ import * as SignatureEnvelope from './SignatureEnvelope.js'
  * - `limits`: Per-TIP-20 token spending limits (only applies to `transfer()` and `approve()` calls)
  * - `type`: Key type (`secp256k1`, `p256`, or `webAuthn`)
  *
- * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
+ * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
 export type KeyAuthorization<
   signed extends boolean = boolean,
@@ -103,7 +103,7 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
  * Defines a per-TIP-20 token spending limit for an access key. Limits deplete as tokens
  * are spent and can be updated by the root key via `updateSpendingLimit()`.
  *
- * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
+ * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
 export type TokenLimit<bigintType = bigint> = {
   /** Address of the TIP-20 token. */
@@ -120,7 +120,7 @@ export type TokenLimit<bigintType = bigint> = {
  * can be included in a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo} via the
  * `keyAuthorization` field to provision the access key on-chain.
  *
- * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
+ * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  *
  * @example
  * ### Secp256k1 Key
@@ -424,7 +424,7 @@ export declare namespace fromTuple {
  * is attached to the key authorization via {@link ox#KeyAuthorization.(from:function)} with the
  * `signature` option.
  *
- * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
+ * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  *
  * @example
  * ```ts twoslash
