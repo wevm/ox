@@ -1,5 +1,26 @@
 # ox
 
+## 0.10.0
+
+### Minor Changes
+
+- [#138](https://github.com/wevm/ox/pull/138) [`29a2f43`](https://github.com/wevm/ox/commit/29a2f4357c90fad0c4ba69e3ebf3665bdd5c30d1) Thanks [@wbj-cb](https://github.com/wbj-cb)! - **Breaking:** Aligned to latest ERC-8021 specification. Modified `Attribution.toDataSuffix` parameters to include `codeRegistry` instead of `registryAddress`.
+
+  ```diff ts twoslash
+  Attribution.toDataSuffix({
+      codes: ['baseapp', 'morpho'],
+  -   registryAddress: '0xcccccccccccccccccccccccccccccccccccccccc',
+  +   codeRegistry: {
+  +       address: '0xcccccccccccccccccccccccccccccccccccccccc`
+  +       chainId: 8453,
+  +   }
+  })
+  ```
+
+- [`f8bf590`](https://github.com/wevm/ox/commit/f8bf5908bfaf3b1a5d39c38cea98ed58fc9f7935) Thanks [@jxom](https://github.com/jxom)! - **Breaking:** Renamed `TransactionEnvelope*` to `TxEnvelope*`.
+
+- [#140](https://github.com/wevm/ox/pull/140) [`7997629`](https://github.com/wevm/ox/commit/79976295604ef5281c33a89af9d59a6fafc9ddd0) Thanks [@jxom](https://github.com/jxom)! - Added `ox/tempo` entrypoint.
+
 ## 0.9.17
 
 ### Patch Changes
