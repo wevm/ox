@@ -19,6 +19,7 @@ lookup.json
 config-generated.ts
 site/pages/api
 site/pages/ercs
+site/pages/tempo
 site/pages/glossary
 tsdoc-metadata.json
 *.timestamp*

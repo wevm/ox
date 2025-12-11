@@ -27,9 +27,10 @@ jobs:
       - name: Check TSDoc
         run: pnpm check:tsdoc
 
-  test:
-    name: Test Runtime
+  test-core:
+    name: Test Runtime (core)
     runs-on: ubuntu-latest
+
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -40,9 +41,54 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Run tests
-        run: pnpm test:ci
+        run: pnpm test --project core,ercs --bail=1 --coverage
         env: 
           VITE_ANVIL_FORK_URL: ${{ secrets.VITE_ANVIL_FORK_URL }}
+
+  test-tempo:
+    name: 'Test Runtime (tempo, env: localnet, tag: ${{ matrix.tag }})'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tag: 
+          - latest
+          - https://rpc.testnet.tempo.xyz
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with: 
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Run tests
+        run: pnpm test --project tempo --bail=1 --coverage
+        env: 
+          VITE_TEMPO_TAG: ${{ matrix.tag }}
+
+  test-tempo-e2e:
+    name: 'Test Runtime (tempo, env: ${{ matrix.tempo-env }}, e2e)'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tempo-env: 
+          - testnet
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with: 
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Run tests
+        run: pnpm test --project tempo e2e --bail=1
+        env:
+          VITE_TEMPO_ENV: ${{ matrix.tempo-env }}
 
   vectors:
     name: Vectors

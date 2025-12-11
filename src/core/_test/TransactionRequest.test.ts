@@ -1,6 +1,6 @@
 import { TransactionRequest, Value } from 'ox'
 import { describe, expect, test } from 'vitest'
-import { anvilMainnet } from '../../../test/anvil.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('toRpc', () => {
   test('default', () => {

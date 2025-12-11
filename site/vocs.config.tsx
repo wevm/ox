@@ -86,6 +86,10 @@ export default defineConfig({
             text: 'ERCs',
             link: '/ercs',
           },
+          {
+            text: 'Tempo',
+            link: '/tempo',
+          },
         ],
       },
     ],

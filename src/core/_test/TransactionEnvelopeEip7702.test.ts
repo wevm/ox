@@ -8,9 +8,9 @@ import {
   Value,
 } from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
-import { anvilMainnet } from '../../../test/anvil.js'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { accounts } from '../../../test/constants/accounts.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assert', () => {
   test('invalid chainId', () => {

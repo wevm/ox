@@ -1,9 +1,8 @@
 import { Abi, AbiEvent, Hex } from 'ox'
 import { describe, expect, test } from 'vitest'
-
-import { anvilMainnet } from '../../../test/anvil.js'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assertArgs', () => {
   test('default', () => {
