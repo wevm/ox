@@ -20,6 +20,10 @@ import * as TokenId from './TokenId.js'
 
 /**
  * Represents a single call within a Tempo transaction.
+ *
+ * Tempo transactions support batching multiple calls for atomic execution.
+ *
+ * @see [Batch Calls](https://docs.tempo.xyz/protocol/transactions#batch-calls)
  */
 export type Call<bigintType = bigint> = {
   /** Call data. */
@@ -30,6 +34,34 @@ export type Call<bigintType = bigint> = {
   value?: bigintType | undefined
 }
 
+/**
+ * Tempo transaction envelope (type `0x76`).
+ *
+ * A new EIP-2718 transaction type exclusively available on Tempo, designed for payment
+ * use cases with the following features:
+ *
+ * - **Configurable Fee Tokens**: Pay transaction fees with any USD-denominated TIP-20 token.
+ *   The Fee AMM automatically converts to the validator's preferred token.
+ *
+ * - **Fee Sponsorship**: A third-party fee payer can pay fees on behalf of the sender using
+ *   a dual-signature scheme (sender signs tx, fee payer signs over tx + sender address).
+ *
+ * - **Batch Calls**: Execute multiple operations atomically in a single transaction via
+ *   the `calls` array, reducing overhead and simplifying wallet management.
+ *
+ * - **Access Keys**: Delegate signing to secondary keys with expiry and per-TIP-20 spending
+ *   limits via `keyAuthorization`. Enables passkey UX without repeated prompts.
+ *
+ * - **Parallelizable Nonces**: Use different `nonceKey` values to submit multiple transactions
+ *   in parallel without waiting for sequential nonce confirmation.
+ *
+ * - **Scheduled Transactions**: Set `validAfter` and `validBefore` timestamps to define a
+ *   time window for when the transaction can be included in a block.
+ *
+ * - **Multi-Signature Support**: Sign with secp256k1, P256 (passkeys), or WebAuthn credentials.
+ *
+ * @see [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+ */
 export type TransactionEnvelopeTempo<
   signed extends boolean = boolean,
   bigintType = bigint,
@@ -354,6 +386,12 @@ export declare namespace deserialize {
 /**
  * Converts an arbitrary transaction object into a Tempo Transaction Envelope.
  *
+ * Use this to create transaction envelopes with Tempo-specific features like batched calls,
+ * fee tokens, access keys, and scheduled execution. Attach a signature using the `signature`
+ * option after signing with {@link ox#TransactionEnvelopeTempo.(getSignPayload:function)}.
+ *
+ * @see [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+ *
  * @example
  * ```ts twoslash
  * import { Value } from 'ox'
@@ -498,6 +536,11 @@ export declare namespace from {
 
 /**
  * Serializes a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}.
+ *
+ * RLP-encodes the transaction with type prefix `0x76`. For fee sponsorship, use `format: 'feePayer'`
+ * to serialize with the fee payer magic `0x78` and the sender address.
+ *
+ * @see [RLP Encoding](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#rlp-encoding)
  *
  * @example
  * ```ts twoslash
@@ -670,6 +713,11 @@ export declare namespace serialize {
 /**
  * Returns the payload to sign for a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}.
  *
+ * Computes the keccak256 hash of the unsigned serialized transaction. Sign this payload
+ * with secp256k1, P256, or WebAuthn, then attach the signature via {@link ox#TransactionEnvelopeTempo.(from:function)}.
+ *
+ * @see [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+ *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
  * with ECDSA signing utilities like {@link ox#Secp256k1.(sign:function)}.
@@ -780,6 +828,13 @@ export declare namespace hash {
 
 /**
  * Returns the fee payer payload to sign for a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}.
+ *
+ * Fee sponsorship uses a dual-signature scheme: the sender signs the transaction, then a fee payer
+ * signs over the transaction with the sender's address to commit to paying fees. The fee payer's
+ * signature includes the `feeToken` and `sender_address`, using magic byte `0x78` for domain separation.
+ *
+ * @see [Fee Payer Signature](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#fee-payer-signature)
+ * @see [Fee Sponsorship Guide](https://docs.tempo.xyz/protocol/transactions#fee-sponsorship)
  *
  * @example
  * ```ts twoslash

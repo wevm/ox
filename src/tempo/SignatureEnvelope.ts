@@ -65,10 +65,24 @@ export type GetType<
 /**
  * Represents a signature envelope that can contain different signature types.
  *
- * Supports:
- * - secp256k1: Standard ECDSA signature (65 bytes)
- * - p256: P256 signature with embedded public key and prehash flag (130 bytes)
- * - webAuthn: WebAuthn signature with variable-length authenticator data
+ * Tempo transactions support multiple signature types, each with different wire formats:
+ *
+ * - **secp256k1** (no type prefix, 65 bytes): Standard Ethereum ECDSA signature. The sender
+ *   address is recovered via `ecrecover`. Base transaction cost: 21,000 gas.
+ *
+ * - **p256** (type `0x01`, 130 bytes): P256/secp256r1 curve signature for passkey accounts.
+ *   Includes embedded public key (64 bytes) and prehash flag. Enables native WebCrypto
+ *   key support. Additional gas cost: +5,000 gas over secp256k1.
+ *
+ * - **webAuthn** (type `0x02`, 129-2049 bytes): WebAuthn signature with authenticator data
+ *   and clientDataJSON. Enables browser passkey authentication. The signature is also
+ *   charged as calldata (16 gas/non-zero byte, 4 gas/zero byte).
+ *
+ * - **keychain** (type `0x03`): Access key signature that wraps an inner signature (secp256k1,
+ *   p256, or webAuthn). Format: `0x03` + user_address (20 bytes) + inner signature. The
+ *   protocol validates the access key authorization via the AccountKeychain precompile.
+ *
+ * @see [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
 export type SignatureEnvelope<bigintType = bigint, numberType = number> = OneOf<
   | Secp256k1<bigintType, numberType>
@@ -250,10 +264,13 @@ export declare namespace assert {
 /**
  * Deserializes a hex-encoded signature envelope into a typed signature object.
  *
- * For backward compatibility:
- * - 65 bytes: secp256k1 signature (no type identifier)
- * - 130 bytes: P256 signature (1 byte type + 129 bytes data)
- * - 129+ bytes: WebAuthn signature (1 byte type + variable data)
+ * Wire format detection:
+ * - 65 bytes (no prefix): secp256k1 signature
+ * - Type `0x01` + 129 bytes: P256 signature (r, s, pubKeyX, pubKeyY, prehash)
+ * - Type `0x02` + variable: WebAuthn signature (webauthnData, r, s, pubKeyX, pubKeyY)
+ * - Type `0x03` + 20 bytes + inner: Keychain signature (userAddress + inner signature)
+ *
+ * @see [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
  * @example
  * ```ts twoslash
@@ -389,6 +406,11 @@ export function deserialize(serialized: Serialized): SignatureEnvelope {
  * Coerces a value to a signature envelope.
  *
  * Accepts either a serialized hex string or an existing signature envelope object.
+ * Use this to wrap raw signatures from {@link ox#Secp256k1.(sign:function)}, {@link ox#P256.(sign:function)},
+ * {@link ox#WebCryptoP256.(sign:function)}, or {@link ox#WebAuthnP256.(sign:function)} into the envelope format
+ * required by Tempo transactions.
+ *
+ * @see [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
  * @example
  * ### Secp256k1
@@ -717,10 +739,13 @@ export function getType<
 /**
  * Serializes a signature envelope to a hex-encoded string.
  *
- * For backward compatibility:
- * - secp256k1: encoded WITHOUT type identifier (65 bytes)
- * - P256: encoded WITH type identifier prefix (130 bytes)
- * - WebAuthn: encoded WITH type identifier prefix (variable length)
+ * Wire format:
+ * - secp256k1: 65 bytes (no type prefix, for backward compatibility)
+ * - P256: `0x01` + r (32) + s (32) + pubKeyX (32) + pubKeyY (32) + prehash (1) = 130 bytes
+ * - WebAuthn: `0x02` + webauthnData (variable) + r (32) + s (32) + pubKeyX (32) + pubKeyY (32)
+ * - Keychain: `0x03` + userAddress (20) + inner signature (recursive)
+ *
+ * @see [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
  * @example
  * ```ts twoslash

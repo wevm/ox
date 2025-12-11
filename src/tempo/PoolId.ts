@@ -5,6 +5,11 @@ import * as TokenId from './TokenId.js'
 /**
  * Converts a user token and validator token to a pool ID.
  *
+ * Pool IDs are deterministic keys derived from two token addresses (order-independent)
+ * used to identify trading pairs on Tempo's enshrined stablecoin DEX.
+ *
+ * @see [Stablecoin DEX Specification](https://docs.tempo.xyz/protocol/exchange/spec)
+ *
  * @example
  * ```ts twoslash
  * import { PoolId } from 'ox/tempo'

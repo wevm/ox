@@ -3,6 +3,14 @@ import type * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionReceipt from '../core/TransactionReceipt.js'
 
+/**
+ * Tempo transaction receipt.
+ *
+ * Extends standard receipts with `feePayer` (the address that paid fees) and
+ * `feeToken` (the TIP-20 token used for fee payment).
+ *
+ * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ */
 export type TransactionReceipt<
   status = ox_TransactionReceipt.Status,
   type = ox_TransactionReceipt.Type,
@@ -51,6 +59,8 @@ export const toRpcType = {
 
 /**
  * Converts an RPC receipt to a TransactionReceipt.
+ *
+ * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
  *
  * @example
  * ```ts twoslash

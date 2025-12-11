@@ -21,6 +21,11 @@ export const toPreHashed = {
 /**
  * Serializes a token role to its keccak256 hash representation.
  *
+ * TIP-20 includes a built-in RBAC system with roles like `ISSUER_ROLE` (mint/burn),
+ * `PAUSE_ROLE`/`UNPAUSE_ROLE` (emergency controls), and `BURN_BLOCKED_ROLE` (compliance).
+ *
+ * @see [TIP-20 RBAC](https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac)
+ *
  * @example
  * ```ts twoslash
  * import { TokenRole } from 'ox/tempo'

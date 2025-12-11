@@ -9,8 +9,23 @@ import * as SignatureEnvelope from './SignatureEnvelope.js'
 /**
  * Key authorization for provisioning access keys.
  *
- * Used in TransactionEnvelopeTempo to add a new key to the keychain precompile.
- * The transaction must be signed by the root key to authorize adding this access key.
+ * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary
+ * keys with customizable permissions including expiry timestamps and per-TIP-20 token spending
+ * limits. This enables a user to sign transactions without repeated passkey prompts.
+ *
+ * The root key signs a `KeyAuthorization` to grant an access key permission to sign transactions
+ * on its behalf. The authorization is attached to a transaction (which can be signed by the access
+ * key itself), and the protocol validates the authorization before storing the key in the
+ * AccountKeychain precompile.
+ *
+ * Key authorization fields:
+ * - `address`: Address derived from the access key's public key (the "key ID")
+ * - `chainId`: Chain ID for replay protection (0 = valid on any chain)
+ * - `expiry`: Unix timestamp when the key expires (undefined = never expires)
+ * - `limits`: Per-TIP-20 token spending limits (only applies to `transfer()` and `approve()` calls)
+ * - `type`: Key type (`secp256k1`, `p256`, or `webAuthn`)
+ *
+ * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
 export type KeyAuthorization<
   signed extends boolean = boolean,
@@ -85,8 +100,10 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
 /**
  * Token spending limit for access keys.
  *
- * Defines a per-token spending limit for an access key provisioned via a key authorization.
- * This limit is enforced by the keychain precompile when the key is used.
+ * Defines a per-TIP-20 token spending limit for an access key. Limits deplete as tokens
+ * are spent and can be updated by the root key via `updateSpendingLimit()`.
+ *
+ * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
 export type TokenLimit<bigintType = bigint> = {
   /** Address of the TIP-20 token. */
@@ -97,6 +114,13 @@ export type TokenLimit<bigintType = bigint> = {
 
 /**
  * Converts a Key Authorization object into a typed {@link ox#KeyAuthorization.KeyAuthorization}.
+ *
+ * Use this to create an unsigned key authorization, then sign it with the root key using
+ * {@link ox#KeyAuthorization.(getSignPayload:function)} and attach the signature. The signed authorization
+ * can be included in a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo} via the
+ * `keyAuthorization` field to provision the access key on-chain.
+ *
+ * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  *
  * @example
  * ### Secp256k1 Key
@@ -395,6 +419,12 @@ export declare namespace fromTuple {
 
 /**
  * Computes the sign payload for an {@link ox#KeyAuthorization.KeyAuthorization}.
+ *
+ * The root key must sign this payload to authorize the access key. The resulting signature
+ * is attached to the key authorization via {@link ox#KeyAuthorization.(from:function)} with the
+ * `signature` option.
+ *
+ * @see [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  *
  * @example
  * ```ts twoslash

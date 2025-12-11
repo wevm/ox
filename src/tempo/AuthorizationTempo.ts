@@ -6,7 +6,14 @@ import type { Compute, Mutable } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
-/** Root type for an AA Authorization. */
+/**
+ * Root type for a Tempo Authorization.
+ *
+ * Tempo extends EIP-7702 to support secp256k1, P256, and WebAuthn signature types,
+ * enabling passkey-based account delegation.
+ *
+ * @see [Tempo Authorization Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list)
+ */
 export type AuthorizationTempo<
   signed extends boolean = boolean,
   bigintType = bigint,
@@ -80,10 +87,14 @@ export type TupleList<signed extends boolean = boolean> =
 export type TupleListSigned = TupleList<true>
 
 /**
- * Converts an [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) AA Authorization object into a typed {@link ox#AuthorizationTempo.AuthorizationTempo}.
+ * Converts an EIP-7702 Authorization object into a typed {@link ox#AuthorizationTempo.AuthorizationTempo}.
+ *
+ * Tempo extends EIP-7702 to support secp256k1, P256, and WebAuthn signature types.
+ *
+ * @see [Tempo Authorization Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#tempo-authorization-list)
  *
  * @example
- * An AA Authorization can be instantiated from an [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) AA Authorization tuple in object format.
+ * An Authorization can be instantiated from an EIP-7702 Authorization tuple in object format.
  *
  * ```ts twoslash
  * import { AuthorizationTempo } from 'ox/tempo'

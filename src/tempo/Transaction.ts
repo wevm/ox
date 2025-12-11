@@ -12,6 +12,8 @@ import type { Call } from './TransactionEnvelopeTempo.js'
 
 /**
  * A Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
+ *
+ * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
  */
 export type Transaction<
   pending extends boolean = false,
@@ -32,7 +34,12 @@ export type Rpc<pending extends boolean = false> = UnionCompute<
 >
 
 /**
- * Native account abstraction transaction.
+ * Native account abstraction transaction (type `0x76`).
+ *
+ * Features configurable fee tokens, call batching, fee sponsorship, access keys,
+ * parallelizable nonces, and scheduled execution via `validAfter`/`validBefore`.
+ *
+ * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction Tempo Transaction Specification}
  */
 export type Tempo<
   pending extends boolean = false,
