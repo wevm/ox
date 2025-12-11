@@ -41,7 +41,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Run tests
-        run: pnpm test --project core-ercs --bail=1 --coverage
+        run: pnpm test --project core,ercs --bail=1 --coverage
         env: 
           VITE_ANVIL_FORK_URL: ${{ secrets.VITE_ANVIL_FORK_URL }}
 
