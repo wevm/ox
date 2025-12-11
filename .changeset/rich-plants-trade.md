@@ -2,4 +2,4 @@
 "ox": minor
 ---
 
-Renamed `TransactionEnvelope*` to `TxEnvelope*`.
+**Breaking:** Renamed `TransactionEnvelope*` to `TxEnvelope*`.
