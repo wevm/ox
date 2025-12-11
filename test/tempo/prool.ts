@@ -1,7 +1,7 @@
 import { RpcTransport } from 'ox'
-import { nodeEnv } from './config.js'
+import { Instance, Server } from 'prool'
 import * as TestContainers from 'prool/testcontainers'
-import { Server, Instance } from 'prool'
+import { nodeEnv } from './config.js'
 
 export const port = 3000
 

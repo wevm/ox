@@ -1,7 +1,7 @@
 import { Provider, RpcRequest, RpcResponse } from 'ox'
 import { describe, expect, test } from 'vitest'
-import { anvilMainnet } from '../../../test/prool.js'
 import { address } from '../../../test/constants/addresses.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('Provider.createEmitter', () => {
   test('default', () => {

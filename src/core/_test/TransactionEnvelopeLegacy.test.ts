@@ -1,7 +1,7 @@
 import { Hex, Rlp, Secp256k1, TransactionEnvelopeLegacy, Value } from 'ox'
 import { assertType, describe, expect, expectTypeOf, test } from 'vitest'
-import { anvilMainnet } from '../../../test/prool.js'
 import { accounts } from '../../../test/constants/accounts.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('assert', () => {
   test('fee cap too high', () => {

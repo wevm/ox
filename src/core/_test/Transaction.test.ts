@@ -6,8 +6,8 @@ import {
   TransactionEnvelopeLegacy,
 } from 'ox'
 import { describe, expect, test } from 'vitest'
-import { anvilMainnet } from '../../../test/prool.js'
 import { accounts } from '../../../test/constants/accounts.js'
+import { anvilMainnet } from '../../../test/prool.js'
 
 describe('fromRpc', () => {
   describe('legacy', () => {
