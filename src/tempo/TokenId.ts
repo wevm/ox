@@ -12,7 +12,7 @@ export type TokenIdOrAddress = TokenId | Address.Address
  * TIP-20 is Tempo's native token standard for stablecoins with deterministic addresses
  * derived from sequential token IDs (prefix `0x20c0`).
  *
- * @see [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
+ * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
  *
  * @example
  * ```ts twoslash
@@ -36,7 +36,7 @@ export function from(tokenIdOrAddress: TokenIdOrAddress | number): TokenId {
 /**
  * Converts a TIP-20 token address to a token ID.
  *
- * @see [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
+ * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
  *
  * @example
  * ```ts twoslash
@@ -57,7 +57,7 @@ export function fromAddress(address: Address.Address): TokenId {
 /**
  * Converts a TIP-20 token ID to an address.
  *
- * @see [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
+ * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
  *
  * @example
  * ```ts twoslash

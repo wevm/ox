@@ -8,7 +8,7 @@ import * as TokenId from './TokenId.js'
  * Pool IDs are deterministic keys derived from two token addresses (order-independent)
  * used to identify trading pairs on Tempo's enshrined stablecoin DEX.
  *
- * @see [Stablecoin DEX Specification](https://docs.tempo.xyz/protocol/exchange/spec)
+ * [Stablecoin DEX Specification](https://docs.tempo.xyz/protocol/exchange/spec)
  *
  * @example
  * ```ts twoslash

@@ -24,7 +24,7 @@ export const toPreHashed = {
  * TIP-20 includes a built-in RBAC system with roles like `ISSUER_ROLE` (mint/burn),
  * `PAUSE_ROLE`/`UNPAUSE_ROLE` (emergency controls), and `BURN_BLOCKED_ROLE` (compliance).
  *
- * @see [TIP-20 RBAC](https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac)
+ * [TIP-20 RBAC](https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac)
  *
  * @example
  * ```ts twoslash

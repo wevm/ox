@@ -23,7 +23,7 @@ import * as TokenId from './TokenId.js'
  *
  * Tempo transactions support batching multiple calls for atomic execution.
  *
- * @see [Batch Calls](https://docs.tempo.xyz/protocol/transactions#batch-calls)
+ * [Batch Calls](https://docs.tempo.xyz/protocol/transactions#batch-calls)
  */
 export type Call<bigintType = bigint> = {
   /** Call data. */
@@ -60,7 +60,7 @@ export type Call<bigintType = bigint> = {
  *
  * - **Multi-Signature Support**: Sign with secp256k1, P256 (passkeys), or WebAuthn credentials.
  *
- * @see [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+ * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
  */
 export type TransactionEnvelopeTempo<
   signed extends boolean = boolean,
@@ -390,7 +390,7 @@ export declare namespace deserialize {
  * fee tokens, access keys, and scheduled execution. Attach a signature using the `signature`
  * option after signing with {@link ox#TransactionEnvelopeTempo.(getSignPayload:function)}.
  *
- * @see [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+ * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
  *
  * @example
  * ```ts twoslash
@@ -540,7 +540,7 @@ export declare namespace from {
  * RLP-encodes the transaction with type prefix `0x76`. For fee sponsorship, use `format: 'feePayer'`
  * to serialize with the fee payer magic `0x78` and the sender address.
  *
- * @see [RLP Encoding](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#rlp-encoding)
+ * [RLP Encoding](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#rlp-encoding)
  *
  * @example
  * ```ts twoslash
@@ -716,7 +716,7 @@ export declare namespace serialize {
  * Computes the keccak256 hash of the unsigned serialized transaction. Sign this payload
  * with secp256k1, P256, or WebAuthn, then attach the signature via {@link ox#TransactionEnvelopeTempo.(from:function)}.
  *
- * @see [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+ * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
@@ -833,8 +833,8 @@ export declare namespace hash {
  * signs over the transaction with the sender's address to commit to paying fees. The fee payer's
  * signature includes the `feeToken` and `sender_address`, using magic byte `0x78` for domain separation.
  *
- * @see [Fee Payer Signature](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#fee-payer-signature)
- * @see [Fee Sponsorship Guide](https://docs.tempo.xyz/protocol/transactions#fee-sponsorship)
+ * [Fee Payer Signature](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#fee-payer-signature)
+ * [Fee Sponsorship Guide](https://docs.tempo.xyz/protocol/transactions#fee-sponsorship)
  *
  * @example
  * ```ts twoslash
