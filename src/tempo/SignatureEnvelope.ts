@@ -213,8 +213,8 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     if (typeof p256.prehash !== 'boolean') missing.push('prehash')
     if (!p256.publicKey) missing.push('publicKey')
     else {
-      if (typeof p256.publicKey.x !== 'bigint') missing.push('publicKey.x')
-      if (typeof p256.publicKey.y !== 'bigint') missing.push('publicKey.y')
+      if (!p256.publicKey.x) missing.push('publicKey.x')
+      if (!p256.publicKey.y) missing.push('publicKey.y')
     }
 
     if (missing.length > 0)
@@ -237,8 +237,8 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     }
     if (!webauthn.publicKey) missing.push('publicKey')
     else {
-      if (typeof webauthn.publicKey.x !== 'bigint') missing.push('publicKey.x')
-      if (typeof webauthn.publicKey.y !== 'bigint') missing.push('publicKey.y')
+      if (!webauthn.publicKey.x) missing.push('publicKey.x')
+      if (!webauthn.publicKey.y) missing.push('publicKey.y')
     }
 
     if (missing.length > 0)
@@ -309,8 +309,8 @@ export function deserialize(serialized: Serialized): SignatureEnvelope {
     return {
       publicKey: {
         prefix: 4,
-        x: Hex.toBigInt(Hex.slice(data, 64, 96)),
-        y: Hex.toBigInt(Hex.slice(data, 96, 128)),
+        x: Hex.slice(data, 64, 96),
+        y: Hex.slice(data, 96, 128),
       },
       prehash: Hex.toNumber(Hex.slice(data, 128, 129)) !== 0,
       signature: {
@@ -362,12 +362,8 @@ export function deserialize(serialized: Serialized): SignatureEnvelope {
     return {
       publicKey: {
         prefix: 4,
-        x: Hex.toBigInt(
-          Hex.slice(data, webauthnDataSize + 64, webauthnDataSize + 96),
-        ),
-        y: Hex.toBigInt(
-          Hex.slice(data, webauthnDataSize + 96, webauthnDataSize + 128),
-        ),
+        x: Hex.slice(data, webauthnDataSize + 64, webauthnDataSize + 96),
+        y: Hex.slice(data, webauthnDataSize + 96, webauthnDataSize + 128),
       },
       metadata: {
         authenticatorData,
@@ -584,8 +580,8 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       prehash: envelope.prehash,
       publicKey: {
         prefix: 4,
-        x: Hex.toBigInt(envelope.pubKeyX),
-        y: Hex.toBigInt(envelope.pubKeyY),
+        x: Hex.padLeft(envelope.pubKeyX, 32),
+        y: Hex.padLeft(envelope.pubKeyY, 32),
       },
       signature: {
         r: Hex.padLeft(envelope.r, 32),
@@ -630,8 +626,8 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       },
       publicKey: {
         prefix: 4,
-        x: Hex.toBigInt(envelope.pubKeyX),
-        y: Hex.toBigInt(envelope.pubKeyY),
+        x: Hex.padLeft(envelope.pubKeyX, 32),
+        y: Hex.padLeft(envelope.pubKeyY, 32),
       },
       signature: {
         r: Hex.padLeft(envelope.r, 32),
@@ -773,10 +769,10 @@ export function serialize(
     // Format: 1 byte (type) + 32 (r) + 32 (s) + 32 (pubKeyX) + 32 (pubKeyY) + 1 (prehash)
     return Hex.concat(
       serializedP256Type,
-      p256.signature.r,
-      p256.signature.s,
-      Hex.fromNumber(p256.publicKey.x, { size: 32 }),
-      Hex.fromNumber(p256.publicKey.y, { size: 32 }),
+      Hex.padLeft(p256.signature.r, 32),
+      Hex.padLeft(p256.signature.s, 32),
+      Hex.padLeft(p256.publicKey.x, 32),
+      Hex.padLeft(p256.publicKey.y, 32),
       Hex.fromNumber(p256.prehash ? 1 : 0, { size: 1 }),
     )
   }
@@ -792,10 +788,10 @@ export function serialize(
     return Hex.concat(
       serializedWebAuthnType,
       webauthnData,
-      webauthn.signature.r,
-      webauthn.signature.s,
-      Hex.fromNumber(webauthn.publicKey.x, { size: 32 }),
-      Hex.fromNumber(webauthn.publicKey.y, { size: 32 }),
+      Hex.padLeft(webauthn.signature.r, 32),
+      Hex.padLeft(webauthn.signature.s, 32),
+      Hex.padLeft(webauthn.publicKey.x, 32),
+      Hex.padLeft(webauthn.publicKey.y, 32),
     )
   }
 
@@ -842,10 +838,10 @@ export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
     const p256 = envelope as P256
     return {
       prehash: p256.prehash,
-      pubKeyX: Hex.fromNumber(p256.publicKey.x, { size: 32 }),
-      pubKeyY: Hex.fromNumber(p256.publicKey.y, { size: 32 }),
-      r: p256.signature.r,
-      s: p256.signature.s,
+      pubKeyX: Hex.padLeft(p256.publicKey.x, 32),
+      pubKeyY: Hex.padLeft(p256.publicKey.y, 32),
+      r: Hex.padLeft(p256.signature.r, 32),
+      s: Hex.padLeft(p256.signature.s, 32),
       type: 'p256',
     }
   }
@@ -858,10 +854,10 @@ export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
     )
 
     return {
-      pubKeyX: Hex.fromNumber(webauthn.publicKey.x, { size: 32 }),
-      pubKeyY: Hex.fromNumber(webauthn.publicKey.y, { size: 32 }),
-      r: webauthn.signature.r,
-      s: webauthn.signature.s,
+      pubKeyX: Hex.padLeft(webauthn.publicKey.x, 32),
+      pubKeyY: Hex.padLeft(webauthn.publicKey.y, 32),
+      r: Hex.padLeft(webauthn.signature.r, 32),
+      s: Hex.padLeft(webauthn.signature.s, 32),
       type: 'webAuthn',
       webauthnData,
     }

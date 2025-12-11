@@ -7,19 +7,18 @@ import * as Json from './Json.js'
 /** Root type for an ECDSA Public Key. */
 export type PublicKey<
   compressed extends boolean = false,
-  bigintType = bigint,
   numberType = number,
 > = Compute<
   compressed extends true
     ? {
         prefix: numberType
-        x: bigintType
+        x: Hex.Hex
         y?: undefined
       }
     : {
         prefix: numberType
-        x: bigintType
-        y: bigintType
+        x: Hex.Hex
+        y: Hex.Hex
       }
 >
 
@@ -50,10 +49,7 @@ export function assert(
   const { prefix, x, y } = publicKey
 
   // Uncompressed
-  if (
-    compressed === false ||
-    (typeof x === 'bigint' && typeof y === 'bigint')
-  ) {
+  if (compressed === false || (x && y)) {
     if (prefix !== 4)
       throw new InvalidPrefixError({
         prefix,
@@ -63,10 +59,7 @@ export function assert(
   }
 
   // Compressed
-  if (
-    compressed === true ||
-    (typeof x === 'bigint' && typeof y === 'undefined')
-  ) {
+  if (compressed === true || (x && typeof y === 'undefined')) {
     if (prefix !== 3 && prefix !== 2)
       throw new InvalidPrefixError({
         prefix,
@@ -114,7 +107,7 @@ export declare namespace assert {
 export function compress(publicKey: PublicKey<false>): PublicKey<true> {
   const { x, y } = publicKey
   return {
-    prefix: y % 2n === 0n ? 2 : 3,
+    prefix: Hex.toBigInt(y) % 2n === 0n ? 2 : 3,
     x,
   }
 }
@@ -171,9 +164,13 @@ export function from<
     if (Bytes.validate(value)) return fromBytes(value)
 
     const { prefix, x, y } = value
-    if (typeof x === 'bigint' && typeof y === 'bigint')
-      return { prefix: prefix ?? 0x04, x, y }
-    return { prefix, x }
+    if (x && y)
+      return {
+        prefix: prefix ?? 0x04,
+        x: Hex.padLeft(x, 32),
+        y: Hex.padLeft(y, 32),
+      }
+    return { prefix, x: Hex.padLeft(x, 32) }
   })()
 
   assert(publicKey)
@@ -283,8 +280,8 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
     throw new InvalidSerializedSizeError({ publicKey })
 
   if (publicKey.length === 130) {
-    const x = BigInt(Hex.slice(publicKey, 0, 32))
-    const y = BigInt(Hex.slice(publicKey, 32, 64))
+    const x = Hex.slice(publicKey, 0, 32)
+    const y = Hex.slice(publicKey, 32, 64)
     return {
       prefix: 4,
       x,
@@ -294,8 +291,8 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
 
   if (publicKey.length === 132) {
     const prefix = Number(Hex.slice(publicKey, 0, 1))
-    const x = BigInt(Hex.slice(publicKey, 1, 33))
-    const y = BigInt(Hex.slice(publicKey, 33, 65))
+    const x = Hex.slice(publicKey, 1, 33)
+    const y = Hex.slice(publicKey, 33, 65)
     return {
       prefix,
       x,
@@ -304,7 +301,7 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
   }
 
   const prefix = Number(Hex.slice(publicKey, 0, 1))
-  const x = BigInt(Hex.slice(publicKey, 1, 33))
+  const x = Hex.slice(publicKey, 1, 33)
   return {
     prefix,
     x,
@@ -388,9 +385,9 @@ export function toHex(
 
   const publicKey_ = Hex.concat(
     includePrefix ? Hex.fromNumber(prefix, { size: 1 }) : '0x',
-    Hex.fromNumber(x, { size: 32 }),
+    Hex.padLeft(x, 32),
     // If the public key is not compressed, add the y coordinate.
-    typeof y === 'bigint' ? Hex.fromNumber(y, { size: 32 }) : '0x',
+    y ? Hex.padLeft(y, 32) : '0x',
   )
 
   return publicKey_

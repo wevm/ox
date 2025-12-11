@@ -11,12 +11,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-      {
-        "prefix": 4,
-        "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-        "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-      }
-    `,
+        {
+          "prefix": 4,
+          "x": "0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75",
+          "y": "0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5",
+        }
+      `,
       )
       expect(Address.fromPublicKey(publicKey).toLowerCase()).toEqual(
         accounts[0].address,
@@ -30,12 +30,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-      {
-        "prefix": 4,
-        "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-        "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-      }
-    `,
+        {
+          "prefix": 4,
+          "x": "0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75",
+          "y": "0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5",
+        }
+      `,
       )
       expect(Address.fromPublicKey(publicKey).toLowerCase()).toEqual(
         accounts[0].address,
@@ -58,8 +58,8 @@ describe('createKeyPair', () => {
     expect(keyPair.publicKey).toHaveProperty('x')
     expect(keyPair.publicKey).toHaveProperty('y')
     expect(keyPair.publicKey.prefix).toBe(4)
-    expect(typeof keyPair.publicKey.x).toBe('bigint')
-    expect(typeof keyPair.publicKey.y).toBe('bigint')
+    expect(typeof keyPair.publicKey.x).toBe('string')
+    expect(typeof keyPair.publicKey.y).toBe('string')
   })
 
   test('behavior: deterministic public key derivation', () => {

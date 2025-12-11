@@ -16,8 +16,14 @@ const signature_secp256k1 = Secp256k1.sign({
 
 const publicKey_p256 = PublicKey.from({
   prefix: 4,
-  x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-  y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+  x: Hex.fromNumber(
+    78495282704852028275327922540131762143565388050940484317945369745559774511861n,
+    { size: 32 },
+  ),
+  y: Hex.fromNumber(
+    8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+    { size: 32 },
+  ),
 })
 
 const signature_p256_raw = Signature.from({
@@ -193,8 +199,8 @@ describe('from', () => {
           "prehash": true,
           "publicKey": {
             "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+            "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+            "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
           },
           "signature": {
             "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -243,8 +249,8 @@ describe('from', () => {
           },
           "publicKey": {
             "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+            "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+            "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
           },
           "signature": {
             "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -446,8 +452,8 @@ describe('fromRpc', () => {
       signature: {
         type: 'p256',
         prehash: true,
-        pubKeyX: Hex.fromNumber(publicKey_p256.x),
-        pubKeyY: Hex.fromNumber(publicKey_p256.y),
+        pubKeyX: publicKey_p256.x,
+        pubKeyY: publicKey_p256.y,
         r: signature_p256_raw.r,
         s: signature_p256_raw.s,
       },
@@ -468,8 +474,8 @@ describe('fromRpc', () => {
           "prehash": true,
           "publicKey": {
             "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+            "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+            "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
           },
           "signature": {
             "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -509,8 +515,8 @@ describe('fromRpc', () => {
           },
           "publicKey": {
             "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+            "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+            "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
           },
           "signature": {
             "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -690,8 +696,8 @@ describe('fromTuple', () => {
           "prehash": true,
           "publicKey": {
             "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+            "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+            "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
           },
           "signature": {
             "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -736,8 +742,8 @@ describe('fromTuple', () => {
           },
           "publicKey": {
             "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+            "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+            "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
           },
           "signature": {
             "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",

@@ -161,7 +161,7 @@ describe('getSharedSecret', () => {
 
   test('error: invalid public key', async () => {
     const { privateKey: privateKeyA } = await WebCryptoP256.createKeyPairECDH()
-    const invalidPublicKey = { prefix: 4, x: 0n, y: 0n } as const
+    const invalidPublicKey = { prefix: 4, x: '0x', y: '0x' } as const
 
     await expect(
       WebCryptoP256.getSharedSecret({

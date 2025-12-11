@@ -4,8 +4,14 @@ import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const publicKey = PublicKey.from({
   prefix: 4,
-  x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-  y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+  x: Hex.fromNumber(
+    78495282704852028275327922540131762143565388050940484317945369745559774511861n,
+    { size: 32 },
+  ),
+  y: Hex.fromNumber(
+    8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+    { size: 32 },
+  ),
 })
 
 const p256Signature = Signature.from({
@@ -112,7 +118,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "p256" is missing required properties: \`prehash\`.
 
-        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"prehash":"true","type":"p256"}]
+        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"prehash":"true","type":"p256"}]
       `,
       )
     })
@@ -143,7 +149,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "p256" is missing required properties: \`signature.r\`.
 
-        Provided: {"signature":{"s":"1#__bigint"},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"prehash":true,"type":"p256"}]
+        Provided: {"signature":{"s":"1#__bigint"},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"prehash":true,"type":"p256"}]
       `,
       )
     })
@@ -161,7 +167,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "p256" is missing required properties: \`signature.s\`.
 
-        Provided: {"signature":{"r":"1#__bigint"},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"prehash":true,"type":"p256"}]
+        Provided: {"signature":{"r":"1#__bigint"},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"prehash":true,"type":"p256"}]
       `,
       )
     })
@@ -237,7 +243,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "webAuthn" is missing required properties: \`metadata\`.
 
-        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"type":"webAuthn"}]
+        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"type":"webAuthn"}]
       `,
       )
     })
@@ -276,7 +282,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "webAuthn" is missing required properties: \`signature.r\`.
 
-        Provided: {"signature":{"s":"1#__bigint"},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"metadata":{"authenticatorData":"0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000","clientDataJSON":"{\\"type\\":\\"webauthn.get\\",\\"challenge\\":\\"3q2-7w\\",\\"origin\\":\\"http://localhost\\",\\"crossOrigin\\":false}"},"type":"webAuthn"}]
+        Provided: {"signature":{"s":"1#__bigint"},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"metadata":{"authenticatorData":"0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000","clientDataJSON":"{\\"type\\":\\"webauthn.get\\",\\"challenge\\":\\"3q2-7w\\",\\"origin\\":\\"http://localhost\\",\\"crossOrigin\\":false}"},"type":"webAuthn"}]
       `,
       )
     })
@@ -302,7 +308,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "webAuthn" is missing required properties: \`signature.s\`.
 
-        Provided: {"signature":{"r":"1#__bigint"},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"metadata":{"authenticatorData":"0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000","clientDataJSON":"{\\"type\\":\\"webauthn.get\\",\\"challenge\\":\\"3q2-7w\\",\\"origin\\":\\"http://localhost\\",\\"crossOrigin\\":false}"},"type":"webAuthn"}]
+        Provided: {"signature":{"r":"1#__bigint"},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"metadata":{"authenticatorData":"0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000","clientDataJSON":"{\\"type\\":\\"webauthn.get\\",\\"challenge\\":\\"3q2-7w\\",\\"origin\\":\\"http://localhost\\",\\"crossOrigin\\":false}"},"type":"webAuthn"}]
       `,
       )
     })
@@ -325,7 +331,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "webAuthn" is missing required properties: \`metadata.authenticatorData\`.
 
-        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"metadata":{"clientDataJSON":"{\\"type\\":\\"webauthn.get\\",\\"challenge\\":\\"3q2-7w\\",\\"origin\\":\\"http://localhost\\",\\"crossOrigin\\":false}"},"type":"webAuthn"}]
+        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"metadata":{"clientDataJSON":"{\\"type\\":\\"webauthn.get\\",\\"challenge\\":\\"3q2-7w\\",\\"origin\\":\\"http://localhost\\",\\"crossOrigin\\":false}"},"type":"webAuthn"}]
       `,
       )
     })
@@ -347,7 +353,7 @@ describe('assert', () => {
         `
         [SignatureEnvelope.MissingPropertiesError: Signature envelope of type "webAuthn" is missing required properties: \`metadata.clientDataJSON\`.
 
-        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"78495282704852028275327922540131762143565388050940484317945369745559774511861#__bigint","y":"8109764566587999957624872393871720746996669263962991155166704261108473113504#__bigint"},"metadata":{"authenticatorData":"0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000"},"type":"webAuthn"}]
+        Provided: {"signature":{"r":"0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e","s":"0x77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35","yParity":0},"publicKey":{"prefix":4,"x":"0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5","y":"0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"},"metadata":{"authenticatorData":"0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000"},"type":"webAuthn"}]
       `,
       )
     })
@@ -637,8 +643,8 @@ describe('deserialize', () => {
             "prehash": true,
             "publicKey": {
               "prefix": 4,
-              "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-              "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+              "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+              "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
             },
             "signature": {
               "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -667,8 +673,8 @@ describe('deserialize', () => {
             },
             "publicKey": {
               "prefix": 4,
-              "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-              "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+              "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+              "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
             },
             "signature": {
               "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -1169,8 +1175,8 @@ describe('serialize', () => {
               "prehash": true,
               "publicKey": {
                 "prefix": 4,
-                "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-                "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+                "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+                "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
               },
               "signature": {
                 "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -1199,8 +1205,8 @@ describe('serialize', () => {
               },
               "publicKey": {
                 "prefix": 4,
-                "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-                "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
+                "x": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
+                "y": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
               },
               "signature": {
                 "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
@@ -1363,8 +1369,8 @@ describe('fromRpc', () => {
     test('behavior: converts RPC P256 signature', () => {
       const rpc: SignatureEnvelope.P256Rpc = {
         prehash: true,
-        pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
-        pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
+        pubKeyX: publicKey.x,
+        pubKeyY: publicKey.y,
         r: p256Signature.r,
         s: p256Signature.s,
         type: 'p256',
@@ -1398,8 +1404,8 @@ describe('fromRpc', () => {
       })
 
       const rpc: SignatureEnvelope.WebAuthnRpc = {
-        pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
-        pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
+        pubKeyX: publicKey.x,
+        pubKeyY: publicKey.y,
         r: p256Signature.r,
         s: p256Signature.s,
         type: 'webAuthn',
@@ -1461,8 +1467,8 @@ describe('fromRpc', () => {
         userAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
         signature: {
           prehash: true,
-          pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
-          pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
+          pubKeyX: publicKey.x,
+          pubKeyY: publicKey.y,
           r: p256Signature.r,
           s: p256Signature.s,
           type: 'p256',
@@ -1502,8 +1508,8 @@ describe('fromRpc', () => {
         type: 'keychain',
         userAddress: '0xfedcbafedcbafedcbafedcbafedcbafedcbafedc',
         signature: {
-          pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
-          pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
+          pubKeyX: publicKey.x,
+          pubKeyY: publicKey.y,
           r: p256Signature.r,
           s: p256Signature.s,
           type: 'webAuthn',

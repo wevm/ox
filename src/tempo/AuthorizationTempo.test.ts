@@ -210,7 +210,7 @@ describe('from', () => {
         clientDataJSON:
           '{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}',
       },
-      publicKey: { prefix: 4, x: 1n, y: 2n },
+      publicKey: { prefix: 4, x: '0x1', y: '0x2' },
       signature: {
         r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
         s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
@@ -447,8 +447,8 @@ describe('fromRpcList', () => {
             "prehash": true,
             "publicKey": {
               "prefix": 4,
-              "x": 1n,
-              "y": 2n,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000002",
             },
             "signature": {
               "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
@@ -465,8 +465,8 @@ describe('fromRpcList', () => {
             "prehash": false,
             "publicKey": {
               "prefix": 4,
-              "x": 3n,
-              "y": 4n,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000003",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000004",
             },
             "signature": {
               "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
@@ -528,8 +528,8 @@ describe('fromRpcList', () => {
             },
             "publicKey": {
               "prefix": 4,
-              "x": 1n,
-              "y": 2n,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000002",
             },
             "signature": {
               "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
@@ -549,8 +549,8 @@ describe('fromRpcList', () => {
             },
             "publicKey": {
               "prefix": 4,
-              "x": 3n,
-              "y": 4n,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000003",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000004",
             },
             "signature": {
               "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -632,8 +632,8 @@ describe('fromRpcList', () => {
             "prehash": true,
             "publicKey": {
               "prefix": 4,
-              "x": 3n,
-              "y": 4n,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000003",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000004",
             },
             "signature": {
               "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -653,8 +653,8 @@ describe('fromRpcList', () => {
             },
             "publicKey": {
               "prefix": 4,
-              "x": 5n,
-              "y": 6n,
+              "x": "0x0000000000000000000000000000000000000000000000000000000000000005",
+              "y": "0x0000000000000000000000000000000000000000000000000000000000000006",
             },
             "signature": {
               "r": "0x0000000000000000000000000000000000000000000000000000000000000003",
@@ -739,7 +739,7 @@ describe('fromTuple', () => {
   test('behavior: signature (p256)', () => {
     const signatureEnvelope = SignatureEnvelope.from({
       prehash: true,
-      publicKey: { prefix: 4, x: 1n, y: 2n },
+      publicKey: { prefix: 4, x: '0x1', y: '0x2' },
       signature: {
         r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
         s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
@@ -946,7 +946,7 @@ describe('toRpc', () => {
       nonce: 1n,
       signature: {
         prehash: true,
-        publicKey: { prefix: 4, x: 1n, y: 2n },
+        publicKey: { prefix: 4, x: '0x1', y: '0x2' },
         signature: {
           r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
           s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
@@ -967,7 +967,7 @@ describe('toRpc', () => {
           authenticatorData: '0x1234',
           clientDataJSON: '0x5678',
         },
-        publicKey: { prefix: 4, x: 1n, y: 2n },
+        publicKey: { prefix: 4, x: '0x1', y: '0x2' },
         signature: {
           r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
           s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
@@ -1253,7 +1253,11 @@ describe('signature type interoperability', () => {
         clientDataJSON:
           '{"type":"webauthn.get","challenge":"","origin":"https://example.com","crossOrigin":false}',
       },
-      publicKey: { prefix: 4, x: 1n, y: 2n },
+      publicKey: {
+        prefix: 4,
+        x: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        y: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      },
       signature: {
         r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
         s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
@@ -1285,7 +1289,7 @@ describe('signature type interoperability', () => {
   test('tuple serialization preserves signature type', () => {
     const signatureEnvelope = SignatureEnvelope.from({
       prehash: true,
-      publicKey: { prefix: 4, x: 1n, y: 2n },
+      publicKey: { prefix: 4, x: '0x1', y: '0x2' },
       signature: {
         r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
         s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',

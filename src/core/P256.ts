@@ -79,7 +79,10 @@ export function getPublicKey(
       ? privateKey.slice(2)
       : Hex.fromBytes(privateKey).slice(2),
   )
-  return PublicKey.from(point)
+  return PublicKey.from({
+    x: Hex.fromNumber(point.x, { size: 32 }),
+    y: Hex.fromNumber(point.y, { size: 32 }),
+  })
 }
 
 export declare namespace getPublicKey {
@@ -226,7 +229,10 @@ export function recoverPublicKey(
   const payload_ =
     payload instanceof Uint8Array ? Hex.fromBytes(payload) : payload
   const point = signature_.recoverPublicKey(payload_.substring(2))
-  return PublicKey.from(point)
+  return PublicKey.from({
+    x: Hex.fromNumber(point.x, { size: 32 }),
+    y: Hex.fromNumber(point.y, { size: 32 }),
+  })
 }
 
 export declare namespace recoverPublicKey {

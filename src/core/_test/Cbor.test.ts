@@ -657,8 +657,14 @@ describe('webauthn', () => {
   const attestationObject =
     '0xa363666d74646e6f6e656761747453746d74a0686175746844617461589849960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97635d00000000fbfc3007154e4ecc8c0b6e020557d7bd0014f55a2aef110f9c55f4343dc5e73ab1d291ae72cca5010203262001215820eee72c4fc66e2670b0f606fcb54ce453b8ae09d0661303dd4ad8d4063be212872258202093aff8b065c247c742e6833937ba987fb0f871e61fcfc6763fd9144611210f'
   const publicKey = PublicKey.from({
-    x: 108058905462353399599412887269393158541451912165746768801221323097156211577479n,
-    y: 14734952183441233246695696377579450501147029832688498617254314309528960704783n,
+    x: Hex.fromNumber(
+      108058905462353399599412887269393158541451912165746768801221323097156211577479n,
+      { size: 32 },
+    ),
+    y: Hex.fromNumber(
+      14734952183441233246695696377579450501147029832688498617254314309528960704783n,
+      { size: 32 },
+    ),
   })
 
   test('behavior: verify authData', () => {
@@ -708,8 +714,13 @@ describe('webauthn', () => {
     expect(credentialPublicKey['3']).toBe(-7)
     expect(credentialPublicKey['-1']).toBe(1)
 
-    const x = Bytes.toBigInt(credentialPublicKey['-2'])
-    const y = Bytes.toBigInt(credentialPublicKey['-3'])
-    expect(PublicKey.from({ x, y })).toStrictEqual(publicKey)
+    const x = Bytes.toHex(credentialPublicKey['-2'], { size: 32 })
+    const y = Bytes.toHex(credentialPublicKey['-3'], { size: 32 })
+    expect(
+      PublicKey.from({
+        x,
+        y,
+      }),
+    ).toStrictEqual(publicKey)
   })
 })

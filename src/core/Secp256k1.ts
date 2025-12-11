@@ -79,7 +79,10 @@ export function getPublicKey(
   const point = secp256k1.ProjectivePoint.fromPrivateKey(
     Hex.from(privateKey).slice(2),
   )
-  return PublicKey.from(point)
+  return PublicKey.from({
+    x: Hex.fromNumber(point.x, { size: 32 }),
+    y: Hex.fromNumber(point.y, { size: 32 }),
+  })
 }
 
 export declare namespace getPublicKey {
@@ -264,7 +267,11 @@ export function recoverPublicKey(
     BigInt(s),
   ).addRecoveryBit(yParity)
   const point = signature_.recoverPublicKey(Hex.from(payload).substring(2))
-  return PublicKey.from(point)
+  return PublicKey.from({
+    prefix: 4,
+    x: Hex.fromNumber(point.x, { size: 32 }),
+    y: Hex.fromNumber(point.y, { size: 32 }),
+  })
 }
 
 export declare namespace recoverPublicKey {

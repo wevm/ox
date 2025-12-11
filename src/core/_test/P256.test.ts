@@ -14,12 +14,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-    {
-      "prefix": 4,
-      "x": 10551483369778534213743005046722587423472548496575383028418761641566343103239n,
-      "y": 88295525029668593780823649128376935553570204792365777341876890493798599407244n,
-    }
-  `,
+        {
+          "prefix": 4,
+          "x": "0x1753ed8e23fd6e17922ebdeed8ebe8043e34cd10118271cf2acdee88c1d58307",
+          "y": "0xc3357f052ea5e9a67625fa723ca0e7bc8ce9d069bea5b8b397137f991284b68c",
+        }
+      `,
       )
     }
 
@@ -30,12 +30,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-    {
-      "prefix": 4,
-      "x": 74284260781974828542656778781460620511024287575108245086657461940925169173577n,
-      "y": 49004966777120461993240735637857463864712305111925716454339081891868780934195n,
-    }
-  `,
+        {
+          "prefix": 4,
+          "x": "0xa43b66d1eaee03f07d64920491f8b3487a90f527f2342c8caccd55d506508449",
+          "y": "0x6c57d409d6db06faefd8a0aa1106acd69501134e11cf74b2e95c81b451da3433",
+        }
+      `,
       )
     }
   })
@@ -55,8 +55,8 @@ describe('createKeyPair', () => {
     expect(keyPair.publicKey).toHaveProperty('x')
     expect(keyPair.publicKey).toHaveProperty('y')
     expect(keyPair.publicKey.prefix).toBe(4)
-    expect(typeof keyPair.publicKey.x).toBe('bigint')
-    expect(typeof keyPair.publicKey.y).toBe('bigint')
+    expect(typeof keyPair.publicKey.x).toBe('string')
+    expect(typeof keyPair.publicKey.y).toBe('string')
   })
 
   test('behavior: deterministic public key derivation', () => {
@@ -312,7 +312,7 @@ describe('getSharedSecret', () => {
 
   test('error: invalid public key', () => {
     const privateKeyA = P256.randomPrivateKey()
-    const invalidPublicKey = { prefix: 4, x: 0n, y: 0n } as const
+    const invalidPublicKey = { prefix: 4, x: '0x', y: '0x' } as const
 
     expect(() =>
       P256.getSharedSecret({
