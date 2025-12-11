@@ -84,10 +84,7 @@ export type TxEnvelopeTempo<
     /** Gas provided for transaction execution */
     gas?: bigintType | undefined
     /** Fee payer signature. */
-    feePayerSignature?:
-      | Signature.Signature<true, bigintType, numberType>
-      | null
-      | undefined
+    feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
     /** Fee token preference. Address or ID of the TIP-20 token. */
     feeToken?: TokenId.TokenIdOrAddress | undefined
     /**
@@ -116,12 +113,10 @@ export type TxEnvelopeTempo<
     validAfter?: numberType | undefined
   } & (signed extends true
     ? {
-        signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
+        signature: SignatureEnvelope.SignatureEnvelope<numberType>
       }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
       })
 >
 

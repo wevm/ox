@@ -246,7 +246,10 @@ export async function sign(
   const r = Bytes.toBigInt(Bytes.slice(signature_bytes, 0, 32))
   let s = Bytes.toBigInt(Bytes.slice(signature_bytes, 32, 64))
   if (s > p256.CURVE.n / 2n) s = p256.CURVE.n - s
-  return { r, s }
+  return {
+    r: Hex.fromNumber(r, { size: 32 }),
+    s: Hex.fromNumber(s, { size: 32 }),
+  }
 }
 
 export declare namespace sign {
@@ -299,7 +302,10 @@ export async function verify(options: verify.Options): Promise<boolean> {
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes.concat(Bytes.fromNumber(signature.r), Bytes.fromNumber(signature.s)),
+    Bytes.concat(
+      Bytes.fromHex(signature.r, { size: 32 }),
+      Bytes.fromHex(signature.s, { size: 32 }),
+    ),
     Bytes.from(payload),
   )
 }

@@ -72,9 +72,9 @@ export type Base<
   /** Value in wei sent with this transaction */
   value: bigintType
   /** ECDSA signature r. */
-  r: bigintType
+  r: Hex.Hex
   /** ECDSA signature s. */
-  s: bigintType
+  s: Hex.Hex
   /** ECDSA signature yParity. */
   yParity: numberType
   /** @deprecated ECDSA signature v (for backwards compatibility). */
@@ -399,10 +399,8 @@ export function toRpc<pending extends boolean = false>(
     rpc.maxFeePerGas = Hex.fromNumber(transaction.maxFeePerGas)
   if (typeof transaction.maxPriorityFeePerGas === 'bigint')
     rpc.maxPriorityFeePerGas = Hex.fromNumber(transaction.maxPriorityFeePerGas)
-  if (typeof transaction.r === 'bigint')
-    rpc.r = Hex.fromNumber(transaction.r, { size: 32 })
-  if (typeof transaction.s === 'bigint')
-    rpc.s = Hex.fromNumber(transaction.s, { size: 32 })
+  if (transaction.r) rpc.r = transaction.r
+  if (transaction.s) rpc.s = transaction.s
   if (typeof transaction.v === 'number')
     rpc.v = Hex.fromNumber(transaction.v, { size: 1 })
   if (typeof transaction.yParity === 'number')

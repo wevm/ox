@@ -20,7 +20,7 @@ export type Authorization<
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
   } & (signed extends true
-    ? Signature.Signature<true, bigintType, numberType>
+    ? Signature.Signature<true, numberType>
     : Undefined<Signature.Signature>)
 >
 

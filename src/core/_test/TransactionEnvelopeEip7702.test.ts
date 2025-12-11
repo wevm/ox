@@ -21,8 +21,8 @@ describe('assert', () => {
             address: '0x0000000000000000000000000000000000000000',
             chainId: -1,
             nonce: 0n,
-            r: 0n,
-            s: 0n,
+            r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+            s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
             yParity: 0,
           },
         ],
@@ -41,8 +41,8 @@ describe('assert', () => {
             address: '0x000000000000000000000000000000000000000z',
             chainId: 0,
             nonce: 0n,
-            r: 0n,
-            s: 0n,
+            r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+            s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
             yParity: 0,
           },
         ],
@@ -65,8 +65,8 @@ describe('assert', () => {
             address: '0x0000000000000000000000000000000000000000',
             chainId: 1,
             nonce: 0n,
-            r: 0n,
-            s: 0n,
+            r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+            s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
             yParity: 0,
           },
         ],
@@ -232,8 +232,8 @@ describe('deserialize', () => {
           "maxFeePerGas": 1n,
           "maxPriorityFeePerGas": 1n,
           "nonce": 0n,
-          "r": 0n,
-          "s": 0n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "to": "0x0000000000000000000000000000000000000000",
           "type": "eip7702",
           "value": 0n,
@@ -265,8 +265,8 @@ describe('deserialize', () => {
           "maxFeePerGas": 1n,
           "maxPriorityFeePerGas": 1n,
           "nonce": 0n,
-          "r": 69n,
-          "s": 420n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000045",
+          "s": "0x00000000000000000000000000000000000000000000000000000000000001a4",
           "to": "0x0000000000000000000000000000000000000000",
           "type": "eip7702",
           "value": 0n,
@@ -405,8 +405,8 @@ describe('from', () => {
         authorizationList: [],
         chainId: 1,
         nonce: 0n,
-        r: 0n,
-        s: 1n,
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         yParity: 0,
       })
       expect(envelope).toMatchInlineSnapshot(`
@@ -414,8 +414,8 @@ describe('from', () => {
           "authorizationList": [],
           "chainId": 1,
           "nonce": 0n,
-          "r": 0n,
-          "s": 1n,
+          "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+          "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
           "type": "eip7702",
           "yParity": 0,
         }
@@ -435,8 +435,8 @@ describe('from', () => {
       },
       {
         signature: {
-          r: 0n,
-          s: 1n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 0,
         },
       },
@@ -446,8 +446,8 @@ describe('from', () => {
         "authorizationList": [],
         "chainId": 1,
         "nonce": 0n,
-        "r": 0n,
-        "s": 1n,
+        "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+        "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
         "type": "eip7702",
         "yParity": 0,
       }
@@ -519,12 +519,8 @@ describe('hash', () => {
       nonce: 665n,
       value: 1000000000000000000n,
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      r: BigInt(
-        '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
-      ),
-      s: BigInt(
-        '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
-      ),
+      r: '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
+      s: '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
       yParity: 0,
     })
 
@@ -690,12 +686,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip7702.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 1,
         },
       }),
@@ -706,12 +698,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip7702.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 0,
         },
       }),
@@ -722,8 +710,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip7702.serialize(transaction, {
         signature: {
-          r: 0n,
-          s: 0n,
+          r: '0x',
+          s: '0x',
           yParity: 0,
         },
       }),

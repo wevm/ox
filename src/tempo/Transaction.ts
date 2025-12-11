@@ -64,9 +64,9 @@ export type Tempo<
     feePayerSignature?:
       | {
           /** ECDSA signature r. */
-          r: bigintType
+          r: Hex.Hex
           /** ECDSA signature s. */
-          s: bigintType
+          s: Hex.Hex
           /** ECDSA signature yParity. */
           yParity: numberType
           /** @deprecated ECDSA signature v (for backwards compatibility). */
@@ -88,7 +88,7 @@ export type Tempo<
     /** Nonce key for 2D nonce system (192 bits). */
     nonceKey?: bigintType | undefined
     /** Sender signature. */
-    signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
+    signature: SignatureEnvelope.SignatureEnvelope<numberType>
     /** Transaction can only be included in a block before this timestamp. */
     validBefore?: numberType | undefined
     /** Transaction can only be included in a block after this timestamp. */

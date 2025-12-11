@@ -30,8 +30,8 @@ describe('from', () => {
       verificationGasLimit: 0n,
     } as const satisfies UserOperation.UserOperation
     const signature = Signature.from({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
       yParity: 1,
     })
     const userOperation = UserOperation.from(input, { signature })
@@ -402,8 +402,8 @@ describe('hash', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 0n,
-              s: 0n,
+              r: '0x',
+              s: '0x',
             },
           },
           {
@@ -438,8 +438,8 @@ describe('hash', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 0n,
-              s: 0n,
+              r: '0x',
+              s: '0x',
             },
           },
           {
@@ -881,8 +881,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 69n,
           yParity: 0,
-          r: 1n,
-          s: 2n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
         },
       }),
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
@@ -898,8 +898,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 69n,
           yParity: 0,
-          r: 1n,
-          s: 2n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
         },
       }),
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
@@ -915,8 +915,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 42n,
           yParity: 1,
-          r: 123n,
-          s: 456n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         },
       }),
     ).toBe('0x1234567890123456789012345678901234567890cafebabe')
@@ -1279,8 +1279,8 @@ describe('toTypedData', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 1n,
-              s: 2n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000002',
             },
           },
           {
@@ -1371,8 +1371,8 @@ describe('toTypedData', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 1n,
-              s: 2n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000002',
             },
           },
           {

@@ -97,18 +97,18 @@ describe('deserialize', () => {
     })
     expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
-    {
-      "gasPrice": 2000000000n,
-      "nonce": 785n,
-      "r": 49162359600332107255572924559512453493861388410495780496134469638986269765272n,
-      "s": 23658591060807096482427659898336319664614845702773383989972841251496079269784n,
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "legacy",
-      "v": 28,
-      "value": 1000000000000000000n,
-      "yParity": 1,
-    }
-  `,
+      {
+        "gasPrice": 2000000000n,
+        "nonce": 785n,
+        "r": "0x6cb0e8d21e5baf998fb9a05f47acd83692dc148f90b81b332a152f020da0ae98",
+        "s": "0x344e49bacb1ef7af7c2ffed9e88d3f0ae0aa4945c9da0a660a03717dd5621f98",
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "legacy",
+        "v": 28,
+        "value": 1000000000000000000n,
+        "yParity": 1,
+      }
+    `,
     )
   })
 
@@ -116,8 +116,8 @@ describe('deserialize', () => {
     {
       const serialized = TxEnvelopeLegacy.serialize(transaction, {
         signature: {
-          r: 1n,
-          s: 0n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 0,
         },
       })
@@ -126,8 +126,8 @@ describe('deserialize', () => {
       {
         "gasPrice": 2000000000n,
         "nonce": 785n,
-        "r": 1n,
-        "s": 0n,
+        "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+        "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
         "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
         "type": "legacy",
         "v": 27,
@@ -141,8 +141,8 @@ describe('deserialize', () => {
     {
       const serialized = TxEnvelopeLegacy.serialize(transaction, {
         signature: {
-          r: 0n,
-          s: 1n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 0,
         },
       })
@@ -151,8 +151,8 @@ describe('deserialize', () => {
       {
         "gasPrice": 2000000000n,
         "nonce": 785n,
-        "r": 0n,
-        "s": 1n,
+        "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+        "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
         "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
         "type": "legacy",
         "v": 27,
@@ -178,19 +178,19 @@ describe('deserialize', () => {
     })
     expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
-    {
-      "chainId": 69,
-      "gasPrice": 2000000000n,
-      "nonce": 785n,
-      "r": 21377422632306986934234848369642217951872212572373694238667569216102361836592n,
-      "s": 46566099151962357110521349825476283164605004096182178307881493582909309068838n,
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "legacy",
-      "v": 173,
-      "value": 1000000000000000000n,
-      "yParity": 0,
-    }
-  `,
+      {
+        "chainId": 69,
+        "gasPrice": 2000000000n,
+        "nonce": 785n,
+        "r": "0x2f43314322cf4c5dd645b028aa0b0dadff0fb73c41a6f0620ff1dfb11601ac30",
+        "s": "0x66f37a65e139fa4b6df33a42ab5ccaeaa7a109382e7430caefd1deee63962626",
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "legacy",
+        "v": 173,
+        "value": 1000000000000000000n,
+        "yParity": 0,
+      }
+    `,
     )
   })
 
@@ -253,19 +253,19 @@ describe('deserialize', () => {
         Hex.fromNumber(420), // s
       ])
       expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
-      {
-        "gas": 1n,
-        "gasPrice": 1n,
-        "nonce": 0n,
-        "r": 69n,
-        "s": 420n,
-        "to": "0x0000000000000000000000000000000000000000",
-        "type": "legacy",
-        "v": 27,
-        "value": 0n,
-        "yParity": 0,
-      }
-    `)
+        {
+          "gas": 1n,
+          "gasPrice": 1n,
+          "nonce": 0n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000045",
+          "s": "0x00000000000000000000000000000000000000000000000000000000000001a4",
+          "to": "0x0000000000000000000000000000000000000000",
+          "type": "legacy",
+          "v": 27,
+          "value": 0n,
+          "yParity": 0,
+        }
+      `)
     })
   })
 
@@ -395,8 +395,8 @@ describe('from', () => {
         chainId: 1,
         to: '0x0000000000000000000000000000000000000000',
         value: 69n,
-        r: 0n,
-        s: 1n,
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         v: 37,
       })
       const serialized = TxEnvelopeLegacy.serialize(envelope)
@@ -415,8 +415,8 @@ describe('from', () => {
       },
       {
         signature: {
-          r: 0n,
-          s: 1n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 1,
         },
       },
@@ -424,8 +424,8 @@ describe('from', () => {
     expect(envelope).toMatchInlineSnapshot(`
       {
         "nonce": 0n,
-        "r": 0n,
-        "s": 1n,
+        "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+        "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
         "to": "0x0000000000000000000000000000000000000000",
         "type": "legacy",
         "v": 28,
@@ -438,12 +438,17 @@ describe('from', () => {
     expect(envelope2).toEqual(envelope)
     const envelope3 = TxEnvelopeLegacy.from(serialized, {
       signature: {
-        r: 1n,
-        s: 0n,
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         yParity: 1,
       },
     })
-    expect(envelope3).toEqual({ ...envelope, r: 1n, s: 0n, v: 28 })
+    expect(envelope3).toEqual({
+      ...envelope,
+      r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+      v: 28,
+    })
   })
 })
 
@@ -495,12 +500,8 @@ describe('hash', () => {
       nonce: 665n,
       value: 1000000000000000000n,
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      r: BigInt(
-        '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
-      ),
-      s: BigInt(
-        '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
-      ),
+      r: '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
+      s: '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
       v: 27,
     })
 
@@ -628,18 +629,18 @@ describe('serialize', () => {
     )
     expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
-    {
-      "gasPrice": 2000000000n,
-      "nonce": 785n,
-      "r": 49162359600332107255572924559512453493861388410495780496134469638986269765272n,
-      "s": 23658591060807096482427659898336319664614845702773383989972841251496079269784n,
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "legacy",
-      "v": 28,
-      "value": 1000000000000000000n,
-      "yParity": 1,
-    }
-  `,
+      {
+        "gasPrice": 2000000000n,
+        "nonce": 785n,
+        "r": "0x6cb0e8d21e5baf998fb9a05f47acd83692dc148f90b81b332a152f020da0ae98",
+        "s": "0x344e49bacb1ef7af7c2ffed9e88d3f0ae0aa4945c9da0a660a03717dd5621f98",
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "legacy",
+        "v": 28,
+        "value": 1000000000000000000n,
+        "yParity": 1,
+      }
+    `,
     )
   })
 
@@ -647,12 +648,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeLegacy.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 1,
         },
       }),
@@ -662,12 +659,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeLegacy.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 0,
         },
       }),
@@ -693,19 +686,19 @@ describe('serialize', () => {
     )
     expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
-    {
-      "chainId": 69,
-      "gasPrice": 2000000000n,
-      "nonce": 785n,
-      "r": 21377422632306986934234848369642217951872212572373694238667569216102361836592n,
-      "s": 46566099151962357110521349825476283164605004096182178307881493582909309068838n,
-      "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "type": "legacy",
-      "v": 173,
-      "value": 1000000000000000000n,
-      "yParity": 0,
-    }
-  `,
+      {
+        "chainId": 69,
+        "gasPrice": 2000000000n,
+        "nonce": 785n,
+        "r": "0x2f43314322cf4c5dd645b028aa0b0dadff0fb73c41a6f0620ff1dfb11601ac30",
+        "s": "0x66f37a65e139fa4b6df33a42ab5ccaeaa7a109382e7430caefd1deee63962626",
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "legacy",
+        "v": 173,
+        "value": 1000000000000000000n,
+        "yParity": 0,
+      }
+    `,
     )
   })
 
@@ -719,12 +712,8 @@ describe('serialize', () => {
         to: '0x55d398326f99059ff775485246999027b3197955',
         value: 0n,
         v: 84475,
-        r: BigInt(
-          '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
-        ),
-        s: BigInt(
-          '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
-        ),
+        r: '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
+        s: '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
       })
       expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8667584b2d05e0082c9ab9455d398326f99059ff775485246999027b31979558080830149fba073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
@@ -740,12 +729,8 @@ describe('serialize', () => {
         to: '0x55d398326f99059ff775485246999027b3197955',
         value: 0n,
         v: 84476,
-        r: BigInt(
-          '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
-        ),
-        s: BigInt(
-          '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
-        ),
+        r: '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
+        s: '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
       })
       expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8667584b2d05e0082c9ab9455d398326f99059ff775485246999027b31979558080830149fca073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
@@ -763,12 +748,8 @@ describe('serialize', () => {
         value: 0n,
         type: 'legacy',
         v: 35,
-        r: BigInt(
-          '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
-        ),
-        s: BigInt(
-          '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
-        ),
+        r: '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
+        s: '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
       })
       expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8637584b2d05e0082c9ab9455d398326f99059ff775485246999027b319795580801ba073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
@@ -786,12 +767,8 @@ describe('serialize', () => {
         value: 0n,
         type: 'legacy',
         v: 36,
-        r: BigInt(
-          '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
-        ),
-        s: BigInt(
-          '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
-        ),
+        r: '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
+        s: '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
       })
       expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8637584b2d05e0082c9ab9455d398326f99059ff775485246999027b319795580801ca073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
@@ -805,8 +782,8 @@ describe('serialize', () => {
       gas: BigInt('0x52080'),
       gasPrice: 0n,
       nonce: 0n,
-      r: 0n,
-      s: 0n,
+      r: '0x',
+      s: '0x',
       v: 0,
       to: '0xc000000000000000000000000000000000000000',
       type: 'legacy',
@@ -821,12 +798,8 @@ describe('serialize', () => {
     expect(() =>
       TxEnvelopeLegacy.serialize({
         ...transaction,
-        r: BigInt(
-          '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-        ),
-        s: BigInt(
-          '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-        ),
+        r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+        s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
         v: 29,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -844,8 +817,8 @@ describe('toRpc', () => {
       gasPrice: Value.fromGwei('10'),
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
       value: 1000000000000000000n,
-      r: 1n,
-      s: 2n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
       yParity: 0,
     })
     expect(transaction).toMatchInlineSnapshot(`

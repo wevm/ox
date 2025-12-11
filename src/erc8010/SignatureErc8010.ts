@@ -125,8 +125,8 @@ export function unwrap(wrapped: Wrapped): Unwrapped {
     chainId: Number(auth.chainId),
     nonce: auth.nonce,
     yParity: auth.yParity,
-    r: auth.r,
-    s: auth.s,
+    r: Hex.fromNumber(auth.r, { size: 32 }),
+    s: Hex.fromNumber(auth.s, { size: 32 }),
   })
 
   return {
@@ -176,7 +176,10 @@ export function wrap(value: Unwrapped): Wrapped {
 
   const suffix = AbiParameters.encode(suffixParameters, [
     {
-      ...value.authorization,
+      nonce: value.authorization.nonce,
+      yParity: value.authorization.yParity,
+      r: BigInt(value.authorization.r),
+      s: BigInt(value.authorization.s),
       delegation: value.authorization.address,
       chainId: BigInt(value.authorization.chainId),
     },

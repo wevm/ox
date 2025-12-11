@@ -279,8 +279,8 @@ export function sign(options: sign.Options): Signature.Signature {
     },
   )
   return {
-    r,
-    s,
+    r: Hex.fromNumber(r, { size: 32 }),
+    s: Hex.fromNumber(s, { size: 32 }),
     yParity: recovery,
   }
 }
@@ -333,7 +333,10 @@ export declare namespace sign {
 export function verify(options: verify.Options): boolean {
   const { hash, payload, publicKey, signature } = options
   return secp256r1.verify(
-    signature,
+    {
+      r: Hex.toBigInt(signature.r),
+      s: Hex.toBigInt(signature.s),
+    },
     payload instanceof Uint8Array ? payload : Bytes.fromHex(payload),
     PublicKey.toHex(publicKey).substring(2),
     ...(hash ? [{ prehash: true, lowS: true }] : []),

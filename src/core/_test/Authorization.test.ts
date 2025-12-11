@@ -1,4 +1,4 @@
-import { Authorization, Secp256k1 } from 'ox'
+import { Authorization, type Hex, Secp256k1 } from 'ox'
 import { describe, expect, expectTypeOf, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -34,16 +34,16 @@ describe('from', () => {
         address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
         chainId: 1,
         nonce: 40n,
-        r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-        s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+        r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+        s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
         yParity: 0,
       })
       expectTypeOf(authorization).toEqualTypeOf<{
         readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
         readonly chainId: 1
         readonly nonce: 40n
-        readonly r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n
-        readonly s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n
+        readonly r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf'
+        readonly s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
         readonly yParity: 0
       }>()
       expectTypeOf(authorization).toMatchTypeOf<
@@ -51,15 +51,15 @@ describe('from', () => {
       >()
       expect(authorization).toMatchInlineSnapshot(
         `
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 1,
-        "nonce": 40n,
-        "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-        "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
-        "yParity": 0,
-      }
-    `,
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1,
+          "nonce": 40n,
+          "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+          "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
+          "yParity": 0,
+        }
+      `,
       )
     }
   })
@@ -81,8 +81,8 @@ describe('from', () => {
       readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
       readonly chainId: 1
       readonly nonce: 40n
-      readonly r: bigint
-      readonly s: bigint
+      readonly r: Hex.Hex
+      readonly s: Hex.Hex
       readonly yParity: number
     }>()
     expectTypeOf(authorization_signed).toMatchTypeOf<
@@ -90,15 +90,15 @@ describe('from', () => {
     >()
     expect(authorization_signed).toMatchInlineSnapshot(
       `
-    {
-      "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-      "chainId": 1,
-      "nonce": 40n,
-      "r": 74666311849961653398815470296948700361392062371901161364182304079113687952627n,
-      "s": 24912990662134805731506157958890440652926649106845286943280690489391727501383n,
-      "yParity": 1,
-    }
-  `,
+      {
+        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1,
+        "nonce": 40n,
+        "r": "0xa513a287a156a99f2be4023466d401589e33add75c057e5fd376d11ed8946cf3",
+        "s": "0x371440c5f5c845ae5260bffccf9e28307b9204216faeaa0e27a6608bcdd7e047",
+        "yParity": 1,
+      }
+    `,
     )
   })
 
@@ -115,15 +115,15 @@ describe('from', () => {
       expectTypeOf(authorization).toMatchTypeOf<Authorization.Authorization>()
       expect(authorization).toMatchInlineSnapshot(
         `
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 1,
-        "nonce": 1n,
-        "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-        "yParity": 0,
-      }
-    `,
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 1,
+          "nonce": 1n,
+          "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+          "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+          "yParity": 0,
+        }
+      `,
       )
     }
   })
@@ -141,15 +141,15 @@ describe('fromRpc', () => {
         yParity: '0x0',
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "address": "0x0000000000000000000000000000000000000000",
-      "chainId": 1,
-      "nonce": 1n,
-      "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-      "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 1,
+        "nonce": 1n,
+        "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+        "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+        "yParity": 0,
+      }
+    `)
   })
 })
 
@@ -175,25 +175,25 @@ describe('fromRpcList', () => {
         },
       ]),
     ).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": 1,
-        "nonce": 1n,
-        "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-        "yParity": 0,
-      },
-      {
-        "address": "0x0000000000000000000000000000000000000000",
-        "chainId": 1,
-        "nonce": 1n,
-        "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-        "yParity": 0,
-      },
-    ]
-  `)
+      [
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": 1,
+          "nonce": 1n,
+          "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+          "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+          "yParity": 0,
+        },
+        {
+          "address": "0x0000000000000000000000000000000000000000",
+          "chainId": 1,
+          "nonce": 1n,
+          "r": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d",
+          "s": "0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540",
+          "yParity": 0,
+        },
+      ]
+    `)
   })
 })
 
@@ -241,15 +241,15 @@ describe('fromTuple', () => {
     ] as const satisfies Authorization.Tuple
     const authorization = Authorization.fromTuple(tuple)
     expect(authorization).toMatchInlineSnapshot(`
-    {
-      "address": "0x0000000000000000000000000000000000000000",
-      "chainId": 1,
-      "nonce": 3n,
-      "r": 1n,
-      "s": 2n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 1,
+        "nonce": 3n,
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "yParity": 0,
+      }
+    `)
   })
 })
 
@@ -297,25 +297,25 @@ describe('fromTupleList', () => {
     ] as const satisfies Authorization.TupleList
     const authorization = Authorization.fromTupleList(tupleList)
     expect(authorization).toMatchInlineSnapshot(`
-    [
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 5,
-        "nonce": 42n,
-        "r": 1n,
-        "s": 2n,
-        "yParity": 0,
-      },
-      {
-        "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 2,
-        "nonce": 43n,
-        "r": 4n,
-        "s": 5n,
-        "yParity": 0,
-      },
-    ]
-  `)
+      [
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 5,
+          "nonce": 42n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "yParity": 0,
+        },
+        {
+          "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "chainId": 2,
+          "nonce": 43n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000004",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000005",
+          "yParity": 0,
+        },
+      ]
+    `)
   })
 })
 
@@ -409,8 +409,8 @@ describe('toRpc', () => {
         address: '0x0000000000000000000000000000000000000000',
         chainId: 1,
         nonce: 1n,
-        r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
         yParity: 0,
       }),
     ).toMatchInlineSnapshot(`
@@ -434,8 +434,8 @@ describe('toRpcList', () => {
           address: '0x0000000000000000000000000000000000000000',
           chainId: 1,
           nonce: 1n,
-          r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-          s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+          s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
           yParity: 0,
         },
       ]),
@@ -477,8 +477,8 @@ describe('toTuple', () => {
         address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
         chainId: 1,
         nonce: 40n,
-        r: 1n,
-        s: 2n,
+        r: '0x01',
+        s: '0x02',
         yParity: 0,
       })
       const tuple = Authorization.toTuple(authorization)
@@ -555,16 +555,16 @@ describe('toTupleList', () => {
         address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
         chainId: 5,
         nonce: 42n,
-        r: 1n,
-        s: 2n,
+        r: '0x01',
+        s: '0x02',
         yParity: 0,
       })
       const authorization_4 = Authorization.from({
         address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
         chainId: 2,
         nonce: 43n,
-        r: 4n,
-        s: 5n,
+        r: '0x04',
+        s: '0x05',
         yParity: 0,
       })
       const tuple = Authorization.toTupleList([

@@ -163,12 +163,15 @@ export function parseAsn1Signature(bytes: Uint8Array) {
   const r_end = r_start + 32
   const s_start = bytes[r_end + 2] === 0 ? r_end + 3 : r_end + 2
 
-  const r = BigInt(Hex.fromBytes(bytes.slice(r_start, r_end)))
-  const s = BigInt(Hex.fromBytes(bytes.slice(s_start)))
+  const r = Hex.fromBytes(bytes.slice(r_start, r_end), { size: 32 })
+  const s = Hex.fromBytes(bytes.slice(s_start), { size: 32 })
 
   return {
     r,
-    s: s > p256.CURVE.n / 2n ? p256.CURVE.n - s : s,
+    s:
+      BigInt(s) > p256.CURVE.n / 2n
+        ? Hex.fromNumber(p256.CURVE.n - BigInt(s), { size: 32 })
+        : s,
   }
 }
 

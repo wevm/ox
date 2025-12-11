@@ -264,8 +264,14 @@ describe('deserialize', () => {
         },
       ],
       signature: SignatureEnvelope.from({
-        r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+        r: Hex.fromNumber(
+          44944627813007772897391531230081695102703289123332187696115181104739239197517n,
+          { size: 32 },
+        ),
+        s: Hex.fromNumber(
+          36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          { size: 32 },
+        ),
         yParity: 0,
       }),
     })
@@ -288,8 +294,14 @@ describe('deserialize', () => {
         chainId: 1,
         nonce: 40n,
         signature: SignatureEnvelope.from({
-          r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-          s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+          r: Hex.fromNumber(
+            49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+            { size: 32 },
+          ),
+          s: Hex.fromNumber(
+            33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+            { size: 32 },
+          ),
           yParity: 0,
         }),
       }),
@@ -298,8 +310,8 @@ describe('deserialize', () => {
         chainId: 1,
         nonce: 55n,
         signature: SignatureEnvelope.from({
-          r: 12345678901234567890n,
-          s: 98765432109876543210n,
+          r: Hex.fromNumber(12345678901234567890n, { size: 32 }),
+          s: Hex.fromNumber(98765432109876543210n, { size: 32 }),
           yParity: 1,
         }),
       }),
@@ -444,8 +456,8 @@ describe('deserialize', () => {
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.feePayerSignature).toEqual({
       yParity: 0,
-      r: 1n,
-      s: 2n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
     })
   })
 
@@ -651,8 +663,8 @@ describe('from', () => {
         nonce: 0n,
         nonceKey: 0n,
         signature: SignatureEnvelope.from({
-          r: 0n,
-          s: 1n,
+          r: Hex.fromNumber(0n, { size: 32 }),
+          s: Hex.fromNumber(1n, { size: 32 }),
           yParity: 0,
         }),
       })
@@ -668,8 +680,8 @@ describe('from', () => {
           "nonceKey": 0n,
           "signature": {
             "signature": {
-              "r": 0n,
-              "s": 1n,
+              "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
               "yParity": 0,
             },
             "type": "secp256k1",
@@ -696,8 +708,8 @@ describe('from', () => {
       },
       {
         signature: SignatureEnvelope.from({
-          r: 0n,
-          s: 1n,
+          r: Hex.fromNumber(0n, { size: 32 }),
+          s: Hex.fromNumber(1n, { size: 32 }),
           yParity: 0,
         }),
       },
@@ -712,8 +724,8 @@ describe('from', () => {
         "nonceKey": 0n,
         "signature": {
           "signature": {
-            "r": 0n,
-            "s": 1n,
+            "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
             "yParity": 0,
           },
           "type": "secp256k1",
@@ -735,7 +747,11 @@ describe('from', () => {
         nonceKey: 0n,
       },
       {
-        signature: { r: 0n, s: 1n, yParity: 0 },
+        signature: {
+          r: Hex.fromNumber(0n, { size: 32 }),
+          s: Hex.fromNumber(1n, { size: 32 }),
+          yParity: 0,
+        },
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
@@ -748,8 +764,8 @@ describe('from', () => {
         "nonceKey": 0n,
         "signature": {
           "signature": {
-            "r": 0n,
-            "s": 1n,
+            "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
             "yParity": 0,
           },
           "type": "secp256k1",
@@ -774,8 +790,8 @@ describe('from', () => {
       },
       {
         feePayerSignature: {
-          r: 0n,
-          s: 1n,
+          r: Hex.fromNumber(0n, { size: 32 }),
+          s: Hex.fromNumber(1n, { size: 32 }),
           yParity: 0,
         },
       },
@@ -787,8 +803,8 @@ describe('from', () => {
         ],
         "chainId": 1,
         "feePayerSignature": {
-          "r": 0n,
-          "s": 1n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000001",
           "yParity": 0,
         },
         "nonce": 0n,
@@ -898,8 +914,14 @@ describe('serialize', () => {
         },
       ],
       signature: SignatureEnvelope.from({
-        r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-        s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+        r: Hex.fromNumber(
+          44944627813007772897391531230081695102703289123332187696115181104739239197517n,
+          { size: 32 },
+        ),
+        s: Hex.fromNumber(
+          36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+          { size: 32 },
+        ),
         yParity: 0,
       }),
     })
@@ -933,8 +955,14 @@ describe('serialize', () => {
       ],
       signature: SignatureEnvelope.from({
         signature: {
-          r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-          s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
+          r: Hex.fromNumber(
+            92602584010956101470289867944347135737570451066466093224269890121909314569518n,
+            { size: 32 },
+          ),
+          s: Hex.fromNumber(
+            54171125190222965779385658110416711469231271457324878825831748147306957269813n,
+            { size: 32 },
+          ),
         },
         publicKey: {
           prefix: 4,
@@ -984,8 +1012,14 @@ describe('serialize', () => {
       ],
       signature: SignatureEnvelope.from({
         signature: {
-          r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-          s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
+          r: Hex.fromNumber(
+            92602584010956101470289867944347135737570451066466093224269890121909314569518n,
+            { size: 32 },
+          ),
+          s: Hex.fromNumber(
+            54171125190222965779385658110416711469231271457324878825831748147306957269813n,
+            { size: 32 },
+          ),
         },
         publicKey: {
           prefix: 4,
@@ -1020,8 +1054,14 @@ describe('serialize', () => {
         chainId: 1,
         nonce: 40n,
         signature: SignatureEnvelope.from({
-          r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-          s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+          r: Hex.fromNumber(
+            49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+            { size: 32 },
+          ),
+          s: Hex.fromNumber(
+            33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+            { size: 32 },
+          ),
           yParity: 0,
         }),
       }),
@@ -1030,8 +1070,8 @@ describe('serialize', () => {
         chainId: 1,
         nonce: 55n,
         signature: SignatureEnvelope.from({
-          r: 12345678901234567890n,
-          s: 98765432109876543210n,
+          r: Hex.fromNumber(12345678901234567890n, { size: 32 }),
+          s: Hex.fromNumber(98765432109876543210n, { size: 32 }),
           yParity: 1,
         }),
       }),
@@ -1189,8 +1229,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeTempo.serialize(transaction, {
         feePayerSignature: {
-          r: 1n,
-          s: 2n,
+          r: Hex.fromNumber(1n, { size: 32 }),
+          s: Hex.fromNumber(2n, { size: 32 }),
           yParity: 0,
         },
       }),

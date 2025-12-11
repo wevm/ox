@@ -1,62 +1,50 @@
-import { Bytes, Signature, Solidity, TxEnvelopeEip1559 } from 'ox'
+import { Bytes, Hex, Signature, Solidity, TxEnvelopeEip1559 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('assert', () => {
   test('default', () => {
     expect(() =>
-      Signature.assert({ r: undefined, s: 0n, yParity: 0 }),
+      Signature.assert({ r: undefined, s: '0x', yParity: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[Signature.MissingPropertiesError: Signature \`{"s":"0#__bigint","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+      `[Signature.MissingPropertiesError: Signature \`{"s":"0x","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
     )
 
     expect(() =>
-      Signature.assert({ r: 0n, s: undefined, yParity: 0 }),
+      Signature.assert({ r: '0x', s: undefined, yParity: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[Signature.MissingPropertiesError: Signature \`{"r":"0#__bigint","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
+      `[Signature.MissingPropertiesError: Signature \`{"r":"0x","yParity":0}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
     )
 
     expect(() =>
-      Signature.assert({ r: 0n, s: 0n, yParity: 69 }),
+      Signature.assert({ r: '0x', s: '0x', yParity: 69 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      '[Signature.InvalidYParityError: Value `69` is an invalid y-parity value. Y-parity must be 0 or 1.]',
+      `[Signature.InvalidYParityError: Value \`69\` is an invalid y-parity value. Y-parity must be 0 or 1.]`,
     )
 
     expect(() =>
-      Signature.assert({ r: 0n, s: 0n }, { recovered: true }),
+      Signature.assert({ r: '0x', s: '0x' }, { recovered: true }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[Signature.MissingPropertiesError: Signature \`{"r":"0#__bigint","s":"0#__bigint"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
-    )
-
-    expect(() =>
-      Signature.assert({ r: -1n, s: 0n, yParity: 0 }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      '[Signature.InvalidRError: Value `-1` is an invalid r value. r must be a positive integer less than 2^256.]',
+      `[Signature.MissingPropertiesError: Signature \`{"r":"0x","s":"0x"}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.]`,
     )
 
     expect(() =>
       Signature.assert({
-        r: Solidity.maxUint256 + 1n,
-        s: 0n,
+        r: Hex.fromNumber(Solidity.maxUint256 + 1n),
+        s: '0x',
         yParity: 0,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      '[Signature.InvalidRError: Value `115792089237316195423570985008687907853269984665640564039457584007913129639936` is an invalid r value. r must be a positive integer less than 2^256.]',
-    )
-
-    expect(() =>
-      Signature.assert({ r: 0n, s: -1n, yParity: 0 }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      '[Signature.InvalidSError: Value `-1` is an invalid s value. s must be a positive integer less than 2^256.]',
+      `[Signature.InvalidRError: Value \`0x10000000000000000000000000000000000000000000000000000000000000000\` is an invalid r value. r must be a positive integer less than 2^256.]`,
     )
 
     expect(() =>
       Signature.assert({
-        r: 0n,
-        s: Solidity.maxUint256 + 1n,
+        r: '0x',
+        s: Hex.fromNumber(Solidity.maxUint256 + 1n),
         yParity: 0,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      '[Signature.InvalidSError: Value `115792089237316195423570985008687907853269984665640564039457584007913129639936` is an invalid s value. s must be a positive integer less than 2^256.]',
+      `[Signature.InvalidSError: Value \`0x10000000000000000000000000000000000000000000000000000000000000000\` is an invalid s value. s must be a positive integer less than 2^256.]`,
     )
   })
 })
@@ -68,8 +56,8 @@ describe('fromHex', () => {
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c',
       ),
     ).toEqual({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       yParity: 1,
     })
 
@@ -78,8 +66,8 @@ describe('fromHex', () => {
         '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81b',
       ),
     ).toEqual({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       yParity: 0,
     })
 
@@ -88,8 +76,8 @@ describe('fromHex', () => {
         '0x602381e57b70f1ada20bd56a806291cfc5cb5088f00f0e791510fd8b8cf05cc40dea7b983e0c7d204f3dc511b1f19a2787a5c82cd72f3bd38da58f10969907841b',
       ),
     ).toEqual({
-      r: 43484769623367213860417783105635222705150611167432112567800024380109931699396n,
-      s: 6294362263987653295407096796775254566164834706640834070377421739817648588676n,
+      r: '0x602381e57b70f1ada20bd56a806291cfc5cb5088f00f0e791510fd8b8cf05cc4',
+      s: '0x0dea7b983e0c7d204f3dc511b1f19a2787a5c82cd72f3bd38da58f1096990784',
       yParity: 0,
     })
 
@@ -99,8 +87,8 @@ describe('fromHex', () => {
       ),
     ).toMatchInlineSnapshot(`
     {
-      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+      "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
     }
   `)
   })
@@ -152,8 +140,8 @@ describe('fromBytes', () => {
         ),
       ),
     ).toEqual({
-      r: 74352382517807082440778846078252240710763999160569457624520311883943391062769n,
-      s: 43375188480015931414505591342117068151247353833881461609019650667261881302875n,
+      r: '0xa461f509887bd19e312c0c58467ce8ff8e300d3c1a90b608a760c5b80318eaf1',
+      s: '0x5fe57c96f9175d6cd4daad4663763baa7e78836e067d0163e9a2ccf2ff753f5b',
       yParity: 0,
     })
 
@@ -164,8 +152,8 @@ describe('fromBytes', () => {
         ),
       ),
     ).toEqual({
-      r: 89036260706339362183898531363310683680162157132496689422406521430939707497224n,
-      s: 22310885159939283473640002814069314990500333570711854513358211093549688653897n,
+      r: '0xc4d8bcda762d35ea79d9542b23200f46c2c1899db15bf929bbacaf609581db08',
+      s: '0x31538374a01206517edd934e474212a0f1e2d62e9a01cd64f1cf94ea2e098849',
       yParity: 1,
     })
   })
@@ -174,12 +162,8 @@ describe('fromBytes', () => {
 describe('extract', () => {
   test('default', () => {
     const signature = Signature.from({
-      r: BigInt(
-        '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
-      ),
-      s: BigInt(
-        '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
-      ),
+      r: '0x73b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bf',
+      s: '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
       yParity: 0,
     })
     const envelope = TxEnvelopeEip1559.from({
@@ -209,14 +193,14 @@ describe('extract', () => {
 describe('from', () => {
   test('default', () => {
     const signature = {
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       yParity: 1,
     } as const
     expect(Signature.from(signature)).toMatchInlineSnapshot(`
     {
-      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+      "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
       "yParity": 1,
     }
   `)
@@ -227,13 +211,13 @@ describe('from', () => {
 
   test('behavior: unrecovered', () => {
     const signature = {
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
     } as const
     expect(Signature.from(signature)).toMatchInlineSnapshot(`
     {
-      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+      "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
     }
   `)
 
@@ -243,14 +227,14 @@ describe('from', () => {
 
   test('behavior: legacy', () => {
     const signature = {
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       v: 27,
     } as const
     expect(Signature.from(signature)).toMatchInlineSnapshot(`
     {
-      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+      "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
       "yParity": 0,
     }
   `)
@@ -264,12 +248,12 @@ describe('from', () => {
         yParity: '0x0',
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "r": 1n,
-      "s": 2n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x1",
+        "s": "0x2",
+        "yParity": 0,
+      }
+    `)
 
     expect(
       Signature.from({
@@ -278,12 +262,12 @@ describe('from', () => {
         v: '0x0',
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "r": 1n,
-      "s": 2n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x1",
+        "s": "0x2",
+        "yParity": 0,
+      }
+    `)
 
     expect(
       Signature.from({
@@ -292,22 +276,22 @@ describe('from', () => {
         v: '0x1b',
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "r": 1n,
-      "s": 2n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x1",
+        "s": "0x2",
+        "yParity": 0,
+      }
+    `)
   })
 
   test('error: invalid sig', () => {
     const signature = {
-      r: Solidity.maxUint256 + 1n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: Hex.fromNumber(Solidity.maxUint256 + 1n),
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       yParity: 1,
     } as const
     expect(() => Signature.from(signature)).toThrowErrorMatchingInlineSnapshot(
-      '[Signature.InvalidRError: Value `115792089237316195423570985008687907853269984665640564039457584007913129639936` is an invalid r value. r must be a positive integer less than 2^256.]',
+      `[Signature.InvalidRError: Value \`0x10000000000000000000000000000000000000000000000000000000000000000\` is an invalid r value. r must be a positive integer less than 2^256.]`,
     )
   })
 })
@@ -321,8 +305,8 @@ describe('fromDerHex', () => {
     ).toMatchInlineSnapshot(
       `
     {
-      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+      "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
     }
   `,
     )
@@ -332,8 +316,8 @@ describe('fromDerHex', () => {
 describe('fromDerBytes', () => {
   test('default', () => {
     const signature = Signature.from({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
     })
     const signature_der = Signature.toDerBytes(signature)
     expect(Signature.fromDerBytes(signature_der)).toEqual(signature)
@@ -349,12 +333,12 @@ describe('fromRpc', () => {
         yParity: '0x0',
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "r": 1n,
-      "s": 2n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x1",
+        "s": "0x2",
+        "yParity": 0,
+      }
+    `)
 
     expect(
       Signature.fromRpc({
@@ -363,12 +347,12 @@ describe('fromRpc', () => {
         v: '0x0',
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "r": 1n,
-      "s": 2n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x1",
+        "s": "0x2",
+        "yParity": 0,
+      }
+    `)
 
     expect(
       Signature.fromRpc({
@@ -377,12 +361,12 @@ describe('fromRpc', () => {
         v: '0x1b',
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "r": 1n,
-      "s": 2n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x1",
+        "s": "0x2",
+        "yParity": 0,
+      }
+    `)
   })
 
   test('error: missing yParity and v', () => {
@@ -406,20 +390,20 @@ describe('fromTuple', () => {
         '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       ]),
     ).toMatchInlineSnapshot(`
-    {
-      "r": 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      "s": 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
-      "yParity": 1,
-    }
-  `)
+      {
+        "r": "0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf",
+        "s": "0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8",
+        "yParity": 1,
+      }
+    `)
 
     expect(Signature.fromTuple(['0x', '0x', '0x'])).toMatchInlineSnapshot(`
-    {
-      "r": 0n,
-      "s": 0n,
-      "yParity": 0,
-    }
-  `)
+      {
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "yParity": 0,
+      }
+    `)
   })
 
   test('error: invalid sig', () => {
@@ -430,7 +414,7 @@ describe('fromTuple', () => {
         '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       ]),
     ).toThrowErrorMatchingInlineSnapshot(
-      '[Signature.InvalidRError: Value `12744384857206398515154870451201165412972984067701483231091796422377075355598728` is an invalid r value. r must be a positive integer less than 2^256.]',
+      `[Hex.SizeExceedsPaddingSizeError: Hex size (\`33\`) exceeds padding size (\`32\`).]`,
     )
   })
 })
@@ -439,8 +423,8 @@ describe('serialize', () => {
   test('default', () => {
     expect(
       Signature.toHex({
-        r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-        s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+        r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+        s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
         yParity: 1,
       }),
     ).toMatchInlineSnapshot(
@@ -449,8 +433,8 @@ describe('serialize', () => {
 
     expect(
       Signature.toHex({
-        r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-        s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+        r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+        s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
         yParity: 0,
       }),
     ).toMatchInlineSnapshot(
@@ -459,8 +443,8 @@ describe('serialize', () => {
 
     expect(
       Signature.toHex({
-        r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-        s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+        r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+        s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       }),
     ).toMatchInlineSnapshot(
       `"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"`,
@@ -472,8 +456,8 @@ describe('toBytes', () => {
   test('args: as (bytes)', () => {
     expect(
       Signature.toBytes({
-        r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-        s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+        r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+        s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
         yParity: 1,
       }),
     ).toMatchInlineSnapshot(
@@ -553,8 +537,8 @@ describe('toBytes', () => {
 describe('toDerHex', () => {
   test('default', () => {
     const signature = Signature.from({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
     })
     expect(Signature.toDerHex(signature)).toMatchInlineSnapshot(
       `"0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8"`,
@@ -565,8 +549,8 @@ describe('toDerHex', () => {
 describe('toDerBytes', () => {
   test('options: as: bytes', () => {
     const signature = Signature.from({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
     })
     expect(Signature.toDerBytes(signature)).toMatchInlineSnapshot(
       `
@@ -650,37 +634,37 @@ describe('toDerBytes', () => {
 describe('toLegacy', () => {
   test('default', () => {
     expect(
-      Signature.fromLegacy({ r: 1n, s: 2n, v: 28 }),
+      Signature.fromLegacy({ r: '0x01', s: '0x02', v: 28 }),
     ).toMatchInlineSnapshot(`
     {
-      "r": 1n,
-      "s": 2n,
+      "r": "0x01",
+      "s": "0x02",
       "yParity": 1,
     }
   `)
 
     expect(
-      Signature.fromLegacy({ r: 1n, s: 2n, v: 27 }),
+      Signature.fromLegacy({ r: '0x01', s: '0x02', v: 27 }),
     ).toMatchInlineSnapshot(`
       {
-        "r": 1n,
-        "s": 2n,
+        "r": "0x01",
+        "s": "0x02",
         "yParity": 0,
       }
     `)
 
     expect(
-      Signature.fromLegacy({ r: 1n, s: 2n, v: 35 }),
+      Signature.fromLegacy({ r: '0x01', s: '0x02', v: 35 }),
     ).toMatchInlineSnapshot(`
       {
-        "r": 1n,
-        "s": 2n,
+        "r": "0x01",
+        "s": "0x02",
         "yParity": 0,
       }
     `)
 
     expect(() =>
-      Signature.fromLegacy({ r: 1n, s: 2n, v: 30 }),
+      Signature.fromLegacy({ r: '0x01', s: '0x02', v: 30 }),
     ).toThrowErrorMatchingInlineSnapshot(
       '[Signature.InvalidVError: Value `30` is an invalid v value. v must be 27, 28 or >=35.]',
     )
@@ -691,17 +675,17 @@ describe('toRpc', () => {
   test('default', () => {
     expect(
       Signature.toRpc({
-        r: 1n,
-        s: 2n,
+        r: '0x01',
+        s: '0x02',
         yParity: 0,
       }),
     ).toMatchInlineSnapshot(`
-    {
-      "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
-      "yParity": "0x0",
-    }
-  `)
+      {
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "yParity": "0x0",
+      }
+    `)
   })
 })
 
@@ -709,8 +693,8 @@ describe('toTuple', () => {
   test('default', () => {
     expect(
       Signature.toTuple({
-        r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-        s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+        r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+        s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
         yParity: 1,
       }),
     ).toMatchInlineSnapshot(`
@@ -723,8 +707,8 @@ describe('toTuple', () => {
 
     expect(
       Signature.toTuple({
-        r: 0n,
-        s: 0n,
+        r: '0x',
+        s: '0x',
         yParity: 0,
       }),
     ).toMatchInlineSnapshot(`
@@ -741,16 +725,16 @@ describe('validate', () => {
   test('default', () => {
     expect(
       Signature.validate({
-        r: 0n,
-        s: 0n,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000000',
         yParity: 0,
       }),
     ).toBe(true)
     expect(
       Signature.validate({
-        r: -1n,
-        s: 0n,
-        yParity: 0,
+        r: '0x',
+        s: '0x',
+        yParity: -1,
       }),
     ).toBe(false)
   })

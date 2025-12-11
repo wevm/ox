@@ -27,11 +27,9 @@ export type AuthorizationTempo<
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
   } & (signed extends true
-    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    ? { signature: SignatureEnvelope.SignatureEnvelope<numberType> }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
       })
 >
 

@@ -31,14 +31,14 @@ export type Base<
     /** Value in wei sent with this transaction */
     value?: bigintType | undefined
     /** ECDSA signature r. */
-    r?: bigintType | undefined
+    r?: Hex.Hex | undefined
     /** ECDSA signature s. */
-    s?: bigintType | undefined
+    s?: Hex.Hex | undefined
     /** ECDSA signature yParity. */
     yParity?: numberType | undefined
     /** @deprecated ECDSA signature v (for backwards compatibility). */
     v?: numberType | undefined
-  } & (signed extends true ? { r: bigintType; s: bigintType } : {})
+  } & (signed extends true ? { r: Hex.Hex; s: Hex.Hex } : {})
 >
 
 /** RPC representation of a {@link ox#(TransactionEnvelope:namespace).Base}. */

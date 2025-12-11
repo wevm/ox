@@ -317,8 +317,8 @@ export function sign(options: sign.Options): Signature.Signature {
     },
   )
   return {
-    r,
-    s,
+    r: Hex.fromNumber(r, { size: 32 }),
+    s: Hex.fromNumber(s, { size: 32 }),
     yParity: recovery,
   }
 }
@@ -390,7 +390,10 @@ export function verify(options: verify.Options): boolean {
   if (address)
     return Address.isEqual(address, recoverAddress({ payload, signature }))
   return secp256k1.verify(
-    signature,
+    {
+      r: Hex.toBigInt(signature.r),
+      s: Hex.toBigInt(signature.s),
+    },
     Bytes.from(payload),
     PublicKey.toBytes(publicKey),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
