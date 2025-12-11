@@ -1,4 +1,4 @@
-import { Bytes, Signature, Solidity, TransactionEnvelopeEip1559 } from 'ox'
+import { Bytes, Signature, Solidity, TxEnvelopeEip1559 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('assert', () => {
@@ -182,7 +182,7 @@ describe('extract', () => {
       ),
       yParity: 0,
     })
-    const envelope = TransactionEnvelopeEip1559.from({
+    const envelope = TxEnvelopeEip1559.from({
       chainId: 1,
       gas: 69420n,
       ...signature,
@@ -196,7 +196,7 @@ describe('extract', () => {
       s: '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
       yParity: '0x0',
     } as const
-    const envelope = TransactionEnvelopeEip1559.from({
+    const envelope = TxEnvelopeEip1559.from({
       chainId: 1,
       gas: 69420n,
     })

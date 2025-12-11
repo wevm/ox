@@ -12,10 +12,10 @@ import type {
 } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
-import * as TransactionEnvelope from './TransactionEnvelope.js'
-import * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelope from './TxEnvelope.js'
+import * as TxEnvelopeEip1559 from './TxEnvelopeEip1559.js'
 
-export type TransactionEnvelopeEip7702<
+export type TxEnvelopeEip7702<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
@@ -33,7 +33,7 @@ export type TransactionEnvelopeEip7702<
   }
 >
 
-export type Rpc<signed extends boolean = boolean> = TransactionEnvelopeEip7702<
+export type Rpc<signed extends boolean = boolean> = TxEnvelopeEip7702<
   signed,
   Hex.Hex,
   Hex.Hex,
@@ -42,7 +42,7 @@ export type Rpc<signed extends boolean = boolean> = TransactionEnvelopeEip7702<
 
 export type Serialized = `${SerializedType}${string}`
 
-export type Signed = TransactionEnvelopeEip7702<true>
+export type Signed = TxEnvelopeEip7702<true>
 
 export const serializedType = '0x04' as const
 export type SerializedType = typeof serializedType
@@ -51,13 +51,13 @@ export const type = 'eip7702' as const
 export type Type = typeof type
 
 /**
- * Asserts a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelopeEip7702} is valid.
+ * Asserts a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702} is valid.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip7702, Value } from 'ox'
+ * import { TxEnvelopeEip7702, Value } from 'ox'
  *
- * TransactionEnvelopeEip7702.assert({
+ * TxEnvelopeEip7702.assert({
  *   authorizationList: [],
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
@@ -71,9 +71,7 @@ export type Type = typeof type
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function assert(
-  envelope: PartialBy<TransactionEnvelopeEip7702, 'type'>,
-) {
+export function assert(envelope: PartialBy<TxEnvelopeEip7702, 'type'>) {
   const { authorizationList } = envelope
   if (authorizationList) {
     for (const authorization of authorizationList) {
@@ -83,8 +81,8 @@ export function assert(
         throw new TransactionEnvelope.InvalidChainIdError({ chainId })
     }
   }
-  TransactionEnvelopeEip1559.assert(
-    envelope as {} as TransactionEnvelopeEip1559.TransactionEnvelopeEip1559,
+  TxEnvelopeEip1559.assert(
+    envelope as {} as TxEnvelopeEip1559.TxEnvelopeEip1559,
   )
 }
 
@@ -96,13 +94,13 @@ export declare namespace assert {
 }
 
 /**
- * Deserializes a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelopeEip7702} from its serialized form.
+ * Deserializes a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702} from its serialized form.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip7702 } from 'ox'
+ * import { TxEnvelopeEip7702 } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip7702.deserialize('0x04ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip7702.deserialize('0x04ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
  * // @log: {
  * // @log:   authorizationList: [...],
  * // @log:   type: 'eip7702',
@@ -119,7 +117,7 @@ export declare namespace assert {
  */
 export function deserialize(
   serialized: Serialized,
-): Compute<TransactionEnvelopeEip7702> {
+): Compute<TxEnvelopeEip7702> {
   const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const [
@@ -166,7 +164,7 @@ export function deserialize(
   let transaction = {
     chainId: Number(chainId),
     type,
-  } as TransactionEnvelopeEip7702
+  } as TxEnvelopeEip7702
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
   if (Hex.validate(data) && data !== '0x') transaction.data = data
@@ -190,7 +188,7 @@ export function deserialize(
     transaction = {
       ...transaction,
       ...signature,
-    } as TransactionEnvelopeEip7702
+    } as TxEnvelopeEip7702
 
   assert(transaction)
 
@@ -206,7 +204,7 @@ export declare namespace deserialize {
  *
  * @example
  * ```ts twoslash
- * import { Authorization, Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
+ * import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
@@ -221,7 +219,7 @@ export declare namespace deserialize {
  *
  * const authorizationList = [Authorization.from(authorization, { signature })]
  *
- * const envelope = TransactionEnvelopeEip7702.from({ // [!code focus]
+ * const envelope = TxEnvelopeEip7702.from({ // [!code focus]
  *   authorizationList, // [!code focus]
  *   chainId: 1, // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
@@ -238,9 +236,9 @@ export declare namespace deserialize {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip7702.from({
+ * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList: [...],
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
@@ -250,11 +248,11 @@ export declare namespace deserialize {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeEip7702.getSignPayload(envelope),
+ *   payload: TxEnvelopeEip7702.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const envelope_signed = TransactionEnvelopeEip7702.from(envelope, { // [!code focus]
+ * const envelope_signed = TxEnvelopeEip7702.from(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  * // @log: {
@@ -274,12 +272,12 @@ export declare namespace deserialize {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an EIP-7702 Transaction Envelope from a {@link ox#TransactionEnvelopeEip7702.Serialized} value.
+ * It is possible to instantiate an EIP-7702 Transaction Envelope from a {@link ox#TxEnvelopeEip7702.Serialized} value.
  *
  * ```ts twoslash
- * import { TransactionEnvelopeEip7702 } from 'ox'
+ * import { TxEnvelopeEip7702 } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip7702.from('0x04f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip7702.from('0x04f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
  * // @log: {
  * // @log:   authorizationList: [...],
  * // @log:   chainId: 1,
@@ -295,22 +293,17 @@ export declare namespace deserialize {
  * @returns An EIP-7702 Transaction Envelope.
  */
 export function from<
-  const envelope extends
-    | UnionPartialBy<TransactionEnvelopeEip7702, 'type'>
-    | Serialized,
+  const envelope extends UnionPartialBy<TxEnvelopeEip7702, 'type'> | Serialized,
   const signature extends Signature.Signature | undefined = undefined,
 >(
-  envelope:
-    | envelope
-    | UnionPartialBy<TransactionEnvelopeEip7702, 'type'>
-    | Serialized,
+  envelope: envelope | UnionPartialBy<TxEnvelopeEip7702, 'type'> | Serialized,
   options: from.Options<signature> = {},
 ): from.ReturnType<envelope, signature> {
   const { signature } = options
 
   const envelope_ = (
     typeof envelope === 'string' ? deserialize(envelope) : envelope
-  ) as TransactionEnvelopeEip7702
+  ) as TxEnvelopeEip7702
 
   assert(envelope_)
 
@@ -328,13 +321,13 @@ export declare namespace from {
     }
 
   type ReturnType<
-    envelope extends
-      | UnionPartialBy<TransactionEnvelopeEip7702, 'type'>
-      | Hex.Hex = TransactionEnvelopeEip7702 | Hex.Hex,
+    envelope extends UnionPartialBy<TxEnvelopeEip7702, 'type'> | Hex.Hex =
+      | TxEnvelopeEip7702
+      | Hex.Hex,
     signature extends Signature.Signature | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
-      ? TransactionEnvelopeEip7702
+      ? TxEnvelopeEip7702
       : Assign<
           envelope,
           (signature extends Signature.Signature ? Readonly<signature> : {}) & {
@@ -350,7 +343,7 @@ export declare namespace from {
 }
 
 /**
- * Returns the payload to sign for a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelopeEip7702}.
+ * Returns the payload to sign for a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702}.
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
@@ -358,9 +351,9 @@ export declare namespace from {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Secp256k1, TransactionEnvelopeEip7702 } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip7702 } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip7702.from({
+ * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList: [...],
  *   chainId: 1,
  *   nonce: 0n,
@@ -370,7 +363,7 @@ export declare namespace from {
  *   value: 1000000000000000000n,
  * })
  *
- * const payload = TransactionEnvelopeEip7702.getSignPayload(envelope) // [!code focus]
+ * const payload = TxEnvelopeEip7702.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
@@ -380,7 +373,7 @@ export declare namespace from {
  * @returns The sign payload.
  */
 export function getSignPayload(
-  envelope: TransactionEnvelopeEip7702,
+  envelope: TxEnvelopeEip7702,
 ): getSignPayload.ReturnType {
   return hash(envelope, { presign: true })
 }
@@ -392,14 +385,14 @@ export declare namespace getSignPayload {
 }
 
 /**
- * Hashes a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelopeEip7702}. This is the "transaction hash".
+ * Hashes a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Secp256k1, TransactionEnvelopeEip7702 } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip7702 } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip7702.from({
+ * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList: [...],
  *   chainId: 1,
  *   nonce: 0n,
@@ -410,13 +403,13 @@ export declare namespace getSignPayload {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeEip7702.getSignPayload(envelope),
+ *   payload: TxEnvelopeEip7702.getSignPayload(envelope),
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TransactionEnvelopeEip7702.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip7702.from(envelope, { signature })
  *
- * const hash = TransactionEnvelopeEip7702.hash(envelope_signed) // [!code focus]
+ * const hash = TxEnvelopeEip7702.hash(envelope_signed) // [!code focus]
  * ```
  *
  * @param envelope - The EIP-7702 Transaction Envelope to hash.
@@ -424,7 +417,7 @@ export declare namespace getSignPayload {
  * @returns The hash of the transaction envelope.
  */
 export function hash<presign extends boolean = false>(
-  envelope: TransactionEnvelopeEip7702<presign extends true ? false : true>,
+  envelope: TxEnvelopeEip7702<presign extends true ? false : true>,
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const { presign } = options
@@ -457,12 +450,12 @@ export declare namespace hash {
 }
 
 /**
- * Serializes a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelopeEip7702}.
+ * Serializes a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702}.
  *
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Authorization, Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
+ * import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
@@ -477,7 +470,7 @@ export declare namespace hash {
  *
  * const authorizationList = [Authorization.from(authorization, { signature })]
  *
- * const envelope = TransactionEnvelopeEip7702.from({
+ * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList,
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
@@ -485,7 +478,7 @@ export declare namespace hash {
  *   value: Value.fromEther('1'),
  * })
  *
- * const serialized = TransactionEnvelopeEip7702.serialize(envelope) // [!code focus]
+ * const serialized = TxEnvelopeEip7702.serialize(envelope) // [!code focus]
  * ```
  *
  * @example
@@ -495,9 +488,9 @@ export declare namespace hash {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Secp256k1, TransactionEnvelopeEip7702, Value } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip7702.from({
+ * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList: [...],
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
@@ -506,11 +499,11 @@ export declare namespace hash {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeEip7702.getSignPayload(envelope),
+ *   payload: TxEnvelopeEip7702.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const serialized = TransactionEnvelopeEip7702.serialize(envelope, { // [!code focus]
+ * const serialized = TxEnvelopeEip7702.serialize(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  *
@@ -522,7 +515,7 @@ export declare namespace hash {
  * @returns The serialized Transaction Envelope.
  */
 export function serialize(
-  envelope: PartialBy<TransactionEnvelopeEip7702, 'type'>,
+  envelope: PartialBy<TxEnvelopeEip7702, 'type'>,
   options: serialize.Options = {},
 ): Serialized {
   const {
@@ -579,13 +572,13 @@ export declare namespace serialize {
 }
 
 /**
- * Validates a {@link ox#TransactionEnvelopeEip7702.TransactionEnvelopeEip7702}. Returns `true` if the envelope is valid, `false` otherwise.
+ * Validates a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702}. Returns `true` if the envelope is valid, `false` otherwise.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip7702, Value } from 'ox'
+ * import { TxEnvelopeEip7702, Value } from 'ox'
  *
- * const valid = TransactionEnvelopeEip7702.validate({
+ * const valid = TxEnvelopeEip7702.validate({
  *   authorizationList: [],
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
@@ -597,9 +590,7 @@ export declare namespace serialize {
  *
  * @param envelope - The transaction envelope to validate.
  */
-export function validate(
-  envelope: PartialBy<TransactionEnvelopeEip7702, 'type'>,
-) {
+export function validate(envelope: PartialBy<TxEnvelopeEip7702, 'type'>) {
   try {
     assert(envelope)
     return true

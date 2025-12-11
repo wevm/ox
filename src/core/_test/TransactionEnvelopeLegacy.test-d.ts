@@ -1,9 +1,9 @@
-import { TransactionEnvelopeLegacy } from 'ox'
+import { TxEnvelopeLegacy } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
   {
-    const envelope = TransactionEnvelopeLegacy.from({
+    const envelope = TxEnvelopeLegacy.from({
       to: '0x0000000000000000000000000000000000000000',
       value: 69n,
     })
@@ -12,22 +12,18 @@ test('default', () => {
       readonly value: 69n
       readonly type: 'legacy'
     }>()
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
+    expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeLegacy.TxEnvelopeLegacy>()
   }
 
   {
-    const envelope = TransactionEnvelopeLegacy.from(
-      '0x123' as TransactionEnvelopeLegacy.Serialized,
+    const envelope = TxEnvelopeLegacy.from(
+      '0x123' as TxEnvelopeLegacy.Serialized,
     )
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
+    expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeLegacy.TxEnvelopeLegacy>()
   }
 
   {
-    const envelope = TransactionEnvelopeLegacy.from({
+    const envelope = TxEnvelopeLegacy.from({
       to: '0x0000000000000000000000000000000000000000',
       value: 69n,
       r: 0n,
@@ -42,14 +38,12 @@ test('default', () => {
       readonly v: 37
       readonly type: 'legacy'
     }>()
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
+    expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeLegacy.TxEnvelopeLegacy>()
   }
 })
 
 test('options: signature', () => {
-  const envelope = TransactionEnvelopeLegacy.from(
+  const envelope = TxEnvelopeLegacy.from(
     {
       to: '0x0000000000000000000000000000000000000000',
       value: 69n,
@@ -71,7 +65,5 @@ test('options: signature', () => {
     readonly yParity: 0
     readonly type: 'legacy'
   }>()
-  expectTypeOf(
-    envelope,
-  ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
+  expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeLegacy.TxEnvelopeLegacy>()
 })

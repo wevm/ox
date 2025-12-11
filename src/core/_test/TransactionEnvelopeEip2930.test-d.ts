@@ -1,9 +1,9 @@
-import { TransactionEnvelopeEip2930 } from 'ox'
+import { TxEnvelopeEip2930 } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
   {
-    const envelope = TransactionEnvelopeEip2930.from({
+    const envelope = TxEnvelopeEip2930.from({
       chainId: 1,
       to: '0x0000000000000000000000000000000000000000',
       value: 69n,
@@ -14,22 +14,18 @@ test('default', () => {
       readonly value: 69n
       readonly type: 'eip2930'
     }>()
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
+    expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip2930.TxEnvelopeEip2930>()
   }
 
   {
-    const envelope = TransactionEnvelopeEip2930.from(
-      '0x123' as TransactionEnvelopeEip2930.Serialized,
+    const envelope = TxEnvelopeEip2930.from(
+      '0x123' as TxEnvelopeEip2930.Serialized,
     )
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
+    expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip2930.TxEnvelopeEip2930>()
   }
 
   {
-    const envelope = TransactionEnvelopeEip2930.from({
+    const envelope = TxEnvelopeEip2930.from({
       chainId: 1,
       to: '0x0000000000000000000000000000000000000000',
       value: 69n,
@@ -46,14 +42,12 @@ test('default', () => {
       readonly yParity: 0
       readonly type: 'eip2930'
     }>()
-    expectTypeOf(
-      envelope,
-    ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
+    expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip2930.TxEnvelopeEip2930>()
   }
 })
 
 test('options: signature', () => {
-  const envelope = TransactionEnvelopeEip2930.from(
+  const envelope = TxEnvelopeEip2930.from(
     {
       chainId: 1,
       to: '0x0000000000000000000000000000000000000000',
@@ -76,7 +70,5 @@ test('options: signature', () => {
     readonly yParity: 0
     readonly type: 'eip2930'
   }>()
-  expectTypeOf(
-    envelope,
-  ).toMatchTypeOf<TransactionEnvelopeEip2930.TransactionEnvelopeEip2930>()
+  expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip2930.TxEnvelopeEip2930>()
 })

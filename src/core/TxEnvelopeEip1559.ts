@@ -1,5 +1,5 @@
 import * as AccessList from './AccessList.js'
-import * as Blobs from './Blobs.js'
+import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
@@ -9,13 +9,11 @@ import type {
   PartialBy,
   UnionPartialBy,
 } from './internal/types.js'
-import * as Kzg from './Kzg.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
-import * as TransactionEnvelope from './TransactionEnvelope.js'
-import * as TransactionEnvelopeEip1559 from './TransactionEnvelopeEip1559.js'
+import * as TransactionEnvelope from './TxEnvelope.js'
 
-export type TransactionEnvelopeEip4844<
+export type TxEnvelopeEip1559<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
@@ -24,101 +22,87 @@ export type TransactionEnvelopeEip4844<
   TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
     /** EIP-2930 Access List. */
     accessList?: AccessList.AccessList | undefined
-    /** Versioned hashes of blobs to be included in the transaction. */
-    blobVersionedHashes: readonly Hex.Hex[]
-    /** Maximum total fee per gas sender is willing to pay for blob gas (in wei). */
-    maxFeePerBlobGas?: bigintType | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
     /** Max priority fee per gas (in wei). */
     maxPriorityFeePerGas?: bigintType | undefined
-    /** The sidecars associated with this transaction. When defined, the envelope is in the "network wrapper" format. */
-    sidecars?: readonly Blobs.BlobSidecar<Hex.Hex>[] | undefined
   }
 >
 
-export type Rpc<signed extends boolean = boolean> = TransactionEnvelopeEip4844<
+export type Rpc<signed extends boolean = boolean> = TxEnvelopeEip1559<
   signed,
   Hex.Hex,
   Hex.Hex,
-  '0x3'
+  '0x2'
 >
 
 export type Serialized = `${SerializedType}${string}`
 
-export const serializedType = '0x03' as const
+export const serializedType = '0x02' as const
 export type SerializedType = typeof serializedType
 
-export type Signed = TransactionEnvelopeEip4844<true>
+export type Signed = TxEnvelopeEip1559<true>
 
-export const type = 'eip4844' as const
-export type Type = 'eip4844'
+export const type = 'eip1559' as const
+export type Type = typeof type
 
 /**
- * Asserts a {@link ox#TransactionEnvelopeEip4844.TransactionEnvelopeEip4844} is valid.
+ * Asserts a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559} is valid.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip4844, Value } from 'ox'
+ * import { TxEnvelopeEip1559, Value } from 'ox'
  *
- * TransactionEnvelopeEip4844.assert({
- *   blobVersionedHashes: [],
+ * TxEnvelopeEip1559.assert({
+ *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
  *   value: Value.fromEther('1'),
  * })
- * // @error: EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.
+ * // @error: FeeCapTooHighError:
+ * // @error: The fee cap (`masFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913 gwei) cannot be
+ * // @error: higher than the maximum allowed value (2^256-1).
  * ```
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function assert(
-  envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
-) {
-  const { blobVersionedHashes } = envelope
-  if (blobVersionedHashes) {
-    if (blobVersionedHashes.length === 0)
-      throw new Blobs.EmptyBlobVersionedHashesError()
-    for (const hash of blobVersionedHashes) {
-      const size = Hex.size(hash)
-      const version = Hex.toNumber(Hex.slice(hash, 0, 1))
-      if (size !== 32)
-        throw new Blobs.InvalidVersionedHashSizeError({ hash, size })
-      if (version !== Kzg.versionedHashVersion)
-        throw new Blobs.InvalidVersionedHashVersionError({
-          hash,
-          version,
-        })
-    }
-  }
-  TransactionEnvelopeEip1559.assert(
-    envelope as {} as TransactionEnvelopeEip1559.TransactionEnvelopeEip1559,
+export function assert(envelope: PartialBy<TxEnvelopeEip1559, 'type'>) {
+  const { chainId, maxPriorityFeePerGas, maxFeePerGas, to } = envelope
+  if (chainId <= 0)
+    throw new TransactionEnvelope.InvalidChainIdError({ chainId })
+  if (to) Address.assert(to, { strict: false })
+  if (maxFeePerGas && BigInt(maxFeePerGas) > 2n ** 256n - 1n)
+    throw new TransactionEnvelope.FeeCapTooHighError({ feeCap: maxFeePerGas })
+  if (
+    maxPriorityFeePerGas &&
+    maxFeePerGas &&
+    maxPriorityFeePerGas > maxFeePerGas
   )
+    throw new TransactionEnvelope.TipAboveFeeCapError({
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+    })
 }
 
 export declare namespace assert {
   type ErrorType =
-    | TransactionEnvelopeEip1559.assert.ErrorType
-    | Hex.size.ErrorType
-    | Hex.toNumber.ErrorType
-    | Hex.slice.ErrorType
-    | Blobs.EmptyBlobVersionedHashesError
-    | Blobs.InvalidVersionedHashSizeError
-    | Blobs.InvalidVersionedHashVersionError
+    | Address.assert.ErrorType
+    | TransactionEnvelope.InvalidChainIdError
+    | TransactionEnvelope.FeeCapTooHighError
+    | TransactionEnvelope.TipAboveFeeCapError
     | Errors.GlobalErrorType
 }
 
 /**
- * Deserializes a {@link ox#TransactionEnvelopeEip4844.TransactionEnvelopeEip4844} from its serialized form.
+ * Deserializes a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559} from its serialized form.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip4844 } from 'ox'
+ * import { TxEnvelopeEip1559 } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip4844.deserialize('0x03ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip1559.deserialize('0x02ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
  * // @log: {
- * // @log:   blobVersionedHashes: [...],
- * // @log:   type: 'eip4844',
+ * // @log:   type: 'eip1559',
  * // @log:   nonce: 785n,
  * // @log:   maxFeePerGas: 2000000000n,
  * // @log:   gas: 1000000n,
@@ -132,17 +116,8 @@ export declare namespace assert {
  */
 export function deserialize(
   serialized: Serialized,
-): Compute<TransactionEnvelopeEip4844> {
-  const transactionOrWrapperArray = Rlp.toHex(Hex.slice(serialized, 1))
-
-  const hasNetworkWrapper = transactionOrWrapperArray.length === 4
-
-  const transactionArray = hasNetworkWrapper
-    ? transactionOrWrapperArray[0]!
-    : transactionOrWrapperArray
-  const wrapperArray = hasNetworkWrapper
-    ? transactionOrWrapperArray.slice(1)
-    : []
+): Compute<TxEnvelopeEip1559> {
+  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const [
     chainId,
@@ -154,15 +129,12 @@ export function deserialize(
     value,
     data,
     accessList,
-    maxFeePerBlobGas,
-    blobVersionedHashes,
     yParity,
     r,
     s,
-  ] = transactionArray
-  const [blobs, commitments, proofs] = wrapperArray
+  ] = transactionArray as readonly Hex.Hex[]
 
-  if (!(transactionArray.length === 11 || transactionArray.length === 14))
+  if (!(transactionArray.length === 9 || transactionArray.length === 12))
     throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
         chainId,
@@ -187,39 +159,29 @@ export function deserialize(
     })
 
   let transaction = {
-    blobVersionedHashes: blobVersionedHashes as Hex.Hex[],
     chainId: Number(chainId),
     type,
-  } as TransactionEnvelopeEip4844
+  } as TxEnvelopeEip1559
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
   if (Hex.validate(data) && data !== '0x') transaction.data = data
   if (Hex.validate(nonce))
     transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
   if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(maxFeePerBlobGas) && maxFeePerBlobGas !== '0x')
-    transaction.maxFeePerBlobGas = BigInt(maxFeePerBlobGas)
   if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
   if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
-  if (accessList?.length !== 0 && accessList !== '0x')
+  if (accessList!.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList.fromTupleList(accessList as any)
-  if (blobs && commitments && proofs)
-    transaction.sidecars = Blobs.toSidecars(blobs as Hex.Hex[], {
-      commitments: commitments as Hex.Hex[],
-      proofs: proofs as Hex.Hex[],
-    })
 
   const signature =
-    r && s && yParity
-      ? Signature.fromTuple([yParity as Hex.Hex, r as Hex.Hex, s as Hex.Hex])
-      : undefined
+    r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
   if (signature)
     transaction = {
       ...transaction,
       ...signature,
-    } as TransactionEnvelopeEip4844
+    } as TxEnvelopeEip1559
 
   assert(transaction)
 
@@ -231,21 +193,14 @@ export declare namespace deserialize {
 }
 
 /**
- * Converts an arbitrary transaction object into an EIP-4844 Transaction Envelope.
+ * Converts an arbitrary transaction object into an EIP-1559 Transaction Envelope.
  *
  * @example
  * ```ts twoslash
- * // @noErrors
- * import { Blobs, TransactionEnvelopeEip4844, Value } from 'ox'
- * import { kzg } from './kzg'
+ * import { TxEnvelopeEip1559, Value } from 'ox'
  *
- * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- *
- * const envelope = TransactionEnvelopeEip4844.from({
+ * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
- *   blobVersionedHashes,
- *   maxFeePerBlobGas: Value.fromGwei('3'),
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
@@ -259,18 +214,10 @@ export declare namespace deserialize {
  * It is possible to attach a `signature` to the transaction envelope.
  *
  * ```ts twoslash
- * // @noErrors
- * import { Blobs, Secp256k1, TransactionEnvelopeEip4844, Value } from 'ox'
- * import { kzg } from './kzg'
+ * import { Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
  *
- * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
- *
- * const envelope = TransactionEnvelopeEip4844.from({
- *   blobVersionedHashes,
+ * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
- *   maxFeePerBlobGas: Value.fromGwei('3'),
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
@@ -278,22 +225,19 @@ export declare namespace deserialize {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeEip4844.getSignPayload(envelope),
+ *   payload: TxEnvelopeEip1559.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const envelope_signed = TransactionEnvelopeEip4844.from(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
+ * const envelope_signed = TxEnvelopeEip1559.from(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  * // @log: {
- * // @log:   blobVersionedHashes: [...],
  * // @log:   chainId: 1,
- * // @log:   maxFeePerBlobGas: 3000000000n,
  * // @log:   maxFeePerGas: 10000000000n,
  * // @log:   maxPriorityFeePerGas: 1000000000n,
  * // @log:   to: '0x0000000000000000000000000000000000000000',
- * // @log:   type: 'eip4844',
+ * // @log:   type: 'eip1559',
  * // @log:   value: 1000000000000000000n,
  * // @log:   r: 125...n,
  * // @log:   s: 642...n,
@@ -304,50 +248,45 @@ export declare namespace deserialize {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an EIP-4844 Transaction Envelope from a {@link ox#TransactionEnvelopeEip4844.Serialized} value.
+ * It is possible to instantiate an EIP-1559 Transaction Envelope from a {@link ox#TxEnvelopeEip1559.Serialized} value.
  *
  * ```ts twoslash
- * import { TransactionEnvelopeEip4844 } from 'ox'
+ * import { TxEnvelopeEip1559 } from 'ox'
  *
- * const envelope = TransactionEnvelopeEip4844.from('0x03f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip1559.from('0x02f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
  * // @log: {
- * // @log:   blobVersionedHashes: [...],
  * // @log:   chainId: 1,
  * // @log:   maxFeePerGas: 10000000000n,
+ * // @log:   maxPriorityFeePerGas: 1000000000n,
  * // @log:   to: '0x0000000000000000000000000000000000000000',
- * // @log:   type: 'eip4844',
+ * // @log:   type: 'eip1559',
  * // @log:   value: 1000000000000000000n,
  * // @log: }
  * ```
  *
  * @param envelope - The transaction object to convert.
  * @param options - Options.
- * @returns An EIP-4844 Transaction Envelope.
+ * @returns An EIP-1559 Transaction Envelope.
  */
 export function from<
-  const envelope extends
-    | UnionPartialBy<TransactionEnvelopeEip4844, 'type'>
-    | Serialized,
+  const envelope extends UnionPartialBy<TxEnvelopeEip1559, 'type'> | Serialized,
   const signature extends Signature.Signature | undefined = undefined,
 >(
-  envelope:
-    | envelope
-    | UnionPartialBy<TransactionEnvelopeEip4844, 'type'>
-    | Serialized,
+  envelope: envelope | UnionPartialBy<TxEnvelopeEip1559, 'type'> | Serialized,
   options: from.Options<signature> = {},
 ): from.ReturnType<envelope, signature> {
   const { signature } = options
 
   const envelope_ = (
     typeof envelope === 'string' ? deserialize(envelope) : envelope
-  ) as TransactionEnvelopeEip4844
+  ) as TxEnvelopeEip1559
 
   assert(envelope_)
 
   return {
     ...envelope_,
     ...(signature ? Signature.from(signature) : {}),
-    type: 'eip4844',
+    type: 'eip1559',
   } as never
 }
 
@@ -358,17 +297,17 @@ export declare namespace from {
     }
 
   type ReturnType<
-    envelope extends
-      | UnionPartialBy<TransactionEnvelopeEip4844, 'type'>
-      | Hex.Hex = TransactionEnvelopeEip4844 | Hex.Hex,
+    envelope extends UnionPartialBy<TxEnvelopeEip1559, 'type'> | Hex.Hex =
+      | TxEnvelopeEip1559
+      | Hex.Hex,
     signature extends Signature.Signature | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
-      ? TransactionEnvelopeEip4844
+      ? TxEnvelopeEip1559
       : Assign<
           envelope,
           (signature extends Signature.Signature ? Readonly<signature> : {}) & {
-            readonly type: 'eip4844'
+            readonly type: 'eip1559'
           }
         >
   >
@@ -380,22 +319,16 @@ export declare namespace from {
 }
 
 /**
- * Returns the payload to sign for a {@link ox#TransactionEnvelopeEip4844.TransactionEnvelopeEip4844}.
+ * Returns the payload to sign for a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559}.
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
  * with ECDSA signing utilities like {@link ox#Secp256k1.(sign:function)}.
  *
  * ```ts twoslash
- * // @noErrors
- * import { Blobs, Secp256k1, TransactionEnvelopeEip4844 } from 'ox'
- * import { kzg } from './kzg'
+ * import { Secp256k1, TxEnvelopeEip1559 } from 'ox'
  *
- * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- *
- * const envelope = TransactionEnvelopeEip4844.from({
- *   blobVersionedHashes,
+ * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -404,7 +337,7 @@ export declare namespace from {
  *   value: 1000000000000000000n,
  * })
  *
- * const payload = TransactionEnvelopeEip4844.getSignPayload(envelope) // [!code focus]
+ * const payload = TxEnvelopeEip1559.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
@@ -414,7 +347,7 @@ export declare namespace from {
  * @returns The sign payload.
  */
 export function getSignPayload(
-  envelope: TransactionEnvelopeEip4844,
+  envelope: TxEnvelopeEip1559,
 ): getSignPayload.ReturnType {
   return hash(envelope, { presign: true })
 }
@@ -426,19 +359,13 @@ export declare namespace getSignPayload {
 }
 
 /**
- * Hashes a {@link ox#TransactionEnvelopeEip4844.TransactionEnvelopeEip4844}. This is the "transaction hash".
+ * Hashes a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash
- * // @noErrors
- * import { Blobs, TransactionEnvelopeEip4844 } from 'ox'
- * import { kzg } from './kzg'
+ * import { Secp256k1, TxEnvelopeEip1559 } from 'ox'
  *
- * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- *
- * const envelope = TransactionEnvelopeEip4844.from({
- *   blobVersionedHashes,
+ * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -447,15 +374,22 @@ export declare namespace getSignPayload {
  *   value: 1000000000000000000n,
  * })
  *
- * const hash = TransactionEnvelopeEip4844.hash(envelope) // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   payload: TxEnvelopeEip1559.getSignPayload(envelope),
+ *   privateKey: '0x...'
+ * })
+ *
+ * const envelope_signed = TxEnvelopeEip1559.from(envelope, { signature })
+ *
+ * const hash = TxEnvelopeEip1559.hash(envelope_signed) // [!code focus]
  * ```
  *
- * @param envelope - The EIP-4844 Transaction Envelope to hash.
+ * @param envelope - The EIP-1559 Transaction Envelope to hash.
  * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
 export function hash<presign extends boolean = false>(
-  envelope: TransactionEnvelopeEip4844<presign extends true ? false : true>,
+  envelope: TxEnvelopeEip1559<presign extends true ? false : true>,
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const { presign } = options
@@ -464,7 +398,6 @@ export function hash<presign extends boolean = false>(
       ...envelope,
       ...(presign
         ? {
-            sidecars: undefined,
             r: undefined,
             s: undefined,
             yParity: undefined,
@@ -490,26 +423,21 @@ export declare namespace hash {
 }
 
 /**
- * Serializes a {@link ox#TransactionEnvelopeEip4844.TransactionEnvelopeEip4844}.
+ * Serializes a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559}.
  *
  * @example
  * ```ts twoslash
- * // @noErrors
- * import { Blobs, TransactionEnvelopeEip4844 } from 'ox'
- * import { kzg } from './kzg'
+ * import { TxEnvelopeEip1559, Value } from 'ox'
  *
- * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- *
- * const envelope = TransactionEnvelopeEip4844.from({
- *   blobVersionedHashes,
+ * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
  *   value: Value.fromEther('1'),
  * })
  *
- * const serialized = TransactionEnvelopeEip4844.serialize(envelope) // [!code focus]
+ * const serialized = TxEnvelopeEip1559.serialize(envelope) // [!code focus]
  * ```
  *
  * @example
@@ -518,18 +446,10 @@ export declare namespace hash {
  * It is possible to attach a `signature` to the serialized Transaction Envelope.
  *
  * ```ts twoslash
- * // @noErrors
- * import { Blobs, Secp256k1, TransactionEnvelopeEip4844, Value } from 'ox'
- * import { kzg } from './kzg'
+ * import { Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
  *
- * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(blobs)
- *
- * const envelope = TransactionEnvelopeEip4844.from({
- *   blobVersionedHashes,
+ * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
- *   maxFeePerBlobGas: Value.fromGwei('3'),
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
@@ -537,12 +457,11 @@ export declare namespace hash {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeEip4844.getSignPayload(envelope),
+ *   payload: TxEnvelopeEip1559.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const serialized = TransactionEnvelopeEip4844.serialize(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
+ * const serialized = TxEnvelopeEip1559.serialize(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  *
@@ -554,21 +473,20 @@ export declare namespace hash {
  * @returns The serialized Transaction Envelope.
  */
 export function serialize(
-  envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
+  envelope: PartialBy<TxEnvelopeEip1559, 'type'>,
   options: serialize.Options = {},
 ): Serialized {
   const {
-    blobVersionedHashes,
     chainId,
     gas,
     nonce,
     to,
     value,
-    maxFeePerBlobGas,
     maxFeePerGas,
     maxPriorityFeePerGas,
     accessList,
     data,
+    input,
   } = envelope
 
   assert(envelope)
@@ -585,41 +503,18 @@ export function serialize(
     gas ? Hex.fromNumber(gas) : '0x',
     to ?? '0x',
     value ? Hex.fromNumber(value) : '0x',
-    data ?? '0x',
+    data ?? input ?? '0x',
     accessTupleList,
-    maxFeePerBlobGas ? Hex.fromNumber(maxFeePerBlobGas) : '0x',
-    blobVersionedHashes ?? [],
     ...(signature ? Signature.toTuple(signature) : []),
-  ] as const
+  ]
 
-  const sidecars = options.sidecars || envelope.sidecars
-  const blobs: Hex.Hex[] = []
-  const commitments: Hex.Hex[] = []
-  const proofs: Hex.Hex[] = []
-  if (sidecars)
-    for (let i = 0; i < sidecars.length; i++) {
-      const { blob, commitment, proof } = sidecars[i]!
-      blobs.push(blob)
-      commitments.push(commitment)
-      proofs.push(proof)
-    }
-
-  return Hex.concat(
-    '0x03',
-    sidecars
-      ? // If sidecars are provided, envelope turns into a "network wrapper":
-        Rlp.fromHex([serialized, blobs, commitments, proofs])
-      : // Otherwise, standard envelope is used:
-        Rlp.fromHex(serialized),
-  ) as Serialized
+  return Hex.concat(serializedType, Rlp.fromHex(serialized)) as Serialized
 }
 
 export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature.Signature | undefined
-    /** Sidecars to append to the serialized Transaction Envelope. */
-    sidecars?: Blobs.BlobSidecars<Hex.Hex> | undefined
   }
 
   type ErrorType =
@@ -632,28 +527,21 @@ export declare namespace serialize {
 }
 
 /**
- * Converts an {@link ox#TransactionEnvelopeEip4844.TransactionEnvelopeEip4844} to an {@link ox#TransactionEnvelopeEip4844.Rpc}.
+ * Converts an {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559} to an {@link ox#TxEnvelopeEip1559.Rpc}.
  *
  * @example
  * ```ts twoslash
- * // @noErrors
- * import { Blobs, RpcRequest, TransactionEnvelopeEip4844, Value } from 'ox'
- * import { kzg } from './kzg'
+ * import { RpcRequest, TxEnvelopeEip1559, Value } from 'ox'
  *
- * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- *
- * const envelope = TransactionEnvelopeEip4844.from({
- *   blobVersionedHashes,
+ * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
  *   nonce: 0n,
  *   gas: 21000n,
- *   maxFeePerBlobGas: Value.fromGwei('20'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: Value.fromEther('1'),
  * })
  *
- * const envelope_rpc = TransactionEnvelopeEip4844.toRpc(envelope) // [!code focus]
+ * const envelope_rpc = TxEnvelopeEip1559.toRpc(envelope) // [!code focus]
  *
  * const request = RpcRequest.from({
  *   id: 0,
@@ -662,16 +550,17 @@ export declare namespace serialize {
  * })
  * ```
  *
- * @param envelope - The EIP-4844 transaction envelope to convert.
- * @returns An RPC-formatted EIP-4844 transaction envelope.
+ * @param envelope - The EIP-1559 transaction envelope to convert.
+ * @returns An RPC-formatted EIP-1559 transaction envelope.
  */
-export function toRpc(envelope: Omit<TransactionEnvelopeEip4844, 'type'>): Rpc {
+export function toRpc(envelope: Omit<TxEnvelopeEip1559, 'type'>): Rpc {
   const signature = Signature.extract(envelope)
 
   return {
     ...envelope,
     chainId: Hex.fromNumber(envelope.chainId),
     data: envelope.data ?? envelope.input,
+    type: '0x2',
     ...(typeof envelope.gas === 'bigint'
       ? { gas: Hex.fromNumber(envelope.gas) }
       : {}),
@@ -681,16 +570,14 @@ export function toRpc(envelope: Omit<TransactionEnvelopeEip4844, 'type'>): Rpc {
     ...(typeof envelope.value === 'bigint'
       ? { value: Hex.fromNumber(envelope.value) }
       : {}),
-    ...(typeof envelope.maxFeePerBlobGas === 'bigint'
-      ? { maxFeePerBlobGas: Hex.fromNumber(envelope.maxFeePerBlobGas) }
-      : {}),
     ...(typeof envelope.maxFeePerGas === 'bigint'
       ? { maxFeePerGas: Hex.fromNumber(envelope.maxFeePerGas) }
       : {}),
     ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
-      ? { maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas) }
+      ? {
+          maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas),
+        }
       : {}),
-    type: '0x3',
     ...(signature ? Signature.toRpc(signature) : {}),
   } as never
 }
@@ -700,14 +587,14 @@ export declare namespace toRpc {
 }
 
 /**
- * Validates a {@link ox#TransactionEnvelopeEip4844.TransactionEnvelopeEip4844}. Returns `true` if the envelope is valid, `false` otherwise.
+ * Validates a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559}. Returns `true` if the envelope is valid, `false` otherwise.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip4844, Value } from 'ox'
+ * import { TxEnvelopeEip1559, Value } from 'ox'
  *
- * const valid = TransactionEnvelopeEip4844.assert({
- *   blobVersionedHashes: [],
+ * const valid = TxEnvelopeEip1559.assert({
+ *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
  *   value: Value.fromEther('1'),
@@ -717,9 +604,7 @@ export declare namespace toRpc {
  *
  * @param envelope - The transaction envelope to validate.
  */
-export function validate(
-  envelope: PartialBy<TransactionEnvelopeEip4844, 'type'>,
-) {
+export function validate(envelope: PartialBy<TxEnvelopeEip1559, 'type'>) {
   try {
     assert(envelope)
     return true

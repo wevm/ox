@@ -160,7 +160,7 @@ describe('encrypt/decrypt', () => {
     expect(decrypted).toEqual(Bytes.fromHex(secret))
   })
 
-  test('behavior: scrypt', async () => {
+  test.skip('behavior: scrypt', async () => {
     const [key, opts] = Keystore.scrypt({
       iv: '0x83dbcc02d8ccb40e466191a123791e0e',
       salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',

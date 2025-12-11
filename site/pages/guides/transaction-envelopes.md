@@ -7,13 +7,13 @@ utilized to construct Transactions to be broadcast to a network.
 
 Ox supports the core Ethereum Transaction Envelope types:
 
-| Module                                                          | Name                                                                            | Type   |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------ |
-| [`TransactionEnvelopeLegacy`](/api/TransactionEnvelopeLegacy)   | Legacy Transactions                                                             | `0x00` |
-| [`TransactionEnvelopeEip2930`](/api/TransactionEnvelopeEip2930) | [EIP-2930: Access List Transactions](https://eips.ethereum.org/EIPS/eip-2930)   | `0x01` |
-| [`TransactionEnvelopeEip1559`](/api/TransactionEnvelopeEip1559) | [EIP-1559: Fee Market Transactions](https://eips.ethereum.org/EIPS/eip-1559)    | `0x02` |
-| [`TransactionEnvelopeEip4844`](/api/TransactionEnvelopeEip4844) | [EIP-4844: Blob Transactions](https://eips.ethereum.org/EIPS/eip-4844)          | `0x03` |
-| [`TransactionEnvelopeEip7702`](/api/TransactionEnvelopeEip7702) | [EIP-7702: Authorization Transactions](https://eips.ethereum.org/EIPS/eip-7702) | `0x04` |
+| Module                                        | Name                                                                            | Type   |
+| --------------------------------------------- | ------------------------------------------------------------------------------- | ------ |
+| [`TxEnvelopeLegacy`](/api/TxEnvelopeLegacy)   | Legacy Transactions                                                             | `0x00` |
+| [`TxEnvelopeEip2930`](/api/TxEnvelopeEip2930) | [EIP-2930: Access List Transactions](https://eips.ethereum.org/EIPS/eip-2930)   | `0x01` |
+| [`TxEnvelopeEip1559`](/api/TxEnvelopeEip1559) | [EIP-1559: Fee Market Transactions](https://eips.ethereum.org/EIPS/eip-1559)    | `0x02` |
+| [`TxEnvelopeEip4844`](/api/TxEnvelopeEip4844) | [EIP-4844: Blob Transactions](https://eips.ethereum.org/EIPS/eip-4844)          | `0x03` |
+| [`TxEnvelopeEip7702`](/api/TxEnvelopeEip7702) | [EIP-7702: Authorization Transactions](https://eips.ethereum.org/EIPS/eip-7702) | `0x04` |
 
 ## Examples
 
@@ -21,12 +21,12 @@ Ox supports the core Ethereum Transaction Envelope types:
 
 A Transaction Envelope can be constructed using the respective `.from` function.
 
-The example below demonstrates how to construct an [EIP-1559 Transaction Envelope](/api/TransactionEnvelopeEip1559) using [`TransactionEnvelopeEip1559.from`](/api/TransactionEnvelopeEip1559/from). EIP-1559 Transactions are the most commonly used Transaction Envelope type.
+The example below demonstrates how to construct an [EIP-1559 Transaction Envelope](/api/TxEnvelopeEip1559) using [`TxEnvelopeEip1559.from`](/api/TxEnvelopeEip1559/from). EIP-1559 Transactions are the most commonly used Transaction Envelope type.
 
 ```ts twoslash
-import { TransactionEnvelopeEip1559, Value } from 'ox'
+import { TxEnvelopeEip1559, Value } from 'ox'
 
-const envelope = TransactionEnvelopeEip1559.from({
+const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
@@ -40,13 +40,13 @@ const envelope = TransactionEnvelopeEip1559.from({
 
 We can sign over a Transaction Envelope by passing the result of the Envelope's `.getSignPayload` function to the respective [Signer's](/guides/ecdsa#signing) `.sign` function.
 
-The example below demonstrates how to sign an [EIP-1559 Transaction Envelope](/api/TransactionEnvelopeEip1559).
+The example below demonstrates how to sign an [EIP-1559 Transaction Envelope](/api/TxEnvelopeEip1559).
 
 ```ts twoslash
-import { TransactionEnvelopeEip1559, Secp256k1, Value } from 'ox'
+import { TxEnvelopeEip1559, Secp256k1, Value } from 'ox'
 
 // Construct the Envelope.
-const envelope = TransactionEnvelopeEip1559.from({
+const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
@@ -57,12 +57,12 @@ const envelope = TransactionEnvelopeEip1559.from({
 
 // Sign over the Envelope. // [!code focus]
 const signature = Secp256k1.sign({ // [!code focus]
-  payload: TransactionEnvelopeEip1559.getSignPayload(envelope), // [!code focus]
+  payload: TxEnvelopeEip1559.getSignPayload(envelope), // [!code focus]
   privateKey: '0x...', // [!code focus]
 }) // [!code focus]
 
 // Attach the Signature to the Envelope. // [!code focus]
-const signed = TransactionEnvelopeEip1559.from(envelope, { signature }) // [!code focus]
+const signed = TxEnvelopeEip1559.from(envelope, { signature }) // [!code focus]
 //    ^?
 
 
@@ -86,10 +86,10 @@ const signed = TransactionEnvelopeEip1559.from(envelope, { signature }) // [!cod
 We can serialize a Transaction Envelope into RLP-encoded format by calling `.serialize`. We can also deserialize an RLP-encoded Transaction Envelope by calling `.deserialize`.
 
 ```ts twoslash
-import { TransactionEnvelopeEip1559, Secp256k1, Value } from 'ox'
+import { TxEnvelopeEip1559, Secp256k1, Value } from 'ox'
 
 // Construct the Envelope.
-const envelope = TransactionEnvelopeEip1559.from({
+const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
@@ -99,13 +99,13 @@ const envelope = TransactionEnvelopeEip1559.from({
 })
 
 // Serialize the Envelope. // [!code focus]
-const serialized = TransactionEnvelopeEip1559.serialize(envelope) // [!code focus]
+const serialized = TxEnvelopeEip1559.serialize(envelope) // [!code focus]
 //    ^?
 
 
 
 // Deserialize the Envelope. // [!code focus]
-const deserialized = TransactionEnvelopeEip1559.deserialize(serialized) // [!code focus]
+const deserialized = TxEnvelopeEip1559.deserialize(serialized) // [!code focus]
 //    ^?
 
 
@@ -120,10 +120,10 @@ We can send a Transaction Envelope to the network by serializing the signed enve
 In this example, we will use [`RpcTransport.fromHttp`](/api/RpcTransport/fromHttp) to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
 
 ```ts twoslash
-import { RpcTransport, TransactionEnvelopeEip1559, Secp256k1, Value } from 'ox'
+import { RpcTransport, TxEnvelopeEip1559, Secp256k1, Value } from 'ox'
 
 // Construct the Envelope.
-const envelope = TransactionEnvelopeEip1559.from({
+const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   maxFeePerGas: Value.fromGwei('10'),
   maxPriorityFeePerGas: Value.fromGwei('1'),
@@ -134,12 +134,12 @@ const envelope = TransactionEnvelopeEip1559.from({
 
 // Sign over the Envelope.
 const signature = Secp256k1.sign({
-  payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
+  payload: TxEnvelopeEip1559.getSignPayload(envelope),
   privateKey: '0x...',
 })
 
 // Serialize the Envelope with the Signature. // [!code focus]
-const serialized = TransactionEnvelopeEip1559.serialize(envelope, { // [!code focus] 
+const serialized = TxEnvelopeEip1559.serialize(envelope, { // [!code focus] 
   signature  // [!code focus]
 }) // [!code focus]
 
@@ -164,17 +164,17 @@ interact with a Browser Extension Wallet. You could also use `RpcTransport.fromH
 
 ```ts twoslash
 import 'ox/window'
-import { Provider, TransactionEnvelopeEip1559, Value } from 'ox'
+import { Provider, TxEnvelopeEip1559, Value } from 'ox'
 
 // Construct the Envelope.
-const envelope = TransactionEnvelopeEip1559.from({
+const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1.5'),
 })
 
 // Convert the Envelope to an RPC-compatible format. 
-const envelope_rpc = TransactionEnvelopeEip1559.toRpc(envelope)
+const envelope_rpc = TxEnvelopeEip1559.toRpc(envelope)
 
 // Broadcast the Envelope with `eth_sendTransaction`. 
 const provider = Provider.from(window.ethereum)
@@ -186,11 +186,11 @@ const hash = await provider.request({
 
 ## Related Modules
 
-| Module                                                        | Description                                                                                                         |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| [TransactionEnvelope](/api/TransactionEnvelope)               | Errors & Types for working with Transaction Envelopes.                                                              |
-| [TransactionEnvelopeEip1559](/api/TransactionEnvelopeEip1559) | Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559). |
-| [TransactionEnvelopeEip2930](/api/TransactionEnvelopeEip2930) | Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930). |
-| [TransactionEnvelopeEip4844](/api/TransactionEnvelopeEip4844) | Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844). |
-| [TransactionEnvelopeEip7702](/api/TransactionEnvelopeEip7702) | Utility functions for working with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702). |
-| [TransactionEnvelopeLegacy](/api/TransactionEnvelopeLegacy)   | Utility functions for working with **Legacy Transaction Envelopes**.                                                |
+| Module                                          | Description                                                                                                         |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [TransactionEnvelope](/api/TransactionEnvelope) | Errors & Types for working with Transaction Envelopes.                                                              |
+| [TxEnvelopeEip1559](/api/TxEnvelopeEip1559)     | Utility functions for working with [EIP-1559 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-1559). |
+| [TxEnvelopeEip2930](/api/TxEnvelopeEip2930)     | Utility functions for working with [EIP-2930 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-2930). |
+| [TxEnvelopeEip4844](/api/TxEnvelopeEip4844)     | Utility functions for working with [EIP-4844 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-4844). |
+| [TxEnvelopeEip7702](/api/TxEnvelopeEip7702)     | Utility functions for working with [EIP-7702 Typed Transaction Envelopes](https://eips.ethereum.org/EIPS/eip-7702). |
+| [TxEnvelopeLegacy](/api/TxEnvelopeLegacy)       | Utility functions for working with **Legacy Transaction Envelopes**.                                                |

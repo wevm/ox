@@ -8,7 +8,7 @@ import * as ox_Transaction from '../core/Transaction.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import type { Call } from './TransactionEnvelopeTempo.js'
+import type { Call } from './TxEnvelopeTempo.js'
 
 /**
  * A Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).

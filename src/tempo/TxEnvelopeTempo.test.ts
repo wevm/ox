@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import { SignatureEnvelope } from './index.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as TransactionEnvelopeTempo from './TransactionEnvelopeTempo.js'
+import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
 const privateKey =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
@@ -11,54 +11,54 @@ const privateKey =
 describe('assert', () => {
   test('empty calls list', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         calls: [],
         chainId: 1,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TransactionEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
+      `[TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
     )
   })
 
   test('missing calls', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         chainId: 1,
       } as any),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TransactionEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
+      `[TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
     )
   })
 
   test('invalid validity window', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         calls: [{ to: '0x0000000000000000000000000000000000000000' }],
         chainId: 1,
         validBefore: 100,
         validAfter: 200,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TransactionEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (200).]`,
+      `[TxEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (200).]`,
     )
   })
 
   test('invalid validity window (equal)', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         calls: [{ to: '0x0000000000000000000000000000000000000000' }],
         chainId: 1,
         validBefore: 100,
         validAfter: 100,
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TransactionEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (100).]`,
+      `[TxEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (100).]`,
     )
   })
 
   test('invalid call address', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         calls: [{ to: '0x000000000000000000000000000000000000000z' }],
         chainId: 1,
       }),
@@ -73,7 +73,7 @@ describe('assert', () => {
 
   test('fee cap too high', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         calls: [{ to: '0x0000000000000000000000000000000000000000' }],
         maxFeePerGas: 2n ** 256n - 1n + 1n,
         chainId: 1,
@@ -85,7 +85,7 @@ describe('assert', () => {
 
   test('tip above fee cap', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         calls: [{ to: '0x0000000000000000000000000000000000000000' }],
         chainId: 1,
         maxFeePerGas: 10n,
@@ -98,7 +98,7 @@ describe('assert', () => {
 
   test('invalid chain id', () => {
     expect(() =>
-      TransactionEnvelopeTempo.assert({
+      TxEnvelopeTempo.assert({
         calls: [{ to: '0x0000000000000000000000000000000000000000' }],
         chainId: 0,
       }),
@@ -109,7 +109,7 @@ describe('assert', () => {
 })
 
 describe('deserialize', () => {
-  const transaction = TransactionEnvelopeTempo.from({
+  const transaction = TxEnvelopeTempo.from({
     chainId: 1,
     calls: [
       {
@@ -123,26 +123,24 @@ describe('deserialize', () => {
   })
 
   test('default', () => {
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized).toEqual(transaction)
   })
 
   test('minimal', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{}],
       nonce: 0n,
       nonceKey: 0n,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
-      transaction,
-    )
+    const serialized = TxEnvelopeTempo.serialize(transaction)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(transaction)
   })
 
   test('multiple calls', () => {
-    const transaction_multiCall = TransactionEnvelopeTempo.from({
+    const transaction_multiCall = TxEnvelopeTempo.from({
       ...transaction,
       calls: [
         {
@@ -155,25 +153,23 @@ describe('deserialize', () => {
         },
       ],
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction_multiCall)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_multiCall)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_multiCall,
     )
   })
 
   test('gas', () => {
-    const transaction_gas = TransactionEnvelopeTempo.from({
+    const transaction_gas = TxEnvelopeTempo.from({
       ...transaction,
       gas: 21001n,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction_gas)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
-      transaction_gas,
-    )
+    const serialized = TxEnvelopeTempo.serialize(transaction_gas)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(transaction_gas)
   })
 
   test('accessList', () => {
-    const transaction_accessList = TransactionEnvelopeTempo.from({
+    const transaction_accessList = TxEnvelopeTempo.from({
       ...transaction,
       accessList: [
         {
@@ -185,81 +181,73 @@ describe('deserialize', () => {
         },
       ],
     })
-    const serialized = TransactionEnvelopeTempo.serialize(
-      transaction_accessList,
-    )
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_accessList)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_accessList,
     )
   })
 
   test('nonce', () => {
-    const transaction_nonce = TransactionEnvelopeTempo.from({
+    const transaction_nonce = TxEnvelopeTempo.from({
       ...transaction,
       nonce: 0n,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction_nonce)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
-      transaction_nonce,
-    )
+    const serialized = TxEnvelopeTempo.serialize(transaction_nonce)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(transaction_nonce)
   })
 
   test('nonceKey', () => {
-    const transaction_nonceKey = TransactionEnvelopeTempo.from({
+    const transaction_nonceKey = TxEnvelopeTempo.from({
       ...transaction,
       nonceKey: 0n,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction_nonceKey)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_nonceKey)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_nonceKey,
     )
   })
 
   test('validBefore', () => {
-    const transaction_validBefore = TransactionEnvelopeTempo.from({
+    const transaction_validBefore = TxEnvelopeTempo.from({
       ...transaction,
       validBefore: 1000000,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(
-      transaction_validBefore,
-    )
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_validBefore)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_validBefore,
     )
   })
 
   test('validAfter', () => {
-    const transaction_validAfter = TransactionEnvelopeTempo.from({
+    const transaction_validAfter = TxEnvelopeTempo.from({
       ...transaction,
       validAfter: 500000,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(
-      transaction_validAfter,
-    )
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_validAfter)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_validAfter,
     )
   })
 
   test('validBefore and validAfter', () => {
-    const transaction_validity = TransactionEnvelopeTempo.from({
+    const transaction_validity = TxEnvelopeTempo.from({
       ...transaction,
       validBefore: 1000000,
       validAfter: 500000,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction_validity)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_validity)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_validity,
     )
   })
 
   test('feeToken', () => {
-    const transaction_feeToken = TransactionEnvelopeTempo.from({
+    const transaction_feeToken = TxEnvelopeTempo.from({
       ...transaction,
       feeToken: '0x20c0000000000000000000000000000000000000',
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction_feeToken)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_feeToken)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_feeToken,
     )
   })
@@ -282,15 +270,13 @@ describe('deserialize', () => {
       }),
     })
 
-    const transaction_keyAuthorization = TransactionEnvelopeTempo.from({
+    const transaction_keyAuthorization = TxEnvelopeTempo.from({
       ...transaction,
       keyAuthorization,
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(
-      transaction_keyAuthorization,
-    )
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_keyAuthorization)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_keyAuthorization,
     )
   })
@@ -319,29 +305,25 @@ describe('deserialize', () => {
       }),
     ] as const
 
-    const transaction_authorizationList = TransactionEnvelopeTempo.from({
+    const transaction_authorizationList = TxEnvelopeTempo.from({
       ...transaction,
       authorizationList,
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(
-      transaction_authorizationList,
-    )
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_authorizationList)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_authorizationList,
     )
   })
 
   test('authorizationList (empty)', () => {
-    const transaction_authorizationList = TransactionEnvelopeTempo.from({
+    const transaction_authorizationList = TxEnvelopeTempo.from({
       ...transaction,
       authorizationList: [],
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(
-      transaction_authorizationList,
-    )
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const serialized = TxEnvelopeTempo.serialize(transaction_authorizationList)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
 
     // Empty authorizationList should be undefined after deserialization
     expect(deserialized.authorizationList).toBeUndefined()
@@ -350,13 +332,13 @@ describe('deserialize', () => {
   describe('signature', () => {
     test('secp256k1', () => {
       const signature = Secp256k1.sign({
-        payload: TransactionEnvelopeTempo.getSignPayload(transaction),
+        payload: TxEnvelopeTempo.getSignPayload(transaction),
         privateKey,
       })
-      const serialized = TransactionEnvelopeTempo.serialize(transaction, {
+      const serialized = TxEnvelopeTempo.serialize(transaction, {
         signature,
       })
-      expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual({
+      expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
         signature: { signature, type: 'secp256k1' },
       })
@@ -364,13 +346,13 @@ describe('deserialize', () => {
 
     test('secp256k1', () => {
       const signature = Secp256k1.sign({
-        payload: TransactionEnvelopeTempo.getSignPayload(transaction),
+        payload: TxEnvelopeTempo.getSignPayload(transaction),
         privateKey,
       })
-      const serialized = TransactionEnvelopeTempo.serialize(transaction, {
+      const serialized = TxEnvelopeTempo.serialize(transaction, {
         signature: SignatureEnvelope.from(signature),
       })
-      expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual({
+      expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
         signature: { signature, type: 'secp256k1' },
       })
@@ -380,10 +362,10 @@ describe('deserialize', () => {
       const privateKey = P256.randomPrivateKey()
       const publicKey = P256.getPublicKey({ privateKey })
       const signature = P256.sign({
-        payload: TransactionEnvelopeTempo.getSignPayload(transaction),
+        payload: TxEnvelopeTempo.getSignPayload(transaction),
         privateKey,
       })
-      const serialized = TransactionEnvelopeTempo.serialize(transaction, {
+      const serialized = TxEnvelopeTempo.serialize(transaction, {
         signature: SignatureEnvelope.from({
           signature,
           publicKey,
@@ -393,7 +375,7 @@ describe('deserialize', () => {
       // biome-ignore lint/suspicious/noTsIgnore: _
       // @ts-ignore
       delete signature.yParity
-      expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual({
+      expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
         signature: { prehash: true, publicKey, signature, type: 'p256' },
       })
@@ -401,12 +383,12 @@ describe('deserialize', () => {
   })
 
   test('feePayerSignature null', () => {
-    const transaction_feePayer = TransactionEnvelopeTempo.from({
+    const transaction_feePayer = TxEnvelopeTempo.from({
       ...transaction,
       feePayerSignature: null,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction_feePayer)
-    expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeTempo.serialize(transaction_feePayer)
+    expect(TxEnvelopeTempo.deserialize(serialized)).toEqual(
       transaction_feePayer,
     )
   })
@@ -433,7 +415,7 @@ describe('deserialize', () => {
       '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // feePayerSignatureOrSender (address)
       [], // authorizationList
     ]).slice(2)}` as const
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.feePayerSignature).toBe(null)
   })
 
@@ -459,7 +441,7 @@ describe('deserialize', () => {
       [Hex.fromNumber(0), Hex.fromNumber(1), Hex.fromNumber(2)], // feePayerSignatureOrSender (signature tuple)
       [], // authorizationList
     ]).slice(2)}` as const
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.feePayerSignature).toEqual({
       yParity: 0,
       r: 1n,
@@ -490,9 +472,7 @@ describe('deserialize', () => {
         '0x', // feePayerSignature
         [], // authorizationList
       ]).slice(2)}` as const
-      expect(
-        TransactionEnvelopeTempo.deserialize(serialized),
-      ).toMatchInlineSnapshot(`
+      expect(TxEnvelopeTempo.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "calls": [
             {
@@ -533,9 +513,7 @@ describe('deserialize', () => {
         '0x', // feePayerSignature
         [], // authorizationList
       ]).slice(2)}` as const
-      expect(
-        TransactionEnvelopeTempo.deserialize(serialized),
-      ).toMatchInlineSnapshot(`
+      expect(TxEnvelopeTempo.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "calls": [
             {
@@ -558,7 +536,7 @@ describe('deserialize', () => {
   describe('errors', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TransactionEnvelopeTempo.deserialize(`0x76${Rlp.fromHex([]).slice(2)}`),
+        TxEnvelopeTempo.deserialize(`0x76${Rlp.fromHex([]).slice(2)}`),
       ).toThrowErrorMatchingInlineSnapshot(`
         [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
 
@@ -569,7 +547,7 @@ describe('deserialize', () => {
 
     test('invalid transaction (some missing)', () => {
       expect(() =>
-        TransactionEnvelopeTempo.deserialize(
+        TxEnvelopeTempo.deserialize(
           `0x76${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
@@ -582,7 +560,7 @@ describe('deserialize', () => {
 
     test('invalid transaction (empty calls)', () => {
       expect(() =>
-        TransactionEnvelopeTempo.deserialize(
+        TxEnvelopeTempo.deserialize(
           `0x76${Rlp.fromHex([
             Hex.fromNumber(1), // chainId
             Hex.fromNumber(1), // maxPriorityFeePerGas
@@ -600,13 +578,13 @@ describe('deserialize', () => {
           ]).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(
-        `[TransactionEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
+        `[TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
       )
     })
 
     test('invalid transaction (too many fields with signature)', () => {
       expect(() =>
-        TransactionEnvelopeTempo.deserialize(
+        TxEnvelopeTempo.deserialize(
           `0x76${Rlp.fromHex([
             Hex.fromNumber(1), // chainId
             Hex.fromNumber(1), // maxPriorityFeePerGas
@@ -644,7 +622,7 @@ describe('deserialize', () => {
 describe('from', () => {
   test('default', () => {
     {
-      const envelope = TransactionEnvelopeTempo.from({
+      const envelope = TxEnvelopeTempo.from({
         chainId: 1,
         calls: [{}],
         nonce: 0n,
@@ -661,13 +639,13 @@ describe('from', () => {
           "type": "tempo",
         }
       `)
-      const serialized = TransactionEnvelopeTempo.serialize(envelope)
-      const envelope2 = TransactionEnvelopeTempo.from(serialized)
+      const serialized = TxEnvelopeTempo.serialize(envelope)
+      const envelope2 = TxEnvelopeTempo.from(serialized)
       expect(envelope2).toEqual(envelope)
     }
 
     {
-      const envelope = TransactionEnvelopeTempo.from({
+      const envelope = TxEnvelopeTempo.from({
         chainId: 1,
         calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
         nonce: 0n,
@@ -699,8 +677,8 @@ describe('from', () => {
           "type": "tempo",
         }
       `)
-      const serialized = TransactionEnvelopeTempo.serialize(envelope)
-      const envelope2 = TransactionEnvelopeTempo.from(serialized)
+      const serialized = TxEnvelopeTempo.serialize(envelope)
+      const envelope2 = TxEnvelopeTempo.from(serialized)
       expect(envelope2).toEqual({
         ...envelope,
         signature: { ...envelope.signature, type: 'secp256k1' },
@@ -709,7 +687,7 @@ describe('from', () => {
   })
 
   test('options: signature', () => {
-    const envelope = TransactionEnvelopeTempo.from(
+    const envelope = TxEnvelopeTempo.from(
       {
         chainId: 1,
         calls: [{}],
@@ -743,13 +721,13 @@ describe('from', () => {
         "type": "tempo",
       }
     `)
-    const serialized = TransactionEnvelopeTempo.serialize(envelope)
-    const envelope2 = TransactionEnvelopeTempo.from(serialized)
+    const serialized = TxEnvelopeTempo.serialize(envelope)
+    const envelope2 = TxEnvelopeTempo.from(serialized)
     expect(envelope2).toEqual(envelope)
   })
 
   test('options: signature', () => {
-    const envelope = TransactionEnvelopeTempo.from(
+    const envelope = TxEnvelopeTempo.from(
       {
         chainId: 1,
         calls: [{}],
@@ -779,13 +757,13 @@ describe('from', () => {
         "type": "tempo",
       }
     `)
-    const serialized = TransactionEnvelopeTempo.serialize(envelope)
-    const envelope2 = TransactionEnvelopeTempo.from(serialized)
+    const serialized = TxEnvelopeTempo.serialize(envelope)
+    const envelope2 = TxEnvelopeTempo.from(serialized)
     expect(envelope2).toEqual(envelope)
   })
 
   test('options: feePayerSignature', () => {
-    const envelope = TransactionEnvelopeTempo.from(
+    const envelope = TxEnvelopeTempo.from(
       {
         chainId: 1,
         calls: [{}],
@@ -823,7 +801,7 @@ describe('from', () => {
   })
 
   test('options: feePayerSignature (null)', () => {
-    const envelope = TransactionEnvelopeTempo.from(
+    const envelope = TxEnvelopeTempo.from(
       {
         chainId: 1,
         calls: [{}],
@@ -848,7 +826,7 @@ describe('from', () => {
 
 describe('serialize', () => {
   test('default', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [
         {
@@ -859,39 +837,37 @@ describe('serialize', () => {
       maxFeePerGas: Value.fromGwei('2'),
       maxPriorityFeePerGas: Value.fromGwei('2'),
     })
-    expect(
-      TransactionEnvelopeTempo.serialize(transaction),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeTempo.serialize(transaction)).toMatchInlineSnapshot(
       `"0x76ef018477359400847735940080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c08082031180808080c0"`,
     )
   })
 
   test('minimal', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{}],
       nonce: 0n,
     })
-    expect(
-      TransactionEnvelopeTempo.serialize(transaction),
-    ).toMatchInlineSnapshot(`"0x76d101808080c4c3808080c0808080808080c0"`)
+    expect(TxEnvelopeTempo.serialize(transaction)).toMatchInlineSnapshot(
+      `"0x76d101808080c4c3808080c0808080808080c0"`,
+    )
   })
 
   test('undefined nonceKey', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{}],
       nonce: 0n,
       nonceKey: undefined,
     })
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76d101808080c4c3808080c0808080808080c0"`,
     )
   })
 
   test('multiple calls', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [
         {
@@ -905,9 +881,7 @@ describe('serialize', () => {
       ],
       nonce: 0n,
     })
-    expect(
-      TransactionEnvelopeTempo.serialize(transaction),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeTempo.serialize(transaction)).toMatchInlineSnapshot(
       `"0x76f84101808080f4d79470997970c51812dc3a010c7d01b50e0d17dc79c88080db943c44cdddb6a900fa2b585dd299e03d12fa4293bc8207d0821234c0808080808080c0"`,
     )
   })
@@ -930,19 +904,19 @@ describe('serialize', () => {
       }),
     })
 
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
       keyAuthorization,
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76f8a201808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c0808080808080c0f87bf7808094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2dad99420c000000000000000000000000000000000000183989680b841635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b"`,
     )
 
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.keyAuthorization).toEqual(keyAuthorization)
   })
 
@@ -971,19 +945,19 @@ describe('serialize', () => {
       }),
     })
 
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
       keyAuthorization,
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76f8e301808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c0808080808080c0f8bcf7800194be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2dad99420c000000000000000000000000000000000000183989680b88201ccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba001"`,
     )
 
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.keyAuthorization).toEqual(keyAuthorization)
   })
 
@@ -1022,20 +996,20 @@ describe('serialize', () => {
       }),
     })
 
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
       keyAuthorization,
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76f9016501808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c0808080808080c0f9013df7800294be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2dad99420c000000000000000000000000000000000000183989680b901020249960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976305000000007b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a223371322d3777222c226f726967696e223a22687474703a2f2f6c6f63616c686f7374222c2263726f73734f726967696e223a66616c73657dccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0"`,
     )
 
     // Verify roundtrip
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.keyAuthorization).toEqual(keyAuthorization)
   })
 
@@ -1063,19 +1037,19 @@ describe('serialize', () => {
       }),
     ] as const
 
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
       authorizationList,
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76f8de01808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c0808080808080f8b8f85a0194be95c3f554e9fc85ec51be69a3d807a0d55bcf2c28b8416e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81bf85a019470997970c51812dc3a010c7d01b50e0d17dc79c837b841000000000000000000000000000000000000000000000000ab54a98ceb1f0ad20000000000000000000000000000000000000000000000055aa54d38e5267eea1c"`,
     )
 
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.authorizationList).toEqual(authorizationList)
   })
 
@@ -1116,15 +1090,15 @@ describe('serialize', () => {
       }),
     ]
 
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
       authorizationList,
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
 
     expect(deserialized.authorizationList).toHaveLength(2)
     expect(deserialized.authorizationList?.[0]?.address).toBe(
@@ -1140,35 +1114,35 @@ describe('serialize', () => {
   })
 
   test('authorizationList (empty)', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
       authorizationList: [],
     })
 
-    const serialized = TransactionEnvelopeTempo.serialize(transaction)
+    const serialized = TxEnvelopeTempo.serialize(transaction)
     expect(serialized).toMatchInlineSnapshot(
       `"0x76e501808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c0808080808080c0"`,
     )
 
-    const deserialized = TransactionEnvelopeTempo.deserialize(serialized)
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.authorizationList).toBeUndefined()
   })
 
   describe('with signature', () => {
     test('secp256k1', () => {
-      const transaction = TransactionEnvelopeTempo.from({
+      const transaction = TxEnvelopeTempo.from({
         chainId: 1,
         calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
         nonce: 0n,
       })
       const signature = Secp256k1.sign({
-        payload: TransactionEnvelopeTempo.getSignPayload(transaction),
+        payload: TxEnvelopeTempo.getSignPayload(transaction),
         privateKey,
       })
       expect(
-        TransactionEnvelopeTempo.serialize(transaction, {
+        TxEnvelopeTempo.serialize(transaction, {
           signature: SignatureEnvelope.from(signature),
         }),
       ).toMatchInlineSnapshot(
@@ -1177,7 +1151,7 @@ describe('serialize', () => {
     })
 
     test('p256', () => {
-      const transaction = TransactionEnvelopeTempo.from({
+      const transaction = TxEnvelopeTempo.from({
         chainId: 1,
         calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
         nonce: 0n,
@@ -1185,10 +1159,10 @@ describe('serialize', () => {
       const privateKey = P256.randomPrivateKey()
       const publicKey = P256.getPublicKey({ privateKey })
       const signature = P256.sign({
-        payload: TransactionEnvelopeTempo.getSignPayload(transaction),
+        payload: TxEnvelopeTempo.getSignPayload(transaction),
         privateKey,
       })
-      const serialized = TransactionEnvelopeTempo.serialize(transaction, {
+      const serialized = TxEnvelopeTempo.serialize(transaction, {
         signature: SignatureEnvelope.from({
           signature,
           publicKey,
@@ -1198,7 +1172,7 @@ describe('serialize', () => {
       // biome-ignore lint/suspicious/noTsIgnore: _
       // @ts-ignore
       delete signature.yParity
-      expect(TransactionEnvelopeTempo.deserialize(serialized)).toEqual({
+      expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
         nonceKey: 0n,
         signature: { prehash: true, publicKey, signature, type: 'p256' },
@@ -1207,13 +1181,13 @@ describe('serialize', () => {
   })
 
   test('with feePayerSignature', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
     })
     expect(
-      TransactionEnvelopeTempo.serialize(transaction, {
+      TxEnvelopeTempo.serialize(transaction, {
         feePayerSignature: {
           r: 1n,
           s: 2n,
@@ -1226,13 +1200,13 @@ describe('serialize', () => {
   })
 
   test('with feePayerSignature (null)', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
     })
     expect(
-      TransactionEnvelopeTempo.serialize(transaction, {
+      TxEnvelopeTempo.serialize(transaction, {
         feePayerSignature: null,
       }),
     ).toMatchInlineSnapshot(
@@ -1241,13 +1215,13 @@ describe('serialize', () => {
   })
 
   test('format: feePayer', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
       nonce: 0n,
     })
     expect(
-      TransactionEnvelopeTempo.serialize(transaction, {
+      TxEnvelopeTempo.serialize(transaction, {
         sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
         format: 'feePayer',
       }),
@@ -1260,7 +1234,7 @@ describe('serialize', () => {
 describe('hash', () => {
   describe('default', () => {
     test('secp256k1', () => {
-      const transaction = TransactionEnvelopeTempo.from({
+      const transaction = TxEnvelopeTempo.from({
         chainId: 1,
         calls: [
           {
@@ -1270,20 +1244,20 @@ describe('hash', () => {
         nonce: 0n,
       })
       const signature = Secp256k1.sign({
-        payload: TransactionEnvelopeTempo.getSignPayload(transaction),
+        payload: TxEnvelopeTempo.getSignPayload(transaction),
         privateKey,
       })
-      const signed = TransactionEnvelopeTempo.from(transaction, {
+      const signed = TxEnvelopeTempo.from(transaction, {
         signature: SignatureEnvelope.from(signature),
       })
-      expect(TransactionEnvelopeTempo.hash(signed)).toMatchInlineSnapshot(
+      expect(TxEnvelopeTempo.hash(signed)).toMatchInlineSnapshot(
         `"0x04ad27d1607bc3fc37445724d8864b0843f88008bafd818814474e5ee94647eb"`,
       )
     })
   })
 
   test('presign', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [
         {
@@ -1293,7 +1267,7 @@ describe('hash', () => {
       nonce: 0n,
     })
     expect(
-      TransactionEnvelopeTempo.hash(transaction, { presign: true }),
+      TxEnvelopeTempo.hash(transaction, { presign: true }),
     ).toMatchInlineSnapshot(
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
     )
@@ -1302,7 +1276,7 @@ describe('hash', () => {
 
 describe('getSignPayload', () => {
   test('default', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [
         {
@@ -1311,9 +1285,7 @@ describe('getSignPayload', () => {
       ],
       nonce: 0n,
     })
-    expect(
-      TransactionEnvelopeTempo.getSignPayload(transaction),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeTempo.getSignPayload(transaction)).toMatchInlineSnapshot(
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
     )
   })
@@ -1321,7 +1293,7 @@ describe('getSignPayload', () => {
 
 describe('getFeePayerSignPayload', () => {
   test('default', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [
         {
@@ -1331,7 +1303,7 @@ describe('getFeePayerSignPayload', () => {
       nonce: 0n,
     })
     expect(
-      TransactionEnvelopeTempo.getFeePayerSignPayload(transaction, {
+      TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
         sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
       }),
     ).toMatchInlineSnapshot(
@@ -1340,7 +1312,7 @@ describe('getFeePayerSignPayload', () => {
   })
 
   test('with feeToken', () => {
-    const transaction = TransactionEnvelopeTempo.from({
+    const transaction = TxEnvelopeTempo.from({
       chainId: 1,
       calls: [
         {
@@ -1350,21 +1322,18 @@ describe('getFeePayerSignPayload', () => {
       nonce: 0n,
       feeToken: '0x20c0000000000000000000000000000000000000',
     })
-    const hash1 = TransactionEnvelopeTempo.getFeePayerSignPayload(transaction, {
+    const hash1 = TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
       sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
     })
 
     // Change feeToken - hash should be different
-    const transaction2 = TransactionEnvelopeTempo.from({
+    const transaction2 = TxEnvelopeTempo.from({
       ...transaction,
       feeToken: '0x20c0000000000000000000000000000000000001',
     })
-    const hash2 = TransactionEnvelopeTempo.getFeePayerSignPayload(
-      transaction2,
-      {
-        sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-      },
-    )
+    const hash2 = TxEnvelopeTempo.getFeePayerSignPayload(transaction2, {
+      sender: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+    })
 
     expect(hash1).not.toBe(hash2)
   })
@@ -1373,7 +1342,7 @@ describe('getFeePayerSignPayload', () => {
 describe('validate', () => {
   test('valid', () => {
     expect(
-      TransactionEnvelopeTempo.validate({
+      TxEnvelopeTempo.validate({
         calls: [{ to: '0x0000000000000000000000000000000000000000' }],
         chainId: 1,
       }),
@@ -1382,7 +1351,7 @@ describe('validate', () => {
 
   test('invalid (empty calls)', () => {
     expect(
-      TransactionEnvelopeTempo.validate({
+      TxEnvelopeTempo.validate({
         calls: [],
         chainId: 1,
       }),
@@ -1391,7 +1360,7 @@ describe('validate', () => {
 
   test('invalid (validity window)', () => {
     expect(
-      TransactionEnvelopeTempo.validate({
+      TxEnvelopeTempo.validate({
         calls: [{ to: '0x0000000000000000000000000000000000000000' }],
         chainId: 1,
         validBefore: 100,

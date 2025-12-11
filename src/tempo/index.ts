@@ -233,37 +233,6 @@ export * as TokenRole from './TokenRole.js'
  * @category Reference
  */
 export * as Transaction from './Transaction.js'
-
-/**
- * Utilities for instantiating, serializing, and hashing Tempo transaction envelopes.
- *
- * Create, sign, and serialize Tempo transactions with support for configurable fee tokens,
- * call batching, fee sponsorship, access keys, and scheduled execution via `validAfter`/`validBefore`.
- *
- * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction Tempo Transaction Specification}
- *
- * @example
- * ```ts twoslash
- * import { Secp256k1, Value } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
- *
- * const envelope = TransactionEnvelopeTempo.from({
- *   chainId: 1,
- *   calls: [{ to: '0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }],
- *   maxFeePerGas: Value.fromGwei('10'),
- * })
- *
- * const payload = TransactionEnvelopeTempo.getSignPayload(envelope)
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
- *
- * const envelope_signed = TransactionEnvelopeTempo.from(envelope, { signature })
- * const envelope_serialized = TransactionEnvelopeTempo.serialize(envelope_signed)
- * ```
- *
- * @category Reference
- */
-export * as TransactionEnvelopeTempo from './TransactionEnvelopeTempo.js'
-
 /**
  * Utilities for working with Tempo transaction receipts.
  *
@@ -287,7 +256,6 @@ export * as TransactionEnvelopeTempo from './TransactionEnvelopeTempo.js'
  * @category Reference
  */
 export * as TransactionReceipt from './TransactionReceipt.js'
-
 /**
  * Utilities for preparing RPC-formatted transaction requests.
  *
@@ -309,3 +277,32 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * @category Reference
  */
 export * as TransactionRequest from './TransactionRequest.js'
+/**
+ * Utilities for instantiating, serializing, and hashing Tempo transaction envelopes.
+ *
+ * Create, sign, and serialize Tempo transactions with support for configurable fee tokens,
+ * call batching, fee sponsorship, access keys, and scheduled execution via `validAfter`/`validBefore`.
+ *
+ * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction Tempo Transaction Specification}
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1, Value } from 'ox'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * const envelope = TxEnvelopeTempo.from({
+ *   chainId: 1,
+ *   calls: [{ to: '0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }],
+ *   maxFeePerGas: Value.fromGwei('10'),
+ * })
+ *
+ * const payload = TxEnvelopeTempo.getSignPayload(envelope)
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ *
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, { signature })
+ * const envelope_serialized = TxEnvelopeTempo.serialize(envelope_signed)
+ * ```
+ *
+ * @category Reference
+ */
+export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'

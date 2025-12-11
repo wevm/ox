@@ -1,4 +1,4 @@
-import { Hex, Rlp, Secp256k1, TransactionEnvelopeLegacy, Value } from 'ox'
+import { Hex, Rlp, Secp256k1, TxEnvelopeLegacy, Value } from 'ox'
 import { assertType, describe, expect, expectTypeOf, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'
@@ -6,7 +6,7 @@ import { anvilMainnet } from '../../../test/prool.js'
 describe('assert', () => {
   test('fee cap too high', () => {
     expect(() =>
-      TransactionEnvelopeLegacy.assert({
+      TxEnvelopeLegacy.assert({
         gasPrice: 2n ** 256n - 1n + 1n,
         chainId: 1,
       }),
@@ -17,7 +17,7 @@ describe('assert', () => {
 
   test('invalid chainId', () => {
     expect(() =>
-      TransactionEnvelopeLegacy.assert({ chainId: 0 }),
+      TxEnvelopeLegacy.assert({ chainId: 0 }),
     ).toThrowErrorMatchingInlineSnapshot(
       `[TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.]`,
     )
@@ -25,7 +25,7 @@ describe('assert', () => {
 
   test('invalid address', () => {
     expect(() =>
-      TransactionEnvelopeLegacy.assert({ to: '0x123', chainId: 1 }),
+      TxEnvelopeLegacy.assert({ to: '0x123', chainId: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0x123" is invalid.
 
@@ -35,7 +35,7 @@ describe('assert', () => {
 })
 
 describe('deserialize', () => {
-  const transaction = TransactionEnvelopeLegacy.from({
+  const transaction = TxEnvelopeLegacy.from({
     gasPrice: Value.fromGwei('2'),
     to: accounts[1].address,
     nonce: 785n,
@@ -43,69 +43,59 @@ describe('deserialize', () => {
   })
 
   test('default', () => {
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction)
-    const deserialized = TransactionEnvelopeLegacy.deserialize(serialized)
-    assertType<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>(
-      deserialized,
-    )
+    const serialized = TxEnvelopeLegacy.serialize(transaction)
+    const deserialized = TxEnvelopeLegacy.deserialize(serialized)
+    assertType<TxEnvelopeLegacy.TxEnvelopeLegacy>(deserialized)
     expect(deserialized).toEqual(transaction)
   })
 
   test('gas', () => {
-    const transaction_gas = TransactionEnvelopeLegacy.from({
+    const transaction_gas = TxEnvelopeLegacy.from({
       ...transaction,
       gas: 21001n,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction_gas)
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
-      transaction_gas,
-    )
+    const serialized = TxEnvelopeLegacy.serialize(transaction_gas)
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(transaction_gas)
   })
 
   test('data', () => {
-    const transaction_data = TransactionEnvelopeLegacy.from({
+    const transaction_data = TxEnvelopeLegacy.from({
       ...transaction,
       data: '0x1234',
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction_data)
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
-      transaction_data,
-    )
+    const serialized = TxEnvelopeLegacy.serialize(transaction_data)
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(transaction_data)
   })
 
   test('chainId', () => {
-    const transaction_chainId = TransactionEnvelopeLegacy.from({
+    const transaction_chainId = TxEnvelopeLegacy.from({
       ...transaction,
       chainId: 69,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction_chainId)
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
+    const serialized = TxEnvelopeLegacy.serialize(transaction_chainId)
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(
       transaction_chainId,
     )
   })
 
   test('zeroish nonce', () => {
-    const transaction_nonce = TransactionEnvelopeLegacy.from({
+    const transaction_nonce = TxEnvelopeLegacy.from({
       ...transaction,
       nonce: 0n,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction_nonce)
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
-      transaction_nonce,
-    )
+    const serialized = TxEnvelopeLegacy.serialize(transaction_nonce)
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(transaction_nonce)
   })
 
   test('signature', async () => {
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelopeLegacy.getSignPayload(transaction),
+      payload: TxEnvelopeLegacy.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction, {
+    const serialized = TxEnvelopeLegacy.serialize(transaction, {
       signature,
     })
-    expect(
-      TransactionEnvelopeLegacy.deserialize(serialized),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
     {
       "gasPrice": 2000000000n,
@@ -124,16 +114,14 @@ describe('deserialize', () => {
 
   test('signature', async () => {
     {
-      const serialized = TransactionEnvelopeLegacy.serialize(transaction, {
+      const serialized = TxEnvelopeLegacy.serialize(transaction, {
         signature: {
           r: 1n,
           s: 0n,
           yParity: 0,
         },
       })
-      expect(
-        TransactionEnvelopeLegacy.deserialize(serialized),
-      ).toMatchInlineSnapshot(
+      expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
         `
       {
         "gasPrice": 2000000000n,
@@ -151,16 +139,14 @@ describe('deserialize', () => {
     }
 
     {
-      const serialized = TransactionEnvelopeLegacy.serialize(transaction, {
+      const serialized = TxEnvelopeLegacy.serialize(transaction, {
         signature: {
           r: 0n,
           s: 1n,
           yParity: 0,
         },
       })
-      expect(
-        TransactionEnvelopeLegacy.deserialize(serialized),
-      ).toMatchInlineSnapshot(
+      expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
         `
       {
         "gasPrice": 2000000000n,
@@ -179,23 +165,18 @@ describe('deserialize', () => {
   })
 
   test('signature + chainId', async () => {
-    const transaction_chainId = TransactionEnvelopeLegacy.from({
+    const transaction_chainId = TxEnvelopeLegacy.from({
       ...transaction,
       chainId: 69,
     })
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelopeLegacy.getSignPayload(transaction_chainId),
+      payload: TxEnvelopeLegacy.getSignPayload(transaction_chainId),
       privateKey: accounts[0].privateKey,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(
-      transaction_chainId,
-      {
-        signature,
-      },
-    )
-    expect(
-      TransactionEnvelopeLegacy.deserialize(serialized),
-    ).toMatchInlineSnapshot(
+    const serialized = TxEnvelopeLegacy.serialize(transaction_chainId, {
+      signature,
+    })
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
     {
       "chainId": 69,
@@ -223,9 +204,7 @@ describe('deserialize', () => {
         Hex.fromNumber(0), // value
         '0x', // data
       ])
-      expect(
-        TransactionEnvelopeLegacy.deserialize(serialized),
-      ).toMatchInlineSnapshot(`
+      expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "gas": 1n,
           "gasPrice": 1n,
@@ -249,9 +228,7 @@ describe('deserialize', () => {
         '0x', // r
         '0x', // s
       ])
-      expect(
-        TransactionEnvelopeLegacy.deserialize(serialized),
-      ).toMatchInlineSnapshot(`
+      expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "gas": 1n,
           "gasPrice": 1n,
@@ -275,9 +252,7 @@ describe('deserialize', () => {
         Hex.fromNumber(69), // r
         Hex.fromNumber(420), // s
       ])
-      expect(
-        TransactionEnvelopeLegacy.deserialize(serialized),
-      ).toMatchInlineSnapshot(`
+      expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
       {
         "gas": 1n,
         "gasPrice": 1n,
@@ -297,7 +272,7 @@ describe('deserialize', () => {
   describe('errors', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TransactionEnvelopeLegacy.deserialize(Rlp.fromHex([])),
+        TxEnvelopeLegacy.deserialize(Rlp.fromHex([])),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
@@ -308,7 +283,7 @@ describe('deserialize', () => {
 
     test('invalid transaction (some missing)', () => {
       expect(() =>
-        TransactionEnvelopeLegacy.deserialize(Rlp.fromHex(['0x00', '0x01'])),
+        TxEnvelopeLegacy.deserialize(Rlp.fromHex(['0x00', '0x01'])),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
@@ -319,7 +294,7 @@ describe('deserialize', () => {
 
     test('invalid transaction (missing signature)', () => {
       expect(() =>
-        TransactionEnvelopeLegacy.deserialize(
+        TxEnvelopeLegacy.deserialize(
           Rlp.fromHex(['0x', '0x', '0x', '0x', '0x', '0x', '0x']),
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
@@ -332,7 +307,7 @@ describe('deserialize', () => {
 
     test('invalid transaction (attribute overload)', () => {
       expect(() =>
-        TransactionEnvelopeLegacy.deserialize(
+        TxEnvelopeLegacy.deserialize(
           Rlp.fromHex([
             '0x',
             '0x',
@@ -355,7 +330,7 @@ describe('deserialize', () => {
 
     test('invalid v', () => {
       expect(() =>
-        TransactionEnvelopeLegacy.deserialize(
+        TxEnvelopeLegacy.deserialize(
           Rlp.fromHex([
             Hex.fromNumber(0), // nonce
             Hex.fromNumber(1), // gasPrice
@@ -373,7 +348,7 @@ describe('deserialize', () => {
       )
 
       expect(() =>
-        TransactionEnvelopeLegacy.deserialize(
+        TxEnvelopeLegacy.deserialize(
           Rlp.fromHex([
             Hex.fromNumber(0), // nonce
             Hex.fromNumber(1), // gasPrice
@@ -396,10 +371,8 @@ describe('deserialize', () => {
 describe('from', () => {
   test('default', () => {
     {
-      const envelope = TransactionEnvelopeLegacy.from({})
-      expectTypeOf(
-        envelope,
-      ).toMatchTypeOf<TransactionEnvelopeLegacy.TransactionEnvelopeLegacy>()
+      const envelope = TxEnvelopeLegacy.from({})
+      expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeLegacy.TxEnvelopeLegacy>()
       expect(envelope).toMatchInlineSnapshot(`
         {
           "type": "legacy",
@@ -408,17 +381,17 @@ describe('from', () => {
     }
 
     {
-      const envelope = TransactionEnvelopeLegacy.from({
+      const envelope = TxEnvelopeLegacy.from({
         nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
         value: 69n,
       })
-      const serialized = TransactionEnvelopeLegacy.serialize(envelope)
-      expect(TransactionEnvelopeLegacy.from(serialized)).toEqual(envelope)
+      const serialized = TxEnvelopeLegacy.serialize(envelope)
+      expect(TxEnvelopeLegacy.from(serialized)).toEqual(envelope)
     }
 
     {
-      const envelope = TransactionEnvelopeLegacy.from({
+      const envelope = TxEnvelopeLegacy.from({
         chainId: 1,
         to: '0x0000000000000000000000000000000000000000',
         value: 69n,
@@ -426,14 +399,14 @@ describe('from', () => {
         s: 1n,
         v: 37,
       })
-      const serialized = TransactionEnvelopeLegacy.serialize(envelope)
-      const envelope2 = TransactionEnvelopeLegacy.from(serialized)
+      const serialized = TxEnvelopeLegacy.serialize(envelope)
+      const envelope2 = TxEnvelopeLegacy.from(serialized)
       expect(envelope2).toEqual({ ...envelope, nonce: 0n, yParity: 0 })
     }
   })
 
   test('options: signature', () => {
-    const envelope = TransactionEnvelopeLegacy.from(
+    const envelope = TxEnvelopeLegacy.from(
       {
         nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
@@ -460,10 +433,10 @@ describe('from', () => {
         "yParity": 1,
       }
     `)
-    const serialized = TransactionEnvelopeLegacy.serialize(envelope)
-    const envelope2 = TransactionEnvelopeLegacy.from(serialized)
+    const serialized = TxEnvelopeLegacy.serialize(envelope)
+    const envelope2 = TxEnvelopeLegacy.from(serialized)
     expect(envelope2).toEqual(envelope)
-    const envelope3 = TransactionEnvelopeLegacy.from(serialized, {
+    const envelope3 = TxEnvelopeLegacy.from(serialized, {
       signature: {
         r: 1n,
         s: 0n,
@@ -476,7 +449,7 @@ describe('from', () => {
 
 describe('getSignPayload', () => {
   test('default', () => {
-    const envelope = TransactionEnvelopeLegacy.from({
+    const envelope = TxEnvelopeLegacy.from({
       chainId: 1,
       gas: 21000n,
       gasPrice: 1000000000n,
@@ -486,29 +459,28 @@ describe('getSignPayload', () => {
       type: 'legacy',
     })
 
-    const hash = TransactionEnvelopeLegacy.hash(envelope, { presign: true })
+    const hash = TxEnvelopeLegacy.hash(envelope, { presign: true })
     expect(hash).toMatchInlineSnapshot(
       `"0x4c1dec0d90aa1a17cb0aa735b5550e43a1bd27cd1cacb8987522576fa6220e46"`,
     )
 
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+      payload: TxEnvelopeLegacy.getSignPayload(envelope),
       privateKey: accounts[0].privateKey,
     })
 
-    const envelope_signed = TransactionEnvelopeLegacy.from(envelope, {
+    const envelope_signed = TxEnvelopeLegacy.from(envelope, {
       signature,
     })
 
     {
-      const hash = TransactionEnvelopeLegacy.hash(envelope_signed)
+      const hash = TxEnvelopeLegacy.hash(envelope_signed)
       expect(hash).toMatchInlineSnapshot(
         `"0x882958af32ef451898e54afcaa1c5bb56e5dff1bf47ac9d1b47751bd0b6c8ec8"`,
       )
     }
     {
-      const hash_presign =
-        TransactionEnvelopeLegacy.getSignPayload(envelope_signed)
+      const hash_presign = TxEnvelopeLegacy.getSignPayload(envelope_signed)
       expect(hash_presign).toEqual(hash)
     }
   })
@@ -516,7 +488,7 @@ describe('getSignPayload', () => {
 
 describe('hash', () => {
   test('default', () => {
-    const envelope = TransactionEnvelopeLegacy.from({
+    const envelope = TxEnvelopeLegacy.from({
       chainId: 1,
       gas: 21000n,
       gasPrice: 1000000000n,
@@ -532,7 +504,7 @@ describe('hash', () => {
       v: 27,
     })
 
-    const hash = TransactionEnvelopeLegacy.hash(envelope)
+    const hash = TxEnvelopeLegacy.hash(envelope)
     expect(hash).toMatchInlineSnapshot(
       `"0x5e427e088ae00b084b41e198c52440aa43b2d6f8f1f01246fd25d4e9b6ebfdab"`,
     )
@@ -540,7 +512,7 @@ describe('hash', () => {
 })
 
 describe('serialize', () => {
-  const transaction = TransactionEnvelopeLegacy.from({
+  const transaction = TxEnvelopeLegacy.from({
     gasPrice: Value.fromGwei('2'),
     nonce: 785n,
     to: accounts[1].address,
@@ -548,18 +520,16 @@ describe('serialize', () => {
   })
 
   test('default', () => {
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction)
-    assertType<TransactionEnvelopeLegacy.Serialized>(serialized)
+    const serialized = TxEnvelopeLegacy.serialize(transaction)
+    assertType<TxEnvelopeLegacy.Serialized>(serialized)
     expect(serialized).toEqual(
       '0xe88203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080',
     )
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
-      transaction,
-    )
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(transaction)
   })
 
   test('default (all zeros)', () => {
-    const transaction = TransactionEnvelopeLegacy.from({
+    const transaction = TxEnvelopeLegacy.from({
       to: accounts[1].address,
       nonce: 0n,
       value: 0n,
@@ -567,14 +537,12 @@ describe('serialize', () => {
       gasPrice: 0n,
     })
 
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction)
+    const serialized = TxEnvelopeLegacy.serialize(transaction)
 
     expect(serialized).toEqual(
       '0xda8080809470997970c51812dc3a010c7d01b50e0d17dc79c88080',
     )
-    expect(
-      TransactionEnvelopeLegacy.deserialize(serialized),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
       {
         "nonce": 0n,
@@ -586,12 +554,10 @@ describe('serialize', () => {
   })
 
   test('minimal', () => {
-    const transaction = TransactionEnvelopeLegacy.from({})
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction)
+    const transaction = TxEnvelopeLegacy.from({})
+    const serialized = TxEnvelopeLegacy.serialize(transaction)
     expect(serialized).toEqual('0xc6808080808080')
-    expect(
-      TransactionEnvelopeLegacy.deserialize(serialized),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
       {
         "nonce": 0n,
@@ -602,73 +568,65 @@ describe('serialize', () => {
   })
 
   test('minimal (w/ gasPrice)', () => {
-    const transaction = TransactionEnvelopeLegacy.from({
+    const transaction = TxEnvelopeLegacy.from({
       nonce: 0n,
       gasPrice: Value.fromGwei('2'),
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction)
+    const serialized = TxEnvelopeLegacy.serialize(transaction)
     expect(serialized).toEqual('0xca80847735940080808080')
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
-      transaction,
-    )
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(transaction)
   })
 
   test('gas', () => {
-    const transaction_gas = TransactionEnvelopeLegacy.from({
+    const transaction_gas = TxEnvelopeLegacy.from({
       ...transaction,
       gas: 21001n,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction_gas)
+    const serialized = TxEnvelopeLegacy.serialize(transaction_gas)
     expect(serialized).toEqual(
       '0xea82031184773594008252099470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080',
     )
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
-      transaction_gas,
-    )
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(transaction_gas)
   })
 
   test('data', () => {
-    const transaction_gas = TransactionEnvelopeLegacy.from({
+    const transaction_gas = TxEnvelopeLegacy.from({
       ...transaction,
       data: '0x1234',
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction_gas)
+    const serialized = TxEnvelopeLegacy.serialize(transaction_gas)
     expect(serialized).toEqual(
       '0xea8203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a7640000821234',
     )
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
-      transaction_gas,
-    )
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(transaction_gas)
   })
 
   test('chainId', () => {
-    const transaction_chainId = TransactionEnvelopeLegacy.from({
+    const transaction_chainId = TxEnvelopeLegacy.from({
       ...transaction,
       chainId: 69,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction_chainId)
+    const serialized = TxEnvelopeLegacy.serialize(transaction_chainId)
     expect(serialized).toEqual(
       '0xeb8203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080458080',
     )
-    expect(TransactionEnvelopeLegacy.deserialize(serialized)).toEqual(
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toEqual(
       transaction_chainId,
     )
   })
 
   test('options: signature', async () => {
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelopeLegacy.getSignPayload(transaction),
+      payload: TxEnvelopeLegacy.getSignPayload(transaction),
       privateKey: accounts[0].privateKey,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(transaction, {
+    const serialized = TxEnvelopeLegacy.serialize(transaction, {
       signature,
     })
     expect(serialized).toEqual(
       '0xf86b8203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a7640000801ca06cb0e8d21e5baf998fb9a05f47acd83692dc148f90b81b332a152f020da0ae98a0344e49bacb1ef7af7c2ffed9e88d3f0ae0aa4945c9da0a660a03717dd5621f98',
     )
-    expect(
-      TransactionEnvelopeLegacy.deserialize(serialized),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
     {
       "gasPrice": 2000000000n,
@@ -687,7 +645,7 @@ describe('serialize', () => {
 
   test('options: signature', () => {
     expect(
-      TransactionEnvelopeLegacy.serialize(transaction, {
+      TxEnvelopeLegacy.serialize(transaction, {
         signature: {
           r: BigInt(
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
@@ -702,7 +660,7 @@ describe('serialize', () => {
       '0xf86b8203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a7640000801ca060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
     )
     expect(
-      TransactionEnvelopeLegacy.serialize(transaction, {
+      TxEnvelopeLegacy.serialize(transaction, {
         signature: {
           r: BigInt(
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
@@ -719,26 +677,21 @@ describe('serialize', () => {
   })
 
   test('behavior: signature + chainId', async () => {
-    const transaction_chainId = TransactionEnvelopeLegacy.from({
+    const transaction_chainId = TxEnvelopeLegacy.from({
       ...transaction,
       chainId: 69,
     })
     const signature = Secp256k1.sign({
-      payload: TransactionEnvelopeLegacy.getSignPayload(transaction_chainId),
+      payload: TxEnvelopeLegacy.getSignPayload(transaction_chainId),
       privateKey: accounts[0].privateKey,
     })
-    const serialized = TransactionEnvelopeLegacy.serialize(
-      transaction_chainId,
-      {
-        signature,
-      },
-    )
+    const serialized = TxEnvelopeLegacy.serialize(transaction_chainId, {
+      signature,
+    })
     expect(serialized).toEqual(
       '0xf86c8203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a76400008081ada02f43314322cf4c5dd645b028aa0b0dadff0fb73c41a6f0620ff1dfb11601ac30a066f37a65e139fa4b6df33a42ab5ccaeaa7a109382e7430caefd1deee63962626',
     )
-    expect(
-      TransactionEnvelopeLegacy.deserialize(serialized),
-    ).toMatchInlineSnapshot(
+    expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
       `
     {
       "chainId": 69,
@@ -758,7 +711,7 @@ describe('serialize', () => {
 
   test('behavior: inferred chainId', () => {
     {
-      const transaction = TransactionEnvelopeLegacy.from({
+      const transaction = TxEnvelopeLegacy.from({
         gas: 51627n,
         gasPrice: 3000000000n,
         hash: '0x3eaa88a766e82cbe53c95218ab4c3cf316325802b5f75d086b5121007b918e92',
@@ -773,15 +726,13 @@ describe('serialize', () => {
           '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
         ),
       })
-      expect(
-        TransactionEnvelopeLegacy.serialize(transaction),
-      ).toMatchInlineSnapshot(
+      expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8667584b2d05e0082c9ab9455d398326f99059ff775485246999027b31979558080830149fba073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
       )
     }
 
     {
-      const transaction = TransactionEnvelopeLegacy.from({
+      const transaction = TxEnvelopeLegacy.from({
         gas: 51627n,
         gasPrice: 3000000000n,
         hash: '0x3eaa88a766e82cbe53c95218ab4c3cf316325802b5f75d086b5121007b918e92',
@@ -796,15 +747,13 @@ describe('serialize', () => {
           '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
         ),
       })
-      expect(
-        TransactionEnvelopeLegacy.serialize(transaction),
-      ).toMatchInlineSnapshot(
+      expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8667584b2d05e0082c9ab9455d398326f99059ff775485246999027b31979558080830149fca073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
       )
     }
 
     {
-      const transaction = TransactionEnvelopeLegacy.from({
+      const transaction = TxEnvelopeLegacy.from({
         gas: 51627n,
         gasPrice: 3000000000n,
         hash: '0x3eaa88a766e82cbe53c95218ab4c3cf316325802b5f75d086b5121007b918e92',
@@ -821,15 +770,13 @@ describe('serialize', () => {
           '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
         ),
       })
-      expect(
-        TransactionEnvelopeLegacy.serialize(transaction),
-      ).toMatchInlineSnapshot(
+      expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8637584b2d05e0082c9ab9455d398326f99059ff775485246999027b319795580801ba073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
       )
     }
 
     {
-      const transaction = TransactionEnvelopeLegacy.from({
+      const transaction = TxEnvelopeLegacy.from({
         gas: 51627n,
         gasPrice: 3000000000n,
         hash: '0x3eaa88a766e82cbe53c95218ab4c3cf316325802b5f75d086b5121007b918e92',
@@ -846,16 +793,14 @@ describe('serialize', () => {
           '0x354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23',
         ),
       })
-      expect(
-        TransactionEnvelopeLegacy.serialize(transaction),
-      ).toMatchInlineSnapshot(
+      expect(TxEnvelopeLegacy.serialize(transaction)).toMatchInlineSnapshot(
         '"0xf8637584b2d05e0082c9ab9455d398326f99059ff775485246999027b319795580801ca073b39769ff4a36515c8fca546550a3fdafebbf37fa9e22be2d92b44653ade7bfa0354c756a1aa3346e9b3ea5423ac99acfc005e9cce2cd698e14d792f43fa15a23"',
       )
     }
   })
 
   test('behavior: zeroish sig coords', () => {
-    const serialized = TransactionEnvelopeLegacy.serialize({
+    const serialized = TxEnvelopeLegacy.serialize({
       chainId: 17000,
       gas: BigInt('0x52080'),
       gasPrice: 0n,
@@ -874,7 +819,7 @@ describe('serialize', () => {
 
   test('error: invalid v', () => {
     expect(() =>
-      TransactionEnvelopeLegacy.serialize({
+      TxEnvelopeLegacy.serialize({
         ...transaction,
         r: BigInt(
           '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
@@ -892,7 +837,7 @@ describe('serialize', () => {
 
 describe('toRpc', () => {
   test('default', () => {
-    const transaction = TransactionEnvelopeLegacy.toRpc({
+    const transaction = TxEnvelopeLegacy.toRpc({
       chainId: 1,
       nonce: 0n,
       gas: 21000n,
@@ -922,7 +867,7 @@ describe('toRpc', () => {
   })
 
   test('behavior: nullish', () => {
-    const transaction = TransactionEnvelopeLegacy.toRpc({
+    const transaction = TxEnvelopeLegacy.toRpc({
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
     })
     expect(transaction).toMatchInlineSnapshot(`
@@ -941,7 +886,7 @@ describe('toRpc', () => {
       params: [accounts[0].address, 'pending'],
     })
 
-    const transaction = TransactionEnvelopeLegacy.from({
+    const transaction = TxEnvelopeLegacy.from({
       chainId: 1,
       nonce: BigInt(nonce),
       gas: 21000n,
@@ -951,7 +896,7 @@ describe('toRpc', () => {
       value: Value.fromEther('1'),
     })
 
-    const rpc = TransactionEnvelopeLegacy.toRpc(transaction)
+    const rpc = TxEnvelopeLegacy.toRpc(transaction)
 
     const hash = await anvilMainnet.request({
       method: 'eth_sendTransaction',
@@ -991,13 +936,13 @@ describe('toRpc', () => {
 describe('validate', () => {
   test('default', () => {
     expect(
-      TransactionEnvelopeLegacy.validate({
+      TxEnvelopeLegacy.validate({
         chainId: 1,
         gasPrice: 69n,
       }),
     ).toBe(true)
     expect(
-      TransactionEnvelopeLegacy.validate({
+      TxEnvelopeLegacy.validate({
         chainId: 1,
         gasPrice: 2n ** 257n,
       }),
@@ -1006,7 +951,7 @@ describe('validate', () => {
 })
 
 test('exports', () => {
-  expect(Object.keys(TransactionEnvelopeLegacy)).toMatchInlineSnapshot(`
+  expect(Object.keys(TxEnvelopeLegacy)).toMatchInlineSnapshot(`
     [
       "type",
       "assert",

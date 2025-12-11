@@ -2,8 +2,8 @@ import {
   Hex,
   Secp256k1,
   Transaction,
-  TransactionEnvelopeEip1559,
-  TransactionEnvelopeLegacy,
+  TxEnvelopeEip1559,
+  TxEnvelopeLegacy,
 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
@@ -191,22 +191,19 @@ describe('fromRpc', () => {
 
       if (transaction_rpc?.type !== 'legacy') return
 
-      const envelope = TransactionEnvelopeLegacy.from({
+      const envelope = TxEnvelopeLegacy.from({
         ...transaction_rpc!,
         nonce: 69420n,
       })
 
       const signature = Secp256k1.sign({
-        payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+        payload: TxEnvelopeLegacy.getSignPayload(envelope),
         privateKey: accounts[0].privateKey,
       })
 
-      const envelope_serialized = TransactionEnvelopeLegacy.serialize(
-        envelope,
-        {
-          signature,
-        },
-      )
+      const envelope_serialized = TxEnvelopeLegacy.serialize(envelope, {
+        signature,
+      })
 
       const hash = await anvilMainnet.request({
         method: 'eth_sendRawTransaction',
@@ -456,19 +453,16 @@ describe('fromRpc', () => {
 
       if (transaction_rpc?.type !== 'eip1559') return
 
-      const envelope = TransactionEnvelopeEip1559.from(transaction_rpc!)
+      const envelope = TxEnvelopeEip1559.from(transaction_rpc!)
 
       const signature = Secp256k1.sign({
-        payload: TransactionEnvelopeEip1559.getSignPayload(envelope),
+        payload: TxEnvelopeEip1559.getSignPayload(envelope),
         privateKey: accounts[0].privateKey,
       })
 
-      const envelope_serialized = TransactionEnvelopeEip1559.serialize(
-        envelope,
-        {
-          signature,
-        },
-      )
+      const envelope_serialized = TxEnvelopeEip1559.serialize(envelope, {
+        signature,
+      })
 
       const hash = await anvilMainnet.request({
         method: 'eth_sendRawTransaction',

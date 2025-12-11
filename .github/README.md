@@ -45,10 +45,10 @@ As an unopinionated Standard Library, it is designed to be used by higher-level 
 The example below demonstrates how to construct, sign, and broadcast a transaction envelope using Ox:
 
 ```ts
-import { Provider, Secp256k1, TransactionEnvelopeEip1559, Value } from 'ox'
+import { Provider, Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
  
 // 1. Construct a transaction envelope.
-const envelope = TransactionEnvelopeEip1559.from({
+const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
   gas: 21000n,
   nonce: 0n,
@@ -59,13 +59,13 @@ const envelope = TransactionEnvelopeEip1559.from({
 })
  
 // 2. Get the signing payload for the envelope.
-const payload = TransactionEnvelopeEip1559.getSignPayload(envelope) 
+const payload = TxEnvelopeEip1559.getSignPayload(envelope) 
  
 // 3. Sign the payload with your private key using secp256k1.
 const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
 
 // 4. Serialize the envelope with the signature.
-const serialized = TransactionEnvelopeEip1559.serialize(envelope, { signature })
+const serialized = TxEnvelopeEip1559.serialize(envelope, { signature })
 
 // 5. Broadcast the envelope to the network.
 const provider = Provider.from(window.ethereum)

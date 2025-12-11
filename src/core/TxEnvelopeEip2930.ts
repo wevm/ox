@@ -1,55 +1,57 @@
+import * as AccessList from './AccessList.js'
 import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import type {
   Assign,
-  Branded,
   Compute,
   PartialBy,
   UnionPartialBy,
 } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
-import * as TransactionEnvelope from './TransactionEnvelope.js'
+import * as TransactionEnvelope from './TxEnvelope.js'
 
-export type TransactionEnvelopeLegacy<
+export type TxEnvelopeEip2930<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
   type extends string = Type,
 > = Compute<
-  PartialBy<
-    TransactionEnvelope.Base<type, signed, bigintType, numberType>,
-    'chainId'
-  > & {
+  TransactionEnvelope.Base<type, signed, bigintType, numberType> & {
+    /** EIP-2930 Access List. */
+    accessList?: AccessList.AccessList | undefined
     /** Base fee per gas. */
     gasPrice?: bigintType | undefined
   }
 >
 
-export type Rpc<signed extends boolean = boolean> = TransactionEnvelopeLegacy<
+export type Rpc<signed extends boolean = boolean> = TxEnvelopeEip2930<
   signed,
   Hex.Hex,
   Hex.Hex,
-  '0x0'
+  '0x1'
 >
 
-export type Serialized = Branded<`0x${string}`, 'legacy'>
+export type Serialized = `${SerializedType}${string}`
 
-export type Signed = TransactionEnvelopeLegacy<true>
+export const serializedType = '0x01' as const
+export type SerializedType = typeof serializedType
 
-export const type = 'legacy'
+export type Signed = TxEnvelopeEip2930<true>
+
+export const type = 'eip2930' as const
 export type Type = typeof type
 
 /**
- * Asserts a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy} is valid.
+ * Asserts a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930} is valid.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeLegacy, Value } from 'ox'
+ * import { TxEnvelopeEip2930, Value } from 'ox'
  *
- * TransactionEnvelopeLegacy.assert({
+ * TxEnvelopeEip2930.assert({
  *   gasPrice: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
@@ -62,11 +64,11 @@ export type Type = typeof type
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function assert(envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>) {
+export function assert(envelope: PartialBy<TxEnvelopeEip2930, 'type'>) {
   const { chainId, gasPrice, to } = envelope
-  if (to) Address.assert(to, { strict: false })
-  if (typeof chainId !== 'undefined' && chainId <= 0)
+  if (chainId <= 0)
     throw new TransactionEnvelope.InvalidChainIdError({ chainId })
+  if (to) Address.assert(to, { strict: false })
   if (gasPrice && BigInt(gasPrice) > 2n ** 256n - 1n)
     throw new TransactionEnvelope.GasPriceTooHighError({ gasPrice })
 }
@@ -80,15 +82,15 @@ export declare namespace assert {
 }
 
 /**
- * Deserializes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy} from its serialized form.
+ * Deserializes a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930} from its serialized form.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeLegacy } from 'ox'
+ * import { TxEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.deserialize('0x01ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip2930.deserialize('0x01ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
  * // @log: {
- * // @log:   type: 'legacy',
+ * // @log:   type: 'eip2930',
  * // @log:   nonce: 785n,
  * // @log:   gasPrice: 2000000000n,
  * // @log:   gas: 1000000n,
@@ -100,26 +102,37 @@ export declare namespace assert {
  * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
-export function deserialize(
-  serialized: Hex.Hex,
-): Compute<TransactionEnvelopeLegacy> {
-  const tuple = Rlp.toHex(serialized)
+export function deserialize(serialized: Serialized): TxEnvelopeEip2930 {
+  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
-  const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
-    tuple as readonly Hex.Hex[]
+  const [
+    chainId,
+    nonce,
+    gasPrice,
+    gas,
+    to,
+    value,
+    data,
+    accessList,
+    yParity,
+    r,
+    s,
+  ] = transactionArray as readonly Hex.Hex[]
 
-  if (!(tuple.length === 6 || tuple.length === 9))
+  if (!(transactionArray.length === 8 || transactionArray.length === 11))
     throw new TransactionEnvelope.InvalidSerializedError({
       attributes: {
+        chainId,
         nonce,
         gasPrice,
         gas,
         to,
         value,
         data,
-        ...(tuple.length > 6
+        accessList,
+        ...(transactionArray.length > 8
           ? {
-              v: chainIdOrV_,
+              yParity,
               r,
               s,
             }
@@ -129,9 +142,10 @@ export function deserialize(
       type,
     })
 
-  const transaction = {
+  let transaction = {
+    chainId: Number(chainId as Hex.Hex),
     type,
-  } as TransactionEnvelopeLegacy
+  } as TxEnvelopeEip2930
   if (Hex.validate(to) && to !== '0x') transaction.to = to
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
   if (Hex.validate(data) && data !== '0x') transaction.data = data
@@ -140,28 +154,16 @@ export function deserialize(
   if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
   if (Hex.validate(gasPrice) && gasPrice !== '0x')
     transaction.gasPrice = BigInt(gasPrice)
+  if (accessList!.length !== 0 && accessList !== '0x')
+    transaction.accessList = AccessList.fromTupleList(accessList as any)
 
-  if (tuple.length === 6) return transaction
-
-  const chainIdOrV =
-    Hex.validate(chainIdOrV_) && chainIdOrV_ !== '0x'
-      ? Number(chainIdOrV_ as Hex.Hex)
-      : 0
-
-  if (s === '0x' && r === '0x') {
-    if (chainIdOrV > 0) transaction.chainId = Number(chainIdOrV)
-    return transaction
-  }
-
-  const v = chainIdOrV
-  const chainId: number | undefined = Math.floor((v - 35) / 2)
-  if (chainId > 0) transaction.chainId = chainId
-  else if (v !== 27 && v !== 28) throw new Signature.InvalidVError({ value: v })
-
-  transaction.yParity = Signature.vToYParity(v)
-  transaction.v = v
-  transaction.s = s === '0x' ? 0n : BigInt(s!)
-  transaction.r = r === '0x' ? 0n : BigInt(r!)
+  const signature =
+    r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
+  if (signature)
+    transaction = {
+      ...transaction,
+      ...signature,
+    } as TxEnvelopeEip2930
 
   assert(transaction)
 
@@ -173,13 +175,16 @@ export declare namespace deserialize {
 }
 
 /**
- * Converts an arbitrary transaction object into a legacy Transaction Envelope.
+ * Converts an arbitrary transaction object into an EIP-2930 Transaction Envelope.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeLegacy, Value } from 'ox'
+ * // @noErrors
+ * import { TxEnvelopeEip2930, Value } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from({
+ * const envelope = TxEnvelopeEip2930.from({
+ *   chainId: 1,
+ *   accessList: [...],
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
  *   value: Value.fromEther('1'),
@@ -192,9 +197,9 @@ export declare namespace deserialize {
  * It is possible to attach a `signature` to the transaction envelope.
  *
  * ```ts twoslash
- * import { Secp256k1, TransactionEnvelopeLegacy, Value } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip2930, Value } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from({
+ * const envelope = TxEnvelopeEip2930.from({
  *   chainId: 1,
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
@@ -202,19 +207,18 @@ export declare namespace deserialize {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   payload: TxEnvelopeEip2930.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { // [!code focus]
+ * const envelope_signed = TxEnvelopeEip2930.from(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  * // @log: {
- * // @log:   authorizationList: [...],
  * // @log:   chainId: 1,
  * // @log:   gasPrice: 10000000000n,
  * // @log:   to: '0x0000000000000000000000000000000000000000',
- * // @log:   type: 'eip7702',
+ * // @log:   type: 'eip2930',
  * // @log:   value: 1000000000000000000n,
  * // @log:   r: 125...n,
  * // @log:   s: 642...n,
@@ -225,56 +229,44 @@ export declare namespace deserialize {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate an legacy Transaction Envelope from a {@link ox#TransactionEnvelopeLegacy.Serialized} value.
+ * It is possible to instantiate an EIP-2930 Transaction Envelope from a {@link ox#TxEnvelopeEip2930.Serialized} value.
  *
  * ```ts twoslash
- * import { TransactionEnvelopeLegacy } from 'ox'
+ * import { TxEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from('0xf858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip2930.from('0x01f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
  * // @log: {
  * // @log:   chainId: 1,
  * // @log:   gasPrice: 10000000000n,
  * // @log:   to: '0x0000000000000000000000000000000000000000',
- * // @log:   type: 'legacy',
+ * // @log:   type: 'eip2930',
  * // @log:   value: 1000000000000000000n,
  * // @log: }
  * ```
  *
  * @param envelope - The transaction object to convert.
  * @param options - Options.
- * @returns A legacy Transaction Envelope.
+ * @returns A {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930}
  */
 export function from<
-  const envelope extends
-    | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
-    | Hex.Hex,
+  const envelope extends UnionPartialBy<TxEnvelopeEip2930, 'type'> | Serialized,
   const signature extends Signature.Signature | undefined = undefined,
 >(
-  envelope:
-    | envelope
-    | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
-    | Hex.Hex,
+  envelope: envelope | UnionPartialBy<TxEnvelopeEip2930, 'type'> | Serialized,
   options: from.Options<signature> = {},
 ): from.ReturnType<envelope, signature> {
   const { signature } = options
 
   const envelope_ = (
     typeof envelope === 'string' ? deserialize(envelope) : envelope
-  ) as TransactionEnvelopeLegacy
+  ) as TxEnvelopeEip2930
 
   assert(envelope_)
 
-  const signature_ = (() => {
-    if (!signature) return {}
-    const s = Signature.from(signature) as any
-    s.v = Signature.yParityToV(s.yParity)
-    return s
-  })()
-
   return {
     ...envelope_,
-    ...signature_,
-    type: 'legacy',
+    ...(signature ? Signature.from(signature) : {}),
+    type: 'eip2930',
   } as never
 }
 
@@ -285,23 +277,17 @@ export declare namespace from {
     }
 
   type ReturnType<
-    envelope extends
-      | UnionPartialBy<TransactionEnvelopeLegacy, 'type'>
-      | Hex.Hex = TransactionEnvelopeLegacy | Hex.Hex,
+    envelope extends UnionPartialBy<TxEnvelopeEip2930, 'type'> | Hex.Hex =
+      | TxEnvelopeEip2930
+      | Hex.Hex,
     signature extends Signature.Signature | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
-      ? TransactionEnvelopeLegacy
+      ? TxEnvelopeEip2930
       : Assign<
           envelope,
-          (signature extends Signature.Signature
-            ? Readonly<
-                signature & {
-                  v: signature['yParity'] extends 0 ? 27 : 28
-                }
-              >
-            : {}) & {
-            readonly type: 'legacy'
+          (signature extends Signature.Signature ? Readonly<signature> : {}) & {
+            readonly type: 'eip2930'
           }
         >
   >
@@ -313,17 +299,17 @@ export declare namespace from {
 }
 
 /**
- * Returns the payload to sign for a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy}.
+ * Returns the payload to sign for a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930}.
  *
  * @example
  * The example below demonstrates how to compute the sign payload which can be used
  * with ECDSA signing utilities like {@link ox#Secp256k1.(sign:function)}.
  *
  * ```ts twoslash
- * // @noErrors
- * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from({
+ * const envelope = TxEnvelopeEip2930.from({
+ *   chainId: 1,
  *   nonce: 0n,
  *   gasPrice: 1000000000n,
  *   gas: 21000n,
@@ -331,7 +317,7 @@ export declare namespace from {
  *   value: 1000000000000000000n,
  * })
  *
- * const payload = TransactionEnvelopeLegacy.getSignPayload(envelope) // [!code focus]
+ * const payload = TxEnvelopeEip2930.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
@@ -341,7 +327,7 @@ export declare namespace from {
  * @returns The sign payload.
  */
 export function getSignPayload(
-  envelope: TransactionEnvelopeLegacy<false>,
+  envelope: TxEnvelopeEip2930,
 ): getSignPayload.ReturnType {
   return hash(envelope, { presign: true })
 }
@@ -353,13 +339,13 @@ export declare namespace getSignPayload {
 }
 
 /**
- * Hashes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy}. This is the "transaction hash".
+ * Hashes a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash
- * import { Secp256k1, TransactionEnvelopeLegacy } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip2930 } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from({
+ * const envelope = TxEnvelopeEip2930.from({
  *   chainId: 1,
  *   nonce: 0n,
  *   gasPrice: 1000000000n,
@@ -369,21 +355,23 @@ export declare namespace getSignPayload {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
- *   privateKey: '0x...'
+ *   payload: TxEnvelopeEip2930.getSignPayload(envelope),
+ *   privateKey: '0x...',
  * })
  *
- * const envelope_signed = TransactionEnvelopeLegacy.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip2930.from(envelope, {
+ *   signature,
+ * })
  *
- * const hash = TransactionEnvelopeLegacy.hash(envelope_signed) // [!code focus]
+ * const hash = TxEnvelopeEip2930.hash(envelope_signed) // [!code focus]
  * ```
  *
- * @param envelope - The Legacy Transaction Envelope to hash.
+ * @param envelope - The EIP-2930 Transaction Envelope to hash.
  * @param options - Options.
  * @returns The hash of the transaction envelope.
  */
 export function hash<presign extends boolean = false>(
-  envelope: TransactionEnvelopeLegacy<presign extends true ? false : true>,
+  envelope: TxEnvelopeEip2930<presign extends true ? false : true>,
   options: hash.Options<presign> = {},
 ): hash.ReturnType {
   const { presign } = options
@@ -417,21 +405,20 @@ export declare namespace hash {
 }
 
 /**
- * Serializes a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy}.
+ * Serializes a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930}.
  *
  * @example
  * ```ts twoslash
- * // @noErrors
- * import { TransactionEnvelopeLegacy } from 'ox'
+ * import { TxEnvelopeEip2930, Value } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from({
+ * const envelope = TxEnvelopeEip2930.from({
  *   chainId: 1,
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
  *   value: Value.fromEther('1'),
  * })
  *
- * const serialized = TransactionEnvelopeLegacy.serialize(envelope) // [!code focus]
+ * const serialized = TxEnvelopeEip2930.serialize(envelope) // [!code focus]
  * ```
  *
  * @example
@@ -440,10 +427,9 @@ export declare namespace hash {
  * It is possible to attach a `signature` to the serialized Transaction Envelope.
  *
  * ```ts twoslash
- * // @noErrors
- * import { Secp256k1, TransactionEnvelopeLegacy, Value } from 'ox'
+ * import { Secp256k1, TxEnvelopeEip2930, Value } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from({
+ * const envelope = TxEnvelopeEip2930.from({
  *   chainId: 1,
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
@@ -451,11 +437,11 @@ export declare namespace hash {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeLegacy.getSignPayload(envelope),
+ *   payload: TxEnvelopeEip2930.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const serialized = TransactionEnvelopeLegacy.serialize(envelope, { // [!code focus]
+ * const serialized = TxEnvelopeEip2930.serialize(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  *
@@ -467,68 +453,31 @@ export declare namespace hash {
  * @returns The serialized Transaction Envelope.
  */
 export function serialize(
-  envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
+  envelope: PartialBy<TxEnvelopeEip2930, 'type'>,
   options: serialize.Options = {},
 ): Serialized {
-  const { chainId = 0, gas, data, input, nonce, to, value, gasPrice } = envelope
+  const { chainId, gas, data, input, nonce, to, value, accessList, gasPrice } =
+    envelope
 
   assert(envelope)
 
-  let serialized = [
+  const accessTupleList = AccessList.toTupleList(accessList)
+
+  const signature = Signature.extract(options.signature || (envelope as any))
+
+  const serialized = [
+    Hex.fromNumber(chainId),
     nonce ? Hex.fromNumber(nonce) : '0x',
     gasPrice ? Hex.fromNumber(gasPrice) : '0x',
     gas ? Hex.fromNumber(gas) : '0x',
     to ?? '0x',
     value ? Hex.fromNumber(value) : '0x',
     data ?? input ?? '0x',
-  ]
+    accessTupleList,
+    ...(signature ? Signature.toTuple(signature) : []),
+  ] as const
 
-  const signature = (() => {
-    if (options.signature)
-      return {
-        r: options.signature.r,
-        s: options.signature.s,
-        v: Signature.yParityToV(options.signature.yParity),
-      }
-
-    if (typeof envelope.r === 'undefined' || typeof envelope.s === 'undefined')
-      return undefined
-    return {
-      r: envelope.r,
-      s: envelope.s,
-      v: envelope.v!,
-    }
-  })()
-
-  if (signature) {
-    const v = (() => {
-      // EIP-155 (inferred chainId)
-      if (signature.v >= 35) {
-        const inferredChainId = Math.floor((signature.v - 35) / 2)
-        if (inferredChainId > 0) return signature.v
-        return 27 + (signature.v === 35 ? 0 : 1)
-      }
-
-      // EIP-155 (explicit chainId)
-      if (chainId > 0) return chainId * 2 + 35 + signature.v - 27
-
-      // Pre-EIP-155 (no chainId)
-      const v = 27 + (signature.v === 27 ? 0 : 1)
-      if (signature.v !== v)
-        throw new Signature.InvalidVError({ value: signature.v })
-      return v
-    })()
-
-    serialized = [
-      ...serialized,
-      Hex.fromNumber(v),
-      signature.r === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.r)),
-      signature.s === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.s)),
-    ]
-  } else if (chainId > 0)
-    serialized = [...serialized, Hex.fromNumber(chainId), '0x', '0x']
-
-  return Rlp.fromHex(serialized) as never
+  return Hex.concat('0x01', Rlp.fromHex(serialized)) as Serialized
 }
 
 export declare namespace serialize {
@@ -540,28 +489,29 @@ export declare namespace serialize {
   type ErrorType =
     | assert.ErrorType
     | Hex.fromNumber.ErrorType
-    | Hex.trimLeft.ErrorType
+    | Signature.toTuple.ErrorType
+    | Hex.concat.ErrorType
     | Rlp.fromHex.ErrorType
-    | Signature.InvalidVError
     | Errors.GlobalErrorType
 }
 
 /**
- * Converts an {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy} to an {@link ox#TransactionEnvelopeLegacy.Rpc}.
+ * Converts an {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930} to an {@link ox#TxEnvelopeEip2930.Rpc}.
  *
  * @example
  * ```ts twoslash
- * import { RpcRequest, TransactionEnvelopeLegacy, Value } from 'ox'
+ * import { RpcRequest, TxEnvelopeEip2930, Value } from 'ox'
  *
- * const envelope = TransactionEnvelopeLegacy.from({
+ * const envelope = TxEnvelopeEip2930.from({
  *   chainId: 1,
  *   nonce: 0n,
  *   gas: 21000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: Value.fromEther('1'),
  * })
  *
- * const envelope_rpc = TransactionEnvelopeLegacy.toRpc(envelope) // [!code focus]
+ * const envelope_rpc = TxEnvelopeEip2930.toRpc(envelope) // [!code focus]
  *
  * const request = RpcRequest.from({
  *   id: 0,
@@ -570,20 +520,16 @@ export declare namespace serialize {
  * })
  * ```
  *
- * @param envelope - The legacy transaction envelope to convert.
- * @returns An RPC-formatted legacy transaction envelope.
+ * @param envelope - The EIP-2930 transaction envelope to convert.
+ * @returns An RPC-formatted EIP-2930 transaction envelope.
  */
-export function toRpc(envelope: Omit<TransactionEnvelopeLegacy, 'type'>): Rpc {
+export function toRpc(envelope: Omit<TxEnvelopeEip2930, 'type'>): Rpc {
   const signature = Signature.extract(envelope)!
 
   return {
     ...envelope,
-    chainId:
-      typeof envelope.chainId === 'number'
-        ? Hex.fromNumber(envelope.chainId)
-        : undefined,
+    chainId: Hex.fromNumber(envelope.chainId),
     data: envelope.data ?? envelope.input,
-    type: '0x0',
     ...(typeof envelope.gas === 'bigint'
       ? { gas: Hex.fromNumber(envelope.gas) }
       : {}),
@@ -596,12 +542,8 @@ export function toRpc(envelope: Omit<TransactionEnvelopeLegacy, 'type'>): Rpc {
     ...(typeof envelope.gasPrice === 'bigint'
       ? { gasPrice: Hex.fromNumber(envelope.gasPrice) }
       : {}),
-    ...(signature
-      ? {
-          ...Signature.toRpc(signature),
-          v: signature.yParity === 0 ? '0x1b' : '0x1c',
-        }
-      : {}),
+    type: '0x1',
+    ...(signature ? Signature.toRpc(signature) : {}),
   } as never
 }
 
@@ -610,13 +552,13 @@ export declare namespace toRpc {
 }
 
 /**
- * Validates a {@link ox#TransactionEnvelopeLegacy.TransactionEnvelopeLegacy}. Returns `true` if the envelope is valid, `false` otherwise.
+ * Validates a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930}. Returns `true` if the envelope is valid, `false` otherwise.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeLegacy, Value } from 'ox'
+ * import { TxEnvelopeEip2930, Value } from 'ox'
  *
- * const valid = TransactionEnvelopeLegacy.assert({
+ * const valid = TxEnvelopeEip2930.assert({
  *   gasPrice: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
@@ -627,9 +569,7 @@ export declare namespace toRpc {
  *
  * @param envelope - The transaction envelope to validate.
  */
-export function validate(
-  envelope: PartialBy<TransactionEnvelopeLegacy, 'type'>,
-) {
+export function validate(envelope: PartialBy<TxEnvelopeEip2930, 'type'>) {
   try {
     assert(envelope)
     return true

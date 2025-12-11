@@ -117,7 +117,7 @@ export type TokenLimit<bigintType = bigint> = {
  *
  * Use this to create an unsigned key authorization, then sign it with the root key using
  * {@link ox#KeyAuthorization.(getSignPayload:function)} and attach the signature. The signed authorization
- * can be included in a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo} via the
+ * can be included in a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} via the
  * `keyAuthorization` field to provision the access key on-chain.
  *
  * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)

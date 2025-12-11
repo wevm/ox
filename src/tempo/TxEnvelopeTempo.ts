@@ -12,7 +12,7 @@ import type {
 } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as Signature from '../core/Signature.js'
-import * as TransactionEnvelope from '../core/TransactionEnvelope.js'
+import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
@@ -62,7 +62,7 @@ export type Call<bigintType = bigint> = {
  *
  * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
  */
-export type TransactionEnvelopeTempo<
+export type TxEnvelopeTempo<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
@@ -125,7 +125,7 @@ export type TransactionEnvelopeTempo<
       })
 >
 
-export type Rpc<signed extends boolean = boolean> = TransactionEnvelopeTempo<
+export type Rpc<signed extends boolean = boolean> = TxEnvelopeTempo<
   signed,
   Hex.Hex,
   Hex.Hex,
@@ -137,7 +137,7 @@ export type FeePayerMagic = typeof feePayerMagic
 
 export type Serialized = `${SerializedType}${string}`
 
-export type Signed = TransactionEnvelopeTempo<true>
+export type Signed = TxEnvelopeTempo<true>
 
 export const serializedType = '0x76' as const
 export type SerializedType = typeof serializedType
@@ -146,13 +146,13 @@ export const type = 'tempo' as const
 export type Type = typeof type
 
 /**
- * Asserts a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo} is valid.
+ * Asserts a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} is valid.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * TransactionEnvelopeTempo.assert({
+ * TxEnvelopeTempo.assert({
  *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: 0n }],
  *   chainId: 1,
  *   maxFeePerGas: 1000000000n,
@@ -161,7 +161,7 @@ export type Type = typeof type
  *
  * @param envelope - The transaction envelope to assert.
  */
-export function assert(envelope: PartialBy<TransactionEnvelopeTempo, 'type'>) {
+export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   const {
     calls,
     chainId,
@@ -221,13 +221,13 @@ export declare namespace assert {
 }
 
 /**
- * Deserializes a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo} from its serialized form.
+ * Deserializes a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} from its serialized form.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.deserialize('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
+ * const envelope = TxEnvelopeTempo.deserialize('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
  * // @log: {
  * // @log:   type: 'tempo',
  * // @log:   nonce: 785n,
@@ -240,9 +240,7 @@ export declare namespace assert {
  * @param serialized - The serialized transaction.
  * @returns Deserialized Transaction Envelope.
  */
-export function deserialize(
-  serialized: Serialized,
-): Compute<TransactionEnvelopeTempo> {
+export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
   const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const [
@@ -306,7 +304,7 @@ export function deserialize(
   let transaction = {
     chainId: Number(chainId),
     type,
-  } as TransactionEnvelopeTempo
+  } as TxEnvelopeTempo
 
   if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
   if (Hex.validate(nonce))
@@ -388,16 +386,16 @@ export declare namespace deserialize {
  *
  * Use this to create transaction envelopes with Tempo-specific features like batched calls,
  * fee tokens, access keys, and scheduled execution. Attach a signature using the `signature`
- * option after signing with {@link ox#TransactionEnvelopeTempo.(getSignPayload:function)}.
+ * option after signing with {@link ox#TxEnvelopeTempo.(getSignPayload:function)}.
  *
  * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
  *
  * @example
  * ```ts twoslash
  * import { Value } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from({ // [!code focus]
+ * const envelope = TxEnvelopeTempo.from({ // [!code focus]
  *   chainId: 1, // [!code focus]
  *   calls: [{ // [!code focus]
  *     data: '0xdeadbeef', // [!code focus]
@@ -416,9 +414,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1, Value } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from({
+ * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
@@ -429,11 +427,11 @@ export declare namespace deserialize {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeTempo.getSignPayload(envelope),
+ *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const envelope_signed = TransactionEnvelopeTempo.from(envelope, { // [!code focus]
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  * // @log: {
@@ -451,12 +449,12 @@ export declare namespace deserialize {
  * @example
  * ### From Serialized
  *
- * It is possible to instantiate a Tempo Transaction Envelope from a {@link ox#TransactionEnvelopeTempo.Serialized} value.
+ * It is possible to instantiate a Tempo Transaction Envelope from a {@link ox#TxEnvelopeTempo.Serialized} value.
  *
  * ```ts twoslash
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
+ * const envelope = TxEnvelopeTempo.from('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
  * // @log: {
  * // @log:   chainId: 1,
  * // @log:   calls: [{
@@ -473,22 +471,17 @@ export declare namespace deserialize {
  * @returns A Tempo Transaction Envelope.
  */
 export function from<
-  const envelope extends
-    | UnionPartialBy<TransactionEnvelopeTempo, 'type'>
-    | Serialized,
+  const envelope extends UnionPartialBy<TxEnvelopeTempo, 'type'> | Serialized,
   const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
-  envelope:
-    | envelope
-    | UnionPartialBy<TransactionEnvelopeTempo, 'type'>
-    | Serialized,
+  envelope: envelope | UnionPartialBy<TxEnvelopeTempo, 'type'> | Serialized,
   options: from.Options<signature> = {},
 ): from.ReturnValue<envelope, signature> {
   const { feePayerSignature, signature } = options
 
   const envelope_ = (
     typeof envelope === 'string' ? deserialize(envelope) : envelope
-  ) as TransactionEnvelopeTempo
+  ) as TxEnvelopeTempo
 
   assert(envelope_)
 
@@ -511,13 +504,13 @@ export declare namespace from {
   }
 
   type ReturnValue<
-    envelope extends
-      | UnionPartialBy<TransactionEnvelopeTempo, 'type'>
-      | Hex.Hex = TransactionEnvelopeTempo | Hex.Hex,
+    envelope extends UnionPartialBy<TxEnvelopeTempo, 'type'> | Hex.Hex =
+      | TxEnvelopeTempo
+      | Hex.Hex,
     signature extends SignatureEnvelope.from.Value | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
-      ? TransactionEnvelopeTempo
+      ? TxEnvelopeTempo
       : Assign<
           envelope,
           (signature extends SignatureEnvelope.from.Value
@@ -535,7 +528,7 @@ export declare namespace from {
 }
 
 /**
- * Serializes a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}.
+ * Serializes a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
  *
  * RLP-encodes the transaction with type prefix `0x76`. For fee sponsorship, use `format: 'feePayer'`
  * to serialize with the fee payer magic `0x78` and the sender address.
@@ -546,9 +539,9 @@ export declare namespace from {
  * ```ts twoslash
  * // @noErrors
  * import { Value } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from({
+ * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
@@ -557,7 +550,7 @@ export declare namespace from {
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
  *
- * const serialized = TransactionEnvelopeTempo.serialize(envelope) // [!code focus]
+ * const serialized = TxEnvelopeTempo.serialize(envelope) // [!code focus]
  * ```
  *
  * @example
@@ -568,9 +561,9 @@ export declare namespace from {
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1, Value } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from({
+ * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
@@ -580,11 +573,11 @@ export declare namespace from {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeTempo.getSignPayload(envelope),
+ *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  *   privateKey: '0x...',
  * })
  *
- * const serialized = TransactionEnvelopeTempo.serialize(envelope, { // [!code focus]
+ * const serialized = TxEnvelopeTempo.serialize(envelope, { // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  *
@@ -596,7 +589,7 @@ export declare namespace from {
  * @returns The serialized Transaction Envelope.
  */
 export function serialize(
-  envelope: PartialBy<TransactionEnvelopeTempo, 'type'>,
+  envelope: PartialBy<TxEnvelopeTempo, 'type'>,
   options: serialize.Options = {},
 ): Serialized {
   const {
@@ -711,10 +704,10 @@ export declare namespace serialize {
 }
 
 /**
- * Returns the payload to sign for a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}.
+ * Returns the payload to sign for a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
  *
  * Computes the keccak256 hash of the unsigned serialized transaction. Sign this payload
- * with secp256k1, P256, or WebAuthn, then attach the signature via {@link ox#TransactionEnvelopeTempo.(from:function)}.
+ * with secp256k1, P256, or WebAuthn, then attach the signature via {@link ox#TxEnvelopeTempo.(from:function)}.
  *
  * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
  *
@@ -725,9 +718,9 @@ export declare namespace serialize {
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1 } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from({
+ * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
@@ -738,7 +731,7 @@ export declare namespace serialize {
  *   gas: 21000n,
  * })
  *
- * const payload = TransactionEnvelopeTempo.getSignPayload(envelope) // [!code focus]
+ * const payload = TxEnvelopeTempo.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
@@ -748,7 +741,7 @@ export declare namespace serialize {
  * @returns The sign payload.
  */
 export function getSignPayload(
-  envelope: TransactionEnvelopeTempo,
+  envelope: TxEnvelopeTempo,
 ): getSignPayload.ReturnValue {
   return hash(envelope, { presign: true })
 }
@@ -760,15 +753,15 @@ export declare namespace getSignPayload {
 }
 
 /**
- * Hashes a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}. This is the "transaction hash".
+ * Hashes a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}. This is the "transaction hash".
  *
  * @example
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1 } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from({
+ * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
@@ -780,13 +773,13 @@ export declare namespace getSignPayload {
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: TransactionEnvelopeTempo.getSignPayload(envelope),
+ *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TransactionEnvelopeTempo.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, { signature })
  *
- * const hash = TransactionEnvelopeTempo.hash(envelope_signed) // [!code focus]
+ * const hash = TxEnvelopeTempo.hash(envelope_signed) // [!code focus]
  * ```
  *
  * @param envelope - The Tempo Transaction Envelope to hash.
@@ -794,7 +787,7 @@ export declare namespace getSignPayload {
  * @returns The hash of the transaction envelope.
  */
 export function hash<presign extends boolean = false>(
-  envelope: TransactionEnvelopeTempo<presign extends true ? false : true>,
+  envelope: TxEnvelopeTempo<presign extends true ? false : true>,
   options: hash.Options<presign> = {},
 ): hash.ReturnValue {
   const serialized = serialize({
@@ -827,7 +820,7 @@ export declare namespace hash {
 }
 
 /**
- * Returns the fee payer payload to sign for a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}.
+ * Returns the fee payer payload to sign for a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
  *
  * Fee sponsorship uses a dual-signature scheme: the sender signs the transaction, then a fee payer
  * signs over the transaction with the sender's address to commit to paying fees. The fee payer's
@@ -840,9 +833,9 @@ export declare namespace hash {
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1 } from 'ox'
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TransactionEnvelopeTempo.from({
+ * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
@@ -853,7 +846,7 @@ export declare namespace hash {
  *   gas: 21000n,
  * })
  *
- * const payload = TransactionEnvelopeTempo.getFeePayerSignPayload(envelope, {
+ * const payload = TxEnvelopeTempo.getFeePayerSignPayload(envelope, {
  *   sender: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
  * }) // [!code focus]
  * // @log: '0x...'
@@ -866,7 +859,7 @@ export declare namespace hash {
  * @returns The fee payer sign payload.
  */
 export function getFeePayerSignPayload(
-  envelope: TransactionEnvelopeTempo,
+  envelope: TxEnvelopeTempo,
   options: getFeePayerSignPayload.Options,
 ): getFeePayerSignPayload.ReturnValue {
   const { sender } = options
@@ -894,13 +887,13 @@ export declare namespace getFeePayerSignPayload {
 }
 
 /**
- * Validates a {@link ox#TransactionEnvelopeTempo.TransactionEnvelopeTempo}. Returns `true` if the envelope is valid, `false` otherwise.
+ * Validates a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}. Returns `true` if the envelope is valid, `false` otherwise.
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const valid = TransactionEnvelopeTempo.validate({
+ * const valid = TxEnvelopeTempo.validate({
  *   calls: [{
  *     data: '0xdeadbeef',
  *     to: '0x0000000000000000000000000000000000000000',
@@ -913,9 +906,7 @@ export declare namespace getFeePayerSignPayload {
  *
  * @param envelope - The transaction envelope to validate.
  */
-export function validate(
-  envelope: PartialBy<TransactionEnvelopeTempo, 'type'>,
-) {
+export function validate(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   try {
     assert(envelope)
     return true
@@ -933,17 +924,17 @@ export declare namespace validate {
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * TransactionEnvelopeTempo.assert({
+ * TxEnvelopeTempo.assert({
  *   calls: [],
  *   chainId: 1,
  * })
- * // @error: TransactionEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.
+ * // @error: TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.
  * ```
  */
 export class CallsEmptyError extends Errors.BaseError {
-  override readonly name = 'TransactionEnvelopeTempo.CallsEmptyError'
+  override readonly name = 'TxEnvelopeTempo.CallsEmptyError'
   constructor() {
     super('Calls list cannot be empty.')
   }
@@ -954,19 +945,19 @@ export class CallsEmptyError extends Errors.BaseError {
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeTempo } from 'ox/tempo'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * TransactionEnvelopeTempo.assert({
+ * TxEnvelopeTempo.assert({
  *   calls: [{ to: '0x0000000000000000000000000000000000000000' }],
  *   chainId: 1,
  *   validBefore: 100,
  *   validAfter: 200,
  * })
- * // @error: TransactionEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (200).
+ * // @error: TxEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (200).
  * ```
  */
 export class InvalidValidityWindowError extends Errors.BaseError {
-  override readonly name = 'TransactionEnvelopeTempo.InvalidValidityWindowError'
+  override readonly name = 'TxEnvelopeTempo.InvalidValidityWindowError'
   constructor({
     validBefore,
     validAfter,

@@ -55,9 +55,9 @@ export type BaseSigned<type extends string = string> = Base<type, true>
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip1559 } from 'ox'
+ * import { TxEnvelopeEip1559 } from 'ox'
  *
- * TransactionEnvelopeEip1559.assert({
+ * TxEnvelopeEip1559.assert({
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  * })
@@ -84,9 +84,9 @@ export class FeeCapTooHighError extends Errors.BaseError {
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeLegacy } from 'ox'
+ * import { TxEnvelopeLegacy } from 'ox'
  *
- * TransactionEnvelopeLegacy.assert({
+ * TxEnvelopeLegacy.assert({
  *   gasPrice: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  * })
@@ -113,9 +113,9 @@ export class GasPriceTooHighError extends Errors.BaseError {
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip1559 } from 'ox'
+ * import { TxEnvelopeEip1559 } from 'ox'
  *
- * TransactionEnvelopeEip1559.assert({ chainId: 0 })
+ * TxEnvelopeEip1559.assert({ chainId: 0 })
  * // @error: TransactionEnvelope.InvalidChainIdError: Chain ID "0" is invalid.
  * ```
  */
@@ -135,9 +135,9 @@ export class InvalidChainIdError extends Errors.BaseError {
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip1559 } from 'ox'
+ * import { TxEnvelopeEip1559 } from 'ox'
  *
- * TransactionEnvelopeEip1559.deserialize('0x02c0')
+ * TxEnvelopeEip1559.deserialize('0x02c0')
  * // @error: TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip1559" was provided.
  * // @error: Serialized Transaction: "0x02c0"
  * // @error: Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList
@@ -171,9 +171,9 @@ export class InvalidSerializedError extends Errors.BaseError {
  *
  * @example
  * ```ts twoslash
- * import { TransactionEnvelopeEip1559 } from 'ox'
+ * import { TxEnvelopeEip1559 } from 'ox'
  *
- * TransactionEnvelopeEip1559.assert({
+ * TxEnvelopeEip1559.assert({
  *   chainId: 1,
  *   maxFeePerGas: 10n,
  *   maxPriorityFeePerGas: 11n,
