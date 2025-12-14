@@ -1,5 +1,11 @@
 # ox
 
+## 0.10.1
+
+### Patch Changes
+
+- [`a5a63d4`](https://github.com/wevm/ox/commit/a5a63d4940734fb8df042df1f67aa0c6c8d9b698) Thanks [@jxom](https://github.com/jxom)! - Explicitly widened `WebAuthn` `getFn`/`createFn` to avoid downstream type conflicts.
+
 ## 0.10.0
 
 ### Minor Changes
