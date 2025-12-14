@@ -64,7 +64,7 @@ export async function createCredential(
   const creationOptions = getCredentialCreationOptions(rest)
   try {
     const credential = (await createFn(
-      creationOptions,
+      creationOptions as never,
     )) as internal.PublicKeyCredential
     if (!credential) throw new CredentialCreationFailedError()
 
@@ -593,7 +593,7 @@ export async function sign(options: sign.Options): Promise<sign.ReturnType> {
   const requestOptions = getCredentialRequestOptions(rest)
   try {
     const credential = (await getFn(
-      requestOptions,
+      requestOptions as never,
     )) as internal.PublicKeyCredential
     if (!credential) throw new CredentialRequestFailedError()
     const response = credential.response as AuthenticatorAssertionResponse
