@@ -1,5 +1,11 @@
 # ox
 
+## 0.10.2
+
+### Patch Changes
+
+- [`a98c346`](https://github.com/wevm/ox/commit/a98c346aead489f5c4697f5a2cbf6f5803921655) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Removed `0x` fallback on `to` for `TransactionRequest.toRpc`
+
 ## 0.10.1
 
 ### Patch Changes
