@@ -112,7 +112,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     )
   if (request.calls)
     request_rpc.calls = request.calls.map((call) => ({
-      to: call.to ?? '0x',
+      to: call.to,
       value: call.value ? Hex.fromNumber(call.value) : '0x',
       data: call.data ?? '0x',
     }))
