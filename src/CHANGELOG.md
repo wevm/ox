@@ -1,5 +1,13 @@
 # ox
 
+## 0.10.4
+
+### Patch Changes
+
+- [`a449324`](https://github.com/wevm/ox/commit/a44932462769ac9e9a42e342310eae3d821e130c) Thanks [@jxom](https://github.com/jxom)! - Added `SignatureEnvelope.verify`.
+
+- [`fa6cc3c`](https://github.com/wevm/ox/commit/fa6cc3c64bc358d3c31c6a4e0ac76960ec36b9c1) Thanks [@jxom](https://github.com/jxom)! - Added `magic` to `SignatureEnvelope.serialize`.
+
 ## 0.10.3
 
 ### Patch Changes
