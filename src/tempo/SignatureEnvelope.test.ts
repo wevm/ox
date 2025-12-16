@@ -1857,7 +1857,7 @@ describe('verify', () => {
   })
 
   describe('keychain', () => {
-    test('behavior: returns false for keychain signatures', () => {
+    test('error: throws for keychain signatures', () => {
       const privateKey = Secp256k1.randomPrivateKey()
       const secp256k1PublicKey = Secp256k1.getPublicKey({ privateKey })
       const payload = '0xdeadbeef' as const
@@ -1869,12 +1869,14 @@ describe('verify', () => {
         inner: innerEnvelope,
       })
 
-      expect(
+      expect(() =>
         SignatureEnvelope.verify(envelope, {
           payload,
           publicKey: secp256k1PublicKey,
         }),
-      ).toBe(false)
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.VerificationError: Unable to verify signature envelope of type "keychain".]`,
+      )
     })
   })
 })

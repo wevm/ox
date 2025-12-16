@@ -957,7 +957,7 @@ export declare namespace validate {
  * Supports `secp256k1`, `p256`, and `webAuthn` signature types.
  *
  * :::warning
- * `keychain` signatures are not supported and will return `false`.
+ * `keychain` signatures are not supported and will throw an error.
  * :::
  *
  * @example
@@ -1068,44 +1068,42 @@ export function verify(
   })()
   if (!address) return false
 
-  try {
-    const envelope = from(signature)
+  const envelope = from(signature)
 
-    if (envelope.type === 'secp256k1') {
-      if (!address) return false
-      return ox_Secp256k1.verify({
-        address,
-        payload,
-        signature: envelope.signature,
-      })
-    }
-
-    if (envelope.type === 'p256') {
-      const envelopeAddress = Address.fromPublicKey(envelope.publicKey)
-      if (!Address.isEqual(envelopeAddress, address)) return false
-      return ox_P256.verify({
-        hash: envelope.prehash,
-        publicKey: envelope.publicKey,
-        payload,
-        signature: envelope.signature,
-      })
-    }
-
-    if (envelope.type === 'webAuthn') {
-      const envelopeAddress = Address.fromPublicKey(envelope.publicKey)
-      if (!Address.isEqual(envelopeAddress, address)) return false
-      return ox_WebAuthnP256.verify({
-        challenge: Hex.from(payload),
-        metadata: envelope.metadata,
-        publicKey: envelope.publicKey,
-        signature: envelope.signature,
-      })
-    }
-
-    return false
-  } catch {
-    return false
+  if (envelope.type === 'secp256k1') {
+    if (!address) return false
+    return ox_Secp256k1.verify({
+      address,
+      payload,
+      signature: envelope.signature,
+    })
   }
+
+  if (envelope.type === 'p256') {
+    const envelopeAddress = Address.fromPublicKey(envelope.publicKey)
+    if (!Address.isEqual(envelopeAddress, address)) return false
+    return ox_P256.verify({
+      hash: envelope.prehash,
+      publicKey: envelope.publicKey,
+      payload,
+      signature: envelope.signature,
+    })
+  }
+
+  if (envelope.type === 'webAuthn') {
+    const envelopeAddress = Address.fromPublicKey(envelope.publicKey)
+    if (!Address.isEqual(envelopeAddress, address)) return false
+    return ox_WebAuthnP256.verify({
+      challenge: Hex.from(payload),
+      metadata: envelope.metadata,
+      publicKey: envelope.publicKey,
+      signature: envelope.signature,
+    })
+  }
+
+  throw new VerificationError(
+    `Unable to verify signature envelope of type "${envelope.type}".`,
+  )
 }
 
 export declare namespace verify {
@@ -1172,4 +1170,11 @@ export class InvalidSerializedError extends Errors.BaseError {
       metaMessages: [`Serialized: ${serialized}`],
     })
   }
+}
+
+/**
+ * Error thrown when a signature envelope fails to verify.
+ */
+export class VerificationError extends Errors.BaseError {
+  override readonly name = 'SignatureEnvelope.VerificationError'
 }
