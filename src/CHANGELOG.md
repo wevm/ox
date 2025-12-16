@@ -1,5 +1,11 @@
 # ox
 
+## 0.10.5
+
+### Patch Changes
+
+- [`e750936`](https://github.com/wevm/ox/commit/e7509364b3e9c0db3ec34e82e4e3b5baf43164e9) Thanks [@jxom](https://github.com/jxom)! - Throw error if signature envelope type not supported.
+
 ## 0.10.4
 
 ### Patch Changes
