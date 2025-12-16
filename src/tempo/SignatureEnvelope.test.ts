@@ -477,6 +477,24 @@ describe('deserialize', () => {
       })
     })
 
+    test('behavior: deserializes signature with magic identifier', () => {
+      const serialized = SignatureEnvelope.serialize(
+        { signature: signature_secp256k1, type: 'secp256k1' },
+        { magic: true },
+      )
+
+      const envelope = SignatureEnvelope.deserialize(serialized)
+
+      expect(envelope).toMatchObject({
+        signature: {
+          r: signature_secp256k1.r,
+          s: signature_secp256k1.s,
+          yParity: signature_secp256k1.yParity,
+        },
+        type: 'secp256k1',
+      })
+    })
+
     test('error: throws on invalid size', () => {
       expect(() =>
         SignatureEnvelope.deserialize('0xdeadbeef'),
@@ -520,6 +538,26 @@ describe('deserialize', () => {
       })
     })
 
+    test('behavior: deserializes P256 signature with magic identifier', () => {
+      const serialized = SignatureEnvelope.serialize(signature_p256, {
+        magic: true,
+      })
+      const deserialized = SignatureEnvelope.deserialize(serialized)
+
+      expect(deserialized).toMatchObject({
+        signature: {
+          r: signature_p256.signature.r,
+          s: signature_p256.signature.s,
+        },
+        publicKey: {
+          x: signature_p256.publicKey.x,
+          y: signature_p256.publicKey.y,
+        },
+        prehash: signature_p256.prehash,
+        type: 'p256',
+      })
+    })
+
     test('error: throws on invalid P256 signature length', () => {
       // P256 signature with wrong length (should be 130 bytes total, but only 100)
       const invalidSig = `0x01${'00'.repeat(100)}` as `0x${string}`
@@ -538,6 +576,29 @@ describe('deserialize', () => {
   describe('webAuthn', () => {
     test('behavior: deserializes WebAuthn signature', () => {
       const serialized = SignatureEnvelope.serialize(signature_webauthn)
+      const deserialized = SignatureEnvelope.deserialize(serialized)
+
+      expect(deserialized).toMatchObject({
+        signature: {
+          r: signature_webauthn.signature.r,
+          s: signature_webauthn.signature.s,
+        },
+        publicKey: {
+          x: signature_webauthn.publicKey.x,
+          y: signature_webauthn.publicKey.y,
+        },
+        metadata: {
+          authenticatorData: signature_webauthn.metadata.authenticatorData,
+          clientDataJSON: signature_webauthn.metadata.clientDataJSON,
+        },
+        type: 'webAuthn',
+      })
+    })
+
+    test('behavior: deserializes WebAuthn signature with magic identifier', () => {
+      const serialized = SignatureEnvelope.serialize(signature_webauthn, {
+        magic: true,
+      })
       const deserialized = SignatureEnvelope.deserialize(serialized)
 
       expect(deserialized).toMatchObject({
@@ -674,6 +735,20 @@ describe('deserialize', () => {
           "userAddress": "0xfedcbafedcbafedcbafedcbafedcbafedcbafedc",
         }
       `)
+    })
+
+    test('behavior: deserializes keychain signature with magic identifier', () => {
+      const serialized = SignatureEnvelope.serialize(
+        signature_keychain_secp256k1,
+        { magic: true },
+      )
+      const deserialized = SignatureEnvelope.deserialize(serialized)
+
+      expect(deserialized).toMatchObject({
+        userAddress: signature_keychain_secp256k1.userAddress,
+        inner: SignatureEnvelope.from(signature_secp256k1),
+        type: 'keychain',
+      })
     })
 
     test('error: throws on invalid keychain signature length', () => {
@@ -916,6 +991,20 @@ describe('serialize', () => {
 
       expect(serialized).toBe(Signature.toHex(signature_secp256k1))
     })
+
+    test('behavior: serializes with magic identifier', () => {
+      const envelope: SignatureEnvelope.SignatureEnvelope = {
+        signature: signature_secp256k1,
+        type: 'secp256k1',
+      }
+
+      const serialized = SignatureEnvelope.serialize(envelope, { magic: true })
+
+      expect(serialized.endsWith(SignatureEnvelope.magicBytes.slice(2))).toBe(
+        true,
+      )
+      expect(Hex.size(serialized)).toBe(65 + 32) // signature + magic identifier
+    })
   })
 
   describe('p256', () => {
@@ -935,6 +1024,17 @@ describe('serialize', () => {
 
       // Last byte should be 0x00 for false
       expect(serialized.slice(-2)).toBe('00')
+    })
+
+    test('behavior: serializes with magic identifier', () => {
+      const serialized = SignatureEnvelope.serialize(signature_p256, {
+        magic: true,
+      })
+
+      expect(serialized.endsWith(SignatureEnvelope.magicBytes.slice(2))).toBe(
+        true,
+      )
+      expect(Hex.size(serialized)).toBe(130 + 32) // signature + magic identifier
     })
   })
 
@@ -965,6 +1065,23 @@ describe('serialize', () => {
       expect(deserialized.metadata?.clientDataJSON).toBe(
         signature_webauthn.metadata.clientDataJSON,
       )
+    })
+
+    test('behavior: serializes with magic identifier', () => {
+      const serialized = SignatureEnvelope.serialize(signature_webauthn, {
+        magic: true,
+      })
+
+      expect(serialized.endsWith(SignatureEnvelope.magicBytes.slice(2))).toBe(
+        true,
+      )
+
+      const authDataLength =
+        (signature_webauthn.metadata.authenticatorData.length - 2) / 2
+      const clientDataLength = signature_webauthn.metadata.clientDataJSON.length
+      const expectedSize = 1 + authDataLength + clientDataLength + 128 + 32 // type + data + signature components + magic
+
+      expect(Hex.size(serialized)).toBe(expectedSize)
     })
   })
 
@@ -1043,6 +1160,18 @@ describe('serialize', () => {
         },
       })
     })
+
+    test('behavior: serializes with magic identifier', () => {
+      const serialized = SignatureEnvelope.serialize(
+        signature_keychain_secp256k1,
+        { magic: true },
+      )
+
+      expect(serialized.endsWith(SignatureEnvelope.magicBytes.slice(2))).toBe(
+        true,
+      )
+      expect(Hex.size(serialized)).toBe(1 + 20 + 65 + 32) // type + address + secp256k1 + magic
+    })
   })
 
   describe('roundtrip', () => {
@@ -1054,6 +1183,27 @@ describe('serialize', () => {
         }
 
         const serialized = SignatureEnvelope.serialize(envelope)
+        const deserialized = SignatureEnvelope.deserialize(serialized)
+
+        expect(deserialized).toMatchObject({
+          signature: {
+            r: signature_secp256k1.r,
+            s: signature_secp256k1.s,
+            yParity: signature_secp256k1.yParity,
+          },
+          type: 'secp256k1',
+        })
+      })
+
+      test('behavior: roundtrips serialize with magic -> deserialize', () => {
+        const envelope: SignatureEnvelope.Secp256k1 = {
+          signature: signature_secp256k1,
+          type: 'secp256k1',
+        }
+
+        const serialized = SignatureEnvelope.serialize(envelope, {
+          magic: true,
+        })
         const deserialized = SignatureEnvelope.deserialize(serialized)
 
         expect(deserialized).toMatchObject({
@@ -1092,6 +1242,26 @@ describe('serialize', () => {
         const deserialized = SignatureEnvelope.deserialize(serialized)
 
         expect(deserialized.prehash).toBe(false)
+      })
+
+      test('behavior: roundtrips serialize with magic -> deserialize', () => {
+        const serialized = SignatureEnvelope.serialize(signature_p256, {
+          magic: true,
+        })
+        const deserialized = SignatureEnvelope.deserialize(serialized)
+
+        expect(deserialized).toMatchObject({
+          signature: {
+            r: signature_p256.signature.r,
+            s: signature_p256.signature.s,
+          },
+          publicKey: {
+            x: signature_p256.publicKey.x,
+            y: signature_p256.publicKey.y,
+          },
+          prehash: signature_p256.prehash,
+          type: 'p256',
+        })
       })
     })
 
@@ -1136,6 +1306,29 @@ describe('serialize', () => {
         const deserialized = SignatureEnvelope.deserialize(serialized)
 
         expect(deserialized.metadata?.clientDataJSON).toBe(longClientData)
+      })
+
+      test('behavior: roundtrips serialize with magic -> deserialize', () => {
+        const serialized = SignatureEnvelope.serialize(signature_webauthn, {
+          magic: true,
+        })
+        const deserialized = SignatureEnvelope.deserialize(serialized)
+
+        expect(deserialized).toMatchObject({
+          signature: {
+            r: signature_webauthn.signature.r,
+            s: signature_webauthn.signature.s,
+          },
+          publicKey: {
+            x: signature_webauthn.publicKey.x,
+            y: signature_webauthn.publicKey.y,
+          },
+          metadata: {
+            authenticatorData: signature_webauthn.metadata.authenticatorData,
+            clientDataJSON: signature_webauthn.metadata.clientDataJSON,
+          },
+          type: 'webAuthn',
+        })
       })
     })
 
@@ -1202,6 +1395,69 @@ describe('serialize', () => {
             "userAddress": "0xfedcbafedcbafedcbafedcbafedcbafedcbafedc",
           }
         `)
+      })
+
+      test('behavior: roundtrips serialize with magic -> deserialize with secp256k1 inner', () => {
+        const serialized = SignatureEnvelope.serialize(
+          signature_keychain_secp256k1,
+          { magic: true },
+        )
+        const deserialized = SignatureEnvelope.deserialize(serialized)
+
+        expect(deserialized).toMatchObject(signature_keychain_secp256k1)
+      })
+
+      test('behavior: roundtrips serialize with magic -> deserialize with p256 inner', () => {
+        const serialized = SignatureEnvelope.serialize(
+          signature_keychain_p256,
+          { magic: true },
+        )
+        const deserialized = SignatureEnvelope.deserialize(serialized)
+
+        expect(deserialized).toMatchObject({
+          type: 'keychain',
+          userAddress: signature_keychain_p256.userAddress,
+          inner: {
+            type: 'p256',
+            prehash: signature_p256.prehash,
+            publicKey: {
+              x: signature_p256.publicKey.x,
+              y: signature_p256.publicKey.y,
+            },
+            signature: {
+              r: signature_p256.signature.r,
+              s: signature_p256.signature.s,
+            },
+          },
+        })
+      })
+
+      test('behavior: roundtrips serialize with magic -> deserialize with webAuthn inner', () => {
+        const serialized = SignatureEnvelope.serialize(
+          signature_keychain_webauthn,
+          { magic: true },
+        )
+        const deserialized = SignatureEnvelope.deserialize(serialized)
+
+        expect(deserialized).toMatchObject({
+          type: 'keychain',
+          userAddress: signature_keychain_webauthn.userAddress,
+          inner: {
+            type: 'webAuthn',
+            metadata: {
+              authenticatorData: signature_webauthn.metadata.authenticatorData,
+              clientDataJSON: signature_webauthn.metadata.clientDataJSON,
+            },
+            publicKey: {
+              x: signature_webauthn.publicKey.x,
+              y: signature_webauthn.publicKey.y,
+            },
+            signature: {
+              r: signature_webauthn.signature.r,
+              s: signature_webauthn.signature.s,
+            },
+          },
+        })
       })
     })
   })

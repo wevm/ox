@@ -19,6 +19,10 @@ const serializedP256Type = '0x01'
 const serializedWebAuthnType = '0x02'
 const serializedKeychainType = '0x03'
 
+/** Serialized magic identifier for Tempo signature envelopes. */
+export const magicBytes =
+  '0x7777777777777777777777777777777777777777777777777777777777777777' // 32 "T"s
+
 /**
  * Statically determines the signature type of an envelope at compile time.
  *
@@ -283,7 +287,11 @@ export declare namespace assert {
  * @returns The deserialized signature envelope.
  * @throws `CoercionError` if the serialized value cannot be coerced to a valid signature envelope.
  */
-export function deserialize(serialized: Serialized): SignatureEnvelope {
+export function deserialize(value: Serialized): SignatureEnvelope {
+  const serialized = value.endsWith(magicBytes.slice(2))
+    ? Hex.slice(value, 0, -Hex.size(magicBytes))
+    : value
+
   const size = Hex.size(serialized)
 
   // Backward compatibility: 65 bytes means secp256k1 without type identifier
@@ -763,13 +771,17 @@ export function getType<
  */
 export function serialize(
   envelope: UnionPartialBy<SignatureEnvelope, 'prehash'>,
+  options: serialize.Options = {},
 ): Serialized {
   const type = getType(envelope)
 
   // Backward compatibility: no type identifier for secp256k1
   if (type === 'secp256k1') {
     const secp256k1 = envelope as Secp256k1
-    return Signature.toHex(secp256k1.signature)
+    return Hex.concat(
+      Signature.toHex(secp256k1.signature),
+      options.magic ? magicBytes : '0x',
+    )
   }
 
   if (type === 'p256') {
@@ -782,6 +794,7 @@ export function serialize(
       Hex.fromNumber(p256.publicKey.x, { size: 32 }),
       Hex.fromNumber(p256.publicKey.y, { size: 32 }),
       Hex.fromNumber(p256.prehash ? 1 : 0, { size: 1 }),
+      options.magic ? magicBytes : '0x',
     )
   }
 
@@ -800,6 +813,7 @@ export function serialize(
       Hex.fromNumber(webauthn.signature.s, { size: 32 }),
       Hex.fromNumber(webauthn.publicKey.x, { size: 32 }),
       Hex.fromNumber(webauthn.publicKey.y, { size: 32 }),
+      options.magic ? magicBytes : '0x',
     )
   }
 
@@ -809,10 +823,21 @@ export function serialize(
       serializedKeychainType,
       keychain.userAddress,
       serialize(keychain.inner),
+      options.magic ? magicBytes : '0x',
     )
   }
 
   throw new CoercionError({ envelope })
+}
+
+export declare namespace serialize {
+  type Options = {
+    /**
+     * Whether to serialize the signature envelope with the Tempo magic identifier.
+     * This is useful for being able to distinguish between Tempo and non-Tempo (e.g. ERC-1271) signatures.
+     */
+    magic?: boolean | undefined
+  }
 }
 
 /**
