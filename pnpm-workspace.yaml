@@ -1,4 +1,8 @@
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - abitype
 packages:
-  - 'examples/*'
-  - 'site'
-  - 'src'
+  - examples/*
+  - site
+  - src
+trustPolicy: no-downgrade

@@ -22,7 +22,7 @@
     "@noble/hashes": "^1.8.0",
     "@scure/bip32": "^1.7.0",
     "@scure/bip39": "^1.6.0",
-    "abitype": "^1.0.9",
+    "abitype": "^1.2.3",
     "eventemitter3": "5.0.1"
   },
   "peerDependencies": {
