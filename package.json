@@ -19,6 +19,7 @@
     "clean": "rimraf src/_types src/_esm src/_cjs ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
     "contracts:build": "forge build --config-path ./contracts/foundry.toml && tsx contracts/scripts/generate-typed-artifacts.ts",
     "deps": "pnpx taze -r",
+    "deps:ci": "pnpx actions-up",
     "dev": "pnpm preconstruct && pnpm playground",
     "docs:dev": "pnpm --filter site dev",
     "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json && tsx scripts/docgen/build.ts",
