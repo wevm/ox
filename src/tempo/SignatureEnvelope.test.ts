@@ -1,4 +1,13 @@
-import { Hex, PublicKey, Secp256k1, Signature, WebAuthnP256 } from 'ox'
+import {
+  Address,
+  Hex,
+  P256,
+  PublicKey,
+  Secp256k1,
+  Signature,
+  WebAuthnP256,
+  WebCryptoP256,
+} from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -1579,6 +1588,294 @@ describe('validate', () => {
         s: 0n,
       } as any),
     ).toBe(false)
+  })
+})
+
+describe('verify', () => {
+  describe('secp256k1', () => {
+    test('behavior: verifies valid signature with publicKey', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const publicKey = Secp256k1.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from(signature)
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          publicKey,
+        }),
+      ).toBe(true)
+    })
+
+    test('behavior: verifies valid signature with address', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const publicKey = Secp256k1.getPublicKey({ privateKey })
+      const address = Address.fromPublicKey(publicKey)
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from(signature)
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          address,
+        }),
+      ).toBe(true)
+    })
+
+    test('behavior: returns false for wrong publicKey', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const wrongPrivateKey = Secp256k1.randomPrivateKey()
+      const wrongPublicKey = Secp256k1.getPublicKey({
+        privateKey: wrongPrivateKey,
+      })
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from(signature)
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          publicKey: wrongPublicKey,
+        }),
+      ).toBe(false)
+    })
+
+    test('behavior: returns false for wrong payload', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const publicKey = Secp256k1.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from(signature)
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload: '0xcafebabe',
+          publicKey,
+        }),
+      ).toBe(false)
+    })
+  })
+
+  describe('p256', () => {
+    test('behavior: verifies valid signature with publicKey', () => {
+      const privateKey = P256.randomPrivateKey()
+      const publicKey = P256.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = P256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: false,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          publicKey,
+        }),
+      ).toBe(true)
+    })
+
+    test('behavior: verifies valid signature with address', () => {
+      const privateKey = P256.randomPrivateKey()
+      const publicKey = P256.getPublicKey({ privateKey })
+      const address = Address.fromPublicKey(publicKey)
+      const payload = '0xdeadbeef' as const
+
+      const signature = P256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: false,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          address,
+        }),
+      ).toBe(true)
+    })
+
+    test('behavior: returns false for mismatched publicKey', () => {
+      const privateKey = P256.randomPrivateKey()
+      const publicKey = P256.getPublicKey({ privateKey })
+      const wrongPrivateKey = P256.randomPrivateKey()
+      const wrongPublicKey = P256.getPublicKey({ privateKey: wrongPrivateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = P256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: false,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          publicKey: wrongPublicKey,
+        }),
+      ).toBe(false)
+    })
+
+    test('behavior: returns false for wrong payload', () => {
+      const privateKey = P256.randomPrivateKey()
+      const publicKey = P256.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = P256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: false,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload: '0xcafebabe',
+          publicKey,
+        }),
+      ).toBe(false)
+    })
+  })
+
+  describe('webCryptoP256', () => {
+    test('behavior: verifies valid signature with publicKey', async () => {
+      const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+      const payload = '0xdeadbeef' as const
+
+      const signature = await WebCryptoP256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: true,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          publicKey,
+        }),
+      ).toBe(true)
+    })
+
+    test('behavior: verifies valid signature with address', async () => {
+      const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+      const address = Address.fromPublicKey(publicKey)
+      const payload = '0xdeadbeef' as const
+
+      const signature = await WebCryptoP256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: true,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          address,
+        }),
+      ).toBe(true)
+    })
+
+    test('behavior: returns false for mismatched publicKey', async () => {
+      const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+      const { publicKey: wrongPublicKey } = await WebCryptoP256.createKeyPair()
+      const payload = '0xdeadbeef' as const
+
+      const signature = await WebCryptoP256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: true,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          publicKey: wrongPublicKey,
+        }),
+      ).toBe(false)
+    })
+
+    test('behavior: returns false for wrong payload', async () => {
+      const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+      const payload = '0xdeadbeef' as const
+
+      const signature = await WebCryptoP256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: true,
+        publicKey,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload: '0xcafebabe',
+          publicKey,
+        }),
+      ).toBe(false)
+    })
+  })
+
+  describe('webAuthn', () => {
+    test('behavior: returns false for mismatched publicKey', () => {
+      const wrongPrivateKey = P256.randomPrivateKey()
+      const wrongPublicKey = P256.getPublicKey({ privateKey: wrongPrivateKey })
+      const payload = '0xdeadbeef' as const
+
+      expect(
+        SignatureEnvelope.verify(signature_webauthn, {
+          payload,
+          publicKey: wrongPublicKey,
+        }),
+      ).toBe(false)
+    })
+
+    test('behavior: returns false for mismatched address', () => {
+      const wrongPrivateKey = P256.randomPrivateKey()
+      const wrongPublicKey = P256.getPublicKey({ privateKey: wrongPrivateKey })
+      const wrongAddress = Address.fromPublicKey(wrongPublicKey)
+      const payload = '0xdeadbeef' as const
+
+      expect(
+        SignatureEnvelope.verify(signature_webauthn, {
+          payload,
+          address: wrongAddress,
+        }),
+      ).toBe(false)
+    })
+  })
+
+  describe('keychain', () => {
+    test('behavior: returns false for keychain signatures', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const secp256k1PublicKey = Secp256k1.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const innerEnvelope = SignatureEnvelope.from(signature)
+      const envelope = SignatureEnvelope.from({
+        userAddress: '0x1234567890123456789012345678901234567890',
+        inner: innerEnvelope,
+      })
+
+      expect(
+        SignatureEnvelope.verify(envelope, {
+          payload,
+          publicKey: secp256k1PublicKey,
+        }),
+      ).toBe(false)
+    })
   })
 })
 

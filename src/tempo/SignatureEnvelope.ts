@@ -1,4 +1,5 @@
-import type * as Address from '../core/Address.js'
+import * as Address from '../core/Address.js'
+import type * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type {
@@ -10,9 +11,12 @@ import type {
   UnionPartialBy,
 } from '../core/internal/types.js'
 import * as Json from '../core/Json.js'
+import * as ox_P256 from '../core/P256.js'
 import type * as PublicKey from '../core/PublicKey.js'
+import * as ox_Secp256k1 from '../core/Secp256k1.js'
 import * as Signature from '../core/Signature.js'
 import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
+import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
 
 /** Signature type identifiers for encoding/decoding */
 const serializedP256Type = '0x01'
@@ -945,6 +949,179 @@ export function validate(
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Verifies a signature envelope against a digest/payload.
+ *
+ * Supports `secp256k1`, `p256`, and `webAuthn` signature types.
+ *
+ * :::warning
+ * `keychain` signatures are not supported and will return `false`.
+ * :::
+ *
+ * @example
+ * ### Secp256k1
+ *
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ * import { Secp256k1 } from 'ox'
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const publicKey = Secp256k1.getPublicKey({ privateKey })
+ * const payload = '0xdeadbeef'
+ *
+ * const signature = Secp256k1.sign({ payload, privateKey })
+ * const envelope = SignatureEnvelope.from(signature)
+ *
+ * const valid = SignatureEnvelope.verify(envelope, {
+ *   payload,
+ *   publicKey,
+ * })
+ * // @log: true
+ * ```
+ *
+ * @example
+ * ### P256
+ *
+ * For P256 signatures, the `address` or `publicKey` must match the embedded
+ * public key in the signature envelope.
+ *
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ * import { P256 } from 'ox'
+ *
+ * const privateKey = P256.randomPrivateKey()
+ * const publicKey = P256.getPublicKey({ privateKey })
+ * const payload = '0xdeadbeef'
+ *
+ * const signature = P256.sign({ payload, privateKey })
+ * const envelope = SignatureEnvelope.from({ prehash: false, publicKey, signature })
+ *
+ * const valid = SignatureEnvelope.verify(envelope, {
+ *   payload,
+ *   publicKey,
+ * })
+ * // @log: true
+ * ```
+ *
+ * @example
+ * ### WebCryptoP256
+ *
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ * const payload = '0xdeadbeef'
+ *
+ * const signature = await WebCryptoP256.sign({ payload, privateKey })
+ * const envelope = SignatureEnvelope.from({ prehash: true, publicKey, signature })
+ *
+ * const valid = SignatureEnvelope.verify(envelope, {
+ *   payload,
+ *   publicKey,
+ * })
+ * // @log: true
+ * ```
+ *
+ * @example
+ * ### WebAuthnP256
+ *
+ * ```ts twoslash
+ * import { SignatureEnvelope } from 'ox/tempo'
+ * import { WebAuthnP256 } from 'ox'
+ *
+ * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ * const payload = '0xdeadbeef'
+ *
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   challenge: payload,
+ *   credentialId: credential.id,
+ * })
+ * const envelope = SignatureEnvelope.from({
+ *   metadata,
+ *   signature,
+ *   publicKey: credential.publicKey,
+ * })
+ *
+ * const valid = SignatureEnvelope.verify(envelope, {
+ *   payload,
+ *   publicKey: credential.publicKey,
+ * })
+ * // @log: true
+ * ```
+ *
+ * @param parameters - Verification parameters.
+ * @returns `true` if the signature is valid, `false` otherwise.
+ */
+export function verify(
+  signature: SignatureEnvelope,
+  parameters: verify.Parameters,
+): boolean {
+  const { payload } = parameters
+
+  const address = (() => {
+    if (parameters.address) return parameters.address
+    if (parameters.publicKey) return Address.fromPublicKey(parameters.publicKey)
+    return undefined
+  })()
+  if (!address) return false
+
+  try {
+    const envelope = from(signature)
+
+    if (envelope.type === 'secp256k1') {
+      if (!address) return false
+      return ox_Secp256k1.verify({
+        address,
+        payload,
+        signature: envelope.signature,
+      })
+    }
+
+    if (envelope.type === 'p256') {
+      const envelopeAddress = Address.fromPublicKey(envelope.publicKey)
+      if (!Address.isEqual(envelopeAddress, address)) return false
+      return ox_P256.verify({
+        hash: envelope.prehash,
+        publicKey: envelope.publicKey,
+        payload,
+        signature: envelope.signature,
+      })
+    }
+
+    if (envelope.type === 'webAuthn') {
+      const envelopeAddress = Address.fromPublicKey(envelope.publicKey)
+      if (!Address.isEqual(envelopeAddress, address)) return false
+      return ox_WebAuthnP256.verify({
+        challenge: Hex.from(payload),
+        metadata: envelope.metadata,
+        publicKey: envelope.publicKey,
+        signature: envelope.signature,
+      })
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}
+
+export declare namespace verify {
+  type Parameters = {
+    /** Payload that was signed. */
+    payload: Hex.Hex | Bytes.Bytes
+  } & OneOf<
+    | {
+        /** Public key that signed the payload. */
+        publicKey: PublicKey.PublicKey
+      }
+    | {
+        /** Address that signed the payload. */
+        address: Address.Address
+      }
+  >
 }
 
 /**
