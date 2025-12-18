@@ -136,8 +136,10 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (nonceKey) request_rpc.nonceKey = nonceKey
 
   if (
-    request.calls ||
+    typeof request.calls !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||
+    typeof request.keyAuthorization !== 'undefined' ||
+    typeof request.nonceKey !== 'undefined' ||
     typeof request.validBefore !== 'undefined' ||
     typeof request.validAfter !== 'undefined' ||
     request.type === 'tempo'
