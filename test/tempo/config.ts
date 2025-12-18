@@ -27,6 +27,15 @@ export const client = createClient({
   pollingInterval: 100,
   transport: http(rpcUrl, {
     ...debugOptions({ rpcUrl }),
+    ...(nodeEnv === 'devnet'
+      ? {
+          fetchOptions: {
+            headers: {
+              Authorization: `Basic ${btoa(import.meta.env.VITE_TEMPO_CREDENTIALS ?? '')}`,
+            },
+          },
+        }
+      : {}),
   }),
 })
 
