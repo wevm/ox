@@ -1,5 +1,11 @@
 # ox
 
+## 0.10.6
+
+### Patch Changes
+
+- [`a24f08a`](https://github.com/wevm/ox/commit/a24f08a11b9d980709512fda6cbd350c44500b30) Thanks [@jxom](https://github.com/jxom)! - Updated `TransactionRequest.toRpc` for Tempo.
+
 ## 0.10.5
 
 ### Patch Changes
