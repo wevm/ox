@@ -74,6 +74,7 @@ jobs:
     strategy:
       matrix:
         tempo-env: 
+          - devnet
           - testnet
 
     steps:
