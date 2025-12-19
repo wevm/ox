@@ -920,6 +920,7 @@ describe('behavior: keyAuthorization', () => {
       feePayer,
       feeToken,
       from,
+      gasUsed,
       logs,
       logsBloom,
       transactionHash,
@@ -932,6 +933,7 @@ describe('behavior: keyAuthorization', () => {
     expect(cumulativeGasUsed).toBeDefined()
     expect(feeToken).toBeDefined()
     expect(feePayer).toBeDefined()
+    expect(gasUsed).toBeDefined()
     expect(from).toBeDefined()
     expect(logs).toBeDefined()
     expect(logsBloom).toBeDefined()
@@ -943,7 +945,6 @@ describe('behavior: keyAuthorization', () => {
         "blobGasUsed": undefined,
         "contractAddress": null,
         "effectiveGasPrice": 20000000000n,
-        "gasUsed": 56600n,
         "status": "success",
         "to": "0x0000000000000000000000000000000000000000",
         "type": "0x76",
