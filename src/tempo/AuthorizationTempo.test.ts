@@ -303,7 +303,7 @@ describe('fromRpc', () => {
       chainId: '0x1',
       nonce: '0x1',
       signature: {
-        prehash: true,
+        preHash: true,
         pubKeyX:
           '0x0000000000000000000000000000000000000000000000000000000000000001',
         pubKeyY:
@@ -408,7 +408,7 @@ describe('fromRpcList', () => {
           chainId: '0x1',
           nonce: '0x1',
           signature: {
-            prehash: true,
+            preHash: true,
             pubKeyX:
               '0x0000000000000000000000000000000000000000000000000000000000000001',
             pubKeyY:
@@ -423,7 +423,7 @@ describe('fromRpcList', () => {
           chainId: '0x2',
           nonce: '0x2',
           signature: {
-            prehash: false,
+            preHash: false,
             pubKeyX:
               '0x0000000000000000000000000000000000000000000000000000000000000003',
             pubKeyY:
@@ -579,7 +579,7 @@ describe('fromRpcList', () => {
           chainId: '0x2',
           nonce: '0x2',
           signature: {
-            prehash: true,
+            preHash: true,
             pubKeyX:
               '0x0000000000000000000000000000000000000000000000000000000000000003',
             pubKeyY:

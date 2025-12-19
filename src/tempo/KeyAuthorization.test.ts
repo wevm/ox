@@ -439,7 +439,7 @@ describe('fromRpc', () => {
       limits: [{ token, limit: '0x989680' }],
       signature: {
         type: 'p256',
-        prehash: true,
+        preHash: true,
         pubKeyX: Hex.fromNumber(publicKey_p256.x),
         pubKeyY: Hex.fromNumber(publicKey_p256.y),
         r: Hex.fromNumber(signature_p256_raw.r),
