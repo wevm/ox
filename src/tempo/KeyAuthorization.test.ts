@@ -1013,7 +1013,7 @@ describe('toRpc', () => {
           },
         ],
         "signature": {
-          "prehash": true,
+          "preHash": true,
           "pubKeyX": "0xad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f5",
           "pubKeyY": "0x11edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
           "r": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e",
