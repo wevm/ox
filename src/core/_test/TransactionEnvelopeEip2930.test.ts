@@ -559,24 +559,22 @@ describe('toRpc', () => {
 
     expect({ ...tx, blockHash: null }).toMatchInlineSnapshot(`
       {
-        "accessList": [],
         "blockHash": null,
         "blockNumber": "0x12f2975",
         "chainId": "0x1",
         "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
         "gas": "0x5208",
         "gasPrice": "0x2540be400",
-        "hash": "0x3abd5f1feb4598f71e8bce577a48b76a194e483d043888bfeaf59c4a603c926b",
+        "hash": "0x431d828c5cfb696bd4d80214e89bcaa36f6ed8e8c13e9e3bcc485a9966759a54",
         "input": "0x",
         "nonce": "0x297",
-        "r": "0x65eb2e814e2d0bc71107740c694706e44264850a68421d1b02cd7342f41aee75",
-        "s": "0x7c29b61014e58a6a2464ac5c48ec8c4135e4d95262355b634f57ff934caa52a",
+        "r": "0x221b7f859c35a3f54defb3c29ad2f456a08f4acd3cbddda988a49d8803457655",
+        "s": "0x243e08c40d4f672d37712b579481bf4324464a72a5fcba033aebf474fb65382b",
         "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
         "transactionIndex": "0x0",
-        "type": "0x1",
-        "v": "0x1",
+        "type": "0x0",
+        "v": "0x26",
         "value": "0xde0b6b3a7640000",
-        "yParity": "0x1",
       }
     `)
   })
