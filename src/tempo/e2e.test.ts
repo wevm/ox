@@ -131,6 +131,7 @@ test('behavior: default (secp256k1)', async () => {
     feePayer,
     feeToken: _,
     from,
+    gasUsed,
     logs,
     logsBloom,
     transactionHash,
@@ -143,6 +144,7 @@ test('behavior: default (secp256k1)', async () => {
   expect(cumulativeGasUsed).toBeDefined()
   expect(feePayer).toBeDefined()
   expect(from).toBe(address)
+  expect(gasUsed).toBeDefined()
   expect(logs).toBeDefined()
   expect(logsBloom).toBeDefined()
   expect(transactionHash).toBe(receipt.transactionHash)
@@ -153,7 +155,6 @@ test('behavior: default (secp256k1)', async () => {
       "blobGasUsed": undefined,
       "contractAddress": null,
       "effectiveGasPrice": 20000000000n,
-      "gasUsed": 23600n,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
       "type": "0x76",
@@ -339,6 +340,7 @@ test('behavior: default (p256)', async () => {
     feePayer,
     feeToken: _,
     from,
+    gasUsed,
     logs,
     logsBloom,
     transactionHash,
@@ -351,6 +353,7 @@ test('behavior: default (p256)', async () => {
   expect(cumulativeGasUsed).toBeDefined()
   expect(feePayer).toBeDefined()
   expect(from).toBe(address)
+  expect(gasUsed).toBeDefined()
   expect(logs).toBeDefined()
   expect(logsBloom).toBeDefined()
   expect(transactionHash).toBe(receipt.transactionHash)
@@ -361,7 +364,6 @@ test('behavior: default (p256)', async () => {
       "blobGasUsed": undefined,
       "contractAddress": null,
       "effectiveGasPrice": 20000000000n,
-      "gasUsed": 28600n,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
       "type": "0x76",
@@ -479,6 +481,7 @@ test('behavior: default (p256 - webcrypto)', async () => {
     feePayer,
     feeToken: _,
     from,
+    gasUsed,
     logs,
     logsBloom,
     transactionHash,
@@ -491,6 +494,7 @@ test('behavior: default (p256 - webcrypto)', async () => {
   expect(cumulativeGasUsed).toBeDefined()
   expect(feePayer).toBeDefined()
   expect(from).toBeDefined()
+  expect(gasUsed).toBeDefined()
   expect(logs).toBeDefined()
   expect(logsBloom).toBeDefined()
   expect(transactionHash).toBe(receipt.transactionHash)
@@ -501,7 +505,6 @@ test('behavior: default (p256 - webcrypto)', async () => {
       "blobGasUsed": undefined,
       "contractAddress": null,
       "effectiveGasPrice": 20000000000n,
-      "gasUsed": 28600n,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
       "type": "0x76",
@@ -626,6 +629,7 @@ test('behavior: default (webauthn)', async () => {
     feePayer,
     feeToken: _,
     from,
+    gasUsed,
     logs,
     logsBloom,
     transactionHash,
@@ -638,6 +642,7 @@ test('behavior: default (webauthn)', async () => {
   expect(cumulativeGasUsed).toBeDefined()
   expect(feePayer).toBeDefined()
   expect(from).toBe(address)
+  expect(gasUsed).toBeDefined()
   expect(logs).toBeDefined()
   expect(logsBloom).toBeDefined()
   expect(transactionHash).toBe(receipt.transactionHash)
@@ -648,7 +653,6 @@ test('behavior: default (webauthn)', async () => {
       "blobGasUsed": undefined,
       "contractAddress": null,
       "effectiveGasPrice": 20000000000n,
-      "gasUsed": 31208n,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
       "type": "0x76",
@@ -733,6 +737,7 @@ test('behavior: feePayerSignature (user → feePayer)', async () => {
       feePayer,
       feeToken: _,
       from,
+      gasUsed,
       logs,
       logsBloom,
       transactionHash,
@@ -745,6 +750,7 @@ test('behavior: feePayerSignature (user → feePayer)', async () => {
     expect(cumulativeGasUsed).toBeDefined()
     expect(feePayer).toBe(feePayerAddress)
     expect(from).toBe(senderAddress)
+    expect(gasUsed).toBeDefined()
     expect(logs).toBeDefined()
     expect(logsBloom).toBeDefined()
     expect(transactionHash).toBe(receipt.transactionHash)
@@ -755,7 +761,6 @@ test('behavior: feePayerSignature (user → feePayer)', async () => {
         "blobGasUsed": undefined,
         "contractAddress": null,
         "effectiveGasPrice": 20000000000n,
-        "gasUsed": 23600n,
         "status": "success",
         "to": "0x0000000000000000000000000000000000000000",
         "type": "0x76",
@@ -1132,6 +1137,7 @@ describe('behavior: keyAuthorization', () => {
       feePayer,
       feeToken,
       from,
+      gasUsed,
       logs,
       logsBloom,
       transactionHash,
@@ -1145,6 +1151,7 @@ describe('behavior: keyAuthorization', () => {
     expect(feePayer).toBeDefined()
     expect(feeToken).toBeDefined()
     expect(from).toBeDefined()
+    expect(gasUsed).toBeDefined()
     expect(logs).toBeDefined()
     expect(logsBloom).toBeDefined()
     expect(transactionHash).toBe(receipt.transactionHash)
@@ -1155,7 +1162,6 @@ describe('behavior: keyAuthorization', () => {
         "blobGasUsed": undefined,
         "contractAddress": null,
         "effectiveGasPrice": 20000000000n,
-        "gasUsed": 61600n,
         "status": "success",
         "to": "0x0000000000000000000000000000000000000000",
         "type": "0x76",
