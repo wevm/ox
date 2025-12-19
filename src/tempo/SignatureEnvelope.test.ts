@@ -1907,7 +1907,7 @@ describe('fromRpc', () => {
   describe('p256', () => {
     test('behavior: converts RPC P256 signature', () => {
       const rpc: SignatureEnvelope.P256Rpc = {
-        prehash: true,
+        preHash: true,
         pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
         pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
         r: Hex.fromNumber(p256Signature.r, { size: 32 }),
@@ -2005,7 +2005,7 @@ describe('fromRpc', () => {
         type: 'keychain',
         userAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
         signature: {
-          prehash: true,
+          preHash: true,
           pubKeyX: Hex.fromNumber(publicKey.x, { size: 32 }),
           pubKeyY: Hex.fromNumber(publicKey.y, { size: 32 }),
           r: Hex.fromNumber(p256Signature.r, { size: 32 }),
@@ -2108,7 +2108,7 @@ describe('toRpc', () => {
       const rpc = SignatureEnvelope.toRpc(signature_p256)
 
       expect(rpc.type).toBe('p256')
-      expect(rpc.prehash).toBe(true)
+      expect(rpc.preHash).toBe(true)
       expect(typeof rpc.pubKeyX).toBe('string')
       expect(typeof rpc.pubKeyY).toBe('string')
       expect(typeof rpc.r).toBe('string')
@@ -2119,7 +2119,7 @@ describe('toRpc', () => {
       const withPrehashFalse = { ...signature_p256, prehash: false }
       const rpc = SignatureEnvelope.toRpc(withPrehashFalse)
 
-      expect(rpc.prehash).toBe(false)
+      expect(rpc.preHash).toBe(false)
     })
   })
 

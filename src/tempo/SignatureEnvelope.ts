@@ -128,7 +128,7 @@ export type P256<bigintType = bigint, numberType = number> = {
 }
 
 export type P256Rpc = {
-  prehash: boolean
+  preHash: boolean
   pubKeyX: Hex.Hex
   pubKeyY: Hex.Hex
   r: Hex.Hex
@@ -597,7 +597,7 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
 
   if (envelope.type === 'p256') {
     return {
-      prehash: envelope.prehash,
+      prehash: envelope.preHash,
       publicKey: {
         prefix: 4,
         x: Hex.toBigInt(envelope.pubKeyX),
@@ -874,7 +874,7 @@ export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
   if (type === 'p256') {
     const p256 = envelope as P256
     return {
-      prehash: p256.prehash,
+      preHash: p256.prehash,
       pubKeyX: Hex.fromNumber(p256.publicKey.x, { size: 32 }),
       pubKeyY: Hex.fromNumber(p256.publicKey.y, { size: 32 }),
       r: Hex.fromNumber(p256.signature.r, { size: 32 }),
