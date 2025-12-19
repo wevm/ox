@@ -1,5 +1,11 @@
 # ox
 
+## 0.11.0
+
+### Minor Changes
+
+- [`4c55afa`](https://github.com/wevm/ox/commit/4c55afa2c942eb86789b1315e5b4ccc4611aafca) Thanks [@jxom](https://github.com/jxom)! - **Breaking:** Renamed `prehash` to `preHash` on `KeyAuthorization#P256Rpc`
+
 ## 0.10.6
 
 ### Patch Changes
