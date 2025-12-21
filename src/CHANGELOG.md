@@ -1,5 +1,11 @@
 # ox
 
+## 0.11.1
+
+### Patch Changes
+
+- [`11cde15`](https://github.com/wevm/ox/commit/11cde150fa9ad07c4e2f398c20ab95278a8ab0d5) Thanks [@jxom](https://github.com/jxom)! - Fixed `KeyAuthorization.toRpc`
+
 ## 0.11.0
 
 ### Minor Changes
