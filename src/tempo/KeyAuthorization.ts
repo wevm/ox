@@ -37,7 +37,7 @@ export type KeyAuthorization<
   /** Chain ID for replay protection (0 = valid on any chain). */
   chainId?: bigintType | undefined
   /** Unix timestamp when key expires (0 = never expires). */
-  expiry?: numberType | undefined
+  expiry?: numberType | null | undefined
   /** TIP20 spending limits for this key. */
   limits?: readonly TokenLimit<bigintType>[] | undefined
   /** Key type. (secp256k1, P256, WebAuthn). */
