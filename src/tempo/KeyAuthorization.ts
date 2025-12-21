@@ -539,7 +539,7 @@ export function toRpc(authorization: Signed): Rpc {
 
   return {
     chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
-    expiry: typeof expiry === 'number' ? Hex.fromNumber(expiry) : undefined,
+    expiry: typeof expiry === 'number' ? Hex.fromNumber(expiry) : null,
     limits: limits?.map(({ token, limit }) => ({
       token,
       limit: Hex.fromNumber(limit),
