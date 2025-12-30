@@ -26,7 +26,7 @@ bun install ox
 
 ## CDN
 
-If you're not using a package manager, you can also use Viem via an ESM-compatible CDN such as [esm.sh](https://esm.sh). Simply add a `<script type="module">` tag to the bottom of your HTML file with the following content.
+If you're not using a package manager, you can also use Ox via an ESM-compatible CDN such as [esm.sh](https://esm.sh). Simply add a `<script type="module">` tag to the bottom of your HTML file with the following content.
 
 ```html
 <script type="module">
@@ -36,7 +36,7 @@ If you're not using a package manager, you can also use Viem via an ESM-compatib
 
 ## Using Unreleased Commits
 
-If you can't wait for a new release to test the latest features, you can either install from the `canary` tag (tracks the [`main`](https://github.com/wevm/viem/tree/main) branch).
+If you can't wait for a new release to test the latest features, you can either install from the `canary` tag (tracks the [`main`](https://github.com/wevm/ox/tree/main) branch).
 
 :::code-group
 ```bash [pnpm]
