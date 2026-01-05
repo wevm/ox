@@ -116,9 +116,9 @@ export function compute(value: compute.Value): Address.Address {
 
 export declare namespace compute {
   export type Value = {
-    /** The sender address. */
-    sender: Address.Address
     /** The salt (32 bytes). */
     salt: Hex.Hex
+    /** The sender address. */
+    sender: Address.Address
   }
 }
