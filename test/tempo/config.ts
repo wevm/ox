@@ -1,6 +1,3 @@
-// TODO: remove `tempo.ts` once upstreamed into viem.
-import { tempoLocal, tempoTestnet } from 'tempo.ts/chains'
-import { Actions } from 'tempo.ts/viem'
 import {
   type Address,
   type Chain,
@@ -12,14 +9,16 @@ import {
   type Transport,
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
+import { tempoLocalnet, tempoTestnet } from 'viem/chains'
+import { Actions } from 'viem/tempo'
 import { accounts } from '../constants/accounts.js'
 import { rpcUrl } from './prool.js'
 
 export const nodeEnv = import.meta.env.VITE_TEMPO_ENV || 'localnet'
 
 export const chain = (() => {
-  if (nodeEnv === 'testnet') return tempoTestnet()
-  return tempoLocal()
+  if (nodeEnv === 'testnet') return tempoTestnet
+  return tempoLocalnet
 })()
 
 export const client = createClient({
@@ -80,4 +79,20 @@ export declare namespace fundAddress {
     /** Account to fund. */
     address: Address
   }
+}
+
+export async function mintFeeTokenLiquidity(client: Client<Transport, Chain>) {
+  await Promise.all(
+    [1n, 2n, 3n].map((id) =>
+      Actions.amm.mintSync(client, {
+        account: privateKeyToAccount(accounts[0].privateKey!),
+        feeToken: 0n,
+        nonceKey: 'random',
+        userTokenAddress: id,
+        validatorTokenAddress: 0n,
+        validatorTokenAmount: parseUnits('1000', 6),
+        to: accounts[0].address,
+      }),
+    ),
+  )
 }

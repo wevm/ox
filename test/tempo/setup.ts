@@ -1,13 +1,16 @@
 import { setTimeout } from 'node:timers/promises'
-// TODO: remove `tempo.ts` once upstreamed into viem.
-import { Actions } from 'tempo.ts/viem'
+import { Actions } from 'viem/tempo'
 import { afterAll, beforeAll } from 'vitest'
 import { accounts } from '../constants/accounts.js'
-import { client, nodeEnv } from './config.js'
+import { client, mintFeeTokenLiquidity, nodeEnv } from './config.js'
 import { rpcUrl } from './prool.js'
 
 beforeAll(async () => {
-  if (nodeEnv === 'localnet') return
+  if (nodeEnv === 'localnet') {
+    await mintFeeTokenLiquidity(client)
+    return
+  }
+
   await Actions.faucet.fundSync(client, {
     account: accounts[0].address,
   })

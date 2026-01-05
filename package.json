@@ -69,13 +69,12 @@
     "sherif": "^0.11.0",
     "simple-git-hooks": "^2.11.1",
     "size-limit": "^11.1.4",
-    "tempo.ts": "^0.10.5",
     "testcontainers": "^11.10.0",
     "ts-morph": "^24.0.0",
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.1.0",
-    "viem": "^2.41.2",
+    "viem": "^2.43.5",
     "vite-tsconfig-paths": "^5.0.1",
     "vitest": "^4.0.15",
     "vocs": "^1.0.13",
@@ -129,6 +128,7 @@
   },
   "pnpm": {
     "overrides": {
+      "viem>ox": "npm:ox@0.11.1",
       "@microsoft/api-extractor>typescript": "^5.5.4",
       "hono@<4.2.7": ">=4.2.7",
       "ws@>=8.0.0 <8.17.1": ">=8.17.1",
@@ -138,9 +138,7 @@
       "rollup@>=4.0.0 <4.22.4": ">=4.22.4",
       "hono@<4.6.5": ">=4.6.5"
     },
-    "patchedDependencies": {
-      "size-limit@11.1.4": "patches/size-limit@11.1.4.patch"
-    }
+    "patchedDependencies": {}
   },
   "size-limit": [
     {
