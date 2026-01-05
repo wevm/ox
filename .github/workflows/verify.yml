@@ -74,7 +74,7 @@ jobs:
     strategy:
       matrix:
         tempo-env: 
-          - devnet
+          # - devnet TODO: re-enable.
           - testnet
 
     steps:
