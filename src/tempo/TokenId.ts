@@ -1,4 +1,6 @@
+import * as AbiParameters from '../core/AbiParameters.js'
 import * as Address from '../core/Address.js'
+import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 
 const tip20Prefix = '0x20c0'
@@ -77,4 +79,46 @@ export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
 
   const tokenIdHex = Hex.fromNumber(tokenId, { size: 18 })
   return Hex.concat(tip20Prefix, tokenIdHex)
+}
+
+/**
+ * Computes a deterministic TIP-20 token address from a sender address and salt.
+ *
+ * The address is computed as: `TIP20_PREFIX (12 bytes) || keccak256(abi.encode(sender, salt))[:8]`
+ *
+ * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
+ *
+ * @example
+ * ```ts twoslash
+ * import { TokenId } from 'ox/tempo'
+ *
+ * const address = TokenId.compute({
+ *   sender: '0x1234567890123456789012345678901234567890',
+ *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ * })
+ * ```
+ *
+ * @param value - The sender address and salt.
+ * @returns The computed TIP-20 token address.
+ */
+export function compute(value: compute.Value): Address.Address {
+  const hash = Hash.keccak256(
+    AbiParameters.encode(AbiParameters.from('address, bytes32'), [
+      value.sender,
+      value.salt,
+    ]),
+  )
+  return Hex.concat(
+    Hex.padRight(tip20Prefix, 12),
+    Hex.slice(hash, 0, 8),
+  ) as Address.Address
+}
+
+export declare namespace compute {
+  export type Value = {
+    /** The sender address. */
+    sender: Address.Address
+    /** The salt (32 bytes). */
+    salt: Hex.Hex
+  }
 }
