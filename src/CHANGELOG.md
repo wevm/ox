@@ -1,5 +1,11 @@
 # ox
 
+## 0.11.3
+
+### Patch Changes
+
+- [`4a79129`](https://github.com/wevm/ox/commit/4a79129da654098ee28ac63b4771a47a4bb57179) Thanks [@jxom](https://github.com/jxom)! - Fixed `TokenId.compute` return value.
+
 ## 0.11.2
 
 ### Patch Changes
