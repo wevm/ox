@@ -1,5 +1,11 @@
 # ox
 
+## 0.11.2
+
+### Patch Changes
+
+- [#153](https://github.com/wevm/ox/pull/153) [`95ebfcf`](https://github.com/wevm/ox/commit/95ebfcf1caf857b3658c26c26bb2d6ebbd88b904) Thanks [@jxom](https://github.com/jxom)! - Added `TokenId.compute` to compute deterministic TIP-20 token addresses from sender and salt.
+
 ## 0.11.1
 
 ### Patch Changes
