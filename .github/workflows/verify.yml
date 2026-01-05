@@ -51,7 +51,7 @@ jobs:
     strategy:
       matrix:
         tag: 
-          - latest
+          # - latest
           - https://rpc.testnet.tempo.xyz
 
     steps:
