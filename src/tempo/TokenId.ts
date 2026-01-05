@@ -92,26 +92,23 @@ export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
  * ```ts twoslash
  * import { TokenId } from 'ox/tempo'
  *
- * const address = TokenId.compute({
+ * const id = TokenId.compute({
  *   sender: '0x1234567890123456789012345678901234567890',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
  * })
  * ```
  *
  * @param value - The sender address and salt.
- * @returns The computed TIP-20 token address.
+ * @returns The computed TIP-20 token id.
  */
-export function compute(value: compute.Value): Address.Address {
+export function compute(value: compute.Value): bigint {
   const hash = Hash.keccak256(
     AbiParameters.encode(AbiParameters.from('address, bytes32'), [
       value.sender,
       value.salt,
     ]),
   )
-  return Hex.concat(
-    Hex.padRight(tip20Prefix, 12),
-    Hex.slice(hash, 0, 8),
-  ) as Address.Address
+  return Hex.toBigInt(Hex.slice(hash, 0, 8))
 }
 
 export declare namespace compute {

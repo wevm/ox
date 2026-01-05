@@ -1,3 +1,4 @@
+import { Hex } from 'ox'
 import { TokenId } from 'ox/tempo'
 import { expect, test } from 'vitest'
 
@@ -46,14 +47,19 @@ test('compute', () => {
   const salt2 =
     '0x0000000000000000000000000000000000000000000000000000000000000002'
 
-  const address1 = TokenId.compute({ sender, salt: salt1 })
-  const address2 = TokenId.compute({ sender, salt: salt2 })
+  const id1 = TokenId.compute({ sender, salt: salt1 })
+  const id2 = TokenId.compute({ sender, salt: salt2 })
+  const address1 = TokenId.toAddress(id1)
+  const address2 = TokenId.toAddress(id2)
 
   // deterministic: same inputs produce same output
-  expect(TokenId.compute({ sender, salt: salt1 })).toBe(address1)
+  expect(TokenId.compute({ sender, salt: salt1 })).toBe(id1)
 
   // different salts produce different addresses
   expect(address1).not.toBe(address2)
+
+  // address suffix matches id
+  expect(Hex.slice(address1, 12)).toBe(Hex.fromNumber(id1, { size: 8 }))
 
   // addresses have TIP-20 prefix (0x20c0 followed by zeroes for 12 bytes total)
   expect(address1.toLowerCase().startsWith('0x20c000000000000000000000')).toBe(
