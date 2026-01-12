@@ -11,7 +11,7 @@ const integerToCharacter = /*#__PURE__*/ Object.fromEntries(
   ).map((a, i) => [i, a.charCodeAt(0)]),
 )
 
-const characterToInteger = /*#__PURE__*/ {
+const characterToInteger = /*#__PURE__*/ (() => ({
   ...Object.fromEntries(
     Array.from(
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
@@ -20,7 +20,7 @@ const characterToInteger = /*#__PURE__*/ {
   ['='.charCodeAt(0)]: 0,
   ['-'.charCodeAt(0)]: 62,
   ['_'.charCodeAt(0)]: 63,
-} as Record<number, number>
+}))() as Record<number, number>
 
 /**
  * Encodes a {@link ox#Bytes.Bytes} to a Base64-encoded string (with optional padding and/or URL-safe characters).
