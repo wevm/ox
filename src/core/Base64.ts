@@ -11,7 +11,7 @@ const integerToCharacter = /*#__PURE__*/ Object.fromEntries(
   ).map((a, i) => [i, a.charCodeAt(0)]),
 )
 
-const characterToInteger = /*#__PURE__*/ {
+const characterToInteger = {
   ...Object.fromEntries(
     Array.from(
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
