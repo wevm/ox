@@ -1,5 +1,11 @@
 # ox
 
+## 0.12.0
+
+### Minor Changes
+
+- [`f605321`](https://github.com/wevm/ox/commit/f60532162ff75c3dd19ebfa9ad1c56905fb35fb6) Thanks [@jxom](https://github.com/jxom)! - Added `Hash.hmac256` for computing HMAC-SHA256 hashes.
+
 ## 0.11.3
 
 ### Patch Changes
