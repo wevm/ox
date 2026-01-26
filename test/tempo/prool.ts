@@ -8,7 +8,7 @@ export const rpcUrl = (() => {
   if (import.meta.env.VITE_TEMPO_ENV === 'devnet')
     return 'https://rpc.devnet.tempo.xyz'
   if (import.meta.env.VITE_TEMPO_ENV === 'testnet')
-    return 'https://rpc.testnet.tempo.xyz'
+    return 'https://rpc.moderato.tempo.xyz'
   const id =
     (typeof import.meta !== 'undefined' &&
       Number(import.meta.env.VITEST_POOL_ID ?? 1) +
