@@ -9,7 +9,7 @@ import {
   type Transport,
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { tempoLocalnet, tempoTestnet } from 'viem/chains'
+import { tempoLocalnet, tempoModerato } from 'viem/chains'
 import { Actions } from 'viem/tempo'
 import { accounts } from '../constants/accounts.js'
 import { rpcUrl } from './prool.js'
@@ -17,7 +17,7 @@ import { rpcUrl } from './prool.js'
 export const nodeEnv = import.meta.env.VITE_TEMPO_ENV || 'localnet'
 
 export const chain = (() => {
-  if (nodeEnv === 'testnet') return tempoTestnet
+  if (nodeEnv === 'testnet') return tempoModerato
   return tempoLocalnet
 })()
 
