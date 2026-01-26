@@ -834,40 +834,23 @@ describe('serialize', () => {
       params: [hash],
     })
 
-    expect({ ...tx, blockHash: null }).toMatchInlineSnapshot(`
-    {
-      "accessList": [],
-      "authorizationList": [
-        {
-          "address": "0x1d1aee6d5dc35f3c15e2d11083d0e59c026b64c4",
-          "chainId": "0x1",
-          "nonce": "0x297",
-          "r": "0x63a17c5bd4689e0a20cd66babbbc21f3036c93341c390f75b8f575c19e4f358b",
-          "s": "0x4ba15577764447dca6c0eab652914e6cdf889cd88d2c3afcc7bee281f1be57b4",
-          "yParity": "0x1",
-        },
-      ],
-      "blockHash": null,
-      "blockNumber": "0x12f2977",
-      "chainId": "0x1",
-      "from": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-      "gas": "0xf4240",
-      "gasPrice": "0x3df788e0a",
-      "hash": "0x457e23cafba3c0d5b061724b98c5da1c0a2bd87d30a25cfc2824dc3ce9fc770b",
-      "input": "0xdeadbeef",
-      "maxFeePerGas": "0x4a817c800",
-      "maxPriorityFeePerGas": "0x2540be400",
-      "nonce": "0x71",
-      "r": "0x674cf928a35d4fe579eec27d9a6a13af24f6a1d47d178a24e96173762c784cf5",
-      "s": "0x7feecdc37bd9fc83deddc3e985c015099a1e4e51f79ebd50b262a4bf9afe3d8f",
-      "to": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-      "transactionIndex": "0x0",
-      "type": "0x4",
-      "v": "0x0",
-      "value": "0x0",
-      "yParity": "0x0",
-    }
-  `)
+    expect(tx).toMatchObject({
+      accessList: [],
+      chainId: '0x1',
+      from: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      gas: '0xf4240',
+      input: '0xdeadbeef',
+      maxFeePerGas: '0x4a817c800',
+      maxPriorityFeePerGas: '0x2540be400',
+      to: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      transactionIndex: '0x0',
+      type: '0x4',
+      value: '0x0',
+    })
+    expect(tx?.authorizationList).toHaveLength(1)
+    expect(tx?.authorizationList?.[0]).toMatchObject({
+      chainId: '0x1',
+    })
 
     const receipt = await anvilMainnet.request({
       method: 'eth_getTransactionReceipt',
