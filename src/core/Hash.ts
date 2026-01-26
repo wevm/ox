@@ -1,3 +1,4 @@
+import { hmac } from '@noble/hashes/hmac'
 import { ripemd160 as noble_ripemd160 } from '@noble/hashes/ripemd160'
 import { keccak_256 as noble_keccak256 } from '@noble/hashes/sha3'
 import { sha256 as noble_sha256 } from '@noble/hashes/sha256'
@@ -58,6 +59,66 @@ export function keccak256<
 }
 
 export declare namespace keccak256 {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    /** The return type. @default 'Hex' */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Calculates the [HMAC-SHA256](https://en.wikipedia.org/wiki/HMAC) of a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ *
+ * This function is a re-export of `hmac` from [`@noble/hashes`](https://github.com/paulmillr/noble-hashes), an audited & minimal JS hashing library.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Hash, Hex } from 'ox'
+ *
+ * Hash.hmac256(Hex.fromString('key'), '0xdeadbeef')
+ * // @log: '0x...'
+ * ```
+ *
+ * @example
+ * ### Configure Return Type
+ *
+ * ```ts twoslash
+ * import { Hash, Hex } from 'ox'
+ *
+ * Hash.hmac256(Hex.fromString('key'), '0xdeadbeef', { as: 'Bytes' })
+ * // @log: Uint8Array [...]
+ * ```
+ *
+ * @param key - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} key.
+ * @param value - {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ * @param options - Options.
+ * @returns HMAC-SHA256 hash.
+ */
+export function hmac256<
+  value extends Hex.Hex | Bytes.Bytes,
+  as extends 'Hex' | 'Bytes' =
+    | (value extends Hex.Hex ? 'Hex' : never)
+    | (value extends Bytes.Bytes ? 'Bytes' : never),
+>(
+  key: Hex.Hex | Bytes.Bytes,
+  value: value | Hex.Hex | Bytes.Bytes,
+  options: hmac256.Options<as> = {},
+): hmac256.ReturnType<as> {
+  const { as = typeof value === 'string' ? 'Hex' : 'Bytes' } = options
+  const bytes = hmac(noble_sha256, Bytes.from(key), Bytes.from(value))
+  if (as === 'Bytes') return bytes as never
+  return Hex.fromBytes(bytes) as never
+}
+
+export declare namespace hmac256 {
   type Options<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
     /** The return type. @default 'Hex' */
     as?: as | 'Hex' | 'Bytes' | undefined

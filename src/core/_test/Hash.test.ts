@@ -1,6 +1,109 @@
 import { Hash } from 'ox'
 import { describe, expect, test } from 'vitest'
 
+describe('hmac256', () => {
+  test('default', () => {
+    expect(
+      Hash.hmac256(
+        new Uint8Array([107, 101, 121]),
+        new Uint8Array([72, 101, 108, 108, 111]),
+      ),
+    ).toMatchInlineSnapshot(`
+      Uint8Array [
+        199,
+        11,
+        159,
+        77,
+        102,
+        91,
+        214,
+        41,
+        116,
+        175,
+        200,
+        53,
+        130,
+        222,
+        129,
+        14,
+        114,
+        164,
+        26,
+        88,
+        219,
+        130,
+        197,
+        56,
+        169,
+        215,
+        52,
+        201,
+        38,
+        109,
+        50,
+        30,
+      ]
+    `)
+
+    expect(Hash.hmac256('0x6b6579', '0x48656c6c6f')).toMatchInlineSnapshot(
+      `"0xc70b9f4d665bd62974afc83582de810e72a41a58db82c538a9d734c9266d321e"`,
+    )
+  })
+
+  test('as: Hex', () => {
+    expect(
+      Hash.hmac256(
+        new Uint8Array([107, 101, 121]),
+        new Uint8Array([72, 101, 108, 108, 111]),
+        { as: 'Hex' },
+      ),
+    ).toMatchInlineSnapshot(
+      `"0xc70b9f4d665bd62974afc83582de810e72a41a58db82c538a9d734c9266d321e"`,
+    )
+  })
+
+  test('as: Bytes', () => {
+    expect(
+      Hash.hmac256('0x6b6579', '0x48656c6c6f', { as: 'Bytes' }),
+    ).toMatchInlineSnapshot(`
+      Uint8Array [
+        199,
+        11,
+        159,
+        77,
+        102,
+        91,
+        214,
+        41,
+        116,
+        175,
+        200,
+        53,
+        130,
+        222,
+        129,
+        14,
+        114,
+        164,
+        26,
+        88,
+        219,
+        130,
+        197,
+        56,
+        169,
+        215,
+        52,
+        201,
+        38,
+        109,
+        50,
+        30,
+      ]
+    `)
+  })
+})
+
 describe('keccak256', () => {
   test('default', () => {
     expect(Hash.keccak256('0xdeadbeef')).toMatchInlineSnapshot(
@@ -429,6 +532,7 @@ test('exports', () => {
   expect(Object.keys(Hash)).toMatchInlineSnapshot(`
     [
       "keccak256",
+      "hmac256",
       "ripemd160",
       "sha256",
       "validate",
