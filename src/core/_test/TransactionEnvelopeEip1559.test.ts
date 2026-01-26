@@ -763,30 +763,17 @@ describe('toRpc', () => {
       params: [hash],
     })
 
-    expect({ ...tx, blockHash: null }).toMatchInlineSnapshot(`
-      {
-        "accessList": [],
-        "blockHash": null,
-        "blockNumber": "0x12f2976",
-        "chainId": "0x1",
-        "from": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-        "gas": "0x5208",
-        "gasPrice": "0x1c3c4d5e1",
-        "hash": "0x5446efae07c46266b79c1a3f6b45a60fa91c0b99d21804b3687fe0dedacbaf4c",
-        "input": "0x",
-        "maxFeePerGas": "0x417d0b9e1",
-        "maxPriorityFeePerGas": "0x0",
-        "nonce": "0x298",
-        "r": "0x94e61e799554e9303d0463523fba94c2ae1708f003b8716b0e7ef341a7ab98c7",
-        "s": "0x17c69227e635b4715bc252e60bfe28feecef5fa3a4aa3da68180e73ab44a0472",
-        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-        "transactionIndex": "0x0",
-        "type": "0x2",
-        "v": "0x0",
-        "value": "0xde0b6b3a7640000",
-        "yParity": "0x0",
-      }
-    `)
+    expect(tx).toMatchObject({
+      accessList: [],
+      chainId: '0x1',
+      from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+      gas: '0x5208',
+      input: '0x',
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      transactionIndex: '0x0',
+      type: '0x2',
+      value: '0xde0b6b3a7640000',
+    })
   })
 })
 
