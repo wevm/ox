@@ -1,4 +1,4 @@
-import type { Address as abitype_Address } from 'abitype'
+import type { AbiParameter, Address as abitype_Address } from 'abitype'
 import * as Bytes from './Bytes.js'
 import * as Caches from './Caches.js'
 import * as Errors from './Errors.js'
@@ -35,12 +35,13 @@ export function assert(
   value: string,
   options: assert.Options = {},
 ): asserts value is Address {
-  const { strict = true } = options
+  const { strict = true, parameter } = options
 
   if (!addressRegex.test(value))
     throw new InvalidAddressError({
       address: value,
       cause: new InvalidInputError(),
+      parameter,
     })
 
   if (strict) {
@@ -49,12 +50,17 @@ export function assert(
       throw new InvalidAddressError({
         address: value,
         cause: new InvalidChecksumError(),
+        parameter,
       })
   }
 }
 
 export declare namespace assert {
   type Options = {
+    /**
+     * ABI parameter context for error reporting.
+     */
+    parameter?: AbiParameter | undefined
     /**
      * Enables strict mode. Whether or not to compare the address against its checksum.
      *
@@ -315,10 +321,20 @@ export class InvalidAddressError<
 > extends Errors.BaseError<cause> {
   override readonly name = 'Address.InvalidAddressError'
 
-  constructor({ address, cause }: { address: string; cause: cause }) {
+  readonly parameter: AbiParameter | undefined
+  constructor({
+    address,
+    cause,
+    parameter,
+  }: {
+    address: string
+    cause: cause
+    parameter?: AbiParameter | undefined
+  }) {
     super(`Address "${address}" is invalid.`, {
       cause,
     })
+    this.parameter = parameter
   }
 }
 

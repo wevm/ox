@@ -466,6 +466,7 @@ export function prepareParameter<
   if (parameter.type === 'address') {
     return encodeAddress(value as unknown as Hex.Hex, {
       checksum: checksumAddress,
+      parameter,
     })
   }
   if (parameter.type === 'bool') {
@@ -475,12 +476,16 @@ export function prepareParameter<
     const signed = parameter.type.startsWith('int')
     const [, , size = '256'] = integerRegex.exec(parameter.type) ?? []
     return encodeNumber(value as unknown as number, {
+      parameter,
       signed,
       size: Number(size),
     })
   }
   if (parameter.type.startsWith('bytes')) {
-    return encodeBytes(value as unknown as Hex.Hex, { type: parameter.type })
+    return encodeBytes(value as unknown as Hex.Hex, {
+      parameter,
+      type: parameter.type,
+    })
   }
   if (parameter.type === 'string') {
     return encodeString(value as unknown as string)
@@ -544,10 +549,13 @@ export declare namespace encode {
 /** @internal */
 export function encodeAddress(
   value: Hex.Hex,
-  options: { checksum: boolean },
+  options: {
+    checksum: boolean
+    parameter?: AbiParameters.Parameter | undefined
+  },
 ): PreparedParameter {
-  const { checksum = false } = options
-  Address.assert(value, { strict: checksum })
+  const { checksum = false, parameter } = options
+  Address.assert(value, { strict: checksum, parameter })
   return {
     dynamic: false,
     encoded: Hex.padLeft(value.toLowerCase() as Hex.Hex),
@@ -575,11 +583,13 @@ export function encodeArray<const parameter extends AbiParameters.Parameter>(
 
   const dynamic = length === null
 
-  if (!Array.isArray(value)) throw new AbiParameters.InvalidArrayError(value)
+  if (!Array.isArray(value))
+    throw new AbiParameters.InvalidArrayError(value, { parameter })
   if (!dynamic && value.length !== length)
     throw new AbiParameters.ArrayLengthMismatchError({
       expectedLength: length!,
       givenLength: value.length,
+      parameter,
       type: `${parameter.type}[${length}]`,
     })
 
@@ -626,8 +636,12 @@ export declare namespace encodeArray {
 /** @internal */
 export function encodeBytes(
   value: Hex.Hex,
-  { type }: { type: string },
+  options: {
+    parameter?: AbiParameters.Parameter | undefined
+    type: string
+  },
 ): PreparedParameter {
+  const { parameter, type } = options
   const [, parametersize] = type.split('bytes')
   const bytesSize = Hex.size(value)
   if (!parametersize) {
@@ -647,6 +661,7 @@ export function encodeBytes(
   if (bytesSize !== Number.parseInt(parametersize, 10))
     throw new AbiParameters.BytesSizeMismatchError({
       expectedSize: Number.parseInt(parametersize, 10),
+      parameter,
       value,
     })
   return { dynamic: false, encoded: Hex.padRight(value) }
@@ -682,8 +697,13 @@ export declare namespace encodeBoolean {
 /** @internal */
 export function encodeNumber(
   value: number,
-  { signed, size }: { signed: boolean; size: number },
+  options: {
+    parameter?: AbiParameters.Parameter | undefined
+    signed: boolean
+    size: number
+  },
 ): PreparedParameter {
+  const { parameter, signed, size } = options
   if (typeof size === 'number') {
     const max = 2n ** (BigInt(size) - (signed ? 1n : 0n)) - 1n
     const min = signed ? -max - 1n : 0n
@@ -691,6 +711,7 @@ export function encodeNumber(
       throw new Hex.IntegerOutOfRangeError({
         max: max.toString(),
         min: min.toString(),
+        parameter,
         signed,
         size: size / 8,
         value: value.toString(),
