@@ -21,7 +21,29 @@ describe('Address.assert', () => {
   test('default', () => {
     Address.assert('0x0000000000000000000000000000000000000000')
     Address.assert('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+  })
 
+  test('options: parameter', () => {
+    const parameter = { type: 'address', name: 'recipient' } as const
+
+    expect(() => Address.assert('0xinvalid', { parameter })).toThrowError(
+      expect.objectContaining({ parameter }),
+    )
+
+    expect(() =>
+      Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac', {
+        parameter,
+      }),
+    ).toThrowError(expect.objectContaining({ parameter }))
+  })
+
+  test('parameter is undefined by default', () => {
+    expect(() => Address.assert('0xinvalid')).toThrowError(
+      expect.objectContaining({ parameter: undefined }),
+    )
+  })
+
+  test('error: invalid checksum', () => {
     expect(() =>
       Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'),
     ).toThrowErrorMatchingInlineSnapshot(`

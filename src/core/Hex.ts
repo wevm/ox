@@ -1,4 +1,5 @@
 import { equalBytes } from '@noble/curves/abstract/utils'
+import type { AbiParameter } from 'abitype'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as internal_bytes from './internal/bytes.js'
@@ -772,16 +773,19 @@ export declare namespace validate {
  */
 export class IntegerOutOfRangeError extends Errors.BaseError {
   override readonly name = 'Hex.IntegerOutOfRangeError'
+  readonly parameter: AbiParameter | undefined
 
   constructor({
     max,
     min,
+    parameter,
     signed,
     size,
     value,
   }: {
     max?: string | undefined
     min: string
+    parameter?: AbiParameter | undefined
     signed?: boolean | undefined
     size?: number | undefined
     value: string
@@ -791,6 +795,7 @@ export class IntegerOutOfRangeError extends Errors.BaseError {
         size ? ` ${size * 8}-bit` : ''
       }${signed ? ' signed' : ' unsigned'} integer range ${max ? `(\`${min}\` to \`${max}\`)` : `(above \`${min}\`)`}`,
     )
+    this.parameter = parameter
   }
 }
 

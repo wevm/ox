@@ -583,14 +583,22 @@ export class ZeroDataError extends Errors.BaseError {
  */
 export class ArrayLengthMismatchError extends Errors.BaseError {
   override readonly name = 'AbiParameters.ArrayLengthMismatchError'
+  readonly parameter: Parameter | undefined
   constructor({
     expectedLength,
     givenLength,
+    parameter,
     type,
-  }: { expectedLength: number; givenLength: number; type: string }) {
+  }: {
+    expectedLength: number
+    givenLength: number
+    parameter?: Parameter | undefined
+    type: string
+  }) {
     super(
       `Array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`,
     )
+    this.parameter = parameter
   }
 }
 
@@ -622,15 +630,22 @@ export class ArrayLengthMismatchError extends Errors.BaseError {
  */
 export class BytesSizeMismatchError extends Errors.BaseError {
   override readonly name = 'AbiParameters.BytesSizeMismatchError'
+  readonly parameter: Parameter | undefined
   constructor({
     expectedSize,
+    parameter,
     value,
-  }: { expectedSize: number; value: Hex.Hex }) {
+  }: {
+    expectedSize: number
+    parameter?: Parameter | undefined
+    value: Hex.Hex
+  }) {
     super(
       `Size of bytes "${value}" (bytes${Hex.size(
         value,
       )}) does not match expected size (bytes${expectedSize}).`,
     )
+    this.parameter = parameter
   }
 }
 
@@ -691,8 +706,10 @@ export class LengthMismatchError extends Errors.BaseError {
  */
 export class InvalidArrayError extends Errors.BaseError {
   override readonly name = 'AbiParameters.InvalidArrayError'
-  constructor(value: unknown) {
+  readonly parameter: Parameter | undefined
+  constructor(value: unknown, options?: { parameter?: Parameter | undefined }) {
     super(`Value \`${value}\` is not a valid array.`)
+    this.parameter = options?.parameter
   }
 }
 
