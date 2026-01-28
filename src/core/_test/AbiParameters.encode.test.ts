@@ -1963,3 +1963,111 @@ test('https://github.com/wevm/viem/issues/1960', () => {
     `[BaseError: Invalid boolean value: "true" (type: string). Expected: \`true\` or \`false\`.]`,
   )
 })
+
+describe('error parameter context', () => {
+  test('InvalidAddressError includes parameter info', () => {
+    const parameter = { type: 'address', name: 'recipient' } as const
+    expect(() => AbiParameters.encode([parameter], ['0xinvalid'])).toThrowError(
+      expect.objectContaining({ parameter }),
+    )
+  })
+
+  test('InvalidAddressError includes parameter with checksum validation', () => {
+    const parameter = { type: 'address', name: 'sender' } as const
+    expect(() =>
+      AbiParameters.encode(
+        [parameter],
+        ['0xa5cC3c03994DB5b0d9A5eEdD10CabaB0813678AC'],
+        { checksumAddress: true },
+      ),
+    ).toThrowError(expect.objectContaining({ parameter }))
+  })
+
+  test('IntegerOutOfRangeError includes parameter info', () => {
+    const parameter = { type: 'uint8', name: 'amount' } as const
+    expect(() => AbiParameters.encode([parameter], [256])).toThrowError(
+      expect.objectContaining({ parameter }),
+    )
+  })
+
+  test('IntegerOutOfRangeError includes parameter for signed int', () => {
+    const parameter = { type: 'int8', name: 'delta' } as const
+    expect(() => AbiParameters.encode([parameter], [128])).toThrowError(
+      expect.objectContaining({ parameter }),
+    )
+  })
+
+  test('InvalidArrayError includes parameter info', () => {
+    const parameter = { type: 'uint256[]', name: 'amounts' } as const
+    expect(() =>
+      AbiParameters.encode(
+        [parameter],
+        /* @ts-expect-error */
+        [69],
+      ),
+    ).toThrowError(
+      expect.objectContaining({
+        parameter: expect.objectContaining({
+          name: 'amounts',
+          type: 'uint256',
+        }),
+      }),
+    )
+  })
+
+  test('ArrayLengthMismatchError includes parameter info', () => {
+    const parameter = { type: 'uint256[3]', name: 'values' } as const
+    expect(() =>
+      AbiParameters.encode(
+        [parameter],
+        /* @ts-expect-error */
+        [[69n, 420n]],
+      ),
+    ).toThrowError(
+      expect.objectContaining({
+        parameter: expect.objectContaining({ name: 'values', type: 'uint256' }),
+      }),
+    )
+  })
+
+  test('BytesSizeMismatchError includes parameter info', () => {
+    const parameter = { type: 'bytes8', name: 'data' } as const
+    expect(() => AbiParameters.encode([parameter], ['0x111'])).toThrowError(
+      expect.objectContaining({ parameter }),
+    )
+  })
+
+  test('parameter is undefined for direct error construction', () => {
+    const error = new AbiParameters.InvalidArrayError('test')
+    expect(error.parameter).toBeUndefined()
+  })
+
+  test('nested tuple with invalid address includes correct parameter', () => {
+    const parameters = [
+      { type: 'address', name: 'from' },
+      { type: 'address', name: 'to' },
+      { type: 'uint256', name: 'amount' },
+    ] as const
+    expect(() =>
+      AbiParameters.encode(parameters, [address.vitalik, '0xinvalid', 100n]),
+    ).toThrowError(
+      expect.objectContaining({
+        parameter: expect.objectContaining({ type: 'address', name: 'to' }),
+      }),
+    )
+  })
+
+  test('array of addresses with invalid entry includes parameter', () => {
+    const parameter = { type: 'address[]', name: 'recipients' } as const
+    expect(() =>
+      AbiParameters.encode([parameter], [[address.vitalik, '0xinvalid']]),
+    ).toThrowError(
+      expect.objectContaining({
+        parameter: expect.objectContaining({
+          type: 'address',
+          name: 'recipients',
+        }),
+      }),
+    )
+  })
+})
