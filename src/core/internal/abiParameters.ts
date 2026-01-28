@@ -473,19 +473,10 @@ export function prepareParameter<
     return encodeBoolean(value as unknown as boolean)
   }
   if (parameter.type.startsWith('uint') || parameter.type.startsWith('int')) {
-    const signed = parameter.type.startsWith('int')
-    const [, , size = '256'] = integerRegex.exec(parameter.type) ?? []
-    return encodeNumber(value as unknown as number, {
-      parameter,
-      signed,
-      size: Number(size),
-    })
+    return encodeNumber(value as unknown as number, { parameter })
   }
   if (parameter.type.startsWith('bytes')) {
-    return encodeBytes(value as unknown as Hex.Hex, {
-      parameter,
-      type: parameter.type,
-    })
+    return encodeBytes(value as unknown as Hex.Hex, { parameter })
   }
   if (parameter.type === 'string') {
     return encodeString(value as unknown as string)
@@ -551,7 +542,7 @@ export function encodeAddress(
   value: Hex.Hex,
   options: {
     checksum: boolean
-    parameter?: AbiParameters.Parameter | undefined
+    parameter: AbiParameters.Parameter
   },
 ): PreparedParameter {
   const { checksum = false, parameter } = options
@@ -637,12 +628,11 @@ export declare namespace encodeArray {
 export function encodeBytes(
   value: Hex.Hex,
   options: {
-    parameter?: AbiParameters.Parameter | undefined
-    type: string
+    parameter: AbiParameters.Parameter
   },
 ): PreparedParameter {
-  const { parameter, type } = options
-  const [, parametersize] = type.split('bytes')
+  const { parameter } = options
+  const [, parametersize] = parameter.type.split('bytes')
   const bytesSize = Hex.size(value)
   if (!parametersize) {
     let value_ = value
@@ -698,14 +688,16 @@ export declare namespace encodeBoolean {
 export function encodeNumber(
   value: number,
   options: {
-    parameter?: AbiParameters.Parameter | undefined
-    signed: boolean
-    size: number
+    parameter: AbiParameters.Parameter
   },
 ): PreparedParameter {
-  const { parameter, signed, size } = options
-  if (typeof size === 'number') {
-    const max = 2n ** (BigInt(size) - (signed ? 1n : 0n)) - 1n
+  const { parameter } = options
+  const signed = parameter.type.startsWith('int')
+  const [, , size = '256'] = integerRegex.exec(parameter.type) ?? []
+  const sizeNum = Number(size)
+
+  if (typeof sizeNum === 'number') {
+    const max = 2n ** (BigInt(sizeNum) - (signed ? 1n : 0n)) - 1n
     const min = signed ? -max - 1n : 0n
     if (value > max || value < min)
       throw new Hex.IntegerOutOfRangeError({
@@ -713,10 +705,11 @@ export function encodeNumber(
         min: min.toString(),
         parameter,
         signed,
-        size: size / 8,
+        size: sizeNum / 8,
         value: value.toString(),
       })
   }
+
   return {
     dynamic: false,
     encoded: Hex.fromNumber(value, {
