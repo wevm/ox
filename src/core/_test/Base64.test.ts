@@ -59,6 +59,16 @@ describe('toBytes', () => {
       Bytes.fromString('hello wo�d'),
     )
   })
+
+  test('strips invalid characters', () => {
+    expect(Base64.toBytes('aGVsbG8!')).toStrictEqual(Bytes.fromString('hello'))
+    expect(Base64.toBytes('  aGVsbG8  ')).toStrictEqual(
+      Bytes.fromString('hello'),
+    )
+    expect(Base64.toBytes('aGVs\nbG8=')).toStrictEqual(
+      Bytes.fromString('hello'),
+    )
+  })
 })
 
 describe('toHex', () => {

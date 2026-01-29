@@ -238,7 +238,7 @@ export declare namespace fromString {
  * @returns The Base64 decoded {@link ox#Bytes.Bytes}.
  */
 export function toBytes(value: string): Bytes.Bytes {
-  const base64 = value.replace(/=+$/, '')
+  const base64 = value.replace(/[^A-Za-z0-9+/_-]/g, '')
 
   const size = base64.length
 
