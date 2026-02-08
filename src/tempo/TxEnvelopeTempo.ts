@@ -11,6 +11,7 @@ import type {
   UnionPartialBy,
 } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
+import * as Secp256k1 from '../core/Secp256k1.js'
 import * as Signature from '../core/Signature.js'
 import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
@@ -624,13 +625,38 @@ export function serialize(
   ])
 
   const feePayerSignatureOrSender = (() => {
+    // Explicit sender address provided — use as-is.
     if (options.sender) return options.sender
+
+    // When serializing in fee payer format and a signature is present,
+    // derive the sender address from the signature so the fee payer proxy
+    // knows which account to cover fees for.
+    //
+    // - secp256k1: recover address via ecrecover from the sign payload.
+    // - p256/webAuthn: derive address from the embedded public key.
+    // - keychain: use the explicit `userAddress` on the signature.
+    if (options.format === 'feePayer' && signature) {
+      const sig = SignatureEnvelope.from(signature)
+      if (sig.type === 'keychain') return sig.userAddress
+      if (sig.type === 'p256' || sig.type === 'webAuthn')
+        return Address.fromPublicKey(sig.publicKey)
+      if (sig.type === 'secp256k1')
+        return Secp256k1.recoverAddress({
+          payload: getSignPayload(from(envelope)),
+          signature: sig.signature,
+        })
+    }
+
     const feePayerSignature =
       typeof options.feePayerSignature !== 'undefined'
         ? options.feePayerSignature
         : envelope.feePayerSignature
+    // `null` indicates the envelope is intended to be signed by a fee payer
+    // but hasn't been signed yet — encode as a single zero byte marker.
     if (feePayerSignature === null) return '0x00'
+    // No fee payer involvement — omit from the envelope.
     if (!feePayerSignature) return '0x'
+    // Fee payer has signed — encode the signature as an RLP tuple.
     return Signature.toTuple(feePayerSignature)
   })()
 
@@ -672,8 +698,11 @@ export declare namespace serialize {
     | {
         /**
          * Sender address to cover the fee of.
+         *
+         * If not provided and a signature is present, the sender will be
+         * automatically derived from the signature.
          */
-        sender: Address.Address
+        sender?: Address.Address | undefined
         /**
          * Whether to serialize the transaction in the fee payer format.
          *
