@@ -1,4 +1,4 @@
-import { Hex, P256, Rlp, Secp256k1, Value, WebAuthnP256 } from 'ox'
+import { Address, Hex, P256, Rlp, Secp256k1, Value, WebAuthnP256 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import { SignatureEnvelope } from './index.js'
@@ -1228,6 +1228,91 @@ describe('serialize', () => {
     ).toMatchInlineSnapshot(
       `"0x78f83901808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c0808080808094f39fd6e51aad88f6f4ce6ab8827279cfffb92266c0"`,
     )
+  })
+
+  test('format: feePayer, sender derived from secp256k1 signature', () => {
+    const transaction = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+      nonce: 0n,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+      privateKey,
+    })
+    const serialized = TxEnvelopeTempo.serialize(transaction, {
+      format: 'feePayer',
+      signature: SignatureEnvelope.from(signature),
+    })
+    const expected = TxEnvelopeTempo.serialize(transaction, {
+      sender: Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      ),
+      format: 'feePayer',
+      signature: SignatureEnvelope.from(signature),
+    })
+    expect(serialized).toBe(expected)
+  })
+
+  test('format: feePayer, sender derived from p256 signature', () => {
+    const transaction = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+      nonce: 0n,
+    })
+    const p256PrivateKey = P256.randomPrivateKey()
+    const publicKey = P256.getPublicKey({ privateKey: p256PrivateKey })
+    const signature = P256.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+      privateKey: p256PrivateKey,
+    })
+    const serialized = TxEnvelopeTempo.serialize(transaction, {
+      format: 'feePayer',
+      signature: SignatureEnvelope.from({
+        signature,
+        publicKey,
+        prehash: true,
+      }),
+    })
+    const expected = TxEnvelopeTempo.serialize(transaction, {
+      sender: Address.fromPublicKey(publicKey),
+      format: 'feePayer',
+      signature: SignatureEnvelope.from({
+        signature,
+        publicKey,
+        prehash: true,
+      }),
+    })
+    expect(serialized).toBe(expected)
+  })
+
+  test('format: feePayer, sender derived from keychain signature', () => {
+    const transaction = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [{ to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+      nonce: 0n,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+      privateKey,
+    })
+    const userAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' as const
+    const serialized = TxEnvelopeTempo.serialize(transaction, {
+      format: 'feePayer',
+      signature: SignatureEnvelope.from({
+        userAddress,
+        inner: SignatureEnvelope.from(signature),
+      }),
+    })
+    const expected = TxEnvelopeTempo.serialize(transaction, {
+      sender: userAddress,
+      format: 'feePayer',
+      signature: SignatureEnvelope.from({
+        userAddress,
+        inner: SignatureEnvelope.from(signature),
+      }),
+    })
+    expect(serialized).toBe(expected)
   })
 })
 
