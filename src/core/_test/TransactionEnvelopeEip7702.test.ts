@@ -872,6 +872,7 @@ describe('serialize', () => {
         "blobGasPrice": "0x1",
         "blockHash": null,
         "blockNumber": "0x12f2977",
+        "blockTimestamp": 1715686979,
         "contractAddress": null,
         "cumulativeGasUsed": null,
         "effectiveGasPrice": "0x3df788e0a",
