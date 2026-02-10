@@ -391,13 +391,10 @@ export function fromTuple<const tuple extends Tuple>(
   })()
   const args: KeyAuthorization = {
     address: keyId,
-    expiry:
-      typeof expiry !== 'undefined' ? hexToNumber(expiry) : undefined,
+    expiry: typeof expiry !== 'undefined' ? hexToNumber(expiry) : undefined,
     type: keyType,
     ...(chainId !== '0x' ? { chainId: Hex.toBigInt(chainId) } : {}),
-    ...(typeof expiry !== 'undefined'
-      ? { expiry: hexToNumber(expiry) }
-      : {}),
+    ...(typeof expiry !== 'undefined' ? { expiry: hexToNumber(expiry) } : {}),
     ...(typeof limits !== 'undefined'
       ? {
           limits: limits.map(([token, limit]) => ({
