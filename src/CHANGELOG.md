@@ -1,5 +1,11 @@
 # ox
 
+## 0.12.1
+
+### Patch Changes
+
+- [#166](https://github.com/wevm/ox/pull/166) [`480d01a`](https://github.com/wevm/ox/commit/480d01ae5f165b2d06474df1a417abca814b57c2) Thanks [@jxom](https://github.com/jxom)! - Derived sender address from signature in `TxEnvelopeTempo.serialize` when using `format: 'feePayer'`.
+
 ## 0.12.0
 
 ### Minor Changes
