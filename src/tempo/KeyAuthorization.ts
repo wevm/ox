@@ -391,15 +391,18 @@ export function fromTuple<const tuple extends Tuple>(
   })()
   const args: KeyAuthorization = {
     address: keyId,
-    expiry: typeof expiry !== 'undefined' ? Hex.toNumber(expiry) : undefined,
+    expiry:
+      typeof expiry !== 'undefined' ? hexToNumber(expiry) : undefined,
     type: keyType,
     ...(chainId !== '0x' ? { chainId: Hex.toBigInt(chainId) } : {}),
-    ...(typeof expiry !== 'undefined' ? { expiry: Hex.toNumber(expiry) } : {}),
+    ...(typeof expiry !== 'undefined'
+      ? { expiry: hexToNumber(expiry) }
+      : {}),
     ...(typeof limits !== 'undefined'
       ? {
           limits: limits.map(([token, limit]) => ({
             token,
-            limit: BigInt(limit),
+            limit: hexToBigint(limit),
           })),
         }
       : {}),
@@ -604,11 +607,11 @@ export function toTuple<const authorization extends KeyAuthorization>(
     }
   })()
   const authorizationTuple = [
-    chainId === 0n ? '0x' : Hex.fromNumber(chainId),
+    bigintToHex(chainId),
     type,
     address,
-    typeof expiry === 'number' ? Hex.fromNumber(expiry) : undefined,
-    limits?.map((limit) => [limit.token, Hex.fromNumber(limit.limit)]) ??
+    typeof expiry === 'number' ? numberToHex(expiry) : undefined,
+    limits?.map((limit) => [limit.token, bigintToHex(limit.limit)]) ??
       undefined,
   ].filter(Boolean)
   return [authorizationTuple, ...(signature ? [signature] : [])] as never
@@ -619,4 +622,20 @@ export declare namespace toTuple {
     Compute<Tuple<authorization extends KeyAuthorization<true> ? true : false>>
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+function bigintToHex(value: bigint): Hex.Hex {
+  return value === 0n ? '0x' : Hex.fromNumber(value)
+}
+
+function numberToHex(value: number): Hex.Hex {
+  return value === 0 ? '0x' : Hex.fromNumber(value)
+}
+
+function hexToBigint(hex: Hex.Hex): bigint {
+  return hex === '0x' ? 0n : BigInt(hex)
+}
+
+function hexToNumber(hex: Hex.Hex): number {
+  return hex === '0x' ? 0 : Hex.toNumber(hex)
 }
