@@ -1245,9 +1245,7 @@ describe('serialize', () => {
       signature: SignatureEnvelope.from(signature),
     })
     const expected = TxEnvelopeTempo.serialize(transaction, {
-      sender: Address.fromPublicKey(
-        Secp256k1.getPublicKey({ privateKey }),
-      ),
+      sender: Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })),
       format: 'feePayer',
       signature: SignatureEnvelope.from(signature),
     })

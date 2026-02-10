@@ -1,4 +1,12 @@
-import { Hex, PublicKey, Secp256k1, Signature, Value, WebAuthnP256 } from 'ox'
+import {
+  Hex,
+  PublicKey,
+  Rlp,
+  Secp256k1,
+  Signature,
+  Value,
+  WebAuthnP256,
+} from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
@@ -1369,5 +1377,103 @@ describe('toTuple', () => {
         ],
       ]
     `)
+  })
+
+  test('zero spending limit roundtrips through RLP', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: 0n,
+        },
+      ],
+    })
+
+    const tuple = KeyAuthorization.toTuple(authorization)
+
+    expect(tuple).toMatchInlineSnapshot(`
+      [
+        [
+          "0x",
+          "0x",
+          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "0x499602d2",
+          [
+            [
+              "0x20c0000000000000000000000000000000000001",
+              "0x",
+            ],
+          ],
+        ],
+      ]
+    `)
+
+    const [authorizationTuple] = tuple
+    const rlpEncoded = Rlp.fromHex(authorizationTuple)
+    const rlpDecoded = Rlp.toHex(rlpEncoded)
+    expect(rlpDecoded).toEqual(authorizationTuple)
+
+    const restored = KeyAuthorization.fromTuple(tuple)
+    expect(restored.limits?.[0]?.limit).toBe(0n)
+  })
+
+  test('zero expiry roundtrips through RLP', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      expiry: 0,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: Value.from('10', 6),
+        },
+      ],
+    })
+
+    const tuple = KeyAuthorization.toTuple(authorization)
+
+    expect(tuple).toMatchInlineSnapshot(`
+      [
+        [
+          "0x",
+          "0x",
+          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "0x",
+          [
+            [
+              "0x20c0000000000000000000000000000000000001",
+              "0x989680",
+            ],
+          ],
+        ],
+      ]
+    `)
+
+    const [authorizationTuple] = tuple
+    const rlpEncoded = Rlp.fromHex(authorizationTuple)
+    const rlpDecoded = Rlp.toHex(rlpEncoded)
+    expect(rlpDecoded).toEqual(authorizationTuple)
+
+    const restored = KeyAuthorization.fromTuple(tuple)
+    expect(restored.expiry).toBe(0)
+  })
+
+  test('hash works with zero spending limit', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: 0n,
+        },
+      ],
+    })
+
+    expect(() => KeyAuthorization.hash(authorization)).not.toThrow()
   })
 })
