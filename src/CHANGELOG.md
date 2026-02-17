@@ -1,5 +1,11 @@
 # ox
 
+## 0.12.2
+
+### Patch Changes
+
+- [`ddf03bc`](https://github.com/wevm/ox/commit/ddf03bcb9fef345e3ee45999855d15554b006ec1) Thanks [@jxom](https://github.com/jxom)! - Added `Json.canonicalize` (RFC 8785)
+
 ## 0.12.1
 
 ### Patch Changes
