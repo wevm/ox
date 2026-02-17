@@ -46,7 +46,8 @@ export function canonicalize(value: unknown): string {
       .sort()
       .reduce<string[]>((acc, key) => {
         const v = (value as Record<string, unknown>)[key]
-        if (v !== undefined) acc.push(`${JSON.stringify(key)}:${canonicalize(v)}`)
+        if (v !== undefined)
+          acc.push(`${JSON.stringify(key)}:${canonicalize(v)}`)
         return acc
       }, [])
     return `{${entries.join(',')}}`
