@@ -1,6 +1,6 @@
 import * as Cbor from './Cbor.js'
 import * as Errors from './Errors.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
 import * as PublicKey from './PublicKey.js'
 
 /**
@@ -72,9 +72,7 @@ export function toPublicKey(coseKey: Hex.Hex): PublicKey.PublicKey {
   if (!(x instanceof Uint8Array) || !(y instanceof Uint8Array))
     throw new InvalidCoseKeyError()
 
-  return PublicKey.from(
-    new Uint8Array([0x04, ...x, ...y]),
-  )
+  return PublicKey.from(new Uint8Array([0x04, ...x, ...y]))
 }
 
 export declare namespace toPublicKey {

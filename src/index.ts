@@ -1330,40 +1330,6 @@ export * as Caches from './core/Caches.js'
  * @category Data
  */
 export * as Cbor from './core/Cbor.js'
-
-/**
- * Utility functions for converting between COSE_Key and P256 public keys.
- *
- * COSE_Key is the key format used in WebAuthn attestation objects, as defined in
- * [RFC 9053](https://datatracker.ietf.org/doc/html/rfc9053).
- *
- * @example
- * ### Encoding a Public Key to COSE_Key
- *
- * ```ts twoslash
- * import { CoseKey, P256 } from 'ox'
- *
- * const { publicKey } = P256.createKeyPair()
- *
- * const coseKey = CoseKey.fromPublicKey(publicKey)
- * ```
- *
- * @example
- * ### Decoding a COSE_Key to Public Key
- *
- * ```ts twoslash
- * import { CoseKey, P256 } from 'ox'
- *
- * const { publicKey } = P256.createKeyPair()
- * const coseKey = CoseKey.fromPublicKey(publicKey)
- *
- * const publicKey2 = CoseKey.toPublicKey(coseKey)
- * ```
- *
- * @category Crypto
- */
-export * as CoseKey from './core/CoseKey.js'
-
 /**
  * Utility functions for computing Contract Addresses.
  *
@@ -1401,6 +1367,38 @@ export * as CoseKey from './core/CoseKey.js'
  * @category Addresses
  */
 export * as ContractAddress from './core/ContractAddress.js'
+/**
+ * Utility functions for converting between COSE_Key and P256 public keys.
+ *
+ * COSE_Key is the key format used in WebAuthn attestation objects, as defined in
+ * [RFC 9053](https://datatracker.ietf.org/doc/html/rfc9053).
+ *
+ * @example
+ * ### Encoding a Public Key to COSE_Key
+ *
+ * ```ts twoslash
+ * import { CoseKey, P256 } from 'ox'
+ *
+ * const { publicKey } = P256.createKeyPair()
+ *
+ * const coseKey = CoseKey.fromPublicKey(publicKey)
+ * ```
+ *
+ * @example
+ * ### Decoding a COSE_Key to Public Key
+ *
+ * ```ts twoslash
+ * import { CoseKey, P256 } from 'ox'
+ *
+ * const { publicKey } = P256.createKeyPair()
+ * const coseKey = CoseKey.fromPublicKey(publicKey)
+ *
+ * const publicKey2 = CoseKey.toPublicKey(coseKey)
+ * ```
+ *
+ * @category Crypto
+ */
+export * as CoseKey from './core/CoseKey.js'
 
 /**
  * Utilities for working with Ed25519 signatures and key pairs.

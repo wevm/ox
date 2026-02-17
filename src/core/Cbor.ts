@@ -254,7 +254,8 @@ function getEncodable(value: unknown): Encodable {
       new Uint8Array(value.buffer, value.byteOffset, value.byteLength),
     )
 
-  if (value instanceof Map) return getEncodable.map(value as Map<unknown, unknown>)
+  if (value instanceof Map)
+    return getEncodable.map(value as Map<unknown, unknown>)
 
   if (typeof value === 'object')
     return getEncodable.object(value as Record<string, unknown>)

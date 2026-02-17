@@ -8,7 +8,7 @@ import * as Hex from './Hex.js'
 import type { Compute, OneOf } from './internal/types.js'
 import * as internal from './internal/webauthn.js'
 import * as P256 from './P256.js'
-import * as PublicKey from './PublicKey.js'
+import type * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 
 /** A WebAuthn-flavored P256 credential. */
