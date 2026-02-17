@@ -254,6 +254,8 @@ function getEncodable(value: unknown): Encodable {
       new Uint8Array(value.buffer, value.byteOffset, value.byteLength),
     )
 
+  if (value instanceof Map) return getEncodable.map(value as Map<unknown, unknown>)
+
   if (typeof value === 'object')
     return getEncodable.object(value as Record<string, unknown>)
 
@@ -538,6 +540,67 @@ namespace getEncodable {
     if (size <= 0xffffffff)
       return {
         length: 5 + bodyLength, // 1 byte prefix + 4 bytes uint32 + body length
+        encode(cursor) {
+          cursor.pushUint8(0xba)
+          cursor.pushUint32(size)
+          for (const entry of entries) {
+            entry.key.encode(cursor)
+            entry.value.encode(cursor)
+          }
+        },
+      }
+    throw new ObjectTooLargeError({ size })
+  }
+
+  /** @internal */
+  export function map(value: Map<unknown, unknown>): Encodable {
+    const entries: { key: Encodable; value: Encodable }[] = []
+    for (const [k, v] of value)
+      entries.push({ key: getEncodable(k), value: getEncodable(v) })
+    const bodyLength = entries.reduce(
+      (acc, entry) => acc + entry.key.length + entry.value.length,
+      0,
+    )
+    const size = value.size
+
+    if (size <= 0x17)
+      return {
+        length: 1 + bodyLength,
+        encode(cursor) {
+          cursor.pushUint8(0xa0 + size)
+          for (const entry of entries) {
+            entry.key.encode(cursor)
+            entry.value.encode(cursor)
+          }
+        },
+      }
+    if (size <= 0xff)
+      return {
+        length: 2 + bodyLength,
+        encode(cursor) {
+          cursor.pushUint8(0xb8)
+          cursor.pushUint8(size)
+          for (const entry of entries) {
+            entry.key.encode(cursor)
+            entry.value.encode(cursor)
+          }
+        },
+      }
+    if (size <= 0xffff)
+      return {
+        length: 3 + bodyLength,
+        encode(cursor) {
+          cursor.pushUint8(0xb9)
+          cursor.pushUint16(size)
+          for (const entry of entries) {
+            entry.key.encode(cursor)
+            entry.value.encode(cursor)
+          }
+        },
+      }
+    if (size <= 0xffffffff)
+      return {
+        length: 5 + bodyLength,
         encode(cursor) {
           cursor.pushUint8(0xba)
           cursor.pushUint32(size)

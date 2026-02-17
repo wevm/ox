@@ -1,12 +1,14 @@
 import * as Base64 from './Base64.js'
 import * as Bytes from './Bytes.js'
+import * as Cbor from './Cbor.js'
+import * as CoseKey from './CoseKey.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import type { Compute, OneOf } from './internal/types.js'
 import * as internal from './internal/webauthn.js'
 import * as P256 from './P256.js'
-import type * as PublicKey from './PublicKey.js'
+import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
 
 /** A WebAuthn-flavored P256 credential. */
@@ -128,21 +130,69 @@ export declare namespace createCredential {
  * // @log: "0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce194705000001a4"
  * ```
  *
+ * @example
+ * ### With Attested Credential Data
+ *
+ * Include a credential ID and public key in the authenticator data (for registration responses):
+ *
+ * ```ts twoslash
+ * import { P256, WebAuthnP256 } from 'ox'
+ *
+ * const { publicKey } = P256.createKeyPair()
+ *
+ * const authenticatorData = WebAuthnP256.getAuthenticatorData({
+ *   rpId: 'example.com',
+ *   flag: 0x41, // UP + AT
+ *   credential: {
+ *     id: new Uint8Array(32),
+ *     publicKey,
+ *   },
+ * })
+ * ```
+ *
  * @param options - Options to construct the authenticator data.
  * @returns The authenticator data.
  */
 export function getAuthenticatorData(
   options: getAuthenticatorData.Options = {},
 ): Hex.Hex {
-  const { flag = 5, rpId = window.location.hostname, signCount = 0 } = options
+  const {
+    credential,
+    flag = 5,
+    rpId = window.location.hostname,
+    signCount = 0,
+  } = options
   const rpIdHash = Hash.sha256(Hex.fromString(rpId))
   const flag_bytes = Hex.fromNumber(flag, { size: 1 })
   const signCount_bytes = Hex.fromNumber(signCount, { size: 4 })
-  return Hex.concat(rpIdHash, flag_bytes, signCount_bytes)
+  const base = Hex.concat(rpIdHash, flag_bytes, signCount_bytes)
+
+  if (!credential) return base
+
+  // AAGUID (16 bytes of zeros)
+  const aaguid = Hex.fromBytes(new Uint8Array(16))
+
+  // Credential ID
+  const credentialId = Hex.fromBytes(credential.id)
+  const credIdLen = Hex.fromNumber(credential.id.length, { size: 2 })
+
+  // COSE public key
+  const coseKey = CoseKey.fromPublicKey(credential.publicKey)
+
+  return Hex.concat(base, aaguid, credIdLen, credentialId, coseKey)
 }
 
 export declare namespace getAuthenticatorData {
   type Options = {
+    /** Attested credential data to include (credential ID + public key). When set, the AT flag (0x40) should also be set. */
+    credential?:
+      | {
+          /** The credential ID as raw bytes. */
+          id: Uint8Array
+          /** The P256 public key associated with the credential. */
+          publicKey: PublicKey.PublicKey
+        }
+      | undefined
     /** A bitfield that indicates various attributes that were asserted by the authenticator. [Read more](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Authenticator_data#flags) */
     flag?: number | undefined
     /** The [Relying Party ID](https://w3c.github.io/webauthn/#relying-party-identifier) that the credential is scoped to. */
@@ -187,10 +237,11 @@ export function getClientDataJSON(options: getClientDataJSON.Options): string {
     crossOrigin = false,
     extraClientData,
     origin = window.location.origin,
+    type = 'webauthn.get',
   } = options
 
   return JSON.stringify({
-    type: 'webauthn.get',
+    type,
     challenge: Base64.fromHex(challenge, { url: true, pad: false }),
     origin,
     crossOrigin,
@@ -208,9 +259,64 @@ export declare namespace getClientDataJSON {
     extraClientData?: Record<string, unknown> | undefined
     /** The fully qualified origin of the relying party which has been given by the client/browser to the authenticator. */
     origin?: string | undefined
+    /** The WebAuthn ceremony type. @default 'webauthn.get' */
+    type?: 'webauthn.create' | 'webauthn.get' | undefined
   }
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Constructs a CBOR-encoded attestation object for testing WebAuthn registration
+ * verification. Combines the authenticator data with an attestation statement.
+ *
+ * :::warning
+ *
+ * This function is mainly for testing purposes. In production, the attestation
+ * object is returned by the authenticator during `navigator.credentials.create()`.
+ *
+ * :::
+ *
+ * @example
+ * ```ts twoslash
+ * import { P256, WebAuthnP256 } from 'ox'
+ *
+ * const { publicKey } = P256.createKeyPair()
+ *
+ * const attestationObject = WebAuthnP256.getAttestationObject({
+ *   authData: WebAuthnP256.getAuthenticatorData({
+ *     rpId: 'example.com',
+ *     flag: 0x41,
+ *     credential: { id: new Uint8Array(32), publicKey },
+ *   }),
+ * })
+ * ```
+ *
+ * @param options - Options to construct the attestation object.
+ * @returns The CBOR-encoded attestation object as a Hex string.
+ */
+export function getAttestationObject(
+  options: getAttestationObject.Options,
+): Hex.Hex {
+  const { attStmt = {}, authData, fmt = 'none' } = options
+  return Cbor.encode({
+    fmt,
+    attStmt,
+    authData: Hex.toBytes(authData),
+  })
+}
+
+export declare namespace getAttestationObject {
+  type Options = {
+    /** Attestation statement. @default {} */
+    attStmt?: Record<string, unknown> | undefined
+    /** Authenticator data as a Hex string (from {@link ox#WebAuthnP256.(getAuthenticatorData:function)}). */
+    authData: Hex.Hex
+    /** Attestation format. @default 'none' */
+    fmt?: string | undefined
+  }
+
+  type ErrorType = Cbor.encode.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -716,7 +822,10 @@ export function verify(options: verify.Options): boolean {
   // Check that response is for an authentication assertion (if typeIndex is provided)
   if (typeIndex !== undefined) {
     const type = '"type":"webauthn.get"'
-    if (type !== clientDataJSON.slice(Number(typeIndex), type.length + 1))
+    if (
+      type !==
+      clientDataJSON.slice(Number(typeIndex), Number(typeIndex) + type.length)
+    )
       return false
   }
 

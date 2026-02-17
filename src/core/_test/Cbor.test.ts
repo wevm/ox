@@ -241,6 +241,60 @@ describe('encode', () => {
     const decoded = Cbor.decode(encoded)
     expect(decoded).toBe(value)
   })
+
+  test('Map with integer keys', () => {
+    const map = new Map<number, unknown>([
+      [1, 2],
+      [3, -7],
+    ])
+    const encoded = Cbor.encode(map)
+    // keys should be CBOR integers, not text strings
+    // {1: 2, 3: -7} = a2 01 02 03 26
+    expect(encoded).toBe(Hex.from([0xa2, 0x01, 0x02, 0x03, 0x26]))
+  })
+
+  test('Map with negative integer keys', () => {
+    const map = new Map<number, unknown>([
+      [-1, 1],
+      [-2, new Uint8Array([0xaa, 0xbb])],
+    ])
+    const encoded = Cbor.encode(map)
+    // -1 = 0x20, -2 = 0x21
+    const decoded = Cbor.decode<Record<string, unknown>>(encoded)
+    expect(decoded).toStrictEqual({
+      '-1': 1,
+      '-2': new Uint8Array([0xaa, 0xbb]),
+    })
+  })
+
+  test('Map with mixed key types', () => {
+    const map = new Map<number | string, unknown>([
+      [1, 'hello'],
+      ['foo', 42],
+    ])
+    const encoded = Cbor.encode(map)
+    const decoded = Cbor.decode<Record<string, unknown>>(encoded)
+    expect(decoded).toStrictEqual({ '1': 'hello', foo: 42 })
+  })
+
+  test('Map roundtrip for COSE_Key structure', () => {
+    const x = new Uint8Array(32).fill(0xaa)
+    const y = new Uint8Array(32).fill(0xbb)
+    const coseKey = new Map<number, unknown>([
+      [1, 2],
+      [3, -7],
+      [-1, 1],
+      [-2, x],
+      [-3, y],
+    ])
+    const encoded = Cbor.encode(coseKey)
+    const decoded = Cbor.decode<Record<string, unknown>>(encoded)
+    expect(decoded['1']).toBe(2)
+    expect(decoded['3']).toBe(-7)
+    expect(decoded['-1']).toBe(1)
+    expect(decoded['-2']).toStrictEqual(x)
+    expect(decoded['-3']).toStrictEqual(y)
+  })
 })
 
 describe('decode', () => {
