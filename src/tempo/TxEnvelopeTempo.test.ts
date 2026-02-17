@@ -7,6 +7,7 @@ import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 
 const privateKey =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
 
 describe('assert', () => {
   test('empty calls list', () => {
@@ -340,6 +341,7 @@ describe('deserialize', () => {
       })
       expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
+        from: address,
         signature: { signature, type: 'secp256k1' },
       })
     })
@@ -354,6 +356,7 @@ describe('deserialize', () => {
       })
       expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
+        from: address,
         signature: { signature, type: 'secp256k1' },
       })
     })
@@ -377,6 +380,7 @@ describe('deserialize', () => {
       delete signature.yParity
       expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
+        from: Address.fromPublicKey(publicKey),
         signature: { prehash: true, publicKey, signature, type: 'p256' },
       })
     })
@@ -417,6 +421,7 @@ describe('deserialize', () => {
     ]).slice(2)}` as const
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
     expect(deserialized.feePayerSignature).toBe(null)
+    expect(deserialized.from).toBe('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266')
   })
 
   test('feePayerSignature with signature tuple', () => {
@@ -1174,6 +1179,7 @@ describe('serialize', () => {
       delete signature.yParity
       expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
+        from: Address.fromPublicKey(publicKey),
         nonceKey: 0n,
         signature: { prehash: true, publicKey, signature, type: 'p256' },
       })

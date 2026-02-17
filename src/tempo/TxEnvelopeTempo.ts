@@ -351,9 +351,11 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     if (
       feePayerSignatureOrSender === '0x00' ||
       Address.validate(feePayerSignatureOrSender)
-    )
+    ) {
       transaction.feePayerSignature = null
-    else
+      if (Address.validate(feePayerSignatureOrSender))
+        transaction.from = feePayerSignatureOrSender
+    } else
       transaction.feePayerSignature = Signature.fromTuple(
         feePayerSignatureOrSender as never,
       )
@@ -372,6 +374,24 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
       ...transaction,
       signature: signatureEnvelope,
     }
+
+  // Recover sender address from the signature if not already set.
+  if (!transaction.from && signatureEnvelope) {
+    try {
+      if (signatureEnvelope.type === 'keychain')
+        transaction.from = signatureEnvelope.userAddress
+      else if (
+        signatureEnvelope.type === 'p256' ||
+        signatureEnvelope.type === 'webAuthn'
+      )
+        transaction.from = Address.fromPublicKey(signatureEnvelope.publicKey)
+      else if (signatureEnvelope.type === 'secp256k1')
+        transaction.from = Secp256k1.recoverAddress({
+          payload: getSignPayload(from(transaction)),
+          signature: signatureEnvelope.signature,
+        })
+    } catch {}
+  }
 
   assert(transaction)
 
