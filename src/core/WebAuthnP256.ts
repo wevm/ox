@@ -308,7 +308,7 @@ export function getAttestationObject(
 
 export declare namespace getAttestationObject {
   type Options = {
-    /** Attestation statement. @default {} */
+    /** Attestation statement. */
     attStmt?: Record<string, unknown> | undefined
     /** Authenticator data as a Hex string (from {@link ox#WebAuthnP256.(getAuthenticatorData:function)}). */
     authData: Hex.Hex
