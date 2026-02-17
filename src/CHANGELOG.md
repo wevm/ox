@@ -1,5 +1,17 @@
 # ox
 
+## 0.12.3
+
+### Patch Changes
+
+- [#171](https://github.com/wevm/ox/pull/171) [`d206a6e`](https://github.com/wevm/ox/commit/d206a6e3c371b9ed5d89ec89adcf86eba35bd6ed) Thanks [@jxom](https://github.com/jxom)! - Fixed COSE key encoding in `WebAuthnP256.getAuthenticatorData` to use CBOR integer keys.
+
+- [#171](https://github.com/wevm/ox/pull/171) [`d206a6e`](https://github.com/wevm/ox/commit/d206a6e3c371b9ed5d89ec89adcf86eba35bd6ed) Thanks [@jxom](https://github.com/jxom)! - Added `CoseKey` module with `fromPublicKey` and `toPublicKey` for converting between P256 public keys and CBOR-encoded COSE_Key format.
+
+- [#171](https://github.com/wevm/ox/pull/171) [`d206a6e`](https://github.com/wevm/ox/commit/d206a6e3c371b9ed5d89ec89adcf86eba35bd6ed) Thanks [@jxom](https://github.com/jxom)! - Added `Map` support to `Cbor.encode` for encoding maps with non-string keys (e.g. CBOR integer keys).
+
+- [#171](https://github.com/wevm/ox/pull/171) [`d206a6e`](https://github.com/wevm/ox/commit/d206a6e3c371b9ed5d89ec89adcf86eba35bd6ed) Thanks [@jxom](https://github.com/jxom)! - Fixed `WebAuthnP256.verify` type-check slice bug.
+
 ## 0.12.2
 
 ### Patch Changes
