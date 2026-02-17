@@ -1819,6 +1819,7 @@ test('exports', () => {
       "createCredential",
       "getAuthenticatorData",
       "getClientDataJSON",
+      "getAttestationObject",
       "getCredentialCreationOptions",
       "getCredentialRequestOptions",
       "getSignPayload",
