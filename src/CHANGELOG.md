@@ -1,5 +1,11 @@
 # ox
 
+## 0.12.4
+
+### Patch Changes
+
+- [`772f3eb`](https://github.com/wevm/ox/commit/772f3eb7139d1ef1f8f7271d3d10729948195b42) Thanks [@jxom](https://github.com/jxom)! - Added support for recovering the sender address (`from`) from the transaction signature in `TxEnvelopeTempo.deserialize`.
+
 ## 0.12.3
 
 ### Patch Changes
