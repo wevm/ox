@@ -28,6 +28,7 @@ test('exports', () => {
       "Bytes",
       "Caches",
       "Cbor",
+      "CoseKey",
       "ContractAddress",
       "Ed25519",
       "Ens",
