@@ -3,6 +3,62 @@ import type * as Errors from './Errors.js'
 const bigIntSuffix = '#__bigint'
 
 /**
+ * Serializes a value to a canonical JSON string as defined by
+ * [RFC 8785 (JSON Canonicalization Scheme)](https://www.rfc-editor.org/rfc/rfc8785).
+ *
+ * - Object keys are sorted recursively by UTF-16 code unit comparison.
+ * - Primitives are serialized per ECMAScript rules (no trailing zeros on numbers, etc.).
+ * - No whitespace is inserted.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Json } from 'ox'
+ *
+ * const json = Json.canonicalize({ b: 2, a: 1 })
+ * // @log: '{"a":1,"b":2}'
+ * ```
+ *
+ * @example
+ * ```ts twoslash
+ * import { Json } from 'ox'
+ *
+ * const json = Json.canonicalize({ z: [3, { y: 1, x: 2 }], a: 'hello' })
+ * // @log: '{"a":"hello","z":[3,{"x":2,"y":1}]}'
+ * ```
+ *
+ * @param value - The value to canonicalize.
+ * @returns The canonical JSON string.
+ */
+export function canonicalize(value: unknown): string {
+  if (value === null || typeof value === 'boolean' || typeof value === 'string')
+    return JSON.stringify(value)
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value))
+      throw new TypeError('Cannot canonicalize non-finite number')
+    return Object.is(value, -0) ? '0' : JSON.stringify(value)
+  }
+  if (typeof value === 'bigint')
+    throw new TypeError('Cannot canonicalize bigint')
+  if (Array.isArray(value))
+    return `[${value.map((item) => canonicalize(item)).join(',')}]`
+  if (typeof value === 'object') {
+    const entries = Object.keys(value as Record<string, unknown>)
+      .sort()
+      .reduce<string[]>((acc, key) => {
+        const v = (value as Record<string, unknown>)[key]
+        if (v !== undefined) acc.push(`${JSON.stringify(key)}:${canonicalize(v)}`)
+        return acc
+      }, [])
+    return `{${entries.join(',')}}`
+  }
+  return undefined as never
+}
+
+export declare namespace canonicalize {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
  * Parses a JSON string, with support for `bigint`.
  *
  * @example
