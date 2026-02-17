@@ -1,0 +1,21 @@
+name: Prerelease
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Prepublish
+        run: |
+          cd src && pnpm version prerelease --preid $(git rev-parse --short=7 HEAD) && cd ..
+          pnpm changeset:prepublish
+          pnpx pkg-pr-new publish --pnpm --compact './src'
