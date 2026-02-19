@@ -323,9 +323,7 @@ export declare namespace getSignPayload {
 export type Response<serialized extends boolean = false> = {
   metadata: Credential_.SignMetadata
   raw: Types.PublicKeyCredential<serialized>
-  signature: serialized extends true
-    ? Hex.Hex
-    : Signature.Signature<false>
+  signature: serialized extends true ? Hex.Hex : Signature.Signature<false>
 }
 
 /**
@@ -421,10 +419,7 @@ export function serializeResponse(response: Response): Response<true> {
       id: raw.id,
       type: raw.type,
       authenticatorAttachment: raw.authenticatorAttachment,
-      rawId: Base64.fromBytes(
-        bufferSourceToBytes(raw.rawId),
-        base64UrlOptions,
-      ),
+      rawId: Base64.fromBytes(bufferSourceToBytes(raw.rawId), base64UrlOptions),
       response: rawResponse as unknown as Types.AuthenticatorResponse<true>,
     },
     signature: Signature.toHex(signature),
