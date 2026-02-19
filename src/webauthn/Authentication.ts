@@ -89,6 +89,7 @@ export declare namespace deserializeOptions {
  * import { Authentication } from 'ox/webauthn'
  *
  * const response = Authentication.deserializeResponse({ // [!code focus]
+ *   id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
  *   metadata: { // [!code focus]
  *     authenticatorData: '0x49960de5...', // [!code focus]
  *     clientDataJSON: '{"type":"webauthn.get",...}', // [!code focus]
@@ -101,7 +102,7 @@ export declare namespace deserializeOptions {
  *     type: 'public-key', // [!code focus]
  *     authenticatorAttachment: 'platform', // [!code focus]
  *     rawId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
- *     response: {}, // [!code focus]
+ *     response: { clientDataJSON: 'eyJ0eXBlIjoid2ViYXV0aG4uZ2V0In0' }, // [!code focus]
  *   }, // [!code focus]
  *   signature: '0x...', // [!code focus]
  * }) // [!code focus]

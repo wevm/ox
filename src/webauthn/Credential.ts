@@ -94,6 +94,8 @@ export declare namespace serialize {
  * import { Credential } from 'ox/webauthn'
  *
  * const credential = Credential.deserialize({ // [!code focus]
+ *   attestationObject: 'o2NmbXRkbm9uZQ...', // [!code focus]
+ *   clientDataJSON: 'eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0', // [!code focus]
  *   id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
  *   publicKey: '0x04ab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7d884318e919fd3b3e5a631d866d8a380b44063e70f0c381ee16e0652f7f97554', // [!code focus]
  *   raw: { // [!code focus]

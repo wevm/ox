@@ -454,7 +454,7 @@ export declare namespace deserializeOptions {
  *     clientDataJSON: 'eyJ0eXBlIjoid2Vi...', // [!code focus]
  *     id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
  *     publicKey: '0x04ab891400...', // [!code focus]
- *     raw: { id: '...', type: 'public-key', authenticatorAttachment: 'platform', rawId: '...', response: {} }, // [!code focus]
+ *     raw: { id: '...', type: 'public-key', authenticatorAttachment: 'platform', rawId: '...', response: { clientDataJSON: 'eyJ0eXBlIjoid2Vi...' } }, // [!code focus]
  *   }, // [!code focus]
  *   counter: 0, // [!code focus]
  * }) // [!code focus]
@@ -507,13 +507,12 @@ export declare namespace deserializeResponse {
  *
  * @example
  * ```ts twoslash
- * import { Credential, Registration } from 'ox/webauthn'
+ * import { Registration } from 'ox/webauthn'
  *
  * const credential = await Registration.create({ name: 'Example' })
- * const serialized = Credential.serialize(credential)
  *
  * const result = Registration.verify({ // [!code focus]
- *   credential: serialized.raw, // [!code focus]
+ *   credential, // [!code focus]
  *   challenge: '0x69abb4b5a0de4bc62a2a201f8d25bae9', // [!code focus]
  *   origin: 'https://example.com', // [!code focus]
  *   rpId: 'example.com', // [!code focus]
