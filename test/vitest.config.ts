@@ -1,3 +1,4 @@
+import { playwright } from '@vitest/browser-playwright'
 import { basename, dirname, join } from 'node:path'
 import { defineConfig } from 'vitest/config'
 
@@ -47,6 +48,20 @@ export default defineConfig({
           include: ['src/tempo/**/*.test.ts'],
           setupFiles: [join(__dirname, './tempo/setup.ts')],
           globalSetup: [join(__dirname, './tempo/setup.global.ts')],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'browser',
+          include: ['src/**/*.browser.test.ts'],
+          setupFiles: [join(__dirname, './setup.browser.ts')],
+          browser: {
+            enabled: true,
+            provider: playwright() as never,
+            headless: true,
+            instances: [{ browser: 'chromium' }],
+          },
         },
       },
     ],

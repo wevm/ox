@@ -283,7 +283,10 @@ export declare namespace sign {
  * @returns Whether the payload was signed by the provided public key.
  */
 export async function verify(options: verify.Options): Promise<boolean> {
-  const { payload, signature } = options
+  const { lowS = true, payload, signature } = options
+
+  // Reject high-S signatures if lowS is enabled.
+  if (lowS && signature.s > p256.CURVE.n / 2n) return false
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
@@ -306,6 +309,8 @@ export async function verify(options: verify.Options): Promise<boolean> {
 
 export declare namespace verify {
   type Options = {
+    /** If set to `true`, only low-S signatures will be accepted. @default true */
+    lowS?: boolean | undefined
     /** Public key that signed the payload. */
     publicKey: PublicKey.PublicKey<boolean>
     /** Signature of the payload. */

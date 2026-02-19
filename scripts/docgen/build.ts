@@ -99,7 +99,7 @@ const namespaceMap: Record<
 > = {}
 
 for (const namespace of namespaces) {
-  const name = namespace.displayName
+  const name = namespace.displayName.replace(/_\d+$/, '')
   const docComment = namespaceDocComments[name]
   const basePath = docComment ? getPath(docComment) : '/'
   const baseLink = `${basePath}/${name}`

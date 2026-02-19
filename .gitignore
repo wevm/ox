@@ -20,6 +20,7 @@ config-generated.ts
 site/pages/api
 site/pages/ercs
 site/pages/tempo
+site/pages/webauthn
 site/pages/glossary
 tsdoc-metadata.json
 *.timestamp*

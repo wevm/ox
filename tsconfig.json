@@ -15,6 +15,7 @@
       "ox/erc8021": ["src/erc8021/index.ts"],
       "ox/tempo": ["src/tempo/index.ts"],
       "ox/trusted-setups": ["src/trusted-setups/index.ts"],
+      "ox/webauthn": ["src/webauthn/index.ts"],
       "ox/window": ["src/window/index.ts"]
     }
   }
