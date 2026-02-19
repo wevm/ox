@@ -114,9 +114,11 @@ export declare namespace serialize {
 export function deserialize(credential: Credential<true>): Credential {
   const { attestationObject, clientDataJSON, id, publicKey, raw } = credential
 
-  const response: Record<string, ArrayBuffer> = {}
-  for (const [key, value] of Object.entries(raw.response))
-    response[key] = bytesToArrayBuffer(Base64.toBytes(value))
+  const response = Object.create(null) as Record<string, ArrayBuffer>
+  for (const key of responseKeys) {
+    const value = (raw.response as unknown as Record<string, string>)[key]
+    if (value) response[key] = bytesToArrayBuffer(Base64.toBytes(value))
+  }
 
   return {
     attestationObject: bytesToArrayBuffer(Base64.toBytes(attestationObject)),
