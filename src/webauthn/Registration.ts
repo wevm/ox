@@ -638,10 +638,10 @@ export function verify(options: verify.Options): verify.ReturnType {
   const coseKeyBytes = authData.slice(55 + credIdLen)
   const coseKeyHex = Hex.fromBytes(coseKeyBytes)
   const coseKeyData = Cbor.decode<Record<string, unknown>>(coseKeyHex)
-  // Validate key type is EC2 (2) and algorithm is ES256 (-7)
-  if (coseKeyData['1'] !== 2 || coseKeyData['3'] !== -7)
+  // Validate key type is EC2 (2), algorithm is ES256 (-7), and curve is P-256 (1)
+  if (coseKeyData['1'] !== 2 || coseKeyData['3'] !== -7 || coseKeyData['-1'] !== 1)
     throw new VerifyError(
-      'COSE key must be EC2 (kty=2) with ES256 algorithm (alg=-7)',
+      'COSE key must be EC2 (kty=2) with ES256 algorithm (alg=-7) on P-256 curve (crv=1)',
     )
   const publicKey = CoseKey.toPublicKey(coseKeyHex)
 
