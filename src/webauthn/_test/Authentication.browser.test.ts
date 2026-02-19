@@ -705,7 +705,7 @@ async function createCredential(challenge?: Hex.Hex) {
   return { credential, challenge: ch }
 }
 
-/** Builds a synthetic authentication response signed with a known key pair. */
+/** @internal */
 function buildSignedMetadata(options?: {
   challenge?: Hex.Hex
   flag?: number

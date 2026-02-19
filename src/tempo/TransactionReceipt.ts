@@ -9,7 +9,7 @@ import * as ox_TransactionReceipt from '../core/TransactionReceipt.js'
  * Extends standard receipts with `feePayer` (the address that paid fees) and
  * `feeToken` (the TIP-20 token used for fee payment).
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * @see {@link https://docs.tempo.xyz/protocol/transactions}
  */
 export type TransactionReceipt<
   status = ox_TransactionReceipt.Status,
@@ -60,7 +60,7 @@ export const toRpcType = {
 /**
  * Converts an RPC receipt to a TransactionReceipt.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * @see {@link https://docs.tempo.xyz/protocol/transactions}
  *
  * @example
  * ```ts twoslash

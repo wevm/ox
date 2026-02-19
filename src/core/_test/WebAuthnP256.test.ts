@@ -45,6 +45,8 @@ describe('createCredential', () => {
 
     expect(credential).toMatchInlineSnapshot(`
       {
+        "attestationObject": undefined,
+        "clientDataJSON": undefined,
         "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
         "publicKey": {
           "prefix": 4,
@@ -148,7 +150,7 @@ describe('createCredential', () => {
         name: 'Foo',
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [WebAuthnP256.CredentialCreationFailedError: Failed to create credential.
+      [Registration.CreateFailedError: Failed to create credential.
 
       Details: Failed to create credential.]
     `)
@@ -163,7 +165,7 @@ describe('createCredential', () => {
         name: 'Foo',
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [WebAuthnP256.CredentialCreationFailedError: Failed to create credential.
+      [Registration.CreateFailedError: Failed to create credential.
 
       Details: foo]
     `)
@@ -1298,10 +1300,10 @@ describe('sign', () => {
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       }),
     ).rejects.toMatchInlineSnapshot(`
-    [WebAuthnP256.CredentialRequestFailedError: Failed to request credential.
+      [Authentication.SignFailedError: Failed to request credential.
 
-    Details: Failed to request credential.]
-  `)
+      Details: Failed to request credential.]
+    `)
   })
 
   test('error: thrown', async () => {
@@ -1314,10 +1316,10 @@ describe('sign', () => {
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       }),
     ).rejects.toMatchInlineSnapshot(`
-    [WebAuthnP256.CredentialRequestFailedError: Failed to request credential.
+      [Authentication.SignFailedError: Failed to request credential.
 
-    Details: foo]
-  `)
+      Details: foo]
+    `)
   })
 })
 
@@ -1825,8 +1827,6 @@ test('exports', () => {
       "getSignPayload",
       "sign",
       "verify",
-      "CredentialCreationFailedError",
-      "CredentialRequestFailedError",
     ]
   `)
 })
