@@ -1572,7 +1572,7 @@ describe('verify', () => {
     ).toBeFalsy()
   })
 
-  test('behavior: invalid type index', async () => {
+  test('behavior: invalid type', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
       x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
@@ -1587,8 +1587,8 @@ describe('verify', () => {
         '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
       challengeIndex: 23,
       clientDataJSON:
-        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
-      typeIndex: 2,
+        '{"type":"webauthn.create","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
       userVerificationRequired: true,
     } as const
 
