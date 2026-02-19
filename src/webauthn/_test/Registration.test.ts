@@ -1003,8 +1003,7 @@ describe('verify', () => {
   })
 
   test('serializeResponse → deserializeResponse round-trip', async () => {
-    const { credential, challenge, origin, rpId } =
-      await mockCreateCredential()
+    const { credential, challenge, origin, rpId } = await mockCreateCredential()
 
     const response = Registration.verify({
       credential,
@@ -1026,12 +1025,8 @@ describe('verify', () => {
     const deserialized = Registration.deserializeResponse(JSON.parse(json))
 
     expect(deserialized.credential.id).toBe(credential.id)
-    expect(deserialized.credential.publicKey.x).toBe(
-      credential.publicKey.x,
-    )
-    expect(deserialized.credential.publicKey.y).toBe(
-      credential.publicKey.y,
-    )
+    expect(deserialized.credential.publicKey.x).toBe(credential.publicKey.x)
+    expect(deserialized.credential.publicKey.y).toBe(credential.publicKey.y)
     expect(deserialized.counter).toBe(response.counter)
     expect(deserialized.userVerified).toBe(response.userVerified)
   })

@@ -20,6 +20,14 @@ import {
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
+/** Response from a WebAuthn authentication ceremony. */
+export type Response<serialized extends boolean = false> = {
+  id: string
+  metadata: Credential_.SignMetadata
+  raw: Types.PublicKeyCredential<serialized>
+  signature: serialized extends true ? Hex.Hex : Signature.Signature<false>
+}
+
 /**
  * Deserializes credential request options that can be passed to
  * `navigator.credentials.get()`.
@@ -103,13 +111,14 @@ export declare namespace deserializeOptions {
  * @returns The deserialized authentication response.
  */
 export function deserializeResponse(response: Response<true>): Response {
-  const { metadata, raw, signature } = response
+  const { id, metadata, raw, signature } = response
 
   const rawResponse: Record<string, ArrayBuffer> = {}
   for (const [key, value] of Object.entries(raw.response))
     rawResponse[key] = bytesToArrayBuffer(Base64.toBytes(value))
 
   return {
+    id,
     metadata,
     raw: {
       id: raw.id,
@@ -319,13 +328,6 @@ export declare namespace getSignPayload {
     | Errors.GlobalErrorType
 }
 
-/** Response from a WebAuthn authentication ceremony. */
-export type Response<serialized extends boolean = false> = {
-  metadata: Credential_.SignMetadata
-  raw: Types.PublicKeyCredential<serialized>
-  signature: serialized extends true ? Hex.Hex : Signature.Signature<false>
-}
-
 /**
  * Serializes credential request options into a JSON-serializable
  * format, converting `BufferSource` fields to base64url strings.
@@ -401,7 +403,7 @@ export declare namespace serializeOptions {
  * @returns The serialized authentication response.
  */
 export function serializeResponse(response: Response): Response<true> {
-  const { metadata, raw, signature } = response
+  const { id, metadata, raw, signature } = response
 
   const rawResponse = {} as Record<string, string>
   for (const key of responseKeys) {
@@ -414,6 +416,7 @@ export function serializeResponse(response: Response): Response<true> {
   }
 
   return {
+    id,
     metadata,
     raw: {
       id: raw.id,
@@ -492,6 +495,7 @@ export async function sign(options: sign.Options): Promise<sign.ReturnType> {
     )
 
     return {
+      id: credential.id,
       metadata: {
         authenticatorData: Hex.fromBytes(
           new Uint8Array(response.authenticatorData),
