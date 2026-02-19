@@ -28,7 +28,7 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'core,ercs',
+          name: 'core',
           globalSetup: process.env.TYPES
             ? [join(__dirname, './setup.global.types.ts')]
             : [join(__dirname, './setup.global.ts')],
@@ -37,6 +37,7 @@ export default defineConfig({
               ? ['src/**/*.snap-d.ts']
               : ['src/**/*.test.ts']),
             '!src/tempo/**',
+            '!src/**/*.browser.test.ts',
           ],
           setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
         },
