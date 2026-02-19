@@ -8,8 +8,8 @@ import * as Hex from '../core/Hex.js'
 import type { OneOf } from '../core/internal/types.js'
 import * as internal from '../core/internal/webauthn.js'
 import * as P256 from '../core/P256.js'
-import * as Signature from '../core/Signature.js'
 import * as PublicKey from '../core/PublicKey.js'
+import * as Signature from '../core/Signature.js'
 import type * as Credential_ from './Credential.js'
 import {
   base64UrlOptions,
@@ -61,7 +61,10 @@ export async function create(
     ),
     ...rest
   } = options
-  const creationOptions = getOptions(rest)
+  const creationOptions =
+    'publicKey' in rest
+      ? (rest as Types.CredentialCreationOptions)
+      : getOptions(rest as never)
   try {
     const credential = (await createFn(
       creationOptions as never,
@@ -87,19 +90,22 @@ export async function create(
 }
 
 export declare namespace create {
-  type Options = getOptions.Options & {
-    /**
-     * Credential creation function. Useful for environments that do not support
-     * the WebAuthn API natively (i.e. React Native or testing environments).
-     *
-     * @default window.navigator.credentials.create
-     */
-    createFn?:
-      | ((
-          options?: Types.CredentialCreationOptions | undefined,
-        ) => Promise<Types.Credential | null>)
-      | undefined
-  }
+  type Options = OneOf<
+    | (getOptions.Options & {
+        /**
+         * Credential creation function. Useful for environments that do not support
+         * the WebAuthn API natively (i.e. React Native or testing environments).
+         *
+         * @default window.navigator.credentials.create
+         */
+        createFn?:
+          | ((
+              options?: Types.CredentialCreationOptions | undefined,
+            ) => Promise<Types.Credential | null>)
+          | undefined
+      })
+    | Types.CredentialCreationOptions
+  >
 
   type ErrorType =
     | getOptions.ErrorType
