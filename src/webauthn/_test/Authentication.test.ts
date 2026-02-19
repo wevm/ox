@@ -890,7 +890,7 @@ describe('serializeResponse', () => {
 
     expect(serialized).toMatchInlineSnapshot(`
       {
-        "id": undefined,
+        "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
         "metadata": {
           "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
           "challengeIndex": 23,
@@ -948,7 +948,7 @@ describe('deserializeResponse', () => {
 
     expect(deserialized).toMatchInlineSnapshot(`
       {
-        "id": undefined,
+        "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
         "metadata": {
           "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
           "challengeIndex": 23,
