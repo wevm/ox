@@ -17,7 +17,7 @@ export type {}
  *
  * const dataSuffix2 = Attribution.toDataSuffix({
  *   codes: ['baseapp', 'morpho'],
- *   codeRegistryAddress: '0x...'
+ *   codeRegistry: { address: '0x0000000000000000000000000000000000000000', chainId: 1 },
  * })
  * ```
  *
@@ -30,7 +30,7 @@ export type {}
  * const attribution = Attribution.fromData('0x...')
  *
  * console.log(attribution)
- * // @log: { codes: ['baseapp', 'morpho'], codeRegistryAddress: '0x...' }
+ * // @log: { codes: ['baseapp', 'morpho'], codeRegistry: { address: '0x...', chainId: 1 } }
  * ```
  *
  * @category ERC-8021

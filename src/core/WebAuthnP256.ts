@@ -1,35 +1,15 @@
-import * as Base64 from './Base64.js'
-import * as Bytes from './Bytes.js'
-import * as Cbor from './Cbor.js'
-import * as CoseKey from './CoseKey.js'
-import * as Errors from './Errors.js'
-import * as Hash from './Hash.js'
-import * as Hex from './Hex.js'
-import type { Compute, OneOf } from './internal/types.js'
-import * as internal from './internal/webauthn.js'
-import * as P256 from './P256.js'
-import type * as PublicKey from './PublicKey.js'
-import type * as Signature from './Signature.js'
+import * as Authentication from '../webauthn/Authentication.js'
+import * as Authenticator from '../webauthn/Authenticator.js'
+import type * as Credential_ from '../webauthn/Credential.js'
+import * as Registration from '../webauthn/Registration.js'
 
 /** A WebAuthn-flavored P256 credential. */
-export type P256Credential = {
-  id: string
-  publicKey: PublicKey.PublicKey
-  raw: internal.PublicKeyCredential
-}
+export type P256Credential = Credential_.Credential
 
 /** Metadata for a WebAuthn P256 signature. */
-export type SignMetadata = Compute<{
-  authenticatorData: Hex.Hex
-  challengeIndex?: number | undefined
-  clientDataJSON: string
-  typeIndex?: number | undefined
-  userVerificationRequired?: boolean | undefined
-}>
+export type SignMetadata = Credential_.SignMetadata
 
-export const createChallenge = Uint8Array.from([
-  105, 171, 180, 181, 160, 222, 75, 198, 42, 42, 32, 31, 141, 37, 186, 233,
-])
+export const createChallenge = Registration.createChallenge
 
 /**
  * Creates a new WebAuthn P256 Credential, which can be stored and later used for signing.
@@ -57,53 +37,12 @@ export const createChallenge = Uint8Array.from([
 export async function createCredential(
   options: createCredential.Options,
 ): Promise<P256Credential> {
-  const {
-    createFn = window.navigator.credentials.create.bind(
-      window.navigator.credentials,
-    ),
-    ...rest
-  } = options
-  const creationOptions = getCredentialCreationOptions(rest)
-  try {
-    const credential = (await createFn(
-      creationOptions as never,
-    )) as internal.PublicKeyCredential
-    if (!credential) throw new CredentialCreationFailedError()
-
-    const response = credential.response as AuthenticatorAttestationResponse
-    const publicKey = await internal.parseCredentialPublicKey(response)
-
-    return {
-      id: credential.id,
-      publicKey,
-      raw: credential,
-    }
-  } catch (error) {
-    throw new CredentialCreationFailedError({
-      cause: error as Error,
-    })
-  }
+  return Registration.create(options)
 }
 
 export declare namespace createCredential {
-  type Options = getCredentialCreationOptions.Options & {
-    /**
-     * Credential creation function. Useful for environments that do not support
-     * the WebAuthn API natively (i.e. React Native or testing environments).
-     *
-     * @default window.navigator.credentials.create
-     */
-    createFn?:
-      | ((
-          options?: internal.CredentialCreationOptions | undefined,
-        ) => Promise<internal.Credential | null>)
-      | undefined
-  }
-
-  type ErrorType =
-    | getCredentialCreationOptions.ErrorType
-    | internal.parseCredentialPublicKey.ErrorType
-    | Errors.GlobalErrorType
+  type Options = Registration.create.Options
+  type ErrorType = Registration.create.ErrorType
 }
 
 /**
@@ -153,55 +92,12 @@ export declare namespace createCredential {
  * @param options - Options to construct the authenticator data.
  * @returns The authenticator data.
  */
-export function getAuthenticatorData(
-  options: getAuthenticatorData.Options = {},
-): Hex.Hex {
-  const {
-    credential,
-    flag = 5,
-    rpId = window.location.hostname,
-    signCount = 0,
-  } = options
-  const rpIdHash = Hash.sha256(Hex.fromString(rpId))
-  const flag_bytes = Hex.fromNumber(flag, { size: 1 })
-  const signCount_bytes = Hex.fromNumber(signCount, { size: 4 })
-  const base = Hex.concat(rpIdHash, flag_bytes, signCount_bytes)
-
-  if (!credential) return base
-
-  // AAGUID (16 bytes of zeros)
-  const aaguid = Hex.fromBytes(new Uint8Array(16))
-
-  // Credential ID
-  const credentialId = Hex.fromBytes(credential.id)
-  const credIdLen = Hex.fromNumber(credential.id.length, { size: 2 })
-
-  // COSE public key
-  const coseKey = CoseKey.fromPublicKey(credential.publicKey)
-
-  return Hex.concat(base, aaguid, credIdLen, credentialId, coseKey)
-}
+export const getAuthenticatorData = Authenticator.getAuthenticatorData
 
 export declare namespace getAuthenticatorData {
-  type Options = {
-    /** Attested credential data to include (credential ID + public key). When set, the AT flag (0x40) should also be set. */
-    credential?:
-      | {
-          /** The credential ID as raw bytes. */
-          id: Uint8Array
-          /** The P256 public key associated with the credential. */
-          publicKey: PublicKey.PublicKey
-        }
-      | undefined
-    /** A bitfield that indicates various attributes that were asserted by the authenticator. [Read more](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Authenticator_data#flags) */
-    flag?: number | undefined
-    /** The [Relying Party ID](https://w3c.github.io/webauthn/#relying-party-identifier) that the credential is scoped to. */
-    rpId?: internal.PublicKeyCredentialRequestOptions['rpId'] | undefined
-    /** A signature counter, if supported by the authenticator (set to 0 otherwise). */
-    signCount?: number | undefined
-  }
+  type Options = Authenticator.getAuthenticatorData.Options
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = Authenticator.getAuthenticatorData.ErrorType
 }
 
 /**
@@ -231,39 +127,12 @@ export declare namespace getAuthenticatorData {
  * @param options - Options to construct the client data.
  * @returns The client data.
  */
-export function getClientDataJSON(options: getClientDataJSON.Options): string {
-  const {
-    challenge,
-    crossOrigin = false,
-    extraClientData,
-    origin = window.location.origin,
-    type = 'webauthn.get',
-  } = options
-
-  return JSON.stringify({
-    type,
-    challenge: Base64.fromHex(challenge, { url: true, pad: false }),
-    origin,
-    crossOrigin,
-    ...extraClientData,
-  })
-}
+export const getClientDataJSON = Authenticator.getClientDataJSON
 
 export declare namespace getClientDataJSON {
-  type Options = {
-    /** The challenge to sign. */
-    challenge: Hex.Hex
-    /** If set to `true`, it means that the calling context is an `<iframe>` that is not same origin with its ancestor frames. */
-    crossOrigin?: boolean | undefined
-    /** Additional client data to include in the client data JSON. */
-    extraClientData?: Record<string, unknown> | undefined
-    /** The fully qualified origin of the relying party which has been given by the client/browser to the authenticator. */
-    origin?: string | undefined
-    /** The WebAuthn ceremony type. @default 'webauthn.get' */
-    type?: 'webauthn.create' | 'webauthn.get' | undefined
-  }
+  type Options = Authenticator.getClientDataJSON.Options
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = Authenticator.getClientDataJSON.ErrorType
 }
 
 /**
@@ -295,28 +164,12 @@ export declare namespace getClientDataJSON {
  * @param options - Options to construct the attestation object.
  * @returns The CBOR-encoded attestation object as a Hex string.
  */
-export function getAttestationObject(
-  options: getAttestationObject.Options,
-): Hex.Hex {
-  const { attStmt = {}, authData, fmt = 'none' } = options
-  return Cbor.encode({
-    fmt,
-    attStmt,
-    authData: Hex.toBytes(authData),
-  })
-}
+export const getAttestationObject = Authenticator.getAttestationObject
 
 export declare namespace getAttestationObject {
-  type Options = {
-    /** Attestation statement. */
-    attStmt?: Record<string, unknown> | undefined
-    /** Authenticator data as a Hex string (from {@link ox#WebAuthnP256.(getAuthenticatorData:function)}). */
-    authData: Hex.Hex
-    /** Attestation format. @default 'none' */
-    fmt?: string | undefined
-  }
+  type Options = Authenticator.getAttestationObject.Options
 
-  type ErrorType = Cbor.encode.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Authenticator.getAttestationObject.ErrorType
 }
 
 /**
@@ -335,128 +188,12 @@ export declare namespace getAttestationObject {
  * @param options - Options.
  * @returns The credential creation options.
  */
-export function getCredentialCreationOptions(
-  options: getCredentialCreationOptions.Options,
-): internal.CredentialCreationOptions {
-  const {
-    attestation = 'none',
-    authenticatorSelection = {
-      residentKey: 'preferred',
-      requireResidentKey: false,
-      userVerification: 'required',
-    },
-    challenge = createChallenge,
-    excludeCredentialIds,
-    extensions,
-    name: name_,
-    rp = {
-      id: window.location.hostname,
-      name: window.document.title,
-    },
-    user,
-  } = options
-  const name = (user?.name ?? name_)!
-  return {
-    publicKey: {
-      attestation,
-      authenticatorSelection,
-      challenge:
-        typeof challenge === 'string' ? Bytes.fromHex(challenge) : challenge,
-      ...(excludeCredentialIds
-        ? {
-            excludeCredentials: excludeCredentialIds?.map((id) => ({
-              id: Base64.toBytes(id),
-              type: 'public-key',
-            })),
-          }
-        : {}),
-      pubKeyCredParams: [
-        {
-          type: 'public-key',
-          alg: -7, // p256
-        },
-      ],
-      ...(extensions && { extensions }),
-      rp,
-      user: {
-        id: user?.id ?? Hash.keccak256(Bytes.fromString(name), { as: 'Bytes' }),
-        name,
-        displayName: user?.displayName ?? name,
-      },
-    },
-  }
-}
+export const getCredentialCreationOptions = Registration.getOptions
 
 export declare namespace getCredentialCreationOptions {
-  type Options = {
-    /**
-     * A string specifying the relying party's preference for how the attestation statement
-     * (i.e., provision of verifiable evidence of the authenticity of the authenticator and its data)
-     * is conveyed during credential creation.
-     */
-    attestation?:
-      | internal.PublicKeyCredentialCreationOptions['attestation']
-      | undefined
-    /**
-     * An object whose properties are criteria used to filter out the potential authenticators
-     * for the credential creation operation.
-     */
-    authenticatorSelection?:
-      | internal.PublicKeyCredentialCreationOptions['authenticatorSelection']
-      | undefined
-    /**
-     * An `ArrayBuffer`, `TypedArray`, or `DataView` used as a cryptographic challenge.
-     */
-    challenge?:
-      | Hex.Hex
-      | internal.PublicKeyCredentialCreationOptions['challenge']
-      | undefined
-    /**
-     * List of credential IDs to exclude from the creation. This property can be used
-     * to prevent creation of a credential if it already exists.
-     */
-    excludeCredentialIds?: readonly string[] | undefined
-    /**
-     * List of Web Authentication API credentials to use during creation or authentication.
-     */
-    extensions?:
-      | internal.PublicKeyCredentialCreationOptions['extensions']
-      | undefined
-    /**
-     * An object describing the relying party that requested the credential creation
-     */
-    rp?:
-      | {
-          id: string
-          name: string
-        }
-      | undefined
-    /**
-     * A numerical hint, in milliseconds, which indicates the time the calling web app is willing to wait for the creation operation to complete.
-     */
-    timeout?: internal.PublicKeyCredentialCreationOptions['timeout'] | undefined
-  } & OneOf<
-    | {
-        /** Name for the credential (user.name). */
-        name: string
-      }
-    | {
-        /**
-         * An object describing the user account for which the credential is generated.
-         */
-        user: {
-          displayName?: string
-          id?: BufferSource
-          name: string
-        }
-      }
-  >
+  type Options = Registration.getOptions.Options
 
-  type ErrorType =
-    | Base64.toBytes.ErrorType
-    | Hash.keccak256.ErrorType
-    | Bytes.fromString.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Registration.getOptions.ErrorType
 }
 
 /**
@@ -476,63 +213,11 @@ export declare namespace getCredentialCreationOptions {
  * @param options - Options.
  * @returns The credential request options.
  */
-export function getCredentialRequestOptions(
-  options: getCredentialRequestOptions.Options,
-): internal.CredentialRequestOptions {
-  const {
-    credentialId,
-    challenge,
-    extensions,
-    rpId = window.location.hostname,
-    userVerification = 'required',
-  } = options
-  return {
-    publicKey: {
-      ...(credentialId
-        ? {
-            allowCredentials: Array.isArray(credentialId)
-              ? credentialId.map((id) => ({
-                  id: Base64.toBytes(id),
-                  type: 'public-key',
-                }))
-              : [
-                  {
-                    id: Base64.toBytes(credentialId),
-                    type: 'public-key',
-                  },
-                ],
-          }
-        : {}),
-      challenge: Bytes.fromHex(challenge),
-      ...(extensions && { extensions }),
-      rpId,
-      userVerification,
-    },
-  }
-}
+export const getCredentialRequestOptions = Authentication.getOptions
 
 export declare namespace getCredentialRequestOptions {
-  type Options = {
-    /** The credential ID to use. */
-    credentialId?: string | string[] | undefined
-    /** The challenge to sign. */
-    challenge: Hex.Hex
-    /** List of Web Authentication API credentials to use during creation or authentication. */
-    extensions?:
-      | internal.PublicKeyCredentialRequestOptions['extensions']
-      | undefined
-    /** The relying party identifier to use. */
-    rpId?: internal.PublicKeyCredentialRequestOptions['rpId'] | undefined
-    /** The user verification requirement. */
-    userVerification?:
-      | internal.PublicKeyCredentialRequestOptions['userVerification']
-      | undefined
-  }
-
-  type ErrorType =
-    | Bytes.fromHex.ErrorType
-    | Base64.toBytes.ErrorType
-    | Errors.GlobalErrorType
+  type Options = Authentication.getOptions.Options
+  type ErrorType = Authentication.getOptions.ErrorType
 }
 
 /**
@@ -578,85 +263,14 @@ export declare namespace getCredentialRequestOptions {
  * @param options - Options to construct the signing payload.
  * @returns The signing payload.
  */
-export function getSignPayload(
-  options: getSignPayload.Options,
-): getSignPayload.ReturnType {
-  const {
-    challenge,
-    crossOrigin,
-    extraClientData,
-    flag,
-    origin,
-    rpId,
-    signCount,
-    userVerification = 'required',
-  } = options
-
-  const authenticatorData = getAuthenticatorData({
-    flag,
-    rpId,
-    signCount,
-  })
-  const clientDataJSON = getClientDataJSON({
-    challenge,
-    crossOrigin,
-    extraClientData,
-    origin,
-  })
-  const clientDataJSONHash = Hash.sha256(Hex.fromString(clientDataJSON))
-
-  const challengeIndex = clientDataJSON.indexOf('"challenge"')
-  const typeIndex = clientDataJSON.indexOf('"type"')
-
-  const metadata = {
-    authenticatorData,
-    clientDataJSON,
-    challengeIndex,
-    typeIndex,
-    userVerificationRequired: userVerification === 'required',
-  }
-
-  const payload = Hex.concat(authenticatorData, clientDataJSONHash)
-
-  return { metadata, payload }
-}
+export const getSignPayload = Authentication.getSignPayload
 
 export declare namespace getSignPayload {
-  type Options = {
-    /** The challenge to sign. */
-    challenge: Hex.Hex
-    /** If set to `true`, it means that the calling context is an `<iframe>` that is not same origin with its ancestor frames. */
-    crossOrigin?: boolean | undefined
-    /** Additional client data to include in the client data JSON. */
-    extraClientData?: Record<string, unknown> | undefined
-    /** If set to `true`, the payload will be hashed before being returned. */
-    hash?: boolean | undefined
-    /** A bitfield that indicates various attributes that were asserted by the authenticator. [Read more](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Authenticator_data#flags) */
-    flag?: number | undefined
-    /** The fully qualified origin of the relying party which has been given by the client/browser to the authenticator. */
-    origin?: string | undefined
-    /** The [Relying Party ID](https://w3c.github.io/webauthn/#relying-party-identifier) that the credential is scoped to. */
-    rpId?: internal.PublicKeyCredentialRequestOptions['rpId'] | undefined
-    /** A signature counter, if supported by the authenticator (set to 0 otherwise). */
-    signCount?: number | undefined
-    /** The user verification requirement that the authenticator will enforce. */
-    userVerification?:
-      | internal.PublicKeyCredentialRequestOptions['userVerification']
-      | undefined
-  }
+  type Options = Authentication.getSignPayload.Options
 
-  type ReturnType = {
-    metadata: SignMetadata
-    payload: Hex.Hex
-  }
+  type ReturnType = Authentication.getSignPayload.ReturnType
 
-  type ErrorType =
-    | Hash.sha256.ErrorType
-    | Hex.concat.ErrorType
-    | Hex.fromString.ErrorType
-    | getAuthenticatorData.ErrorType
-    | getClientDataJSON.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Authentication.getSignPayload.ErrorType
 }
 
 /**
@@ -692,74 +306,15 @@ export declare namespace getSignPayload {
  * @returns The signature.
  */
 export async function sign(options: sign.Options): Promise<sign.ReturnType> {
-  const {
-    getFn = window.navigator.credentials.get.bind(window.navigator.credentials),
-    ...rest
-  } = options
-  const requestOptions = getCredentialRequestOptions(rest)
-  try {
-    const credential = (await getFn(
-      requestOptions as never,
-    )) as internal.PublicKeyCredential
-    if (!credential) throw new CredentialRequestFailedError()
-    const response = credential.response as AuthenticatorAssertionResponse
-
-    const clientDataJSON = String.fromCharCode(
-      ...new Uint8Array(response.clientDataJSON),
-    )
-    const challengeIndex = clientDataJSON.indexOf('"challenge"')
-    const typeIndex = clientDataJSON.indexOf('"type"')
-
-    const signature = internal.parseAsn1Signature(
-      new Uint8Array(response.signature),
-    )
-
-    return {
-      metadata: {
-        authenticatorData: Hex.fromBytes(
-          new Uint8Array(response.authenticatorData),
-        ),
-        clientDataJSON,
-        challengeIndex,
-        typeIndex,
-        userVerificationRequired:
-          requestOptions.publicKey!.userVerification === 'required',
-      },
-      signature,
-      raw: credential,
-    }
-  } catch (error) {
-    throw new CredentialRequestFailedError({
-      cause: error as Error,
-    })
-  }
+  return Authentication.sign(options)
 }
 
 export declare namespace sign {
-  type Options = getCredentialRequestOptions.Options & {
-    /**
-     * Credential request function. Useful for environments that do not support
-     * the WebAuthn API natively (i.e. React Native or testing environments).
-     *
-     * @default window.navigator.credentials.get
-     */
-    getFn?:
-      | ((
-          options?: internal.CredentialRequestOptions | undefined,
-        ) => Promise<internal.Credential | null>)
-      | undefined
-  }
+  type Options = Authentication.sign.Options
 
-  type ReturnType = {
-    metadata: SignMetadata
-    raw: internal.PublicKeyCredential
-    signature: Signature.Signature<false>
-  }
+  type ReturnType = Authentication.sign.ReturnType
 
-  type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | getCredentialRequestOptions.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Authentication.sign.ErrorType
 }
 
 /**
@@ -791,113 +346,13 @@ export declare namespace sign {
  * @returns Whether the signature is valid.
  */
 export function verify(options: verify.Options): boolean {
-  const { challenge, hash = true, metadata, publicKey, signature } = options
-  const {
-    authenticatorData,
-    challengeIndex,
-    clientDataJSON,
-    typeIndex,
-    userVerificationRequired,
-  } = metadata
-
-  const authenticatorDataBytes = Bytes.fromHex(authenticatorData)
-
-  // Check length of `authenticatorData`.
-  if (authenticatorDataBytes.length < 37) return false
-
-  const flag = authenticatorDataBytes[32]!
-
-  // Verify that the UP bit of the flags in authData is set.
-  if ((flag & 0x01) !== 0x01) return false
-
-  // If user verification was determined to be required, verify that
-  // the UV bit of the flags in authData is set. Otherwise, ignore the
-  // value of the UV flag.
-  if (userVerificationRequired && (flag & 0x04) !== 0x04) return false
-
-  // If the BE bit of the flags in authData is not set, verify that
-  // the BS bit is not set.
-  if ((flag & 0x08) !== 0x08 && (flag & 0x10) === 0x10) return false
-
-  // Check that response is for an authentication assertion (if typeIndex is provided)
-  if (typeIndex !== undefined) {
-    const type = '"type":"webauthn.get"'
-    if (
-      type !==
-      clientDataJSON.slice(Number(typeIndex), Number(typeIndex) + type.length)
-    )
-      return false
-  }
-
-  // Extract and validate the challenge from clientDataJSON
-  const challengeMatch =
-    challengeIndex !== undefined
-      ? clientDataJSON
-          .slice(Number(challengeIndex))
-          .match(/^"challenge":"(.*?)"/)
-      : clientDataJSON.match(/"challenge":"(.*?)"/)
-  if (!challengeMatch) return false
-
-  // Validate the challenge in the clientDataJSON.
-  const [_, challenge_extracted] = challengeMatch
-  if (Hex.fromBytes(Base64.toBytes(challenge_extracted!)) !== challenge)
-    return false
-
-  const clientDataJSONHash = Hash.sha256(Bytes.fromString(clientDataJSON), {
-    as: 'Bytes',
-  })
-  const payload = Bytes.concat(authenticatorDataBytes, clientDataJSONHash)
-
-  return P256.verify({
-    hash,
-    payload,
-    publicKey,
-    signature,
-  })
+  return Authentication.verify(options)
 }
 
 export declare namespace verify {
-  type Options = {
-    /** The challenge to verify. */
-    challenge: Hex.Hex
-    /** If set to `true`, the payload will be hashed (sha256) before being verified. */
-    hash?: boolean | undefined
-    /** The public key to verify the signature with. */
-    publicKey: PublicKey.PublicKey
-    /** The signature to verify. */
-    signature: Signature.Signature<false>
-    /** The metadata to verify the signature with. */
-    metadata: SignMetadata
-  }
+  type Options = Authentication.verify.Options
 
-  type ErrorType =
-    | Base64.toBytes.ErrorType
-    | Bytes.concat.ErrorType
-    | Bytes.fromHex.ErrorType
-    | P256.verify.ErrorType
-    | Errors.GlobalErrorType
-}
-
-/** Thrown when a WebAuthn P256 credential creation fails. */
-export class CredentialCreationFailedError extends Errors.BaseError<Error> {
-  override readonly name = 'WebAuthnP256.CredentialCreationFailedError'
-
-  constructor({ cause }: { cause?: Error | undefined } = {}) {
-    super('Failed to create credential.', {
-      cause,
-    })
-  }
-}
-
-/** Thrown when a WebAuthn P256 credential request fails. */
-export class CredentialRequestFailedError extends Errors.BaseError<Error> {
-  override readonly name = 'WebAuthnP256.CredentialRequestFailedError'
-
-  constructor({ cause }: { cause?: Error | undefined } = {}) {
-    super('Failed to request credential.', {
-      cause,
-    })
-  }
+  type ErrorType = Authentication.verify.ErrorType
 }
 
 // Export types required for inference.
@@ -926,4 +381,4 @@ export type {
   PublicKeyCredentialUserEntity,
   ResidentKeyRequirement,
   UserVerificationRequirement,
-} from './internal/webauthn.js'
+} from '../webauthn/Types.js'

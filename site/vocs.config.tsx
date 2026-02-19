@@ -83,6 +83,10 @@ export default defineConfig({
             link: '/api',
           },
           {
+            text: 'WebAuthn',
+            link: '/webauthn',
+          },
+          {
             text: 'ERCs',
             link: '/ercs',
           },

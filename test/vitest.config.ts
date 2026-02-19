@@ -1,4 +1,5 @@
 import { basename, dirname, join } from 'node:path'
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -27,7 +28,7 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'core,ercs',
+          name: 'core',
           globalSetup: process.env.TYPES
             ? [join(__dirname, './setup.global.types.ts')]
             : [join(__dirname, './setup.global.ts')],
@@ -36,6 +37,7 @@ export default defineConfig({
               ? ['src/**/*.snap-d.ts']
               : ['src/**/*.test.ts']),
             '!src/tempo/**',
+            '!src/**/*.browser.test.ts',
           ],
           setupFiles: process.env.TYPES ? [] : [join(__dirname, './setup.ts')],
         },
@@ -47,6 +49,21 @@ export default defineConfig({
           include: ['src/tempo/**/*.test.ts'],
           setupFiles: [join(__dirname, './tempo/setup.ts')],
           globalSetup: [join(__dirname, './tempo/setup.global.ts')],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'browser',
+          include: ['src/**/*.browser.test.ts'],
+          setupFiles: [join(__dirname, './setup.browser.ts')],
+          browser: {
+            enabled: true,
+            provider: playwright() as never,
+            headless: true,
+            instances: [{ browser: 'chromium' }],
+            screenshotFailures: false,
+          },
         },
       },
     ],

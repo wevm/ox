@@ -146,7 +146,7 @@ export function createResolveDeclarationReference(
     const item = result.resolvedApiItem
     if (item) {
       const url = getLinkForApiItem(item)
-      const namespaceName = item.parent?.displayName
+      const namespaceName = item.parent?.displayName.replace(/_\d+$/, '')
       const text = namespaceName
         ? `${namespaceName}.${item.displayName}`
         : item.displayName
@@ -184,11 +184,12 @@ function getLinkForApiItem(item: model.ApiItem) {
   const parent = item.parent
   if (!parent) throw new Error('Parent not found')
 
+  const parentName = parent.displayName.replace(/_\d+$/, '')
   const { entrypointCategory, category } =
-    namespaceDocComments[parent.displayName] || {}
+    namespaceDocComments[parentName] || {}
   const basePath = getPath({ category, entrypointCategory })
 
-  const baseLink = `${basePath === '/' ? '/api' : basePath}/${parent.displayName}`
+  const baseLink = `${basePath === '/' ? '/api' : basePath}/${parentName}`
   if (item.kind === model.ApiItemKind.Namespace) return baseLink
   if (item.kind === model.ApiItemKind.Function)
     return `${baseLink}/${item.displayName}`
@@ -762,5 +763,5 @@ export function getId(item: model.ApiItem) {
 }
 
 function formatType(type: string) {
-  return type.replaceAll('_', '.')
+  return type.replace(/_\d+$/, '').replaceAll('_', '.')
 }

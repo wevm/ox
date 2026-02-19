@@ -16,7 +16,7 @@ type KeyType = 'secp256k1' | 'p256' | 'webAuthn'
  * Extends the [Execution API specification](https://github.com/ethereum/execution-apis/blob/4aca1d7a3e5aab24c8f6437131289ad386944eaa/src/schemas/transaction.yaml#L358-L423)
  * with Tempo-specific fields for batched calls, fee tokens, access keys, and scheduled execution.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * @see {@link https://docs.tempo.xyz/protocol/transactions}
  */
 export type TransactionRequest<
   bigintType = bigint,
@@ -54,7 +54,7 @@ export type Rpc = Omit<
 /**
  * Converts a {@link ox#TransactionRequest.TransactionRequest} to a {@link ox#TransactionRequest.Rpc}.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * @see {@link https://docs.tempo.xyz/protocol/transactions}
  *
  * @example
  * ```ts twoslash

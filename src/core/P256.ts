@@ -336,7 +336,7 @@ export function verify(options: verify.Options): boolean {
     signature,
     payload instanceof Uint8Array ? payload : Bytes.fromHex(payload),
     PublicKey.toHex(publicKey).substring(2),
-    ...(hash ? [{ prehash: true, lowS: true }] : []),
+    { lowS: true, ...(hash ? { prehash: true } : {}) },
   )
 }
 

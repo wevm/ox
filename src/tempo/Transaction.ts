@@ -13,7 +13,7 @@ import type { Call } from './TxEnvelopeTempo.js'
 /**
  * A Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml).
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions Tempo Transactions}
+ * @see {@link https://docs.tempo.xyz/protocol/transactions}
  */
 export type Transaction<
   pending extends boolean = false,
@@ -39,7 +39,7 @@ export type Rpc<pending extends boolean = false> = UnionCompute<
  * Features configurable fee tokens, call batching, fee sponsorship, access keys,
  * parallelizable nonces, and scheduled execution via `validAfter`/`validBefore`.
  *
- * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction Tempo Transaction Specification}
+ * @see {@link https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction}
  */
 export type Tempo<
   pending extends boolean = false,

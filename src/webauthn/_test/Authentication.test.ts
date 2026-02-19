@@ -1,5 +1,9 @@
-import { P256, PublicKey, Signature, WebAuthnP256, WebCryptoP256 } from 'ox'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import * as P256 from '../../core/P256.js'
+import * as PublicKey from '../../core/PublicKey.js'
+import * as Signature from '../../core/Signature.js'
+import * as WebCryptoP256 from '../../core/WebCryptoP256.js'
+import { Authentication } from '../index.js'
 
 beforeAll(() => {
   vi.stubGlobal('window', {
@@ -11,586 +15,14 @@ beforeAll(() => {
     },
   })
 })
-
 afterAll(() => {
   vi.restoreAllMocks()
 })
 
-describe('createCredential', () => {
-  test('default', async () => {
-    let options: CredentialCreationOptions | undefined
-
-    const credential = await WebAuthnP256.createCredential({
-      createFn(options_) {
-        options = options_
-        return Promise.resolve({
-          id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
-          response: {
-            getPublicKey() {
-              return [
-                48, 89, 48, 19, 6, 7, 42, 134, 72, 206, 61, 2, 1, 6, 8, 42, 134,
-                72, 206, 61, 3, 1, 7, 3, 66, 0, 4, 171, 137, 20, 0, 20, 15, 196,
-                248, 233, 65, 206, 15, 249, 14, 65, 157, 233, 71, 10, 202, 202,
-                97, 59, 189, 113, 122, 71, 117, 67, 80, 49, 167, 216, 132, 49,
-                142, 145, 159, 211, 179, 229, 166, 49, 216, 102, 216, 163, 128,
-                180, 64, 99, 231, 15, 12, 56, 30, 225, 110, 6, 82, 247, 249,
-                117, 84,
-              ]
-            },
-          },
-        } as any)
-      },
-      name: 'Foo',
-    })
-
-    expect(credential).toMatchInlineSnapshot(`
-      {
-        "attestationObject": undefined,
-        "clientDataJSON": undefined,
-        "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
-        "publicKey": {
-          "prefix": 4,
-          "x": 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
-          "y": 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
-        },
-        "raw": {
-          "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
-          "response": {
-            "getPublicKey": [Function],
-          },
-        },
-      }
-    `)
-    expect(options).toMatchInlineSnapshot(`
-      {
-        "publicKey": {
-          "attestation": "none",
-          "authenticatorSelection": {
-            "requireResidentKey": false,
-            "residentKey": "preferred",
-            "userVerification": "required",
-          },
-          "challenge": Uint8Array [
-            105,
-            171,
-            180,
-            181,
-            160,
-            222,
-            75,
-            198,
-            42,
-            42,
-            32,
-            31,
-            141,
-            37,
-            186,
-            233,
-          ],
-          "pubKeyCredParams": [
-            {
-              "alg": -7,
-              "type": "public-key",
-            },
-          ],
-          "rp": {
-            "id": "https://example.com",
-            "name": "My Website",
-          },
-          "user": {
-            "displayName": "Foo",
-            "id": Uint8Array [
-              182,
-              8,
-              199,
-              66,
-              131,
-              243,
-              52,
-              225,
-              240,
-              71,
-              219,
-              191,
-              29,
-              170,
-              36,
-              7,
-              212,
-              29,
-              70,
-              137,
-              172,
-              166,
-              124,
-              66,
-              39,
-              150,
-              249,
-              54,
-              172,
-              206,
-              22,
-              183,
-            ],
-            "name": "Foo",
-          },
-        },
-      }
-    `)
-  })
-
-  test('error: null credential', async () => {
-    await expect(() =>
-      WebAuthnP256.createCredential({
-        createFn() {
-          return Promise.resolve(null)
-        },
-        name: 'Foo',
-      }),
-    ).rejects.toMatchInlineSnapshot(`
-      [Registration.CreateFailedError: Failed to create credential.
-
-      Details: Failed to create credential.]
-    `)
-  })
-
-  test('error: thrown', async () => {
-    await expect(() =>
-      WebAuthnP256.createCredential({
-        createFn() {
-          return Promise.reject(new Error('foo'))
-        },
-        name: 'Foo',
-      }),
-    ).rejects.toMatchInlineSnapshot(`
-      [Registration.CreateFailedError: Failed to create credential.
-
-      Details: foo]
-    `)
-  })
-
-  test('behavior: firefox workaround', async () => {
-    const credential = await WebAuthnP256.createCredential({
-      createFn(_options) {
-        return Promise.resolve({
-          id: 'DxRcX5C6BRQ-q-CO7XEFwrnmKlk',
-          response: {
-            attestationObject: new Uint8Array([
-              163, 99, 102, 109, 116, 100, 110, 111, 110, 101, 103, 97, 116,
-              116, 83, 116, 109, 116, 160, 104, 97, 117, 116, 104, 68, 97, 116,
-              97, 88, 152, 73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15,
-              100, 118, 96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153, 92,
-              243, 186, 131, 29, 151, 99, 93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 15, 20, 92, 95, 144, 186, 5, 20,
-              62, 171, 224, 142, 237, 113, 5, 194, 185, 230, 42, 89, 165, 1, 2,
-              3, 38, 32, 1, 33, 88, 32, 98, 163, 23, 104, 212, 79, 94, 255, 34,
-              47, 141, 112, 196, 203, 97, 171, 210, 132, 11, 39, 214, 23, 167,
-              254, 141, 17, 183, 45, 213, 232, 111, 193, 34, 88, 32, 102, 17,
-              186, 227, 241, 226, 205, 56, 228, 5, 21, 55, 118, 167, 220, 182,
-              153, 91, 130, 84, 161, 65, 110, 173, 16, 42, 9, 108, 176, 216, 6,
-              24,
-            ]),
-            getPublicKey() {
-              throw new Error('Permission denied to access object')
-            },
-          },
-        } as any)
-      },
-      name: 'Example',
-    })
-
-    const publicKey = credential.publicKey
-    expect(publicKey).toMatchInlineSnapshot(`
-      {
-        "prefix": 4,
-        "x": 44614816799078269475358047303051634413161263247311473071495733982312972971969n,
-        "y": 46167236825796363714760407637183215339795593866991122305568923653847108814360n,
-      }
-    `)
-
-    expect(
-      WebAuthnP256.verify({
-        metadata: {
-          authenticatorData:
-            '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631d00000000',
-          clientDataJSON:
-            '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173"}',
-          challengeIndex: 23,
-          typeIndex: 1,
-          userVerificationRequired: true,
-        },
-        challenge:
-          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
-        publicKey,
-        signature: {
-          r: 113791849669138837781667788757552147501372344687388971338283671717487200515057n,
-          s: 5390836038580862917709632535460377625750500964730124261384576347991859205326n,
-        },
-      }),
-    ).toBeTruthy()
-  })
-})
-
-describe('getAuthenticatorData', () => {
-  test('default', () => {
-    const authenticatorData = WebAuthnP256.getAuthenticatorData({
-      rpId: 'example.com',
-    })
-    expect(authenticatorData).toMatchInlineSnapshot(
-      `"0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce19470500000000"`,
-    )
-  })
-
-  test('options: signCount', () => {
-    const authenticatorData = WebAuthnP256.getAuthenticatorData({
-      rpId: 'example.com',
-      signCount: 420,
-    })
-    expect(authenticatorData).toMatchInlineSnapshot(
-      `"0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce194705000001a4"`,
-    )
-  })
-
-  test('options: flag', () => {
-    const authenticatorData = WebAuthnP256.getAuthenticatorData({
-      rpId: 'example.com',
-      flag: 1,
-      signCount: 420,
-    })
-    expect(authenticatorData).toMatchInlineSnapshot(
-      `"0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce194701000001a4"`,
-    )
-  })
-})
-
-describe('getClientDataJSON', () => {
-  test('default', () => {
-    const clientDataJSON = WebAuthnP256.getClientDataJSON({
-      challenge: '0xdeadbeef',
-      origin: 'https://example.com',
-    })
-    expect(clientDataJSON).toMatchInlineSnapshot(
-      `"{"type":"webauthn.get","challenge":"3q2-7w","origin":"https://example.com","crossOrigin":false}"`,
-    )
-  })
-
-  test('options: crossOrigin', () => {
-    const clientDataJSON = WebAuthnP256.getClientDataJSON({
-      challenge: '0xdeadbeef',
-      origin: 'https://example.com',
-      crossOrigin: true,
-    })
-    expect(clientDataJSON).toMatchInlineSnapshot(
-      `"{"type":"webauthn.get","challenge":"3q2-7w","origin":"https://example.com","crossOrigin":true}"`,
-    )
-  })
-})
-
-describe('getCredentialCreationOptions', () => {
+describe('getOptions', () => {
   test('default', () => {
     expect(
-      WebAuthnP256.getCredentialCreationOptions({
-        name: 'Foo',
-      }),
-    ).toMatchInlineSnapshot(`
-      {
-        "publicKey": {
-          "attestation": "none",
-          "authenticatorSelection": {
-            "requireResidentKey": false,
-            "residentKey": "preferred",
-            "userVerification": "required",
-          },
-          "challenge": Uint8Array [
-            105,
-            171,
-            180,
-            181,
-            160,
-            222,
-            75,
-            198,
-            42,
-            42,
-            32,
-            31,
-            141,
-            37,
-            186,
-            233,
-          ],
-          "pubKeyCredParams": [
-            {
-              "alg": -7,
-              "type": "public-key",
-            },
-          ],
-          "rp": {
-            "id": "https://example.com",
-            "name": "My Website",
-          },
-          "user": {
-            "displayName": "Foo",
-            "id": Uint8Array [
-              182,
-              8,
-              199,
-              66,
-              131,
-              243,
-              52,
-              225,
-              240,
-              71,
-              219,
-              191,
-              29,
-              170,
-              36,
-              7,
-              212,
-              29,
-              70,
-              137,
-              172,
-              166,
-              124,
-              66,
-              39,
-              150,
-              249,
-              54,
-              172,
-              206,
-              22,
-              183,
-            ],
-            "name": "Foo",
-          },
-        },
-      }
-    `)
-  })
-
-  test('args: excludeCredentialIds', () => {
-    expect(
-      WebAuthnP256.getCredentialCreationOptions({
-        excludeCredentialIds: ['pzpQZRhXUkboj-b_srH0X42XJS7Ai2ZXd6-9lnFULig'],
-        name: 'Foo',
-      }),
-    ).toMatchInlineSnapshot(`
-      {
-        "publicKey": {
-          "attestation": "none",
-          "authenticatorSelection": {
-            "requireResidentKey": false,
-            "residentKey": "preferred",
-            "userVerification": "required",
-          },
-          "challenge": Uint8Array [
-            105,
-            171,
-            180,
-            181,
-            160,
-            222,
-            75,
-            198,
-            42,
-            42,
-            32,
-            31,
-            141,
-            37,
-            186,
-            233,
-          ],
-          "excludeCredentials": [
-            {
-              "id": Uint8Array [
-                167,
-                58,
-                80,
-                101,
-                24,
-                87,
-                82,
-                70,
-                232,
-                143,
-                230,
-                255,
-                178,
-                177,
-                244,
-                95,
-                141,
-                151,
-                37,
-                46,
-                192,
-                139,
-                102,
-                87,
-                119,
-                175,
-                189,
-                150,
-                113,
-                84,
-                46,
-                40,
-              ],
-              "type": "public-key",
-            },
-          ],
-          "pubKeyCredParams": [
-            {
-              "alg": -7,
-              "type": "public-key",
-            },
-          ],
-          "rp": {
-            "id": "https://example.com",
-            "name": "My Website",
-          },
-          "user": {
-            "displayName": "Foo",
-            "id": Uint8Array [
-              182,
-              8,
-              199,
-              66,
-              131,
-              243,
-              52,
-              225,
-              240,
-              71,
-              219,
-              191,
-              29,
-              170,
-              36,
-              7,
-              212,
-              29,
-              70,
-              137,
-              172,
-              166,
-              124,
-              66,
-              39,
-              150,
-              249,
-              54,
-              172,
-              206,
-              22,
-              183,
-            ],
-            "name": "Foo",
-          },
-        },
-      }
-    `)
-  })
-
-  test('args: user', () => {
-    expect(
-      WebAuthnP256.getCredentialCreationOptions({
-        user: {
-          name: 'Foo',
-        },
-      }),
-    ).toMatchInlineSnapshot(`
-      {
-        "publicKey": {
-          "attestation": "none",
-          "authenticatorSelection": {
-            "requireResidentKey": false,
-            "residentKey": "preferred",
-            "userVerification": "required",
-          },
-          "challenge": Uint8Array [
-            105,
-            171,
-            180,
-            181,
-            160,
-            222,
-            75,
-            198,
-            42,
-            42,
-            32,
-            31,
-            141,
-            37,
-            186,
-            233,
-          ],
-          "pubKeyCredParams": [
-            {
-              "alg": -7,
-              "type": "public-key",
-            },
-          ],
-          "rp": {
-            "id": "https://example.com",
-            "name": "My Website",
-          },
-          "user": {
-            "displayName": "Foo",
-            "id": Uint8Array [
-              182,
-              8,
-              199,
-              66,
-              131,
-              243,
-              52,
-              225,
-              240,
-              71,
-              219,
-              191,
-              29,
-              170,
-              36,
-              7,
-              212,
-              29,
-              70,
-              137,
-              172,
-              166,
-              124,
-              66,
-              39,
-              150,
-              249,
-              54,
-              172,
-              206,
-              22,
-              183,
-            ],
-            "name": "Foo",
-          },
-        },
-      }
-    `)
-  })
-})
-
-describe('getCredentialRequestOptions', () => {
-  test('default', () => {
-    expect(
-      WebAuthnP256.getCredentialRequestOptions({
+      Authentication.getOptions({
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         rpId: 'foo',
@@ -641,7 +73,7 @@ describe('getCredentialRequestOptions', () => {
 
   test('options: credentialId', () => {
     expect(
-      WebAuthnP256.getCredentialRequestOptions({
+      Authentication.getOptions({
         credentialId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -731,9 +163,111 @@ describe('getCredentialRequestOptions', () => {
   })
 })
 
+describe('serializeOptions', () => {
+  test('default', () => {
+    const options = Authentication.getOptions({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      rpId: 'foo',
+    })
+    const serialized = Authentication.serializeOptions(options)
+
+    expect(typeof serialized.publicKey!.challenge).toBe('string')
+    expect(serialized).toMatchInlineSnapshot(`
+      {
+        "publicKey": {
+          "challenge": "0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf",
+          "rpId": "foo",
+          "userVerification": "required",
+        },
+      }
+    `)
+    expect(() => JSON.stringify(serialized)).not.toThrow()
+  })
+
+  test('with allowCredentials', () => {
+    const options = Authentication.getOptions({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      credentialId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+      rpId: 'foo',
+    })
+    const serialized = Authentication.serializeOptions(options)
+
+    expect(typeof serialized.publicKey!.allowCredentials![0]!.id).toBe('string')
+    expect(() => JSON.stringify(serialized)).not.toThrow()
+  })
+
+  test('empty publicKey', () => {
+    const serialized = Authentication.serializeOptions({})
+    expect(serialized).toEqual({})
+  })
+})
+
+describe('deserializeOptions', () => {
+  test('default', () => {
+    const options = Authentication.getOptions({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      rpId: 'foo',
+    })
+    const serialized = Authentication.serializeOptions(options)
+    const deserialized = Authentication.deserializeOptions(serialized)
+
+    expect(deserialized.publicKey!.challenge).toBeInstanceOf(Uint8Array)
+    expect(deserialized.publicKey!.challenge).toEqual(
+      options.publicKey!.challenge,
+    )
+    expect(deserialized.publicKey!.rpId).toBe(options.publicKey!.rpId)
+  })
+
+  test('with allowCredentials', () => {
+    const options = Authentication.getOptions({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      credentialId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+      rpId: 'foo',
+    })
+    const serialized = Authentication.serializeOptions(options)
+    const deserialized = Authentication.deserializeOptions(serialized)
+
+    expect(deserialized.publicKey!.allowCredentials![0]!.id).toBeInstanceOf(
+      Uint8Array,
+    )
+    expect(deserialized.publicKey!.allowCredentials![0]!.id).toEqual(
+      options.publicKey!.allowCredentials![0]!.id,
+    )
+  })
+
+  test('empty publicKey', () => {
+    const deserialized = Authentication.deserializeOptions({})
+    expect(deserialized).toEqual({})
+  })
+
+  test('JSON round-trip', () => {
+    const options = Authentication.getOptions({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      credentialId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+      rpId: 'foo',
+    })
+    const serialized = Authentication.serializeOptions(options)
+    const json = JSON.stringify(serialized)
+    const parsed = JSON.parse(json)
+    const deserialized = Authentication.deserializeOptions(parsed)
+
+    expect(deserialized.publicKey!.challenge).toEqual(
+      options.publicKey!.challenge,
+    )
+    expect(deserialized.publicKey!.allowCredentials![0]!.id).toEqual(
+      options.publicKey!.allowCredentials![0]!.id,
+    )
+  })
+})
+
 describe('getSignPayload', () => {
   test('default', () => {
-    const payload = WebAuthnP256.getSignPayload({
+    const payload = Authentication.getSignPayload({
       challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       origin: 'http://localhost:5173',
@@ -759,13 +293,13 @@ describe('getSignPayload', () => {
     )
   })
 
-  test('behavior: P256.sign + WebAuthnP256.verify', async () => {
+  test('behavior: P256.sign + Authentication.verify', async () => {
     const { privateKey, publicKey } = P256.createKeyPair()
 
     const challenge =
       '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' as const
 
-    const { metadata, payload } = WebAuthnP256.getSignPayload({
+    const { metadata, payload } = Authentication.getSignPayload({
       challenge,
       origin: 'http://localhost:5173',
       rpId: 'localhost',
@@ -782,7 +316,7 @@ describe('getSignPayload', () => {
     })
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge,
         publicKey,
         signature,
@@ -791,7 +325,7 @@ describe('getSignPayload', () => {
     ).toBeTruthy()
   })
 
-  test('behavior: WebCryptoP256.sign + WebAuthnP256.verify', async () => {
+  test('behavior: WebCryptoP256.sign + Authentication.verify', async () => {
     const keyPair = await WebCryptoP256.createKeyPair()
     const { privateKey, publicKey } = keyPair
 
@@ -808,7 +342,7 @@ describe('getSignPayload', () => {
       },
     } as const
 
-    const { metadata, payload } = WebAuthnP256.getSignPayload(data)
+    const { metadata, payload } = Authentication.getSignPayload(data)
 
     const signature = await WebCryptoP256.sign({
       payload,
@@ -816,7 +350,7 @@ describe('getSignPayload', () => {
     })
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge,
         publicKey,
         signature,
@@ -825,8 +359,7 @@ describe('getSignPayload', () => {
     ).toBeTruthy()
   })
 
-  test('behavior: WebAuthnP256.sign + P256.verify', () => {
-    // Note: Public Key and Signature generated from WebAuthn Authenticator from examples/webauthn-p256.
+  test('behavior: Authentication.sign + P256.verify', () => {
     const publicKey = PublicKey.from({
       prefix: 4,
       x: 60047643624523853691583342123967083322395535713181616683944672258158697774181n,
@@ -837,7 +370,7 @@ describe('getSignPayload', () => {
       s: 42284206126603545568097288331895750698887263268526215297009386324761546383756n,
     })
 
-    const { payload } = WebAuthnP256.getSignPayload({
+    const { payload } = Authentication.getSignPayload({
       challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       origin: 'http://localhost:5173',
@@ -859,7 +392,7 @@ describe('getSignPayload', () => {
   })
 
   test('options: crossOrigin', () => {
-    const payload = WebAuthnP256.getSignPayload({
+    const payload = Authentication.getSignPayload({
       challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       origin: 'http://localhost:5173',
@@ -884,7 +417,7 @@ describe('getSignPayload', () => {
   })
 
   test('options: flag', () => {
-    const payload = WebAuthnP256.getSignPayload({
+    const payload = Authentication.getSignPayload({
       challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       origin: 'http://localhost:5173',
@@ -910,7 +443,7 @@ describe('getSignPayload', () => {
   })
 
   test('options: signCount', () => {
-    const payload = WebAuthnP256.getSignPayload({
+    const payload = Authentication.getSignPayload({
       challenge:
         '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       origin: 'http://localhost:5173',
@@ -940,7 +473,7 @@ describe('sign', () => {
   test('default', async () => {
     let options: CredentialRequestOptions | undefined
 
-    const signature = await WebAuthnP256.sign({
+    const signature = await Authentication.sign({
       getFn(options_) {
         options = options_
         return Promise.resolve({
@@ -1293,7 +826,7 @@ describe('sign', () => {
 
   test('error: null credential', async () => {
     await expect(() =>
-      WebAuthnP256.sign({
+      Authentication.sign({
         getFn() {
           return Promise.resolve(null)
         },
@@ -1301,15 +834,15 @@ describe('sign', () => {
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [Authentication.SignFailedError: Failed to request credential.
+    [Authentication.SignFailedError: Failed to request credential.
 
-      Details: Failed to request credential.]
-    `)
+    Details: Failed to request credential.]
+  `)
   })
 
   test('error: thrown', async () => {
     await expect(() =>
-      WebAuthnP256.sign({
+      Authentication.sign({
         getFn() {
           return Promise.reject(new Error('foo'))
         },
@@ -1317,10 +850,180 @@ describe('sign', () => {
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [Authentication.SignFailedError: Failed to request credential.
+    [Authentication.SignFailedError: Failed to request credential.
 
-      Details: foo]
+    Details: foo]
+  `)
+  })
+})
+
+describe('serializeResponse', () => {
+  test('default', () => {
+    const response: Authentication.Response = {
+      id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+      metadata: {
+        authenticatorData:
+          '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+        challengeIndex: 23,
+        clientDataJSON:
+          '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+        typeIndex: 1,
+        userVerificationRequired: true,
+      },
+      signature: Signature.from({
+        r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+        s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      }),
+      raw: {
+        id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+        type: 'public-key',
+        authenticatorAttachment: null,
+        rawId: new Uint8Array([1, 2, 3, 4]).buffer as ArrayBuffer,
+        response: {
+          clientDataJSON: new Uint8Array([5, 6, 7, 8]).buffer as ArrayBuffer,
+        } as any,
+        getClientExtensionResults: () => ({}),
+      },
+    }
+
+    const serialized = Authentication.serializeResponse(response)
+
+    expect(serialized).toMatchInlineSnapshot(`
+      {
+        "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
+        "metadata": {
+          "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+          "challengeIndex": 23,
+          "clientDataJSON": "{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}",
+          "typeIndex": 1,
+          "userVerificationRequired": true,
+        },
+        "raw": {
+          "authenticatorAttachment": null,
+          "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
+          "rawId": "AQIDBA",
+          "response": {
+            "clientDataJSON": "BQYHCA",
+          },
+          "type": "public-key",
+        },
+        "signature": "0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4",
+      }
     `)
+    expect(() => JSON.stringify(serialized)).not.toThrow()
+  })
+})
+
+describe('deserializeResponse', () => {
+  test('default', () => {
+    const response: Authentication.Response = {
+      id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+      metadata: {
+        authenticatorData:
+          '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+        challengeIndex: 23,
+        clientDataJSON:
+          '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+        typeIndex: 1,
+        userVerificationRequired: true,
+      },
+      signature: Signature.from({
+        r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+        s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      }),
+      raw: {
+        id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+        type: 'public-key',
+        authenticatorAttachment: null,
+        rawId: new Uint8Array([1, 2, 3, 4]).buffer as ArrayBuffer,
+        response: {
+          clientDataJSON: new Uint8Array([5, 6, 7, 8]).buffer as ArrayBuffer,
+        } as any,
+        getClientExtensionResults: () => ({}),
+      },
+    }
+
+    const serialized = Authentication.serializeResponse(response)
+    const deserialized = Authentication.deserializeResponse(serialized)
+
+    expect(deserialized).toMatchInlineSnapshot(`
+      {
+        "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
+        "metadata": {
+          "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+          "challengeIndex": 23,
+          "clientDataJSON": "{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}",
+          "typeIndex": 1,
+          "userVerificationRequired": true,
+        },
+        "raw": {
+          "authenticatorAttachment": null,
+          "getClientExtensionResults": [Function],
+          "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
+          "rawId": ArrayBuffer [
+            1,
+            2,
+            3,
+            4,
+          ],
+          "response": {
+            "clientDataJSON": ArrayBuffer [
+              5,
+              6,
+              7,
+              8,
+            ],
+          },
+          "type": "public-key",
+        },
+        "signature": {
+          "r": 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+          "s": 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+        },
+      }
+    `)
+  })
+
+  test('JSON round-trip preserves verify', () => {
+    const { metadata, payload } = Authentication.getSignPayload({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'localhost',
+    })
+
+    const { privateKey, publicKey } = P256.createKeyPair()
+    const sig = P256.sign({ hash: true, payload, privateKey })
+
+    const response: Authentication.Response = {
+      id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+      metadata,
+      signature: sig,
+      raw: {
+        id: 'test-id',
+        type: 'public-key',
+        authenticatorAttachment: null,
+        rawId: new ArrayBuffer(8),
+        response: {
+          clientDataJSON: new ArrayBuffer(16),
+        } as any,
+        getClientExtensionResults: () => ({}),
+      },
+    }
+
+    const serialized = Authentication.serializeResponse(response)
+    const json = JSON.stringify(serialized)
+    const deserialized = Authentication.deserializeResponse(JSON.parse(json))
+
+    expect(
+      Authentication.verify({
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature: deserialized.signature,
+        metadata: deserialized.metadata,
+      }),
+    ).toBeTruthy()
   })
 })
 
@@ -1346,7 +1049,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         metadata,
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -1377,7 +1080,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1408,7 +1111,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xa631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1439,7 +1142,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xa631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1470,7 +1173,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xa631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1501,7 +1204,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         metadata,
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -1532,7 +1235,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1563,7 +1266,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1586,15 +1289,13 @@ describe('verify', () => {
     const metadata = {
       authenticatorData:
         '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
-      challengeIndex: 23,
       clientDataJSON:
         '{"type":"webauthn.create","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
-      typeIndex: 1,
       userVerificationRequired: true,
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1625,7 +1326,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1656,7 +1357,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
@@ -1684,7 +1385,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         metadata,
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -1714,7 +1415,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         metadata,
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -1744,7 +1445,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         metadata,
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -1773,7 +1474,7 @@ describe('verify', () => {
     } as const
 
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         metadata,
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -1802,9 +1503,8 @@ describe('verify', () => {
       userVerificationRequired: true,
     } as const
 
-    // Should extract challenge automatically and fail validation
     expect(
-      WebAuthnP256.verify({
+      Authentication.verify({
         metadata,
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
@@ -1813,21 +1513,149 @@ describe('verify', () => {
       }),
     ).toBeFalsy()
   })
-})
 
-test('exports', () => {
-  expect(Object.keys(WebAuthnP256)).toMatchInlineSnapshot(`
-    [
-      "createChallenge",
-      "createCredential",
-      "getAuthenticatorData",
-      "getClientDataJSON",
-      "getAttestationObject",
-      "getCredentialCreationOptions",
-      "getCredentialRequestOptions",
-      "getSignPayload",
-      "sign",
-      "verify",
-    ]
-  `)
+  test('options: origin (valid)', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+        origin: 'http://localhost:5173',
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: origin (valid, array)', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+        origin: ['https://example.com', 'http://localhost:5173'],
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: origin (invalid)', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+        origin: 'https://evil.com',
+      }),
+    ).toBeFalsy()
+  })
+
+  test('options: rpId (valid)', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+        rpId: 'localhost',
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: rpId (invalid)', async () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+        rpId: 'evil.com',
+      }),
+    ).toBeFalsy()
+  })
 })
