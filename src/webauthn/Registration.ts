@@ -9,12 +9,14 @@ import type { OneOf } from '../core/internal/types.js'
 import * as internal from '../core/internal/webauthn.js'
 import * as P256 from '../core/P256.js'
 import * as Signature from '../core/Signature.js'
+import * as PublicKey from '../core/PublicKey.js'
 import type * as Credential_ from './Credential.js'
 import {
   base64UrlOptions,
   bufferSourceToBytes,
   bytesToArrayBuffer,
   deserializeExtensions,
+  responseKeys,
   serializeExtensions,
 } from './internal/utils.js'
 import type * as Types from './Types.js'
@@ -22,6 +24,15 @@ import type * as Types from './Types.js'
 export const createChallenge = Uint8Array.from([
   105, 171, 180, 181, 160, 222, 75, 198, 42, 42, 32, 31, 141, 37, 186, 233,
 ])
+
+/** Response from a WebAuthn registration ceremony. */
+export type Response<serialized extends boolean = false> = {
+  credential: Credential_.Credential<serialized>
+  counter: number
+  userVerified?: true | undefined
+  backedUp?: boolean | undefined
+  deviceType?: 'multiDevice' | 'singleDevice' | undefined
+}
 
 /**
  * Creates a new WebAuthn P256 Credential, which can be stored and later used for signing.
@@ -245,6 +256,81 @@ export declare namespace getOptions {
 }
 
 /**
+ * Serializes a registration response into a JSON-serializable
+ * format, converting `ArrayBuffer` fields to base64url strings
+ * and the public key to a hex string.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Registration } from 'ox/webauthn'
+ *
+ * const credential = await Registration.create({ name: 'Example' })
+ * const response = Registration.verify({
+ *   credential,
+ *   challenge: '0x...',
+ *   origin: 'https://example.com',
+ *   rpId: 'example.com',
+ * })
+ *
+ * const serialized = Registration.serializeResponse(response) // [!code focus]
+ *
+ * // `serialized` is JSON-serializable — send it to a server, store it, etc.
+ * const json = JSON.stringify(serialized)
+ * ```
+ *
+ * @param response - The registration response to serialize.
+ * @returns The serialized registration response.
+ */
+export function serializeResponse(response: Response): Response<true> {
+  const { credential, ...rest } = response
+
+  const rawResponse = {} as Record<string, string>
+  for (const key of responseKeys) {
+    const value = (
+      credential.raw.response as unknown as Record<string, unknown>
+    )[key]
+    if (value instanceof ArrayBuffer)
+      rawResponse[key] = Base64.fromBytes(
+        new Uint8Array(value),
+        base64UrlOptions,
+      )
+  }
+
+  return {
+    ...rest,
+    credential: {
+      attestationObject: Base64.fromBytes(
+        new Uint8Array(credential.attestationObject),
+        base64UrlOptions,
+      ),
+      clientDataJSON: Base64.fromBytes(
+        new Uint8Array(credential.clientDataJSON),
+        base64UrlOptions,
+      ),
+      id: credential.id,
+      publicKey: PublicKey.toHex(credential.publicKey),
+      raw: {
+        id: credential.raw.id,
+        type: credential.raw.type,
+        authenticatorAttachment: credential.raw.authenticatorAttachment,
+        rawId: Base64.fromBytes(
+          bufferSourceToBytes(credential.raw.rawId),
+          base64UrlOptions,
+        ),
+        response: rawResponse as unknown as Types.AuthenticatorResponse<true>,
+      },
+    },
+  }
+}
+
+export declare namespace serializeResponse {
+  type ErrorType =
+    | Base64.fromBytes.ErrorType
+    | PublicKey.toHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Serializes credential creation options into a JSON-serializable
  * format, converting `BufferSource` fields to base64url strings.
  *
@@ -347,6 +433,65 @@ export function deserializeOptions(
 
 export declare namespace deserializeOptions {
   type ErrorType = Base64.toBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Deserializes a serialized registration response.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Registration } from 'ox/webauthn'
+ *
+ * const response = Registration.deserializeResponse({ // [!code focus]
+ *   credential: { // [!code focus]
+ *     attestationObject: 'o2NmbXRkbm9uZQ...', // [!code focus]
+ *     clientDataJSON: 'eyJ0eXBlIjoid2Vi...', // [!code focus]
+ *     id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
+ *     publicKey: '0x04ab891400...', // [!code focus]
+ *     raw: { id: '...', type: 'public-key', authenticatorAttachment: 'platform', rawId: '...', response: {} }, // [!code focus]
+ *   }, // [!code focus]
+ *   counter: 0, // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @param response - The serialized registration response.
+ * @returns The deserialized registration response.
+ */
+export function deserializeResponse(response: Response<true>): Response {
+  const { credential, ...rest } = response
+
+  const rawResponse: Record<string, ArrayBuffer> = {}
+  for (const [key, value] of Object.entries(credential.raw.response))
+    rawResponse[key] = bytesToArrayBuffer(Base64.toBytes(value))
+
+  return {
+    ...rest,
+    credential: {
+      attestationObject: bytesToArrayBuffer(
+        Base64.toBytes(credential.attestationObject),
+      ),
+      clientDataJSON: bytesToArrayBuffer(
+        Base64.toBytes(credential.clientDataJSON),
+      ),
+      id: credential.id,
+      publicKey: PublicKey.from(credential.publicKey),
+      raw: {
+        id: credential.raw.id,
+        type: credential.raw.type,
+        authenticatorAttachment: credential.raw.authenticatorAttachment,
+        rawId: bytesToArrayBuffer(Base64.toBytes(credential.raw.rawId)),
+        response: rawResponse as unknown as Types.AuthenticatorResponse,
+        getClientExtensionResults: () => ({}),
+      },
+    },
+  }
+}
+
+export declare namespace deserializeResponse {
+  type ErrorType =
+    | Base64.toBytes.ErrorType
+    | PublicKey.from.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -618,13 +763,7 @@ export declare namespace verify {
     userVerification?: Types.UserVerificationRequirement | undefined
   }
 
-  type ReturnType = {
-    credential: Credential_.Credential
-    counter: number
-    userVerified?: true | undefined
-    backedUp?: boolean | undefined
-    deviceType?: 'multiDevice' | 'singleDevice' | undefined
-  }
+  type ReturnType = Response
 
   type ErrorType =
     | Base64.toBytes.ErrorType

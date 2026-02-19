@@ -132,6 +132,75 @@ describe('serialize/deserialize round-trip', () => {
     expect(result.credential.publicKey.x).toBe(credential.publicKey.x)
     expect(result.credential.publicKey.y).toBe(credential.publicKey.y)
   })
+
+  test('response round-trip: verify → serializeResponse → JSON → deserializeResponse', async () => {
+    const { credential, challenge } = await createCredential()
+
+    const response = Registration.verify({
+      credential,
+      challenge,
+      origin: window.location.origin,
+      rpId,
+    })
+
+    const serialized = Registration.serializeResponse(response)
+    const json = JSON.stringify(serialized)
+    const deserialized = Registration.deserializeResponse(JSON.parse(json))
+
+    expect(deserialized.credential.id).toBe(credential.id)
+    expect(deserialized.credential.publicKey.x).toBe(credential.publicKey.x)
+    expect(deserialized.credential.publicKey.y).toBe(credential.publicKey.y)
+    expect(deserialized.counter).toBe(response.counter)
+  })
+
+  test('response round-trip preserves optional fields', async () => {
+    const { credential, challenge } = await createCredential()
+
+    const response = Registration.verify({
+      credential,
+      challenge,
+      origin: window.location.origin,
+      rpId,
+    })
+
+    const serialized = Registration.serializeResponse(response)
+    const deserialized = Registration.deserializeResponse(serialized)
+
+    expect(deserialized.userVerified).toBe(response.userVerified)
+    expect(deserialized.backedUp).toBe(response.backedUp)
+    expect(deserialized.deviceType).toBe(response.deviceType)
+  })
+
+  test('response round-trip: deserialized credential can authenticate', async () => {
+    const { credential, challenge } = await createCredential()
+
+    const response = Registration.verify({
+      credential,
+      challenge,
+      origin: window.location.origin,
+      rpId,
+    })
+
+    const serialized = Registration.serializeResponse(response)
+    const json = JSON.stringify(serialized)
+    const deserialized = Registration.deserializeResponse(JSON.parse(json))
+
+    const authChallenge = Hex.random(32)
+    const { metadata, signature } = await Authentication.sign({
+      credentialId: deserialized.credential.id,
+      challenge: authChallenge,
+      rpId,
+    })
+
+    const verified = Authentication.verify({
+      metadata,
+      challenge: authChallenge,
+      publicKey: deserialized.credential.publicKey,
+      signature,
+    })
+
+    expect(verified).toBe(true)
+  })
 })
 
 describe('attestation modes', () => {

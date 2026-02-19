@@ -1001,4 +1001,38 @@ describe('verify', () => {
       'Attestation format is "none" but attestation verification is required',
     )
   })
+
+  test('serializeResponse → deserializeResponse round-trip', async () => {
+    const { credential, challenge, origin, rpId } =
+      await mockCreateCredential()
+
+    const response = Registration.verify({
+      credential,
+      challenge,
+      origin,
+      rpId,
+    })
+
+    const serialized = Registration.serializeResponse(response)
+
+    expect(typeof serialized.credential.attestationObject).toBe('string')
+    expect(typeof serialized.credential.clientDataJSON).toBe('string')
+    expect(typeof serialized.credential.publicKey).toBe('string')
+    expect(serialized.credential.id).toBe(credential.id)
+    expect(serialized.counter).toBe(0)
+    expect(serialized.userVerified).toBe(true)
+
+    const json = JSON.stringify(serialized)
+    const deserialized = Registration.deserializeResponse(JSON.parse(json))
+
+    expect(deserialized.credential.id).toBe(credential.id)
+    expect(deserialized.credential.publicKey.x).toBe(
+      credential.publicKey.x,
+    )
+    expect(deserialized.credential.publicKey.y).toBe(
+      credential.publicKey.y,
+    )
+    expect(deserialized.counter).toBe(response.counter)
+    expect(deserialized.userVerified).toBe(response.userVerified)
+  })
 })
