@@ -1,5 +1,5 @@
-import { playwright } from '@vitest/browser-playwright'
 import { basename, dirname, join } from 'node:path'
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -61,6 +61,7 @@ export default defineConfig({
             provider: playwright() as never,
             headless: true,
             instances: [{ browser: 'chromium' }],
+            screenshotFailures: false,
           },
         },
       },

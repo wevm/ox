@@ -384,8 +384,8 @@ export function verify(options: verify.Options): verify.ReturnType {
   const {
     attestation = 'none',
     credential,
-    origin = window.location.origin,
-    rpId = window.location.hostname,
+    origin,
+    rpId,
     userVerification = 'required',
   } = options
 
@@ -447,6 +447,12 @@ export function verify(options: verify.Options): verify.ReturnType {
   if (userVerification === 'required' && !uv)
     throw new VerifyError('User verification flag not set')
 
+  // If the BE bit is not set, the BS bit must not be set.
+  if (!be && bs)
+    throw new VerifyError(
+      'Backup state (BS) flag is set but backup eligibility (BE) flag is not',
+    )
+
   // Minimum authData length: 37 (rpIdHash + flags + counter) + 16 (AAGUID) + 2 (credIdLen)
   if (authData.length < 55)
     throw new VerifyError('authData too short for attested credential data')
@@ -467,7 +473,17 @@ export function verify(options: verify.Options): verify.ReturnType {
   // Credential ID (variable length starting at offset 55)
   const credentialId = authData.slice(55, 55 + credIdLen)
 
+  // Verify credential ID consistency if caller-supplied id is present
+  if (credential.id !== undefined) {
+    const expectedId = Base64.fromBytes(credentialId, base64UrlOptions)
+    if (credential.id !== expectedId)
+      throw new VerifyError(
+        `Credential ID mismatch: supplied "${credential.id}" does not match authData "${expectedId}"`,
+      )
+  }
+
   // 4. Parse and validate COSE public key
+  const ed = (flags & 0x80) !== 0
   const coseKeyBytes = authData.slice(55 + credIdLen)
   const coseKeyHex = Hex.fromBytes(coseKeyBytes)
   const coseKeyData = Cbor.decode<Record<string, unknown>>(coseKeyHex)
@@ -477,6 +493,17 @@ export function verify(options: verify.Options): verify.ReturnType {
       'COSE key must be EC2 (kty=2) with ES256 algorithm (alg=-7)',
     )
   const publicKey = CoseKey.toPublicKey(coseKeyHex)
+
+  // Verify no unexpected trailing bytes after the COSE key.
+  // Re-encode the extracted public key as a COSE key to determine its expected length.
+  const expectedCoseKeyLen = Bytes.fromHex(
+    CoseKey.fromPublicKey(publicKey),
+  ).length
+  const trailingBytes = coseKeyBytes.length - expectedCoseKeyLen
+  if (trailingBytes > 0 && !ed)
+    throw new VerifyError(
+      `authData contains ${trailingBytes} unexpected trailing byte(s) after COSE key`,
+    )
 
   // 5. Verify attestation statement (cryptographic binding of authData + clientDataJSON)
   const clientDataHash = Hash.sha256(Bytes.fromString(clientDataJSON), {
@@ -575,7 +602,6 @@ export declare namespace verify {
       attestationObject: Credential_.Credential['attestationObject']
       clientDataJSON: Credential_.Credential['clientDataJSON']
       id?: Credential_.Credential['id'] | undefined
-      publicKey: Credential_.Credential['publicKey'] | undefined
       raw?: Credential_.Credential['raw'] | undefined
     }
     /**
@@ -585,9 +611,9 @@ export declare namespace verify {
      */
     challenge: Hex.Hex | Uint8Array | ((challenge: string) => boolean)
     /** Expected origin(s) (e.g. `"https://example.com"`). */
-    origin?: string | string[] | undefined
+    origin: string | string[]
     /** Relying party ID (e.g. `"example.com"`). */
-    rpId?: string | undefined
+    rpId: string
     /** The user verification requirement. @default 'required' */
     userVerification?: Types.UserVerificationRequirement | undefined
   }

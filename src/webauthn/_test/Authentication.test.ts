@@ -856,6 +856,171 @@ describe('sign', () => {
   })
 })
 
+describe('serializeResponse', () => {
+  test('default', () => {
+    const response: Authentication.Response = {
+      metadata: {
+        authenticatorData:
+          '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+        challengeIndex: 23,
+        clientDataJSON:
+          '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+        typeIndex: 1,
+        userVerificationRequired: true,
+      },
+      signature: Signature.from({
+        r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+        s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      }),
+      raw: {
+        id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+        type: 'public-key',
+        authenticatorAttachment: null,
+        rawId: new Uint8Array([1, 2, 3, 4]).buffer as ArrayBuffer,
+        response: {
+          clientDataJSON: new Uint8Array([5, 6, 7, 8]).buffer as ArrayBuffer,
+        } as any,
+        getClientExtensionResults: () => ({}),
+      },
+    }
+
+    const serialized = Authentication.serializeResponse(response)
+
+    expect(serialized).toMatchInlineSnapshot(`
+      {
+        "metadata": {
+          "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+          "challengeIndex": 23,
+          "clientDataJSON": "{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}",
+          "typeIndex": 1,
+          "userVerificationRequired": true,
+        },
+        "raw": {
+          "authenticatorAttachment": null,
+          "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
+          "rawId": "AQIDBA",
+          "response": {
+            "clientDataJSON": "BQYHCA",
+          },
+          "type": "public-key",
+        },
+        "signature": "0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4",
+      }
+    `)
+    expect(() => JSON.stringify(serialized)).not.toThrow()
+  })
+})
+
+describe('deserializeResponse', () => {
+  test('default', () => {
+    const response: Authentication.Response = {
+      metadata: {
+        authenticatorData:
+          '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+        challengeIndex: 23,
+        clientDataJSON:
+          '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+        typeIndex: 1,
+        userVerificationRequired: true,
+      },
+      signature: Signature.from({
+        r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+        s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      }),
+      raw: {
+        id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+        type: 'public-key',
+        authenticatorAttachment: null,
+        rawId: new Uint8Array([1, 2, 3, 4]).buffer as ArrayBuffer,
+        response: {
+          clientDataJSON: new Uint8Array([5, 6, 7, 8]).buffer as ArrayBuffer,
+        } as any,
+        getClientExtensionResults: () => ({}),
+      },
+    }
+
+    const serialized = Authentication.serializeResponse(response)
+    const deserialized = Authentication.deserializeResponse(serialized)
+
+    expect(deserialized).toMatchInlineSnapshot(`
+      {
+        "metadata": {
+          "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+          "challengeIndex": 23,
+          "clientDataJSON": "{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}",
+          "typeIndex": 1,
+          "userVerificationRequired": true,
+        },
+        "raw": {
+          "authenticatorAttachment": null,
+          "getClientExtensionResults": [Function],
+          "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
+          "rawId": ArrayBuffer [
+            1,
+            2,
+            3,
+            4,
+          ],
+          "response": {
+            "clientDataJSON": ArrayBuffer [
+              5,
+              6,
+              7,
+              8,
+            ],
+          },
+          "type": "public-key",
+        },
+        "signature": {
+          "r": 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+          "s": 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+        },
+      }
+    `)
+  })
+
+  test('JSON round-trip preserves verify', () => {
+    const { metadata, payload } = Authentication.getSignPayload({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'localhost',
+    })
+
+    const { privateKey, publicKey } = P256.createKeyPair()
+    const sig = P256.sign({ hash: true, payload, privateKey })
+
+    const response: Authentication.Response = {
+      metadata,
+      signature: sig,
+      raw: {
+        id: 'test-id',
+        type: 'public-key',
+        authenticatorAttachment: null,
+        rawId: new ArrayBuffer(8),
+        response: {
+          clientDataJSON: new ArrayBuffer(16),
+        } as any,
+        getClientExtensionResults: () => ({}),
+      },
+    }
+
+    const serialized = Authentication.serializeResponse(response)
+    const json = JSON.stringify(serialized)
+    const deserialized = Authentication.deserializeResponse(JSON.parse(json))
+
+    expect(
+      Authentication.verify({
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature: deserialized.signature,
+        metadata: deserialized.metadata,
+      }),
+    ).toBeTruthy()
+  })
+})
+
 describe('verify', () => {
   test('default', async () => {
     const publicKey = PublicKey.from({

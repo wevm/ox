@@ -724,7 +724,7 @@ describe('verify', () => {
     const origin = options?.origin ?? 'https://example.com'
     const rpId = options?.rpId ?? 'example.com'
     const flag = options?.flag ?? 0x45 // UP + UV + AT
-    const fmt = options?.fmt ?? 'none'
+    const fmt = options?.fmt ?? 'packed'
 
     const { privateKey, publicKey } = P256.createKeyPair()
     const credentialId = new Uint8Array(20).fill(42)
@@ -950,6 +950,38 @@ describe('verify', () => {
     })
 
     expect(result.credential.id).toBe(credential.id)
+  })
+
+  test('error: BS flag set without BE flag', async () => {
+    const { credential, challenge, origin, rpId } = await mockCreateCredential({
+      flag: 0x55,
+    }) // UP + UV + AT + BS (without BE)
+
+    expect(() =>
+      Registration.verify({
+        credential,
+        challenge,
+        origin,
+        rpId,
+        attestation: 'none',
+      }),
+    ).toThrow('Backup state (BS) flag is set but backup eligibility (BE)')
+  })
+
+  test('error: credential ID mismatch', async () => {
+    const { credential, challenge, origin, rpId } = await mockCreateCredential()
+
+    // Tamper with the credential ID
+    credential.id = 'tampered-id-that-does-not-match'
+
+    expect(() =>
+      Registration.verify({
+        credential,
+        challenge,
+        origin,
+        rpId,
+      }),
+    ).toThrow('Credential ID mismatch')
   })
 
   test('error: fmt none rejected when attestation is required', async () => {

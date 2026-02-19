@@ -3,120 +3,130 @@ import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import type { OneOf } from '../core/internal/types.js'
 import * as internal from '../core/internal/webauthn.js'
 import * as P256 from '../core/P256.js'
 import type * as PublicKey from '../core/PublicKey.js'
-import type * as Signature from '../core/Signature.js'
+import * as Signature from '../core/Signature.js'
 import { getAuthenticatorData, getClientDataJSON } from './Authenticator.js'
 import type * as Credential_ from './Credential.js'
 import {
   base64UrlOptions,
   bufferSourceToBytes,
+  bytesToArrayBuffer,
   deserializeExtensions,
+  responseKeys,
   serializeExtensions,
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
 /**
- * Signs a challenge using a stored WebAuthn P256 Credential. If no Credential is provided,
- * a prompt will be displayed for the user to select an existing Credential
- * that was previously registered.
+ * Deserializes credential request options that can be passed to
+ * `navigator.credentials.get()`.
  *
  * @example
  * ```ts twoslash
- * import { Registration, Authentication } from 'ox/webauthn'
+ * import { Authentication } from 'ox/webauthn'
  *
- * const credential = await Registration.create({
- *   name: 'Example',
+ * const options = Authentication.getOptions({
+ *   challenge: '0xdeadbeef',
  * })
+ * const serialized = Authentication.serializeOptions(options)
  *
- * const { metadata, signature } = await Authentication.sign({ // [!code focus]
- *   credentialId: credential.id, // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
- * }) // [!code focus]
- * // @log: {
- * // @log:   metadata: {
- * // @log:     authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
- * // @log:     clientDataJSON: '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
- * // @log:     challengeIndex: 23,
- * // @log:     typeIndex: 1,
- * // @log:     userVerificationRequired: true,
- * // @log:   },
- * // @log:   signature: { r: 51231...4215n, s: 12345...6789n },
- * // @log: }
+ * // ... send to server and back ...
+ *
+ * const deserialized = Authentication.deserializeOptions(serialized) // [!code focus]
+ * const credential = await window.navigator.credentials.get(deserialized)
  * ```
  *
- * @param options - Options.
- * @returns The signature.
+ * @param options - The serialized credential request options.
+ * @returns The deserialized credential request options.
  */
-export async function sign(options: sign.Options): Promise<sign.ReturnType> {
-  const {
-    getFn = window.navigator.credentials.get.bind(window.navigator.credentials),
-    ...rest
-  } = options
-  const requestOptions = getOptions(rest)
-  try {
-    const credential = (await getFn(
-      requestOptions as never,
-    )) as Types.PublicKeyCredential
-    if (!credential) throw new SignFailedError()
-    const response = credential.response as AuthenticatorAssertionResponse
+export function deserializeOptions(
+  options: Types.CredentialRequestOptions<true>,
+): Types.CredentialRequestOptions {
+  const { publicKey, ...rest } = options
+  if (!publicKey) return { ...rest }
 
-    const clientDataJSON = String.fromCharCode(
-      ...new Uint8Array(response.clientDataJSON),
-    )
-    const challengeIndex = clientDataJSON.indexOf('"challenge"')
-    const typeIndex = clientDataJSON.indexOf('"type"')
+  const { allowCredentials, challenge, extensions, ...publicKeyRest } =
+    publicKey
 
-    const signature = internal.parseAsn1Signature(
-      new Uint8Array(response.signature),
-    )
-
-    return {
-      metadata: {
-        authenticatorData: Hex.fromBytes(
-          new Uint8Array(response.authenticatorData),
-        ),
-        clientDataJSON,
-        challengeIndex,
-        typeIndex,
-        userVerificationRequired:
-          requestOptions.publicKey!.userVerification === 'required',
-      },
-      signature,
-      raw: credential,
-    }
-  } catch (error) {
-    throw new SignFailedError({
-      cause: error as Error,
-    })
+  return {
+    ...rest,
+    publicKey: {
+      ...publicKeyRest,
+      challenge: Bytes.fromHex(challenge),
+      ...(allowCredentials && {
+        allowCredentials: allowCredentials.map(({ id, ...rest }) => ({
+          ...rest,
+          id: Base64.toBytes(id),
+        })),
+      }),
+      ...(extensions && {
+        extensions: deserializeExtensions(extensions),
+      }),
+    },
   }
 }
 
-export declare namespace sign {
-  type Options = getOptions.Options & {
-    /**
-     * Credential request function. Useful for environments that do not support
-     * the WebAuthn API natively (i.e. React Native or testing environments).
-     *
-     * @default window.navigator.credentials.get
-     */
-    getFn?:
-      | ((
-          options?: Types.CredentialRequestOptions | undefined,
-        ) => Promise<Types.Credential | null>)
-      | undefined
-  }
+export declare namespace deserializeOptions {
+  type ErrorType = Base64.toBytes.ErrorType | Errors.GlobalErrorType
+}
 
-  type ReturnType = {
-    metadata: Credential_.SignMetadata
-    raw: Types.PublicKeyCredential
-    signature: Signature.Signature<false>
-  }
+/**
+ * Deserializes a serialized authentication response.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Authentication } from 'ox/webauthn'
+ *
+ * const response = Authentication.deserializeResponse({ // [!code focus]
+ *   metadata: { // [!code focus]
+ *     authenticatorData: '0x49960de5...', // [!code focus]
+ *     clientDataJSON: '{"type":"webauthn.get",...}', // [!code focus]
+ *     challengeIndex: 23, // [!code focus]
+ *     typeIndex: 1, // [!code focus]
+ *     userVerificationRequired: true, // [!code focus]
+ *   }, // [!code focus]
+ *   raw: { // [!code focus]
+ *     id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
+ *     type: 'public-key', // [!code focus]
+ *     authenticatorAttachment: 'platform', // [!code focus]
+ *     rawId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
+ *     response: {}, // [!code focus]
+ *   }, // [!code focus]
+ *   signature: '0x...', // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @param response - The serialized authentication response.
+ * @returns The deserialized authentication response.
+ */
+export function deserializeResponse(response: Response<true>): Response {
+  const { metadata, raw, signature } = response
 
+  const rawResponse: Record<string, ArrayBuffer> = {}
+  for (const [key, value] of Object.entries(raw.response))
+    rawResponse[key] = bytesToArrayBuffer(Base64.toBytes(value))
+
+  return {
+    metadata,
+    raw: {
+      id: raw.id,
+      type: raw.type,
+      authenticatorAttachment: raw.authenticatorAttachment,
+      rawId: bytesToArrayBuffer(Base64.toBytes(raw.rawId)),
+      response: rawResponse as unknown as Types.AuthenticatorResponse,
+      getClientExtensionResults: () => ({}),
+    },
+    signature: Signature.from(signature),
+  }
+}
+
+export declare namespace deserializeResponse {
   type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | getOptions.ErrorType
+    | Base64.toBytes.ErrorType
+    | Signature.from.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -194,111 +204,6 @@ export declare namespace getOptions {
     | Bytes.fromHex.ErrorType
     | Base64.toBytes.ErrorType
     | Errors.GlobalErrorType
-}
-
-/**
- * Serializes credential request options into a JSON-serializable
- * format, converting `BufferSource` fields to base64url strings.
- *
- * @example
- * ```ts twoslash
- * import { Authentication } from 'ox/webauthn'
- *
- * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
- * })
- *
- * const serialized = Authentication.serializeOptions(options) // [!code focus]
- *
- * // `serialized` is JSON-serializable — send it to a server, store it, etc.
- * const json = JSON.stringify(serialized)
- * ```
- *
- * @param options - The credential request options to serialize.
- * @returns The serialized credential request options.
- */
-export function serializeOptions(
-  options: Types.CredentialRequestOptions,
-): Types.CredentialRequestOptions<true> {
-  const { publicKey, signal: _, ...rest } = options
-  if (!publicKey) return { ...rest }
-
-  const { allowCredentials, challenge, extensions, ...publicKeyRest } =
-    publicKey
-
-  return {
-    ...rest,
-    publicKey: {
-      ...publicKeyRest,
-      challenge: Hex.fromBytes(bufferSourceToBytes(challenge)),
-      ...(allowCredentials && {
-        allowCredentials: allowCredentials.map(({ id, ...rest }) => ({
-          ...rest,
-          id: Base64.fromBytes(bufferSourceToBytes(id), base64UrlOptions),
-        })),
-      }),
-      ...(extensions && {
-        extensions: serializeExtensions(extensions),
-      }),
-    },
-  }
-}
-
-export declare namespace serializeOptions {
-  type ErrorType = Base64.fromBytes.ErrorType | Errors.GlobalErrorType
-}
-
-/**
- * Deserializes credential request options that can be passed to
- * `navigator.credentials.get()`.
- *
- * @example
- * ```ts twoslash
- * import { Authentication } from 'ox/webauthn'
- *
- * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
- * })
- * const serialized = Authentication.serializeOptions(options)
- *
- * // ... send to server and back ...
- *
- * const deserialized = Authentication.deserializeOptions(serialized) // [!code focus]
- * const credential = await window.navigator.credentials.get(deserialized)
- * ```
- *
- * @param options - The serialized credential request options.
- * @returns The deserialized credential request options.
- */
-export function deserializeOptions(
-  options: Types.CredentialRequestOptions<true>,
-): Types.CredentialRequestOptions {
-  const { publicKey, ...rest } = options
-  if (!publicKey) return { ...rest }
-
-  const { allowCredentials, challenge, extensions, ...publicKeyRest } =
-    publicKey
-
-  return {
-    ...rest,
-    publicKey: {
-      ...publicKeyRest,
-      challenge: Bytes.fromHex(challenge),
-      ...(allowCredentials && {
-        allowCredentials: allowCredentials.map(({ id, ...rest }) => ({
-          ...rest,
-          id: Base64.toBytes(id),
-        })),
-      }),
-      ...(extensions && {
-        extensions: deserializeExtensions(extensions),
-      }),
-    },
-  }
-}
-
-export declare namespace deserializeOptions {
-  type ErrorType = Base64.toBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -412,6 +317,241 @@ export declare namespace getSignPayload {
     | Hex.concat.ErrorType
     | Hex.fromString.ErrorType
     | Errors.GlobalErrorType
+}
+
+/** Response from a WebAuthn authentication ceremony. */
+export type Response<serialized extends boolean = false> = {
+  metadata: Credential_.SignMetadata
+  raw: Types.PublicKeyCredential<serialized>
+  signature: serialized extends true
+    ? Hex.Hex
+    : Signature.Signature<false>
+}
+
+/**
+ * Serializes credential request options into a JSON-serializable
+ * format, converting `BufferSource` fields to base64url strings.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Authentication } from 'ox/webauthn'
+ *
+ * const options = Authentication.getOptions({
+ *   challenge: '0xdeadbeef',
+ * })
+ *
+ * const serialized = Authentication.serializeOptions(options) // [!code focus]
+ *
+ * // `serialized` is JSON-serializable — send it to a server, store it, etc.
+ * const json = JSON.stringify(serialized)
+ * ```
+ *
+ * @param options - The credential request options to serialize.
+ * @returns The serialized credential request options.
+ */
+export function serializeOptions(
+  options: Types.CredentialRequestOptions,
+): Types.CredentialRequestOptions<true> {
+  const { publicKey, signal: _, ...rest } = options
+  if (!publicKey) return { ...rest }
+
+  const { allowCredentials, challenge, extensions, ...publicKeyRest } =
+    publicKey
+
+  return {
+    ...rest,
+    publicKey: {
+      ...publicKeyRest,
+      challenge: Hex.fromBytes(bufferSourceToBytes(challenge)),
+      ...(allowCredentials && {
+        allowCredentials: allowCredentials.map(({ id, ...rest }) => ({
+          ...rest,
+          id: Base64.fromBytes(bufferSourceToBytes(id), base64UrlOptions),
+        })),
+      }),
+      ...(extensions && {
+        extensions: serializeExtensions(extensions),
+      }),
+    },
+  }
+}
+
+export declare namespace serializeOptions {
+  type ErrorType = Base64.fromBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Serializes an authentication response into a JSON-serializable
+ * format, converting `BufferSource` fields to base64url strings
+ * and the signature to a hex string.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Authentication } from 'ox/webauthn'
+ *
+ * const response = await Authentication.sign({
+ *   challenge: '0xdeadbeef',
+ * })
+ *
+ * const serialized = Authentication.serializeResponse(response) // [!code focus]
+ *
+ * // `serialized` is JSON-serializable — send it to a server, store it, etc.
+ * const json = JSON.stringify(serialized)
+ * ```
+ *
+ * @param response - The authentication response to serialize.
+ * @returns The serialized authentication response.
+ */
+export function serializeResponse(response: Response): Response<true> {
+  const { metadata, raw, signature } = response
+
+  const rawResponse = {} as Record<string, string>
+  for (const key of responseKeys) {
+    const value = (raw.response as unknown as Record<string, unknown>)[key]
+    if (value instanceof ArrayBuffer)
+      rawResponse[key] = Base64.fromBytes(
+        new Uint8Array(value),
+        base64UrlOptions,
+      )
+  }
+
+  return {
+    metadata,
+    raw: {
+      id: raw.id,
+      type: raw.type,
+      authenticatorAttachment: raw.authenticatorAttachment,
+      rawId: Base64.fromBytes(
+        bufferSourceToBytes(raw.rawId),
+        base64UrlOptions,
+      ),
+      response: rawResponse as unknown as Types.AuthenticatorResponse<true>,
+    },
+    signature: Signature.toHex(signature),
+  }
+}
+
+export declare namespace serializeResponse {
+  type ErrorType =
+    | Base64.fromBytes.ErrorType
+    | Signature.toHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Signs a challenge using a stored WebAuthn P256 Credential. If no Credential is provided,
+ * a prompt will be displayed for the user to select an existing Credential
+ * that was previously registered.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Registration, Authentication } from 'ox/webauthn'
+ *
+ * const credential = await Registration.create({
+ *   name: 'Example',
+ * })
+ *
+ * const { metadata, signature } = await Authentication.sign({ // [!code focus]
+ *   credentialId: credential.id, // [!code focus]
+ *   challenge: '0xdeadbeef', // [!code focus]
+ * }) // [!code focus]
+ * // @log: {
+ * // @log:   metadata: {
+ * // @log:     authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+ * // @log:     clientDataJSON: '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+ * // @log:     challengeIndex: 23,
+ * // @log:     typeIndex: 1,
+ * // @log:     userVerificationRequired: true,
+ * // @log:   },
+ * // @log:   signature: { r: 51231...4215n, s: 12345...6789n },
+ * // @log: }
+ * ```
+ *
+ * @param options - Options.
+ * @returns The signature.
+ */
+export async function sign(options: sign.Options): Promise<sign.ReturnType> {
+  const {
+    getFn = window.navigator.credentials.get.bind(window.navigator.credentials),
+    ...rest
+  } = options
+  const requestOptions =
+    'publicKey' in rest
+      ? (rest as Types.CredentialRequestOptions)
+      : getOptions(rest as never)
+  try {
+    const credential = (await getFn(
+      requestOptions as never,
+    )) as Types.PublicKeyCredential
+    if (!credential) throw new SignFailedError()
+    const response = credential.response as AuthenticatorAssertionResponse
+
+    const clientDataJSON = String.fromCharCode(
+      ...new Uint8Array(response.clientDataJSON),
+    )
+    const challengeIndex = clientDataJSON.indexOf('"challenge"')
+    const typeIndex = clientDataJSON.indexOf('"type"')
+
+    const signature = internal.parseAsn1Signature(
+      new Uint8Array(response.signature),
+    )
+
+    return {
+      metadata: {
+        authenticatorData: Hex.fromBytes(
+          new Uint8Array(response.authenticatorData),
+        ),
+        clientDataJSON,
+        challengeIndex,
+        typeIndex,
+        userVerificationRequired:
+          requestOptions.publicKey!.userVerification === 'required',
+      },
+      signature,
+      raw: credential,
+    }
+  } catch (error) {
+    throw new SignFailedError({
+      cause: error as Error,
+    })
+  }
+}
+
+export declare namespace sign {
+  type Options = OneOf<
+    | (getOptions.Options & {
+        /**
+         * Credential request function. Useful for environments that do not support
+         * the WebAuthn API natively (i.e. React Native or testing environments).
+         *
+         * @default window.navigator.credentials.get
+         */
+        getFn?:
+          | ((
+              options?: Types.CredentialRequestOptions | undefined,
+            ) => Promise<Types.Credential | null>)
+          | undefined
+      })
+    | Types.CredentialRequestOptions
+  >
+
+  type ReturnType = Response
+
+  type ErrorType =
+    | Hex.fromBytes.ErrorType
+    | getOptions.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/** Thrown when a WebAuthn P256 credential request fails. */
+export class SignFailedError extends Errors.BaseError<Error> {
+  override readonly name = 'Authentication.SignFailedError'
+
+  constructor({ cause }: { cause?: Error | undefined } = {}) {
+    super('Failed to request credential.', {
+      cause,
+    })
+  }
 }
 
 /**
@@ -530,15 +670,4 @@ export declare namespace verify {
     | Hex.fromString.ErrorType
     | P256.verify.ErrorType
     | Errors.GlobalErrorType
-}
-
-/** Thrown when a WebAuthn P256 credential request fails. */
-export class SignFailedError extends Errors.BaseError<Error> {
-  override readonly name = 'Authentication.SignFailedError'
-
-  constructor({ cause }: { cause?: Error | undefined } = {}) {
-    super('Failed to request credential.', {
-      cause,
-    })
-  }
 }
