@@ -1,6 +1,6 @@
 {
   "name": "@wevm/ox",
-  "version": "0.12.4",
+  "version": "0.13.0",
   "publish": {
     "include": ["LICENSE", "README.md", "CHANGELOG.md", "**/*.ts"],
     "exclude": [

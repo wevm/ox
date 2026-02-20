@@ -1,5 +1,16 @@
 # ox
 
+## 0.13.0
+
+### Minor Changes
+
+- [`c8c6229`](https://github.com/wevm/ox/commit/c8c62297ac43161095482176e1846ce61bb62eb5) Thanks [@jxom](https://github.com/jxom)! - Overhauled WebAuthn support with a dedicated `ox/webauthn` entrypoint for server-side registration & authentication ceremonies, credential management, and authenticator data parsing.
+
+  - `Registration` – Full registration ceremony: `create`, `getOptions`, `verify`, with `serializeOptions`/`deserializeOptions` for server↔client transport
+  - `Authentication` – Full authentication ceremony: `sign`, `getOptions`, `verify`, with `serializeOptions`/`deserializeOptions` for server↔client transport
+  - `Credential` – `serialize`/`deserialize` for persisting and transporting WebAuthn credentials as JSON
+  - `Authenticator` – Low-level utilities for constructing/parsing authenticator data, attestation objects, and client data JSON
+
 ## 0.12.4
 
 ### Patch Changes
