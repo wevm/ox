@@ -1391,4 +1391,269 @@ describe('behavior: keyAuthorization', () => {
       expect(receipt).toBeDefined()
     }
   })
+
+  test('behavior: access key with limits + expiry', async () => {
+    const privateKey = P256.randomPrivateKey()
+    const publicKey = P256.getPublicKey({ privateKey })
+    const address = Address.fromPublicKey(publicKey)
+    const access = {
+      address,
+      publicKey,
+      privateKey,
+    } as const
+
+    const keyAuth = KeyAuthorization.from({
+      address: access.address,
+      type: 'p256',
+      expiry: Math.floor(Date.now() / 1000) + 60 * 60,
+      limits: [
+        {
+          token: '0x20c0000000000000000000000000000000000001',
+          limit: Value.from('1000', 6),
+        },
+      ],
+    })
+
+    const keyAuth_signature = Secp256k1.sign({
+      payload: KeyAuthorization.getSignPayload(keyAuth),
+      privateKey: root.privateKey,
+    })
+
+    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+      signature: SignatureEnvelope.from(keyAuth_signature),
+    })
+
+    const nonce = await getTransactionCount(client, {
+      address: root.address,
+      blockTag: 'pending',
+    })
+
+    const transaction = TxEnvelopeTempo.from({
+      calls: [
+        {
+          to: '0x0000000000000000000000000000000000000000',
+        },
+      ],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      keyAuthorization: keyAuth_signed,
+      nonce: BigInt(nonce),
+      gas: 1_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const signature = P256.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+      privateKey: access.privateKey,
+    })
+
+    const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+      signature: SignatureEnvelope.from({
+        userAddress: root.address,
+        inner: SignatureEnvelope.from({
+          prehash: false,
+          publicKey: access.publicKey,
+          signature,
+          type: 'p256',
+        }),
+        type: 'keychain',
+      }),
+    })
+
+    const receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(receipt).toBeDefined()
+    expect(receipt.status).toBe('success')
+
+    {
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+
+      expect(response.from).toBe(root.address)
+      expect(response.keyAuthorization).toBeDefined()
+      expect(response.keyAuthorization?.expiry).toBe(keyAuth.expiry)
+      expect(response.keyAuthorization?.limits).toEqual(keyAuth.limits)
+    }
+  })
+
+  test('behavior: access key with limits (no expiry)', async () => {
+    const privateKey = Secp256k1.randomPrivateKey()
+    const publicKey = Secp256k1.getPublicKey({ privateKey })
+    const address = Address.fromPublicKey(publicKey)
+    const access = {
+      address,
+      publicKey,
+      privateKey,
+    } as const
+
+    const keyAuth = KeyAuthorization.from({
+      address: access.address,
+      type: 'secp256k1',
+      limits: [
+        {
+          token: '0x20c0000000000000000000000000000000000001',
+          limit: Value.from('1000', 6),
+        },
+      ],
+    })
+
+    const keyAuth_signature = Secp256k1.sign({
+      payload: KeyAuthorization.getSignPayload(keyAuth),
+      privateKey: root.privateKey,
+    })
+
+    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+      signature: SignatureEnvelope.from(keyAuth_signature),
+    })
+
+    const nonce = await getTransactionCount(client, {
+      address: root.address,
+      blockTag: 'pending',
+    })
+
+    const transaction = TxEnvelopeTempo.from({
+      calls: [
+        {
+          to: '0x0000000000000000000000000000000000000000',
+        },
+      ],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      keyAuthorization: keyAuth_signed,
+      nonce: BigInt(nonce),
+      gas: 1_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+      privateKey: access.privateKey,
+    })
+
+    const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+      signature: SignatureEnvelope.from({
+        userAddress: root.address,
+        inner: SignatureEnvelope.from(signature),
+        type: 'keychain',
+      }),
+    })
+
+    const receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(receipt).toBeDefined()
+    expect(receipt.status).toBe('success')
+
+    {
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+
+      expect(response.from).toBe(root.address)
+      expect(response.keyAuthorization).toBeDefined()
+      expect(response.keyAuthorization?.expiry).toBe(0)
+      expect(response.keyAuthorization?.limits).toEqual(keyAuth.limits)
+    }
+  })
+
+  test('behavior: access key with expiry (no limits)', async () => {
+    const privateKey = Secp256k1.randomPrivateKey()
+    const publicKey = Secp256k1.getPublicKey({ privateKey })
+    const address = Address.fromPublicKey(publicKey)
+    const access = {
+      address,
+      publicKey,
+      privateKey,
+    } as const
+
+    const keyAuth = KeyAuthorization.from({
+      address: access.address,
+      type: 'secp256k1',
+      expiry: Math.floor(Date.now() / 1000) + 60 * 60,
+    })
+
+    const keyAuth_signature = Secp256k1.sign({
+      payload: KeyAuthorization.getSignPayload(keyAuth),
+      privateKey: root.privateKey,
+    })
+
+    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+      signature: SignatureEnvelope.from(keyAuth_signature),
+    })
+
+    const nonce = await getTransactionCount(client, {
+      address: root.address,
+      blockTag: 'pending',
+    })
+
+    const transaction = TxEnvelopeTempo.from({
+      calls: [
+        {
+          to: '0x0000000000000000000000000000000000000000',
+        },
+      ],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      keyAuthorization: keyAuth_signed,
+      nonce: BigInt(nonce),
+      gas: 1_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+      privateKey: access.privateKey,
+    })
+
+    const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+      signature: SignatureEnvelope.from({
+        userAddress: root.address,
+        inner: SignatureEnvelope.from(signature),
+        type: 'keychain',
+      }),
+    })
+
+    const receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(receipt).toBeDefined()
+    expect(receipt.status).toBe('success')
+
+    {
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+
+      expect(response.from).toBe(root.address)
+      expect(response.keyAuthorization).toBeDefined()
+      expect(response.keyAuthorization?.expiry).toBe(keyAuth.expiry)
+      expect(response.keyAuthorization?.limits).toBeUndefined()
+    }
+  })
 })

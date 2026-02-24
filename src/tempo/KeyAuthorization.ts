@@ -459,6 +459,43 @@ export declare namespace getSignPayload {
 }
 
 /**
+ * Deserializes an RLP-encoded {@link ox#KeyAuthorization.KeyAuthorization}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { KeyAuthorization } from 'ox/tempo'
+ * import { Value } from 'ox'
+ *
+ * const authorization = KeyAuthorization.from({
+ *   expiry: 1234567890,
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   type: 'secp256k1',
+ *   limits: [{
+ *     token: '0x20c0000000000000000000000000000000000001',
+ *     limit: Value.from('10', 6)
+ *   }],
+ * })
+ *
+ * const serialized = KeyAuthorization.serialize(authorization)
+ * const deserialized = KeyAuthorization.deserialize(serialized) // [!code focus]
+ * ```
+ *
+ * @param serialized - The RLP-encoded Key Authorization.
+ * @returns The {@link ox#KeyAuthorization.KeyAuthorization}.
+ */
+export function deserialize(serialized: Hex.Hex): KeyAuthorization {
+  const tuple = Rlp.toHex(serialized) as unknown as Tuple
+  return fromTuple(tuple)
+}
+
+export declare namespace deserialize {
+  type ErrorType =
+    | Rlp.toHex.ErrorType
+    | fromTuple.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Computes the hash for an {@link ox#KeyAuthorization.KeyAuthorization}.
  *
  * @example
@@ -493,6 +530,42 @@ export declare namespace hash {
     | toTuple.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
+    | Rlp.fromHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Serializes a {@link ox#KeyAuthorization.KeyAuthorization} to RLP-encoded hex.
+ *
+ * @example
+ * ```ts twoslash
+ * import { KeyAuthorization } from 'ox/tempo'
+ * import { Value } from 'ox'
+ *
+ * const authorization = KeyAuthorization.from({
+ *   expiry: 1234567890,
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   type: 'secp256k1',
+ *   limits: [{
+ *     token: '0x20c0000000000000000000000000000000000001',
+ *     limit: Value.from('10', 6)
+ *   }],
+ * })
+ *
+ * const serialized = KeyAuthorization.serialize(authorization) // [!code focus]
+ * ```
+ *
+ * @param authorization - The {@link ox#KeyAuthorization.KeyAuthorization}.
+ * @returns The RLP-encoded Key Authorization.
+ */
+export function serialize(authorization: KeyAuthorization): Hex.Hex {
+  const tuple = toTuple(authorization)
+  return Rlp.fromHex(tuple as any)
+}
+
+export declare namespace serialize {
+  type ErrorType =
+    | toTuple.ErrorType
     | Rlp.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
@@ -603,13 +676,19 @@ export function toTuple<const authorization extends KeyAuthorization>(
         throw new Error(`Invalid key type: ${authorization.type}`)
     }
   })()
+  const limitsValue = limits?.map((limit) => [
+    limit.token,
+    bigintToHex(limit.limit),
+  ])
   const authorizationTuple = [
     bigintToHex(chainId),
     type,
     address,
-    typeof expiry === 'number' ? numberToHex(expiry) : undefined,
-    limits?.map((limit) => [limit.token, bigintToHex(limit.limit)]) ??
-      undefined,
+    // expiry is required in the tuple when limits are present
+    typeof expiry === 'number' || limitsValue
+      ? numberToHex(expiry ?? 0)
+      : undefined,
+    limitsValue,
   ].filter(Boolean)
   return [authorizationTuple, ...(signature ? [signature] : [])] as never
 }

@@ -772,6 +772,153 @@ describe('deserialize', () => {
   })
 })
 
+describe('extractAddress', () => {
+  describe('secp256k1', () => {
+    test('default', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from(signature)
+
+      expect(
+        SignatureEnvelope.extractAddress({ payload, signature: envelope }),
+      ).toBe(address)
+    })
+  })
+
+  describe('p256', () => {
+    test('default', () => {
+      const privateKey = P256.randomPrivateKey()
+      const pk = P256.getPublicKey({ privateKey })
+      const address = Address.fromPublicKey(pk)
+      const payload = '0xdeadbeef' as const
+
+      const signature = P256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: false,
+        publicKey: pk,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.extractAddress({ payload, signature: envelope }),
+      ).toBe(address)
+    })
+  })
+
+  describe('webAuthn', () => {
+    test('default', () => {
+      const address = Address.fromPublicKey(publicKey)
+
+      expect(
+        SignatureEnvelope.extractAddress({
+          payload: '0xdeadbeef',
+          signature: signature_webauthn,
+        }),
+      ).toBe(address)
+    })
+  })
+
+  describe('keychain', () => {
+    test('default', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        userAddress: '0x1234567890123456789012345678901234567890',
+        inner: SignatureEnvelope.from(signature),
+      })
+
+      expect(
+        SignatureEnvelope.extractAddress({ payload, signature: envelope }),
+      ).toBe(address)
+    })
+
+    test('behavior: root = true returns userAddress', () => {
+      expect(
+        SignatureEnvelope.extractAddress({
+          payload: '0xdeadbeef',
+          signature: signature_keychain_secp256k1,
+          root: true,
+        }),
+      ).toBe('0x1234567890123456789012345678901234567890')
+    })
+  })
+})
+
+describe('extractPublicKey', () => {
+  describe('secp256k1', () => {
+    test('default', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const pk = Secp256k1.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from(signature)
+
+      expect(
+        SignatureEnvelope.extractPublicKey({ payload, signature: envelope }),
+      ).toEqual(pk)
+    })
+  })
+
+  describe('p256', () => {
+    test('default', () => {
+      const privateKey = P256.randomPrivateKey()
+      const pk = P256.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = P256.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        prehash: false,
+        publicKey: pk,
+        signature,
+      })
+
+      expect(
+        SignatureEnvelope.extractPublicKey({ payload, signature: envelope }),
+      ).toEqual(pk)
+    })
+  })
+
+  describe('webAuthn', () => {
+    test('default', () => {
+      expect(
+        SignatureEnvelope.extractPublicKey({
+          payload: '0xdeadbeef',
+          signature: signature_webauthn,
+        }),
+      ).toEqual(publicKey)
+    })
+  })
+
+  describe('keychain', () => {
+    test('default', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const pk = Secp256k1.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef' as const
+
+      const signature = Secp256k1.sign({ payload, privateKey })
+      const envelope = SignatureEnvelope.from({
+        userAddress: '0x1234567890123456789012345678901234567890',
+        inner: SignatureEnvelope.from(signature),
+      })
+
+      expect(
+        SignatureEnvelope.extractPublicKey({ payload, signature: envelope }),
+      ).toEqual(pk)
+    })
+  })
+})
+
 describe('from', () => {
   describe('secp256k1', () => {
     test('behavior: coerces from hex string', () => {

@@ -70,7 +70,7 @@ jobs:
     strategy:
       matrix:
         tag: 
-          # - latest
+          - latest
           - https://rpc.moderato.tempo.xyz
 
     steps:

@@ -270,6 +270,119 @@ export declare namespace assert {
 }
 
 /**
+ * Extracts the address of the signer from a {@link ox#SignatureEnvelope.SignatureEnvelope}.
+ *
+ * - **secp256k1**: Recovers the address from the payload via `ecrecover`.
+ * - **p256** / **webAuthn**: Derives the address from the embedded public key.
+ * - **keychain**: Extracts from the inner signature (or returns `userAddress` if `user` is `true`).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const payload = '0xdeadbeef'
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const envelope = SignatureEnvelope.from(signature)
+ *
+ * const address = SignatureEnvelope.extractAddress({ // [!code focus]
+ *   payload, // [!code focus]
+ *   signature: envelope, // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @param options - The extraction options.
+ * @returns The signer address.
+ */
+export function extractAddress(
+  options: extractAddress.Options,
+): extractAddress.ReturnType {
+  const { signature, root } = options
+  if (signature.type === 'keychain') {
+    if (root) return signature.userAddress
+    return extractAddress({ ...options, signature: signature.inner })
+  }
+  return Address.fromPublicKey(extractPublicKey(options))
+}
+
+export declare namespace extractAddress {
+  type Options = {
+    /** The sign payload that was signed (only required for secp256k1 signatures). */
+    payload: Hex.Hex | Bytes.Bytes
+    /** The signature envelope. */
+    signature: SignatureEnvelope
+    /** Whether to return the root `userAddress` for keychain signatures instead of extracting from the inner signature. */
+    root?: boolean | undefined
+  }
+
+  type ReturnType = Address.Address
+
+  type ErrorType =
+    | Address.fromPublicKey.ErrorType
+    | extractPublicKey.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts the public key of the signer from a {@link ox#SignatureEnvelope.SignatureEnvelope}.
+ *
+ * - **secp256k1**: Recovers the public key from the payload via `ecrecover`.
+ * - **p256** / **webAuthn**: Returns the embedded public key.
+ * - **keychain**: Extracts from the inner signature.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ * import { SignatureEnvelope } from 'ox/tempo'
+ *
+ * const payload = '0xdeadbeef'
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const envelope = SignatureEnvelope.from(signature)
+ *
+ * const publicKey = SignatureEnvelope.extractPublicKey({ // [!code focus]
+ *   payload, // [!code focus]
+ *   signature: envelope, // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @param options - The extraction options.
+ * @returns The signer's public key.
+ */
+export function extractPublicKey(
+  options: extractPublicKey.Options,
+): extractPublicKey.ReturnType {
+  const { payload, signature } = options
+
+  switch (signature.type) {
+    case 'secp256k1':
+      return ox_Secp256k1.recoverPublicKey({
+        payload,
+        signature: signature.signature,
+      })
+    case 'p256':
+    case 'webAuthn':
+      return signature.publicKey
+    case 'keychain':
+      return extractPublicKey({ payload, signature: signature.inner })
+  }
+}
+
+export declare namespace extractPublicKey {
+  type Options = {
+    /** The sign payload that was signed (only required for secp256k1 signatures). */
+    payload: Hex.Hex | Bytes.Bytes
+    /** The signature envelope. */
+    signature: SignatureEnvelope
+  }
+
+  type ReturnType = PublicKey.PublicKey
+
+  type ErrorType =
+    | ox_Secp256k1.recoverPublicKey.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Deserializes a hex-encoded signature envelope into a typed signature object.
  *
  * Wire format detection:

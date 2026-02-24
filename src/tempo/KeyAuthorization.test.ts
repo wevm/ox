@@ -927,6 +927,74 @@ describe('getSignPayload', () => {
   })
 })
 
+describe('deserialize', () => {
+  test('default', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: Value.from('10', 6),
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const deserialized = KeyAuthorization.deserialize(serialized)
+
+    expect(deserialized).toEqual(authorization)
+  })
+
+  test('signed (secp256k1)', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        expiry,
+        type: 'secp256k1',
+        limits: [
+          {
+            token,
+            limit: Value.from('10', 6),
+          },
+        ],
+      },
+      { signature: signature_secp256k1 },
+    )
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const deserialized = KeyAuthorization.deserialize(serialized)
+
+    expect(deserialized).toEqual(authorization)
+  })
+
+  test('no limits', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      expiry,
+      type: 'secp256k1',
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const deserialized = KeyAuthorization.deserialize(serialized)
+
+    expect(deserialized).toEqual(authorization)
+  })
+
+  test('no expiry', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      type: 'secp256k1',
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const deserialized = KeyAuthorization.deserialize(serialized)
+
+    expect(deserialized).toEqual(authorization)
+  })
+})
+
 describe('hash', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
@@ -945,6 +1013,77 @@ describe('hash', () => {
 
     expect(hash).toMatchInlineSnapshot(
       `"0x6d56b62bb5e94ca0206340e4bc1ece5a35e7ad31c30c6b98074d146d5c5de993"`,
+    )
+  })
+})
+
+describe('serialize', () => {
+  test('default', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: Value.from('10', 6),
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+
+    expect(serialized).toMatchInlineSnapshot(
+      `"0xf838f7808094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2dad99420c000000000000000000000000000000000000183989680"`,
+    )
+  })
+
+  test('signed (secp256k1)', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        expiry,
+        type: 'secp256k1',
+        limits: [
+          {
+            token,
+            limit: Value.from('10', 6),
+          },
+        ],
+      },
+      { signature: signature_secp256k1 },
+    )
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const deserialized = KeyAuthorization.deserialize(serialized)
+
+    expect(deserialized).toEqual(authorization)
+  })
+
+  test('no limits', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      expiry,
+      type: 'secp256k1',
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+
+    expect(serialized).toMatchInlineSnapshot(
+      `"0xdddc808094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2"`,
+    )
+  })
+
+  test('no expiry', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      type: 'secp256k1',
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+
+    expect(serialized).toMatchInlineSnapshot(
+      `"0xd8d7808094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c"`,
     )
   })
 })

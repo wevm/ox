@@ -66,7 +66,7 @@
     "knip": "^5.27.2",
     "micro-eth-signer": "^0.15.0",
     "playwright": "^1.58.2",
-    "prool": "~0.2.1",
+    "prool": "~0.2.3",
     "rimraf": "^5.0.10",
     "sherif": "^0.11.0",
     "simple-git-hooks": "^2.11.1",
