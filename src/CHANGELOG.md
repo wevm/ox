@@ -1,5 +1,15 @@
 # ox
 
+## 0.13.1
+
+### Patch Changes
+
+- [`50c4d08`](https://github.com/wevm/ox/commit/50c4d08556e3c049979b24200efcb5534c156411) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Added `KeyAuthorization.serialize` and `KeyAuthorization.deserialize` for RLP encoding/decoding key authorizations.
+
+  `ox/tempo`: Fixed `KeyAuthorization.toTuple` to always include expiry in the tuple when limits are present, preventing malformed RLP encoding.
+
+- [`50c4d08`](https://github.com/wevm/ox/commit/50c4d08556e3c049979b24200efcb5534c156411) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Added `SignatureEnvelope.extractAddress` and `SignatureEnvelope.extractPublicKey` to extract signer address/public key from a signature envelope. Handles all signature types: secp256k1 (via ecrecover), p256/webAuthn (from embedded public key), and keychain (from inner signature or root `userAddress`).
+
 ## 0.13.0
 
 ### Minor Changes
