@@ -120,69 +120,6 @@ export * as PoolId from './PoolId.js'
  * @category Reference
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
-
-/**
- * Tick-based pricing utilities for DEX price conversions.
- *
- * Prices on Tempo's stablecoin DEX are discretized into integer ticks with a tick size of 0.1 bps
- * (where `price = PRICE_SCALE + tick` and `PRICE_SCALE = 100_000`). Orders must be placed at ticks
- * divisible by `TICK_SPACING = 10` (1 bp grid), within bounds of ±2000 ticks (±2%).
- *
- * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
- *
- * @example
- * ```ts twoslash
- * import { Tick } from 'ox/tempo'
- *
- * const price = Tick.toPrice(100) // "1.001" (0.1% above 1.0)
- * const tick = Tick.fromPrice('0.999') // -100
- * ```
- *
- * @category Reference
- */
-export * as Tick from './Tick.js'
-
-/**
- * TIP-20 token ID utilities for converting between token IDs and addresses.
- *
- * TIP-20 is Tempo's native token standard for stablecoins with deterministic addresses
- * derived from sequential token IDs. TIP-20 extends ERC-20 with payment features like
- * configurable fee tokens, transfer memos, and built-in role-based access control.
- *
- * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
- *
- * @example
- * ```ts twoslash
- * import { TokenId } from 'ox/tempo'
- *
- * const tokenId = TokenId.from(1n)
- * const address = TokenId.toAddress(1n)
- * // '0x20c0000000000000000000000000000000000001'
- * ```
- *
- * @category Reference
- */
-export * as TokenId from './TokenId.js'
-
-/**
- * Token role utilities for serializing role identifiers to keccak256 hashes.
- *
- * TIP-20 includes a built-in RBAC system with roles like `ISSUER_ROLE` (mint/burn),
- * `PAUSE_ROLE`/`UNPAUSE_ROLE` (emergency controls), and `BURN_BLOCKED_ROLE` (compliance).
- *
- * [TIP-20 RBAC](https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac)
- *
- * @example
- * ```ts twoslash
- * import { TokenRole } from 'ox/tempo'
- *
- * const hash = TokenRole.serialize('issuer')
- * ```
- *
- * @category Reference
- */
-export * as TokenRole from './TokenRole.js'
-
 /**
  * Tempo address encoding/decoding utilities for human-readable addresses.
  *
@@ -204,6 +141,65 @@ export * as TokenRole from './TokenRole.js'
  * @category Reference
  */
 export * as TempoAddress from './TempoAddress.js'
+/**
+ * Tick-based pricing utilities for DEX price conversions.
+ *
+ * Prices on Tempo's stablecoin DEX are discretized into integer ticks with a tick size of 0.1 bps
+ * (where `price = PRICE_SCALE + tick` and `PRICE_SCALE = 100_000`). Orders must be placed at ticks
+ * divisible by `TICK_SPACING = 10` (1 bp grid), within bounds of ±2000 ticks (±2%).
+ *
+ * [Stablecoin DEX Pricing](https://docs.tempo.xyz/protocol/exchange/spec#key-concepts)
+ *
+ * @example
+ * ```ts twoslash
+ * import { Tick } from 'ox/tempo'
+ *
+ * const price = Tick.toPrice(100) // "1.001" (0.1% above 1.0)
+ * const tick = Tick.fromPrice('0.999') // -100
+ * ```
+ *
+ * @category Reference
+ */
+export * as Tick from './Tick.js'
+/**
+ * TIP-20 token ID utilities for converting between token IDs and addresses.
+ *
+ * TIP-20 is Tempo's native token standard for stablecoins with deterministic addresses
+ * derived from sequential token IDs. TIP-20 extends ERC-20 with payment features like
+ * configurable fee tokens, transfer memos, and built-in role-based access control.
+ *
+ * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
+ *
+ * @example
+ * ```ts twoslash
+ * import { TokenId } from 'ox/tempo'
+ *
+ * const tokenId = TokenId.from(1n)
+ * const address = TokenId.toAddress(1n)
+ * // '0x20c0000000000000000000000000000000000001'
+ * ```
+ *
+ * @category Reference
+ */
+export * as TokenId from './TokenId.js'
+/**
+ * Token role utilities for serializing role identifiers to keccak256 hashes.
+ *
+ * TIP-20 includes a built-in RBAC system with roles like `ISSUER_ROLE` (mint/burn),
+ * `PAUSE_ROLE`/`UNPAUSE_ROLE` (emergency controls), and `BURN_BLOCKED_ROLE` (compliance).
+ *
+ * [TIP-20 RBAC](https://docs.tempo.xyz/protocol/tip20/overview#role-based-access-control-rbac)
+ *
+ * @example
+ * ```ts twoslash
+ * import { TokenRole } from 'ox/tempo'
+ *
+ * const hash = TokenRole.serialize('issuer')
+ * ```
+ *
+ * @category Reference
+ */
+export * as TokenRole from './TokenRole.js'
 
 /**
  * Utilities for converting between RPC and structured transaction formats.
