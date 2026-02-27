@@ -10,7 +10,7 @@ import * as Hex from './Hex.js'
  * | 0–252 | Direct value | 1 |
  * | 253–65,535 | `0xFD` + 2 bytes LE | 3 |
  * | 65,536–4,294,967,295 | `0xFE` + 4 bytes LE | 5 |
- * | > 4,294,967,295 | `0xFF` + 8 bytes LE | 9 |
+ * | \> 4,294,967,295 | `0xFF` + 8 bytes LE | 9 |
  *
  * @example
  * ```ts twoslash
