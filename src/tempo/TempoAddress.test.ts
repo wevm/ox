@@ -144,9 +144,9 @@ describe('parse', () => {
     `)
   })
 
-  test('case insensitive', () => {
+  test('all uppercase', () => {
     const encoded = TempoAddress.format(rawAddress)
-    const upper = encoded.slice(0, 6) + encoded.slice(6).toUpperCase()
+    const upper = encoded.toUpperCase()
     expect(TempoAddress.parse(upper).address).toBe(rawAddress)
   })
 
