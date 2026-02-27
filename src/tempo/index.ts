@@ -132,10 +132,10 @@ export * as SignatureEnvelope from './SignatureEnvelope.js'
  * import { TempoAddress } from 'ox/tempo'
  *
  * const encoded = TempoAddress.format('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
- * // @log: 'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg8zd8djs'
+ * // @log: 'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg0hlz9j'
  *
  * const { address, zoneId } = TempoAddress.parse(encoded)
- * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28' }
+ * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28', zoneId: undefined }
  * ```
  *
  * @category Reference

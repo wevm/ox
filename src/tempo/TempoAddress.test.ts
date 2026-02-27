@@ -1,4 +1,4 @@
-import { Address } from 'ox'
+import { Address, Bech32m } from 'ox'
 import { TempoAddress } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
@@ -9,27 +9,27 @@ const rawAddress = Address.checksum(
 describe('format', () => {
   test('mainnet address', () => {
     expect(TempoAddress.format(rawAddress)).toMatchInlineSnapshot(
-      `"tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg8zd8djs"`,
+      `"tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg0hlz9j"`,
     )
   })
 
   test('zone address (zone ID = 1)', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 1 }),
-    ).toMatchInlineSnapshot(`"tempoz1q96z6dwvvc6vq5efyk3ms39une6etu4a9zeqtx3q"`)
+    ).toMatchInlineSnapshot(`"tempoz1q96z6dwvvc6vq5efyk3ms39une6etu4a9q2zvzv5"`)
   })
 
   test('zone address (zone ID = 252)', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 252 }),
-    ).toMatchInlineSnapshot(`"tempoz1l36z6dwvvc6vq5efyk3ms39une6etu4a9z8vgw44"`)
+    ).toMatchInlineSnapshot(`"tempoz1l36z6dwvvc6vq5efyk3ms39une6etu4a9q93kqyj"`)
   })
 
   test('zone address (zone ID = 253)', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 253 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1lh7sqapdxhxxvdxq2v5jtgacgj7fuav4727jsx0032us"`,
+      `"tempoz1lh7sqapdxhxxvdxq2v5jtgacgj7fuav4727js0pxdhv"`,
     )
   })
 
@@ -37,7 +37,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 65535 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1lhll7apdxhxxvdxq2v5jtgacgj7fuav4727j37cldu7q"`,
+      `"tempoz1lhll7apdxhxxvdxq2v5jtgacgj7fuav4727jsc6fsc4"`,
     )
   })
 
@@ -45,7 +45,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 65536 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1lcqqqqgqwskntnrxxnq9x2f95wuyf0y7wk2l90fga965qjc"`,
+      `"tempoz1lcqqqqgqwskntnrxxnq9x2f95wuyf0y7wk2l90fga9kw82"`,
     )
   })
 
@@ -53,7 +53,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 4294967295 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1lmllllllwskntnrxxnq9x2f95wuyf0y7wk2l90fgxg58ulq"`,
+      `"tempoz1lmllllllwskntnrxxnq9x2f95wuyf0y7wk2l90fgnd3z52"`,
     )
   })
 
@@ -61,7 +61,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: BigInt('4294967296') }),
     ).toMatchInlineSnapshot(
-      `"tempoz1luqqqqqqqyqqqqr5956uce35cpfjjfdrhpzte8n4jhet62pnyj7cc"`,
+      `"tempoz1luqqqqqqqyqqqqr5956uce35cpfjjfdrhpzte8n4jhet62qelup9g"`,
     )
   })
 
@@ -87,7 +87,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 1n,
+        "zoneId": 1,
       }
     `)
   })
@@ -97,7 +97,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 252n,
+        "zoneId": 252,
       }
     `)
   })
@@ -107,7 +107,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 253n,
+        "zoneId": 253,
       }
     `)
   })
@@ -117,7 +117,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 65535n,
+        "zoneId": 65535,
       }
     `)
   })
@@ -127,7 +127,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 65536n,
+        "zoneId": 65536,
       }
     `)
   })
@@ -151,10 +151,11 @@ describe('parse', () => {
   })
 
   test('error: invalid prefix', () => {
+    const encoded = Bech32m.encode('bitcoin', new Uint8Array(20))
     expect(() =>
-      TempoAddress.parse('bitcoin1abc'),
+      TempoAddress.parse(encoded),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TempoAddress.InvalidPrefixError: Tempo address "bitcoin1abc" has an invalid prefix. Expected "tempo1" or "tempoz1".]`,
+      `[TempoAddress.InvalidPrefixError: Tempo address "${encoded}" has an invalid prefix. Expected "tempo1" or "tempoz1".]`,
     )
   })
 
@@ -174,7 +175,7 @@ describe('parse', () => {
     expect(() =>
       TempoAddress.parse(swapped),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TempoAddress.InvalidLengthError: Tempo address "${swapped}" has an invalid payload length. Expected 24 bytes, got 23.]`,
+      `[TempoAddress.InvalidChecksumError: Tempo address "tempoz1wskntnrxxnq9x2f95wuyf0y7wk2l90fg0hlz9j" has an invalid checksum.]`,
     )
   })
 })

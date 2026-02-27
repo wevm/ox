@@ -17,6 +17,7 @@ test('exports', () => {
       "AesGcm",
       "Authorization",
       "Base32",
+      "Bech32m",
       "Base58",
       "Base64",
       "BinaryStateTree",
