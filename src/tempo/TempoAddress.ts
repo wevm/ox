@@ -117,9 +117,7 @@ export function parse(tempoAddress: string): parse.ReturnType {
       actual: rawAddress.length,
     })
 
-  const address = Address.checksum(
-    Hex.fromBytes(rawAddress) as Address.Address,
-  )
+  const address = Address.checksum(Hex.fromBytes(rawAddress) as Address.Address)
 
   return { address, zoneId }
 }

@@ -92,7 +92,8 @@ export declare namespace toHex {
  * @returns The decoded value and number of bytes consumed.
  */
 export function fromBytes(data: Bytes.Bytes): fromBytes.ReturnType {
-  if (data.length === 0) throw new InsufficientBytesError({ expected: 1, actual: 0 })
+  if (data.length === 0)
+    throw new InsufficientBytesError({ expected: 1, actual: 0 })
   const first = data[0]!
   if (first < 0xfd) return { value: first, size: 1 }
   const view = new DataView(data.buffer, data.byteOffset)
@@ -123,9 +124,7 @@ export declare namespace fromBytes {
     size: number
   }
 
-  type ErrorType =
-    | InsufficientBytesError
-    | Errors.GlobalErrorType
+  type ErrorType = InsufficientBytesError | Errors.GlobalErrorType
 }
 
 /**

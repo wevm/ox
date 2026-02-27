@@ -3,17 +3,15 @@ import { describe, expect, test } from 'vitest'
 
 describe('encode', () => {
   test('20 zero bytes', () => {
-    expect(
-      Bech32m.encode('tempo', new Uint8Array(20)),
-    ).toMatchInlineSnapshot(
+    expect(Bech32m.encode('tempo', new Uint8Array(20))).toMatchInlineSnapshot(
       `"tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqwa7xtm"`,
     )
   })
 
   test('round-trip', () => {
     const data = new Uint8Array([
-      0x74, 0x2d, 0x35, 0xcc, 0x66, 0x34, 0xc0, 0x53, 0x29, 0x25, 0xa3,
-      0xb8, 0x44, 0xbc, 0x9e, 0x75, 0x95, 0xf2, 0xbd, 0x28,
+      0x74, 0x2d, 0x35, 0xcc, 0x66, 0x34, 0xc0, 0x53, 0x29, 0x25, 0xa3, 0xb8,
+      0x44, 0xbc, 0x9e, 0x75, 0x95, 0xf2, 0xbd, 0x28,
     ])
     const encoded = Bech32m.encode('tempo', data)
     const decoded = Bech32m.decode(encoded)
@@ -50,9 +48,7 @@ describe('decode', () => {
   test('error: mixed case', () => {
     const encoded = Bech32m.encode('tempo', new Uint8Array(20))
     const mixed = encoded[0]!.toUpperCase() + encoded.slice(1)
-    expect(() =>
-      Bech32m.decode(mixed),
-    ).toThrowErrorMatchingInlineSnapshot(
+    expect(() => Bech32m.decode(mixed)).toThrowErrorMatchingInlineSnapshot(
       `[Bech32m.MixedCaseError: Bech32m string must not be mixed case.]`,
     )
   })
@@ -68,9 +64,7 @@ describe('decode', () => {
   test('error: invalid checksum', () => {
     const encoded = Bech32m.encode('tempo', new Uint8Array(20))
     const tampered = encoded.slice(0, -1) + (encoded.endsWith('q') ? 'p' : 'q')
-    expect(() =>
-      Bech32m.decode(tampered),
-    ).toThrowErrorMatchingInlineSnapshot(
+    expect(() => Bech32m.decode(tampered)).toThrowErrorMatchingInlineSnapshot(
       `[Bech32m.InvalidChecksumError: Invalid bech32m checksum.]`,
     )
   })

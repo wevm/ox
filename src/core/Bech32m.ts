@@ -38,10 +38,7 @@ export declare namespace encode {
     limit?: number | undefined
   }
 
-  type ErrorType =
-    | InvalidHrpError
-    | ExceedsLengthError
-    | Errors.GlobalErrorType
+  type ErrorType = InvalidHrpError | ExceedsLengthError | Errors.GlobalErrorType
 }
 
 /**
@@ -250,7 +247,7 @@ function convertBits(
   }
   if (pad) {
     if (bits > 0) ret.push((acc << (toBits - bits)) & maxv)
-  } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv)) {
+  } else if (bits >= fromBits || (acc << (toBits - bits)) & maxv) {
     throw new InvalidPaddingError()
   }
   return ret
