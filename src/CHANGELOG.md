@@ -1,5 +1,11 @@
 # ox
 
+## 0.13.2
+
+### Patch Changes
+
+- [#179](https://github.com/wevm/ox/pull/179) [`4b91335`](https://github.com/wevm/ox/commit/4b91335b5a68cfee39248ab91c78a0b98b1d1859) Thanks [@jxom](https://github.com/jxom)! - Added `Base32`, `CompactSize`, and `TempoAddress` modules. `Base32` implements BIP-173 bech32 base32 encoding/decoding. `CompactSize` implements Bitcoin's variable-length integer encoding. `TempoAddress` provides human-readable Tempo address formatting and parsing with `tempo1`/`tempoz1` prefixes, CompactSize zone ID encoding, and double-SHA256 checksumming.
+
 ## 0.13.1
 
 ### Patch Changes
