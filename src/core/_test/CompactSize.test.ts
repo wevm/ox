@@ -3,17 +3,17 @@ import { describe, expect, test } from 'vitest'
 
 describe('toBytes', () => {
   test('single byte (0-252)', () => {
-    expect(CompactSize.toBytes(0)).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(0n)).toMatchInlineSnapshot(`
       Uint8Array [
         0,
       ]
     `)
-    expect(CompactSize.toBytes(1)).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(1n)).toMatchInlineSnapshot(`
       Uint8Array [
         1,
       ]
     `)
-    expect(CompactSize.toBytes(252)).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(252n)).toMatchInlineSnapshot(`
       Uint8Array [
         252,
       ]
@@ -21,14 +21,14 @@ describe('toBytes', () => {
   })
 
   test('3 bytes (253-65535)', () => {
-    expect(CompactSize.toBytes(253)).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(253n)).toMatchInlineSnapshot(`
       Uint8Array [
         253,
         253,
         0,
       ]
     `)
-    expect(CompactSize.toBytes(65535)).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(65535n)).toMatchInlineSnapshot(`
       Uint8Array [
         253,
         255,
@@ -38,7 +38,7 @@ describe('toBytes', () => {
   })
 
   test('5 bytes (65536-4294967295)', () => {
-    expect(CompactSize.toBytes(65536)).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(65536n)).toMatchInlineSnapshot(`
       Uint8Array [
         254,
         0,
@@ -47,7 +47,7 @@ describe('toBytes', () => {
         0,
       ]
     `)
-    expect(CompactSize.toBytes(4294967295)).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(4294967295n)).toMatchInlineSnapshot(`
       Uint8Array [
         254,
         255,
@@ -59,7 +59,7 @@ describe('toBytes', () => {
   })
 
   test('9 bytes (> 4294967295)', () => {
-    expect(CompactSize.toBytes(BigInt('4294967296'))).toMatchInlineSnapshot(`
+    expect(CompactSize.toBytes(4294967296n)).toMatchInlineSnapshot(`
       Uint8Array [
         255,
         0,
@@ -75,7 +75,7 @@ describe('toBytes', () => {
   })
 
   test('error: negative value', () => {
-    expect(() => CompactSize.toBytes(-1)).toThrowErrorMatchingInlineSnapshot(
+    expect(() => CompactSize.toBytes(-1n)).toThrowErrorMatchingInlineSnapshot(
       `[CompactSize.NegativeValueError: CompactSize value must be non-negative, got -1.]`,
     )
   })
@@ -83,8 +83,8 @@ describe('toBytes', () => {
 
 describe('toHex', () => {
   test('default', () => {
-    expect(CompactSize.toHex(252)).toMatchInlineSnapshot(`"0xfc"`)
-    expect(CompactSize.toHex(253)).toMatchInlineSnapshot(`"0xfdfd00"`)
+    expect(CompactSize.toHex(252n)).toMatchInlineSnapshot(`"0xfc"`)
+    expect(CompactSize.toHex(253n)).toMatchInlineSnapshot(`"0xfdfd00"`)
   })
 })
 
