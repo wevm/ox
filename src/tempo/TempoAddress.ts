@@ -58,7 +58,7 @@ export function format(
 export declare namespace format {
   type Options = {
     /** Zone ID for zone addresses. */
-    zoneId?: bigint | undefined
+    zoneId?: bigint | number | undefined
   }
 
   type ErrorType = Errors.GlobalErrorType

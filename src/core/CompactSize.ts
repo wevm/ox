@@ -26,7 +26,7 @@ import * as Hex from './Hex.js'
  * @param value - The integer to encode.
  * @returns The CompactSize-encoded bytes.
  */
-export function toBytes(value: bigint): Bytes.Bytes {
+export function toBytes(value: bigint | number): Bytes.Bytes {
   const n = BigInt(value)
   if (n < 0n) throw new NegativeValueError({ value: n })
   if (n <= 252n) return new Uint8Array([Number(n)])
@@ -69,7 +69,7 @@ export declare namespace toBytes {
  * @param value - The integer to encode.
  * @returns The CompactSize-encoded hex string.
  */
-export function toHex(value: bigint): Hex.Hex {
+export function toHex(value: bigint | number): Hex.Hex {
   return Hex.fromBytes(toBytes(value))
 }
 
