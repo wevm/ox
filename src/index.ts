@@ -839,6 +839,31 @@ export * as AesGcm from './core/AesGcm.js'
 export * as Authorization from './core/Authorization.js'
 
 /**
+ * Utility functions for working with Base32 values using the [BIP-173](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki) bech32 alphabet.
+ *
+ * @example
+ * ### Encoding to Base32
+ *
+ * ```ts twoslash
+ * import { Base32 } from 'ox'
+ *
+ * const value = Base32.fromHex('0x00ff00')
+ * ```
+ *
+ * @example
+ * ### Decoding Base32
+ *
+ * ```ts twoslash
+ * import { Base32 } from 'ox'
+ *
+ * const value = Base32.toBytes('qrlsq')
+ * ```
+ *
+ * @category Data
+ */
+export * as Base32 from './core/Base32.js'
+
+/**
  * Utility functions for working with [Base58](https://digitalbazaar.github.io/base58-spec/) values.
  *
  * @example
@@ -1330,6 +1355,32 @@ export * as Caches from './core/Caches.js'
  * @category Data
  */
 export * as Cbor from './core/Cbor.js'
+
+/**
+ * Utility functions for [Bitcoin's CompactSize](https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer) variable-length integer encoding.
+ *
+ * @example
+ * ### Encoding
+ *
+ * ```ts twoslash
+ * import { CompactSize } from 'ox'
+ *
+ * const bytes = CompactSize.toBytes(65535)
+ * ```
+ *
+ * @example
+ * ### Decoding
+ *
+ * ```ts twoslash
+ * import { CompactSize } from 'ox'
+ *
+ * const { value, size } = CompactSize.fromBytes(new Uint8Array([0xfd, 0xff, 0xff]))
+ * ```
+ *
+ * @category Data
+ */
+export * as CompactSize from './core/CompactSize.js'
+
 /**
  * Utility functions for computing Contract Addresses.
  *
