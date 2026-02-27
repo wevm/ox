@@ -58,7 +58,7 @@ export function format(
 export declare namespace format {
   type Options = {
     /** Zone ID for zone addresses. */
-    zoneId?: number | bigint | undefined
+    zoneId?: bigint | undefined
   }
 
   type ErrorType = Errors.GlobalErrorType
@@ -75,7 +75,7 @@ export declare namespace format {
  * const result = TempoAddress.parse(
  *   'tempo1wst8d6qejxtdg4y5r3zarvary0c5xw7kvmgh8pm',
  * )
- * // { address: '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28', zoneId: undefined }
+ * // { address: '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28' }
  * ```
  *
  * @example
@@ -109,7 +109,7 @@ export function parse(tempoAddress: string): parse.ReturnType {
 
   const payload = Base32.toBytes(lower.slice(prefix.length))
 
-  let zoneId: number | bigint | undefined
+  let zoneId: bigint | undefined
   let remaining: Uint8Array
   if (hasZone) {
     const { value, size } = CompactSize.fromBytes(payload)
@@ -154,7 +154,7 @@ export declare namespace parse {
     /** The raw 20-byte Ethereum address. */
     address: Address.Address
     /** The zone ID, or `undefined` for mainnet addresses. */
-    zoneId: number | bigint | undefined
+    zoneId: bigint | undefined
   }
 
   type ErrorType =

@@ -90,7 +90,7 @@ describe('toHex', () => {
 
 describe('fromBytes', () => {
   test('round-trip (single byte)', () => {
-    for (const n of [0, 1, 100, 252]) {
+    for (const n of [0n, 1n, 100n, 252n]) {
       const encoded = CompactSize.toBytes(n)
       const { value, size } = CompactSize.fromBytes(encoded)
       expect(value).toBe(n)
@@ -99,7 +99,7 @@ describe('fromBytes', () => {
   })
 
   test('round-trip (3 bytes)', () => {
-    for (const n of [253, 1000, 65535]) {
+    for (const n of [253n, 1000n, 65535n]) {
       const encoded = CompactSize.toBytes(n)
       const { value, size } = CompactSize.fromBytes(encoded)
       expect(value).toBe(n)
@@ -108,7 +108,7 @@ describe('fromBytes', () => {
   })
 
   test('round-trip (5 bytes)', () => {
-    for (const n of [65536, 1000000, 4294967295]) {
+    for (const n of [65536n, 1000000n, 4294967295n]) {
       const encoded = CompactSize.toBytes(n)
       const { value, size } = CompactSize.fromBytes(encoded)
       expect(value).toBe(n)
@@ -124,12 +124,12 @@ describe('fromBytes', () => {
     expect(size).toBe(9)
   })
 
-  test('large value returns number when safe', () => {
+  test('large value returns bigint', () => {
     const n = BigInt('4294967296')
     const encoded = CompactSize.toBytes(n)
     const { value } = CompactSize.fromBytes(encoded)
-    expect(typeof value).toBe('number')
-    expect(value).toBe(4294967296)
+    expect(typeof value).toBe('bigint')
+    expect(value).toBe(4294967296n)
   })
 
   test('error: empty bytes', () => {
@@ -154,7 +154,7 @@ describe('fromHex', () => {
     expect(CompactSize.fromHex('0xfc')).toMatchInlineSnapshot(`
       {
         "size": 1,
-        "value": 252,
+        "value": 252n,
       }
     `)
   })

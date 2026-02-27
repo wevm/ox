@@ -198,7 +198,7 @@ export * as TokenRole from './TokenRole.js'
  * // @log: 'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg8zd8djs'
  *
  * const { address, zoneId } = TempoAddress.parse(encoded)
- * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28', zoneId: undefined }
+ * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28' }
  * ```
  *
  * @category Reference

@@ -87,7 +87,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 1,
+        "zoneId": 1n,
       }
     `)
   })
@@ -97,7 +97,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 252,
+        "zoneId": 252n,
       }
     `)
   })
@@ -107,7 +107,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 253,
+        "zoneId": 253n,
       }
     `)
   })
@@ -117,7 +117,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 65535,
+        "zoneId": 65535n,
       }
     `)
   })
@@ -127,7 +127,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 65536,
+        "zoneId": 65536n,
       }
     `)
   })

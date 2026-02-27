@@ -26,7 +26,7 @@ import * as Hex from './Hex.js'
  * @param value - The integer to encode.
  * @returns The CompactSize-encoded bytes.
  */
-export function toBytes(value: number | bigint): Bytes.Bytes {
+export function toBytes(value: bigint): Bytes.Bytes {
   const n = BigInt(value)
   if (n < 0n) throw new NegativeValueError({ value: n })
   if (n <= 252n) return new Uint8Array([Number(n)])
@@ -69,7 +69,7 @@ export declare namespace toBytes {
  * @param value - The integer to encode.
  * @returns The CompactSize-encoded hex string.
  */
-export function toHex(value: number | bigint): Hex.Hex {
+export function toHex(value: bigint): Hex.Hex {
   return Hex.fromBytes(toBytes(value))
 }
 
@@ -95,23 +95,22 @@ export function fromBytes(data: Bytes.Bytes): fromBytes.ReturnType {
   if (data.length === 0)
     throw new InsufficientBytesError({ expected: 1, actual: 0 })
   const first = data[0]!
-  if (first < 0xfd) return { value: first, size: 1 }
+  if (first < 0xfd) return { value: BigInt(first), size: 1 }
   const view = new DataView(data.buffer, data.byteOffset)
   if (first === 0xfd) {
     if (data.length < 3)
       throw new InsufficientBytesError({ expected: 3, actual: data.length })
-    return { value: view.getUint16(1, true), size: 3 }
+    return { value: BigInt(view.getUint16(1, true)), size: 3 }
   }
   if (first === 0xfe) {
     if (data.length < 5)
       throw new InsufficientBytesError({ expected: 5, actual: data.length })
-    return { value: view.getUint32(1, true), size: 5 }
+    return { value: BigInt(view.getUint32(1, true)), size: 5 }
   }
   if (data.length < 9)
     throw new InsufficientBytesError({ expected: 9, actual: data.length })
-  const big = view.getBigUint64(1, true)
   return {
-    value: big <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(big) : big,
+    value: view.getBigUint64(1, true),
     size: 9,
   }
 }
@@ -119,7 +118,7 @@ export function fromBytes(data: Bytes.Bytes): fromBytes.ReturnType {
 export declare namespace fromBytes {
   type ReturnType = {
     /** The decoded integer value. */
-    value: number | bigint
+    value: bigint
     /** The number of bytes consumed. */
     size: number
   }
