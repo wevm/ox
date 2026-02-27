@@ -16,17 +16,13 @@ describe('format', () => {
   test('zone address (zone ID = 1)', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 1 }),
-    ).toMatchInlineSnapshot(
-      `"tempoz1q96z6dwvvc6vq5efyk3ms39une6etu4a9zeqtx3q"`,
-    )
+    ).toMatchInlineSnapshot(`"tempoz1q96z6dwvvc6vq5efyk3ms39une6etu4a9zeqtx3q"`)
   })
 
   test('zone address (zone ID = 252)', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 252 }),
-    ).toMatchInlineSnapshot(
-      `"tempoz1l36z6dwvvc6vq5efyk3ms39une6etu4a9z8vgw44"`,
-    )
+    ).toMatchInlineSnapshot(`"tempoz1l36z6dwvvc6vq5efyk3ms39une6etu4a9z8vgw44"`)
   })
 
   test('zone address (zone ID = 253)', () => {

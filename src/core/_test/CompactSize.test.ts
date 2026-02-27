@@ -75,9 +75,7 @@ describe('toBytes', () => {
   })
 
   test('error: negative value', () => {
-    expect(() =>
-      CompactSize.toBytes(-1),
-    ).toThrowErrorMatchingInlineSnapshot(
+    expect(() => CompactSize.toBytes(-1)).toThrowErrorMatchingInlineSnapshot(
       `[CompactSize.NegativeValueError: CompactSize value must be non-negative, got -1.]`,
     )
   })
