@@ -843,7 +843,7 @@ describe('behavior: keyAuthorization', () => {
 
     const signature = Secp256k1.sign({
       payload: TxEnvelopeTempo.getSignPayload(transaction, {
-        from: root.address,
+        from: keychainVersion === 'v2' ? root.address : undefined,
       }),
       privateKey: access.privateKey,
     })
@@ -985,7 +985,7 @@ describe('behavior: keyAuthorization', () => {
 
       const signature = Secp256k1.sign({
         payload: TxEnvelopeTempo.getSignPayload(transaction, {
-          from: root.address,
+          from: keychainVersion === 'v2' ? root.address : undefined,
         }),
         privateKey: access.privateKey,
       })
@@ -1056,7 +1056,7 @@ describe('behavior: keyAuthorization', () => {
 
     const signature = P256.sign({
       payload: TxEnvelopeTempo.getSignPayload(transaction, {
-        from: root.address,
+        from: keychainVersion === 'v2' ? root.address : undefined,
       }),
       privateKey: access.privateKey,
     })
@@ -1204,7 +1204,7 @@ describe('behavior: keyAuthorization', () => {
 
       const signature = P256.sign({
         payload: TxEnvelopeTempo.getSignPayload(transaction, {
-          from: root.address,
+          from: keychainVersion === 'v2' ? root.address : undefined,
         }),
         privateKey: access.privateKey,
       })
@@ -1278,7 +1278,7 @@ describe('behavior: keyAuthorization', () => {
 
     const signature = await WebCryptoP256.sign({
       payload: TxEnvelopeTempo.getSignPayload(transaction, {
-        from: root.address,
+        from: keychainVersion === 'v2' ? root.address : undefined,
       }),
       privateKey: keyPair.privateKey,
     })
@@ -1387,7 +1387,7 @@ describe('behavior: keyAuthorization', () => {
 
       const signature = await WebCryptoP256.sign({
         payload: TxEnvelopeTempo.getSignPayload(transaction, {
-          from: root.address,
+          from: keychainVersion === 'v2' ? root.address : undefined,
         }),
         privateKey: keyPair.privateKey,
       })
@@ -1469,7 +1469,7 @@ describe('behavior: keyAuthorization', () => {
 
     const signature = P256.sign({
       payload: TxEnvelopeTempo.getSignPayload(transaction, {
-        from: root.address,
+        from: keychainVersion === 'v2' ? root.address : undefined,
       }),
       privateKey: access.privateKey,
     })
@@ -1566,7 +1566,7 @@ describe('behavior: keyAuthorization', () => {
 
     const signature = Secp256k1.sign({
       payload: TxEnvelopeTempo.getSignPayload(transaction, {
-        from: root.address,
+        from: keychainVersion === 'v2' ? root.address : undefined,
       }),
       privateKey: access.privateKey,
     })
@@ -1653,7 +1653,7 @@ describe('behavior: keyAuthorization', () => {
 
     const signature = Secp256k1.sign({
       payload: TxEnvelopeTempo.getSignPayload(transaction, {
-        from: root.address,
+        from: keychainVersion === 'v2' ? root.address : undefined,
       }),
       privateKey: access.privateKey,
     })
