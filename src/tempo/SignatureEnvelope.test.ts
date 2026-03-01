@@ -50,16 +50,19 @@ const signature_webauthn = SignatureEnvelope.from({
 const signature_keychain_secp256k1 = SignatureEnvelope.from({
   userAddress: '0x1234567890123456789012345678901234567890',
   inner: SignatureEnvelope.from(signature_secp256k1),
+  version: 'v2',
 })
 
 const signature_keychain_p256 = SignatureEnvelope.from({
   userAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
   inner: signature_p256,
+  version: 'v2',
 })
 
 const signature_keychain_webauthn = SignatureEnvelope.from({
   userAddress: '0xfedcbafedcbafedcbafedcbafedcbafedcbafedc',
   inner: signature_webauthn,
+  version: 'v2',
 })
 
 describe('assert', () => {
@@ -509,7 +512,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize('0xdeadbeef'),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256) or 0x02 (WebAuthn)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), or 0x04 (Keychain V2)
 
         Serialized: 0xdeadbeef]
       `,
@@ -669,7 +672,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize(unknownType),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256) or 0x02 (WebAuthn)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), or 0x04 (Keychain V2)
 
         Serialized: 0xff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
       `,
@@ -712,6 +715,7 @@ describe('deserialize', () => {
           },
           "type": "keychain",
           "userAddress": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+          "version": "v2",
         }
       `)
     })
@@ -742,6 +746,7 @@ describe('deserialize', () => {
           },
           "type": "keychain",
           "userAddress": "0xfedcbafedcbafedcbafedcbafedcbafedcbafedc",
+          "version": "v2",
         }
       `)
     })
@@ -1250,8 +1255,8 @@ describe('serialize', () => {
       // Should be: 1 (type) + 20 (address) + 65 (secp256k1 signature)
       expect(Hex.size(serialized)).toBe(1 + 20 + 65)
 
-      // First byte should be Keychain type identifier (0x03)
-      expect(Hex.slice(serialized, 0, 1)).toBe('0x03')
+      // First byte should be Keychain V2 type identifier (0x04)
+      expect(Hex.slice(serialized, 0, 1)).toBe('0x04')
 
       // Next 20 bytes should be the user address (without '0x')
       expect(Hex.slice(serialized, 1, 21)).toBe(
@@ -1265,8 +1270,8 @@ describe('serialize', () => {
       // Should be: 1 (type) + 20 (address) + 130 (p256 signature with type)
       expect(Hex.size(serialized)).toBe(1 + 20 + 130)
 
-      // First byte should be Keychain type identifier (0x03)
-      expect(Hex.slice(serialized, 0, 1)).toBe('0x03')
+      // First byte should be Keychain V2 type identifier (0x04)
+      expect(Hex.slice(serialized, 0, 1)).toBe('0x04')
 
       // Next 20 bytes should be the user address (without '0x')
       expect(Hex.slice(serialized, 1, 21)).toBe(
@@ -1284,8 +1289,8 @@ describe('serialize', () => {
         signature_keychain_webauthn,
       )
 
-      // First byte should be Keychain type identifier (0x03)
-      expect(Hex.slice(serialized, 0, 1)).toBe('0x03')
+      // First byte should be Keychain V2 type identifier (0x04)
+      expect(Hex.slice(serialized, 0, 1)).toBe('0x04')
 
       // Should contain the user address
       expect(Hex.slice(serialized, 1, 21)).toBe(
@@ -1519,6 +1524,7 @@ describe('serialize', () => {
             },
             "type": "keychain",
             "userAddress": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+            "version": "v2",
           }
         `)
       })
@@ -1549,6 +1555,7 @@ describe('serialize', () => {
             },
             "type": "keychain",
             "userAddress": "0xfedcbafedcbafedcbafedcbafedcbafedcbafedc",
+            "version": "v2",
           }
         `)
       })

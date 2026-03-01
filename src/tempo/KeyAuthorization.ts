@@ -34,8 +34,8 @@ export type KeyAuthorization<
 > = {
   /** Address derived from the public key of the key type. */
   address: Address.Address
-  /** Chain ID for replay protection (0 = valid on any chain). */
-  chainId?: bigintType | undefined
+  /** Chain ID for replay protection. */
+  chainId: bigintType
   /** Unix timestamp when key expires (0 = never expires). */
   expiry?: numberType | null | undefined
   /** TIP20 spending limits for this key. */
@@ -136,6 +136,7 @@ export type TokenLimit<bigintType = bigint> = {
  *
  * const authorization = KeyAuthorization.from({
  *   address,
+ *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
@@ -157,6 +158,7 @@ export type TokenLimit<bigintType = bigint> = {
  *
  * const authorization = KeyAuthorization.from({
  *   address,
+ *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
@@ -181,6 +183,7 @@ export type TokenLimit<bigintType = bigint> = {
  *
  * const authorization = KeyAuthorization.from({
  *   address,
+ *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
@@ -214,6 +217,7 @@ export type TokenLimit<bigintType = bigint> = {
  *
  * const authorization = KeyAuthorization.from({
  *   address,
+ *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
@@ -313,7 +317,7 @@ export declare namespace from {
  * @returns A signed {@link ox#AuthorizationTempo.AuthorizationTempo}.
  */
 export function fromRpc(authorization: Rpc): Signed {
-  const { chainId = '0x0', keyId, expiry = 0, limits, keyType } = authorization
+  const { chainId, keyId, expiry = 0, limits, keyType } = authorization
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   return {
     address: keyId,
@@ -393,7 +397,7 @@ export function fromTuple<const tuple extends Tuple>(
     address: keyId,
     expiry: typeof expiry !== 'undefined' ? hexToNumber(expiry) : undefined,
     type: keyType,
-    ...(chainId !== '0x' ? { chainId: Hex.toBigInt(chainId) } : {}),
+    chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
     ...(typeof expiry !== 'undefined' ? { expiry: hexToNumber(expiry) } : {}),
     ...(typeof limits !== 'undefined'
       ? {
@@ -436,6 +440,7 @@ export declare namespace fromTuple {
  *
  * const authorization = KeyAuthorization.from({
  *   address,
+ *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
@@ -467,8 +472,9 @@ export declare namespace getSignPayload {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   expiry: 1234567890,
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 4217n,
+ *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
@@ -504,8 +510,9 @@ export declare namespace deserialize {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   expiry: 1234567890,
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 4217n,
+ *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
@@ -543,8 +550,9 @@ export declare namespace hash {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   expiry: 1234567890,
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 4217n,
+ *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
@@ -579,8 +587,9 @@ export declare namespace serialize {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.toRpc({
- *   expiry: 1234567890,
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 4217n,
+ *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
@@ -601,14 +610,7 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: Signed): Rpc {
-  const {
-    address,
-    chainId = 0n,
-    expiry,
-    limits,
-    type,
-    signature,
-  } = authorization
+  const { address, chainId, expiry, limits, type, signature } = authorization
 
   return {
     chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
@@ -636,8 +638,9 @@ export declare namespace toRpc {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   expiry: 1234567890,
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 4217n,
+ *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
  *     token: '0x20c0000000000000000000000000000000000001',
@@ -660,7 +663,7 @@ export declare namespace toRpc {
 export function toTuple<const authorization extends KeyAuthorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
-  const { address, chainId = 0n, expiry, limits } = authorization
+  const { address, chainId, expiry, limits } = authorization
   const signature = authorization.signature
     ? SignatureEnvelope.serialize(authorization.signature)
     : undefined

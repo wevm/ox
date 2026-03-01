@@ -164,6 +164,7 @@ describe('fromRpc', () => {
         },
       ],
       keyAuthorization: {
+        chainId: '0x1',
         expiry: '0xffffffffffff',
         keyId: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
         keyType: 'secp256k1',
@@ -224,7 +225,7 @@ describe('fromRpc', () => {
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
         "keyAuthorization": {
           "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-          "chainId": 0n,
+          "chainId": 1n,
           "expiry": 281474976710655,
           "limits": [
             {
@@ -431,6 +432,7 @@ describe('toRpc', () => {
       data: undefined,
       keyAuthorization: {
         address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        chainId: 1n,
         expiry: 281474976710655,
         type: 'secp256k1',
         limits: [
@@ -487,7 +489,7 @@ describe('toRpc', () => {
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
         "input": undefined,
         "keyAuthorization": {
-          "chainId": "0x",
+          "chainId": "0x1",
           "expiry": "0xffffffffffff",
           "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
           "keyType": "secp256k1",
