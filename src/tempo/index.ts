@@ -121,6 +121,29 @@ export * as PoolId from './PoolId.js'
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
 
+
+/**
+ * Tempo address encoding/decoding utilities for human-readable addresses.
+ *
+ * Tempo addresses use a bech32 base32-encoded format with `tempo1` prefix for mainnet
+ * and `tempoz1` prefix for zone addresses. Includes CompactSize zone ID encoding
+ * and double-SHA256 checksumming.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TempoAddress } from 'ox/tempo'
+ *
+ * const encoded = TempoAddress.format('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
+ * // @log: 'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg8zd8djs'
+ *
+ * const { address, zoneId } = TempoAddress.parse(encoded)
+ * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28' }
+ * ```
+ *
+ * @category Reference
+ */
+export * as TempoAddress from './TempoAddress.js'
+
 /**
  * Tick-based pricing utilities for DEX price conversions.
  *
