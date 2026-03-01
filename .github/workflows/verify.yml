@@ -71,7 +71,7 @@ jobs:
       matrix:
         tag: 
           - latest
-          - https://rpc.moderato.tempo.xyz
+          # - https://rpc.moderato.tempo.xyz
 
     steps:
       - name: Clone repository
