@@ -779,16 +779,67 @@ export declare namespace serialize {
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
  * ```
  *
+ * @example
+ * ### Access Keys
+ *
+ * When signing as an access key on behalf of a root account, pass the
+ * `from` option with the root account address. This computes
+ * `keccak256(0x04 || sigHash || from)` which binds the signature to the
+ * specific user account (V2 keychain format).
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Secp256k1 } from 'ox'
+ * import { TxEnvelopeTempo, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const envelope = TxEnvelopeTempo.from({
+ *   chainId: 1,
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   }],
+ *   nonce: 0n,
+ *   maxFeePerGas: 1000000000n,
+ *   gas: 21000n,
+ * })
+ *
+ * const payload = TxEnvelopeTempo.getSignPayload(envelope, { from: '0x...' }) // [!code focus]
+ *
+ * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ *
+ * const signed = TxEnvelopeTempo.serialize(envelope, {
+ *   signature: SignatureEnvelope.from({
+ *     userAddress: from,
+ *     inner: SignatureEnvelope.from(signature),
+ *   }),
+ * })
+ * ```
+ *
  * @param envelope - The transaction envelope to get the sign payload for.
+ * @param options - Options.
  * @returns The sign payload.
  */
 export function getSignPayload(
   envelope: TxEnvelopeTempo,
+  options: getSignPayload.Options = {},
 ): getSignPayload.ReturnValue {
-  return hash(envelope, { presign: true })
+  const sigHash = hash(envelope, { presign: true })
+  if (options.from)
+    return Hash.keccak256(Hex.concat('0x04', sigHash, options.from))
+  return sigHash
 }
 
 export declare namespace getSignPayload {
+  type Options = {
+    /**
+     * The root account address for access key signing.
+     *
+     * When provided, computes `keccak256(0x04 || sigHash || from)` instead of
+     * the raw `sigHash`, binding the access key signature to the specific user account.
+     */
+    from?: Address.Address | undefined
+  }
+
   type ReturnValue = Hex.Hex
 
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType
