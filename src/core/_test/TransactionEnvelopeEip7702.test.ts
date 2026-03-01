@@ -732,7 +732,7 @@ describe('serialize', () => {
     )
   })
 
-  test('behavior: network', { timeout: 60_000 }, async () => {
+  test('behavior: network', async () => {
     const authority = accounts[0]
     const delegate = accounts[1]
 
