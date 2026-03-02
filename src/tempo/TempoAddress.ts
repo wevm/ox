@@ -16,7 +16,7 @@ export type TempoAddress = `tempo1${string}` | `tempoz1${string}`
  * import { TempoAddress } from 'ox/tempo'
  *
  * const address = TempoAddress.format('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
- * // @log: 'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg0hlz9j'
+ * // @log: 'tempo1qp6z6dwvvc6vq5efyk3ms39une6etu4a9qtj2kk0'
  * ```
  *
  * @example
@@ -28,7 +28,7 @@ export type TempoAddress = `tempo1${string}` | `tempoz1${string}`
  *   '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28',
  *   { zoneId: 1 },
  * )
- * // @log: 'tempoz1q96z6dwvvc6vq5efyk3ms39une6etu4a9q2zvzv5'
+ * // @log: 'tempoz1qqqhgtf4e3nrfszn9yj68wzyhj08t90jh55q74d9uj'
  * ```
  *
  * @param address - The raw 20-byte Ethereum address.
@@ -42,8 +42,9 @@ export function format(
   const { zoneId } = options
 
   const hrp = zoneId != null ? 'tempoz' : 'tempo'
+  const version = new Uint8Array([0x00])
   const zone = zoneId != null ? CompactSize.toBytes(zoneId) : new Uint8Array()
-  const data = Bytes.concat(zone, Bytes.fromHex(address))
+  const data = Bytes.concat(version, zone, Bytes.fromHex(address))
 
   return Bech32m.encode(hrp, data) as TempoAddress
 }
@@ -66,7 +67,7 @@ export declare namespace format {
  * import { TempoAddress } from 'ox/tempo'
  *
  * const result = TempoAddress.parse(
- *   'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg0hlz9j',
+ *   'tempo1qp6z6dwvvc6vq5efyk3ms39une6etu4a9qtj2kk0',
  * )
  * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28', zoneId: undefined }
  * ```
@@ -77,7 +78,7 @@ export declare namespace format {
  * import { TempoAddress } from 'ox/tempo'
  *
  * const result = TempoAddress.parse(
- *   'tempoz1q96z6dwvvc6vq5efyk3ms39une6etu4a9q2zvzv5',
+ *   'tempoz1qqqhgtf4e3nrfszn9yj68wzyhj08t90jh55q74d9uj',
  * )
  * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28', zoneId: 1 }
  * ```
@@ -99,15 +100,23 @@ export function parse(tempoAddress: string): parse.ReturnType {
   if (hrp !== 'tempo' && hrp !== 'tempoz')
     throw new InvalidPrefixError({ address: tempoAddress })
 
+  if (data.length < 1 || data[0] !== 0x00)
+    throw new InvalidVersionError({
+      address: tempoAddress,
+      version: data.length > 0 ? data[0]! : undefined,
+    })
+
+  const payload = data.slice(1)
+
   let zoneId: number | bigint | undefined
   let rawAddress: Uint8Array
   if (hrp === 'tempoz') {
-    const { value, size } = CompactSize.fromBytes(data)
+    const { value, size } = CompactSize.fromBytes(payload)
     zoneId = value
-    rawAddress = data.slice(size)
+    rawAddress = payload.slice(size)
   } else {
     zoneId = undefined
-    rawAddress = data
+    rawAddress = payload
   }
 
   if (rawAddress.length !== 20)
@@ -117,9 +126,7 @@ export function parse(tempoAddress: string): parse.ReturnType {
       actual: rawAddress.length,
     })
 
-  const address = Address.checksum(
-    Hex.fromBytes(rawAddress) as Address.Address,
-  )
+  const address = Address.checksum(Hex.fromBytes(rawAddress) as Address.Address)
 
   return { address, zoneId }
 }
@@ -134,6 +141,7 @@ export declare namespace parse {
 
   type ErrorType =
     | InvalidPrefixError
+    | InvalidVersionError
     | InvalidLengthError
     | InvalidChecksumError
     | Errors.GlobalErrorType
@@ -147,7 +155,7 @@ export declare namespace parse {
  * import { TempoAddress } from 'ox/tempo'
  *
  * const valid = TempoAddress.validate(
- *   'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg0hlz9j',
+ *   'tempo1qp6z6dwvvc6vq5efyk3ms39une6etu4a9qtj2kk0',
  * )
  * // @log: true
  * ```
@@ -171,6 +179,20 @@ export class InvalidPrefixError extends Errors.BaseError {
   constructor({ address }: { address: string }) {
     super(
       `Tempo address "${address}" has an invalid prefix. Expected "tempo1" or "tempoz1".`,
+    )
+  }
+}
+
+/** Thrown when a Tempo address has an unsupported version byte. */
+export class InvalidVersionError extends Errors.BaseError {
+  override readonly name = 'TempoAddress.InvalidVersionError'
+
+  constructor({
+    address,
+    version,
+  }: { address: string; version: number | undefined }) {
+    super(
+      `Tempo address "${address}" has unsupported version ${version === undefined ? '(missing)' : `0x${version.toString(16).padStart(2, '0')}`}. Only version 0x00 is supported.`,
     )
   }
 }

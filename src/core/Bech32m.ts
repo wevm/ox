@@ -16,8 +16,26 @@ import { BaseError } from './Errors.js'
  * @param data - The data bytes to encode.
  * @returns The bech32m-encoded string.
  */
-export function encode(hrp: string, data: Uint8Array): string {
+export function encode(
+  hrp: string,
+  data: Uint8Array,
+  options: encode.Options = {},
+): string {
+  const { limit = 90 } = options
+
+  hrp = hrp.toLowerCase()
+
+  if (hrp.length === 0) throw new InvalidHrpError()
+  for (let i = 0; i < hrp.length; i++) {
+    const c = hrp.charCodeAt(i)
+    if (c < 33 || c > 126) throw new InvalidHrpError()
+  }
+
   const data5 = convertBits(data, 8, 5, true)
+
+  if (hrp.length + 1 + data5.length + 6 > limit)
+    throw new ExceedsLengthError({ limit })
+
   const checksum = createChecksum(hrp, data5)
   let result = hrp + '1'
   for (const d of data5.concat(checksum)) result += alphabet[d]
@@ -25,7 +43,15 @@ export function encode(hrp: string, data: Uint8Array): string {
 }
 
 export declare namespace encode {
-  type ErrorType = Errors.GlobalErrorType
+  type Options = {
+    /** Maximum length of the encoded string. @default 90 */
+    limit?: number | undefined
+  }
+
+  type ErrorType =
+    | InvalidHrpError
+    | ExceedsLengthError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -42,13 +68,29 @@ export declare namespace encode {
  * @param str - The bech32m-encoded string to decode.
  * @returns The decoded HRP and data bytes.
  */
-export function decode(str: string): decode.ReturnType {
+export function decode(
+  str: string,
+  options: decode.Options = {},
+): decode.ReturnType {
+  const { limit = 90 } = options
+
+  if (str.length > limit) throw new ExceedsLengthError({ limit })
+
+  if (str !== str.toLowerCase() && str !== str.toUpperCase())
+    throw new MixedCaseError()
+
   const lower = str.toLowerCase()
   const pos = lower.lastIndexOf('1')
-  if (pos < 1) throw new NoSeparatorError()
+  if (pos === -1) throw new NoSeparatorError()
+  if (pos === 0) throw new InvalidHrpError()
   if (pos + 7 > lower.length) throw new InvalidChecksumError()
 
   const hrp = lower.slice(0, pos)
+  for (let i = 0; i < hrp.length; i++) {
+    const c = hrp.charCodeAt(i)
+    if (c < 33 || c > 126) throw new InvalidHrpError()
+  }
+
   const dataChars = lower.slice(pos + 1)
 
   const data5: number[] = []
@@ -65,6 +107,11 @@ export function decode(str: string): decode.ReturnType {
 }
 
 export declare namespace decode {
+  type Options = {
+    /** Maximum length of the encoded string. @default 90 */
+    limit?: number | undefined
+  }
+
   type ReturnType = {
     /** The human-readable part. */
     hrp: string
@@ -77,6 +124,9 @@ export declare namespace decode {
     | InvalidChecksumError
     | InvalidCharacterError
     | InvalidPaddingError
+    | MixedCaseError
+    | InvalidHrpError
+    | ExceedsLengthError
     | Errors.GlobalErrorType
 }
 
@@ -109,6 +159,32 @@ export class InvalidPaddingError extends BaseError {
   override readonly name = 'Bech32m.InvalidPaddingError'
   constructor() {
     super('Invalid padding in bech32m data.')
+  }
+}
+
+/** Thrown when a bech32m string contains mixed case. */
+export class MixedCaseError extends BaseError {
+  override readonly name = 'Bech32m.MixedCaseError'
+  constructor() {
+    super('Bech32m string must not contain mixed case.')
+  }
+}
+
+/** Thrown when the HRP is invalid (empty or contains non-ASCII characters). */
+export class InvalidHrpError extends BaseError {
+  override readonly name = 'Bech32m.InvalidHrpError'
+  constructor() {
+    super(
+      'Invalid bech32m human-readable part (HRP). Must be 1+ characters in ASCII range 33-126.',
+    )
+  }
+}
+
+/** Thrown when the encoded string exceeds the length limit. */
+export class ExceedsLengthError extends BaseError {
+  override readonly name = 'Bech32m.ExceedsLengthError'
+  constructor({ limit }: { limit: number }) {
+    super(`Bech32m string exceeds length limit of ${limit}.`)
   }
 }
 
