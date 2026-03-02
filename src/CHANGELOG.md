@@ -1,5 +1,24 @@
 # ox
 
+## 0.14.0
+
+### Minor Changes
+
+- [#178](https://github.com/wevm/ox/pull/178) [`4a79ac5`](https://github.com/wevm/ox/commit/4a79ac540c05796ebc92a0d54ce0049a6ff5e195) Thanks [@jxom](https://github.com/jxom)! - **Breaking (`ox/tempo`):** `KeyAuthorization.chainId` is now required.
+
+  ```diff
+   const authorization = KeyAuthorization.from({
+     address,
+  +  chainId: 1n,
+     expiry: 1234567890,
+     type: 'secp256k1',
+   })
+  ```
+
+### Patch Changes
+
+- [#178](https://github.com/wevm/ox/pull/178) [`4a79ac5`](https://github.com/wevm/ox/commit/4a79ac540c05796ebc92a0d54ce0049a6ff5e195) Thanks [@jxom](https://github.com/jxom)! - **`ox/tempo`:** Added support for V2 keychain signature type (`0x04`) which binds the inner signature to the user account via `keccak256(0x04 || sigHash || userAddress)`.
+
 ## 0.13.2
 
 ### Patch Changes

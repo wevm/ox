@@ -48,10 +48,7 @@ export declare namespace encode {
     limit?: number | undefined
   }
 
-  type ErrorType =
-    | InvalidHrpError
-    | ExceedsLengthError
-    | Errors.GlobalErrorType
+  type ErrorType = InvalidHrpError | ExceedsLengthError | Errors.GlobalErrorType
 }
 
 /**

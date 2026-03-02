@@ -48,9 +48,9 @@ describe('encode', () => {
   })
 
   test('error: exceeds length limit', () => {
-    expect(() =>
-      Bech32m.encode('test', new Uint8Array(100)),
-    ).toThrow(Bech32m.ExceedsLengthError)
+    expect(() => Bech32m.encode('test', new Uint8Array(100))).toThrow(
+      Bech32m.ExceedsLengthError,
+    )
   })
 
   test('custom limit', () => {
@@ -166,21 +166,15 @@ describe('BIP-350 valid bech32m vectors', () => {
 
 describe('BIP-350 invalid bech32m vectors', () => {
   test('HRP character out of range (0x20 space)', () => {
-    expect(() => Bech32m.decode('\x201xj0phk')).toThrow(
-      Bech32m.InvalidHrpError,
-    )
+    expect(() => Bech32m.decode('\x201xj0phk')).toThrow(Bech32m.InvalidHrpError)
   })
 
   test('HRP character out of range (0x7F DEL)', () => {
-    expect(() => Bech32m.decode('\x7f1g6xzxy')).toThrow(
-      Bech32m.InvalidHrpError,
-    )
+    expect(() => Bech32m.decode('\x7f1g6xzxy')).toThrow(Bech32m.InvalidHrpError)
   })
 
   test('HRP character out of range (0x80)', () => {
-    expect(() => Bech32m.decode('\x801vctc34')).toThrow(
-      Bech32m.InvalidHrpError,
-    )
+    expect(() => Bech32m.decode('\x801vctc34')).toThrow(Bech32m.InvalidHrpError)
   })
 
   test('overall max length exceeded', () => {
