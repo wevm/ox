@@ -25,7 +25,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 252 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1ql3p6z6dwvvc6vq5efyk3ms39une6etu4a9qlxyrz8"`,
+      `"tempoz1qr78gtf4e3nrfszn9yj68wzyhj08t90jh55q9k62jd"`,
     )
   })
 
@@ -33,7 +33,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 253 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1qlh7sqm5956uce35cpfjjfdrhpzte8n4jhet62qkjqglx"`,
+      `"tempoz1qr7l6qr5956uce35cpfjjfdrhpzte8n4jhet62q0j8hus"`,
     )
   })
 
@@ -41,7 +41,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 65535 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1qlhll7m5956uce35cpfjjfdrhpzte8n4jhet62qw0zzjm"`,
+      `"tempoz1qr7lllm5956uce35cpfjjfdrhpzte8n4jhet62q8pdj6j"`,
     )
   })
 
@@ -49,7 +49,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 65536 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1qlcqqqqgqp6z6dwvvc6vq5efyk3ms39une6etu4a9q0eqe48"`,
+      `"tempoz1qrlqqqqpqp6z6dwvvc6vq5efyk3ms39une6etu4a9qdupk5c"`,
     )
   })
 
@@ -57,7 +57,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: 4294967295 }),
     ).toMatchInlineSnapshot(
-      `"tempoz1qlmllllllp6z6dwvvc6vq5efyk3ms39une6etu4a9qefqdy5"`,
+      `"tempoz1qrl0llllla6z6dwvvc6vq5efyk3ms39une6etu4a9qnk36qy"`,
     )
   })
 
@@ -65,7 +65,7 @@ describe('format', () => {
     expect(
       TempoAddress.format(rawAddress, { zoneId: BigInt('4294967296') }),
     ).toMatchInlineSnapshot(
-      `"tempoz1qluqqqqqqqyqqqqr5956uce35cpfjjfdrhpzte8n4jhet62qywqajg"`,
+      `"tempoz1qrlsqqqqqqqsqqqqwskntnrxxnq9x2f95wuyf0y7wk2l90fg4306kk"`,
     )
   })
 
