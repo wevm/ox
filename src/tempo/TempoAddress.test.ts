@@ -87,7 +87,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 1,
+        "zoneId": 1n,
       }
     `)
   })
@@ -97,7 +97,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 252,
+        "zoneId": 252n,
       }
     `)
   })
@@ -107,7 +107,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 253,
+        "zoneId": 253n,
       }
     `)
   })
@@ -117,7 +117,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 65535,
+        "zoneId": 65535n,
       }
     `)
   })
@@ -127,7 +127,7 @@ describe('parse', () => {
     expect(TempoAddress.parse(encoded)).toMatchInlineSnapshot(`
       {
         "address": "0x742d35CC6634c0532925a3B844bc9e7595F2Bd28",
-        "zoneId": 65536,
+        "zoneId": 65536n,
       }
     `)
   })
@@ -144,9 +144,9 @@ describe('parse', () => {
     `)
   })
 
-  test('case insensitive', () => {
+  test('all uppercase', () => {
     const encoded = TempoAddress.format(rawAddress)
-    const upper = encoded.slice(0, 6) + encoded.slice(6).toUpperCase()
+    const upper = encoded.toUpperCase()
     expect(TempoAddress.parse(upper).address).toBe(rawAddress)
   })
 
