@@ -862,7 +862,6 @@ export * as Authorization from './core/Authorization.js'
  * @category Data
  */
 export * as Base32 from './core/Base32.js'
-
 /**
  * Utility functions for working with [Base58](https://digitalbazaar.github.io/base58-spec/) values.
  *
@@ -917,7 +916,6 @@ export * as Base32 from './core/Base32.js'
  * @category Data
  */
 export * as Base58 from './core/Base58.js'
-
 /**
  * Utility functions for working with [RFC-4648](https://datatracker.ietf.org/doc/html/rfc4648) Base64.
  *
@@ -971,6 +969,30 @@ export * as Base58 from './core/Base58.js'
  * @category Data
  */
 export * as Base64 from './core/Base64.js'
+/**
+ * Utility functions for [BIP-350](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki) bech32m encoding and decoding.
+ *
+ * @example
+ * ### Encoding
+ *
+ * ```ts twoslash
+ * import { Bech32m } from 'ox'
+ *
+ * const encoded = Bech32m.encode('tempo', new Uint8Array(20))
+ * ```
+ *
+ * @example
+ * ### Decoding
+ *
+ * ```ts twoslash
+ * import { Bech32m } from 'ox'
+ *
+ * const { hrp, data } = Bech32m.decode('tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq7w9gdx')
+ * ```
+ *
+ * @category Data
+ */
+export * as Bech32m from './core/Bech32m.js'
 
 /**
  * Utility functions for working with [EIP-7864](https://eips.ethereum.org/EIPS/eip-7864) Binary State Trees.
