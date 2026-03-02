@@ -120,6 +120,7 @@ export * as PoolId from './PoolId.js'
  * @category Reference
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
+
 /**
  * Tempo address encoding/decoding utilities for human-readable addresses.
  *
@@ -141,6 +142,7 @@ export * as SignatureEnvelope from './SignatureEnvelope.js'
  * @category Reference
  */
 export * as TempoAddress from './TempoAddress.js'
+
 /**
  * Tick-based pricing utilities for DEX price conversions.
  *
@@ -161,6 +163,7 @@ export * as TempoAddress from './TempoAddress.js'
  * @category Reference
  */
 export * as Tick from './Tick.js'
+
 /**
  * TIP-20 token ID utilities for converting between token IDs and addresses.
  *
@@ -182,6 +185,7 @@ export * as Tick from './Tick.js'
  * @category Reference
  */
 export * as TokenId from './TokenId.js'
+
 /**
  * Token role utilities for serializing role identifiers to keccak256 hashes.
  *

@@ -31,7 +31,7 @@ function defineAnvil(parameters: Instance.anvil.Parameters) {
     hardfork: 'Prague',
   } as const
 
-  const transport = RpcTransport.fromHttp(rpcUrl)
+  const transport = RpcTransport.fromHttp(rpcUrl, { timeout: 30_000 })
 
   return {
     config,

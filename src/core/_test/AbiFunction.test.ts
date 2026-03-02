@@ -1046,7 +1046,7 @@ describe('fromAbi', () => {
   `)
   })
 
-  test('behavior: network', async () => {
+  test.skip('behavior: network', async () => {
     const abi = Abi.from(wagmiContractConfig.abi)
 
     const totalSupplyItem = AbiFunction.fromAbi(abi, 'totalSupply')

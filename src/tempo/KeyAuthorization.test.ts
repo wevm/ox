@@ -56,6 +56,7 @@ describe('from', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -69,6 +70,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -85,6 +87,7 @@ describe('from', () => {
     const authorization = KeyAuthorization.from(
       {
         address,
+        chainId: 1n,
         expiry,
         type: 'secp256k1',
         limits: [
@@ -102,6 +105,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -126,6 +130,7 @@ describe('from', () => {
     const authorization = KeyAuthorization.from(
       {
         address,
+        chainId: 1n,
         expiry,
         type: 'secp256k1',
         limits: [
@@ -143,6 +148,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -167,6 +173,7 @@ describe('from', () => {
     const authorization = KeyAuthorization.from(
       {
         address,
+        chainId: 1n,
         expiry,
         type: 'p256',
         limits: [
@@ -184,6 +191,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -214,6 +222,7 @@ describe('from', () => {
     const authorization = KeyAuthorization.from(
       {
         address,
+        chainId: 1n,
         expiry,
         type: 'webAuthn',
         limits: [
@@ -231,6 +240,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -263,6 +273,7 @@ describe('from', () => {
   test('with inline signature (secp256k1)', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -277,6 +288,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -301,6 +313,7 @@ describe('from', () => {
     const authorization = KeyAuthorization.from({
       expiry: Hex.fromNumber(expiry),
       keyId: address,
+      chainId: '0x1',
       keyType: 'secp256k1',
       limits: [{ token, limit: '0x989680' }],
       signature: {
@@ -314,7 +327,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 0n,
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -338,6 +351,7 @@ describe('from', () => {
   test('multiple limits', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -355,6 +369,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -374,6 +389,7 @@ describe('from', () => {
   test('zero expiry (never expires)', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry: 0,
       type: 'secp256k1',
       limits: [
@@ -387,6 +403,7 @@ describe('from', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+        "chainId": 1n,
         "expiry": 0,
         "limits": [
           {
@@ -403,6 +420,7 @@ describe('from', () => {
 describe('fromRpc', () => {
   test('secp256k1', () => {
     const authorization = KeyAuthorization.fromRpc({
+      chainId: '0x1',
       expiry: Hex.fromNumber(expiry),
       keyId: address,
       keyType: 'secp256k1',
@@ -418,7 +436,7 @@ describe('fromRpc', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 0n,
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -441,6 +459,7 @@ describe('fromRpc', () => {
 
   test('p256', () => {
     const authorization = KeyAuthorization.fromRpc({
+      chainId: '0x1',
       expiry: Hex.fromNumber(expiry),
       keyId: address,
       keyType: 'p256',
@@ -458,7 +477,7 @@ describe('fromRpc', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 0n,
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -486,6 +505,7 @@ describe('fromRpc', () => {
 
   test('webAuthn', () => {
     const authorization = KeyAuthorization.fromRpc({
+      chainId: '0x1',
       expiry: Hex.fromNumber(expiry),
       keyId: address,
       keyType: 'webAuthn',
@@ -496,7 +516,7 @@ describe('fromRpc', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 0n,
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -527,6 +547,7 @@ describe('fromRpc', () => {
 
   test('multiple limits', () => {
     const authorization = KeyAuthorization.fromRpc({
+      chainId: '0x1',
       expiry: Hex.fromNumber(expiry),
       keyId: address,
       keyType: 'secp256k1',
@@ -551,7 +572,7 @@ describe('fromRpc', () => {
     expect(authorization).toMatchInlineSnapshot(`
       {
         "address": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
-        "chainId": 0n,
+        "chainId": 1n,
         "expiry": 1234567890,
         "limits": [
           {
@@ -845,6 +866,7 @@ describe('getSignPayload', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -858,13 +880,14 @@ describe('getSignPayload', () => {
     const payload = KeyAuthorization.getSignPayload(authorization)
 
     expect(payload).toMatchInlineSnapshot(
-      `"0x6d56b62bb5e94ca0206340e4bc1ece5a35e7ad31c30c6b98074d146d5c5de993"`,
+      `"0x5a3a9a67cc6b68eafd00fe3ffb1ea8755ef29cfa1d1c2f655efa61966ef248f7"`,
     )
   })
 
   test('with signature (signature should be ignored)', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -880,13 +903,14 @@ describe('getSignPayload', () => {
 
     // Should be same as without signature
     expect(payload).toMatchInlineSnapshot(
-      `"0x6d56b62bb5e94ca0206340e4bc1ece5a35e7ad31c30c6b98074d146d5c5de993"`,
+      `"0x5a3a9a67cc6b68eafd00fe3ffb1ea8755ef29cfa1d1c2f655efa61966ef248f7"`,
     )
   })
 
   test('different key types', () => {
     const auth_secp256k1 = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [{ token, limit: Value.from('10', 6) }],
@@ -894,6 +918,7 @@ describe('getSignPayload', () => {
 
     const auth_p256 = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'p256',
       limits: [{ token, limit: Value.from('10', 6) }],
@@ -901,6 +926,7 @@ describe('getSignPayload', () => {
 
     const auth_webauthn = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'webAuthn',
       limits: [{ token, limit: Value.from('10', 6) }],
@@ -916,13 +942,13 @@ describe('getSignPayload', () => {
     expect(payload_p256).not.toBe(payload_webauthn)
 
     expect(payload_secp256k1).toMatchInlineSnapshot(
-      `"0x6d56b62bb5e94ca0206340e4bc1ece5a35e7ad31c30c6b98074d146d5c5de993"`,
+      `"0x5a3a9a67cc6b68eafd00fe3ffb1ea8755ef29cfa1d1c2f655efa61966ef248f7"`,
     )
     expect(payload_p256).toMatchInlineSnapshot(
-      `"0x70f1d02570bd5ec14701306f7c3fadf405911fcd585136d1d60f2e4eb689f602"`,
+      `"0x6807f3a5597cdc334568094bb2a884fd97cfa21ecb7a8034e7fabef32680e5fe"`,
     )
     expect(payload_webauthn).toMatchInlineSnapshot(
-      `"0xb69543e8899a3d0a0186e347df6589f47ea194b6bc3ac935225411b1ef2d4627"`,
+      `"0x576f0b2608ac4630b7f40f2b8571828e2e1e6f13ad9aca8c7ce53773407e9ce5"`,
     )
   })
 })
@@ -931,6 +957,7 @@ describe('deserialize', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -951,6 +978,7 @@ describe('deserialize', () => {
     const authorization = KeyAuthorization.from(
       {
         address,
+        chainId: 1n,
         expiry,
         type: 'secp256k1',
         limits: [
@@ -972,6 +1000,7 @@ describe('deserialize', () => {
   test('no limits', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
     })
@@ -985,6 +1014,7 @@ describe('deserialize', () => {
   test('no expiry', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       type: 'secp256k1',
     })
 
@@ -999,6 +1029,7 @@ describe('hash', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -1012,7 +1043,7 @@ describe('hash', () => {
     const hash = KeyAuthorization.hash(authorization)
 
     expect(hash).toMatchInlineSnapshot(
-      `"0x6d56b62bb5e94ca0206340e4bc1ece5a35e7ad31c30c6b98074d146d5c5de993"`,
+      `"0x5a3a9a67cc6b68eafd00fe3ffb1ea8755ef29cfa1d1c2f655efa61966ef248f7"`,
     )
   })
 })
@@ -1021,6 +1052,7 @@ describe('serialize', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -1034,7 +1066,7 @@ describe('serialize', () => {
     const serialized = KeyAuthorization.serialize(authorization)
 
     expect(serialized).toMatchInlineSnapshot(
-      `"0xf838f7808094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2dad99420c000000000000000000000000000000000000183989680"`,
+      `"0xf838f7018094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2dad99420c000000000000000000000000000000000000183989680"`,
     )
   })
 
@@ -1042,6 +1074,7 @@ describe('serialize', () => {
     const authorization = KeyAuthorization.from(
       {
         address,
+        chainId: 1n,
         expiry,
         type: 'secp256k1',
         limits: [
@@ -1063,6 +1096,7 @@ describe('serialize', () => {
   test('no limits', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
     })
@@ -1070,20 +1104,21 @@ describe('serialize', () => {
     const serialized = KeyAuthorization.serialize(authorization)
 
     expect(serialized).toMatchInlineSnapshot(
-      `"0xdddc808094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2"`,
+      `"0xdddc018094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c84499602d2"`,
     )
   })
 
   test('no expiry', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       type: 'secp256k1',
     })
 
     const serialized = KeyAuthorization.serialize(authorization)
 
     expect(serialized).toMatchInlineSnapshot(
-      `"0xd8d7808094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c"`,
+      `"0xd8d7018094be95c3f554e9fc85ec51be69a3d807a0d55bcf2c"`,
     )
   })
 })
@@ -1092,6 +1127,7 @@ describe('toRpc', () => {
   test('secp256k1', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -1111,7 +1147,7 @@ describe('toRpc', () => {
 
     expect(rpc).toMatchInlineSnapshot(`
       {
-        "chainId": "0x",
+        "chainId": "0x1",
         "expiry": "0x499602d2",
         "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "keyType": "secp256k1",
@@ -1134,6 +1170,7 @@ describe('toRpc', () => {
   test('p256', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'p256',
       limits: [
@@ -1149,7 +1186,7 @@ describe('toRpc', () => {
 
     expect(rpc).toMatchInlineSnapshot(`
       {
-        "chainId": "0x",
+        "chainId": "0x1",
         "expiry": "0x499602d2",
         "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "keyType": "p256",
@@ -1174,6 +1211,7 @@ describe('toRpc', () => {
   test('webAuthn', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'webAuthn',
       limits: [
@@ -1189,7 +1227,7 @@ describe('toRpc', () => {
 
     expect(rpc).toMatchInlineSnapshot(`
       {
-        "chainId": "0x",
+        "chainId": "0x1",
         "expiry": "0x499602d2",
         "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "keyType": "webAuthn",
@@ -1214,6 +1252,7 @@ describe('toRpc', () => {
   test('multiple limits', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -1233,7 +1272,7 @@ describe('toRpc', () => {
 
     expect(rpc).toMatchInlineSnapshot(`
       {
-        "chainId": "0x",
+        "chainId": "0x1",
         "expiry": "0x499602d2",
         "keyId": "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         "keyType": "secp256k1",
@@ -1322,6 +1361,7 @@ describe('toTuple', () => {
   test('default', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       type: 'secp256k1',
     })
 
@@ -1330,7 +1370,7 @@ describe('toTuple', () => {
     expect(tuple).toMatchInlineSnapshot(`
       [
         [
-          "0x",
+          "0x1",
           "0x",
           "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
         ],
@@ -1341,6 +1381,7 @@ describe('toTuple', () => {
   test('with signature (secp256k1)', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -1357,7 +1398,7 @@ describe('toTuple', () => {
     expect(tuple).toMatchInlineSnapshot(`
       [
         [
-          "0x",
+          "0x1",
           "0x",
           "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
           "0x499602d2",
@@ -1376,6 +1417,7 @@ describe('toTuple', () => {
   test('with signature (p256)', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'p256',
       limits: [
@@ -1392,7 +1434,7 @@ describe('toTuple', () => {
     expect(tuple).toMatchInlineSnapshot(`
       [
         [
-          "0x",
+          "0x1",
           "0x01",
           "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
           "0x499602d2",
@@ -1411,6 +1453,7 @@ describe('toTuple', () => {
   test('with signature (webAuthn)', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'webAuthn',
       limits: [
@@ -1427,7 +1470,7 @@ describe('toTuple', () => {
     expect(tuple).toMatchInlineSnapshot(`
       [
         [
-          "0x",
+          "0x1",
           "0x02",
           "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
           "0x499602d2",
@@ -1446,6 +1489,7 @@ describe('toTuple', () => {
   test('multiple limits', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -1465,7 +1509,7 @@ describe('toTuple', () => {
     expect(tuple).toMatchInlineSnapshot(`
       [
         [
-          "0x",
+          "0x1",
           "0x",
           "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
           "0x499602d2",
@@ -1521,6 +1565,7 @@ describe('toTuple', () => {
   test('zero spending limit roundtrips through RLP', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 0n,
       expiry,
       type: 'secp256k1',
       limits: [
@@ -1562,6 +1607,7 @@ describe('toTuple', () => {
   test('zero expiry roundtrips through RLP', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 0n,
       expiry: 0,
       type: 'secp256k1',
       limits: [
@@ -1603,6 +1649,7 @@ describe('toTuple', () => {
   test('hash works with zero spending limit', () => {
     const authorization = KeyAuthorization.from({
       address,
+      chainId: 1n,
       expiry,
       type: 'secp256k1',
       limits: [

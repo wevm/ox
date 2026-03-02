@@ -22,6 +22,7 @@ import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
 const serializedP256Type = '0x01'
 const serializedWebAuthnType = '0x02'
 const serializedKeychainType = '0x03'
+const serializedKeychainV2Type = '0x04'
 
 /** Serialized magic identifier for Tempo signature envelopes. */
 export const magicBytes =
@@ -86,9 +87,10 @@ export type GetType<
  *   and clientDataJSON. Enables browser passkey authentication. The signature is also
  *   charged as calldata (16 gas/non-zero byte, 4 gas/zero byte).
  *
- * - **keychain** (type `0x03`): Access key signature that wraps an inner signature (secp256k1,
- *   p256, or webAuthn). Format: `0x03` + user_address (20 bytes) + inner signature. The
- *   protocol validates the access key authorization via the AccountKeychain precompile.
+ * - **keychain** (type `0x03` V1, `0x04` V2): Access key signature that wraps an inner signature
+ *   (secp256k1, p256, or webAuthn). Format: type byte + user_address (20 bytes) + inner signature.
+ *   V2 binds the signature to the user account via `keccak256(sigHash || userAddress)`.
+ *   The protocol validates the access key authorization via the AccountKeychain precompile.
  *
  * [Signature Types Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  */
@@ -106,18 +108,30 @@ export type SignatureEnvelopeRpc = OneOf<
   Secp256k1Rpc | P256Rpc | WebAuthnRpc | KeychainRpc
 >
 
+/**
+ * Keychain signature version.
+ *
+ * - `'v1'`: Legacy format. Inner signature signs the raw `sig_hash` directly. Deprecated at T1C.
+ * - `'v2'`: Inner signature signs `keccak256(sig_hash || user_address)`, binding the signature
+ *   to the specific user account.
+ */
+export type KeychainVersion = 'v1' | 'v2'
+
 export type Keychain<bigintType = bigint, numberType = number> = {
   /** Root account address that this transaction is being executed for */
   userAddress: Address.Address
   /** The actual signature from the access key (can be Secp256k1, P256, or WebAuthn) */
   inner: SignatureEnvelope<bigintType, numberType>
   type: 'keychain'
+  /** Keychain signature version. @default 'v1' */
+  version?: KeychainVersion | undefined
 }
 
 export type KeychainRpc = {
   type: 'keychain'
   userAddress: Address.Address
   signature: SignatureEnvelopeRpc
+  version?: KeychainVersion | undefined
 }
 
 export type P256<bigintType = bigint, numberType = number> = {
@@ -389,7 +403,8 @@ export declare namespace extractPublicKey {
  * - 65 bytes (no prefix): secp256k1 signature
  * - Type `0x01` + 129 bytes: P256 signature (r, s, pubKeyX, pubKeyY, prehash)
  * - Type `0x02` + variable: WebAuthn signature (webauthnData, r, s, pubKeyX, pubKeyY)
- * - Type `0x03` + 20 bytes + inner: Keychain signature (userAddress + inner signature)
+ * - Type `0x03` + 20 bytes + inner: Keychain V1 signature (userAddress + inner signature)
+ * - Type `0x04` + 20 bytes + inner: Keychain V2 signature (userAddress + inner signature)
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -510,7 +525,10 @@ export function deserialize(value: Serialized): SignatureEnvelope {
     } satisfies WebAuthn
   }
 
-  if (typeId === serializedKeychainType) {
+  if (
+    typeId === serializedKeychainType ||
+    typeId === serializedKeychainV2Type
+  ) {
     const userAddress = Hex.slice(data, 0, 20)
     const inner = deserialize(Hex.slice(data, 20))
 
@@ -518,11 +536,12 @@ export function deserialize(value: Serialized): SignatureEnvelope {
       userAddress,
       inner,
       type: 'keychain',
+      version: typeId === serializedKeychainV2Type ? 'v2' : 'v1',
     } satisfies Keychain
   }
 
   throw new InvalidSerializedError({
-    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256) or ${serializedWebAuthnType} (WebAuthn)`,
+    reason: `Unknown signature type identifier: ${typeId}. Expected ${serializedP256Type} (P256), ${serializedWebAuthnType} (WebAuthn), ${serializedKeychainType} (Keychain V1), or ${serializedKeychainV2Type} (Keychain V2)`,
     serialized,
   })
 }
@@ -660,6 +679,15 @@ export function from<const value extends from.Value>(
   return {
     ...value,
     ...(type === 'p256' ? { prehash: value.prehash } : {}),
+    ...(type === 'keychain' &&
+    !(
+      typeof value === 'object' &&
+      value !== null &&
+      'version' in value &&
+      value.version
+    )
+      ? { version: 'v1' }
+      : {}),
     type,
   } as never
 }
@@ -778,6 +806,7 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       type: 'keychain',
       userAddress: envelope.userAddress,
       inner: fromRpc(envelope.signature),
+      ...(envelope.version ? { version: envelope.version } : {}),
     }
 
   throw new CoercionError({ envelope })
@@ -868,7 +897,8 @@ export function getType<
  * - secp256k1: 65 bytes (no type prefix, for backward compatibility)
  * - P256: `0x01` + r (32) + s (32) + pubKeyX (32) + pubKeyY (32) + prehash (1) = 130 bytes
  * - WebAuthn: `0x02` + webauthnData (variable) + r (32) + s (32) + pubKeyX (32) + pubKeyY (32)
- * - Keychain: `0x03` + userAddress (20) + inner signature (recursive)
+ * - Keychain V1: `0x03` + userAddress (20) + inner signature (recursive)
+ * - Keychain V2: `0x04` + userAddress (20) + inner signature (recursive)
  *
  * [Signature Types](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#signature-types)
  *
@@ -936,8 +966,12 @@ export function serialize(
 
   if (type === 'keychain') {
     const keychain = envelope as Keychain
+    const keychainTypeId =
+      keychain.version === 'v1'
+        ? serializedKeychainType
+        : serializedKeychainV2Type
     return Hex.concat(
-      serializedKeychainType,
+      keychainTypeId,
       keychain.userAddress,
       serialize(keychain.inner),
       options.magic ? magicBytes : '0x',
@@ -1019,6 +1053,7 @@ export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
       type: 'keychain',
       userAddress: keychain.userAddress,
       signature: toRpc(keychain.inner),
+      ...(keychain.version ? { version: keychain.version } : {}),
     }
   }
 

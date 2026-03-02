@@ -1,6 +1,5 @@
 import { Caches } from 'ox'
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest'
-import * as instances from './prool.js'
 
 beforeAll(() => {
   vi.mock('../src/core/internal/errors.ts', async () => ({
@@ -16,8 +15,4 @@ beforeEach(() => {
 
 afterAll(async () => {
   vi.restoreAllMocks()
-
-  await Promise.all(
-    Object.values(instances).map((instance) => instance.restart()),
-  )
 })
