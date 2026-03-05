@@ -702,9 +702,7 @@ describe('from', () => {
       nonce: 0n,
       nonceKey: 0n,
     })
-    expect(envelope.calls[0]!.to).toBe(
-      Address.checksum(hexAddr),
-    )
+    expect(envelope.calls[0]!.to).toBe(Address.checksum(hexAddr))
   })
 
   test('tempo address input for from', () => {

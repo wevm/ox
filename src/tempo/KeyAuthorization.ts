@@ -323,6 +323,7 @@ export declare namespace from {
  * import { KeyAuthorization } from 'ox/tempo'
  *
  * const keyAuthorization = KeyAuthorization.fromRpc({
+ *   chainId: '0x1079',
  *   expiry: '0x174876e800',
  *   keyId: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   keyType: 'secp256k1',

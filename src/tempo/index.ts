@@ -17,7 +17,7 @@ export type {}
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.from({
- *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
  *   nonce: 40n,
  * })
@@ -55,10 +55,11 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  *
  * const authorization = KeyAuthorization.from({
  *   address,
+ *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -291,8 +292,8 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const request = TransactionRequest.toRpc({
- *   calls: [{ to: 'tempo1qr90aw47etlt40k2l6atajh7h2lv4l46hcx5uwlp', data: '0xdeadbeef' }],
- *   feeToken: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv0ywuh',
+ *   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe', data: '0xdeadbeef' }],
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
  * })
  * ```
  *
@@ -314,7 +315,7 @@ export * as TransactionRequest from './TransactionRequest.js'
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme', data: '0xdeadbeef' }],
+ *   calls: [{ to: '0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
  *
