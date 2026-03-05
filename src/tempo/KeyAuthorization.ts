@@ -34,7 +34,7 @@ export type KeyAuthorization<
   numberType = number,
 > = {
   /** Address derived from the public key of the key type. */
-  address: Address.Address
+  address: TempoAddress.Address
   /** Chain ID for replay protection. */
   chainId: bigintType
   /** Unix timestamp when key expires (0 = never expires). */
@@ -108,7 +108,7 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
  */
 export type TokenLimit<bigintType = bigint> = {
   /** Address of the TIP-20 token. */
-  token: Address.Address
+  token: TempoAddress.Address
   /** Maximum spending amount for this token (enforced over the key's lifetime). */
   limit: bigintType
 }
@@ -253,15 +253,7 @@ export function from<
   const authorization extends KeyAuthorization | Rpc,
   const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
-  authorization:
-    | authorization
-    | KeyAuthorization
-    | (Omit<KeyAuthorization, 'address' | 'limits'> & {
-        address: TempoAddress.Address
-        limits?:
-          | readonly { token: TempoAddress.Address; limit: bigint }[]
-          | undefined
-      }),
+  authorization: authorization | KeyAuthorization,
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
@@ -643,7 +635,7 @@ export function toRpc(authorization: Signed): Rpc {
       token,
       limit: Hex.fromNumber(limit),
     })),
-    keyId: address,
+    keyId: TempoAddress.resolve(address),
     signature: SignatureEnvelope.toRpc(signature),
     keyType: type,
   }
