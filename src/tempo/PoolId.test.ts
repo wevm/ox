@@ -30,4 +30,13 @@ test('from', () => {
     validatorToken: 1n,
   })
   expect(poolId4).toBe(poolId1)
+
+  // Test with tempo address inputs
+  const tempoAddr0 = 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv0ywuh'
+  const tempoAddr1 = 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd'
+  const poolId5 = PoolId.from({
+    userToken: tempoAddr0,
+    validatorToken: tempoAddr1,
+  })
+  expect(poolId5).toBe(poolId1)
 })

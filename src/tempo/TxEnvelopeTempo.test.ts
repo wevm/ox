@@ -692,6 +692,34 @@ describe('from', () => {
     }
   })
 
+  test('tempo address input for calls.to', () => {
+    const hexAddr = '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+    const tempoAddr = 'tempo1qpcfj7tsc5vp9hp6qyx86qd4pcx30hreeqlrsqqr'
+
+    const envelope = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [{ to: tempoAddr }],
+      nonce: 0n,
+      nonceKey: 0n,
+    })
+    expect(envelope.calls[0]!.to).toBe(
+      Address.checksum(hexAddr),
+    )
+  })
+
+  test('tempo address input for from', () => {
+    const hexAddr = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+    const tempoAddr = 'tempo1qreel4h9r2kc3ah5ee4t3qnj088llwfzvccugvl7'
+
+    const envelope = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [{}],
+      nonce: 0n,
+      from: tempoAddr as any,
+    })
+    expect(envelope.from).toBe(Address.checksum(hexAddr))
+  })
+
   test('options: signature', () => {
     const envelope = TxEnvelopeTempo.from(
       {
@@ -1382,6 +1410,29 @@ describe('getSignPayload', () => {
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
     )
   })
+
+  test('tempo address input for from', () => {
+    const hexAddr = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+    const tempoAddr = 'tempo1qreel4h9r2kc3ah5ee4t3qnj088llwfzvccugvl7'
+
+    const transaction = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [
+        {
+          to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+        },
+      ],
+      nonce: 0n,
+    })
+
+    const hashHex = TxEnvelopeTempo.getSignPayload(transaction, {
+      from: hexAddr,
+    })
+    const hashTempo = TxEnvelopeTempo.getSignPayload(transaction, {
+      from: tempoAddr,
+    })
+    expect(hashTempo).toBe(hashHex)
+  })
 })
 
 describe('getFeePayerSignPayload', () => {
@@ -1402,6 +1453,29 @@ describe('getFeePayerSignPayload', () => {
     ).toMatchInlineSnapshot(
       `"0xde7a88984d766d0f5aac705487b43e68261516d6e7c524698804d4970d39d77d"`,
     )
+  })
+
+  test('tempo address input for sender', () => {
+    const hexAddr = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+    const tempoAddr = 'tempo1qreel4h9r2kc3ah5ee4t3qnj088llwfzvccugvl7'
+
+    const transaction = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [
+        {
+          to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+        },
+      ],
+      nonce: 0n,
+    })
+
+    const hashHex = TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
+      sender: hexAddr,
+    })
+    const hashTempo = TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
+      sender: tempoAddr,
+    })
+    expect(hashTempo).toBe(hashHex)
   })
 
   test('with feeToken', () => {

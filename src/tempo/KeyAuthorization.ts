@@ -5,6 +5,7 @@ import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
+import * as TempoAddress from './TempoAddress.js'
 
 /**
  * Key authorization for provisioning access keys.
@@ -252,17 +253,40 @@ export function from<
   const authorization extends KeyAuthorization | Rpc,
   const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
-  authorization: authorization | KeyAuthorization,
+  authorization:
+    | authorization
+    | KeyAuthorization
+    | (Omit<KeyAuthorization, 'address' | 'limits'> & {
+        address: TempoAddress.Address
+        limits?:
+          | readonly { token: TempoAddress.Address; limit: bigint }[]
+          | undefined
+      }),
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
-  if (typeof authorization.expiry === 'string')
+  if ('keyId' in authorization)
     return fromRpc(authorization as Rpc) as never
+  const auth = authorization as KeyAuthorization & {
+    limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
+  }
+  const resolved = {
+    ...auth,
+    address: TempoAddress.resolve(auth.address as TempoAddress.Address),
+    ...(auth.limits
+      ? {
+          limits: auth.limits.map((l) => ({
+            ...l,
+            token: TempoAddress.resolve(l.token as TempoAddress.Address),
+          })),
+        }
+      : {}),
+  }
   if (options.signature)
     return {
-      ...authorization,
+      ...resolved,
       signature: SignatureEnvelope.from(options.signature),
     } as never
-  return authorization as never
+  return resolved as never
 }
 
 export declare namespace from {
