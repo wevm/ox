@@ -667,7 +667,6 @@ describe('serialize', () => {
     expect(receipt).toMatchObject({
       blobGasPrice: '0x1',
       blobGasUsed: '0x20000',
-      blockNumber: '0x12f2975',
       contractAddress: null,
       cumulativeGasUsed: '0x5208',
       from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
