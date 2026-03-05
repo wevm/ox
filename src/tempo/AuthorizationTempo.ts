@@ -259,7 +259,9 @@ export function from<
     return fromRpc(authorization as Rpc) as never
   const resolved = {
     ...authorization,
-    address: TempoAddress.resolve(authorization.address as TempoAddress.Address),
+    address: TempoAddress.resolve(
+      authorization.address as TempoAddress.Address,
+    ),
   }
   if (options.signature) {
     return { ...resolved, signature: options.signature } as never
@@ -302,7 +304,7 @@ export declare namespace from {
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.fromRpc({
- *   address: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
+ *   address: '0x0000000000000000000000000000000000000000',
  *   chainId: '0x1',
  *   nonce: '0x1',
  *   signature: {
@@ -340,7 +342,7 @@ export declare namespace fromRpc {
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorizationList = AuthorizationTempo.fromRpcList([{
- *   address: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
+ *   address: '0x0000000000000000000000000000000000000000',
  *   chainId: '0x1',
  *   nonce: '0x1',
  *   signature: {
@@ -716,7 +718,7 @@ export declare namespace hash {
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.toRpc({
- *   address: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
+ *   address: '0x0000000000000000000000000000000000000000',
  *   chainId: 1,
  *   nonce: 1n,
  *   signature: {
@@ -756,7 +758,7 @@ export declare namespace toRpc {
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.toRpcList([{
- *   address: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
+ *   address: '0x0000000000000000000000000000000000000000',
  *   chainId: 1,
  *   nonce: 1n,
  *   signature: {

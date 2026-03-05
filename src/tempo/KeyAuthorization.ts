@@ -141,7 +141,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -163,7 +163,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -188,7 +188,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -222,7 +222,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -264,8 +264,7 @@ export function from<
       }),
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
-  if ('keyId' in authorization)
-    return fromRpc(authorization as Rpc) as never
+  if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
   const auth = authorization as KeyAuthorization & {
     limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
   }
@@ -468,7 +467,7 @@ export declare namespace fromTuple {
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -496,12 +495,12 @@ export declare namespace getSignPayload {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6)
  *   }],
  * })
@@ -534,12 +533,12 @@ export declare namespace deserialize {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6)
  *   }],
  * })
@@ -574,12 +573,12 @@ export declare namespace hash {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6)
  *   }],
  * })
@@ -611,12 +610,12 @@ export declare namespace serialize {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.toRpc({
- *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6)
  *   }],
  *   signature: {
@@ -662,12 +661,12 @@ export declare namespace toRpc {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6)
  *   }],
  * })
