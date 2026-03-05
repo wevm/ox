@@ -65,9 +65,9 @@ export type Rpc = Omit<
  * const request = TransactionRequest.toRpc({
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *     to: 'tempo1qr90aw47etlt40k2l6atajh7h2lv4l46hcx5uwlp',
  *   }],
- *   feeToken: '0x20c0000000000000000000000000000000000000',
+ *   feeToken: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv0ywuh',
  * })
  * ```
  *
@@ -87,9 +87,9 @@ export type Rpc = Omit<
  * const request = TransactionRequest.toRpc({
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *     to: 'tempo1qr90aw47etlt40k2l6atajh7h2lv4l46hcx5uwlp',
  *   }],
- *   feeToken: '0x20c0000000000000000000000000000000000000',
+ *   feeToken: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv0ywuh',
  * })
  *
  * const hash = await provider.request({ // [!code focus]

@@ -45,7 +45,7 @@ export function from(tokenIdOrAddress: TokenIdOrAddress | number): TokenId {
  * ```ts twoslash
  * import { TokenId } from 'ox/tempo'
  *
- * const tokenId = TokenId.fromAddress('0x20c00000000000000000000000000000000000000001')
+ * const tokenId = TokenId.fromAddress('tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd')
  * ```
  *
  * @param address - The token address.
@@ -96,7 +96,7 @@ export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
  * import { TokenId } from 'ox/tempo'
  *
  * const id = TokenId.compute({
- *   sender: '0x1234567890123456789012345678901234567890',
+ *   sender: 'tempo1qqfrg4ncjqfrg4ncjqfrg4ncjqfrg4ncjqgmv79k',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
  * })
  * ```

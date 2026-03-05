@@ -155,7 +155,7 @@ export type Type = typeof type
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: 0n }],
+ *   calls: [{ to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme', value: 0n }],
  *   chainId: 1,
  *   maxFeePerGas: 1000000000n,
  * })
@@ -414,7 +414,7 @@ export declare namespace deserialize {
  *   chainId: 1, // [!code focus]
  *   calls: [{ // [!code focus]
  *     data: '0xdeadbeef', // [!code focus]
- *     to: '0x0000000000000000000000000000000000000000', // [!code focus]
+ *     to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme', // [!code focus]
  *   }], // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
  *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
@@ -435,7 +435,7 @@ export declare namespace deserialize {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x0000000000000000000000000000000000000000',
+ *     to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
  *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
@@ -573,7 +573,7 @@ export declare namespace from {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x0000000000000000000000000000000000000000',
+ *     to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
  *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
@@ -595,7 +595,7 @@ export declare namespace from {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x0000000000000000000000000000000000000000',
+ *     to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
  *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
@@ -780,7 +780,7 @@ export declare namespace serialize {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: 'tempo1qpcfj7tsc5vp9hp6qyx86qd4pcx30hreeqlrsqqr',
  *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -810,7 +810,7 @@ export declare namespace serialize {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: 'tempo1qpcfj7tsc5vp9hp6qyx86qd4pcx30hreeqlrsqqr',
  *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -874,7 +874,7 @@ export declare namespace getSignPayload {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: 'tempo1qpcfj7tsc5vp9hp6qyx86qd4pcx30hreeqlrsqqr',
  *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -948,7 +948,7 @@ export declare namespace hash {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: 'tempo1qpcfj7tsc5vp9hp6qyx86qd4pcx30hreeqlrsqqr',
  *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -956,7 +956,7 @@ export declare namespace hash {
  * })
  *
  * const payload = TxEnvelopeTempo.getFeePayerSignPayload(envelope, {
- *   sender: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
+ *   sender: 'tempo1qrvd56ljd9j2l8t7ak0q8ef5zhfh42tqg5kwwrau'
  * }) // [!code focus]
  * // @log: '0x...'
  *
@@ -1005,7 +1005,7 @@ export declare namespace getFeePayerSignPayload {
  * const valid = TxEnvelopeTempo.validate({
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: '0x0000000000000000000000000000000000000000',
+ *     to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme',
  *   }],
  *   chainId: 1,
  *   maxFeePerGas: 1000000000n,
@@ -1057,7 +1057,7 @@ export class CallsEmptyError extends Errors.BaseError {
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+ *   calls: [{ to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme' }],
  *   chainId: 1,
  *   validBefore: 100,
  *   validAfter: 200,
