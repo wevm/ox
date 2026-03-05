@@ -4,6 +4,7 @@ import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
 import type { Call } from './TxEnvelopeTempo.js'
@@ -30,7 +31,7 @@ export type TransactionRequest<
     authorizationList?:
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
-    calls?: readonly Call<bigintType>[] | undefined
+    calls?: readonly Call<bigintType, TempoAddress.Address>[] | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
@@ -112,7 +113,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     )
   if (request.calls)
     request_rpc.calls = request.calls.map((call) => ({
-      to: call.to,
+      to: call.to ? TempoAddress.resolve(call.to) : call.to,
       value: call.value ? Hex.fromNumber(call.value) : '0x',
       data: call.data ?? '0x',
     }))

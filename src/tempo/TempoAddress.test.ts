@@ -6,11 +6,32 @@ const rawAddress = Address.checksum(
   '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28',
 )
 
+describe('resolve', () => {
+  test('hex address passthrough', () => {
+    expect(TempoAddress.resolve(rawAddress)).toBe(rawAddress)
+  })
+
+  test('tempo address', () => {
+    const tempoAddr = TempoAddress.format(rawAddress)
+    expect(TempoAddress.resolve(tempoAddr)).toBe(rawAddress)
+  })
+
+  test('tempo zone address', () => {
+    const tempoAddr = TempoAddress.format(rawAddress, { zoneId: 1 })
+    expect(TempoAddress.resolve(tempoAddr)).toBe(rawAddress)
+  })
+})
+
 describe('format', () => {
   test('mainnet address', () => {
     expect(TempoAddress.format(rawAddress)).toMatchInlineSnapshot(
       `"tempo1qp6z6dwvvc6vq5efyk3ms39une6etu4a9qtj2kk0"`,
     )
+  })
+
+  test('tempo address input', () => {
+    const tempoAddr = TempoAddress.format(rawAddress)
+    expect(TempoAddress.format(tempoAddr)).toBe(tempoAddr)
   })
 
   test('zone address (zone ID = 1)', () => {

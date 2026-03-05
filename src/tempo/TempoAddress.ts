@@ -1,12 +1,45 @@
-import * as Address from '../core/Address.js'
+import * as core_Address from '../core/Address.js'
 import * as Bech32m from '../core/Bech32m.js'
 import * as Bytes from '../core/Bytes.js'
 import * as CompactSize from '../core/CompactSize.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
+import type { Compute } from '../core/internal/types.js'
+
+/** An address that can be either an Ethereum hex address or a Tempo bech32m address. */
+export type Address = core_Address.Address | Tempo
 
 /** Root type for a Tempo Address. */
-export type TempoAddress = `tempo1${string}` | `tempoz1${string}`
+export type Tempo = Compute<`tempo1${string}` | `tempoz1${string}`>
+
+/**
+ * Resolves an address input (either an Ethereum hex address or a Tempo bech32m address)
+ * to an Ethereum hex address.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TempoAddress } from 'ox/tempo'
+ *
+ * const address = TempoAddress.resolve('tempo1qp6z6dwvvc6vq5efyk3ms39une6etu4a9qtj2kk0')
+ * // @log: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28'
+ * ```
+ *
+ * @example
+ * ### Hex Address Passthrough
+ * ```ts twoslash
+ * import { TempoAddress } from 'ox/tempo'
+ *
+ * const address = TempoAddress.resolve('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
+ * // @log: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28'
+ * ```
+ *
+ * @param address - An Ethereum hex address or Tempo bech32m address.
+ * @returns The resolved Ethereum hex address.
+ */
+export function resolve(address: Address): core_Address.Address {
+  if (address.startsWith('tempo')) return parse(address).address
+  return address as core_Address.Address
+}
 
 /**
  * Formats a raw Ethereum address (and optional zone ID) into a Tempo address string.
@@ -35,18 +68,16 @@ export type TempoAddress = `tempo1${string}` | `tempoz1${string}`
  * @param options - Options.
  * @returns The encoded Tempo address string.
  */
-export function format(
-  address: Address.Address,
-  options: format.Options = {},
-): TempoAddress {
+export function format(address: Address, options: format.Options = {}): Tempo {
   const { zoneId } = options
 
+  const resolved = resolve(address)
   const hrp = zoneId != null ? 'tempoz' : 'tempo'
   const version = new Uint8Array([0x00])
   const zone = zoneId != null ? CompactSize.toBytes(zoneId) : new Uint8Array()
-  const data = Bytes.concat(version, zone, Bytes.fromHex(address))
+  const data = Bytes.concat(version, zone, Bytes.fromHex(resolved))
 
-  return Bech32m.encode(hrp, data) as TempoAddress
+  return Bech32m.encode(hrp, data) as Tempo
 }
 
 export declare namespace format {
@@ -126,7 +157,7 @@ export function parse(tempoAddress: string): parse.ReturnType {
       actual: rawAddress.length,
     })
 
-  const address = Address.checksum(Hex.fromBytes(rawAddress) as Address.Address)
+  const address = core_Address.checksum(Hex.fromBytes(rawAddress) as never)
 
   return { address, zoneId }
 }
@@ -134,7 +165,7 @@ export function parse(tempoAddress: string): parse.ReturnType {
 export declare namespace parse {
   type ReturnType = {
     /** The raw 20-byte Ethereum address. */
-    address: Address.Address
+    address: core_Address.Address
     /** The zone ID, or `undefined` for mainnet addresses. */
     zoneId: number | bigint | undefined
   }

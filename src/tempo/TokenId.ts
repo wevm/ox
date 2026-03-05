@@ -2,11 +2,12 @@ import * as AbiParameters from '../core/AbiParameters.js'
 import * as Address from '../core/Address.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import * as TempoAddress from './TempoAddress.js'
 
 const tip20Prefix = '0x20c0'
 
 export type TokenId = bigint
-export type TokenIdOrAddress = TokenId | Address.Address
+export type TokenIdOrAddress = TokenId | TempoAddress.Address
 
 /**
  * Converts a token ID or address to a token ID.
@@ -50,10 +51,11 @@ export function from(tokenIdOrAddress: TokenIdOrAddress | number): TokenId {
  * @param address - The token address.
  * @returns The token ID.
  */
-export function fromAddress(address: Address.Address): TokenId {
-  if (!address.toLowerCase().startsWith(tip20Prefix))
+export function fromAddress(address: TempoAddress.Address): TokenId {
+  const resolved = TempoAddress.resolve(address)
+  if (!resolved.toLowerCase().startsWith(tip20Prefix))
     throw new Error('invalid tip20 address.')
-  return Hex.toBigInt(Hex.slice(address, tip20Prefix.length))
+  return Hex.toBigInt(Hex.slice(resolved, tip20Prefix.length))
 }
 
 /**
@@ -73,8 +75,9 @@ export function fromAddress(address: Address.Address): TokenId {
  */
 export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
   if (typeof tokenId === 'string') {
-    Address.assert(tokenId)
-    return tokenId
+    const resolved = TempoAddress.resolve(tokenId as TempoAddress.Address)
+    Address.assert(resolved)
+    return resolved
   }
 
   const tokenIdHex = Hex.fromNumber(tokenId, { size: 18 })
@@ -104,7 +107,7 @@ export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
 export function compute(value: compute.Value): bigint {
   const hash = Hash.keccak256(
     AbiParameters.encode(AbiParameters.from('address, bytes32'), [
-      value.sender,
+      TempoAddress.resolve(value.sender),
       value.salt,
     ]),
   )
@@ -115,7 +118,7 @@ export declare namespace compute {
   export type Value = {
     /** The salt (32 bytes). */
     salt: Hex.Hex
-    /** The sender address. */
-    sender: Address.Address
+    /** The sender address. Accepts both hex and Tempo bech32m addresses. */
+    sender: TempoAddress.Address
   }
 }

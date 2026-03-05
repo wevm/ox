@@ -84,6 +84,19 @@ describe('from', () => {
     }
   })
 
+  test('tempo address input', () => {
+    const tempoAddr = 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu'
+
+    const authorization = AuthorizationTempo.from({
+      address: tempoAddr,
+      chainId: 1,
+      nonce: 40n,
+    })
+    expect(authorization.address).toBe(
+      '0xBE95c3f554e9Fc85ec51bE69a3D807A0D55BCF2C',
+    )
+  })
+
   test('options: signature (secp256k1)', () => {
     const authorization = AuthorizationTempo.from({
       address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',

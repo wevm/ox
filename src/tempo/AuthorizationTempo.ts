@@ -5,6 +5,7 @@ import * as Hex from '../core/Hex.js'
 import type { Compute, Mutable } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
+import * as TempoAddress from './TempoAddress.js'
 
 /**
  * Root type for a Tempo Authorization.
@@ -248,15 +249,22 @@ export function from<
   const authorization extends AuthorizationTempo | Rpc,
   const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
-  authorization: authorization | AuthorizationTempo,
+  authorization:
+    | authorization
+    | AuthorizationTempo
+    | (Omit<AuthorizationTempo, 'address'> & { address: TempoAddress.Address }),
   options: from.Options<signature> = {},
 ): from.ReturnType<authorization, signature> {
   if (typeof authorization.chainId === 'string')
     return fromRpc(authorization as Rpc) as never
-  if (options.signature) {
-    return { ...authorization, signature: options.signature } as never
+  const resolved = {
+    ...authorization,
+    address: TempoAddress.resolve(authorization.address as TempoAddress.Address),
   }
-  return authorization as never
+  if (options.signature) {
+    return { ...resolved, signature: options.signature } as never
+  }
+  return resolved as never
 }
 
 export declare namespace from {
