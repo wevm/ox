@@ -141,7 +141,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -163,7 +163,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -188,7 +188,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -222,7 +222,7 @@ export type TokenLimit<bigintType = bigint> = {
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -468,7 +468,7 @@ export declare namespace fromTuple {
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -496,12 +496,12 @@ export declare namespace getSignPayload {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6)
  *   }],
  * })
@@ -534,12 +534,12 @@ export declare namespace deserialize {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6)
  *   }],
  * })
@@ -574,12 +574,12 @@ export declare namespace hash {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6)
  *   }],
  * })
@@ -611,12 +611,12 @@ export declare namespace serialize {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.toRpc({
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6)
  *   }],
  *   signature: {
@@ -662,12 +662,12 @@ export declare namespace toRpc {
  * import { Value } from 'ox'
  *
  * const authorization = KeyAuthorization.from({
- *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
  *   chainId: 4217n,
  *   expiry: 1234567890,
  *   type: 'secp256k1',
  *   limits: [{
- *     token: '0x20c0000000000000000000000000000000000001',
+ *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
  *     limit: Value.from('10', 6)
  *   }],
  * })
