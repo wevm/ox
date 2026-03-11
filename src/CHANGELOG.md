@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.1
+
+### Patch Changes
+
+- [`e0d36d4`](https://github.com/wevm/ox/commit/e0d36d4c82ee5234078df083fe5ebc845fe8676f) Thanks [@jxom](https://github.com/jxom)! - Added `keyId` to `SignatureEnvelope` and made keychain signatures default to v2.
+
 ## 0.14.0
 
 ### Minor Changes
