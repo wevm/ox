@@ -122,6 +122,8 @@ export type Keychain<bigintType = bigint, numberType = number> = {
   userAddress: Address.Address
   /** The actual signature from the access key (can be Secp256k1, P256, or WebAuthn) */
   inner: SignatureEnvelope<bigintType, numberType>
+  /** The access key address (recovered address of the access key signer). */
+  keyId?: Address.Address | undefined
   type: 'keychain'
   /** Keychain signature version. @default 'v1' */
   version?: KeychainVersion | undefined
@@ -130,6 +132,7 @@ export type Keychain<bigintType = bigint, numberType = number> = {
 export type KeychainRpc = {
   type: 'keychain'
   userAddress: Address.Address
+  keyId?: Address.Address | undefined
   signature: SignatureEnvelopeRpc
   version?: KeychainVersion | undefined
 }
@@ -663,6 +666,7 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  */
 export function from<const value extends from.Value>(
   value: value | from.Value,
+  options?: from.Options | undefined,
 ): from.ReturnValue<value> {
   if (typeof value === 'string') return deserialize(value) as never
 
@@ -679,20 +683,45 @@ export function from<const value extends from.Value>(
   return {
     ...value,
     ...(type === 'p256' ? { prehash: value.prehash } : {}),
-    ...(type === 'keychain' &&
-    !(
-      typeof value === 'object' &&
-      value !== null &&
-      'version' in value &&
-      value.version
-    )
-      ? { version: 'v1' }
+    ...(type === 'keychain'
+      ? {
+          ...(!(
+            typeof value === 'object' &&
+            value !== null &&
+            'version' in value &&
+            value.version
+          )
+            ? { version: 'v2' }
+            : {}),
+          ...(!(typeof value === 'object' && 'keyId' in value && value.keyId)
+            ? (() => {
+                const inner = (value as Keychain).inner
+                if (inner.type === 'p256' || inner.type === 'webAuthn')
+                  return { keyId: Address.fromPublicKey(inner.publicKey) }
+                if (inner.type === 'secp256k1' && options?.payload)
+                  return {
+                    keyId: Address.fromPublicKey(
+                      ox_Secp256k1.recoverPublicKey({
+                        payload: options.payload,
+                        signature: inner.signature,
+                      }),
+                    ),
+                  }
+                return {}
+              })()
+            : {}),
+        }
       : {}),
     type,
   } as never
 }
 
 export declare namespace from {
+  type Options = {
+    /** Payload that was signed. Used to recover `keyId` for keychain envelopes with secp256k1 inner signatures. */
+    payload?: Hex.Hex | Bytes.Bytes | undefined
+  }
+
   type Value =
     | UnionPartialBy<SignatureEnvelope, 'prehash' | 'type'>
     | Secp256k1Flat
@@ -706,7 +735,14 @@ export declare namespace from {
           ? Secp256k1
           : IsNarrowable<value, SignatureEnvelope> extends true
             ? SignatureEnvelope
-            : Assign<value, { readonly type: GetType<value> }>
+            : Assign<
+                value,
+                {
+                  readonly type: GetType<value>
+                } & (GetType<value> extends 'keychain'
+                  ? { keyId?: Address.Address | undefined }
+                  : {})
+              >
     >
   >
 }
@@ -806,6 +842,7 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       type: 'keychain',
       userAddress: envelope.userAddress,
       inner: fromRpc(envelope.signature),
+      ...(envelope.keyId ? { keyId: envelope.keyId } : {}),
       ...(envelope.version ? { version: envelope.version } : {}),
     }
 
@@ -1053,6 +1090,7 @@ export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
       type: 'keychain',
       userAddress: keychain.userAddress,
       signature: toRpc(keychain.inner),
+      ...(keychain.keyId ? { keyId: keychain.keyId } : {}),
       ...(keychain.version ? { version: keychain.version } : {}),
     }
   }

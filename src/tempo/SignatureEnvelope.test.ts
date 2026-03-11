@@ -1040,6 +1040,61 @@ describe('from', () => {
 
       expect(envelope.type).toBe('keychain')
     })
+
+    test('behavior: computes keyId from p256 inner publicKey', () => {
+      const envelope = SignatureEnvelope.from({
+        userAddress: '0x1234567890123456789012345678901234567890',
+        inner: signature_p256,
+      })
+
+      expect(envelope.keyId).toBe(Address.fromPublicKey(publicKey))
+    })
+
+    test('behavior: computes keyId from webAuthn inner publicKey', () => {
+      const envelope = SignatureEnvelope.from({
+        userAddress: '0x1234567890123456789012345678901234567890',
+        inner: signature_webauthn,
+      })
+
+      expect(envelope.keyId).toBe(Address.fromPublicKey(publicKey))
+    })
+
+    test('behavior: computes keyId from secp256k1 inner with payload', () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const accessKeyPublicKey = Secp256k1.getPublicKey({ privateKey })
+      const payload = '0xdeadbeef'
+      const sig = Secp256k1.sign({ payload, privateKey })
+
+      const envelope = SignatureEnvelope.from(
+        {
+          userAddress: '0x1234567890123456789012345678901234567890',
+          inner: SignatureEnvelope.from(sig),
+        },
+        { payload },
+      )
+
+      expect(envelope.keyId).toBe(Address.fromPublicKey(accessKeyPublicKey))
+    })
+
+    test('behavior: does not compute keyId for secp256k1 without payload', () => {
+      const envelope = SignatureEnvelope.from({
+        userAddress: '0x1234567890123456789012345678901234567890',
+        inner: SignatureEnvelope.from(signature_secp256k1),
+      })
+
+      expect(envelope.keyId).toBeUndefined()
+    })
+
+    test('behavior: preserves explicit keyId', () => {
+      const explicitKeyId = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      const envelope = SignatureEnvelope.from({
+        userAddress: '0x1234567890123456789012345678901234567890',
+        inner: signature_p256,
+        keyId: explicitKeyId,
+      })
+
+      expect(envelope.keyId).toBe(explicitKeyId)
+    })
   })
 })
 
@@ -2235,6 +2290,24 @@ describe('fromRpc', () => {
         },
       })
     })
+
+    test('behavior: preserves keyId from RPC', () => {
+      const rpc: SignatureEnvelope.KeychainRpc = {
+        type: 'keychain',
+        userAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        keyId: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        signature: {
+          type: 'secp256k1',
+          r: '0xa2bb71146c20ce932456c043ebb2973ed205e07cd32c35a60bdefca1285fd132',
+          s: '0x7cba10692bccdbfba9a215418443c2903dbee6fe5cb55c91172e47efc607840e',
+          yParity: '0x1',
+        },
+      }
+
+      const envelope = SignatureEnvelope.fromRpc(rpc)
+
+      expect(envelope.keyId).toBe('0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c')
+    })
   })
 })
 
@@ -2351,6 +2424,41 @@ describe('toRpc', () => {
       expect(rpc.signature.type).toBe('webAuthn')
       expect(typeof rpc.signature.pubKeyX).toBe('string')
       expect(typeof rpc.signature.webauthnData).toBe('string')
+    })
+
+    test('behavior: preserves keyId in toRpc', () => {
+      const envelope: SignatureEnvelope.Keychain = {
+        type: 'keychain',
+        userAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        keyId: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+        inner: {
+          signature: signature_secp256k1,
+          type: 'secp256k1',
+        },
+      }
+
+      const rpc = SignatureEnvelope.toRpc(
+        envelope,
+      ) as SignatureEnvelope.KeychainRpc
+
+      expect(rpc.keyId).toBe('0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c')
+    })
+
+    test('behavior: omits keyId in toRpc when not set', () => {
+      const envelope: SignatureEnvelope.Keychain = {
+        type: 'keychain',
+        userAddress: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        inner: {
+          signature: signature_secp256k1,
+          type: 'secp256k1',
+        },
+      }
+
+      const rpc = SignatureEnvelope.toRpc(
+        envelope,
+      ) as SignatureEnvelope.KeychainRpc
+
+      expect(rpc.keyId).toBeUndefined()
     })
   })
 })
