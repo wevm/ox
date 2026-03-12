@@ -444,3 +444,239 @@ describe('fromData', () => {
     })
   })
 })
+
+describe('schema 2 (CBOR-encoded)', () => {
+  describe('getSchemaId', () => {
+    test('returns 2 for appCode', () => {
+      const schemaId = Attribution.getSchemaId({
+        appCode: 'baseapp',
+      })
+
+      expect(schemaId).toBe(2)
+    })
+
+    test('returns 2 for walletCode', () => {
+      const schemaId = Attribution.getSchemaId({
+        walletCode: 'privy',
+      })
+
+      expect(schemaId).toBe(2)
+    })
+
+    test('returns 2 for appCode + walletCode', () => {
+      const schemaId = Attribution.getSchemaId({
+        appCode: 'baseapp',
+        walletCode: 'privy',
+      })
+
+      expect(schemaId).toBe(2)
+    })
+  })
+
+  describe('toDataSuffix', () => {
+    test('single app code', () => {
+      const suffix = Attribution.toDataSuffix({
+        appCode: 'baseapp',
+      })
+
+      // Verify it ends with schema ID 02 and ERC suffix
+      expect(suffix.endsWith('0280218021802180218021802180218021')).toBe(true)
+
+      // Roundtrip decode
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        appCode: 'baseapp',
+      })
+    })
+
+    test('app + wallet codes', () => {
+      const suffix = Attribution.toDataSuffix({
+        appCode: 'baseapp',
+        walletCode: 'privy',
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        appCode: 'baseapp',
+        walletCode: 'privy',
+      })
+    })
+
+    test('with metadata', () => {
+      const suffix = Attribution.toDataSuffix({
+        appCode: 'baseapp',
+        metadata: { source: 'webapp', utm_campaign: 'winter-promo' },
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        appCode: 'baseapp',
+        metadata: { source: 'webapp', utm_campaign: 'winter-promo' },
+      })
+    })
+
+    test('with app registry', () => {
+      const suffix = Attribution.toDataSuffix({
+        appCode: 'baseapp',
+        registries: {
+          app: {
+            address: '0xBcf2B9598Ec0781eE49230CaACF0FB3C881B5195',
+            chainId: 8453,
+          },
+        },
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        appCode: 'baseapp',
+        registries: {
+          app: {
+            address: '0xBcf2B9598Ec0781eE49230CaACF0FB3C881B5195',
+            chainId: 8453,
+          },
+        },
+      })
+    })
+
+    test('full example: app, wallet, registry, metadata', () => {
+      const input: Attribution.AttributionSchemaId2 = {
+        appCode: 'baseapp',
+        walletCode: 'privy',
+        registries: {
+          app: {
+            address: '0xBcf2B9598Ec0781eE49230CaACF0FB3C881B5195',
+            chainId: 8453,
+          },
+        },
+        metadata: {
+          utm_campaign: 'winter-promo',
+          source: 'webapp',
+        },
+      }
+
+      const suffix = Attribution.toDataSuffix(input)
+      const parsed = Attribution.fromData(
+        `0xdddddddd${suffix.slice(2)}` as const,
+      )
+
+      expect(parsed).toEqual(input)
+    })
+
+    test('wallet code only', () => {
+      const suffix = Attribution.toDataSuffix({
+        walletCode: 'metamask',
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        walletCode: 'metamask',
+      })
+    })
+
+    test('with both app and wallet registries', () => {
+      const input: Attribution.AttributionSchemaId2 = {
+        appCode: 'baseapp',
+        walletCode: 'privy',
+        registries: {
+          app: {
+            address: '0xBcf2B9598Ec0781eE49230CaACF0FB3C881B5195',
+            chainId: 8453,
+          },
+          wallet: {
+            address: '0x1234567890123456789012345678901234567890',
+            chainId: 1,
+          },
+        },
+      }
+
+      const suffix = Attribution.toDataSuffix(input)
+      const parsed = Attribution.fromData(
+        `0xdddddddd${suffix.slice(2)}` as const,
+      )
+
+      expect(parsed).toEqual(input)
+    })
+
+    test('empty metadata object is omitted', () => {
+      const suffix = Attribution.toDataSuffix({
+        appCode: 'baseapp',
+        metadata: {},
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      // Empty metadata should not appear in decoded result
+      expect(parsed).toEqual({
+        appCode: 'baseapp',
+      })
+    })
+  })
+
+  describe('fromData', () => {
+    test('spec test: single entity', () => {
+      const input =
+        '0xdddddddda161616762617365617070000b0280218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toEqual({
+        appCode: 'baseapp',
+      })
+    })
+
+    test('spec test: multiple entities with metadata', () => {
+      const input =
+        '0xdddddddda46161676261736561707061776570726976796172a16161a26163663078323130356161782a307842636632423935393845633037383165453439323330436141434630464233433838314235313935616da26c75746d5f63616d706169676e6c77696e7465722d70726f6d6f66736f7572636566776562617070007b0280218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toEqual({
+        appCode: 'baseapp',
+        walletCode: 'privy',
+        registries: {
+          app: {
+            address: '0xBcf2B9598Ec0781eE49230CaACF0FB3C881B5195',
+            chainId: 8453,
+          },
+        },
+        metadata: {
+          utm_campaign: 'winter-promo',
+          source: 'webapp',
+        },
+      })
+    })
+
+    test.each([
+      [{ appCode: 'baseapp' }],
+      [{ walletCode: 'privy' }],
+      [{ appCode: 'baseapp', walletCode: 'privy' }],
+      [
+        {
+          appCode: 'baseapp',
+          metadata: { campaign: 'test', source: 'web' },
+        },
+      ],
+      [
+        {
+          appCode: 'myapp',
+          walletCode: 'mywallet',
+          registries: {
+            app: {
+              address: '0xBcf2B9598Ec0781eE49230CaACF0FB3C881B5195' as const,
+              chainId: 8453,
+            },
+          },
+        },
+      ],
+    ] as Attribution.AttributionSchemaId2[][])(
+      'roundtrip %j',
+      (attribution) => {
+        const suffix = Attribution.toDataSuffix(attribution)
+        const fullData = `0xabcdef${suffix.slice(2)}` as const
+
+        const parsed = Attribution.fromData(fullData)
+
+        expect(parsed).toEqual(attribution)
+      },
+    )
+  })
+})
