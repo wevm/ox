@@ -486,6 +486,7 @@ describe('schema 2 (CBOR-encoded)', () => {
       const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
       expect(parsed).toEqual({
         appCode: 'baseapp',
+        id: 2,
       })
     })
 
@@ -499,6 +500,7 @@ describe('schema 2 (CBOR-encoded)', () => {
       expect(parsed).toEqual({
         appCode: 'baseapp',
         walletCode: 'privy',
+        id: 2,
       })
     })
 
@@ -512,6 +514,7 @@ describe('schema 2 (CBOR-encoded)', () => {
       expect(parsed).toEqual({
         appCode: 'baseapp',
         metadata: { source: 'webapp', utm_campaign: 'winter-promo' },
+        id: 2,
       })
     })
 
@@ -535,6 +538,7 @@ describe('schema 2 (CBOR-encoded)', () => {
             chainId: 8453,
           },
         },
+        id: 2,
       })
     })
 
@@ -559,7 +563,7 @@ describe('schema 2 (CBOR-encoded)', () => {
         `0xdddddddd${suffix.slice(2)}` as const,
       )
 
-      expect(parsed).toEqual(input)
+      expect(parsed).toEqual({ ...input, id: 2 })
     })
 
     test('wallet code only', () => {
@@ -570,6 +574,7 @@ describe('schema 2 (CBOR-encoded)', () => {
       const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
       expect(parsed).toEqual({
         walletCode: 'metamask',
+        id: 2,
       })
     })
 
@@ -594,7 +599,7 @@ describe('schema 2 (CBOR-encoded)', () => {
         `0xdddddddd${suffix.slice(2)}` as const,
       )
 
-      expect(parsed).toEqual(input)
+      expect(parsed).toEqual({ ...input, id: 2 })
     })
 
     test('empty metadata object is omitted', () => {
@@ -607,6 +612,7 @@ describe('schema 2 (CBOR-encoded)', () => {
       // Empty metadata should not appear in decoded result
       expect(parsed).toEqual({
         appCode: 'baseapp',
+        id: 2,
       })
     })
   })
@@ -620,6 +626,7 @@ describe('schema 2 (CBOR-encoded)', () => {
 
       expect(result).toEqual({
         appCode: 'baseapp',
+        id: 2,
       })
     })
 
@@ -642,17 +649,19 @@ describe('schema 2 (CBOR-encoded)', () => {
           utm_campaign: 'winter-promo',
           source: 'webapp',
         },
+        id: 2,
       })
     })
 
     test.each([
-      [{ appCode: 'baseapp' }],
-      [{ walletCode: 'privy' }],
-      [{ appCode: 'baseapp', walletCode: 'privy' }],
+      [{ appCode: 'baseapp', id: 2 }],
+      [{ walletCode: 'privy', id: 2 }],
+      [{ appCode: 'baseapp', walletCode: 'privy', id: 2 }],
       [
         {
           appCode: 'baseapp',
           metadata: { campaign: 'test', source: 'web' },
+          id: 2,
         },
       ],
       [
@@ -665,6 +674,7 @@ describe('schema 2 (CBOR-encoded)', () => {
               chainId: 8453,
             },
           },
+          id: 2,
         },
       ],
     ] as Attribution.AttributionSchemaId2[][])(

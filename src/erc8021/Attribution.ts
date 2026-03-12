@@ -62,6 +62,8 @@ export type AttributionSchemaId2 = {
   registries?: AttributionSchemaId2Registries | undefined
   /** Arbitrary metadata key-value pairs. */
   metadata?: Record<string, unknown> | undefined
+  /** Schema identifier (2 for CBOR-encoded). */
+  id?: 2 | undefined
 }
 
 export type AttributionSchemaId2Registries = {
@@ -85,9 +87,11 @@ export type AttributionSchemaId2Registry = {
  * - `1`: Custom registry
  * - `2`: CBOR-encoded
  */
-export type SchemaId =
-  | NonNullable<AttributionSchemaId0['id'] | AttributionSchemaId1['id']>
-  | 2
+export type SchemaId = NonNullable<
+  | AttributionSchemaId0['id']
+  | AttributionSchemaId1['id']
+  | AttributionSchemaId2['id']
+>
 
 /**
  * ERC-8021 suffix identifier.
@@ -276,7 +280,7 @@ export declare namespace toDataSuffix {
  * const attribution = Attribution.fromData(
  *   '0xdddddddda161616762617365617070000b0280218021802180218021802180218021'
  * )
- * // @log: { appCode: 'baseapp' }
+ * // @log: { appCode: 'baseapp', id: 2 }
  * ```
  *
  * @param data - The transaction calldata containing the attribution suffix.
@@ -476,7 +480,7 @@ function schema2FromData(data: Hex.Hex): AttributionSchemaId2 | undefined {
   // Decode CBOR
   const decoded = Cbor.decode<Schema2CborMap>(cborHex)
 
-  const result: AttributionSchemaId2 = {}
+  const result: AttributionSchemaId2 = { id: 2 }
 
   if (typeof decoded.a === 'string') result.appCode = decoded.a
   if (typeof decoded.w === 'string') result.walletCode = decoded.w
