@@ -694,7 +694,7 @@ describe('from', () => {
 
   test('tempo address input for calls.to', () => {
     const hexAddr = '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
-    const tempoAddr = 'tempo1qpcfj7tsc5vp9hp6qyx86qd4pcx30hreeqlrsqqr'
+    const tempoAddr = 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
 
     const envelope = TxEnvelopeTempo.from({
       chainId: 1,
@@ -707,7 +707,7 @@ describe('from', () => {
 
   test('tempo address input for from', () => {
     const hexAddr = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const tempoAddr = 'tempo1qreel4h9r2kc3ah5ee4t3qnj088llwfzvccugvl7'
+    const tempoAddr = 'tempox0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 
     const envelope = TxEnvelopeTempo.from({
       chainId: 1,
@@ -1411,7 +1411,7 @@ describe('getSignPayload', () => {
 
   test('tempo address input for from', () => {
     const hexAddr = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const tempoAddr = 'tempo1qreel4h9r2kc3ah5ee4t3qnj088llwfzvccugvl7'
+    const tempoAddr = 'tempox0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 
     const transaction = TxEnvelopeTempo.from({
       chainId: 1,
@@ -1455,7 +1455,7 @@ describe('getFeePayerSignPayload', () => {
 
   test('tempo address input for sender', () => {
     const hexAddr = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-    const tempoAddr = 'tempo1qreel4h9r2kc3ah5ee4t3qnj088llwfzvccugvl7'
+    const tempoAddr = 'tempox0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 
     const transaction = TxEnvelopeTempo.from({
       chainId: 1,

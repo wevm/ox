@@ -17,7 +17,7 @@ export type {}
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.from({
- *   address: 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu',
+ *   address: 'tempox0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
  *   nonce: 40n,
  * })
@@ -59,7 +59,7 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
- *     token: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *     token: 'tempox0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -125,19 +125,17 @@ export * as SignatureEnvelope from './SignatureEnvelope.js'
 /**
  * Tempo address encoding/decoding utilities for human-readable addresses.
  *
- * Tempo addresses use a bech32 base32-encoded format with `tempo1` prefix for mainnet
- * and `tempoz1` prefix for zone addresses. Includes CompactSize zone ID encoding
- * and double-SHA256 checksumming.
+ * Tempo addresses use a simple `tempox` prefix before the hex address.
  *
  * @example
  * ```ts twoslash
  * import { TempoAddress } from 'ox/tempo'
  *
  * const encoded = TempoAddress.format('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
- * // @log: 'tempo1wskntnrxxnq9x2f95wuyf0y7wk2l90fg0hlz9j'
+ * // @log: 'tempox0x742d35cc6634c0532925a3b844bc9e7595f2bd28'
  *
- * const { address, zoneId } = TempoAddress.parse(encoded)
- * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28', zoneId: undefined }
+ * const { address } = TempoAddress.parse(encoded)
+ * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28' }
  * ```
  *
  * @category Reference
@@ -180,7 +178,7 @@ export * as Tick from './Tick.js'
  *
  * const tokenId = TokenId.from(1n)
  * const address = TokenId.toAddress(1n)
- * // 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd'
+ * // 'tempox0x20c0000000000000000000000000000000000001'
  * ```
  *
  * @category Reference
@@ -232,7 +230,7 @@ export * as TokenRole from './TokenRole.js'
  *       value: '0x9b6e64a8ec60000',
  *     },
  *   ],
- *   feeToken: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv0ywuh',
+ *   feeToken: 'tempox0x20c0000000000000000000000000000000000000',
  *   transactionIndex: '0x2',
  *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
  *   value: '0x9b6e64a8ec60000',
@@ -271,7 +269,7 @@ export * as Transaction from './Transaction.js'
  * const receipt = TransactionReceipt.fromRpc({
  *   status: '0x1',
  *   feePayer: '0x...',
- *   feeToken: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd',
+ *   feeToken: 'tempox0x20c0000000000000000000000000000000000001',
  *   // ... other fields
  * } as any)
  * ```
@@ -292,8 +290,8 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const request = TransactionRequest.toRpc({
- *   calls: [{ to: 'tempo1qr90aw47etlt40k2l6atajh7h2lv4l46hcx5uwlp', data: '0xdeadbeef' }],
- *   feeToken: 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv0ywuh',
+ *   calls: [{ to: 'tempox0xcafebabecafebabecafebabecafebabecafebabe', data: '0xdeadbeef' }],
+ *   feeToken: 'tempox0x20c0000000000000000000000000000000000000',
  * })
  * ```
  *
@@ -315,7 +313,7 @@ export * as TransactionRequest from './TransactionRequest.js'
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: 'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj97hme', data: '0xdeadbeef' }],
+ *   calls: [{ to: 'tempox0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
  *

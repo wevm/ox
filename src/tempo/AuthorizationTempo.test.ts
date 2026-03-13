@@ -85,7 +85,7 @@ describe('from', () => {
   })
 
   test('tempo address input', () => {
-    const tempoAddr = 'tempo1qzlftsl42n5lep0v2xlxng7cq7sd2k709sxlwnsu'
+    const tempoAddr = 'tempox0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
 
     const authorization = AuthorizationTempo.from({
       address: tempoAddr,

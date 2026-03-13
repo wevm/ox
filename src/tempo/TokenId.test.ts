@@ -25,7 +25,7 @@ test('fromAddress', () => {
   ).toBe(0xdefn)
 
   // tempo address input
-  const tempoAddr = 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd'
+  const tempoAddr = 'tempox0x20c0000000000000000000000000000000000001'
   expect(TokenId.fromAddress(tempoAddr)).toBe(1n)
 })
 
@@ -44,7 +44,7 @@ test('toAddress', () => {
   )
 
   // tempo address input
-  const tempoAddr = 'tempo1qqsvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqyr9xgnd'
+  const tempoAddr = 'tempox0x20c0000000000000000000000000000000000001'
   expect(TokenId.toAddress(tempoAddr)).toBe(
     '0x20C0000000000000000000000000000000000001',
   )
@@ -88,6 +88,6 @@ test('compute', () => {
   expect(address3).not.toBe(address1)
 
   // tempo address input produces same result
-  const tempoSender = 'tempo1qqfrg4ncjqfrg4ncjqfrg4ncjqfrg4ncjqgmv79k'
+  const tempoSender = 'tempox0x1234567890123456789012345678901234567890'
   expect(TokenId.compute({ sender: tempoSender, salt: salt1 })).toBe(id1)
 })
