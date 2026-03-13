@@ -56,9 +56,8 @@ export async function create(
   options: create.Options,
 ): Promise<Credential_.Credential> {
   const {
-    createFn = window.navigator.credentials.create.bind(
-      window.navigator.credentials,
-    ),
+    createFn = (opts: Types.CredentialCreationOptions | undefined) =>
+      window.navigator.credentials.create(opts),
     ...rest
   } = options
   const creationOptions =
@@ -73,12 +72,23 @@ export async function create(
 
     const response =
       credential.response as Types.AuthenticatorAttestationResponse
-    const publicKey = await internal.parseCredentialPublicKey(response)
+
+    // Eagerly copy ArrayBuffer data to avoid cross-origin access errors
+    // when browser extensions (e.g. 1Password on Firefox) replace
+    // `navigator.credentials` with a cross-compartment proxy.
+    const attestationObject = response.attestationObject
+    const clientDataJSON = response.clientDataJSON
+    const id = credential.id
+
+    const publicKey = await internal.parseCredentialPublicKey(
+      response,
+      attestationObject,
+    )
 
     return {
-      attestationObject: response.attestationObject,
-      clientDataJSON: response.clientDataJSON,
-      id: credential.id,
+      attestationObject,
+      clientDataJSON,
+      id,
       publicKey,
       raw: credential,
     }

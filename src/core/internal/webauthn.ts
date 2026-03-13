@@ -21,6 +21,9 @@ export function parseAsn1Signature(bytes: Uint8Array) {
  */
 export async function parseCredentialPublicKey(
   response: AuthenticatorAttestationResponse,
+  /** Pre-cloned attestationObject to use in the fallback path, avoiding
+   *  cross-origin access on the proxy response object. */
+  attestationObject?: ArrayBuffer | ArrayBufferLike,
 ): Promise<PublicKey.PublicKey> {
   try {
     const publicKeyBuffer = response.getPublicKey()
@@ -50,7 +53,9 @@ export async function parseCredentialPublicKey(
     if ((error as Error).message !== 'Permission denied to access object')
       throw error
 
-    const data = new Uint8Array(response.attestationObject)
+    const data = new Uint8Array(
+      attestationObject ?? response.attestationObject,
+    )
     const coordinateLength = 0x20
     const cborPrefix = 0x58
 

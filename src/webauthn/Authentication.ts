@@ -471,7 +471,8 @@ export declare namespace serializeResponse {
  */
 export async function sign(options: sign.Options): Promise<sign.ReturnType> {
   const {
-    getFn = window.navigator.credentials.get.bind(window.navigator.credentials),
+    getFn = (opts: Types.CredentialRequestOptions | undefined) =>
+      window.navigator.credentials.get(opts),
     ...rest
   } = options
   const requestOptions =
@@ -485,22 +486,24 @@ export async function sign(options: sign.Options): Promise<sign.ReturnType> {
     if (!credential) throw new SignFailedError()
     const response = credential.response as AuthenticatorAssertionResponse
 
-    const clientDataJSON = String.fromCharCode(
-      ...new Uint8Array(response.clientDataJSON),
-    )
+    // Eagerly copy ArrayBuffer data to avoid cross-origin access errors
+    // when browser extensions (e.g. 1Password on Firefox) replace
+    // `navigator.credentials` with a cross-compartment proxy.
+    const clientDataJSONBytes = new Uint8Array(response.clientDataJSON)
+    const authenticatorDataBytes = new Uint8Array(response.authenticatorData)
+    const signatureBytes = new Uint8Array(response.signature)
+    const id = credential.id
+
+    const clientDataJSON = String.fromCharCode(...clientDataJSONBytes)
     const challengeIndex = clientDataJSON.indexOf('"challenge"')
     const typeIndex = clientDataJSON.indexOf('"type"')
 
-    const signature = internal.parseAsn1Signature(
-      new Uint8Array(response.signature),
-    )
+    const signature = internal.parseAsn1Signature(signatureBytes)
 
     return {
-      id: credential.id,
+      id,
       metadata: {
-        authenticatorData: Hex.fromBytes(
-          new Uint8Array(response.authenticatorData),
-        ),
+        authenticatorData: Hex.fromBytes(authenticatorDataBytes),
         clientDataJSON,
         challengeIndex,
         typeIndex,
