@@ -53,9 +53,7 @@ export async function parseCredentialPublicKey(
     if ((error as Error).message !== 'Permission denied to access object')
       throw error
 
-    const data = new Uint8Array(
-      attestationObject ?? response.attestationObject,
-    )
+    const data = new Uint8Array(attestationObject ?? response.attestationObject)
     const coordinateLength = 0x20
     const cborPrefix = 0x58
 
