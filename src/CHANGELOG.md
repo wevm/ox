@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.3
+
+### Patch Changes
+
+- [`3f7b80c`](https://github.com/wevm/ox/commit/3f7b80cb6537b407318abb6c6824b9daf91f02ef) Thanks [@jxom](https://github.com/jxom)! - Updated `TempoAddress` to new format.
+
 ## 0.14.2
 
 ### Patch Changes
