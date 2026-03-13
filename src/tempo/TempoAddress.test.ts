@@ -51,9 +51,8 @@ describe('parse', () => {
 
   test('uppercase hex', () => {
     expect(
-      TempoAddress.parse(
-        'tempox0x742D35CC6634C0532925A3B844BC9E7595F2BD28',
-      ).address,
+      TempoAddress.parse('tempox0x742D35CC6634C0532925A3B844BC9E7595F2BD28')
+        .address,
     ).toBe(rawAddress)
   })
 
