@@ -651,6 +651,7 @@ export function serialize(
     call.data ?? '0x',
   ])
 
+  let skipFeeToken = false
   const feePayerSignatureOrSender = (() => {
     // Explicit sender address provided — use as-is.
     if (options.sender) return options.sender
@@ -680,7 +681,11 @@ export function serialize(
         : envelope.feePayerSignature
     // `null` indicates the envelope is intended to be signed by a fee payer
     // but hasn't been signed yet — encode as a single zero byte marker.
-    if (feePayerSignature === null) return '0x00'
+    // The sender does not commit to feeToken, so skip it.
+    if (feePayerSignature === null) {
+      skipFeeToken = true
+      return '0x00'
+    }
     // No fee payer involvement — omit from the envelope.
     if (!feePayerSignature) return '0x'
     // Fee payer has signed — encode the signature as an RLP tuple.
@@ -698,7 +703,8 @@ export function serialize(
     nonce ? Hex.fromNumber(nonce) : '0x',
     typeof validBefore === 'number' ? Hex.fromNumber(validBefore) : '0x',
     typeof validAfter === 'number' ? Hex.fromNumber(validAfter) : '0x',
-    typeof feeToken === 'bigint' || typeof feeToken === 'string'
+    !skipFeeToken &&
+    (typeof feeToken === 'bigint' || typeof feeToken === 'string')
       ? TokenId.toAddress(feeToken)
       : '0x',
     feePayerSignatureOrSender,
@@ -904,6 +910,11 @@ export function hash<presign extends boolean = false>(
     ...(options.presign
       ? {
           signature: undefined,
+          // When a fee payer signature is present, normalize to `null`
+          // (the presign marker).
+          ...(envelope.feePayerSignature !== undefined
+            ? { feePayerSignature: null }
+            : {}),
         }
       : {}),
   })

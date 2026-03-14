@@ -387,6 +387,46 @@ describe('deserialize', () => {
     })
   })
 
+  test('feePayerSignature: recovers sender', () => {
+    const feePayerPrivateKey =
+      '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
+
+    // Sender signs the transaction (without feeToken — sender doesn't commit to it)
+    const senderTransaction = TxEnvelopeTempo.from({
+      ...transaction,
+      feePayerSignature: null,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+    })
+    const senderSignature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(senderTransaction),
+      privateKey,
+    })
+
+    // Fee payer signs over the transaction + sender address
+    const feePayerPayload = TxEnvelopeTempo.getFeePayerSignPayload(
+      senderTransaction,
+      { sender: address },
+    )
+    const feePayerSig = Secp256k1.sign({
+      payload: feePayerPayload,
+      privateKey: feePayerPrivateKey,
+    })
+
+    // Serialize the fully signed transaction
+    const serialized = TxEnvelopeTempo.serialize(
+      {
+        ...senderTransaction,
+        feePayerSignature: feePayerSig,
+      },
+      { signature: senderSignature },
+    )
+
+    // Deserialize and verify sender is recovered correctly
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
+    expect(deserialized.from).toBe(address)
+    expect(deserialized.feePayerSignature).toEqual(feePayerSig)
+  })
+
   test('feePayerSignature null', () => {
     const transaction_feePayer = TxEnvelopeTempo.from({
       ...transaction,
