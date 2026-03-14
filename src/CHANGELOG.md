@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.5
+
+### Patch Changes
+
+- [`6dcde2c`](https://github.com/wevm/ox/commit/6dcde2c34ae05928c9e7fd021af3731390b39619) Thanks [@jxom](https://github.com/jxom)! - Fixed type incompatibility between ox's `CredentialCreationOptions`/`CredentialRequestOptions` and the DOM's built-in types.
+
 ## 0.14.4
 
 ### Patch Changes
