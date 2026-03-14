@@ -904,6 +904,14 @@ export function hash<presign extends boolean = false>(
     ...(options.presign
       ? {
           signature: undefined,
+          // When a fee payer signature is present, the sender signed over a
+          // modified envelope: feeToken is excluded and feePayerSignature is
+          // replaced with a placeholder byte (`null`). This matches tempoxyz/tempo
+          // logic where `encode_for_signing` sets `skip_fee_token = true` when
+          // `fee_payer_signature.is_some()`.
+          ...(envelope.feePayerSignature !== undefined
+            ? { feeToken: undefined, feePayerSignature: null }
+            : {}),
         }
       : {}),
   })
