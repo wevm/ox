@@ -472,7 +472,7 @@ export declare namespace serializeResponse {
 export async function sign(options: sign.Options): Promise<sign.ReturnType> {
   const {
     getFn = (opts: Types.CredentialRequestOptions | undefined) =>
-      window.navigator.credentials.get(opts),
+      window.navigator.credentials.get(opts as never),
     ...rest
   } = options
   const requestOptions =

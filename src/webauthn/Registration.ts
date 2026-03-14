@@ -57,7 +57,7 @@ export async function create(
 ): Promise<Credential_.Credential> {
   const {
     createFn = (opts: Types.CredentialCreationOptions | undefined) =>
-      window.navigator.credentials.create(opts),
+      window.navigator.credentials.create(opts as never),
     ...rest
   } = options
   const creationOptions =
