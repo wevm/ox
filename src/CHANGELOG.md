@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.4
+
+### Patch Changes
+
+- [`0189572`](https://github.com/wevm/ox/commit/0189572f95c96bb9fed70966f7e0fa0eb951dee2) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Fixed sender recovery for fee payer transactions.
+
 ## 0.14.3
 
 ### Patch Changes
