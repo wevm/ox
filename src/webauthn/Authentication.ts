@@ -408,7 +408,13 @@ export function serializeResponse(response: Response): Response<true> {
 
   const rawResponse = {} as Record<string, string>
   for (const key of responseKeys) {
-    const value = (raw.response as unknown as Record<string, unknown>)[key]
+    const r = raw.response as unknown as Record<string, unknown>
+    let value = r[key]
+    if (!(value instanceof ArrayBuffer)) {
+      const getter = `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
+      const fn = r[getter]
+      if (typeof fn === 'function') value = fn.call(r)
+    }
     if (value instanceof ArrayBuffer)
       rawResponse[key] = Base64.fromBytes(
         new Uint8Array(value),
