@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.6
+
+### Patch Changes
+
+- [#197](https://github.com/wevm/ox/pull/197) [`28ac186`](https://github.com/wevm/ox/commit/28ac1866867eda53bb2e2114f043d674cfcb093a) Thanks [@jxom](https://github.com/jxom)! - Fixed WebAuthn response serialization to fall back to getter methods (e.g. `getAuthenticatorData()`) when properties are not directly accessible on the response object. Some browsers and passkey providers (e.g. 1Password, Firefox) proxy the credential object, making property access return `undefined` even though the data is available via getter methods.
+
 ## 0.14.5
 
 ### Patch Changes

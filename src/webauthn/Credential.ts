@@ -59,7 +59,8 @@ export function serialize(credential: Credential): Credential<true> {
     // getter methods (e.g. `getAuthenticatorData()`) in certain browsers
     // and passkey providers.
     if (!(value instanceof ArrayBuffer)) {
-      const getter = `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
+      const getter =
+        `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
       const fn = r[getter]
       if (typeof fn === 'function') value = fn.call(r)
     }
