@@ -305,7 +305,8 @@ export function serializeResponse(response: Response): Response<true> {
     const r = credential.raw.response as unknown as Record<string, unknown>
     let value = r[key]
     if (!(value instanceof ArrayBuffer)) {
-      const getter = `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
+      const getter =
+        `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
       const fn = r[getter]
       if (typeof fn === 'function') value = fn.call(r)
     }
