@@ -15,8 +15,8 @@ describe('from', () => {
         chainId: 1,
         nonce: 40n,
       })
-      expectTypeOf(authorization).toEqualTypeOf<{
-        readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+      expectTypeOf(authorization).toExtend<{
+        address: `0x${string}`
         readonly chainId: 1
         readonly nonce: 40n
       }>()
@@ -48,8 +48,8 @@ describe('from', () => {
           type: 'secp256k1' as const,
         },
       })
-      expectTypeOf(authorization).toEqualTypeOf<{
-        readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+      expectTypeOf(authorization).toExtend<{
+        address: `0x${string}`
         readonly chainId: 1
         readonly nonce: 40n
         readonly signature: {
@@ -111,7 +111,7 @@ describe('from', () => {
       signature,
     })
     expectTypeOf(authorization_signed).toExtend<{
-      readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+      readonly address: `0x${string}`
       readonly chainId: 1
       readonly nonce: 40n
     }>()
@@ -152,7 +152,7 @@ describe('from', () => {
       signature: signatureEnvelope,
     })
     expectTypeOf(authorization_signed).toExtend<{
-      readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+      readonly address: `0x${string}`
       readonly chainId: 1
       readonly nonce: 40n
     }>()

@@ -9,6 +9,15 @@ export type Address = core_Address.Address | Tempo
 /** Root type for a Tempo Address. */
 export type Tempo = Compute<`tempox${string}`>
 
+/** Deeply converts all {@link ox#TempoAddress.Tempo} types to {@link ox#Address.Address}. */
+export type ResolveAddresses<type> = type extends Tempo
+  ? core_Address.Address
+  : type extends readonly (infer item)[]
+    ? readonly ResolveAddresses<item>[]
+    : type extends object
+      ? { [key in keyof type]: ResolveAddresses<type[key]> }
+      : type
+
 /**
  * Resolves an address input (either an Ethereum hex address or a Tempo address)
  * to an Ethereum hex address.

@@ -32,15 +32,16 @@ export type KeyAuthorization<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
+  addressType = Address.Address,
 > = {
   /** Address derived from the public key of the key type. */
-  address: TempoAddress.Address
+  address: addressType
   /** Chain ID for replay protection. */
   chainId: bigintType
   /** Unix timestamp when key expires (0 = never expires). */
   expiry?: numberType | null | undefined
   /** TIP20 spending limits for this key. */
-  limits?: readonly TokenLimit<bigintType>[] | undefined
+  limits?: readonly TokenLimit<bigintType, addressType>[] | undefined
   /** Key type. (secp256k1, P256, WebAuthn). */
   type: SignatureEnvelope.Type
 } & (signed extends true
@@ -50,6 +51,14 @@ export type KeyAuthorization<
         | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
         | undefined
     })
+
+/** Input type for a Key Authorization. */
+export type Input = KeyAuthorization<
+  false,
+  bigint,
+  number,
+  TempoAddress.Address
+>
 
 /** RPC representation of an {@link ox#KeyAuthorization.KeyAuthorization}. */
 export type Rpc = Omit<
@@ -62,11 +71,11 @@ export type Rpc = Omit<
 }
 
 /** Signed representation of a Key Authorization. */
-export type Signed<bigintType = bigint, numberType = number> = KeyAuthorization<
-  true,
-  bigintType,
-  numberType
->
+export type Signed<
+  bigintType = bigint,
+  numberType = number,
+  addressType = Address.Address,
+> = KeyAuthorization<true, bigintType, numberType, addressType>
 
 type BaseTuple = readonly [
   chainId: Hex.Hex,
@@ -106,9 +115,9 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
  *
  * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
-export type TokenLimit<bigintType = bigint> = {
+export type TokenLimit<bigintType = bigint, addressType = Address.Address> = {
   /** Address of the TIP-20 token. */
-  token: TempoAddress.Address
+  token: addressType
   /** Maximum spending amount for this token (enforced over the key's lifetime). */
   limit: bigintType
 }
@@ -250,7 +259,7 @@ export type TokenLimit<bigintType = bigint> = {
  * @returns The {@link ox#KeyAuthorization.KeyAuthorization}.
  */
 export function from<
-  const authorization extends KeyAuthorization | Rpc,
+  const authorization extends Input | Rpc,
   const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
   authorization: authorization | KeyAuthorization,
@@ -291,17 +300,19 @@ export declare namespace from {
   }
 
   type ReturnType<
-    authorization extends KeyAuthorization | Rpc = KeyAuthorization,
+    authorization extends KeyAuthorization | Input | Rpc = KeyAuthorization,
     signature extends SignatureEnvelope.from.Value | undefined =
       | SignatureEnvelope.from.Value
       | undefined,
   > = Compute<
     authorization extends Rpc
       ? Signed
-      : authorization &
-          (signature extends SignatureEnvelope.from.Value
-            ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-            : {})
+      : TempoAddress.ResolveAddresses<
+          authorization &
+            (signature extends SignatureEnvelope.from.Value
+              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+              : {})
+        >
   >
 
   type ErrorType = Errors.GlobalErrorType

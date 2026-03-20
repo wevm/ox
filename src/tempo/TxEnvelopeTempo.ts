@@ -69,6 +69,7 @@ export type TxEnvelopeTempo<
   bigintType = bigint,
   numberType = number,
   type extends string = Type,
+  addressType = Address.Address,
 > = Compute<
   {
     /** EIP-2930 Access List. */
@@ -78,11 +79,11 @@ export type TxEnvelopeTempo<
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
     /** Array of calls to execute. */
-    calls: readonly Call<bigintType, TempoAddress.Address>[]
+    calls: readonly Call<bigintType, addressType>[]
     /** EIP-155 Chain ID. */
     chainId: numberType
     /** Sender of the transaction. */
-    from?: TempoAddress.Address | undefined
+    from?: addressType | undefined
     /** Gas provided for transaction execution */
     gas?: bigintType | undefined
     /** Fee payer signature. */
@@ -100,7 +101,7 @@ export type TxEnvelopeTempo<
      * The authorization must be signed with the root key, the tx can be signed by the Keychain signature.
      */
     keyAuthorization?:
-      | KeyAuthorization.Signed<bigintType, numberType>
+      | KeyAuthorization.Signed<bigintType, numberType, addressType>
       | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
@@ -125,6 +126,15 @@ export type TxEnvelopeTempo<
           | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
           | undefined
       })
+>
+
+/** Input type that accepts TempoAddress for `calls.to`, `from`, etc. */
+export type Input = TxEnvelopeTempo<
+  boolean,
+  bigint,
+  number,
+  Type,
+  TempoAddress.Address
 >
 
 export type Rpc<signed extends boolean = boolean> = TxEnvelopeTempo<
@@ -486,10 +496,10 @@ export declare namespace deserialize {
  * @returns A Tempo Transaction Envelope.
  */
 export function from<
-  const envelope extends UnionPartialBy<TxEnvelopeTempo, 'type'> | Serialized,
+  const envelope extends UnionPartialBy<Input, 'type'> | Serialized,
   const signature extends SignatureEnvelope.from.Value | undefined = undefined,
 >(
-  envelope: envelope | UnionPartialBy<TxEnvelopeTempo, 'type'> | Serialized,
+  envelope: envelope | UnionPartialBy<Input, 'type'> | Serialized,
   options: from.Options<signature> = {},
 ): from.ReturnValue<envelope, signature> {
   const { feePayerSignature, signature } = options
@@ -532,20 +542,22 @@ export declare namespace from {
   }
 
   type ReturnValue<
-    envelope extends UnionPartialBy<TxEnvelopeTempo, 'type'> | Hex.Hex =
+    envelope extends UnionPartialBy<Input, 'type'> | Hex.Hex =
       | TxEnvelopeTempo
       | Hex.Hex,
     signature extends SignatureEnvelope.from.Value | undefined = undefined,
   > = Compute<
     envelope extends Hex.Hex
       ? TxEnvelopeTempo
-      : Assign<
-          envelope,
-          (signature extends SignatureEnvelope.from.Value
-            ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-            : {}) & {
-            readonly type: 'tempo'
-          }
+      : TempoAddress.ResolveAddresses<
+          Assign<
+            envelope,
+            (signature extends SignatureEnvelope.from.Value
+              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+              : {}) & {
+              readonly type: 'tempo'
+            }
+          >
         >
   >
 

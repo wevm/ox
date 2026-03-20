@@ -18,10 +18,11 @@ export type AuthorizationTempo<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
+  addressType = TempoAddress.Address,
 > = Compute<
   {
     /** Address of the contract to set as code for the Authority. */
-    address: TempoAddress.Address
+    address: addressType
     /** Chain ID to authorize. */
     chainId: numberType
     /** Nonce of the Authority to authorize. */
@@ -283,10 +284,12 @@ export declare namespace from {
   > = Compute<
     authorization extends Rpc
       ? Signed
-      : authorization &
-          (signature extends SignatureEnvelope.from.Value
-            ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-            : {})
+      : TempoAddress.ResolveAddresses<
+          authorization &
+            (signature extends SignatureEnvelope.from.Value
+              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+              : {})
+        >
   >
 
   type ErrorType = Errors.GlobalErrorType
