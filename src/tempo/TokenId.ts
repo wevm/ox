@@ -7,7 +7,9 @@ import * as TempoAddress from './TempoAddress.js'
 const tip20Prefix = '0x20c0'
 
 export type TokenId = bigint
-export type TokenIdOrAddress = TokenId | TempoAddress.Address
+export type TokenIdOrAddress<addressType = Address.Address> =
+  | TokenId
+  | addressType
 
 /**
  * Converts a token ID or address to a token ID.
@@ -73,7 +75,9 @@ export function fromAddress(address: TempoAddress.Address): TokenId {
  * @param tokenId - The token ID.
  * @returns The address.
  */
-export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
+export function toAddress(
+  tokenId: TokenIdOrAddress<TempoAddress.Address>,
+): Address.Address {
   if (typeof tokenId === 'string') {
     const resolved = TempoAddress.resolve(tokenId as TempoAddress.Address)
     Address.assert(resolved)

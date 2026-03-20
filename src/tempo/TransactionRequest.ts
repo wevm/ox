@@ -35,7 +35,7 @@ export type TransactionRequest<
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
-    feeToken?: TokenId.TokenIdOrAddress | undefined
+    feeToken?: TokenId.TokenIdOrAddress<TempoAddress.Address> | undefined
     nonceKey?: 'random' | bigintType | undefined
     validBefore?: numberType | undefined
     validAfter?: numberType | undefined
