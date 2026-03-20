@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.7
+
+### Patch Changes
+
+- [`8d51883`](https://github.com/wevm/ox/commit/8d5188398a2d63bbee566e1f59a00da345c3cc99) Thanks [@jxom](https://github.com/jxom)! - ox/tempo: Fixed output types.
+
 ## 0.14.6
 
 ### Patch Changes
