@@ -1,4 +1,5 @@
 import type * as Address from '../core/Address.js'
+import * as Cbor from '../core/Cbor.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { OneOf } from '../core/internal/types.js'
@@ -9,7 +10,9 @@ import type { OneOf } from '../core/internal/types.js'
  * Represents attribution metadata that can be appended to transaction calldata
  * to track entities involved in facilitating a transaction.
  */
-export type Attribution = OneOf<AttributionSchemaId0 | AttributionSchemaId1>
+export type Attribution = OneOf<
+  AttributionSchemaId0 | AttributionSchemaId1 | AttributionSchemaId2
+>
 
 /**
  * Schema 0: Canonical Registry Attribution.
@@ -45,13 +48,49 @@ export type AttributionSchemaId1Registry = {
 }
 
 /**
+ * Schema 2: CBOR-Encoded Attribution.
+ *
+ * Uses CBOR encoding for extensible transaction annotation with optional fields,
+ * support for arbitrary metadata, and coexistence with other suffix-based systems.
+ */
+export type AttributionSchemaId2 = {
+  /** Application attribution code. */
+  appCode?: string | undefined
+  /** Wallet attribution code. */
+  walletCode?: string | undefined
+  /** Custom code registries keyed by entity type. */
+  registries?: AttributionSchemaId2Registries | undefined
+  /** Arbitrary metadata key-value pairs. */
+  metadata?: Record<string, unknown> | undefined
+  /** Schema identifier (2 for CBOR-encoded). */
+  id?: 2 | undefined
+}
+
+export type AttributionSchemaId2Registries = {
+  /** Custom registry for the application entity. */
+  app?: AttributionSchemaId2Registry | undefined
+  /** Custom registry for the wallet entity. */
+  wallet?: AttributionSchemaId2Registry | undefined
+}
+
+export type AttributionSchemaId2Registry = {
+  /** Address of the custom code registry contract. */
+  address: Address.Address
+  /** Chain ID of the chain the custom code registry contract is deployed on. */
+  chainId: number
+}
+
+/**
  * Attribution schema identifier.
  *
  * - `0`: Canonical registry
  * - `1`: Custom registry
+ * - `2`: CBOR-encoded
  */
 export type SchemaId = NonNullable<
-  AttributionSchemaId0['id'] | AttributionSchemaId1['id']
+  | AttributionSchemaId0['id']
+  | AttributionSchemaId1['id']
+  | AttributionSchemaId2['id']
 >
 
 /**
@@ -84,12 +123,18 @@ export const ercSuffixSize = /*#__PURE__*/ Hex.size(ercSuffix)
  *   }
  * })
  * // @log: 1
+ *
+ * const schemaId3 = Attribution.getSchemaId({
+ *   appCode: 'baseapp',
+ * })
+ * // @log: 2
  * ```
  *
  * @param attribution - The attribution object.
- * @returns The schema ID (0 for canonical registry, 1 for custom registry).
+ * @returns The schema ID (0 for canonical registry, 1 for custom registry, 2 for CBOR-encoded).
  */
 export function getSchemaId(attribution: Attribution): SchemaId {
+  if ('appCode' in attribution || 'walletCode' in attribution) return 2
   if ('codeRegistry' in attribution) return 1
   return 0
 }
@@ -128,12 +173,34 @@ export declare namespace getSchemaId {
  * })
  * ```
  *
+ * @example
+ * ### Schema 2 (CBOR-Encoded)
+ *
+ * ```ts twoslash
+ * import { Attribution } from 'ox/erc8021'
+ *
+ * const suffix = Attribution.toDataSuffix({
+ *   appCode: 'baseapp',
+ *   walletCode: 'privy',
+ *   metadata: { source: 'webapp' },
+ * })
+ * ```
+ *
  * @param attribution - The attribution to convert.
  * @returns The data suffix as a {@link ox#Hex.Hex} value.
  */
 export function toDataSuffix(attribution: Attribution): Hex.Hex {
+  // Determine schema ID
+  const schemaId = getSchemaId(attribution)
+
+  // Schema 2: CBOR-encoded
+  if (schemaId === 2) {
+    const schema2 = attribution as AttributionSchemaId2
+    return schema2ToDataSuffix(schema2)
+  }
+
   // Encode the codes as ASCII strings separated by commas
-  const codesHex = Hex.fromString(attribution.codes.join(','))
+  const codesHex = Hex.fromString((attribution.codes ?? []).join(','))
 
   // Get the byte length of the encoded codes
   const codesLength = Hex.size(codesHex)
@@ -141,14 +208,11 @@ export function toDataSuffix(attribution: Attribution): Hex.Hex {
   // Encode the codes length as 1 byte
   const codesLengthHex = Hex.fromNumber(codesLength, { size: 1 })
 
-  // Determine schema ID
-  const schemaId = getSchemaId(attribution)
   const schemaIdHex = Hex.fromNumber(schemaId, { size: 1 })
 
-  // Build the suffix based on schema
+  // Schema 1: codeRegistryAddress (20 bytes) ∥ chainId ∥ chainIdLength (1 byte) ∥ codes ∥ codesLength (1 byte) ∥ schemaId (1 byte) ∥ ercSuffix
   if (schemaId === 1) {
     const schema1 = attribution as AttributionSchemaId1
-    // Schema 1: codeRegistryAddress (20 bytes) ∥ chainId ∥ chainIdLength (1 byte) ∥ codes ∥ codesLength (1 byte) ∥ schemaId (1 byte) ∥ ercSuffix
     return Hex.concat(
       registryToData(schema1.codeRegistry),
       codesHex,
@@ -169,6 +233,7 @@ export declare namespace toDataSuffix {
     | Hex.fromString.ErrorType
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
+    | Cbor.encode.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -198,12 +263,24 @@ export declare namespace toDataSuffix {
  * )
  * // @log: {
  * // @log:   codes: ['baseapp', 'morpho'],
- * // @log:   registry: {
- * // @log:       address: '0xcccccccccccccccccccccccccccccccccccccccc`
+ * // @log:   codeRegistry: {
+ * // @log:       address: '0xcccccccccccccccccccccccccccccccccccccccc',
  * // @log:       chainId: 8453,
- * // @log:   }
+ * // @log:   },
  * // @log:   id: 1
  * // @log: }
+ * ```
+ *
+ * @example
+ * ### Schema 2 (CBOR-Encoded)
+ *
+ * ```ts twoslash
+ * import { Attribution } from 'ox/erc8021'
+ *
+ * const attribution = Attribution.fromData(
+ *   '0xdddddddda161616762617365617070000b0280218021802180218021802180218021'
+ * )
+ * // @log: { appCode: 'baseapp', id: 2 }
  * ```
  *
  * @param data - The transaction calldata containing the attribution suffix.
@@ -270,6 +347,10 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
       id: 1,
     }
   }
+  // Schema 2: CBOR-encoded
+  if (schemaId === 2) {
+    return schema2FromData(data)
+  }
 
   // Unknown schema ID
   return undefined
@@ -325,5 +406,103 @@ export declare namespace fromData {
     | Hex.toNumber.ErrorType
     | Hex.toString.ErrorType
     | Hex.size.ErrorType
+    | Cbor.decode.ErrorType
     | Errors.GlobalErrorType
+}
+
+// ---- Schema 2 helpers ----
+
+/** Internal CBOR map shape matching the ERC-8021 spec. */
+type Schema2CborMap = {
+  a?: string
+  w?: string
+  r?: {
+    a?: { c: string; a: string }
+    w?: { c: string; a: string }
+  }
+  m?: Record<string, unknown>
+}
+
+function schema2ToDataSuffix(attribution: AttributionSchemaId2): Hex.Hex {
+  // Build the CBOR map using single-letter keys per the spec
+  const cborMap: Schema2CborMap = {}
+
+  if (attribution.appCode) cborMap.a = attribution.appCode
+  if (attribution.walletCode) cborMap.w = attribution.walletCode
+
+  if (attribution.registries) {
+    const r: Schema2CborMap['r'] = {}
+    if (attribution.registries.app) {
+      r.a = {
+        c: Hex.fromNumber(attribution.registries.app.chainId),
+        a: attribution.registries.app.address,
+      }
+    }
+    if (attribution.registries.wallet) {
+      r.w = {
+        c: Hex.fromNumber(attribution.registries.wallet.chainId),
+        a: attribution.registries.wallet.address,
+      }
+    }
+    if (r.a || r.w) cborMap.r = r
+  }
+
+  if (attribution.metadata && Object.keys(attribution.metadata).length > 0)
+    cborMap.m = attribution.metadata
+
+  // Encode to CBOR
+  const cborHex = Cbor.encode(cborMap)
+  const cborBytes = Hex.size(cborHex)
+
+  // cborData ∥ cborLength (2 bytes) ∥ schemaId (1 byte) ∥ ercSuffix
+  return Hex.concat(
+    cborHex,
+    Hex.fromNumber(cborBytes, { size: 2 }),
+    Hex.fromNumber(2, { size: 1 }),
+    ercSuffix,
+  )
+}
+
+function schema2FromData(data: Hex.Hex): AttributionSchemaId2 | undefined {
+  // cborLength is 2 bytes before schema ID
+  const cborLengthHex = Hex.slice(
+    data,
+    -ercSuffixSize - 1 - 2,
+    -ercSuffixSize - 1,
+  )
+  const cborLength = Hex.toNumber(cborLengthHex)
+
+  // Extract CBOR data
+  const cborStart = -ercSuffixSize - 1 - 2 - cborLength
+  const cborEnd = -ercSuffixSize - 1 - 2
+  const cborHex = Hex.slice(data, cborStart, cborEnd)
+
+  // Decode CBOR
+  const decoded = Cbor.decode<Schema2CborMap>(cborHex)
+
+  const result: AttributionSchemaId2 = { id: 2 }
+
+  if (typeof decoded.a === 'string') result.appCode = decoded.a
+  if (typeof decoded.w === 'string') result.walletCode = decoded.w
+
+  if (decoded.r) {
+    const registries: AttributionSchemaId2Registries = {}
+    if (decoded.r.a?.c && decoded.r.a?.a) {
+      registries.app = {
+        address: decoded.r.a.a as Address.Address,
+        chainId: Hex.toNumber(decoded.r.a.c as Hex.Hex),
+      }
+    }
+    if (decoded.r.w?.c && decoded.r.w?.a) {
+      registries.wallet = {
+        address: decoded.r.w.a as Address.Address,
+        chainId: Hex.toNumber(decoded.r.w.c as Hex.Hex),
+      }
+    }
+    if (registries.app || registries.wallet) result.registries = registries
+  }
+
+  if (decoded.m && typeof decoded.m === 'object') result.metadata = decoded.m
+
+  return result
 }
