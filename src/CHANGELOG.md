@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.8
+
+### Patch Changes
+
+- [`0d0575e`](https://github.com/wevm/ox/commit/0d0575e36503403ce245eaaaf29aac106bad508a) Thanks [@jxom](https://github.com/jxom)! - Added ERC-8021 Schema 2 (CBOR-encoded) attribution support to the `Attribution` module.
+
 ## 0.14.7
 
 ### Patch Changes
