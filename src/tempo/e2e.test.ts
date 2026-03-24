@@ -1590,7 +1590,7 @@ describe('behavior: keyAuthorization', () => {
 
       expect(response.from).toBe(root.address)
       expect(response.keyAuthorization).toBeDefined()
-      expect(response.keyAuthorization?.expiry).toBe(0)
+      expect(response.keyAuthorization?.expiry).toBeUndefined()
       expect(response.keyAuthorization?.limits).toEqual(keyAuth.limits)
     }
   })
