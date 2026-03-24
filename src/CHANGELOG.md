@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.9
+
+### Patch Changes
+
+- [#201](https://github.com/wevm/ox/pull/201) [`ea94ea6`](https://github.com/wevm/ox/commit/ea94ea627eec365de22ade3126dc39b824cc53f9) Thanks [@decofe](https://github.com/decofe)! - Fixed `KeyAuthorization.fromRpc` to preserve `undefined` expiry instead of defaulting to `0`.
+
 ## 0.14.8
 
 ### Patch Changes
