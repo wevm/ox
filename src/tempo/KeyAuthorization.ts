@@ -38,7 +38,7 @@ export type KeyAuthorization<
   address: addressType
   /** Chain ID for replay protection. */
   chainId: bigintType
-  /** Unix timestamp when key expires (0 = never expires). */
+  /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
   /** TIP20 spending limits for this key. */
   limits?: readonly TokenLimit<bigintType, addressType>[] | undefined
@@ -344,12 +344,12 @@ export declare namespace from {
  * @returns A signed {@link ox#AuthorizationTempo.AuthorizationTempo}.
  */
 export function fromRpc(authorization: Rpc): Signed {
-  const { chainId, keyId, expiry = 0, limits, keyType } = authorization
+  const { chainId, keyId, expiry, limits, keyType } = authorization
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   return {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
-    expiry: Number(expiry),
+    ...(expiry != null ? { expiry: Number(expiry) } : {}),
     limits: limits?.map((limit) => ({
       token: limit.token,
       limit: BigInt(limit.limit),

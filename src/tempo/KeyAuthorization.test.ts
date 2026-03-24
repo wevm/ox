@@ -639,6 +639,24 @@ describe('fromRpc', () => {
 
     expect(authorization.chainId).toBe(0n)
   })
+
+  test('omits expiry when null (never expires)', () => {
+    const authorization = KeyAuthorization.fromRpc({
+      chainId: '0x1',
+      expiry: null,
+      keyId: address,
+      keyType: 'secp256k1',
+      limits: [{ token, limit: '0x989680' }],
+      signature: {
+        type: 'secp256k1',
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+        yParity: '0x0',
+      },
+    })
+
+    expect(authorization.expiry).toBeUndefined()
+  })
 })
 
 describe('fromTuple', () => {
@@ -1379,6 +1397,29 @@ describe('toRpc', () => {
     const restored = KeyAuthorization.fromRpc(rpc)
 
     expect(restored).toEqual(authorization)
+  })
+
+  test('round-trip: toRpc -> fromRpc (no expiry)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 0n,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: Value.from('10', 6),
+        },
+      ],
+      signature: SignatureEnvelope.from(signature_secp256k1),
+    })
+
+    const rpc = KeyAuthorization.toRpc(authorization)
+    expect(rpc.expiry).toBeNull()
+
+    const restored = KeyAuthorization.fromRpc(rpc)
+    expect(restored.expiry).toBeUndefined()
+    expect(restored.address).toBe(authorization.address)
+    expect(restored.chainId).toBe(authorization.chainId)
   })
 })
 
