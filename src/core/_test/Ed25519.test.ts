@@ -1,4 +1,4 @@
-import { Bytes, Ed25519, Hex } from 'ox'
+import { Bytes, Ed25519, Hex, X25519 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('createKeyPair', () => {
@@ -322,6 +322,109 @@ describe('verify', () => {
       signature: testSignature,
     })
     expect(isValid).toBe(true)
+  })
+})
+
+describe('toX25519PublicKey', () => {
+  test('default (Hex)', () => {
+    const { publicKey } = Ed25519.createKeyPair()
+    const x25519PublicKey = Ed25519.toX25519PublicKey({ publicKey })
+    expect(typeof x25519PublicKey).toBe('string')
+    expect(x25519PublicKey).toMatch(/^0x[0-9a-fA-F]{64}$/)
+  })
+
+  test('with as: Bytes', () => {
+    const { publicKey } = Ed25519.createKeyPair()
+    const x25519PublicKey = Ed25519.toX25519PublicKey({
+      publicKey,
+      as: 'Bytes',
+    })
+    expect(x25519PublicKey).toBeInstanceOf(Uint8Array)
+    expect(x25519PublicKey).toHaveLength(32)
+  })
+
+  test('with Bytes public key', () => {
+    const { publicKey } = Ed25519.createKeyPair({ as: 'Bytes' })
+    const x25519PublicKey = Ed25519.toX25519PublicKey({ publicKey })
+    expect(typeof x25519PublicKey).toBe('string')
+    expect(x25519PublicKey).toMatch(/^0x[0-9a-fA-F]{64}$/)
+  })
+
+  test('deterministic', () => {
+    const { publicKey } = Ed25519.createKeyPair()
+    const a = Ed25519.toX25519PublicKey({ publicKey })
+    const b = Ed25519.toX25519PublicKey({ publicKey })
+    expect(a).toBe(b)
+  })
+
+  test('different from ed25519 public key', () => {
+    const { publicKey } = Ed25519.createKeyPair()
+    const x25519PublicKey = Ed25519.toX25519PublicKey({ publicKey })
+    expect(x25519PublicKey).not.toBe(publicKey)
+  })
+})
+
+describe('toX25519PrivateKey', () => {
+  test('default (Hex)', () => {
+    const { privateKey } = Ed25519.createKeyPair()
+    const x25519PrivateKey = Ed25519.toX25519PrivateKey({ privateKey })
+    expect(typeof x25519PrivateKey).toBe('string')
+    expect(x25519PrivateKey).toMatch(/^0x[0-9a-fA-F]{64}$/)
+  })
+
+  test('with as: Bytes', () => {
+    const { privateKey } = Ed25519.createKeyPair()
+    const x25519PrivateKey = Ed25519.toX25519PrivateKey({
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(x25519PrivateKey).toBeInstanceOf(Uint8Array)
+    expect(x25519PrivateKey).toHaveLength(32)
+  })
+
+  test('with Bytes private key', () => {
+    const { privateKey } = Ed25519.createKeyPair({ as: 'Bytes' })
+    const x25519PrivateKey = Ed25519.toX25519PrivateKey({ privateKey })
+    expect(typeof x25519PrivateKey).toBe('string')
+    expect(x25519PrivateKey).toMatch(/^0x[0-9a-fA-F]{64}$/)
+  })
+
+  test('deterministic', () => {
+    const { privateKey } = Ed25519.createKeyPair()
+    const a = Ed25519.toX25519PrivateKey({ privateKey })
+    const b = Ed25519.toX25519PrivateKey({ privateKey })
+    expect(a).toBe(b)
+  })
+})
+
+describe('toX25519 integration', () => {
+  test('converted keys produce valid X25519 shared secret', () => {
+    const alice = Ed25519.createKeyPair()
+    const bob = Ed25519.createKeyPair()
+
+    const aliceX25519Priv = Ed25519.toX25519PrivateKey({
+      privateKey: alice.privateKey,
+    })
+    const bobX25519Pub = Ed25519.toX25519PublicKey({
+      publicKey: bob.publicKey,
+    })
+    const bobX25519Priv = Ed25519.toX25519PrivateKey({
+      privateKey: bob.privateKey,
+    })
+    const aliceX25519Pub = Ed25519.toX25519PublicKey({
+      publicKey: alice.publicKey,
+    })
+
+    const sharedA = X25519.getSharedSecret({
+      privateKey: aliceX25519Priv,
+      publicKey: bobX25519Pub,
+    })
+    const sharedB = X25519.getSharedSecret({
+      privateKey: bobX25519Priv,
+      publicKey: aliceX25519Pub,
+    })
+
+    expect(sharedA).toBe(sharedB)
   })
 })
 
