@@ -18,7 +18,11 @@ export type Deserialized = {
  * Serializes the `Signature-Input` header value per RFC 9421 Structured Fields.
  *
  * @example
- * `eth=("@method" "@authority" "@path");created=1700000000;expires=1700000060;nonce="abc";keyid="erc8128:1:0x..."`
+ * ```ts
+ * import * as HttpSignatureInput from './HttpSignatureInput.js'
+ * HttpSignatureInput.serialize('eth', ['@method', '@authority'], { created: 1700000000 })
+ * // 'eth=("@method" "@authority");created=1700000000'
+ * ```
  */
 export function serialize(
   label: string,
@@ -38,6 +42,12 @@ export function serialize(
  * Deserializes a `Signature-Input` header value.
  *
  * Parses `label=("@method" "@authority" ...);created=123;keyid="erc8128:1:0x..."`.
+ *
+ * @example
+ * ```ts
+ * import * as HttpSignatureInput from './HttpSignatureInput.js'
+ * HttpSignatureInput.deserialize('eth=("@method" "@authority");created=1700000000;keyid="erc8128:1:0xabc"')
+ * ```
  */
 export function deserialize(input: string): Deserialized {
   // Split label from the rest: `eth=(...);...`
