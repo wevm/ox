@@ -1,4 +1,8 @@
-import { ed25519 } from '@noble/curves/ed25519'
+import {
+  ed25519,
+  edwardsToMontgomeryPriv,
+  edwardsToMontgomeryPub,
+} from '@noble/curves/ed25519'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -234,4 +238,102 @@ export declare namespace verify {
   }
 
   type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Converts an Ed25519 public key to an X25519 public key.
+ *
+ * This is useful for performing X25519 Diffie-Hellman key exchange
+ * using an Ed25519 signing key pair.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Ed25519, X25519 } from 'ox'
+ *
+ * const { privateKey, publicKey } = Ed25519.createKeyPair()
+ *
+ * const x25519PublicKey = Ed25519.toX25519PublicKey({ publicKey })
+ * ```
+ *
+ * @param options - The options.
+ * @returns The X25519 public key.
+ */
+export function toX25519PublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: toX25519PublicKey.Options<as>,
+): toX25519PublicKey.ReturnType<as> {
+  const { as = 'Hex', publicKey } = options
+  const publicKeyBytes = Bytes.from(publicKey)
+  const x25519PublicKeyBytes = edwardsToMontgomeryPub(publicKeyBytes)
+  if (as === 'Hex') return Hex.fromBytes(x25519PublicKeyBytes) as never
+  return x25519PublicKeyBytes as never
+}
+
+export declare namespace toX25519PublicKey {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned public key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /** Ed25519 public key to convert. */
+    publicKey: Hex.Hex | Bytes.Bytes
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Converts an Ed25519 private key to an X25519 private key.
+ *
+ * This is useful for performing X25519 Diffie-Hellman key exchange
+ * using an Ed25519 signing key pair.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Ed25519, X25519 } from 'ox'
+ *
+ * const { privateKey, publicKey } = Ed25519.createKeyPair()
+ *
+ * const x25519PrivateKey = Ed25519.toX25519PrivateKey({ privateKey })
+ * ```
+ *
+ * @param options - The options.
+ * @returns The X25519 private key.
+ */
+export function toX25519PrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: toX25519PrivateKey.Options<as>,
+): toX25519PrivateKey.ReturnType<as> {
+  const { as = 'Hex', privateKey } = options
+  const privateKeyBytes = Bytes.from(privateKey)
+  const x25519PrivateKeyBytes = edwardsToMontgomeryPriv(privateKeyBytes)
+  if (as === 'Hex') return Hex.fromBytes(x25519PrivateKeyBytes) as never
+  return x25519PrivateKeyBytes as never
+}
+
+export declare namespace toX25519PrivateKey {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /**
+     * Format of the returned private key.
+     * @default 'Hex'
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+    /** Ed25519 private key to convert. */
+    privateKey: Hex.Hex | Bytes.Bytes
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Bytes.from.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Errors.GlobalErrorType
 }
