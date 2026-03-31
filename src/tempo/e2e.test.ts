@@ -2,6 +2,7 @@ import {
   Address,
   Hex,
   P256,
+  RpcTransport,
   Secp256k1,
   Value,
   WebAuthnP256,
@@ -14,6 +15,7 @@ import {
   AuthorizationTempo,
   KeyAuthorization,
   SignatureEnvelope,
+  ZoneRpcAuthentication,
 } from './index.js'
 import * as Transaction from './Transaction.js'
 import * as TransactionReceipt from './TransactionReceipt.js'
