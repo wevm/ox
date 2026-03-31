@@ -320,6 +320,26 @@ export * as TransactionRequest from './TransactionRequest.js'
  */
 export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 /**
+ * Zone ID utilities for converting between zone IDs and zone chain IDs.
+ *
+ * Zone chain IDs are deterministically derived from zone IDs using the formula
+ * `421_700_000 + zoneId`. This module provides helpers to convert between them.
+ *
+ * @example
+ * ```ts twoslash
+ * import { ZoneId } from 'ox/tempo'
+ *
+ * const zoneId = ZoneId.fromChainId(421_700_026)
+ * // @log: 26
+ *
+ * const chainId = ZoneId.toChainId(26)
+ * // @log: 421700026
+ * ```
+ *
+ * @category Reference
+ */
+export * as ZoneId from './ZoneId.js'
+/**
  * Zone RPC authentication token utilities for private zone RPC access.
  *
  * Zone RPC authentication tokens are short-lived, read-only credentials used in
