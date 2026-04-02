@@ -471,6 +471,14 @@ describe('schema 2 (CBOR-encoded)', () => {
 
       expect(schemaId).toBe(2)
     })
+
+    test('returns 2 for serviceCodes', () => {
+      const schemaId = Attribution.getSchemaId({
+        serviceCodes: ['flashbots'],
+      })
+
+      expect(schemaId).toBe(2)
+    })
   })
 
   describe('toDataSuffix', () => {
@@ -566,6 +574,47 @@ describe('schema 2 (CBOR-encoded)', () => {
       expect(parsed).toEqual({ ...input, id: 2 })
     })
 
+    test('with service codes', () => {
+      const suffix = Attribution.toDataSuffix({
+        appCode: 'baseapp',
+        walletCode: 'privy',
+        serviceCodes: ['flashbots', 'titan'],
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        appCode: 'baseapp',
+        walletCode: 'privy',
+        serviceCodes: ['flashbots', 'titan'],
+        id: 2,
+      })
+    })
+
+    test('service codes only', () => {
+      const suffix = Attribution.toDataSuffix({
+        serviceCodes: ['flashbots'],
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        serviceCodes: ['flashbots'],
+        id: 2,
+      })
+    })
+
+    test('empty service codes array is omitted', () => {
+      const suffix = Attribution.toDataSuffix({
+        appCode: 'baseapp',
+        serviceCodes: [],
+      })
+
+      const parsed = Attribution.fromData(`0xdddddddd${suffix.slice(2)}`)
+      expect(parsed).toEqual({
+        appCode: 'baseapp',
+        id: 2,
+      })
+    })
+
     test('wallet code only', () => {
       const suffix = Attribution.toDataSuffix({
         walletCode: 'metamask',
@@ -653,6 +702,20 @@ describe('schema 2 (CBOR-encoded)', () => {
       })
     })
 
+    test('spec test: app + wallet + service codes', () => {
+      const input =
+        '0xdddddddda361616762617365617070617765707269767961738269666c617368626f747365746974616e00260280218021802180218021802180218021'
+
+      const result = Attribution.fromData(input)
+
+      expect(result).toEqual({
+        appCode: 'baseapp',
+        walletCode: 'privy',
+        serviceCodes: ['flashbots', 'titan'],
+        id: 2,
+      })
+    })
+
     test.each([
       [{ appCode: 'baseapp', id: 2 }],
       [{ walletCode: 'privy', id: 2 }],
@@ -674,6 +737,23 @@ describe('schema 2 (CBOR-encoded)', () => {
               chainId: 8453,
             },
           },
+          id: 2,
+        },
+      ],
+      [{ serviceCodes: ['flashbots'], id: 2 }],
+      [
+        {
+          appCode: 'baseapp',
+          walletCode: 'privy',
+          serviceCodes: ['flashbots', 'titan'],
+          id: 2,
+        },
+      ],
+      [
+        {
+          appCode: 'baseapp',
+          serviceCodes: ['builder0x69'],
+          metadata: { source: 'webapp' },
           id: 2,
         },
       ],
