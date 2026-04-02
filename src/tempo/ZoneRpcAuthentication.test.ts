@@ -19,11 +19,11 @@ const p256Signature = Signature.from({
 })
 
 const authentication = {
-  chainId: 4217000026,
+  chainId: 4217000006,
   expiresAt: 1711235160,
   issuedAt: 1711234560,
-  zoneId: 26,
-  zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
+  zoneId: 6,
+  zonePortal: '0x7069DeC4E64Fd07334A0933eDe836C17259c9B23',
 } as const
 
 describe('from', () => {
@@ -44,12 +44,12 @@ describe('from', () => {
 
     expect(token).toMatchInlineSnapshot(`
       {
-        "chainId": 4217000026,
+        "chainId": 4217000006,
         "expiresAt": 1711235160,
         "issuedAt": 1711234560,
         "version": 0,
-        "zoneId": 26,
-        "zonePortal": "0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8",
+        "zoneId": 6,
+        "zonePortal": "0x7069DeC4E64Fd07334A0933eDe836C17259c9B23",
       }
     `)
   })
@@ -68,20 +68,20 @@ describe('from', () => {
     >()
     expect(token_signed).toMatchInlineSnapshot(`
       {
-        "chainId": 4217000026,
+        "chainId": 4217000006,
         "expiresAt": 1711235160,
         "issuedAt": 1711234560,
         "signature": {
           "signature": {
-            "r": 18118569821309640066725746585949487884242825007452246572100235702777206224302n,
-            "s": 46419667458513652580602838308372599096196769294735128367935559788600008107514n,
-            "yParity": 0,
+            "r": 40351686734431274270700452833251506460179550093528042520483563401805519703376n,
+            "s": 786627345783392172375258838634520174472337637961517353324978261757543563647n,
+            "yParity": 1,
           },
           "type": "secp256k1",
         },
         "version": 0,
-        "zoneId": 26,
-        "zonePortal": "0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8",
+        "zoneId": 6,
+        "zonePortal": "0x7069DeC4E64Fd07334A0933eDe836C17259c9B23",
       }
     `)
   })
@@ -92,17 +92,17 @@ describe('getFields', () => {
     const token = ZoneRpcAuthentication.from(authentication)
 
     expect(ZoneRpcAuthentication.getFields(token)).toMatchInlineSnapshot(
-      `"0x000000001a00000000fb5a505a0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c80000000065ff5e000000000065ff6058"`,
+      `"0x000000000600000000fb5a50467069DeC4E64Fd07334A0933eDe836C17259c9B230000000065ff5e000000000065ff6058"`,
     )
     expect(ZoneRpcAuthentication.getSignPayload(token)).toMatchInlineSnapshot(
-      `"0x650004cab5e43be40d43b33ce883e980dab5ab77ce7928d56b9cda120316da9d"`,
+      `"0xa433f4548ae4cb7c50f60e0dc266c57ca461ddd0061a209623e0827fc4b7bfe5"`,
     )
     expect(
       ZoneRpcAuthentication.getSignPayload(token, {
         userAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
       }),
     ).toMatchInlineSnapshot(
-      `"0xc361772a7796a0e1cff7a8da8d1ba5db13cf1fed88bb53bb4c23402cddb51e44"`,
+      `"0xd2d1117bf662a04bb63106cacf7974de59384ab4053a30ef3fed3fe05475c2f8"`,
     )
   })
 })
@@ -120,26 +120,26 @@ describe('serialize', () => {
     })
 
     expect(serialized).toMatchInlineSnapshot(
-      `"0x280ebf423a8652a4989d4f590b8a75947ba3f28237ecd5509df92e5c3a8335ae66a099c87ff53d8a4d78953a16b0fbbbbf51c2952ba22a2538f1bb94aa67e5fa1b000000001a00000000fb5a505a0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c80000000065ff5e000000000065ff6058"`,
+      `"0x59363ece42781a3599c63295c190f349ad42ca8b0b5d5b9211059a36347ccd5001bd371de48dacdd1b7e27bf1eb94065782eb6b383f550b04de0de2ecdebc17f1c000000000600000000fb5a50467069DeC4E64Fd07334A0933eDe836C17259c9B230000000065ff5e000000000065ff6058"`,
     )
     expect(
       ZoneRpcAuthentication.deserialize(serialized),
     ).toMatchInlineSnapshot(`
       {
-        "chainId": 4217000026,
+        "chainId": 4217000006,
         "expiresAt": 1711235160,
         "issuedAt": 1711234560,
         "signature": {
           "signature": {
-            "r": 18118569821309640066725746585949487884242825007452246572100235702777206224302n,
-            "s": 46419667458513652580602838308372599096196769294735128367935559788600008107514n,
-            "yParity": 0,
+            "r": 40351686734431274270700452833251506460179550093528042520483563401805519703376n,
+            "s": 786627345783392172375258838634520174472337637961517353324978261757543563647n,
+            "yParity": 1,
           },
           "type": "secp256k1",
         },
         "version": 0,
-        "zoneId": 26,
-        "zonePortal": "0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8",
+        "zoneId": 6,
+        "zonePortal": "0x7069DeC4E64Fd07334A0933eDe836C17259c9B23",
       }
     `)
   })
@@ -168,15 +168,15 @@ describe('serialize', () => {
       ZoneRpcAuthentication.deserialize(serialized),
     ).toMatchInlineSnapshot(`
       {
-        "chainId": 4217000026,
+        "chainId": 4217000006,
         "expiresAt": 1711235160,
         "issuedAt": 1711234560,
         "signature": {
           "inner": {
             "signature": {
-              "r": 13157937893609283879859776537490301006969916119098760417520014675905043658018n,
-              "s": 15478006200349760575038029189394774636774839199126345953743260366289789191585n,
-              "yParity": 1,
+              "r": 112321973626197669432476215906763305093610636258878019755402728069462339908152n,
+              "s": 49209546339975998582588635962324430460594498604120786514504236238336822631981n,
+              "yParity": 0,
             },
             "type": "secp256k1",
           },
@@ -185,8 +185,8 @@ describe('serialize', () => {
           "version": "v2",
         },
         "version": 0,
-        "zoneId": 26,
-        "zonePortal": "0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8",
+        "zoneId": 6,
+        "zonePortal": "0x7069DeC4E64Fd07334A0933eDe836C17259c9B23",
       }
     `)
   })
@@ -215,13 +215,13 @@ describe('serialize', () => {
       ZoneRpcAuthentication.deserialize(serialized),
     ).toMatchInlineSnapshot(`
       {
-        "chainId": 4217000026,
+        "chainId": 4217000006,
         "expiresAt": 1711235160,
         "issuedAt": 1711234560,
         "signature": {
           "metadata": {
             "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
-            "clientDataJSON": "{"type":"webauthn.get","challenge":"ZQAEyrXkO-QNQ7M86IPpgNq1q3fOeSjVa5zaEgMW2p0","origin":"http://localhost","crossOrigin":false}",
+            "clientDataJSON": "{"type":"webauthn.get","challenge":"pDP0VIrky3xQ9g4NwmbFfKRh3dAGGiCWI-CCf8S3v-U","origin":"http://localhost","crossOrigin":false}",
           },
           "publicKey": {
             "prefix": 4,
@@ -235,8 +235,8 @@ describe('serialize', () => {
           "type": "webAuthn",
         },
         "version": 0,
-        "zoneId": 26,
-        "zonePortal": "0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8",
+        "zoneId": 6,
+        "zonePortal": "0x7069DeC4E64Fd07334A0933eDe836C17259c9B23",
       }
     `)
   })
@@ -247,11 +247,11 @@ test('e2e', async () => {
 
   const now = Math.floor(Date.now() / 1000)
   const authentication = ZoneRpcAuthentication.from({
-    chainId: 4217000026,
+    chainId: 4217000006,
     expiresAt: now + 600,
     issuedAt: now,
-    zoneId: 26,
-    zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
+    zoneId: 6,
+    zonePortal: '0x7069DeC4E64Fd07334A0933eDe836C17259c9B23',
   })
 
   const signature = Secp256k1.sign({
@@ -263,7 +263,7 @@ test('e2e', async () => {
     signature: SignatureEnvelope.from(signature),
   })
 
-  const transport = RpcTransport.fromHttp('https://rpc-zone-003.tempoxyz.dev', {
+  const transport = RpcTransport.fromHttp('https://rpc-zone-005.tempoxyz.dev', {
     fetchOptions: {
       headers: {
         Authorization: `Basic ${btoa(import.meta.env.VITE_TEMPO_CREDENTIALS!)}`,
