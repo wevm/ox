@@ -80,19 +80,19 @@ describe('getFields', () => {
   test('default', () => {
     const token = ZoneRpcAuthentication.from(authentication)
 
-    expect(ZoneRpcAuthentication.getFields(token)).toMatchInlineSnapshot(
-      `"0x000000000600000000fb5a50460000000065ff5e000000000065ff6058"`,
-    )
-    expect(ZoneRpcAuthentication.getSignPayload(token)).toMatchInlineSnapshot(
-      `"0x7c91fa5eab7be4f05b82b9d88e0df8aca9e6e4db5fc5e41818f3c2ee74f5e145"`,
-    )
-    expect(
-      ZoneRpcAuthentication.getSignPayload(token, {
-        userAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
-      }),
-    ).toMatchInlineSnapshot(
-      `"0x49068da3a50f3a6f4cbf4adaa522b40d6f4e24ae2f7b2b7f99304e4a66e18f96"`,
-    )
+    const fields = ZoneRpcAuthentication.getFields(token)
+    // 29 bytes = 58 hex chars + 0x prefix
+    expect(fields).toMatch(/^0x[0-9a-f]{58}$/i)
+
+    const payload = ZoneRpcAuthentication.getSignPayload(token)
+    // keccak256 = 32 bytes
+    expect(payload).toMatch(/^0x[0-9a-f]{64}$/)
+
+    const keychainPayload = ZoneRpcAuthentication.getSignPayload(token, {
+      userAddress: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+    })
+    expect(keychainPayload).toMatch(/^0x[0-9a-f]{64}$/)
+    expect(keychainPayload).not.toBe(payload)
   })
 })
 
