@@ -170,38 +170,57 @@ describe('serialize', () => {
   })
 })
 
-test('e2e', async () => {
-  const privateKey = Secp256k1.randomPrivateKey()
+const credentials = import.meta.env.VITE_TEMPO_CREDENTIALS
+const rpcUrl = 'https://rpc-zone-006-private.tempoxyz.dev'
 
-  const now = Math.floor(Date.now() / 1000)
-  const authentication = ZoneRpcAuthentication.from({
-    chainId: 4217000006,
-    expiresAt: now + 600,
-    issuedAt: now,
-    zoneId: 6,
-  })
+describe('e2e', () => {
+  test.skipIf(!credentials)('succeeds with auth token', async () => {
+    const privateKey = Secp256k1.randomPrivateKey()
+    const now = Math.floor(Date.now() / 1000)
 
-  const signature = Secp256k1.sign({
-    payload: ZoneRpcAuthentication.getSignPayload(authentication),
-    privateKey,
-  })
+    const auth = ZoneRpcAuthentication.from({
+      chainId: 4217000007,
+      expiresAt: now + 600,
+      issuedAt: now,
+      zoneId: 7,
+    })
 
-  const serialized = ZoneRpcAuthentication.serialize(authentication, {
-    signature: SignatureEnvelope.from(signature),
-  })
+    const serialized = ZoneRpcAuthentication.serialize(auth, {
+      signature: SignatureEnvelope.from(
+        Secp256k1.sign({
+          payload: ZoneRpcAuthentication.getSignPayload(auth),
+          privateKey,
+        }),
+      ),
+    })
 
-  const transport = RpcTransport.fromHttp('https://rpc-zone-005.tempoxyz.dev', {
-    fetchOptions: {
-      headers: {
-        Authorization: `Basic ${btoa(import.meta.env.VITE_TEMPO_CREDENTIALS!)}`,
-        [ZoneRpcAuthentication.headerName]: serialized,
+    const transport = RpcTransport.fromHttp(rpcUrl, {
+      fetchOptions: {
+        headers: {
+          Authorization: `Basic ${btoa(credentials!)}`,
+          [ZoneRpcAuthentication.headerName]: serialized,
+        },
       },
-    },
+    })
+
+    const blockNumber = await transport.request({
+      method: 'eth_blockNumber',
+    })
+    expect(blockNumber).toBeDefined()
+    expect(typeof blockNumber).toBe('string')
   })
 
-  const blockNumber = await transport.request({
-    method: 'eth_blockNumber',
+  test.skipIf(!credentials)('fails without auth token', async () => {
+    const transport = RpcTransport.fromHttp(rpcUrl, {
+      fetchOptions: {
+        headers: {
+          Authorization: `Basic ${btoa(credentials!)}`,
+        },
+      },
+    })
+
+    await expect(
+      transport.request({ method: 'eth_blockNumber' }),
+    ).rejects.toThrow()
   })
-  expect(blockNumber).toBeDefined()
-  expect(typeof blockNumber).toBe('string')
 })
