@@ -1,4 +1,3 @@
-import type * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -20,7 +19,7 @@ export const magicBytes =
 /**
  * Size, in bytes, of the fixed Zone RPC authentication fields.
  */
-export const fieldsSize = 49 as const
+export const fieldsSize = 29 as const
 
 /** Current Zone RPC authentication version. */
 export const version = 0 as const
@@ -40,7 +39,6 @@ export type ZoneRpcAuthentication<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  addressType = Address.Address,
 > = Compute<
   {
     /** Zone chain ID for replay protection. */
@@ -53,8 +51,6 @@ export type ZoneRpcAuthentication<
     version: Version
     /** Numeric zone identifier. */
     zoneId: numberType
-    /** ZonePortal address on Tempo L1. */
-    zonePortal: addressType
   } & (signed extends true
     ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
     : {
@@ -65,12 +61,9 @@ export type ZoneRpcAuthentication<
 >
 
 /** Input type for a Zone RPC authentication token. */
-export type Input = PartialBy<
-  ZoneRpcAuthentication<false, bigint, number, TempoAddress.Address>,
-  'version'
->
+export type Input = PartialBy<ZoneRpcAuthentication<false>, 'version'>
 
-/** 49-byte fixed Zone RPC authentication field suffix. */
+/** 29-byte fixed Zone RPC authentication field suffix. */
 export type Fields = Hex.Hex
 
 /** Hex-encoded serialized Zone RPC authentication token. */
@@ -80,8 +73,7 @@ export type Serialized = Hex.Hex
 export type Signed<
   bigintType = bigint,
   numberType = number,
-  addressType = Address.Address,
-> = ZoneRpcAuthentication<true, bigintType, numberType, addressType>
+> = ZoneRpcAuthentication<true, bigintType, numberType>
 
 /**
  * Instantiates a typed Zone RPC authentication token.
@@ -95,7 +87,6 @@ export type Signed<
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
  * })
  * ```
  *
@@ -111,7 +102,6 @@ export type Signed<
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
  * })
  *
  * const signature = Secp256k1.sign({
@@ -135,13 +125,10 @@ export function from<
   authentication: authentication | ZoneRpcAuthentication,
   options: from.Options<signature> = {},
 ): from.ReturnType<authentication, signature> {
-  const auth = authentication as ZoneRpcAuthentication & {
-    zonePortal: TempoAddress.Address
-  }
+  const auth = authentication as ZoneRpcAuthentication
   const resolved = {
     ...auth,
     version,
-    zonePortal: TempoAddress.resolve(auth.zonePortal),
   }
   if (options.signature)
     return {
@@ -169,13 +156,11 @@ export declare namespace from {
       | SignatureEnvelope.from.Value
       | undefined,
   > = Compute<
-    TempoAddress.ResolveAddresses<
-      authentication & {
-        readonly version: Version
-      } & (signature extends SignatureEnvelope.from.Value
-          ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-          : {})
-    >
+    authentication & {
+      readonly version: Version
+    } & (signature extends SignatureEnvelope.from.Value
+        ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+        : {})
   >
 
   type ErrorType = Errors.GlobalErrorType
@@ -184,7 +169,7 @@ export declare namespace from {
 /**
  * Parses a serialized Zone RPC authentication token.
  *
- * The serialized format is `<signature><49-byte fields>`. The signature is parsed
+ * The serialized format is `<signature><29-byte fields>`. The signature is parsed
  * from the prefix and the fixed-length fields are parsed from the suffix.
  *
  * @example
@@ -218,12 +203,11 @@ export function deserialize(serialized: Serialized): Signed {
 
   return {
     chainId: Hex.toNumber(Hex.slice(fields, 5, 13), { size: 8 }),
-    expiresAt: Hex.toNumber(Hex.slice(fields, 41, 49), { size: 8 }),
-    issuedAt: Hex.toNumber(Hex.slice(fields, 33, 41), { size: 8 }),
+    expiresAt: Hex.toNumber(Hex.slice(fields, 21, 29), { size: 8 }),
+    issuedAt: Hex.toNumber(Hex.slice(fields, 13, 21), { size: 8 }),
     signature: SignatureEnvelope.deserialize(signature),
     version,
     zoneId: Hex.toNumber(Hex.slice(fields, 1, 5), { size: 4 }),
-    zonePortal: Hex.slice(fields, 13, 33),
   }
 }
 
@@ -239,7 +223,7 @@ export declare namespace deserialize {
 }
 
 /**
- * Returns the 49-byte fixed field suffix for a Zone RPC authentication token.
+ * Returns the 29-byte fixed field suffix for a Zone RPC authentication token.
  *
  * @example
  * ```ts twoslash
@@ -250,12 +234,11 @@ export declare namespace deserialize {
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
  * })
  * ```
  *
  * @param authentication - The Zone RPC authentication token.
- * @returns The fixed 49-byte field suffix.
+ * @returns The fixed 29-byte field suffix.
  */
 export function getFields(
   authentication: PartialBy<ZoneRpcAuthentication, 'version'>,
@@ -264,7 +247,6 @@ export function getFields(
     Hex.fromNumber(version, { size: 1 }),
     Hex.fromNumber(authentication.zoneId, { size: 4 }),
     Hex.fromNumber(authentication.chainId, { size: 8 }),
-    TempoAddress.resolve(authentication.zonePortal),
     Hex.fromNumber(authentication.issuedAt, { size: 8 }),
     Hex.fromNumber(authentication.expiresAt, { size: 8 }),
   )
@@ -292,7 +274,6 @@ export declare namespace getFields {
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
  * })
  *
  * const payload = ZoneRpcAuthentication.getSignPayload(authentication)
@@ -342,7 +323,6 @@ export declare namespace getSignPayload {
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
  * })
  *
  * const hash = ZoneRpcAuthentication.hash(authentication)
@@ -368,7 +348,7 @@ export declare namespace hash {
 /**
  * Serializes a Zone RPC authentication token to hex.
  *
- * The serialized format is `<signature><49-byte fields>`.
+ * The serialized format is `<signature><29-byte fields>`.
  *
  * @example
  * ```ts twoslash
@@ -380,7 +360,6 @@ export declare namespace hash {
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
  * })
  *
  * const signature = Secp256k1.sign({
