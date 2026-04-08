@@ -1864,9 +1864,185 @@ describe('behavior: keyAuthorization', () => {
     },
   )
 
-  // TODO: add test for periodic spending limit reset once node supports it.
-  // The period reset behavior needs investigation — the limit doesn't appear
-  // to auto-reset after the period elapses on current node versions.
+  test.runIf(nodeEnv === 'localnet')(
+    'behavior: periodic spending limit resets after period',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const token = '0x20c0000000000000000000000000000000000001'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const recipient = '0x0000000000000000000000000000000000000001'
+
+      // Key with a 5 USDC limit that resets every 5 seconds
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        limits: [
+          {
+            token,
+            limit: Value.from('5', 6),
+            period: Period.seconds(5),
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      // 1. Provision key + transfer 4 USDC
+      {
+        const nonce = await getTransactionCount(client, {
+          address: root.address,
+          blockTag: 'pending',
+        })
+
+        const transferData = AbiFunction.encodeData(transfer, [
+          recipient,
+          Value.from('4', 6),
+        ])
+
+        const transaction = TxEnvelopeTempo.from({
+          calls: [{ to: token, data: transferData }],
+          chainId,
+          feeToken: token,
+          keyAuthorization: keyAuth_signed,
+          nonce: BigInt(nonce),
+          gas: 5_000_000n,
+          maxFeePerGas: Value.fromGwei('20'),
+          maxPriorityFeePerGas: Value.fromGwei('10'),
+        })
+
+        const signature = Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload(transaction, {
+            from: root.address,
+          }),
+          privateKey: accessPrivateKey,
+        })
+
+        const serialized = TxEnvelopeTempo.serialize(transaction, {
+          signature: SignatureEnvelope.from({
+            userAddress: root.address,
+            inner: SignatureEnvelope.from(signature),
+            type: 'keychain',
+          }),
+        })
+
+        const receipt = (await client
+          .request({
+            method: 'eth_sendRawTransactionSync',
+            params: [serialized],
+          })
+          .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+        expect(receipt.status).toBe('success')
+      }
+
+      // 2. Immediately try another 4 USDC transfer (should revert — limit exhausted)
+      {
+        const nonce = await getTransactionCount(client, {
+          address: root.address,
+          blockTag: 'pending',
+        })
+
+        const transferData = AbiFunction.encodeData(transfer, [
+          recipient,
+          Value.from('4', 6),
+        ])
+
+        const transaction = TxEnvelopeTempo.from({
+          calls: [{ to: token, data: transferData }],
+          chainId,
+          feeToken: token,
+          nonce: BigInt(nonce),
+          gas: 5_000_000n,
+          maxFeePerGas: Value.fromGwei('20'),
+          maxPriorityFeePerGas: Value.fromGwei('10'),
+        })
+
+        const signature = Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload(transaction, {
+            from: root.address,
+          }),
+          privateKey: accessPrivateKey,
+        })
+
+        const serialized = TxEnvelopeTempo.serialize(transaction, {
+          signature: SignatureEnvelope.from({
+            userAddress: root.address,
+            inner: SignatureEnvelope.from(signature),
+            type: 'keychain',
+          }),
+        })
+
+        const receipt = (await client
+          .request({
+            method: 'eth_sendRawTransactionSync',
+            params: [serialized],
+          })
+          .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+        expect(receipt.status).toBe('reverted')
+      }
+
+      // 3. Wait for period to reset
+      await new Promise((resolve) => setTimeout(resolve, 6000))
+
+      // 4. Transfer 4 USDC again (should succeed — period reset)
+      {
+        const nonce = await getTransactionCount(client, {
+          address: root.address,
+          blockTag: 'pending',
+        })
+
+        const transferData = AbiFunction.encodeData(transfer, [
+          recipient,
+          Value.from('4', 6),
+        ])
+
+        const transaction = TxEnvelopeTempo.from({
+          calls: [{ to: token, data: transferData }],
+          chainId,
+          feeToken: token,
+          nonce: BigInt(nonce),
+          gas: 5_000_000n,
+          maxFeePerGas: Value.fromGwei('20'),
+          maxPriorityFeePerGas: Value.fromGwei('10'),
+        })
+
+        const signature = Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload(transaction, {
+            from: root.address,
+          }),
+          privateKey: accessPrivateKey,
+        })
+
+        const serialized = TxEnvelopeTempo.serialize(transaction, {
+          signature: SignatureEnvelope.from({
+            userAddress: root.address,
+            inner: SignatureEnvelope.from(signature),
+            type: 'keychain',
+          }),
+        })
+
+        const receipt = (await client
+          .request({
+            method: 'eth_sendRawTransactionSync',
+            params: [serialized],
+          })
+          .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+        expect(receipt.status).toBe('success')
+      }
+    },
+  )
 
   // TODO: remove skipIf when testnet has T3
   test.skipIf(nodeEnv === 'testnet')(
