@@ -78,6 +78,36 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
 export * as KeyAuthorization from './KeyAuthorization.js'
 
 /**
+ * Utilities for constructing period durations (in seconds) for recurring spending limits.
+ *
+ * Periods define the reset interval for access key spending limits. A spending limit with a
+ * period will reset every `period` seconds. For example, a daily spending limit uses
+ * `Period.days(1)` (86400 seconds).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { KeyAuthorization, Period } from 'ox/tempo'
+ *
+ * const authorization = KeyAuthorization.from({
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   chainId: 4217n,
+ *   type: 'secp256k1',
+ *   limits: [{
+ *     token: '0x20c0000000000000000000000000000000000001',
+ *     limit: Value.from('100', 6),
+ *     period: Period.days(1), // resets daily
+ *   }],
+ * })
+ * ```
+ *
+ * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
+ *
+ * @category Reference
+ */
+export * as Period from './Period.js'
+
+/**
  * Pool ID utilities for computing pool identifiers from token pairs.
  *
  * Pool IDs are deterministic keys derived from two token addresses (order-independent)
