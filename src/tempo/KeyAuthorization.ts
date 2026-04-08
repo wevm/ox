@@ -965,7 +965,6 @@ function hexToNumber(hex: Hex.Hex): number {
   return hex === '0x' ? 0 : Hex.toNumber(hex)
 }
 
-/** Normalize a selector that may come as a byte array from the node into a hex string. */
 function normalizeSelector(selector: Hex.Hex | number[]): Hex.Hex {
   if (typeof selector === 'string') return selector
   if (Array.isArray(selector))
