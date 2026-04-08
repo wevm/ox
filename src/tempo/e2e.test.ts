@@ -781,6 +781,87 @@ test('behavior: feePayerSignature (user → feePayer)', async () => {
   expect(from).toBe(senderAddress)
 })
 
+test('behavior: feePayerSignature (feePayer → user)', async () => {
+  const userPrivateKey = Secp256k1.randomPrivateKey()
+  const userAddress = Address.fromPublicKey(
+    Secp256k1.getPublicKey({ privateKey: userPrivateKey }),
+  )
+
+  const feePayerPrivateKey = Secp256k1.randomPrivateKey()
+  const feePayerAddress = Address.fromPublicKey(
+    Secp256k1.getPublicKey({ privateKey: feePayerPrivateKey }),
+  )
+
+  await Promise.all([
+    fundAddress(client, { address: userAddress }),
+    fundAddress(client, { address: feePayerAddress }),
+  ])
+
+  const nonce = await getTransactionCount(client, {
+    address: userAddress,
+    blockTag: 'pending',
+  })
+
+  //////////////////////////////////////////////////////////////////
+  // Fee payer flow
+
+  // 1. Build the transaction with `feePayerSignature: null` to indicate
+  //    fee sponsorship intent. The user does NOT commit to `feeToken`.
+  const transaction = TxEnvelopeTempo.from({
+    calls: [
+      {
+        to: '0x0000000000000000000000000000000000000000',
+      },
+    ],
+    chainId,
+    feePayerSignature: null,
+    feeToken: '0x20c0000000000000000000000000000000000001',
+    nonce: BigInt(nonce),
+    gas: 500_000n,
+    maxFeePerGas: Value.fromGwei('20'),
+    maxPriorityFeePerGas: Value.fromGwei('10'),
+  })
+
+  // 2. Fee payer signs first — commits to the sender address and fee token.
+  const feePayerSignature = Secp256k1.sign({
+    payload: TxEnvelopeTempo.getFeePayerSignPayload(transaction, {
+      sender: userAddress,
+    }),
+    privateKey: feePayerPrivateKey,
+  })
+
+  // 3. Attach fee payer signature to the transaction.
+  const transaction_feePayer = TxEnvelopeTempo.from(transaction, {
+    feePayerSignature,
+  })
+
+  //////////////////////////////////////////////////////////////////
+  // User flow
+
+  // 4. User signs second — `feePayerSignature` presence causes `feeToken`
+  //    to be skipped from the user's signing payload.
+  const userSignature = Secp256k1.sign({
+    payload: TxEnvelopeTempo.getSignPayload(transaction_feePayer),
+    privateKey: userPrivateKey,
+  })
+
+  // 5. Serialize with both signatures.
+  const serialized_signed = TxEnvelopeTempo.serialize(transaction_feePayer, {
+    signature: SignatureEnvelope.from(userSignature),
+  })
+
+  const receipt = (await client
+    .request({
+      method: 'eth_sendRawTransactionSync',
+      params: [serialized_signed],
+    })
+    .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+  expect(receipt).toBeDefined()
+  expect(receipt.status).toBe('success')
+  expect(receipt.from).toBe(userAddress)
+  expect(receipt.feePayer).toBe(feePayerAddress)
+})
+
 describe('behavior: keyAuthorization', () => {
   const privateKey = Secp256k1.randomPrivateKey()
   const address = Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey }))
