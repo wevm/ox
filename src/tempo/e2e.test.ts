@@ -1853,12 +1853,14 @@ describe('behavior: keyAuthorization', () => {
         }),
       })
 
-      await expect(
-        client.request({
+      const receipt = (await client
+        .request({
           method: 'eth_sendRawTransactionSync',
           params: [serialized_signed],
-        }),
-      ).rejects.toThrow()
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt).toBeDefined()
+      expect(receipt.status).toBe('reverted')
     },
   )
 
