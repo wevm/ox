@@ -1864,6 +1864,10 @@ describe('behavior: keyAuthorization', () => {
     },
   )
 
+  // TODO: add test for periodic spending limit reset once node supports it.
+  // The period reset behavior needs investigation — the limit doesn't appear
+  // to auto-reset after the period elapses on current node versions.
+
   // TODO: remove skipIf when testnet has T3
   test.skipIf(nodeEnv === 'testnet')(
     'behavior: access key with call scopes (transfer)',
