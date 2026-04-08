@@ -58,6 +58,8 @@ export type AttributionSchemaId2 = {
   appCode?: string | undefined
   /** Wallet attribution code. */
   walletCode?: string | undefined
+  /** Service codes identifying additional service providers (e.g., block builders, relayers, solvers). */
+  serviceCodes?: readonly string[] | undefined
   /** Custom code registries keyed by entity type. */
   registries?: AttributionSchemaId2Registries | undefined
   /** Arbitrary metadata key-value pairs. */
@@ -134,7 +136,12 @@ export const ercSuffixSize = /*#__PURE__*/ Hex.size(ercSuffix)
  * @returns The schema ID (0 for canonical registry, 1 for custom registry, 2 for CBOR-encoded).
  */
 export function getSchemaId(attribution: Attribution): SchemaId {
-  if ('appCode' in attribution || 'walletCode' in attribution) return 2
+  if (
+    'appCode' in attribution ||
+    'walletCode' in attribution ||
+    'serviceCodes' in attribution
+  )
+    return 2
   if ('codeRegistry' in attribution) return 1
   return 0
 }
@@ -416,6 +423,7 @@ export declare namespace fromData {
 type Schema2CborMap = {
   a?: string
   w?: string
+  s?: string[]
   r?: {
     a?: { c: string; a: string }
     w?: { c: string; a: string }
@@ -429,6 +437,8 @@ function schema2ToDataSuffix(attribution: AttributionSchemaId2): Hex.Hex {
 
   if (attribution.appCode) cborMap.a = attribution.appCode
   if (attribution.walletCode) cborMap.w = attribution.walletCode
+  if (attribution.serviceCodes && attribution.serviceCodes.length > 0)
+    cborMap.s = [...attribution.serviceCodes]
 
   if (attribution.registries) {
     const r: Schema2CborMap['r'] = {}
@@ -484,6 +494,7 @@ function schema2FromData(data: Hex.Hex): AttributionSchemaId2 | undefined {
 
   if (typeof decoded.a === 'string') result.appCode = decoded.a
   if (typeof decoded.w === 'string') result.walletCode = decoded.w
+  if (Array.isArray(decoded.s)) result.serviceCodes = decoded.s
 
   if (decoded.r) {
     const registries: AttributionSchemaId2Registries = {}
