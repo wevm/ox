@@ -194,13 +194,13 @@ export type TokenLimit<
 > = {
   /** Address of the TIP-20 token. */
   token: addressType
-  /** Maximum spending amount for this token (enforced over the key's lifetime, or per period if `period` > 0). */
+  /** Maximum spending amount for this token (enforced over the key's lifetime, or per period if `period` \> 0). */
   limit: bigintType
   /**
    * Period duration in seconds for recurring spending limits.
    *
    * - `0` or `undefined` = one-time limit
-   * - `> 0` = periodic limit that resets every `period` seconds
+   * - `\> 0` = periodic limit that resets every `period` seconds
    */
   period?: numberType | undefined
 }
