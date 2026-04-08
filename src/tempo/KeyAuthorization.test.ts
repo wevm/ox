@@ -1670,11 +1670,10 @@ describe('toTuple', () => {
     expect(restored.limits?.[0]?.limit).toBe(0n)
   })
 
-  test('zero expiry roundtrips through RLP', () => {
+  test('undefined expiry roundtrips through RLP', () => {
     const authorization = KeyAuthorization.from({
       address,
       chainId: 0n,
-      expiry: 0,
       type: 'secp256k1',
       limits: [
         {
@@ -1709,7 +1708,7 @@ describe('toTuple', () => {
     expect(rlpDecoded).toEqual(authorizationTuple)
 
     const restored = KeyAuthorization.fromTuple(tuple)
-    expect(restored.expiry).toBe(0)
+    expect(restored.expiry).toBeUndefined()
   })
 
   test('hash works with zero spending limit', () => {

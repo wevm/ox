@@ -422,10 +422,15 @@ export function fromTuple<const tuple extends Tuple>(
   })()
   const args: KeyAuthorization = {
     address: keyId,
-    expiry: typeof expiry !== 'undefined' ? hexToNumber(expiry) : undefined,
+    expiry:
+      typeof expiry !== 'undefined'
+        ? hexToNumber(expiry) || undefined
+        : undefined,
     type: keyType,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
-    ...(typeof expiry !== 'undefined' ? { expiry: hexToNumber(expiry) } : {}),
+    ...(typeof expiry !== 'undefined'
+      ? { expiry: hexToNumber(expiry) || undefined }
+      : {}),
     ...(typeof limits !== 'undefined'
       ? {
           limits: limits.map(([token, limit]) => ({
@@ -715,7 +720,8 @@ export function toTuple<const authorization extends KeyAuthorization>(
     type,
     address,
     // expiry is required in the tuple when limits are present
-    typeof expiry === 'number' || limitsValue
+    // expiry=0 is treated the same as undefined (never expires)
+    (expiry !== null && expiry !== undefined && expiry !== 0) || limitsValue
       ? numberToHex(expiry ?? 0)
       : undefined,
     limitsValue,
