@@ -9,6 +9,7 @@ import {
 } from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as Period from './Period.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const address = '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
@@ -1670,11 +1671,10 @@ describe('toTuple', () => {
     expect(restored.limits?.[0]?.limit).toBe(0n)
   })
 
-  test('zero expiry roundtrips through RLP', () => {
+  test('undefined expiry roundtrips through RLP', () => {
     const authorization = KeyAuthorization.from({
       address,
       chainId: 0n,
-      expiry: 0,
       type: 'secp256k1',
       limits: [
         {
@@ -1709,7 +1709,7 @@ describe('toTuple', () => {
     expect(rlpDecoded).toEqual(authorizationTuple)
 
     const restored = KeyAuthorization.fromTuple(tuple)
-    expect(restored.expiry).toBe(0)
+    expect(restored.expiry).toBeUndefined()
   })
 
   test('hash works with zero spending limit', () => {
@@ -1727,5 +1727,314 @@ describe('toTuple', () => {
     })
 
     expect(() => KeyAuthorization.hash(authorization)).not.toThrow()
+  })
+
+  test('periodic spending limit (period > 0)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: Value.from('10', 6),
+          period: Period.months(1),
+        },
+      ],
+    })
+
+    const tuple = KeyAuthorization.toTuple(authorization)
+
+    expect(tuple).toMatchInlineSnapshot(`
+      [
+        [
+          "0x1",
+          "0x",
+          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "0x499602d2",
+          [
+            [
+              "0x20c0000000000000000000000000000000000001",
+              "0x989680",
+              "0x278d00",
+            ],
+          ],
+        ],
+      ]
+    `)
+
+    // Roundtrip
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.limits?.[0]?.period).toBe(2592000)
+    expect(restored.limits?.[0]?.limit).toBe(Value.from('10', 6))
+  })
+
+  test('one-time limit omits period from tuple', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: Value.from('10', 6),
+        },
+      ],
+    })
+
+    const tuple = KeyAuthorization.toTuple(authorization)
+    // Canonical 2-field form — no period element
+    const [authTuple] = tuple
+    const limitTuple = (authTuple as any)[4][0]
+    expect(limitTuple).toHaveLength(2)
+  })
+
+  test('mixed one-time and periodic limits', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token: '0x20c0000000000000000000000000000000000001',
+          limit: Value.from('10', 6),
+        },
+        {
+          token: '0x20c0000000000000000000000000000000000002',
+          limit: Value.from('100', 6),
+          period: Period.days(1),
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.limits?.[0]?.period).toBeUndefined()
+    expect(restored.limits?.[1]?.period).toBe(86400)
+  })
+
+  test('call scopes: address-only (any selector)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          contractAddress: '0x1234567890123456789012345678901234567890',
+        },
+      ],
+    })
+
+    const tuple = KeyAuthorization.toTuple(authorization)
+    expect(tuple).toMatchInlineSnapshot(`
+      [
+        [
+          "0x1",
+          "0x",
+          "0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c",
+          "0x",
+          [],
+          [
+            [
+              "0x1234567890123456789012345678901234567890",
+              [],
+            ],
+          ],
+        ],
+      ]
+    `)
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes).toHaveLength(1)
+    expect(restored.scopes?.[0]?.contractAddress).toBe(
+      '0x1234567890123456789012345678901234567890',
+    )
+    expect(restored.scopes?.[0]?.selector).toBeUndefined()
+  })
+
+  test('call scopes: explicit selectors', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          contractAddress: '0x1234567890123456789012345678901234567890',
+          selector: '0xa9059cbb', // transfer
+        },
+        {
+          contractAddress: '0x1234567890123456789012345678901234567890',
+          selector: '0x095ea7b3', // approve
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes).toHaveLength(2)
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+    expect(restored.scopes?.[1]?.selector).toBe('0x095ea7b3')
+    expect(restored.scopes?.[0]?.recipients).toBeUndefined()
+  })
+
+  test('call scopes: selectors with recipients', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          contractAddress: token,
+          selector: '0xa9059cbb',
+          recipients: [
+            '0x1111111111111111111111111111111111111111',
+            '0x2222222222222222222222222222222222222222',
+          ],
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes?.[0]?.recipients).toEqual([
+      '0x1111111111111111111111111111111111111111',
+      '0x2222222222222222222222222222222222222222',
+    ])
+  })
+
+  test('scopes = undefined (unrestricted, omitted from wire)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+
+    const tuple = KeyAuthorization.toTuple(authorization)
+    // No scopes field in tuple
+    const [authTuple] = tuple
+    expect((authTuple as unknown as any[]).length).toBe(3) // chainId, type, address
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes).toBeUndefined()
+  })
+
+  test('scopes = [] (scoped, no calls allowed)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes).toEqual([])
+  })
+
+  test('scopes + limits + expiry combined', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      expiry,
+      type: 'secp256k1',
+      limits: [
+        {
+          token,
+          limit: Value.from('10', 6),
+          period: Period.days(1),
+        },
+      ],
+      scopes: [
+        {
+          contractAddress: '0x1234567890123456789012345678901234567890',
+          selector: '0xa9059cbb',
+          recipients: ['0x1111111111111111111111111111111111111111'],
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.expiry).toBe(expiry)
+    expect(restored.limits?.[0]?.period).toBe(86400)
+    expect(restored.scopes?.[0]?.recipients).toEqual([
+      '0x1111111111111111111111111111111111111111',
+    ])
+  })
+
+  test('hash consistency with scopes', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          contractAddress: '0x1234567890123456789012345678901234567890',
+          selector: '0xa9059cbb',
+        },
+      ],
+    })
+
+    const hash1 = KeyAuthorization.hash(authorization)
+    const hash2 = KeyAuthorization.hash(authorization)
+    expect(hash1).toBe(hash2)
+
+    // Different scopes should produce different hash
+    const authorization2 = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          contractAddress: '0x1234567890123456789012345678901234567890',
+          selector: '0x095ea7b3',
+        },
+      ],
+    })
+    expect(KeyAuthorization.hash(authorization2)).not.toBe(hash1)
+  })
+
+  test('toRpc/fromRpc roundtrip with period and scopes', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        chainId: 1n,
+        expiry,
+        type: 'secp256k1',
+        limits: [
+          {
+            token,
+            limit: Value.from('10', 6),
+            period: Period.months(1),
+          },
+        ],
+        scopes: [
+          {
+            contractAddress: token,
+            selector: '0xa9059cbb',
+            recipients: ['0x1111111111111111111111111111111111111111'],
+          },
+        ],
+      },
+      {
+        signature: SignatureEnvelope.from(signature_secp256k1),
+      },
+    )
+
+    const rpc = KeyAuthorization.toRpc(authorization)
+    const restored = KeyAuthorization.fromRpc(rpc)
+
+    expect(restored.limits?.[0]?.period).toBe(2592000)
+    expect(restored.scopes?.[0]?.contractAddress).toBe(token)
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+    expect(restored.scopes?.[0]?.recipients).toEqual([
+      '0x1111111111111111111111111111111111111111',
+    ])
   })
 })

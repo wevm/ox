@@ -1,4 +1,5 @@
 import * as Base64 from '../core/Base64.js'
+import * as Cbor from '../core/Cbor.js'
 import type * as Errors from '../core/Errors.js'
 import type * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
@@ -66,6 +67,20 @@ export function serialize(credential: Credential): Credential<true> {
     }
     if (value instanceof ArrayBuffer)
       response[key] = Base64.fromBytes(new Uint8Array(value), base64UrlOptions)
+  }
+
+  // Some browsers/passkey providers (e.g. Firefox + 1Password) don't expose
+  // `authenticatorData` on the response object. Fall back to extracting it
+  // from the CBOR-encoded `attestationObject` which always contains `authData`.
+  if (!response.authenticatorData) {
+    const attestation = Cbor.decode<{ authData: Uint8Array }>(
+      new Uint8Array(attestationObject),
+    )
+    if (attestation.authData)
+      response.authenticatorData = Base64.fromBytes(
+        attestation.authData,
+        base64UrlOptions,
+      )
   }
 
   return {

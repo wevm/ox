@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.11
+
+### Patch Changes
+
+- [#209](https://github.com/wevm/ox/pull/209) [`52d985e`](https://github.com/wevm/ox/commit/52d985e54ab063e4d835ad467da2bcf07fcbfb33) Thanks [@jxom](https://github.com/jxom)! - Fixed `Credential.serialize` to extract `authenticatorData` from the CBOR-encoded `attestationObject` when the browser/passkey provider doesn't expose it on the response object (e.g. Firefox + 1Password).
+
 ## 0.14.10
 
 ### Patch Changes
