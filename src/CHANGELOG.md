@@ -1,5 +1,13 @@
 # ox
 
+## 0.14.12
+
+### Patch Changes
+
+- [#208](https://github.com/wevm/ox/pull/208) [`30537f8`](https://github.com/wevm/ox/commit/30537f82b2721d5d8dbccdbc4fc422b4d41b0993) Thanks [@dgca](https://github.com/dgca)! - Added `serviceCodes` field to ERC-8021 `Attribution` schema.
+
+- [#211](https://github.com/wevm/ox/pull/211) [`9d0d676`](https://github.com/wevm/ox/commit/9d0d6766385686ee380f5793d0ccb54f5928c153) Thanks [@jxom](https://github.com/jxom)! - `viem/tempo`: Added support for period and call scopes on `KeyAuthorization`.
+
 ## 0.14.11
 
 ### Patch Changes
