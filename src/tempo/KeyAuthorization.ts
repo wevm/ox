@@ -41,7 +41,17 @@ export type KeyAuthorization<
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
   /** TIP20 spending limits for this key. */
-  limits?: readonly TokenLimit<bigintType, addressType>[] | undefined
+  limits?:
+    | readonly TokenLimit<bigintType, numberType, addressType>[]
+    | undefined
+  /**
+   * Call scopes restricting which contracts/selectors this key can call.
+   *
+   * - `undefined` = unrestricted key (any call allowed)
+   * - `[]` = scoped mode with no calls allowed
+   * - `[...]` = only listed contract+selector combinations allowed
+   */
+  scopes?: readonly Scope<addressType>[] | undefined
   /** Key type. (secp256k1, P256, WebAuthn). */
   type: SignatureEnvelope.Type
 } & (signed extends true
@@ -60,14 +70,41 @@ export type Input = KeyAuthorization<
   TempoAddress.Address
 >
 
-/** RPC representation of an {@link ox#KeyAuthorization.KeyAuthorization}. */
-export type Rpc = Omit<
-  KeyAuthorization<false, Hex.Hex, Hex.Hex>,
-  'address' | 'signature' | 'type'
-> & {
+/** RPC representation matching the node's wire format. */
+export type Rpc = {
+  /** Allowed call scopes (node field: `allowedCalls`). */
+  allowedCalls?: readonly RpcCallScope[] | undefined
+  /** Chain ID (hex quantity). */
+  chainId: Hex.Hex
+  /** Expiry timestamp (hex quantity or null). */
+  expiry: Hex.Hex | null | undefined
+  /** Key identifier. */
   keyId: Address.Address
+  /** Key type. */
   keyType: SignatureEnvelope.Type
+  /** Token spending limits. */
+  limits?: readonly RpcTokenLimit[] | undefined
+  /** Signature envelope. */
   signature: SignatureEnvelope.SignatureEnvelopeRpc
+}
+
+/** RPC representation of a token limit (matches node's `TokenLimit` serde). */
+export type RpcTokenLimit = {
+  token: Address.Address
+  limit: Hex.Hex
+  period?: Hex.Hex | undefined
+}
+
+/** RPC representation of a call scope (matches node's `CallScope` serde). */
+export type RpcCallScope = {
+  target: Address.Address
+  selectorRules?: readonly RpcSelectorRule[]
+}
+
+/** RPC representation of a selector rule (matches node's `SelectorRule` serde). */
+export type RpcSelectorRule = {
+  selector: Hex.Hex
+  recipients?: readonly Address.Address[]
 }
 
 /** Signed representation of a Key Authorization. */
@@ -83,29 +120,64 @@ type BaseTuple = readonly [
   keyId: Address.Address,
 ]
 
+type TokenLimitTuple =
+  | readonly [token: Address.Address, limit: Hex.Hex]
+  | readonly [token: Address.Address, limit: Hex.Hex, period: Hex.Hex]
+
+type SelectorRuleTuple = readonly [
+  selector: Hex.Hex,
+  recipients: readonly Address.Address[],
+]
+
+type CallScopeTuple = readonly [
+  target: Address.Address,
+  selectorRules: readonly SelectorRuleTuple[],
+]
+
+type AuthorizationTuple =
+  | BaseTuple
+  | readonly [...BaseTuple, expiry: Hex.Hex]
+  | readonly [...BaseTuple, expiry: Hex.Hex, limits: readonly TokenLimitTuple[]]
+  | readonly [
+      ...BaseTuple,
+      expiry: Hex.Hex,
+      limits: readonly TokenLimitTuple[],
+      calls: readonly CallScopeTuple[],
+    ]
+
 /** Tuple representation of a Key Authorization. */
 export type Tuple<signed extends boolean = boolean> = signed extends true
-  ? readonly [
-      authorization:
-        | BaseTuple
-        | readonly [...BaseTuple, expiry: Hex.Hex]
-        | readonly [
-            ...BaseTuple,
-            expiry: Hex.Hex,
-            limits: readonly [token: Address.Address, limit: Hex.Hex][],
-          ],
-      signature: Hex.Hex,
-    ]
-  : readonly [
-      authorization:
-        | BaseTuple
-        | readonly [...BaseTuple, expiry: Hex.Hex]
-        | readonly [
-            ...BaseTuple,
-            expiry: Hex.Hex,
-            limits: readonly [token: Address.Address, limit: Hex.Hex][],
-          ],
-    ]
+  ? readonly [authorization: AuthorizationTuple, signature: Hex.Hex]
+  : readonly [authorization: AuthorizationTuple]
+
+/**
+ * Call scope entry restricting which contract, selector, and recipients an access key can use.
+ *
+ * Multiple entries with the same `contractAddress` are grouped by target on the wire.
+ *
+ * - `{ contractAddress }` = any selector on this contract
+ * - `{ contractAddress, selector }` = specific selector
+ * - `{ contractAddress, selector, recipients }` = selector + recipient constraint
+ *
+ * [TIP-1011 Specification](https://docs.tempo.xyz/protocol/transactions/tip-1011)
+ */
+export type Scope<addressType = Address.Address> = {
+  /** Target contract address. */
+  contractAddress: addressType
+  /**
+   * 4-byte function selector. Omit to allow any selector on this contract.
+   */
+  selector?: Hex.Hex | undefined
+  /**
+   * Recipient allowlist for this selector (first ABI `address` argument).
+   *
+   * - `undefined` or `[]` = any recipient allowed
+   * - `[...]` = only listed recipients allowed
+   *
+   * Only valid for constrained selectors: `transfer`, `approve`, `transferWithMemo`.
+   */
+  recipients?: readonly addressType[] | undefined
+}
 
 /**
  * Token spending limit for access keys.
@@ -115,11 +187,22 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
  *
  * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
-export type TokenLimit<bigintType = bigint, addressType = Address.Address> = {
+export type TokenLimit<
+  bigintType = bigint,
+  numberType = number,
+  addressType = Address.Address,
+> = {
   /** Address of the TIP-20 token. */
   token: addressType
-  /** Maximum spending amount for this token (enforced over the key's lifetime). */
+  /** Maximum spending amount for this token (enforced over the key's lifetime, or per period if `period` \> 0). */
   limit: bigintType
+  /**
+   * Period duration in seconds for recurring spending limits.
+   *
+   * - `0` or `undefined` = one-time limit
+   * - `\> 0` = periodic limit that resets every `period` seconds
+   */
+  period?: numberType | undefined
 }
 
 /**
@@ -268,6 +351,11 @@ export function from<
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
   const auth = authorization as KeyAuthorization & {
     limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
+    scopes?: readonly {
+      contractAddress: TempoAddress.Address
+      selector?: Hex.Hex
+      recipients?: readonly TempoAddress.Address[]
+    }[]
   }
   const resolved = {
     ...auth,
@@ -277,6 +365,21 @@ export function from<
           limits: auth.limits.map((l) => ({
             ...l,
             token: TempoAddress.resolve(l.token as TempoAddress.Address),
+          })),
+        }
+      : {}),
+    ...(auth.scopes
+      ? {
+          scopes: auth.scopes.map((scope) => ({
+            ...scope,
+            contractAddress: TempoAddress.resolve(scope.contractAddress),
+            ...(scope.recipients
+              ? {
+                  recipients: scope.recipients.map((r) =>
+                    TempoAddress.resolve(r),
+                  ),
+                }
+              : {}),
           })),
         }
       : {}),
@@ -344,8 +447,27 @@ export declare namespace from {
  * @returns A signed {@link ox#AuthorizationTempo.AuthorizationTempo}.
  */
 export function fromRpc(authorization: Rpc): Signed {
-  const { chainId, keyId, expiry, limits, keyType } = authorization
+  const { allowedCalls, chainId, keyId, expiry, limits, keyType } =
+    authorization
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
+
+  // Unflatten nested allowedCalls into flat scopes
+  const scopes = allowedCalls
+    ? allowedCalls.flatMap((callScope) => {
+        if (!callScope.selectorRules || callScope.selectorRules.length === 0)
+          return [{ contractAddress: callScope.target }] as Scope[]
+        return callScope.selectorRules.map(
+          (rule): Scope => ({
+            contractAddress: callScope.target,
+            selector: normalizeSelector(rule.selector),
+            ...(rule.recipients && rule.recipients.length > 0
+              ? { recipients: rule.recipients }
+              : {}),
+          }),
+        )
+      })
+    : undefined
+
   return {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
@@ -353,7 +475,11 @@ export function fromRpc(authorization: Rpc): Signed {
     limits: limits?.map((limit) => ({
       token: limit.token,
       limit: BigInt(limit.limit),
+      ...(limit.period && hexToNumber(limit.period) > 0
+        ? { period: hexToNumber(limit.period) }
+        : {}),
     })),
+    ...(scopes ? { scopes } : {}),
     signature,
     type: keyType,
   }
@@ -406,7 +532,7 @@ export function fromTuple<const tuple extends Tuple>(
   tuple: tuple,
 ): fromTuple.ReturnType<tuple> {
   const [authorization, signatureSerialized] = tuple
-  const [chainId, keyType_hex, keyId, expiry, limits] = authorization
+  const [chainId, keyType_hex, keyId, expiry, limits, scopes] = authorization
   const keyType = (() => {
     switch (keyType_hex) {
       case '0x':
@@ -431,12 +557,41 @@ export function fromTuple<const tuple extends Tuple>(
     ...(typeof expiry !== 'undefined'
       ? { expiry: hexToNumber(expiry) || undefined }
       : {}),
-    ...(typeof limits !== 'undefined'
+    ...(typeof limits !== 'undefined' &&
+    Array.isArray(limits) &&
+    limits.length > 0
       ? {
-          limits: limits.map(([token, limit]) => ({
-            token,
-            limit: hexToBigint(limit),
-          })),
+          limits: limits.map((limitTuple: any) => {
+            const [token, limit, period] = limitTuple
+            return {
+              token,
+              limit: hexToBigint(limit),
+              ...(typeof period !== 'undefined'
+                ? { period: hexToNumber(period) }
+                : {}),
+            }
+          }),
+        }
+      : {}),
+    ...(typeof scopes !== 'undefined' && Array.isArray(scopes)
+      ? {
+          scopes: scopes.flatMap((scopeTuple: any) => {
+            const [contractAddress, selectorRules] = scopeTuple
+            // If no selector rules, this is an address-only scope
+            if (!Array.isArray(selectorRules) || selectorRules.length === 0)
+              return [{ contractAddress }]
+            // Flatten each selector rule into a separate scope entry
+            return selectorRules.map((ruleTuple: any) => {
+              const [selector, recipients] = ruleTuple
+              return {
+                contractAddress,
+                selector,
+                ...(Array.isArray(recipients) && recipients.length > 0
+                  ? { recipients }
+                  : {}),
+              }
+            })
+          }),
         }
       : {}),
   }
@@ -642,18 +797,45 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: Signed): Rpc {
-  const { address, chainId, expiry, limits, type, signature } = authorization
+  const { address, scopes, chainId, expiry, limits, type, signature } =
+    authorization
+
+  // Group flat scopes by contractAddress into nested allowedCalls wire format
+  const allowedCalls = (() => {
+    if (!scopes) return undefined
+    const grouped = new Map<string, RpcSelectorRule[]>()
+    for (const scope of scopes) {
+      const key = scope.contractAddress as string
+      if (!grouped.has(key)) grouped.set(key, [])
+      if (scope.selector) {
+        grouped.get(key)!.push({
+          selector: scope.selector,
+          ...(scope.recipients && scope.recipients.length > 0
+            ? { recipients: scope.recipients }
+            : {}),
+        })
+      }
+    }
+    return [...grouped.entries()].map(
+      ([target, selectorRules]): RpcCallScope => ({
+        target: target as Address.Address,
+        ...(selectorRules.length > 0 ? { selectorRules } : {}),
+      }),
+    )
+  })()
 
   return {
     chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
     expiry: typeof expiry === 'number' ? Hex.fromNumber(expiry) : null,
-    limits: limits?.map(({ token, limit }) => ({
+    keyId: TempoAddress.resolve(address),
+    keyType: type,
+    limits: limits?.map(({ token, limit, period }) => ({
       token,
       limit: Hex.fromNumber(limit),
+      ...(period ? { period: numberToHex(period) } : {}),
     })),
-    keyId: TempoAddress.resolve(address),
     signature: SignatureEnvelope.toRpc(signature),
-    keyType: type,
+    ...(allowedCalls ? { allowedCalls } : {}),
   }
 }
 
@@ -695,7 +877,7 @@ export declare namespace toRpc {
 export function toTuple<const authorization extends KeyAuthorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
-  const { address, chainId, expiry, limits } = authorization
+  const { address, chainId, scopes, expiry, limits } = authorization
   const signature = authorization.signature
     ? SignatureEnvelope.serialize(authorization.signature)
     : undefined
@@ -711,21 +893,52 @@ export function toTuple<const authorization extends KeyAuthorization>(
         throw new Error(`Invalid key type: ${authorization.type}`)
     }
   })()
-  const limitsValue = limits?.map((limit) => [
-    limit.token,
-    bigintToHex(limit.limit),
-  ])
+  const limitsValue = limits?.map((limit) => {
+    const tuple: any[] = [limit.token, bigintToHex(limit.limit)]
+    // Canonical: omit period when 0 (one-time limit)
+    if (limit.period && limit.period > 0) tuple.push(numberToHex(limit.period))
+    return tuple
+  })
+  // Group flat scopes by contractAddress for wire format
+  const callsValue = (() => {
+    if (!scopes) return undefined
+    const grouped = new Map<
+      string,
+      [Hex.Hex, (readonly Address.Address[])[]][]
+    >()
+    for (const scope of scopes) {
+      const key = scope.contractAddress as string
+      if (!grouped.has(key)) grouped.set(key, [])
+      if (scope.selector) {
+        grouped
+          .get(key)!
+          .push([
+            scope.selector,
+            (scope.recipients ??
+              []) as unknown as (readonly Address.Address[])[],
+          ])
+      }
+    }
+    return [...grouped.entries()].map(([contractAddress, selectorRules]) => [
+      contractAddress,
+      selectorRules.map(([selector, recipients]) => [selector, recipients]),
+    ])
+  })()
   const authorizationTuple = [
     bigintToHex(chainId),
     type,
     address,
-    // expiry is required in the tuple when limits are present
+    // expiry is required in the tuple when limits or scopes are present
     // expiry=0 is treated the same as undefined (never expires)
-    (expiry !== null && expiry !== undefined && expiry !== 0) || limitsValue
+    (expiry !== null && expiry !== undefined && expiry !== 0) ||
+    limitsValue ||
+    callsValue
       ? numberToHex(expiry ?? 0)
       : undefined,
-    limitsValue,
-  ].filter(Boolean)
+    // limits is required in the tuple when scopes are present
+    limitsValue || callsValue ? (limitsValue ?? []) : undefined,
+    callsValue,
+  ].filter((x) => typeof x !== 'undefined')
   return [authorizationTuple, ...(signature ? [signature] : [])] as never
 }
 
@@ -750,4 +963,11 @@ function hexToBigint(hex: Hex.Hex): bigint {
 
 function hexToNumber(hex: Hex.Hex): number {
   return hex === '0x' ? 0 : Hex.toNumber(hex)
+}
+
+function normalizeSelector(selector: Hex.Hex | number[]): Hex.Hex {
+  if (typeof selector === 'string') return selector
+  if (Array.isArray(selector))
+    return Hex.fromBytes(new Uint8Array(selector)) as Hex.Hex
+  return selector
 }

@@ -1,4 +1,5 @@
 import {
+  AbiFunction,
   Address,
   Hex,
   P256,
@@ -9,10 +10,11 @@ import {
 } from 'ox'
 import { getTransactionCount } from 'viem/actions'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { chain, client, fundAddress } from '../../test/tempo/config.js'
+import { chain, client, fundAddress, nodeEnv } from '../../test/tempo/config.js'
 import {
   AuthorizationTempo,
   KeyAuthorization,
+  Period,
   SignatureEnvelope,
 } from './index.js'
 import * as Transaction from './Transaction.js'
@@ -1680,4 +1682,891 @@ describe('behavior: keyAuthorization', () => {
       expect(response.keyAuthorization?.limits).toBeUndefined()
     }
   })
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: access key with periodic spending limit',
+    async () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const publicKey = Secp256k1.getPublicKey({ privateKey })
+      const address = Address.fromPublicKey(publicKey)
+      const access = {
+        address,
+        publicKey,
+        privateKey,
+      } as const
+
+      const keyAuth = KeyAuthorization.from({
+        address: access.address,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        limits: [
+          {
+            token: '0x20c0000000000000000000000000000000000001',
+            limit: Value.from('1000', 6),
+            period: Period.months(1),
+          },
+        ],
+      })
+
+      const keyAuth_signature = Secp256k1.sign({
+        payload: KeyAuthorization.getSignPayload(keyAuth),
+        privateKey: root.privateKey,
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(keyAuth_signature),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [
+          {
+            to: '0x0000000000000000000000000000000000000000',
+          },
+        ],
+        chainId,
+        feeToken: '0x20c0000000000000000000000000000000000001',
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 1_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: access.privateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt).toBeDefined()
+      expect(receipt.status).toBe('success')
+
+      {
+        const response = await client
+          .request({
+            method: 'eth_getTransactionByHash',
+            params: [receipt.transactionHash],
+          })
+          .then((tx) => Transaction.fromRpc(tx as any))
+        if (!response) throw new Error()
+
+        expect(response.from).toBe(root.address)
+        expect(response.keyAuthorization).toBeDefined()
+        expect(response.keyAuthorization?.limits?.[0]?.limit).toBe(
+          Value.from('1000', 6),
+        )
+        expect(response.keyAuthorization?.limits?.[0]?.period).toBe(2592000)
+      }
+    },
+  )
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: rejects transfer exceeding periodic spending limit',
+    async () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const publicKey = Secp256k1.getPublicKey({ privateKey })
+      const address = Address.fromPublicKey(publicKey)
+      const token = '0x20c0000000000000000000000000000000000001'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+
+      // Key with a 5 USDC periodic limit
+      const keyAuth = KeyAuthorization.from({
+        address,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        limits: [
+          {
+            token,
+            limit: Value.from('5', 6),
+            period: Period.months(1),
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      // Try to transfer 10 USDC (exceeds 5 USDC limit)
+      const transferData = AbiFunction.encodeData(transfer, [
+        '0x0000000000000000000000000000000000000001',
+        Value.from('10', 6),
+      ])
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: token, data: transferData }],
+        chainId,
+        feeToken: token,
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt).toBeDefined()
+      expect(receipt.status).toBe('reverted')
+    },
+  )
+
+  test.runIf(nodeEnv === 'localnet')(
+    'behavior: periodic spending limit resets after period',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const token = '0x20c0000000000000000000000000000000000001'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const recipient = '0x0000000000000000000000000000000000000001'
+
+      // Key with a 5 USDC limit that resets every 5 seconds
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        limits: [
+          {
+            token,
+            limit: Value.from('5', 6),
+            period: Period.seconds(5),
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      // 1. Provision key + transfer 4 USDC
+      {
+        const nonce = await getTransactionCount(client, {
+          address: root.address,
+          blockTag: 'pending',
+        })
+
+        const transferData = AbiFunction.encodeData(transfer, [
+          recipient,
+          Value.from('4', 6),
+        ])
+
+        const transaction = TxEnvelopeTempo.from({
+          calls: [{ to: token, data: transferData }],
+          chainId,
+          feeToken: token,
+          keyAuthorization: keyAuth_signed,
+          nonce: BigInt(nonce),
+          gas: 5_000_000n,
+          maxFeePerGas: Value.fromGwei('20'),
+          maxPriorityFeePerGas: Value.fromGwei('10'),
+        })
+
+        const signature = Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload(transaction, {
+            from: root.address,
+          }),
+          privateKey: accessPrivateKey,
+        })
+
+        const serialized = TxEnvelopeTempo.serialize(transaction, {
+          signature: SignatureEnvelope.from({
+            userAddress: root.address,
+            inner: SignatureEnvelope.from(signature),
+            type: 'keychain',
+          }),
+        })
+
+        const receipt = (await client
+          .request({
+            method: 'eth_sendRawTransactionSync',
+            params: [serialized],
+          })
+          .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+        expect(receipt.status).toBe('success')
+      }
+
+      // 2. Immediately try another 4 USDC transfer (should revert — limit exhausted)
+      {
+        const nonce = await getTransactionCount(client, {
+          address: root.address,
+          blockTag: 'pending',
+        })
+
+        const transferData = AbiFunction.encodeData(transfer, [
+          recipient,
+          Value.from('4', 6),
+        ])
+
+        const transaction = TxEnvelopeTempo.from({
+          calls: [{ to: token, data: transferData }],
+          chainId,
+          feeToken: token,
+          nonce: BigInt(nonce),
+          gas: 5_000_000n,
+          maxFeePerGas: Value.fromGwei('20'),
+          maxPriorityFeePerGas: Value.fromGwei('10'),
+        })
+
+        const signature = Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload(transaction, {
+            from: root.address,
+          }),
+          privateKey: accessPrivateKey,
+        })
+
+        const serialized = TxEnvelopeTempo.serialize(transaction, {
+          signature: SignatureEnvelope.from({
+            userAddress: root.address,
+            inner: SignatureEnvelope.from(signature),
+            type: 'keychain',
+          }),
+        })
+
+        const receipt = (await client
+          .request({
+            method: 'eth_sendRawTransactionSync',
+            params: [serialized],
+          })
+          .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+        expect(receipt.status).toBe('reverted')
+      }
+
+      // 3. Wait for period to reset
+      await new Promise((resolve) => setTimeout(resolve, 6000))
+
+      // 4. Transfer 4 USDC again (should succeed — period reset)
+      {
+        const nonce = await getTransactionCount(client, {
+          address: root.address,
+          blockTag: 'pending',
+        })
+
+        const transferData = AbiFunction.encodeData(transfer, [
+          recipient,
+          Value.from('4', 6),
+        ])
+
+        const transaction = TxEnvelopeTempo.from({
+          calls: [{ to: token, data: transferData }],
+          chainId,
+          feeToken: token,
+          nonce: BigInt(nonce),
+          gas: 5_000_000n,
+          maxFeePerGas: Value.fromGwei('20'),
+          maxPriorityFeePerGas: Value.fromGwei('10'),
+        })
+
+        const signature = Secp256k1.sign({
+          payload: TxEnvelopeTempo.getSignPayload(transaction, {
+            from: root.address,
+          }),
+          privateKey: accessPrivateKey,
+        })
+
+        const serialized = TxEnvelopeTempo.serialize(transaction, {
+          signature: SignatureEnvelope.from({
+            userAddress: root.address,
+            inner: SignatureEnvelope.from(signature),
+            type: 'keychain',
+          }),
+        })
+
+        const receipt = (await client
+          .request({
+            method: 'eth_sendRawTransactionSync',
+            params: [serialized],
+          })
+          .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+        expect(receipt.status).toBe('success')
+      }
+    },
+  )
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: access key with call scopes (transfer)',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const recipient = '0x0000000000000000000000000000000000000001'
+      const token = '0x20c0000000000000000000000000000000000001'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const transferData = AbiFunction.encodeData(transfer, [
+        recipient,
+        Value.from('1', 6),
+      ])
+
+      // Scope key: only transfer() on token contract, with sufficient spending limit
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        limits: [{ token, limit: Value.from('10000', 6) }],
+        scopes: [
+          {
+            contractAddress: token,
+            selector: AbiFunction.getSelector(transfer),
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: token, data: transferData }],
+        chainId,
+        feeToken: token,
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt).toBeDefined()
+      expect(receipt.status).toBe('success')
+
+      {
+        const response = await client
+          .request({
+            method: 'eth_getTransactionByHash',
+            params: [receipt.transactionHash],
+          })
+          .then((tx) => Transaction.fromRpc(tx as any))
+        if (!response) throw new Error()
+
+        expect(response.from).toBe(root.address)
+        expect(response.keyAuthorization).toBeDefined()
+        expect(response.keyAuthorization?.scopes?.[0]?.contractAddress).toBe(
+          token,
+        )
+        expect(response.keyAuthorization?.scopes?.[0]?.selector).toBe(
+          '0xa9059cbb',
+        )
+      }
+    },
+  )
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: access key with call scopes + recipient allowlist (transfer)',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const recipient = '0x0000000000000000000000000000000000000001'
+      const token = '0x20c0000000000000000000000000000000000001'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const transferData = AbiFunction.encodeData(transfer, [
+        recipient,
+        Value.from('1', 6),
+      ])
+
+      // Scope key: transfer() on token, only to recipient, with sufficient spending limit
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        limits: [{ token, limit: Value.from('10000', 6) }],
+        scopes: [
+          {
+            contractAddress: token,
+            selector: AbiFunction.getSelector(transfer),
+            recipients: [recipient],
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: token, data: transferData }],
+        chainId,
+        feeToken: token,
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt).toBeDefined()
+      expect(receipt.status).toBe('success')
+
+      {
+        const response = await client
+          .request({
+            method: 'eth_getTransactionByHash',
+            params: [receipt.transactionHash],
+          })
+          .then((tx) => Transaction.fromRpc(tx as any))
+        if (!response) throw new Error()
+
+        expect(response.from).toBe(root.address)
+        expect(response.keyAuthorization).toBeDefined()
+        expect(response.keyAuthorization?.scopes?.[0]?.selector).toBe(
+          '0xa9059cbb',
+        )
+        expect(response.keyAuthorization?.scopes?.[0]?.recipients).toEqual([
+          recipient,
+        ])
+      }
+    },
+  )
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: rejects transfer to wrong contract (outside scope)',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const token1 = '0x20c0000000000000000000000000000000000001'
+      const token2 = '0x20c0000000000000000000000000000000000002'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const transferData = AbiFunction.encodeData(transfer, [
+        '0x0000000000000000000000000000000000000001',
+        Value.from('1', 6),
+      ])
+
+      // Scope key to only token1
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        scopes: [
+          {
+            contractAddress: token1,
+            selector: AbiFunction.getSelector(transfer),
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      // Call transfer on token2 (not scoped) — should be rejected
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: token2, data: transferData }],
+        chainId,
+        feeToken: token1,
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      await expect(
+        client.request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        }),
+      ).rejects.toThrow()
+    },
+  )
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: rejects approve when only transfer is scoped',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const token = '0x20c0000000000000000000000000000000000001'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const approve = AbiFunction.from(
+        'function approve(address spender, uint256 amount)',
+      )
+      const approveData = AbiFunction.encodeData(approve, [
+        '0x0000000000000000000000000000000000000001',
+        Value.from('1', 6),
+      ])
+
+      // Scope key to only transfer()
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        scopes: [
+          {
+            contractAddress: token,
+            selector: AbiFunction.getSelector(transfer),
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      // Call approve() instead — should be rejected
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: token, data: approveData }],
+        chainId,
+        feeToken: token,
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      await expect(
+        client.request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        }),
+      ).rejects.toThrow()
+    },
+  )
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: rejects transfer to wrong recipient',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const token = '0x20c0000000000000000000000000000000000001'
+      const allowedRecipient = '0x0000000000000000000000000000000000000001'
+      const wrongRecipient = '0x0000000000000000000000000000000000000002'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const transferData = AbiFunction.encodeData(transfer, [
+        wrongRecipient,
+        Value.from('1', 6),
+      ])
+
+      // Scope key: transfer only to allowedRecipient
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        scopes: [
+          {
+            contractAddress: token,
+            selector: AbiFunction.getSelector(transfer),
+            recipients: [allowedRecipient],
+          },
+        ],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      // transfer to wrongRecipient — should be rejected
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: token, data: transferData }],
+        chainId,
+        feeToken: token,
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      await expect(
+        client.request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        }),
+      ).rejects.toThrow()
+    },
+  )
+
+  // TODO: remove skipIf when testnet has T3
+  test.skipIf(nodeEnv === 'testnet')(
+    'behavior: rejects any call when scopes = [] (empty)',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const token = '0x20c0000000000000000000000000000000000001'
+      const transfer = AbiFunction.from(
+        'function transfer(address to, uint256 amount)',
+      )
+      const transferData = AbiFunction.encodeData(transfer, [
+        '0x0000000000000000000000000000000000000001',
+        Value.from('1', 6),
+      ])
+
+      // scopes = [] → scoped mode with NO calls allowed
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        scopes: [],
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: token, data: transferData }],
+        chainId,
+        feeToken: token,
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 5_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      await expect(
+        client.request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        }),
+      ).rejects.toThrow()
+    },
+  )
 })
