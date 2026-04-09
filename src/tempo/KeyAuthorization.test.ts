@@ -1824,7 +1824,7 @@ describe('toTuple', () => {
       type: 'secp256k1',
       scopes: [
         {
-          contractAddress: '0x1234567890123456789012345678901234567890',
+          address: '0x1234567890123456789012345678901234567890',
         },
       ],
     })
@@ -1851,7 +1851,7 @@ describe('toTuple', () => {
     const serialized = KeyAuthorization.serialize(authorization)
     const restored = KeyAuthorization.deserialize(serialized)
     expect(restored.scopes).toHaveLength(1)
-    expect(restored.scopes?.[0]?.contractAddress).toBe(
+    expect(restored.scopes?.[0]?.address).toBe(
       '0x1234567890123456789012345678901234567890',
     )
     expect(restored.scopes?.[0]?.selector).toBeUndefined()
@@ -1864,11 +1864,11 @@ describe('toTuple', () => {
       type: 'secp256k1',
       scopes: [
         {
-          contractAddress: '0x1234567890123456789012345678901234567890',
+          address: '0x1234567890123456789012345678901234567890',
           selector: '0xa9059cbb', // transfer
         },
         {
-          contractAddress: '0x1234567890123456789012345678901234567890',
+          address: '0x1234567890123456789012345678901234567890',
           selector: '0x095ea7b3', // approve
         },
       ],
@@ -1889,7 +1889,7 @@ describe('toTuple', () => {
       type: 'secp256k1',
       scopes: [
         {
-          contractAddress: token,
+          address: token,
           selector: '0xa9059cbb',
           recipients: [
             '0x1111111111111111111111111111111111111111',
@@ -1952,7 +1952,7 @@ describe('toTuple', () => {
       ],
       scopes: [
         {
-          contractAddress: '0x1234567890123456789012345678901234567890',
+          address: '0x1234567890123456789012345678901234567890',
           selector: '0xa9059cbb',
           recipients: ['0x1111111111111111111111111111111111111111'],
         },
@@ -1975,7 +1975,7 @@ describe('toTuple', () => {
       type: 'secp256k1',
       scopes: [
         {
-          contractAddress: '0x1234567890123456789012345678901234567890',
+          address: '0x1234567890123456789012345678901234567890',
           selector: '0xa9059cbb',
         },
       ],
@@ -1992,12 +1992,109 @@ describe('toTuple', () => {
       type: 'secp256k1',
       scopes: [
         {
-          contractAddress: '0x1234567890123456789012345678901234567890',
+          address: '0x1234567890123456789012345678901234567890',
           selector: '0x095ea7b3',
         },
       ],
     })
     expect(KeyAuthorization.hash(authorization2)).not.toBe(hash1)
+  })
+
+  test('call scopes: selector from function signature string', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          selector: 'function transfer(address,uint256)',
+        },
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          selector: 'function approve(address,uint256)',
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes).toHaveLength(2)
+    // transfer(address,uint256) => 0xa9059cbb
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+    // approve(address,uint256) => 0x095ea7b3
+    expect(restored.scopes?.[1]?.selector).toBe('0x095ea7b3')
+  })
+
+  test('call scopes: selector from signature with recipients', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          address: token,
+          selector: 'function transfer(address,uint256)',
+          recipients: [
+            '0x1111111111111111111111111111111111111111',
+          ],
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+    expect(restored.scopes?.[0]?.recipients).toEqual([
+      '0x1111111111111111111111111111111111111111',
+    ])
+  })
+
+  test('call scopes: selector from bare signature (no function prefix)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          selector: 'transfer(address,uint256)',
+        },
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          selector: 'approve(address,uint256)',
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes).toHaveLength(2)
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+    expect(restored.scopes?.[1]?.selector).toBe('0x095ea7b3')
+  })
+
+  test('call scopes: mixed hex and signature selectors', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      scopes: [
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          selector: '0xa9059cbb',
+        },
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          selector: 'function approve(address,uint256)',
+        },
+      ],
+    })
+
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+    expect(restored.scopes?.[1]?.selector).toBe('0x095ea7b3')
   })
 
   test('toRpc/fromRpc roundtrip with period and scopes', () => {
@@ -2016,7 +2113,7 @@ describe('toTuple', () => {
         ],
         scopes: [
           {
-            contractAddress: token,
+            address: token,
             selector: '0xa9059cbb',
             recipients: ['0x1111111111111111111111111111111111111111'],
           },
@@ -2031,7 +2128,7 @@ describe('toTuple', () => {
     const restored = KeyAuthorization.fromRpc(rpc)
 
     expect(restored.limits?.[0]?.period).toBe(2592000)
-    expect(restored.scopes?.[0]?.contractAddress).toBe(token)
+    expect(restored.scopes?.[0]?.address).toBe(token)
     expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
     expect(restored.scopes?.[0]?.recipients).toEqual([
       '0x1111111111111111111111111111111111111111',

@@ -2151,7 +2151,7 @@ describe('behavior: keyAuthorization', () => {
         limits: [{ token, limit: Value.from('10000', 6) }],
         scopes: [
           {
-            contractAddress: token,
+            address: token,
             selector: AbiFunction.getSelector(transfer),
           },
         ],
@@ -2217,7 +2217,7 @@ describe('behavior: keyAuthorization', () => {
 
         expect(response.from).toBe(root.address)
         expect(response.keyAuthorization).toBeDefined()
-        expect(response.keyAuthorization?.scopes?.[0]?.contractAddress).toBe(
+        expect(response.keyAuthorization?.scopes?.[0]?.address).toBe(
           token,
         )
         expect(response.keyAuthorization?.scopes?.[0]?.selector).toBe(
@@ -2253,7 +2253,7 @@ describe('behavior: keyAuthorization', () => {
         limits: [{ token, limit: Value.from('10000', 6) }],
         scopes: [
           {
-            contractAddress: token,
+            address: token,
             selector: AbiFunction.getSelector(transfer),
             recipients: [recipient],
           },

@@ -1,3 +1,4 @@
+import * as AbiItem from '../core/AbiItem.js'
 import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
@@ -153,21 +154,25 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
 /**
  * Call scope entry restricting which contract, selector, and recipients an access key can use.
  *
- * Multiple entries with the same `contractAddress` are grouped by target on the wire.
+ * Multiple entries with the same `address` are grouped by target on the wire.
  *
- * - `{ contractAddress }` = any selector on this contract
- * - `{ contractAddress, selector }` = specific selector
- * - `{ contractAddress, selector, recipients }` = selector + recipient constraint
+ * - `{ address }` = any selector on this contract
+ * - `{ address, selector }` = specific selector
+ * - `{ address, selector, recipients }` = selector + recipient constraint
  *
  * [TIP-1011 Specification](https://docs.tempo.xyz/protocol/transactions/tip-1011)
  */
 export type Scope<addressType = Address.Address> = {
   /** Target contract address. */
-  contractAddress: addressType
+  address: addressType
   /**
-   * 4-byte function selector. Omit to allow any selector on this contract.
+   * 4-byte function selector, or a human-readable ABI signature
+   * (e.g. `'transfer(address,uint256)'` or `'function transfer(address,uint256)'`).
+   *
+   * Signatures are encoded into a 4-byte selector automatically.
+   * Omit to allow any selector on this contract.
    */
-  selector?: Hex.Hex | undefined
+  selector?: Hex.Hex | string | undefined
   /**
    * Recipient allowlist for this selector (first ABI `address` argument).
    *
@@ -352,8 +357,8 @@ export function from<
   const auth = authorization as KeyAuthorization & {
     limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
     scopes?: readonly {
-      contractAddress: TempoAddress.Address
-      selector?: Hex.Hex
+      address: TempoAddress.Address
+      selector?: Hex.Hex | string
       recipients?: readonly TempoAddress.Address[]
     }[]
   }
@@ -372,7 +377,8 @@ export function from<
       ? {
           scopes: auth.scopes.map((scope) => ({
             ...scope,
-            contractAddress: TempoAddress.resolve(scope.contractAddress),
+            address: TempoAddress.resolve(scope.address),
+            selector: resolveSelector(scope.selector),
             ...(scope.recipients
               ? {
                   recipients: scope.recipients.map((r) =>
@@ -455,10 +461,10 @@ export function fromRpc(authorization: Rpc): Signed {
   const scopes = allowedCalls
     ? allowedCalls.flatMap((callScope) => {
         if (!callScope.selectorRules || callScope.selectorRules.length === 0)
-          return [{ contractAddress: callScope.target }] as Scope[]
+          return [{ address: callScope.target }] as Scope[]
         return callScope.selectorRules.map(
           (rule): Scope => ({
-            contractAddress: callScope.target,
+            address: callScope.target,
             selector: normalizeSelector(rule.selector),
             ...(rule.recipients && rule.recipients.length > 0
               ? { recipients: rule.recipients }
@@ -576,15 +582,15 @@ export function fromTuple<const tuple extends Tuple>(
     ...(typeof scopes !== 'undefined' && Array.isArray(scopes)
       ? {
           scopes: scopes.flatMap((scopeTuple: any) => {
-            const [contractAddress, selectorRules] = scopeTuple
+            const [address, selectorRules] = scopeTuple
             // If no selector rules, this is an address-only scope
             if (!Array.isArray(selectorRules) || selectorRules.length === 0)
-              return [{ contractAddress }]
+              return [{ address }]
             // Flatten each selector rule into a separate scope entry
             return selectorRules.map((ruleTuple: any) => {
               const [selector, recipients] = ruleTuple
               return {
-                contractAddress,
+                address,
                 selector,
                 ...(Array.isArray(recipients) && recipients.length > 0
                   ? { recipients }
@@ -800,16 +806,16 @@ export function toRpc(authorization: Signed): Rpc {
   const { address, scopes, chainId, expiry, limits, type, signature } =
     authorization
 
-  // Group flat scopes by contractAddress into nested allowedCalls wire format
+  // Group flat scopes by address into nested allowedCalls wire format
   const allowedCalls = (() => {
     if (!scopes) return undefined
     const grouped = new Map<string, RpcSelectorRule[]>()
     for (const scope of scopes) {
-      const key = scope.contractAddress as string
+      const key = scope.address as string
       if (!grouped.has(key)) grouped.set(key, [])
       if (scope.selector) {
         grouped.get(key)!.push({
-          selector: scope.selector,
+          selector: resolveSelector(scope.selector)!,
           ...(scope.recipients && scope.recipients.length > 0
             ? { recipients: scope.recipients }
             : {}),
@@ -899,7 +905,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
     if (limit.period && limit.period > 0) tuple.push(numberToHex(limit.period))
     return tuple
   })
-  // Group flat scopes by contractAddress for wire format
+  // Group flat scopes by address for wire format
   const callsValue = (() => {
     if (!scopes) return undefined
     const grouped = new Map<
@@ -907,20 +913,20 @@ export function toTuple<const authorization extends KeyAuthorization>(
       [Hex.Hex, (readonly Address.Address[])[]][]
     >()
     for (const scope of scopes) {
-      const key = scope.contractAddress as string
+      const key = scope.address as string
       if (!grouped.has(key)) grouped.set(key, [])
       if (scope.selector) {
         grouped
           .get(key)!
           .push([
-            scope.selector,
+            resolveSelector(scope.selector)!,
             (scope.recipients ??
               []) as unknown as (readonly Address.Address[])[],
           ])
       }
     }
-    return [...grouped.entries()].map(([contractAddress, selectorRules]) => [
-      contractAddress,
+    return [...grouped.entries()].map(([address, selectorRules]) => [
+      address,
       selectorRules.map(([selector, recipients]) => [selector, recipients]),
     ])
   })()
@@ -970,4 +976,12 @@ function normalizeSelector(selector: Hex.Hex | number[]): Hex.Hex {
   if (Array.isArray(selector))
     return Hex.fromBytes(new Uint8Array(selector)) as Hex.Hex
   return selector
+}
+
+function resolveSelector(
+  selector: Hex.Hex | string | undefined,
+): Hex.Hex | undefined {
+  if (!selector) return undefined
+  if (selector.startsWith('0x')) return selector as Hex.Hex
+  return AbiItem.getSelector(selector)
 }
