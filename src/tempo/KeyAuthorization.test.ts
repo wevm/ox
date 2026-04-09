@@ -2035,9 +2035,7 @@ describe('toTuple', () => {
         {
           address: token,
           selector: 'function transfer(address,uint256)',
-          recipients: [
-            '0x1111111111111111111111111111111111111111',
-          ],
+          recipients: ['0x1111111111111111111111111111111111111111'],
         },
       ],
     })
