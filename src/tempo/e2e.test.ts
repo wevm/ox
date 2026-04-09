@@ -2217,9 +2217,7 @@ describe('behavior: keyAuthorization', () => {
 
         expect(response.from).toBe(root.address)
         expect(response.keyAuthorization).toBeDefined()
-        expect(response.keyAuthorization?.scopes?.[0]?.address).toBe(
-          token,
-        )
+        expect(response.keyAuthorization?.scopes?.[0]?.address).toBe(token)
         expect(response.keyAuthorization?.scopes?.[0]?.selector).toBe(
           '0xa9059cbb',
         )
@@ -2355,7 +2353,7 @@ describe('behavior: keyAuthorization', () => {
         type: 'secp256k1',
         scopes: [
           {
-            contractAddress: token1,
+            address: token1,
             selector: AbiFunction.getSelector(transfer),
           },
         ],
@@ -2438,7 +2436,7 @@ describe('behavior: keyAuthorization', () => {
         type: 'secp256k1',
         scopes: [
           {
-            contractAddress: token,
+            address: token,
             selector: AbiFunction.getSelector(transfer),
           },
         ],
@@ -2520,7 +2518,7 @@ describe('behavior: keyAuthorization', () => {
         type: 'secp256k1',
         scopes: [
           {
-            contractAddress: token,
+            address: token,
             selector: AbiFunction.getSelector(transfer),
             recipients: [allowedRecipient],
           },
