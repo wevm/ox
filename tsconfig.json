@@ -1,22 +1,9 @@
 {
-  // This configuration is used for local development and type checking.
-  "extends": "./tsconfig.base.json",
-  "include": ["contracts", "scripts", "src", "test", "vectors", "contracts/scripts/generateTypedArtifacts.ts"],
-  "exclude": ["src/_types"],
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "~test/*": ["./test/*"],
-      "ox": ["src/index.ts"],
-      "ox/erc4337": ["src/erc4337/index.ts"],
-      "ox/erc6492": ["src/erc6492/index.ts"],
-      "ox/erc7821": ["src/erc7821/index.ts"],
-      "ox/erc8010": ["src/erc8010/index.ts"],
-      "ox/erc8021": ["src/erc8021/index.ts"],
-      "ox/tempo": ["src/tempo/index.ts"],
-      "ox/trusted-setups": ["src/trusted-setups/index.ts"],
-      "ox/webauthn": ["src/webauthn/index.ts"],
-      "ox/window": ["src/window/index.ts"]
-    }
-  }
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true
+  },
+  "files": [],
+  "references": [{ "path": "./src" }, { "path": "./test" }]
 }

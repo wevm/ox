@@ -1,0 +1,27 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/importMeta"],
+    "paths": {
+      "ox": ["../src/index.ts"],
+      "ox/erc4337": ["../src/erc4337/index.ts"],
+      "ox/erc6492": ["../src/erc6492/index.ts"],
+      "ox/erc7821": ["../src/erc7821/index.ts"],
+      "ox/erc8010": ["../src/erc8010/index.ts"],
+      "ox/erc8021": ["../src/erc8021/index.ts"],
+      "ox/tempo": ["../src/tempo/index.ts"],
+      "ox/trusted-setups": ["../src/trusted-setups/index.ts"],
+      "ox/webauthn": ["../src/webauthn/index.ts"],
+      "ox/window": ["../src/window/index.ts"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "../src/**/*.test.ts",
+    "../src/**/*.test-d.ts",
+    "../src/**/*.bench.ts",
+    "../src/**/*.bench-d.ts",
+    "../src/**/*.snap-d.ts",
+    "../src/**/*.browser.test.ts"
+  ]
+}
