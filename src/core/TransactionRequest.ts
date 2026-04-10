@@ -19,7 +19,7 @@ export type TransactionRequest<
     | Authorization.ListSigned<bigintType, numberType>
     | undefined
   /** Versioned hashes of blobs to be included in the transaction. */
-  blobVersionedHashes?: readonly Hex.Hex[]
+  blobVersionedHashes?: readonly Hex.Hex[] | undefined
   /** Raw blob data. */
   blobs?: readonly Hex.Hex[] | undefined
   /** EIP-155 Chain ID. */
