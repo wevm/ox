@@ -271,3 +271,88 @@ export type Default = ResolvedRegister['RpcSchema']
 export type MethodNameGeneric<schema extends Generic = Generic> =
   | schema['Request']['method']
   | (string & {})
+
+/**
+ * Converts an Ox {@link ox#RpcSchema.Generic} (union of `{ Request, ReturnType }`) to
+ * a [Viem-compatible RPC schema](https://viem.sh) (tuple of `{ Method, Parameters, ReturnType }`).
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ *
+ * type ViemSchema = RpcSchema.ToViem<
+ *   | {
+ *       Request: { method: 'eth_blockNumber'; params?: undefined }
+ *       ReturnType: `0x${string}`
+ *     }
+ *   | {
+ *       Request: { method: 'eth_chainId'; params?: undefined }
+ *       ReturnType: `0x${string}`
+ *     }
+ * >
+ * // ^? [{ Method: 'eth_blockNumber'; Parameters?: undefined; ReturnType: `0x${string}` }, ...]
+ * ```
+ */
+export type ToViem<schema extends Generic> = UnionToTuple<
+  schema extends schema
+    ? {
+        Method: schema['Request']['method']
+        Parameters: schema['Request']['params']
+        ReturnType: schema extends { ReturnType: infer r } ? r : unknown
+      }
+    : never
+>
+
+/**
+ * Converts a [Viem-compatible RPC schema](https://viem.sh) (tuple of `{ Method, Parameters, ReturnType }`)
+ * to an Ox {@link ox#RpcSchema.Generic} (union of `{ Request, ReturnType }`).
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ *
+ * type OxSchema = RpcSchema.FromViem<[
+ *   { Method: 'eth_blockNumber'; Parameters?: undefined; ReturnType: `0x${string}` },
+ *   { Method: 'eth_chainId'; Parameters?: undefined; ReturnType: `0x${string}` },
+ * ]>
+ * // ^? { Request: { method: 'eth_blockNumber'; params?: undefined }; ReturnType: `0x${string}` } | ...
+ * ```
+ */
+export type FromViem<schema extends readonly ViemSchemaItem[]> = {
+  [k in keyof schema]: schema[k] extends ViemSchemaItem
+    ? {
+        Request: {
+          method: schema[k]['Method']
+          params: schema[k]['Parameters']
+        }
+        ReturnType: schema[k]['ReturnType']
+      }
+    : never
+}[number]
+
+/** @internal */
+type ViemSchemaItem = {
+  Method: string
+  Parameters?: unknown
+  ReturnType?: unknown
+}
+
+// --- Union-to-tuple helpers (order is not guaranteed, but stable) ---
+/** @internal */
+type UnionToIntersection<union> = (
+  union extends unknown
+    ? (arg: () => union) => void
+    : never
+) extends (arg: infer intersection) => void
+  ? intersection
+  : never
+
+/** @internal */
+type UnionLast<union> = UnionToIntersection<union> extends () => infer last
+  ? last
+  : never
+
+/** @internal */
+type UnionToTuple<union, last = UnionLast<union>> = [union] extends [never]
+  ? []
+  : [...UnionToTuple<Exclude<union, last>>, last]

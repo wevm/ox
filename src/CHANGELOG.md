@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.13
+
+### Patch Changes
+
+- [`68f8fa0`](https://github.com/wevm/ox/commit/68f8fa0514032e5495b6c527c61c957e1545850d) Thanks [@jxom](https://github.com/jxom)! - viem/tempo: Renamed `contractAddress` to `address` on `KeyAuthorization.Scope`. Added support for human-readable ABI signatures in `selector` (e.g. `'transfer(address,uint256)'`), which are automatically encoded into 4-byte selectors.
+
 ## 0.14.12
 
 ### Patch Changes
