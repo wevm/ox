@@ -8,25 +8,6 @@ import type * as TransactionRequest from './TransactionRequest.js'
 
 /**
  * Union of all JSON-RPC Methods for the `tempo_` namespace.
- *
- * @example
- * ```ts twoslash
- * import { RpcSchema } from 'ox/tempo'
- *
- * type Schema = RpcSchema.Tempo
- * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
  */
 export type Tempo = RpcSchema.From<{
   Request: {

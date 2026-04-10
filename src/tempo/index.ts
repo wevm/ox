@@ -135,11 +135,11 @@ export * as PoolId from './PoolId.js'
  * @example
  * ```ts twoslash
  * import { Provider, RpcSchema } from 'ox'
- * import { RpcSchema as TempoRpcSchema } from 'ox/tempo'
+ * import { RpcSchemaTempo } from 'ox/tempo'
  *
  * const schema = RpcSchema.from<
  *   | RpcSchema.Default
- *   | TempoRpcSchema.Tempo
+ *   | RpcSchemaTempo.Tempo
  * >()
  *
  * const provider = Provider.from(window.ethereum!, { schema })
@@ -147,7 +147,7 @@ export * as PoolId from './PoolId.js'
  *
  * @category Reference
  */
-export * as RpcSchema from './RpcSchema.js'
+export * as RpcSchemaTempo from './RpcSchemaTempo.js'
 
 /**
  * Signature envelope utilities for secp256k1, P256, WebAuthn, and keychain signatures.
