@@ -4,5 +4,4 @@ minimumReleaseAgeExclude:
 packages:
   - examples/*
   - site
-  - src
 trustPolicy: no-downgrade
