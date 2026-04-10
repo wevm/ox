@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.15
+
+### Patch Changes
+
+- [`d073091`](https://github.com/wevm/ox/commit/d0730912904d951d3609d7191c5d83fc2d00030d) Thanks [@jxom](https://github.com/jxom)! - Fixed `TransactionRequest.blobVersionedHashes` to include `| undefined` for `exactOptionalPropertyTypes` compatibility.
+
 ## 0.14.14
 
 ### Patch Changes
