@@ -42,11 +42,7 @@ export type Tempo = RpcSchema.From<{
         traceTransfers?: boolean | undefined
         validation?: boolean | undefined
       },
-      block:
-        | Block.Number<Hex.Hex>
-        | Block.Tag
-        | Block.Hash
-        | Block.Identifier,
+      block: Block.Number<Hex.Hex> | Block.Tag | Block.Hash | Block.Identifier,
     ]
   }
   ReturnType: {

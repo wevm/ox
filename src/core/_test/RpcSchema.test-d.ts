@@ -1,4 +1,4 @@
-import { RpcSchema } from 'ox'
+import type { RpcSchema } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
 test('ToViem: converts ox schema to viem schema', () => {
@@ -64,10 +64,7 @@ test('FromViem: converts viem schema to ox schema', () => {
 
   expectTypeOf<Result>().toMatchTypeOf<RpcSchema.Generic>()
 
-  type BlockNumber = Extract<
-    Result,
-    { Request: { method: 'eth_blockNumber' } }
-  >
+  type BlockNumber = Extract<Result, { Request: { method: 'eth_blockNumber' } }>
   expectTypeOf<BlockNumber['ReturnType']>().toEqualTypeOf<`0x${string}`>()
 })
 
