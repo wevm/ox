@@ -130,6 +130,26 @@ export * as Period from './Period.js'
 export * as PoolId from './PoolId.js'
 
 /**
+ * Union of all JSON-RPC Methods for the `tempo_` namespace.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Provider, RpcSchema } from 'ox'
+ * import { RpcSchema as TempoRpcSchema } from 'ox/tempo'
+ *
+ * const schema = RpcSchema.from<
+ *   | RpcSchema.Default
+ *   | TempoRpcSchema.Tempo
+ * >()
+ *
+ * const provider = Provider.from(window.ethereum!, { schema })
+ * ```
+ *
+ * @category Reference
+ */
+export * as RpcSchema from './RpcSchema.js'
+
+/**
  * Signature envelope utilities for secp256k1, P256, WebAuthn, and keychain signatures.
  *
  * Tempo transactions support multiple signature types: secp256k1 (65 bytes), P256 for passkeys
