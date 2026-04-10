@@ -655,6 +655,11 @@
       "src": "./src/tempo/PoolId.ts",
       "default": "./dist/tempo/PoolId.js"
     },
+    "./tempo/RpcSchema": {
+      "types": "./dist/tempo/RpcSchema.d.ts",
+      "src": "./src/tempo/RpcSchema.ts",
+      "default": "./dist/tempo/RpcSchema.js"
+    },
     "./tempo/SignatureEnvelope": {
       "types": "./dist/tempo/SignatureEnvelope.d.ts",
       "src": "./src/tempo/SignatureEnvelope.ts",
