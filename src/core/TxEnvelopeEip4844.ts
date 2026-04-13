@@ -51,6 +51,18 @@ export type SerializedType = typeof serializedType
 
 export type Signed = TxEnvelopeEip4844<true>
 
+/** An EIP-4844 Transaction Envelope in the shape of a [viem](https://viem.sh) TransactionSerializableEIP4844. */
+export type Viem<signed extends boolean = boolean> = Compute<
+  TransactionEnvelope.BaseViem<Type, signed> & {
+    accessList?: AccessList.AccessList | undefined
+    blobVersionedHashes: readonly Hex.Hex[]
+    maxFeePerBlobGas?: bigint | undefined
+    maxFeePerGas?: bigint | undefined
+    maxPriorityFeePerGas?: bigint | undefined
+    sidecars?: readonly Blobs.BlobSidecar<Hex.Hex>[] | undefined
+  }
+>
+
 export const type = 'eip4844' as const
 export type Type = 'eip4844'
 
@@ -721,4 +733,82 @@ export function validate(envelope: PartialBy<TxEnvelopeEip4844, 'type'>) {
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip4844.Viem} to a {@link ox#TxEnvelopeEip4844.TxEnvelopeEip4844}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeEip4844 } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip4844.fromViem({
+ *   blobVersionedHashes: ['0x01b0a4cdd5f55589f5c5b4d46c76704bb6ce95c0a8c09f77f197a57571571c71'],
+ *   chainId: 1,
+ *   nonce: 0,
+ *   maxFeePerGas: 1000000000n,
+ *   maxFeePerBlobGas: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip4844',
+ * })
+ * ```
+ *
+ * @param envelope - The viem transaction serializable to convert.
+ * @returns An ox TxEnvelopeEip4844.
+ */
+export function fromViem(envelope: Viem): TxEnvelopeEip4844 {
+  const { nonce, r, s, v, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+    ...(typeof r !== 'undefined' ? { r: BigInt(r) } : {}),
+    ...(typeof s !== 'undefined' ? { s: BigInt(s) } : {}),
+    ...(typeof v !== 'undefined' ? { v: Number(v) } : {}),
+  } as TxEnvelopeEip4844
+}
+
+export declare namespace fromViem {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip4844.TxEnvelopeEip4844} to a {@link ox#TxEnvelopeEip4844.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeEip4844 } from 'ox'
+ *
+ * const serializable = TxEnvelopeEip4844.toViem({
+ *   blobVersionedHashes: ['0x01b0a4cdd5f55589f5c5b4d46c76704bb6ce95c0a8c09f77f197a57571571c71'],
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   maxFeePerGas: 1000000000n,
+ *   maxFeePerBlobGas: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip4844',
+ * })
+ * ```
+ *
+ * @param envelope - The ox TxEnvelopeEip4844 to convert.
+ * @returns A viem-compatible transaction serializable.
+ */
+export function toViem(envelope: TxEnvelopeEip4844): Viem {
+  const { nonce, r, s, v, from: _, input: _input, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+    ...(typeof r !== 'undefined'
+      ? { r: Hex.fromNumber(r, { size: 32 }) }
+      : {}),
+    ...(typeof s !== 'undefined'
+      ? { s: Hex.fromNumber(s, { size: 32 }) }
+      : {}),
+    ...(typeof v !== 'undefined' ? { v: BigInt(v) } : {}),
+  } as Viem
+}
+
+export declare namespace toViem {
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

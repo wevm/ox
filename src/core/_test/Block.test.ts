@@ -667,11 +667,168 @@ describe('toRpc', () => {
   })
 })
 
+describe('fromViem', () => {
+  test('default', () => {
+    const result = Block.fromViem({
+      baseFeePerGas: 0n,
+      blobGasUsed: 1n,
+      difficulty: 0n,
+      excessBlobGas: 0n,
+      extraData: '0x',
+      gasLimit: 30000000n,
+      gasUsed: 0n,
+      hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+      logsBloom: '0x00',
+      miner: '0x0000000000000000000000000000000000000000',
+      mixHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      nonce: '0x0000000000000000',
+      number: 100n,
+      parentHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      receiptsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      sealFields: [],
+      sha3Uncles:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      size: 520n,
+      stateRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      timestamp: 1662619503n,
+      totalDifficulty: null,
+      transactions: [],
+      transactionsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      uncles: [],
+    })
+    expect(result.baseFeePerGas).toEqual(0n)
+    expect(result.totalDifficulty).toBeUndefined()
+  })
+
+  test('behavior: null baseFeePerGas', () => {
+    const result = Block.fromViem({
+      baseFeePerGas: null,
+      blobGasUsed: 0n,
+      difficulty: 0n,
+      excessBlobGas: 0n,
+      extraData: '0x',
+      gasLimit: 30000000n,
+      gasUsed: 0n,
+      hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+      logsBloom: '0x00',
+      miner: '0x0000000000000000000000000000000000000000',
+      mixHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      nonce: '0x0000000000000000',
+      number: 100n,
+      parentHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      receiptsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      sealFields: [],
+      sha3Uncles:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      size: 520n,
+      stateRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      timestamp: 1662619503n,
+      totalDifficulty: 0n,
+      transactions: [],
+      transactionsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      uncles: [],
+    })
+    expect(result.baseFeePerGas).toBeUndefined()
+  })
+
+  test('behavior: null', () => {
+    expect(Block.fromViem(null)).toBeNull()
+  })
+})
+
+describe('toViem', () => {
+  test('default', () => {
+    const block = Block.fromRpc({
+      baseFeePerGas: '0x0',
+      blobGasUsed: '0x1',
+      difficulty: '0x0',
+      excessBlobGas: '0x0',
+      extraData: '0x',
+      gasLimit: '0x1c9c380',
+      gasUsed: '0x0',
+      hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+      logsBloom: '0x00',
+      miner: '0x0000000000000000000000000000000000000000',
+      mixHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      nonce: '0x0000000000000000',
+      number: '0x64',
+      parentHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      receiptsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      sealFields: [],
+      sha3Uncles:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      size: '0x208',
+      stateRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      timestamp: '0x63198f6f',
+      totalDifficulty: '0x0',
+      transactions: [],
+      transactionsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      uncles: [],
+    })
+    const result = Block.toViem(block)
+    expect(result.baseFeePerGas).toEqual(0n)
+    expect(result.totalDifficulty).toEqual(0n)
+    expect(result.sealFields).toEqual([])
+  })
+
+  test('behavior: optional fields missing', () => {
+    const result = Block.toViem({
+      gasLimit: 30000000n,
+      gasUsed: 0n,
+      hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+      logsBloom: '0x00',
+      miner: '0x0000000000000000000000000000000000000000',
+      mixHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      nonce: '0x0000000000000000',
+      number: 100n,
+      parentHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      receiptsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      sha3Uncles:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      size: 520n,
+      stateRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      timestamp: 1662619503n,
+      transactions: [],
+      transactionsRoot:
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      uncles: [],
+    } as any)
+    expect(result.baseFeePerGas).toEqual(null)
+    expect(result.blobGasUsed).toEqual(0n)
+    expect(result.difficulty).toEqual(0n)
+    expect(result.excessBlobGas).toEqual(0n)
+    expect(result.extraData).toEqual('0x')
+    expect(result.sealFields).toEqual([])
+    expect(result.totalDifficulty).toEqual(null)
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(Block)).toMatchInlineSnapshot(`
     [
       "toRpc",
       "fromRpc",
+      "fromViem",
+      "toViem",
     ]
   `)
 })

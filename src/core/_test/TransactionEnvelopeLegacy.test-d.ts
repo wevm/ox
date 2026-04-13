@@ -1,4 +1,5 @@
 import { TxEnvelopeLegacy } from 'ox'
+import type { TransactionSerializableLegacy } from 'viem'
 import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
@@ -66,4 +67,33 @@ test('options: signature', () => {
     readonly type: 'legacy'
   }>()
   expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeLegacy.TxEnvelopeLegacy>()
+})
+
+test('Viem type: viem TransactionSerializableLegacy assignable', () => {
+  const viemTx = {} as TransactionSerializableLegacy
+  expectTypeOf(viemTx).toExtend<TxEnvelopeLegacy.Viem>()
+})
+
+test('fromViem', () => {
+  const result = TxEnvelopeLegacy.fromViem({
+    nonce: 0,
+    gasPrice: 1000000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    value: 1000000000000000000n,
+    type: 'legacy',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeLegacy.TxEnvelopeLegacy>()
+  expectTypeOf(result.nonce).toEqualTypeOf<bigint | undefined>()
+})
+
+test('toViem', () => {
+  const result = TxEnvelopeLegacy.toViem({
+    nonce: 0n,
+    gasPrice: 1000000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    value: 1000000000000000000n,
+    type: 'legacy',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeLegacy.Viem>()
+  expectTypeOf(result.nonce).toEqualTypeOf<number | undefined>()
 })

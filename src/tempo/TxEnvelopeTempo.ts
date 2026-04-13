@@ -157,6 +157,48 @@ export type SerializedType = typeof serializedType
 export const type = 'tempo' as const
 export type Type = typeof type
 
+/** A Tempo Transaction Envelope in the shape of a [viem](https://viem.sh) TransactionSerializableTempo. */
+export type Viem = Compute<{
+  accessList?: AccessList.AccessList | undefined
+  authorizationList?:
+    | AuthorizationTempo.ListSigned<bigint, number>
+    | undefined
+  calls: { data?: Hex.Hex | undefined; to?: Address.Address | undefined; value?: bigint | undefined }[]
+  chainId: number
+  data?: Hex.Hex | undefined
+  feePayerSignature?:
+    | {
+        r: Hex.Hex
+        s: Hex.Hex
+        v?: bigint | undefined
+        yParity: number
+      }
+    | null
+    | undefined
+  feeToken?: TokenId.TokenIdOrAddress | undefined
+  from?: Address.Address | undefined
+  gas?: bigint | undefined
+  gasPrice?: undefined
+  keyAuthorization?:
+    | KeyAuthorization.Signed<bigint, number>
+    | undefined
+  maxFeePerBlobGas?: undefined
+  maxFeePerGas?: bigint | undefined
+  maxPriorityFeePerGas?: bigint | undefined
+  nonce?: number | undefined
+  nonceKey?: bigint | undefined
+  r?: Hex.Hex | undefined
+  s?: Hex.Hex | undefined
+  signature?: SignatureEnvelope.SignatureEnvelope<bigint, number> | undefined
+  type?: Type | undefined
+  to?: Address.Address | null | undefined
+  v?: bigint | undefined
+  validBefore?: number | undefined
+  validAfter?: number | undefined
+  value?: bigint | undefined
+  yParity?: number | undefined
+}>
+
 /**
  * Asserts a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} is valid.
  *
@@ -1101,4 +1143,90 @@ export class InvalidValidityWindowError extends Errors.BaseError {
       `validBefore (${validBefore}) must be greater than validAfter (${validAfter}).`,
     )
   }
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeTempo.Viem} to a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * const envelope = TxEnvelopeTempo.fromViem({
+ *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: 1n }],
+ *   chainId: 1,
+ *   nonce: 0,
+ *   maxFeePerGas: 1000000000n,
+ *   maxPriorityFeePerGas: 1000000n,
+ * })
+ * ```
+ *
+ * @param envelope - The viem transaction serializable to convert.
+ * @returns An ox TxEnvelopeTempo.
+ */
+export function fromViem(envelope: Viem): TxEnvelopeTempo {
+  const { nonce, feePayerSignature, ...rest } = envelope
+  return {
+    ...rest,
+    type: 'tempo',
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+    ...(feePayerSignature
+      ? {
+          feePayerSignature: {
+            r: BigInt(feePayerSignature.r),
+            s: BigInt(feePayerSignature.s),
+            yParity: feePayerSignature.yParity,
+          },
+        }
+      : feePayerSignature === null
+        ? { feePayerSignature: null }
+        : {}),
+  } as TxEnvelopeTempo
+}
+
+export declare namespace fromViem {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} to a {@link ox#TxEnvelopeTempo.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * const serializable = TxEnvelopeTempo.toViem({
+ *   calls: [{ to: '0x0000000000000000000000000000000000000000', value: 1n }],
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   maxFeePerGas: 1000000000n,
+ *   maxPriorityFeePerGas: 1000000n,
+ *   type: 'tempo',
+ * })
+ * ```
+ *
+ * @param envelope - The ox TxEnvelopeTempo to convert.
+ * @returns A viem-compatible transaction serializable.
+ */
+export function toViem(envelope: TxEnvelopeTempo): Viem {
+  const { nonce, feePayerSignature, from: _, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+    ...(feePayerSignature
+      ? {
+          feePayerSignature: {
+            r: Hex.fromNumber(feePayerSignature.r, { size: 32 }),
+            s: Hex.fromNumber(feePayerSignature.s, { size: 32 }),
+            yParity: feePayerSignature.yParity,
+          },
+        }
+      : feePayerSignature === null
+        ? { feePayerSignature: null }
+        : {}),
+  } as Viem
+}
+
+export declare namespace toViem {
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

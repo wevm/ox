@@ -53,6 +53,29 @@ export type TransactionRequest<
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
 
+/** A Transaction Request in the shape of a [viem](https://viem.sh) Transaction Request. */
+export type Viem = Compute<
+  Omit<
+    TransactionRequest<bigint, number, string>,
+    'nonce' | 'input' | 'authorizationList'
+  > & {
+    nonce?: number | undefined
+    authorizationList?: Viem.AuthorizationList | undefined
+  }
+>
+
+export namespace Viem {
+  export type AuthorizationList = readonly {
+    address: Address.Address
+    chainId: number
+    nonce: number
+    r?: Hex.Hex | undefined
+    s?: Hex.Hex | undefined
+    v?: number | undefined
+    yParity?: number | undefined
+  }[]
+}
+
 /**
  * Converts a {@link ox#TransactionRequest.Rpc} to a {@link ox#TransactionRequest.TransactionRequest}.
  *
@@ -205,4 +228,84 @@ export declare namespace toRpc {
     | Authorization.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TransactionRequest.Viem} to a {@link ox#TransactionRequest.TransactionRequest}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionRequest } from 'ox'
+ *
+ * const request = TransactionRequest.fromViem({
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 10000000000000000n,
+ * })
+ * ```
+ *
+ * @param request - The viem request to convert.
+ * @returns A transaction request.
+ */
+export function fromViem(request: Viem): TransactionRequest {
+  const { nonce, authorizationList, ...rest } = request
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+    ...(authorizationList
+      ? {
+          authorizationList: authorizationList.map((auth) => ({
+            ...auth,
+            nonce: BigInt(auth.nonce),
+            ...(auth.r ? { r: BigInt(auth.r) } : {}),
+            ...(auth.s ? { s: BigInt(auth.s) } : {}),
+          })),
+        }
+      : {}),
+  } as TransactionRequest
+}
+
+export declare namespace fromViem {
+  export type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TransactionRequest.TransactionRequest} to a {@link ox#TransactionRequest.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionRequest, Value } from 'ox'
+ *
+ * const request = TransactionRequest.toViem({
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: Value.fromEther('0.01'),
+ * })
+ * ```
+ *
+ * @param request - The request to convert.
+ * @returns A viem transaction request.
+ */
+export function toViem(request: TransactionRequest): Viem {
+  const { nonce, input: _, authorizationList, ...rest } = request
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+    ...(authorizationList
+      ? {
+          authorizationList: authorizationList.map((auth) => ({
+            ...auth,
+            nonce: Number(auth.nonce),
+            ...(typeof auth.r !== 'undefined'
+              ? { r: Hex.fromNumber(auth.r, { size: 32 }) }
+              : {}),
+            ...(typeof auth.s !== 'undefined'
+              ? { s: Hex.fromNumber(auth.s, { size: 32 }) }
+              : {}),
+          })),
+        }
+      : {}),
+  } as Viem
+}
+
+export declare namespace toViem {
+  export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

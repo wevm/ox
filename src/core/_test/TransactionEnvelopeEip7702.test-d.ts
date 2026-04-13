@@ -78,3 +78,59 @@ test('options: signature', () => {
   }>()
   expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip7702.TxEnvelopeEip7702>()
 })
+
+test('Viem type', () => {
+  const oxViem = {} as TxEnvelopeEip7702.Viem
+  expectTypeOf(oxViem.type).toEqualTypeOf<'eip7702' | undefined>()
+  expectTypeOf(oxViem.nonce).toEqualTypeOf<number | undefined>()
+  expectTypeOf(oxViem.chainId).toEqualTypeOf<number>()
+  expectTypeOf(oxViem.authorizationList).toExtend<
+    readonly { address: string; chainId: number; nonce: number }[]
+  >()
+})
+
+test('fromViem', () => {
+  const result = TxEnvelopeEip7702.fromViem({
+    chainId: 1,
+    nonce: 0,
+    maxFeePerGas: 1000000000n,
+    maxPriorityFeePerGas: 1000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    authorizationList: [
+      {
+        address: '0x0000000000000000000000000000000000000000',
+        chainId: 1,
+        nonce: 0,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        yParity: 0,
+      },
+    ],
+    type: 'eip7702',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeEip7702.TxEnvelopeEip7702>()
+  expectTypeOf(result.nonce).toEqualTypeOf<bigint | undefined>()
+})
+
+test('toViem', () => {
+  const result = TxEnvelopeEip7702.toViem({
+    chainId: 1,
+    nonce: 0n,
+    maxFeePerGas: 1000000000n,
+    maxPriorityFeePerGas: 1000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    authorizationList: [
+      {
+        address: '0x0000000000000000000000000000000000000000',
+        chainId: 1,
+        nonce: 0n,
+        r: 0n,
+        s: 0n,
+        yParity: 0,
+      },
+    ],
+    type: 'eip7702',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeEip7702.Viem>()
+  expectTypeOf(result.nonce).toEqualTypeOf<number | undefined>()
+})

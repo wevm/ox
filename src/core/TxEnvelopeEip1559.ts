@@ -43,6 +43,17 @@ export type SerializedType = typeof serializedType
 
 export type Signed = TxEnvelopeEip1559<true>
 
+/** An EIP-1559 Transaction Envelope in the shape of a [viem](https://viem.sh) TransactionSerializableEIP1559. */
+export type Viem<signed extends boolean = boolean> = Compute<
+  TransactionEnvelope.BaseViem<Type, signed> & {
+    accessList?: AccessList.AccessList | undefined
+    gasPrice?: undefined
+    maxFeePerBlobGas?: undefined
+    maxFeePerGas?: bigint | undefined
+    maxPriorityFeePerGas?: bigint | undefined
+  }
+>
+
 export const type = 'eip1559' as const
 export type Type = typeof type
 
@@ -615,4 +626,80 @@ export function validate(envelope: PartialBy<TxEnvelopeEip1559, 'type'>) {
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip1559.Viem} to a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeEip1559 } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip1559.fromViem({
+ *   chainId: 1,
+ *   nonce: 0,
+ *   maxFeePerGas: 1000000000n,
+ *   maxPriorityFeePerGas: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip1559',
+ * })
+ * ```
+ *
+ * @param envelope - The viem transaction serializable to convert.
+ * @returns An ox TxEnvelopeEip1559.
+ */
+export function fromViem(envelope: Viem): TxEnvelopeEip1559 {
+  const { nonce, r, s, v, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+    ...(typeof r !== 'undefined' ? { r: BigInt(r) } : {}),
+    ...(typeof s !== 'undefined' ? { s: BigInt(s) } : {}),
+    ...(typeof v !== 'undefined' ? { v: Number(v) } : {}),
+  } as TxEnvelopeEip1559
+}
+
+export declare namespace fromViem {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip1559.TxEnvelopeEip1559} to a {@link ox#TxEnvelopeEip1559.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeEip1559 } from 'ox'
+ *
+ * const serializable = TxEnvelopeEip1559.toViem({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   maxFeePerGas: 1000000000n,
+ *   maxPriorityFeePerGas: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip1559',
+ * })
+ * ```
+ *
+ * @param envelope - The ox TxEnvelopeEip1559 to convert.
+ * @returns A viem-compatible transaction serializable.
+ */
+export function toViem(envelope: TxEnvelopeEip1559): Viem {
+  const { nonce, r, s, v, from: _, input: _input, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+    ...(typeof r !== 'undefined'
+      ? { r: Hex.fromNumber(r, { size: 32 }) }
+      : {}),
+    ...(typeof s !== 'undefined'
+      ? { s: Hex.fromNumber(s, { size: 32 }) }
+      : {}),
+    ...(typeof v !== 'undefined' ? { v: BigInt(v) } : {}),
+  } as Viem
+}
+
+export declare namespace toViem {
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

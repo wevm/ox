@@ -87,6 +87,40 @@ export type BaseRpc<
   pending extends boolean = false,
 > = Base<type, pending, Hex.Hex, Hex.Hex>
 
+/** A Transaction in the shape of a [viem](https://viem.sh) Transaction. */
+export type Viem<pending extends boolean = false> = Compute<
+  Omit<
+    Base<string, pending, bigint, number>,
+    'nonce' | 'r' | 's' | 'v' | 'yParity' | 'data'
+  > & {
+    nonce: number
+    r: Hex.Hex
+    s: Hex.Hex
+    v: bigint
+    yParity?: number | undefined
+    typeHex: Hex.Hex | null
+    accessList?: AccessList.AccessList | undefined
+    authorizationList?: Viem.AuthorizationList | undefined
+    blobVersionedHashes?: readonly Hex.Hex[] | undefined
+    gasPrice?: bigint | undefined
+    maxFeePerGas?: bigint | undefined
+    maxFeePerBlobGas?: bigint | undefined
+    maxPriorityFeePerGas?: bigint | undefined
+  }
+>
+
+export namespace Viem {
+  export type AuthorizationList = readonly {
+    address: Address.Address
+    chainId: number
+    nonce: number
+    r: Hex.Hex
+    s: Hex.Hex
+    v: number
+    yParity: number
+  }[]
+}
+
 /** An [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) Transaction as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/transaction.yaml). */
 export type Eip1559<
   pending extends boolean = false,
@@ -417,4 +451,123 @@ export declare namespace toRpc {
   }
 
   type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#Transaction.Viem} to an {@link ox#Transaction.Transaction}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Transaction } from 'ox'
+ *
+ * const transaction = Transaction.fromViem({
+ *   blockHash: '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: 19868015n,
+ *   chainId: 1,
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   gas: 278365n,
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   input: '0x3593564c',
+ *   nonce: 855,
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   transactionIndex: 2,
+ *   type: 'eip1559',
+ *   typeHex: '0x2',
+ *   v: 27n,
+ *   value: 700000000000000000n,
+ *   yParity: 0,
+ *   // ...
+ * })
+ * ```
+ *
+ * @param transaction - The viem transaction to convert.
+ * @returns An instantiated {@link ox#Transaction.Transaction}.
+ */
+export function fromViem<pending extends boolean = false>(
+  transaction: Viem<pending>,
+): Transaction<pending> {
+  const { typeHex: _, nonce, r, s, v, authorizationList, ...rest } = transaction
+  return {
+    ...rest,
+    nonce: BigInt(nonce),
+    r: BigInt(r),
+    s: BigInt(s),
+    v: Number(v),
+    yParity: rest.yParity ?? (Number(v) === 28 ? 1 : 0),
+    ...(authorizationList
+      ? {
+          authorizationList: authorizationList.map((auth) => ({
+            ...auth,
+            nonce: BigInt(auth.nonce),
+            r: BigInt(auth.r),
+            s: BigInt(auth.s),
+          })),
+        }
+      : {}),
+  } as Transaction<pending>
+}
+
+export declare namespace fromViem {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts an {@link ox#Transaction.Transaction} to a {@link ox#Transaction.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Transaction } from 'ox'
+ *
+ * const transaction = Transaction.toViem({
+ *   blockHash: '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: 19868015n,
+ *   chainId: 1,
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   gas: 278365n,
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   input: '0x3593564c',
+ *   nonce: 855n,
+ *   r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
+ *   s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+ *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+ *   transactionIndex: 2,
+ *   type: 'eip1559',
+ *   v: 27,
+ *   value: 700000000000000000n,
+ *   yParity: 0,
+ *   // ...
+ * })
+ * ```
+ *
+ * @param transaction - The transaction to convert.
+ * @returns A viem-formatted transaction.
+ */
+export function toViem<pending extends boolean = false>(
+  transaction: Transaction<pending>,
+): Viem<pending> {
+  const { nonce, r, s, v, data: _, authorizationList, ...rest } = transaction
+  return {
+    ...rest,
+    nonce: Number(nonce),
+    r: Hex.fromNumber(r, { size: 32 }),
+    s: Hex.fromNumber(s, { size: 32 }),
+    v: BigInt(v ?? (rest.yParity === 0 ? 27 : 28)),
+    typeHex: (toRpcType as any)[rest.type] ?? null,
+    ...(authorizationList
+      ? {
+          authorizationList: authorizationList.map((auth) => ({
+            ...auth,
+            nonce: Number(auth.nonce),
+            r: Hex.fromNumber(auth.r, { size: 32 }),
+            s: Hex.fromNumber(auth.s, { size: 32 }),
+          })),
+        }
+      : {}),
+  } as unknown as Viem<pending>
+}
+
+export declare namespace toViem {
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

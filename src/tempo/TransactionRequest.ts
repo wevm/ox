@@ -52,6 +52,13 @@ export type Rpc = Omit<
   nonceKey?: Hex.Hex | undefined
 }
 
+/** A Transaction Request in the shape of a [viem](https://viem.sh) Transaction Request. */
+export type Viem = Compute<
+  Omit<TransactionRequest, 'nonce' | 'input'> & {
+    nonce?: number | undefined
+  }
+>
+
 /**
  * Converts a {@link ox#TransactionRequest.TransactionRequest} to a {@link ox#TransactionRequest.Rpc}.
  *
@@ -160,4 +167,66 @@ export declare namespace toRpc {
     | AuthorizationTempo.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TransactionRequest.Viem} to a {@link ox#TransactionRequest.TransactionRequest}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionRequest } from 'ox/tempo'
+ *
+ * const request = TransactionRequest.fromViem({
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *   }],
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
+ * })
+ * ```
+ *
+ * @param request - The viem request to convert.
+ * @returns A transaction request.
+ */
+export function fromViem(request: Viem): TransactionRequest {
+  const { nonce, ...rest } = request
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+  } as TransactionRequest
+}
+
+export declare namespace fromViem {
+  export type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TransactionRequest.TransactionRequest} to a {@link ox#TransactionRequest.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionRequest } from 'ox/tempo'
+ *
+ * const request = TransactionRequest.toViem({
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *   }],
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
+ * })
+ * ```
+ *
+ * @param request - The request to convert.
+ * @returns A viem transaction request.
+ */
+export function toViem(request: TransactionRequest): Viem {
+  const { nonce, input: _, ...rest } = request
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+  } as Viem
+}
+
+export declare namespace toViem {
+  export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

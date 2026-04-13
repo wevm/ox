@@ -1,4 +1,5 @@
 import { TxEnvelopeEip4844 } from 'ox'
+import type { TransactionSerializableEIP4844 } from 'viem'
 import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
@@ -89,4 +90,47 @@ test('options: signature', () => {
     readonly type: 'eip4844'
   }>()
   expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip4844.TxEnvelopeEip4844>()
+})
+
+test('Viem type: viem TransactionSerializableEIP4844 assignable', () => {
+  const viemTx = {} as TransactionSerializableEIP4844<
+    bigint,
+    number,
+    false
+  > & {
+    blobVersionedHashes: readonly `0x${string}`[]
+  }
+  expectTypeOf(viemTx).toExtend<TxEnvelopeEip4844.Viem>()
+})
+
+test('fromViem', () => {
+  const result = TxEnvelopeEip4844.fromViem({
+    chainId: 1,
+    nonce: 0,
+    maxFeePerGas: 1000000000n,
+    maxPriorityFeePerGas: 1000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    blobVersionedHashes: [
+      '0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe',
+    ],
+    type: 'eip4844',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeEip4844.TxEnvelopeEip4844>()
+  expectTypeOf(result.nonce).toEqualTypeOf<bigint | undefined>()
+})
+
+test('toViem', () => {
+  const result = TxEnvelopeEip4844.toViem({
+    chainId: 1,
+    nonce: 0n,
+    maxFeePerGas: 1000000000n,
+    maxPriorityFeePerGas: 1000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    blobVersionedHashes: [
+      '0x01febabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe',
+    ],
+    type: 'eip4844',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeEip4844.Viem>()
+  expectTypeOf(result.nonce).toEqualTypeOf<number | undefined>()
 })

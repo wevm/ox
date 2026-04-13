@@ -44,6 +44,23 @@ export type Serialized = `${SerializedType}${string}`
 
 export type Signed = TxEnvelopeEip7702<true>
 
+/** An EIP-7702 Transaction Envelope in the shape of a [viem](https://viem.sh) TransactionSerializableEIP7702. */
+export type Viem<signed extends boolean = boolean> = Compute<
+  TransactionEnvelope.BaseViem<Type, signed> & {
+    accessList?: AccessList.AccessList | undefined
+    authorizationList: readonly Compute<{
+      address: Address.Address
+      chainId: number
+      nonce: number
+      r: Hex.Hex
+      s: Hex.Hex
+      yParity: number
+    }>[]
+    maxFeePerGas?: bigint | undefined
+    maxPriorityFeePerGas?: bigint | undefined
+  }
+>
+
 export const serializedType = '0x04' as const
 export type SerializedType = typeof serializedType
 
@@ -601,4 +618,109 @@ export function validate(envelope: PartialBy<TxEnvelopeEip7702, 'type'>) {
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip7702.Viem} to a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { TxEnvelopeEip7702 } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip7702.fromViem({
+ *   authorizationList: [...],
+ *   chainId: 1,
+ *   nonce: 0,
+ *   maxFeePerGas: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip7702',
+ * })
+ * ```
+ *
+ * @param envelope - The viem transaction serializable to convert.
+ * @returns An ox TxEnvelopeEip7702.
+ */
+export function fromViem(envelope: Viem): TxEnvelopeEip7702 {
+  const { nonce, r, s, v, authorizationList, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+    ...(typeof r !== 'undefined' ? { r: BigInt(r) } : {}),
+    ...(typeof s !== 'undefined' ? { s: BigInt(s) } : {}),
+    ...(typeof v !== 'undefined' ? { v: Number(v) } : {}),
+    authorizationList: authorizationList.map((auth) => {
+      const { nonce, r, s, ...authRest } = auth
+      return {
+        ...authRest,
+        nonce: BigInt(nonce),
+        r: BigInt(r),
+        s: BigInt(s),
+      }
+    }),
+  } as TxEnvelopeEip7702
+}
+
+export declare namespace fromViem {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702} to a {@link ox#TxEnvelopeEip7702.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { TxEnvelopeEip7702 } from 'ox'
+ *
+ * const serializable = TxEnvelopeEip7702.toViem({
+ *   authorizationList: [...],
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   maxFeePerGas: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip7702',
+ * })
+ * ```
+ *
+ * @param envelope - The ox TxEnvelopeEip7702 to convert.
+ * @returns A viem-compatible transaction serializable.
+ */
+export function toViem(envelope: TxEnvelopeEip7702): Viem {
+  const {
+    nonce,
+    r,
+    s,
+    v,
+    from: _,
+    input: _input,
+    authorizationList,
+    ...rest
+  } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+    ...(typeof r !== 'undefined'
+      ? { r: Hex.fromNumber(r, { size: 32 }) }
+      : {}),
+    ...(typeof s !== 'undefined'
+      ? { s: Hex.fromNumber(s, { size: 32 }) }
+      : {}),
+    ...(typeof v !== 'undefined' ? { v: BigInt(v) } : {}),
+    authorizationList: authorizationList.map((auth) => {
+      const { nonce, r, s, ...authRest } = auth
+      return {
+        ...authRest,
+        nonce: Number(nonce),
+        r: Hex.fromNumber(r, { size: 32 }),
+        s: Hex.fromNumber(s, { size: 32 }),
+      }
+    }),
+  } as Viem
+}
+
+export declare namespace toViem {
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

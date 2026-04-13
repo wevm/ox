@@ -50,6 +50,23 @@ export type BaseRpc<
 /** Signed representation of a {@link ox#(TransactionEnvelope:namespace).Base}. */
 export type BaseSigned<type extends string = string> = Base<type, true>
 
+/** A Transaction Envelope Base in the shape of a [viem](https://viem.sh) Transaction Serializable. */
+export type BaseViem<
+  type extends string = string,
+  signed extends boolean = boolean,
+> = Compute<
+  Omit<
+    Base<type, signed, bigint, number>,
+    'nonce' | 'r' | 's' | 'v' | 'from' | 'input' | 'type'
+  > & {
+    nonce?: number | undefined
+    r?: Hex.Hex | undefined
+    s?: Hex.Hex | undefined
+    type?: type | undefined
+    v?: bigint | undefined
+  } & (signed extends true ? { r: Hex.Hex; s: Hex.Hex } : {})
+>
+
 /**
  * Thrown when a fee cap is too high.
  *

@@ -1,4 +1,5 @@
 import { TxEnvelopeEip1559 } from 'ox'
+import type { TransactionSerializableEIP1559 } from 'viem'
 import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
@@ -44,4 +45,35 @@ test('default', () => {
     }>()
     expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip1559.TxEnvelopeEip1559>()
   }
+})
+
+test('Viem type: viem TransactionSerializableEIP1559 assignable', () => {
+  const viemTx = {} as TransactionSerializableEIP1559
+  expectTypeOf(viemTx).toExtend<TxEnvelopeEip1559.Viem>()
+})
+
+test('fromViem', () => {
+  const result = TxEnvelopeEip1559.fromViem({
+    chainId: 1,
+    nonce: 0,
+    maxFeePerGas: 1000000000n,
+    maxPriorityFeePerGas: 1000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    type: 'eip1559',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeEip1559.TxEnvelopeEip1559>()
+  expectTypeOf(result.nonce).toEqualTypeOf<bigint | undefined>()
+})
+
+test('toViem', () => {
+  const result = TxEnvelopeEip1559.toViem({
+    chainId: 1,
+    nonce: 0n,
+    maxFeePerGas: 1000000000n,
+    maxPriorityFeePerGas: 1000000n,
+    to: '0x0000000000000000000000000000000000000000',
+    type: 'eip1559',
+  })
+  expectTypeOf(result).toExtend<TxEnvelopeEip1559.Viem>()
+  expectTypeOf(result.nonce).toEqualTypeOf<number | undefined>()
 })

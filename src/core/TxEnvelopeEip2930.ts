@@ -41,6 +41,14 @@ export type SerializedType = typeof serializedType
 
 export type Signed = TxEnvelopeEip2930<true>
 
+/** An EIP-2930 Transaction Envelope in the shape of a [viem](https://viem.sh) TransactionSerializableEIP2930. */
+export type Viem<signed extends boolean = boolean> = Compute<
+  TransactionEnvelope.BaseViem<Type, signed> & {
+    accessList?: AccessList.AccessList | undefined
+    gasPrice?: bigint | undefined
+  }
+>
+
 export const type = 'eip2930' as const
 export type Type = typeof type
 
@@ -580,4 +588,78 @@ export function validate(envelope: PartialBy<TxEnvelopeEip2930, 'type'>) {
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip2930.Viem} to a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeEip2930 } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip2930.fromViem({
+ *   chainId: 1,
+ *   nonce: 0,
+ *   gasPrice: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip2930',
+ * })
+ * ```
+ *
+ * @param envelope - The viem transaction serializable to convert.
+ * @returns An ox TxEnvelopeEip2930.
+ */
+export function fromViem(envelope: Viem): TxEnvelopeEip2930 {
+  const { nonce, r, s, v, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+    ...(typeof r !== 'undefined' ? { r: BigInt(r) } : {}),
+    ...(typeof s !== 'undefined' ? { s: BigInt(s) } : {}),
+    ...(typeof v !== 'undefined' ? { v: Number(v) } : {}),
+  } as TxEnvelopeEip2930
+}
+
+export declare namespace fromViem {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeEip2930.TxEnvelopeEip2930} to a {@link ox#TxEnvelopeEip2930.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeEip2930 } from 'ox'
+ *
+ * const serializable = TxEnvelopeEip2930.toViem({
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'eip2930',
+ * })
+ * ```
+ *
+ * @param envelope - The ox TxEnvelopeEip2930 to convert.
+ * @returns A viem-compatible transaction serializable.
+ */
+export function toViem(envelope: TxEnvelopeEip2930): Viem {
+  const { nonce, r, s, v, from: _, input: _input, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+    ...(typeof r !== 'undefined'
+      ? { r: Hex.fromNumber(r, { size: 32 }) }
+      : {}),
+    ...(typeof s !== 'undefined'
+      ? { s: Hex.fromNumber(s, { size: 32 }) }
+      : {}),
+    ...(typeof v !== 'undefined' ? { v: BigInt(v) } : {}),
+  } as Viem
+}
+
+export declare namespace toViem {
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

@@ -1574,3 +1574,151 @@ describe('validate', () => {
     ).toBe(false)
   })
 })
+
+describe('fromViem', () => {
+  test('default', () => {
+    const result = TxEnvelopeTempo.fromViem({
+      calls: [
+        {
+          to: '0x0000000000000000000000000000000000000000',
+          value: 1000000000000000000n,
+        },
+      ],
+      chainId: 1,
+      nonce: 5,
+      maxFeePerGas: 1000000000n,
+      maxPriorityFeePerGas: 1000000n,
+    })
+    expect(result.nonce).toEqual(5n)
+    expect(result.type).toEqual('tempo')
+    expect(result.chainId).toEqual(1)
+    expect(result.calls).toEqual([
+      {
+        to: '0x0000000000000000000000000000000000000000',
+        value: 1000000000000000000n,
+      },
+    ])
+  })
+
+  test('behavior: no nonce', () => {
+    const result = TxEnvelopeTempo.fromViem({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+    })
+    expect(result.nonce).toBeUndefined()
+    expect(result.type).toEqual('tempo')
+  })
+
+  test('behavior: feePayerSignature', () => {
+    const result = TxEnvelopeTempo.fromViem({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      feePayerSignature: {
+        r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+        yParity: 0,
+      },
+    })
+    expect(result.feePayerSignature).toEqual({
+      r: BigInt(
+        '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      ),
+      s: BigInt(
+        '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+      ),
+      yParity: 0,
+    })
+  })
+
+  test('behavior: feePayerSignature null', () => {
+    const result = TxEnvelopeTempo.fromViem({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      feePayerSignature: null,
+    })
+    expect(result.feePayerSignature).toBeNull()
+  })
+})
+
+describe('toViem', () => {
+  test('default', () => {
+    const result = TxEnvelopeTempo.toViem({
+      calls: [
+        {
+          to: '0x0000000000000000000000000000000000000000',
+          value: 1000000000000000000n,
+        },
+      ],
+      chainId: 1,
+      nonce: 5n,
+      maxFeePerGas: 1000000000n,
+      maxPriorityFeePerGas: 1000000n,
+      type: 'tempo',
+    })
+    expect(result.nonce).toEqual(5)
+    expect(result.chainId).toEqual(1)
+  })
+
+  test('behavior: feePayerSignature', () => {
+    const result = TxEnvelopeTempo.toViem({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      type: 'tempo',
+      feePayerSignature: {
+        r: BigInt(
+          '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+        ),
+        s: BigInt(
+          '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+        ),
+        yParity: 0,
+      },
+    })
+    expect(result.feePayerSignature).toEqual({
+      r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+      yParity: 0,
+    })
+  })
+
+  test('behavior: feePayerSignature null', () => {
+    const result = TxEnvelopeTempo.toViem({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      type: 'tempo',
+      feePayerSignature: null,
+    })
+    expect(result.feePayerSignature).toBeNull()
+  })
+
+  test('behavior: strips from', () => {
+    const result = TxEnvelopeTempo.toViem({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      type: 'tempo',
+      from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+    })
+    expect((result as any).from).toBeUndefined()
+  })
+
+  test('behavior: roundtrip', () => {
+    const original: TxEnvelopeTempo.TxEnvelopeTempo = {
+      calls: [
+        {
+          to: '0x0000000000000000000000000000000000000000',
+          value: 1000000000000000000n,
+        },
+      ],
+      chainId: 1,
+      nonce: 5n,
+      maxFeePerGas: 1000000000n,
+      maxPriorityFeePerGas: 1000000n,
+      type: 'tempo',
+    }
+    const viemTx = TxEnvelopeTempo.toViem(original)
+    const backToOx = TxEnvelopeTempo.fromViem(viemTx)
+    expect(backToOx.nonce).toEqual(original.nonce)
+    expect(backToOx.chainId).toEqual(original.chainId)
+    expect(backToOx.calls).toEqual(original.calls)
+  })
+})

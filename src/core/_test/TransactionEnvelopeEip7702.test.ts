@@ -939,6 +939,8 @@ test('exports', () => {
       "hash",
       "serialize",
       "validate",
+      "fromViem",
+      "toViem",
     ]
   `)
 })

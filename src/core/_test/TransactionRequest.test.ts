@@ -198,11 +198,51 @@ describe('fromRpc', () => {
   })
 })
 
+describe('fromViem', () => {
+  test('default', () => {
+    const result = TransactionRequest.fromViem({
+      to: '0x0000000000000000000000000000000000000000',
+      value: 10000000000000000n,
+      nonce: 1,
+    })
+    expect(result.nonce).toEqual(1n)
+  })
+
+  test('behavior: no nonce', () => {
+    const result = TransactionRequest.fromViem({
+      to: '0x0000000000000000000000000000000000000000',
+    })
+    expect(result.nonce).toBeUndefined()
+  })
+})
+
+describe('toViem', () => {
+  test('default', () => {
+    const result = TransactionRequest.toViem({
+      to: '0x0000000000000000000000000000000000000000',
+      value: 10000000000000000n,
+      nonce: 1n,
+    })
+    expect(result.nonce).toEqual(1)
+  })
+
+  test('behavior: strips input', () => {
+    const result = TransactionRequest.toViem({
+      input: '0xdeadbeef',
+      data: '0xdeadbeef',
+    })
+    expect((result as any).input).toBeUndefined()
+    expect(result.data).toEqual('0xdeadbeef')
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(TransactionRequest)).toMatchInlineSnapshot(`
     [
       "fromRpc",
       "toRpc",
+      "fromViem",
+      "toViem",
     ]
   `)
 })

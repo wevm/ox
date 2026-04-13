@@ -114,6 +114,41 @@ export type Rpc<
  */
 export type Tag = 'latest' | 'earliest' | 'pending' | 'safe' | 'finalized'
 
+/** A Block in the shape of a [viem](https://viem.sh) Block. */
+export type Viem<
+  includeTransactions extends boolean = false,
+  blockTag extends Tag = 'latest',
+> = Compute<
+  Omit<
+    Block<includeTransactions, blockTag>,
+    | 'baseFeePerGas'
+    | 'blobGasUsed'
+    | 'difficulty'
+    | 'excessBlobGas'
+    | 'totalDifficulty'
+    | 'extraData'
+    | 'sealFields'
+    | 'transactions'
+    | 'uncles'
+    | 'withdrawals'
+  > & {
+    baseFeePerGas: bigint | null
+    blobGasUsed: bigint
+    difficulty: bigint
+    excessBlobGas: bigint
+    extraData: Hex.Hex
+    sealFields: Hex.Hex[]
+    totalDifficulty: bigint | null
+    transactions: includeTransactions extends true
+      ? Transaction.Viem<blockTag extends 'pending' ? true : false>[]
+      : Hex.Hex[]
+    uncles: Hex.Hex[]
+    withdrawals?:
+      | Withdrawal.Withdrawal<bigint, number>[]
+      | undefined
+  }
+>
+
 /**
  * Converts a {@link ox#Block.Block} to an {@link ox#Block.Rpc}.
  *
@@ -321,4 +356,100 @@ export declare namespace fromRpc {
   }
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#Block.Viem} to an {@link ox#Block.Block}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Block } from 'ox'
+ *
+ * const block = Block.fromViem({
+ *   // ...
+ *   hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+ *   number: 19868020n,
+ *   size: 520n,
+ *   timestamp: 1662222222n,
+ *   // ...
+ * })
+ * ```
+ *
+ * @param block - The viem block to convert.
+ * @returns An instantiated {@link ox#Block.Block}.
+ */
+export function fromViem<
+  const block extends Viem<boolean, Tag> | null,
+  includeTransactions extends boolean = false,
+  blockTag extends Tag = 'latest',
+>(
+  block: block | Viem<includeTransactions, blockTag> | null,
+): block extends Viem<includeTransactions, blockTag>
+  ? Block<includeTransactions, blockTag>
+  : null {
+  if (!block) return null as never
+
+  const transactions = block.transactions.map((transaction) => {
+    if (typeof transaction === 'string') return transaction
+    return Transaction.fromViem(transaction as any) as any
+  })
+  return {
+    ...block,
+    baseFeePerGas: block.baseFeePerGas ?? undefined,
+    totalDifficulty: block.totalDifficulty ?? undefined,
+    transactions,
+  } as Block as never
+}
+
+export declare namespace fromViem {
+  type ErrorType = Transaction.fromViem.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Converts an {@link ox#Block.Block} to a {@link ox#Block.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Block } from 'ox'
+ *
+ * const block = Block.toViem({
+ *   // ...
+ *   hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
+ *   number: 19868020n,
+ *   size: 520n,
+ *   timestamp: 1662222222n,
+ *   // ...
+ * })
+ * ```
+ *
+ * @param block - The Block to convert.
+ * @returns A viem-formatted Block.
+ */
+export function toViem<
+  includeTransactions extends boolean = false,
+  blockTag extends Tag = 'latest',
+>(
+  block: Block<includeTransactions, blockTag>,
+): Viem<includeTransactions, blockTag> {
+  const transactions = block.transactions.map((transaction) => {
+    if (typeof transaction === 'string') return transaction
+    return Transaction.toViem(transaction as any) as any
+  })
+  return {
+    ...block,
+    baseFeePerGas: block.baseFeePerGas ?? null,
+    blobGasUsed: block.blobGasUsed ?? 0n,
+    difficulty: block.difficulty ?? 0n,
+    excessBlobGas: block.excessBlobGas ?? 0n,
+    extraData: block.extraData ?? '0x',
+    sealFields: block.sealFields ?? [],
+    totalDifficulty: block.totalDifficulty ?? null,
+    transactions,
+  } as unknown as Viem<includeTransactions, blockTag>
+}
+
+export declare namespace toViem {
+  type ErrorType = Transaction.toViem.ErrorType | Errors.GlobalErrorType
 }

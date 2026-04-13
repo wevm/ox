@@ -50,7 +50,7 @@ export type Tempo<
   Omit<
     ox_Transaction.Base<type, pending, bigintType, numberType>,
     // Tempo transactions don't have these properties.
-    'input' | 'to' | 'value' | 'v' | 'r' | 's' | 'yParity'
+    'data' | 'input' | 'to' | 'value' | 'v' | 'r' | 's' | 'yParity'
   > & {
     /** EIP-2930 Access List. */
     accessList: AccessList.AccessList
@@ -116,6 +116,28 @@ export type TempoRpc<pending extends boolean = false> = Compute<
     signature: SignatureEnvelope.SignatureEnvelopeRpc
   }
 >
+
+/** A Tempo Transaction in the shape of a [viem](https://viem.sh) Transaction. */
+export type TempoViem<pending extends boolean = false> = Compute<
+  Omit<
+    Tempo<pending>,
+    'nonce' | 'feePayerSignature'
+  > & {
+    nonce: number
+    feePayerSignature?:
+      | {
+          r: Hex.Hex
+          s: Hex.Hex
+          v?: bigint | undefined
+          yParity: number
+        }
+      | undefined
+    typeHex: Hex.Hex | null
+  }
+>
+
+/** A Transaction in the shape of a [viem](https://viem.sh) Transaction. */
+export type Viem<pending extends boolean = false> = ox_Transaction.Viem<pending> | TempoViem<pending>
 
 /** Type to RPC Type mapping. */
 export const toRpcType = {
@@ -336,4 +358,116 @@ export declare namespace toRpc {
   }
 
   type ErrorType = ox_Transaction.toRpc.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#Transaction.Viem} to a {@link ox#Transaction.Transaction}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Transaction } from 'ox/tempo'
+ *
+ * const transaction = Transaction.fromViem({
+ *   blockHash: '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: 19868015n,
+ *   chainId: 1,
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   gas: 278365n,
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   nonce: 855,
+ *   transactionIndex: 2,
+ *   type: 'eip1559',
+ *   typeHex: '0x2',
+ *   // ...
+ * })
+ * ```
+ *
+ * @param transaction - The viem transaction to convert.
+ * @returns An instantiated {@link ox#Transaction.Transaction}.
+ */
+export function fromViem<pending extends boolean = false>(
+  transaction: Viem<pending>,
+): Transaction<pending> {
+  if (transaction.type !== 'tempo')
+    return ox_Transaction.fromViem(transaction as ox_Transaction.Viem<pending>) as Transaction<pending>
+
+  const { typeHex: _, nonce, feePayerSignature, ...rest } = transaction as TempoViem<pending>
+  return {
+    ...rest,
+    nonce: BigInt(nonce),
+    ...(feePayerSignature
+      ? {
+          feePayerSignature: {
+            r: BigInt(feePayerSignature.r),
+            s: BigInt(feePayerSignature.s),
+            yParity: feePayerSignature.yParity,
+            v:
+              feePayerSignature.v !== undefined
+                ? Number(feePayerSignature.v)
+                : Signature.yParityToV(feePayerSignature.yParity),
+          },
+        }
+      : {}),
+  } as Transaction<pending>
+}
+
+export declare namespace fromViem {
+  type ErrorType = ox_Transaction.fromViem.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#Transaction.Transaction} to a {@link ox#Transaction.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Transaction } from 'ox/tempo'
+ *
+ * const transaction = Transaction.toViem({
+ *   accessList: [],
+ *   blockHash: '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+ *   blockNumber: 19868015n,
+ *   calls: [{ data: '0xdeadbeef', to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad' }],
+ *   chainId: 1,
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
+ *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+ *   gas: 278365n,
+ *   hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+ *   maxFeePerGas: 11985937556n,
+ *   maxPriorityFeePerGas: 68993984n,
+ *   nonce: 855n,
+ *   signature: { signature: { r: 0n, s: 0n, yParity: 0 }, type: 'secp256k1' },
+ *   transactionIndex: 2,
+ *   type: 'tempo',
+ * })
+ * ```
+ *
+ * @param transaction - The transaction to convert.
+ * @returns A viem-formatted transaction.
+ */
+export function toViem<pending extends boolean = false>(
+  transaction: Transaction<pending>,
+): Viem<pending> {
+  if (transaction.type !== 'tempo')
+    return ox_Transaction.toViem(transaction as ox_Transaction.Transaction<pending>) as Viem<pending>
+
+  const { nonce, feePayerSignature, ...rest } = transaction as Tempo<pending>
+  return {
+    ...rest,
+    nonce: Number(nonce),
+    typeHex: toRpcType.tempo,
+    ...(feePayerSignature
+      ? {
+          feePayerSignature: {
+            r: Hex.fromNumber(feePayerSignature.r, { size: 32 }),
+            s: Hex.fromNumber(feePayerSignature.s, { size: 32 }),
+            v: BigInt(feePayerSignature.v ?? (feePayerSignature.yParity === 0 ? 27 : 28)),
+            yParity: feePayerSignature.yParity,
+          },
+        }
+      : {}),
+  } as unknown as Viem<pending>
+}
+
+export declare namespace toViem {
+  type ErrorType = ox_Transaction.toViem.ErrorType | Errors.GlobalErrorType
 }

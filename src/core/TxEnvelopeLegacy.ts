@@ -39,6 +39,13 @@ export type Serialized = Branded<`0x${string}`, 'legacy'>
 
 export type Signed = TxEnvelopeLegacy<true>
 
+/** A Legacy Transaction Envelope in the shape of a [viem](https://viem.sh) TransactionSerializableLegacy. */
+export type Viem<signed extends boolean = boolean> = Compute<
+  PartialBy<TransactionEnvelope.BaseViem<Type, signed>, 'chainId'> & {
+    gasPrice?: bigint | undefined
+  }
+>
+
 export const type = 'legacy'
 export type Type = typeof type
 
@@ -631,4 +638,75 @@ export function validate(envelope: PartialBy<TxEnvelopeLegacy, 'type'>) {
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeLegacy.Viem} to a {@link ox#TxEnvelopeLegacy.TxEnvelopeLegacy}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeLegacy } from 'ox'
+ *
+ * const envelope = TxEnvelopeLegacy.fromViem({
+ *   nonce: 0,
+ *   gasPrice: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ * })
+ * ```
+ *
+ * @param envelope - The viem transaction serializable to convert.
+ * @returns An ox TxEnvelopeLegacy.
+ */
+export function fromViem(envelope: Viem): TxEnvelopeLegacy {
+  const { nonce, r, s, v, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: BigInt(nonce) } : {}),
+    ...(typeof r !== 'undefined' ? { r: BigInt(r) } : {}),
+    ...(typeof s !== 'undefined' ? { s: BigInt(s) } : {}),
+    ...(typeof v !== 'undefined' ? { v: Number(v) } : {}),
+  } as TxEnvelopeLegacy
+}
+
+export declare namespace fromViem {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeLegacy.TxEnvelopeLegacy} to a {@link ox#TxEnvelopeLegacy.Viem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TxEnvelopeLegacy } from 'ox'
+ *
+ * const serializable = TxEnvelopeLegacy.toViem({
+ *   nonce: 0n,
+ *   gasPrice: 1000000000n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1000000000000000000n,
+ *   type: 'legacy',
+ * })
+ * ```
+ *
+ * @param envelope - The ox TxEnvelopeLegacy to convert.
+ * @returns A viem-compatible transaction serializable.
+ */
+export function toViem(envelope: TxEnvelopeLegacy): Viem {
+  const { nonce, r, s, v, from: _, input: _input, ...rest } = envelope
+  return {
+    ...rest,
+    ...(typeof nonce !== 'undefined' ? { nonce: Number(nonce) } : {}),
+    ...(typeof r !== 'undefined'
+      ? { r: Hex.fromNumber(r, { size: 32 }) }
+      : {}),
+    ...(typeof s !== 'undefined'
+      ? { s: Hex.fromNumber(s, { size: 32 }) }
+      : {}),
+    ...(typeof v !== 'undefined' ? { v: BigInt(v) } : {}),
+  } as Viem
+}
+
+export declare namespace toViem {
+  type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

@@ -600,6 +600,8 @@ test('exports', () => {
       "serialize",
       "toRpc",
       "validate",
+      "fromViem",
+      "toViem",
     ]
   `)
 })
