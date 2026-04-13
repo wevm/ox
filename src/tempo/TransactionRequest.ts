@@ -23,6 +23,7 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
+  addressType = TempoAddress.Address,
 > = Compute<
   Omit<
     ox_TransactionRequest.TransactionRequest<bigintType, numberType, type>,
@@ -31,11 +32,11 @@ export type TransactionRequest<
     authorizationList?:
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
-    calls?: readonly Call<bigintType, TempoAddress.Address>[] | undefined
+    calls?: readonly Call<bigintType, addressType>[] | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
-    feeToken?: TokenId.TokenIdOrAddress<TempoAddress.Address> | undefined
+    feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
     nonceKey?: 'random' | bigintType | undefined
     validBefore?: numberType | undefined
     validAfter?: numberType | undefined
@@ -44,11 +45,11 @@ export type TransactionRequest<
 
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
-  TransactionRequest<Hex.Hex, Hex.Hex, string>,
+  TransactionRequest<Hex.Hex, Hex.Hex, string, Hex.Hex>,
   'authorizationList' | 'feeToken' | 'keyAuthorization'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
-  feeToken?: TempoAddress.Address | undefined
+  feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
 }
