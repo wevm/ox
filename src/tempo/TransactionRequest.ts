@@ -35,6 +35,7 @@ export type TransactionRequest<
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
+    feePayer?: boolean | undefined
     feeToken?: TokenId.TokenIdOrAddress<TempoAddress.Address> | undefined
     nonceKey?: 'random' | bigintType | undefined
     validBefore?: numberType | undefined
@@ -217,6 +218,7 @@ export function toRpc(request: TransactionRequest): Rpc {
 
   if (
     typeof request.calls !== 'undefined' ||
+    typeof request.feePayer !== 'undefined' ||
     typeof request.feeToken !== 'undefined' ||
     typeof request.keyAuthorization !== 'undefined' ||
     typeof request.nonceKey !== 'undefined' ||
