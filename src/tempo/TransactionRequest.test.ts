@@ -21,7 +21,7 @@ describe('fromRpc', () => {
             "to": "0xcafebabecafebabecafebabecafebabecafebabe",
           },
         ],
-        "feeToken": 0n,
+        "feeToken": "0x20c0000000000000000000000000000000000000",
         "type": "tempo",
       }
     `)
@@ -156,7 +156,9 @@ describe('roundtrip', () => {
         value: call.value,
       })),
     )
-    expect(converted.feeToken).toEqual(1n)
+    expect(converted.feeToken).toEqual(
+      '0x20c0000000000000000000000000000000000001',
+    )
     expect(converted.validBefore).toBe(original.validBefore)
     expect(converted.validAfter).toBe(original.validAfter)
     expect(converted.nonceKey).toBe(original.nonceKey)
