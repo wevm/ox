@@ -78,19 +78,26 @@ export function fromRpc(request: Rpc): TransactionRequest {
     rest as any,
   ) as TransactionRequest
 
+  if (typeof request.type !== 'undefined')
+    request_.type =
+      Transaction.fromRpcType[
+        request.type as keyof typeof Transaction.fromRpcType
+      ] || request_.type
+
   if (request.authorizationList)
     request_.authorizationList = AuthorizationTempo.fromRpcList(
       request.authorizationList,
     )
   if (request.calls)
-    request_.calls = request.calls.map((call) => ({
-      to: call.to,
-      value:
-        call.value && call.value !== '0x'
-          ? Hex.toBigInt(call.value)
-          : undefined,
-      data: call.data,
-    }))
+    request_.calls = request.calls.map((call) => {
+      const mapped: Call<bigint, TempoAddress.Address> = {
+        to: call.to,
+        data: call.data,
+      }
+      if (call.value && call.value !== '0x')
+        mapped.value = Hex.toBigInt(call.value)
+      return mapped
+    })
   if (typeof request.feeToken !== 'undefined')
     request_.feeToken = TokenId.fromAddress(
       request.feeToken as TempoAddress.Address,
