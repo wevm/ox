@@ -53,6 +53,69 @@ export type Rpc = Omit<
 }
 
 /**
+ * Converts a {@link ox#TransactionRequest.Rpc} to a {@link ox#TransactionRequest.TransactionRequest}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionRequest } from 'ox/tempo'
+ *
+ * const request = TransactionRequest.fromRpc({
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *   }],
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
+ *   type: '0x76',
+ * })
+ * ```
+ *
+ * @param request - The RPC request to convert.
+ * @returns A transaction request.
+ */
+export function fromRpc(request: Rpc): TransactionRequest {
+  const { authorizationList: _, ...rest } = request
+  const request_ = ox_TransactionRequest.fromRpc(rest as any) as TransactionRequest
+
+  if (request.authorizationList)
+    request_.authorizationList = AuthorizationTempo.fromRpcList(
+      request.authorizationList,
+    )
+  if (request.calls)
+    request_.calls = request.calls.map((call) => ({
+      to: call.to,
+      value:
+        call.value && call.value !== '0x'
+          ? Hex.toBigInt(call.value)
+          : undefined,
+      data: call.data,
+    }))
+  if (typeof request.feeToken !== 'undefined')
+    request_.feeToken = TokenId.fromAddress(
+      request.feeToken as TempoAddress.Address,
+    )
+  if (request.keyAuthorization)
+    request_.keyAuthorization = KeyAuthorization.fromRpc(
+      request.keyAuthorization,
+    )
+  if (typeof request.validBefore !== 'undefined')
+    request_.validBefore = Hex.toNumber(request.validBefore as Hex.Hex)
+  if (typeof request.validAfter !== 'undefined')
+    request_.validAfter = Hex.toNumber(request.validAfter as Hex.Hex)
+  if (typeof request.nonceKey !== 'undefined')
+    request_.nonceKey = Hex.toBigInt(request.nonceKey as Hex.Hex)
+
+  return request_
+}
+
+export declare namespace fromRpc {
+  export type ErrorType =
+    | AuthorizationTempo.fromRpcList.ErrorType
+    | Hex.toNumber.ErrorType
+    | Hex.toBigInt.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Converts a {@link ox#TransactionRequest.TransactionRequest} to a {@link ox#TransactionRequest.Rpc}.
  *
  * @see {@link https://docs.tempo.xyz/protocol/transactions}
