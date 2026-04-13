@@ -128,7 +128,7 @@ describe('roundtrip', () => {
     const converted = TransactionRequest.fromRpc(rpc)
 
     expect(converted.calls).toEqual(
-      original.calls.map((call) => ({
+      original.calls!.map((call) => ({
         to: call.to,
         data: call.data ?? '0x',
         value: call.value,
