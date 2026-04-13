@@ -100,6 +100,28 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('behavior: to/data/value folded into calls', () => {
+    const request = TransactionRequest.toRpc({
+      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      data: '0xdeadbeef',
+      value: 1000n,
+      feeToken: '0x20c0000000000000000000000000000000000000',
+    })
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "data": "0xdeadbeef",
+            "to": "0xcafebabecafebabecafebabecafebabecafebabe",
+            "value": "0x3e8",
+          },
+        ],
+        "feeToken": "0x20c0000000000000000000000000000000000000",
+        "type": "0x76",
+      }
+    `)
+  })
 })
 
 describe('roundtrip', () => {

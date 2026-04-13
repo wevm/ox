@@ -189,6 +189,14 @@ export function toRpc(request: TransactionRequest): Rpc {
       value: call.value ? Hex.fromNumber(call.value) : '0x',
       data: call.data ?? '0x',
     }))
+  else if (request.to || request.data || request.value)
+    request_rpc.calls = [
+      {
+        to: request.to ? TempoAddress.resolve(request.to) : undefined,
+        value: request.value ? Hex.fromNumber(request.value) : '0x',
+        data: request.data ?? '0x',
+      },
+    ]
   if (typeof request.feeToken !== 'undefined')
     request_rpc.feeToken = TokenId.toAddress(request.feeToken)
   if (request.keyAuthorization)
