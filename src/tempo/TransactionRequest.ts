@@ -45,9 +45,10 @@ export type TransactionRequest<
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string>,
-  'authorizationList' | 'keyAuthorization'
+  'authorizationList' | 'feeToken' | 'keyAuthorization'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
+  feeToken?: TempoAddress.Address | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
 }
@@ -99,9 +100,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
       return mapped
     })
   if (typeof request.feeToken !== 'undefined')
-    request_.feeToken = TokenId.fromAddress(
-      request.feeToken as TempoAddress.Address,
-    )
+    request_.feeToken = request.feeToken
   if (request.keyAuthorization)
     request_.keyAuthorization = KeyAuthorization.fromRpc(
       request.keyAuthorization,
