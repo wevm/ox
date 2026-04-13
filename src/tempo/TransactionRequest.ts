@@ -74,7 +74,9 @@ export type Rpc = Omit<
  */
 export function fromRpc(request: Rpc): TransactionRequest {
   const { authorizationList: _, ...rest } = request
-  const request_ = ox_TransactionRequest.fromRpc(rest as any) as TransactionRequest
+  const request_ = ox_TransactionRequest.fromRpc(
+    rest as any,
+  ) as TransactionRequest
 
   if (request.authorizationList)
     request_.authorizationList = AuthorizationTempo.fromRpcList(
