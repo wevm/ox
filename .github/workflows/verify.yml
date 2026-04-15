@@ -85,6 +85,7 @@ jobs:
       - name: Run tests
         run: pnpm test --project tempo --bail=1 --coverage
         env: 
+          VITE_TEMPO_CREDENTIALS: ${{ secrets.VITE_TEMPO_CREDENTIALS }}
           VITE_TEMPO_TAG: ${{ matrix.tag }}
 
   # test-tempo-e2e:

@@ -35,7 +35,6 @@ export type {}
  * @category Reference
  */
 export * as AuthorizationTempo from './AuthorizationTempo.js'
-
 /**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
@@ -76,7 +75,6 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  * @category Reference
  */
 export * as KeyAuthorization from './KeyAuthorization.js'
-
 /**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
@@ -128,7 +126,6 @@ export * as Period from './Period.js'
  * @category Reference
  */
 export * as PoolId from './PoolId.js'
-
 /**
  * Union of all JSON-RPC Methods for the `tempo_` namespace.
  *
@@ -171,7 +168,6 @@ export * as RpcSchemaTempo from './RpcSchemaTempo.js'
  * @category Reference
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
-
 /**
  * Tempo address encoding/decoding utilities for human-readable addresses.
  *
@@ -191,7 +187,6 @@ export * as SignatureEnvelope from './SignatureEnvelope.js'
  * @category Reference
  */
 export * as TempoAddress from './TempoAddress.js'
-
 /**
  * Tick-based pricing utilities for DEX price conversions.
  *
@@ -212,7 +207,6 @@ export * as TempoAddress from './TempoAddress.js'
  * @category Reference
  */
 export * as Tick from './Tick.js'
-
 /**
  * TIP-20 token ID utilities for converting between token IDs and addresses.
  *
@@ -234,7 +228,6 @@ export * as Tick from './Tick.js'
  * @category Reference
  */
 export * as TokenId from './TokenId.js'
-
 /**
  * Token role utilities for serializing role identifiers to keccak256 hashes.
  *
@@ -253,7 +246,6 @@ export * as TokenId from './TokenId.js'
  * @category Reference
  */
 export * as TokenRole from './TokenRole.js'
-
 /**
  * Utilities for converting between RPC and structured transaction formats.
  *
@@ -377,3 +369,58 @@ export * as TransactionRequest from './TransactionRequest.js'
  * @category Reference
  */
 export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
+/**
+ * Zone ID utilities for converting between zone IDs and zone chain IDs.
+ *
+ * Zone chain IDs are deterministically derived from zone IDs using the formula
+ * `421_700_000 + zoneId`. This module provides helpers to convert between them.
+ *
+ * @example
+ * ```ts twoslash
+ * import { ZoneId } from 'ox/tempo'
+ *
+ * const zoneId = ZoneId.fromChainId(421_700_026)
+ * // @log: 26
+ *
+ * const chainId = ZoneId.toChainId(26)
+ * // @log: 421700026
+ * ```
+ *
+ * @category Reference
+ */
+export * as ZoneId from './ZoneId.js'
+/**
+ * Zone RPC authentication token utilities for private zone RPC access.
+ *
+ * Zone RPC authentication tokens are short-lived, read-only credentials used in
+ * the `X-Authorization-Token` header when talking to private zone RPC endpoints.
+ * They reuse Tempo's multi-signature model, so secp256k1, P256, WebAuthn, and
+ * keychain access-key signatures all share the same wire format as Tempo
+ * transaction signatures.
+ *
+ * [Zone RPC Specification](https://docs.tempo.xyz/protocol/privacy/rpc#authorization-tokens)
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ * import { ZoneRpcAuthentication } from 'ox/tempo'
+ *
+ * const authentication = ZoneRpcAuthentication.from({
+ *   chainId: 4217000026,
+ *   expiresAt: 1711235160,
+ *   issuedAt: 1711234560,
+ *   zoneId: 26,
+ *   zonePortal: 'tempox0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: ZoneRpcAuthentication.getSignPayload(authentication),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const token = ZoneRpcAuthentication.serialize(authentication, { signature })
+ * ```
+ *
+ * @category Reference
+ */
+export * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
