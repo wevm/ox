@@ -1,5 +1,15 @@
 # ox
 
+## 0.14.17
+
+### Patch Changes
+
+- [#220](https://github.com/wevm/ox/pull/220) [`da7a62c`](https://github.com/wevm/ox/commit/da7a62cfbecb99b3cc24f275703e33b1320abb1b) Thanks [@Zygimantass](https://github.com/Zygimantass)! - Added Tempo zones support
+
+- [#219](https://github.com/wevm/ox/pull/219) [`a934992`](https://github.com/wevm/ox/commit/a934992257add3724f16538c7a14d72e647a2b66) Thanks [@jxom](https://github.com/jxom)! - Added `feePayer` to `TransactionRequest` in `ox/tempo`.
+
+- [#217](https://github.com/wevm/ox/pull/217) [`5e2ae4d`](https://github.com/wevm/ox/commit/5e2ae4d9a007bb4071896c5e4c0f258e9a637a54) Thanks [@jxom](https://github.com/jxom)! - Fixed `TransactionRequest.fromRpc` in `ox/tempo`. `TransactionRequest.toRpc` now folds top-level `to`/`data`/`value` into `calls` when `calls` is not provided.
+
 ## 0.14.16
 
 ### Patch Changes
