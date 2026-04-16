@@ -131,6 +131,7 @@ export * as PoolId from './PoolId.js'
  *
  * @example
  * ```ts twoslash
+ * import 'ox/window'
  * import { Provider, RpcSchema } from 'ox'
  * import { RpcSchemaTempo } from 'ox/tempo'
  *
@@ -407,11 +408,12 @@ export * as VirtualAddress from './VirtualAddress.js'
  *
  * @example
  * ```ts twoslash
+ * import { Address, Hex } from 'ox'
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const registration = {
- *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
- *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
+ *   salt: Hex.from('0x00000000000000000000000000000000000000000000000000000000abf52baf'),
  * }
  *
  * const registrationHash = VirtualMaster.getRegistrationHash(registration) // keccak256(address || salt)

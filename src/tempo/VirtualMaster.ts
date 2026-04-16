@@ -25,11 +25,12 @@ export type Salt = Hex.Hex | Bytes.Bytes | number | bigint
  *
  * @example
  * ```ts twoslash
+ * import { Address, Hex } from 'ox'
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const hash = VirtualMaster.getRegistrationHash({
- *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
- *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
+ *   salt: Hex.from('0x00000000000000000000000000000000000000000000000000000000abf52baf'),
  * })
  *
  * hash
@@ -79,11 +80,12 @@ export declare namespace getRegistrationHash {
  *
  * @example
  * ```ts twoslash
+ * import { Address, Hex } from 'ox'
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const masterId = VirtualMaster.getMasterId({
- *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
- *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
+ *   salt: Hex.from('0x00000000000000000000000000000000000000000000000000000000abf52baf'),
  * })
  *
  * masterId
@@ -112,11 +114,12 @@ export declare namespace getMasterId {
  *
  * @example
  * ```ts twoslash
+ * import { Address, Hex } from 'ox'
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const valid = VirtualMaster.validateSalt({
- *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
- *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
+ *   salt: Hex.from('0x00000000000000000000000000000000000000000000000000000000abf52baf'),
  * })
  *
  * valid
@@ -157,10 +160,11 @@ export declare namespace validateSalt {
  *
  * @example
  * ```ts twoslash
+ * import { Address } from 'ox'
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const result = VirtualMaster.mineSalt({
- *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+ *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
  *   start: 0xabf52ba0n,
  *   count: 16,
  * })

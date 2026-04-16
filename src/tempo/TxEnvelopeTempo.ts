@@ -162,10 +162,11 @@ export type Type = typeof type
  *
  * @example
  * ```ts twoslash
+ * import { Address } from 'ox'
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: 'tempox0x0000000000000000000000000000000000000000', value: 0n }],
+ *   calls: [{ to: Address.from('0x0000000000000000000000000000000000000000'), value: 0n }],
  *   chainId: 1,
  *   maxFeePerGas: 1000000000n,
  * })
@@ -1023,12 +1024,13 @@ export declare namespace getFeePayerSignPayload {
  *
  * @example
  * ```ts twoslash
+ * import { Address } from 'ox'
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * const valid = TxEnvelopeTempo.validate({
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: 'tempox0x0000000000000000000000000000000000000000',
+ *     to: Address.from('0x0000000000000000000000000000000000000000'),
  *   }],
  *   chainId: 1,
  *   maxFeePerGas: 1000000000n,
@@ -1077,10 +1079,11 @@ export class CallsEmptyError extends Errors.BaseError {
  *
  * @example
  * ```ts twoslash
+ * import { Address } from 'ox'
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: 'tempox0x0000000000000000000000000000000000000000' }],
+ *   calls: [{ to: Address.from('0x0000000000000000000000000000000000000000') }],
  *   chainId: 1,
  *   validBefore: 100,
  *   validAfter: 200,
