@@ -370,6 +370,58 @@ export * as TransactionRequest from './TransactionRequest.js'
  */
 export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 /**
+ * TIP-1022 virtual address encoding and parsing utilities.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
+ * Virtual addresses reserve the following 20-byte layout:
+ * `[4-byte masterId][10-byte VIRTUAL_MAGIC][6-byte userTag]`.
+ * These helpers only operate on the reserved byte layout and do not query
+ * onchain registration state.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TempoAddress, VirtualAddress } from 'ox/tempo'
+ *
+ * const masterId = '0x58e21090' // derived when the master registers
+ * const userTag = '0x010203040506' // operator-defined deposit identifier
+ *
+ * const address = VirtualAddress.from({
+ *   masterId,
+ *   userTag,
+ * })
+ *
+ * const tempoAddress = TempoAddress.format(address) // optional display format
+ * ```
+ *
+ * @category Reference
+ */
+export * as VirtualAddress from './VirtualAddress.js'
+/**
+ * TIP-1022 master registration utilities.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
+ * These utilities expose deterministic hashing and bounded salt mining helpers for
+ * `registerVirtualMaster(bytes32 salt)` without introducing any extra hashing dependency.
+ *
+ * @example
+ * ```ts twoslash
+ * import { VirtualMaster } from 'ox/tempo'
+ *
+ * const registration = {
+ *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+ *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ * }
+ *
+ * const registrationHash = VirtualMaster.getRegistrationHash(registration) // keccak256(address || salt)
+ * const masterId = VirtualMaster.getMasterId(registration) // bytes [4:8] of the hash
+ * ```
+ *
+ * @category Reference
+ */
+export * as VirtualMaster from './VirtualMaster.js'
+/**
  * Zone ID utilities for converting between zone IDs and zone chain IDs.
  *
  * Zone chain IDs are deterministically derived from zone IDs using the formula

@@ -45,8 +45,15 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'tempo-unit',
+          include: ['src/tempo/**/*.test.ts', '!src/tempo/e2e.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'tempo',
-          include: ['src/tempo/**/*.test.ts'],
+          include: ['src/tempo/e2e.test.ts'],
           setupFiles: [join(__dirname, './tempo/setup.ts')],
           globalSetup: [join(__dirname, './tempo/setup.global.ts')],
         },
