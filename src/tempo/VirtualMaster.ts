@@ -4,22 +4,13 @@ import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as TempoAddress from './TempoAddress.js'
+import * as VirtualAddress from './VirtualAddress.js'
+
+const tip20Prefix = '0x20c000000000000000000000'
+const zeroAddress = '0x0000000000000000000000000000000000000000'
 
 /** A valid salt input for TIP-1022 master registration. */
 export type Salt = Hex.Hex | Bytes.Bytes | number | bigint
-
-/**
- * Streaming Keccak-256 interface used by `mineSalt`.
- *
- * This is intentionally narrow so callers can inject accelerated implementations
- * without pulling them into `ox` itself. For example, `await createKeccak(256)`
- * from `hash-wasm` fits this shape directly.
- */
-export type Keccak256 = {
-  init(): unknown
-  update(value: Bytes.Bytes): unknown
-  digest(): Bytes.Bytes | string
-}
 
 /**
  * Computes the TIP-1022 registration hash for a master address and salt.
@@ -62,6 +53,7 @@ export declare namespace getRegistrationHash {
   type ErrorType =
     | Address.assert.ErrorType
     | Bytes.padLeft.ErrorType
+    | Errors.BaseError
     | Hash.keccak256.ErrorType
     | Hex.assert.ErrorType
     | Hex.fromBytes.ErrorType
@@ -149,7 +141,7 @@ export declare namespace validateSalt {
  *
  * This is intentionally a small, deterministic primitive. It does not coordinate
  * workers or async execution. Callers that need large searches can shard ranges
- * externally and optionally inject a faster Keccak backend.
+ * externally.
  *
  * @example
  * ```ts twoslash
@@ -165,34 +157,10 @@ export declare namespace validateSalt {
  * // @log: '0x00000000000000000000000000000000000000000000000000000000abf52baf'
  * ```
  *
- * @example
- * ### Inject a Faster Keccak Backend
- *
- * ```ts twoslash
- * // @noErrors
- * import { createKeccak } from 'hash-wasm'
- * import { VirtualMaster } from 'ox/tempo'
- *
- * const keccak256 = await createKeccak(256) // initialize the backend once
- *
- * const result = VirtualMaster.mineSalt(
- *   {
- *     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
- *     start: 0xabf52ba0n,
- *     count: 16,
- *   },
- *   { keccak256 }, // reuse it across repeated searches
- * )
- * ```
- *
  * @param value - Search range parameters.
- * @param options - Search options.
  * @returns The first matching salt in the range, if any.
  */
-export function mineSalt(
-  value: mineSalt.Value,
-  options: mineSalt.Options = {},
-): mineSalt.ReturnType | undefined {
+export function mineSalt(value: mineSalt.Value): mineSalt.ReturnType | undefined {
   assertCount(value.count)
 
   const address = resolveAddress(value.address)
@@ -204,9 +172,7 @@ export function mineSalt(
   for (let i = 0; i < value.count; i++) {
     input.set(saltBytes, addressBytes.length)
 
-    const registrationHash = options.keccak256
-      ? hashWithKeccak256(addressBytes, saltBytes, options.keccak256)
-      : Hash.keccak256(input, { as: 'Bytes' })
+    const registrationHash = Hash.keccak256(input, { as: 'Bytes' })
 
     if (hasProofOfWork(registrationHash)) {
       return {
@@ -232,11 +198,6 @@ export declare namespace mineSalt {
     start?: Salt | undefined
   }
 
-  type Options = {
-    /** Optional streaming Keccak-256 backend for repeated hashing. */
-    keccak256?: Keccak256 | undefined
-  }
-
   type ReturnType = {
     /** The 4-byte master identifier derived from the matching salt. */
     masterId: Hex.Hex
@@ -258,33 +219,6 @@ export declare namespace mineSalt {
     | Hex.padLeft.ErrorType
     | TempoAddress.parse.ErrorType
     | Errors.GlobalErrorType
-}
-
-function digestToBytes(digest: Bytes.Bytes | string): Bytes.Bytes {
-  const bytes =
-    digest instanceof Uint8Array
-      ? Uint8Array.from(digest)
-      : Bytes.fromHex(
-          (digest.startsWith('0x') ? digest : `0x${digest}`) as Hex.Hex,
-        )
-
-  if (bytes.length !== 32)
-    throw new Errors.BaseError(
-      `Injected Keccak-256 backend returned ${bytes.length} bytes, expected 32 bytes.`,
-    )
-
-  return bytes
-}
-
-function hashWithKeccak256(
-  address: Bytes.Bytes,
-  salt: Bytes.Bytes,
-  keccak256: Keccak256,
-): Bytes.Bytes {
-  keccak256.init()
-  keccak256.update(address)
-  keccak256.update(salt)
-  return digestToBytes(keccak256.digest())
 }
 
 function hasProofOfWork(hash: Bytes.Bytes): boolean {
@@ -317,7 +251,27 @@ function increment(bytes: Bytes.Bytes): boolean {
 function resolveAddress(address: string): Address.Address {
   const resolved = TempoAddress.resolve(address as TempoAddress.Address)
   Address.assert(resolved, { strict: false })
+  assertValidMasterAddress(resolved)
   return resolved
+}
+
+function assertValidMasterAddress(address: Address.Address) {
+  const normalized = address.toLowerCase()
+
+  if (normalized === zeroAddress)
+    throw new Errors.BaseError(
+      'Virtual master address cannot be the zero address.',
+    )
+
+  if (VirtualAddress.isVirtual(address))
+    throw new Errors.BaseError(
+      'Virtual master address cannot itself be a virtual address.',
+    )
+
+  if (normalized.startsWith(tip20Prefix))
+    throw new Errors.BaseError(
+      'Virtual master address cannot be a TIP-20 token address.',
+    )
 }
 
 function toFixedBytes(value: Salt, size: number): Bytes.Bytes {

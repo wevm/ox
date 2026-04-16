@@ -1,5 +1,3 @@
-import { createKeccak } from 'hash-wasm'
-import { Bytes, Hash } from 'ox'
 import { TempoAddress, VirtualMaster } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
@@ -10,6 +8,8 @@ const salt =
 const masterId = '0x58e21090'
 const registrationHash =
   '0x0000000058e21090d8f4bee424b90cddc2378aefa1bbbfa1443631a929ae966d'
+const virtualAddress = '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
+const tip20Address = '0x20c0000000000000000000000000000000000001'
 
 describe('getRegistrationHash', () => {
   test('raw address', () => {
@@ -101,55 +101,19 @@ describe('mineSalt', () => {
     )
   })
 
-  test('uses an injected keccak backend', () => {
-    const keccak256 = new TestKeccak256()
-
-    const result = VirtualMaster.mineSalt(
-      {
-        address,
-        count: 16,
-        start: 0xabf52ba0n,
-      },
-      { keccak256 },
-    )
-
-    expect(result).toEqual({ masterId, registrationHash, salt })
-    expect(keccak256.calls).toMatchInlineSnapshot(`
-      {
-        "digest": 16,
-        "init": 16,
-        "update": 32,
-      }
-    `)
-  })
-
-  test('uses a hash-wasm keccak backend', async () => {
-    const keccak256 = await createKeccak(256)
-
-    const result = VirtualMaster.mineSalt(
-      {
-        address,
-        count: 16,
-        start: 0xabf52ba0n,
-      },
-      { keccak256 },
-    )
-
-    expect(result).toEqual({ masterId, registrationHash, salt })
-  })
-
-  test('throws for an injected backend with an invalid digest size', () => {
+  test.each([
+    ['zero address', '0x0000000000000000000000000000000000000000'],
+    ['virtual address', virtualAddress],
+    ['TIP-20 token address', tip20Address],
+  ])('rejects %s as a virtual master', (_label, invalidAddress) => {
     expect(() =>
       VirtualMaster.mineSalt(
         {
-          address,
+          address: invalidAddress as VirtualMaster.mineSalt.Value['address'],
           count: 1,
         },
-        { keccak256: new InvalidDigestKeccak256() },
       ),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `[BaseError: Injected Keccak-256 backend returned 4 bytes, expected 32 bytes.]`,
-    )
+    ).toThrowError()
   })
 })
 
@@ -163,43 +127,3 @@ test('exports', () => {
     ]
   `)
 })
-
-class TestKeccak256 {
-  buffer = new Uint8Array()
-  calls = {
-    digest: 0,
-    init: 0,
-    update: 0,
-  }
-
-  init() {
-    this.calls.init++
-    this.buffer = new Uint8Array()
-    return this
-  }
-
-  update(value: Uint8Array) {
-    this.calls.update++
-    this.buffer = Bytes.concat(this.buffer, value)
-    return this
-  }
-
-  digest() {
-    this.calls.digest++
-    return Hash.keccak256(this.buffer, { as: 'Hex' }).slice(2)
-  }
-}
-
-class InvalidDigestKeccak256 {
-  init() {
-    return this
-  }
-
-  update(_value: Uint8Array) {
-    return this
-  }
-
-  digest() {
-    return new Uint8Array([0, 0, 0, 0])
-  }
-}

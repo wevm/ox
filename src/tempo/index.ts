@@ -404,8 +404,7 @@ export * as VirtualAddress from './VirtualAddress.js'
  *
  * These utilities expose deterministic hashing and bounded salt mining helpers for
  * `registerVirtualMaster(bytes32 salt)` without introducing any extra hashing dependency.
- * `mineSalt` uses `ox`'s built-in JS Keccak path by default and accepts an optional
- * injected streaming Keccak-256 backend for faster repeated hashing.
+ * `mineSalt` uses `ox`'s built-in JS Keccak path.
  *
  * @example
  * ```ts twoslash
