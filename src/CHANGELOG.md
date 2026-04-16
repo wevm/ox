@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.18
+
+### Patch Changes
+
+- [#221](https://github.com/wevm/ox/pull/221) [`3b84126`](https://github.com/wevm/ox/commit/3b841266704b2e2bc24359462bafd8acd7a16ec9) Thanks [@tmm](https://github.com/tmm)! - Added [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022) virtual address utilities to `ox/tempo`, including `VirtualAddress` helpers for formatting and parsing virtual addresses and `VirtualMaster` helpers for deriving registration hashes, validating salts, and mining bounded salt ranges.
+
 ## 0.14.17
 
 ### Patch Changes
