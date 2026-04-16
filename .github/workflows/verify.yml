@@ -83,7 +83,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Run tests
-        run: pnpm test --project tempo --bail=1 --coverage
+        run: pnpm test --project tempo-unit --project tempo --bail=1 --coverage
         env: 
           VITE_TEMPO_CREDENTIALS: ${{ secrets.VITE_TEMPO_CREDENTIALS }}
           VITE_TEMPO_TAG: ${{ matrix.tag }}

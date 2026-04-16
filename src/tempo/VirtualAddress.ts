@@ -13,6 +13,8 @@ export type Part = Hex.Hex | Bytes.Bytes | number | bigint
 /**
  * Builds a TIP-1022 virtual address from a `masterId` and `userTag`.
  *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
  * TIP-1022 encodes virtual addresses as:
  * `[4-byte masterId][10-byte VIRTUAL_MAGIC][6-byte userTag]`
  *
@@ -63,6 +65,11 @@ export declare namespace from {
 /**
  * Checks whether an address matches the TIP-1022 virtual address format.
  *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
+ * This only checks the reserved byte layout, not whether the `masterId`
+ * is registered onchain.
+ *
  * @example
  * ```ts twoslash
  * import { VirtualAddress } from 'ox/tempo'
@@ -89,6 +96,8 @@ export function isVirtual(address: string): boolean {
 
 /**
  * Parses a TIP-1022 virtual address into its `masterId` and `userTag` parts.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
  *
  * @example
  * ```ts twoslash
@@ -135,6 +144,11 @@ export declare namespace parse {
 /**
  * Validates that an address matches the TIP-1022 virtual address format.
  *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
+ * This only validates the reserved byte layout, not whether the `masterId`
+ * resolves to a registered master onchain.
+ *
  * @example
  * ```ts twoslash
  * import { VirtualAddress } from 'ox/tempo'
@@ -148,7 +162,7 @@ export declare namespace parse {
  * ```
  *
  * @param address - Address to validate.
- * @returns `true` if the address is a valid virtual address.
+ * @returns `true` if the address has a valid virtual-address layout.
  */
 export function validate(address: string): boolean {
   try {

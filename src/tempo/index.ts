@@ -372,8 +372,12 @@ export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 /**
  * TIP-1022 virtual address encoding and parsing utilities.
  *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
  * Virtual addresses reserve the following 20-byte layout:
  * `[4-byte masterId][10-byte VIRTUAL_MAGIC][6-byte userTag]`.
+ * These helpers only operate on the reserved byte layout and do not query
+ * onchain registration state.
  *
  * @example
  * ```ts twoslash
@@ -395,6 +399,8 @@ export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 export * as VirtualAddress from './VirtualAddress.js'
 /**
  * TIP-1022 master registration utilities.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
  *
  * These utilities expose deterministic hashing and bounded salt mining helpers for
  * `registerVirtualMaster(bytes32 salt)` without introducing any extra hashing dependency.

@@ -79,6 +79,28 @@ describe('mineSalt', () => {
     ).toBeUndefined()
   })
 
+  test('throws for a non-integer count', () => {
+    expect(() =>
+      VirtualMaster.mineSalt({
+        address,
+        count: 1.5,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Count "1.5" is invalid. Expected a positive safe integer.]`,
+    )
+  })
+
+  test('throws for a non-finite count', () => {
+    expect(() =>
+      VirtualMaster.mineSalt({
+        address,
+        count: Number.POSITIVE_INFINITY,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Count "Infinity" is invalid. Expected a positive safe integer.]`,
+    )
+  })
+
   test('uses an injected keccak backend', () => {
     const keccak256 = new TestKeccak256()
 
@@ -114,6 +136,20 @@ describe('mineSalt', () => {
     )
 
     expect(result).toEqual({ masterId, registrationHash, salt })
+  })
+
+  test('throws for an injected backend with an invalid digest size', () => {
+    expect(() =>
+      VirtualMaster.mineSalt(
+        {
+          address,
+          count: 1,
+        },
+        { keccak256: new InvalidDigestKeccak256() },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Injected Keccak-256 backend returned 4 bytes, expected 32 bytes.]`,
+    )
   })
 })
 
@@ -151,5 +187,19 @@ class TestKeccak256 {
   digest() {
     this.calls.digest++
     return Hash.keccak256(this.buffer, { as: 'Hex' }).slice(2)
+  }
+}
+
+class InvalidDigestKeccak256 {
+  init() {
+    return this
+  }
+
+  update(_value: Uint8Array) {
+    return this
+  }
+
+  digest() {
+    return new Uint8Array([0, 0, 0, 0])
   }
 }

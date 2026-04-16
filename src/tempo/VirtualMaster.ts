@@ -1,6 +1,6 @@
 import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
-import type * as Errors from '../core/Errors.js'
+import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as TempoAddress from './TempoAddress.js'
@@ -23,6 +23,8 @@ export type Keccak256 = {
 
 /**
  * Computes the TIP-1022 registration hash for a master address and salt.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
  *
  * The registration hash is `keccak256(masterAddress || salt)` where `salt`
  * is encoded as a 32-byte value.
@@ -72,6 +74,8 @@ export declare namespace getRegistrationHash {
 /**
  * Derives the 4-byte TIP-1022 `masterId` from a master address and salt.
  *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
  * This returns bytes `[4:8]` of the registration hash, regardless of whether the
  * salt satisfies the proof-of-work requirement.
  *
@@ -102,6 +106,8 @@ export declare namespace getMasterId {
 
 /**
  * Validates that a salt satisfies the TIP-1022 32-bit proof-of-work requirement.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
  *
  * @example
  * ```ts twoslash
@@ -138,6 +144,8 @@ export declare namespace validateSalt {
 
 /**
  * Searches a bounded range of salts for the first value that satisfies TIP-1022 PoW.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
  *
  * This is intentionally a small, deterministic primitive. It does not coordinate
  * workers or async execution. Callers that need large searches can shard ranges
@@ -185,7 +193,7 @@ export function mineSalt(
   value: mineSalt.Value,
   options: mineSalt.Options = {},
 ): mineSalt.ReturnType | undefined {
-  if (value.count <= 0) return undefined
+  assertCount(value.count)
 
   const address = resolveAddress(value.address)
   const addressBytes = Bytes.fromHex(address)
@@ -242,6 +250,7 @@ export declare namespace mineSalt {
     | Address.assert.ErrorType
     | Bytes.fromHex.ErrorType
     | Bytes.padLeft.ErrorType
+    | Errors.BaseError
     | Hash.keccak256.ErrorType
     | Hex.assert.ErrorType
     | Hex.fromBytes.ErrorType
@@ -252,10 +261,19 @@ export declare namespace mineSalt {
 }
 
 function digestToBytes(digest: Bytes.Bytes | string): Bytes.Bytes {
-  if (digest instanceof Uint8Array) return Uint8Array.from(digest)
-  return Bytes.fromHex(
-    (digest.startsWith('0x') ? digest : `0x${digest}`) as Hex.Hex,
-  )
+  const bytes =
+    digest instanceof Uint8Array
+      ? Uint8Array.from(digest)
+      : Bytes.fromHex(
+          (digest.startsWith('0x') ? digest : `0x${digest}`) as Hex.Hex,
+        )
+
+  if (bytes.length !== 32)
+    throw new Errors.BaseError(
+      `Injected Keccak-256 backend returned ${bytes.length} bytes, expected 32 bytes.`,
+    )
+
+  return bytes
 }
 
 function hashWithKeccak256(
@@ -271,6 +289,14 @@ function hashWithKeccak256(
 
 function hasProofOfWork(hash: Bytes.Bytes): boolean {
   return hash[0] === 0 && hash[1] === 0 && hash[2] === 0 && hash[3] === 0
+}
+
+function assertCount(count: number) {
+  if (Number.isSafeInteger(count) && count > 0) return
+
+  throw new Errors.BaseError(
+    `Count "${count}" is invalid. Expected a positive safe integer.`,
+  )
 }
 
 function increment(bytes: Bytes.Bytes): boolean {
