@@ -370,6 +370,48 @@ export * as TransactionRequest from './TransactionRequest.js'
  */
 export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 /**
+ * TIP-1022 virtual address encoding and parsing utilities.
+ *
+ * Virtual addresses reserve the following 20-byte layout:
+ * `[4-byte masterId][10-byte VIRTUAL_MAGIC][6-byte userTag]`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TempoAddress, VirtualAddress } from 'ox/tempo'
+ *
+ * const address = VirtualAddress.from({
+ *   masterId: '0x58e21090',
+ *   userTag: '0x010203040506',
+ * })
+ *
+ * const tempoAddress = TempoAddress.format(address)
+ * ```
+ *
+ * @category Reference
+ */
+export * as VirtualAddress from './VirtualAddress.js'
+/**
+ * TIP-1022 master registration utilities.
+ *
+ * These utilities expose deterministic hashing and bounded salt mining helpers for
+ * `registerVirtualMaster(bytes32 salt)` without introducing any extra hashing dependency.
+ * `mineSalt` uses `ox`'s built-in JS Keccak path by default and accepts an optional
+ * injected streaming Keccak-256 backend for faster repeated hashing.
+ *
+ * @example
+ * ```ts twoslash
+ * import { VirtualMaster } from 'ox/tempo'
+ *
+ * const masterId = VirtualMaster.getMasterId({
+ *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+ *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as VirtualMaster from './VirtualMaster.js'
+/**
  * Zone ID utilities for converting between zone IDs and zone chain IDs.
  *
  * Zone chain IDs are deterministically derived from zone IDs using the formula
