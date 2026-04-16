@@ -20,6 +20,9 @@ export type Salt = Hex.Hex | Bytes.Bytes | number | bigint
  * The registration hash is `keccak256(masterAddress || salt)` where `salt`
  * is encoded as a 32-byte value.
  *
+ * Master addresses must satisfy TIP-1022 registration constraints: they cannot
+ * be the zero address, another virtual address, or a TIP-20 token address.
+ *
  * @example
  * ```ts twoslash
  * import { VirtualMaster } from 'ox/tempo'
@@ -71,6 +74,9 @@ export declare namespace getRegistrationHash {
  * This returns bytes `[4:8]` of the registration hash, regardless of whether the
  * salt satisfies the proof-of-work requirement.
  *
+ * Master addresses must satisfy TIP-1022 registration constraints: they cannot
+ * be the zero address, another virtual address, or a TIP-20 token address.
+ *
  * @example
  * ```ts twoslash
  * import { VirtualMaster } from 'ox/tempo'
@@ -100,6 +106,9 @@ export declare namespace getMasterId {
  * Validates that a salt satisfies the TIP-1022 32-bit proof-of-work requirement.
  *
  * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
+ * Returns `false` for invalid master addresses, including the zero address,
+ * virtual addresses, and TIP-20 token addresses.
  *
  * @example
  * ```ts twoslash
@@ -143,6 +152,9 @@ export declare namespace validateSalt {
  * workers or async execution. Callers that need large searches can shard ranges
  * externally.
  *
+ * Master addresses must satisfy TIP-1022 registration constraints: they cannot
+ * be the zero address, another virtual address, or a TIP-20 token address.
+ *
  * @example
  * ```ts twoslash
  * import { VirtualMaster } from 'ox/tempo'
@@ -160,7 +172,9 @@ export declare namespace validateSalt {
  * @param value - Search range parameters.
  * @returns The first matching salt in the range, if any.
  */
-export function mineSalt(value: mineSalt.Value): mineSalt.ReturnType | undefined {
+export function mineSalt(
+  value: mineSalt.Value,
+): mineSalt.ReturnType | undefined {
   assertCount(value.count)
 
   const address = resolveAddress(value.address)

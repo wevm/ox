@@ -107,12 +107,10 @@ describe('mineSalt', () => {
     ['TIP-20 token address', tip20Address],
   ])('rejects %s as a virtual master', (_label, invalidAddress) => {
     expect(() =>
-      VirtualMaster.mineSalt(
-        {
-          address: invalidAddress as VirtualMaster.mineSalt.Value['address'],
-          count: 1,
-        },
-      ),
+      VirtualMaster.mineSalt({
+        address: invalidAddress as VirtualMaster.mineSalt.Value['address'],
+        count: 1,
+      }),
     ).toThrowError()
   })
 })
