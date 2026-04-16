@@ -135,6 +135,18 @@ export declare namespace parse {
 /**
  * Validates that an address matches the TIP-1022 virtual address format.
  *
+ * @example
+ * ```ts twoslash
+ * import { VirtualAddress } from 'ox/tempo'
+ *
+ * const valid = VirtualAddress.validate(
+ *   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506',
+ * )
+ *
+ * valid
+ * // @log: true
+ * ```
+ *
  * @param address - Address to validate.
  * @returns `true` if the address is a valid virtual address.
  */

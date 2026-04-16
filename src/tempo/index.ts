@@ -379,12 +379,15 @@ export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
  * ```ts twoslash
  * import { TempoAddress, VirtualAddress } from 'ox/tempo'
  *
+ * const masterId = '0x58e21090' // derived when the master registers
+ * const userTag = '0x010203040506' // operator-defined deposit identifier
+ *
  * const address = VirtualAddress.from({
- *   masterId: '0x58e21090',
- *   userTag: '0x010203040506',
+ *   masterId,
+ *   userTag,
  * })
  *
- * const tempoAddress = TempoAddress.format(address)
+ * const tempoAddress = TempoAddress.format(address) // optional display format
  * ```
  *
  * @category Reference
@@ -402,10 +405,13 @@ export * as VirtualAddress from './VirtualAddress.js'
  * ```ts twoslash
  * import { VirtualMaster } from 'ox/tempo'
  *
- * const masterId = VirtualMaster.getMasterId({
+ * const registration = {
  *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
  *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
- * })
+ * }
+ *
+ * const registrationHash = VirtualMaster.getRegistrationHash(registration) // keccak256(address || salt)
+ * const masterId = VirtualMaster.getMasterId(registration) // bytes [4:8] of the hash
  * ```
  *
  * @category Reference

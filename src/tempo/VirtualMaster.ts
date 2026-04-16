@@ -9,7 +9,7 @@ import * as TempoAddress from './TempoAddress.js'
 export type Salt = Hex.Hex | Bytes.Bytes | number | bigint
 
 /**
- * Streaming Keccak-256 interface used by {@link mineSalt}.
+ * Streaming Keccak-256 interface used by `mineSalt`.
  *
  * This is intentionally narrow so callers can inject accelerated implementations
  * without pulling them into `ox` itself. For example, `await createKeccak(256)`
@@ -75,6 +75,19 @@ export declare namespace getRegistrationHash {
  * This returns bytes `[4:8]` of the registration hash, regardless of whether the
  * salt satisfies the proof-of-work requirement.
  *
+ * @example
+ * ```ts twoslash
+ * import { VirtualMaster } from 'ox/tempo'
+ *
+ * const masterId = VirtualMaster.getMasterId({
+ *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+ *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ * })
+ *
+ * masterId
+ * // @log: '0x58e21090'
+ * ```
+ *
  * @param value - Master address and salt.
  * @returns The derived master identifier.
  */
@@ -89,6 +102,19 @@ export declare namespace getMasterId {
 
 /**
  * Validates that a salt satisfies the TIP-1022 32-bit proof-of-work requirement.
+ *
+ * @example
+ * ```ts twoslash
+ * import { VirtualMaster } from 'ox/tempo'
+ *
+ * const valid = VirtualMaster.validateSalt({
+ *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+ *   salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+ * })
+ *
+ * valid
+ * // @log: true
+ * ```
  *
  * @param value - Master address and salt.
  * @returns `true` if the first 4 bytes of the registration hash are zero.
@@ -139,7 +165,7 @@ export declare namespace validateSalt {
  * import { createKeccak } from 'hash-wasm'
  * import { VirtualMaster } from 'ox/tempo'
  *
- * const keccak256 = await createKeccak(256)
+ * const keccak256 = await createKeccak(256) // initialize the backend once
  *
  * const result = VirtualMaster.mineSalt(
  *   {
@@ -147,7 +173,7 @@ export declare namespace validateSalt {
  *     start: 0xabf52ba0n,
  *     count: 16,
  *   },
- *   { keccak256 },
+ *   { keccak256 }, // reuse it across repeated searches
  * )
  * ```
  *
