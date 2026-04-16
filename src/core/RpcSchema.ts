@@ -290,7 +290,6 @@ export type MethodNameGeneric<schema extends Generic = Generic> =
  *       ReturnType: `0x${string}`
  *     }
  * >
- * // ^? [{ Method: 'eth_blockNumber'; Parameters?: undefined; ReturnType: `0x${string}` }, ...]
  * ```
  */
 export type ToViem<schema extends Generic> = UnionToTuple<
@@ -315,7 +314,6 @@ export type ToViem<schema extends Generic> = UnionToTuple<
  *   { Method: 'eth_blockNumber'; Parameters?: undefined; ReturnType: `0x${string}` },
  *   { Method: 'eth_chainId'; Parameters?: undefined; ReturnType: `0x${string}` },
  * ]>
- * // ^? { Request: { method: 'eth_blockNumber'; params?: undefined }; ReturnType: `0x${string}` } | ...
  * ```
  */
 export type FromViem<schema extends readonly ViemSchemaItem[]> = {
