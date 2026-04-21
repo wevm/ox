@@ -69,8 +69,8 @@ export async function resolveNode(): Promise<Pool | undefined> {
         },
       })
       worker.on('message', (msg: Message) => onMessage(msg))
-      worker.on('error', (err) => onError(err))
-      worker.on('exit', (code) => {
+      worker.on('error', (err: unknown) => onError(err))
+      worker.on('exit', (code: number) => {
         if (code !== 0)
           onError(
             new Errors.BaseError(
