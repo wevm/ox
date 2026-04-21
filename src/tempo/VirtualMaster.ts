@@ -151,7 +151,7 @@ export declare namespace validateSalt {
 /**
  * Searches a bounded range of salts for the first value that satisfies TIP-1022 PoW.
  *
- * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ * [TIP-1022](https://tips.sh/1022)
  *
  * This is intentionally a small, deterministic primitive. It does not coordinate
  * workers or async execution. Callers that need large searches can shard ranges
@@ -160,15 +160,21 @@ export declare namespace validateSalt {
  * Master addresses must satisfy TIP-1022 registration constraints: they cannot
  * be the zero address, another virtual address, or a TIP-20 token address.
  *
+ * :::warning
+ *
+ * It is strongly recommended to use {@link ox#VirtualMaster.(mineSaltAsync:function)} instead of this
+ * function. `mineSaltAsync` uses WASM-accelerated keccak256 with parallel
+ * workers and is a lot faster than the pure JS implementation used here.
+ *
+ * :::
+ *
  * @example
  * ```ts twoslash
  * import { Address } from 'ox'
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const result = VirtualMaster.mineSalt({
- *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
- *   start: 0xabf52ba0n,
- *   count: 16,
+ *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
  * })
  *
  * result?.salt
@@ -181,7 +187,9 @@ export declare namespace validateSalt {
 export function mineSalt(
   value: mineSalt.Value,
 ): mineSalt.ReturnType | undefined {
-  assertCount(value.count)
+  const count = value.count ?? 2 ** 32
+
+  assertCount(count)
 
   const addressBytes = Bytes.fromHex(resolveAddress(value.address))
   const input = new Uint8Array(addressBytes.length + 32)
@@ -191,7 +199,7 @@ export function mineSalt(
   const saltView = input.subarray(addressBytes.length)
   saltView.set(toFixedBytes(value.start ?? 0n, 32))
 
-  for (let i = 0; i < value.count; i++) {
+  for (let i = 0; i < count; i++) {
     const hash = keccak_256(input)
 
     if (hash[0] === 0 && hash[1] === 0 && hash[2] === 0 && hash[3] === 0) {
@@ -202,7 +210,7 @@ export function mineSalt(
       }
     }
 
-    if (i < value.count - 1 && !increment(saltView)) break
+    if (i < count - 1 && !increment(saltView)) break
   }
 
   return undefined
@@ -213,7 +221,7 @@ export declare namespace mineSalt {
     /** Master address. Accepts both hex and Tempo addresses. */
     address: TempoAddress.Address
     /** Number of consecutive salts to try. */
-    count: number
+    count?: number | undefined
     /** Starting salt value. @default 0n */
     start?: Salt | undefined
   }
@@ -245,11 +253,14 @@ export declare namespace mineSalt {
  * Searches for a salt that satisfies TIP-1022 PoW using parallel workers and
  * WASM-accelerated keccak256.
  *
- * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ * [TIP-1022](https://tips.sh/1022)
  *
- * In Node.js, spawns `worker_threads` with WASM keccak256 (~9x faster than
- * pure JS) for parallel mining. Falls back to chunked single-threaded mining
- * in environments without worker support.
+ * Uses WASM-accelerated keccak256 with parallel
+ * workers when available. Falls back to chunked single-threaded mining in
+ * environments without worker support.
+ *
+ * - **Node.js / Bun / Deno**: Spawns `worker_threads` with inline WASM keccak256.
+ * - **Browsers**: Spawns Web Workers via Blob URLs with inline WASM keccak256.
  *
  * @example
  * ```ts twoslash
@@ -257,11 +268,7 @@ export declare namespace mineSalt {
  * import { VirtualMaster } from 'ox/tempo'
  *
  * const result = await VirtualMaster.mineSaltAsync({
- *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
- *   count: 2 ** 32,
- *   onProgress({ progress, rate }) {
- *     console.log(`${(progress * 100).toFixed(1)}% — ${(rate / 1e6).toFixed(2)}M hash/s`)
- *   },
+ *   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
  * })
  * ```
  *
