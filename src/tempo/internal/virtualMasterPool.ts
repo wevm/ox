@@ -54,7 +54,8 @@ export async function resolve(): Promise<Pool | undefined> {
  * @internal
  */
 export async function resolveNode(): Promise<Pool | undefined> {
-  const { Worker } = await import('node:worker_threads')
+  const id = 'node:worker_threads'
+  const { Worker } = await import(id)
   const { wasmBase64 } = await import('./mine.wasm.js')
   const workerSource = getNodeWorkerSource()
 
