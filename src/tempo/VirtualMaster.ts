@@ -277,7 +277,7 @@ export async function mineSaltAsync(
     onProgress,
     signal,
     start: start_ = 0n,
-    workers,
+    workers = getDefaultWorkerCount(),
   } = parameters
 
   const address = resolveAddress(parameters.address)
@@ -287,13 +287,12 @@ export async function mineSaltAsync(
   if (workers !== undefined) assertWorkers(workers)
   throwIfAborted(signal)
 
-  const requestedWorkers = workers ?? getDefaultWorkerCount()
   const workerCount = Math.max(
     1,
-    Math.min(requestedWorkers, Math.ceil(count / chunkSize)),
+    Math.min(workers, Math.ceil(count / chunkSize)),
   )
 
-  if (workerCount <= 1) {
+  if (workerCount <= 1)
     return mineSaltAsyncFallback({
       address,
       chunkSize,
@@ -302,10 +301,9 @@ export async function mineSaltAsync(
       signal,
       start,
     })
-  }
 
   const pool = await VirtualMasterPool.resolve()
-  if (!pool) {
+  if (!pool)
     return mineSaltAsyncFallback({
       address,
       chunkSize,
@@ -314,7 +312,6 @@ export async function mineSaltAsync(
       signal,
       start,
     })
-  }
 
   return mineSaltWithWorkerPool({
     address,
@@ -587,14 +584,6 @@ function getAbortError(signal?: AbortSignal): Error {
  * @internal
  */
 function getDefaultWorkerCount(): number {
-  if (typeof globalThis.process !== 'undefined') {
-    try {
-      const { availableParallelism } = globalThis.require(
-        'node:os',
-      ) as typeof import('node:os')
-      return Math.max(1, availableParallelism() - 1)
-    } catch {}
-  }
   if (typeof navigator !== 'undefined') {
     const c = navigator.hardwareConcurrency
     if (c && c > 1) return c - 1
