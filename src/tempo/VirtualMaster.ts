@@ -589,7 +589,6 @@ function getAbortError(signal?: AbortSignal): Error {
 function getDefaultWorkerCount(): number {
   if (typeof globalThis.process !== 'undefined') {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { availableParallelism } = globalThis.require(
         'node:os',
       ) as typeof import('node:os')
