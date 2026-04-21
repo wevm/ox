@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.19
+
+### Patch Changes
+
+- [`3f6682d`](https://github.com/wevm/ox/commit/3f6682d88ba3ac53f4f84764acf62111ac229c9c) Thanks [@jxom](https://github.com/jxom)! - Embedded WASM keccak256 salt miner for `VirtualMaster.mineSaltAsync`. Added platform-agnostic worker pool supporting Node.js, Bun, Deno (`worker_threads`), and browsers (Web Workers via Blob URLs).
+
 ## 0.14.18
 
 ### Patch Changes
