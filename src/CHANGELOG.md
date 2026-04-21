@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.20
+
+### Patch Changes
+
+- [#225](https://github.com/wevm/ox/pull/225) [`7203ffc`](https://github.com/wevm/ox/commit/7203ffcc55cbcd1e31e7d89cd43bd86a948c135a) Thanks [@jxom](https://github.com/jxom)! - Fixed webpack compatibility for `VirtualMaster` by making the `node:worker_threads` import specifier non-literal, preventing bundlers from statically analyzing and failing on the `node:` scheme.
+
 ## 0.14.19
 
 ### Patch Changes
