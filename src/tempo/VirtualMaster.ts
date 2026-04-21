@@ -1,8 +1,10 @@
+import { keccak_256 } from '@noble/hashes/sha3'
 import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import * as VirtualMasterPool from './internal/virtualMasterPool.js'
 import * as TempoAddress from './TempoAddress.js'
 import * as VirtualAddress from './VirtualAddress.js'
 
@@ -181,26 +183,26 @@ export function mineSalt(
 ): mineSalt.ReturnType | undefined {
   assertCount(value.count)
 
-  const address = resolveAddress(value.address)
-  const addressBytes = Bytes.fromHex(address)
-  const saltBytes = toFixedBytes(value.start ?? 0n, 32)
-  const input = new Uint8Array(addressBytes.length + saltBytes.length)
+  const addressBytes = Bytes.fromHex(resolveAddress(value.address))
+  const input = new Uint8Array(addressBytes.length + 32)
   input.set(addressBytes)
 
+  // Salt is a view into input — increment mutates input directly, no copy.
+  const saltView = input.subarray(addressBytes.length)
+  saltView.set(toFixedBytes(value.start ?? 0n, 32))
+
   for (let i = 0; i < value.count; i++) {
-    input.set(saltBytes, addressBytes.length)
+    const hash = keccak_256(input)
 
-    const registrationHash = Hash.keccak256(input, { as: 'Bytes' })
-
-    if (hasProofOfWork(registrationHash)) {
+    if (hash[0] === 0 && hash[1] === 0 && hash[2] === 0 && hash[3] === 0) {
       return {
-        masterId: Hex.fromBytes(registrationHash.subarray(4, 8)),
-        registrationHash: Hex.fromBytes(registrationHash),
-        salt: Hex.fromBytes(saltBytes),
+        masterId: Hex.fromBytes(hash.subarray(4, 8)),
+        registrationHash: Hex.fromBytes(hash),
+        salt: Hex.fromBytes(saltView),
       }
     }
 
-    if (i < value.count - 1 && !increment(saltBytes)) break
+    if (i < value.count - 1 && !increment(saltView)) break
   }
 
   return undefined
@@ -239,10 +241,392 @@ export declare namespace mineSalt {
     | Errors.GlobalErrorType
 }
 
+/**
+ * Searches for a salt that satisfies TIP-1022 PoW using parallel workers and
+ * WASM-accelerated keccak256.
+ *
+ * [TIP-1022](https://docs.tempo.xyz/protocol/tips/tip-1022)
+ *
+ * In Node.js, spawns `worker_threads` with WASM keccak256 (~9x faster than
+ * pure JS) for parallel mining. Falls back to chunked single-threaded mining
+ * in environments without worker support.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Address } from 'ox'
+ * import { VirtualMaster } from 'ox/tempo'
+ *
+ * const result = await VirtualMaster.mineSaltAsync({
+ *   address: Address.from('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
+ *   count: 2 ** 32,
+ *   onProgress({ progress, rate }) {
+ *     console.log(`${(progress * 100).toFixed(1)}% — ${(rate / 1e6).toFixed(2)}M hash/s`)
+ *   },
+ * })
+ * ```
+ *
+ * @param parameters - Search parameters.
+ * @returns The first matching salt, if any.
+ */
+export async function mineSaltAsync(
+  parameters: mineSaltAsync.Parameters,
+): Promise<mineSalt.ReturnType | undefined> {
+  const {
+    chunkSize = 100_000,
+    count = 2 ** 32,
+    onProgress,
+    signal,
+    start: start_ = 0n,
+    workers,
+  } = parameters
+
+  const address = resolveAddress(parameters.address)
+  const start = toFixedHex(start_, 32)
+
+  assertCount(count)
+  if (workers !== undefined) assertWorkers(workers)
+  throwIfAborted(signal)
+
+  const requestedWorkers = workers ?? getDefaultWorkerCount()
+  const workerCount = Math.max(
+    1,
+    Math.min(requestedWorkers, Math.ceil(count / chunkSize)),
+  )
+
+  if (workerCount <= 1) {
+    return mineSaltAsyncFallback({
+      address,
+      chunkSize,
+      count,
+      onProgress,
+      signal,
+      start,
+    })
+  }
+
+  const pool = await VirtualMasterPool.resolve()
+  if (!pool) {
+    return mineSaltAsyncFallback({
+      address,
+      chunkSize,
+      count,
+      onProgress,
+      signal,
+      start,
+    })
+  }
+
+  return mineSaltWithWorkerPool({
+    address,
+    chunkSize,
+    count,
+    onProgress,
+    pool,
+    signal,
+    start,
+    workerCount,
+  })
+}
+
+export declare namespace mineSaltAsync {
+  type Parameters = {
+    /** Master address. Accepts both hex and Tempo addresses. */
+    address: TempoAddress.Address
+    /**
+     * Number of salts each worker processes before sending a progress update.
+     *
+     * @default 100_000
+     */
+    chunkSize?: number | undefined
+    /** Number of consecutive salts to try. @default 2 ** 32 */
+    count?: number | undefined
+    /** Progress callback invoked after each completed chunk. */
+    onProgress?: ((progress: Progress) => void) | undefined
+    /** AbortSignal for cancellation. */
+    signal?: AbortSignal | undefined
+    /** Starting salt value. @default 0n */
+    start?: Salt | undefined
+    /**
+     * Number of workers to use.
+     *
+     * Set to `0` or `1` to disable worker parallelism.
+     *
+     * @default os.availableParallelism() - 1
+     */
+    workers?: number | undefined
+  }
+
+  type Progress = {
+    /** Total attempts so far. */
+    attempts: number
+    /** Configured chunk size. */
+    chunkSize: number
+    /** Total count requested. */
+    count: number
+    /** Elapsed time in milliseconds. */
+    elapsed: number
+    /** Fraction complete (0–1). */
+    progress: number
+    /** Hashes per second. */
+    rate: number
+    /** Number of workers in use. */
+    workers: number
+  }
+
+  type ErrorType =
+    | mineSalt.ErrorType
+    | Errors.BaseError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Runs parallel salt mining across a worker pool.
+ *
+ * @internal
+ */
+// biome-ignore lint/correctness/noUnusedVariables: _
+function mineSaltWithWorkerPool(
+  value: mineSaltWithWorkerPool.Options,
+): Promise<mineSalt.ReturnType | undefined> {
+  const startedAt = Date.now()
+
+  return new Promise<mineSalt.ReturnType | undefined>((resolve, reject) => {
+    let settled = false
+    let attempts = 0
+    let completedWorkers = 0
+    const handles: { terminate(): void }[] = []
+
+    const emitProgress = () => {
+      if (!value.onProgress) return
+      const elapsed = Date.now() - startedAt
+      const seconds = elapsed / 1000
+      value.onProgress({
+        attempts,
+        chunkSize: value.chunkSize,
+        count: value.count,
+        elapsed,
+        progress: Math.min(1, attempts / value.count),
+        rate: seconds === 0 ? 0 : attempts / seconds,
+        workers: value.workerCount,
+      })
+    }
+
+    const terminateAll = () => {
+      for (const h of handles) h.terminate()
+    }
+
+    const succeed = (result: mineSalt.ReturnType | undefined) => {
+      if (settled) return
+      settled = true
+      value.signal?.removeEventListener('abort', onAbort)
+      terminateAll()
+      resolve(result)
+    }
+
+    const fail = (error: unknown) => {
+      if (settled) return
+      settled = true
+      value.signal?.removeEventListener('abort', onAbort)
+      terminateAll()
+      reject(
+        error instanceof Error
+          ? error
+          : new Errors.BaseError('Failed to mine virtual master salt.'),
+      )
+    }
+
+    const onMessage = (msg: VirtualMasterPool.Message) => {
+      if (settled) return
+      switch (msg.type) {
+        case 'found':
+          succeed(msg.result as mineSalt.ReturnType)
+          return
+        case 'progress':
+          attempts += msg.attempts
+          emitProgress()
+          return
+        case 'done':
+          completedWorkers++
+          if (completedWorkers === value.workerCount) succeed(undefined)
+          return
+        case 'error':
+          fail(new Errors.BaseError(msg.message))
+          return
+      }
+    }
+
+    const onAbort = () => fail(getAbortError(value.signal))
+    value.signal?.addEventListener('abort', onAbort, { once: true })
+
+    for (let i = 0; i < value.workerCount; i++) {
+      const handle = value.pool.spawn(i, onMessage, fail)
+      handles.push(handle)
+      handle.postMessage({
+        type: 'start',
+        address: value.address,
+        chunkSize: value.chunkSize,
+        count: value.count,
+        start: value.start,
+        workerCount: value.workerCount,
+        workerIndex: i,
+      })
+    }
+  })
+}
+
+declare namespace mineSaltWithWorkerPool {
+  type Options = {
+    /** Resolved master address. */
+    address: Address.Address
+    /** Salts per chunk before a progress update. */
+    chunkSize: number
+    /** Total number of salts to try. */
+    count: number
+    /** Progress callback. */
+    onProgress: mineSaltAsync.Parameters['onProgress']
+    /** Worker pool to distribute work across. */
+    pool: VirtualMasterPool.Pool
+    /** AbortSignal for cancellation. */
+    signal: AbortSignal | undefined
+    /** Starting salt as a hex string. */
+    start: Hex.Hex
+    /** Number of workers to use. */
+    workerCount: number
+  }
+}
+
+/**
+ * Single-threaded chunked fallback when no worker pool is available.
+ *
+ * @internal
+ */
+// biome-ignore lint/correctness/noUnusedVariables: _
+async function mineSaltAsyncFallback(
+  value: mineSaltAsyncFallback.Options,
+): Promise<mineSalt.ReturnType | undefined> {
+  const startedAt = Date.now()
+  const startBigInt = BigInt(value.start)
+
+  for (let offset = 0; offset < value.count; offset += value.chunkSize) {
+    throwIfAborted(value.signal)
+
+    const count = Math.min(value.chunkSize, value.count - offset)
+    const result = mineSalt({
+      address: value.address,
+      count,
+      start: startBigInt + BigInt(offset),
+    })
+
+    if (value.onProgress) {
+      const attempts = Math.min(value.count, offset + count)
+      const elapsed = Date.now() - startedAt
+      const seconds = elapsed / 1000
+      value.onProgress({
+        attempts,
+        chunkSize: value.chunkSize,
+        count: value.count,
+        elapsed,
+        progress: Math.min(1, attempts / value.count),
+        rate: seconds === 0 ? 0 : attempts / seconds,
+        workers: 1,
+      })
+    }
+
+    if (result) return result
+
+    // Yield to the event loop between chunks.
+    await new Promise<void>((r) => setTimeout(r, 0))
+  }
+
+  return undefined
+}
+
+declare namespace mineSaltAsyncFallback {
+  type Options = {
+    /** Resolved master address. */
+    address: Address.Address
+    /** Salts per chunk before yielding to the event loop. */
+    chunkSize: number
+    /** Total number of salts to try. */
+    count: number
+    /** Progress callback. */
+    onProgress: mineSaltAsync.Parameters['onProgress']
+    /** AbortSignal for cancellation. */
+    signal: AbortSignal | undefined
+    /** Starting salt as a hex string. */
+    start: Hex.Hex
+  }
+}
+
+/**
+ * Asserts that `workers` is a non-negative safe integer.
+ *
+ * @internal
+ */
+function assertWorkers(workers: number) {
+  if (Number.isSafeInteger(workers) && workers >= 0) return
+  throw new Errors.BaseError(
+    `Workers "${workers}" is invalid. Expected a non-negative safe integer.`,
+  )
+}
+
+/**
+ * Extracts or creates an error from an `AbortSignal`.
+ *
+ * @internal
+ */
+function getAbortError(signal?: AbortSignal): Error {
+  const reason = signal?.reason
+  if (reason instanceof Error) return reason
+  return new Errors.BaseError('The operation was aborted.')
+}
+
+/**
+ * Returns the default number of workers for the current platform.
+ *
+ * @internal
+ */
+function getDefaultWorkerCount(): number {
+  if (typeof globalThis.process !== 'undefined') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { availableParallelism } = globalThis.require(
+        'node:os',
+      ) as typeof import('node:os')
+      return Math.max(1, availableParallelism() - 1)
+    } catch {}
+  }
+  if (typeof navigator !== 'undefined') {
+    const c = navigator.hardwareConcurrency
+    if (c && c > 1) return c - 1
+  }
+  return 1
+}
+
+/**
+ * Throws the signal's abort reason if the signal is aborted.
+ *
+ * @internal
+ */
+function throwIfAborted(signal?: AbortSignal) {
+  if (!signal?.aborted) return
+  throw getAbortError(signal)
+}
+
+/**
+ * Returns `true` if the first 4 bytes of a hash are zero.
+ *
+ * @internal
+ */
 function hasProofOfWork(hash: Bytes.Bytes): boolean {
   return hash[0] === 0 && hash[1] === 0 && hash[2] === 0 && hash[3] === 0
 }
 
+/**
+ * Asserts that `count` is a positive safe integer.
+ *
+ * @internal
+ */
 function assertCount(count: number) {
   if (Number.isSafeInteger(count) && count > 0) return
 
@@ -251,6 +635,11 @@ function assertCount(count: number) {
   )
 }
 
+/**
+ * Increments a big-endian byte array by one. Returns `false` on overflow.
+ *
+ * @internal
+ */
 function increment(bytes: Bytes.Bytes): boolean {
   for (let i = bytes.length - 1; i >= 0; i--) {
     const value = bytes[i]!
@@ -266,6 +655,11 @@ function increment(bytes: Bytes.Bytes): boolean {
   return false
 }
 
+/**
+ * Resolves a Tempo or hex address, validates it as a valid master.
+ *
+ * @internal
+ */
 function resolveAddress(address: string): Address.Address {
   const resolved = TempoAddress.resolve(address as TempoAddress.Address)
   Address.assert(resolved, { strict: false })
@@ -273,6 +667,11 @@ function resolveAddress(address: string): Address.Address {
   return resolved
 }
 
+/**
+ * Throws if the address is zero, virtual, or a TIP-20 token.
+ *
+ * @internal
+ */
 function assertValidMasterAddress(address: Address.Address) {
   const normalized = address.toLowerCase()
 
@@ -292,10 +691,20 @@ function assertValidMasterAddress(address: Address.Address) {
     )
 }
 
+/**
+ * Converts a salt to a fixed-size byte array.
+ *
+ * @internal
+ */
 function toFixedBytes(value: Salt, size: number): Bytes.Bytes {
   return Bytes.fromHex(toFixedHex(value, size))
 }
 
+/**
+ * Converts a salt to a zero-padded hex string of the given size.
+ *
+ * @internal
+ */
 function toFixedHex(value: Salt, size: number): Hex.Hex {
   if (typeof value === 'number' || typeof value === 'bigint')
     return Hex.fromNumber(value, { size })

@@ -115,6 +115,82 @@ describe('mineSalt', () => {
   })
 })
 
+describe('mineSaltAsync', () => {
+  test('finds the same salt as the sync version', async () => {
+    const result = await VirtualMaster.mineSaltAsync({
+      address,
+      count: 16,
+      start: 0xabf52ba0n,
+      workers: 1,
+    })
+
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "masterId": "0x58e21090",
+        "registrationHash": "0x0000000058e21090d8f4bee424b90cddc2378aefa1bbbfa1443631a929ae966d",
+        "salt": "0x00000000000000000000000000000000000000000000000000000000abf52baf",
+      }
+    `)
+  })
+
+  test('finds the same salt with workers', async () => {
+    const result = await VirtualMaster.mineSaltAsync({
+      address,
+      count: 16,
+      start: 0xabf52ba0n,
+      workers: 2,
+    })
+
+    expect(result).toEqual({
+      masterId: '0x58e21090',
+      registrationHash:
+        '0x0000000058e21090d8f4bee424b90cddc2378aefa1bbbfa1443631a929ae966d',
+      salt: '0x00000000000000000000000000000000000000000000000000000000abf52baf',
+    })
+  })
+
+  test('returns undefined when no salt is found', async () => {
+    const result = await VirtualMaster.mineSaltAsync({
+      address,
+      count: 1,
+      start: 0n,
+      workers: 1,
+    })
+
+    expect(result).toBeUndefined()
+  })
+
+  test('reports progress', async () => {
+    const progressCalls: VirtualMaster.mineSaltAsync.Progress[] = []
+
+    await VirtualMaster.mineSaltAsync({
+      address,
+      count: 16,
+      start: 0xabf52ba0n,
+      workers: 1,
+      chunkSize: 8,
+      onProgress: (p) => progressCalls.push({ ...p }),
+    })
+
+    expect(progressCalls.length).toBeGreaterThanOrEqual(1)
+    expect(progressCalls[0]!.workers).toBe(1)
+    expect(progressCalls[0]!.attempts).toBeGreaterThan(0)
+  })
+
+  test('supports AbortSignal cancellation', async () => {
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(
+      VirtualMaster.mineSaltAsync({
+        address,
+        count: 1_000_000,
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow()
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(VirtualMaster)).toMatchInlineSnapshot(`
     [
@@ -122,6 +198,7 @@ test('exports', () => {
       "getMasterId",
       "validateSalt",
       "mineSalt",
+      "mineSaltAsync",
     ]
   `)
 })
