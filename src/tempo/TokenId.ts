@@ -4,7 +4,7 @@ import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as TempoAddress from './TempoAddress.js'
 
-const tip20Prefix = '0x20c0'
+const tip20Prefix = '0x20C000000000000000000000'
 
 export type TokenId = bigint
 export type TokenIdOrAddress<addressType = Address.Address> =
