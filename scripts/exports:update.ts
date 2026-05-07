@@ -90,9 +90,7 @@ for (const dir of dirs) {
 const rootSorted = exports
   .filter(([k]) => k !== '.' && k !== './index.docs')
   .sort(([a], [b]) => a.localeCompare(b))
-const rootSpecial = exports.filter(
-  ([k]) => k === '.' || k === './index.docs',
-)
+const rootSpecial = exports.filter(([k]) => k === '.' || k === './index.docs')
 
 const finalEntries = [...rootSpecial, ...rootSorted, ...subExports]
 
