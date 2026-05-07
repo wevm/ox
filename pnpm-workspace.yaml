@@ -1,8 +1,35 @@
+allowBuilds:
+  bun: true
+  cpu-features: true
+  esbuild: true
+  protobufjs: true
+  simple-git-hooks: true
+  ssh2: true
+
+autoInstallPeers: false
+
+linkWorkspacePackages: true
+
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - abitype
+
+overrides:
+  viem>ox: npm:ox@0.11.1
+  '@microsoft/api-extractor>typescript': ^5.5.4
+  hono@<4.2.7: '>=4.2.7'
+  ws@>=8.0.0 <8.17.1: '>=8.17.1'
+  hono@<4.5.8: '>=4.5.8'
+  micromatch@<4.0.8: '>=4.0.8'
+  webpack@>=5.0.0-alpha.0 <5.94.0: '>=5.94.0'
+  rollup@>=4.0.0 <4.22.4: '>=4.22.4'
+  hono@<4.6.5: '>=4.6.5'
+
 packages:
-  - examples/*
   - site
-  - src
+
+provenance: false
+
+strictPeerDependencies: false
+
 trustPolicy: no-downgrade

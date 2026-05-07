@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { trustedSetup as fastSetup } from '@paulmillr/trusted-setups/fast-kzg.js'
-import { KZG } from 'micro-eth-signer/kzg.js'
+import { KZG } from 'micro-eth-signer/advanced/kzg.js'
 import { Bytes, Hex, Kzg } from 'ox'
 
 const k = new KZG(fastSetup)
