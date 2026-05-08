@@ -1,9 +1,14 @@
-import { secp256k1 } from '@noble/curves/secp256k1'
+import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as Entropy from './internal/entropy.js'
+import {
+  fromRecoveredBytes,
+  toCompactBytes,
+  toRecoveredBytes,
+} from './internal/signature.js'
 import type { OneOf } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
@@ -76,10 +81,8 @@ export function getPublicKey(
   options: getPublicKey.Options,
 ): PublicKey.PublicKey {
   const { privateKey } = options
-  const point = secp256k1.ProjectivePoint.fromPrivateKey(
-    Hex.from(privateKey).slice(2),
-  )
-  return PublicKey.from(point)
+  const bytes = secp256k1.getPublicKey(Bytes.from(privateKey), false)
+  return PublicKey.fromBytes(bytes)
 }
 
 export declare namespace getPublicKey {
@@ -119,13 +122,11 @@ export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: getSharedSecret.Options<as>,
 ): getSharedSecret.ReturnType<as> {
   const { as = 'Hex', privateKey, publicKey } = options
-  const point = secp256k1.ProjectivePoint.fromHex(
-    PublicKey.toHex(publicKey).slice(2),
+  const sharedSecret = secp256k1.getSharedSecret(
+    Bytes.from(privateKey),
+    PublicKey.toBytes(publicKey),
+    true, // compressed
   )
-  const sharedPoint = point.multiply(
-    secp256k1.utils.normPrivateKeyToScalar(Hex.from(privateKey).slice(2)),
-  )
-  const sharedSecret = sharedPoint.toRawBytes(true) // compressed format
   if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
   return sharedSecret as never
 }
@@ -175,7 +176,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = secp256k1.utils.randomPrivateKey()
+  const bytes = secp256k1.utils.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -258,13 +259,12 @@ export function recoverPublicKey(
   options: recoverPublicKey.Options,
 ): PublicKey.PublicKey {
   const { payload, signature } = options
-  const { r, s, yParity } = signature
-  const signature_ = new secp256k1.Signature(
-    BigInt(r),
-    BigInt(s),
-  ).addRecoveryBit(yParity)
-  const point = signature_.recoverPublicKey(Hex.from(payload).substring(2))
-  return PublicKey.from(point)
+  const sigBytes = toRecoveredBytes(signature)
+  const point = secp256k1.Signature.fromBytes(
+    sigBytes,
+    'recovered',
+  ).recoverPublicKey(Bytes.from(payload))
+  return PublicKey.fromBytes(point.toBytes(false))
 }
 
 export declare namespace recoverPublicKey {
@@ -304,23 +304,16 @@ export function sign(options: sign.Options): Signature.Signature {
     payload,
     privateKey,
   } = options
-  const { r, s, recovery } = secp256k1.sign(
-    Bytes.from(payload),
-    Bytes.from(privateKey),
-    {
-      extraEntropy:
-        typeof extraEntropy === 'boolean'
-          ? extraEntropy
-          : Hex.from(extraEntropy).slice(2),
-      lowS: true,
-      ...(hash ? { prehash: true } : {}),
-    },
-  )
-  return {
-    r,
-    s,
-    yParity: recovery,
-  }
+  const sigBytes = secp256k1.sign(Bytes.from(payload), Bytes.from(privateKey), {
+    extraEntropy:
+      typeof extraEntropy === 'boolean'
+        ? extraEntropy
+        : Bytes.from(extraEntropy),
+    lowS: true,
+    prehash: hash === true,
+    format: 'recovered',
+  })
+  return fromRecoveredBytes(sigBytes)
 }
 
 export declare namespace sign {
@@ -390,10 +383,10 @@ export function verify(options: verify.Options): boolean {
   if (address)
     return Address.isEqual(address, recoverAddress({ payload, signature }))
   return secp256k1.verify(
-    signature,
+    toCompactBytes(signature),
     Bytes.from(payload),
     PublicKey.toBytes(publicKey),
-    ...(hash ? [{ prehash: true, lowS: true }] : []),
+    { lowS: true, prehash: hash === true },
   )
 }
 

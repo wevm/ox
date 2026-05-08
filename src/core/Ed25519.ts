@@ -1,8 +1,4 @@
-import {
-  ed25519,
-  edwardsToMontgomeryPriv,
-  edwardsToMontgomeryPub,
-} from '@noble/curves/ed25519'
+import { ed25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -124,7 +120,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = ed25519.utils.randomPrivateKey()
+  const bytes = ed25519.utils.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -263,7 +259,7 @@ export function toX25519PublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): toX25519PublicKey.ReturnType<as> {
   const { as = 'Hex', publicKey } = options
   const publicKeyBytes = Bytes.from(publicKey)
-  const x25519PublicKeyBytes = edwardsToMontgomeryPub(publicKeyBytes)
+  const x25519PublicKeyBytes = ed25519.utils.toMontgomery(publicKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(x25519PublicKeyBytes) as never
   return x25519PublicKeyBytes as never
 }
@@ -312,7 +308,8 @@ export function toX25519PrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
 ): toX25519PrivateKey.ReturnType<as> {
   const { as = 'Hex', privateKey } = options
   const privateKeyBytes = Bytes.from(privateKey)
-  const x25519PrivateKeyBytes = edwardsToMontgomeryPriv(privateKeyBytes)
+  const x25519PrivateKeyBytes =
+    ed25519.utils.toMontgomerySecret(privateKeyBytes)
   if (as === 'Hex') return Hex.fromBytes(x25519PrivateKeyBytes) as never
   return x25519PrivateKeyBytes as never
 }

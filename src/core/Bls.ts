@@ -1,5 +1,4 @@
-import type { ProjPointType } from '@noble/curves/abstract/weierstrass'
-import { bls12_381 as bls } from '@noble/curves/bls12-381'
+import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 
 import type * as BlsPoint from './BlsPoint.js'
 import * as Bytes from './Bytes.js'
@@ -56,13 +55,13 @@ export function aggregate(
   const group = typeof points[0]?.x === 'bigint' ? bls.G1 : bls.G2
   const point = points.reduce(
     (acc, point) =>
-      acc.add(new (group as any).ProjectivePoint(point.x, point.y, point.z)),
-    group.ProjectivePoint.ZERO,
+      acc.add(new (group as any).Point(point.x, point.y, point.z)),
+    group.Point.ZERO,
   )
   return {
-    x: point.px,
-    y: point.py,
-    z: point.pz,
+    x: point.X,
+    y: point.Y,
+    z: point.Z,
   }
 }
 
@@ -330,10 +329,10 @@ export function getPublicKey<size extends Size = 'short-key:long-sig'>(
 export function getPublicKey(options: getPublicKey.Options): BlsPoint.BlsPoint {
   const { privateKey, size = 'short-key:long-sig' } = options
   const group = size === 'short-key:long-sig' ? bls.G1 : bls.G2
-  const { px, py, pz } = group.ProjectivePoint.fromPrivateKey(
-    Hex.from(privateKey).slice(2),
+  const point = group.Point.BASE.multiply(
+    group.Point.Fn.fromBytes(Bytes.from(privateKey)),
   )
-  return { x: px, y: py, z: pz }
+  return { x: point.X, y: point.Y, z: point.Z }
 }
 
 export declare namespace getPublicKey {
@@ -373,7 +372,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = bls.utils.randomPrivateKey()
+  const bytes = bls.utils.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }
@@ -470,13 +469,13 @@ export function sign(options: sign.Options): BlsPoint.BlsPoint {
 
   const privateKeyGroup = size === 'short-key:long-sig' ? bls.G1 : bls.G2
   const signature = payloadPoint.multiply(
-    privateKeyGroup.normPrivateKeyToScalar(privateKey.slice(2)),
-  ) as ProjPointType<any>
+    privateKeyGroup.Point.Fn.fromBytes(Bytes.from(privateKey)),
+  )
 
   return {
-    x: signature.px,
-    y: signature.py,
-    z: signature.pz,
+    x: signature.X,
+    y: signature.Y,
+    z: signature.Z,
   }
 }
 
@@ -571,33 +570,29 @@ export function verify(options: verify.Options): boolean {
   const payloadPoint = group.hashToCurve(
     Bytes.from(payload),
     suite ? { DST: Bytes.fromString(suite) } : undefined,
-  ) as ProjPointType<any>
+  )
 
   const shortSigPairing = () =>
     bls.pairingBatch([
       {
-        g1: payloadPoint,
-        g2: new bls.G2.ProjectivePoint(publicKey.x, publicKey.y, publicKey.z),
+        g1: payloadPoint as InstanceType<typeof bls.G1.Point>,
+        g2: new bls.G2.Point(publicKey.x, publicKey.y, publicKey.z),
       },
       {
-        g1: new bls.G1.ProjectivePoint(signature.x, signature.y, signature.z),
-        g2: bls.G2.ProjectivePoint.BASE.negate(),
+        g1: new bls.G1.Point(signature.x, signature.y, signature.z),
+        g2: bls.G2.Point.BASE.negate(),
       },
     ])
 
   const longSigPairing = () =>
     bls.pairingBatch([
       {
-        g1: new bls.G1.ProjectivePoint(
-          publicKey.x,
-          publicKey.y,
-          publicKey.z,
-        ).negate(),
-        g2: payloadPoint,
+        g1: new bls.G1.Point(publicKey.x, publicKey.y, publicKey.z).negate(),
+        g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
       },
       {
-        g1: bls.G1.ProjectivePoint.BASE,
-        g2: new bls.G2.ProjectivePoint(signature.x, signature.y, signature.z),
+        g1: bls.G1.Point.BASE,
+        g2: new bls.G2.Point(signature.x, signature.y, signature.z),
       },
     ])
 

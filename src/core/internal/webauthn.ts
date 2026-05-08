@@ -1,4 +1,4 @@
-import { p256 } from '@noble/curves/p256'
+import { p256 } from '@noble/curves/nist.js'
 import * as Registration from '../../webauthn/Registration.js'
 import type * as Errors from '../Errors.js'
 import * as PublicKey from '../PublicKey.js'
@@ -9,8 +9,10 @@ import * as PublicKey from '../PublicKey.js'
  * @internal
  */
 export function parseAsn1Signature(bytes: Uint8Array) {
-  const sig = p256.Signature.fromDER(bytes).normalizeS()
-  return { r: sig.r, s: sig.s }
+  const sig = p256.Signature.fromBytes(bytes, 'der')
+  const n = p256.Point.CURVE().n
+  const s = sig.hasHighS() ? n - sig.s : sig.s
+  return { r: sig.r, s }
 }
 
 /**

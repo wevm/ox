@@ -1,10 +1,13 @@
-import { p256 } from '@noble/curves/p256'
+import { p256 } from '@noble/curves/nist.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
+
+/** secp256r1 / P-256 curve order. */
+const N = p256.Point.CURVE().n
 
 /**
  * Generates an ECDSA P256 key pair that includes:
@@ -245,7 +248,7 @@ export async function sign(
   const signature_bytes = Bytes.fromArray(new Uint8Array(signature))
   const r = Bytes.toBigInt(Bytes.slice(signature_bytes, 0, 32))
   let s = Bytes.toBigInt(Bytes.slice(signature_bytes, 32, 64))
-  if (s > p256.CURVE.n / 2n) s = p256.CURVE.n - s
+  if (s > N / 2n) s = N - s
   return { r, s }
 }
 
@@ -286,7 +289,7 @@ export async function verify(options: verify.Options): Promise<boolean> {
   const { lowS = true, payload, signature } = options
 
   // Reject high-S signatures if lowS is enabled.
-  if (lowS && signature.s > p256.CURVE.n / 2n) return false
+  if (lowS && signature.s > N / 2n) return false
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
