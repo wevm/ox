@@ -1,4 +1,4 @@
-import { equalBytes } from '@noble/curves/abstract/utils'
+import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal from './internal/bytes.js'

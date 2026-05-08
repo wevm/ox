@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1'
+import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -360,7 +360,10 @@ export declare namespace fromDerBytes {
  * @returns The {@link ox#Signature.Signature}.
  */
 export function fromDerHex(signature: Hex.Hex): Signature<false> {
-  const { r, s } = secp256k1.Signature.fromDER(Hex.from(signature).slice(2))
+  const { r, s } = secp256k1.Signature.fromHex(
+    Hex.from(signature).slice(2),
+    'der',
+  )
   return { r, s }
 }
 
@@ -562,7 +565,7 @@ export declare namespace toHex {
  */
 export function toDerBytes(signature: Signature<boolean>): Bytes.Bytes {
   const sig = new secp256k1.Signature(signature.r, signature.s)
-  return sig.toDERRawBytes()
+  return sig.toBytes('der')
 }
 
 export declare namespace toDerBytes {
@@ -590,7 +593,7 @@ export declare namespace toDerBytes {
  */
 export function toDerHex(signature: Signature<boolean>): Hex.Hex {
   const sig = new secp256k1.Signature(signature.r, signature.s)
-  return `0x${sig.toDERHex()}`
+  return `0x${sig.toHex('der')}`
 }
 
 export declare namespace toDerHex {

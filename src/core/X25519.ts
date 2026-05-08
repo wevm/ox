@@ -1,4 +1,4 @@
-import { x25519 } from '@noble/curves/ed25519'
+import { x25519 } from '@noble/curves/ed25519.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
@@ -180,7 +180,7 @@ export function randomPrivateKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: randomPrivateKey.Options<as> = {},
 ): randomPrivateKey.ReturnType<as> {
   const { as = 'Hex' } = options
-  const bytes = x25519.utils.randomPrivateKey()
+  const bytes = x25519.utils.randomSecretKey()
   if (as === 'Hex') return Hex.fromBytes(bytes) as never
   return bytes as never
 }

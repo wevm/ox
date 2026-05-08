@@ -1,4 +1,4 @@
-import { bls12_381 as bls } from '@noble/curves/bls12-381'
+import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 
 import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
@@ -61,11 +61,7 @@ export function toBytes<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Bytes : G2Bytes {
   const group = typeof point.z === 'bigint' ? bls.G1 : bls.G2
-  return new (group as any).ProjectivePoint(
-    point.x,
-    point.y,
-    point.z,
-  ).toRawBytes()
+  return new (group as any).Point(point.x, point.y, point.z).toBytes()
 }
 
 export declare namespace toBytes {
@@ -155,11 +151,11 @@ export function fromBytes<group extends 'G1' | 'G2'>(
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function fromBytes(bytes: Bytes.Bytes): BlsPoint<any> {
   const group = bytes.length === 48 ? bls.G1 : bls.G2
-  const point = group.ProjectivePoint.fromHex(bytes)
+  const point = group.Point.fromBytes(bytes)
   return {
-    x: point.px,
-    y: point.py,
-    z: point.pz,
+    x: point.X,
+    y: point.Y,
+    z: point.Z,
   }
 }
 

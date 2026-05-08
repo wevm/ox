@@ -150,6 +150,6 @@ test('verify', () => {
 
 test('noble export', () => {
   expectTypeOf(Ed25519.noble).toMatchTypeOf<
-    typeof import('@noble/curves/ed25519').ed25519
+    typeof import('@noble/curves/ed25519.js').ed25519
   >()
 })

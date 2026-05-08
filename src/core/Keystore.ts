@@ -1,13 +1,13 @@
-import { ctr } from '@noble/ciphers/aes'
+import { ctr } from '@noble/ciphers/aes.js'
 import {
   pbkdf2 as pbkdf2_noble,
   pbkdf2Async as pbkdf2Async_noble,
-} from '@noble/hashes/pbkdf2'
+} from '@noble/hashes/pbkdf2.js'
 import {
   scrypt as scrypt_noble,
   scryptAsync as scryptAsync_noble,
-} from '@noble/hashes/scrypt'
-import { sha256 } from '@noble/hashes/sha2'
+} from '@noble/hashes/scrypt.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'

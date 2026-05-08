@@ -1,4 +1,4 @@
-import { keccak_256 } from '@noble/hashes/sha3'
+import { keccak_256 } from '@noble/hashes/sha3.js'
 import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'

@@ -127,6 +127,6 @@ test('randomPrivateKey', () => {
 
 test('noble export', () => {
   expectTypeOf(X25519.noble).toMatchTypeOf<
-    typeof import('@noble/curves/ed25519').x25519
+    typeof import('@noble/curves/ed25519.js').x25519
   >()
 })
