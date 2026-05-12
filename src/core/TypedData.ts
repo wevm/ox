@@ -106,53 +106,75 @@ export function assert<
   const { domain, message, primaryType, types } =
     value as unknown as assert.Value
 
+  const validateValue = (type: string, value: unknown, name: string) => {
+    // Array types: validate length (if fixed) and recurse into each element.
+    const arrayMatch = type.match(Solidity.arrayRegex)
+    if (arrayMatch) {
+      const [, elementType, lengthStr] = arrayMatch
+      if (!Array.isArray(value))
+        throw new InvalidArrayError({ name, type, value })
+      if (lengthStr) {
+        const expected = Number.parseInt(lengthStr, 10)
+        if (value.length !== expected)
+          throw new InvalidArrayLengthError({
+            name,
+            type,
+            expectedLength: expected,
+            givenLength: value.length,
+          })
+      }
+      for (const element of value) validateValue(elementType!, element, name)
+      return
+    }
+
+    const integerMatch = type.match(Solidity.integerRegex)
+    if (
+      integerMatch &&
+      (typeof value === 'number' || typeof value === 'bigint')
+    ) {
+      const [, base, size_] = integerMatch
+      // If number cannot be cast to a sized hex value, it is out of range
+      // and will throw.
+      Hex.fromNumber(value, {
+        signed: base === 'int',
+        size: Number.parseInt(size_ ?? '', 10) / 8,
+      })
+    }
+
+    if (
+      type === 'address' &&
+      typeof value === 'string' &&
+      !Address.validate(value)
+    )
+      throw new Address.InvalidAddressError({
+        address: value,
+        cause: new Address.InvalidInputError(),
+      })
+
+    const bytesMatch = type.match(Solidity.bytesRegex)
+    if (bytesMatch) {
+      const [, size] = bytesMatch
+      if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
+        throw new BytesSizeMismatchError({
+          expectedSize: Number.parseInt(size, 10),
+          givenSize: Hex.size(value as Hex.Hex),
+        })
+    }
+
+    const struct = types[type]
+    if (struct) {
+      validateReference(type)
+      validateData(struct, value as Record<string, unknown>)
+    }
+  }
+
   const validateData = (
     struct: readonly Parameter[],
     data: Record<string, unknown>,
   ) => {
     for (const param of struct) {
       const { name, type } = param
-      const value = data[name]
-
-      const integerMatch = type.match(Solidity.integerRegex)
-      if (
-        integerMatch &&
-        (typeof value === 'number' || typeof value === 'bigint')
-      ) {
-        const [, base, size_] = integerMatch
-        // If number cannot be cast to a sized hex value, it is out of range
-        // and will throw.
-        Hex.fromNumber(value, {
-          signed: base === 'int',
-          size: Number.parseInt(size_ ?? '', 10) / 8,
-        })
-      }
-
-      if (
-        type === 'address' &&
-        typeof value === 'string' &&
-        !Address.validate(value)
-      )
-        throw new Address.InvalidAddressError({
-          address: value,
-          cause: new Address.InvalidInputError(),
-        })
-
-      const bytesMatch = type.match(Solidity.bytesRegex)
-      if (bytesMatch) {
-        const [, size] = bytesMatch
-        if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
-          throw new BytesSizeMismatchError({
-            expectedSize: Number.parseInt(size, 10),
-            givenSize: Hex.size(value as Hex.Hex),
-          })
-      }
-
-      const struct = types[type]
-      if (struct) {
-        validateReference(type)
-        validateData(struct, value as Record<string, unknown>)
-      }
+      validateValue(type, data[name], name)
     }
   }
 
@@ -178,6 +200,8 @@ export declare namespace assert {
   type ErrorType =
     | Address.InvalidAddressError
     | BytesSizeMismatchError
+    | InvalidArrayError
+    | InvalidArrayLengthError
     | InvalidPrimaryTypeError
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
@@ -757,6 +781,42 @@ export class InvalidStructTypeError extends Errors.BaseError {
   }
 }
 
+/** Thrown when an array-typed value is not an array. */
+export class InvalidArrayError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidArrayError'
+
+  constructor({
+    name,
+    type,
+    value,
+  }: { name: string; type: string; value: unknown }) {
+    super(
+      `Value for field \`${name}\` of type \`${type}\` is not an array. Got \`${typeof value}\`.`,
+    )
+  }
+}
+
+/** Thrown when a fixed-length array does not match its declared length. */
+export class InvalidArrayLengthError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidArrayLengthError'
+
+  constructor({
+    name,
+    type,
+    expectedLength,
+    givenLength,
+  }: {
+    name: string
+    type: string
+    expectedLength: number
+    givenLength: number
+  }) {
+    super(
+      `Expected fixed-length array \`${type}\` for field \`${name}\` to have ${expectedLength} elements, got ${givenLength}.`,
+    )
+  }
+}
+
 /** @internal */
 export function encodeData(value: {
   data: Record<string, unknown>
@@ -837,7 +897,22 @@ export function encodeField(properties: {
     ]
 
   if (type.lastIndexOf(']') === type.length - 1) {
-    const parsedType = type.slice(0, type.lastIndexOf('['))
+    const arrayMatch = type.match(Solidity.arrayRegex)
+    const parsedType = arrayMatch
+      ? arrayMatch[1]!
+      : type.slice(0, type.lastIndexOf('['))
+    const fixedLength = arrayMatch?.[2]
+      ? Number.parseInt(arrayMatch[2], 10)
+      : undefined
+    if (!Array.isArray(value))
+      throw new InvalidArrayError({ name, type, value })
+    if (fixedLength !== undefined && value.length !== fixedLength)
+      throw new InvalidArrayLengthError({
+        name,
+        type,
+        expectedLength: fixedLength,
+        givenLength: value.length,
+      })
     const typeValuePairs = (value as [AbiParameters.Parameter, any][]).map(
       (item) =>
         encodeField({
@@ -867,6 +942,8 @@ export declare namespace encodeField {
     | AbiParameters.encode.ErrorType
     | Hash.keccak256.ErrorType
     | Bytes.fromString.ErrorType
+    | InvalidArrayError
+    | InvalidArrayLengthError
     | Errors.GlobalErrorType
 }
 
