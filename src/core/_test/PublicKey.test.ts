@@ -83,6 +83,48 @@ describe('PublicKey.assert', () => {
   `,
     )
   })
+
+  test('behavior: rejects missing x/y when compressed: false is set', () => {
+    expect(() =>
+      PublicKey.assert({ prefix: 4 }, { compressed: false }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidError: Value \`{"prefix":4}\` is not a valid public key.
+
+      Public key must contain:
+      - an \`x\` and \`prefix\` value (compressed)
+      - an \`x\`, \`y\`, and \`prefix\` value (uncompressed)]
+    `)
+    expect(() =>
+      PublicKey.assert({ prefix: 4, x: 1n }, { compressed: false }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidError: Value \`{"prefix":4,"x":"1#__bigint"}\` is not a valid public key.
+
+      Public key must contain:
+      - an \`x\` and \`prefix\` value (compressed)
+      - an \`x\`, \`y\`, and \`prefix\` value (uncompressed)]
+    `)
+  })
+
+  test('behavior: rejects missing x or extra y when compressed: true is set', () => {
+    expect(() =>
+      PublicKey.assert({ prefix: 2 }, { compressed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidError: Value \`{"prefix":2}\` is not a valid public key.
+
+      Public key must contain:
+      - an \`x\` and \`prefix\` value (compressed)
+      - an \`x\`, \`y\`, and \`prefix\` value (uncompressed)]
+    `)
+    expect(() =>
+      PublicKey.assert({ prefix: 2, x: 1n, y: 1n }, { compressed: true }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidError: Value \`{"prefix":2,"x":"1#__bigint","y":"1#__bigint"}\` is not a valid public key.
+
+      Public key must contain:
+      - an \`x\` and \`prefix\` value (compressed)
+      - an \`x\`, \`y\`, and \`prefix\` value (uncompressed)]
+    `)
+  })
 })
 
 describe('PublicKey.compress', () => {

@@ -49,11 +49,34 @@ export function assert(
   const { compressed } = options
   const { prefix, x, y } = publicKey
 
+  // Explicit `compressed: false` -- require uncompressed shape.
+  if (compressed === false) {
+    if (typeof x !== 'bigint' || typeof y !== 'bigint')
+      throw new InvalidError({ publicKey })
+    if (prefix !== 4)
+      throw new InvalidPrefixError({
+        prefix,
+        cause: new InvalidUncompressedPrefixError(),
+      })
+    return
+  }
+
+  // Explicit `compressed: true` -- require compressed shape.
+  if (compressed === true) {
+    if (typeof x !== 'bigint' || typeof y !== 'undefined')
+      throw new InvalidError({ publicKey })
+    if (prefix !== 3 && prefix !== 2)
+      throw new InvalidPrefixError({
+        prefix,
+        cause: new InvalidCompressedPrefixError(),
+      })
+    return
+  }
+
+  // No explicit `compressed` option -- infer from shape.
+
   // Uncompressed
-  if (
-    compressed === false ||
-    (typeof x === 'bigint' && typeof y === 'bigint')
-  ) {
+  if (typeof x === 'bigint' && typeof y === 'bigint') {
     if (prefix !== 4)
       throw new InvalidPrefixError({
         prefix,
@@ -63,10 +86,7 @@ export function assert(
   }
 
   // Compressed
-  if (
-    compressed === true ||
-    (typeof x === 'bigint' && typeof y === 'undefined')
-  ) {
+  if (typeof x === 'bigint' && typeof y === 'undefined') {
     if (prefix !== 3 && prefix !== 2)
       throw new InvalidPrefixError({
         prefix,
