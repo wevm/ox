@@ -83,9 +83,7 @@ describe('v0.8', () => {
       verificationGasLimit: 100_000n,
     } as const satisfies UserOperationGas.UserOperationGas<'0.8'>
 
-    const rpc = UserOperationGas.toRpc(
-      v08,
-    ) as UserOperationGas.Rpc<'0.8'>
+    const rpc = UserOperationGas.toRpc(v08) as UserOperationGas.Rpc<'0.8'>
     const parsed = UserOperationGas.fromRpc(
       rpc,
     ) as UserOperationGas.UserOperationGas<'0.8'>
