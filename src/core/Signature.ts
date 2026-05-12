@@ -461,15 +461,20 @@ export declare namespace fromRpc {
  */
 export function fromTuple(tuple: Tuple): Signature {
   const [yParity, r, s] = tuple
-  return from({
+  // Construct directly without routing through `from()` so we skip its runtime
+  // type discrimination on every TxEnvelope decode. `assert` still validates
+  // the result.
+  const sig: Signature = {
     r: r === '0x' ? 0n : BigInt(r),
     s: s === '0x' ? 0n : BigInt(s),
     yParity: yParity === '0x' ? 0 : Number(yParity),
-  })
+  }
+  assert(sig)
+  return sig
 }
 
 export declare namespace fromTuple {
-  type ErrorType = from.ErrorType | Errors.GlobalErrorType
+  type ErrorType = assert.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -677,18 +682,17 @@ export declare namespace toRpc {
 export function toTuple(signature: Signature): Tuple {
   const { r, s, yParity } = signature
 
+  // Skip the `Hex.fromNumber` + `Hex.trimLeft` round-trip used by previous
+  // versions; bigint -> minimal hex is already what RLP wants.
   return [
     yParity ? '0x01' : '0x',
-    r === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(r!)),
-    s === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(s!)),
+    r === 0n ? '0x' : (`0x${r.toString(16)}` as Hex.Hex),
+    s === 0n ? '0x' : (`0x${s.toString(16)}` as Hex.Hex),
   ] as const
 }
 
 export declare namespace toTuple {
-  type ErrorType =
-    | Hex.trimLeft.ErrorType
-    | Hex.fromNumber.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /**
