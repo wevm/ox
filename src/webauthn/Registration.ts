@@ -16,8 +16,8 @@ import {
   bufferSourceToBytes,
   bytesToArrayBuffer,
   deserializeExtensions,
-  responseKeys,
   serializeExtensions,
+  serializeResponseFields,
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
@@ -300,22 +300,9 @@ export declare namespace getOptions {
 export function serializeResponse(response: Response): Response<true> {
   const { credential, ...rest } = response
 
-  const rawResponse = {} as Record<string, string>
-  for (const key of responseKeys) {
-    const r = credential.raw.response as unknown as Record<string, unknown>
-    let value = r[key]
-    if (!(value instanceof ArrayBuffer)) {
-      const getter =
-        `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
-      const fn = r[getter]
-      if (typeof fn === 'function') value = fn.call(r)
-    }
-    if (value instanceof ArrayBuffer)
-      rawResponse[key] = Base64.fromBytes(
-        new Uint8Array(value),
-        base64UrlOptions,
-      )
-  }
+  const rawResponse = serializeResponseFields(
+    credential.raw.response as unknown as Record<string, unknown>,
+  )
 
   return {
     ...rest,
