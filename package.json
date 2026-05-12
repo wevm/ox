@@ -23,6 +23,7 @@
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
+    "bench": "vitest bench -c ./test/vitest.config.ts",
     "test": "vitest -c ./test/vitest.config.ts",
     "test:cov": "vitest -c ./test/vitest.config.ts --coverage",
     "test:types": "TYPES=true vitest -c ./test/vitest.config.ts",
