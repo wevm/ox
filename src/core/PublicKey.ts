@@ -302,37 +302,46 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
   )
     throw new InvalidSerializedSizeError({ publicKey })
 
-  if (publicKey.length === 130) {
-    const x = BigInt(Hex.slice(publicKey, 0, 32))
-    const y = BigInt(Hex.slice(publicKey, 32, 64))
-    return {
-      prefix: 4,
-      x,
-      y,
-    } as never
-  }
+  const result = (() => {
+    if (publicKey.length === 130) {
+      const x = BigInt(Hex.slice(publicKey, 0, 32))
+      const y = BigInt(Hex.slice(publicKey, 32, 64))
+      return {
+        prefix: 4,
+        x,
+        y,
+      }
+    }
 
-  if (publicKey.length === 132) {
+    if (publicKey.length === 132) {
+      const prefix = Number(Hex.slice(publicKey, 0, 1))
+      const x = BigInt(Hex.slice(publicKey, 1, 33))
+      const y = BigInt(Hex.slice(publicKey, 33, 65))
+      return {
+        prefix,
+        x,
+        y,
+      }
+    }
+
     const prefix = Number(Hex.slice(publicKey, 0, 1))
     const x = BigInt(Hex.slice(publicKey, 1, 33))
-    const y = BigInt(Hex.slice(publicKey, 33, 65))
     return {
       prefix,
       x,
-      y,
-    } as never
-  }
+    }
+  })()
 
-  const prefix = Number(Hex.slice(publicKey, 0, 1))
-  const x = BigInt(Hex.slice(publicKey, 1, 33))
-  return {
-    prefix,
-    x,
-  } as never
+  assert(result)
+  return result as never
 }
 
 export declare namespace fromHex {
-  type ErrorType = Hex.slice.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | assert.ErrorType
+    | Hex.slice.ErrorType
+    | InvalidSerializedSizeError
+    | Errors.GlobalErrorType
 }
 
 /**

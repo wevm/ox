@@ -210,6 +210,32 @@ describe('PublicKey.fromHex', () => {
     Received 63 bytes.]
   `)
   })
+
+  test('error: invalid uncompressed prefix', () => {
+    // 65-byte serialized with prefix 5 (invalid for uncompressed).
+    expect(() =>
+      PublicKey.fromHex(
+        '0x058318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidPrefixError: Prefix "5" is invalid.
+
+      Details: Prefix must be 4 for uncompressed public keys.]
+    `)
+  })
+
+  test('error: invalid compressed prefix', () => {
+    // 33-byte serialized with prefix 5 (invalid for compressed).
+    expect(() =>
+      PublicKey.fromHex(
+        '0x058318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidPrefixError: Prefix "5" is invalid.
+
+      Details: Prefix must be 2 or 3 for compressed public keys.]
+    `)
+  })
 })
 
 describe('PublicKey.fromBytes', () => {
@@ -225,6 +251,18 @@ describe('PublicKey.fromBytes', () => {
       "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     }
   `)
+  })
+
+  test('error: invalid prefix', () => {
+    const serialized = Bytes.fromHex(
+      '0x058318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+    )
+    expect(() => PublicKey.fromBytes(serialized))
+      .toThrowErrorMatchingInlineSnapshot(`
+      [PublicKey.InvalidPrefixError: Prefix "5" is invalid.
+
+      Details: Prefix must be 4 for uncompressed public keys.]
+    `)
   })
 })
 
