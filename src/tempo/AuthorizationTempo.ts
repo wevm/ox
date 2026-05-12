@@ -261,7 +261,10 @@ export function from<
     ),
   }
   if (options.signature) {
-    return { ...resolved, signature: options.signature } as never
+    return {
+      ...resolved,
+      signature: SignatureEnvelope.from(options.signature),
+    } as never
   }
   return resolved as never
 }
