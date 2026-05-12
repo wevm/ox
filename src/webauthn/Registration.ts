@@ -634,28 +634,28 @@ export function verify(options: verify.Options): verify.ReturnType {
       )
   }
 
-  // 4. Parse and validate COSE public key
+  // 4. Parse and validate COSE public key.
+  // Decode once: get the public key, the consumed byte length and the decoded
+  // CBOR map. No re-encode required to compute trailing-byte count.
   const ed = (flags & 0x80) !== 0
-  const coseKeyBytes = authData.slice(55 + credIdLen)
-  const coseKeyHex = Hex.fromBytes(coseKeyBytes)
-  const coseKeyData = Cbor.decode<Record<string, unknown>>(coseKeyHex)
-  // Validate key type is EC2 (2), algorithm is ES256 (-7), and curve is P-256 (1)
-  if (
-    coseKeyData['1'] !== 2 ||
-    coseKeyData['3'] !== -7 ||
-    coseKeyData['-1'] !== 1
-  )
-    throw new VerifyError(
-      'COSE key must be EC2 (kty=2) with ES256 algorithm (alg=-7) on P-256 curve (crv=1)',
-    )
-  const publicKey = CoseKey.toPublicKey(coseKeyHex)
+  const coseKeyBytes = authData.subarray(55 + credIdLen)
+  let publicKey: PublicKey.PublicKey
+  let coseByteLength: number
+  try {
+    const result = CoseKey.toPublicKey(coseKeyBytes, {
+      returnByteLength: true,
+    })
+    publicKey = result.publicKey
+    coseByteLength = result.byteLength!
+  } catch (error) {
+    if (error instanceof CoseKey.InvalidCoseKeyError)
+      throw new VerifyError(
+        'COSE key must be EC2 (kty=2) with ES256 algorithm (alg=-7) on P-256 curve (crv=1)',
+      )
+    throw error
+  }
 
-  // Verify no unexpected trailing bytes after the COSE key.
-  // Re-encode the extracted public key as a COSE key to determine its expected length.
-  const expectedCoseKeyLen = Bytes.fromHex(
-    CoseKey.fromPublicKey(publicKey),
-  ).length
-  const trailingBytes = coseKeyBytes.length - expectedCoseKeyLen
+  const trailingBytes = coseKeyBytes.length - coseByteLength
   if (trailingBytes > 0 && !ed)
     throw new VerifyError(
       `authData contains ${trailingBytes} unexpected trailing byte(s) after COSE key`,
