@@ -305,7 +305,10 @@ export async function verify(options: verify.Options): Promise<boolean> {
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes.concat(Bytes.fromNumber(signature.r), Bytes.fromNumber(signature.s)),
+    Bytes.concat(
+      Bytes.fromNumber(signature.r, { size: 32 }),
+      Bytes.fromNumber(signature.s, { size: 32 }),
+    ),
     Bytes.from(payload),
   )
 }

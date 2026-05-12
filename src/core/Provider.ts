@@ -480,23 +480,16 @@ export function from<
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function from(provider: any, _options: Options = {}): Provider {
   if (!provider) throw new IsUndefinedError()
-  return {
-    ...provider,
-    async request(args) {
-      try {
-        const result = await provider.request(args)
-        if (
-          result &&
-          typeof result === 'object' &&
-          'jsonrpc' in (result as { jsonrpc?: unknown })
-        )
-          return RpcResponse.parse(result) as never
-        return result
-      } catch (error) {
-        throw parseError(error)
-      }
-    },
+  const wrapped = Object.create(Object.getPrototypeOf(provider))
+  Object.defineProperties(wrapped, Object.getOwnPropertyDescriptors(provider))
+  wrapped.request = async (args: any) => {
+    try {
+      return await provider.request(args)
+    } catch (error) {
+      throw parseError(error)
+    }
   }
+  return wrapped
 }
 
 export declare namespace from {

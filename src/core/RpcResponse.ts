@@ -76,11 +76,15 @@ export function from<
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function from(response: RpcResponse, options: any = {}): RpcResponse {
   const { request } = options
-  return {
-    ...response,
-    id: response.id ?? request?.id,
-    jsonrpc: response.jsonrpc ?? request.jsonrpc,
-  }
+  if (request)
+    return {
+      ...response,
+      id: response.id ?? request.id,
+      jsonrpc: response.jsonrpc ?? request.jsonrpc,
+    }
+  if (response.id === undefined || response.jsonrpc === undefined)
+    throw new ParseError({ message: 'Invalid JSON-RPC response.' })
+  return response
 }
 
 export declare namespace from {
@@ -214,7 +218,15 @@ export function parse<
   raw
 > {
   const { raw = false } = options
-  const response_ = response as RpcResponse
+  const response_ = response as RpcResponse | null | undefined
+  if (
+    !response_ ||
+    typeof response_ !== 'object' ||
+    response_.jsonrpc !== '2.0' ||
+    response_.id === undefined ||
+    (!('result' in response_) && !('error' in response_))
+  )
+    throw new ParseError({ message: 'Invalid JSON-RPC response.' })
   if (raw) return response as never
   if (response_.error) throw parseError(response_.error)
   return response_.result as never
@@ -284,6 +296,8 @@ export function parseError<const error extends Error | ErrorObject | unknown>(
   error: error | Error | ErrorObject,
 ): parseError.ReturnType<error> {
   const error_ = error as Error | ErrorObject
+
+  if (error_ instanceof BaseError) return error_ as never
 
   if (error_ instanceof Error && !('code' in error_))
     return new InternalError({
