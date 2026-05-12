@@ -1,14 +1,11 @@
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-
-/** Bech32 base32 alphabet (BIP-173). */
-const alphabet = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
-const alphabetMap = /*#__PURE__*/ (() => {
-  const map: Record<string, number> = {}
-  for (let i = 0; i < alphabet.length; i++) map[alphabet[i]!] = i
-  return map
-})()
+import {
+  alphabet,
+  alphabetMap,
+  convertBits,
+} from './internal/codec/bech32-base32.js'
 
 /**
  * Encodes a {@link ox#Bytes.Bytes} value to a Base32-encoded string (using the BIP-173 bech32 alphabet).
@@ -24,19 +21,11 @@ const alphabetMap = /*#__PURE__*/ (() => {
  * @returns The Base32 encoded string.
  */
 export function fromBytes(value: Bytes.Bytes): string {
-  let bits = 0
-  let acc = 0
-  let result = ''
-  for (const byte of value) {
-    acc = (acc << 8) | byte
-    bits += 8
-    while (bits >= 5) {
-      bits -= 5
-      result += alphabet[(acc >>> bits) & 0x1f]
-    }
-  }
-  if (bits > 0) result += alphabet[(acc << (5 - bits)) & 0x1f]
-  return result
+  const data5 = convertBits(value, 8, 5, true)
+  const len = data5.length
+  const out = new Array<string>(len)
+  for (let i = 0; i < len; i++) out[i] = alphabet[data5[i]!]!
+  return out.join('')
 }
 
 export declare namespace fromBytes {
@@ -78,25 +67,29 @@ export declare namespace fromHex {
  * @returns The decoded byte array.
  */
 export function toBytes(value: string): Bytes.Bytes {
-  const values: number[] = []
-  for (const char of value) {
-    const v = alphabetMap[char]
-    if (v === undefined) throw new InvalidCharacterError({ character: char })
-    values.push(v)
+  const len = value.length
+  const values = new Array<number>(len)
+  for (let i = 0; i < len; i++) {
+    const ch = value[i]!
+    const v = alphabetMap[ch]
+    if (v === undefined) throw new InvalidCharacterError({ character: ch })
+    values[i] = v
   }
 
   let bits = 0
   let acc = 0
-  const bytes: number[] = []
-  for (const v of values) {
-    acc = (acc << 5) | v
+  // Worst-case: every 5 bits maps to up to 1 byte; preallocate.
+  const bytes = new Uint8Array((len * 5) >> 3)
+  let n = 0
+  for (let i = 0; i < len; i++) {
+    acc = (acc << 5) | values[i]!
     bits += 5
     if (bits >= 8) {
       bits -= 8
-      bytes.push((acc >>> bits) & 0xff)
+      bytes[n++] = (acc >>> bits) & 0xff
     }
   }
-  return new Uint8Array(bytes)
+  return bytes.subarray(0, n)
 }
 
 export declare namespace toBytes {
