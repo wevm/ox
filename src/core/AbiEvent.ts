@@ -137,8 +137,14 @@ export function assertArgs<const abiEvent extends AbiEvent>(
     if (input.type === 'address')
       return Address.isEqual(value as Address.Address, arg as Address.Address)
     if (input.type === 'string')
-      return Hash.keccak256(Bytes.fromString(value as string)) === arg
-    if (input.type === 'bytes') return Hash.keccak256(value as Hex.Hex) === arg
+      return (
+        Hash.keccak256(Bytes.fromString(value as string), { as: 'Hex' }) === arg
+      )
+    if (input.type === 'bytes') {
+      const hex =
+        typeof value === 'string' ? (value as Hex.Hex) : Hex.fromBytes(value as Bytes.Bytes)
+      return Hash.keccak256(hex, { as: 'Hex' }) === arg
+    }
     return value === arg
   }
 
@@ -664,8 +670,14 @@ export function encode(
     if (args_.length > 0) {
       const encode = (param: abitype.AbiParameter, value: unknown) => {
         if (param.type === 'string')
-          return Hash.keccak256(Hex.fromString(value as string))
-        if (param.type === 'bytes') return Hash.keccak256(value as Hex.Hex)
+          return Hash.keccak256(Hex.fromString(value as string), { as: 'Hex' })
+        if (param.type === 'bytes') {
+          const hex =
+            typeof value === 'string'
+              ? (value as Hex.Hex)
+              : Hex.fromBytes(value as Bytes.Bytes)
+          return Hash.keccak256(hex, { as: 'Hex' })
+        }
         if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
           throw new FilterTypeNotSupportedError(param.type)
         return AbiParameters.encode([param], [value])
@@ -712,9 +724,7 @@ export declare namespace encode {
 
   type ReturnType = {
     topics:
-      | Compute<
-          [selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]
-        >
+      | Compute<[selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]>
       | readonly (Hex.Hex | readonly Hex.Hex[] | null)[]
   }
 

@@ -14,7 +14,7 @@ const N = p256.Point.CURVE().n
  *
  * - a `privateKey` of type [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey)
  *
- * - a `publicKey` of type {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}
+ * - a `publicKey` of type {@link ox#PublicKey.PublicKey}
  *
  * @example
  * ```ts twoslash
@@ -212,6 +212,11 @@ export declare namespace getSharedSecret {
 /**
  * Signs a payload with the provided `CryptoKey` private key and returns a P256 signature.
  *
+ * @remarks
+ * Web Crypto may emit ECDSA signatures with `s` in the upper half of the curve
+ * order. ox always normalizes the result to a low-S signature so it round-trips
+ * with {@link ox#WebCryptoP256.(verify:function)} and other ox ECDSA verifiers.
+ *
  * @example
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
@@ -229,7 +234,7 @@ export declare namespace getSharedSecret {
  * ```
  *
  * @param options - Options for signing the payload.
- * @returns The P256 ECDSA {@link ox#Signature.Signature}.
+ * @returns The P256 ECDSA {@link ox#Signature.Signature} (always low-S normalized).
  */
 export async function sign(
   options: sign.Options,
