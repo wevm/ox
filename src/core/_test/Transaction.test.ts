@@ -1224,6 +1224,30 @@ describe('toRpc', () => {
         }
       `)
     })
+
+    test('behavior: transactionIndex 0', () => {
+      const rpc = Transaction.toRpc({
+        blockHash:
+          '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+        blockNumber: 19868015n,
+        chainId: 1,
+        from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+        gas: 21000n,
+        gasPrice: 1n,
+        hash: '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+        input: '0x',
+        nonce: 0n,
+        r: 1n,
+        s: 2n,
+        to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+        transactionIndex: 0,
+        type: 'legacy',
+        v: 27,
+        value: 0n,
+        yParity: 0,
+      })
+      expect(rpc.transactionIndex).toBe('0x0')
+    })
   })
 
   describe('eip1559', () => {

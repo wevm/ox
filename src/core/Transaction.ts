@@ -383,9 +383,10 @@ export function toRpc<pending extends boolean = false>(
   rpc.input = transaction.input
   rpc.nonce = Hex.fromNumber(transaction.nonce ?? 0n)
   rpc.to = transaction.to
-  rpc.transactionIndex = transaction.transactionIndex
-    ? Hex.fromNumber(transaction.transactionIndex)
-    : null
+  rpc.transactionIndex =
+    typeof transaction.transactionIndex === 'number'
+      ? Hex.fromNumber(transaction.transactionIndex)
+      : null
   rpc.type = (toRpcType as any)[transaction.type] ?? transaction.type
   rpc.value = Hex.fromNumber(transaction.value ?? 0n)
 

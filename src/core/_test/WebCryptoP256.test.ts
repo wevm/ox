@@ -155,7 +155,7 @@ describe('getSharedSecret', () => {
         publicKey: publicKeyB,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      '[Error: privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.]',
+      '[WebCryptoP256.InvalidPrivateKeyAlgorithmError: privateKey is not compatible with ECDH. Please use `createKeyPairECDH` to create an ECDH key.]',
     )
   })
 
@@ -219,6 +219,7 @@ test('exports', () => {
       "getSharedSecret",
       "sign",
       "verify",
+      "InvalidPrivateKeyAlgorithmError",
     ]
   `)
 })
