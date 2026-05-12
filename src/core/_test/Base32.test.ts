@@ -61,6 +61,7 @@ test('exports', () => {
       "toBytes",
       "toHex",
       "InvalidCharacterError",
+      "InvalidPaddingError",
     ]
   `)
 })
