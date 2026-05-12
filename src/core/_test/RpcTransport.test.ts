@@ -54,7 +54,7 @@ describe('fromHttp', () => {
   test('options: fetchOptions', async () => {
     const server = await createHttpServer((req, res) => {
       const header = req.headers['x-custom-header']
-      res.end(JSON.stringify({ result: header }))
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: header }))
     })
 
     const transport = RpcTransport.fromHttp(server.url, {
@@ -73,7 +73,7 @@ describe('fromHttp', () => {
   test('options: fetchOptions (fn)', async () => {
     const server = await createHttpServer((req, res) => {
       const header = req.headers['x-custom-header']
-      res.end(JSON.stringify({ result: header }))
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: header }))
     })
 
     const transport = RpcTransport.fromHttp(server.url, {

@@ -143,7 +143,7 @@ describe('fromRpc', () => {
         "size": 56024n,
         "stateRoot": "0x115fd5eac921e6728825958b2b87da8aaf17edc0085164f11de798f6ed00abbd",
         "timestamp": 1715686979n,
-        "totalDifficulty": 0n,
+        "totalDifficulty": undefined,
         "transactions": [
           "0x5d374a026007c13e901765497b9164d44822902463efdf7b574b10c476ee2ad6",
           "0x2762a7fb7c973e888edc457a3808d3882b5c8fc4f6c43a082d823319b126b91a",

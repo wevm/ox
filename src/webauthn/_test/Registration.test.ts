@@ -888,7 +888,7 @@ describe('verify', () => {
     expect(() =>
       Registration.verify({
         credential,
-        challenge: '0xbadbadbad',
+        challenge: '0xbadbadbadbad',
         origin,
         rpId,
       }),
