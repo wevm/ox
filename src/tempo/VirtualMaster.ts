@@ -2,7 +2,7 @@ import { keccak_256 } from '@noble/hashes/sha3.js'
 import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
-import * as Hash from '../core/Hash.js'
+import type * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as VirtualMasterPool from './internal/virtualMasterPool.js'
 import * as TempoAddress from './TempoAddress.js'
@@ -43,9 +43,7 @@ export type Salt = Hex.Hex | Bytes.Bytes | number | bigint
  * @returns The registration hash.
  */
 export function getRegistrationHash(value: getRegistrationHash.Value): Hex.Hex {
-  return Hash.keccak256(
-    Hex.concat(resolveAddress(value.address), toFixedHex(value.salt, 32)),
-  )
+  return Hex.fromBytes(buildRegistrationDigest(value.address, value.salt))
 }
 
 export declare namespace getRegistrationHash {
@@ -133,12 +131,7 @@ export declare namespace getMasterId {
  */
 export function validateSalt(value: validateSalt.Value): boolean {
   try {
-    return hasProofOfWork(
-      Hash.keccak256(
-        Hex.concat(resolveAddress(value.address), toFixedHex(value.salt, 32)),
-        { as: 'Bytes' },
-      ),
-    )
+    return hasProofOfWork(buildRegistrationDigest(value.address, value.salt))
   } catch {
     return false
   }
@@ -656,10 +649,28 @@ function increment(bytes: Bytes.Bytes): boolean {
  * @internal
  */
 function resolveAddress(address: string): Address.Address {
-  const resolved = TempoAddress.resolve(address as TempoAddress.Address)
+  const resolved = TempoAddress.unwrap(address)
   Address.assert(resolved, { strict: false })
   assertValidMasterAddress(resolved)
   return resolved
+}
+
+/**
+ * Builds the 52-byte `address || salt` buffer and returns its keccak256 digest
+ * as raw bytes. Avoids the intermediate hex concatenation produced by the
+ * previous `Hex.concat(addressHex, saltHex)` round trip.
+ *
+ * @internal
+ */
+function buildRegistrationDigest(
+  address: TempoAddress.Address,
+  salt: Salt,
+): Bytes.Bytes {
+  const buffer = new Uint8Array(52)
+  const addressBytes = Bytes.fromHex(resolveAddress(address))
+  buffer.set(addressBytes)
+  buffer.set(toFixedBytes(salt, 32), addressBytes.length)
+  return keccak_256(buffer)
 }
 
 /**
@@ -687,12 +698,19 @@ function assertValidMasterAddress(address: Address.Address) {
 }
 
 /**
- * Converts a salt to a fixed-size byte array.
+ * Converts a salt to a fixed-size byte array using direct bytes-first
+ * normalization (no intermediate `number -> hex -> bytes` round trip).
  *
  * @internal
  */
 function toFixedBytes(value: Salt, size: number): Bytes.Bytes {
-  return Bytes.fromHex(toFixedHex(value, size))
+  if (typeof value === 'number' || typeof value === 'bigint')
+    return Bytes.fromNumber(value, { size })
+  if (typeof value === 'string') {
+    Hex.assert(value, { strict: true })
+    return Bytes.padLeft(Bytes.fromHex(value), size)
+  }
+  return Bytes.padLeft(value, size)
 }
 
 /**
@@ -701,11 +719,5 @@ function toFixedBytes(value: Salt, size: number): Bytes.Bytes {
  * @internal
  */
 function toFixedHex(value: Salt, size: number): Hex.Hex {
-  if (typeof value === 'number' || typeof value === 'bigint')
-    return Hex.fromNumber(value, { size })
-  if (typeof value === 'string') {
-    Hex.assert(value, { strict: true })
-    return Hex.padLeft(value, size)
-  }
-  return Hex.fromBytes(Bytes.padLeft(value, size))
+  return Hex.fromBytes(toFixedBytes(value, size))
 }
