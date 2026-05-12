@@ -1525,9 +1525,12 @@ test('data size too small', () => {
       [{ type: 'uint256' }, { type: 'uint256' }],
       '0x0000000000000000000000000000000000000000000000000000000000010f2c',
     ),
-  ).toThrowErrorMatchingInlineSnapshot(
-    '[Cursor.PositionOutOfBoundsError: Position `32` is out of bounds (`0 < position < 32`).]',
-  )
+  ).toThrowErrorMatchingInlineSnapshot(`
+    [AbiParameters.DataSizeTooSmallError: Data size of 32 bytes is too small for given parameters.
+
+    Params: (uint256, uint256)
+    Data:   0x0000000000000000000000000000000000000000000000000000000000010f2c (32 bytes)]
+  `)
 })
 
 test('invalid type', () => {

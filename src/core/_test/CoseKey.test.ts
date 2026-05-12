@@ -1,4 +1,4 @@
-import { CoseKey, P256, PublicKey } from 'ox'
+import { Cbor, CoseKey, P256, PublicKey } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('fromPublicKey', () => {
@@ -53,5 +53,55 @@ describe('errors', () => {
     expect(() => CoseKey.toPublicKey('0xa10102')).toThrow(
       CoseKey.InvalidCoseKeyError,
     )
+  })
+
+  function makeCoseKey(overrides: {
+    kty?: number
+    alg?: number
+    crv?: number
+    x?: Uint8Array
+    y?: Uint8Array
+  }) {
+    const x = overrides.x ?? new Uint8Array(32).fill(0xaa)
+    const y = overrides.y ?? new Uint8Array(32).fill(0xbb)
+    return Cbor.encode(
+      new Map<number, unknown>([
+        [1, overrides.kty ?? 2],
+        [3, overrides.alg ?? -7],
+        [-1, overrides.crv ?? 1],
+        [-2, x],
+        [-3, y],
+      ]),
+    )
+  }
+
+  test('rejects wrong kty', () => {
+    expect(() => CoseKey.toPublicKey(makeCoseKey({ kty: 1 }))).toThrow(
+      CoseKey.InvalidCoseKeyError,
+    )
+  })
+
+  test('rejects wrong alg', () => {
+    expect(() => CoseKey.toPublicKey(makeCoseKey({ alg: -8 }))).toThrow(
+      CoseKey.InvalidCoseKeyError,
+    )
+  })
+
+  test('rejects wrong crv', () => {
+    expect(() => CoseKey.toPublicKey(makeCoseKey({ crv: 2 }))).toThrow(
+      CoseKey.InvalidCoseKeyError,
+    )
+  })
+
+  test('rejects wrong x coordinate length', () => {
+    expect(() =>
+      CoseKey.toPublicKey(makeCoseKey({ x: new Uint8Array(31).fill(0xaa) })),
+    ).toThrow(CoseKey.InvalidCoseKeyError)
+  })
+
+  test('rejects wrong y coordinate length', () => {
+    expect(() =>
+      CoseKey.toPublicKey(makeCoseKey({ y: new Uint8Array(33).fill(0xbb) })),
+    ).toThrow(CoseKey.InvalidCoseKeyError)
   })
 })
