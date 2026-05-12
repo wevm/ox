@@ -1,26 +1,66 @@
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import { decoder } from './internal/codec/utf8.js'
 
-const encoder = /*#__PURE__*/ new TextEncoder()
-const decoder = /*#__PURE__*/ new TextDecoder()
+// Standard Base64 alphabet (RFC 4648 section 4) and URL-safe alphabet (section 5).
+const stdAlphabet =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
-const integerToCharacter = /*#__PURE__*/ Object.fromEntries(
-  Array.from(
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
-  ).map((a, i) => [i, a.charCodeAt(0)]),
-)
+// Char-code -> 6-bit integer lookup. Sentinel `0xff` = invalid character.
+// Standard alphabet plus URL-safe `-`/`_` (decoders are alphabet-agnostic).
+const characterToInteger = /*#__PURE__*/ (() => {
+  const table = new Uint8Array(256).fill(0xff)
+  for (let i = 0; i < stdAlphabet.length; i++)
+    table[stdAlphabet.charCodeAt(i)] = i
+  // URL-safe alternates: `-` for `+` (62), `_` for `/` (63).
+  table[45 /* '-' */] = 62
+  table[95 /* '_' */] = 63
+  return table
+})()
 
-const characterToInteger = {
-  ...Object.fromEntries(
-    Array.from(
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
-    ).map((a, i) => [a.charCodeAt(0), i]),
-  ),
-  ['='.charCodeAt(0)]: 0,
-  ['-'.charCodeAt(0)]: 62,
-  ['_'.charCodeAt(0)]: 63,
-} as Record<number, number>
+// Integer -> char-code table for the standard alphabet, indexed by 6-bit value.
+const integerToCharacter = /*#__PURE__*/ (() => {
+  const table = new Uint8Array(64)
+  for (let i = 0; i < stdAlphabet.length; i++)
+    table[i] = stdAlphabet.charCodeAt(i)
+  return table
+})()
+
+// Phase 2 native fast-path detection: `Uint8Array.prototype.toBase64` /
+// `Uint8Array.fromBase64` ship in Node 22+, Safari 18+, Firefox 133+.
+const nativeToBase64:
+  | ((
+      this: Uint8Array,
+      options?: { alphabet?: 'base64' | 'base64url'; omitPadding?: boolean },
+    ) => string)
+  | undefined = (
+  Uint8Array.prototype as Uint8Array & {
+    toBase64?: (options?: {
+      alphabet?: 'base64' | 'base64url'
+      omitPadding?: boolean
+    }) => string
+  }
+).toBase64
+const nativeFromBase64:
+  | ((
+      value: string,
+      options?: {
+        alphabet?: 'base64' | 'base64url-or-base64'
+        lastChunkHandling?: 'loose' | 'strict' | 'stop-before-partial'
+      },
+    ) => Uint8Array)
+  | undefined = (
+  Uint8Array as typeof Uint8Array & {
+    fromBase64?: (
+      value: string,
+      options?: {
+        alphabet?: 'base64' | 'base64url-or-base64'
+        lastChunkHandling?: 'loose' | 'strict' | 'stop-before-partial'
+      },
+    ) => Uint8Array
+  }
+).fromBase64
 
 /**
  * Encodes a {@link ox#Bytes.Bytes} to a Base64-encoded string (with optional padding and/or URL-safe characters).
@@ -62,6 +102,20 @@ const characterToInteger = {
  */
 export function fromBytes(value: Bytes.Bytes, options: fromBytes.Options = {}) {
   const { pad = true, url = false } = options
+
+  if (nativeToBase64) {
+    const out = nativeToBase64.call(value, {
+      alphabet: url ? 'base64url' : 'base64',
+      omitPadding: !pad,
+    })
+    // Native `base64url` already omits padding; if pad was requested, restore it.
+    if (url && pad) {
+      const k = value.length % 3
+      if (k === 1) return `${out}==`
+      if (k === 2) return `${out}=`
+    }
+    return out
+  }
 
   const encoded = new Uint8Array(Math.ceil(value.length / 3) * 4)
 
@@ -239,44 +293,53 @@ export declare namespace fromString {
  */
 export function toBytes(value: string): Bytes.Bytes {
   // Strip trailing '=' padding (only at the very end).
-  let body = value
+  let bodyEnd = value.length
   let pad = 0
-  while (body.length > 0 && body.charCodeAt(body.length - 1) === 61 /* '=' */) {
-    body = body.slice(0, -1)
+  while (bodyEnd > 0 && value.charCodeAt(bodyEnd - 1) === 61 /* '=' */) {
+    bodyEnd--
     pad++
   }
 
-  const size = body.length
+  const size = bodyEnd
   // Reject impossible lengths and excessive padding.
   if (size % 4 === 1) throw new InvalidLengthError({ length: value.length })
   if (pad > 2) throw new InvalidPaddingError({ padding: pad })
 
-  // Validate characters: every char must be in the standard or URL-safe alphabet,
-  // and '=' may not appear in the body (only stripped trailing padding).
+  if (nativeFromBase64) {
+    try {
+      // `base64url-or-base64` accepts both alphabets transparently.
+      return nativeFromBase64(value.slice(0, bodyEnd), {
+        alphabet: 'base64url-or-base64',
+        lastChunkHandling: 'loose',
+      })
+    } catch {
+      // Fall through to the JS path so we throw the typed error class.
+    }
+  }
+
+  // Validate characters: every char must be in the standard or URL-safe
+  // alphabet, and '=' may not appear in the body (only stripped trailing
+  // padding).
+  const decoded = new Uint8Array(
+    (size >> 2) * 3 + (size % 4 ? (size % 4) - 1 : 0),
+  )
+  let acc = 0
+  let bits = 0
+  let n = 0
   for (let i = 0; i < size; i++) {
-    const code = body.charCodeAt(i)
+    const code = value.charCodeAt(i)
     if (code === 61 /* '=' */)
       throw new InvalidCharacterError({ character: '=' })
-    if (characterToInteger[code] === undefined)
-      throw new InvalidCharacterError({ character: body[i]! })
+    const v = characterToInteger[code]!
+    if (v === 0xff) throw new InvalidCharacterError({ character: value[i]! })
+    acc = (acc << 6) | v
+    bits += 6
+    if (bits >= 8) {
+      bits -= 8
+      decoded[n++] = (acc >>> bits) & 0xff
+    }
   }
-
-  const decoded = new Uint8Array(size + 3)
-  encoder.encodeInto(body + '===', decoded)
-
-  for (let i = 0, j = 0; i < size; i += 4, j += 3) {
-    const x =
-      (characterToInteger[decoded[i]!]! << 18) +
-      (characterToInteger[decoded[i + 1]!]! << 12) +
-      (characterToInteger[decoded[i + 2]!]! << 6) +
-      characterToInteger[decoded[i + 3]!]!
-    decoded[j] = x >> 16
-    decoded[j + 1] = (x >> 8) & 0xff
-    decoded[j + 2] = x & 0xff
-  }
-
-  const decodedSize = (size >> 2) * 3 + (size % 4 && (size % 4) - 1)
-  return new Uint8Array(decoded.buffer, 0, decodedSize)
+  return decoded
 }
 
 export declare namespace toBytes {
