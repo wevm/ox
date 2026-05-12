@@ -107,10 +107,7 @@ export function createStore<
   let id = options.id ?? 0
   return {
     prepare(options) {
-      return from({
-        id: id++,
-        ...options,
-      } as never) as never
+      return { id: id++, ...options, jsonrpc: '2.0' } as never
     },
     get id() {
       return id
