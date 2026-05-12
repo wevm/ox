@@ -163,6 +163,12 @@ export function decodeData(
     ? fromAbi([abiFunction, ...overloads], data as never)
     : abiFunction
 
+  if (item.inputs.length > 0 && Hex.size(data) <= 4)
+    throw new AbiParameters.DataSizeTooSmallError({
+      data,
+      parameters: item.inputs as never,
+      size: Math.max(0, Hex.size(data) - 4),
+    })
   if (Hex.size(data) <= 4) return undefined
   return AbiParameters.decode(item.inputs, Hex.slice(data, 4))
 }

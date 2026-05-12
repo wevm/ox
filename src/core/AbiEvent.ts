@@ -142,7 +142,9 @@ export function assertArgs<const abiEvent extends AbiEvent>(
       )
     if (input.type === 'bytes') {
       const hex =
-        typeof value === 'string' ? (value as Hex.Hex) : Hex.fromBytes(value as Bytes.Bytes)
+        typeof value === 'string'
+          ? (value as Hex.Hex)
+          : Hex.fromBytes(value as Bytes.Bytes)
       return Hash.keccak256(hex, { as: 'Hex' }) === arg
     }
     return value === arg
@@ -390,8 +392,22 @@ export function decode(
 
   let args: any = isUnnamed ? [] : {}
 
+  // Single-pass partition: keep both the input and its original index so we
+  // don't have to call `inputs.indexOf(...)` per non-indexed entry below
+  // (which is O(n^2) on event width).
+  const indexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedOriginalIndex: number[] = []
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i]!
+    if ('indexed' in input && input.indexed) indexedInputs.push(input)
+    else {
+      nonIndexedInputs.push(input)
+      nonIndexedOriginalIndex.push(i)
+    }
+  }
+
   // Decode topics (indexed args).
-  const indexedInputs = inputs.filter((x) => 'indexed' in x && x.indexed)
   for (let i = 0; i < indexedInputs.length; i++) {
     const param = indexedInputs[i]!
     const topic = argTopics[i]
@@ -414,7 +430,6 @@ export function decode(
   }
 
   // Decode data (non-indexed args).
-  const nonIndexedInputs = inputs.filter((x) => !('indexed' in x && x.indexed))
   if (nonIndexedInputs.length > 0) {
     if (data && data !== '0x') {
       try {
@@ -423,7 +438,7 @@ export function decode(
           if (isUnnamed) args = [...args, ...decodedData]
           else {
             for (let i = 0; i < nonIndexedInputs.length; i++) {
-              const index = inputs.indexOf(nonIndexedInputs[i]!)
+              const index = nonIndexedOriginalIndex[i]!
               args[nonIndexedInputs[i]!.name! || index] = decodedData[i]
             }
           }

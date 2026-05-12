@@ -480,6 +480,16 @@ export function normalizeSignature(signature: string): string {
 
   if (!valid) throw new Errors.BaseError('Unable to normalize signature.')
 
+  // Reject trailing characters after the closing paren of the top-level
+  // parameter list. The loop above breaks at the first `)` at level 0,
+  // so any remaining non-whitespace input means the signature is malformed.
+  for (let j = i + 1; j < signature.length; j++) {
+    if (signature[j] !== ' ')
+      throw new Errors.BaseError(
+        `Unable to normalize signature: trailing characters after closing parenthesis: ${signature.slice(j)}`,
+      )
+  }
+
   return result
 }
 
