@@ -1,5 +1,5 @@
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 
@@ -25,6 +25,8 @@ export function contains(
   bloom: Hex.Hex,
   input: Hex.Hex | Bytes.Bytes,
 ): boolean {
+  if (!validate(bloom)) throw new InvalidBloomError({ bloom })
+
   const filter = Bytes.fromHex(bloom)
   const hash = Hash.keccak256(input, { as: 'Bytes' })
 
@@ -41,6 +43,7 @@ export declare namespace contains {
   type ErrorType =
     | Bytes.fromHex.ErrorType
     | Hash.keccak256.ErrorType
+    | InvalidBloomError
     | Errors.GlobalErrorType
 }
 
@@ -70,4 +73,15 @@ export declare namespace validate {
     | Hex.validate.ErrorType
     | Hex.size.ErrorType
     | Errors.GlobalErrorType
+}
+
+/** Thrown when a value is not a valid bloom filter. */
+export class InvalidBloomError extends Errors.BaseError {
+  override readonly name = 'Bloom.InvalidBloomError'
+
+  constructor({ bloom }: { bloom: string }) {
+    super(
+      `Value \`${bloom}\` is not a valid bloom filter (must be a 256-byte hex string).`,
+    )
+  }
 }

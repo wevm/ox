@@ -34,6 +34,28 @@ describe('contains', () => {
       ),
     ).toBeTruthy()
   })
+
+  test('error: rejects bloom of incorrect length', () => {
+    expect(() =>
+      Bloom.contains(
+        '0xdeadbeef',
+        '0xef2d6d194084c2de36e0dabfce45d046b37d1106',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Bloom.InvalidBloomError: Value `0xdeadbeef` is not a valid bloom filter (must be a 256-byte hex string).]',
+    )
+  })
+
+  test('error: rejects non-hex bloom', () => {
+    expect(() =>
+      Bloom.contains(
+        'not-a-hex' as never,
+        '0xef2d6d194084c2de36e0dabfce45d046b37d1106',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Bloom.InvalidBloomError: Value `not-a-hex` is not a valid bloom filter (must be a 256-byte hex string).]',
+    )
+  })
 })
 
 describe('validate', () => {
