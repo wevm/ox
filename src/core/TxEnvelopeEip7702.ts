@@ -572,6 +572,70 @@ export declare namespace serialize {
 }
 
 /**
+ * Converts an {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702} to an {@link ox#TxEnvelopeEip7702.Rpc}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Authorization, RpcRequest, TxEnvelopeEip7702, Value } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip7702.from({
+ *   authorizationList: [...],
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gas: 21000n,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const envelope_rpc = TxEnvelopeEip7702.toRpc(envelope) // [!code focus]
+ *
+ * const request = RpcRequest.from({
+ *   id: 0,
+ *   method: 'eth_sendTransaction',
+ *   params: [envelope_rpc],
+ * })
+ * ```
+ *
+ * @param envelope - The EIP-7702 transaction envelope to convert.
+ * @returns An RPC-formatted EIP-7702 transaction envelope.
+ */
+export function toRpc(envelope: Omit<TxEnvelopeEip7702, 'type'>): Rpc {
+  const signature = Signature.extract(envelope)
+
+  return {
+    ...envelope,
+    authorizationList: Authorization.toRpcList(envelope.authorizationList),
+    chainId: Hex.fromNumber(envelope.chainId),
+    data: envelope.data ?? envelope.input,
+    type: '0x4',
+    ...(typeof envelope.gas === 'bigint'
+      ? { gas: Hex.fromNumber(envelope.gas) }
+      : {}),
+    ...(typeof envelope.nonce === 'bigint'
+      ? { nonce: Hex.fromNumber(envelope.nonce) }
+      : {}),
+    ...(typeof envelope.value === 'bigint'
+      ? { value: Hex.fromNumber(envelope.value) }
+      : {}),
+    ...(typeof envelope.maxFeePerGas === 'bigint'
+      ? { maxFeePerGas: Hex.fromNumber(envelope.maxFeePerGas) }
+      : {}),
+    ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
+      ? {
+          maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas),
+        }
+      : {}),
+    ...(signature ? Signature.toRpc(signature) : {}),
+  } as never
+}
+
+export declare namespace toRpc {
+  export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
+}
+
+/**
  * Validates a {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702}. Returns `true` if the envelope is valid, `false` otherwise.
  *
  * @example
