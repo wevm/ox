@@ -91,7 +91,12 @@ export function decode(
 
   const { bytecode } = options
   if (abiConstructor.inputs?.length === 0) return undefined
-  const data = options.data.replace(bytecode, '0x') as Hex.Hex
+  if (!options.data.startsWith(bytecode))
+    throw new BytecodeMismatchError({
+      bytecode,
+      data: options.data,
+    })
+  const data = ('0x' + options.data.slice(bytecode.length)) as Hex.Hex
   return AbiParameters.decode(abiConstructor.inputs, data)
 }
 
@@ -474,4 +479,30 @@ export declare namespace fromAbi {
   >
 
   type ErrorType = AbiItem.NotFoundError | Errors.GlobalErrorType
+}
+
+/**
+ * Throws when the provided `data` does not begin with the provided `bytecode`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiConstructor } from 'ox'
+ *
+ * AbiConstructor.decode(
+ *   AbiConstructor.from('constructor(address)'),
+ *   { bytecode: '0x6080...', data: '0xdeadbeef' },
+ * )
+ * // @error: AbiConstructor.BytecodeMismatchError: Provided `data` does not start with the provided `bytecode`.
+ * ```
+ */
+export class BytecodeMismatchError extends Errors.BaseError {
+  override readonly name = 'AbiConstructor.BytecodeMismatchError'
+  constructor({ bytecode, data }: { bytecode: Hex.Hex; data: Hex.Hex }) {
+    super('Provided `data` does not start with the provided `bytecode`.', {
+      metaMessages: [
+        `Bytecode: ${bytecode.slice(0, 18)}${bytecode.length > 18 ? '...' : ''}`,
+        `Data:     ${data.slice(0, 18)}${data.length > 18 ? '...' : ''}`,
+      ],
+    })
+  }
 }
