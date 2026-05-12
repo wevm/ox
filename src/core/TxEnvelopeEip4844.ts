@@ -562,6 +562,7 @@ export function serialize(
     maxPriorityFeePerGas,
     accessList,
     data,
+    input,
   } = envelope
 
   assert(envelope)
@@ -578,7 +579,7 @@ export function serialize(
     gas ? Hex.fromNumber(gas) : '0x',
     to ?? '0x',
     value ? Hex.fromNumber(value) : '0x',
-    data ?? '0x',
+    data ?? input ?? '0x',
     accessTupleList,
     maxFeePerBlobGas ? Hex.fromNumber(maxFeePerBlobGas) : '0x',
     blobVersionedHashes ?? [],
