@@ -107,7 +107,11 @@ export async function encrypt<
     key,
     Bytes.from(value),
   )
-  const result = Bytes.concat(iv, new Uint8Array(encrypted))
+  // Write IV and ciphertext into a single output buffer to avoid an extra
+  // allocation and copy from `Bytes.concat(iv, ciphertext)`.
+  const result = new Uint8Array(ivLength + encrypted.byteLength)
+  result.set(iv, 0)
+  result.set(new Uint8Array(encrypted), ivLength)
   if (as === 'Bytes') return result as never
   return Hex.from(result) as never
 }
