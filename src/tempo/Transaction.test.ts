@@ -304,7 +304,7 @@ describe('toRpc', () => {
         "blockNumber": "0x12f296f",
         "calls": [
           {
-            "data": "0xdeadbeef",
+            "input": "0xdeadbeef",
             "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
             "value": "0x9b6e64a8ec60000",
           },
@@ -380,7 +380,7 @@ describe('toRpc', () => {
         "blockNumber": "0x12f296f",
         "calls": [
           {
-            "data": "0xdeadbeef",
+            "input": "0xdeadbeef",
             "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
             "value": "0x9b6e64a8ec60000",
           },
@@ -476,7 +476,7 @@ describe('toRpc', () => {
         "blockNumber": "0x12f296f",
         "calls": [
           {
-            "data": "0xdeadbeef",
+            "input": "0xdeadbeef",
             "to": "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
             "value": "0x9b6e64a8ec60000",
           },
