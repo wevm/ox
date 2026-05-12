@@ -6,6 +6,14 @@ export type Cursor = {
   bytes: Bytes
   dataView: DataView
   position: number
+  /**
+   * Highest cursor position observed so far. Used to short-circuit
+   * `_touch` when reads are monotonically forward (the common ABI
+   * decode case), avoiding `Map.get` / `Map.set` per `read*` call.
+   *
+   * @internal
+   */
+  maxLinearPosition: number
   positionReadCount: Map<number, number>
   recursiveReadCount: number
   recursiveReadLimit: number
@@ -41,6 +49,7 @@ const staticCursor: Cursor = {
   bytes: new Uint8Array(),
   dataView: new DataView(new ArrayBuffer(0)),
   position: 0,
+  maxLinearPosition: 0,
   positionReadCount: new Map(),
   recursiveReadCount: 0,
   recursiveReadLimit: Number.POSITIVE_INFINITY,
@@ -190,6 +199,14 @@ const staticCursor: Cursor = {
   },
   _touch() {
     if (this.recursiveReadLimit === Number.POSITIVE_INFINITY) return
+    // Fast path: if reads are advancing monotonically forward (no
+    // back-jumps via `setPosition`), no slot can be re-read. Skip the
+    // `Map` bookkeeping entirely. Real ABI decodes are dominated by
+    // forward reads through static parameter heads.
+    if (this.position >= this.maxLinearPosition) {
+      this.maxLinearPosition = this.position
+      return
+    }
     const count = this.getReadCount()
     this.positionReadCount.set(this.position, count + 1)
     if (count > 0) this.recursiveReadCount++
@@ -208,6 +225,7 @@ export function create(
     bytes.byteOffset,
     bytes.byteLength,
   )
+  cursor.maxLinearPosition = 0
   cursor.positionReadCount = new Map()
   cursor.recursiveReadLimit = recursiveReadLimit
   return cursor
