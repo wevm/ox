@@ -14,8 +14,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Prepublish
+      - name: Prerelease
         run: |
-          pnpm exec zile publish:prepare
-          pnpm version prerelease --preid $(git rev-parse --short=7 HEAD) --no-git-tag-version --allow-same-version
-          pnpx pkg-pr-new publish --pnpm --compact
+          pnpm run build
+          pnpx pkg-pr-new publish --pnpm
