@@ -437,7 +437,7 @@ describe('assert', () => {
         },
         primaryType: 'Foo',
         message: {
-          addresses: ['0x0000000000000000000000000000000000000001'],
+          addresses: ['0x0000000000000000000000000000000000000001'] as any,
         },
       }),
     ).toThrowErrorMatchingInlineSnapshot(
@@ -491,7 +491,7 @@ describe('assert', () => {
         },
         primaryType: 'Foo',
         message: {
-          amounts: [256n],
+          amounts: [256n] as any,
         },
       }),
     ).toThrowErrorMatchingInlineSnapshot(`

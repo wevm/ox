@@ -114,7 +114,6 @@ describe('fromRpc', () => {
 
   test('behavior: optional totalDifficulty preserved as undefined', () => {
     const block = Block.fromRpc({
-      // @ts-expect-error totalDifficulty is omitted on purpose
       extraData: '0x',
       gasLimit: '0x1c9c347',
       gasUsed: '0x0',
