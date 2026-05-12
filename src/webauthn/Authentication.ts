@@ -258,6 +258,7 @@ export function getSignPayload(
     crossOrigin,
     extraClientData,
     flag,
+    hash = false,
     origin,
     rpId,
     signCount,
@@ -288,7 +289,8 @@ export function getSignPayload(
     userVerificationRequired: userVerification === 'required',
   }
 
-  const payload = Hex.concat(authenticatorData, clientDataJSONHash)
+  const concatenated = Hex.concat(authenticatorData, clientDataJSONHash)
+  const payload = hash ? Hash.sha256(concatenated) : concatenated
 
   return { metadata, payload }
 }

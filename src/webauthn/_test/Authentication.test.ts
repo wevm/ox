@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import * as Bytes from '../../core/Bytes.js'
+import * as Hash from '../../core/Hash.js'
 import * as P256 from '../../core/P256.js'
 import * as PublicKey from '../../core/PublicKey.js'
 import * as Signature from '../../core/Signature.js'
@@ -441,6 +442,47 @@ describe('getSignPayload', () => {
     }
   `,
     )
+  })
+
+  test('options: hash', () => {
+    const data = {
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'foo',
+    } as const
+    const { payload: unhashed } = Authentication.getSignPayload(data)
+    const { payload: hashed } = Authentication.getSignPayload({
+      ...data,
+      hash: true,
+    })
+    expect(hashed).toBe(Hash.sha256(unhashed))
+  })
+
+  test('options: hash + verify roundtrip', () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+
+    const challenge =
+      '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' as const
+
+    const { metadata, payload } = Authentication.getSignPayload({
+      challenge,
+      origin: 'http://localhost:5173',
+      rpId: 'localhost',
+      hash: true,
+    })
+
+    // payload is already hashed, so do not re-hash on sign
+    const signature = P256.sign({ payload, privateKey })
+
+    expect(
+      Authentication.verify({
+        challenge,
+        publicKey,
+        signature,
+        metadata,
+      }),
+    ).toBeTruthy()
   })
 
   test('options: signCount', () => {
