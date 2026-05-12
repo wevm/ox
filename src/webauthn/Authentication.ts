@@ -16,8 +16,9 @@ import {
   bufferSourceToBytes,
   bytesToArrayBuffer,
   deserializeExtensions,
-  responseKeys,
+  parseAuthenticatorData,
   serializeExtensions,
+  serializeResponseFields,
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
@@ -409,22 +410,9 @@ export declare namespace serializeOptions {
 export function serializeResponse(response: Response): Response<true> {
   const { id, metadata, raw, signature } = response
 
-  const rawResponse = {} as Record<string, string>
-  for (const key of responseKeys) {
-    const r = raw.response as unknown as Record<string, unknown>
-    let value = r[key]
-    if (!(value instanceof ArrayBuffer)) {
-      const getter =
-        `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
-      const fn = r[getter]
-      if (typeof fn === 'function') value = fn.call(r)
-    }
-    if (value instanceof ArrayBuffer)
-      rawResponse[key] = Base64.fromBytes(
-        new Uint8Array(value),
-        base64UrlOptions,
-      )
-  }
+  const rawResponse = serializeResponseFields(
+    raw.response as unknown as Record<string, unknown>,
+  )
 
   return {
     id,
@@ -602,40 +590,37 @@ export function verify(options: verify.Options): boolean {
 
   const authenticatorDataBytes = Bytes.fromHex(authenticatorData)
 
-  // Check length of `authenticatorData`.
-  if (authenticatorDataBytes.length < 37) return false
+  const parsed = parseAuthenticatorData(authenticatorDataBytes)
+  if (!parsed) return false
 
   // If rpId is provided, validate the rpIdHash in authenticatorData.
   if (rpId !== undefined) {
-    const rpIdHash = authenticatorDataBytes.slice(0, 32)
     const expectedRpIdHash = Hash.sha256(Hex.fromString(rpId), { as: 'Bytes' })
-    if (!Bytes.isEqual(rpIdHash, expectedRpIdHash)) return false
+    if (!Bytes.isEqual(parsed.rpIdHash, expectedRpIdHash)) return false
   }
 
-  const flag = authenticatorDataBytes[32]!
-
   // Verify that the UP bit of the flags in authData is set.
-  if ((flag & 0x01) !== 0x01) return false
+  if (!parsed.up) return false
 
   // If user verification was determined to be required, verify that
   // the UV bit of the flags in authData is set. Otherwise, ignore the
   // value of the UV flag.
-  if (userVerificationRequired && (flag & 0x04) !== 0x04) return false
+  if (userVerificationRequired && !parsed.uv) return false
 
   // If the BE bit of the flags in authData is not set, verify that
   // the BS bit is not set.
-  if ((flag & 0x08) !== 0x08 && (flag & 0x10) === 0x10) return false
+  if (!parsed.be && parsed.bs) return false
 
   // Authentication assertions must not carry attested credential data
   // (AT bit). If AT is set, the structure is invalid for an assertion.
-  if ((flag & 0x40) === 0x40) return false
+  if (parsed.at) return false
 
   // If the ED bit is set, trailing extension bytes must be a valid CBOR
   // map. Reject malformed extensions.
-  if ((flag & 0x80) === 0x80) {
+  if (parsed.ed) {
     if (authenticatorDataBytes.length <= 37) return false
     try {
-      Cbor.decode(authenticatorDataBytes.slice(37))
+      Cbor.decode(authenticatorDataBytes.subarray(37))
     } catch {
       return false
     }
