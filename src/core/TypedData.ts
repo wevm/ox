@@ -304,6 +304,11 @@ export function encode<
     types,
   })
 
+  // Memoize `keccak256(encodeType(t))` per type for the duration of this
+  // encode call. Same `(primaryType, types)` is hashed once instead of once
+  // per nested struct / array element.
+  const typeHashes = new Map<string, Hex.Hex>()
+
   // Typed Data Format: `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`
   const parts: Hex.Hex[] = ['0x19', '0x01']
   if (domain)
@@ -311,6 +316,7 @@ export function encode<
       hashDomain({
         domain,
         types,
+        typeHashes,
       }),
     )
   if (primaryType !== 'EIP712Domain')
@@ -319,6 +325,7 @@ export function encode<
         data: message,
         primaryType,
         types,
+        typeHashes,
       }),
     )
 
@@ -516,7 +523,7 @@ export declare namespace getSignPayload {
  * @returns The hashed domain.
  */
 export function hashDomain(value: hashDomain.Value): Hex.Hex {
-  const { domain, types } = value
+  const { domain, types, typeHashes } = value
   return hashStruct({
     data: domain,
     primaryType: 'EIP712Domain',
@@ -524,6 +531,7 @@ export function hashDomain(value: hashDomain.Value): Hex.Hex {
       ...types,
       EIP712Domain: types?.EIP712Domain || extractEip712DomainTypes(domain),
     },
+    typeHashes,
   })
 }
 
@@ -538,6 +546,8 @@ export declare namespace hashDomain {
           [key: string]: readonly Parameter[] | undefined
         }
       | undefined
+    /** Optional cache of `keccak256(encodeType(t))` keyed by type name, shared across nested struct/array calls. */
+    typeHashes?: Map<string, Hex.Hex> | undefined
   }
 
   type ErrorType = hashStruct.ErrorType | Errors.GlobalErrorType
@@ -572,11 +582,12 @@ export declare namespace hashDomain {
  * @returns The hashed Typed Data struct.
  */
 export function hashStruct(value: hashStruct.Value): Hex.Hex {
-  const { data, primaryType, types } = value
+  const { data, primaryType, types, typeHashes } = value
   const encoded = encodeData({
     data,
     primaryType,
     types,
+    typeHashes,
   })
   return Hash.keccak256(encoded)
 }
@@ -589,6 +600,8 @@ export declare namespace hashStruct {
     primaryType: string
     /** The types of the Typed Data struct. */
     types: TypedData
+    /** Optional cache of `keccak256(encodeType(t))` keyed by type name, shared across nested struct/array calls. */
+    typeHashes?: Map<string, Hex.Hex> | undefined
   }
 
   type ErrorType =
@@ -822,10 +835,12 @@ export function encodeData(value: {
   data: Record<string, unknown>
   primaryType: string
   types: TypedData
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
   const { data, primaryType, types } = value
+  const typeHashes = value.typeHashes ?? new Map<string, Hex.Hex>()
   const encodedTypes: AbiParameters.Parameter[] = [{ type: 'bytes32' }]
-  const encodedValues: unknown[] = [hashType({ primaryType, types })]
+  const encodedValues: unknown[] = [hashType({ primaryType, types, typeHashes })]
 
   for (const field of types[primaryType] ?? []) {
     const [type, value] = encodeField({
@@ -833,6 +848,7 @@ export function encodeData(value: {
       name: field.name,
       type: field.type,
       value: data[field.name],
+      typeHashes,
     })
     encodedTypes.push(type)
     encodedValues.push(value)
@@ -854,10 +870,15 @@ export declare namespace encodeData {
 export function hashType(value: {
   primaryType: string
   types: TypedData
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
-  const { primaryType, types } = value
+  const { primaryType, types, typeHashes } = value
+  const cached = typeHashes?.get(primaryType)
+  if (cached) return cached
   const encodedHashType = Hex.fromString(encodeType({ primaryType, types }))
-  return Hash.keccak256(encodedHashType)
+  const hash = Hash.keccak256(encodedHashType)
+  typeHashes?.set(primaryType, hash)
+  return hash
 }
 
 /** @internal */
@@ -875,13 +896,16 @@ export function encodeField(properties: {
   name: string
   type: string
   value: any
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): [type: AbiParameters.Parameter, value: Hex.Hex] {
-  let { types, name, type, value } = properties
+  let { types, name, type, value, typeHashes } = properties
 
   if (types[type] !== undefined)
     return [
       { type: 'bytes32' },
-      Hash.keccak256(encodeData({ data: value, primaryType: type, types })),
+      Hash.keccak256(
+        encodeData({ data: value, primaryType: type, types, typeHashes }),
+      ),
     ]
 
   if (type === 'bytes') {
@@ -920,6 +944,7 @@ export function encodeField(properties: {
           type: parsedType,
           types,
           value: item,
+          typeHashes,
         }),
     )
     return [

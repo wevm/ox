@@ -1053,6 +1053,32 @@ describe('hashStruct', () => {
       `"0xc52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e"`,
     )
   })
+
+  test('behavior: shared `typeHashes` cache produces identical hash and is populated', () => {
+    const typeHashes = new Map<string, `0x${string}`>()
+    const hash = TypedData.hashStruct({
+      ...typedData.basic,
+      primaryType: 'Mail',
+      data: typedData.basic.message,
+      typeHashes,
+    })
+    expect(hash).toBe(
+      '0xc52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e',
+    )
+    // Mail nests Person twice (from + to), so both should be cached.
+    expect(typeHashes.has('Mail')).toBe(true)
+    expect(typeHashes.has('Person')).toBe(true)
+
+    // Re-using the populated cache yields the same hash.
+    expect(
+      TypedData.hashStruct({
+        ...typedData.basic,
+        primaryType: 'Mail',
+        data: typedData.basic.message,
+        typeHashes,
+      }),
+    ).toBe(hash)
+  })
 })
 
 describe('serialize', () => {
