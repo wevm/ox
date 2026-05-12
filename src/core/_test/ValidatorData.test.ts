@@ -21,6 +21,19 @@ describe('encode', () => {
       `"0x1900d8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64"`,
     )
   })
+
+  test('error: invalid validator address', () => {
+    expect(() =>
+      ValidatorData.encode({
+        data: Hex.fromString('hello world'),
+        validator: '0xnope' as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0xnope" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
 })
 
 describe('getSignPayload', () => {
