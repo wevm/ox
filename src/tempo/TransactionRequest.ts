@@ -210,7 +210,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.validAfter = Hex.fromNumber(request.validAfter)
 
   const nonceKey = (() => {
-    if (request.nonceKey === 'random') return Hex.random(6)
+    if (request.nonceKey === 'random') return Hex.random(24)
     if (typeof request.nonceKey === 'bigint')
       return Hex.fromNumber(request.nonceKey)
     return undefined

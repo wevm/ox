@@ -122,6 +122,21 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test("behavior: nonceKey 'random' generates a 192-bit value", () => {
+    const request = TransactionRequest.toRpc({
+      calls: [
+        {
+          data: '0xdeadbeef',
+          to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        },
+      ],
+      feeToken: '0x20c0000000000000000000000000000000000000',
+      nonceKey: 'random',
+    })
+    // 24 bytes = 48 hex chars + '0x' prefix.
+    expect(request.nonceKey).toMatch(/^0x[0-9a-f]{48}$/)
+  })
 })
 
 describe('roundtrip', () => {
