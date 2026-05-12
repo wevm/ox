@@ -433,8 +433,9 @@ export function normalizeSignature(signature: string): string {
   let level = 0
   let result = ''
   let valid = false
+  let i = 0
 
-  for (let i = 0; i < signature.length; i++) {
+  for (; i < signature.length; i++) {
     const char = signature[i]!
 
     // If the character is a separator, we want to reactivate.
