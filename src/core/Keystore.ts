@@ -231,6 +231,7 @@ export declare namespace encrypt {
  */
 export function pbkdf2(options: pbkdf2.Options) {
   const { iv, iterations = 262_144, password } = options
+  assertPbkdf2Iterations(iterations)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -277,6 +278,7 @@ export declare namespace pbkdf2 {
  */
 export async function pbkdf2Async(options: pbkdf2.Options) {
   const { iv, iterations = 262_144, password } = options
+  assertPbkdf2Iterations(iterations)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -317,6 +319,7 @@ export declare namespace pbkdf2Async {
  */
 export function scrypt(options: scrypt.Options) {
   const { iv, n = 262_144, password, p = 8, r = 1 } = options
+  assertScryptParams(n, r, p)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -368,6 +371,7 @@ export declare namespace scrypt {
  */
 export async function scryptAsync(options: scrypt.Options) {
   const { iv, n = 262_144, password, p = 8, r = 1 } = options
+  assertScryptParams(n, r, p)
 
   const salt = options.salt ? Bytes.from(options.salt) : Bytes.random(32)
   const key = Bytes.toHex(
@@ -519,6 +523,28 @@ export declare namespace toKeyAsync {
 }
 
 ///////////////////////////////////////////////////////////////////////////
+
+/** @internal */
+// biome-ignore lint/correctness/noUnusedVariables: called above
+function assertPbkdf2Iterations(iterations: number) {
+  if (!Number.isInteger(iterations) || iterations < 1_000)
+    throw new Error(
+      `Keystore: PBKDF2 iterations must be an integer >= 1000, got ${iterations}.`,
+    )
+}
+
+/** @internal */
+// biome-ignore lint/correctness/noUnusedVariables: called above
+function assertScryptParams(n: number, r: number, p: number) {
+  if (!Number.isInteger(n) || n < 1_024 || (n & (n - 1)) !== 0)
+    throw new Error(
+      `Keystore: scrypt n must be a power of two >= 1024, got ${n}.`,
+    )
+  if (!Number.isInteger(r) || r <= 0)
+    throw new Error(`Keystore: scrypt r must be a positive integer, got ${r}.`)
+  if (!Number.isInteger(p) || p <= 0)
+    throw new Error(`Keystore: scrypt p must be a positive integer, got ${p}.`)
+}
 
 /** @internal */
 // biome-ignore lint/correctness/noUnusedVariables: _

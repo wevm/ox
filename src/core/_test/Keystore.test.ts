@@ -426,6 +426,64 @@ describe('pbkdf2Async', () => {
   })
 })
 
+describe('validation', () => {
+  test('pbkdf2 rejects iterations < 1000', () => {
+    expect(() =>
+      Keystore.pbkdf2({ password: 'x', iterations: 1 }),
+    ).toThrowError(
+      'Keystore: PBKDF2 iterations must be an integer >= 1000, got 1.',
+    )
+  })
+
+  test('pbkdf2 rejects non-integer iterations', () => {
+    expect(() =>
+      Keystore.pbkdf2({ password: 'x', iterations: 1.5 }),
+    ).toThrowError(
+      'Keystore: PBKDF2 iterations must be an integer >= 1000, got 1.5.',
+    )
+  })
+
+  test('pbkdf2Async rejects iterations < 1000', async () => {
+    await expect(
+      Keystore.pbkdf2Async({ password: 'x', iterations: 1 }),
+    ).rejects.toThrowError(
+      'Keystore: PBKDF2 iterations must be an integer >= 1000, got 1.',
+    )
+  })
+
+  test('scrypt rejects n < 1024', () => {
+    expect(() => Keystore.scrypt({ password: 'x', n: 2 })).toThrowError(
+      'Keystore: scrypt n must be a power of two >= 1024, got 2.',
+    )
+  })
+
+  test('scrypt rejects n that is not a power of two', () => {
+    expect(() => Keystore.scrypt({ password: 'x', n: 1500 })).toThrowError(
+      'Keystore: scrypt n must be a power of two >= 1024, got 1500.',
+    )
+  })
+
+  test('scrypt rejects r <= 0', () => {
+    expect(() =>
+      Keystore.scrypt({ password: 'x', n: 1024, r: 0 }),
+    ).toThrowError('Keystore: scrypt r must be a positive integer, got 0.')
+  })
+
+  test('scrypt rejects p <= 0', () => {
+    expect(() =>
+      Keystore.scrypt({ password: 'x', n: 1024, p: 0 }),
+    ).toThrowError('Keystore: scrypt p must be a positive integer, got 0.')
+  })
+
+  test('scryptAsync rejects n that is not a power of two', async () => {
+    await expect(
+      Keystore.scryptAsync({ password: 'x', n: 1500 }),
+    ).rejects.toThrowError(
+      'Keystore: scrypt n must be a power of two >= 1024, got 1500.',
+    )
+  })
+})
+
 describe.skip('scrypt', () => {
   test('default', async () => {
     const [key, opts] = Keystore.scrypt({
