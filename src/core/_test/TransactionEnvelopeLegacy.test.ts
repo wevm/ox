@@ -859,7 +859,7 @@ describe('toRpc', () => {
         "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
         "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
         "type": "0x0",
-        "v": "0x1b",
+        "v": "0x25",
         "value": "0xde0b6b3a7640000",
         "yParity": "0x0",
       }
@@ -878,6 +878,28 @@ describe('toRpc', () => {
       "type": "0x0",
     }
   `)
+  })
+
+  test('behavior: preserves explicit `v`', () => {
+    const transaction = TxEnvelopeLegacy.toRpc({
+      chainId: 1,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      r: 1n,
+      s: 2n,
+      v: 38,
+      yParity: 1,
+    })
+    expect(transaction.v).toBe('0x26')
+  })
+
+  test('behavior: pre-EIP-155 (no chainId)', () => {
+    const transaction = TxEnvelopeLegacy.toRpc({
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      r: 1n,
+      s: 2n,
+      yParity: 1,
+    })
+    expect(transaction.v).toBe('0x1c')
   })
 
   test('behavior: network', async () => {

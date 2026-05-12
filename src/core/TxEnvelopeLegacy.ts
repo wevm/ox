@@ -592,7 +592,19 @@ export function toRpc(envelope: Omit<TxEnvelopeLegacy, 'type'>): Rpc {
     ...(signature
       ? {
           ...Signature.toRpc(signature),
-          v: signature.yParity === 0 ? '0x1b' : '0x1c',
+          v: (() => {
+            // Prefer the original `v` from the envelope when present
+            // (preserves EIP-155 `v = chainId * 2 + 35 + yParity`).
+            if (typeof envelope.v === 'number')
+              return Hex.fromNumber(envelope.v)
+            // Otherwise derive EIP-155 `v` from `chainId` + `yParity`.
+            if (typeof envelope.chainId === 'number' && envelope.chainId > 0)
+              return Hex.fromNumber(
+                envelope.chainId * 2 + 35 + signature.yParity,
+              )
+            // Fall back to pre-EIP-155 `27`/`28`.
+            return signature.yParity === 0 ? '0x1b' : '0x1c'
+          })(),
         }
       : {}),
   } as never
