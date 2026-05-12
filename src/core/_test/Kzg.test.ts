@@ -112,10 +112,7 @@ test('from: preserves `this` binding for method-style implementations', () => {
     blobToKzgCommitment(blob: Uint8Array): Uint8Array {
       return new Uint8Array([...blob.slice(0, 1), ...this.suffix])
     }
-    computeBlobKzgProof(
-      blob: Uint8Array,
-      commitment: Uint8Array,
-    ): Uint8Array {
+    computeBlobKzgProof(blob: Uint8Array, commitment: Uint8Array): Uint8Array {
       return new Uint8Array([
         ...blob.slice(0, 1),
         ...commitment.slice(0, 1),

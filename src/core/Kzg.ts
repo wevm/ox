@@ -36,10 +36,10 @@ export type Kzg = {
  * @returns The KZG interface object.
  */
 export function from(value: Kzg): Kzg {
-  const { blobToKzgCommitment, computeBlobKzgProof } = value
   return {
-    blobToKzgCommitment,
-    computeBlobKzgProof,
+    blobToKzgCommitment: (blob) => value.blobToKzgCommitment(blob),
+    computeBlobKzgProof: (blob, commitment) =>
+      value.computeBlobKzgProof(blob, commitment),
   }
 }
 
