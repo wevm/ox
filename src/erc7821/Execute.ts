@@ -1,5 +1,5 @@
 import * as AbiFunction from '../core/AbiFunction.js'
-import type * as Hex from '../core/Hex.js'
+import * as Hex from '../core/Hex.js'
 import { AbiParameters } from '../index.js'
 import * as Calls from './Calls.js'
 
@@ -91,22 +91,19 @@ export function decodeBatchOfBatchesData(
   ) as readonly [Hex.Hex[]]
 
   return encodedBatches.map((encodedBatch) => {
-    // Try decoding with opData first
-    try {
-      const decoded = Calls.decode(encodedBatch, { opData: true })
-      if (decoded.opData) {
-        return {
-          calls: decoded.calls,
-          opData: decoded.opData,
-        }
-      }
-      // If opData is undefined, return without it
-      return { calls: decoded.calls }
-    } catch {
-      // If decoding with opData fails, decode without it
-      const decoded = Calls.decode(encodedBatch, { opData: false })
-      return { calls: decoded.calls }
-    }
+    // Structurally detect whether the batch was encoded with opData by
+    // inspecting the first ABI head word (the offset to the first dynamic
+    // param). For a single dynamic param tuple `(Call[] calls)` the head
+    // is one word, so the offset is 0x20. For a two dynamic param tuple
+    // `(Call[] calls, bytes opData)` the head is two words, so the offset
+    // is 0x40.
+    const firstHead = Hex.toBigInt(Hex.slice(encodedBatch, 0, 32))
+    const withOpData = firstHead === 64n
+
+    const decoded = Calls.decode(encodedBatch, { opData: withOpData })
+    if (withOpData && decoded.opData)
+      return { calls: decoded.calls, opData: decoded.opData }
+    return { calls: decoded.calls }
   })
 }
 

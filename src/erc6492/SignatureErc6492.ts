@@ -91,16 +91,29 @@ export const universalSignatureValidatorAbi = [
  * // @error: InvalidWrappedSignatureError: Value `0xdeadbeef` is an invalid ERC-6492 wrapped signature.
  * ```
  *
- * @param wrapped - The wrapped signature to assert.
+ * @param value - The value to assert.
  */
-export function assert(wrapped: Wrapped) {
-  if (Hex.slice(wrapped, -32) !== magicBytes)
-    throw new InvalidWrappedSignatureError(wrapped)
+export function assert(value: Unwrapped | Wrapped) {
+  if (typeof value === 'string') {
+    if (Hex.slice(value, -32) !== magicBytes)
+      throw new InvalidWrappedSignatureError(value)
+    return
+  }
+  if (value === null || typeof value !== 'object')
+    throw new InvalidUnwrappedSignatureError(value as never)
+  const { data, signature, to } = value as Unwrapped
+  if (
+    typeof to !== 'string' ||
+    typeof data !== 'string' ||
+    typeof signature !== 'string'
+  )
+    throw new InvalidUnwrappedSignatureError(value as Unwrapped)
 }
 
 export declare namespace assert {
   type ErrorType =
     | InvalidWrappedSignatureError
+    | InvalidUnwrappedSignatureError
     | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
@@ -137,6 +150,7 @@ export declare namespace assert {
  */
 export function from(wrapped: Unwrapped | Wrapped): Unwrapped {
   if (typeof wrapped === 'string') return unwrap(wrapped)
+  assert(wrapped)
   return wrapped
 }
 
@@ -166,9 +180,10 @@ export declare namespace from {
 export function unwrap(wrapped: Wrapped): Unwrapped {
   assert(wrapped)
 
+  const body = Hex.slice(wrapped, 0, -32)
   const [to, data, signature] = AbiParameters.decode(
     AbiParameters.from('address, bytes, bytes'),
-    wrapped,
+    body,
   )
 
   return { data, signature, to }
@@ -259,5 +274,16 @@ export class InvalidWrappedSignatureError extends Errors.BaseError {
 
   constructor(wrapped: Wrapped) {
     super(`Value \`${wrapped}\` is an invalid ERC-6492 wrapped signature.`)
+  }
+}
+
+/** Thrown when an ERC-6492 unwrapped signature object is malformed. */
+export class InvalidUnwrappedSignatureError extends Errors.BaseError {
+  override readonly name = 'SignatureErc6492.InvalidUnwrappedSignatureError'
+
+  constructor(value: Unwrapped) {
+    super(
+      `Value \`${JSON.stringify(value)}\` is an invalid ERC-6492 unwrapped signature.`,
+    )
   }
 }

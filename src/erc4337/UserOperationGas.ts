@@ -9,6 +9,7 @@ export type UserOperationGas<
 > = OneOf<
   | (entryPointVersion extends '0.6' ? V06<bigintType> : never)
   | (entryPointVersion extends '0.7' ? V07<bigintType> : never)
+  | (entryPointVersion extends '0.8' ? V08<bigintType> : never)
 >
 
 /** RPC User Operation Gas on EntryPoint 0.6 */
@@ -37,6 +38,12 @@ export type V07<bigintType = bigint> = {
 
 /** RPC User Operation Gas on EntryPoint 0.7 */
 export type RpcV07 = V07<Hex.Hex>
+
+/** Type for User Operation Gas on EntryPoint 0.8 */
+export type V08<bigintType = bigint> = V07<bigintType>
+
+/** RPC User Operation Gas on EntryPoint 0.8 */
+export type RpcV08 = V08<Hex.Hex>
 
 /**
  * Converts an {@link ox#UserOperationGas.Rpc} to an {@link ox#UserOperationGas.UserOperationGas}.

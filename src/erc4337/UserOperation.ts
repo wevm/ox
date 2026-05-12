@@ -1,6 +1,6 @@
 import * as AbiParameters from '../core/AbiParameters.js'
 import type * as Address from '../core/Address.js'
-import type * as Authorization from '../core/Authorization.js'
+import * as Authorization from '../core/Authorization.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -718,7 +718,7 @@ export declare namespace toPacked {
  * @param packed - The packed user operation to transform.
  * @returns The structured user operation.
  */
-export function fromPacked(packed: Packed): UserOperation<'0.7' | '0.8', true> {
+export function fromPacked(packed: Packed): UserOperation<'0.7', true> {
   const {
     accountGasLimits,
     callData,
@@ -856,6 +856,13 @@ export function toRpc(userOperation: UserOperation): Rpc {
       userOperation.paymasterVerificationGasLimit,
     )
   if (userOperation.signature) rpc.signature = userOperation.signature
+
+  const authorization = (userOperation as UserOperation<'0.8', true>)
+    .authorization
+  if (authorization)
+    (rpc as Rpc<'0.8'>).authorization = Authorization.toRpc(
+      authorization as Authorization.Signed,
+    ) as Rpc<'0.8'>['authorization']
 
   return rpc
 }

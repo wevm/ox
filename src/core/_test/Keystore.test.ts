@@ -480,7 +480,42 @@ describe.skip('scrypt', () => {
   })
 })
 
-describe.skip('scryptAsync', () => {
+describe('scryptAsync', () => {
+  test('behavior: respects p and r options', async () => {
+    const [, opts] = await Keystore.scryptAsync({
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+      p: 1,
+      r: 8,
+    })
+    expect(opts.kdfparams.p).toBe(1)
+    expect(opts.kdfparams.r).toBe(8)
+    expect(opts.kdfparams.n).toBe(1024)
+  })
+
+  test('behavior: matches sync scrypt for identical params', async () => {
+    const [keySync] = Keystore.scrypt({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+      p: 2,
+      r: 4,
+    })
+    const [keyAsync] = await Keystore.scryptAsync({
+      iv: '0x83dbcc02d8ccb40e466191a123791e0e',
+      salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
+      password: 'testpassword',
+      n: 1024,
+      p: 2,
+      r: 4,
+    })
+    expect(keyAsync()).toEqual(keySync())
+  })
+})
+
+describe.skip('scryptAsync legacy snapshot', () => {
   test('default', async () => {
     const [key, opts] = await Keystore.scryptAsync({
       salt: '0xab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19',
