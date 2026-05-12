@@ -316,7 +316,11 @@ export function fromRpc<
   if (transaction.type)
     transaction_.type =
       (fromRpcType as any)[transaction.type] ?? transaction.type
-  if (signature) transaction_.v = Signature.yParityToV(signature.yParity)
+  if (signature)
+    transaction_.v =
+      transaction.type === '0x0' && typeof transaction.v !== 'undefined'
+        ? Number(transaction.v)
+        : Signature.yParityToV(signature.yParity)
 
   return transaction_ as never
 }
