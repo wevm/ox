@@ -24,6 +24,11 @@ export type Wrapped = Hex.Hex
 export const magicBytes =
   '0x6492649264926492649264926492649264926492649264926492649264926492' as const
 
+/** Cached ABI parameters for ERC-6492 wrapped signature payloads. */
+const wrappedParameters = /*#__PURE__*/ AbiParameters.from(
+  'address, bytes, bytes',
+)
+
 /**
  * Deployless ERC-6492 signature verification bytecode.
  */
@@ -181,10 +186,7 @@ export function unwrap(wrapped: Wrapped): Unwrapped {
   assert(wrapped)
 
   const body = Hex.slice(wrapped, 0, -32)
-  const [to, data, signature] = AbiParameters.decode(
-    AbiParameters.from('address, bytes, bytes'),
-    body,
-  )
+  const [to, data, signature] = AbiParameters.decode(wrappedParameters, body)
 
   return { data, signature, to }
 }
@@ -224,11 +226,7 @@ export function wrap(value: Unwrapped): Wrapped {
   const { data, signature, to } = value
 
   return Hex.concat(
-    AbiParameters.encode(AbiParameters.from('address, bytes, bytes'), [
-      to,
-      data,
-      signature,
-    ]),
+    AbiParameters.encode(wrappedParameters, [to, data, signature]),
     magicBytes,
   )
 }
