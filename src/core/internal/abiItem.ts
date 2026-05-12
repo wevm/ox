@@ -433,9 +433,8 @@ export function normalizeSignature(signature: string): string {
   let level = 0
   let result = ''
   let valid = false
-  let i = 0
 
-  for (; i < signature.length; i++) {
+  for (let i = 0; i < signature.length; i++) {
     const char = signature[i]!
 
     // If the character is a separator, we want to reactivate.
@@ -480,16 +479,6 @@ export function normalizeSignature(signature: string): string {
   }
 
   if (!valid) throw new Errors.BaseError('Unable to normalize signature.')
-
-  // Reject trailing characters after the closing paren of the top-level
-  // parameter list. The loop above breaks at the first `)` at level 0,
-  // so any remaining non-whitespace input means the signature is malformed.
-  for (let j = i + 1; j < signature.length; j++) {
-    if (signature[j] !== ' ')
-      throw new Errors.BaseError(
-        `Unable to normalize signature: trailing characters after closing parenthesis: ${signature.slice(j)}`,
-      )
-  }
 
   return result
 }
