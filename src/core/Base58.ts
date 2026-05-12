@@ -1,5 +1,5 @@
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal from './internal/base58.js'
 
@@ -106,6 +106,8 @@ export declare namespace toBytes {
  * @returns The decoded hex string.
  */
 export function toHex(value: string): Hex.Hex {
+  if (value.length === 0) return '0x'
+
   let integer = BigInt(0)
   let pad = 0
   let checkPad = true
@@ -119,18 +121,19 @@ export function toHex(value: string): Hex.Hex {
 
     // check for invalid characters
     if (typeof internal.alphabetToInteger[char] !== 'bigint')
-      throw new Error('invalid base58 character: ' + char)
+      throw new InvalidCharacterError({ character: char })
 
     integer = integer * 58n
     integer = integer + internal.alphabetToInteger[char]!
   }
 
-  if (!pad) return `0x${integer.toString(16)}` as Hex.Hex
-  return `0x${'0'.repeat(pad * 2)}${integer.toString(16)}` as Hex.Hex
+  let body = integer === 0n ? '' : integer.toString(16)
+  if ((body.length & 1) !== 0) body = `0${body}`
+  return `0x${'00'.repeat(pad)}${body}` as Hex.Hex
 }
 
 export declare namespace toHex {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = InvalidCharacterError | Errors.GlobalErrorType
 }
 
 /**
@@ -153,4 +156,13 @@ export function toString(value: string): string {
 
 export declare namespace toString {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/** Thrown when a Base58 string contains an invalid character. */
+export class InvalidCharacterError extends Errors.BaseError {
+  override readonly name = 'Base58.InvalidCharacterError'
+
+  constructor({ character }: { character: string }) {
+    super(`Invalid Base58 character: "${character}".`)
+  }
 }

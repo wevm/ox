@@ -106,53 +106,75 @@ export function assert<
   const { domain, message, primaryType, types } =
     value as unknown as assert.Value
 
+  const validateValue = (type: string, value: unknown, name: string) => {
+    // Array types: validate length (if fixed) and recurse into each element.
+    const arrayMatch = type.match(Solidity.arrayRegex)
+    if (arrayMatch) {
+      const [, elementType, lengthStr] = arrayMatch
+      if (!Array.isArray(value))
+        throw new InvalidArrayError({ name, type, value })
+      if (lengthStr) {
+        const expected = Number.parseInt(lengthStr, 10)
+        if (value.length !== expected)
+          throw new InvalidArrayLengthError({
+            name,
+            type,
+            expectedLength: expected,
+            givenLength: value.length,
+          })
+      }
+      for (const element of value) validateValue(elementType!, element, name)
+      return
+    }
+
+    const integerMatch = type.match(Solidity.integerRegex)
+    if (
+      integerMatch &&
+      (typeof value === 'number' || typeof value === 'bigint')
+    ) {
+      const [, base, size_] = integerMatch
+      // If number cannot be cast to a sized hex value, it is out of range
+      // and will throw.
+      Hex.fromNumber(value, {
+        signed: base === 'int',
+        size: Number.parseInt(size_ ?? '', 10) / 8,
+      })
+    }
+
+    if (
+      type === 'address' &&
+      typeof value === 'string' &&
+      !Address.validate(value)
+    )
+      throw new Address.InvalidAddressError({
+        address: value,
+        cause: new Address.InvalidInputError(),
+      })
+
+    const bytesMatch = type.match(Solidity.bytesRegex)
+    if (bytesMatch) {
+      const [, size] = bytesMatch
+      if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
+        throw new BytesSizeMismatchError({
+          expectedSize: Number.parseInt(size, 10),
+          givenSize: Hex.size(value as Hex.Hex),
+        })
+    }
+
+    const struct = types[type]
+    if (struct) {
+      validateReference(type)
+      validateData(struct, value as Record<string, unknown>)
+    }
+  }
+
   const validateData = (
     struct: readonly Parameter[],
     data: Record<string, unknown>,
   ) => {
     for (const param of struct) {
       const { name, type } = param
-      const value = data[name]
-
-      const integerMatch = type.match(Solidity.integerRegex)
-      if (
-        integerMatch &&
-        (typeof value === 'number' || typeof value === 'bigint')
-      ) {
-        const [, base, size_] = integerMatch
-        // If number cannot be cast to a sized hex value, it is out of range
-        // and will throw.
-        Hex.fromNumber(value, {
-          signed: base === 'int',
-          size: Number.parseInt(size_ ?? '', 10) / 8,
-        })
-      }
-
-      if (
-        type === 'address' &&
-        typeof value === 'string' &&
-        !Address.validate(value)
-      )
-        throw new Address.InvalidAddressError({
-          address: value,
-          cause: new Address.InvalidInputError(),
-        })
-
-      const bytesMatch = type.match(Solidity.bytesRegex)
-      if (bytesMatch) {
-        const [, size] = bytesMatch
-        if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
-          throw new BytesSizeMismatchError({
-            expectedSize: Number.parseInt(size, 10),
-            givenSize: Hex.size(value as Hex.Hex),
-          })
-      }
-
-      const struct = types[type]
-      if (struct) {
-        validateReference(type)
-        validateData(struct, value as Record<string, unknown>)
-      }
+      validateValue(type, data[name], name)
     }
   }
 
@@ -178,6 +200,8 @@ export declare namespace assert {
   type ErrorType =
     | Address.InvalidAddressError
     | BytesSizeMismatchError
+    | InvalidArrayError
+    | InvalidArrayLengthError
     | InvalidPrimaryTypeError
     | Hex.fromNumber.ErrorType
     | Hex.size.ErrorType
@@ -280,6 +304,11 @@ export function encode<
     types,
   })
 
+  // Memoize `keccak256(encodeType(t))` per type for the duration of this
+  // encode call. Same `(primaryType, types)` is hashed once instead of once
+  // per nested struct / array element.
+  const typeHashes = new Map<string, Hex.Hex>()
+
   // Typed Data Format: `0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message)`
   const parts: Hex.Hex[] = ['0x19', '0x01']
   if (domain)
@@ -287,6 +316,7 @@ export function encode<
       hashDomain({
         domain,
         types,
+        typeHashes,
       }),
     )
   if (primaryType !== 'EIP712Domain')
@@ -295,6 +325,7 @@ export function encode<
         data: message,
         primaryType,
         types,
+        typeHashes,
       }),
     )
 
@@ -492,7 +523,7 @@ export declare namespace getSignPayload {
  * @returns The hashed domain.
  */
 export function hashDomain(value: hashDomain.Value): Hex.Hex {
-  const { domain, types } = value
+  const { domain, types, typeHashes } = value
   return hashStruct({
     data: domain,
     primaryType: 'EIP712Domain',
@@ -500,6 +531,7 @@ export function hashDomain(value: hashDomain.Value): Hex.Hex {
       ...types,
       EIP712Domain: types?.EIP712Domain || extractEip712DomainTypes(domain),
     },
+    typeHashes,
   })
 }
 
@@ -514,6 +546,8 @@ export declare namespace hashDomain {
           [key: string]: readonly Parameter[] | undefined
         }
       | undefined
+    /** Optional cache of `keccak256(encodeType(t))` keyed by type name, shared across nested struct/array calls. */
+    typeHashes?: Map<string, Hex.Hex> | undefined
   }
 
   type ErrorType = hashStruct.ErrorType | Errors.GlobalErrorType
@@ -548,11 +582,12 @@ export declare namespace hashDomain {
  * @returns The hashed Typed Data struct.
  */
 export function hashStruct(value: hashStruct.Value): Hex.Hex {
-  const { data, primaryType, types } = value
+  const { data, primaryType, types, typeHashes } = value
   const encoded = encodeData({
     data,
     primaryType,
     types,
+    typeHashes,
   })
   return Hash.keccak256(encoded)
 }
@@ -565,6 +600,8 @@ export declare namespace hashStruct {
     primaryType: string
     /** The types of the Typed Data struct. */
     types: TypedData
+    /** Optional cache of `keccak256(encodeType(t))` keyed by type name, shared across nested struct/array calls. */
+    typeHashes?: Map<string, Hex.Hex> | undefined
   }
 
   type ErrorType =
@@ -757,15 +794,55 @@ export class InvalidStructTypeError extends Errors.BaseError {
   }
 }
 
+/** Thrown when an array-typed value is not an array. */
+export class InvalidArrayError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidArrayError'
+
+  constructor({
+    name,
+    type,
+    value,
+  }: { name: string; type: string; value: unknown }) {
+    super(
+      `Value for field \`${name}\` of type \`${type}\` is not an array. Got \`${typeof value}\`.`,
+    )
+  }
+}
+
+/** Thrown when a fixed-length array does not match its declared length. */
+export class InvalidArrayLengthError extends Errors.BaseError {
+  override readonly name = 'TypedData.InvalidArrayLengthError'
+
+  constructor({
+    name,
+    type,
+    expectedLength,
+    givenLength,
+  }: {
+    name: string
+    type: string
+    expectedLength: number
+    givenLength: number
+  }) {
+    super(
+      `Expected fixed-length array \`${type}\` for field \`${name}\` to have ${expectedLength} elements, got ${givenLength}.`,
+    )
+  }
+}
+
 /** @internal */
 export function encodeData(value: {
   data: Record<string, unknown>
   primaryType: string
   types: TypedData
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
   const { data, primaryType, types } = value
+  const typeHashes = value.typeHashes ?? new Map<string, Hex.Hex>()
   const encodedTypes: AbiParameters.Parameter[] = [{ type: 'bytes32' }]
-  const encodedValues: unknown[] = [hashType({ primaryType, types })]
+  const encodedValues: unknown[] = [
+    hashType({ primaryType, types, typeHashes }),
+  ]
 
   for (const field of types[primaryType] ?? []) {
     const [type, value] = encodeField({
@@ -773,6 +850,7 @@ export function encodeData(value: {
       name: field.name,
       type: field.type,
       value: data[field.name],
+      typeHashes,
     })
     encodedTypes.push(type)
     encodedValues.push(value)
@@ -794,10 +872,15 @@ export declare namespace encodeData {
 export function hashType(value: {
   primaryType: string
   types: TypedData
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): Hex.Hex {
-  const { primaryType, types } = value
+  const { primaryType, types, typeHashes } = value
+  const cached = typeHashes?.get(primaryType)
+  if (cached) return cached
   const encodedHashType = Hex.fromString(encodeType({ primaryType, types }))
-  return Hash.keccak256(encodedHashType)
+  const hash = Hash.keccak256(encodedHashType)
+  typeHashes?.set(primaryType, hash)
+  return hash
 }
 
 /** @internal */
@@ -815,13 +898,16 @@ export function encodeField(properties: {
   name: string
   type: string
   value: any
+  typeHashes?: Map<string, Hex.Hex> | undefined
 }): [type: AbiParameters.Parameter, value: Hex.Hex] {
-  let { types, name, type, value } = properties
+  let { types, name, type, value, typeHashes } = properties
 
   if (types[type] !== undefined)
     return [
       { type: 'bytes32' },
-      Hash.keccak256(encodeData({ data: value, primaryType: type, types })),
+      Hash.keccak256(
+        encodeData({ data: value, primaryType: type, types, typeHashes }),
+      ),
     ]
 
   if (type === 'bytes') {
@@ -837,7 +923,22 @@ export function encodeField(properties: {
     ]
 
   if (type.lastIndexOf(']') === type.length - 1) {
-    const parsedType = type.slice(0, type.lastIndexOf('['))
+    const arrayMatch = type.match(Solidity.arrayRegex)
+    const parsedType = arrayMatch
+      ? arrayMatch[1]!
+      : type.slice(0, type.lastIndexOf('['))
+    const fixedLength = arrayMatch?.[2]
+      ? Number.parseInt(arrayMatch[2], 10)
+      : undefined
+    if (!Array.isArray(value))
+      throw new InvalidArrayError({ name, type, value })
+    if (fixedLength !== undefined && value.length !== fixedLength)
+      throw new InvalidArrayLengthError({
+        name,
+        type,
+        expectedLength: fixedLength,
+        givenLength: value.length,
+      })
     const typeValuePairs = (value as [AbiParameters.Parameter, any][]).map(
       (item) =>
         encodeField({
@@ -845,6 +946,7 @@ export function encodeField(properties: {
           type: parsedType,
           types,
           value: item,
+          typeHashes,
         }),
     )
     return [
@@ -867,6 +969,8 @@ export declare namespace encodeField {
     | AbiParameters.encode.ErrorType
     | Hash.keccak256.ErrorType
     | Bytes.fromString.ErrorType
+    | InvalidArrayError
+    | InvalidArrayLengthError
     | Errors.GlobalErrorType
 }
 

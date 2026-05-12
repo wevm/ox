@@ -147,3 +147,65 @@ describe('validate', () => {
     expect(SignatureErc8010.validate('0xdeadbeef')).toBe(false)
   })
 })
+
+describe('assert: validates unwrapped objects', () => {
+  test('throws on malformed object', () => {
+    expect(() =>
+      // @ts-expect-error
+      SignatureErc8010.assert(null),
+    ).toThrow(SignatureErc8010.InvalidUnwrappedSignatureError)
+
+    expect(() =>
+      // @ts-expect-error
+      SignatureErc8010.assert({ authorization, data: '0xdeadbeef' }),
+    ).toThrow(SignatureErc8010.InvalidUnwrappedSignatureError)
+
+    expect(() =>
+      SignatureErc8010.assert({
+        // @ts-expect-error
+        authorization: null,
+        signature,
+      }),
+    ).toThrow(SignatureErc8010.InvalidUnwrappedSignatureError)
+  })
+})
+
+describe('wrap: skips recovery when `to` is provided', () => {
+  test('uses caller-supplied `to` verbatim', () => {
+    const customTo = '0xcafebabecafebabecafebabecafebabecafebabe' as const
+    const wrapped = SignatureErc8010.wrap({
+      authorization,
+      data: '0xdeadbeef',
+      signature,
+      to: customTo,
+    })
+    const unwrapped = SignatureErc8010.unwrap(wrapped)
+    expect(unwrapped.to).toBe(customTo)
+  })
+
+  test('still recovers when `to` is absent', () => {
+    const wrapped = SignatureErc8010.wrap({
+      authorization,
+      data: '0xdeadbeef',
+      signature,
+    })
+    const unwrapped = SignatureErc8010.unwrap(wrapped)
+    expect(unwrapped.to).toBe(accounts[0].address)
+  })
+})
+
+describe('unwrap: rejects oversized suffix length', () => {
+  test('throws InvalidWrappedSignatureError on out-of-range suffix length', () => {
+    // Construct a malicious wrapped value: short signature + impossibly large
+    // suffix length word + magic bytes. The naive Number(hex) parse used to
+    // produce a valid slice; the safe parse must reject.
+    const shortSig = `0x${'00'.repeat(8)}`
+    const huge = `0x${'ff'.repeat(32)}`
+    const malicious = (shortSig +
+      huge.slice(2) +
+      SignatureErc8010.magicBytes.slice(2)) as `0x${string}`
+    expect(() => SignatureErc8010.unwrap(malicious)).toThrow(
+      SignatureErc8010.InvalidWrappedSignatureError,
+    )
+  })
+})

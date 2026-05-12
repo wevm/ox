@@ -909,6 +909,57 @@ describe('serialize', () => {
   })
 })
 
+describe('toRpc', () => {
+  test('default', () => {
+    const transaction = TxEnvelopeEip7702.toRpc({
+      authorizationList: [
+        {
+          address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+          chainId: 1,
+          nonce: 0n,
+          r: 1n,
+          s: 2n,
+          yParity: 0,
+        },
+      ],
+      chainId: 1,
+      nonce: 0n,
+      gas: 21000n,
+      maxFeePerGas: 1000000000n,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000000000000000000n,
+      r: 1n,
+      s: 2n,
+      yParity: 0,
+    })
+    expect(transaction).toMatchInlineSnapshot(`
+      {
+        "authorizationList": [
+          {
+            "address": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "chainId": "0x1",
+            "nonce": "0x0",
+            "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "yParity": "0x0",
+          },
+        ],
+        "chainId": "0x1",
+        "data": undefined,
+        "gas": "0x5208",
+        "maxFeePerGas": "0x3b9aca00",
+        "nonce": "0x0",
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "to": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "type": "0x4",
+        "value": "0xde0b6b3a7640000",
+        "yParity": "0x0",
+      }
+    `)
+  })
+})
+
 describe('validate', () => {
   test('default', () => {
     expect(
@@ -938,6 +989,7 @@ test('exports', () => {
       "getSignPayload",
       "hash",
       "serialize",
+      "toRpc",
       "validate",
     ]
   `)

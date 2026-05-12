@@ -1443,3 +1443,60 @@ describe('toTypedData', () => {
     })
   })
 })
+
+describe('v0.8 authorization round-trip', () => {
+  const userOperation = {
+    authorization: {
+      address: '0x1234567890123456789012345678901234567890',
+      chainId: 1,
+      nonce: 0n,
+      yParity: 0,
+      r: 1n,
+      s: 2n,
+    },
+    callData: '0xdeadbeef',
+    callGasLimit: 300_000n,
+    maxFeePerGas: 100_000n,
+    maxPriorityFeePerGas: 100_000n,
+    nonce: 0n,
+    preVerificationGas: 100_000n,
+    sender: '0x1234567890123456789012345678901234567890',
+    signature: '0x',
+    verificationGasLimit: 100_000n,
+  } as const satisfies UserOperation.UserOperation<'0.8', true>
+
+  test('toRpc serializes authorization', () => {
+    const rpc = UserOperation.toRpc(userOperation) as UserOperation.Rpc<'0.8'>
+    expect(rpc.authorization).toMatchInlineSnapshot(`
+      {
+        "address": "0x1234567890123456789012345678901234567890",
+        "chainId": "0x1",
+        "nonce": "0x0",
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "yParity": "0x0",
+      }
+    `)
+  })
+
+  test('fromRpc parses authorization', () => {
+    const rpc = UserOperation.toRpc(userOperation) as UserOperation.Rpc<'0.8'>
+    const parsed = UserOperation.fromRpc(rpc) as UserOperation.UserOperation<
+      '0.8',
+      true
+    >
+    expect(parsed.authorization).toEqual(userOperation.authorization)
+  })
+
+  test('round-trip preserves authorization', () => {
+    const rpc = UserOperation.toRpc(userOperation)
+    const parsed = UserOperation.fromRpc(rpc)
+    expect(parsed).toEqual(userOperation)
+  })
+
+  test('toRpc omits authorization when absent', () => {
+    const { authorization: _omit, ...rest } = userOperation
+    const rpc = UserOperation.toRpc(rest)
+    expect('authorization' in rpc).toBe(false)
+  })
+})

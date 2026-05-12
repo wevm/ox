@@ -52,6 +52,30 @@ describe('aggregate', () => {
     })
     expect(valid).toBe(true)
   })
+
+  test('error: empty array', () => {
+    expect(() => Bls.aggregate([])).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Bls.aggregate expects a non-empty array of points.]`,
+    )
+  })
+
+  test('behavior: single-element array fast-returns the input', () => {
+    const publicKey = Bls.getPublicKey({ privateKey })
+    expect(Bls.aggregate([publicKey])).toBe(publicKey)
+  })
+
+  test('error: mixed groups', () => {
+    const g1 = Bls.getPublicKey({ privateKey })
+    const g2 = Bls.getPublicKey({
+      privateKey,
+      size: 'long-key:short-sig',
+    })
+    expect(() =>
+      Bls.aggregate([g1, g2 as any]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Bls.aggregate expects all points to be from the same group (G1 or G2).]`,
+    )
+  })
 })
 
 describe('createKeyPair', () => {

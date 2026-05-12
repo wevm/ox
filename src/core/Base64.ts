@@ -1,5 +1,5 @@
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 
 const encoder = /*#__PURE__*/ new TextEncoder()
@@ -238,14 +238,33 @@ export declare namespace fromString {
  * @returns The Base64 decoded {@link ox#Bytes.Bytes}.
  */
 export function toBytes(value: string): Bytes.Bytes {
-  const base64 = value.replace(/=+$/, '')
+  // Strip trailing '=' padding (only at the very end).
+  let body = value
+  let pad = 0
+  while (body.length > 0 && body.charCodeAt(body.length - 1) === 61 /* '=' */) {
+    body = body.slice(0, -1)
+    pad++
+  }
 
-  const size = base64.length
+  const size = body.length
+  // Reject impossible lengths and excessive padding.
+  if (size % 4 === 1) throw new InvalidLengthError({ length: value.length })
+  if (pad > 2) throw new InvalidPaddingError({ padding: pad })
+
+  // Validate characters: every char must be in the standard or URL-safe alphabet,
+  // and '=' may not appear in the body (only stripped trailing padding).
+  for (let i = 0; i < size; i++) {
+    const code = body.charCodeAt(i)
+    if (code === 61 /* '=' */)
+      throw new InvalidCharacterError({ character: '=' })
+    if (characterToInteger[code] === undefined)
+      throw new InvalidCharacterError({ character: body[i]! })
+  }
 
   const decoded = new Uint8Array(size + 3)
-  encoder.encodeInto(base64 + '===', decoded)
+  encoder.encodeInto(body + '===', decoded)
 
-  for (let i = 0, j = 0; i < base64.length; i += 4, j += 3) {
+  for (let i = 0, j = 0; i < size; i += 4, j += 3) {
     const x =
       (characterToInteger[decoded[i]!]! << 18) +
       (characterToInteger[decoded[i + 1]!]! << 12) +
@@ -261,7 +280,11 @@ export function toBytes(value: string): Bytes.Bytes {
 }
 
 export declare namespace toBytes {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidCharacterError
+    | InvalidLengthError
+    | InvalidPaddingError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -306,4 +329,31 @@ export function toString(value: string): string {
 
 export declare namespace toString {
   type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/** Thrown when a Base64 string contains an invalid character. */
+export class InvalidCharacterError extends Errors.BaseError {
+  override readonly name = 'Base64.InvalidCharacterError'
+
+  constructor({ character }: { character: string }) {
+    super(`Invalid Base64 character: "${character}".`)
+  }
+}
+
+/** Thrown when a Base64 string has an impossible length. */
+export class InvalidLengthError extends Errors.BaseError {
+  override readonly name = 'Base64.InvalidLengthError'
+
+  constructor({ length }: { length: number }) {
+    super(`Invalid Base64 input length \`${length}\`.`)
+  }
+}
+
+/** Thrown when a Base64 string contains too many trailing `=` padding characters. */
+export class InvalidPaddingError extends Errors.BaseError {
+  override readonly name = 'Base64.InvalidPaddingError'
+
+  constructor({ padding }: { padding: number }) {
+    super(`Invalid Base64 padding length \`${padding}\` (must be 0, 1, or 2).`)
+  }
 }

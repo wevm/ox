@@ -94,22 +94,18 @@ export function trim(
 ): trim.ReturnType {
   const { dir = 'left' } = options
 
-  let data = value.replace('0x', '')
+  const data = value.slice(2)
 
-  let sliceLength = 0
-  for (let i = 0; i < data.length - 1; i++) {
-    if (data[dir === 'left' ? i : data.length - i - 1]!.toString() === '0')
-      sliceLength++
-    else break
-  }
-  data =
-    dir === 'left'
-      ? data.slice(sliceLength)
-      : data.slice(0, data.length - sliceLength)
+  let start = 0
+  let end = data.length
+  if (dir === 'left')
+    while (start < end && data.charCodeAt(start) === 48 /* '0' */) start++
+  else while (end > start && data.charCodeAt(end - 1) === 48 /* '0' */) end--
 
-  if (data === '0') return '0x'
-  if (dir === 'right' && data.length % 2 === 1) return `0x${data}0`
-  return `0x${data}` as trim.ReturnType
+  if (start >= end) return '0x'
+  if (dir === 'right' && (end - start) % 2 === 1)
+    return `0x${data.slice(start, end)}0` as trim.ReturnType
+  return `0x${data.slice(start, end)}` as trim.ReturnType
 }
 
 /** @internal */

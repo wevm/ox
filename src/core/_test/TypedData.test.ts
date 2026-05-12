@@ -428,6 +428,76 @@ describe('assert', () => {
       Struct type must not be a Solidity type.]
     `)
   })
+
+  test('fixed-array length mismatch', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'addresses', type: 'address[2]' }],
+        },
+        primaryType: 'Foo',
+        message: {
+          addresses: ['0x0000000000000000000000000000000000000001'] as any,
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[TypedData.InvalidArrayLengthError: Expected fixed-length array `address[2]` for field `addresses` to have 2 elements, got 1.]',
+    )
+  })
+
+  test('non-array value for array type', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Person: [
+            { name: 'name', type: 'string' },
+            { name: 'wallet', type: 'address' },
+          ],
+          Foo: [{ name: 'people', type: 'Person[]' }],
+        },
+        primaryType: 'Foo',
+        message: {
+          people: 'oops' as any,
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[TypedData.InvalidArrayError: Value for field `people` of type `Person[]` is not an array. Got `string`.]',
+    )
+  })
+
+  test('invalid array element', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'addresses', type: 'address[]' }],
+        },
+        primaryType: 'Foo',
+        message: {
+          addresses: ['0xnot-an-address'],
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Address.InvalidAddressError: Address "0xnot-an-address" is invalid.
+
+      Details: Address is not a 20 byte (40 hexadecimal character) value.]
+    `)
+  })
+
+  test('uint array element overflow', () => {
+    expect(() =>
+      TypedData.assert({
+        types: {
+          Foo: [{ name: 'amounts', type: 'uint8[]' }],
+        },
+        primaryType: 'Foo',
+        message: {
+          amounts: [256n] as any,
+        },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [Hex.IntegerOutOfRangeError: Number \`256n\` is not in safe 8-bit unsigned integer range (\`0n\` to \`255n\`)]
+    `)
+  })
 })
 
 describe('domainSeparator', () => {
@@ -983,6 +1053,32 @@ describe('hashStruct', () => {
       `"0xc52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e"`,
     )
   })
+
+  test('behavior: shared `typeHashes` cache produces identical hash and is populated', () => {
+    const typeHashes = new Map<string, `0x${string}`>()
+    const hash = TypedData.hashStruct({
+      ...typedData.basic,
+      primaryType: 'Mail',
+      data: typedData.basic.message,
+      typeHashes,
+    })
+    expect(hash).toBe(
+      '0xc52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e',
+    )
+    // Mail nests Person twice (from + to), so both should be cached.
+    expect(typeHashes.has('Mail')).toBe(true)
+    expect(typeHashes.has('Person')).toBe(true)
+
+    // Re-using the populated cache yields the same hash.
+    expect(
+      TypedData.hashStruct({
+        ...typedData.basic,
+        primaryType: 'Mail',
+        data: typedData.basic.message,
+        typeHashes,
+      }),
+    ).toBe(hash)
+  })
 })
 
 describe('serialize', () => {
@@ -1489,6 +1585,8 @@ test('exports', () => {
       "InvalidDomainError",
       "InvalidPrimaryTypeError",
       "InvalidStructTypeError",
+      "InvalidArrayError",
+      "InvalidArrayLengthError",
       "encodeData",
       "hashType",
       "encodeField",

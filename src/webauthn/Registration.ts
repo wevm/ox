@@ -760,10 +760,10 @@ export declare namespace verify {
   type Options = {
     /**
      * Attestation verification mode.
-     * - `'required'` (default): attestation signature must be present and valid (`packed` self-attestation).
-     * - `'none'`: accept `fmt: "none"` attestation (no cryptographic binding of authData to clientDataJSON).
+     * - `'none'` (default): accept `fmt: "none"` attestation (no cryptographic binding of authData to clientDataJSON).
+     * - `'required'`: attestation signature must be present and valid (`packed` self-attestation).
      *
-     * @default 'required'
+     * @default 'none'
      */
     attestation?: 'required' | 'none' | undefined
     /** The credential response from `Registration.create()`. */

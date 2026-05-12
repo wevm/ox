@@ -9,10 +9,12 @@ export function withTimeout<data>(
   return new Promise((resolve, reject) => {
     ;(async () => {
       let timeoutId: any
+      let timedOut = false
       try {
         const controller = new AbortController()
         if (timeout > 0)
           timeoutId = setTimeout(() => {
+            timedOut = true
             if (signal) {
               controller.abort()
             } else {
@@ -21,8 +23,9 @@ export function withTimeout<data>(
           }, timeout) as any
         resolve(await fn({ signal: controller.signal }))
       } catch (err) {
-        if ((err as Error)?.name === 'AbortError') reject(errorInstance)
-        reject(err)
+        if (timedOut || (err as Error)?.name === 'AbortError')
+          reject(errorInstance)
+        else reject(err)
       } finally {
         clearTimeout(timeoutId)
       }

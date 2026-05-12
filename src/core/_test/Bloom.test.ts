@@ -1,4 +1,4 @@
-import { Bloom } from 'ox'
+import { Bloom, Hash } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 describe('contains', () => {
@@ -34,6 +34,28 @@ describe('contains', () => {
       ),
     ).toBeTruthy()
   })
+
+  test('error: rejects bloom of incorrect length', () => {
+    expect(() =>
+      Bloom.contains(
+        '0xdeadbeef',
+        '0xef2d6d194084c2de36e0dabfce45d046b37d1106',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Bloom.InvalidBloomError: Value `0xdeadbeef` is not a valid bloom filter (must be a 256-byte hex string).]',
+    )
+  })
+
+  test('error: rejects non-hex bloom', () => {
+    expect(() =>
+      Bloom.contains(
+        'not-a-hex' as never,
+        '0xef2d6d194084c2de36e0dabfce45d046b37d1106',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Bloom.InvalidBloomError: Value `not-a-hex` is not a valid bloom filter (must be a 256-byte hex string).]',
+    )
+  })
 })
 
 describe('validate', () => {
@@ -55,4 +77,46 @@ describe('validate', () => {
       ),
     ).toBeTruthy()
   })
+})
+
+const matchingBloom =
+  '0x00000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002020000000000000000000000000000000000000000000008000000001000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' as const
+const matchingAddress = '0xef2d6d194084c2de36e0dabfce45d046b37d1106' as const
+
+describe('prepare + containsPrepared', () => {
+  test('matches contains() for matching address', () => {
+    const prepared = Bloom.prepare(matchingBloom)
+    expect(Bloom.containsPrepared(prepared, matchingAddress)).toBe(
+      Bloom.contains(matchingBloom, matchingAddress),
+    )
+  })
+
+  test('throws for invalid bloom', () => {
+    expect(() =>
+      Bloom.prepare('0xdeadbeef'),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Bloom.InvalidBloomError: Value `0xdeadbeef` is not a valid bloom filter (must be a 256-byte hex string).]',
+    )
+  })
+})
+
+describe('containsHash', () => {
+  test('skips keccak when caller pre-hashes the input', () => {
+    const prepared = Bloom.prepare(matchingBloom)
+    const hash = Hash.keccak256(matchingAddress, { as: 'Bytes' })
+    expect(Bloom.containsHash(prepared, hash)).toBe(true)
+  })
+})
+
+test('exports', () => {
+  expect(Object.keys(Bloom)).toMatchInlineSnapshot(`
+    [
+      "contains",
+      "prepare",
+      "containsPrepared",
+      "containsHash",
+      "validate",
+      "InvalidBloomError",
+    ]
+  `)
 })

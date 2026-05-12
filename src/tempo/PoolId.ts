@@ -25,11 +25,11 @@ import * as TokenId from './TokenId.js'
  * @returns The pool ID.
  */
 export function from(value: from.Value): Hex.Hex {
+  const a = TokenId.toAddress(value.userToken)
+  const b = TokenId.toAddress(value.validatorToken)
+  const [left, right] = a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a]
   return Hash.keccak256(
-    Hex.concat(
-      Hex.padLeft(TokenId.toAddress(value.userToken), 32),
-      Hex.padLeft(TokenId.toAddress(value.validatorToken), 32),
-    ),
+    Hex.concat(Hex.padLeft(left, 32), Hex.padLeft(right, 32)),
   )
 }
 

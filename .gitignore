@@ -7,6 +7,7 @@
 dist
 coverage
 node_modules
+tasks
 tsconfig.*.tsbuildinfo
 tsconfig.tsbuildinfo
 tsdoc.d.tson

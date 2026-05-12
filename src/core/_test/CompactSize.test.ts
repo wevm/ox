@@ -169,6 +169,8 @@ test('exports', () => {
       "fromHex",
       "NegativeValueError",
       "InsufficientBytesError",
+      "InvalidValueError",
+      "NonMinimalEncodingError",
     ]
   `)
 })

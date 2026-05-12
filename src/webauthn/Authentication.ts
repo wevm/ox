@@ -1,5 +1,6 @@
 import * as Base64 from '../core/Base64.js'
 import * as Bytes from '../core/Bytes.js'
+import * as Cbor from '../core/Cbor.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -258,6 +259,7 @@ export function getSignPayload(
     crossOrigin,
     extraClientData,
     flag,
+    hash = false,
     origin,
     rpId,
     signCount,
@@ -288,7 +290,8 @@ export function getSignPayload(
     userVerificationRequired: userVerification === 'required',
   }
 
-  const payload = Hex.concat(authenticatorData, clientDataJSONHash)
+  const concatenated = Hex.concat(authenticatorData, clientDataJSONHash)
+  const payload = hash ? Hash.sha256(concatenated) : concatenated
 
   return { metadata, payload }
 }
@@ -501,7 +504,7 @@ export async function sign(options: sign.Options): Promise<sign.ReturnType> {
     const signatureBytes = new Uint8Array(response.signature)
     const id = credential.id
 
-    const clientDataJSON = String.fromCharCode(...clientDataJSONBytes)
+    const clientDataJSON = Bytes.toString(clientDataJSONBytes)
     const challengeIndex = clientDataJSON.indexOf('"challenge"')
     const typeIndex = clientDataJSON.indexOf('"type"')
 
@@ -622,6 +625,21 @@ export function verify(options: verify.Options): boolean {
   // If the BE bit of the flags in authData is not set, verify that
   // the BS bit is not set.
   if ((flag & 0x08) !== 0x08 && (flag & 0x10) === 0x10) return false
+
+  // Authentication assertions must not carry attested credential data
+  // (AT bit). If AT is set, the structure is invalid for an assertion.
+  if ((flag & 0x40) === 0x40) return false
+
+  // If the ED bit is set, trailing extension bytes must be a valid CBOR
+  // map. Reject malformed extensions.
+  if ((flag & 0x80) === 0x80) {
+    if (authenticatorDataBytes.length <= 37) return false
+    try {
+      Cbor.decode(authenticatorDataBytes.slice(37))
+    } catch {
+      return false
+    }
+  }
 
   // Parse clientDataJSON for validation.
   const clientData = JSON.parse(clientDataJSON)

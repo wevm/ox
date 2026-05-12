@@ -1,7 +1,7 @@
 import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 
 import type * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Branded, Compute } from './internal/types.js'
 
@@ -149,9 +149,17 @@ export function fromBytes<group extends 'G1' | 'G2'>(
   group: group,
 ): group extends 'G1' ? G1 : G2
 // eslint-disable-next-line jsdoc/require-jsdoc
-export function fromBytes(bytes: Bytes.Bytes): BlsPoint<any> {
-  const group = bytes.length === 48 ? bls.G1 : bls.G2
-  const point = group.Point.fromBytes(bytes)
+export function fromBytes(
+  bytes: Bytes.Bytes,
+  group: 'G1' | 'G2',
+): BlsPoint<any> {
+  const expectedLength = group === 'G1' ? 48 : 96
+  if (bytes.length !== expectedLength)
+    throw new Errors.BaseError(
+      `Expected ${expectedLength} bytes for a ${group} point, received ${bytes.length}.`,
+    )
+  const Group = group === 'G1' ? bls.G1 : bls.G2
+  const point = Group.Point.fromBytes(bytes)
   return {
     x: point.X,
     y: point.Y,

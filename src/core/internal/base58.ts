@@ -72,13 +72,17 @@ export const alphabetToInteger = /* __PURE__ */ Object.freeze<
 
 /** @internal */
 export function from(value: Hex.Hex | Bytes.Bytes) {
-  let bytes = Bytes.from(value)
+  const bytes = Bytes.from(value)
 
-  let integer = (() => {
-    let hex = value
-    if (value instanceof Uint8Array) hex = Hex.fromBytes(bytes)
-    return BigInt(hex as string)
-  })()
+  if (bytes.length === 0) return ''
+
+  let pad = 0
+  while (pad < bytes.length && bytes[pad] === 0) pad++
+
+  let integer =
+    value instanceof Uint8Array
+      ? BigInt(Hex.fromBytes(bytes))
+      : BigInt(value as string)
 
   let result = ''
   while (integer > 0n) {
@@ -87,12 +91,7 @@ export function from(value: Hex.Hex | Bytes.Bytes) {
     result = integerToAlphabet[remainder] + result
   }
 
-  while (bytes.length > 1 && bytes[0] === 0) {
-    result = '1' + result
-    bytes = bytes.slice(1)
-  }
-
-  return result
+  return '1'.repeat(pad) + result
 }
 
 /** @internal */

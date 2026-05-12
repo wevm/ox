@@ -74,20 +74,21 @@ export type Type = 'eip4844'
  */
 export function assert(envelope: PartialBy<TxEnvelopeEip4844, 'type'>) {
   const { blobVersionedHashes } = envelope
-  if (blobVersionedHashes) {
-    if (blobVersionedHashes.length === 0)
-      throw new Blobs.EmptyBlobVersionedHashesError()
-    for (const hash of blobVersionedHashes) {
-      const size = Hex.size(hash)
-      const version = Hex.toNumber(Hex.slice(hash, 0, 1))
-      if (size !== 32)
-        throw new Blobs.InvalidVersionedHashSizeError({ hash, size })
-      if (version !== Kzg.versionedHashVersion)
-        throw new Blobs.InvalidVersionedHashVersionError({
-          hash,
-          version,
-        })
-    }
+  // EIP-4844 requires at least one versioned blob hash. Treat a missing
+  // field as an empty list to give callers a single, descriptive error
+  // rather than a downstream RLP/serialization failure.
+  if (!blobVersionedHashes || blobVersionedHashes.length === 0)
+    throw new Blobs.EmptyBlobVersionedHashesError()
+  for (const hash of blobVersionedHashes) {
+    const size = Hex.size(hash)
+    const version = Hex.toNumber(Hex.slice(hash, 0, 1))
+    if (size !== 32)
+      throw new Blobs.InvalidVersionedHashSizeError({ hash, size })
+    if (version !== Kzg.versionedHashVersion)
+      throw new Blobs.InvalidVersionedHashVersionError({
+        hash,
+        version,
+      })
   }
   TxEnvelopeEip1559.assert(
     envelope as {} as TxEnvelopeEip1559.TxEnvelopeEip1559,
@@ -172,7 +173,9 @@ export function deserialize(
         value,
         data,
         accessList,
-        ...(transactionArray.length > 9
+        maxFeePerBlobGas,
+        blobVersionedHashes,
+        ...(transactionArray.length > 11
           ? {
               yParity,
               r,
@@ -203,11 +206,34 @@ export function deserialize(
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
   if (accessList?.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList.fromTupleList(accessList as any)
-  if (blobs && commitments && proofs)
-    transaction.sidecars = Blobs.toSidecars(blobs as Hex.Hex[], {
-      commitments: commitments as Hex.Hex[],
-      proofs: proofs as Hex.Hex[],
+  if (blobs && commitments && proofs) {
+    // Validate sidecar wrapper cardinality before zipping; otherwise
+    // `Blobs.toSidecars` blindly indexes `commitments[i]!` / `proofs[i]!`
+    // and fabricates `undefined` entries from a malformed payload.
+    const blobsArr = blobs as readonly Hex.Hex[]
+    const commitmentsArr = commitments as readonly Hex.Hex[]
+    const proofsArr = proofs as readonly Hex.Hex[]
+    const versionedHashesArr = blobVersionedHashes as readonly Hex.Hex[]
+    if (
+      blobsArr.length !== commitmentsArr.length ||
+      blobsArr.length !== proofsArr.length ||
+      blobsArr.length !== versionedHashesArr.length
+    )
+      throw new TransactionEnvelope.InvalidSerializedError({
+        attributes: {
+          blobVersionedHashes,
+          blobs: blobsArr.length,
+          commitments: commitmentsArr.length,
+          proofs: proofsArr.length,
+        },
+        serialized,
+        type,
+      })
+    transaction.sidecars = Blobs.toSidecars(blobsArr as Hex.Hex[], {
+      commitments: commitmentsArr as Hex.Hex[],
+      proofs: proofsArr as Hex.Hex[],
     })
+  }
 
   const signature =
     r && s && yParity
@@ -562,6 +588,7 @@ export function serialize(
     maxPriorityFeePerGas,
     accessList,
     data,
+    input,
   } = envelope
 
   assert(envelope)
@@ -578,7 +605,7 @@ export function serialize(
     gas ? Hex.fromNumber(gas) : '0x',
     to ?? '0x',
     value ? Hex.fromNumber(value) : '0x',
-    data ?? '0x',
+    data ?? input ?? '0x',
     accessTupleList,
     maxFeePerBlobGas ? Hex.fromNumber(maxFeePerBlobGas) : '0x',
     blobVersionedHashes ?? [],

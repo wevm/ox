@@ -319,8 +319,9 @@ export function sign(options: sign.Options): Signature.Signature {
 export declare namespace sign {
   type Options = {
     /**
-     * Extra entropy to add to the signing process. Setting to `false` will disable it.
-     * @default true
+     * Extra entropy to add to the signing process. Setting to `true` enables hedged
+     * (RFC 6979 + extra randomness) signing.
+     * @default false
      */
     extraEntropy?: boolean | Hex.Hex | Bytes.Bytes | undefined
     /**

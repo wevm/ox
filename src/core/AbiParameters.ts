@@ -96,14 +96,24 @@ export function decode(
   const values: any = as === 'Array' ? [] : {}
   for (let i = 0; i < parameters.length; ++i) {
     const param = parameters[i] as Parameter
-    cursor.setPosition(consumed)
-    const [data, consumed_] = internal.decodeParameter(cursor, param, {
-      checksumAddress,
-      staticPosition: 0,
-    })
-    consumed += consumed_
-    if (as === 'Array') values.push(data)
-    else values[param.name ?? i] = data
+    try {
+      cursor.setPosition(consumed)
+      const [data_, consumed_] = internal.decodeParameter(cursor, param, {
+        checksumAddress,
+        staticPosition: 0,
+      })
+      consumed += consumed_
+      if (as === 'Array') values.push(data_)
+      else values[param.name ?? i] = data_
+    } catch (err) {
+      if (err instanceof Cursor.PositionOutOfBoundsError)
+        throw new DataSizeTooSmallError({
+          data: typeof data === 'string' ? data : Hex.fromBytes(data),
+          parameters: parameters as readonly Parameter[],
+          size: Bytes.size(bytes),
+        })
+      throw err
+    }
   }
   return values
 }
@@ -314,7 +324,16 @@ export namespace encodePacked {
 
     const arrayMatch = (type as string).match(Solidity.arrayRegex)
     if (arrayMatch && Array.isArray(value)) {
-      const [_type, childType] = arrayMatch
+      const [_type, childType, lengthMatch] = arrayMatch
+      if (lengthMatch) {
+        const declaredLength = Number.parseInt(lengthMatch, 10)
+        if (value.length !== declaredLength)
+          throw new ArrayLengthMismatchError({
+            expectedLength: declaredLength,
+            givenLength: value.length,
+            type: type as string,
+          })
+      }
       const data: Hex.Hex[] = []
       for (let i = 0; i < value.length; i++) {
         data.push(encode(childType, value[i], true))

@@ -54,7 +54,7 @@ describe('fromHttp', () => {
   test('options: fetchOptions', async () => {
     const server = await createHttpServer((req, res) => {
       const header = req.headers['x-custom-header']
-      res.end(JSON.stringify({ result: header }))
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: header }))
     })
 
     const transport = RpcTransport.fromHttp(server.url, {
@@ -73,7 +73,7 @@ describe('fromHttp', () => {
   test('options: fetchOptions (fn)', async () => {
     const server = await createHttpServer((req, res) => {
       const header = req.headers['x-custom-header']
-      res.end(JSON.stringify({ result: header }))
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: header }))
     })
 
     const transport = RpcTransport.fromHttp(server.url, {
@@ -157,9 +157,13 @@ describe('fromHttp', () => {
 
     const transport = RpcTransport.fromHttp(server.url)
 
-    const blockNumber = await transport.request({ method: 'eth_accounts' })
+    await expect(() =>
+      transport.request({ method: 'eth_accounts' }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(`
+      [RpcTransport.MalformedResponseError: HTTP Response could not be parsed as JSON.
 
-    expect(blockNumber).toMatchInlineSnapshot('undefined')
+      Response: ]
+    `)
   })
 
   test('behavior: http error', async () => {
@@ -200,7 +204,7 @@ describe('fromHttp', () => {
     URL: https://oxlib.sh/rpc
     Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
 
-    Details: "bad"]
+    Details: bad]
   `)
   })
 
@@ -218,6 +222,31 @@ describe('fromHttp', () => {
 
     Response: bad]
   `)
+  })
+
+  test('behavior: timeout still fires when caller supplies signal', async () => {
+    // Regression: previously fetchOptions.signal would replace the timeout
+    // signal, so the timeout could never abort the request.
+    const server = await createHttpServer(async (_, res) => {
+      await setTimeout(200)
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: 'wagmi' }))
+    })
+
+    const controller = new AbortController()
+    const transport = RpcTransport.fromHttp(server.url, {
+      timeout: 50,
+      fetchOptions: {
+        signal: controller.signal,
+      },
+    })
+
+    await expect(() =>
+      transport.request({ method: 'eth_accounts' }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Promise.TimeoutError: Operation timed out.]',
+    )
+
+    server.close()
   })
 })
 

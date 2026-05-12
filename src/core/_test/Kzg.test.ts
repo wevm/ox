@@ -100,3 +100,33 @@ test('exports', () => {
     ]
   `)
 })
+
+test('from: preserves `this` binding for method-style implementations', () => {
+  // Stateful implementation whose methods rely on `this` -- a destructured
+  // wrapper would lose the binding and throw.
+  class StatefulKzg {
+    suffix: Uint8Array
+    constructor(suffix: Uint8Array) {
+      this.suffix = suffix
+    }
+    blobToKzgCommitment(blob: Uint8Array): Uint8Array {
+      return new Uint8Array([...blob.slice(0, 1), ...this.suffix])
+    }
+    computeBlobKzgProof(blob: Uint8Array, commitment: Uint8Array): Uint8Array {
+      return new Uint8Array([
+        ...blob.slice(0, 1),
+        ...commitment.slice(0, 1),
+        ...this.suffix,
+      ])
+    }
+  }
+  const stateful = new StatefulKzg(new Uint8Array([0xab, 0xcd]))
+  const kzg = Kzg.from(stateful)
+  expect(() => kzg.blobToKzgCommitment(new Uint8Array([0x11]))).not.toThrow()
+  expect(kzg.blobToKzgCommitment(new Uint8Array([0x11]))).toEqual(
+    new Uint8Array([0x11, 0xab, 0xcd]),
+  )
+  expect(
+    kzg.computeBlobKzgProof(new Uint8Array([0x11]), new Uint8Array([0x22])),
+  ).toEqual(new Uint8Array([0x11, 0x22, 0xab, 0xcd]))
+})

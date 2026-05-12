@@ -49,6 +49,8 @@ export type Base<
   blockHash: pending extends true ? null : Hex.Hex
   /** Number of block containing this transaction or `null` if pending */
   blockNumber: pending extends true ? null : bigintType
+  /** Timestamp (in seconds) of the block containing this transaction, or `null` if pending. */
+  blockTimestamp?: (pending extends true ? null : bigintType) | undefined
   /** Chain ID that this transaction is valid on. */
   chainId: numberType
   /** @alias `input` Added for TransactionEnvelope - Transaction compatibility. */
@@ -289,6 +291,8 @@ export function fromRpc<
   transaction_.blockNumber = transaction.blockNumber
     ? BigInt(transaction.blockNumber)
     : null
+  if (transaction.blockTimestamp)
+    transaction_.blockTimestamp = BigInt(transaction.blockTimestamp)
   transaction_.data = transaction.input
   transaction_.gas = BigInt(transaction.gas ?? 0n)
   transaction_.nonce = BigInt(transaction.nonce ?? 0n)
@@ -312,7 +316,11 @@ export function fromRpc<
   if (transaction.type)
     transaction_.type =
       (fromRpcType as any)[transaction.type] ?? transaction.type
-  if (signature) transaction_.v = Signature.yParityToV(signature.yParity)
+  if (signature)
+    transaction_.v =
+      transaction.type === '0x0' && typeof transaction.v !== 'undefined'
+        ? Number(transaction.v)
+        : Signature.yParityToV(signature.yParity)
 
   return transaction_ as never
 }
@@ -371,15 +379,18 @@ export function toRpc<pending extends boolean = false>(
     typeof transaction.blockNumber === 'bigint'
       ? Hex.fromNumber(transaction.blockNumber)
       : null
+  if (typeof transaction.blockTimestamp === 'bigint')
+    rpc.blockTimestamp = Hex.fromNumber(transaction.blockTimestamp)
   rpc.from = transaction.from
   rpc.gas = Hex.fromNumber(transaction.gas ?? 0n)
   rpc.hash = transaction.hash
   rpc.input = transaction.input
   rpc.nonce = Hex.fromNumber(transaction.nonce ?? 0n)
   rpc.to = transaction.to
-  rpc.transactionIndex = transaction.transactionIndex
-    ? Hex.fromNumber(transaction.transactionIndex)
-    : null
+  rpc.transactionIndex =
+    typeof transaction.transactionIndex === 'number'
+      ? Hex.fromNumber(transaction.transactionIndex)
+      : null
   rpc.type = (toRpcType as any)[transaction.type] ?? transaction.type
   rpc.value = Hex.fromNumber(transaction.value ?? 0n)
 

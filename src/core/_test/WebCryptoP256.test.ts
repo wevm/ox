@@ -155,7 +155,7 @@ describe('getSharedSecret', () => {
         publicKey: publicKeyB,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      '[Error: privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.]',
+      '[WebCryptoP256.InvalidPrivateKeyAlgorithmError: privateKey is not compatible with ECDH. Please use `createKeyPairECDH` to create an ECDH key.]',
     )
   })
 
@@ -192,6 +192,23 @@ describe('verify', () => {
       await WebCryptoP256.verify({ publicKey, payload, signature: { r, s } }),
     ).toBe(true)
   })
+
+  test('behavior: signature with leading-zero r/s is verified', async () => {
+    // Sign repeatedly until we hit a signature whose r or s value has its
+    // most-significant byte equal to zero. With variable-width number
+    // encoding such signatures fail to verify; with fixed-width 32-byte
+    // encoding (the regression fix) they verify correctly.
+    const payload = '0xdeadbeef'
+    for (let i = 0; i < 256; i++) {
+      const signature = await WebCryptoP256.sign({ payload, privateKey })
+      if (signature.r >> 248n === 0n || signature.s >> 248n === 0n) {
+        expect(
+          await WebCryptoP256.verify({ publicKey, payload, signature }),
+        ).toBe(true)
+        return
+      }
+    }
+  })
 })
 
 test('exports', () => {
@@ -202,6 +219,7 @@ test('exports', () => {
       "getSharedSecret",
       "sign",
       "verify",
+      "InvalidPrivateKeyAlgorithmError",
     ]
   `)
 })

@@ -196,13 +196,11 @@ describe('fromHex', () => {
             97,
           ]
         `)
-    expect(Bytes.fromHex('0xabcde')).toMatchInlineSnapshot(
+    expect(() => Bytes.fromHex('0xabcde')).toThrowErrorMatchingInlineSnapshot(
       `
-      Uint8Array [
-        10,
-        188,
-        222,
-      ]
+      [Hex.InvalidLengthError: Hex value \`"0xabcde"\` is an odd length (5 nibbles).
+
+      It must be an even length.]
     `,
     )
     expect(Bytes.fromHex('0x616263')).toMatchInlineSnapshot(
@@ -1560,13 +1558,7 @@ describe('trim', () => {
   test('default', () => {
     expect(
       Bytes.trimLeft(new Uint8Array([0, 0, 0, 0, 0])),
-    ).toMatchInlineSnapshot(
-      `
-      Uint8Array [
-        0,
-      ]
-    `,
-    )
+    ).toMatchInlineSnapshot('Uint8Array []')
 
     expect(
       Bytes.trimLeft(

@@ -4,6 +4,16 @@ import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 
 /**
+ * Precomputed `0x19 ‖ "Ethereum Signed Message:\n"` prefix (the invariant part
+ * of the ERC-191 v0x45 envelope). Concatenated with the per-message
+ * `Hex.fromString(String(byteLength))` and the message itself.
+ *
+ * @internal
+ */
+const erc191PrefixHex = /*#__PURE__*/ ('0x19' +
+  Hex.fromString('Ethereum Signed Message:\n').slice(2)) as Hex.Hex
+
+/**
  * Encodes a personal sign message in [ERC-191 format](https://eips.ethereum.org/EIPS/eip-191#version-0x45-e): `0x19 ‖ "Ethereum Signed Message:\n" + message.length ‖ message`.
  *
  * @example
@@ -22,8 +32,8 @@ export function encode(data: Hex.Hex | Bytes.Bytes): Hex.Hex {
   const message = Hex.from(data)
   return Hex.concat(
     // Personal Sign Format: `0x19 ‖ "Ethereum Signed Message:\n" ‖ message.length ‖ message`
-    '0x19',
-    Hex.fromString('Ethereum Signed Message:\n' + Hex.size(message)),
+    erc191PrefixHex,
+    Hex.fromString(String(Hex.size(message))),
     message,
   )
 }

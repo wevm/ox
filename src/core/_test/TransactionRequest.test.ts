@@ -196,6 +196,20 @@ describe('fromRpc', () => {
       input: '0xdeadbeef',
     })
   })
+
+  test('behavior: does not mutate input', () => {
+    const rpc = {
+      chainId: '0x1',
+      gas: '0x5208',
+      gasPrice: '0x2540be400',
+      nonce: '0x1',
+      to: '0x0000000000000000000000000000000000000000',
+      value: '0xde0b6b3a7640000',
+    } as const
+    const snapshot = { ...rpc }
+    TransactionRequest.fromRpc(rpc)
+    expect(rpc).toEqual(snapshot)
+  })
 })
 
 test('exports', () => {

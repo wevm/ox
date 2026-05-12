@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import * as Bytes from '../../core/Bytes.js'
+import * as Hash from '../../core/Hash.js'
 import * as P256 from '../../core/P256.js'
 import * as PublicKey from '../../core/PublicKey.js'
 import * as Signature from '../../core/Signature.js'
@@ -442,6 +444,47 @@ describe('getSignPayload', () => {
     )
   })
 
+  test('options: hash', () => {
+    const data = {
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'foo',
+    } as const
+    const { payload: unhashed } = Authentication.getSignPayload(data)
+    const { payload: hashed } = Authentication.getSignPayload({
+      ...data,
+      hash: true,
+    })
+    expect(hashed).toBe(Hash.sha256(unhashed))
+  })
+
+  test('options: hash + verify roundtrip', () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+
+    const challenge =
+      '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' as const
+
+    const { metadata, payload } = Authentication.getSignPayload({
+      challenge,
+      origin: 'http://localhost:5173',
+      rpId: 'localhost',
+      hash: true,
+    })
+
+    // payload is already hashed, so do not re-hash on sign
+    const signature = P256.sign({ payload, privateKey })
+
+    expect(
+      Authentication.verify({
+        challenge,
+        publicKey,
+        signature,
+        metadata,
+      }),
+    ).toBeTruthy()
+  })
+
   test('options: signCount', () => {
     const payload = Authentication.getSignPayload({
       challenge:
@@ -822,6 +865,76 @@ describe('sign', () => {
       },
     }
   `)
+  })
+
+  test('behavior: non-ASCII clientDataJSON decodes as UTF-8', async () => {
+    const clientDataJSON = `{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false,"note":"🚀 héllo"}`
+    const clientDataJSONBytes = Bytes.fromString(clientDataJSON)
+
+    const response = await Authentication.sign({
+      getFn() {
+        return Promise.resolve({
+          id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+          response: {
+            authenticatorData: new Uint8Array([
+              73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118,
+              96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153, 92, 243, 186,
+              131, 29, 151, 99, 5, 0, 0, 0, 0,
+            ]),
+            clientDataJSON: clientDataJSONBytes,
+            signature: new Uint8Array([
+              48, 70, 2, 33, 0, 146, 61, 150, 57, 188, 182, 119, 250, 23, 162,
+              103, 56, 232, 200, 162, 77, 88, 37, 145, 151, 40, 59, 42, 63, 46,
+              225, 53, 221, 74, 128, 13, 165, 2, 33, 0, 128, 39, 38, 71, 180,
+              153, 30, 232, 243, 94, 159, 66, 42, 246, 56, 195, 195, 139, 40,
+              163, 26, 34, 125, 244, 171, 166, 7, 178, 169, 246, 142, 198,
+            ]),
+          },
+        } as any)
+      },
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+    })
+
+    expect(response.metadata.clientDataJSON).toBe(clientDataJSON)
+    expect(response.metadata.challengeIndex).toBe(
+      clientDataJSON.indexOf('"challenge"'),
+    )
+    expect(response.metadata.typeIndex).toBe(clientDataJSON.indexOf('"type"'))
+  })
+
+  test('behavior: large clientDataJSON does not throw', async () => {
+    const extra = 'x'.repeat(200_000)
+    const clientDataJSON = `{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false,"note":"${extra}"}`
+    const clientDataJSONBytes = Bytes.fromString(clientDataJSON)
+
+    const response = await Authentication.sign({
+      getFn() {
+        return Promise.resolve({
+          id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+          response: {
+            authenticatorData: new Uint8Array([
+              73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118,
+              96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153, 92, 243, 186,
+              131, 29, 151, 99, 5, 0, 0, 0, 0,
+            ]),
+            clientDataJSON: clientDataJSONBytes,
+            signature: new Uint8Array([
+              48, 70, 2, 33, 0, 146, 61, 150, 57, 188, 182, 119, 250, 23, 162,
+              103, 56, 232, 200, 162, 77, 88, 37, 145, 151, 40, 59, 42, 63, 46,
+              225, 53, 221, 74, 128, 13, 165, 2, 33, 0, 128, 39, 38, 71, 180,
+              153, 30, 232, 243, 94, 159, 66, 42, 246, 56, 195, 195, 139, 40,
+              163, 26, 34, 125, 244, 171, 166, 7, 178, 169, 246, 142, 198,
+            ]),
+          },
+        } as any)
+      },
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+    })
+
+    expect(response.metadata.clientDataJSON).toBe(clientDataJSON)
+    expect(response.metadata.clientDataJSON.length).toBe(clientDataJSON.length)
   })
 
   test('error: null credential', async () => {
@@ -1655,6 +1768,103 @@ describe('verify', () => {
         publicKey,
         signature,
         rpId: 'evil.com',
+      }),
+    ).toBeFalsy()
+  })
+
+  test('behavior: AT flag set on assertion is rejected', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    // Original flag byte was 0x05; flip the AT bit (0x40) to make 0x45.
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634500000000',
+      challengeIndex: 23,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeFalsy()
+  })
+
+  test('behavior: ED flag set with no extension bytes is rejected', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    // Flag byte 0x85 = UP | UV | ED, but no trailing CBOR map.
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97638500000000',
+      challengeIndex: 23,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeFalsy()
+  })
+
+  test('behavior: ED flag set with malformed CBOR extension is rejected', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    // Flag byte 0x85 = UP | UV | ED, with an obviously malformed trailing
+    // extension (0xff is reserved/break in CBOR and not a valid top-level item).
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97638500000000ff',
+      challengeIndex: 23,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
       }),
     ).toBeFalsy()
   })

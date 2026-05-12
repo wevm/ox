@@ -2,7 +2,7 @@ import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 
 import type * as BlsPoint from './BlsPoint.js'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { OneOf } from './internal/types.js'
 
@@ -52,7 +52,25 @@ export function aggregate<const points extends readonly BlsPoint.BlsPoint[]>(
 export function aggregate(
   points: readonly BlsPoint.BlsPoint[],
 ): BlsPoint.BlsPoint {
-  const group = typeof points[0]?.x === 'bigint' ? bls.G1 : bls.G2
+  if (points.length === 0)
+    throw new Errors.BaseError(
+      'Bls.aggregate expects a non-empty array of points.',
+    )
+
+  const first = points[0]!
+
+  // Fast path: a single point aggregates to itself.
+  if (points.length === 1) return first
+
+  const isG1 = typeof first.x === 'bigint'
+  for (let i = 1; i < points.length; i++) {
+    if ((typeof points[i]!.x === 'bigint') !== isG1)
+      throw new Errors.BaseError(
+        'Bls.aggregate expects all points to be from the same group (G1 or G2).',
+      )
+  }
+
+  const group = isG1 ? bls.G1 : bls.G2
   const point = points.reduce(
     (acc, point) =>
       acc.add(new (group as any).Point(point.x, point.y, point.z)),

@@ -225,7 +225,7 @@ describe('deserialize', () => {
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
       Serialized Transaction: "0x03c0"
-      Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+      Missing Attributes: chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, maxFeePerBlobGas, blobVersionedHashes]
     `)
     })
 
@@ -238,7 +238,7 @@ describe('deserialize', () => {
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
       Serialized Transaction: "0x03c20001"
-      Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList]
+      Missing Attributes: maxPriorityFeePerGas, maxFeePerGas, gas, to, value, data, accessList, maxFeePerBlobGas, blobVersionedHashes]
     `)
     })
 
@@ -498,13 +498,15 @@ describe('serialize', () => {
   })
 
   test('no blobVersionedHashes', () => {
-    // @ts-expect-error
-    const transaction = TxEnvelopeEip4844.from({
-      chainId: 1,
-      nonce: 0n,
-    })
-    const serialized = TxEnvelopeEip4844.serialize(transaction)
-    expect(serialized).toMatchInlineSnapshot(`"0x03cb0180808080808080c080c0"`)
+    expect(() =>
+      TxEnvelopeEip4844.from({
+        // @ts-expect-error
+        chainId: 1,
+        nonce: 0n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Blobs.EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.]`,
+    )
   })
 
   test('options: signature', async () => {

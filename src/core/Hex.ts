@@ -35,7 +35,6 @@ export function assert(
   options: assert.Options = {},
 ): asserts value is Hex {
   const { strict = false } = options
-  if (!value) throw new InvalidHexTypeError(value)
   if (typeof value !== 'string') throw new InvalidHexTypeError(value)
   if (strict) {
     if (!/^0x[0-9a-fA-F]*$/.test(value)) throw new InvalidHexValueError(value)
@@ -109,7 +108,8 @@ export declare namespace concat {
 export function from(value: Hex | Bytes.Bytes | readonly number[]): Hex {
   if (value instanceof Uint8Array) return fromBytes(value)
   if (Array.isArray(value)) return fromBytes(new Uint8Array(value))
-  return value as never
+  assert(value)
+  return value
 }
 
 export declare namespace from {
@@ -665,8 +665,16 @@ export declare namespace toBytes {
  */
 export function toNumber(hex: Hex, options: toNumber.Options = {}): number {
   const { signed, size } = options
-  if (!signed && !size) return Number(hex)
-  return Number(toBigInt(hex, options))
+  const value = !signed && !size ? Number(hex) : Number(toBigInt(hex, options))
+  if (!Number.isSafeInteger(value))
+    throw new IntegerOutOfRangeError({
+      max: `${Number.MAX_SAFE_INTEGER}`,
+      min: signed ? `${Number.MIN_SAFE_INTEGER}` : '0',
+      signed,
+      size,
+      value: `${value}`,
+    })
+  return value
 }
 
 export declare namespace toNumber {

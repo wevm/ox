@@ -49,12 +49,26 @@ export function assert(value: Unwrapped | Wrapped) {
   if (typeof value === 'string') {
     if (Hex.slice(value, -32) !== magicBytes)
       throw new InvalidWrappedSignatureError(value)
-  } else Signature.assert(value.authorization)
+    return
+  }
+  if (value === null || typeof value !== 'object')
+    throw new InvalidUnwrappedSignatureError(value as never)
+  const { authorization, data, signature, to } = value as Unwrapped
+  if (typeof signature !== 'string')
+    throw new InvalidUnwrappedSignatureError(value as Unwrapped)
+  if (data !== undefined && typeof data !== 'string')
+    throw new InvalidUnwrappedSignatureError(value as Unwrapped)
+  if (to !== undefined && typeof to !== 'string')
+    throw new InvalidUnwrappedSignatureError(value as Unwrapped)
+  if (authorization === null || typeof authorization !== 'object')
+    throw new InvalidUnwrappedSignatureError(value as Unwrapped)
+  Signature.assert(authorization)
 }
 
 export declare namespace assert {
   type ErrorType =
     | InvalidWrappedSignatureError
+    | InvalidUnwrappedSignatureError
     | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
@@ -91,6 +105,7 @@ export declare namespace assert {
  */
 export function from(value: Unwrapped | Wrapped): Unwrapped {
   if (typeof value === 'string') return unwrap(value)
+  assert(value)
   return value
 }
 
@@ -114,7 +129,12 @@ export declare namespace from {
 export function unwrap(wrapped: Wrapped): Unwrapped {
   assert(wrapped)
 
-  const suffixLength = Hex.toNumber(Hex.slice(wrapped, -64, -32))
+  const suffixLengthBig = Hex.toBigInt(Hex.slice(wrapped, -64, -32))
+  const wrappedSize = Hex.size(wrapped)
+  // Suffix + length word + magic bytes must fit inside the wrapped value.
+  if (suffixLengthBig < 0n || suffixLengthBig > BigInt(wrappedSize - 64))
+    throw new InvalidWrappedSignatureError(wrapped)
+  const suffixLength = Number(suffixLengthBig)
   const suffix = Hex.slice(wrapped, -suffixLength - 64, -64)
   const signature = Hex.slice(wrapped, 0, -suffixLength - 64)
 
@@ -169,10 +189,12 @@ export function wrap(value: Unwrapped): Wrapped {
 
   assert(value)
 
-  const self = Secp256k1.recoverAddress({
-    payload: Authorization.getSignPayload(value.authorization),
-    signature: Signature.from(value.authorization),
-  })
+  const to =
+    value.to ??
+    Secp256k1.recoverAddress({
+      payload: Authorization.getSignPayload(value.authorization),
+      signature: Signature.from(value.authorization),
+    })
 
   const suffix = AbiParameters.encode(suffixParameters, [
     {
@@ -180,7 +202,7 @@ export function wrap(value: Unwrapped): Wrapped {
       delegation: value.authorization.address,
       chainId: BigInt(value.authorization.chainId),
     },
-    value.to ?? self,
+    to,
     data ?? '0x',
   ])
   const suffixLength = Hex.fromNumber(Hex.size(suffix), { size: 32 })
@@ -224,5 +246,18 @@ export class InvalidWrappedSignatureError extends Errors.BaseError {
 
   constructor(wrapped: Wrapped) {
     super(`Value \`${wrapped}\` is an invalid ERC-8010 wrapped signature.`)
+  }
+}
+
+/** Thrown when an ERC-8010 unwrapped signature object is malformed. */
+export class InvalidUnwrappedSignatureError extends Errors.BaseError {
+  override readonly name = 'SignatureErc8010.InvalidUnwrappedSignatureError'
+
+  constructor(value: Unwrapped) {
+    super(
+      `Value \`${JSON.stringify(value, (_, v) =>
+        typeof v === 'bigint' ? v.toString() : v,
+      )}\` is an invalid ERC-8010 unwrapped signature.`,
+    )
   }
 }

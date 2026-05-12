@@ -72,3 +72,22 @@ describe('toRpc', () => {
     `)
   })
 })
+
+describe('v0.8', () => {
+  test('round-trips matching v0.7 shape', () => {
+    const v08 = {
+      callGasLimit: 300_000n,
+      paymasterPostOpGasLimit: 100_000n,
+      paymasterVerificationGasLimit: 100_000n,
+      preVerificationGas: 100_000n,
+      verificationGasLimit: 100_000n,
+    } as const satisfies UserOperationGas.UserOperationGas<'0.8'>
+
+    const rpc = UserOperationGas.toRpc(v08) as UserOperationGas.Rpc<'0.8'>
+    const parsed = UserOperationGas.fromRpc(
+      rpc,
+    ) as UserOperationGas.UserOperationGas<'0.8'>
+
+    expect(parsed).toEqual(v08)
+  })
+})

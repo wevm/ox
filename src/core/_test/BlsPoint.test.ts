@@ -19,6 +19,26 @@ describe('fromBytes', () => {
     const publicKeyHex = BlsPoint.toBytes(publicKey)
     expect(BlsPoint.fromBytes(publicKeyHex, 'G2')).toEqual(publicKey)
   })
+
+  test('error: wrong byte length for G1', () => {
+    const g2Bytes = BlsPoint.toBytes(
+      Bls.getPublicKey({ privateKey, size: 'long-key:short-sig' }),
+    )
+    expect(() =>
+      BlsPoint.fromBytes(g2Bytes, 'G1'),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Expected 48 bytes for a G1 point, received 96.]`,
+    )
+  })
+
+  test('error: wrong byte length for G2', () => {
+    const g1Bytes = BlsPoint.toBytes(Bls.getPublicKey({ privateKey }))
+    expect(() =>
+      BlsPoint.fromBytes(g1Bytes, 'G2'),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Expected 96 bytes for a G2 point, received 48.]`,
+    )
+  })
 })
 
 describe('fromHex', () => {

@@ -1,6 +1,6 @@
 import { p256 } from '@noble/curves/nist.js'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
@@ -14,7 +14,7 @@ const N = p256.Point.CURVE().n
  *
  * - a `privateKey` of type [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey)
  *
- * - a `publicKey` of type {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}
+ * - a `publicKey` of type {@link ox#PublicKey.PublicKey}
  *
  * @example
  * ```ts twoslash
@@ -157,9 +157,7 @@ export async function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { as = 'Hex', privateKey, publicKey } = options
 
   if (privateKey.algorithm.name === 'ECDSA') {
-    throw new Error(
-      'privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.',
-    )
+    throw new InvalidPrivateKeyAlgorithmError()
   }
 
   const publicKeyCrypto = await globalThis.crypto.subtle.importKey(
@@ -214,6 +212,11 @@ export declare namespace getSharedSecret {
 /**
  * Signs a payload with the provided `CryptoKey` private key and returns a P256 signature.
  *
+ * @remarks
+ * Web Crypto may emit ECDSA signatures with `s` in the upper half of the curve
+ * order. ox always normalizes the result to a low-S signature so it round-trips
+ * with {@link ox#WebCryptoP256.(verify:function)} and other ox ECDSA verifiers.
+ *
  * @example
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
@@ -231,7 +234,7 @@ export declare namespace getSharedSecret {
  * ```
  *
  * @param options - Options for signing the payload.
- * @returns The P256 ECDSA {@link ox#Signature.Signature}.
+ * @returns The P256 ECDSA {@link ox#Signature.Signature} (always low-S normalized).
  */
 export async function sign(
   options: sign.Options,
@@ -305,7 +308,10 @@ export async function verify(options: verify.Options): Promise<boolean> {
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes.concat(Bytes.fromNumber(signature.r), Bytes.fromNumber(signature.s)),
+    Bytes.concat(
+      Bytes.fromNumber(signature.r, { size: 32 }),
+      Bytes.fromNumber(signature.s, { size: 32 }),
+    ),
     Bytes.from(payload),
   )
 }
@@ -323,4 +329,18 @@ export declare namespace verify {
   }
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Thrown when an ECDSA private key is supplied to {@link ox#WebCryptoP256.(getSharedSecret:function)}.
+ * Only ECDH private keys are valid for shared secret derivation.
+ */
+export class InvalidPrivateKeyAlgorithmError extends Errors.BaseError {
+  override readonly name = 'WebCryptoP256.InvalidPrivateKeyAlgorithmError'
+
+  constructor() {
+    super(
+      'privateKey is not compatible with ECDH. Please use `createKeyPairECDH` to create an ECDH key.',
+    )
+  }
 }

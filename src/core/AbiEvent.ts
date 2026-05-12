@@ -137,8 +137,16 @@ export function assertArgs<const abiEvent extends AbiEvent>(
     if (input.type === 'address')
       return Address.isEqual(value as Address.Address, arg as Address.Address)
     if (input.type === 'string')
-      return Hash.keccak256(Bytes.fromString(value as string)) === arg
-    if (input.type === 'bytes') return Hash.keccak256(value as Hex.Hex) === arg
+      return (
+        Hash.keccak256(Bytes.fromString(value as string), { as: 'Hex' }) === arg
+      )
+    if (input.type === 'bytes') {
+      const hex =
+        typeof value === 'string'
+          ? (value as Hex.Hex)
+          : Hex.fromBytes(value as Bytes.Bytes)
+      return Hash.keccak256(hex, { as: 'Hex' }) === arg
+    }
     return value === arg
   }
 
@@ -365,23 +373,41 @@ export function decode(
 
   const { data, topics } = log
 
-  const [selector_, ...argTopics] = topics
+  const isAnonymous = abiEvent.anonymous === true
+  const argTopics = isAnonymous ? [...topics] : topics.slice(1)
 
-  const selector = getSelector(abiEvent)
-  if (selector_ !== selector)
-    throw new SelectorTopicMismatchError({
-      abiEvent,
-      actual: selector_,
-      expected: selector,
-    })
+  if (!isAnonymous) {
+    const selector_ = topics[0]
+    const selector = getSelector(abiEvent)
+    if (selector_ !== selector)
+      throw new SelectorTopicMismatchError({
+        abiEvent,
+        actual: selector_,
+        expected: selector,
+      })
+  }
 
   const { inputs } = abiEvent
   const isUnnamed = inputs?.every((x) => !('name' in x && x.name))
 
   let args: any = isUnnamed ? [] : {}
 
+  // Single-pass partition: keep both the input and its original index so we
+  // don't have to call `inputs.indexOf(...)` per non-indexed entry below
+  // (which is O(n^2) on event width).
+  const indexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const nonIndexedOriginalIndex: number[] = []
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i]!
+    if ('indexed' in input && input.indexed) indexedInputs.push(input)
+    else {
+      nonIndexedInputs.push(input)
+      nonIndexedOriginalIndex.push(i)
+    }
+  }
+
   // Decode topics (indexed args).
-  const indexedInputs = inputs.filter((x) => 'indexed' in x && x.indexed)
   for (let i = 0; i < indexedInputs.length; i++) {
     const param = indexedInputs[i]!
     const topic = argTopics[i]
@@ -404,7 +430,6 @@ export function decode(
   }
 
   // Decode data (non-indexed args).
-  const nonIndexedInputs = inputs.filter((x) => !('indexed' in x && x.indexed))
   if (nonIndexedInputs.length > 0) {
     if (data && data !== '0x') {
       try {
@@ -413,7 +438,7 @@ export function decode(
           if (isUnnamed) args = [...args, ...decodedData]
           else {
             for (let i = 0; i < nonIndexedInputs.length; i++) {
-              const index = inputs.indexOf(nonIndexedInputs[i]!)
+              const index = nonIndexedOriginalIndex[i]!
               args[nonIndexedInputs[i]!.name! || index] = decodedData[i]
             }
           }
@@ -660,8 +685,14 @@ export function encode(
     if (args_.length > 0) {
       const encode = (param: abitype.AbiParameter, value: unknown) => {
         if (param.type === 'string')
-          return Hash.keccak256(Hex.fromString(value as string))
-        if (param.type === 'bytes') return Hash.keccak256(value as Hex.Hex)
+          return Hash.keccak256(Hex.fromString(value as string), { as: 'Hex' })
+        if (param.type === 'bytes') {
+          const hex =
+            typeof value === 'string'
+              ? (value as Hex.Hex)
+              : Hex.fromBytes(value as Bytes.Bytes)
+          return Hash.keccak256(hex, { as: 'Hex' })
+        }
         if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
           throw new FilterTypeNotSupportedError(param.type)
         return AbiParameters.encode([param], [value])
@@ -679,6 +710,8 @@ export function encode(
         }) ?? []
     }
   }
+
+  if (abiEvent.anonymous === true) return { topics }
 
   const selector = (() => {
     if (abiEvent.hash) return abiEvent.hash
@@ -705,9 +738,9 @@ export declare namespace encode {
     : [readonly unknown[] | Record<string, unknown>] | []
 
   type ReturnType = {
-    topics: Compute<
-      [selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]
-    >
+    topics:
+      | Compute<[selector: Hex.Hex, ...(Hex.Hex | readonly Hex.Hex[] | null)[]]>
+      | readonly (Hex.Hex | readonly Hex.Hex[] | null)[]
   }
 
   type ErrorType =
