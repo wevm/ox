@@ -984,6 +984,23 @@ describe('verify', () => {
     ).toThrow('Credential ID mismatch')
   })
 
+  test('default attestation is "none" (matches getOptions default)', async () => {
+    const { credential, challenge, origin, rpId } = await mockCreateCredential({
+      fmt: 'none',
+    })
+
+    // No `attestation` option; runtime default must be 'none' so that
+    // unattested ('fmt: "none"') credentials are accepted by default.
+    const result = Registration.verify({
+      credential,
+      challenge,
+      origin,
+      rpId,
+    })
+
+    expect(result.credential.id).toBe(credential.id)
+  })
+
   test('error: fmt none rejected when attestation is required', async () => {
     const { credential, challenge, origin, rpId } = await mockCreateCredential({
       fmt: 'none',
