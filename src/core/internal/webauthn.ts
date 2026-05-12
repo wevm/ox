@@ -16,6 +16,36 @@ export function parseAsn1Signature(bytes: Uint8Array) {
 }
 
 /**
+ * SPKI prefix for an uncompressed P-256 public key (91-byte total SPKI):
+ * `SEQUENCE { SEQUENCE { OID ecPublicKey, OID secp256r1 }, BIT STRING }`.
+ * The 26-byte prefix is followed by `0x04 || X(32) || Y(32)`.
+ *
+ * @internal
+ */
+const spkiP256Prefix = /*#__PURE__*/ new Uint8Array([
+  0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+  0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03, 0x42, 0x00,
+])
+
+/**
+ * Parses a P-256 uncompressed public key from a SubjectPublicKeyInfo (SPKI)
+ * DER blob. WebAuthn `getPublicKey()` returns SPKI bytes per the spec, and for
+ * P-256 with `alg=-7` the structure is fixed 91 bytes. The trailing 65 bytes
+ * are exactly the SEC1 uncompressed point `0x04 || X(32) || Y(32)`.
+ *
+ * @internal
+ */
+function spkiToRawP256(spki: Uint8Array): Uint8Array {
+  if (spki.length !== 91) throw new Registration.CreateFailedError()
+  for (let i = 0; i < spkiP256Prefix.length; i++)
+    if (spki[i] !== spkiP256Prefix[i]!)
+      throw new Registration.CreateFailedError()
+  if (spki[spkiP256Prefix.length] !== 0x04)
+    throw new Registration.CreateFailedError()
+  return spki.subarray(spkiP256Prefix.length)
+}
+
+/**
  * Parses a public key into x and y coordinates from the public key
  * defined on the credential.
  *
@@ -33,21 +63,7 @@ export async function parseCredentialPublicKey(
 
     // Converting `publicKeyBuffer` throws when credential is created by 1Password Firefox Add-on
     const publicKeyBytes = new Uint8Array(publicKeyBuffer)
-    const cryptoKey = await crypto.subtle.importKey(
-      'spki',
-      new Uint8Array(publicKeyBytes),
-      {
-        name: 'ECDSA',
-        namedCurve: 'P-256',
-        hash: 'SHA-256',
-      },
-      true,
-      ['verify'],
-    )
-    const publicKey = new Uint8Array(
-      await crypto.subtle.exportKey('raw', cryptoKey),
-    )
-    return PublicKey.from(publicKey)
+    return PublicKey.from(spkiToRawP256(publicKeyBytes))
   } catch (error) {
     // Fallback for 1Password Firefox Add-on restricts access to certain credential properties
     // so we need to use `attestationObject` to extract the public key.
