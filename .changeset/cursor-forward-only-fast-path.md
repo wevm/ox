@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Added a forward-only fast path to the internal `Cursor` `_touch` bookkeeping so monotonic reads (the dominant ABI decode pattern) skip the per-read `Map` get/set used to enforce the recursive-read limit.
+Sped up `AbiParameters.decode`, `AbiFunction.decodeData`, `AbiError.decode`, and `AbiEvent.decode` on monotonically-forward reads (the dominant ABI decode pattern), eliminating per-read bookkeeping that previously ran on every cursor advance.
