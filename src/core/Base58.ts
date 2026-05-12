@@ -1,5 +1,5 @@
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal from './internal/base58.js'
 

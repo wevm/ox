@@ -665,8 +665,16 @@ export declare namespace toBytes {
  */
 export function toNumber(hex: Hex, options: toNumber.Options = {}): number {
   const { signed, size } = options
-  if (!signed && !size) return Number(hex)
-  return Number(toBigInt(hex, options))
+  const value = !signed && !size ? Number(hex) : Number(toBigInt(hex, options))
+  if (!Number.isSafeInteger(value))
+    throw new IntegerOutOfRangeError({
+      max: `${Number.MAX_SAFE_INTEGER}`,
+      min: signed ? `${Number.MIN_SAFE_INTEGER}` : '0',
+      signed,
+      size,
+      value: `${value}`,
+    })
+  return value
 }
 
 export declare namespace toNumber {
