@@ -260,6 +260,7 @@ describe('fromTupleList', () => {
       ['0x03', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x14'],
     ] as const satisfies Authorization.TupleList
     const authorization = Authorization.fromTupleList(tupleList)
+    expectTypeOf(authorization).toMatchTypeOf<Authorization.List<false>>()
     expect(authorization).toMatchInlineSnapshot(`
     [
       {

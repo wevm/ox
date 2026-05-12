@@ -353,7 +353,7 @@ export function fromTupleList<const tupleList extends TupleList>(
 
 export declare namespace fromTupleList {
   type ReturnType<tupleList extends TupleList> = Compute<
-    TupleList<tupleList extends TupleList<true> ? true : false>
+    List<tupleList extends TupleList<true> ? true : false>
   >
 
   type ErrorType = Errors.GlobalErrorType
