@@ -39,9 +39,7 @@ export function quantityToBigIntRequired(
   container?: string | undefined,
 ): bigint {
   if (value === undefined || value === null)
-    throw new MissingFieldError(
-      container ? { field, container } : { field },
-    )
+    throw new MissingFieldError(container ? { field, container } : { field })
   return BigInt(value)
 }
 

@@ -840,7 +840,9 @@ export function encodeData(value: {
   const { data, primaryType, types } = value
   const typeHashes = value.typeHashes ?? new Map<string, Hex.Hex>()
   const encodedTypes: AbiParameters.Parameter[] = [{ type: 'bytes32' }]
-  const encodedValues: unknown[] = [hashType({ primaryType, types, typeHashes })]
+  const encodedValues: unknown[] = [
+    hashType({ primaryType, types, typeHashes }),
+  ]
 
   for (const field of types[primaryType] ?? []) {
     const [type, value] = encodeField({

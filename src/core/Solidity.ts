@@ -107,3 +107,60 @@ export const maxUint232 = 2n ** 232n - 1n
 export const maxUint240 = 2n ** 240n - 1n
 export const maxUint248 = 2n ** 248n - 1n
 export const maxUint256 = 2n ** 256n - 1n
+
+/**
+ * Returns the inclusive `[min, max]` range of values representable by a Solidity
+ * integer of the given bit width.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Solidity } from 'ox'
+ *
+ * Solidity.intRange(8, false)
+ * // @log: { min: 0n, max: 255n }
+ *
+ * Solidity.intRange(8, true)
+ * // @log: { min: -128n, max: 127n }
+ * ```
+ *
+ * @param bits - Bit width (must be a positive multiple of 8 in `[8, 256]`).
+ * @param signed - Whether the integer is signed.
+ * @returns `{ min, max }` inclusive bounds.
+ */
+export function intRange(
+  bits: number,
+  signed: boolean,
+): { min: bigint; max: bigint } {
+  if (!Number.isInteger(bits) || bits < 8 || bits > 256 || bits % 8 !== 0)
+    throw new Error(
+      `\`bits\` must be a positive multiple of 8 in [8, 256]. Got \`${bits}\`.`,
+    )
+  const big = BigInt(bits)
+  if (signed) {
+    const max = 2n ** (big - 1n) - 1n
+    return { min: -(max + 1n), max }
+  }
+  return { min: 0n, max: 2n ** big - 1n }
+}
+
+/**
+ * Returns the maximum value representable by an unsigned Solidity integer of the
+ * given bit width.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Solidity } from 'ox'
+ *
+ * Solidity.maxUint(8)
+ * // @log: 255n
+ *
+ * Solidity.maxUint(256) === Solidity.maxUint256
+ * // @log: true
+ * ```
+ *
+ * @param bits - Bit width (must be a positive multiple of 8 in `[8, 256]`).
+ * @returns The maximum unsigned value.
+ */
+export function maxUint(bits: number): bigint {
+  return intRange(bits, false).max
+}
