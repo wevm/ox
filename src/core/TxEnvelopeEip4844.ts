@@ -3,6 +3,7 @@ import * as Blobs from './Blobs.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Compute,
@@ -192,18 +193,30 @@ export function deserialize(
     chainId: Number(chainId),
     type,
   } as TxEnvelopeEip4844
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(maxFeePerBlobGas) && maxFeePerBlobGas !== '0x')
-    transaction.maxFeePerBlobGas = BigInt(maxFeePerBlobGas)
-  if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
-    transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
-    transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
+  const to_ = Tx.hexToHexOrUndefined(to as Hex.Hex | undefined)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.hexToBigIntOrUndefined(gas as Hex.Hex | undefined)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.hexToHexOrUndefined(data as Hex.Hex | undefined)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined)
+    transaction.nonce = Tx.hexToBigIntOrZero(nonce as Hex.Hex)
+  const value_ = Tx.hexToBigIntOrUndefined(value as Hex.Hex | undefined)
+  if (value_ !== undefined) transaction.value = value_
+  const maxFeePerBlobGas_ = Tx.hexToBigIntOrUndefined(
+    maxFeePerBlobGas as Hex.Hex | undefined,
+  )
+  if (maxFeePerBlobGas_ !== undefined)
+    transaction.maxFeePerBlobGas = maxFeePerBlobGas_
+  const maxFeePerGas_ = Tx.hexToBigIntOrUndefined(
+    maxFeePerGas as Hex.Hex | undefined,
+  )
+  if (maxFeePerGas_ !== undefined) transaction.maxFeePerGas = maxFeePerGas_
+  const maxPriorityFeePerGas_ = Tx.hexToBigIntOrUndefined(
+    maxPriorityFeePerGas as Hex.Hex | undefined,
+  )
+  if (maxPriorityFeePerGas_ !== undefined)
+    transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
   if (accessList?.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList.fromTupleList(accessList as any)
   if (blobs && commitments && proofs) {
@@ -599,15 +612,15 @@ export function serialize(
 
   const serialized = [
     Hex.fromNumber(chainId),
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
-    maxFeePerGas ? Hex.fromNumber(maxFeePerGas) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(maxPriorityFeePerGas),
+    Tx.quantityToHex(maxFeePerGas),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
+    Tx.quantityToHex(value),
     data ?? input ?? '0x',
     accessTupleList,
-    maxFeePerBlobGas ? Hex.fromNumber(maxFeePerBlobGas) : '0x',
+    Tx.quantityToHex(maxFeePerBlobGas),
     blobVersionedHashes ?? [],
     ...(signature ? Signature.toTuple(signature) : []),
   ] as const

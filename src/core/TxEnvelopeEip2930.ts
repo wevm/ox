@@ -3,6 +3,7 @@ import * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Compute,
@@ -146,14 +147,17 @@ export function deserialize(serialized: Serialized): TxEnvelopeEip2930 {
     chainId: Number(chainId as Hex.Hex),
     type,
   } as TxEnvelopeEip2930
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(gasPrice) && gasPrice !== '0x')
-    transaction.gasPrice = BigInt(gasPrice)
+  const to_ = Tx.hexToHexOrUndefined(to)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.hexToBigIntOrUndefined(gas)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.hexToHexOrUndefined(data)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined) transaction.nonce = Tx.hexToBigIntOrZero(nonce)
+  const value_ = Tx.hexToBigIntOrUndefined(value)
+  if (value_ !== undefined) transaction.value = value_
+  const gasPrice_ = Tx.hexToBigIntOrUndefined(gasPrice)
+  if (gasPrice_ !== undefined) transaction.gasPrice = gasPrice_
   if (accessList!.length !== 0 && accessList !== '0x')
     transaction.accessList = AccessList.fromTupleList(accessList as any)
 
@@ -467,11 +471,11 @@ export function serialize(
 
   const serialized = [
     Hex.fromNumber(chainId),
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    gasPrice ? Hex.fromNumber(gasPrice) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(gasPrice),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
+    Tx.quantityToHex(value),
     data ?? input ?? '0x',
     accessTupleList,
     ...(signature ? Signature.toTuple(signature) : []),
