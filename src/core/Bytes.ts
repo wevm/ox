@@ -212,16 +212,24 @@ export declare namespace fromBoolean {
 export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
 
+  if (
+    typeof value !== 'string' ||
+    value.length < 2 ||
+    value.charCodeAt(0) !== 48 /* '0' */ ||
+    value.charCodeAt(1) !== 120 /* 'x' */
+  )
+    throw new Hex.InvalidHexValueError(value)
+
   let hex = value
   if (size) {
     internal_hex.assertSize(value, size)
     hex = Hex.padRight(value, size)
   }
 
-  let hexString = hex.slice(2) as string
-  if (hexString.length % 2) hexString = `0${hexString}`
+  const hexString = hex.slice(2)
+  if ((hexString.length & 1) !== 0) throw new Hex.InvalidLengthError(hex)
 
-  const length = hexString.length / 2
+  const length = hexString.length >> 1
   const bytes = new Uint8Array(length)
   for (let index = 0, j = 0; index < length; index++) {
     const nibbleLeft = internal.charCodeToBase16(hexString.charCodeAt(j++))
@@ -245,6 +253,8 @@ export declare namespace fromHex {
   type ErrorType =
     | internal_hex.assertSize.ErrorType
     | Hex.padRight.ErrorType
+    | Hex.InvalidHexValueError
+    | Hex.InvalidLengthError
     | Errors.GlobalErrorType
 }
 

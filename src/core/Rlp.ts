@@ -59,14 +59,8 @@ export function to<
 >(value: value, to: to | 'Hex' | 'Bytes'): to.ReturnType<to> {
   const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
 
-  const bytes = (() => {
-    if (typeof value === 'string') {
-      if (value.length > 3 && value.length % 2 !== 0)
-        throw new Hex.InvalidLengthError(value)
-      return Bytes.fromHex(value)
-    }
-    return value as Bytes.Bytes
-  })()
+  const bytes =
+    typeof value === 'string' ? Bytes.fromHex(value) : (value as Bytes.Bytes)
 
   const cursor = Cursor.create(bytes, {
     recursiveReadLimit: Number.POSITIVE_INFINITY,
