@@ -499,8 +499,8 @@ describe('serialize', () => {
 
   test('no blobVersionedHashes', () => {
     expect(() =>
+      // @ts-expect-error
       TxEnvelopeEip4844.from({
-        // @ts-expect-error
         chainId: 1,
         nonce: 0n,
       }),

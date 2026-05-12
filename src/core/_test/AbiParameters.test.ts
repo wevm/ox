@@ -255,6 +255,7 @@ describe('encodePacked', () => {
 
   test('error: fixed-array length mismatch', () => {
     expect(() =>
+      // @ts-expect-error
       AbiParameters.encodePacked(['uint256[2]'], [[1n, 2n, 3n]]),
     ).toThrowErrorMatchingInlineSnapshot(
       '[AbiParameters.ArrayLengthMismatchError: Array length mismatch for type `uint256[2]`. Expected: `2`. Given: `3`.]',
