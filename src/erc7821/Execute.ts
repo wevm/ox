@@ -10,6 +10,9 @@ export type Batch = {
 
 export type Call = Calls.Call
 
+/** Cached ABI parameters for the encoded `bytes[]` payload of batch-of-batches. */
+const batchesParameters = /*#__PURE__*/ AbiParameters.from('bytes[]')
+
 export const abiFunction = {
   type: 'function',
   name: 'execute',
@@ -86,7 +89,7 @@ export function decodeBatchOfBatchesData(
   ]
 
   const [encodedBatches] = AbiParameters.decode(
-    AbiParameters.from('bytes[]'),
+    batchesParameters,
     executionData,
   ) as readonly [Hex.Hex[]]
 
@@ -146,7 +149,7 @@ export declare namespace decodeBatchOfBatchesData {
  * @returns The encoded data.
  */
 export function encodeBatchOfBatchesData(batches: readonly Batch[]) {
-  const b = AbiParameters.encode(AbiParameters.from('bytes[]'), [
+  const b = AbiParameters.encode(batchesParameters, [
     batches.map((b) => {
       const batch = b as Batch
       return Calls.encode(batch.calls, {
