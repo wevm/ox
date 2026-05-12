@@ -500,7 +500,7 @@ export async function toKeyAsync(
           password,
         })
       case 'pbkdf2':
-        return await pbkdf2({
+        return await pbkdf2Async({
           iv: Bytes.from(`0x${iv}`),
           iterations: c,
           password,
