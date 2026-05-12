@@ -20,7 +20,7 @@ export class MissingFieldError extends Error {
  *
  * @internal
  */
-export function quantityToBigInt(
+export function toBigInt(
   value: Hex.Hex | undefined | null,
 ): bigint | undefined {
   if (value === undefined || value === null) return undefined
@@ -33,7 +33,7 @@ export function quantityToBigInt(
  *
  * @internal
  */
-export function quantityToBigIntRequired(
+export function toBigIntRequired(
   value: Hex.Hex | undefined | null,
   field: string,
   container?: string | undefined,
@@ -51,7 +51,7 @@ export function quantityToBigIntRequired(
  *
  * @internal
  */
-export function quantityToNumber(
+export function toNumber(
   value: Hex.Hex | undefined | null,
 ): number | undefined {
   if (value === undefined || value === null) return undefined
@@ -63,7 +63,7 @@ export function quantityToNumber(
  *
  * @internal
  */
-export function bigIntToQuantity(
+export function fromBigInt(
   value: bigint | undefined | null,
 ): Hex.Hex | undefined {
   if (typeof value !== 'bigint') return undefined
@@ -75,7 +75,7 @@ export function bigIntToQuantity(
  *
  * @internal
  */
-export function numberToQuantity(
+export function fromNumber(
   value: number | undefined | null,
 ): Hex.Hex | undefined {
   if (typeof value !== 'number') return undefined

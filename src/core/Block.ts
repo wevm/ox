@@ -156,11 +156,11 @@ export function toRpc<
     return Transaction.toRpc(transaction as any) as any
   })
   return {
-    baseFeePerGas: Quantity.bigIntToQuantity(block.baseFeePerGas),
-    blobGasUsed: Quantity.bigIntToQuantity(block.blobGasUsed),
-    excessBlobGas: Quantity.bigIntToQuantity(block.excessBlobGas),
+    baseFeePerGas: Quantity.fromBigInt(block.baseFeePerGas),
+    blobGasUsed: Quantity.fromBigInt(block.blobGasUsed),
+    excessBlobGas: Quantity.fromBigInt(block.excessBlobGas),
     extraData: block.extraData,
-    difficulty: Quantity.bigIntToQuantity(block.difficulty),
+    difficulty: Quantity.fromBigInt(block.difficulty),
     gasLimit: Hex.fromNumber(block.gasLimit),
     gasUsed: Hex.fromNumber(block.gasUsed),
     hash: block.hash,
@@ -179,7 +179,7 @@ export function toRpc<
     size: Hex.fromNumber(block.size),
     stateRoot: block.stateRoot,
     timestamp: Hex.fromNumber(block.timestamp),
-    totalDifficulty: Quantity.bigIntToQuantity(block.totalDifficulty),
+    totalDifficulty: Quantity.fromBigInt(block.totalDifficulty),
     transactions,
     transactionsRoot: block.transactionsRoot,
     uncles: block.uncles,
@@ -277,17 +277,17 @@ export function fromRpc<
   })
   return {
     ...block,
-    baseFeePerGas: Quantity.quantityToBigInt(block.baseFeePerGas),
-    blobGasUsed: Quantity.quantityToBigInt(block.blobGasUsed),
-    difficulty: Quantity.quantityToBigInt(block.difficulty),
-    excessBlobGas: Quantity.quantityToBigInt(block.excessBlobGas),
+    baseFeePerGas: Quantity.toBigInt(block.baseFeePerGas),
+    blobGasUsed: Quantity.toBigInt(block.blobGasUsed),
+    difficulty: Quantity.toBigInt(block.difficulty),
+    excessBlobGas: Quantity.toBigInt(block.excessBlobGas),
     gasLimit: BigInt(block.gasLimit ?? 0n),
     gasUsed: BigInt(block.gasUsed ?? 0n),
     number: block.number ? BigInt(block.number) : null,
     size: BigInt(block.size ?? 0n),
     stateRoot: block.stateRoot,
     timestamp: BigInt(block.timestamp ?? 0n),
-    totalDifficulty: Quantity.quantityToBigInt(block.totalDifficulty),
+    totalDifficulty: Quantity.toBigInt(block.totalDifficulty),
     transactions,
     withdrawals: block.withdrawals?.map(Withdrawal.fromRpc),
   } as Block as never

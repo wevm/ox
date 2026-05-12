@@ -137,7 +137,7 @@ export function toRpc(proof: AccountProof): Rpc {
     storageProof: proof.storageProof.map((slot) => ({
       key: slot.key,
       proof: slot.proof,
-      value: Quantity.bigIntToQuantity(slot.value)!,
+      value: Quantity.fromBigInt(slot.value)!,
     })),
   }
 }

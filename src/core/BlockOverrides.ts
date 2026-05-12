@@ -62,25 +62,25 @@ export type Rpc = BlockOverrides<Hex.Hex, Hex.Hex>
 export function fromRpc(rpcBlockOverrides: Rpc): BlockOverrides {
   const overrides: BlockOverrides = {}
   if (rpcBlockOverrides.baseFeePerGas !== undefined)
-    overrides.baseFeePerGas = Quantity.quantityToBigInt(
+    overrides.baseFeePerGas = Quantity.toBigInt(
       rpcBlockOverrides.baseFeePerGas,
     )
   if (rpcBlockOverrides.blobBaseFee !== undefined)
-    overrides.blobBaseFee = Quantity.quantityToBigInt(
+    overrides.blobBaseFee = Quantity.toBigInt(
       rpcBlockOverrides.blobBaseFee,
     )
   if (rpcBlockOverrides.feeRecipient !== undefined)
     overrides.feeRecipient = rpcBlockOverrides.feeRecipient
   if (rpcBlockOverrides.gasLimit !== undefined)
-    overrides.gasLimit = Quantity.quantityToBigInt(rpcBlockOverrides.gasLimit)
+    overrides.gasLimit = Quantity.toBigInt(rpcBlockOverrides.gasLimit)
   if (rpcBlockOverrides.number !== undefined)
-    overrides.number = Quantity.quantityToBigInt(rpcBlockOverrides.number)
+    overrides.number = Quantity.toBigInt(rpcBlockOverrides.number)
   if (rpcBlockOverrides.prevRandao !== undefined)
-    overrides.prevRandao = Quantity.quantityToBigInt(
+    overrides.prevRandao = Quantity.toBigInt(
       rpcBlockOverrides.prevRandao,
     )
   if (rpcBlockOverrides.time !== undefined)
-    overrides.time = Quantity.quantityToBigInt(rpcBlockOverrides.time)
+    overrides.time = Quantity.toBigInt(rpcBlockOverrides.time)
   if (rpcBlockOverrides.withdrawals !== undefined)
     overrides.withdrawals = rpcBlockOverrides.withdrawals.map(
       Withdrawal.fromRpc,
@@ -120,19 +120,19 @@ export function fromRpc(rpcBlockOverrides: Rpc): BlockOverrides {
 export function toRpc(blockOverrides: BlockOverrides): Rpc {
   const rpc: Rpc = {}
   if (typeof blockOverrides.baseFeePerGas === 'bigint')
-    rpc.baseFeePerGas = Quantity.bigIntToQuantity(blockOverrides.baseFeePerGas)
+    rpc.baseFeePerGas = Quantity.fromBigInt(blockOverrides.baseFeePerGas)
   if (typeof blockOverrides.blobBaseFee === 'bigint')
-    rpc.blobBaseFee = Quantity.bigIntToQuantity(blockOverrides.blobBaseFee)
+    rpc.blobBaseFee = Quantity.fromBigInt(blockOverrides.blobBaseFee)
   if (typeof blockOverrides.feeRecipient === 'string')
     rpc.feeRecipient = blockOverrides.feeRecipient
   if (typeof blockOverrides.gasLimit === 'bigint')
-    rpc.gasLimit = Quantity.bigIntToQuantity(blockOverrides.gasLimit)
+    rpc.gasLimit = Quantity.fromBigInt(blockOverrides.gasLimit)
   if (typeof blockOverrides.number === 'bigint')
-    rpc.number = Quantity.bigIntToQuantity(blockOverrides.number)
+    rpc.number = Quantity.fromBigInt(blockOverrides.number)
   if (typeof blockOverrides.prevRandao === 'bigint')
-    rpc.prevRandao = Quantity.bigIntToQuantity(blockOverrides.prevRandao)
+    rpc.prevRandao = Quantity.fromBigInt(blockOverrides.prevRandao)
   if (typeof blockOverrides.time === 'bigint')
-    rpc.time = Quantity.bigIntToQuantity(blockOverrides.time)
+    rpc.time = Quantity.fromBigInt(blockOverrides.time)
   if (blockOverrides.withdrawals !== undefined)
     rpc.withdrawals = blockOverrides.withdrawals.map(Withdrawal.toRpc)
   return rpc

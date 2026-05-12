@@ -76,7 +76,7 @@ export function fromRpc(rpcStateOverrides: Rpc): StateOverrides {
   )) {
     const accountOverrides: AccountOverrides = {}
     if (accountOverridesRpc.balance !== undefined)
-      accountOverrides.balance = Quantity.quantityToBigInt(
+      accountOverrides.balance = Quantity.toBigInt(
         accountOverridesRpc.balance,
       )
     if (accountOverridesRpc.code)
@@ -85,7 +85,7 @@ export function fromRpc(rpcStateOverrides: Rpc): StateOverrides {
       accountOverrides.movePrecompileToAddress =
         accountOverridesRpc.movePrecompileToAddress
     if (accountOverridesRpc.nonce !== undefined)
-      accountOverrides.nonce = Quantity.quantityToBigInt(
+      accountOverrides.nonce = Quantity.toBigInt(
         accountOverridesRpc.nonce,
       )
     if (accountOverridesRpc.state)
@@ -119,7 +119,7 @@ export function toRpc(stateOverrides: StateOverrides): Rpc {
   for (const [address, accountOverrides] of Object.entries(stateOverrides)) {
     const accountOverridesRpc: RpcAccountOverrides = {}
     if (typeof accountOverrides.balance === 'bigint')
-      accountOverridesRpc.balance = Quantity.bigIntToQuantity(
+      accountOverridesRpc.balance = Quantity.fromBigInt(
         accountOverrides.balance,
       )
     if (accountOverrides.code) accountOverridesRpc.code = accountOverrides.code
@@ -127,7 +127,7 @@ export function toRpc(stateOverrides: StateOverrides): Rpc {
       accountOverridesRpc.movePrecompileToAddress =
         accountOverrides.movePrecompileToAddress
     if (typeof accountOverrides.nonce === 'bigint')
-      accountOverridesRpc.nonce = Quantity.bigIntToQuantity(
+      accountOverridesRpc.nonce = Quantity.fromBigInt(
         accountOverrides.nonce,
       )
     if (accountOverrides.state)
