@@ -307,7 +307,7 @@ export function toRpc<pending extends boolean = false>(
     rpc.calls = transaction.calls.map((call) => ({
       to: call.to,
       value: call.value ? Hex.fromNumber(call.value) : undefined,
-      input: call.data,
+      data: call.data,
     }))
   if (transaction.feeToken) rpc.feeToken = transaction.feeToken
   if (transaction.keyAuthorization)
