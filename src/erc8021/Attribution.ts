@@ -339,6 +339,8 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
  * Reads the trailing `codes ∥ codesLength (1)` segment from a schema-0/1
  * payload, given the absolute end-offset of the codes-length byte (which is
  * the start of the schema ID).
+ *
+ * @internal
  */
 function decodeCodesTail(
   data: Hex.Hex,

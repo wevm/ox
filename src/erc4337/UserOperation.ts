@@ -51,6 +51,8 @@ const hashEnvelopeParameters = [
  * Packs two `uint128` values into a single `bytes32` word, with `high` in the
  * upper 16 bytes and `low` in the lower 16 bytes. Used for `accountGasLimits`
  * and `gasFees` packing in v0.7+ user operations.
+ *
+ * @internal
  */
 function packUint128Pair(high: bigint | number, low: bigint | number): Hex.Hex {
   return Hex.concat(
