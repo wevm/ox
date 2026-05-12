@@ -122,9 +122,7 @@ describe('decode', () => {
   })
 
   test('error: bytecode does not match data prefix', () => {
-    const abiConstructor = AbiConstructor.from(
-      'constructor(address, uint256)',
-    )
+    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
     expect(() =>
       AbiConstructor.decode(abiConstructor, {
         bytecode: '0x6080604052deadbeef',
