@@ -1,5 +1,5 @@
 import type * as Address from './Address.js'
-import * as Errors from './Errors.js'
+import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Compute, OneOf } from './internal/types.js'
 import * as Transaction from './Transaction.js'
@@ -299,12 +299,12 @@ export function fromRpc<
     excessBlobGas: block.excessBlobGas
       ? BigInt(block.excessBlobGas)
       : undefined,
-    gasLimit: requiredBigInt(block.gasLimit, 'gasLimit'),
-    gasUsed: requiredBigInt(block.gasUsed, 'gasUsed'),
+    gasLimit: BigInt(block.gasLimit ?? 0n),
+    gasUsed: BigInt(block.gasUsed ?? 0n),
     number: block.number ? BigInt(block.number) : null,
-    size: requiredBigInt(block.size, 'size'),
+    size: BigInt(block.size ?? 0n),
     stateRoot: block.stateRoot,
-    timestamp: requiredBigInt(block.timestamp, 'timestamp'),
+    timestamp: BigInt(block.timestamp ?? 0n),
     totalDifficulty:
       typeof block.totalDifficulty !== 'undefined' &&
       block.totalDifficulty !== null
@@ -324,21 +324,5 @@ export declare namespace fromRpc {
     includeTransactions?: includeTransactions | boolean | undefined
   }
 
-  type ErrorType = MissingFieldError | Errors.GlobalErrorType
-}
-
-/** Thrown when a required Block field is missing in an RPC response. */
-export class MissingFieldError extends Errors.BaseError {
-  override readonly name = 'Block.MissingFieldError'
-
-  constructor({ field }: { field: string }) {
-    super(`Required Block field \`${field}\` is missing.`)
-  }
-}
-
-/** @internal */
-function requiredBigInt(value: Hex.Hex | bigint | undefined, field: string) {
-  if (typeof value === 'undefined' || value === null)
-    throw new MissingFieldError({ field })
-  return BigInt(value)
+  type ErrorType = Errors.GlobalErrorType
 }
