@@ -1,6 +1,7 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 
 /** A Log as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/receipt.yaml). */
@@ -144,11 +145,9 @@ export function fromRpc<
 ): Log<pending> {
   return {
     ...log,
-    blockNumber: log.blockNumber ? BigInt(log.blockNumber) : null,
-    logIndex: log.logIndex ? Number(log.logIndex) : null,
-    transactionIndex: log.transactionIndex
-      ? Number(log.transactionIndex)
-      : null,
+    blockNumber: Quantity.toBigInt(log.blockNumber) ?? null,
+    logIndex: Quantity.toNumber(log.logIndex) ?? null,
+    transactionIndex: Quantity.toNumber(log.transactionIndex) ?? null,
   } as Log<pending>
 }
 
@@ -214,19 +213,12 @@ export function toRpc<
   return {
     address: log.address,
     blockHash: log.blockHash,
-    blockNumber:
-      typeof log.blockNumber === 'bigint'
-        ? Hex.fromNumber(log.blockNumber)
-        : null,
+    blockNumber: Quantity.fromBigInt(log.blockNumber) ?? null,
     data: log.data,
-    logIndex:
-      typeof log.logIndex === 'number' ? Hex.fromNumber(log.logIndex) : null,
+    logIndex: Quantity.fromNumber(log.logIndex) ?? null,
     topics: log.topics,
     transactionHash: log.transactionHash,
-    transactionIndex:
-      typeof log.transactionIndex === 'number'
-        ? Hex.fromNumber(log.transactionIndex)
-        : null,
+    transactionIndex: Quantity.fromNumber(log.transactionIndex) ?? null,
     removed: log.removed,
   } as Rpc as never
 }
