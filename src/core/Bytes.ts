@@ -286,7 +286,12 @@ export function fromNumber(
   options?: fromNumber.Options | undefined,
 ) {
   const hex = Hex.fromNumber(value, options)
-  return fromHex(hex)
+  // Hex.fromNumber may produce odd-nibble hex (e.g. `0x7`, total length 3);
+  // even-pad before handing to the strict `fromHex` parser.
+  const evenHex = (
+    (hex.length & 1) === 1 ? `0x0${hex.slice(2)}` : hex
+  ) as Hex.Hex
+  return fromHex(evenHex)
 }
 
 export declare namespace fromNumber {

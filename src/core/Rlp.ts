@@ -323,7 +323,14 @@ function getEncodableList(list: Encodable[]): Encodable {
 
 function getEncodableBytes(bytesOrHex: Bytes.Bytes | Hex.Hex): Encodable {
   const bytes =
-    typeof bytesOrHex === 'string' ? Bytes.fromHex(bytesOrHex) : bytesOrHex
+    typeof bytesOrHex === 'string'
+      ? // Even-pad odd-length hex (e.g. `0x1`) before strict parsing.
+        Bytes.fromHex(
+          ((bytesOrHex.length & 1) === 1
+            ? `0x0${bytesOrHex.slice(2)}`
+            : bytesOrHex) as Hex.Hex,
+        )
+      : bytesOrHex
 
   const sizeOfBytesLength = getSizeOfLength(bytes.length)
   const length = (() => {
