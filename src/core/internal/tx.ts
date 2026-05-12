@@ -1,4 +1,10 @@
+import type * as Bytes from '../Bytes.js'
 import * as Hex from '../Hex.js'
+import type { RecursiveArray } from './types.js'
+
+const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
+  i.toString(16).padStart(2, '0'),
+)
 
 /**
  * Encodes a transaction quantity (`bigint` or `number`) as an RLP scalar Hex.
@@ -74,4 +80,106 @@ export function hexToHexOrUndefined(
 ): Hex.Hex | undefined {
   if (value === undefined || value === '0x') return undefined
   return value
+}
+
+/**
+ * Decodes a `Bytes` scalar (typically a `Uint8Array.subarray` view returned
+ * by `Rlp.toBytes`) into `bigint`, or `undefined` when the field is absent
+ * or empty.
+ *
+ * For payloads ≤ 6 bytes (the common case for `chainId`, `nonce`, `gas`,
+ * `value`, etc.) the conversion is done with native `Number` accumulation,
+ * skipping the per-leaf hex-string allocation that `Bytes.toBigInt` (which
+ * round-trips through `Hex.fromBytes`) performs.
+ *
+ * @internal
+ */
+export function bytesToBigIntOrUndefined(
+  value: Bytes.Bytes | undefined,
+): bigint | undefined {
+  if (value === undefined || value.length === 0) return undefined
+  return bytesToBigInt(value)
+}
+
+/**
+ * Decodes a `Bytes` scalar into `bigint`, defaulting to `0n` when the field
+ * is empty.
+ *
+ * @internal
+ */
+export function bytesToBigIntOrZero(value: Bytes.Bytes | undefined): bigint {
+  if (value === undefined || value.length === 0) return 0n
+  return bytesToBigInt(value)
+}
+
+/**
+ * Decodes a `Bytes` scalar into `number` via the same fast path as
+ * {@link bytesToBigIntOrUndefined}. Returns `undefined` for absent / empty
+ * scalars.
+ *
+ * @internal
+ */
+export function bytesToNumberOrUndefined(
+  value: Bytes.Bytes | undefined,
+): number | undefined {
+  if (value === undefined || value.length === 0) return undefined
+  return Number(bytesToBigInt(value))
+}
+
+/**
+ * Encodes a `Bytes` scalar to `Hex`, returning `undefined` when the field is
+ * absent or empty. Used for opaque hex fields like `to` / `data` after
+ * decoding via `Rlp.toBytes`.
+ *
+ * @internal
+ */
+export function bytesToHexOrUndefined(
+  value: Bytes.Bytes | undefined,
+): Hex.Hex | undefined {
+  if (value === undefined || value.length === 0) return undefined
+  return bytesToHex(value)
+}
+
+/**
+ * Encodes a `Bytes` scalar to `Hex` (no `undefined` short-circuit). Used for
+ * fields that flow into `Signature.fromTuple` etc., which expect hex inputs.
+ *
+ * @internal
+ */
+export function bytesToHex(value: Bytes.Bytes): Hex.Hex {
+  let out = '0x'
+  for (let i = 0; i < value.length; i++) out += hexes[value[i]!]
+  return out as Hex.Hex
+}
+
+/**
+ * Recursively maps a `RecursiveArray<Bytes>` (e.g. as returned by
+ * `Rlp.toBytes`) to a `RecursiveArray<Hex>`. Used by envelope decoders to
+ * hand the (rarely-large) access list / authorization list sub-trees off to
+ * their existing hex-typed `fromTupleList` codecs without re-running RLP.
+ *
+ * @internal
+ */
+export function bytesTreeToHex(
+  value: RecursiveArray<Bytes.Bytes>,
+): RecursiveArray<Hex.Hex> {
+  if (Array.isArray(value)) return value.map((x) => bytesTreeToHex(x))
+  return bytesToHex(value as Bytes.Bytes)
+}
+
+function bytesToBigInt(value: Bytes.Bytes): bigint {
+  // Fast path: values up to 6 bytes fit in a JS `number` precisely. Avoid
+  // allocating the intermediate hex string altogether.
+  const len = value.length
+  if (len <= 6) {
+    let n = 0
+    for (let i = 0; i < len; i++) n = n * 256 + value[i]!
+    return BigInt(n)
+  }
+  // Wider scalars (e.g. 32-byte fee values) round-trip through hex; the
+  // allocated string is the same one `BigInt` would build internally and is
+  // released immediately after parsing.
+  let hex = '0x'
+  for (let i = 0; i < len; i++) hex += hexes[value[i]!]
+  return BigInt(hex)
 }

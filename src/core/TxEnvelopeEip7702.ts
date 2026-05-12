@@ -1,6 +1,7 @@
 import * as AccessList from './AccessList.js'
 import * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
+import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
@@ -119,7 +120,7 @@ export declare namespace assert {
 export function deserialize(
   serialized: Serialized,
 ): Compute<TxEnvelopeEip7702> {
-  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.toBytes(Hex.slice(serialized, 1))
 
   const [
     chainId,
@@ -135,7 +136,7 @@ export function deserialize(
     yParity,
     r,
     s,
-  ] = transactionArray as readonly Hex.Hex[]
+  ] = transactionArray as readonly Bytes.Bytes[]
 
   if (!(transactionArray.length === 10 || transactionArray.length === 13))
     throw new TransactionEnvelope.InvalidSerializedError({
@@ -163,32 +164,43 @@ export function deserialize(
     })
 
   let transaction = {
-    chainId: Number(chainId),
+    chainId: Number(Tx.bytesToBigIntOrZero(chainId)),
     type,
   } as TxEnvelopeEip7702
-  const to_ = Tx.hexToHexOrUndefined(to)
+  const to_ = Tx.bytesToHexOrUndefined(to)
   if (to_) transaction.to = to_
-  const gas_ = Tx.hexToBigIntOrUndefined(gas)
+  const gas_ = Tx.bytesToBigIntOrUndefined(gas)
   if (gas_ !== undefined) transaction.gas = gas_
-  const data_ = Tx.hexToHexOrUndefined(data)
+  const data_ = Tx.bytesToHexOrUndefined(data)
   if (data_) transaction.data = data_
-  if (nonce !== undefined) transaction.nonce = Tx.hexToBigIntOrZero(nonce)
-  const value_ = Tx.hexToBigIntOrUndefined(value)
+  if (nonce !== undefined) transaction.nonce = Tx.bytesToBigIntOrZero(nonce)
+  const value_ = Tx.bytesToBigIntOrUndefined(value)
   if (value_ !== undefined) transaction.value = value_
-  const maxFeePerGas_ = Tx.hexToBigIntOrUndefined(maxFeePerGas)
+  const maxFeePerGas_ = Tx.bytesToBigIntOrUndefined(maxFeePerGas)
   if (maxFeePerGas_ !== undefined) transaction.maxFeePerGas = maxFeePerGas_
-  const maxPriorityFeePerGas_ = Tx.hexToBigIntOrUndefined(maxPriorityFeePerGas)
+  const maxPriorityFeePerGas_ =
+    Tx.bytesToBigIntOrUndefined(maxPriorityFeePerGas)
   if (maxPriorityFeePerGas_ !== undefined)
     transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
-  if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList.fromTupleList(accessList as never)
-  if (authorizationList !== '0x')
+  if ((accessList as unknown as readonly unknown[]).length !== 0)
+    transaction.accessList = AccessList.fromTupleList(
+      Tx.bytesTreeToHex(accessList as never) as never,
+    )
+  // Authorization list is preserved even when empty for round-trip parity
+  // with the legacy `authorizationList !== '0x'` hex check.
+  if (Array.isArray(authorizationList))
     transaction.authorizationList = Authorization.fromTupleList(
-      authorizationList as never,
+      Tx.bytesTreeToHex(authorizationList as never) as never,
     )
 
   const signature =
-    r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
+    r && s && yParity
+      ? Signature.fromTuple([
+          Tx.bytesToHex(yParity),
+          Tx.bytesToHex(r),
+          Tx.bytesToHex(s),
+        ])
+      : undefined
   if (signature)
     transaction = {
       ...transaction,
