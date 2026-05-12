@@ -182,10 +182,6 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.maxPriorityFeePerGas = Hex.fromNumber(
       request.maxPriorityFeePerGas,
     )
-  if (typeof request.maxPriorityFeePerGas !== 'undefined')
-    request_rpc.maxPriorityFeePerGas = Hex.fromNumber(
-      request.maxPriorityFeePerGas,
-    )
   if (typeof request.nonce !== 'undefined')
     request_rpc.nonce = Hex.fromNumber(request.nonce)
   if (typeof request.to !== 'undefined') request_rpc.to = request.to

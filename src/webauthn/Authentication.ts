@@ -501,7 +501,7 @@ export async function sign(options: sign.Options): Promise<sign.ReturnType> {
     const signatureBytes = new Uint8Array(response.signature)
     const id = credential.id
 
-    const clientDataJSON = String.fromCharCode(...clientDataJSONBytes)
+    const clientDataJSON = Bytes.toString(clientDataJSONBytes)
     const challengeIndex = clientDataJSON.indexOf('"challenge"')
     const typeIndex = clientDataJSON.indexOf('"type"')
 
