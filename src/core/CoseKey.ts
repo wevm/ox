@@ -66,10 +66,19 @@ export declare namespace fromPublicKey {
 export function toPublicKey(coseKey: Hex.Hex): PublicKey.PublicKey {
   const decoded = Cbor.decode<Record<string, unknown>>(coseKey)
 
+  // Validate COSE_Key header per RFC 9053 (kty=2 EC2, alg=-7 ES256, crv=1 P-256).
+  if (decoded['1'] !== 2 || decoded['3'] !== -7 || decoded['-1'] !== 1)
+    throw new InvalidCoseKeyError()
+
   const x = decoded['-2']
   const y = decoded['-3']
 
-  if (!(x instanceof Uint8Array) || !(y instanceof Uint8Array))
+  if (
+    !(x instanceof Uint8Array) ||
+    x.length !== 32 ||
+    !(y instanceof Uint8Array) ||
+    y.length !== 32
+  )
     throw new InvalidCoseKeyError()
 
   return PublicKey.from(new Uint8Array([0x04, ...x, ...y]))

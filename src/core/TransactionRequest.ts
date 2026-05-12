@@ -70,7 +70,7 @@ export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const request_ = request as TransactionRequest
+  const request_ = { ...request } as TransactionRequest
 
   if (typeof request.authorizationList !== 'undefined')
     request_.authorizationList = Authorization.fromRpcList(
