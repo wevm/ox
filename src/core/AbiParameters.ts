@@ -296,8 +296,20 @@ export namespace encodePacked {
         isArray ? 32 : 0,
       ) as Address.Address
     }
-    if (type === 'string') return Hex.fromString(value as string)
-    if (type === 'bytes') return value as Hex.Hex
+    if (type === 'string') {
+      const hex = Hex.fromString(value as string)
+      if (!isArray) return hex
+      const byteSize = (hex.length - 2) / 2
+      const paddedSize = Math.ceil(byteSize / 32) * 32 || 32
+      return Hex.padRight(hex, paddedSize)
+    }
+    if (type === 'bytes') {
+      const hex = value as Hex.Hex
+      if (!isArray) return hex
+      const byteSize = (hex.length - 2) / 2
+      const paddedSize = Math.ceil(byteSize / 32) * 32 || 32
+      return Hex.padRight(hex, paddedSize)
+    }
     if (type === 'bool')
       return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
 
@@ -324,7 +336,16 @@ export namespace encodePacked {
 
     const arrayMatch = (type as string).match(Solidity.arrayRegex)
     if (arrayMatch && Array.isArray(value)) {
-      const [_type, childType] = arrayMatch
+      const [_type, childType, lengthMatch] = arrayMatch
+      if (lengthMatch) {
+        const declaredLength = Number.parseInt(lengthMatch, 10)
+        if (value.length !== declaredLength)
+          throw new ArrayLengthMismatchError({
+            expectedLength: declaredLength,
+            givenLength: value.length,
+            type: type as string,
+          })
+      }
       const data: Hex.Hex[] = []
       for (let i = 0; i < value.length; i++) {
         data.push(encode(childType, value[i], true))

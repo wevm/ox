@@ -37,6 +37,22 @@ describe('from', () => {
       }
     `)
   })
+
+  test('behavior: missing request and missing jsonrpc throws ParseError', () => {
+    expect(() =>
+      RpcResponse.from({ id: 0, result: '0x1' } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
+
+  test('behavior: missing request and missing id throws ParseError', () => {
+    expect(() =>
+      RpcResponse.from({ jsonrpc: '2.0', result: '0x1' } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
 })
 
 describe('parse', () => {
@@ -355,6 +371,36 @@ describe('parse', () => {
       }),
     ).toThrowErrorMatchingInlineSnapshot('[RpcResponse.InternalError: oh no]')
   })
+
+  test('behavior: rejects empty object envelope', () => {
+    expect(() => RpcResponse.parse({})).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
+
+  test('behavior: rejects null envelope', () => {
+    expect(() =>
+      RpcResponse.parse(null as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
+
+  test('behavior: rejects envelope without result or error', () => {
+    expect(() =>
+      RpcResponse.parse({ jsonrpc: '2.0', id: 0 } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
+
+  test('behavior: rejects envelope with wrong jsonrpc', () => {
+    expect(() =>
+      RpcResponse.parse({ jsonrpc: '1.0', id: 0, result: '0x1' } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
 })
 
 describe('parseError', () => {
@@ -482,6 +528,12 @@ describe('parseError', () => {
     expect(code).toBe(-69420)
     expect(message).toBe('foo')
     expect(error).toMatchInlineSnapshot('[RpcResponse.InternalError: foo]')
+  })
+
+  test('behavior: preserves existing BaseError instance', () => {
+    const original = new RpcResponse.InvalidInputError({ message: 'foo' })
+    const error = RpcResponse.parseError(original)
+    expect(error).toBe(original)
   })
 })
 

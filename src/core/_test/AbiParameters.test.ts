@@ -252,6 +252,30 @@ describe('encodePacked', () => {
       '[AbiParameters.InvalidTypeError: Type `function` is not a valid ABI Type.]',
     )
   })
+
+  test('error: fixed-array length mismatch', () => {
+    expect(() =>
+      AbiParameters.encodePacked(['uint256[2]'], [[1n, 2n, 3n]]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[AbiParameters.ArrayLengthMismatchError: Array length mismatch for type `uint256[2]`. Expected: `2`. Given: `3`.]',
+    )
+  })
+
+  test('behavior: pads string[] elements to 32 bytes', () => {
+    expect(
+      AbiParameters.encodePacked(['string[]'], [['hi', 'bye']]),
+    ).toMatchInlineSnapshot(
+      `"0x68690000000000000000000000000000000000000000000000000000000000006279650000000000000000000000000000000000000000000000000000000000"`,
+    )
+  })
+
+  test('behavior: pads bytes[] elements to 32 bytes', () => {
+    expect(
+      AbiParameters.encodePacked(['bytes[]'], [['0xdead', '0xbeef']]),
+    ).toMatchInlineSnapshot(
+      `"0xdead000000000000000000000000000000000000000000000000000000000000beef000000000000000000000000000000000000000000000000000000000000"`,
+    )
+  })
 })
 
 describe('from', () => {

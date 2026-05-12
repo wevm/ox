@@ -330,6 +330,7 @@ export declare namespace from {
  * @returns An instantiated {@link ox#UserOperation.UserOperation}.
  */
 export function fromRpc(rpc: Rpc): UserOperation {
+  const authorization = (rpc as Rpc<'0.8'>).authorization
   return {
     ...rpc,
     callGasLimit: BigInt(rpc.callGasLimit),
@@ -343,6 +344,9 @@ export function fromRpc(rpc: Rpc): UserOperation {
     }),
     ...(rpc.paymasterVerificationGasLimit && {
       paymasterVerificationGasLimit: BigInt(rpc.paymasterVerificationGasLimit),
+    }),
+    ...(authorization && {
+      authorization: Authorization.fromRpc(authorization as Authorization.Rpc),
     }),
   } as UserOperation
 }
