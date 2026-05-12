@@ -1,6 +1,7 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute, OneOf } from './internal/types.js'
 import * as Transaction from './Transaction.js'
 import * as Withdrawal from './Withdrawal.js'
@@ -155,23 +156,11 @@ export function toRpc<
     return Transaction.toRpc(transaction as any) as any
   })
   return {
-    baseFeePerGas:
-      typeof block.baseFeePerGas === 'bigint'
-        ? Hex.fromNumber(block.baseFeePerGas)
-        : undefined,
-    blobGasUsed:
-      typeof block.blobGasUsed === 'bigint'
-        ? Hex.fromNumber(block.blobGasUsed)
-        : undefined,
-    excessBlobGas:
-      typeof block.excessBlobGas === 'bigint'
-        ? Hex.fromNumber(block.excessBlobGas)
-        : undefined,
+    baseFeePerGas: Quantity.bigIntToQuantity(block.baseFeePerGas),
+    blobGasUsed: Quantity.bigIntToQuantity(block.blobGasUsed),
+    excessBlobGas: Quantity.bigIntToQuantity(block.excessBlobGas),
     extraData: block.extraData,
-    difficulty:
-      typeof block.difficulty === 'bigint'
-        ? Hex.fromNumber(block.difficulty)
-        : undefined,
+    difficulty: Quantity.bigIntToQuantity(block.difficulty),
     gasLimit: Hex.fromNumber(block.gasLimit),
     gasUsed: Hex.fromNumber(block.gasUsed),
     hash: block.hash,
@@ -190,10 +179,7 @@ export function toRpc<
     size: Hex.fromNumber(block.size),
     stateRoot: block.stateRoot,
     timestamp: Hex.fromNumber(block.timestamp),
-    totalDifficulty:
-      typeof block.totalDifficulty === 'bigint'
-        ? Hex.fromNumber(block.totalDifficulty)
-        : undefined,
+    totalDifficulty: Quantity.bigIntToQuantity(block.totalDifficulty),
     transactions,
     transactionsRoot: block.transactionsRoot,
     uncles: block.uncles,
@@ -291,25 +277,17 @@ export function fromRpc<
   })
   return {
     ...block,
-    baseFeePerGas: block.baseFeePerGas
-      ? BigInt(block.baseFeePerGas)
-      : undefined,
-    blobGasUsed: block.blobGasUsed ? BigInt(block.blobGasUsed) : undefined,
-    difficulty: block.difficulty ? BigInt(block.difficulty) : undefined,
-    excessBlobGas: block.excessBlobGas
-      ? BigInt(block.excessBlobGas)
-      : undefined,
+    baseFeePerGas: Quantity.quantityToBigInt(block.baseFeePerGas),
+    blobGasUsed: Quantity.quantityToBigInt(block.blobGasUsed),
+    difficulty: Quantity.quantityToBigInt(block.difficulty),
+    excessBlobGas: Quantity.quantityToBigInt(block.excessBlobGas),
     gasLimit: BigInt(block.gasLimit ?? 0n),
     gasUsed: BigInt(block.gasUsed ?? 0n),
     number: block.number ? BigInt(block.number) : null,
     size: BigInt(block.size ?? 0n),
     stateRoot: block.stateRoot,
     timestamp: BigInt(block.timestamp ?? 0n),
-    totalDifficulty:
-      typeof block.totalDifficulty !== 'undefined' &&
-      block.totalDifficulty !== null
-        ? BigInt(block.totalDifficulty)
-        : undefined,
+    totalDifficulty: Quantity.quantityToBigInt(block.totalDifficulty),
     transactions,
     withdrawals: block.withdrawals?.map(Withdrawal.fromRpc),
   } as Block as never
