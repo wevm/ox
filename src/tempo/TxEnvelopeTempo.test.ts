@@ -628,6 +628,19 @@ describe('deserialize', () => {
       )
     })
 
+    test('invalid transaction (wrong prefix byte)', () => {
+      // EIP-1559 prefix byte (0x02) instead of Tempo's 0x76.
+      expect(() =>
+        TxEnvelopeTempo.deserialize(
+          `0x02${Rlp.fromHex([]).slice(2)}` as TxEnvelopeTempo.Serialized,
+        ),
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
+
+        Serialized Transaction: "0x02c0"]
+      `)
+    })
+
     test('invalid transaction (too many fields with signature)', () => {
       expect(() =>
         TxEnvelopeTempo.deserialize(

@@ -254,6 +254,13 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
+  if (Hex.slice(serialized, 0, 1) !== serializedType)
+    throw new TransactionEnvelope.InvalidSerializedError({
+      attributes: {},
+      serialized,
+      type,
+    })
+
   const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
 
   const [
