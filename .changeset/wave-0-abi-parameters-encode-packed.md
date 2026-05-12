@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Fixed `AbiParameters.encodePacked` to validate fixed-array lengths and to right-pad `string[]` and `bytes[]` elements to a 32-byte boundary, matching the Solidity packed-encoding specification.
+Fixed `AbiParameters.encodePacked` to validate that fixed-array lengths match the supplied value, throwing `ArrayLengthMismatchError` (e.g. for `uint256[2]` with three elements) instead of silently encoding the wrong arity.

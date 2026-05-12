@@ -296,20 +296,8 @@ export namespace encodePacked {
         isArray ? 32 : 0,
       ) as Address.Address
     }
-    if (type === 'string') {
-      const hex = Hex.fromString(value as string)
-      if (!isArray) return hex
-      const byteSize = (hex.length - 2) / 2
-      const paddedSize = Math.ceil(byteSize / 32) * 32 || 32
-      return Hex.padRight(hex, paddedSize)
-    }
-    if (type === 'bytes') {
-      const hex = value as Hex.Hex
-      if (!isArray) return hex
-      const byteSize = (hex.length - 2) / 2
-      const paddedSize = Math.ceil(byteSize / 32) * 32 || 32
-      return Hex.padRight(hex, paddedSize)
-    }
+    if (type === 'string') return Hex.fromString(value as string)
+    if (type === 'bytes') return value as Hex.Hex
     if (type === 'bool')
       return Hex.padLeft(Hex.fromBoolean(value as boolean), isArray ? 32 : 1)
 
