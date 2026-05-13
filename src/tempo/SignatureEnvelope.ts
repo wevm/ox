@@ -1,5 +1,5 @@
 import * as Address from '../core/Address.js'
-import type * as Bytes from '../core/Bytes.js'
+import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type {
@@ -476,24 +476,19 @@ export function deserialize(value: Serialized): SignatureEnvelope {
     const webauthnDataSize = dataSize - 128
     const webauthnData = Hex.slice(data, 0, webauthnDataSize)
 
-    // Parse webauthnData into authenticatorData and clientDataJSON
-    // According to the Rust code, it's authenticatorData || clientDataJSON
-    // We need to find the split point (minimum authenticatorData is 37 bytes)
-    let authenticatorData: Hex.Hex | undefined
-    let clientDataJSON: string | undefined
-
-    // Try to find the JSON start (clientDataJSON should start with '{')
-    for (let split = 37; split < webauthnDataSize; split++) {
-      const potentialJson = Hex.toString(Hex.slice(webauthnData, split))
-      if (potentialJson.startsWith('{') && potentialJson.endsWith('}')) {
-        try {
-          JSON.parse(potentialJson)
-          authenticatorData = Hex.slice(webauthnData, 0, split)
-          clientDataJSON = potentialJson
-          break
-        } catch {}
-      }
-    }
+    // Parse webauthnData into authenticatorData and clientDataJSON.
+    // According to the Rust code, it's authenticatorData || clientDataJSON,
+    // and clientDataJSON is well-formed JSON ending with '}'. The minimum
+    // authenticatorData length is 37 bytes.
+    //
+    // The previous implementation re-decoded a UTF-8 string from every
+    // candidate byte offset (O(n) string allocations + JSON.parse calls).
+    // Decode the byte payload once and only try JSON.parse on actual `{`
+    // candidate positions, which is typically O(1) attempts in practice.
+    const { authenticatorData, clientDataJSON } = parseWebAuthnSplit(
+      webauthnData,
+      webauthnDataSize,
+    ) ?? { authenticatorData: undefined, clientDataJSON: undefined }
 
     if (!authenticatorData || !clientDataJSON)
       throw new InvalidSerializedError({
@@ -1363,4 +1358,40 @@ export class InvalidSerializedError extends Errors.BaseError {
  */
 export class VerificationError extends Errors.BaseError {
   override readonly name = 'SignatureEnvelope.VerificationError'
+}
+
+/**
+ * Splits the WebAuthn `webauthnData` into `authenticatorData` and
+ * `clientDataJSON` by decoding the byte payload once and trying `JSON.parse`
+ * only at candidate `{` byte positions. The previous implementation re-decoded
+ * a UTF-8 string from every byte offset.
+ *
+ * @internal
+ */
+function parseWebAuthnSplit(
+  webauthnData: Hex.Hex,
+  webauthnDataSize: number,
+): { authenticatorData: Hex.Hex; clientDataJSON: string } | undefined {
+  const minAuthenticatorBytes = 37
+  if (webauthnDataSize <= minAuthenticatorBytes) return undefined
+
+  const bytes = Bytes.fromHex(webauthnData)
+  // clientDataJSON must end with the `}` byte.
+  if (bytes[bytes.length - 1] !== 0x7d) return undefined
+
+  const decoder = new TextDecoder('utf-8', { fatal: false })
+
+  for (let split = minAuthenticatorBytes; split < webauthnDataSize; split++) {
+    if (bytes[split] !== 0x7b) continue
+    const candidate = decoder.decode(bytes.subarray(split))
+    try {
+      JSON.parse(candidate)
+      return {
+        authenticatorData: Hex.fromBytes(bytes.subarray(0, split)),
+        clientDataJSON: candidate,
+      }
+    } catch {}
+  }
+
+  return undefined
 }

@@ -326,21 +326,22 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     type,
   } as TxEnvelopeTempo
 
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(nonce))
+  // RLP leaves are guaranteed to be hex strings; the previous `Hex.validate`
+  // calls here were redundant. `'0x'` is the canonical "missing/zero" marker.
+  if (gas && gas !== '0x') transaction.gas = BigInt(gas)
+  if (nonce !== undefined)
     transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
+  if (maxFeePerGas && maxFeePerGas !== '0x')
     transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
+  if (maxPriorityFeePerGas && maxPriorityFeePerGas !== '0x')
     transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
-  if (Hex.validate(nonceKey))
+  if (nonceKey !== undefined)
     transaction.nonceKey = nonceKey === '0x' ? 0n : BigInt(nonceKey)
-  if (Hex.validate(validBefore) && validBefore !== '0x')
+  if (validBefore && validBefore !== '0x')
     transaction.validBefore = Number(validBefore)
-  if (Hex.validate(validAfter) && validAfter !== '0x')
+  if (validAfter && validAfter !== '0x')
     transaction.validAfter = Number(validAfter)
-  if (Hex.validate(feeToken) && feeToken !== '0x')
-    transaction.feeToken = feeToken
+  if (feeToken && feeToken !== '0x') transaction.feeToken = feeToken
 
   // Parse calls array
   if (calls && calls !== '0x') {
@@ -395,10 +396,13 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
     }
 
   // Recover sender address from the signature if not already set.
+  // The transaction was just produced from a successful RLP parse — there is
+  // no need to re-run `from()` (which only re-resolves `TempoAddress` inputs
+  // and re-asserts) before computing the sign payload.
   if (!transaction.from && signatureEnvelope) {
     try {
       transaction.from = SignatureEnvelope.extractAddress({
-        payload: getSignPayload(from(transaction)),
+        payload: getSignPayload(transaction),
         signature: signatureEnvelope,
         root: true,
       })

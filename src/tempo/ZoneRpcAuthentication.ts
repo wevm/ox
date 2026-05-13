@@ -383,8 +383,15 @@ export function serialize(
   const signature = options.signature || authentication.signature
   if (!signature) throw new MissingSignatureError()
 
+  // Skip `SignatureEnvelope.from` re-coercion when the signature is already
+  // a typed envelope object — the common case for `prepare()` callers.
+  const envelope =
+    typeof signature === 'object' && signature !== null && 'type' in signature
+      ? (signature as SignatureEnvelope.SignatureEnvelope)
+      : SignatureEnvelope.from(signature)
+
   return Hex.concat(
-    SignatureEnvelope.serialize(SignatureEnvelope.from(signature)),
+    SignatureEnvelope.serialize(envelope),
     getFields(authentication),
   )
 }
@@ -399,6 +406,76 @@ export declare namespace serialize {
     | getFields.ErrorType
     | MissingSignatureError
     | SignatureEnvelope.CoercionError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Pre-computes the fixed fields, hash, and serialized form of a Zone RPC
+ * authentication token in a single pass. Useful when the same signed token is
+ * sent across many RPC requests — the previous "create once, reuse many"
+ * pattern paid the field/hash/serialization cost on every request.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ * import { ZoneRpcAuthentication } from 'ox/tempo'
+ *
+ * const authentication = ZoneRpcAuthentication.from({
+ *   chainId: 4217000026,
+ *   expiresAt: 1711235160,
+ *   issuedAt: 1711234560,
+ *   zoneId: 26,
+ * })
+ *
+ * const signature = Secp256k1.sign({
+ *   payload: ZoneRpcAuthentication.getSignPayload(authentication),
+ *   privateKey: '0x...',
+ * })
+ *
+ * const prepared = ZoneRpcAuthentication.prepare(authentication, { signature })
+ *
+ * // Reuse `prepared.serialized` and `prepared.header` across many requests.
+ * fetch(url, { headers: prepared.header })
+ * ```
+ *
+ * @param authentication - The Zone RPC authentication token.
+ * @param options - Preparation options.
+ * @returns A bundle of pre-computed token fields ready to be sent.
+ */
+export function prepare(
+  authentication: PartialBy<ZoneRpcAuthentication, 'version'>,
+  options: prepare.Options = {},
+): prepare.ReturnValue {
+  const fields = getFields(authentication)
+  const authHash = Hash.keccak256(Hex.concat(magicBytes, fields))
+  const serialized = serialize(authentication, options)
+
+  return {
+    fields,
+    hash: authHash,
+    header: { [headerName]: serialized },
+    serialized,
+  }
+}
+
+export declare namespace prepare {
+  type Options = serialize.Options
+
+  type ReturnValue = {
+    /** 29-byte fixed fields suffix. */
+    fields: Fields
+    /** Authorization hash (`keccak256(magicBytes || fields)`). */
+    hash: Hex.Hex
+    /** Pre-built header object keyed by `headerName`. */
+    header: { [K in typeof headerName]: Serialized }
+    /** Hex-encoded serialized authentication token. */
+    serialized: Serialized
+  }
+
+  type ErrorType =
+    | getFields.ErrorType
+    | hash.ErrorType
+    | serialize.ErrorType
     | Errors.GlobalErrorType
 }
 
