@@ -1,12 +1,24 @@
 import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
-import * as Hex from './Hex.js'
 import * as internal from './internal/bytes.js'
+import {
+  bytesToHex,
+  type Hex as Hex_codec,
+  hexToBytes,
+  type InvalidHexValueError,
+  type InvalidLengthError,
+} from './internal/codec/hex.js'
+import {
+  bigIntToBytes,
+  bytesToBigInt,
+  bytesToSafeNumber,
+} from './internal/codec/int.js'
+import { decoder, encoder } from './internal/codec/utf8.js'
 import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
 
-const decoder = /*#__PURE__*/ new TextDecoder()
-const encoder = /*#__PURE__*/ new TextEncoder()
+/** Local alias of the `Hex` type from `internal/codec/hex.ts` to avoid a runtime import of `./Hex.js`. */
+type HexStr = Hex_codec
 
 /** Root type for a Bytes array. */
 export type Bytes = Uint8Array
@@ -105,7 +117,7 @@ export declare namespace concat {
  * @param value - Value to convert.
  * @returns A {@link ox#Bytes.Bytes} instance.
  */
-export function from(value: Hex.Hex | Bytes | readonly number[]): Bytes {
+export function from(value: HexStr | Bytes | readonly number[]): Bytes {
   if (value instanceof Uint8Array) return value
   if (typeof value === 'string') return fromHex(value)
   return fromArray(value)
@@ -209,39 +221,15 @@ export declare namespace fromBoolean {
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
-export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
+export function fromHex(value: HexStr, options: fromHex.Options = {}): Bytes {
   const { size } = options
-
-  if (
-    typeof value !== 'string' ||
-    value.length < 2 ||
-    value.charCodeAt(0) !== 48 /* '0' */ ||
-    value.charCodeAt(1) !== 120 /* 'x' */
-  )
-    throw new Hex.InvalidHexValueError(value)
-
-  let hex = value
-  if (size) {
+  if (typeof size === 'number') {
     internal_hex.assertSize(value, size)
-    hex = Hex.padRight(value, size)
+    // Right-pad the hex string before parsing to preserve odd-nibble
+    // semantics of the previous implementation.
+    return hexToBytes(internal_hex.pad(value, { dir: 'right', size }))
   }
-
-  const hexString = hex.slice(2)
-  if ((hexString.length & 1) !== 0) throw new Hex.InvalidLengthError(hex)
-
-  const length = hexString.length >> 1
-  const bytes = new Uint8Array(length)
-  for (let index = 0, j = 0; index < length; index++) {
-    const nibbleLeft = internal.charCodeToBase16(hexString.charCodeAt(j++))
-    const nibbleRight = internal.charCodeToBase16(hexString.charCodeAt(j++))
-    if (nibbleLeft === undefined || nibbleRight === undefined) {
-      throw new Errors.BaseError(
-        `Invalid byte sequence ("${hexString[j - 2]}${hexString[j - 1]}" in "${hexString}").`,
-      )
-    }
-    bytes[index] = (nibbleLeft << 4) | nibbleRight
-  }
-  return bytes
+  return hexToBytes(value)
 }
 
 export declare namespace fromHex {
@@ -252,9 +240,9 @@ export declare namespace fromHex {
 
   type ErrorType =
     | internal_hex.assertSize.ErrorType
-    | Hex.padRight.ErrorType
-    | Hex.InvalidHexValueError
-    | Hex.InvalidLengthError
+    | internal_hex.pad.ErrorType
+    | InvalidHexValueError
+    | InvalidLengthError
     | Errors.GlobalErrorType
 }
 
@@ -285,46 +273,13 @@ export function fromNumber(
   value: bigint | number,
   options?: fromNumber.Options | undefined,
 ) {
-  const { signed, size } = options ?? {}
-
-  // Fast path: fixed-width unsigned big-endian write directly into Uint8Array,
-  // skipping the hex round-trip.
-  if (typeof size === 'number' && size > 0 && !signed) {
-    const v = typeof value === 'bigint' ? value : BigInt(value)
-    if (v < 0n || v >= 1n << BigInt(size * 8)) {
-      // Defer to Hex.fromNumber so the IntegerOutOfRangeError shape stays
-      // identical to the slow path.
-      const hex = Hex.fromNumber(value, options)
-      const evenHex = (
-        (hex.length & 1) === 1 ? `0x0${hex.slice(2)}` : hex
-      ) as Hex.Hex
-      return fromHex(evenHex)
-    }
-    const bytes = new Uint8Array(size)
-    let cur = v
-    for (let i = size - 1; i >= 0 && cur > 0n; i--) {
-      bytes[i] = Number(cur & 0xffn)
-      cur >>= 8n
-    }
-    return bytes
-  }
-
-  const hex = Hex.fromNumber(value, options)
-  // Hex.fromNumber may produce odd-nibble hex (e.g. `0x7`, total length 3);
-  // even-pad before handing to the strict `fromHex` parser.
-  const evenHex = (
-    (hex.length & 1) === 1 ? `0x0${hex.slice(2)}` : hex
-  ) as Hex.Hex
-  return fromHex(evenHex)
+  return bigIntToBytes(value, options)
 }
 
 export declare namespace fromNumber {
-  export type Options = Hex.fromNumber.Options
+  export type Options = bigIntToBytes.Options
 
-  export type ErrorType =
-    | Hex.fromNumber.ErrorType
-    | fromHex.ErrorType
-    | Errors.GlobalErrorType
+  export type ErrorType = bigIntToBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -564,32 +519,7 @@ export declare namespace slice {
 export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
   const { signed, size } = options
   if (typeof size !== 'undefined') internal.assertSize(bytes, size)
-
-  // Fast path: unsigned big-endian read using DataView for 8-byte chunks,
-  // skipping the hex round-trip.
-  if (!signed) {
-    const len = bytes.length
-    if (len === 0) return 0n
-    let val = 0n
-    let i = 0
-    if (len >= 8) {
-      const view = new DataView(bytes.buffer, bytes.byteOffset, len)
-      const tail = len & 7
-      const fullEnd = len - tail
-      while (i < fullEnd) {
-        val = (val << 64n) | view.getBigUint64(i, false)
-        i += 8
-      }
-    }
-    while (i < len) {
-      val = (val << 8n) | BigInt(bytes[i]!)
-      i++
-    }
-    return val
-  }
-
-  const hex = Hex.fromBytes(bytes, options)
-  return Hex.toBigInt(hex, options)
+  return bytesToBigInt(bytes, signed)
 }
 
 export declare namespace toBigInt {
@@ -601,8 +531,8 @@ export declare namespace toBigInt {
   }
 
   type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | Hex.toBigInt.ErrorType
+    | internal.assertSize.ErrorType
+    | bytesToBigInt.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -663,8 +593,14 @@ export declare namespace toBoolean {
  * @param options - Options.
  * @returns Decoded {@link ox#Hex.Hex} value.
  */
-export function toHex(value: Bytes, options: toHex.Options = {}): Hex.Hex {
-  return Hex.fromBytes(value, options)
+export function toHex(value: Bytes, options: toHex.Options = {}): HexStr {
+  const hex = bytesToHex(value)
+  const { size } = options
+  if (typeof size === 'number') {
+    internal_hex.assertSize(hex, size)
+    return internal_hex.pad(hex, { dir: 'right', size })
+  }
+  return hex
 }
 
 export declare namespace toHex {
@@ -673,7 +609,11 @@ export declare namespace toHex {
     size?: number | undefined
   }
 
-  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType =
+    | internal_hex.assertSize.ErrorType
+    | internal_hex.pad.ErrorType
+    | bytesToHex.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -688,10 +628,9 @@ export declare namespace toHex {
  * ```
  */
 export function toNumber(bytes: Bytes, options: toNumber.Options = {}): number {
-  const { size } = options
+  const { signed, size } = options
   if (typeof size !== 'undefined') internal.assertSize(bytes, size)
-  const hex = Hex.fromBytes(bytes, options)
-  return Hex.toNumber(hex, options)
+  return bytesToSafeNumber(bytes, signed)
 }
 
 export declare namespace toNumber {
@@ -703,8 +642,8 @@ export declare namespace toNumber {
   }
 
   type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | Hex.toNumber.ErrorType
+    | internal.assertSize.ErrorType
+    | bytesToSafeNumber.ErrorType
     | Errors.GlobalErrorType
 }
 

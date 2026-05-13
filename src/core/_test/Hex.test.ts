@@ -586,7 +586,11 @@ describe('toBytes', () => {
     expect(() =>
       Hex.toBytes('0x420fggf11a'),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[BaseError: Invalid byte sequence ("gg" in "420fggf11a").]`,
+      `
+      [Hex.InvalidHexValueError: Value \`0x420fggf11a\` is an invalid hex value.
+
+      Hex values must start with \`"0x"\` and contain only hexadecimal characters (0-9, a-f, A-F).]
+    `,
     )
   })
 })
