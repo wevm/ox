@@ -71,15 +71,18 @@ export function aggregate(
   }
 
   const group = isG1 ? bls.G1 : bls.G2
-  const point = points.reduce(
-    (acc, point) =>
-      acc.add(new (group as any).Point(point.x, point.y, point.z)),
-    group.Point.ZERO,
-  )
+  // Hoist the noble Point ctor reference and accumulate via a tight loop
+  // (avoids the per-iteration callback overhead from `Array.reduce`).
+  const PointCtor = (group as any).Point
+  let acc = group.Point.ZERO
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i]!
+    acc = acc.add(new PointCtor(p.x, p.y, p.z))
+  }
   return {
-    x: point.X,
-    y: point.Y,
-    z: point.Z,
+    x: acc.X,
+    y: acc.Y,
+    z: acc.Z,
   }
 }
 

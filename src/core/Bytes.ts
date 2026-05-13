@@ -285,6 +285,30 @@ export function fromNumber(
   value: bigint | number,
   options?: fromNumber.Options | undefined,
 ) {
+  const { signed, size } = options ?? {}
+
+  // Fast path: fixed-width unsigned big-endian write directly into Uint8Array,
+  // skipping the hex round-trip.
+  if (typeof size === 'number' && size > 0 && !signed) {
+    const v = typeof value === 'bigint' ? value : BigInt(value)
+    if (v < 0n || v >= 1n << BigInt(size * 8)) {
+      // Defer to Hex.fromNumber so the IntegerOutOfRangeError shape stays
+      // identical to the slow path.
+      const hex = Hex.fromNumber(value, options)
+      const evenHex = (
+        (hex.length & 1) === 1 ? `0x0${hex.slice(2)}` : hex
+      ) as Hex.Hex
+      return fromHex(evenHex)
+    }
+    const bytes = new Uint8Array(size)
+    let cur = v
+    for (let i = size - 1; i >= 0 && cur > 0n; i--) {
+      bytes[i] = Number(cur & 0xffn)
+      cur >>= 8n
+    }
+    return bytes
+  }
+
   const hex = Hex.fromNumber(value, options)
   // Hex.fromNumber may produce odd-nibble hex (e.g. `0x7`, total length 3);
   // even-pad before handing to the strict `fromHex` parser.
@@ -538,8 +562,32 @@ export declare namespace slice {
  * @returns Decoded bigint.
  */
 export function toBigInt(bytes: Bytes, options: toBigInt.Options = {}): bigint {
-  const { size } = options
+  const { signed, size } = options
   if (typeof size !== 'undefined') internal.assertSize(bytes, size)
+
+  // Fast path: unsigned big-endian read using DataView for 8-byte chunks,
+  // skipping the hex round-trip.
+  if (!signed) {
+    const len = bytes.length
+    if (len === 0) return 0n
+    let val = 0n
+    let i = 0
+    if (len >= 8) {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, len)
+      const tail = len & 7
+      const fullEnd = len - tail
+      while (i < fullEnd) {
+        val = (val << 64n) | view.getBigUint64(i, false)
+        i += 8
+      }
+    }
+    while (i < len) {
+      val = (val << 8n) | BigInt(bytes[i]!)
+      i++
+    }
+    return val
+  }
+
   const hex = Hex.fromBytes(bytes, options)
   return Hex.toBigInt(hex, options)
 }

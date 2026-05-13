@@ -69,7 +69,9 @@ export declare namespace assert {
  * @returns The concatenated {@link ox#Hex.Hex} value.
  */
 export function concat(...values: readonly Hex[]): Hex {
-  return `0x${(values as Hex[]).reduce((acc, x) => acc + x.replace('0x', ''), '')}`
+  let result = '0x'
+  for (let i = 0; i < values.length; i++) result += values[i]!.slice(2)
+  return result as Hex
 }
 
 export declare namespace concat {
@@ -443,9 +445,11 @@ export function slice(
 ): Hex {
   const { strict } = options
   internal.assertStartOffset(value, start)
-  const value_ = `0x${value
-    .replace('0x', '')
-    .slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
+  // Strip the `0x` prefix once and offset against the data (post-`0x`).
+  const data = value.slice(2)
+  const startOffset = (start ?? 0) * 2
+  const endOffset = end !== undefined ? end * 2 : undefined
+  const value_ = `0x${data.slice(startOffset, endOffset)}` as Hex
   if (strict) internal.assertEndOffset(value_, start, end)
   return value_
 }

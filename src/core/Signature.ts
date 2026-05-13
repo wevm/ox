@@ -461,15 +461,20 @@ export declare namespace fromRpc {
  */
 export function fromTuple(tuple: Tuple): Signature {
   const [yParity, r, s] = tuple
-  return from({
+  // Construct directly without routing through `from()` so we skip its runtime
+  // type discrimination on every TxEnvelope decode. `assert` still validates
+  // the result.
+  const sig: Signature = {
     r: r === '0x' ? 0n : BigInt(r),
     s: s === '0x' ? 0n : BigInt(s),
     yParity: yParity === '0x' ? 0 : Number(yParity),
-  })
+  }
+  assert(sig)
+  return sig
 }
 
 export declare namespace fromTuple {
-  type ErrorType = from.ErrorType | Errors.GlobalErrorType
+  type ErrorType = assert.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -499,6 +504,122 @@ export declare namespace toBytes {
     | toHex.ErrorType
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Encodes a {@link ox#Signature.Signature} as a 64-byte compact byte
+ * representation (`r ++ s`, big-endian, 32 bytes each).
+ *
+ * Used for signature inputs that omit the recovery byte (e.g. ECDSA verify).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const bytes = Signature.toCompactBytes({
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   yParity: 1,
+ * })
+ * // @log: Uint8Array [110, 16, 10, ...] // 64 bytes
+ * ```
+ *
+ * @param signature - The signature to encode.
+ * @returns The 64-byte compact representation.
+ */
+export function toCompactBytes(signature: Signature<boolean>): Bytes.Bytes {
+  const bytes = new Uint8Array(64)
+  bytes.set(Bytes.fromNumber(signature.r, { size: 32 }), 0)
+  bytes.set(Bytes.fromNumber(signature.s, { size: 32 }), 32)
+  return bytes
+}
+
+export declare namespace toCompactBytes {
+  type ErrorType = Bytes.fromNumber.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Decodes a 64-byte compact byte representation (`r ++ s`, big-endian) into a
+ * {@link ox#Signature.Signature} (without recovery).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const signature = Signature.fromCompactBytes(new Uint8Array(64))
+ * // @log: { r: 0n, s: 0n }
+ * ```
+ *
+ * @param bytes - The 64-byte compact representation.
+ * @returns The decoded {@link ox#Signature.Signature}.
+ */
+export function fromCompactBytes(bytes: Bytes.Bytes): Signature<false> {
+  return {
+    r: Bytes.toBigInt(bytes.subarray(0, 32)),
+    s: Bytes.toBigInt(bytes.subarray(32, 64)),
+  }
+}
+
+export declare namespace fromCompactBytes {
+  type ErrorType = Bytes.toBigInt.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Encodes a {@link ox#Signature.Signature} as a 65-byte recovered byte
+ * representation (`yParity ++ r ++ s`, big-endian).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const bytes = Signature.toRecoveredBytes({
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   yParity: 1,
+ * })
+ * // @log: Uint8Array [1, 110, 16, ...] // 65 bytes
+ * ```
+ *
+ * @param signature - The signature to encode.
+ * @returns The 65-byte recovered representation.
+ */
+export function toRecoveredBytes(signature: Signature): Bytes.Bytes {
+  const bytes = new Uint8Array(65)
+  bytes[0] = signature.yParity
+  bytes.set(Bytes.fromNumber(signature.r, { size: 32 }), 1)
+  bytes.set(Bytes.fromNumber(signature.s, { size: 32 }), 33)
+  return bytes
+}
+
+export declare namespace toRecoveredBytes {
+  type ErrorType = Bytes.fromNumber.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Decodes a 65-byte recovered byte representation (`yParity ++ r ++ s`,
+ * big-endian) into a {@link ox#Signature.Signature}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const signature = Signature.fromRecoveredBytes(new Uint8Array(65))
+ * // @log: { r: 0n, s: 0n, yParity: 0 }
+ * ```
+ *
+ * @param bytes - The 65-byte recovered representation.
+ * @returns The decoded {@link ox#Signature.Signature}.
+ */
+export function fromRecoveredBytes(bytes: Bytes.Bytes): Signature {
+  return {
+    r: Bytes.toBigInt(bytes.subarray(1, 33)),
+    s: Bytes.toBigInt(bytes.subarray(33, 65)),
+    yParity: bytes[0]!,
+  }
+}
+
+export declare namespace fromRecoveredBytes {
+  type ErrorType = Bytes.toBigInt.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -677,18 +798,17 @@ export declare namespace toRpc {
 export function toTuple(signature: Signature): Tuple {
   const { r, s, yParity } = signature
 
+  // Skip the `Hex.fromNumber` + `Hex.trimLeft` round-trip used by previous
+  // versions; bigint -> minimal hex is already what RLP wants.
   return [
     yParity ? '0x01' : '0x',
-    r === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(r!)),
-    s === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(s!)),
+    r === 0n ? '0x' : (`0x${r.toString(16)}` as Hex.Hex),
+    s === 0n ? '0x' : (`0x${s.toString(16)}` as Hex.Hex),
   ] as const
 }
 
 export declare namespace toTuple {
-  type ErrorType =
-    | Hex.trimLeft.ErrorType
-    | Hex.fromNumber.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /**
