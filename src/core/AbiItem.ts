@@ -3,6 +3,7 @@ import type * as Abi from './Abi.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as abiMeta from './internal/abiMeta.js'
 import * as internal from './internal/abiItem.js'
 import type { UnionCompute } from './internal/types.js'
 
@@ -231,10 +232,32 @@ export function from<
       return abitype.parseAbiItem(abiItem as never)
     return abiItem
   })() as AbiItem
-  return {
+  const result = {
     ...item,
     ...(prepare ? { hash: getSignatureHash(item) } : {}),
-  } as never
+  } as AbiItem
+  if (prepare) attachMeta(result)
+  return result as never
+}
+
+/**
+ * Attaches per-parameter `_meta` (non-enumerable) to the inputs/outputs
+ * of a prepared ABI item, so subsequent `AbiParameters.encode` /
+ * `decode` calls can dispatch by `kind` without re-running regexes.
+ *
+ * @internal
+ */
+function attachMeta(item: AbiItem): void {
+  const inputs = (item as { inputs?: readonly unknown[] }).inputs
+  if (Array.isArray(inputs))
+    (item as { inputs: readonly unknown[] }).inputs = inputs.map((p) =>
+      abiMeta.attach(p as never),
+    )
+  const outputs = (item as { outputs?: readonly unknown[] }).outputs
+  if (Array.isArray(outputs))
+    (item as { outputs: readonly unknown[] }).outputs = outputs.map((p) =>
+      abiMeta.attach(p as never),
+    )
 }
 
 export declare namespace from {
@@ -343,20 +366,20 @@ export function fromAbi<
 
   // Selector lookups are always unique on the ABI: precompute the
   // function/error 4-byte selector once and short-circuit via `find`
-  // instead of building a full `filter` result we'd discard.
+  // instead of building a full `filter` result we'd discard. Repeated
+  // selector lookups against the same ABI value reuse a memoized
+  // selector -> item map (keyed by the ABI array identity) so we don't
+  // re-keccak each candidate per call.
   if (isSelector) {
     const selector = Hex.slice(name, 0, 4)
-    const abiItem = (abi as Abi.Abi).find((abiItem) => {
-      if (abiItem.type === 'function' || abiItem.type === 'error')
-        return getSelector(abiItem) === selector
-      if (abiItem.type === 'event') return getSignatureHash(abiItem) === name
-      return false
-    })
+    const abiItem = lookupSelector(abi as Abi.Abi, selector, name)
     if (!abiItem) throw new NotFoundError({ name: name as string })
-    return {
+    const result = {
       ...abiItem,
       ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-    } as never
+    } as AbiItem
+    if (prepare) attachMeta(result)
+    return result as never
   }
 
   const abiItems = (abi as Abi.Abi).filter(
@@ -364,21 +387,27 @@ export function fromAbi<
   )
 
   if (abiItems.length === 0) throw new NotFoundError({ name: name as string })
-  if (abiItems.length === 1)
-    return {
+  if (abiItems.length === 1) {
+    const result = {
       ...abiItems[0],
       ...(prepare ? { hash: getSignatureHash(abiItems[0]!) } : {}),
-    } as never
+    } as AbiItem
+    if (prepare) attachMeta(result)
+    return result as never
+  }
 
   let matchedAbiItem: AbiItem | undefined
   for (const abiItem of abiItems) {
     if (!('inputs' in abiItem)) continue
     if (!args || args.length === 0) {
-      if (!abiItem.inputs || abiItem.inputs.length === 0)
-        return {
+      if (!abiItem.inputs || abiItem.inputs.length === 0) {
+        const result = {
           ...abiItem,
           ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-        } as never
+        } as AbiItem
+        if (prepare) attachMeta(result)
+        return result as never
+      }
       continue
     }
     if (!abiItem.inputs) continue
@@ -425,10 +454,51 @@ export function fromAbi<
   })()
 
   if (!abiItem) throw new NotFoundError({ name: name as string })
-  return {
+  const result = {
     ...abiItem,
     ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-  } as never
+  } as AbiItem
+  if (prepare) attachMeta(result)
+  return result as never
+}
+
+/**
+ * Memoizes selector -> ABI item lookups against the originating ABI
+ * value. Keyed by the ABI array identity (`WeakMap`) so user-mutated
+ * arrays naturally invalidate. The inner map is built lazily on the
+ * first selector lookup and only contains function/error/event entries.
+ *
+ * @internal
+ */
+const selectorCache: WeakMap<
+  readonly AbiItem[],
+  Map<Hex.Hex, AbiItem>
+> = new WeakMap()
+
+/** @internal */
+function lookupSelector(
+  abi: Abi.Abi,
+  selector: Hex.Hex,
+  fullName: Hex.Hex | string,
+): AbiItem | undefined {
+  let cache = selectorCache.get(abi as readonly AbiItem[])
+  if (!cache) {
+    cache = new Map()
+    for (let i = 0; i < abi.length; i++) {
+      const item = abi[i]!
+      if (item.type === 'function' || item.type === 'error') {
+        const sig = getSelector(item)
+        if (!cache.has(sig)) cache.set(sig, item)
+      } else if (item.type === 'event') {
+        const sig = getSignatureHash(item) as Hex.Hex
+        if (!cache.has(sig)) cache.set(sig, item)
+      }
+    }
+    selectorCache.set(abi as readonly AbiItem[], cache)
+  }
+  // Try the 4-byte function/error selector first; fall back to the
+  // 32-byte event signature hash.
+  return cache.get(selector) ?? cache.get(fullName as Hex.Hex)
 }
 
 export declare namespace fromAbi {

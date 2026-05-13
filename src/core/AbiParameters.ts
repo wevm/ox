@@ -3,6 +3,7 @@ import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as abiMeta from './internal/abiMeta.js'
 import * as internal from './internal/abiParameters.js'
 import * as Cursor from './internal/cursor.js'
 import * as Solidity from './Solidity.js'
@@ -81,11 +82,24 @@ export function decode(
   const { as = 'Array', checksumAddress = false } = options
 
   const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
-  const cursor = Cursor.create(bytes)
+  // When every top-level parameter has a cached `_meta`, sum their static
+  // head contribution as a strict lower bound; otherwise fall back to
+  // the historical 32-byte floor and let `Cursor.PositionOutOfBoundsError`
+  // surface as `DataSizeTooSmallError` from the per-parameter loop.
+  const minSize = abiMeta.minStaticHeadSize(parameters as readonly Parameter[])
+  // For fully-static parameter trees we know reads are monotonic, so
+  // skip cursor recursive-read bookkeeping.
+  const fullyStatic =
+    minSize !== undefined &&
+    abiMeta.isFullyStatic(parameters as readonly Parameter[])
+  const cursor = Cursor.create(
+    bytes,
+    fullyStatic ? { recursiveReadLimit: Number.POSITIVE_INFINITY } : undefined,
+  )
 
   if (Bytes.size(bytes) === 0 && parameters.length > 0)
     throw new ZeroDataError()
-  if (Bytes.size(bytes) && Bytes.size(bytes) < 32)
+  if (Bytes.size(bytes) && Bytes.size(bytes) < (minSize ?? 32))
     throw new DataSizeTooSmallError({
       data: typeof data === 'string' ? data : Hex.fromBytes(data),
       parameters: parameters as readonly Parameter[],

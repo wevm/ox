@@ -10,6 +10,7 @@ import * as Bytes from '../Bytes.js'
 import * as Errors from '../Errors.js'
 import * as Hex from '../Hex.js'
 import { integerRegex } from '../Solidity.js'
+import * as abiMeta from './abiMeta.js'
 import type * as Cursor from './cursor.js'
 import type { Compute, IsNarrowable, UnionToIntersection } from './types.js'
 
@@ -66,6 +67,39 @@ export function decodeParameter(
   options: { checksumAddress?: boolean | undefined; staticPosition: number },
 ) {
   const { checksumAddress, staticPosition } = options
+  const meta = abiMeta.get(param)
+  if (meta) {
+    switch (meta.kind) {
+      case 'address':
+        return decodeAddress(cursor, { checksum: checksumAddress })
+      case 'bool':
+        return decodeBool(cursor)
+      case 'fixedBytes':
+      case 'bytes':
+        return decodeBytes(cursor, param, { staticPosition })
+      case 'string':
+        return decodeString(cursor, { staticPosition })
+      case 'int':
+      case 'uint':
+        return decodeNumberCached(cursor, meta.signed!, meta.size!)
+      case 'tuple':
+        return decodeTuple(cursor, param as TupleAbiParameter, {
+          checksumAddress,
+          staticPosition,
+        })
+      case 'array':
+        return decodeArray(
+          cursor,
+          { ...param, type: stripArraySuffix(param.type) },
+          {
+            checksumAddress,
+            length: meta.arrayLength ?? null,
+            staticPosition,
+          },
+        )
+      // Unknown meta kind: fall through to the regex path below.
+    }
+  }
   const arrayComponents = getArrayComponents(param.type)
   if (arrayComponents) {
     const [length, type] = arrayComponents
@@ -89,6 +123,38 @@ export function decodeParameter(
     return decodeNumber(cursor, param)
   if (param.type === 'string') return decodeString(cursor, { staticPosition })
   throw new AbiParameters.InvalidTypeError(param.type)
+}
+
+/**
+ * Strips the trailing `[...]` from an array type. Cached separately
+ * from {@link getArrayComponents} so prepared paths skip the second
+ * regex execution.
+ *
+ * @internal
+ */
+function stripArraySuffix(type: string): string {
+  const components = getArrayComponents(type)
+  return components ? components[1] : type
+}
+
+/**
+ * Number decode that consumes pre-parsed `signed`/`size` from the meta
+ * cache instead of re-running `param.type.split('int')`.
+ *
+ * @internal
+ */
+function decodeNumberCached(
+  cursor: Cursor.Cursor,
+  signed: boolean,
+  size: number,
+) {
+  const value = cursor.readBytes(32)
+  return [
+    size > 48
+      ? Bytes.toBigInt(value, { signed })
+      : Bytes.toNumber(value, { signed }),
+    32,
+  ]
 }
 
 export declare namespace decodeParameter {
@@ -453,6 +519,46 @@ export function prepareParameter<
   checksumAddress?: boolean | undefined
 }): PreparedParameter {
   const parameter = parameter_ as AbiParameters.Parameter
+
+  const meta = abiMeta.get(parameter)
+  if (meta) {
+    switch (meta.kind) {
+      case 'address':
+        return encodeAddress(value as unknown as Hex.Hex, {
+          checksum: checksumAddress,
+        })
+      case 'bool':
+        return encodeBoolean(value as unknown as boolean)
+      case 'string':
+        return encodeString(value as unknown as string)
+      case 'bytes':
+      case 'fixedBytes':
+        return encodeBytes(value as unknown as Hex.Hex, {
+          type: parameter.type,
+        })
+      case 'int':
+      case 'uint':
+        return encodeNumber(value as unknown as number, {
+          signed: meta.signed!,
+          size: meta.size!,
+        })
+      case 'tuple':
+        return encodeTuple(value as unknown as Tuple, {
+          checksumAddress,
+          parameter: parameter as TupleAbiParameter,
+        })
+      case 'array':
+        return encodeArray(value, {
+          checksumAddress,
+          length: meta.arrayLength ?? null,
+          parameter: {
+            ...parameter,
+            type: stripArraySuffix(parameter.type),
+          },
+        })
+      // Unknown meta kind: fall through to the regex path below.
+    }
+  }
 
   const arrayComponents = getArrayComponents(parameter.type)
   if (arrayComponents) {

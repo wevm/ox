@@ -1,4 +1,5 @@
 import * as abitype from 'abitype'
+import * as AbiItem from './AbiItem.js'
 import type * as Errors from './Errors.js'
 import * as internal from './internal/abi.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
@@ -61,6 +62,7 @@ export function from<const abi extends Abi | readonly string[]>(
     (abi extends readonly string[]
       ? AbiItem_internal.Signatures<abi>
       : unknown),
+  options?: from.Options,
 ): from.ReturnType<abi>
 /**
  * Parses an arbitrary **JSON ABI** or **Human Readable ABI** into a typed {@link ox#Abi.Abi}.
@@ -139,14 +141,33 @@ export function from<const abi extends Abi | readonly string[]>(
  * @param abi - The ABI to parse.
  * @returns The typed ABI.
  */
-export function from(abi: Abi | readonly string[]): Abi
+export function from(abi: Abi | readonly string[], options?: from.Options): Abi
 // eslint-disable-next-line jsdoc/require-jsdoc
-export function from(abi: Abi | readonly string[]): from.ReturnType {
-  if (internal.isSignatures(abi)) return abitype.parseAbi(abi)
-  return abi
+export function from(
+  abi: Abi | readonly string[],
+  options: from.Options = {},
+): from.ReturnType {
+  const { prepare = false } = options
+  const parsed = internal.isSignatures(abi) ? abitype.parseAbi(abi) : abi
+  if (!prepare) return parsed as Abi
+  return (parsed as Abi).map((item) =>
+    AbiItem.from(item, { prepare: true }),
+  ) as Abi
 }
 
 export declare namespace from {
+  type Options = {
+    /**
+     * Whether or not to prepare each item (optimization for encoding
+     * performance). When `true`, the `hash` property is computed and
+     * attached to every item, and a per-parameter `_meta` cache is
+     * attached so subsequent encode/decode calls skip regex parses.
+     *
+     * @default false
+     */
+    prepare?: boolean | undefined
+  }
+
   type ReturnType<
     abi extends Abi | readonly string[] | readonly unknown[] = Abi,
   > = abi extends readonly string[] ? abitype.ParseAbi<abi> : abi

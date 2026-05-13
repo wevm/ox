@@ -811,10 +811,25 @@ export function encode(
 
   if (abiEvent.anonymous === true) return { topics }
 
-  const selector = (() => {
-    if (abiEvent.hash) return abiEvent.hash
-    return getSelector(abiEvent)
-  })()
+  // Fast path: no-arg encode reuses a cached `[selector]` topics array
+  // attached to the prepared event item. Avoids allocating a fresh
+  // 1-element array (and a fresh wrapper object) per call.
+  if (topics.length === 0) {
+    const cached = (abiEvent as { _topicsNoArgs?: readonly Hex.Hex[] })
+      ._topicsNoArgs
+    if (cached) return { topics: cached as Hex.Hex[] }
+    const selector = abiEvent.hash ?? getSelector(abiEvent)
+    const topicsNoArgs: readonly Hex.Hex[] = [selector]
+    Object.defineProperty(abiEvent, '_topicsNoArgs', {
+      value: topicsNoArgs,
+      enumerable: false,
+      writable: false,
+      configurable: true,
+    })
+    return { topics: topicsNoArgs as Hex.Hex[] }
+  }
+
+  const selector = abiEvent.hash ?? getSelector(abiEvent)
 
   return { topics: [selector, ...topics] }
 }
