@@ -96,6 +96,13 @@ export function parse(
   string: string,
   reviver?: ((this: any, key: string, value: any) => any) | undefined,
 ) {
+  // Fast path: when the bigint sentinel is absent, skip the reviver wrapper
+  // entirely. `JSON.parse` is dramatically faster without a reviver because
+  // engines avoid materializing intermediate values for every key.
+  if (!string.includes(bigIntSuffix)) {
+    if (typeof reviver === 'function') return JSON.parse(string, reviver)
+    return JSON.parse(string)
+  }
   return JSON.parse(string, (key, value_) => {
     const value = value_
     if (typeof value === 'string' && value.endsWith(bigIntSuffix))
