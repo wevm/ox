@@ -24,6 +24,30 @@ export type PublicKey<
 >
 
 /**
+ * Structured parts of an ECDSA public key.
+ *
+ * @remarks
+ * In a future major (`1.0`), {@link ox#PublicKey.PublicKey} will be flipped to
+ * a serialized {@link ox#Hex.Hex} string and this `Parts` type will represent
+ * the structured object form. Today, `PublicKeyParts<compressed>` is
+ * structurally equivalent to `PublicKey<compressed>` -- prefer it in new code
+ * so the upgrade path is a no-op.
+ */
+export type PublicKeyParts<compressed extends boolean = false> = Compute<
+  compressed extends true
+    ? {
+        prefix: number
+        x: bigint
+        y?: undefined
+      }
+    : {
+        prefix: number
+        x: bigint
+        y: bigint
+      }
+>
+
+/**
  * Asserts that a {@link ox#PublicKey.PublicKey} is valid.
  *
  * @example
@@ -384,6 +408,87 @@ export declare namespace toBytes {
     | Hex.fromNumber.ErrorType
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#PublicKey.PublicKey} to its structured
+ * {@link ox#PublicKey.PublicKeyParts} form.
+ *
+ * @remarks
+ * Today this is a structural pass-through (the root `PublicKey` type is
+ * already the structured object). In a future major, `PublicKey` will be a
+ * serialized `Hex.Hex` string and this codec will decode into the parts form.
+ * Migrating call sites to `toParts` / `fromParts` now keeps that upgrade a
+ * no-op.
+ *
+ * @example
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const parts = PublicKey.toParts({
+ *   prefix: 4,
+ *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * })
+ * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
+ * ```
+ *
+ * @param publicKey - The public key to convert.
+ * @returns The structured {@link ox#PublicKey.PublicKeyParts}.
+ */
+export function toParts<compressed extends boolean = false>(
+  publicKey: PublicKey<compressed>,
+): PublicKeyParts<compressed> {
+  if (typeof publicKey.y === 'bigint')
+    return {
+      prefix: publicKey.prefix,
+      x: publicKey.x,
+      y: publicKey.y,
+    } as never
+  return { prefix: publicKey.prefix, x: publicKey.x } as never
+}
+
+export declare namespace toParts {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#PublicKey.PublicKeyParts} into a structured
+ * {@link ox#PublicKey.PublicKey}.
+ *
+ * @remarks
+ * Today this is a structural pass-through. In a future major, `PublicKey` will
+ * be a serialized `Hex.Hex` string and this codec will encode into that form.
+ *
+ * @example
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.fromParts({
+ *   prefix: 4,
+ *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * })
+ * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
+ * ```
+ *
+ * @param parts - The structured parts to convert.
+ * @returns The {@link ox#PublicKey.PublicKey}.
+ */
+export function fromParts<compressed extends boolean = false>(
+  parts: PublicKeyParts<compressed>,
+): PublicKey<compressed> {
+  if (typeof parts.y === 'bigint')
+    return {
+      prefix: parts.prefix,
+      x: parts.x,
+      y: parts.y,
+    } as never
+  return { prefix: parts.prefix, x: parts.x } as never
+}
+
+export declare namespace fromParts {
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /**

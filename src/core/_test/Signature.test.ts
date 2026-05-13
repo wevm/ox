@@ -786,6 +786,70 @@ describe('yParityToV', () => {
   })
 })
 
+describe('Signature.toParts', () => {
+  test('default', () => {
+    const parts = Signature.toParts({
+      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      yParity: 1,
+    })
+    expect(parts).toEqual({
+      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      yParity: 1,
+    })
+  })
+
+  test('behavior: unrecovered', () => {
+    const parts = Signature.toParts<false>({
+      r: 1n,
+      s: 2n,
+    })
+    expect(parts).toEqual({ r: 1n, s: 2n })
+    expect('yParity' in parts).toBe(false)
+  })
+
+  test('behavior: returns a fresh object (no aliasing)', () => {
+    const sig = {
+      r: 1n,
+      s: 2n,
+      yParity: 0 as const,
+    }
+    const parts = Signature.toParts(sig)
+    expect(parts).not.toBe(sig)
+  })
+})
+
+describe('Signature.fromParts', () => {
+  test('default', () => {
+    const signature = Signature.fromParts({
+      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      yParity: 1,
+    })
+    expect(signature).toEqual({
+      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      yParity: 1,
+    })
+  })
+
+  test('behavior: unrecovered', () => {
+    const signature = Signature.fromParts<false>({ r: 1n, s: 2n })
+    expect(signature).toEqual({ r: 1n, s: 2n })
+    expect('yParity' in signature).toBe(false)
+  })
+
+  test('behavior: roundtrip', () => {
+    const original = {
+      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      yParity: 1 as const,
+    }
+    expect(Signature.fromParts(Signature.toParts(original))).toEqual(original)
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(Signature)).toMatchInlineSnapshot(`
     [
@@ -804,6 +868,8 @@ test('exports', () => {
       "fromCompactBytes",
       "toRecoveredBytes",
       "fromRecoveredBytes",
+      "toParts",
+      "fromParts",
       "toHex",
       "toDerBytes",
       "toDerHex",

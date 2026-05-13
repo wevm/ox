@@ -1,6 +1,6 @@
 import { attest } from '@ark/attest'
 import { PublicKey } from 'ox'
-import { describe, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vitest'
 
 describe('PublicKey.from', () => {
   test('default', () => {
@@ -48,5 +48,35 @@ describe('PublicKey.from', () => {
     } as PublicKey.PublicKey<true>)
 
     attest(publicKey).type.toString.snap()
+  })
+})
+
+describe('PublicKeyParts type-equivalence', () => {
+  test('PublicKeyParts<false> matches PublicKey<false> structurally', () => {
+    expectTypeOf<PublicKey.PublicKeyParts<false>>().toEqualTypeOf<
+      PublicKey.PublicKey<false>
+    >()
+  })
+
+  test('PublicKeyParts<true> matches PublicKey<true> structurally', () => {
+    expectTypeOf<PublicKey.PublicKeyParts<true>>().toEqualTypeOf<
+      PublicKey.PublicKey<true>
+    >()
+  })
+
+  test('default PublicKeyParts matches default PublicKey', () => {
+    expectTypeOf<PublicKey.PublicKeyParts>().toEqualTypeOf<PublicKey.PublicKey>()
+  })
+
+  test('toParts return is PublicKeyParts', () => {
+    type Result = ReturnType<typeof PublicKey.toParts<false>>
+    expectTypeOf<Result>().toEqualTypeOf<PublicKey.PublicKeyParts<false>>()
+  })
+
+  test('fromParts accepts PublicKeyParts and returns PublicKey', () => {
+    type Param = Parameters<typeof PublicKey.fromParts<false>>[0]
+    type Result = ReturnType<typeof PublicKey.fromParts<false>>
+    expectTypeOf<Param>().toEqualTypeOf<PublicKey.PublicKeyParts<false>>()
+    expectTypeOf<Result>().toEqualTypeOf<PublicKey.PublicKey<false>>()
   })
 })

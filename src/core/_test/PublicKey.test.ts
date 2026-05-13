@@ -10,6 +10,8 @@ test('exports', () => {
       "fromBytes",
       "fromHex",
       "toBytes",
+      "toParts",
+      "fromParts",
       "toHex",
       "validate",
       "InvalidError",
@@ -534,5 +536,78 @@ describe('PublicKey.validate', () => {
         y: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
       }),
     ).toBe(false)
+  })
+})
+
+describe('PublicKey.toParts', () => {
+  test('default', () => {
+    const parts = PublicKey.toParts({
+      prefix: 4,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+    })
+    expect(parts).toEqual({
+      prefix: 4,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+    })
+  })
+
+  test('behavior: compressed', () => {
+    const parts = PublicKey.toParts<true>({
+      prefix: 3,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+    })
+    expect(parts).toEqual({
+      prefix: 3,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+    })
+    expect('y' in parts).toBe(false)
+  })
+
+  test('behavior: returns a fresh object (no aliasing)', () => {
+    const pk = {
+      prefix: 4,
+      x: 1n,
+      y: 2n,
+    }
+    const parts = PublicKey.toParts(pk)
+    expect(parts).not.toBe(pk)
+  })
+})
+
+describe('PublicKey.fromParts', () => {
+  test('default', () => {
+    const publicKey = PublicKey.fromParts({
+      prefix: 4,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+    })
+    expect(publicKey).toEqual({
+      prefix: 4,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+    })
+  })
+
+  test('behavior: compressed', () => {
+    const publicKey = PublicKey.fromParts<true>({
+      prefix: 2,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+    })
+    expect(publicKey).toEqual({
+      prefix: 2,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+    })
+    expect('y' in publicKey).toBe(false)
+  })
+
+  test('behavior: roundtrip', () => {
+    const original = {
+      prefix: 4,
+      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+    }
+    expect(PublicKey.fromParts(PublicKey.toParts(original))).toEqual(original)
   })
 })

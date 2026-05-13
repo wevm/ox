@@ -32,6 +32,28 @@ export type G2Bytes = Branded<Bytes.Bytes, 'G2'>
 export type G2Hex = Branded<Hex.Hex, 'G2'>
 
 /**
+ * Structured projective parts of a BLS point on the G1 curve.
+ *
+ * @remarks
+ * In a future major (`1.0`), {@link ox#BlsPoint.G1} will be flipped to a
+ * branded {@link ox#BlsPoint.G1Hex} string and this `Parts` type will represent
+ * the structured projective form. Today, `G1Parts` is structurally equivalent
+ * to `G1` -- prefer it in new code so the upgrade path is a no-op.
+ */
+export type G1Parts = BlsPoint<Fp>
+
+/**
+ * Structured projective parts of a BLS point on the G2 curve.
+ *
+ * @remarks
+ * In a future major (`1.0`), {@link ox#BlsPoint.G2} will be flipped to a
+ * branded {@link ox#BlsPoint.G2Hex} string and this `Parts` type will represent
+ * the structured projective form. Today, `G2Parts` is structurally equivalent
+ * to `G2` -- prefer it in new code so the upgrade path is a no-op.
+ */
+export type G2Parts = BlsPoint<Fp2>
+
+/**
  * Converts a BLS point to {@link ox#Bytes.Bytes}.
  *
  * @example
@@ -220,5 +242,91 @@ export function fromHex(hex: Hex.Hex, group: 'G1' | 'G2'): BlsPoint<any> {
 }
 
 export declare namespace fromHex {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a BLS point to its structured projective {@link ox#BlsPoint.G1Parts}
+ * / {@link ox#BlsPoint.G2Parts} form.
+ *
+ * @remarks
+ * Today this is a structural pass-through (the root `BlsPoint` is already the
+ * projective object). In a future major, `G1` / `G2` will be branded
+ * `Hex.Hex` strings and this codec will decode into the parts form by
+ * delegating through {@link ox#BlsPoint.(toBytes:function)} /
+ * {@link ox#BlsPoint.(fromBytes:function)}. Migrating call sites to `toParts`
+ * / `fromParts` now keeps that upgrade a no-op.
+ *
+ * @example
+ * ### Public Key to Parts
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
+ * const parts = BlsPoint.toParts(publicKey)
+ * // @log: { x: 172...n, y: 175...n, z: 1n }
+ * ```
+ *
+ * @param point - The BLS point to convert.
+ * @returns The structured projective parts.
+ */
+export function toParts<point extends G1 | G2>(
+  point: point,
+): point extends G1 ? G1Parts : G2Parts {
+  // Today the root `BlsPoint` is already the projective object form -- copy
+  // the fields so callers don't accidentally mutate the input. In the future
+  // major, this becomes `fromBytes(toBytes(point))`.
+  return { x: point.x, y: point.y, z: point.z } as never
+}
+
+export declare namespace toParts {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts structured projective parts ({@link ox#BlsPoint.G1Parts} or
+ * {@link ox#BlsPoint.G2Parts}) into a {@link ox#BlsPoint.G1} or
+ * {@link ox#BlsPoint.G2} BLS point.
+ *
+ * @remarks
+ * Today this is a structural pass-through. In a future major, the BLS point
+ * root types will be branded `Hex.Hex` strings; this codec will then encode
+ * the parts via {@link ox#BlsPoint.(toBytes:function)}.
+ *
+ * @example
+ * ### Parts to Public Key
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { BlsPoint } from 'ox'
+ *
+ * const publicKey = BlsPoint.fromParts(
+ *   { x: 172n, y: 175n, z: 1n },
+ *   'G1',
+ * )
+ * // @log: { x: 172n, y: 175n, z: 1n }
+ * ```
+ *
+ * @param parts - The structured projective parts to convert.
+ * @param group - The BLS curve group (`'G1'` or `'G2'`).
+ * @returns The BLS point.
+ */
+export function fromParts<group extends 'G1' | 'G2'>(
+  parts: group extends 'G1' ? G1Parts : G2Parts,
+  group: group,
+): group extends 'G1' ? G1 : G2
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function fromParts(
+  parts: G1Parts | G2Parts,
+  _group: 'G1' | 'G2',
+): BlsPoint<any> {
+  // Today the root `BlsPoint` is already the projective object form. In the
+  // future major, this becomes `fromBytes(<bytes encoded from parts>, group)`
+  // -- the `group` argument is kept now so call sites match the future shape.
+  return { x: parts.x, y: parts.y, z: parts.z }
+}
+
+export declare namespace fromParts {
   type ErrorType = Errors.GlobalErrorType
 }
