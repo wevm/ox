@@ -8,8 +8,7 @@
 dist
 coverage
 node_modules
-tasks/*
-!tasks/bench/
+tasks/
 tsconfig.*.tsbuildinfo
 tsconfig.tsbuildinfo
 tsdoc.d.tson
