@@ -48,6 +48,25 @@ export function resolve(address: Address): core_Address.Address {
 }
 
 /**
+ * Internal fast path: strips a `tempox` prefix and validates the remaining
+ * hex without running EIP-55 checksum or allocating a `{ address }` wrapper.
+ *
+ * Suitable for hot paths that only need a format-validated 0x-prefixed
+ * address (hashing, byte slicing, tuple encoding). Non-Tempo inputs are
+ * returned verbatim so the original case is preserved for error messages.
+ *
+ * @internal
+ */
+export function unwrap(address: string): core_Address.Address {
+  if (address.charCodeAt(0) === 116 /* 't' */ && address.startsWith('tempox')) {
+    const hex = address.slice(6)
+    Hex.assert(hex, { strict: true })
+    return hex as core_Address.Address
+  }
+  return address as core_Address.Address
+}
+
+/**
  * Formats a raw Ethereum address into a Tempo address string.
  *
  * @example
