@@ -107,42 +107,36 @@ export function assert<
     value as unknown as assert.Value
 
   const validateValue = (type: string, value: unknown, name: string) => {
-    // Array types: validate length (if fixed) and recurse into each element.
-    const arrayMatch = type.match(Solidity.arrayRegex)
-    if (arrayMatch) {
-      const [, elementType, lengthStr] = arrayMatch
+    const parsed = getParsedType(types, type)
+    if (parsed.kind === 'array') {
       if (!Array.isArray(value))
         throw new InvalidArrayError({ name, type, value })
-      if (lengthStr) {
-        const expected = Number.parseInt(lengthStr, 10)
-        if (value.length !== expected)
-          throw new InvalidArrayLengthError({
-            name,
-            type,
-            expectedLength: expected,
-            givenLength: value.length,
-          })
-      }
-      for (const element of value) validateValue(elementType!, element, name)
+      if (parsed.length !== undefined && value.length !== parsed.length)
+        throw new InvalidArrayLengthError({
+          name,
+          type,
+          expectedLength: parsed.length,
+          givenLength: value.length,
+        })
+      for (const element of value)
+        validateValue(parsed.elementType, element, name)
       return
     }
 
-    const integerMatch = type.match(Solidity.integerRegex)
     if (
-      integerMatch &&
+      parsed.kind === 'integer' &&
       (typeof value === 'number' || typeof value === 'bigint')
     ) {
-      const [, base, size_] = integerMatch
       // If number cannot be cast to a sized hex value, it is out of range
       // and will throw.
       Hex.fromNumber(value, {
-        signed: base === 'int',
-        size: Number.parseInt(size_ ?? '', 10) / 8,
+        signed: parsed.signed,
+        size: parsed.sizeBytes,
       })
     }
 
     if (
-      type === 'address' &&
+      parsed.kind === 'address' &&
       typeof value === 'string' &&
       !Address.validate(value)
     )
@@ -151,20 +145,17 @@ export function assert<
         cause: new Address.InvalidInputError(),
       })
 
-    const bytesMatch = type.match(Solidity.bytesRegex)
-    if (bytesMatch) {
-      const [, size] = bytesMatch
-      if (size && Hex.size(value as Hex.Hex) !== Number.parseInt(size, 10))
+    if (parsed.kind === 'fixedBytes') {
+      if (Hex.size(value as Hex.Hex) !== parsed.size)
         throw new BytesSizeMismatchError({
-          expectedSize: Number.parseInt(size, 10),
+          expectedSize: parsed.size,
           givenSize: Hex.size(value as Hex.Hex),
         })
     }
 
-    const struct = types[type]
-    if (struct) {
+    if (parsed.kind === 'struct') {
       validateReference(type)
-      validateData(struct, value as Record<string, unknown>)
+      validateData(types[type]!, value as Record<string, unknown>)
     }
   }
 
@@ -901,8 +892,9 @@ export function encodeField(properties: {
   typeHashes?: Map<string, Hex.Hex> | undefined
 }): [type: AbiParameters.Parameter, value: Hex.Hex] {
   let { types, name, type, value, typeHashes } = properties
+  const parsed = getParsedType(types, type)
 
-  if (types[type] !== undefined)
+  if (parsed.kind === 'struct')
     return [
       { type: 'bytes32' },
       Hash.keccak256(
@@ -910,40 +902,33 @@ export function encodeField(properties: {
       ),
     ]
 
-  if (type === 'bytes') {
+  if (parsed.kind === 'bytes') {
     const prepend = value.length % 2 ? '0' : ''
     value = `0x${prepend + value.slice(2)}`
     return [{ type: 'bytes32' }, Hash.keccak256(value, { as: 'Hex' })]
   }
 
-  if (type === 'string')
+  if (parsed.kind === 'string')
     return [
       { type: 'bytes32' },
       Hash.keccak256(Bytes.fromString(value), { as: 'Hex' }),
     ]
 
-  if (type.lastIndexOf(']') === type.length - 1) {
-    const arrayMatch = type.match(Solidity.arrayRegex)
-    const parsedType = arrayMatch
-      ? arrayMatch[1]!
-      : type.slice(0, type.lastIndexOf('['))
-    const fixedLength = arrayMatch?.[2]
-      ? Number.parseInt(arrayMatch[2], 10)
-      : undefined
+  if (parsed.kind === 'array') {
     if (!Array.isArray(value))
       throw new InvalidArrayError({ name, type, value })
-    if (fixedLength !== undefined && value.length !== fixedLength)
+    if (parsed.length !== undefined && value.length !== parsed.length)
       throw new InvalidArrayLengthError({
         name,
         type,
-        expectedLength: fixedLength,
+        expectedLength: parsed.length,
         givenLength: value.length,
       })
     const typeValuePairs = (value as [AbiParameters.Parameter, any][]).map(
       (item) =>
         encodeField({
           name,
-          type: parsedType,
+          type: parsed.elementType,
           types,
           value: item,
           typeHashes,
@@ -1012,4 +997,106 @@ function validateReference(type: string) {
     type.startsWith('int')
   )
     throw new InvalidStructTypeError({ type })
+}
+
+/** @internal */
+type ParsedType =
+  | { kind: 'array'; elementType: string; length: number | undefined }
+  | { kind: 'integer'; signed: boolean; sizeBytes: number }
+  | { kind: 'address' }
+  | { kind: 'bool' }
+  | { kind: 'string' }
+  | { kind: 'bytes' }
+  | { kind: 'fixedBytes'; size: number }
+  | { kind: 'struct' }
+  | { kind: 'unknown' }
+
+/**
+ * Per-`types`-reference cache of parsed type metadata. Avoids re-running
+ * `Solidity.arrayRegex` / `Solidity.integerRegex` / `Solidity.bytesRegex`
+ * (and the `types[type]` lookup) on every call into `assert.validateValue`
+ * and `encodeField` for the same `(types, type)` pair.
+ *
+ * @internal
+ */
+const parsedTypeCache = new WeakMap<object, Map<string, ParsedType>>()
+
+/** @internal */
+function getParsedType(
+  types: TypedData | Record<string, unknown>,
+  type: string,
+): ParsedType {
+  let perTypes = parsedTypeCache.get(types as object)
+  if (!perTypes) {
+    perTypes = new Map()
+    parsedTypeCache.set(types as object, perTypes)
+  }
+  const cached = perTypes.get(type)
+  if (cached) return cached
+  const parsed = parseType(types, type)
+  perTypes.set(type, parsed)
+  return parsed
+}
+
+/** @internal */
+function parseType(
+  types: TypedData | Record<string, unknown>,
+  type: string,
+): ParsedType {
+  // User-defined types take precedence so a struct named after a Solidity
+  // primitive (e.g. `address`) reaches `validateReference` and throws
+  // `InvalidStructTypeError`, matching the original lookup-after-primitive
+  // ordering in `validateValue`.
+  if ((types as Record<string, unknown>)[type] !== undefined)
+    return { kind: 'struct' }
+
+  // array (e.g. `uint256[2]`, `Person[]`)
+  if (type.charCodeAt(type.length - 1) === 0x5d /* `]` */) {
+    const arrayMatch = type.match(Solidity.arrayRegex)
+    if (arrayMatch) {
+      const [, elementType, lengthStr] = arrayMatch
+      return {
+        kind: 'array',
+        elementType: elementType!,
+        length: lengthStr ? Number.parseInt(lengthStr, 10) : undefined,
+      }
+    }
+  }
+
+  if (type === 'address') return { kind: 'address' }
+  if (type === 'bool') return { kind: 'bool' }
+  if (type === 'string') return { kind: 'string' }
+  if (type === 'bytes') return { kind: 'bytes' }
+
+  // fixed bytes (e.g. `bytes32`)
+  if (type.startsWith('bytes')) {
+    const bytesMatch = type.match(Solidity.bytesRegex)
+    if (bytesMatch) {
+      const [, sizeStr] = bytesMatch
+      // `bytes` (no width) is handled above; the regex only matches sized
+      // variants here, so `sizeStr` is always defined.
+      return {
+        kind: 'fixedBytes',
+        size: Number.parseInt(sizeStr ?? '0', 10),
+      }
+    }
+  }
+
+  // (u)int (e.g. `uint8`, `int256`)
+  if (type.startsWith('int') || type.startsWith('uint')) {
+    const integerMatch = type.match(Solidity.integerRegex)
+    if (integerMatch) {
+      const [, base, sizeStr] = integerMatch
+      return {
+        kind: 'integer',
+        signed: base === 'int',
+        // Preserves legacy behavior for unsized `uint` / `int`: passes
+        // `NaN` through to `Hex.fromNumber({ size })`, matching what the
+        // original inline regex code did.
+        sizeBytes: Number.parseInt(sizeStr ?? '', 10) / 8,
+      }
+    }
+  }
+
+  return { kind: 'unknown' }
 }
