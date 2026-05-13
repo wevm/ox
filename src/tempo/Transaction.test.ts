@@ -1,3 +1,4 @@
+import { Signature } from 'ox'
 import { Transaction } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
@@ -57,11 +58,7 @@ describe('fromRpc', () => {
         "maxPriorityFeePerGas": 1n,
         "nonce": 855n,
         "signature": {
-          "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
-          },
+          "signature": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b",
           "type": "secp256k1",
         },
         "transactionIndex": 2,
@@ -139,11 +136,7 @@ describe('fromRpc', () => {
         "maxPriorityFeePerGas": 1n,
         "nonce": 855n,
         "signature": {
-          "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
-          },
+          "signature": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b",
           "type": "secp256k1",
         },
         "transactionIndex": 2,
@@ -234,11 +227,7 @@ describe('fromRpc', () => {
             },
           ],
           "signature": {
-            "signature": {
-              "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-              "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-              "yParity": 0,
-            },
+            "signature": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b",
             "type": "secp256k1",
           },
           "type": "secp256k1",
@@ -247,11 +236,7 @@ describe('fromRpc', () => {
         "maxPriorityFeePerGas": 1n,
         "nonce": 855n,
         "signature": {
-          "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
-          },
+          "signature": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b",
           "type": "secp256k1",
         },
         "transactionIndex": 2,
@@ -287,11 +272,11 @@ describe('toRpc', () => {
       maxPriorityFeePerGas: 1n,
       nonce: 855n,
       signature: {
-        signature: {
+        signature: Signature.fromParts({
           r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
           s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
           yParity: 0,
-        },
+        }),
         type: 'secp256k1',
       },
       transactionIndex: 2,
@@ -363,11 +348,11 @@ describe('toRpc', () => {
       maxPriorityFeePerGas: 1n,
       nonce: 855n,
       signature: {
-        signature: {
+        signature: Signature.fromParts({
           r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
           s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
           yParity: 0,
-        },
+        }),
         type: 'secp256k1',
       },
       transactionIndex: 2,
@@ -442,11 +427,11 @@ describe('toRpc', () => {
           },
         ],
         signature: {
-          signature: {
+          signature: Signature.fromParts({
             r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
             s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
             yParity: 0,
-          },
+          }),
           type: 'secp256k1',
         },
       },
@@ -459,11 +444,11 @@ describe('toRpc', () => {
       maxPriorityFeePerGas: 1n,
       nonce: 855n,
       signature: {
-        signature: {
+        signature: Signature.fromParts({
           r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
           s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
           yParity: 0,
-        },
+        }),
         type: 'secp256k1',
       },
       transactionIndex: 2,

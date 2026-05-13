@@ -27,35 +27,39 @@ describe('Signature round-trip', () => {
   test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromHex(toHex(s)) ≡ s',
     ({ sig }) => {
-      expect(Signature.fromHex(Signature.toHex(sig))).toEqual(sig)
+      const hex = Signature.fromParts(sig)
+      expect(Signature.fromHex(Signature.toHex(hex))).toEqual(hex)
     },
   )
 
   test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromBytes(toBytes(s)) ≡ s',
     ({ sig }) => {
-      expect(Signature.fromBytes(Signature.toBytes(sig))).toEqual(sig)
+      const hex = Signature.fromParts(sig)
+      expect(Signature.fromBytes(Signature.toBytes(hex))).toEqual(hex)
     },
   )
 
   test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromTuple(toTuple(s)) ≡ s',
     ({ sig }) => {
-      expect(Signature.fromTuple(Signature.toTuple(sig))).toEqual(sig)
+      const hex = Signature.fromParts(sig)
+      expect(Signature.fromTuple(Signature.toTuple(hex))).toEqual(hex)
     },
   )
 
   test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromRpc(toRpc(s)) ≡ s',
     ({ sig }) => {
-      expect(Signature.fromRpc(Signature.toRpc(sig))).toEqual(sig)
+      const hex = Signature.fromParts(sig)
+      expect(Signature.fromRpc(Signature.toRpc(hex))).toEqual(hex)
     },
   )
 
   test.prop({ sig: arbitrarySignature }, { numRuns })(
     'fromCompactBytes(toCompactBytes(s)) ≡ s (without recovery)',
     ({ sig }) => {
-      const stripped = { r: sig.r, s: sig.s }
+      const stripped = Signature.fromParts<false>({ r: sig.r, s: sig.s })
       expect(
         Signature.fromCompactBytes(Signature.toCompactBytes(stripped)),
       ).toEqual(stripped)

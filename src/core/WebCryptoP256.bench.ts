@@ -1,11 +1,13 @@
 import { bench, describe } from 'vitest'
 import * as Bytes from './Bytes.js'
 import * as PublicKey from './PublicKey.js'
+import * as Signature from './Signature.js'
 import * as WebCryptoP256 from './WebCryptoP256.js'
 
 const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
 const payload = Bytes.random(32)
 const signature = await WebCryptoP256.sign({ payload, privateKey })
+const signatureParts = Signature.toParts<false>(signature)
 
 // Pre-import the verifying key once; this models a hypothetical
 // `verifyPrepared` fast path that would skip `subtle.importKey` per call.
@@ -18,8 +20,8 @@ const preparedVerifyKey = await globalThis.crypto.subtle.importKey(
 )
 
 const signatureBytes = Bytes.concat(
-  Bytes.fromNumber(signature.r, { size: 32 }),
-  Bytes.fromNumber(signature.s, { size: 32 }),
+  Bytes.fromNumber(signatureParts.r, { size: 32 }),
+  Bytes.fromNumber(signatureParts.s, { size: 32 }),
 )
 
 describe('WebCryptoP256.verify', () => {

@@ -1,20 +1,11 @@
 import { attest } from '@ark/attest'
-import { PublicKey } from 'ox'
+import { Hex, PublicKey } from 'ox'
 import { describe, expectTypeOf, test } from 'vitest'
 
-describe('PublicKey.from', () => {
+describe('PublicKey.fromParts', () => {
   test('default', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts({
       prefix: 4,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    })
-
-    attest(publicKey).type.toString.snap()
-  })
-
-  test('behavior: uncompressed, no prefix', () => {
-    const publicKey = PublicKey.from({
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
@@ -23,49 +14,26 @@ describe('PublicKey.from', () => {
   })
 
   test('behavior: compressed', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts<true>({
       prefix: 0x03,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
     })
 
     attest(publicKey).type.toString.snap()
   })
-
-  test('behavior: widened, uncompressed', () => {
-    const publicKey = PublicKey.from({
-      prefix: 4,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    } as PublicKey.PublicKey)
-
-    attest(publicKey).type.toString.snap()
-  })
-
-  test('behavior: widened, compressed', () => {
-    const publicKey = PublicKey.from({
-      prefix: 3,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    } as PublicKey.PublicKey<true>)
-
-    attest(publicKey).type.toString.snap()
-  })
 })
 
-describe('Parts type-equivalence', () => {
-  test('Parts<false> matches PublicKey<false> structurally', () => {
-    expectTypeOf<PublicKey.Parts<false>>().toEqualTypeOf<
-      PublicKey.PublicKey<false>
-    >()
+describe('PublicKey type identity', () => {
+  test('PublicKey<false> is Hex.Hex', () => {
+    expectTypeOf<PublicKey.PublicKey<false>>().toEqualTypeOf<Hex.Hex>()
   })
 
-  test('Parts<true> matches PublicKey<true> structurally', () => {
-    expectTypeOf<PublicKey.Parts<true>>().toEqualTypeOf<
-      PublicKey.PublicKey<true>
-    >()
+  test('PublicKey<true> is Hex.Hex', () => {
+    expectTypeOf<PublicKey.PublicKey<true>>().toEqualTypeOf<Hex.Hex>()
   })
 
-  test('default Parts matches default PublicKey', () => {
-    expectTypeOf<PublicKey.Parts>().toEqualTypeOf<PublicKey.PublicKey>()
+  test('default PublicKey is Hex.Hex', () => {
+    expectTypeOf<PublicKey.PublicKey>().toEqualTypeOf<Hex.Hex>()
   })
 
   test('toParts return is Parts', () => {

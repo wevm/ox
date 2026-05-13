@@ -482,7 +482,7 @@ export function deserializeResponse(response: Response<true>): Response {
         Base64.toBytes(credential.clientDataJSON),
       ),
       id: credential.id,
-      publicKey: PublicKey.from(credential.publicKey),
+      publicKey: PublicKey.fromHex(credential.publicKey),
       raw: {
         id: credential.raw.id,
         type: credential.raw.type,
@@ -498,7 +498,7 @@ export function deserializeResponse(response: Response<true>): Response {
 export declare namespace deserializeResponse {
   type ErrorType =
     | Base64.toBytes.ErrorType
-    | PublicKey.from.ErrorType
+    | PublicKey.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -1,12 +1,22 @@
 import type { BlsPoint } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
-test('G1Parts matches G1 structurally', () => {
-  expectTypeOf<BlsPoint.G1Parts>().toEqualTypeOf<BlsPoint.G1>()
+test('G1 is a branded G1Hex string', () => {
+  expectTypeOf<BlsPoint.G1>().toEqualTypeOf<BlsPoint.G1Hex>()
 })
 
-test('G2Parts matches G2 structurally', () => {
-  expectTypeOf<BlsPoint.G2Parts>().toEqualTypeOf<BlsPoint.G2>()
+test('G2 is a branded G2Hex string', () => {
+  expectTypeOf<BlsPoint.G2>().toEqualTypeOf<BlsPoint.G2Hex>()
+})
+
+test('G1Parts is the structured projective form on Fp', () => {
+  expectTypeOf<BlsPoint.G1Parts>().toEqualTypeOf<BlsPoint.BlsPoint<bigint>>()
+})
+
+test('G2Parts is the structured projective form on Fp2', () => {
+  expectTypeOf<BlsPoint.G2Parts>().toEqualTypeOf<
+    BlsPoint.BlsPoint<BlsPoint.Fp2>
+  >()
 })
 
 test('toParts narrows G1 to G1Parts', () => {

@@ -64,10 +64,7 @@ export declare namespace createKeyPair {
     publicKey: PublicKey.PublicKey
   }
 
-  type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | PublicKey.from.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -83,37 +80,33 @@ export declare namespace createKeyPair {
  * @param options - The options to compute the public key.
  * @returns The computed public key.
  */
-export function getPublicKey<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
+export function getPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: getPublicKey.Options<as>,
 ): getPublicKey.ReturnType<as> {
-  const { as = 'Object', privateKey } = options
+  const { as = 'Hex', privateKey } = options
   const bytes = secp256k1.getPublicKey(Bytes.from(privateKey), false)
   const publicKey = PublicKey.fromBytes(bytes)
   return formatPublicKey(publicKey, as) as never
 }
 
 export declare namespace getPublicKey {
-  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /**
      * Format of the returned public key.
-     * @default 'Object'
+     * @default 'Hex'
      */
-    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
     /**
      * Private key to compute the public key from.
      */
     privateKey: Hex.Hex | Bytes.Bytes
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? PublicKey.PublicKey : never)
+    | (as extends 'Hex' ? PublicKey.PublicKey : never)
 
-  type ErrorType =
-    | Hex.from.ErrorType
-    | PublicKey.from.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Hex.from.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -162,10 +155,10 @@ export declare namespace getSharedSecret {
     /**
      * Public key to use for the shared secret computation.
      *
-     * Accepts a structured {@link ox#PublicKey.PublicKey}, a serialized hex
-     * string, or a `Uint8Array` (SEC1 encoding).
+     * Accepts a canonical {@link ox#PublicKey.PublicKey} (hex), a `Uint8Array`
+     * (SEC1 encoding), or a structured {@link ox#PublicKey.Parts}.
      */
-    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
+    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.Parts<boolean>
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
@@ -226,10 +219,10 @@ export declare namespace randomPrivateKey {
  *
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
  *
- * const address = Secp256k1.recoverAddress({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
- * }) // [!code focus]
+ * const address = Secp256k1.recoverAddress({
+ *   payload: '0xdeadbeef',
+ *   signature,
+ * })
  * ```
  *
  * @param options - The recovery options.
@@ -248,10 +241,11 @@ export declare namespace recoverAddress {
     /**
      * Signature of the payload.
      *
-     * Accepts a structured {@link ox#Signature.Signature}, a serialized hex
-     * string, or a `Uint8Array` (65-byte recovered).
+     * Accepts a canonical {@link ox#Signature.Signature} (hex), a
+     * `Uint8Array` (65-byte recovered), or a structured
+     * {@link ox#Signature.Parts}.
      */
-    signature: Hex.Hex | Bytes.Bytes | Signature.Signature
+    signature: Hex.Hex | Bytes.Bytes | Signature.Parts<boolean>
   }
 
   type ReturnType = Address.Address
@@ -271,20 +265,25 @@ export declare namespace recoverAddress {
  *
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
  *
- * const publicKey = Secp256k1.recoverPublicKey({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
- * }) // [!code focus]
+ * const publicKey = Secp256k1.recoverPublicKey({
+ *   payload: '0xdeadbeef',
+ *   signature,
+ * })
  * ```
  *
  * @param options - The recovery options.
  * @returns The recovered public key.
  */
-export function recoverPublicKey<
-  as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
->(options: recoverPublicKey.Options<as>): recoverPublicKey.ReturnType<as> {
-  const { as = 'Object', payload, signature } = options
-  const sigBytes = toRecoveredBytes(normalizeSignature<true>(signature))
+export function recoverPublicKey<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: recoverPublicKey.Options<as>,
+): recoverPublicKey.ReturnType<as> {
+  const { as = 'Hex', payload, signature } = options
+  const ourBytes = toRecoveredBytes(normalizeSignature(signature))
+  // `@noble/curves` v2 expects the recovered signature as `recid || r || s`.
+  // Convert from our canonical `r || s || yParity` layout.
+  const sigBytes = new Uint8Array(65)
+  sigBytes[0] = ourBytes[64]!
+  sigBytes.set(ourBytes.subarray(0, 64), 1)
   const point = secp256k1.Signature.fromBytes(
     sigBytes,
     'recovered',
@@ -294,32 +293,29 @@ export function recoverPublicKey<
 }
 
 export declare namespace recoverPublicKey {
-  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /**
      * Format of the returned public key.
-     * @default 'Object'
+     * @default 'Hex'
      */
-    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
     /** Payload that was signed. */
     payload: Hex.Hex | Bytes.Bytes
     /**
      * Signature of the payload.
      *
-     * Accepts a structured {@link ox#Signature.Signature}, a serialized hex
-     * string, or a `Uint8Array` (65-byte recovered).
+     * Accepts a canonical {@link ox#Signature.Signature} (hex), a
+     * `Uint8Array` (65-byte recovered), or a structured
+     * {@link ox#Signature.Parts}.
      */
-    signature: Hex.Hex | Bytes.Bytes | Signature.Signature
+    signature: Hex.Hex | Bytes.Bytes | Signature.Parts<boolean>
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? PublicKey.PublicKey : never)
+    | (as extends 'Hex' ? PublicKey.PublicKey : never)
 
-  type ErrorType =
-    | PublicKey.from.ErrorType
-    | Hex.from.ErrorType
-    | Errors.GlobalErrorType
+  type ErrorType = Hex.from.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -329,20 +325,20 @@ export declare namespace recoverPublicKey {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const signature = Secp256k1.sign({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   privateKey: '0x...' // [!code focus]
- * }) // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param options - The signing options.
  * @returns The ECDSA {@link ox#Signature.Signature}.
  */
-export function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
+export function sign<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: sign.Options<as>,
 ): sign.ReturnType<as> {
   const {
-    as = 'Object',
+    as = 'Hex',
     extraEntropy = Entropy.extraEntropy,
     hash,
     payload,
@@ -357,17 +353,22 @@ export function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
     prehash: hash === true,
     format: 'recovered',
   })
-  const signature = fromRecoveredBytes(sigBytes)
+  // `@noble/curves` v2 emits the recovered signature as `recid || r || s`.
+  // Convert to canonical `r || s || yParity` for `fromRecoveredBytes`.
+  const recoveredBytes = new Uint8Array(65)
+  recoveredBytes.set(sigBytes.subarray(1, 65), 0)
+  recoveredBytes[64] = sigBytes[0]!
+  const signature = fromRecoveredBytes(recoveredBytes)
   return formatSignature(signature, as) as never
 }
 
 export declare namespace sign {
-  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /**
      * Format of the returned signature.
-     * @default 'Object'
+     * @default 'Hex'
      */
-    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
     /**
      * Extra entropy to add to the signing process. Setting to `true` enables hedged
      * (RFC 6979 + extra randomness) signing.
@@ -388,10 +389,9 @@ export declare namespace sign {
     privateKey: Hex.Hex | Bytes.Bytes
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? Signature.Signature : never)
+    | (as extends 'Hex' ? Signature.Signature : never)
 
   type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
 }
@@ -407,11 +407,11 @@ export declare namespace sign {
  *
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
  *
- * const verified = Secp256k1.verify({ // [!code focus]
- *   address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
- * }) // [!code focus]
+ * const verified = Secp256k1.verify({
+ *   address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+ *   payload: '0xdeadbeef',
+ *   signature,
+ * })
  * ```
  *
  * @example
@@ -424,11 +424,11 @@ export declare namespace sign {
  * const publicKey = Secp256k1.getPublicKey({ privateKey })
  * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
  *
- * const verified = Secp256k1.verify({ // [!code focus]
- *   publicKey, // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
- * }) // [!code focus]
+ * const verified = Secp256k1.verify({
+ *   publicKey,
+ *   payload: '0xdeadbeef',
+ *   signature,
+ * })
  * ```
  *
  * @param options - The verification options.
@@ -460,26 +460,27 @@ export declare namespace verify {
         /**
          * Signature of the payload.
          *
-         * Accepts a structured {@link ox#Signature.Signature}, a serialized
-         * hex string, or a `Uint8Array`.
+         * Accepts a canonical {@link ox#Signature.Signature} (hex), a
+         * `Uint8Array`, or a structured {@link ox#Signature.Parts}.
          */
-        signature: Hex.Hex | Bytes.Bytes | Signature.Signature
+        signature: Hex.Hex | Bytes.Bytes | Signature.Parts<boolean>
       }
     | {
         /**
          * Public key that signed the payload.
          *
-         * Accepts a structured {@link ox#PublicKey.PublicKey}, a serialized
-         * hex string, or a `Uint8Array` (SEC1 encoding).
+         * Accepts a canonical {@link ox#PublicKey.PublicKey} (hex), a
+         * `Uint8Array` (SEC1 encoding), or a structured
+         * {@link ox#PublicKey.Parts}.
          */
-        publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
+        publicKey: Hex.Hex | Bytes.Bytes | PublicKey.Parts<boolean>
         /**
          * Signature of the payload.
          *
-         * Accepts a structured {@link ox#Signature.Signature}, a serialized
-         * hex string, or a `Uint8Array`.
+         * Accepts a canonical {@link ox#Signature.Signature} (hex), a
+         * `Uint8Array`, or a structured {@link ox#Signature.Parts}.
          */
-        signature: Hex.Hex | Bytes.Bytes | Signature.Signature<boolean>
+        signature: Hex.Hex | Bytes.Bytes | Signature.Parts<boolean>
       }
   >
 

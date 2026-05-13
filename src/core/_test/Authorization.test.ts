@@ -78,12 +78,12 @@ describe('from', () => {
       signature,
     })
     expectTypeOf(authorization_signed).toEqualTypeOf<{
-      readonly address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
-      readonly chainId: 1
-      readonly nonce: 40n
-      readonly r: bigint
-      readonly s: bigint
-      readonly yParity: number
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
+      chainId: 1
+      nonce: 40n
+      r: bigint
+      s: bigint
+      yParity: number
     }>()
     expectTypeOf(authorization_signed).toMatchTypeOf<
       Authorization.Authorization<true>

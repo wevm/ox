@@ -4,28 +4,21 @@ import * as Hex from './Hex.js'
 import type { Compute, ExactPartial } from './internal/types.js'
 import * as Json from './Json.js'
 
-/** Root type for an ECDSA Public Key. */
-export type PublicKey<
-  compressed extends boolean = false,
-  bigintType = bigint,
-  numberType = number,
-> = Compute<
-  compressed extends true
-    ? {
-        prefix: numberType
-        x: bigintType
-        y?: undefined
-      }
-    : {
-        prefix: numberType
-        x: bigintType
-        y: bigintType
-      }
->
+/**
+ * Canonical type for an ECDSA Public Key.
+ *
+ * A {@link ox#PublicKey.PublicKey} is a serialized {@link ox#Hex.Hex} SEC1
+ * encoding:
+ *
+ * - Uncompressed (default): `0x04{x32}{y32}` -- 65 bytes.
+ * - Compressed: `0x02{x32}` or `0x03{x32}` -- 33 bytes.
+ *
+ * Use {@link ox#PublicKey.toParts} / {@link ox#PublicKey.fromParts} to convert
+ * between the canonical form and the structured {@link ox#PublicKey.Parts}.
+ */
+export type PublicKey<compressed extends boolean = false> =
+  compressed extends true ? Hex.Hex : Hex.Hex
 
-// TODO(v1): flip `PublicKey` to a serialized `Hex.Hex` string and let `Parts`
-// represent the structured object form. Today `Parts<compressed>` is
-// structurally equivalent to `PublicKey<compressed>`.
 /** Structured parts of an ECDSA public key. */
 export type Parts<compressed extends boolean = false> = Compute<
   compressed extends true
@@ -42,7 +35,8 @@ export type Parts<compressed extends boolean = false> = Compute<
 >
 
 /**
- * Asserts that a {@link ox#PublicKey.PublicKey} is valid.
+ * Asserts that a {@link ox#PublicKey.Parts} object is a valid ECDSA public
+ * key.
  *
  * @example
  * ```ts twoslash
@@ -58,19 +52,19 @@ export type Parts<compressed extends boolean = false> = Compute<
  * // @error: - an `x`, `y`, and `prefix` value (uncompressed)
  * ```
  *
- * @param publicKey - The public key object to assert.
+ * @param parts - The public key parts to assert.
  */
 export function assert(
-  publicKey: ExactPartial<PublicKey>,
+  parts: ExactPartial<Parts>,
   options: assert.Options = {},
-): asserts publicKey is PublicKey {
+): asserts parts is Parts {
   const { compressed } = options
-  const { prefix, x, y } = publicKey
+  const { prefix, x, y } = parts
 
   // Explicit `compressed: false` -- require uncompressed shape.
   if (compressed === false) {
     if (typeof x !== 'bigint' || typeof y !== 'bigint')
-      throw new InvalidError({ publicKey })
+      throw new InvalidError({ publicKey: parts })
     if (prefix !== 4)
       throw new InvalidPrefixError({
         prefix,
@@ -82,7 +76,7 @@ export function assert(
   // Explicit `compressed: true` -- require compressed shape.
   if (compressed === true) {
     if (typeof x !== 'bigint' || typeof y !== 'undefined')
-      throw new InvalidError({ publicKey })
+      throw new InvalidError({ publicKey: parts })
     if (prefix !== 3 && prefix !== 2)
       throw new InvalidPrefixError({
         prefix,
@@ -114,7 +108,7 @@ export function assert(
   }
 
   // Unknown/invalid
-  throw new InvalidError({ publicKey })
+  throw new InvalidError({ publicKey: parts })
 }
 
 export declare namespace assert {
@@ -133,122 +127,29 @@ export declare namespace assert {
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.from({
+ * const publicKey = PublicKey.fromParts({
  *   prefix: 4,
  *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
  *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
  * })
  *
- * const compressed = PublicKey.compress(publicKey) // [!code focus]
- * // @log: {
- * // @log:   prefix: 3,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log: }
+ * const compressed = PublicKey.compress(publicKey)
+ * // @log: '0x038318535b...'
  * ```
  *
  * @param publicKey - The public key to compress.
  * @returns The compressed public key.
  */
 export function compress(publicKey: PublicKey<false>): PublicKey<true> {
-  const { x, y } = publicKey
-  return {
+  const { x, y } = toParts(publicKey)
+  return fromParts<true>({
     prefix: y % 2n === 0n ? 2 : 3,
     x,
-  }
+  })
 }
 
 export declare namespace compress {
   type ErrorType = Errors.GlobalErrorType
-}
-
-/**
- * Instantiates a typed {@link ox#PublicKey.PublicKey} object from a {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
- *
- * @example
- * ```ts twoslash
- * import { PublicKey } from 'ox'
- *
- * const publicKey = PublicKey.from({
- *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * })
- * // @log: {
- * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * // @log: }
- * ```
- *
- * @example
- * ### From Serialized
- *
- * ```ts twoslash
- * import { PublicKey } from 'ox'
- *
- * const publicKey = PublicKey.from('0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
- * // @log: {
- * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * // @log: }
- * ```
- *
- * @param value - The public key value to instantiate.
- * @returns The instantiated {@link ox#PublicKey.PublicKey}.
- */
-export function from<
-  const publicKey extends
-    | CompressedPublicKey
-    | UncompressedPublicKey
-    | Hex.Hex
-    | Bytes.Bytes,
->(value: from.Value<publicKey>): from.ReturnType<publicKey> {
-  const publicKey = (() => {
-    if (Hex.validate(value)) return fromHex(value)
-    if (Bytes.validate(value)) return fromBytes(value)
-
-    const { prefix, x, y } = value
-    if (typeof x === 'bigint' && typeof y === 'bigint')
-      return { prefix: prefix ?? 0x04, x, y }
-    return { prefix, x }
-  })()
-
-  assert(publicKey)
-
-  return publicKey as never
-}
-
-/** @internal */
-type CompressedPublicKey = PublicKey<true>
-
-/** @internal */
-type UncompressedPublicKey = Omit<PublicKey<false>, 'prefix'> & {
-  prefix?: PublicKey['prefix'] | undefined
-}
-
-export declare namespace from {
-  type Value<
-    publicKey extends
-      | CompressedPublicKey
-      | UncompressedPublicKey
-      | Hex.Hex
-      | Bytes.Bytes = PublicKey,
-  > = publicKey | CompressedPublicKey | UncompressedPublicKey
-
-  type ReturnType<
-    publicKey extends
-      | CompressedPublicKey
-      | UncompressedPublicKey
-      | Hex.Hex
-      | Bytes.Bytes = PublicKey,
-  > = publicKey extends CompressedPublicKey | UncompressedPublicKey
-    ? publicKey extends UncompressedPublicKey
-      ? Compute<publicKey & { readonly prefix: 0x04 }>
-      : publicKey
-    : PublicKey
-
-  type ErrorType = assert.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -260,15 +161,11 @@ export declare namespace from {
  * import { PublicKey } from 'ox'
  *
  * const publicKey = PublicKey.fromBytes(new Uint8Array([128, 3, 131, ...]))
- * // @log: {
- * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * // @log: }
+ * // @log: '0x048318535b54105d4a7aae...'
  * ```
  *
  * @param publicKey - The serialized public key.
- * @returns The deserialized public key.
+ * @returns The {@link ox#PublicKey.PublicKey}.
  */
 export function fromBytes(publicKey: Bytes.Bytes): PublicKey {
   return fromHex(Hex.fromBytes(publicKey))
@@ -282,35 +179,26 @@ export declare namespace fromBytes {
 }
 
 /**
- * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} value.
+ * Normalizes a {@link ox#Hex.Hex} encoded public key to a canonical
+ * {@link ox#PublicKey.PublicKey}.
+ *
+ * Accepts:
+ *
+ * - 33 bytes (compressed + prefix).
+ * - 64 bytes (uncompressed, missing `0x04` prefix). The `0x04` prefix is
+ *   prepended to the canonical form.
+ * - 65 bytes (uncompressed + prefix).
  *
  * @example
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
  * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
- * // @log: {
- * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * // @log: }
- * ```
- *
- * @example
- * ### Deserializing a Compressed Public Key
- *
- * ```ts twoslash
- * import { PublicKey } from 'ox'
- *
- * const publicKey = PublicKey.fromHex('0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75')
- * // @log: {
- * // @log:   prefix: 3,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log: }
+ * // @log: '0x048318535b54105d4a7aae...'
  * ```
  *
  * @param publicKey - The serialized public key.
- * @returns The deserialized public key.
+ * @returns The canonical {@link ox#PublicKey.PublicKey}.
  */
 export function fromHex(publicKey: Hex.Hex): PublicKey {
   if (
@@ -320,38 +208,26 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
   )
     throw new InvalidSerializedSizeError({ publicKey })
 
-  const result = (() => {
-    if (publicKey.length === 130) {
-      const x = BigInt(Hex.slice(publicKey, 0, 32))
-      const y = BigInt(Hex.slice(publicKey, 32, 64))
-      return {
-        prefix: 4,
-        x,
-        y,
-      }
-    }
+  // Missing prefix: prepend 0x04.
+  if (publicKey.length === 130) return `0x04${publicKey.slice(2)}` as PublicKey
 
-    if (publicKey.length === 132) {
-      const prefix = Number(Hex.slice(publicKey, 0, 1))
-      const x = BigInt(Hex.slice(publicKey, 1, 33))
-      const y = BigInt(Hex.slice(publicKey, 33, 65))
-      return {
+  const prefix = Number(Hex.slice(publicKey, 0, 1))
+  if (publicKey.length === 132) {
+    if (prefix !== 4)
+      throw new InvalidPrefixError({
         prefix,
-        x,
-        y,
-      }
-    }
+        cause: new InvalidUncompressedPrefixError(),
+      })
+    return publicKey as PublicKey
+  }
 
-    const prefix = Number(Hex.slice(publicKey, 0, 1))
-    const x = BigInt(Hex.slice(publicKey, 1, 33))
-    return {
+  // Compressed (68 chars total -> 33 bytes).
+  if (prefix !== 2 && prefix !== 3)
+    throw new InvalidPrefixError({
       prefix,
-      x,
-    }
-  })()
-
-  assert(result)
-  return result as never
+      cause: new InvalidCompressedPrefixError(),
+    })
+  return publicKey as PublicKey
 }
 
 export declare namespace fromHex {
@@ -369,14 +245,14 @@ export declare namespace fromHex {
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.from({
+ * const publicKey = PublicKey.fromParts({
  *   prefix: 4,
  *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
  *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
  * })
  *
- * const bytes = PublicKey.toBytes(publicKey) // [!code focus]
- * // @log: Uint8Array [128, 3, 131, ...]
+ * const bytes = PublicKey.toBytes(publicKey)
+ * // @log: Uint8Array [4, 131, 24, 83, ...]
  * ```
  *
  * @param publicKey - The public key to serialize.
@@ -404,8 +280,6 @@ export declare namespace toBytes {
     | Errors.GlobalErrorType
 }
 
-// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, decode it into
-// the parts form here instead of returning the input directly.
 /**
  * Converts a {@link ox#PublicKey.PublicKey} to its structured
  * {@link ox#PublicKey.Parts} form.
@@ -414,11 +288,9 @@ export declare namespace toBytes {
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const parts = PublicKey.toParts({
- *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * })
+ * const parts = PublicKey.toParts(
+ *   '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ * )
  * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
  * ```
  *
@@ -428,23 +300,40 @@ export declare namespace toBytes {
 export function toParts<compressed extends boolean = false>(
   publicKey: PublicKey<compressed>,
 ): Parts<compressed> {
-  if (typeof publicKey.y === 'bigint')
-    return {
-      prefix: publicKey.prefix,
-      x: publicKey.x,
-      y: publicKey.y,
-    } as never
-  return { prefix: publicKey.prefix, x: publicKey.x } as never
+  if (
+    publicKey.length !== 132 &&
+    publicKey.length !== 130 &&
+    publicKey.length !== 68
+  )
+    throw new InvalidSerializedSizeError({ publicKey })
+
+  if (publicKey.length === 130) {
+    const x = BigInt(Hex.slice(publicKey, 0, 32))
+    const y = BigInt(Hex.slice(publicKey, 32, 64))
+    return { prefix: 4, x, y } as never
+  }
+
+  if (publicKey.length === 132) {
+    const prefix = Number(Hex.slice(publicKey, 0, 1))
+    const x = BigInt(Hex.slice(publicKey, 1, 33))
+    const y = BigInt(Hex.slice(publicKey, 33, 65))
+    return { prefix, x, y } as never
+  }
+
+  const prefix = Number(Hex.slice(publicKey, 0, 1))
+  const x = BigInt(Hex.slice(publicKey, 1, 33))
+  return { prefix, x } as never
 }
 
 export declare namespace toParts {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | InvalidSerializedSizeError
+    | Hex.slice.ErrorType
+    | Errors.GlobalErrorType
 }
 
-// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, encode the
-// parts into that form here instead of returning the input directly.
 /**
- * Converts a {@link ox#PublicKey.Parts} into a structured
+ * Converts {@link ox#PublicKey.Parts} into a canonical
  * {@link ox#PublicKey.PublicKey}.
  *
  * @example
@@ -456,65 +345,61 @@ export declare namespace toParts {
  *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
  *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
  * })
- * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
+ * // @log: '0x048318535b54105d4a7aae...'
  * ```
  *
  * @param parts - The structured parts to convert.
- * @returns The {@link ox#PublicKey.PublicKey}.
+ * @returns The canonical {@link ox#PublicKey.PublicKey}.
  */
 export function fromParts<compressed extends boolean = false>(
   parts: Parts<compressed>,
 ): PublicKey<compressed> {
-  if (typeof parts.y === 'bigint')
-    return {
-      prefix: parts.prefix,
-      x: parts.x,
-      y: parts.y,
-    } as never
-  return { prefix: parts.prefix, x: parts.x } as never
+  assert(parts)
+  const { prefix, x, y } = parts
+  return Hex.concat(
+    Hex.fromNumber(prefix, { size: 1 }),
+    Hex.fromNumber(x, { size: 32 }),
+    typeof y === 'bigint' ? Hex.fromNumber(y, { size: 32 }) : '0x',
+  ) as PublicKey<compressed>
 }
 
 export declare namespace fromParts {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | assert.ErrorType
+    | Hex.concat.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
- * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Hex.Hex}.
+ * Identity helper: returns the {@link ox#PublicKey.PublicKey} as
+ * {@link ox#Hex.Hex}. The prefix can optionally be omitted.
  *
  * @example
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.from({
+ * const publicKey = PublicKey.fromParts({
  *   prefix: 4,
  *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
  *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
  * })
  *
- * const hex = PublicKey.toHex(publicKey) // [!code focus]
- * // @log: '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
+ * const hex = PublicKey.toHex(publicKey)
+ * // @log: '0x048318535b54105d4a7aae...'
  * ```
  *
- * @param publicKey - The public key to serialize.
- * @returns The serialized public key.
+ * @param publicKey - The public key.
+ * @param options - Options.
+ * @returns The {@link ox#Hex.Hex} representation.
  */
 export function toHex(
   publicKey: PublicKey<boolean>,
   options: toHex.Options = {},
 ): Hex.Hex {
-  assert(publicKey)
-
-  const { prefix, x, y } = publicKey
   const { includePrefix = true } = options
-
-  const publicKey_ = Hex.concat(
-    includePrefix ? Hex.fromNumber(prefix, { size: 1 }) : '0x',
-    Hex.fromNumber(x, { size: 32 }),
-    // If the public key is not compressed, add the y coordinate.
-    typeof y === 'bigint' ? Hex.fromNumber(y, { size: 32 }) : '0x',
-  )
-
-  return publicKey_
+  if (includePrefix) return publicKey
+  return `0x${publicKey.slice(4)}` as Hex.Hex
 }
 
 export declare namespace toHex {
@@ -530,7 +415,8 @@ export declare namespace toHex {
 }
 
 /**
- * Validates a {@link ox#PublicKey.PublicKey}. Returns `true` if valid, `false` otherwise.
+ * Validates a {@link ox#PublicKey.Parts} object. Returns `true` if valid,
+ * `false` otherwise.
  *
  * @example
  * ```ts twoslash
@@ -543,14 +429,14 @@ export declare namespace toHex {
  * // @log: false
  * ```
  *
- * @param publicKey - The public key object to assert.
+ * @param parts - The public key parts to validate.
  */
 export function validate(
-  publicKey: ExactPartial<PublicKey>,
+  parts: ExactPartial<Parts>,
   options: validate.Options = {},
 ): boolean {
   try {
-    assert(publicKey, options)
+    assert(parts, options)
     return true
   } catch (_error) {
     return false

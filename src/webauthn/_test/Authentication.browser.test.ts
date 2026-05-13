@@ -3,6 +3,7 @@ import * as Bytes from '../../core/Bytes.js'
 import * as Hash from '../../core/Hash.js'
 import * as Hex from '../../core/Hex.js'
 import * as P256 from '../../core/P256.js'
+import * as Signature from '../../core/Signature.js'
 import {
   Authentication,
   Authenticator,
@@ -29,8 +30,8 @@ describe('sign', () => {
     expect(result.metadata.challengeIndex).toBeTypeOf('number')
     expect(result.metadata.typeIndex).toBeTypeOf('number')
     expect(result.metadata.userVerificationRequired).toBe(true)
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(Signature.toParts(result.signature).r).toBeTypeOf('bigint')
+    expect(Signature.toParts(result.signature).s).toBeTypeOf('bigint')
     expect(result.raw).toBeDefined()
   })
 
@@ -44,8 +45,8 @@ describe('sign', () => {
       rpId,
     })
 
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(Signature.toParts(result.signature).r).toBeTypeOf('bigint')
+    expect(Signature.toParts(result.signature).s).toBeTypeOf('bigint')
   })
 
   test('signs with CredentialRequestOptions', async () => {
@@ -60,8 +61,8 @@ describe('sign', () => {
 
     const result = await Authentication.sign(options)
 
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(Signature.toParts(result.signature).r).toBeTypeOf('bigint')
+    expect(Signature.toParts(result.signature).s).toBeTypeOf('bigint')
 
     const verified = Authentication.verify({
       metadata: result.metadata,
@@ -682,7 +683,8 @@ describe('behavior: signature validation', () => {
 
     const n =
       0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
-    const highS = { r: signature.r, s: n - signature.s }
+    const { r, s } = Signature.toParts(signature)
+    const highS = Signature.fromParts<false>({ r, s: n - s })
 
     const verified = Authentication.verify({
       metadata,

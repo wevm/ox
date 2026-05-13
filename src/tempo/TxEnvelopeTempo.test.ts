@@ -1,4 +1,14 @@
-import { Address, Hex, P256, Rlp, Secp256k1, Value, WebAuthnP256 } from 'ox'
+import {
+  Address,
+  Hex,
+  P256,
+  PublicKey,
+  Rlp,
+  Secp256k1,
+  Signature,
+  Value,
+  WebAuthnP256,
+} from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import { SignatureEnvelope } from './index.js'
@@ -376,13 +386,17 @@ describe('deserialize', () => {
           prehash: true,
         }),
       })
-      // biome-ignore lint/suspicious/noTsIgnore: _
-      // @ts-ignore
-      delete signature.yParity
+      // p256 envelopes serialize r||s only (no recovery byte).
+      const signature_norec = signature.slice(0, 130) as `0x${string}`
       expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
         from: Address.fromPublicKey(publicKey),
-        signature: { prehash: true, publicKey, signature, type: 'p256' },
+        signature: {
+          prehash: true,
+          publicKey,
+          signature: signature_norec,
+          type: 'p256',
+        },
       })
     })
   })
@@ -488,7 +502,7 @@ describe('deserialize', () => {
       [], // authorizationList
     ]).slice(2)}` as const
     const deserialized = TxEnvelopeTempo.deserialize(serialized)
-    expect(deserialized.feePayerSignature).toEqual({
+    expect(Signature.toParts(deserialized.feePayerSignature!)).toEqual({
       yParity: 0,
       r: 1n,
       s: 2n,
@@ -726,11 +740,7 @@ describe('from', () => {
           "nonce": 0n,
           "nonceKey": 0n,
           "signature": {
-            "signature": {
-              "r": 0n,
-              "s": 1n,
-              "yParity": 0,
-            },
+            "signature": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011b",
             "type": "secp256k1",
           },
           "type": "tempo",
@@ -796,11 +806,7 @@ describe('from', () => {
         "nonce": 0n,
         "nonceKey": 0n,
         "signature": {
-          "signature": {
-            "r": 0n,
-            "s": 1n,
-            "yParity": 0,
-          },
+          "signature": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011b",
           "type": "secp256k1",
         },
         "type": "tempo",
@@ -820,7 +826,7 @@ describe('from', () => {
         nonceKey: 0n,
       },
       {
-        signature: { r: 0n, s: 1n, yParity: 0 },
+        signature: Signature.fromParts({ r: 0n, s: 1n, yParity: 0 }),
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
@@ -832,11 +838,7 @@ describe('from', () => {
         "nonce": 0n,
         "nonceKey": 0n,
         "signature": {
-          "signature": {
-            "r": 0n,
-            "s": 1n,
-            "yParity": 0,
-          },
+          "signature": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011b",
           "type": "secp256k1",
         },
         "type": "tempo",
@@ -858,11 +860,11 @@ describe('from', () => {
         yParity: 0,
       },
       {
-        feePayerSignature: {
+        feePayerSignature: Signature.fromParts({
           r: 0n,
           s: 1n,
           yParity: 0,
-        },
+        }),
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
@@ -871,11 +873,7 @@ describe('from', () => {
           {},
         ],
         "chainId": 1,
-        "feePayerSignature": {
-          "r": 0n,
-          "s": 1n,
-          "yParity": 0,
-        },
+        "feePayerSignature": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011b",
         "nonce": 0n,
         "r": 1n,
         "s": 2n,
@@ -1019,15 +1017,15 @@ describe('serialize', () => {
         },
       ],
       signature: SignatureEnvelope.from({
-        signature: {
+        signature: Signature.fromParts<false>({
           r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
           s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-        },
-        publicKey: {
+        }),
+        publicKey: PublicKey.fromParts({
           prefix: 4,
           x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
           y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-        },
+        }),
         prehash: true,
       }),
     })
@@ -1071,15 +1069,15 @@ describe('serialize', () => {
         },
       ],
       signature: SignatureEnvelope.from({
-        signature: {
+        signature: Signature.fromParts<false>({
           r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
           s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-        },
-        publicKey: {
+        }),
+        publicKey: PublicKey.fromParts({
           prefix: 4,
           x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
           y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-        },
+        }),
         metadata,
       }),
     })
@@ -1257,14 +1255,18 @@ describe('serialize', () => {
           prehash: true,
         }),
       })
-      // biome-ignore lint/suspicious/noTsIgnore: _
-      // @ts-ignore
-      delete signature.yParity
+      // p256 envelopes serialize r||s only (no recovery byte).
+      const signature_norec = signature.slice(0, 130) as `0x${string}`
       expect(TxEnvelopeTempo.deserialize(serialized)).toEqual({
         ...transaction,
         from: Address.fromPublicKey(publicKey),
         nonceKey: 0n,
-        signature: { prehash: true, publicKey, signature, type: 'p256' },
+        signature: {
+          prehash: true,
+          publicKey,
+          signature: signature_norec,
+          type: 'p256',
+        },
       })
     })
   })
@@ -1277,11 +1279,11 @@ describe('serialize', () => {
     })
     expect(
       TxEnvelopeTempo.serialize(transaction, {
-        feePayerSignature: {
+        feePayerSignature: Signature.fromParts({
           r: 1n,
           s: 2n,
           yParity: 0,
-        },
+        }),
       }),
     ).toMatchInlineSnapshot(
       `"0x76e801808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c08080808080c3800102c0"`,

@@ -4,6 +4,7 @@ import * as Bytes from '../../core/Bytes.js'
 import * as Hash from '../../core/Hash.js'
 import * as Hex from '../../core/Hex.js'
 import * as P256 from '../../core/P256.js'
+import * as PublicKey from '../../core/PublicKey.js'
 import * as Signature from '../../core/Signature.js'
 import {
   Authentication,
@@ -58,11 +59,7 @@ describe('create', () => {
         "attestationObject": undefined,
         "clientDataJSON": undefined,
         "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
-        "publicKey": {
-          "prefix": 4,
-          "x": 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
-          "y": 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
-        },
+        "publicKey": "0x04ab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7d884318e919fd3b3e5a631d866d8a380b44063e70f0c381ee16e0652f7f97554",
         "raw": {
           "id": "m1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs",
           "response": {
@@ -212,13 +209,9 @@ describe('create', () => {
     })
 
     const publicKey = credential.publicKey
-    expect(publicKey).toMatchInlineSnapshot(`
-      {
-        "prefix": 4,
-        "x": 44614816799078269475358047303051634413161263247311473071495733982312972971969n,
-        "y": 46167236825796363714760407637183215339795593866991122305568923653847108814360n,
-      }
-    `)
+    expect(publicKey).toMatchInlineSnapshot(
+      `"0x0462a31768d44f5eff222f8d70c4cb61abd2840b27d617a7fe8d11b72dd5e86fc16611bae3f1e2cd38e405153776a7dcb6995b8254a1416ead102a096cb0d80618"`,
+    )
 
     expect(
       Authentication.verify({
@@ -234,10 +227,10 @@ describe('create', () => {
         challenge:
           '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
         publicKey,
-        signature: {
+        signature: Signature.fromParts<false>({
           r: 113791849669138837781667788757552147501372344687388971338283671717487200515057n,
           s: 5390836038580862917709632535460377625750500964730124261384576347991859205326n,
-        },
+        }),
       }),
     ).toBeTruthy()
   })
@@ -1042,8 +1035,12 @@ describe('verify', () => {
     const deserialized = Registration.deserializeResponse(JSON.parse(json))
 
     expect(deserialized.credential.id).toBe(credential.id)
-    expect(deserialized.credential.publicKey.x).toBe(credential.publicKey.x)
-    expect(deserialized.credential.publicKey.y).toBe(credential.publicKey.y)
+    const deserializedParts = PublicKey.toParts(
+      deserialized.credential.publicKey,
+    )
+    const credentialParts = PublicKey.toParts(credential.publicKey)
+    expect(deserializedParts.x).toBe(credentialParts.x)
+    expect(deserializedParts.y).toBe(credentialParts.y)
     expect(deserialized.counter).toBe(response.counter)
     expect(deserialized.userVerified).toBe(response.userVerified)
   })

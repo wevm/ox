@@ -37,7 +37,7 @@ export type Version = typeof version
  */
 export type ZoneRpcAuthentication<
   signed extends boolean = boolean,
-  bigintType = bigint,
+  _bigintType = bigint,
   numberType = number,
 > = Compute<
   {
@@ -52,11 +52,9 @@ export type ZoneRpcAuthentication<
     /** Numeric zone identifier. */
     zoneId: numberType
   } & (signed extends true
-    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    ? { signature: SignatureEnvelope.SignatureEnvelope }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope | undefined
       })
 >
 

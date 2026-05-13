@@ -6,16 +6,21 @@ import * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
 const privateKey =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as const
 
-const publicKey = PublicKey.from({
+const publicKeyParts = {
   prefix: 4,
   x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
   y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-})
+} as const satisfies PublicKey.Parts<false>
+const publicKey = PublicKey.fromParts(publicKeyParts)
 
-const p256Signature = Signature.from({
+const p256SignatureParts = {
   r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
   s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
   yParity: 0,
+} as const satisfies Signature.Parts<false>
+const p256Signature = Signature.fromParts<false>({
+  r: p256SignatureParts.r,
+  s: p256SignatureParts.s,
 })
 
 const authentication = {
@@ -62,11 +67,7 @@ describe('from', () => {
         "expiresAt": 1711235160,
         "issuedAt": 1711234560,
         "signature": {
-          "signature": {
-            "r": 97341227674200655943359900797834667459856344667825437562901364609374126504358n,
-            "s": 25574506064018953291781981030565094064718304178734850538810668278475710350395n,
-            "yParity": 0,
-          },
+          "signature": "0xd7352eb40bcd052ad97aa4ef761223eaa757d90cc78e4f66d4ea6aaa5dca79a6388aa84fef3c9c0430756b6614248e9ae6d1a7741255dbf1173db5436469443b1b",
           "type": "secp256k1",
         },
         "version": 0,

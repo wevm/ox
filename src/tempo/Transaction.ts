@@ -88,7 +88,7 @@ export type Tempo<
     /** Nonce key for 2D nonce system (192 bits). */
     nonceKey?: bigintType | undefined
     /** Sender signature. */
-    signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
+    signature: SignatureEnvelope.SignatureEnvelope
     /** Transaction can only be included in a block before this timestamp. */
     validBefore?: numberType | undefined
     /** Transaction can only be included in a block after this timestamp. */
@@ -225,11 +225,11 @@ export function fromRpc<
       transaction.keyAuthorization,
     )
   if (transaction.feePayerSignature) {
-    transaction_.feePayerSignature = Signature.fromRpc(
-      transaction.feePayerSignature,
+    transaction_.feePayerSignature = Signature.toParts(
+      Signature.fromRpc(transaction.feePayerSignature),
     )
     ;(transaction_.feePayerSignature as any).v = Signature.yParityToV(
-      transaction_.feePayerSignature.yParity,
+      transaction_.feePayerSignature!.yParity,
     )
   }
 
@@ -314,7 +314,7 @@ export function toRpc<pending extends boolean = false>(
     rpc.keyAuthorization = KeyAuthorization.toRpc(transaction.keyAuthorization)
   if (transaction.feePayerSignature) {
     rpc.feePayerSignature = Signature.toRpc(
-      transaction.feePayerSignature,
+      Signature.fromParts(transaction.feePayerSignature),
     ) as any
     ;(rpc.feePayerSignature as any).v = Hex.fromNumber(
       Signature.yParityToV(transaction.feePayerSignature?.yParity),

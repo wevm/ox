@@ -193,7 +193,7 @@ export function wrap(value: Unwrapped): Wrapped {
     value.to ??
     Secp256k1.recoverAddress({
       payload: Authorization.getSignPayload(value.authorization),
-      signature: Signature.from(value.authorization),
+      signature: Signature.extract(value.authorization)!,
     })
 
   const suffix = AbiParameters.encode(suffixParameters, [

@@ -261,7 +261,7 @@ export function from<
 
   const signature_ = (() => {
     if (!signature) return {}
-    const s = Signature.from(signature) as any
+    const s = Signature.toParts(signature) as any
     s.v = Signature.yParityToV(s.yParity)
     return s
   })()
@@ -290,11 +290,7 @@ export declare namespace from {
       : Assign<
           envelope,
           (signature extends Signature.Signature
-            ? Readonly<
-                signature & {
-                  v: signature['yParity'] extends 0 ? 27 : 28
-                }
-              >
+            ? Readonly<Signature.Parts<true> & { v: number }>
             : {}) & {
             readonly type: 'legacy'
           }
@@ -479,12 +475,14 @@ export function serialize(
   ]
 
   const signature = (() => {
-    if (options.signature)
+    if (options.signature) {
+      const parts = Signature.toParts(options.signature)
       return {
-        r: options.signature.r,
-        s: options.signature.s,
-        v: Signature.yParityToV(options.signature.yParity),
+        r: parts.r,
+        s: parts.s,
+        v: Signature.yParityToV(parts.yParity),
       }
+    }
 
     if (typeof envelope.r === 'undefined' || typeof envelope.s === 'undefined')
       return undefined
@@ -569,7 +567,8 @@ export declare namespace serialize {
  * @returns An RPC-formatted legacy transaction envelope.
  */
 export function toRpc(envelope: Omit<TxEnvelopeLegacy, 'type'>): Rpc {
-  const signature = Signature.extract(envelope)!
+  const signature = Signature.extract(envelope)
+  const parts = signature ? Signature.toParts(signature) : undefined
 
   return {
     ...envelope,
@@ -591,7 +590,7 @@ export function toRpc(envelope: Omit<TxEnvelopeLegacy, 'type'>): Rpc {
     ...(typeof envelope.gasPrice === 'bigint'
       ? { gasPrice: Hex.fromNumber(envelope.gasPrice) }
       : {}),
-    ...(signature
+    ...(signature && parts
       ? {
           ...Signature.toRpc(signature),
           v: (() => {
@@ -601,11 +600,9 @@ export function toRpc(envelope: Omit<TxEnvelopeLegacy, 'type'>): Rpc {
               return Hex.fromNumber(envelope.v)
             // Otherwise derive EIP-155 `v` from `chainId` + `yParity`.
             if (typeof envelope.chainId === 'number' && envelope.chainId > 0)
-              return Hex.fromNumber(
-                envelope.chainId * 2 + 35 + signature.yParity,
-              )
+              return Hex.fromNumber(envelope.chainId * 2 + 35 + parts.yParity)
             // Fall back to pre-EIP-155 `27`/`28`.
-            return signature.yParity === 0 ? '0x1b' : '0x1c'
+            return parts.yParity === 0 ? '0x1b' : '0x1c'
           })(),
         }
       : {}),

@@ -1,20 +1,26 @@
-import type { Signature } from 'ox'
+import type { Hex, Signature } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
-test('Parts<true> matches Signature<true> structurally', () => {
-  expectTypeOf<Signature.Parts<true>>().toEqualTypeOf<
-    Signature.Signature<true>
-  >()
+test('Signature is a serialized Hex.Hex string', () => {
+  expectTypeOf<Signature.Signature>().toEqualTypeOf<Hex.Hex>()
+  expectTypeOf<Signature.Signature<true>>().toEqualTypeOf<Hex.Hex>()
+  expectTypeOf<Signature.Signature<false>>().toEqualTypeOf<Hex.Hex>()
 })
 
-test('Parts<false> matches Signature<false> structurally', () => {
-  expectTypeOf<Signature.Parts<false>>().toEqualTypeOf<
-    Signature.Signature<false>
-  >()
+test('Parts<true> is the structured object form', () => {
+  expectTypeOf<Signature.Parts<true>>().toEqualTypeOf<{
+    r: bigint
+    s: bigint
+    yParity: number
+  }>()
 })
 
-test('Parts default matches Signature default', () => {
-  expectTypeOf<Signature.Parts>().toEqualTypeOf<Signature.Signature>()
+test('Parts<false> makes yParity optional', () => {
+  expectTypeOf<Signature.Parts<false>>().toEqualTypeOf<{
+    r: bigint
+    s: bigint
+    yParity?: number | undefined
+  }>()
 })
 
 test('toParts return is Parts', () => {

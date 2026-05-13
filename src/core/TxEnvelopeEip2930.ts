@@ -175,7 +175,7 @@ export function deserialize(serialized: Serialized): TxEnvelopeEip2930 {
   if (signature)
     transaction = {
       ...transaction,
-      ...signature,
+      ...Signature.toParts(signature),
     } as TxEnvelopeEip2930
 
   assert(transaction)
@@ -278,7 +278,7 @@ export function from<
 
   return {
     ...envelope_,
-    ...(signature ? Signature.from(signature) : {}),
+    ...(signature ? Signature.toParts(signature) : {}),
     type: 'eip2930',
   } as never
 }
@@ -299,7 +299,9 @@ export declare namespace from {
       ? TxEnvelopeEip2930
       : Assign<
           envelope,
-          (signature extends Signature.Signature ? Readonly<signature> : {}) & {
+          (signature extends Signature.Signature
+            ? Readonly<Signature.Parts<true>>
+            : {}) & {
             readonly type: 'eip2930'
           }
         >
@@ -476,7 +478,7 @@ export function serialize(
 
   const accessTupleList = AccessList.toTupleList(accessList)
 
-  const signature = Signature.extract(options.signature || (envelope as any))
+  const signature = options.signature ?? Signature.extract(envelope as any)
 
   const serialized = [
     Hex.fromNumber(chainId),

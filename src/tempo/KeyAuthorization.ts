@@ -56,11 +56,9 @@ export type KeyAuthorization<
   /** Key type. (secp256k1, P256, WebAuthn). */
   type: SignatureEnvelope.Type
 } & (signed extends true
-  ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+  ? { signature: SignatureEnvelope.SignatureEnvelope }
   : {
-      signature?:
-        | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-        | undefined
+      signature?: SignatureEnvelope.SignatureEnvelope | undefined
     })
 
 /** Input type for a Key Authorization. */

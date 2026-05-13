@@ -36,13 +36,9 @@ describe('getSignPayload', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    expect(signature).toMatchInlineSnapshot(`
-      {
-        "r": 74352382517807082440778846078252240710763999160569457624520311883943391062769n,
-        "s": 43375188480015931414505591342117068151247353833881461609019650667261881302875n,
-        "yParity": 0,
-      }
-    `)
+    expect(signature).toMatchInlineSnapshot(
+      `"0xa461f509887bd19e312c0c58467ce8ff8e300d3c1a90b608a760c5b80318eaf15fe57c96f9175d6cd4daad4663763baa7e78836e067d0163e9a2ccf2ff753f5b1b"`,
+    )
   })
 })
 

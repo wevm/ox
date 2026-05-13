@@ -1,4 +1,4 @@
-import { Hex, PublicKey, WebCryptoP256 } from 'ox'
+import { Hex, PublicKey, Signature, WebCryptoP256 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
 const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
@@ -6,25 +6,27 @@ const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
 describe('createKeyPair', () => {
   test('default', async () => {
     const key = await WebCryptoP256.createKeyPair()
+    const parts = PublicKey.toParts(key.publicKey)
     expect(key.privateKey).toBeDefined()
-    expect(key.publicKey.prefix).toBeDefined()
-    expect(key.publicKey.x).toBeDefined()
-    expect(key.publicKey.y).toBeDefined()
+    expect(parts.prefix).toBeDefined()
+    expect(parts.x).toBeDefined()
+    expect(parts.y).toBeDefined()
   })
 })
 
 describe('createKeyPairECDH', () => {
   test('default', async () => {
     const key = await WebCryptoP256.createKeyPairECDH()
+    const parts = PublicKey.toParts(key.publicKey)
     expect(key.privateKey).toBeDefined()
     expect(key.privateKey.algorithm.name).toBe('ECDH')
     expect((key.privateKey.algorithm as EcKeyAlgorithm).namedCurve).toBe(
       'P-256',
     )
     expect(key.privateKey.usages).toContain('deriveBits')
-    expect(key.publicKey.prefix).toBeDefined()
-    expect(key.publicKey.x).toBeDefined()
-    expect(key.publicKey.y).toBeDefined()
+    expect(parts.prefix).toBeDefined()
+    expect(parts.x).toBeDefined()
+    expect(parts.y).toBeDefined()
   })
 
   test('options: extractable', async () => {
@@ -174,11 +176,13 @@ describe('getSharedSecret', () => {
 
 describe('sign', () => {
   test('default', async () => {
-    const signature = await WebCryptoP256.sign({
-      payload:
-        '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
-      privateKey,
-    })
+    const signature = Signature.toParts<false>(
+      await WebCryptoP256.sign({
+        payload:
+          '0xd9eba16ed0ecae432b71fe008c98cc872bb4cc214d3220a36f365326cf807d68',
+        privateKey,
+      }),
+    )
     expect(signature.r).toBeDefined()
     expect(signature.s).toBeDefined()
   })
@@ -187,7 +191,9 @@ describe('sign', () => {
 describe('verify', () => {
   test('default', async () => {
     const payload = '0xdeadbeef'
-    const { r, s } = await WebCryptoP256.sign({ payload, privateKey })
+    const { r, s } = Signature.toParts<false>(
+      await WebCryptoP256.sign({ payload, privateKey }),
+    )
     expect(
       await WebCryptoP256.verify({ publicKey, payload, signature: { r, s } }),
     ).toBe(true)
@@ -201,7 +207,8 @@ describe('verify', () => {
     const payload = '0xdeadbeef'
     for (let i = 0; i < 256; i++) {
       const signature = await WebCryptoP256.sign({ payload, privateKey })
-      if (signature.r >> 248n === 0n || signature.s >> 248n === 0n) {
+      const { r, s } = Signature.toParts<false>(signature)
+      if (r >> 248n === 0n || s >> 248n === 0n) {
         expect(
           await WebCryptoP256.verify({ publicKey, payload, signature }),
         ).toBe(true)
@@ -246,14 +253,14 @@ describe('as option / serialized inputs', () => {
     expect(sigBytes).toBeInstanceOf(Uint8Array)
   })
 
-  test('default as remains Object', async () => {
+  test('default as remains Hex', async () => {
     const { privateKey } = await WebCryptoP256.createKeyPair()
     const sig = await WebCryptoP256.sign({
       payload: '0xdeadbeef',
       privateKey,
     })
-    expect(typeof sig).toBe('object')
-    expect('r' in sig).toBe(true)
+    expect(typeof sig).toBe('string')
+    expect((sig as Hex.Hex).startsWith('0x')).toBe(true)
   })
 
   test('verify accepts Hex publicKey + Hex signature', async () => {

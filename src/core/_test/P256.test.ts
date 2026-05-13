@@ -1,4 +1,4 @@
-import { Bytes, Hex, P256 } from 'ox'
+import { Bytes, Hex, P256, PublicKey, Signature } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 
@@ -13,13 +13,7 @@ describe('getPublicKey', () => {
       })
 
       expect(publicKey).toMatchInlineSnapshot(
-        `
-    {
-      "prefix": 4,
-      "x": 10551483369778534213743005046722587423472548496575383028418761641566343103239n,
-      "y": 88295525029668593780823649128376935553570204792365777341876890493798599407244n,
-    }
-  `,
+        `"0x041753ed8e23fd6e17922ebdeed8ebe8043e34cd10118271cf2acdee88c1d58307c3357f052ea5e9a67625fa723ca0e7bc8ce9d069bea5b8b397137f991284b68c"`,
       )
     }
 
@@ -29,13 +23,7 @@ describe('getPublicKey', () => {
       })
 
       expect(publicKey).toMatchInlineSnapshot(
-        `
-    {
-      "prefix": 4,
-      "x": 74284260781974828542656778781460620511024287575108245086657461940925169173577n,
-      "y": 49004966777120461993240735637857463864712305111925716454339081891868780934195n,
-    }
-  `,
+        `"0x04a43b66d1eaee03f07d64920491f8b3487a90f527f2342c8caccd55d5065084496c57d409d6db06faefd8a0aa1106acd69501134e11cf74b2e95c81b451da3433"`,
       )
     }
   })
@@ -44,6 +32,7 @@ describe('getPublicKey', () => {
 describe('createKeyPair', () => {
   test('default', () => {
     const keyPair = P256.createKeyPair()
+    const publicKeyParts = PublicKey.toParts(keyPair.publicKey)
 
     expect(keyPair).toHaveProperty('privateKey')
     expect(keyPair).toHaveProperty('publicKey')
@@ -51,12 +40,12 @@ describe('createKeyPair', () => {
     expect(keyPair.privateKey).toMatch(/^0x[0-9a-f]{64}$/)
     expect(keyPair.privateKey.length).toBe(66)
 
-    expect(keyPair.publicKey).toHaveProperty('prefix')
-    expect(keyPair.publicKey).toHaveProperty('x')
-    expect(keyPair.publicKey).toHaveProperty('y')
-    expect(keyPair.publicKey.prefix).toBe(4)
-    expect(typeof keyPair.publicKey.x).toBe('bigint')
-    expect(typeof keyPair.publicKey.y).toBe('bigint')
+    expect(publicKeyParts).toHaveProperty('prefix')
+    expect(publicKeyParts).toHaveProperty('x')
+    expect(publicKeyParts).toHaveProperty('y')
+    expect(publicKeyParts.prefix).toBe(4)
+    expect(typeof publicKeyParts.x).toBe('bigint')
+    expect(typeof publicKeyParts.y).toBe('bigint')
   })
 
   test('behavior: deterministic public key derivation', () => {
@@ -119,11 +108,12 @@ describe('createKeyPair', () => {
 
   test('options: as (Bytes)', () => {
     const keyPair = P256.createKeyPair({ as: 'Bytes' })
+    const publicKeyParts = PublicKey.toParts(keyPair.publicKey)
 
     expect(keyPair.privateKey).toBeInstanceOf(Uint8Array)
     expect(keyPair.privateKey.length).toBe(32)
-    expect(keyPair.publicKey).toHaveProperty('prefix')
-    expect(keyPair.publicKey.prefix).toBe(4)
+    expect(publicKeyParts).toHaveProperty('prefix')
+    expect(publicKeyParts.prefix).toBe(4)
   })
 
   test('behavior: bytes format works with other functions', () => {
@@ -219,7 +209,7 @@ describe('getSharedSecret', () => {
     const { publicKey: publicKeyB } = P256.createKeyPair()
 
     // Ensure the public key is uncompressed (prefix 4)
-    expect(publicKeyB.prefix).toBe(4)
+    expect(PublicKey.toParts(publicKeyB).prefix).toBe(4)
 
     const sharedSecret = P256.getSharedSecret({
       privateKey: privateKeyA,
@@ -360,13 +350,7 @@ describe('sign', () => {
         privateKey,
       })
       expect(signature).toMatchInlineSnapshot(
-        `
-        {
-          "r": 25696373395957984486324188498890325781005829812399813021478384321951480608605n,
-          "s": 44320676628162932405815850946781131436023797452754174109610070201481442411520n,
-          "yParity": 1,
-        }
-      `,
+        `"0x38cfa1c681a8a8a2dedc9657eda39fce932517ddf6e9595b7da89b400a3af75d61fc9d2f84a253fe75e8fbd4a6d24a8d5f29bf664ebe5009f827a246807cc4001c"`,
       )
       expect(
         P256.verify({
@@ -393,13 +377,7 @@ describe('sign', () => {
         privateKey,
       })
       expect(signature).toMatchInlineSnapshot(
-        `
-        {
-          "r": 109093915289726021639001379260733771573757231672849462488223442695417941697300n,
-          "s": 6698841733262193840826736319213924566905321252379319222891108166116990474980n,
-          "yParity": 0,
-        }
-      `,
+        `"0xf130f7c7f3c62f6cf141874ccb17c9bd8eba4ea80c078f2354f9bb664137a3140ecf68f998506c55189f0542198848b979bd727999a60ac573910c5962bf5ae41b"`,
       )
       expect(
         P256.verify({
@@ -426,13 +404,7 @@ describe('sign', () => {
       privateKey,
     })
     expect(signature).toMatchInlineSnapshot(
-      `
-  {
-    "r": 38589374264307162948518251922729143918445204519165784874036137623135009958234n,
-    "s": 201259577542353941908945259470130875727678910646252042669727980758229302244n,
-    "yParity": 0,
-  }
-`,
+      `"0x5550cfd3b935570c4e9ace7d36d733368c7a7f755de10c783020b0ff0b74e95a0071e8aca10952c56847d3a599b62ba0d2ab42985b993f77d762514ee427bbe41b"`,
     )
     expect(
       P256.verify({
@@ -509,14 +481,14 @@ describe('verify', () => {
 
   test('default', () => {
     const payload = '0xdeadbeef'
-    const { r, s } = P256.sign({ payload, privateKey })
+    const { r, s } = Signature.toParts(P256.sign({ payload, privateKey }))
     const publicKey = P256.getPublicKey({ privateKey })
     expect(P256.verify({ publicKey, payload, signature: { r, s } })).toBe(true)
   })
 
   test('behavior: bytes payload', () => {
     const payload = '0xdeadbeef'
-    const { r, s } = P256.sign({ payload, privateKey })
+    const { r, s } = Signature.toParts(P256.sign({ payload, privateKey }))
     const publicKey = P256.getPublicKey({ privateKey })
     expect(
       P256.verify({
@@ -529,7 +501,9 @@ describe('verify', () => {
 
   test('options: hash', () => {
     const payload = '0xdeadbeef'
-    const { r, s } = P256.sign({ hash: true, payload, privateKey })
+    const { r, s } = Signature.toParts(
+      P256.sign({ hash: true, payload, privateKey }),
+    )
     const publicKey = P256.getPublicKey({ privateKey })
     expect(
       P256.verify({ hash: true, publicKey, payload, signature: { r, s } }),

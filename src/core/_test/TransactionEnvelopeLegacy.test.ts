@@ -1,4 +1,4 @@
-import { Hex, Rlp, Secp256k1, TxEnvelopeLegacy, Value } from 'ox'
+import { Hex, Rlp, Secp256k1, Signature, TxEnvelopeLegacy, Value } from 'ox'
 import { assertType, describe, expect, expectTypeOf, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'
@@ -115,11 +115,11 @@ describe('deserialize', () => {
   test('signature', async () => {
     {
       const serialized = TxEnvelopeLegacy.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: 1n,
           s: 0n,
           yParity: 0,
-        },
+        }),
       })
       expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
         `
@@ -140,11 +140,11 @@ describe('deserialize', () => {
 
     {
       const serialized = TxEnvelopeLegacy.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: 0n,
           s: 1n,
           yParity: 0,
-        },
+        }),
       })
       expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(
         `
@@ -414,11 +414,11 @@ describe('from', () => {
         type: 'legacy',
       },
       {
-        signature: {
+        signature: Signature.fromParts({
           r: 0n,
           s: 1n,
           yParity: 1,
-        },
+        }),
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
@@ -437,11 +437,11 @@ describe('from', () => {
     const envelope2 = TxEnvelopeLegacy.from(serialized)
     expect(envelope2).toEqual(envelope)
     const envelope3 = TxEnvelopeLegacy.from(serialized, {
-      signature: {
+      signature: Signature.fromParts({
         r: 1n,
         s: 0n,
         yParity: 1,
-      },
+      }),
     })
     expect(envelope3).toEqual({ ...envelope, r: 1n, s: 0n, v: 28 })
   })
@@ -646,7 +646,7 @@ describe('serialize', () => {
   test('options: signature', () => {
     expect(
       TxEnvelopeLegacy.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: BigInt(
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
@@ -654,14 +654,14 @@ describe('serialize', () => {
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
           yParity: 1,
-        },
+        }),
       }),
     ).toEqual(
       '0xf86b8203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a7640000801ca060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
     )
     expect(
       TxEnvelopeLegacy.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: BigInt(
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
@@ -669,7 +669,7 @@ describe('serialize', () => {
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
           yParity: 0,
-        },
+        }),
       }),
     ).toEqual(
       '0xf86b8203118477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a7640000801ba060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',

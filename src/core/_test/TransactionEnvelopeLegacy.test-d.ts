@@ -1,4 +1,4 @@
-import { TxEnvelopeLegacy } from 'ox'
+import { Signature, TxEnvelopeLegacy } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
@@ -49,20 +49,20 @@ test('options: signature', () => {
       value: 69n,
     },
     {
-      signature: {
+      signature: Signature.fromParts({
         r: 0n,
         s: 1n,
         yParity: 0,
-      },
+      }),
     },
   )
   expectTypeOf(envelope).toEqualTypeOf<{
     readonly to: '0x0000000000000000000000000000000000000000'
     readonly value: 69n
-    readonly r: 0n
-    readonly s: 1n
-    readonly v: 27
-    readonly yParity: 0
+    readonly r: bigint
+    readonly s: bigint
+    readonly v: number
+    readonly yParity: number
     readonly type: 'legacy'
   }>()
   expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeLegacy.TxEnvelopeLegacy>()

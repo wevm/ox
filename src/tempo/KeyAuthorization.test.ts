@@ -23,27 +23,33 @@ const signature_secp256k1 = Secp256k1.sign({
   privateKey: privateKey_secp256k1,
 })
 
-const publicKey_p256 = PublicKey.from({
+const publicKey_p256 = {
   prefix: 4,
   x: 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
   y: 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-})
+} as const satisfies PublicKey.Parts<false>
 
-const signature_p256_raw = Signature.from({
+const signature_p256_raw = {
   r: 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
   s: 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
   yParity: 0,
+} as const satisfies Signature.Parts<false>
+
+const signature_p256_hex = Signature.fromParts<false>({
+  r: signature_p256_raw.r,
+  s: signature_p256_raw.s,
 })
+const publicKey_p256_hex = PublicKey.fromParts(publicKey_p256)
 
 const signature_p256 = SignatureEnvelope.from({
-  signature: signature_p256_raw,
-  publicKey: publicKey_p256,
+  signature: signature_p256_hex,
+  publicKey: publicKey_p256_hex,
   prehash: true,
 })
 
 const signature_webauthn = SignatureEnvelope.from({
-  signature: signature_p256_raw,
-  publicKey: publicKey_p256,
+  signature: signature_p256_hex,
+  publicKey: publicKey_p256_hex,
   metadata: {
     authenticatorData: WebAuthnP256.getAuthenticatorData({ rpId: 'localhost' }),
     clientDataJSON: WebAuthnP256.getClientDataJSON({
@@ -140,11 +146,7 @@ describe('from', () => {
           },
         ],
         "signature": {
-          "signature": {
-            "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
-            "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
-            "yParity": 1,
-          },
+          "signature": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c",
           "type": "secp256k1",
         },
         "type": "secp256k1",
@@ -183,11 +185,7 @@ describe('from', () => {
           },
         ],
         "signature": {
-          "signature": {
-            "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
-            "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
-            "yParity": 1,
-          },
+          "signature": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c",
           "type": "secp256k1",
         },
         "type": "secp256k1",
@@ -227,16 +225,8 @@ describe('from', () => {
         ],
         "signature": {
           "prehash": true,
-          "publicKey": {
-            "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-          },
-          "signature": {
-            "r": 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-            "s": 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-            "yParity": 0,
-          },
+          "publicKey": "0x04ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
+          "signature": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35",
           "type": "p256",
         },
         "type": "p256",
@@ -279,16 +269,8 @@ describe('from', () => {
             "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
             "clientDataJSON": "{"type":"webauthn.get","challenge":"3q2-7w","origin":"http://localhost","crossOrigin":false}",
           },
-          "publicKey": {
-            "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-          },
-          "signature": {
-            "r": 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-            "s": 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-            "yParity": 0,
-          },
+          "publicKey": "0x04ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
+          "signature": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35",
           "type": "webAuthn",
         },
         "type": "webAuthn",
@@ -323,11 +305,7 @@ describe('from', () => {
           },
         ],
         "signature": {
-          "signature": {
-            "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
-            "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
-            "yParity": 1,
-          },
+          "signature": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c",
           "type": "secp256k1",
         },
         "type": "secp256k1",
@@ -362,11 +340,7 @@ describe('from', () => {
           },
         ],
         "signature": {
-          "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
-          },
+          "signature": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b",
           "type": "secp256k1",
         },
         "type": "secp256k1",
@@ -471,11 +445,7 @@ describe('fromRpc', () => {
           },
         ],
         "signature": {
-          "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
-          },
+          "signature": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b",
           "type": "secp256k1",
         },
         "type": "secp256k1",
@@ -513,15 +483,8 @@ describe('fromRpc', () => {
         ],
         "signature": {
           "prehash": true,
-          "publicKey": {
-            "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-          },
-          "signature": {
-            "r": 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-            "s": 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-          },
+          "publicKey": "0x04ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
+          "signature": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35",
           "type": "p256",
         },
         "type": "p256",
@@ -555,15 +518,8 @@ describe('fromRpc', () => {
             "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
             "clientDataJSON": "{"type":"webauthn.get","challenge":"3q2-7w","origin":"http://localhost","crossOrigin":false}",
           },
-          "publicKey": {
-            "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-          },
-          "signature": {
-            "r": 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-            "s": 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-          },
+          "publicKey": "0x04ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
+          "signature": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35",
           "type": "webAuthn",
         },
         "type": "webAuthn",
@@ -611,11 +567,7 @@ describe('fromRpc', () => {
           },
         ],
         "signature": {
-          "signature": {
-            "r": 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
-            "s": 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
-            "yParity": 0,
-          },
+          "signature": "0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f05401b",
           "type": "secp256k1",
         },
         "type": "secp256k1",
@@ -716,11 +668,7 @@ describe('fromTuple', () => {
           },
         ],
         "signature": {
-          "signature": {
-            "r": 113291597329930009559670063131885256927775966057121513567941051428123344285399n,
-            "s": 54293712598725100598138577281441749550405991478212695085505730636505228583888n,
-            "yParity": 1,
-          },
+          "signature": "0xfa78c5905fb0b9d6066ef531f962a62bc6ef0d5eb59ecb134056d206f75aaed7780926ff2601a935c2c79707d9e1799948c9f19dcdde1e090e903b19a07923d01c",
           "type": "secp256k1",
         },
         "type": "secp256k1",
@@ -755,15 +703,8 @@ describe('fromTuple', () => {
         ],
         "signature": {
           "prehash": true,
-          "publicKey": {
-            "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-          },
-          "signature": {
-            "r": 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-            "s": 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-          },
+          "publicKey": "0x04ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
+          "signature": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35",
           "type": "p256",
         },
         "type": "p256",
@@ -801,15 +742,8 @@ describe('fromTuple', () => {
             "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
             "clientDataJSON": "{"type":"webauthn.get","challenge":"3q2-7w","origin":"http://localhost","crossOrigin":false}",
           },
-          "publicKey": {
-            "prefix": 4,
-            "x": 78495282704852028275327922540131762143565388050940484317945369745559774511861n,
-            "y": 8109764566587999957624872393871720746996669263962991155166704261108473113504n,
-          },
-          "signature": {
-            "r": 92602584010956101470289867944347135737570451066466093224269890121909314569518n,
-            "s": 54171125190222965779385658110416711469231271457324878825831748147306957269813n,
-          },
+          "publicKey": "0x04ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba0",
+          "signature": "0xccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35",
           "type": "webAuthn",
         },
         "type": "webAuthn",

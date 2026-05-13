@@ -282,10 +282,11 @@ export function fromRpc<
   if (!transaction) return null as never
 
   const signature = Signature.extract(transaction)
+  const parts = signature ? Signature.toParts(signature) : undefined
 
   const transaction_ = {
     ...transaction,
-    ...signature,
+    ...(parts ?? {}),
   } as unknown as Transaction<boolean>
 
   transaction_.blockNumber = transaction.blockNumber
@@ -316,11 +317,11 @@ export function fromRpc<
   if (transaction.type)
     transaction_.type =
       (fromRpcType as any)[transaction.type] ?? transaction.type
-  if (signature)
+  if (signature && parts)
     transaction_.v =
       transaction.type === '0x0' && typeof transaction.v !== 'undefined'
         ? Number(transaction.v)
-        : Signature.yParityToV(signature.yParity)
+        : Signature.yParityToV(parts.yParity)
 
   return transaction_ as never
 }

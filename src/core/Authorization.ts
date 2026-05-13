@@ -6,6 +6,13 @@ import type { Compute, Mutable, Undefined } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
 
+/** Signature parts stored inline on an EIP-7702 Authorization. */
+type SignatureFields<bigintType, numberType> = {
+  r: bigintType
+  s: bigintType
+  yParity: numberType
+}
+
 /** Root type for an EIP-7702 Authorization. */
 export type Authorization<
   signed extends boolean = boolean,
@@ -20,8 +27,8 @@ export type Authorization<
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
   } & (signed extends true
-    ? Signature.Signature<true, bigintType, numberType>
-    : Undefined<Signature.Signature>)
+    ? SignatureFields<bigintType, numberType>
+    : Undefined<SignatureFields<bigint, number>>)
 >
 
 /** RPC representation of an {@link ox#Authorization.Authorization}. */
@@ -125,7 +132,10 @@ export function from<
 ): from.ReturnType<authorization, signature> {
   if (typeof authorization.chainId === 'string')
     return fromRpc(authorization) as never
-  return { ...authorization, ...options.signature } as never
+  const parts = options.signature
+    ? Signature.toParts(options.signature)
+    : undefined
+  return { ...authorization, ...(parts ?? {}) } as never
 }
 
 export declare namespace from {
@@ -146,8 +156,7 @@ export declare namespace from {
   > = Compute<
     authorization extends Rpc
       ? Signed
-      : authorization &
-          (signature extends Signature.Signature ? Readonly<signature> : {})
+      : authorization & (signature extends Signature.Signature ? Signed : {})
   >
 
   type ErrorType = Errors.GlobalErrorType
@@ -181,7 +190,7 @@ export function fromRpc(authorization: Rpc): Signed {
     address,
     chainId: Number(chainId),
     nonce: BigInt(nonce),
-    ...signature,
+    ...Signature.toParts(signature),
   }
 }
 
@@ -273,7 +282,10 @@ export function fromTuple<const tuple extends Tuple>(
     nonce: nonce === '0x' ? 0n : BigInt(nonce),
   }
   if (yParity && r && s)
-    args = { ...args, ...Signature.fromTuple([yParity, r, s]) }
+    args = {
+      ...args,
+      ...Signature.toParts(Signature.fromTuple([yParity, r, s])),
+    }
   return from(args) as never
 }
 
@@ -471,13 +483,13 @@ export declare namespace hash {
  * @returns An RPC-formatted Authorization.
  */
 export function toRpc(authorization: Signed): Rpc {
-  const { address, chainId, nonce, ...signature } = authorization
+  const { address, chainId, nonce, r, s, yParity } = authorization
 
   return {
     address,
     chainId: Hex.fromNumber(chainId),
     nonce: Hex.fromNumber(nonce),
-    ...Signature.toRpc(signature),
+    ...Signature.toRpc(Signature.fromParts({ r, s, yParity })),
   }
 }
 

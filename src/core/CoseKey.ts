@@ -120,7 +120,7 @@ export function toPublicKey<options extends toPublicKey.Options = {}>(
   raw[0] = 0x04
   raw.set(x, 1)
   raw.set(y, 33)
-  const publicKey = PublicKey.from(raw)
+  const publicKey = PublicKey.fromBytes(raw)
 
   if (!options.returnByteLength && !options.returnDecoded)
     return publicKey as toPublicKey.ReturnType<options>
@@ -155,7 +155,7 @@ export declare namespace toPublicKey {
   type ErrorType =
     | Bytes.fromHex.ErrorType
     | Cbor.decode.ErrorType
-    | PublicKey.from.ErrorType
+    | PublicKey.fromBytes.ErrorType
     | InvalidCoseKeyError
     | Errors.GlobalErrorType
 }

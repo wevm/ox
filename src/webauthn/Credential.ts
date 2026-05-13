@@ -139,7 +139,7 @@ export function deserialize(credential: Credential<true>): Credential {
     attestationObject: bytesToArrayBuffer(Base64.toBytes(attestationObject)),
     clientDataJSON: bytesToArrayBuffer(Base64.toBytes(clientDataJSON)),
     id,
-    publicKey: PublicKey.from(publicKey),
+    publicKey: PublicKey.fromHex(publicKey),
     raw: {
       id: raw.id,
       type: raw.type,
@@ -154,6 +154,6 @@ export function deserialize(credential: Credential<true>): Credential {
 export declare namespace deserialize {
   type ErrorType =
     | Base64.toBytes.ErrorType
-    | PublicKey.from.ErrorType
+    | PublicKey.fromHex.ErrorType
     | Errors.GlobalErrorType
 }

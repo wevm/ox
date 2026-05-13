@@ -131,14 +131,14 @@ export function deserializeResponse(response: Response<true>): Response {
       response: rawResponse as unknown as Types.AuthenticatorResponse,
       getClientExtensionResults: () => ({}),
     },
-    signature: Signature.from(signature),
+    signature: Signature.fromHex(signature),
   }
 }
 
 export declare namespace deserializeResponse {
   type ErrorType =
     | Base64.toBytes.ErrorType
-    | Signature.from.ErrorType
+    | Signature.fromHex.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -496,7 +496,9 @@ export async function sign(options: sign.Options): Promise<sign.ReturnType> {
     const challengeIndex = clientDataJSON.indexOf('"challenge"')
     const typeIndex = clientDataJSON.indexOf('"type"')
 
-    const signature = internal.parseAsn1Signature(signatureBytes)
+    const signature = Signature.fromParts<false>(
+      internal.parseAsn1Signature(signatureBytes),
+    )
 
     return {
       id,

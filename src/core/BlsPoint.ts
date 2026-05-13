@@ -1,6 +1,6 @@
 import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 
-import type * as Bytes from './Bytes.js'
+import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Branded, Compute } from './internal/types.js'
@@ -10,41 +10,35 @@ export type Fp = bigint
 /** Type for a field element in the extension field of the BLS12-381 curve. */
 export type Fp2 = Compute<{ c0: bigint; c1: bigint }>
 
-/** Root type for a BLS point on the G1 or G2 curve. */
+/** Structured projective form of a BLS point on the G1 or G2 curve. */
 export type BlsPoint<type = Fp | Fp2> = Compute<{
   x: type
   y: type
   z: type
 }>
 
-/** Type for a BLS point on the G1 curve. */
-export type G1 = BlsPoint<Fp>
 /** Branded type for a bytes representation of a G1 point. */
 export type G1Bytes = Branded<Bytes.Bytes, 'G1'>
 /** Branded type for a hex representation of a G1 point. */
 export type G1Hex = Branded<Hex.Hex, 'G1'>
 
-/** Type for a BLS point on the G2 curve. */
-export type G2 = BlsPoint<Fp2>
 /** Branded type for a bytes representation of a G2 point. */
 export type G2Bytes = Branded<Bytes.Bytes, 'G2'>
 /** Branded type for a hex representation of a G2 point. */
 export type G2Hex = Branded<Hex.Hex, 'G2'>
 
-// TODO(v1): flip `G1` to a branded `G1Hex` string and let `G1Parts` represent
-// the structured projective form. Today `G1Parts` is structurally equivalent
-// to `G1`.
+/** Canonical type for a BLS point on the G1 curve (compressed hex). */
+export type G1 = G1Hex
+/** Canonical type for a BLS point on the G2 curve (compressed hex). */
+export type G2 = G2Hex
+
 /** Structured projective parts of a BLS point on the G1 curve. */
 export type G1Parts = BlsPoint<Fp>
-
-// TODO(v1): flip `G2` to a branded `G2Hex` string and let `G2Parts` represent
-// the structured projective form. Today `G2Parts` is structurally equivalent
-// to `G2`.
 /** Structured projective parts of a BLS point on the G2 curve. */
 export type G2Parts = BlsPoint<Fp2>
 
 /**
- * Converts a BLS point to {@link ox#Bytes.Bytes}.
+ * Serializes a BLS point to {@link ox#Bytes.Bytes}.
  *
  * @example
  * ### Public Key to Bytes
@@ -56,24 +50,13 @@ export type G2Parts = BlsPoint<Fp2>
  * // @log: Uint8Array [172, 175, 255, ...]
  * ```
  *
- * @example
- * ### Signature to Bytes
- * ```ts twoslash
- * import { Bls, BlsPoint } from 'ox'
- *
- * const signature = Bls.sign({ payload: '0x...', privateKey: '0x...' })
- * const signatureBytes = BlsPoint.toBytes(signature)
- * // @log: Uint8Array [172, 175, 255, ...]
- * ```
- *
  * @param point - The BLS point to convert.
  * @returns The bytes representation of the BLS point.
  */
 export function toBytes<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Bytes : G2Bytes {
-  const group = typeof point.z === 'bigint' ? bls.G1 : bls.G2
-  return new (group as any).Point(point.x, point.y, point.z).toBytes()
+  return Bytes.fromHex(point) as never
 }
 
 export declare namespace toBytes {
@@ -81,28 +64,15 @@ export declare namespace toBytes {
 }
 
 /**
- * Converts a BLS point to {@link ox#Hex.Hex}.
+ * Identity helper: returns the BLS point as {@link ox#Hex.Hex}.
  *
  * @example
- * ### Public Key to Hex
- *
  * ```ts twoslash
  * import { Bls, BlsPoint } from 'ox'
  *
  * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
  * const publicKeyHex = BlsPoint.toHex(publicKey)
- * // @log: '0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66'
- * ```
- *
- * @example
- * ### Signature to Hex
- *
- * ```ts twoslash
- * import { Bls, BlsPoint } from 'ox'
- *
- * const signature = Bls.sign({ payload: '0x...', privateKey: '0x...' })
- * const signatureHex = BlsPoint.toHex(signature)
- * // @log: '0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c'
+ * // @log: '0xacafff52270773ad...'
  * ```
  *
  * @param point - The BLS point to convert.
@@ -110,10 +80,8 @@ export declare namespace toBytes {
  */
 export function toHex<point extends G1 | G2>(
   point: point,
-): point extends G1 ? G1Hex : G2Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function toHex(point: G1 | G2): Hex.Hex {
-  return Hex.fromBytes(toBytes(point))
+): point extends G1 ? G1Hex : G2Hex {
+  return point as never
 }
 
 export declare namespace toHex {
@@ -121,62 +89,31 @@ export declare namespace toHex {
 }
 
 /**
- * Converts {@link ox#Bytes.Bytes} to a BLS point.
+ * Deserializes {@link ox#Bytes.Bytes} to a canonical BLS point.
  *
  * @example
- * ### Bytes to Public Key
- *
  * ```ts twoslash
  * // @noErrors
- * import { BlsPoint } from 'ox'
+ * import { Bytes, BlsPoint } from 'ox'
  *
  * const publicKey = BlsPoint.fromBytes(Bytes.from([172, 175, 255, ...]), 'G1')
- * // @log: {
- * // @log:   x: 172...n,
- * // @log:   y: 175...n,
- * // @log:   z: 1n,
- * // @log: }
- * ```
- *
- * @example
- * ### Bytes to Signature
- *
- * ```ts twoslash
- * // @noErrors
- * import { BlsPoint } from 'ox'
- *
- * const signature = BlsPoint.fromBytes(Bytes.from([172, 175, 255, ...]), 'G2')
- * // @log: {
- * // @log:   x: 511...n,
- * // @log:   y: 234...n,
- * // @log:   z: 1n,
- * // @log: }
+ * // @log: '0xacafff52...' (G1Hex)
  * ```
  *
  * @param bytes - The bytes to convert.
- * @returns The BLS point.
+ * @param group - The BLS curve group (`'G1'` or `'G2'`).
+ * @returns The canonical BLS point.
  */
 export function fromBytes<group extends 'G1' | 'G2'>(
   bytes: Bytes.Bytes,
   group: group,
-): group extends 'G1' ? G1 : G2
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function fromBytes(
-  bytes: Bytes.Bytes,
-  group: 'G1' | 'G2',
-): BlsPoint<any> {
+): group extends 'G1' ? G1 : G2 {
   const expectedLength = group === 'G1' ? 48 : 96
   if (bytes.length !== expectedLength)
     throw new Errors.BaseError(
       `Expected ${expectedLength} bytes for a ${group} point, received ${bytes.length}.`,
     )
-  const Group = group === 'G1' ? bls.G1 : bls.G2
-  const point = Group.Point.fromBytes(bytes)
-  return {
-    x: point.X,
-    y: point.Y,
-    z: point.Z,
-  }
+  return Hex.fromBytes(bytes) as never
 }
 
 export declare namespace fromBytes {
@@ -184,67 +121,43 @@ export declare namespace fromBytes {
 }
 
 /**
- * Converts {@link ox#Hex.Hex} to a BLS point.
+ * Validates {@link ox#Hex.Hex} as a canonical BLS point.
  *
  * @example
- * ### Hex to Public Key
- *
  * ```ts twoslash
- * // @noErrors
  * import { BlsPoint } from 'ox'
  *
  * const publicKey = BlsPoint.fromHex('0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66', 'G1')
- * // @log: {
- * // @log:   x: 172...n,
- * // @log:   y: 175...n,
- * // @log:   z: 1n,
- * // @log: }
+ * // @log: '0xacafff52...' (G1Hex)
  * ```
  *
- * @example
- * ### Hex to Signature
- *
- * ```ts twoslash
- * // @noErrors
- * import { BlsPoint } from 'ox'
- *
- * const signature = BlsPoint.fromHex(
- *   '0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c',
- *   'G2',
- * )
- * // @log: {
- * // @log:   x: 511...n,
- * // @log:   y: 234...n,
- * // @log:   z: 1n,
- * // @log: }
- * ```
- *
- * @param bytes - The bytes to convert.
- * @returns The BLS point.
+ * @param hex - The hex to convert.
+ * @param group - The BLS curve group (`'G1'` or `'G2'`).
+ * @returns The canonical BLS point.
  */
 export function fromHex<group extends 'G1' | 'G2'>(
   hex: Hex.Hex,
   group: group,
-): group extends 'G1' ? G1 : G2
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function fromHex(hex: Hex.Hex, group: 'G1' | 'G2'): BlsPoint<any> {
-  return fromBytes(Hex.toBytes(hex), group)
+): group extends 'G1' ? G1 : G2 {
+  const expectedLength = group === 'G1' ? 48 : 96
+  const actualLength = Hex.size(hex)
+  if (actualLength !== expectedLength)
+    throw new Errors.BaseError(
+      `Expected ${expectedLength} bytes for a ${group} point, received ${actualLength}.`,
+    )
+  return hex as never
 }
 
 export declare namespace fromHex {
   type ErrorType = Errors.GlobalErrorType
 }
 
-// TODO(v1): once `G1` / `G2` are branded `Hex.Hex` strings, decode into the
-// parts form here by delegating through `toBytes` / `fromBytes` instead of
-// returning the projective object directly.
 /**
- * Converts a BLS point to its structured projective {@link ox#BlsPoint.G1Parts}
- * / {@link ox#BlsPoint.G2Parts} form.
+ * Converts a canonical BLS point ({@link ox#BlsPoint.G1} /
+ * {@link ox#BlsPoint.G2}) to its structured projective parts
+ * ({@link ox#BlsPoint.G1Parts} / {@link ox#BlsPoint.G2Parts}).
  *
  * @example
- * ### Public Key to Parts
- *
  * ```ts twoslash
  * import { Bls, BlsPoint } from 'ox'
  *
@@ -259,26 +172,26 @@ export declare namespace fromHex {
 export function toParts<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Parts : G2Parts {
-  // Today the root `BlsPoint` is already the projective object form -- copy
-  // the fields so callers don't accidentally mutate the input. In the future
-  // major, this becomes `fromBytes(toBytes(point))`.
-  return { x: point.x, y: point.y, z: point.z } as never
+  const bytes = Bytes.fromHex(point)
+  const group = bytes.length === 48 ? bls.G1 : bls.G2
+  const noblePoint = group.Point.fromBytes(bytes)
+  return {
+    x: noblePoint.X,
+    y: noblePoint.Y,
+    z: noblePoint.Z,
+  } as never
 }
 
 export declare namespace toParts {
   type ErrorType = Errors.GlobalErrorType
 }
 
-// TODO(v1): once `G1` / `G2` are branded `Hex.Hex` strings, encode the parts
-// via `toBytes` here instead of returning the projective object directly.
 /**
  * Converts structured projective parts ({@link ox#BlsPoint.G1Parts} or
- * {@link ox#BlsPoint.G2Parts}) into a {@link ox#BlsPoint.G1} or
+ * {@link ox#BlsPoint.G2Parts}) into a canonical {@link ox#BlsPoint.G1} or
  * {@link ox#BlsPoint.G2} BLS point.
  *
  * @example
- * ### Parts to Public Key
- *
  * ```ts twoslash
  * // @noErrors
  * import { BlsPoint } from 'ox'
@@ -287,26 +200,22 @@ export declare namespace toParts {
  *   { x: 172n, y: 175n, z: 1n },
  *   'G1',
  * )
- * // @log: { x: 172n, y: 175n, z: 1n }
+ * // @log: '0xacafff52...' (G1Hex)
  * ```
  *
  * @param parts - The structured projective parts to convert.
  * @param group - The BLS curve group (`'G1'` or `'G2'`).
- * @returns The BLS point.
+ * @returns The canonical BLS point.
  */
 export function fromParts<group extends 'G1' | 'G2'>(
   parts: group extends 'G1' ? G1Parts : G2Parts,
   group: group,
-): group extends 'G1' ? G1 : G2
-// eslint-disable-next-line jsdoc/require-jsdoc
-export function fromParts(
-  parts: G1Parts | G2Parts,
-  _group: 'G1' | 'G2',
-): BlsPoint<any> {
-  // Today the root `BlsPoint` is already the projective object form. In the
-  // future major, this becomes `fromBytes(<bytes encoded from parts>, group)`
-  // -- the `group` argument is kept now so call sites match the future shape.
-  return { x: parts.x, y: parts.y, z: parts.z }
+): group extends 'G1' ? G1 : G2 {
+  const noblePoint =
+    group === 'G1'
+      ? new (bls.G1 as any).Point(parts.x, parts.y, parts.z)
+      : new (bls.G2 as any).Point(parts.x, parts.y, parts.z)
+  return Hex.fromBytes(noblePoint.toBytes()) as never
 }
 
 export declare namespace fromParts {

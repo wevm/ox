@@ -1,4 +1,12 @@
-import { Blobs, Hex, Rlp, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
+import {
+  Blobs,
+  Hex,
+  Rlp,
+  Secp256k1,
+  Signature,
+  TxEnvelopeEip4844,
+  Value,
+} from 'ox'
 import { assertType, describe, expect, test } from 'vitest'
 import { accounts } from '../../../test/constants/accounts.js'
 import { kzg } from '../../../test/kzg.js'
@@ -159,7 +167,7 @@ describe('deserialize', () => {
     })
     expect(TxEnvelopeEip4844.deserialize(serialized)).toEqual({
       ...transaction,
-      ...signature,
+      ...Signature.toParts(signature),
       sidecars,
     })
   })
@@ -335,11 +343,11 @@ describe('from', () => {
         nonce: 0n,
       },
       {
-        signature: {
+        signature: Signature.fromParts({
           r: 0n,
           s: 1n,
           yParity: 0,
-        },
+        }),
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
@@ -386,8 +394,9 @@ describe('from', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const envelope_signed = TxEnvelopeEip4844.from(envelope, {
-      signature,
+    const envelope_signed = TxEnvelopeEip4844.from({
+      ...envelope,
+      ...Signature.toParts(signature),
     })
 
     {
@@ -519,14 +528,14 @@ describe('serialize', () => {
     })
     expect(TxEnvelopeEip4844.deserialize(serialized)).toEqual({
       ...transaction,
-      ...signature,
+      ...Signature.toParts(signature),
     })
   })
 
   test('options: signature', () => {
     expect(
       TxEnvelopeEip4844.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: BigInt(
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
@@ -534,7 +543,7 @@ describe('serialize', () => {
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
           yParity: 1,
-        },
+        }),
       }),
     ).toEqual(
       '0x03f88d018203118080809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c080e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed8026101a060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
@@ -544,7 +553,7 @@ describe('serialize', () => {
         transaction,
 
         {
-          signature: {
+          signature: Signature.fromParts({
             r: BigInt(
               '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
             ),
@@ -552,7 +561,7 @@ describe('serialize', () => {
               '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
             ),
             yParity: 0,
-          },
+          }),
         },
       ),
     ).toEqual(
@@ -583,7 +592,7 @@ describe('serialize', () => {
     })
     expect(TxEnvelopeEip4844.deserialize(serialized)).toEqual({
       ...transaction,
-      ...signature,
+      ...Signature.toParts(signature),
       sidecars,
     })
   })

@@ -63,7 +63,7 @@ export async function parseCredentialPublicKey(
 
     // Converting `publicKeyBuffer` throws when credential is created by 1Password Firefox Add-on
     const publicKeyBytes = new Uint8Array(publicKeyBuffer)
-    return PublicKey.from(spkiToRawP256(publicKeyBytes))
+    return PublicKey.fromBytes(spkiToRawP256(publicKeyBytes))
   } catch (error) {
     // Fallback for 1Password Firefox Add-on restricts access to certain credential properties
     // so we need to use `attestationObject` to extract the public key.
@@ -86,7 +86,7 @@ export async function parseCredentialPublicKey(
     const xStart = findStart(0x21)
     const yStart = findStart(0x22)
 
-    return PublicKey.from(
+    return PublicKey.fromBytes(
       new Uint8Array([
         0x04,
         ...data.slice(xStart, xStart + coordinateLength),

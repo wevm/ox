@@ -6,7 +6,6 @@ test('exports', () => {
     [
       "assert",
       "compress",
-      "from",
       "fromBytes",
       "fromHex",
       "toBytes",
@@ -132,12 +131,14 @@ describe('PublicKey.assert', () => {
 describe('PublicKey.compress', () => {
   test('default', () => {
     {
-      const publicKey = PublicKey.compress({
-        prefix: 4,
-        x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-        y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-      })
-      expect(publicKey).toMatchInlineSnapshot(`
+      const publicKey = PublicKey.compress(
+        PublicKey.fromParts({
+          prefix: 4,
+          x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+          y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+        }),
+      )
+      expect(PublicKey.toParts<true>(publicKey)).toMatchInlineSnapshot(`
     {
       "prefix": 3,
       "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -146,12 +147,14 @@ describe('PublicKey.compress', () => {
     }
 
     {
-      const publicKey = PublicKey.compress({
-        prefix: 4,
-        x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-        y: 24099691209996290925259367678540227198235484593389470330605641003500238088870n,
-      })
-      expect(publicKey).toMatchInlineSnapshot(`
+      const publicKey = PublicKey.compress(
+        PublicKey.fromParts({
+          prefix: 4,
+          x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+          y: 24099691209996290925259367678540227198235484593389470330605641003500238088870n,
+        }),
+      )
+      expect(PublicKey.toParts<true>(publicKey)).toMatchInlineSnapshot(`
       {
         "prefix": 2,
         "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -166,7 +169,7 @@ describe('PublicKey.fromHex', () => {
     const serialized =
       '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
     const publicKey = PublicKey.fromHex(serialized)
-    expect(publicKey).toMatchInlineSnapshot(`
+    expect(PublicKey.toParts(publicKey)).toMatchInlineSnapshot(`
     {
       "prefix": 4,
       "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -179,7 +182,7 @@ describe('PublicKey.fromHex', () => {
     const serialized =
       '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
     const publicKey = PublicKey.fromHex(serialized)
-    expect(publicKey).toMatchInlineSnapshot(`
+    expect(PublicKey.toParts(publicKey)).toMatchInlineSnapshot(`
     {
       "prefix": 4,
       "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -192,7 +195,7 @@ describe('PublicKey.fromHex', () => {
     const serialized =
       '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75'
     const publicKey = PublicKey.fromHex(serialized)
-    expect(publicKey).toMatchInlineSnapshot(`
+    expect(PublicKey.toParts<true>(publicKey)).toMatchInlineSnapshot(`
     {
       "prefix": 3,
       "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -246,7 +249,7 @@ describe('PublicKey.fromBytes', () => {
       '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
     )
     const publicKey = PublicKey.fromBytes(serialized)
-    expect(publicKey).toMatchInlineSnapshot(`
+    expect(PublicKey.toParts(publicKey)).toMatchInlineSnapshot(`
     {
       "prefix": 4,
       "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -269,133 +272,10 @@ describe('PublicKey.fromBytes', () => {
   })
 })
 
-describe('PublicKey.from', () => {
-  test('uncompressed', () => {
-    const publicKey = PublicKey.from({
-      prefix: 4,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    })
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 4,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    }
-  `)
-  })
-
-  test('uncompressed, serialized hex', () => {
-    const publicKey = PublicKey.from(
-      '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    )
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 4,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    }
-  `)
-  })
-
-  test('uncompressed, serialized bytes', () => {
-    const publicKey = PublicKey.from(
-      Bytes.fromHex(
-        '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-      ),
-    )
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 4,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    }
-  `)
-  })
-
-  test('uncompressed, no prefix', () => {
-    const publicKey = PublicKey.from({
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    })
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 4,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    }
-  `)
-  })
-
-  test('uncompressed, no prefix, serialized hex', () => {
-    const publicKey = PublicKey.from(
-      '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    )
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 4,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    }
-  `)
-  })
-
-  test('compressed', () => {
-    const publicKey = PublicKey.from({
-      prefix: 3,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    })
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 3,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    }
-  `)
-  })
-
-  test('compressed', () => {
-    const publicKey = PublicKey.from({
-      prefix: 2,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    })
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 2,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    }
-  `)
-  })
-
-  test('compressed, serialized hex', () => {
-    const publicKey = PublicKey.from(
-      '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-    )
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 3,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    }
-  `)
-  })
-
-  test('compressed, serialized bytes', () => {
-    const publicKey = PublicKey.from(
-      Bytes.fromHex(
-        '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-      ),
-    )
-    expect(publicKey).toMatchInlineSnapshot(`
-    {
-      "prefix": 3,
-      "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    }
-  `)
-  })
-})
-
 describe('PublicKey.toHex', () => {
   test('default', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts({
+      prefix: 4,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
@@ -406,7 +286,7 @@ describe('PublicKey.toHex', () => {
   })
 
   test('behavior: prefix', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts({
       prefix: 4,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
@@ -418,7 +298,7 @@ describe('PublicKey.toHex', () => {
   })
 
   test('behavior: compressed', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts<true>({
       prefix: 3,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
     })
@@ -429,7 +309,8 @@ describe('PublicKey.toHex', () => {
   })
 
   test('option: includePrefix', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts({
+      prefix: 4,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
@@ -442,7 +323,8 @@ describe('PublicKey.toHex', () => {
 
 describe('PublicKey.toBytes', () => {
   test('default', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts({
+      prefix: 4,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
@@ -541,11 +423,13 @@ describe('PublicKey.validate', () => {
 
 describe('PublicKey.toParts', () => {
   test('default', () => {
-    const parts = PublicKey.toParts({
-      prefix: 4,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    })
+    const parts = PublicKey.toParts(
+      PublicKey.fromParts({
+        prefix: 4,
+        x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+        y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+      }),
+    )
     expect(parts).toEqual({
       prefix: 4,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -554,10 +438,12 @@ describe('PublicKey.toParts', () => {
   })
 
   test('behavior: compressed', () => {
-    const parts = PublicKey.toParts<true>({
-      prefix: 3,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    })
+    const parts = PublicKey.toParts<true>(
+      PublicKey.fromParts<true>({
+        prefix: 3,
+        x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+      }),
+    )
     expect(parts).toEqual({
       prefix: 3,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
@@ -566,13 +452,14 @@ describe('PublicKey.toParts', () => {
   })
 
   test('behavior: returns a fresh object (no aliasing)', () => {
-    const pk = {
+    const hex = PublicKey.fromParts({
       prefix: 4,
       x: 1n,
       y: 2n,
-    }
-    const parts = PublicKey.toParts(pk)
-    expect(parts).not.toBe(pk)
+    })
+    const a = PublicKey.toParts(hex)
+    const b = PublicKey.toParts(hex)
+    expect(a).not.toBe(b)
   })
 })
 
@@ -583,11 +470,9 @@ describe('PublicKey.fromParts', () => {
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     })
-    expect(publicKey).toEqual({
-      prefix: 4,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-      y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-    })
+    expect(publicKey).toMatchInlineSnapshot(
+      `"0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5"`,
+    )
   })
 
   test('behavior: compressed', () => {
@@ -595,11 +480,9 @@ describe('PublicKey.fromParts', () => {
       prefix: 2,
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
     })
-    expect(publicKey).toEqual({
-      prefix: 2,
-      x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-    })
-    expect('y' in publicKey).toBe(false)
+    expect(publicKey).toMatchInlineSnapshot(
+      `"0x028318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75"`,
+    )
   })
 
   test('behavior: roundtrip', () => {
@@ -608,6 +491,6 @@ describe('PublicKey.fromParts', () => {
       x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
       y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
     }
-    expect(PublicKey.fromParts(PublicKey.toParts(original))).toEqual(original)
+    expect(PublicKey.toParts(PublicKey.fromParts(original))).toEqual(original)
   })
 })

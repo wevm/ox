@@ -3,6 +3,7 @@ import {
   Hex,
   Rlp,
   Secp256k1,
+  Signature,
   TxEnvelopeEip1559,
   TxEnvelopeEip7702,
   Value,
@@ -177,7 +178,7 @@ describe('deserialize', () => {
     })
     expect(TxEnvelopeEip7702.deserialize(serialized)).toEqual({
       ...transaction,
-      ...signature,
+      ...Signature.toParts(signature),
     })
   })
 
@@ -434,11 +435,11 @@ describe('from', () => {
         nonce: 0n,
       },
       {
-        signature: {
+        signature: Signature.fromParts({
           r: 0n,
           s: 1n,
           yParity: 0,
-        },
+        }),
       },
     )
     expect(envelope).toMatchInlineSnapshot(`
@@ -491,8 +492,9 @@ describe('getSignPayload', () => {
       privateKey: accounts[0].privateKey,
     })
 
-    const envelope_signed = TxEnvelopeEip7702.from(envelope, {
-      signature: signature_tx,
+    const envelope_signed = TxEnvelopeEip7702.from({
+      ...envelope,
+      ...Signature.toParts(signature_tx),
     })
 
     {
@@ -682,14 +684,14 @@ describe('serialize', () => {
     )
     expect(TxEnvelopeEip7702.deserialize(serialized)).toEqual({
       ...transaction,
-      ...signature,
+      ...Signature.toParts(signature),
     })
   })
 
   test('options: signature', () => {
     expect(
       TxEnvelopeEip7702.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: BigInt(
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
@@ -697,7 +699,7 @@ describe('serialize', () => {
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
           yParity: 1,
-        },
+        }),
       }),
     ).toEqual(
       '0x04f901300182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0f8bcf85c0194fba3912ca04dd458c843e2ee08967fc04f3579c282031101a05f9eab9d5d717098430d03780924a379e350e5cdd38fb7ffe707393d587e4e35a07e28e4c4eadc81dafea5d73c8e5327034306d4ad2dc4dbd94ef829bec57f04dbf85c0a94fba3912ca04dd458c843e2ee08967fc04f3579c282031280a0f4181dd27f6b801404cd3bc24207aa1b07b1ff8991ea847b0af1a6c3e4ba9e99a00fda7db5a05f0c5298339ffa7ec9be2d2a483f5c0af7fe267237b01290bc958201a060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
@@ -705,7 +707,7 @@ describe('serialize', () => {
 
     expect(
       TxEnvelopeEip7702.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: BigInt(
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
@@ -713,7 +715,7 @@ describe('serialize', () => {
             '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           ),
           yParity: 0,
-        },
+        }),
       }),
     ).toEqual(
       '0x04f901300182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0f8bcf85c0194fba3912ca04dd458c843e2ee08967fc04f3579c282031101a05f9eab9d5d717098430d03780924a379e350e5cdd38fb7ffe707393d587e4e35a07e28e4c4eadc81dafea5d73c8e5327034306d4ad2dc4dbd94ef829bec57f04dbf85c0a94fba3912ca04dd458c843e2ee08967fc04f3579c282031280a0f4181dd27f6b801404cd3bc24207aa1b07b1ff8991ea847b0af1a6c3e4ba9e99a00fda7db5a05f0c5298339ffa7ec9be2d2a483f5c0af7fe267237b01290bc958280a060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fea060fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
@@ -721,11 +723,11 @@ describe('serialize', () => {
 
     expect(
       TxEnvelopeEip7702.serialize(transaction, {
-        signature: {
+        signature: Signature.fromParts({
           r: 0n,
           s: 0n,
           yParity: 0,
-        },
+        }),
       }),
     ).toEqual(
       '0x04f8f00182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0f8bcf85c0194fba3912ca04dd458c843e2ee08967fc04f3579c282031101a05f9eab9d5d717098430d03780924a379e350e5cdd38fb7ffe707393d587e4e35a07e28e4c4eadc81dafea5d73c8e5327034306d4ad2dc4dbd94ef829bec57f04dbf85c0a94fba3912ca04dd458c843e2ee08967fc04f3579c282031280a0f4181dd27f6b801404cd3bc24207aa1b07b1ff8991ea847b0af1a6c3e4ba9e99a00fda7db5a05f0c5298339ffa7ec9be2d2a483f5c0af7fe267237b01290bc9582808080',

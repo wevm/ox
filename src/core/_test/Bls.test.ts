@@ -1,4 +1,4 @@
-import { Bls, Hex } from 'ox'
+import { Bls, BlsPoint, Hex } from 'ox'
 import { describe, expect, it, test } from 'vitest'
 
 const privateKey =
@@ -73,7 +73,7 @@ describe('aggregate', () => {
     expect(() =>
       Bls.aggregate([g1, g2 as any]),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[BaseError: Bls.aggregate expects all points to be from the same group (G1 or G2).]`,
+      `[Error: invalid G1 point: expected 48 bytes]`,
     )
   })
 })
@@ -81,34 +81,37 @@ describe('aggregate', () => {
 describe('createKeyPair', () => {
   it('default', () => {
     const { privateKey, publicKey } = Bls.createKeyPair()
+    const parts = BlsPoint.toParts(publicKey)
     expect(privateKey).toBeDefined()
     expect(privateKey.length).toBe(66)
     expect(publicKey).toBeDefined()
-    expect(typeof publicKey.x).toBe('bigint')
-    expect(typeof publicKey.y).toBe('bigint')
-    expect(typeof publicKey.z).toBe('bigint')
+    expect(typeof parts.x).toBe('bigint')
+    expect(typeof parts.y).toBe('bigint')
+    expect(typeof parts.z).toBe('bigint')
   })
 
   it('as: bytes', () => {
     const { privateKey, publicKey } = Bls.createKeyPair({ as: 'Bytes' })
+    const parts = BlsPoint.toParts(publicKey)
     expect(privateKey).toBeDefined()
     expect(privateKey.length).toBe(32)
     expect(publicKey).toBeDefined()
-    expect(typeof publicKey.x).toBe('bigint')
-    expect(typeof publicKey.y).toBe('bigint')
-    expect(typeof publicKey.z).toBe('bigint')
+    expect(typeof parts.x).toBe('bigint')
+    expect(typeof parts.y).toBe('bigint')
+    expect(typeof parts.z).toBe('bigint')
   })
 
   it('size: "long-key:short-sig"', () => {
     const { privateKey, publicKey } = Bls.createKeyPair({
       size: 'long-key:short-sig',
     })
+    const parts = BlsPoint.toParts(publicKey)
     expect(privateKey).toBeDefined()
     expect(privateKey.length).toBe(66)
     expect(publicKey).toBeDefined()
-    expect(typeof publicKey.x).toBe('object')
-    expect(typeof publicKey.y).toBe('object')
-    expect(typeof publicKey.z).toBe('object')
+    expect(typeof parts.x).toBe('object')
+    expect(typeof parts.y).toBe('object')
+    expect(typeof parts.z).toBe('object')
   })
 
   it('should create functional key pair', () => {
@@ -141,13 +144,9 @@ describe('createKeyPair', () => {
 describe('getPublicKey', () => {
   it('default', () => {
     const publicKey = Bls.getPublicKey({ privateKey })
-    expect(publicKey).toMatchInlineSnapshot(`
-      {
-        "x": 1952783380189056174522580903352347766701573809635723835268303492562286913265402164399416172997666069723894699105894n,
-        "y": 3394089175947417419526317884165437122243448720528225119792553064107324599006426161993648623279289675312316462718429n,
-        "z": 1n,
-      }
-    `)
+    expect(publicKey).toMatchInlineSnapshot(
+      `"0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66"`,
+    )
   })
 
   it('size: "long-key:short-sig"', () => {
@@ -155,22 +154,9 @@ describe('getPublicKey', () => {
       privateKey,
       size: 'long-key:short-sig',
     })
-    expect(publicKey).toMatchInlineSnapshot(`
-      {
-        "x": {
-          "c0": 355700073819052008684778820175963255205495140126954969787089018774753222070622698188835174184164179369078130885244n,
-          "c1": 3141747483469678201696152507180044107401052508149828985947848597238369234167677882679751100991611433759974704216489n,
-        },
-        "y": {
-          "c0": 2066498625632373741693121319338450383866133445054897600869581552265032944423583015562782022208222353927807243866749n,
-          "c1": 2094957017561088565638483770249057751981351081887405244515911122357724535677090041039038848651564427361620547334206n,
-        },
-        "z": {
-          "c0": 1n,
-          "c1": 0n,
-        },
-      }
-    `)
+    expect(publicKey).toMatchInlineSnapshot(
+      `"0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c"`,
+    )
   })
 })
 
@@ -193,22 +179,9 @@ describe('sign', () => {
     const payload = Hex.fromString('hello world')
     const signature = Bls.sign({ payload, privateKey })
 
-    expect(signature).toMatchInlineSnapshot(`
-      {
-        "x": {
-          "c0": 3746086905447253682610543432049782958935576956103835696177151771320417199129097598091428899350812694802984340320507n,
-          "c1": 3283146048622226517954881634398987000360291525283271875090618615961785504260074427269084149051224291832699744536875n,
-        },
-        "y": {
-          "c0": 2635882389000876446384650976799081995605300411488416553944693011070686484045367229225761824211357395609735141830301n,
-          "c1": 3150725065472868899001777665935568609665827996367588938443411055163385844006645735808933132167606601018627944394270n,
-        },
-        "z": {
-          "c0": 1n,
-          "c1": 0n,
-        },
-      }
-    `)
+    expect(signature).toMatchInlineSnapshot(
+      `"0xb554be670320ec850f81f6197dc2b42a4586dd11e439b0779bdbb4fbf324d68190b781ee049b685b39c8cfa7387dc92b1856bcc293208adcf1dfe12b752470c7910e8919071b2f03249d0da78ec8f3ad5b01c0b2a675cf0d0b658580616c70fb"`,
+    )
   })
 
   test('size: "long-key:short-sig"', () => {
@@ -219,13 +192,9 @@ describe('sign', () => {
       size: 'long-key:short-sig',
     })
 
-    expect(signature).toMatchInlineSnapshot(`
-      {
-        "x": 3755087731136217504597239089482980992941034609034858157163586991013626465307525157337003693748653301444139684957942n,
-        "y": 1939521305169884934876256226456095365402898060507274143668904400539743214063601510507290152344771164790023535191463n,
-        "z": 1n,
-      }
-    `)
+    expect(signature).toMatchInlineSnapshot(
+      `"0x9865b546866aa341024c0470d6500272c8bc368f0ae835ba957397b34f0df9896cc410e7314acd1c3260520d541f8ef6"`,
+    )
   })
 })
 
@@ -269,10 +238,10 @@ describe('as option / serialized inputs', () => {
     expect(pkBytes).toBeInstanceOf(Uint8Array)
   })
 
-  test('getPublicKey default as remains Object', () => {
+  test('getPublicKey default as remains Hex', () => {
     const pk = Bls.getPublicKey({ privateKey })
-    expect(typeof pk).toBe('object')
-    expect('z' in pk).toBe(true)
+    expect(typeof pk).toBe('string')
+    expect((pk as Hex.Hex).startsWith('0x')).toBe(true)
   })
 
   test("sign: as 'Hex' returns hex string", () => {
@@ -343,8 +312,9 @@ describe('as option / serialized inputs', () => {
     expect(aggregated).toEqual(aggregatedObj)
   })
 
-  test('aggregate throws if serialized inputs without group hint', () => {
-    const a = Bls.getPublicKey({ privateKey, as: 'Hex' })
-    expect(() => Bls.aggregate([a])).toThrow()
+  test('aggregate throws if serialized inputs of non-standard byte length without group hint', () => {
+    // 32-byte hex is neither a G1 (48) nor G2 (96) point length.
+    const nonStandard = ('0x' + 'aa'.repeat(32)) as Hex.Hex
+    expect(() => Bls.aggregate([nonStandard])).toThrow()
   })
 })

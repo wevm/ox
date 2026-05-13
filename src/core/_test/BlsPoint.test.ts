@@ -254,21 +254,19 @@ describe('BlsPoint.toParts', () => {
   test('default: G1 public key', () => {
     const publicKey = Bls.getPublicKey({ privateKey })
     const parts = BlsPoint.toParts(publicKey)
-    expect(parts).toEqual({
-      x: publicKey.x,
-      y: publicKey.y,
-      z: publicKey.z,
-    })
+    expect(typeof parts.x).toBe('bigint')
+    expect(typeof parts.y).toBe('bigint')
+    expect(typeof parts.z).toBe('bigint')
+    expect(BlsPoint.fromParts(parts, 'G1')).toEqual(publicKey)
   })
 
   test('default: G2 signature', () => {
     const signature = Bls.sign({ payload: '0xdeadbeef', privateKey })
     const parts = BlsPoint.toParts(signature)
-    expect(parts).toEqual({
-      x: signature.x,
-      y: signature.y,
-      z: signature.z,
-    })
+    expect(typeof parts.x).toBe('object')
+    expect(typeof parts.y).toBe('object')
+    expect(typeof parts.z).toBe('object')
+    expect(BlsPoint.fromParts(parts, 'G2')).toEqual(signature)
   })
 
   test('behavior: returns a fresh object (no aliasing)', () => {

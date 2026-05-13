@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import * as PublicKey from '../../core/PublicKey.js'
 import { Credential } from '../index.js'
 
 describe('Credential.serialize', () => {
@@ -7,11 +8,11 @@ describe('Credential.serialize', () => {
       attestationObject: new Uint8Array([1, 2, 3]).buffer as ArrayBuffer,
       clientDataJSON: new Uint8Array([123, 125]).buffer as ArrayBuffer,
       id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
-      publicKey: {
+      publicKey: PublicKey.fromParts({
         prefix: 4,
         x: 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
         y: 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
-      },
+      }),
       raw: {
         id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
         type: 'public-key',
@@ -56,11 +57,11 @@ describe('Credential.serialize', () => {
       attestationObject: new Uint8Array([4, 5, 6]).buffer as ArrayBuffer,
       clientDataJSON: new Uint8Array([123, 125]).buffer as ArrayBuffer,
       id: 'test-id',
-      publicKey: {
+      publicKey: PublicKey.fromParts({
         prefix: 4,
         x: 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
         y: 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
-      },
+      }),
       raw: {
         id: 'test-id',
         type: 'public-key',
@@ -103,9 +104,10 @@ describe('Credential.deserialize', () => {
     const credential = Credential.deserialize(serialized)
 
     expect(credential.id).toBe(serialized.id)
-    expect(credential.publicKey.prefix).toBe(4)
-    expect(typeof credential.publicKey.x).toBe('bigint')
-    expect(typeof credential.publicKey.y).toBe('bigint')
+    const parts = PublicKey.toParts(credential.publicKey)
+    expect(parts.prefix).toBe(4)
+    expect(typeof parts.x).toBe('bigint')
+    expect(typeof parts.y).toBe('bigint')
     expect(credential.raw.rawId).toBeInstanceOf(ArrayBuffer)
     expect(credential.raw.response.clientDataJSON).toBeInstanceOf(ArrayBuffer)
   })
@@ -115,11 +117,11 @@ describe('Credential.deserialize', () => {
       attestationObject: new Uint8Array([1, 2, 3]).buffer as ArrayBuffer,
       clientDataJSON: new Uint8Array([123, 125]).buffer as ArrayBuffer,
       id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
-      publicKey: {
+      publicKey: PublicKey.fromParts({
         prefix: 4,
         x: 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
         y: 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
-      },
+      }),
       raw: {
         id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
         type: 'public-key',

@@ -1,4 +1,4 @@
-import { TxEnvelopeEip2930 } from 'ox'
+import { Signature, TxEnvelopeEip2930 } from 'ox'
 import { expectTypeOf, test } from 'vitest'
 
 test('default', () => {
@@ -54,20 +54,20 @@ test('options: signature', () => {
       value: 69n,
     },
     {
-      signature: {
+      signature: Signature.fromParts({
         r: 0n,
         s: 1n,
         yParity: 0,
-      },
+      }),
     },
   )
   expectTypeOf(envelope).toEqualTypeOf<{
     readonly chainId: 1
     readonly to: '0x0000000000000000000000000000000000000000'
     readonly value: 69n
-    readonly r: 0n
-    readonly s: 1n
-    readonly yParity: 0
+    readonly r: bigint
+    readonly s: bigint
+    readonly yParity: number
     readonly type: 'eip2930'
   }>()
   expectTypeOf(envelope).toMatchTypeOf<TxEnvelopeEip2930.TxEnvelopeEip2930>()

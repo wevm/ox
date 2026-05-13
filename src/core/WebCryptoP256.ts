@@ -9,7 +9,7 @@ import {
 } from './internal/cryptoIo.js'
 import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
-import type * as Signature from './Signature.js'
+import * as Signature from './Signature.js'
 
 /** secp256r1 / P-256 curve order. */
 const N = p256.Point.CURVE().n
@@ -26,14 +26,6 @@ const N = p256.Point.CURVE().n
  * import { WebCryptoP256 } from 'ox'
  *
  * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
- * // @log: {
- * // @log:   privateKey: CryptoKey {},
- * // @log:   publicKey: {
- * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * // @log:     prefix: 4,
- * // @log:   },
- * // @log: }
  * ```
  *
  * @param options - Options for creating the key pair.
@@ -55,7 +47,7 @@ export async function createKeyPair(
     'raw',
     keypair.publicKey,
   )
-  const publicKey = PublicKey.from(new Uint8Array(publicKey_raw))
+  const publicKey = PublicKey.fromBytes(new Uint8Array(publicKey_raw))
   return {
     privateKey: keypair.privateKey,
     publicKey,
@@ -73,7 +65,7 @@ export declare namespace createKeyPair {
     publicKey: PublicKey.PublicKey
   }>
 
-  type ErrorType = PublicKey.from.ErrorType | Errors.GlobalErrorType
+  type ErrorType = PublicKey.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -87,14 +79,6 @@ export declare namespace createKeyPair {
  * import { WebCryptoP256 } from 'ox'
  *
  * const { publicKey, privateKey } = await WebCryptoP256.createKeyPairECDH()
- * // @log: {
- * // @log:   privateKey: CryptoKey {},
- * // @log:   publicKey: {
- * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
- * // @log:     prefix: 4,
- * // @log:   },
- * // @log: }
  * ```
  *
  * @param options - Options for creating the key pair.
@@ -116,7 +100,7 @@ export async function createKeyPairECDH(
     'raw',
     keypair.publicKey,
   )
-  const publicKey = PublicKey.from(new Uint8Array(publicKey_raw))
+  const publicKey = PublicKey.fromBytes(new Uint8Array(publicKey_raw))
   return {
     privateKey: keypair.privateKey,
     publicKey,
@@ -134,7 +118,7 @@ export declare namespace createKeyPairECDH {
     publicKey: PublicKey.PublicKey
   }>
 
-  type ErrorType = PublicKey.from.ErrorType | Errors.GlobalErrorType
+  type ErrorType = PublicKey.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -201,7 +185,7 @@ export declare namespace getSharedSecret {
     /**
      * Public key to use for the shared secret computation.
      */
-    publicKey: PublicKey.PublicKey<boolean>
+    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.Parts<boolean>
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
@@ -228,23 +212,20 @@ export declare namespace getSharedSecret {
  *
  * const { privateKey } = await WebCryptoP256.createKeyPair()
  *
- * const signature = await WebCryptoP256.sign({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   privateKey, // [!code focus]
- * }) // [!code focus]
- * // @log: {
- * // @log:   r: 151231...4423n,
- * // @log:   s: 516123...5512n,
- * // @log: }
+ * const signature = await WebCryptoP256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey,
+ * })
+ * // @log: '0x1512314423...5161235512'
  * ```
  *
  * @param options - Options for signing the payload.
  * @returns The P256 ECDSA {@link ox#Signature.Signature} (always low-S normalized).
  */
-export async function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
+export async function sign<as extends 'Hex' | 'Bytes' = 'Hex'>(
   options: sign.Options<as>,
 ): Promise<sign.ReturnType<as>> {
-  const { as = 'Object', payload, privateKey } = options
+  const { as = 'Hex', payload, privateKey } = options
   const signature = await globalThis.crypto.subtle.sign(
     {
       name: 'ECDSA',
@@ -254,29 +235,30 @@ export async function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
     Bytes.from(payload),
   )
   const signature_bytes = Bytes.fromArray(new Uint8Array(signature))
+  // Fixed-width 32-byte big-endian r and s.
   const r = Bytes.toBigInt(Bytes.slice(signature_bytes, 0, 32))
   let s = Bytes.toBigInt(Bytes.slice(signature_bytes, 32, 64))
   if (s > N / 2n) s = N - s
-  return formatSignature({ r, s }, as) as never
+  const sig = Signature.fromParts<false>({ r, s })
+  return formatSignature(sig, as) as never
 }
 
 export declare namespace sign {
-  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /**
      * Format of the returned signature.
-     * @default 'Object'
+     * @default 'Hex'
      */
-    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
+    as?: as | 'Hex' | 'Bytes' | undefined
     /** Payload to sign. */
     payload: Hex.Hex | Bytes.Bytes
     /** ECDSA private key. */
     privateKey: CryptoKey
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+  type ReturnType<as extends 'Hex' | 'Bytes'> =
     | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-    | (as extends 'Object' ? Signature.Signature<false> : never)
+    | (as extends 'Hex' ? Signature.Signature<false> : never)
 
   type ErrorType = Bytes.fromArray.ErrorType | Errors.GlobalErrorType
 }
@@ -292,11 +274,11 @@ export declare namespace sign {
  * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
  * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
  *
- * const verified = await WebCryptoP256.verify({ // [!code focus]
- *   payload: '0xdeadbeef', // [!code focus]
- *   publicKey, // [!code focus]
- *   signature, // [!code focus]
- * }) // [!code focus]
+ * const verified = await WebCryptoP256.verify({
+ *   payload: '0xdeadbeef',
+ *   publicKey,
+ *   signature,
+ * })
  * // @log: true
  * ```
  *
@@ -305,10 +287,14 @@ export declare namespace sign {
  */
 export async function verify(options: verify.Options): Promise<boolean> {
   const { lowS = true, payload } = options
-  const signature = normalizeSignature<false>(options.signature)
+  const signature = normalizeSignature(options.signature)
+  const compact = Bytes.fromHex(signature.slice(0, 130) as Hex.Hex)
 
   // Reject high-S signatures if lowS is enabled.
-  if (lowS && signature.s > N / 2n) return false
+  if (lowS) {
+    const s = Bytes.toBigInt(Bytes.slice(compact, 32, 64))
+    if (s > N / 2n) return false
+  }
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
@@ -324,10 +310,7 @@ export async function verify(options: verify.Options): Promise<boolean> {
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes.concat(
-      Bytes.fromNumber(signature.r, { size: 32 }),
-      Bytes.fromNumber(signature.s, { size: 32 }),
-    ),
+    compact,
     Bytes.from(payload),
   )
 }
@@ -339,17 +322,17 @@ export declare namespace verify {
     /**
      * Public key that signed the payload.
      *
-     * Accepts a structured {@link ox#PublicKey.PublicKey}, a serialized hex
-     * string, or a `Uint8Array` (SEC1 encoding).
+     * Accepts a canonical {@link ox#PublicKey.PublicKey} (hex), a `Uint8Array`
+     * (SEC1 encoding), or a structured {@link ox#PublicKey.Parts}.
      */
-    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
+    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.Parts<boolean>
     /**
      * Signature of the payload.
      *
-     * Accepts a structured {@link ox#Signature.Signature}, a serialized hex
-     * string, or a `Uint8Array`.
+     * Accepts a canonical {@link ox#Signature.Signature} (hex), a
+     * `Uint8Array`, or a structured {@link ox#Signature.Parts}.
      */
-    signature: Hex.Hex | Bytes.Bytes | Signature.Signature<false>
+    signature: Hex.Hex | Bytes.Bytes | Signature.Parts<false>
     /** Payload that was signed. */
     payload: Hex.Hex | Bytes.Bytes
   }

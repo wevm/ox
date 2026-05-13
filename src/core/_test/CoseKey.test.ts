@@ -22,7 +22,8 @@ describe('toPublicKey', () => {
 
 describe('roundtrip', () => {
   test('roundtrip with known public key', () => {
-    const publicKey = PublicKey.from({
+    const publicKey = PublicKey.fromParts({
+      prefix: 4,
       x: 108058905462353399599412887269393158541451912165746768801221323097156211577479n,
       y: 14734952183441233246695696377579450501147029832688498617254314309528960704783n,
     })
@@ -36,7 +37,8 @@ describe('roundtrip', () => {
       '0xa5010203262001215820eee72c4fc66e2670b0f606fcb54ce453b8ae09d0661303dd4ad8d4063be212872258202093aff8b065c247c742e6833937ba987fb0f871e61fcfc6763fd9144611210f'
     const publicKey = CoseKey.toPublicKey(coseKeyHex)
     expect(publicKey).toStrictEqual(
-      PublicKey.from({
+      PublicKey.fromParts({
+        prefix: 4,
         x: 108058905462353399599412887269393158541451912165746768801221323097156211577479n,
         y: 14734952183441233246695696377579450501147029832688498617254314309528960704783n,
       }),

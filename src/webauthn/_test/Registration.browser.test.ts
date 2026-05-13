@@ -5,6 +5,7 @@ import * as Cbor from '../../core/Cbor.js'
 import * as Hash from '../../core/Hash.js'
 import * as Hex from '../../core/Hex.js'
 import * as P256 from '../../core/P256.js'
+import * as PublicKey from '../../core/PublicKey.js'
 import * as Signature from '../../core/Signature.js'
 import {
   Authentication,
@@ -28,8 +29,9 @@ describe('create + verify', () => {
     })
 
     expect(result.credential.id).toBe(credential.id)
-    expect(result.credential.publicKey.x).toBeTypeOf('bigint')
-    expect(result.credential.publicKey.y).toBeTypeOf('bigint')
+    const resultParts = PublicKey.toParts(result.credential.publicKey)
+    expect(resultParts.x).toBeTypeOf('bigint')
+    expect(resultParts.y).toBeTypeOf('bigint')
     expect(result.counter).toBeTypeOf('number')
     expect(result.userVerified).toBe(true)
   })
@@ -129,8 +131,10 @@ describe('serialize/deserialize round-trip', () => {
     })
 
     expect(result.credential.id).toBe(credential.id)
-    expect(result.credential.publicKey.x).toBe(credential.publicKey.x)
-    expect(result.credential.publicKey.y).toBe(credential.publicKey.y)
+    const resultParts2 = PublicKey.toParts(result.credential.publicKey)
+    const credentialParts2 = PublicKey.toParts(credential.publicKey)
+    expect(resultParts2.x).toBe(credentialParts2.x)
+    expect(resultParts2.y).toBe(credentialParts2.y)
   })
 
   test('response round-trip: verify → serializeResponse → JSON → deserializeResponse', async () => {
@@ -148,8 +152,12 @@ describe('serialize/deserialize round-trip', () => {
     const deserialized = Registration.deserializeResponse(JSON.parse(json))
 
     expect(deserialized.credential.id).toBe(credential.id)
-    expect(deserialized.credential.publicKey.x).toBe(credential.publicKey.x)
-    expect(deserialized.credential.publicKey.y).toBe(credential.publicKey.y)
+    const deserializedParts = PublicKey.toParts(
+      deserialized.credential.publicKey,
+    )
+    const credentialParts3 = PublicKey.toParts(credential.publicKey)
+    expect(deserializedParts.x).toBe(credentialParts3.x)
+    expect(deserializedParts.y).toBe(credentialParts3.y)
     expect(deserialized.counter).toBe(response.counter)
   })
 

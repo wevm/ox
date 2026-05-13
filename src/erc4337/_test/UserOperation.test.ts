@@ -29,7 +29,7 @@ describe('from', () => {
       sender: Hex.random(20),
       verificationGasLimit: 0n,
     } as const satisfies UserOperation.UserOperation
-    const signature = Signature.from({
+    const signature = Signature.fromParts({
       r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
       s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
       yParity: 1,
