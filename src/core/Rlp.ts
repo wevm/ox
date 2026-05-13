@@ -307,6 +307,8 @@ export declare namespace fromHex {
 /**
  * Returns the byte length needed to encode `length` itself (1-4 bytes per
  * RLP), or throws when `length` exceeds the protocol cap.
+ *
+ * @internal
  */
 function getSizeOfLength(length: number) {
   if (length <= 0xff) return 1
@@ -322,6 +324,8 @@ function getSizeOfLength(length: number) {
  * read back in the same order by `writeEncoded` via `cursor`. This avoids
  * re-walking subtrees from `writeEncoded` (which would be O(N²) on nested
  * inputs) without allocating a per-node `Encodable` closure tree.
+ *
+ * @internal
  */
 type EncodeCtx = { lengths: number[]; cursor: number }
 
@@ -329,6 +333,8 @@ type EncodeCtx = { lengths: number[]; cursor: number }
  * Walks `value` once, caches each list's `bodyLength` into `ctx.lengths`,
  * and returns the total encoded byte length. Allocates nothing per node
  * beyond the shared `lengths` array entries.
+ *
+ * @internal
  */
 function measure(
   value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
@@ -381,6 +387,8 @@ function measure(
  * same DFS order that `measure` filled them. Hex leaves are nibble-decoded
  * directly into the destination, skipping the per-leaf `Bytes.fromHex`
  * allocation.
+ *
+ * @internal
  */
 function writeEncoded(
   bytes: Uint8Array,
@@ -413,6 +421,8 @@ function writeEncoded(
  * Hex-leaf fast path: writes the RLP encoding of a hex string directly into
  * `bytes` by nibble-decoding the source hex chars into the destination
  * buffer. Even-pads odd-nibble hex (e.g. `'0x1'`) on the fly.
+ *
+ * @internal
  */
 function writeHexLeaf(bytes: Uint8Array, offset: number, hex: Hex.Hex): number {
   const dataStart = 2
@@ -503,6 +513,8 @@ function writeBytesLeaf(
 /**
  * Returns true if every leaf in the (possibly nested) input is a hex string.
  * Used to gate the hex-output fast path in `from`.
+ *
+ * @internal
  */
 function isAllHex(
   value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
@@ -522,6 +534,8 @@ function isAllHex(
  *
  * Length-prefix bytes are formatted via the cached `hexes[]` table so we
  * never call `toString(16)` per node.
+ *
+ * @internal
  */
 function writeEncodedHex(
   parts: string[],
@@ -579,6 +593,8 @@ const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
 
 /**
  * Returns the big-endian hex encoding of `value` in `size` bytes.
+ *
+ * @internal
  */
 function bigEndianHex(value: number, size: number): string {
   if (size === 1) return hexes[value & 0xff]!
