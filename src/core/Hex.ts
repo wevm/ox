@@ -1,14 +1,14 @@
 import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
 import { BytesSizeOverflowError } from './internal/codec/errors.js'
-import { IntegerOutOfRangeError as IntegerOutOfRangeError_codec } from './internal/codec/int.js'
-import { decoder, encoder } from './internal/codec/utf8.js'
 import {
   bytesToHex,
   hexToBytes,
   InvalidHexValueError as InvalidHexValueError_codec,
   InvalidLengthError as InvalidLengthError_codec,
 } from './internal/codec/hex.js'
+import { IntegerOutOfRangeError as IntegerOutOfRangeError_codec } from './internal/codec/int.js'
+import { decoder, encoder } from './internal/codec/utf8.js'
 import * as internal from './internal/hex.js'
 import * as Json from './Json.js'
 
@@ -75,7 +75,8 @@ export function concat(...values: readonly Hex[]): Hex {
   if (values.length === 2)
     return `0x${(values[0] as string).slice(2)}${(values[1] as string).slice(2)}` as Hex
   const parts = new Array<string>(values.length)
-  for (let i = 0; i < values.length; i++) parts[i] = (values[i] as string).slice(2)
+  for (let i = 0; i < values.length; i++)
+    parts[i] = (values[i] as string).slice(2)
   return `0x${parts.join('')}` as Hex
 }
 
@@ -816,7 +817,9 @@ export declare namespace validate {
  */
 export const IntegerOutOfRangeError = IntegerOutOfRangeError_codec
 /** Re-exported from `internal/codec/int.ts`. */
-export type IntegerOutOfRangeError = InstanceType<typeof IntegerOutOfRangeError_codec>
+export type IntegerOutOfRangeError = InstanceType<
+  typeof IntegerOutOfRangeError_codec
+>
 
 /**
  * Thrown when the provided hex value cannot be represented as a boolean.
@@ -873,7 +876,9 @@ export class InvalidHexTypeError extends Errors.BaseError {
  */
 export const InvalidHexValueError = InvalidHexValueError_codec
 /** Re-exported from `internal/codec/hex.ts`. */
-export type InvalidHexValueError = InstanceType<typeof InvalidHexValueError_codec>
+export type InvalidHexValueError = InstanceType<
+  typeof InvalidHexValueError_codec
+>
 
 /**
  * Thrown when the provided hex value is an odd length.

@@ -21,7 +21,7 @@ export declare namespace assertSize {
 /** @internal */
 export function assertStartOffset(value: Hex.Hex, start?: number | undefined) {
   if (typeof start !== 'number' || start <= 0) return
-  const size = ((value.length - 2) + 1) >> 1
+  const size = (value.length - 2 + 1) >> 1
   if (start > size - 1)
     throw new Hex.SliceOffsetOutOfBoundsError({
       offset: start,
@@ -44,7 +44,7 @@ export function assertEndOffset(
   end?: number | undefined,
 ) {
   if (typeof start !== 'number' || typeof end !== 'number') return
-  const size = ((value.length - 2) + 1) >> 1
+  const size = (value.length - 2 + 1) >> 1
   if (size !== end - start)
     throw new Hex.SliceOffsetOutOfBoundsError({
       offset: end,

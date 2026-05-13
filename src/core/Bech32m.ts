@@ -1,10 +1,10 @@
 import type * as Errors from './Errors.js'
 import { BaseError } from './Errors.js'
 import {
+  InvalidPaddingError as SharedInvalidPaddingError,
   alphabet as sharedAlphabet,
   alphabetMap as sharedAlphabetMap,
   convertBits as sharedConvertBits,
-  InvalidPaddingError as SharedInvalidPaddingError,
 } from './internal/codec/bech32-base32.js'
 
 /**

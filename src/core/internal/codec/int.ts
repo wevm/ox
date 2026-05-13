@@ -28,10 +28,7 @@ export function bytesToBigInt(value: Uint8Array, signed?: boolean): bigint {
  *
  * @internal
  */
-export function bytesToSafeNumber(
-  value: Uint8Array,
-  signed?: boolean,
-): number {
+export function bytesToSafeNumber(value: Uint8Array, signed?: boolean): number {
   if (!signed && value.length <= 6) {
     // Small unsigned values fit in a number directly without BigInt round-trip.
     let n = 0
@@ -77,8 +74,7 @@ export function bigIntToBytes(
     maxValue = BigInt(Number.MAX_SAFE_INTEGER)
   }
 
-  const minValue =
-    typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0n
+  const minValue = typeof maxValue === 'bigint' && signed ? -maxValue - 1n : 0n
 
   if ((maxValue && value_ > maxValue) || value_ < minValue) {
     const suffix = typeof value === 'bigint' ? 'n' : ''

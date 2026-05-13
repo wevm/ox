@@ -1,19 +1,19 @@
 import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
+import * as internal from './internal/bytes.js'
+import {
+  bytesToHex,
+  type Hex as Hex_codec,
+  hexToBytes,
+  type InvalidHexValueError,
+  type InvalidLengthError,
+} from './internal/codec/hex.js'
 import {
   bigIntToBytes,
   bytesToBigInt,
   bytesToSafeNumber,
 } from './internal/codec/int.js'
-import {
-  bytesToHex,
-  hexToBytes,
-  InvalidHexValueError,
-  InvalidLengthError,
-  type Hex as Hex_codec,
-} from './internal/codec/hex.js'
 import { decoder, encoder } from './internal/codec/utf8.js'
-import * as internal from './internal/bytes.js'
 import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
 
@@ -279,9 +279,7 @@ export function fromNumber(
 export declare namespace fromNumber {
   export type Options = bigIntToBytes.Options
 
-  export type ErrorType =
-    | bigIntToBytes.ErrorType
-    | Errors.GlobalErrorType
+  export type ErrorType = bigIntToBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**

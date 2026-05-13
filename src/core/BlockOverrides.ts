@@ -62,13 +62,9 @@ export type Rpc = BlockOverrides<Hex.Hex, Hex.Hex>
 export function fromRpc(rpcBlockOverrides: Rpc): BlockOverrides {
   const overrides: BlockOverrides = {}
   if (rpcBlockOverrides.baseFeePerGas !== undefined)
-    overrides.baseFeePerGas = Quantity.toBigInt(
-      rpcBlockOverrides.baseFeePerGas,
-    )
+    overrides.baseFeePerGas = Quantity.toBigInt(rpcBlockOverrides.baseFeePerGas)
   if (rpcBlockOverrides.blobBaseFee !== undefined)
-    overrides.blobBaseFee = Quantity.toBigInt(
-      rpcBlockOverrides.blobBaseFee,
-    )
+    overrides.blobBaseFee = Quantity.toBigInt(rpcBlockOverrides.blobBaseFee)
   if (rpcBlockOverrides.feeRecipient !== undefined)
     overrides.feeRecipient = rpcBlockOverrides.feeRecipient
   if (rpcBlockOverrides.gasLimit !== undefined)
@@ -76,9 +72,7 @@ export function fromRpc(rpcBlockOverrides: Rpc): BlockOverrides {
   if (rpcBlockOverrides.number !== undefined)
     overrides.number = Quantity.toBigInt(rpcBlockOverrides.number)
   if (rpcBlockOverrides.prevRandao !== undefined)
-    overrides.prevRandao = Quantity.toBigInt(
-      rpcBlockOverrides.prevRandao,
-    )
+    overrides.prevRandao = Quantity.toBigInt(rpcBlockOverrides.prevRandao)
   if (rpcBlockOverrides.time !== undefined)
     overrides.time = Quantity.toBigInt(rpcBlockOverrides.time)
   if (rpcBlockOverrides.withdrawals !== undefined)
