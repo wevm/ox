@@ -9,6 +9,7 @@ import {
   bufferSourceToBytes,
   bytesToArrayBuffer,
   responseKeys,
+  serializeResponseFields,
 } from './internal/utils.js'
 import type * as Types from './Types.js'
 
@@ -52,22 +53,9 @@ export type SignMetadata = Compute<{
 export function serialize(credential: Credential): Credential<true> {
   const { attestationObject, clientDataJSON, id, publicKey, raw } = credential
 
-  const response = {} as Record<string, string>
-  for (const key of responseKeys) {
-    const r = raw.response as unknown as Record<string, unknown>
-    let value = r[key]
-    // Some properties (e.g. `authenticatorData`) are only accessible via
-    // getter methods (e.g. `getAuthenticatorData()`) in certain browsers
-    // and passkey providers.
-    if (!(value instanceof ArrayBuffer)) {
-      const getter =
-        `get${key[0]!.toUpperCase()}${key.slice(1)}` as keyof typeof r
-      const fn = r[getter]
-      if (typeof fn === 'function') value = fn.call(r)
-    }
-    if (value instanceof ArrayBuffer)
-      response[key] = Base64.fromBytes(new Uint8Array(value), base64UrlOptions)
-  }
+  const response = serializeResponseFields(
+    raw.response as unknown as Record<string, unknown>,
+  )
 
   // Some browsers/passkey providers (e.g. Firefox + 1Password) don't expose
   // `authenticatorData` on the response object. Fall back to extracting it

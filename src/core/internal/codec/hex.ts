@@ -80,7 +80,11 @@ export function hexToBytes(value: string): Uint8Array {
     const expected = body.length >> 1
     const buf = _Buffer.from(body, 'hex')
     if (buf.length !== expected) throw new InvalidHexValueError(value)
-    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
+    // Copy out of Buffer pool: callers may rely on `.buffer` being a
+    // standalone ArrayBuffer (e.g. WebAuthn attestationObject round-trips).
+    const out = new Uint8Array(buf.byteLength)
+    out.set(buf)
+    return out
   }
 
   const length = body.length >> 1
