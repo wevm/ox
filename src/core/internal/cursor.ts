@@ -204,14 +204,18 @@ const staticCursor: Cursor = {
     // back-jumps via `setPosition`), no slot can be re-read. Skip the
     // `Map` bookkeeping entirely. Real ABI decodes are dominated by
     // forward reads through static parameter heads.
-    if (this.position >= this.maxLinearPosition) {
-      this.maxLinearPosition = this.position
+    //
+    // `maxLinearPosition` tracks the smallest position the cursor has
+    // not yet observed (i.e. one past the highest byte touched). Any
+    // subsequent read whose start position is strictly less than this
+    // frontier overlaps already-read bytes and must be charged to the
+    // recursive read budget.
+    const next = this.position + 1
+    if (next > this.maxLinearPosition) {
+      this.maxLinearPosition = next
       return
     }
-    if (!this.positionReadCount) this.positionReadCount = new Map()
-    const count = this.positionReadCount.get(this.position) || 0
-    this.positionReadCount.set(this.position, count + 1)
-    if (count > 0) this.recursiveReadCount++
+    this.recursiveReadCount++
   },
 }
 
