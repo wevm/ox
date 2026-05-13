@@ -5,7 +5,7 @@ import * as P256 from '../../core/P256.js'
 import * as PublicKey from '../../core/PublicKey.js'
 import * as Signature from '../../core/Signature.js'
 import * as WebCryptoP256 from '../../core/WebCryptoP256.js'
-import { Authentication } from '../index.js'
+import { Authentication, Authenticator } from '../index.js'
 
 beforeAll(() => {
   vi.stubGlobal('window', {
@@ -483,6 +483,54 @@ describe('getSignPayload', () => {
         metadata,
       }),
     ).toBeTruthy()
+  })
+
+  test('options: as: Bytes', () => {
+    const data = {
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'foo',
+    } as const
+    const { payload: hex } = Authentication.getSignPayload(data)
+    const { payload: bytes } = Authentication.getSignPayload({
+      ...data,
+      as: 'Bytes',
+    })
+    expect(bytes).toBeInstanceOf(Uint8Array)
+    expect(Bytes.toHex(bytes)).toBe(hex)
+  })
+
+  test('options: as: Bytes + hash', () => {
+    const data = {
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'foo',
+    } as const
+    const { payload: hashedHex } = Authentication.getSignPayload({
+      ...data,
+      hash: true,
+    })
+    const { payload: hashedBytes } = Authentication.getSignPayload({
+      ...data,
+      as: 'Bytes',
+      hash: true,
+    })
+    expect(hashedBytes).toBeInstanceOf(Uint8Array)
+    expect(Bytes.toHex(hashedBytes)).toBe(hashedHex)
+  })
+
+  test('options: as: Hex (explicit)', () => {
+    const { payload } = Authentication.getSignPayload({
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'foo',
+      as: 'Hex',
+    })
+    expect(typeof payload).toBe('string')
+    expect((payload as string).startsWith('0x')).toBe(true)
   })
 
   test('options: signCount', () => {
@@ -1857,6 +1905,96 @@ describe('verify', () => {
       typeIndex: 1,
       userVerificationRequired: true,
     } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeFalsy()
+  })
+
+  test('options: metadata.authenticatorData as Uint8Array', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const metadata = {
+      authenticatorData: Bytes.fromHex(
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+      ),
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    }
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: metadata.authenticatorData as parsed AuthenticatorData', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+    })
+    const parsed = Authenticator.parse(
+      '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+    )
+    const metadata = {
+      authenticatorData: parsed!,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    }
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeTruthy()
+  })
+
+  test('options: metadata.authenticatorData as parsed AuthenticatorData with invalid signature', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
+      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+    })
+    const signature = Signature.from({
+      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
+      // wrong `s`
+      s: 1n,
+    })
+    const parsed = Authenticator.parse(
+      '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000',
+    )!
+    const metadata = {
+      authenticatorData: parsed,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+    }
 
     expect(
       Authentication.verify({

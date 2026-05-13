@@ -5,8 +5,19 @@ import * as CoseKey from '../core/CoseKey.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type * as PublicKey from '../core/PublicKey.js'
+import * as PublicKey from '../core/PublicKey.js'
+import {
+  type ParsedAuthenticatorData,
+  parseAuthenticatorData,
+} from './internal/utils.js'
 import type * as Types from './Types.js'
+
+/**
+ * Parsed WebAuthn authenticator data per W3C WebAuthn Level 2 §6.1. Returned
+ * by `Authenticator.parse` and accepted as an input alternative to raw bytes
+ * or hex by `Authenticator.getSignCount` and `Authentication.verify`.
+ */
+export type AuthenticatorData = ParsedAuthenticatorData
 
 /**
  * Gets the authenticator data which contains information about the
@@ -86,7 +97,9 @@ export function getAuthenticatorData<as extends 'Hex' | 'Bytes' = 'Hex'>(
       return out as never
     }
     const credentialId = credential.id
-    const coseKey = Bytes.fromHex(CoseKey.fromPublicKey(credential.publicKey))
+    const coseKey = Bytes.fromHex(
+      CoseKey.fromPublicKey(toPublicKey(credential.publicKey)),
+    )
     const credLen = credentialId.length
     const out = new Uint8Array(baseLength + 16 + 2 + credLen + coseKey.length)
     out.set(rpIdHash, 0)
@@ -114,8 +127,17 @@ export function getAuthenticatorData<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const aaguid = Hex.fromBytes(new Uint8Array(16))
   const credentialId = Hex.fromBytes(credential.id)
   const credIdLen = Hex.fromNumber(credential.id.length, { size: 2 })
-  const coseKey = CoseKey.fromPublicKey(credential.publicKey)
+  const coseKey = CoseKey.fromPublicKey(toPublicKey(credential.publicKey))
   return Hex.concat(base, aaguid, credIdLen, credentialId, coseKey) as never
+}
+
+/** @internal */
+function toPublicKey(
+  publicKey: PublicKey.PublicKey | Hex.Hex | Uint8Array,
+): PublicKey.PublicKey {
+  if (typeof publicKey === 'object' && !(publicKey instanceof Uint8Array))
+    return publicKey
+  return PublicKey.from(publicKey)
 }
 
 export declare namespace getAuthenticatorData {
@@ -127,8 +149,8 @@ export declare namespace getAuthenticatorData {
       | {
           /** The credential ID as raw bytes. */
           id: Uint8Array
-          /** The P256 public key associated with the credential. */
-          publicKey: PublicKey.PublicKey
+          /** The P256 public key associated with the credential. Accepts a parsed {@link ox#PublicKey.PublicKey}, a serialized hex string, or raw bytes. */
+          publicKey: PublicKey.PublicKey | Hex.Hex | Uint8Array
         }
       | undefined
     /** A bitfield that indicates various attributes that were asserted by the authenticator. [Read more](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Authenticator_data#flags) */
@@ -163,12 +185,19 @@ export declare namespace getAuthenticatorData {
  * // @log: 1
  * ```
  *
- * @param authenticatorData - The authenticator data hex string.
+ * @param authenticatorData - The authenticator data as a hex string, raw bytes, or an already-parsed `Authenticator.AuthenticatorData`.
  * @returns The signature counter.
  */
 export function getSignCount(
-  authenticatorData: Hex.Hex | Uint8Array,
+  authenticatorData: Hex.Hex | Uint8Array | AuthenticatorData,
 ): number {
+  // Already-parsed form: short-circuit without re-walking the bytes.
+  if (
+    typeof authenticatorData === 'object' &&
+    !(authenticatorData instanceof Uint8Array)
+  )
+    return authenticatorData.signCount
+
   const bytes =
     typeof authenticatorData === 'string'
       ? Bytes.fromHex(authenticatorData)
@@ -186,6 +215,42 @@ export function getSignCount(
 }
 
 export declare namespace getSignCount {
+  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Parses the fixed 37-byte header of WebAuthn authenticator data into a
+ * structured `Authenticator.AuthenticatorData` object exposing `rpIdHash`,
+ * individual flag bits, and the signature counter.
+ *
+ * Useful for callers that want to consume parsed metadata multiple times
+ * (e.g. inspect the counter and pass to `Authentication.verify`) without
+ * paying for repeated hex or byte conversions.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Authenticator } from 'ox/webauthn'
+ *
+ * const parsed = Authenticator.parse(
+ *   '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000001',
+ * )
+ * // @log: { up: true, uv: true, signCount: 1, ... }
+ * ```
+ *
+ * @param authenticatorData - The authenticator data as a hex string or raw bytes.
+ * @returns The parsed authenticator data, or `undefined` if the input is shorter than the 37-byte header.
+ */
+export function parse(
+  authenticatorData: Hex.Hex | Uint8Array,
+): AuthenticatorData | undefined {
+  const bytes =
+    typeof authenticatorData === 'string'
+      ? Bytes.fromHex(authenticatorData)
+      : authenticatorData
+  return parseAuthenticatorData(bytes)
+}
+
+export declare namespace parse {
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
 

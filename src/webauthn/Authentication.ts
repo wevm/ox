@@ -9,6 +9,7 @@ import * as internal from '../core/internal/webauthn.js'
 import * as P256 from '../core/P256.js'
 import type * as PublicKey from '../core/PublicKey.js'
 import * as Signature from '../core/Signature.js'
+import type * as Authenticator from './Authenticator.js'
 import { getAuthenticatorData, getClientDataJSON } from './Authenticator.js'
 import type * as Credential_ from './Credential.js'
 import {
@@ -252,10 +253,11 @@ export declare namespace getOptions {
  * @param options - Options to construct the signing payload.
  * @returns The signing payload.
  */
-export function getSignPayload(
-  options: getSignPayload.Options,
-): getSignPayload.ReturnType {
+export function getSignPayload<as extends 'Hex' | 'Bytes' = 'Hex'>(
+  options: getSignPayload.Options<as>,
+): getSignPayload.ReturnType<as> {
   const {
+    as = 'Hex',
     challenge,
     crossOrigin,
     extraClientData,
@@ -292,20 +294,23 @@ export function getSignPayload(
   }
 
   const concatenated = Hex.concat(authenticatorData, clientDataJSONHash)
-  const payload = hash ? Hash.sha256(concatenated) : concatenated
+  const hex = hash ? Hash.sha256(concatenated) : concatenated
+  const payload = as === 'Bytes' ? Bytes.fromHex(hex) : hex
 
-  return { metadata, payload }
+  return { metadata, payload } as never
 }
 
 export declare namespace getSignPayload {
-  type Options = {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
+    /** Output representation for the resulting `payload`. The accompanying `metadata` always uses the JSON-friendly hex representation. @default 'Hex' */
+    as?: as | 'Hex' | 'Bytes' | undefined
     /** The challenge to sign. */
     challenge: Hex.Hex
     /** If set to `true`, it means that the calling context is an `<iframe>` that is not same origin with its ancestor frames. */
     crossOrigin?: boolean | undefined
     /** Additional client data to include in the client data JSON. */
     extraClientData?: Record<string, unknown> | undefined
-    /** If set to `true`, the payload will be hashed before being returned. */
+    /** If set to `true`, the returned `payload` is the SHA-256 digest of `authenticatorData || sha256(clientDataJSON)` -- i.e. the value that a raw P256 verifier sees after its internal hashing step. Use this when feeding the payload to a signer that does not perform its own hashing. */
     hash?: boolean | undefined
     /** A bitfield that indicates various attributes that were asserted by the authenticator. [Read more](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Authenticator_data#flags) */
     flag?: number | undefined
@@ -321,12 +326,15 @@ export declare namespace getSignPayload {
       | undefined
   }
 
-  type ReturnType = {
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     metadata: Credential_.SignMetadata
-    payload: Hex.Hex
+    payload:
+      | (as extends 'Hex' ? Hex.Hex : never)
+      | (as extends 'Bytes' ? Bytes.Bytes : never)
   }
 
   type ErrorType =
+    | Bytes.fromHex.ErrorType
     | Hash.sha256.ErrorType
     | Hex.concat.ErrorType
     | Hex.fromString.ErrorType
@@ -588,9 +596,20 @@ export function verify(options: verify.Options): boolean {
   const { authenticatorData, clientDataJSON, userVerificationRequired } =
     metadata
 
-  const authenticatorDataBytes = Bytes.fromHex(authenticatorData)
-
-  const parsed = parseAuthenticatorData(authenticatorDataBytes)
+  // Normalize the polymorphic `authenticatorData` input to a parsed view +
+  // raw bytes without re-decoding when possible.
+  let authenticatorDataBytes: Uint8Array
+  let parsed: ReturnType<typeof parseAuthenticatorData>
+  if (typeof authenticatorData === 'string') {
+    authenticatorDataBytes = Bytes.fromHex(authenticatorData)
+    parsed = parseAuthenticatorData(authenticatorDataBytes)
+  } else if (authenticatorData instanceof Uint8Array) {
+    authenticatorDataBytes = authenticatorData
+    parsed = parseAuthenticatorData(authenticatorData)
+  } else {
+    parsed = authenticatorData
+    authenticatorDataBytes = authenticatorData.bytes
+  }
   if (!parsed) return false
 
   // If rpId is provided, validate the rpIdHash in authenticatorData.
@@ -659,6 +678,16 @@ export function verify(options: verify.Options): boolean {
 }
 
 export declare namespace verify {
+  /**
+   * Metadata accepted by `Authentication.verify`. Widens
+   * `Credential.SignMetadata` so callers can pass `authenticatorData` as raw
+   * bytes or an already-parsed `Authenticator.AuthenticatorData`, skipping a
+   * hex round trip on the verification hot path.
+   */
+  type Metadata = Omit<Credential_.SignMetadata, 'authenticatorData'> & {
+    authenticatorData: Hex.Hex | Uint8Array | Authenticator.AuthenticatorData
+  }
+
   type Options = {
     /** The challenge to verify. */
     challenge: Hex.Hex
@@ -666,8 +695,8 @@ export declare namespace verify {
     publicKey: PublicKey.PublicKey
     /** The signature to verify. */
     signature: Signature.Signature<false>
-    /** The metadata to verify the signature with. */
-    metadata: Credential_.SignMetadata
+    /** The metadata to verify the signature with. Accepts the canonical hex form, raw bytes, or an already-parsed `Authenticator.AuthenticatorData` for `authenticatorData`. */
+    metadata: Metadata
     /** Expected origin(s). If provided, the `clientDataJSON` origin will be validated. */
     origin?: string | string[] | undefined
     /** Expected relying party ID. If provided, the `rpIdHash` in `authenticatorData` will be validated. */
