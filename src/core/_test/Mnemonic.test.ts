@@ -297,6 +297,29 @@ describe('toSeed', () => {
   })
 })
 
+describe('toSeedAsync', () => {
+  const mnemonic =
+    'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+
+  test('matches sync `toSeed`', async () => {
+    const sync = Mnemonic.toSeed(mnemonic)
+    const async_ = await Mnemonic.toSeedAsync(mnemonic)
+    expect(async_).toEqual(sync)
+  })
+
+  test('honors `passphrase`', async () => {
+    const a = await Mnemonic.toSeedAsync(mnemonic, { passphrase: 'a' })
+    const b = await Mnemonic.toSeedAsync(mnemonic, { passphrase: 'b' })
+    expect(a).not.toEqual(b)
+  })
+
+  test('honors `as: "Hex"`', async () => {
+    const seed = await Mnemonic.toSeedAsync(mnemonic, { as: 'Hex' })
+    expect(typeof seed).toBe('string')
+    expect(seed.startsWith('0x')).toBe(true)
+  })
+})
+
 describe('validate', () => {
   test('default', () => {
     expect(
@@ -333,6 +356,7 @@ test('exports', () => {
       "toPrivateKey",
       "toSeed",
       "validate",
+      "toSeedAsync",
     ]
   `)
 })

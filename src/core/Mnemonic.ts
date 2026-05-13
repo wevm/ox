@@ -1,5 +1,6 @@
 import {
   generateMnemonic,
+  mnemonicToSeed,
   mnemonicToSeedSync,
   validateMnemonic,
 } from '@scure/bip39'
@@ -225,5 +226,53 @@ export function validate(mnemonic: string, wordlist: string[]): boolean {
 }
 
 export declare namespace validate {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a mnemonic to a master seed asynchronously, without blocking the
+ * caller's event loop on the 2048-round PBKDF2-HMAC-SHA512 derivation.
+ *
+ * @remarks
+ * Functionally identical to {@link ox#Mnemonic.(toSeed:function)}, but defers
+ * the heavy KDF work via the async `mnemonicToSeed` primitive from `@scure/bip39`.
+ * Prefer this helper in browser / UI contexts and in batch wallet generation
+ * where blocking the main thread becomes noticeable.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Mnemonic } from 'ox'
+ *
+ * const mnemonic = Mnemonic.random(Mnemonic.english)
+ * const seed = await Mnemonic.toSeedAsync(mnemonic)
+ * // @log: Uint8Array [...64 bytes]
+ * ```
+ *
+ * @param mnemonic - The mnemonic to convert.
+ * @param options - Conversion options.
+ * @returns The master seed.
+ */
+export async function toSeedAsync<as extends 'Bytes' | 'Hex' = 'Bytes'>(
+  mnemonic: string,
+  options: toSeedAsync.Options<as> = {},
+): Promise<toSeedAsync.ReturnType<as>> {
+  const { passphrase } = options
+  const seed = await mnemonicToSeed(mnemonic, passphrase)
+  if (options.as === 'Hex') return Bytes.toHex(seed) as never
+  return seed as never
+}
+
+export declare namespace toSeedAsync {
+  type Options<as extends 'Bytes' | 'Hex' = 'Bytes'> = {
+    /** The output format. @default 'Bytes' */
+    as?: as | 'Bytes' | 'Hex' | undefined
+    /** An optional passphrase for additional protection to the seed. */
+    passphrase?: string | undefined
+  }
+
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
   type ErrorType = Errors.GlobalErrorType
 }

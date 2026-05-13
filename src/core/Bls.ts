@@ -12,6 +12,42 @@ export type Size = 'short-key:long-sig' | 'long-key:short-sig'
 export const noble = bls
 
 /**
+ * Domain Separation Tags (DSTs) for the standard BLS-signature ciphersuites
+ * defined in {@link https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05 | draft-irtf-cfrg-bls-signature-05}.
+ *
+ * Use these constants instead of hand-typing the DST string when calling
+ * {@link ox#Bls.(sign:function)} or {@link ox#Bls.(verify:function)} so that
+ * typos cannot silently produce incompatible signatures.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const signature = Bls.sign({
+ *   payload: Hex.random(32),
+ *   privateKey: '0x...',
+ *   suite: Bls.suite.basic,
+ * })
+ * ```
+ */
+export const suite = {
+  /** Basic ciphersuite for short-key:long-sig (G2 signatures). */
+  basic: 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_',
+  /** Message-augmentation ciphersuite for short-key:long-sig (G2 signatures). */
+  augmentation: 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_AUG_',
+  /** Proof-of-possession ciphersuite for short-key:long-sig (G2 signatures). */
+  proofOfPossession: 'BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_',
+  /** Basic ciphersuite for long-key:short-sig (G1 signatures). */
+  basicShortSig: 'BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_',
+  /** Message-augmentation ciphersuite for long-key:short-sig (G1 signatures). */
+  augmentationShortSig: 'BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_AUG_',
+  /** Proof-of-possession ciphersuite for long-key:short-sig (G1 signatures). */
+  proofOfPossessionShortSig: 'BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_POP_',
+} as const
+
+export type SuiteName = keyof typeof suite
+
+/**
  * Aggregates a set of BLS points that are either on the G1 or G2 curves (ie. public keys or signatures).
  *
  * @example

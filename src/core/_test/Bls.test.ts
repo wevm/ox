@@ -253,3 +253,17 @@ describe('verify', () => {
     expect(verified).toBe(true)
   })
 })
+
+describe("suite", () => {
+  test("exports the standard DST constants", () => {
+    expect(Bls.suite.basic).toMatch(/BLS12381G2/)
+    expect(Bls.suite.basicShortSig).toMatch(/BLS12381G1/)
+  })
+
+  test("Bls.sign(suite=basic) matches default", () => {
+    const payload = Hex.fromString("dst-test")
+    expect(
+      Bls.sign({ payload, privateKey, suite: Bls.suite.basic }),
+    ).toEqual(Bls.sign({ payload, privateKey }))
+  })
+})
