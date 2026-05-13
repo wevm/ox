@@ -12,24 +12,30 @@ export function packetToBytes(packet: string): Bytes.Bytes {
   const value = packet.replace(/^\.|\.$/gm, '')
   if (value.length === 0) return new Uint8Array(1)
 
-  const bytes = new Uint8Array(Bytes.fromString(value).byteLength + 2)
-
-  let offset = 0
+  // Pre-encode each label so we can size the output buffer exactly.
+  // Labels longer than 255 bytes are replaced with their wrapped labelhash
+  // form, so the final size is not directly derivable from the input string
+  // length when oversized labels are present.
   const list = value.split('.')
+  const encoded: Uint8Array[] = new Array(list.length)
+  let total = 1 // trailing zero terminator
   for (let i = 0; i < list.length; i++) {
-    let encoded = Bytes.fromString(list[i]!)
-    // if the length is > 255, make the encoded label value a labelhash
-    // this is compatible with the universal resolver
-    if (encoded.byteLength > 255)
-      encoded = Bytes.fromString(wrapLabelhash(Ens.labelhash(list[i]!)))
-    bytes[offset] = encoded.length
-    bytes.set(encoded, offset + 1)
-    offset += encoded.length + 1
+    let bytes = Bytes.fromString(list[i]!)
+    if (bytes.byteLength > 255)
+      bytes = Bytes.fromString(wrapLabelhash(Ens.labelhash(list[i]!)))
+    encoded[i] = bytes
+    total += bytes.length + 1
   }
 
-  if (bytes.byteLength !== offset + 1) return bytes.slice(0, offset + 1)
-
-  return bytes
+  const out = new Uint8Array(total)
+  let offset = 0
+  for (let i = 0; i < encoded.length; i++) {
+    const bytes = encoded[i]!
+    out[offset] = bytes.length
+    out.set(bytes, offset + 1)
+    offset += bytes.length + 1
+  }
+  return out
 }
 
 export declare namespace packetToBytes {

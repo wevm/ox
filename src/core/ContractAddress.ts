@@ -2,7 +2,7 @@ import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
 import type { OneOf } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 
@@ -78,9 +78,8 @@ export function fromCreate(options: fromCreate.Options): Address.Address {
   let nonce = Bytes.fromNumber(options.nonce)
   if (nonce[0] === 0) nonce = new Uint8Array([])
 
-  return Address.from(
-    `0x${Hash.keccak256(Rlp.fromBytes([from, nonce], { as: 'Hex' })).slice(26)}` as Address.Address,
-  )
+  const hash = Hash.keccak256(Rlp.fromBytes([from, nonce]), { as: 'Bytes' })
+  return Address.from(Bytes.toHex(hash.subarray(12)) as Address.Address)
 }
 
 export declare namespace fromCreate {
@@ -96,6 +95,7 @@ export declare namespace fromCreate {
     | Address.from.ErrorType
     | Bytes.fromHex.ErrorType
     | Bytes.fromNumber.ErrorType
+    | Bytes.toHex.ErrorType
     | Rlp.fromBytes.ErrorType
     | Errors.GlobalErrorType
 }
@@ -119,7 +119,7 @@ export declare namespace fromCreate {
  * @returns Contract Address.
  */
 export function fromCreate2(options: fromCreate2.Options): Address.Address {
-  const from = Bytes.fromHex(Address.from(options.from))
+  const fromBytes = Bytes.fromHex(Address.from(options.from))
   const salt = Bytes.padLeft(
     Bytes.validate(options.salt) ? options.salt : Bytes.fromHex(options.salt),
     32,
@@ -133,15 +133,17 @@ export function fromCreate2(options: fromCreate2.Options): Address.Address {
     return Hash.keccak256(options.bytecode, { as: 'Bytes' })
   })()
 
-  return Address.from(
-    Hex.slice(
-      Hash.keccak256(
-        Bytes.concat(Bytes.fromHex('0xff'), from, salt, bytecodeHash),
-        { as: 'Hex' },
-      ),
-      12,
-    ),
-  )
+  // CREATE2 input is exactly: 1 (0xff) + 20 (from) + 32 (salt) + 32 (bytecodeHash)
+  // = 85 bytes. Preallocating avoids the per-call Bytes.concat allocations
+  // that show up in salt-mining hot loops.
+  const buffer = new Uint8Array(85)
+  buffer[0] = 0xff
+  buffer.set(fromBytes, 1)
+  buffer.set(salt, 21)
+  buffer.set(bytecodeHash, 53)
+
+  const hash = Hash.keccak256(buffer, { as: 'Bytes' })
+  return Address.from(Bytes.toHex(hash.subarray(12)) as Address.Address)
 }
 
 export declare namespace fromCreate2 {
@@ -159,11 +161,10 @@ export declare namespace fromCreate2 {
 
   type ErrorType =
     | Address.from.ErrorType
-    | Bytes.concat.ErrorType
     | Bytes.validate.ErrorType
     | Bytes.padLeft.ErrorType
     | Hash.keccak256.ErrorType
-    | Hex.slice.ErrorType
     | Bytes.fromHex.ErrorType
+    | Bytes.toHex.ErrorType
     | Errors.GlobalErrorType
 }
