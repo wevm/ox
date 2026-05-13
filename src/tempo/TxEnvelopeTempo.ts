@@ -779,17 +779,60 @@ export declare namespace serialize {
 }
 
 /**
- * Returns the payload to sign for a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
+ * Encodes a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} for sender signing.
  *
- * Computes the keccak256 hash of the unsigned serialized transaction. Sign this payload
- * with secp256k1, P256, or WebAuthn, then attach the signature via {@link ox#TxEnvelopeTempo.(from:function)}.
- *
- * [Tempo Transaction Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction)
+ * Returns the raw serialized transaction bytes that are hashed by
+ * {@link ox#TxEnvelopeTempo.(getSignPayload:function)}. Sender signatures are
+ * stripped, and fee payer signatures are normalized to the sender pre-sign
+ * marker.
  *
  * @example
- * The example below demonstrates how to compute the sign payload which can be used
- * with ECDSA signing utilities like {@link ox#Secp256k1.(sign:function)}.
+ * ```ts twoslash
+ * // @noErrors
+ * import { Hash } from 'ox'
+ * import { TxEnvelopeTempo } from 'ox/tempo'
  *
+ * const envelope = TxEnvelopeTempo.from({
+ *   chainId: 1,
+ *   calls: [{
+ *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   }],
+ *   nonce: 0n,
+ * })
+ *
+ * const encoded = TxEnvelopeTempo.encodeForSigning(envelope) // [!code focus]
+ * const payload = Hash.keccak256(encoded)
+ * ```
+ *
+ * @param envelope - The transaction envelope to encode for signing.
+ * @returns The serialized transaction bytes used as the sender signing preimage.
+ */
+export function encodeForSigning(
+  envelope: TxEnvelopeTempo,
+): encodeForSigning.ReturnValue {
+  return serialize({
+    ...envelope,
+    signature: undefined,
+    // When a fee payer signature is present, normalize to `null`
+    // (the presign marker).
+    ...(envelope.feePayerSignature !== undefined
+      ? { feePayerSignature: null }
+      : {}),
+  })
+}
+
+export declare namespace encodeForSigning {
+  type ReturnValue = Hex.Hex
+
+  type ErrorType = serialize.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Returns the payload to sign for a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
+ *
+ * Computes the keccak256 hash of {@link ox#TxEnvelopeTempo.(encodeForSigning:function)}.
+ *
+ * @example
  * ```ts twoslash
  * // @noErrors
  * import { Secp256k1 } from 'ox'
@@ -798,54 +841,13 @@ export declare namespace serialize {
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
- *     data: '0xdeadbeef',
  *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   }],
  *   nonce: 0n,
- *   maxFeePerGas: 1000000000n,
- *   gas: 21000n,
  * })
  *
  * const payload = TxEnvelopeTempo.getSignPayload(envelope) // [!code focus]
- * // @log: '0x...'
- *
  * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
- * ```
- *
- * @example
- * ### Access Keys
- *
- * When signing as an access key on behalf of a root account, pass the
- * `from` option with the root account address. This computes
- * `keccak256(0x04 || sigHash || from)` which binds the signature to the
- * specific user account (V2 keychain format).
- *
- * ```ts twoslash
- * // @noErrors
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeTempo, SignatureEnvelope } from 'ox/tempo'
- *
- * const envelope = TxEnvelopeTempo.from({
- *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
- *   nonce: 0n,
- *   maxFeePerGas: 1000000000n,
- *   gas: 21000n,
- * })
- *
- * const payload = TxEnvelopeTempo.getSignPayload(envelope, { from: '0x...' }) // [!code focus]
- *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
- *
- * const signed = TxEnvelopeTempo.serialize(envelope, {
- *   signature: SignatureEnvelope.from({
- *     userAddress: from,
- *     inner: SignatureEnvelope.from(signature),
- *   }),
- * })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
@@ -918,19 +920,9 @@ export function hash<presign extends boolean = false>(
   envelope: TxEnvelopeTempo<presign extends true ? false : true>,
   options: hash.Options<presign> = {},
 ): hash.ReturnValue {
-  const serialized = serialize({
-    ...envelope,
-    ...(options.presign
-      ? {
-          signature: undefined,
-          // When a fee payer signature is present, normalize to `null`
-          // (the presign marker).
-          ...(envelope.feePayerSignature !== undefined
-            ? { feePayerSignature: null }
-            : {}),
-        }
-      : {}),
-  })
+  const serialized = options.presign
+    ? encodeForSigning(envelope)
+    : serialize(envelope)
   return Hash.keccak256(serialized)
 }
 
@@ -949,6 +941,7 @@ export declare namespace hash {
   type ErrorType =
     | Hash.keccak256.ErrorType
     | serialize.ErrorType
+    | encodeForSigning.ErrorType
     | Errors.GlobalErrorType
 }
 
