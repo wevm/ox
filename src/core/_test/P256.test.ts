@@ -551,3 +551,58 @@ test('exports', () => {
     ]
   `)
 })
+
+describe('as option', () => {
+  test("sign + getPublicKey + recoverPublicKey: as 'Hex'", () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+    const sigHex = P256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(typeof sigHex).toBe('string')
+
+    const pkHex = P256.getPublicKey({ privateKey, as: 'Hex' })
+    expect(typeof pkHex).toBe('string')
+
+    const recoveredHex = P256.recoverPublicKey({
+      payload: '0xdeadbeef',
+      signature: sigHex,
+      as: 'Hex',
+    })
+    expect(recoveredHex).toBe(pkHex)
+    expect(
+      P256.verify({ payload: '0xdeadbeef', publicKey, signature: sigHex }),
+    ).toBe(true)
+  })
+
+  test("sign + getPublicKey: as 'Bytes'", () => {
+    const { privateKey } = P256.createKeyPair()
+    const sigBytes = P256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(sigBytes).toBeInstanceOf(Uint8Array)
+
+    const pkBytes = P256.getPublicKey({ privateKey, as: 'Bytes' })
+    expect(pkBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('verify accepts Hex signature + Hex publicKey', () => {
+    const { privateKey } = P256.createKeyPair()
+    const pkHex = P256.getPublicKey({ privateKey, as: 'Hex' })
+    const sigHex = P256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(
+      P256.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkHex,
+        signature: sigHex,
+      }),
+    ).toBe(true)
+  })
+})

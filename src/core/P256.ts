@@ -2,6 +2,12 @@ import { p256 as noble_p256 } from '@noble/curves/nist.js'
 import * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import {
+  formatPublicKey,
+  formatSignature,
+  normalizePublicKey,
+  normalizeSignature,
+} from './internal/cryptoIo.js'
 import * as Entropy from './internal/entropy.js'
 import {
   fromRecoveredBytes,
@@ -75,21 +81,32 @@ export declare namespace createKeyPair {
  * @param options - The options to compute the public key.
  * @returns The computed public key.
  */
-export function getPublicKey(
-  options: getPublicKey.Options,
-): PublicKey.PublicKey {
-  const { privateKey } = options
+export function getPublicKey<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
+  options: getPublicKey.Options<as>,
+): getPublicKey.ReturnType<as> {
+  const { as = 'Object', privateKey } = options
   const bytes = noble_p256.getPublicKey(Bytes.from(privateKey), false)
-  return PublicKey.fromBytes(bytes)
+  const publicKey = PublicKey.fromBytes(bytes)
+  return formatPublicKey(publicKey, as) as never
 }
 
 export declare namespace getPublicKey {
-  type Options = {
+  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+    /**
+     * Format of the returned public key.
+     * @default 'Object'
+     */
+    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
     /**
      * Private key to compute the public key from.
      */
     privateKey: Hex.Hex | Bytes.Bytes
   }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Object' ? PublicKey.PublicKey : never)
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -119,7 +136,7 @@ export function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { as = 'Hex', privateKey, publicKey } = options
   const sharedSecret = noble_p256.getSharedSecret(
     Bytes.from(privateKey),
-    PublicKey.toBytes(publicKey),
+    PublicKey.toBytes(normalizePublicKey(publicKey)),
     true, // compressed
   )
   if (as === 'Hex') return Hex.fromBytes(sharedSecret) as never
@@ -139,8 +156,11 @@ export declare namespace getSharedSecret {
     privateKey: Hex.Hex | Bytes.Bytes
     /**
      * Public key to use for the shared secret computation.
+     *
+     * Accepts a structured {@link ox#PublicKey.PublicKey}, a serialized hex
+     * string, or a `Uint8Array` (SEC1 encoding).
      */
-    publicKey: PublicKey.PublicKey<boolean>
+    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
   }
 
   type ReturnType<as extends 'Hex' | 'Bytes'> =
@@ -209,25 +229,41 @@ export declare namespace randomPrivateKey {
  * @param options - The recovery options.
  * @returns The recovered public key.
  */
-export function recoverPublicKey(
-  options: recoverPublicKey.Options,
-): PublicKey.PublicKey {
-  const { payload, signature } = options
-  const sigBytes = toRecoveredBytes(signature)
+export function recoverPublicKey<
+  as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
+>(options: recoverPublicKey.Options<as>): recoverPublicKey.ReturnType<as> {
+  const { as = 'Object', payload, signature } = options
+  const sigBytes = toRecoveredBytes(normalizeSignature<true>(signature))
   const point = noble_p256.Signature.fromBytes(
     sigBytes,
     'recovered',
   ).recoverPublicKey(Bytes.from(payload))
-  return PublicKey.fromBytes(point.toBytes(false))
+  const publicKey = PublicKey.fromBytes(point.toBytes(false))
+  return formatPublicKey(publicKey, as) as never
 }
 
 export declare namespace recoverPublicKey {
-  type Options = {
+  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+    /**
+     * Format of the returned public key.
+     * @default 'Object'
+     */
+    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
     /** Payload that was signed. */
     payload: Hex.Hex | Bytes.Bytes
-    /** Signature of the payload. */
-    signature: Signature.Signature
+    /**
+     * Signature of the payload.
+     *
+     * Accepts a structured {@link ox#Signature.Signature}, a serialized hex
+     * string, or a `Uint8Array` (65-byte recovered).
+     */
+    signature: Hex.Hex | Bytes.Bytes | Signature.Signature
   }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Object' ? PublicKey.PublicKey : never)
 
   type ErrorType =
     | PublicKey.from.ErrorType
@@ -251,8 +287,11 @@ export declare namespace recoverPublicKey {
  * @param options - The signing options.
  * @returns The ECDSA {@link ox#Signature.Signature}.
  */
-export function sign(options: sign.Options): Signature.Signature {
+export function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
+  options: sign.Options<as>,
+): sign.ReturnType<as> {
   const {
+    as = 'Object',
     extraEntropy = Entropy.extraEntropy,
     hash,
     payload,
@@ -271,11 +310,17 @@ export function sign(options: sign.Options): Signature.Signature {
       format: 'recovered',
     },
   )
-  return fromRecoveredBytes(sigBytes)
+  const signature = fromRecoveredBytes(sigBytes)
+  return formatSignature(signature, as) as never
 }
 
 export declare namespace sign {
-  type Options = {
+  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+    /**
+     * Format of the returned signature.
+     * @default 'Object'
+     */
+    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
     /**
      * Extra entropy to add to the signing process. Setting to `true` enables hedged
      * (RFC 6979 + extra randomness) signing.
@@ -295,6 +340,11 @@ export declare namespace sign {
      */
     privateKey: Hex.Hex | Bytes.Bytes
   }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Object' ? Signature.Signature : never)
 
   type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
@@ -323,9 +373,9 @@ export declare namespace sign {
 export function verify(options: verify.Options): boolean {
   const { hash, payload, publicKey, signature } = options
   return noble_p256.verify(
-    toCompactBytes(signature),
+    toCompactBytes(normalizeSignature(signature)),
     Bytes.from(payload),
-    PublicKey.toBytes(publicKey),
+    PublicKey.toBytes(normalizePublicKey(publicKey)),
     { lowS: true, prehash: hash === true },
   )
 }
@@ -336,10 +386,20 @@ export declare namespace verify {
     hash?: boolean | undefined
     /** Payload that was signed. */
     payload: Hex.Hex | Bytes.Bytes
-    /** Public key that signed the payload. */
-    publicKey: PublicKey.PublicKey<boolean>
-    /** Signature of the payload. */
-    signature: Signature.Signature<boolean>
+    /**
+     * Public key that signed the payload.
+     *
+     * Accepts a structured {@link ox#PublicKey.PublicKey}, a serialized hex
+     * string, or a `Uint8Array` (SEC1 encoding).
+     */
+    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
+    /**
+     * Signature of the payload.
+     *
+     * Accepts a structured {@link ox#Signature.Signature}, a serialized hex
+     * string, or a `Uint8Array`.
+     */
+    signature: Hex.Hex | Bytes.Bytes | Signature.Signature<boolean>
   }
 
   type ErrorType = Errors.GlobalErrorType

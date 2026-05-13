@@ -253,3 +253,98 @@ describe('verify', () => {
     expect(verified).toBe(true)
   })
 })
+
+describe('as option / serialized inputs', () => {
+  const privateKey =
+    '0x527f85c60ed7402247da21f1835cea651d0954fc15b7288f096d3608400cb6ac'
+
+  test("getPublicKey: as 'Hex' returns hex string", () => {
+    const pkHex = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    expect(typeof pkHex).toBe('string')
+    expect((pkHex as Hex.Hex).startsWith('0x')).toBe(true)
+  })
+
+  test("getPublicKey: as 'Bytes' returns Uint8Array", () => {
+    const pkBytes = Bls.getPublicKey({ privateKey, as: 'Bytes' })
+    expect(pkBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('getPublicKey default as remains Object', () => {
+    const pk = Bls.getPublicKey({ privateKey })
+    expect(typeof pk).toBe('object')
+    expect('z' in pk).toBe(true)
+  })
+
+  test("sign: as 'Hex' returns hex string", () => {
+    const sigHex = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(typeof sigHex).toBe('string')
+  })
+
+  test("sign: as 'Bytes' returns Uint8Array", () => {
+    const sigBytes = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(sigBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('verify accepts Hex publicKey + Hex signature', () => {
+    const pkHex = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    const sigHex = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(
+      Bls.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkHex,
+        signature: sigHex,
+      }),
+    ).toBe(true)
+  })
+
+  test('verify accepts Bytes publicKey + Bytes signature', () => {
+    const pkBytes = Bls.getPublicKey({ privateKey, as: 'Bytes' })
+    const sigBytes = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(
+      Bls.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkBytes,
+        signature: sigBytes,
+      }),
+    ).toBe(true)
+  })
+
+  test('aggregate accepts hex inputs with group hint', () => {
+    const a = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    const b = Bls.getPublicKey({
+      privateKey:
+        '0x68f9b6c6e0a1f9e7a02e5a6eaae8aa5c4b6b9e1a8f5d8c7b6a5f4e3d2c1b0a9f',
+      as: 'Hex',
+    })
+    const aggregated = Bls.aggregate([a, b], { group: 'G1' })
+    // Should match aggregating from structured inputs.
+    const aObj = Bls.getPublicKey({ privateKey })
+    const bObj = Bls.getPublicKey({
+      privateKey:
+        '0x68f9b6c6e0a1f9e7a02e5a6eaae8aa5c4b6b9e1a8f5d8c7b6a5f4e3d2c1b0a9f',
+    })
+    const aggregatedObj = Bls.aggregate([aObj, bObj])
+    expect(aggregated).toEqual(aggregatedObj)
+  })
+
+  test('aggregate throws if serialized inputs without group hint', () => {
+    const a = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    expect(() => Bls.aggregate([a])).toThrow()
+  })
+})

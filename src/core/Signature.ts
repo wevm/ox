@@ -25,6 +25,24 @@ export type Signature<
       }
 >
 
+// TODO(v1): flip `Signature` to a serialized `Hex.Hex` string and let `Parts`
+// represent the structured object form. Today `Parts<recovered>` is
+// structurally equivalent to `Signature<recovered>`.
+/** Structured parts of an ECDSA signature. */
+export type Parts<recovered extends boolean = true> = Compute<
+  recovered extends true
+    ? {
+        r: bigint
+        s: bigint
+        yParity: number
+      }
+    : {
+        r: bigint
+        s: bigint
+        yParity?: number | undefined
+      }
+>
+
 /** RPC-formatted ECDSA signature. */
 export type Rpc<recovered extends boolean = true> = Signature<
   recovered,
@@ -620,6 +638,80 @@ export function fromRecoveredBytes(bytes: Bytes.Bytes): Signature {
 
 export declare namespace fromRecoveredBytes {
   type ErrorType = Bytes.toBigInt.ErrorType | Errors.GlobalErrorType
+}
+
+// TODO(v1): once `Signature` is a serialized `Hex.Hex` string, decode it into
+// the parts form here instead of returning the input directly.
+/**
+ * Converts a {@link ox#Signature.Signature} to its structured
+ * {@link ox#Signature.Parts} form.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const parts = Signature.toParts({
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   yParity: 1,
+ * })
+ * // @log: { r: 49782...n, s: 33726...n, yParity: 1 }
+ * ```
+ *
+ * @param signature - The signature to convert.
+ * @returns The structured {@link ox#Signature.Parts}.
+ */
+export function toParts<recovered extends boolean = true>(
+  signature: Signature<recovered>,
+): Parts<recovered> {
+  if (typeof signature.yParity === 'number')
+    return {
+      r: signature.r,
+      s: signature.s,
+      yParity: signature.yParity,
+    } as never
+  return { r: signature.r, s: signature.s } as never
+}
+
+export declare namespace toParts {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+// TODO(v1): once `Signature` is a serialized `Hex.Hex` string, encode the
+// parts into that form here instead of returning the input directly.
+/**
+ * Converts a {@link ox#Signature.Parts} into a structured
+ * {@link ox#Signature.Signature}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Signature } from 'ox'
+ *
+ * const signature = Signature.fromParts({
+ *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   yParity: 1,
+ * })
+ * // @log: { r: 49782...n, s: 33726...n, yParity: 1 }
+ * ```
+ *
+ * @param parts - The structured parts to convert.
+ * @returns The {@link ox#Signature.Signature}.
+ */
+export function fromParts<recovered extends boolean = true>(
+  parts: Parts<recovered>,
+): Signature<recovered> {
+  if (typeof parts.yParity === 'number')
+    return {
+      r: parts.r,
+      s: parts.s,
+      yParity: parts.yParity,
+    } as never
+  return { r: parts.r, s: parts.s } as never
+}
+
+export declare namespace fromParts {
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /**

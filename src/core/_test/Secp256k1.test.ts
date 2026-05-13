@@ -493,3 +493,119 @@ test('exports', () => {
     ]
   `)
 })
+
+describe('as option', () => {
+  test("sign + recoverPublicKey + getPublicKey: as 'Hex'", () => {
+    const privateKey = accounts[0].privateKey
+    const sigHex = Secp256k1.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(typeof sigHex).toBe('string')
+    expect((sigHex as Hex.Hex).startsWith('0x')).toBe(true)
+
+    const pkHex = Secp256k1.getPublicKey({ privateKey, as: 'Hex' })
+    expect(typeof pkHex).toBe('string')
+
+    const recoveredHex = Secp256k1.recoverPublicKey({
+      payload: '0xdeadbeef',
+      signature: sigHex,
+      as: 'Hex',
+    })
+    expect(recoveredHex).toBe(pkHex)
+  })
+
+  test("sign + recoverPublicKey + getPublicKey: as 'Bytes'", () => {
+    const privateKey = accounts[0].privateKey
+    const sigBytes = Secp256k1.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(sigBytes).toBeInstanceOf(Uint8Array)
+
+    const pkBytes = Secp256k1.getPublicKey({ privateKey, as: 'Bytes' })
+    expect(pkBytes).toBeInstanceOf(Uint8Array)
+
+    const recoveredBytes = Secp256k1.recoverPublicKey({
+      payload: '0xdeadbeef',
+      signature: sigBytes,
+      as: 'Bytes',
+    })
+    expect(recoveredBytes).toEqual(pkBytes)
+  })
+
+  test('default as remains Object (no behavior regression)', () => {
+    const sigObj = Secp256k1.sign({
+      payload: '0xdeadbeef',
+      privateKey: accounts[0].privateKey,
+    })
+    expect(typeof sigObj).toBe('object')
+    expect('r' in (sigObj as object)).toBe(true)
+  })
+
+  test('verify accepts Hex signature + Hex publicKey', () => {
+    const privateKey = accounts[0].privateKey
+    const sigHex = Secp256k1.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    const pkHex = Secp256k1.getPublicKey({ privateKey, as: 'Hex' })
+    expect(
+      Secp256k1.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkHex,
+        signature: sigHex,
+      }),
+    ).toBe(true)
+  })
+
+  test('verify accepts Bytes signature + Bytes publicKey', () => {
+    const privateKey = accounts[0].privateKey
+    const sigBytes = Secp256k1.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    const pkBytes = Secp256k1.getPublicKey({ privateKey, as: 'Bytes' })
+    expect(
+      Secp256k1.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkBytes,
+        signature: sigBytes,
+      }),
+    ).toBe(true)
+  })
+
+  test('recoverAddress accepts Hex signature', () => {
+    const privateKey = accounts[0].privateKey
+    const sigHex = Secp256k1.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(
+      Secp256k1.recoverAddress({
+        payload: '0xdeadbeef',
+        signature: sigHex,
+      }),
+    ).toBe(Address.fromPublicKey(Secp256k1.getPublicKey({ privateKey })))
+  })
+
+  test('getSharedSecret accepts Hex publicKey', () => {
+    const a = Secp256k1.createKeyPair()
+    const b = Secp256k1.createKeyPair()
+    const bPubHex = PublicKey.toHex(b.publicKey)
+    const ss1 = Secp256k1.getSharedSecret({
+      privateKey: a.privateKey,
+      publicKey: bPubHex,
+    })
+    const ss2 = Secp256k1.getSharedSecret({
+      privateKey: a.privateKey,
+      publicKey: b.publicKey,
+    })
+    expect(ss1).toBe(ss2)
+  })
+})

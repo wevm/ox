@@ -2,6 +2,11 @@ import { p256 } from '@noble/curves/nist.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import {
+  formatSignature,
+  normalizePublicKey,
+  normalizeSignature,
+} from './internal/cryptoIo.js'
 import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
@@ -162,7 +167,7 @@ export async function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
 
   const publicKeyCrypto = await globalThis.crypto.subtle.importKey(
     'raw',
-    PublicKey.toBytes(publicKey),
+    PublicKey.toBytes(normalizePublicKey(publicKey)),
     { name: 'ECDH', namedCurve: 'P-256' },
     false,
     [],
@@ -236,10 +241,10 @@ export declare namespace getSharedSecret {
  * @param options - Options for signing the payload.
  * @returns The P256 ECDSA {@link ox#Signature.Signature} (always low-S normalized).
  */
-export async function sign(
-  options: sign.Options,
-): Promise<Signature.Signature<false>> {
-  const { payload, privateKey } = options
+export async function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
+  options: sign.Options<as>,
+): Promise<sign.ReturnType<as>> {
+  const { as = 'Object', payload, privateKey } = options
   const signature = await globalThis.crypto.subtle.sign(
     {
       name: 'ECDSA',
@@ -252,16 +257,26 @@ export async function sign(
   const r = Bytes.toBigInt(Bytes.slice(signature_bytes, 0, 32))
   let s = Bytes.toBigInt(Bytes.slice(signature_bytes, 32, 64))
   if (s > N / 2n) s = N - s
-  return { r, s }
+  return formatSignature({ r, s }, as) as never
 }
 
 export declare namespace sign {
-  type Options = {
+  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+    /**
+     * Format of the returned signature.
+     * @default 'Object'
+     */
+    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
     /** Payload to sign. */
     payload: Hex.Hex | Bytes.Bytes
     /** ECDSA private key. */
     privateKey: CryptoKey
   }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Object' ? Signature.Signature<false> : never)
 
   type ErrorType = Bytes.fromArray.ErrorType | Errors.GlobalErrorType
 }
@@ -289,14 +304,15 @@ export declare namespace sign {
  * @returns Whether the payload was signed by the provided public key.
  */
 export async function verify(options: verify.Options): Promise<boolean> {
-  const { lowS = true, payload, signature } = options
+  const { lowS = true, payload } = options
+  const signature = normalizeSignature<false>(options.signature)
 
   // Reject high-S signatures if lowS is enabled.
   if (lowS && signature.s > N / 2n) return false
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
-    PublicKey.toBytes(options.publicKey),
+    PublicKey.toBytes(normalizePublicKey(options.publicKey)),
     { name: 'ECDSA', namedCurve: 'P-256' },
     true,
     ['verify'],
@@ -320,10 +336,20 @@ export declare namespace verify {
   type Options = {
     /** If set to `true`, only low-S signatures will be accepted. @default true */
     lowS?: boolean | undefined
-    /** Public key that signed the payload. */
-    publicKey: PublicKey.PublicKey<boolean>
-    /** Signature of the payload. */
-    signature: Signature.Signature<false>
+    /**
+     * Public key that signed the payload.
+     *
+     * Accepts a structured {@link ox#PublicKey.PublicKey}, a serialized hex
+     * string, or a `Uint8Array` (SEC1 encoding).
+     */
+    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
+    /**
+     * Signature of the payload.
+     *
+     * Accepts a structured {@link ox#Signature.Signature}, a serialized hex
+     * string, or a `Uint8Array`.
+     */
+    signature: Hex.Hex | Bytes.Bytes | Signature.Signature<false>
     /** Payload that was signed. */
     payload: Hex.Hex | Bytes.Bytes
   }

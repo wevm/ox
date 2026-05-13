@@ -31,6 +31,18 @@ export type G2Bytes = Branded<Bytes.Bytes, 'G2'>
 /** Branded type for a hex representation of a G2 point. */
 export type G2Hex = Branded<Hex.Hex, 'G2'>
 
+// TODO(v1): flip `G1` to a branded `G1Hex` string and let `G1Parts` represent
+// the structured projective form. Today `G1Parts` is structurally equivalent
+// to `G1`.
+/** Structured projective parts of a BLS point on the G1 curve. */
+export type G1Parts = BlsPoint<Fp>
+
+// TODO(v1): flip `G2` to a branded `G2Hex` string and let `G2Parts` represent
+// the structured projective form. Today `G2Parts` is structurally equivalent
+// to `G2`.
+/** Structured projective parts of a BLS point on the G2 curve. */
+export type G2Parts = BlsPoint<Fp2>
+
 /**
  * Converts a BLS point to {@link ox#Bytes.Bytes}.
  *
@@ -220,5 +232,83 @@ export function fromHex(hex: Hex.Hex, group: 'G1' | 'G2'): BlsPoint<any> {
 }
 
 export declare namespace fromHex {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+// TODO(v1): once `G1` / `G2` are branded `Hex.Hex` strings, decode into the
+// parts form here by delegating through `toBytes` / `fromBytes` instead of
+// returning the projective object directly.
+/**
+ * Converts a BLS point to its structured projective {@link ox#BlsPoint.G1Parts}
+ * / {@link ox#BlsPoint.G2Parts} form.
+ *
+ * @example
+ * ### Public Key to Parts
+ *
+ * ```ts twoslash
+ * import { Bls, BlsPoint } from 'ox'
+ *
+ * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
+ * const parts = BlsPoint.toParts(publicKey)
+ * // @log: { x: 172...n, y: 175...n, z: 1n }
+ * ```
+ *
+ * @param point - The BLS point to convert.
+ * @returns The structured projective parts.
+ */
+export function toParts<point extends G1 | G2>(
+  point: point,
+): point extends G1 ? G1Parts : G2Parts {
+  // Today the root `BlsPoint` is already the projective object form -- copy
+  // the fields so callers don't accidentally mutate the input. In the future
+  // major, this becomes `fromBytes(toBytes(point))`.
+  return { x: point.x, y: point.y, z: point.z } as never
+}
+
+export declare namespace toParts {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+// TODO(v1): once `G1` / `G2` are branded `Hex.Hex` strings, encode the parts
+// via `toBytes` here instead of returning the projective object directly.
+/**
+ * Converts structured projective parts ({@link ox#BlsPoint.G1Parts} or
+ * {@link ox#BlsPoint.G2Parts}) into a {@link ox#BlsPoint.G1} or
+ * {@link ox#BlsPoint.G2} BLS point.
+ *
+ * @example
+ * ### Parts to Public Key
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { BlsPoint } from 'ox'
+ *
+ * const publicKey = BlsPoint.fromParts(
+ *   { x: 172n, y: 175n, z: 1n },
+ *   'G1',
+ * )
+ * // @log: { x: 172n, y: 175n, z: 1n }
+ * ```
+ *
+ * @param parts - The structured projective parts to convert.
+ * @param group - The BLS curve group (`'G1'` or `'G2'`).
+ * @returns The BLS point.
+ */
+export function fromParts<group extends 'G1' | 'G2'>(
+  parts: group extends 'G1' ? G1Parts : G2Parts,
+  group: group,
+): group extends 'G1' ? G1 : G2
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function fromParts(
+  parts: G1Parts | G2Parts,
+  _group: 'G1' | 'G2',
+): BlsPoint<any> {
+  // Today the root `BlsPoint` is already the projective object form. In the
+  // future major, this becomes `fromBytes(<bytes encoded from parts>, group)`
+  // -- the `group` argument is kept now so call sites match the future shape.
+  return { x: parts.x, y: parts.y, z: parts.z }
+}
+
+export declare namespace fromParts {
   type ErrorType = Errors.GlobalErrorType
 }

@@ -23,6 +23,24 @@ export type PublicKey<
       }
 >
 
+// TODO(v1): flip `PublicKey` to a serialized `Hex.Hex` string and let `Parts`
+// represent the structured object form. Today `Parts<compressed>` is
+// structurally equivalent to `PublicKey<compressed>`.
+/** Structured parts of an ECDSA public key. */
+export type Parts<compressed extends boolean = false> = Compute<
+  compressed extends true
+    ? {
+        prefix: number
+        x: bigint
+        y?: undefined
+      }
+    : {
+        prefix: number
+        x: bigint
+        y: bigint
+      }
+>
+
 /**
  * Asserts that a {@link ox#PublicKey.PublicKey} is valid.
  *
@@ -384,6 +402,80 @@ export declare namespace toBytes {
     | Hex.fromNumber.ErrorType
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
+}
+
+// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, decode it into
+// the parts form here instead of returning the input directly.
+/**
+ * Converts a {@link ox#PublicKey.PublicKey} to its structured
+ * {@link ox#PublicKey.Parts} form.
+ *
+ * @example
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const parts = PublicKey.toParts({
+ *   prefix: 4,
+ *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * })
+ * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
+ * ```
+ *
+ * @param publicKey - The public key to convert.
+ * @returns The structured {@link ox#PublicKey.Parts}.
+ */
+export function toParts<compressed extends boolean = false>(
+  publicKey: PublicKey<compressed>,
+): Parts<compressed> {
+  if (typeof publicKey.y === 'bigint')
+    return {
+      prefix: publicKey.prefix,
+      x: publicKey.x,
+      y: publicKey.y,
+    } as never
+  return { prefix: publicKey.prefix, x: publicKey.x } as never
+}
+
+export declare namespace toParts {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, encode the
+// parts into that form here instead of returning the input directly.
+/**
+ * Converts a {@link ox#PublicKey.Parts} into a structured
+ * {@link ox#PublicKey.PublicKey}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
+ *
+ * const publicKey = PublicKey.fromParts({
+ *   prefix: 4,
+ *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * })
+ * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
+ * ```
+ *
+ * @param parts - The structured parts to convert.
+ * @returns The {@link ox#PublicKey.PublicKey}.
+ */
+export function fromParts<compressed extends boolean = false>(
+  parts: Parts<compressed>,
+): PublicKey<compressed> {
+  if (typeof parts.y === 'bigint')
+    return {
+      prefix: parts.prefix,
+      x: parts.x,
+      y: parts.y,
+    } as never
+  return { prefix: parts.prefix, x: parts.x } as never
+}
+
+export declare namespace fromParts {
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /**
