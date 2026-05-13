@@ -38,8 +38,15 @@ export type Keystore = {
   version: 3
 }
 
-/** Key. */
-export type Key = (() => Hex.Hex) | Hex.Hex
+/**
+ * Key.
+ *
+ * Accepts a raw `Hex.Hex` value, a raw `Bytes.Bytes` value, or a deferred
+ * `() => Hex.Hex` closure. Prefer the raw forms -- the closure form is
+ * retained for backwards compatibility with earlier ox releases that
+ * returned a thunk from `Keystore.pbkdf2`/`Keystore.scrypt`.
+ */
+export type Key = (() => Hex.Hex) | Hex.Hex | Bytes.Bytes
 
 /** Derivation Options. */
 export type DeriveOpts = Pbkdf2DeriveOpts | ScryptDeriveOpts
@@ -416,38 +423,13 @@ export declare namespace scryptAsync {
  * @returns Key
  */
 export function toKey(keystore: Keystore, options: toKey.Options): Key {
-  const { crypto } = keystore
-  const { password } = options
-  const { cipherparams, kdf, kdfparams } = crypto
-  const { iv } = cipherparams
-  const { c, n, p, r, salt } = kdfparams as OneOf<
-    Pbkdf2DeriveOpts['kdfparams'] | ScryptDeriveOpts['kdfparams']
-  >
-
-  const [key] = (() => {
-    switch (kdf) {
-      case 'scrypt':
-        return scrypt({
-          iv: Bytes.from(`0x${iv}`),
-          n,
-          p,
-          r,
-          salt: Bytes.from(`0x${salt}`),
-          password,
-        })
-      case 'pbkdf2':
-        return pbkdf2({
-          iv: Bytes.from(`0x${iv}`),
-          iterations: c,
-          password,
-          salt: Bytes.from(`0x${salt}`),
-        })
-      default:
-        throw new Error('unsupported kdf')
-    }
-  })()
-
-  return key
+  const args = parseKdfArgs(keystore, options.password)
+  switch (args.kdf) {
+    case 'scrypt':
+      return scrypt(args.options)[0]
+    case 'pbkdf2':
+      return pbkdf2(args.options)[0]
+  }
 }
 
 export declare namespace toKey {
@@ -481,38 +463,13 @@ export async function toKeyAsync(
   keystore: Keystore,
   options: toKeyAsync.Options,
 ): Promise<Key> {
-  const { crypto } = keystore
-  const { password } = options
-  const { cipherparams, kdf, kdfparams } = crypto
-  const { iv } = cipherparams
-  const { c, n, p, r, salt } = kdfparams as OneOf<
-    Pbkdf2DeriveOpts['kdfparams'] | ScryptDeriveOpts['kdfparams']
-  >
-
-  const [key] = await (async () => {
-    switch (kdf) {
-      case 'scrypt':
-        return await scryptAsync({
-          iv: Bytes.from(`0x${iv}`),
-          n,
-          p,
-          r,
-          salt: Bytes.from(`0x${salt}`),
-          password,
-        })
-      case 'pbkdf2':
-        return await pbkdf2Async({
-          iv: Bytes.from(`0x${iv}`),
-          iterations: c,
-          password,
-          salt: Bytes.from(`0x${salt}`),
-        })
-      default:
-        throw new Error('unsupported kdf')
-    }
-  })()
-
-  return key
+  const args = parseKdfArgs(keystore, options.password)
+  switch (args.kdf) {
+    case 'scrypt':
+      return (await scryptAsync(args.options))[0]
+    case 'pbkdf2':
+      return (await pbkdf2Async(args.options))[0]
+  }
 }
 
 export declare namespace toKeyAsync {
@@ -544,6 +501,36 @@ function assertScryptParams(n: number, r: number, p: number) {
     throw new Error(`Keystore: scrypt r must be a positive integer, got ${r}.`)
   if (!Number.isInteger(p) || p <= 0)
     throw new Error(`Keystore: scrypt p must be a positive integer, got ${p}.`)
+}
+
+/**
+ * @internal
+ *
+ * Parses the keystore's `crypto` block into the option shape expected by
+ * `pbkdf2`/`scrypt` (or their async variants). Shared by `toKey` and
+ * `toKeyAsync` so that the only meaningful difference between the two
+ * public functions is the sync vs async derivation call.
+ */
+// biome-ignore lint/correctness/noUnusedVariables: called above
+function parseKdfArgs(keystore: Keystore, password: string) {
+  const { crypto } = keystore
+  const { cipherparams, kdf, kdfparams } = crypto
+  const iv = Bytes.from(`0x${cipherparams.iv}`)
+  const { c, n, p, r, salt } = kdfparams as OneOf<
+    Pbkdf2DeriveOpts['kdfparams'] | ScryptDeriveOpts['kdfparams']
+  >
+  const saltBytes = Bytes.from(`0x${salt}`)
+  if (kdf === 'scrypt')
+    return {
+      kdf: 'scrypt' as const,
+      options: { iv, n, p, r, salt: saltBytes, password },
+    }
+  if (kdf === 'pbkdf2')
+    return {
+      kdf: 'pbkdf2' as const,
+      options: { iv, iterations: c, salt: saltBytes, password },
+    }
+  throw new Error('unsupported kdf')
 }
 
 /** @internal */

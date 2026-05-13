@@ -336,6 +336,11 @@
       "src": "./src/core/Ens.ts",
       "default": "./dist/core/Ens.js"
     },
+    "./EnsNormalize": {
+      "types": "./dist/core/EnsNormalize.d.ts",
+      "src": "./src/core/EnsNormalize.ts",
+      "default": "./dist/core/EnsNormalize.js"
+    },
     "./Errors": {
       "types": "./dist/core/Errors.d.ts",
       "src": "./src/core/Errors.ts",
@@ -615,6 +620,56 @@
       "types": "./dist/erc8021/Attribution.d.ts",
       "src": "./src/erc8021/Attribution.ts",
       "default": "./dist/erc8021/Attribution.js"
+    },
+    "./mnemonic/Czech": {
+      "types": "./dist/mnemonic/Czech.d.ts",
+      "src": "./src/mnemonic/Czech.ts",
+      "default": "./dist/mnemonic/Czech.js"
+    },
+    "./mnemonic/English": {
+      "types": "./dist/mnemonic/English.d.ts",
+      "src": "./src/mnemonic/English.ts",
+      "default": "./dist/mnemonic/English.js"
+    },
+    "./mnemonic/French": {
+      "types": "./dist/mnemonic/French.d.ts",
+      "src": "./src/mnemonic/French.ts",
+      "default": "./dist/mnemonic/French.js"
+    },
+    "./mnemonic/Italian": {
+      "types": "./dist/mnemonic/Italian.d.ts",
+      "src": "./src/mnemonic/Italian.ts",
+      "default": "./dist/mnemonic/Italian.js"
+    },
+    "./mnemonic/Japanese": {
+      "types": "./dist/mnemonic/Japanese.d.ts",
+      "src": "./src/mnemonic/Japanese.ts",
+      "default": "./dist/mnemonic/Japanese.js"
+    },
+    "./mnemonic/Korean": {
+      "types": "./dist/mnemonic/Korean.d.ts",
+      "src": "./src/mnemonic/Korean.ts",
+      "default": "./dist/mnemonic/Korean.js"
+    },
+    "./mnemonic/Portuguese": {
+      "types": "./dist/mnemonic/Portuguese.d.ts",
+      "src": "./src/mnemonic/Portuguese.ts",
+      "default": "./dist/mnemonic/Portuguese.js"
+    },
+    "./mnemonic/SimplifiedChinese": {
+      "types": "./dist/mnemonic/SimplifiedChinese.d.ts",
+      "src": "./src/mnemonic/SimplifiedChinese.ts",
+      "default": "./dist/mnemonic/SimplifiedChinese.js"
+    },
+    "./mnemonic/Spanish": {
+      "types": "./dist/mnemonic/Spanish.d.ts",
+      "src": "./src/mnemonic/Spanish.ts",
+      "default": "./dist/mnemonic/Spanish.js"
+    },
+    "./mnemonic/TraditionalChinese": {
+      "types": "./dist/mnemonic/TraditionalChinese.d.ts",
+      "src": "./src/mnemonic/TraditionalChinese.ts",
+      "default": "./dist/mnemonic/TraditionalChinese.js"
     },
     "./tempo": {
       "types": "./dist/tempo/index.d.ts",

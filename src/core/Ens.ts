@@ -1,5 +1,5 @@
-import { ens_normalize } from '@adraffy/ens-normalize'
 import * as Bytes from './Bytes.js'
+import * as EnsNormalize from './EnsNormalize.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
@@ -66,10 +66,7 @@ export function namehash(name: string) {
     const encoded = internal.unwrapLabelhash(label)
     if (encoded) scratch.set(Bytes.fromHex(encoded), 32)
     else
-      scratch.set(
-        Hash.keccak256(Bytes.fromString(label), { as: 'Bytes' }),
-        32,
-      )
+      scratch.set(Hash.keccak256(Bytes.fromString(label), { as: 'Bytes' }), 32)
     scratch.set(Hash.keccak256(scratch, { as: 'Bytes' }), 0)
   }
 
@@ -92,6 +89,10 @@ export declare namespace namehash {
  *
  * For more info see [ENS documentation](https://docs.ens.domains/contract-api-reference/name-processing#normalising-names) on name processing.
  *
+ * For consumers that only need normalization (and want to avoid the
+ * remainder of the `Ens` module surface) the same function is also
+ * available as a deep import: `import * as EnsNormalize from 'ox/EnsNormalize'`.
+ *
  * @example
  * ```ts twoslash
  * import { Ens } from 'ox'
@@ -103,7 +104,7 @@ export declare namespace namehash {
  * @returns Normalized ENS name.
  */
 export function normalize(name: string): string {
-  return ens_normalize(name)
+  return EnsNormalize.normalize(name)
 }
 
 export declare namespace normalize {
