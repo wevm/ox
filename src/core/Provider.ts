@@ -548,34 +548,34 @@ export function parseError<
     if (!error_.data) return error_ as never
 
     const { code } = error_.data as RpcResponse.ErrorObject
-    if (code === DisconnectedError.code)
-      return new DisconnectedError(error_) as never
-    if (code === ChainDisconnectedError.code)
-      return new ChainDisconnectedError(error_) as never
-    if (code === UserRejectedRequestError.code)
-      return new UserRejectedRequestError(error_) as never
-    if (code === UnauthorizedError.code)
-      return new UnauthorizedError(error_) as never
-    if (code === UnsupportedMethodError.code)
-      return new UnsupportedMethodError(error_) as never
-    if (code === SwitchChainError.code)
-      return new SwitchChainError(error_) as never
-    if (code === AtomicReadyWalletRejectedUpgradeError.code)
-      return new AtomicReadyWalletRejectedUpgradeError(error_) as never
-    if (code === AtomicityNotSupportedError.code)
-      return new AtomicityNotSupportedError(error_) as never
-    if (code === BundleTooLargeError.code)
-      return new BundleTooLargeError(error_) as never
-    if (code === UnknownBundleIdError.code)
-      return new UnknownBundleIdError(error_) as never
-    if (code === DuplicateIdError.code)
-      return new DuplicateIdError(error_) as never
-    if (code === UnsupportedChainIdError.code)
-      return new UnsupportedChainIdError(error_) as never
-    if (code === UnsupportedNonOptionalCapabilityError.code)
-      return new UnsupportedNonOptionalCapabilityError(error_) as never
+    const Constructor = providerErrorCodeMap[code]
+    if (Constructor) return new Constructor(error_) as never
   }
   return error_ as never
+}
+
+/** @internal */
+const providerErrorCodeMap: Record<
+  number,
+  new (parameters: {
+    message?: string | undefined
+  }) => ProviderRpcError
+> = {
+  [DisconnectedError.code]: DisconnectedError,
+  [ChainDisconnectedError.code]: ChainDisconnectedError,
+  [UserRejectedRequestError.code]: UserRejectedRequestError,
+  [UnauthorizedError.code]: UnauthorizedError,
+  [UnsupportedMethodError.code]: UnsupportedMethodError,
+  [SwitchChainError.code]: SwitchChainError,
+  [AtomicReadyWalletRejectedUpgradeError.code]:
+    AtomicReadyWalletRejectedUpgradeError,
+  [AtomicityNotSupportedError.code]: AtomicityNotSupportedError,
+  [BundleTooLargeError.code]: BundleTooLargeError,
+  [UnknownBundleIdError.code]: UnknownBundleIdError,
+  [DuplicateIdError.code]: DuplicateIdError,
+  [UnsupportedChainIdError.code]: UnsupportedChainIdError,
+  [UnsupportedNonOptionalCapabilityError.code]:
+    UnsupportedNonOptionalCapabilityError,
 }
 
 export declare namespace parseError {
