@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Refactored `Base32` and `Bech32m` to share the `convertBits` repacker, the BIP-173 alphabet table, and the `InvalidPaddingError` class via `internal/codec/bech32-base32.ts`.
+Consolidated `Base32` and `Bech32m` bit-packing so both modules share a single tight encoder/decoder path.

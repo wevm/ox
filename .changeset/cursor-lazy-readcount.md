@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Deferred `Cursor.positionReadCount` `Map` allocation to the first `_touch()` call so single-pass cursors and cursors with `recursiveReadLimit: Number.POSITIVE_INFINITY` skip the per-instance allocation entirely.
+Sped up `Rlp.toBytes` and `Rlp.toHex` by skipping per-instance read-tracking allocation when the recursive read limit is unbounded.
