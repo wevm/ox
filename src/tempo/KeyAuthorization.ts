@@ -457,21 +457,12 @@ export function fromRpc(authorization: Rpc): Signed {
     authorization
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
 
-  // Unflatten nested allowedCalls into flat scopes
+  // Unflatten nested allowedCalls into flat scopes.
   const scopes = allowedCalls
-    ? allowedCalls.flatMap((callScope) => {
-        if (!callScope.selectorRules || callScope.selectorRules.length === 0)
-          return [{ address: callScope.target }] as Scope[]
-        return callScope.selectorRules.map(
-          (rule): Scope => ({
-            address: callScope.target,
-            selector: normalizeSelector(rule.selector),
-            ...(rule.recipients && rule.recipients.length > 0
-              ? { recipients: rule.recipients }
-              : {}),
-          }),
-        )
-      })
+    ? flattenGroupedScopes(allowedCalls, (callScope) => ({
+        address: callScope.target,
+        rules: callScope.selectorRules,
+      }))
     : undefined
 
   return {
@@ -581,23 +572,27 @@ export function fromTuple<const tuple extends Tuple>(
       : {}),
     ...(typeof scopes !== 'undefined' && Array.isArray(scopes)
       ? {
-          scopes: scopes.flatMap((scopeTuple: any) => {
-            const [address, selectorRules] = scopeTuple
-            // If no selector rules, this is an address-only scope
-            if (!Array.isArray(selectorRules) || selectorRules.length === 0)
-              return [{ address }]
-            // Flatten each selector rule into a separate scope entry
-            return selectorRules.map((ruleTuple: any) => {
-              const [selector, recipients] = ruleTuple
+          scopes: flattenGroupedScopes(
+            scopes as readonly (readonly [
+              Address.Address,
+              readonly (readonly [
+                Hex.Hex,
+                readonly Address.Address[] | undefined,
+              ])[],
+            ])[],
+            (scopeTuple) => {
+              const [address, selectorRules] = scopeTuple
               return {
                 address,
-                selector,
-                ...(Array.isArray(recipients) && recipients.length > 0
-                  ? { recipients }
-                  : {}),
+                rules: Array.isArray(selectorRules)
+                  ? selectorRules.map(([selector, recipients]) => ({
+                      selector,
+                      recipients,
+                    }))
+                  : undefined,
               }
-            })
-          }),
+            },
+          ),
         }
       : {}),
   }
@@ -806,29 +801,13 @@ export function toRpc(authorization: Signed): Rpc {
   const { address, scopes, chainId, expiry, limits, type, signature } =
     authorization
 
-  // Group flat scopes by address into nested allowedCalls wire format
-  const allowedCalls = (() => {
-    if (!scopes) return undefined
-    const grouped = new Map<string, RpcSelectorRule[]>()
-    for (const scope of scopes) {
-      const key = scope.address as string
-      if (!grouped.has(key)) grouped.set(key, [])
-      if (scope.selector) {
-        grouped.get(key)!.push({
-          selector: resolveSelector(scope.selector)!,
-          ...(scope.recipients && scope.recipients.length > 0
-            ? { recipients: scope.recipients }
-            : {}),
-        })
-      }
-    }
-    return [...grouped.entries()].map(
-      ([target, selectorRules]): RpcCallScope => ({
-        target: target as Address.Address,
-        ...(selectorRules.length > 0 ? { selectorRules } : {}),
-      }),
-    )
-  })()
+  // Group flat scopes by address into the nested `allowedCalls` wire format.
+  const allowedCalls = groupScopesByAddress(scopes)?.map(
+    ({ address, rules }): RpcCallScope => ({
+      target: address,
+      ...(rules.length > 0 ? { selectorRules: rules } : {}),
+    }),
+  )
 
   return {
     chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
@@ -905,31 +884,11 @@ export function toTuple<const authorization extends KeyAuthorization>(
     if (limit.period && limit.period > 0) tuple.push(numberToHex(limit.period))
     return tuple
   })
-  // Group flat scopes by address for wire format
-  const callsValue = (() => {
-    if (!scopes) return undefined
-    const grouped = new Map<
-      string,
-      [Hex.Hex, (readonly Address.Address[])[]][]
-    >()
-    for (const scope of scopes) {
-      const key = scope.address as string
-      if (!grouped.has(key)) grouped.set(key, [])
-      if (scope.selector) {
-        grouped
-          .get(key)!
-          .push([
-            resolveSelector(scope.selector)!,
-            (scope.recipients ??
-              []) as unknown as (readonly Address.Address[])[],
-          ])
-      }
-    }
-    return [...grouped.entries()].map(([address, selectorRules]) => [
-      address,
-      selectorRules.map(([selector, recipients]) => [selector, recipients]),
-    ])
-  })()
+  // Group flat scopes by address for the tuple wire format.
+  const callsValue = groupScopesByAddress(scopes)?.map(({ address, rules }) => [
+    address,
+    rules.map((rule) => [rule.selector, rule.recipients ?? []]),
+  ])
   const authorizationTuple = [
     bigintToHex(chainId),
     type,
@@ -984,4 +943,77 @@ function resolveSelector(
   if (!selector) return undefined
   if (selector.startsWith('0x')) return selector as Hex.Hex
   return AbiItem.getSelector(selector)
+}
+
+/**
+ * Internal grouped-scope shape used by both RPC and tuple encoders.
+ *
+ * @internal
+ */
+type GroupedScope = {
+  address: Address.Address
+  rules: RpcSelectorRule[]
+}
+
+/**
+ * Groups a flat `Scope[]` list by address into the wire-native shape used by
+ * both `toRpc` and `toTuple`. Returns `undefined` when `scopes` is undefined
+ * so callers can preserve the "unrestricted" sentinel.
+ *
+ * @internal
+ */
+function groupScopesByAddress(
+  scopes: readonly Scope[] | undefined,
+): GroupedScope[] | undefined {
+  if (!scopes) return undefined
+  const grouped = new Map<string, GroupedScope>()
+  for (const scope of scopes) {
+    const key = scope.address as string
+    let entry = grouped.get(key)
+    if (!entry) {
+      entry = { address: scope.address as Address.Address, rules: [] }
+      grouped.set(key, entry)
+    }
+    if (scope.selector)
+      entry.rules.push({
+        selector: resolveSelector(scope.selector)!,
+        ...(scope.recipients && scope.recipients.length > 0
+          ? { recipients: scope.recipients }
+          : {}),
+      })
+  }
+  return [...grouped.values()]
+}
+
+/**
+ * Flattens a grouped (address, rules) iterable back into the public flat
+ * `Scope[]` form. Used by both `fromRpc` and `fromTuple`.
+ *
+ * @internal
+ */
+function flattenGroupedScopes<T>(
+  groups: readonly T[],
+  read: (group: T) => {
+    address: Address.Address
+    rules:
+      | ReadonlyArray<{
+          selector: Hex.Hex | number[]
+          recipients?: readonly Address.Address[] | undefined
+        }>
+      | undefined
+  },
+): Scope[] {
+  return groups.flatMap((group) => {
+    const { address, rules } = read(group)
+    if (!rules || rules.length === 0) return [{ address }] as Scope[]
+    return rules.map(
+      (rule): Scope => ({
+        address,
+        selector: normalizeSelector(rule.selector),
+        ...(rule.recipients && rule.recipients.length > 0
+          ? { recipients: rule.recipients }
+          : {}),
+      }),
+    )
+  })
 }
