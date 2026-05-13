@@ -74,9 +74,9 @@ export type Base<
   /** Value in wei sent with this transaction */
   value: bigintType
   /** ECDSA signature r. */
-  r: bigintType
+  r: Hex.Hex
   /** ECDSA signature s. */
-  s: bigintType
+  s: Hex.Hex
   /** ECDSA signature yParity. */
   yParity: numberType
   /** @deprecated ECDSA signature v (for backwards compatibility). */
@@ -354,8 +354,8 @@ export declare namespace fromRpc {
  *   maxFeePerGas: 11985937556n,
  *   maxPriorityFeePerGas: 68993984n,
  *   nonce: 855n,
- *   r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *   s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *   to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
  *   transactionIndex: 2,
  *   type: 'eip1559',
@@ -410,10 +410,8 @@ export function toRpc<pending extends boolean = false>(
     rpc.maxFeePerGas = Hex.fromNumber(transaction.maxFeePerGas)
   if (typeof transaction.maxPriorityFeePerGas === 'bigint')
     rpc.maxPriorityFeePerGas = Hex.fromNumber(transaction.maxPriorityFeePerGas)
-  if (typeof transaction.r === 'bigint')
-    rpc.r = Hex.fromNumber(transaction.r, { size: 32 })
-  if (typeof transaction.s === 'bigint')
-    rpc.s = Hex.fromNumber(transaction.s, { size: 32 })
+  if (typeof transaction.r === 'string') rpc.r = transaction.r
+  if (typeof transaction.s === 'string') rpc.s = transaction.s
   if (typeof transaction.v === 'number')
     rpc.v = Hex.fromNumber(transaction.v, { size: 1 })
   if (typeof transaction.yParity === 'number')

@@ -1,10 +1,11 @@
 import { p256 } from '@noble/curves/nist.js'
 import * as Registration from '../../webauthn/Registration.js'
 import type * as Errors from '../Errors.js'
+import * as Hex from '../Hex.js'
 import * as PublicKey from '../PublicKey.js'
 
 /**
- * Parses an ASN.1 signature into a r and s value.
+ * Parses an ASN.1 signature into a r and s value (32-byte padded hex).
  *
  * @internal
  */
@@ -12,7 +13,10 @@ export function parseAsn1Signature(bytes: Uint8Array) {
   const sig = p256.Signature.fromBytes(bytes, 'der')
   const n = p256.Point.CURVE().n
   const s = sig.hasHighS() ? n - sig.s : sig.s
-  return { r: sig.r, s }
+  return {
+    r: Hex.fromNumber(sig.r, { size: 32 }),
+    s: Hex.fromNumber(s, { size: 32 }),
+  }
 }
 
 /**

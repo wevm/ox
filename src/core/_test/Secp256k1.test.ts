@@ -11,12 +11,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-      {
-        "prefix": 4,
-        "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-        "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-      }
-    `,
+        {
+          "prefix": 4,
+          "x": "0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75",
+          "y": "0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5",
+        }
+      `,
       )
       expect(Address.fromPublicKey(publicKey).toLowerCase()).toEqual(
         accounts[0].address,
@@ -30,12 +30,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-      {
-        "prefix": 4,
-        "x": 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-        "y": 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
-      }
-    `,
+        {
+          "prefix": 4,
+          "x": "0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75",
+          "y": "0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5",
+        }
+      `,
       )
       expect(Address.fromPublicKey(publicKey).toLowerCase()).toEqual(
         accounts[0].address,
@@ -58,8 +58,8 @@ describe('createKeyPair', () => {
     expect(keyPair.publicKey).toHaveProperty('x')
     expect(keyPair.publicKey).toHaveProperty('y')
     expect(keyPair.publicKey.prefix).toBe(4)
-    expect(typeof keyPair.publicKey.x).toBe('bigint')
-    expect(typeof keyPair.publicKey.y).toBe('bigint')
+    expect(typeof keyPair.publicKey.x).toBe('string')
+    expect(typeof keyPair.publicKey.y).toBe('string')
   })
 
   test('behavior: deterministic public key derivation', () => {
@@ -304,12 +304,12 @@ describe('sign', () => {
       })
       expect(signature).toMatchInlineSnapshot(
         `
-      {
-        "r": 74352382517807082440778846078252240710763999160569457624520311883943391062769n,
-        "s": 43375188480015931414505591342117068151247353833881461609019650667261881302875n,
-        "yParity": 0,
-      }
-    `,
+        {
+          "r": "0xa461f509887bd19e312c0c58467ce8ff8e300d3c1a90b608a760c5b80318eaf1",
+          "s": "0x5fe57c96f9175d6cd4daad4663763baa7e78836e067d0163e9a2ccf2ff753f5b",
+          "yParity": 0,
+        }
+      `,
       )
       expect(
         Secp256k1.verify({
@@ -330,12 +330,12 @@ describe('sign', () => {
       })
       expect(signature).toMatchInlineSnapshot(
         `
-      {
-        "r": 89036260706339362183898531363310683680162157132496689422406521430939707497224n,
-        "s": 22310885159939283473640002814069314990500333570711854513358211093549688653897n,
-        "yParity": 1,
-      }
-    `,
+        {
+          "r": "0xc4d8bcda762d35ea79d9542b23200f46c2c1899db15bf929bbacaf609581db08",
+          "s": "0x31538374a01206517edd934e474212a0f1e2d62e9a01cd64f1cf94ea2e098849",
+          "yParity": 1,
+        }
+      `,
       )
       expect(
         Secp256k1.verify({
@@ -407,12 +407,12 @@ describe('sign', () => {
     })
     expect(signature).toMatchInlineSnapshot(
       `
-    {
-      "r": 42395289763960325836777315020270385161624044426039905118158393530872007515822n,
-      "s": 30406628000207299947338207254203930276142590474479134670945489721527570429874n,
-      "yParity": 1,
-    }
-  `,
+      {
+        "r": "0x5dbae23786cd5e6400c475b88dd49ae003e28c28dd141943f9d242b028a05eae",
+        "s": "0x43398aa40015d03a771c8b036e4525d2bf5cc8fb2a3f372f3d6f402ae69677b2",
+        "yParity": 1,
+      }
+    `,
     )
 
     const publicKey = Secp256k1.getPublicKey({

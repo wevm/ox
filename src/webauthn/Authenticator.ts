@@ -166,9 +166,7 @@ export declare namespace getAuthenticatorData {
  * @param authenticatorData - The authenticator data hex string.
  * @returns The signature counter.
  */
-export function getSignCount(
-  authenticatorData: Hex.Hex | Uint8Array,
-): number {
+export function getSignCount(authenticatorData: Hex.Hex | Uint8Array): number {
   const bytes =
     typeof authenticatorData === 'string'
       ? Bytes.fromHex(authenticatorData)

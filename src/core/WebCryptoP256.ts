@@ -257,7 +257,13 @@ export async function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
   const r = Bytes.toBigInt(Bytes.slice(signature_bytes, 0, 32))
   let s = Bytes.toBigInt(Bytes.slice(signature_bytes, 32, 64))
   if (s > N / 2n) s = N - s
-  return formatSignature({ r, s }, as) as never
+  return formatSignature(
+    {
+      r: Hex.fromNumber(r, { size: 32 }),
+      s: Hex.fromNumber(s, { size: 32 }),
+    },
+    as,
+  ) as never
 }
 
 export declare namespace sign {
@@ -308,7 +314,7 @@ export async function verify(options: verify.Options): Promise<boolean> {
   const signature = normalizeSignature<false>(options.signature)
 
   // Reject high-S signatures if lowS is enabled.
-  if (lowS && signature.s > N / 2n) return false
+  if (lowS && BigInt(signature.s) > N / 2n) return false
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
@@ -325,8 +331,8 @@ export async function verify(options: verify.Options): Promise<boolean> {
     },
     publicKey,
     Bytes.concat(
-      Bytes.fromNumber(signature.r, { size: 32 }),
-      Bytes.fromNumber(signature.s, { size: 32 }),
+      Bytes.fromHex(signature.r, { size: 32 }),
+      Bytes.fromHex(signature.s, { size: 32 }),
     ),
     Bytes.from(payload),
   )

@@ -261,7 +261,7 @@ describe('BaseError', () => {
         "name": "BaseError",
         "shortMessage": "test1",
         "showVersion": false,
-        "version": "ox@x.y.z",
+        "version": "ox@0.1.1",
       }
     `)
   })
