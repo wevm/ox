@@ -3,11 +3,7 @@ import * as Bytes from './Bytes.js'
 import * as Caches from './Caches.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
-import {
-  classifyAddress,
-  hasAddressShape,
-  lowercaseAddress,
-} from './internal/address.js'
+import * as internal from './internal/address.js'
 import * as PublicKey from './PublicKey.js'
 
 /** Root type for Address. */
@@ -40,7 +36,7 @@ export function assert(
 ): asserts value is Address {
   const { strict = true } = options
 
-  const kind = classifyAddress(value)
+  const kind = internal.classify(value)
   if (kind === 0)
     throw new InvalidAddressError({
       address: value,
@@ -88,7 +84,7 @@ export function checksum(address: string): Address {
   const direct = Caches.checksum.get(address)
   if (direct !== undefined) return direct
 
-  if (!hasAddressShape(address))
+  if (!internal.hasShape(address))
     throw new InvalidAddressError({
       address,
       cause: new InvalidInputError(),
@@ -97,7 +93,7 @@ export function checksum(address: string): Address {
   // Secondary lookup keyed by the canonical lowercase form so that mixed-case
   // spellings of the same address share an entry instead of competing for two
   // slots in a bounded cache.
-  const key = lowercaseAddress(address)
+  const key = internal.lowercase(address)
   if (key !== address) {
     const cached = Caches.checksum.get(key)
     if (cached !== undefined) {
@@ -266,12 +262,12 @@ export declare namespace fromPublicKey {
  * @returns Whether the addresses are equal.
  */
 export function isEqual(addressA: Address, addressB: Address): boolean {
-  if (!hasAddressShape(addressA))
+  if (!internal.hasShape(addressA))
     throw new InvalidAddressError({
       address: addressA,
       cause: new InvalidInputError(),
     })
-  if (!hasAddressShape(addressB))
+  if (!internal.hasShape(addressB))
     throw new InvalidAddressError({
       address: addressB,
       cause: new InvalidInputError(),
@@ -312,7 +308,7 @@ export function validate(
   options: validate.Options = {},
 ): address is Address {
   const { strict = true } = options ?? {}
-  const kind = classifyAddress(address)
+  const kind = internal.classify(address)
   if (kind === 0) return false
   if (!strict || kind === 1) return true
   return checksum(address as Address) === address

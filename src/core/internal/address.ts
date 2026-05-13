@@ -1,5 +1,5 @@
 /** @internal */
-export const addressLength = 42
+export const length = 42
 
 const ZERO = 48 // '0'
 const NINE = 57 // '9'
@@ -21,11 +21,11 @@ const X_LOWER = 120 // 'x'
  * - `1` = valid shape, all-lowercase hex body (no checksum to verify)
  * - `2` = valid shape, contains at least one `A-F` upper char
  */
-export function classifyAddress(value: string): 0 | 1 | 2 {
-  if (typeof value !== 'string' || value.length !== addressLength) return 0
+export function classify(value: string): 0 | 1 | 2 {
+  if (typeof value !== 'string' || value.length !== length) return 0
   if (value.charCodeAt(0) !== ZERO || value.charCodeAt(1) !== X_LOWER) return 0
   let hasUpper = false
-  for (let i = 2; i < addressLength; i++) {
+  for (let i = 2; i < length; i++) {
     const code = value.charCodeAt(i)
     if (code >= ZERO && code <= NINE) continue
     if (code >= A_LOWER && code <= F_LOWER) continue
@@ -45,8 +45,8 @@ export function classifyAddress(value: string): 0 | 1 | 2 {
  * when `value` has the shape `0x[0-9a-fA-F]{40}`. Does not verify checksum
  * casing.
  */
-export function hasAddressShape(value: string): boolean {
-  return classifyAddress(value) !== 0
+export function hasShape(value: string): boolean {
+  return classify(value) !== 0
 }
 
 /**
@@ -54,12 +54,12 @@ export function hasAddressShape(value: string): boolean {
  *
  * Returns the canonical lowercase form of a shape-validated address, or the
  * input unchanged when it is already all-lowercase. Pre-condition: caller has
- * already verified the string is shape-valid via {@link hasAddressShape} or
- * {@link classifyAddress}.
+ * already verified the string is shape-valid via {@link hasShape} or
+ * {@link classify}.
  */
-export function lowercaseAddress(value: string): string {
+export function lowercase(value: string): string {
   let hasUpper = false
-  for (let i = 2; i < addressLength; i++) {
+  for (let i = 2; i < length; i++) {
     const code = value.charCodeAt(i)
     if (code >= A_UPPER && code <= F_UPPER) {
       hasUpper = true
@@ -68,10 +68,10 @@ export function lowercaseAddress(value: string): string {
   }
   if (!hasUpper) return value
 
-  const out = new Uint16Array(addressLength)
+  const out = new Uint16Array(length)
   out[0] = ZERO
   out[1] = X_LOWER
-  for (let i = 2; i < addressLength; i++) {
+  for (let i = 2; i < length; i++) {
     const code = value.charCodeAt(i)
     out[i] = code >= A_UPPER && code <= F_UPPER ? code + 32 : code
   }
