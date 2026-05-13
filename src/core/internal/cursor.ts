@@ -6,15 +6,7 @@ export type Cursor = {
   bytes: Bytes
   dataView: DataView
   position: number
-  /**
-   * Highest cursor position observed so far. Used to short-circuit
-   * `_touch` when reads are monotonically forward (the common ABI
-   * decode case), avoiding `Map.get` / `Map.set` per `read*` call.
-   *
-   * @internal
-   */
-  maxLinearPosition: number
-  /** Lazy: only allocated when a back-jump re-read is observed. */
+  /** Lazy: only allocated when slow-path tracking kicks in. */
   positionReadCount: Map<number, number> | undefined
   recursiveReadCount: number
   recursiveReadLimit: number
@@ -50,7 +42,6 @@ const staticCursor: Cursor = {
   bytes: new Uint8Array(),
   dataView: new DataView(new ArrayBuffer(0)),
   position: 0,
-  maxLinearPosition: 0,
   positionReadCount: undefined,
   recursiveReadCount: 0,
   recursiveReadLimit: Number.POSITIVE_INFINITY,
@@ -200,22 +191,10 @@ const staticCursor: Cursor = {
   },
   _touch() {
     if (this.recursiveReadLimit === Number.POSITIVE_INFINITY) return
-    // Fast path: if reads are advancing monotonically forward (no
-    // back-jumps via `setPosition`), no slot can be re-read. Skip the
-    // `Map` bookkeeping entirely. Real ABI decodes are dominated by
-    // forward reads through static parameter heads.
-    //
-    // `maxLinearPosition` tracks the smallest position the cursor has
-    // not yet observed (i.e. one past the highest byte touched). Any
-    // subsequent read whose start position is strictly less than this
-    // frontier overlaps already-read bytes and must be charged to the
-    // recursive read budget.
-    const next = this.position + 1
-    if (next > this.maxLinearPosition) {
-      this.maxLinearPosition = next
-      return
-    }
-    this.recursiveReadCount++
+    const map = (this.positionReadCount ??= new Map())
+    const count = map.get(this.position) || 0
+    map.set(this.position, count + 1)
+    if (count > 0) this.recursiveReadCount++
   },
 }
 
@@ -231,7 +210,6 @@ export function create(
     bytes.byteOffset,
     bytes.byteLength,
   )
-  cursor.maxLinearPosition = 0
   cursor.positionReadCount = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
   return cursor
