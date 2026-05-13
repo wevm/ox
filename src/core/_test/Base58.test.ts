@@ -70,15 +70,56 @@ describe('toString', () => {
   })
 })
 
+describe('encode', () => {
+  test('bytes input', () => {
+    const bytes = new Uint8Array([
+      72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
+    ])
+    expect(Base58.encode(bytes)).toBe('2NEpo7TZRRrLZSi2U')
+  })
+
+  test('hex input', () => {
+    expect(Base58.encode('0x48656c6c6f20576f726c6421')).toBe(
+      '2NEpo7TZRRrLZSi2U',
+    )
+  })
+
+  test('utf-8 string input', () => {
+    expect(Base58.encode('Hello World!')).toBe('2NEpo7TZRRrLZSi2U')
+  })
+})
+
+describe('decode', () => {
+  test('default (Bytes)', () => {
+    expect(Base58.decode('2NEpo7TZRRrLZSi2U')).toEqual(
+      new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]),
+    )
+  })
+
+  test('as: Hex', () => {
+    expect(Base58.decode('2NEpo7TZRRrLZSi2U', { as: 'Hex' })).toBe(
+      '0x48656c6c6f20576f726c6421',
+    )
+  })
+
+  test('as: String', () => {
+    expect(Base58.decode('2NEpo7TZRRrLZSi2U', { as: 'String' })).toBe(
+      'Hello World!',
+    )
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(Base58)).toMatchInlineSnapshot(`
     [
       "fromBytes",
       "fromHex",
       "fromString",
+      "encode",
       "toBytes",
       "toHex",
       "toString",
+      "decode",
       "InvalidCharacterError",
     ]
   `)

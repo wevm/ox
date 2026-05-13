@@ -160,13 +160,47 @@ describe('fromHex', () => {
   })
 })
 
+describe('encode', () => {
+  test('default (Bytes)', () => {
+    expect(CompactSize.encode(253n)).toEqual(new Uint8Array([253, 253, 0]))
+  })
+
+  test('as: Bytes', () => {
+    expect(CompactSize.encode(252n, { as: 'Bytes' })).toEqual(
+      new Uint8Array([252]),
+    )
+  })
+
+  test('as: Hex', () => {
+    expect(CompactSize.encode(253n, { as: 'Hex' })).toBe('0xfdfd00')
+  })
+})
+
+describe('decode', () => {
+  test('bytes input', () => {
+    expect(CompactSize.decode(new Uint8Array([0xfd, 0x00, 0x01]))).toEqual({
+      value: 256n,
+      size: 3,
+    })
+  })
+
+  test('hex input', () => {
+    expect(CompactSize.decode('0xfd0001')).toEqual({
+      value: 256n,
+      size: 3,
+    })
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(CompactSize)).toMatchInlineSnapshot(`
     [
       "toBytes",
       "toHex",
+      "encode",
       "fromBytes",
       "fromHex",
+      "decode",
       "NegativeValueError",
       "InsufficientBytesError",
       "InvalidValueError",

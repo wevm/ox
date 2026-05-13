@@ -12,6 +12,8 @@ import * as Hex from './Hex.js'
  * | 65,536–4,294,967,295 | `0xFE` + 4 bytes LE | 5 |
  * | \> 4,294,967,295 | `0xFF` + 8 bytes LE | 9 |
  *
+ * @deprecated Use {@link CompactSize#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { CompactSize } from 'ox'
@@ -63,6 +65,8 @@ export declare namespace toBytes {
 /**
  * Encodes an integer using Bitcoin's CompactSize variable-length encoding and returns it as {@link ox#Hex.Hex}.
  *
+ * @deprecated Use {@link CompactSize#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { CompactSize } from 'ox'
@@ -83,7 +87,59 @@ export declare namespace toHex {
 }
 
 /**
+ * Encodes an integer using Bitcoin's CompactSize variable-length encoding.
+ *
+ * Canonical alias for {@link CompactSize#toBytes} / {@link CompactSize#toHex}.
+ *
+ * | Range | Encoding | Bytes |
+ * |---|---|---|
+ * | 0–252 | Direct value | 1 |
+ * | 253–65,535 | `0xFD` + 2 bytes LE | 3 |
+ * | 65,536–4,294,967,295 | `0xFE` + 4 bytes LE | 5 |
+ * | \> 4,294,967,295 | `0xFF` + 8 bytes LE | 9 |
+ *
+ * @example
+ * ```ts twoslash
+ * import { CompactSize } from 'ox'
+ *
+ * CompactSize.encode(253n)
+ * // @log: Uint8Array [ 253, 253, 0 ]
+ *
+ * CompactSize.encode(253n, { as: 'Hex' })
+ * // @log: '0xfdfd00'
+ * ```
+ *
+ * @param value - The integer to encode.
+ * @param options - Encoding options.
+ * @returns The CompactSize-encoded value.
+ */
+export function encode<as extends 'Bytes' | 'Hex' = 'Bytes'>(
+  value: bigint | number,
+  options: encode.Options<as> = {},
+): encode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+  const bytes = toBytes(value)
+  if (as === 'Hex') return Hex.fromBytes(bytes) as encode.ReturnType<as>
+  return bytes as encode.ReturnType<as>
+}
+
+export declare namespace encode {
+  type Options<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
+    /** The format to return the encoded value in. */
+    as?: as | 'Bytes' | 'Hex' | undefined
+  }
+
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
  * Decodes a CompactSize-encoded value from {@link ox#Bytes.Bytes}.
+ *
+ * @deprecated Use {@link CompactSize#decode} instead. Will be removed in a future major.
  *
  * @example
  * ```ts twoslash
@@ -143,6 +199,8 @@ export declare namespace fromBytes {
 /**
  * Decodes a CompactSize-encoded value from {@link ox#Hex.Hex}.
  *
+ * @deprecated Use {@link CompactSize#decode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { CompactSize } from 'ox'
@@ -160,6 +218,39 @@ export function fromHex(data: Hex.Hex): fromBytes.ReturnType {
 
 export declare namespace fromHex {
   type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Decodes a CompactSize-encoded value from {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex}.
+ *
+ * Canonical alias for {@link CompactSize#fromBytes} / {@link CompactSize#fromHex}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { CompactSize } from 'ox'
+ *
+ * CompactSize.decode(new Uint8Array([0xfd, 0x00, 0x01]))
+ * // @log: { value: 256n, size: 3 }
+ *
+ * CompactSize.decode('0xfd0001')
+ * // @log: { value: 256n, size: 3 }
+ * ```
+ *
+ * @param value - The CompactSize-encoded bytes or hex string to decode.
+ * @returns The decoded value and number of bytes consumed.
+ */
+export function decode(value: Bytes.Bytes | Hex.Hex): fromBytes.ReturnType {
+  if (value instanceof Uint8Array) return fromBytes(value)
+  return fromBytes(Bytes.fromHex(value))
+}
+
+export declare namespace decode {
+  type ReturnType = fromBytes.ReturnType
+
+  type ErrorType =
+    | fromBytes.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /** Thrown when a CompactSize value is negative. */

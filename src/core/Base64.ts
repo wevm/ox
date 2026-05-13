@@ -65,6 +65,8 @@ const nativeFromBase64:
 /**
  * Encodes a {@link ox#Bytes.Bytes} to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
+ * @deprecated Use {@link Base64#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base64, Bytes } from 'ox'
@@ -158,6 +160,8 @@ export declare namespace fromBytes {
 /**
  * Encodes a {@link ox#Hex.Hex} to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
+ * @deprecated Use {@link Base64#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
@@ -219,6 +223,8 @@ export declare namespace fromHex {
 /**
  * Encodes a string to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
+ * @deprecated Use {@link Base64#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base64 } from 'ox'
@@ -278,7 +284,54 @@ export declare namespace fromString {
 }
 
 /**
+ * Encodes a {@link ox#Bytes.Bytes}, {@link ox#Hex.Hex}, or string value to a Base64-encoded string (with optional padding and/or URL-safe characters).
+ *
+ * Canonical alias for {@link Base64#fromBytes} / {@link Base64#fromHex} / {@link Base64#fromString}.
+ *
+ * Strings prefixed with `0x` are decoded as hex; other strings are decoded as UTF-8.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Base64, Bytes } from 'ox'
+ *
+ * Base64.encode(Bytes.fromString('hello world'))
+ * // @log: 'aGVsbG8gd29ybGQ='
+ *
+ * Base64.encode('hello world')
+ * // @log: 'aGVsbG8gd29ybGQ='
+ *
+ * Base64.encode('0x68656c6c6f20776f726c64')
+ * // @log: 'aGVsbG8gd29ybGQ='
+ * ```
+ *
+ * @param value - The byte array, hex value, or UTF-8 string to encode.
+ * @param options - Encoding options.
+ * @returns The Base64 encoded string.
+ */
+export function encode(
+  value: Bytes.Bytes | Hex.Hex | string,
+  options: encode.Options = {},
+): string {
+  if (value instanceof Uint8Array) return fromBytes(value, options)
+  if (typeof value === 'string' && value.startsWith('0x'))
+    return fromHex(value as Hex.Hex, options)
+  return fromString(value, options)
+}
+
+export declare namespace encode {
+  type Options = fromBytes.Options
+
+  type ErrorType =
+    | fromBytes.ErrorType
+    | fromHex.ErrorType
+    | fromString.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Bytes.Bytes}.
+ *
+ * @deprecated Use {@link Base64#decode} instead. Will be removed in a future major.
  *
  * @example
  * ```ts twoslash
@@ -353,6 +406,8 @@ export declare namespace toBytes {
 /**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Hex.Hex}.
  *
+ * @deprecated Use {@link Base64#decode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
@@ -375,6 +430,8 @@ export declare namespace toHex {
 /**
  * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a string.
  *
+ * @deprecated Use {@link Base64#decode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base64 } from 'ox'
@@ -391,6 +448,58 @@ export function toString(value: string): string {
 }
 
 export declare namespace toString {
+  type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a {@link ox#Bytes.Bytes}, {@link ox#Hex.Hex}, or UTF-8 string value.
+ *
+ * Canonical alias for {@link Base64#toBytes} / {@link Base64#toHex} / {@link Base64#toString}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Base64 } from 'ox'
+ *
+ * Base64.decode('aGVsbG8gd29ybGQ=')
+ * // @log: Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
+ *
+ * Base64.decode('aGVsbG8gd29ybGQ=', { as: 'Hex' })
+ * // @log: '0x68656c6c6f20776f726c64'
+ *
+ * Base64.decode('aGVsbG8gd29ybGQ=', { as: 'String' })
+ * // @log: 'hello world'
+ * ```
+ *
+ * @param value - The Base64 encoded string.
+ * @param options - Decoding options.
+ * @returns The decoded value.
+ */
+export function decode<as extends 'Bytes' | 'Hex' | 'String' = 'Bytes'>(
+  value: string,
+  options: decode.Options<as> = {},
+): decode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+  const bytes = toBytes(value)
+  if (as === 'String') return Bytes.toString(bytes) as decode.ReturnType<as>
+  if (as === 'Hex') return Hex.fromBytes(bytes) as decode.ReturnType<as>
+  return bytes as decode.ReturnType<as>
+}
+
+export declare namespace decode {
+  type Options<
+    as extends 'Bytes' | 'Hex' | 'String' = 'Bytes' | 'Hex' | 'String',
+  > = {
+    /** The format to return the decoded value in. */
+    as?: as | 'Bytes' | 'Hex' | 'String' | undefined
+  }
+
+  type ReturnType<
+    as extends 'Bytes' | 'Hex' | 'String' = 'Bytes' | 'Hex' | 'String',
+  > =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'String' ? string : never)
+
   type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
 }
 

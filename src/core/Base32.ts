@@ -10,6 +10,8 @@ import {
 /**
  * Encodes a {@link ox#Bytes.Bytes} value to a Base32-encoded string (using the BIP-173 bech32 alphabet).
  *
+ * @deprecated Use {@link Base32#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base32, Bytes } from 'ox'
@@ -35,6 +37,8 @@ export declare namespace fromBytes {
 /**
  * Encodes a {@link ox#Hex.Hex} value to a Base32-encoded string (using the BIP-173 bech32 alphabet).
  *
+ * @deprecated Use {@link Base32#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base32 } from 'ox'
@@ -54,7 +58,40 @@ export declare namespace fromHex {
 }
 
 /**
+ * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to a Base32-encoded string (using the BIP-173 bech32 alphabet).
+ *
+ * Canonical alias for {@link Base32#fromBytes} / {@link Base32#fromHex}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Base32, Bytes } from 'ox'
+ *
+ * Base32.encode(new Uint8Array([0x00, 0xff, 0x00]))
+ * // @log: 'qrlsq'
+ *
+ * Base32.encode('0x00ff00')
+ * // @log: 'qrlsq'
+ * ```
+ *
+ * @param value - The byte array or hex value to encode.
+ * @returns The Base32 encoded string.
+ */
+export function encode(value: Bytes.Bytes | Hex.Hex): string {
+  if (value instanceof Uint8Array) return fromBytes(value)
+  return fromBytes(Bytes.fromHex(value))
+}
+
+export declare namespace encode {
+  type ErrorType =
+    | fromBytes.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Decodes a Base32-encoded string (using the BIP-173 bech32 alphabet) to {@link ox#Bytes.Bytes}.
+ *
+ * @deprecated Use {@link Base32#decode} instead. Will be removed in a future major.
  *
  * @example
  * ```ts twoslash
@@ -99,6 +136,8 @@ export declare namespace toBytes {
 /**
  * Decodes a Base32-encoded string (using the BIP-173 bech32 alphabet) to {@link ox#Hex.Hex}.
  *
+ * @deprecated Use {@link Base32#decode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Base32 } from 'ox'
@@ -114,6 +153,49 @@ export function toHex(value: string): Hex.Hex {
 }
 
 export declare namespace toHex {
+  type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Decodes a Base32-encoded string (using the BIP-173 bech32 alphabet) to a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ *
+ * Canonical alias for {@link Base32#toBytes} / {@link Base32#toHex}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Base32 } from 'ox'
+ *
+ * Base32.decode('qrlsq')
+ * // @log: Uint8Array [ 0, 255, 0 ]
+ *
+ * Base32.decode('qrlsq', { as: 'Hex' })
+ * // @log: '0x00ff00'
+ * ```
+ *
+ * @param value - The Base32 encoded string.
+ * @param options - Decoding options.
+ * @returns The decoded value.
+ */
+export function decode<as extends 'Bytes' | 'Hex' = 'Bytes'>(
+  value: string,
+  options: decode.Options<as> = {},
+): decode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+  const bytes = toBytes(value)
+  if (as === 'Hex') return Hex.fromBytes(bytes) as decode.ReturnType<as>
+  return bytes as decode.ReturnType<as>
+}
+
+export declare namespace decode {
+  type Options<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
+    /** The format to return the decoded value in. */
+    as?: as | 'Bytes' | 'Hex' | undefined
+  }
+
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
   type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
 }
 

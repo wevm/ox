@@ -89,15 +89,58 @@ describe('toString', () => {
   })
 })
 
+describe('encode', () => {
+  test('bytes input', () => {
+    const bytes = new Uint8Array([
+      104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100,
+    ])
+    expect(Base64.encode(bytes)).toBe('aGVsbG8gd29ybGQ=')
+  })
+
+  test('hex input', () => {
+    expect(Base64.encode('0x68656c6c6f20776f726c64')).toBe('aGVsbG8gd29ybGQ=')
+  })
+
+  test('utf-8 string input', () => {
+    expect(Base64.encode('hello world')).toBe('aGVsbG8gd29ybGQ=')
+  })
+
+  test('forwards options', () => {
+    expect(Base64.encode('hello world', { pad: false })).toBe('aGVsbG8gd29ybGQ')
+  })
+})
+
+describe('decode', () => {
+  test('default (Bytes)', () => {
+    expect(Base64.decode('aGVsbG8gd29ybGQ=')).toEqual(
+      new Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100]),
+    )
+  })
+
+  test('as: Hex', () => {
+    expect(Base64.decode('aGVsbG8gd29ybGQ=', { as: 'Hex' })).toBe(
+      '0x68656c6c6f20776f726c64',
+    )
+  })
+
+  test('as: String', () => {
+    expect(Base64.decode('aGVsbG8gd29ybGQ=', { as: 'String' })).toBe(
+      'hello world',
+    )
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(Base64)).toMatchInlineSnapshot(`
     [
       "fromBytes",
       "fromHex",
       "fromString",
+      "encode",
       "toBytes",
       "toHex",
       "toString",
+      "decode",
       "InvalidCharacterError",
       "InvalidLengthError",
       "InvalidPaddingError",

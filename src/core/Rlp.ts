@@ -8,6 +8,8 @@ import type { ExactPartial, RecursiveArray } from './internal/types.js'
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
+ * @deprecated Use {@link Rlp#decode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Rlp } from 'ox'
@@ -31,6 +33,8 @@ export declare namespace toBytes {
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Hex.Hex} value.
  *
+ * @deprecated Use {@link Rlp#decode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Rlp } from 'ox'
@@ -46,6 +50,47 @@ export function toHex(value: Bytes.Bytes | Hex.Hex): RecursiveArray<Hex.Hex> {
 }
 
 export declare namespace toHex {
+  type ErrorType = to.ErrorType
+}
+
+/**
+ * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ *
+ * Canonical alias for {@link Rlp#toBytes} / {@link Rlp#toHex}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Rlp } from 'ox'
+ *
+ * Rlp.decode('0x8b68656c6c6f20776f726c64')
+ * // @log: Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
+ *
+ * Rlp.decode('0x8b68656c6c6f20776f726c64', { as: 'Hex' })
+ * // @log: '0x68656c6c6f20776f726c64'
+ * ```
+ *
+ * @param value - The value to decode.
+ * @param options - Decoding options.
+ * @returns The decoded value.
+ */
+export function decode<as extends 'Bytes' | 'Hex' = 'Bytes'>(
+  value: Bytes.Bytes | Hex.Hex,
+  options: decode.Options<as> = {},
+): decode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+  return to(value, as) as decode.ReturnType<as>
+}
+
+export declare namespace decode {
+  type Options<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
+    /** The format to return the decoded value in. */
+    as?: as | 'Bytes' | 'Hex' | undefined
+  }
+
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
+    | (as extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
+    | (as extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
+
   type ErrorType = to.ErrorType
 }
 
@@ -165,6 +210,8 @@ export declare namespace readList {
 /**
  * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
  *
+ * @deprecated Use {@link Rlp#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Bytes, Rlp } from 'ox'
@@ -237,6 +284,8 @@ export declare namespace from {
 /**
  * Encodes a {@link ox#Bytes.Bytes} value into a Recursive-Length Prefix (RLP) value.
  *
+ * @deprecated Use {@link Rlp#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Bytes, Rlp } from 'ox'
@@ -270,6 +319,8 @@ export declare namespace fromBytes {
 /**
  * Encodes a {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
  *
+ * @deprecated Use {@link Rlp#encode} instead. Will be removed in a future major.
+ *
  * @example
  * ```ts twoslash
  * import { Rlp } from 'ox'
@@ -296,6 +347,46 @@ export declare namespace fromHex {
   >
 
   type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = from.ReturnType<as>
+
+  type ErrorType = from.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
+ *
+ * Canonical alias for {@link Rlp#from} / {@link Rlp#fromBytes} / {@link Rlp#fromHex}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes, Rlp } from 'ox'
+ *
+ * Rlp.encode('0x68656c6c6f20776f726c64', { as: 'Hex' })
+ * // @log: '0x8b68656c6c6f20776f726c64'
+ *
+ * Rlp.encode(Bytes.from([139, 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100]))
+ * // @log: Uint8Array([139, 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
+ * ```
+ *
+ * @param value - The {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to encode.
+ * @param options - Encoding options.
+ * @returns The RLP-encoded value.
+ */
+export function encode<as extends 'Bytes' | 'Hex' = 'Bytes'>(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+  options: encode.Options<as> = {},
+): encode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+  return from(value, { as }) as never
+}
+
+export declare namespace encode {
+  type Options<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
+    /** The format to return the encoded value in. */
+    as?: as | 'Bytes' | 'Hex' | undefined
+  }
+
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
+    from.ReturnType<as>
 
   type ErrorType = from.ErrorType | Errors.GlobalErrorType
 }

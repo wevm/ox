@@ -53,13 +53,44 @@ describe('toHex', () => {
   })
 })
 
+describe('encode', () => {
+  test('bytes input', () => {
+    expect(Base32.encode(new Uint8Array([0x00, 0xff, 0x00]))).toBe('qrlsq')
+  })
+
+  test('hex input', () => {
+    expect(Base32.encode('0x00ff00')).toBe('qrlsq')
+  })
+})
+
+describe('decode', () => {
+  test('default (Bytes)', () => {
+    const out = Base32.decode('qrlsq')
+    expect(out).toBeInstanceOf(Uint8Array)
+    expect(out.slice(0, 3)).toEqual(new Uint8Array([0x00, 0xff, 0x00]))
+  })
+
+  test('as: Bytes', () => {
+    const out = Base32.decode('qrlsq', { as: 'Bytes' })
+    expect(out).toBeInstanceOf(Uint8Array)
+  })
+
+  test('as: Hex', () => {
+    const out = Base32.decode('qrlsq', { as: 'Hex' })
+    expect(out.startsWith('0x')).toBe(true)
+    expect(out.slice(0, 8)).toBe('0x00ff00')
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(Base32)).toMatchInlineSnapshot(`
     [
       "fromBytes",
       "fromHex",
+      "encode",
       "toBytes",
       "toHex",
+      "decode",
       "InvalidCharacterError",
       "InvalidPaddingError",
     ]

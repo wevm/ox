@@ -6,6 +6,7 @@ test('exports', () => {
     [
       "toBytes",
       "toHex",
+      "decode",
       "to",
       "decodeRlpCursor",
       "readLength",
@@ -13,6 +14,7 @@ test('exports', () => {
       "from",
       "fromBytes",
       "fromHex",
+      "encode",
     ]
   `)
 })
@@ -335,5 +337,45 @@ describe('Rlp.to', () => {
     It must be an even length.]
   `,
     )
+  })
+})
+
+describe('Rlp.encode', () => {
+  test('default (Bytes)', () => {
+    const value = '0x68656c6c6f20776f726c64'
+    expect(Rlp.encode(value)).toEqual(
+      Bytes.fromHex('0x8b68656c6c6f20776f726c64'),
+    )
+  })
+
+  test('as: Hex', () => {
+    expect(Rlp.encode('0x68656c6c6f20776f726c64', { as: 'Hex' })).toBe(
+      '0x8b68656c6c6f20776f726c64',
+    )
+  })
+
+  test('as: Bytes', () => {
+    expect(
+      Rlp.encode(Bytes.fromHex('0x68656c6c6f20776f726c64'), { as: 'Bytes' }),
+    ).toEqual(Bytes.fromHex('0x8b68656c6c6f20776f726c64'))
+  })
+})
+
+describe('Rlp.decode', () => {
+  test('default (Bytes)', () => {
+    expect(Rlp.decode('0x8b68656c6c6f20776f726c64')).toEqual(
+      Bytes.fromHex('0x68656c6c6f20776f726c64'),
+    )
+  })
+
+  test('as: Hex', () => {
+    expect(Rlp.decode('0x8b68656c6c6f20776f726c64', { as: 'Hex' })).toBe(
+      '0x68656c6c6f20776f726c64',
+    )
+  })
+
+  test('list', () => {
+    const encoded = Rlp.encode(['0x00', '0x80'], { as: 'Hex' })
+    expect(Rlp.decode(encoded, { as: 'Hex' })).toEqual(['0x00', '0x80'])
   })
 })
