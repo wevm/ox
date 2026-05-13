@@ -463,7 +463,7 @@ export function fromAbi<
 }
 
 /**
- * Memoizes selector -> ABI item lookups against the originating ABI
+ * Memoizes selector -\> ABI item lookups against the originating ABI
  * value. Keyed by the ABI array identity (`WeakMap`) so user-mutated
  * arrays naturally invalidate. The inner map is built lazily on the
  * first selector lookup and only contains function/error/event entries.
