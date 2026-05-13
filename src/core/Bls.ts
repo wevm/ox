@@ -685,3 +685,330 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
+
+/**
+ * Hashes a payload to a point on the BLS12-381 curve.
+ *
+ * @remarks
+ * Identical to {@link ox#Bls.(preparePayload:function)}; the alias is provided
+ * because `hashToCurve` is the standard term used by the BLS-signature
+ * specification and noble's BLS implementation.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const point = Bls.hashToCurve({ payload: Hex.random(32) })
+ * ```
+ *
+ * @param options - The hash-to-curve options.
+ * @returns The hashed point.
+ */
+export function hashToCurve<size extends Size = 'short-key:long-sig'>(
+  options: hashToCurve.Options<size>,
+): size extends 'short-key:long-sig' ? BlsPoint.G2 : BlsPoint.G1
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function hashToCurve(
+  options: hashToCurve.Options,
+): BlsPoint.BlsPoint {
+  return preparePayload(options)
+}
+
+export declare namespace hashToCurve {
+  type Options<size extends Size = 'short-key:long-sig'> =
+    preparePayload.Options<size>
+  type ErrorType = preparePayload.ErrorType
+}
+
+/**
+ * Prepares a payload for repeated signing or verification by hashing it to a
+ * point on the BLS12-381 curve once.
+ *
+ * @remarks
+ * For workflows that sign or verify the same payload many times (threshold
+ * signing, committee voting, aggregated-signature verification), passing the
+ * prepared payload to {@link ox#Bls.(signPrepared:function)} /
+ * {@link ox#Bls.(verifyPrepared:function)} avoids paying the
+ * `hashToCurve` cost on every call.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const payload = Bls.preparePayload({ payload: Hex.random(32) })
+ *
+ * const signatures = Array.from({ length: 16 }, () =>
+ *   Bls.signPrepared({ payload, privateKey: '0x...' }),
+ * )
+ * ```
+ *
+ * @param options - The prepare options.
+ * @returns The prepared payload point.
+ */
+export function preparePayload<size extends Size = 'short-key:long-sig'>(
+  options: preparePayload.Options<size>,
+): size extends 'short-key:long-sig' ? BlsPoint.G2 : BlsPoint.G1
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function preparePayload(
+  options: preparePayload.Options,
+): BlsPoint.BlsPoint {
+  const { payload, suite, size = 'short-key:long-sig' } = options
+  const group = size === 'short-key:long-sig' ? bls.G2 : bls.G1
+  const point = group.hashToCurve(
+    Bytes.from(payload),
+    suite ? { DST: Bytes.fromString(suite) } : undefined,
+  )
+  return { x: point.X, y: point.Y, z: point.Z }
+}
+
+export declare namespace preparePayload {
+  type Options<size extends Size = 'short-key:long-sig'> = {
+    /** Payload to prepare. */
+    payload: Hex.Hex | Bytes.Bytes
+    /**
+     * Ciphersuite (DST) to use. Defaults to "Basic".
+     * @see {@link ox#Bls.suite}
+     */
+    suite?: string | undefined
+    /**
+     * Group on which to prepare the payload.
+     *
+     * - `'short-key:long-sig'`: payload prepared on G2 (96 bytes).
+     * - `'long-key:short-sig'`: payload prepared on G1 (48 bytes).
+     *
+     * @default 'short-key:long-sig'
+     */
+    size?: size | Size | undefined
+  }
+
+  type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Signs a payload that has already been prepared via
+ * {@link ox#Bls.(preparePayload:function)}.
+ *
+ * @remarks
+ * Skips the per-call `hashToCurve` cost. For repeated same-message signing
+ * (threshold / committee), this is the hot path.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const payload = Bls.preparePayload({ payload: Hex.random(32) })
+ * const signature = Bls.signPrepared({ payload, privateKey: '0x...' })
+ * ```
+ *
+ * @param options - The signing options.
+ * @returns BLS signature point.
+ */
+export function signPrepared<size extends Size = 'short-key:long-sig'>(
+  options: signPrepared.Options<size>,
+): size extends 'short-key:long-sig' ? BlsPoint.G2 : BlsPoint.G1
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function signPrepared(
+  options: signPrepared.Options,
+): BlsPoint.BlsPoint {
+  const { payload, privateKey, size = 'short-key:long-sig' } = options
+  const isShortKey = size === 'short-key:long-sig'
+  const payloadGroup = isShortKey ? bls.G2 : bls.G1
+  const privateKeyGroup = isShortKey ? bls.G1 : bls.G2
+
+  const PointCtor = (payloadGroup as any).Point
+  const payloadPoint = new PointCtor(payload.x, payload.y, payload.z)
+  const signature = payloadPoint.multiply(
+    privateKeyGroup.Point.Fn.fromBytes(Bytes.from(privateKey)),
+  )
+  return { x: signature.X, y: signature.Y, z: signature.Z }
+}
+
+export declare namespace signPrepared {
+  type Options<size extends Size = 'short-key:long-sig'> = {
+    /** Payload prepared by {@link ox#Bls.(preparePayload:function)}. */
+    payload: size extends 'short-key:long-sig' ? BlsPoint.G2 : BlsPoint.G1
+    /** BLS private key. */
+    privateKey: Hex.Hex | Bytes.Bytes
+    /**
+     * Size of the signature to compute. Must match the group used to prepare the payload.
+     *
+     * @default 'short-key:long-sig'
+     */
+    size?: size | Size | undefined
+  }
+
+  type ErrorType = Bytes.from.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Verifies a signature against a payload prepared by
+ * {@link ox#Bls.(preparePayload:function)}.
+ *
+ * @remarks
+ * Skips the per-call `hashToCurve` cost. Combine with
+ * {@link ox#Bls.(verifyBatchSameMessage:function)} for high-throughput
+ * verification of many signatures over a single payload.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const privateKey = Bls.randomPrivateKey()
+ * const publicKey = Bls.getPublicKey({ privateKey })
+ *
+ * const payload = Bls.preparePayload({ payload: Hex.random(32) })
+ * const signature = Bls.signPrepared({ payload, privateKey })
+ *
+ * const verified = Bls.verifyPrepared({ payload, publicKey, signature })
+ * ```
+ *
+ * @param options - The verification options.
+ * @returns Whether the signature was produced by the public key over the payload.
+ */
+export function verifyPrepared(options: verifyPrepared.Options): boolean {
+  const publicKey = options.publicKey as unknown as BlsPoint.BlsPoint<any>
+  const signature = options.signature as unknown as BlsPoint.BlsPoint<any>
+  const payloadIn = options.payload as BlsPoint.BlsPoint<any>
+
+  const isShortSig = typeof signature.x === 'bigint'
+
+  const payloadGroup = isShortSig ? bls.G1 : bls.G2
+  const PayloadPointCtor = (payloadGroup as any).Point
+  const payloadPoint = new PayloadPointCtor(
+    payloadIn.x,
+    payloadIn.y,
+    payloadIn.z,
+  )
+
+  const shortSigPairing = () =>
+    bls.pairingBatch([
+      {
+        g1: payloadPoint as InstanceType<typeof bls.G1.Point>,
+        g2: new bls.G2.Point(publicKey.x, publicKey.y, publicKey.z),
+      },
+      {
+        g1: new bls.G1.Point(signature.x, signature.y, signature.z),
+        g2: bls.G2.Point.BASE.negate(),
+      },
+    ])
+
+  const longSigPairing = () =>
+    bls.pairingBatch([
+      {
+        g1: new bls.G1.Point(publicKey.x, publicKey.y, publicKey.z).negate(),
+        g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
+      },
+      {
+        g1: bls.G1.Point.BASE,
+        g2: new bls.G2.Point(signature.x, signature.y, signature.z),
+      },
+    ])
+
+  return bls.fields.Fp12.eql(
+    isShortSig ? shortSigPairing() : longSigPairing(),
+    bls.fields.Fp12.ONE,
+  )
+}
+
+export declare namespace verifyPrepared {
+  type Options = {
+    /** Payload prepared by {@link ox#Bls.(preparePayload:function)}. */
+    payload: BlsPoint.G1 | BlsPoint.G2
+  } & OneOf<
+    | {
+        publicKey: BlsPoint.G1
+        signature: BlsPoint.G2
+      }
+    | {
+        publicKey: BlsPoint.G2
+        signature: BlsPoint.G1
+      }
+  >
+
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Verifies many signatures over the same payload by aggregating them and
+ * verifying once, using the bilinearity of the pairing.
+ *
+ * @remarks
+ * For N signatures over a single message, this performs `O(N)` point
+ * additions instead of `O(N)` pairings, then a single pairing check. The
+ * payload is hashed to the curve once. Returns `true` only if all signatures
+ * verify against their respective public keys.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bls, Hex } from 'ox'
+ *
+ * const payload = Hex.random(32)
+ * const privateKeys = Array.from({ length: 32 }, () => Bls.randomPrivateKey())
+ *
+ * const publicKeys = privateKeys.map((privateKey) =>
+ *   Bls.getPublicKey({ privateKey }),
+ * )
+ * const signatures = privateKeys.map((privateKey) =>
+ *   Bls.sign({ payload, privateKey }),
+ * )
+ *
+ * const verified = Bls.verifyBatchSameMessage({ // [!code focus]
+ *   payload, // [!code focus]
+ *   publicKeys, // [!code focus]
+ *   signatures, // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @param options - The verification options.
+ * @returns Whether every signature is valid for its corresponding public key.
+ */
+export function verifyBatchSameMessage(
+  options: verifyBatchSameMessage.Options,
+): boolean {
+  const { payload, publicKeys, signatures, suite } = options
+  if (publicKeys.length !== signatures.length)
+    throw new Errors.BaseError(
+      `Bls.verifyBatchSameMessage expects publicKeys.length (${publicKeys.length}) === signatures.length (${signatures.length}).`,
+    )
+  if (publicKeys.length === 0)
+    throw new Errors.BaseError(
+      'Bls.verifyBatchSameMessage expects a non-empty input.',
+    )
+
+  const publicKey = aggregate(publicKeys as any)
+  const signature = aggregate(signatures as any)
+
+  return verify({
+    payload,
+    suite,
+    publicKey,
+    signature,
+  } as unknown as verify.Options)
+}
+
+export declare namespace verifyBatchSameMessage {
+  type Options = {
+    /** Payload that was signed. */
+    payload: Hex.Hex | Bytes.Bytes
+    /**
+     * Ciphersuite to use for verification. Defaults to "Basic".
+     *
+     * @see {@link ox#Bls.suite}
+     */
+    suite?: string | undefined
+  } & OneOf<
+    | {
+        publicKeys: readonly BlsPoint.G1[]
+        signatures: readonly BlsPoint.G2[]
+      }
+    | {
+        publicKeys: readonly BlsPoint.G2[]
+        signatures: readonly BlsPoint.G1[]
+      }
+  >
+
+  type ErrorType =
+    | aggregate.ErrorType
+    | verify.ErrorType
+    | Errors.GlobalErrorType
+}

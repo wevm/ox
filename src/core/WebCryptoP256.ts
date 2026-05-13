@@ -332,6 +332,110 @@ export declare namespace verify {
 }
 
 /**
+ * Imports an ECDSA P-256 public key once so that repeated verification calls
+ * do not pay the cost of `crypto.subtle.importKey` on every call.
+ *
+ * @remarks
+ * `crypto.subtle.importKey` is one of the slower Web Crypto steps. For batch
+ * verification of many signatures against the same key, prepare the key once
+ * with {@link ox#WebCryptoP256.(prepareVerifyKey:function)} and pass the
+ * resulting `CryptoKey` to {@link ox#WebCryptoP256.(verifyPrepared:function)}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * const verifier = await WebCryptoP256.prepareVerifyKey(publicKey) // [!code focus]
+ *
+ * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
+ * const verified = await WebCryptoP256.verifyPrepared({
+ *   publicKey: verifier,
+ *   signature,
+ *   payload: '0xdeadbeef',
+ * })
+ * ```
+ *
+ * @param publicKey - The public key to import.
+ * @returns A {@link CryptoKey} usable with {@link ox#WebCryptoP256.(verifyPrepared:function)}.
+ */
+export async function prepareVerifyKey(
+  publicKey: PublicKey.PublicKey<boolean>,
+): Promise<CryptoKey> {
+  return await globalThis.crypto.subtle.importKey(
+    'raw',
+    PublicKey.toBytes(publicKey),
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['verify'],
+  )
+}
+
+export declare namespace prepareVerifyKey {
+  type ErrorType = PublicKey.toBytes.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Verifies a signature using a public key that was already imported with
+ * {@link ox#WebCryptoP256.(prepareVerifyKey:function)}, skipping the
+ * per-call `crypto.subtle.importKey` overhead.
+ *
+ * @example
+ * ```ts twoslash
+ * import { WebCryptoP256 } from 'ox'
+ *
+ * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * const verifier = await WebCryptoP256.prepareVerifyKey(publicKey)
+ *
+ * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
+ *
+ * const verified = await WebCryptoP256.verifyPrepared({ // [!code focus]
+ *   publicKey: verifier, // [!code focus]
+ *   signature, // [!code focus]
+ *   payload: '0xdeadbeef', // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @param options - The verification options.
+ * @returns Whether the payload was signed by the prepared public key.
+ */
+export async function verifyPrepared(
+  options: verifyPrepared.Options,
+): Promise<boolean> {
+  const { lowS = true, payload, publicKey, signature } = options
+
+  if (lowS && signature.s > N / 2n) return false
+
+  return await globalThis.crypto.subtle.verify(
+    {
+      name: 'ECDSA',
+      hash: 'SHA-256',
+    },
+    publicKey,
+    Bytes.concat(
+      Bytes.fromNumber(signature.r, { size: 32 }),
+      Bytes.fromNumber(signature.s, { size: 32 }),
+    ),
+    Bytes.from(payload),
+  )
+}
+
+export declare namespace verifyPrepared {
+  type Options = {
+    /** If set to `true`, only low-S signatures will be accepted. @default true */
+    lowS?: boolean | undefined
+    /** Imported public {@link CryptoKey} from {@link ox#WebCryptoP256.(prepareVerifyKey:function)}. */
+    publicKey: CryptoKey
+    /** Signature of the payload. */
+    signature: Signature.Signature<false>
+    /** Payload that was signed. */
+    payload: Hex.Hex | Bytes.Bytes
+  }
+
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
  * Thrown when an ECDSA private key is supplied to {@link ox#WebCryptoP256.(getSharedSecret:function)}.
  * Only ECDH private keys are valid for shared secret derivation.
  */

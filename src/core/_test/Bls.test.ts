@@ -254,6 +254,112 @@ describe('verify', () => {
   })
 })
 
+
+describe("hashToCurve / preparePayload", () => {
+  test("hashToCurve aliases preparePayload", () => {
+    const payload = Hex.fromString("hello")
+    expect(Bls.hashToCurve({ payload })).toEqual(
+      Bls.preparePayload({ payload }),
+    )
+  })
+
+  test("preparePayload size: long-key:short-sig hits G1", () => {
+    const payload = Hex.fromString("hello")
+    const point = Bls.preparePayload({ payload, size: "long-key:short-sig" })
+    // G1 has bigint x; G2 has Fp2 x
+    expect(typeof point.x).toBe("bigint")
+  })
+})
+
+describe("signPrepared / verifyPrepared", () => {
+  test("equivalent to sign / verify (default size)", () => {
+    const payload = Hex.fromString("hello prepared")
+    const prepared = Bls.preparePayload({ payload })
+    const signature = Bls.signPrepared({ payload: prepared, privateKey })
+
+    expect(signature).toEqual(Bls.sign({ payload, privateKey }))
+
+    const publicKey = Bls.getPublicKey({ privateKey })
+    expect(
+      Bls.verifyPrepared({ payload: prepared, publicKey, signature }),
+    ).toBe(true)
+  })
+
+  test("equivalent to sign / verify (long-key:short-sig)", () => {
+    const payload = Hex.fromString("hello prepared")
+    const size = "long-key:short-sig" as const
+    const prepared = Bls.preparePayload({ payload, size })
+    const signature = Bls.signPrepared({
+      payload: prepared,
+      privateKey,
+      size,
+    })
+
+    expect(signature).toEqual(Bls.sign({ payload, privateKey, size }))
+
+    const publicKey = Bls.getPublicKey({ privateKey, size })
+    expect(
+      Bls.verifyPrepared({ payload: prepared, publicKey, signature }),
+    ).toBe(true)
+  })
+})
+
+describe("verifyBatchSameMessage", () => {
+  test("default", () => {
+    const payload = Hex.random(32)
+    const privateKeys = Array.from({ length: 8 }, () =>
+      Bls.randomPrivateKey(),
+    )
+    const publicKeys = privateKeys.map((pk) =>
+      Bls.getPublicKey({ privateKey: pk }),
+    )
+    const signatures = privateKeys.map((pk) =>
+      Bls.sign({ payload, privateKey: pk }),
+    )
+    expect(
+      Bls.verifyBatchSameMessage({ payload, publicKeys, signatures }),
+    ).toBe(true)
+  })
+
+  test("returns false for any mismatched signature", () => {
+    const payload = Hex.random(32)
+    const pks = Array.from({ length: 4 }, () => Bls.randomPrivateKey())
+    const publicKeys = pks.map((pk) => Bls.getPublicKey({ privateKey: pk }))
+    const signatures = pks.map((pk) =>
+      Bls.sign({ payload, privateKey: pk }),
+    )
+    // tamper one signature with a signature of another payload
+    signatures[0] = Bls.sign({
+      payload: Hex.random(32),
+      privateKey: pks[0]!,
+    })
+    expect(
+      Bls.verifyBatchSameMessage({ payload, publicKeys, signatures }),
+    ).toBe(false)
+  })
+
+  test("rejects empty input", () => {
+    expect(() =>
+      Bls.verifyBatchSameMessage({
+        payload: Hex.fromString("x"),
+        publicKeys: [],
+        signatures: [],
+      }),
+    ).toThrowError("non-empty")
+  })
+
+  test("rejects mismatched lengths", () => {
+    const pk = Bls.randomPrivateKey()
+    expect(() =>
+      Bls.verifyBatchSameMessage({
+        payload: Hex.fromString("x"),
+        publicKeys: [Bls.getPublicKey({ privateKey: pk })],
+        signatures: [],
+      } as any),
+    ).toThrowError("publicKeys.length")
+  })
+})
+
 describe("suite", () => {
   test("exports the standard DST constants", () => {
     expect(Bls.suite.basic).toMatch(/BLS12381G2/)
@@ -267,3 +373,5 @@ describe("suite", () => {
     ).toEqual(Bls.sign({ payload, privateKey }))
   })
 })
+
+

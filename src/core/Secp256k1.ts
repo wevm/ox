@@ -414,3 +414,117 @@ export declare namespace verify {
 
   type ErrorType = Errors.GlobalErrorType
 }
+
+/**
+ * Verifies a payload-bytes signature without re-normalizing the payload from
+ * a hex string on every call.
+ *
+ * @remarks
+ * Identical in behavior to {@link ox#Secp256k1.(verify:function)} when the
+ * caller already holds the payload as a {@link ox#Bytes.Bytes} value (or has
+ * already prehashed it). Skipping the per-call `Bytes.from(...)` branch is
+ * useful in tight batch-verify loops.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes, Secp256k1 } from 'ox'
+ *
+ * const { privateKey, publicKey } = Secp256k1.createKeyPair()
+ * const payload = Bytes.fromString('hello world')
+ * const signature = Secp256k1.sign({ payload, privateKey })
+ *
+ * const verified = Secp256k1.verifyBytes({ // [!code focus]
+ *   publicKey, // [!code focus]
+ *   payload, // [!code focus]
+ *   signature, // [!code focus]
+ * }) // [!code focus]
+ * ```
+ *
+ * @param options - The verification options.
+ * @returns Whether the bytes-payload was signed by the provided public key.
+ */
+export function verifyBytes(options: verifyBytes.Options): boolean {
+  const { hash, payload, publicKey, signature } = options
+  return secp256k1.verify(
+    toCompactBytes(signature),
+    payload,
+    PublicKey.toBytes(publicKey),
+    { lowS: true, prehash: hash === true },
+  )
+}
+
+export declare namespace verifyBytes {
+  type Options = {
+    /** If set to `true`, the payload will be hashed (sha256) before being verified. */
+    hash?: boolean | undefined
+    /** Payload that was signed, as bytes. */
+    payload: Bytes.Bytes
+    /** Public key that signed the payload. */
+    publicKey: PublicKey.PublicKey<boolean>
+    /** Signature of the payload. */
+    signature: Signature.Signature<false>
+  }
+
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Verifies a batch of signatures by pipelining {@link ox#Secp256k1.(verifyBytes:function)}.
+ *
+ * @remarks
+ * The underlying noble backend does not currently expose a native batched
+ * ECDSA verifier, so this is a thin loop wrapper. It still removes per-call
+ * `Bytes.from` normalization once and lets callers express batch intent for
+ * future optimization without touching call sites.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes, Secp256k1 } from 'ox'
+ *
+ * const { privateKey, publicKey } = Secp256k1.createKeyPair()
+ * const payload = Bytes.fromString('hello')
+ * const signatures = [
+ *   Secp256k1.sign({ payload, privateKey }),
+ *   Secp256k1.sign({ payload, privateKey }),
+ * ]
+ *
+ * const results = Secp256k1.verifyBatch( // [!code focus]
+ *   signatures.map((signature) => ({ payload, publicKey, signature })), // [!code focus]
+ * ) // [!code focus]
+ * // @log: [true, true]
+ * ```
+ *
+ * @param entries - The verification entries.
+ * @returns A boolean array, parallel to `entries`.
+ */
+export function verifyBatch(entries: readonly verifyBatch.Entry[]): boolean[] {
+  const out = new Array<boolean>(entries.length)
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!
+    out[i] = verifyBytes({
+      hash: entry.hash,
+      payload:
+        typeof entry.payload === 'string'
+          ? Bytes.from(entry.payload)
+          : entry.payload,
+      publicKey: entry.publicKey,
+      signature: entry.signature,
+    })
+  }
+  return out
+}
+
+export declare namespace verifyBatch {
+  type Entry = {
+    /** If set to `true`, the payload will be hashed (sha256) before being verified. */
+    hash?: boolean | undefined
+    /** Payload that was signed. */
+    payload: Hex.Hex | Bytes.Bytes
+    /** Public key that signed the payload. */
+    publicKey: PublicKey.PublicKey<boolean>
+    /** Signature of the payload. */
+    signature: Signature.Signature<false>
+  }
+
+  type ErrorType = verifyBytes.ErrorType | Errors.GlobalErrorType
+}

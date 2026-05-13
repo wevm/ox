@@ -548,6 +548,48 @@ test('exports', () => {
       "recoverPublicKey",
       "sign",
       "verify",
+      "verifyBytes",
+      "verifyBatch",
     ]
   `)
+})
+
+describe('verifyBytes', () => {
+  test('verifies bytes-payload', () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+    const payload = Bytes.fromString('hello bytes p256')
+    const signature = P256.sign({ payload, privateKey })
+    expect(P256.verifyBytes({ payload, publicKey, signature })).toBe(true)
+  })
+
+  test('rejects wrong payload', () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+    const signature = P256.sign({
+      payload: Bytes.fromString('a'),
+      privateKey,
+    })
+    expect(
+      P256.verifyBytes({
+        payload: Bytes.fromString('b'),
+        publicKey,
+        signature,
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('verifyBatch', () => {
+  test('returns parallel results', () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+    const a = Bytes.fromString('a')
+    const b = Bytes.fromString('b')
+    const sigA = P256.sign({ payload: a, privateKey })
+    const sigB = P256.sign({ payload: b, privateKey })
+    const results = P256.verifyBatch([
+      { payload: a, publicKey, signature: sigA },
+      { payload: b, publicKey, signature: sigB },
+      { payload: a, publicKey, signature: sigB },
+    ])
+    expect(results).toEqual([true, true, false])
+  })
 })

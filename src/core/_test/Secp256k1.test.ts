@@ -490,6 +490,55 @@ test('exports', () => {
       "recoverPublicKey",
       "sign",
       "verify",
+      "verifyBytes",
+      "verifyBatch",
     ]
   `)
+})
+
+describe('verifyBytes', () => {
+  test('verifies bytes-payload', () => {
+    const { privateKey, publicKey } = Secp256k1.createKeyPair()
+    const payload = Bytes.fromString('hello bytes')
+    const signature = Secp256k1.sign({ payload, privateKey })
+    expect(
+      Secp256k1.verifyBytes({ payload, publicKey, signature }),
+    ).toBe(true)
+  })
+
+  test('rejects wrong payload', () => {
+    const { privateKey, publicKey } = Secp256k1.createKeyPair()
+    const signature = Secp256k1.sign({
+      payload: Bytes.fromString('a'),
+      privateKey,
+    })
+    expect(
+      Secp256k1.verifyBytes({
+        payload: Bytes.fromString('b'),
+        publicKey,
+        signature,
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('verifyBatch', () => {
+  test('returns parallel results', () => {
+    const { privateKey, publicKey } = Secp256k1.createKeyPair()
+    const a = Bytes.fromString('a')
+    const b = Bytes.fromString('b')
+    const sigA = Secp256k1.sign({ payload: a, privateKey })
+    const sigB = Secp256k1.sign({ payload: b, privateKey })
+
+    const results = Secp256k1.verifyBatch([
+      { payload: a, publicKey, signature: sigA },
+      { payload: b, publicKey, signature: sigB },
+      { payload: a, publicKey, signature: sigB },
+    ])
+    expect(results).toEqual([true, true, false])
+  })
+
+  test('handles empty input', () => {
+    expect(Secp256k1.verifyBatch([])).toEqual([])
+  })
 })

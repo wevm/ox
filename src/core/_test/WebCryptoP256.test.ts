@@ -219,7 +219,61 @@ test('exports', () => {
       "getSharedSecret",
       "sign",
       "verify",
+      "prepareVerifyKey",
+      "verifyPrepared",
       "InvalidPrivateKeyAlgorithmError",
     ]
   `)
+})
+
+describe('prepareVerifyKey + verifyPrepared', () => {
+  test('round-trip', async () => {
+    const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+    const verifier = await WebCryptoP256.prepareVerifyKey(publicKey)
+    const signature = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+    })
+    const verified = await WebCryptoP256.verifyPrepared({
+      publicKey: verifier,
+      signature,
+      payload: '0xdeadbeef',
+    })
+    expect(verified).toBe(true)
+  })
+
+  test('rejects wrong payload', async () => {
+    const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+    const verifier = await WebCryptoP256.prepareVerifyKey(publicKey)
+    const signature = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+    })
+    const verified = await WebCryptoP256.verifyPrepared({
+      publicKey: verifier,
+      signature,
+      payload: '0xcafebabe',
+    })
+    expect(verified).toBe(false)
+  })
+
+  test('matches `verify` semantics', async () => {
+    const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+    const verifier = await WebCryptoP256.prepareVerifyKey(publicKey)
+    const signature = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+    })
+    const a = await WebCryptoP256.verify({
+      publicKey,
+      signature,
+      payload: '0xdeadbeef',
+    })
+    const b = await WebCryptoP256.verifyPrepared({
+      publicKey: verifier,
+      signature,
+      payload: '0xdeadbeef',
+    })
+    expect(a).toBe(b)
+  })
 })
