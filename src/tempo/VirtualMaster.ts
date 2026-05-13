@@ -277,15 +277,17 @@ export async function mineSaltAsync(
     onProgress,
     signal,
     start: start_ = 0n,
-    workers = getDefaultWorkerCount(),
   } = parameters
 
   const address = resolveAddress(parameters.address)
   const start = toFixedHex(start_, 32)
 
   assertCount(count)
-  if (workers !== undefined) assertWorkers(workers)
   throwIfAborted(signal)
+
+  const workers =
+    parameters.workers ?? (await VirtualMasterPool.getDefaultWorkerCount())
+  assertWorkers(workers)
 
   const workerCount = Math.max(
     1,
@@ -346,9 +348,10 @@ export declare namespace mineSaltAsync {
     /**
      * Number of workers to use.
      *
-     * Set to `0` or `1` to disable worker parallelism.
+     * Set to `0` or `1` to use a single-threaded WASM miner on the main
+     * thread instead of spawning a worker pool.
      *
-     * @default os.availableParallelism() - 1
+     * @default `os.availableParallelism() - 1` on Node/Bun/Deno, `navigator.hardwareConcurrency - 1` in the browser, and `1` otherwise.
      */
     workers?: number | undefined
   }
@@ -493,7 +496,9 @@ declare namespace mineSaltWithWorkerPool {
 }
 
 /**
- * Single-threaded chunked fallback when no worker pool is available.
+ * Single-threaded fallback used when worker parallelism is disabled or no
+ * worker pool is available. Prefers a WASM-backed main-thread miner and only
+ * drops to pure JS when WASM cannot be instantiated.
  *
  * @internal
  */
@@ -502,8 +507,39 @@ async function mineSaltAsyncFallback(
   value: mineSaltAsyncFallback.Options,
 ): Promise<mineSalt.ReturnType | undefined> {
   const startedAt = Date.now()
-  const startBigInt = BigInt(value.start)
+  let attempts = 0
 
+  const reportProgress = (added: number) => {
+    attempts += added
+    if (!value.onProgress) return
+    const elapsed = Date.now() - startedAt
+    const seconds = elapsed / 1000
+    value.onProgress({
+      attempts,
+      chunkSize: value.chunkSize,
+      count: value.count,
+      elapsed,
+      progress: Math.min(1, attempts / value.count),
+      rate: seconds === 0 ? 0 : attempts / seconds,
+      workers: 1,
+    })
+  }
+
+  const miner = await VirtualMasterPool.resolveSingleThreaded()
+  if (miner) {
+    const result = await miner.mine({
+      address: value.address,
+      chunkSize: value.chunkSize,
+      count: value.count,
+      onProgress: reportProgress,
+      signal: value.signal,
+      start: value.start,
+    })
+    return result as mineSalt.ReturnType | undefined
+  }
+
+  // Pure JS fallback only when WASM cannot be instantiated.
+  const startBigInt = BigInt(value.start)
   for (let offset = 0; offset < value.count; offset += value.chunkSize) {
     throwIfAborted(value.signal)
 
@@ -514,21 +550,7 @@ async function mineSaltAsyncFallback(
       start: startBigInt + BigInt(offset),
     })
 
-    if (value.onProgress) {
-      const attempts = Math.min(value.count, offset + count)
-      const elapsed = Date.now() - startedAt
-      const seconds = elapsed / 1000
-      value.onProgress({
-        attempts,
-        chunkSize: value.chunkSize,
-        count: value.count,
-        elapsed,
-        progress: Math.min(1, attempts / value.count),
-        rate: seconds === 0 ? 0 : attempts / seconds,
-        workers: 1,
-      })
-    }
-
+    reportProgress(count)
     if (result) return result
 
     // Yield to the event loop between chunks.
@@ -576,19 +598,6 @@ function getAbortError(signal?: AbortSignal): Error {
   const reason = signal?.reason
   if (reason instanceof Error) return reason
   return new Errors.BaseError('The operation was aborted.')
-}
-
-/**
- * Returns the default number of workers for the current platform.
- *
- * @internal
- */
-function getDefaultWorkerCount(): number {
-  if (typeof navigator !== 'undefined') {
-    const c = navigator.hardwareConcurrency
-    if (c && c > 1) return c - 1
-  }
-  return 1
 }
 
 /**
