@@ -202,11 +202,54 @@ describe('from', () => {
   })
 })
 
+describe('build', () => {
+  test('default', () => {
+    expect(
+      RpcRequest.build({
+        id: 0,
+        method: 'eth_blockNumber',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "id": 0,
+        "jsonrpc": "2.0",
+        "method": "eth_blockNumber",
+      }
+    `)
+  })
+
+  test('with params', () => {
+    expect(
+      RpcRequest.build({
+        id: 1,
+        method: 'eth_call',
+        params: [
+          { to: '0x0000000000000000000000000000000000000000' },
+          'latest',
+        ],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x0000000000000000000000000000000000000000",
+          },
+          "latest",
+        ],
+      }
+    `)
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(RpcRequest)).toMatchInlineSnapshot(`
     [
       "createStore",
       "from",
+      "build",
     ]
   `)
 })

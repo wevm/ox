@@ -478,6 +478,13 @@ export function from<
   options?: options | Options,
 ): from.ReturnType<options, provider>
 // eslint-disable-next-line jsdoc/require-jsdoc
+export function from<
+  schema extends RpcSchema.Generic,
+  provider extends from.Value<{ schema: schema }> | undefined = undefined,
+>(
+  provider: provider | from.Value<{ schema: schema }> | undefined,
+): from.ReturnType<{ schema: schema }, provider>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function from(provider: any, _options: Options = {}): Provider {
   if (!provider) throw new IsUndefinedError()
   const wrapped = Object.create(Object.getPrototypeOf(provider))

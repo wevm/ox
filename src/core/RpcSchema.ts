@@ -9,6 +9,11 @@ export type { Wallet } from './internal/rpcSchemas/wallet.js'
  * to be used as a type-level tag to be used with {@link ox#Provider.(from:function)} or
  * {@link ox#RpcTransport.(fromHttp:function)}.
  *
+ * @deprecated Prefer passing the schema as a type generic directly:
+ * `Provider.from<MySchema>(provider)` and
+ * `RpcTransport.fromHttp<false, MySchema>(url)`. `RpcSchema.from()` remains as a compatibility
+ * wrapper.
+ *
  * @example
  * ### Using with `Provider.from`
  *

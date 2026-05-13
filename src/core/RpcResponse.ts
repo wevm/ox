@@ -58,6 +58,9 @@ export type ErrorObject = {
  * )
  * ```
  *
+ * @deprecated Prefer {@link ox#RpcResponse.(envelope:function)} for new code. `from` remains as
+ * a compatibility wrapper.
+ *
  * @param response - Opaque JSON-RPC response object.
  * @param options - Parsing options.
  * @returns Typed JSON-RPC result, or response object (if `raw` is `true`).
@@ -199,6 +202,10 @@ export declare namespace from {
  *
  * ```
  *
+ * @deprecated Prefer {@link ox#RpcResponse.(parseResult:function)} or
+ * {@link ox#RpcResponse.(parseEnvelope:function)} for new code. `parse` remains as a
+ * compatibility wrapper.
+ *
  * @param response - Opaque JSON-RPC response object.
  * @param options - Parsing options.
  * @returns Typed JSON-RPC result, or response object (if `raw` is `true`).
@@ -233,6 +240,155 @@ export function parse<
   if (raw) return response as never
   if (response_.error) throw parseError(response_.error)
   return response_.result as never
+}
+
+/**
+ * Instantiates a JSON-RPC response envelope. Equivalent to {@link ox#RpcResponse.(from:function)}
+ * with a more explicit name. Prefer this helper in new code.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcResponse } from 'ox'
+ *
+ * const response = RpcResponse.envelope({
+ *   id: 0,
+ *   jsonrpc: '2.0',
+ *   result: '0x69420',
+ * })
+ * ```
+ *
+ * @param response - Opaque JSON-RPC response object.
+ * @param options - Envelope options.
+ * @returns Typed JSON-RPC response envelope.
+ */
+export function envelope<
+  request extends RpcRequest.RpcRequest | undefined = undefined,
+  const response =
+    | (request extends RpcRequest.RpcRequest
+        ? request['_returnType']
+        : RpcResponse)
+    | unknown,
+>(
+  response: from.Response<request, response>,
+  options?: from.Options<request>,
+): Compute<from.ReturnType<response>>
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function envelope(response: any, options: any = {}): any {
+  return from(response, options)
+}
+
+export declare namespace envelope {
+  type Options<
+    request extends RpcRequest.RpcRequest | undefined =
+      | RpcRequest.RpcRequest
+      | undefined,
+  > = from.Options<request>
+
+  type ErrorType = ParseError | Errors.GlobalErrorType
+}
+
+/**
+ * Validates a JSON-RPC response envelope and unwraps the typed `result`. Throws if the response
+ * is malformed or contains a JSON-RPC error.
+ *
+ * Equivalent to calling {@link ox#RpcResponse.(parse:function)} without the `raw` option. Prefer
+ * this helper in new code.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { RpcRequest, RpcResponse } from 'ox'
+ *
+ * const store = RpcRequest.createStore()
+ *
+ * const block = await fetch('https://1.rpc.thirdweb.com', {
+ *   body: JSON.stringify(store.prepare({ method: 'eth_blockNumber' })),
+ *   method: 'POST',
+ *   headers: { 'Content-Type': 'application/json' },
+ * })
+ *  .then((res) => res.json())
+ *  .then(RpcResponse.parseResult)
+ * ```
+ *
+ * @param response - Opaque JSON-RPC response object.
+ * @param options - Parsing options.
+ * @returns Typed JSON-RPC result.
+ */
+export function parseResult<
+  const response extends RpcResponse | unknown,
+  returnType,
+>(
+  response: response,
+  options: parseResult.Options<returnType> = {},
+): parseResult.ReturnType<
+  unknown extends response
+    ? returnType
+    : response extends RpcResponse
+      ? response extends { result: infer result }
+        ? result
+        : never
+      : returnType
+> {
+  return parse(response, options) as never
+}
+
+export declare namespace parseResult {
+  type Options<returnType> = Omit<parse.Options<returnType, false>, 'raw'>
+
+  type ReturnType<returnType> = Compute<returnType>
+
+  type ErrorType = parse.ErrorType
+}
+
+/**
+ * Validates a JSON-RPC response envelope and returns it intact (does not unwrap `result` or
+ * throw on `error`). Use when you need to inspect both branches of the envelope yourself.
+ *
+ * Equivalent to calling {@link ox#RpcResponse.(parse:function)} with `raw: true`. Prefer this
+ * helper in new code.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcResponse } from 'ox'
+ *
+ * const envelope = RpcResponse.parseEnvelope({
+ *   id: 0,
+ *   jsonrpc: '2.0',
+ *   result: '0x1',
+ * })
+ *
+ * envelope
+ * // ^?
+ * ```
+ *
+ * @param response - Opaque JSON-RPC response object.
+ * @param options - Parsing options.
+ * @returns Typed JSON-RPC response envelope.
+ */
+export function parseEnvelope<
+  const response extends RpcResponse | unknown,
+  returnType,
+>(
+  response: response,
+  options: parseEnvelope.Options<returnType> = {},
+): parseEnvelope.ReturnType<
+  unknown extends response
+    ? returnType
+    : response extends RpcResponse
+      ? response extends { result: infer result }
+        ? result
+        : never
+      : returnType
+> {
+  return parse(response, { ...options, raw: true }) as never
+}
+
+export declare namespace parseEnvelope {
+  type Options<returnType> = Omit<parse.Options<returnType, true>, 'raw'>
+
+  type ReturnType<returnType> = Compute<RpcResponse<returnType>>
+
+  type ErrorType = parse.ErrorType
 }
 
 export declare namespace parse {

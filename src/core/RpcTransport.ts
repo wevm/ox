@@ -251,6 +251,18 @@ const wait = (ms: number) =>
  * @param options - Transport options.
  * @returns HTTP JSON-RPC Transport.
  */
+// Existing overload: `RpcTransport.fromHttp<raw, schema>(url, options)`.
+export function fromHttp<
+  raw extends boolean = false,
+  schema extends RpcSchema.Generic = RpcSchema.Default,
+>(url: string, options?: fromHttp.Options<raw, schema>): Http<raw, schema>
+// Schema-first overload: `RpcTransport.fromHttp<MySchema>(url)`.
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function fromHttp<schema extends RpcSchema.Generic>(
+  url: string,
+  options?: fromHttp.Options<false, schema>,
+): Http<false, schema>
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function fromHttp<
   raw extends boolean = false,
   schema extends RpcSchema.Generic = RpcSchema.Default,

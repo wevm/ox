@@ -168,6 +168,9 @@ export declare namespace createStore {
  *  .then((response) => RpcResponse.parse(response, { request }))
  * ```
  *
+ * @deprecated Prefer {@link ox#RpcRequest.(build:function)} for new code. `from` remains as a
+ * compatibility wrapper.
+ *
  * @param options - JSON-RPC request options.
  * @returns The fully-formed JSON-RPC request object.
  */
@@ -190,6 +193,80 @@ export declare namespace from {
   type ReturnType<methodName extends RpcSchema.MethodNameGeneric> = Compute<
     RpcRequest<RpcSchema.ExtractItem<RpcSchema.Default, methodName>>
   >
+
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Builds a JSON-RPC request object as per the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification#request_object).
+ *
+ * Equivalent to {@link ox#RpcRequest.(from:function)} with a more explicit name. Prefer this
+ * helper in new code.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcRequest } from 'ox'
+ *
+ * const request = RpcRequest.build({
+ *   id: 0,
+ *   method: 'eth_blockNumber',
+ * })
+ * // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }
+ * ```
+ *
+ * @example
+ * ### Type-safe Custom Schemas
+ *
+ * Pass a {@link ox#RpcSchema.Generic} as the first generic parameter to type the request without
+ * a runtime schema tag.
+ *
+ * ```ts twoslash
+ * import { RpcSchema, RpcRequest } from 'ox'
+ *
+ * type Schema = RpcSchema.From<{
+ *   Request: { method: 'abe_foo'; params: [number] }
+ *   ReturnType: string
+ * }>
+ *
+ * const request = RpcRequest.build<Schema>({
+ *   id: 0,
+ *   method: 'abe_foo',
+ *   params: [42],
+ * })
+ * ```
+ *
+ * @param options - JSON-RPC request options.
+ * @returns The fully-formed JSON-RPC request object.
+ */
+export function build<
+  schema extends RpcSchema.Generic = RpcSchema.Default,
+  methodName extends
+    RpcSchema.MethodNameGeneric<schema> = RpcSchema.MethodNameGeneric<schema>,
+>(
+  options: build.Options<schema, methodName>,
+): build.ReturnType<schema, methodName> {
+  return {
+    ...options,
+    jsonrpc: '2.0',
+  } as never
+}
+
+export declare namespace build {
+  type Options<
+    schema extends RpcSchema.Generic = RpcSchema.Default,
+    methodName extends
+      RpcSchema.MethodNameGeneric<schema> = RpcSchema.MethodNameGeneric<schema>,
+  > = Compute<
+    RpcSchema_internal.ExtractRequestOpaque<schema, methodName> & {
+      id: number
+    }
+  >
+
+  type ReturnType<
+    schema extends RpcSchema.Generic = RpcSchema.Default,
+    methodName extends
+      RpcSchema.MethodNameGeneric<schema> = RpcSchema.MethodNameGeneric<schema>,
+  > = Compute<RpcRequest<RpcSchema.ExtractItem<schema, methodName>>>
 
   type ErrorType = Errors.GlobalErrorType
 }

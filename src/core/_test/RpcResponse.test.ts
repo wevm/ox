@@ -403,6 +403,102 @@ describe('parse', () => {
   })
 })
 
+describe('envelope', () => {
+  test('default', () => {
+    expect(
+      RpcResponse.envelope({ id: 0, jsonrpc: '2.0', result: '0x69420' }),
+    ).toMatchInlineSnapshot(`
+      {
+        "id": 0,
+        "jsonrpc": "2.0",
+        "result": "0x69420",
+      }
+    `)
+  })
+
+  test('with request', () => {
+    const request = RpcRequest.build({ id: 1, method: 'eth_blockNumber' })
+    expect(
+      RpcResponse.envelope({ result: '0x69420' }, { request }),
+    ).toMatchInlineSnapshot(`
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": "0x69420",
+      }
+    `)
+  })
+})
+
+describe('parseResult', () => {
+  test('default: returns result', () => {
+    expect(
+      RpcResponse.parseResult({ id: 0, jsonrpc: '2.0', result: '0x1' }),
+    ).toBe('0x1')
+  })
+
+  test('throws on error envelope', () => {
+    expect(() =>
+      RpcResponse.parseResult({
+        id: 0,
+        jsonrpc: '2.0',
+        error: { code: -32601, message: 'Method does not exist.' },
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.MethodNotFoundError: Method does not exist.]',
+    )
+  })
+
+  test('throws on malformed envelope', () => {
+    expect(() =>
+      RpcResponse.parseResult({}),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
+})
+
+describe('parseEnvelope', () => {
+  test('default: returns full envelope', () => {
+    expect(
+      RpcResponse.parseEnvelope({ id: 0, jsonrpc: '2.0', result: '0x1' }),
+    ).toMatchInlineSnapshot(`
+      {
+        "id": 0,
+        "jsonrpc": "2.0",
+        "result": "0x1",
+      }
+    `)
+  })
+
+  test('does not throw on error envelope', () => {
+    expect(
+      RpcResponse.parseEnvelope({
+        id: 0,
+        jsonrpc: '2.0',
+        error: { code: -32601, message: 'Method does not exist.' },
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "error": {
+          "code": -32601,
+          "message": "Method does not exist.",
+        },
+        "id": 0,
+        "jsonrpc": "2.0",
+      }
+    `)
+  })
+
+  test('throws on malformed envelope', () => {
+    expect(() =>
+      RpcResponse.parseEnvelope({}),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[RpcResponse.ParseError: Invalid JSON-RPC response.]',
+    )
+  })
+})
+
 describe('parseError', () => {
   test('InternalError', () => {
     const error = RpcResponse.parseError({
@@ -706,6 +802,9 @@ test('exports', () => {
     [
       "from",
       "parse",
+      "envelope",
+      "parseResult",
+      "parseEnvelope",
       "parseError",
       "BaseError",
       "InvalidInputError",
