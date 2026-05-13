@@ -472,9 +472,21 @@ export function slice(
 ): Hex {
   const { strict } = options
   internal.assertStartOffset(value, start)
-  const value_ = `0x${value
-    .replace('0x', '')
-    .slice((start ?? 0) * 2, (end ?? value.length) * 2)}` as const
+  let value_: Hex
+  if (end === undefined && (start === undefined || start >= 0)) {
+    // Non-negative-start, no-end fast path: avoid the intermediate
+    // `replace('0x', '')` / `slice(0, length)` allocation chain.
+    if (start === undefined || start === 0) value_ = value
+    else value_ = `0x${value.slice(2 + start * 2)}` as Hex
+  } else {
+    // Strip the `0x` prefix once and offset against the data (post-`0x`).
+    // Negative offsets fall through here (rare) so they can rely on
+    // `String.prototype.slice`'s negative-offset semantics.
+    const data = value.slice(2)
+    const startOffset = (start ?? 0) * 2
+    const endOffset = end !== undefined ? end * 2 : undefined
+    value_ = `0x${data.slice(startOffset, endOffset)}` as Hex
+  }
   if (strict) internal.assertEndOffset(value_, start, end)
   return value_
 }
