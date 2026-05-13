@@ -22,6 +22,7 @@
     "../src/**/*.bench.ts",
     "../src/**/*.bench-d.ts",
     "../src/**/*.snap-d.ts",
-    "../src/**/*.browser.test.ts"
+    "../src/**/*.browser.test.ts",
+    "../src/**/*.fuzz.ts"
   ]
 }
