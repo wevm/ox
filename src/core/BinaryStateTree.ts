@@ -59,7 +59,7 @@ export function insert(
 
   if (tree.root.type === 'empty') {
     tree.root = stemNode(stem)
-    tree.root.values[subIndex] = value
+    tree.root.values.set(subIndex, value)
     return
   }
 
@@ -74,22 +74,20 @@ export function insert(
 
     if (node.type === 'empty') {
       node = stemNode(stem)
-      node.values[subIndex!] = value
+      node.values.set(subIndex, value)
       return node
     }
 
-    const stemBits = bytesToBits(stem)
     if (node.type === 'stem') {
       if (Bytes.isEqual(node.stem, stem)) {
-        node.values[subIndex!] = value
+        node.values.set(subIndex, value)
         return node
       }
-      const existingStemBits = bytesToBits(node.stem)
-      return splitLeaf(node, stemBits, existingStemBits, subIndex, value, depth)
+      return splitLeaf(node, stem, subIndex, value, depth)
     }
 
     if (node.type === 'internal') {
-      const bit = stemBits[depth]
+      const bit = getBit(stem, depth)
       if (bit === 0) {
         node.left = inner(node.left, stem, subIndex, value, depth + 1)
       } else {
@@ -126,22 +124,31 @@ export function insert(
  */
 export function merkelize(tree: BinaryStateTree): Bytes.Bytes {
   function inner(node: Node): Bytes.Bytes {
-    if (node.type === 'empty') return new Uint8Array(32).fill(0)
+    if (node.type === 'empty') return ZERO32
     if (node.type === 'internal') {
       const hash_left = inner(node.left)
       const hash_right = inner(node.right)
       return hash(Bytes.concat(hash_left, hash_right))
     }
 
-    let level = node.values.map(hash)
-    while (level.length > 1) {
-      const level_ = []
-      for (let i = 0; i < level.length; i += 2)
-        level_.push(hash(Bytes.concat(level[i]!, level[i + 1]!)))
-      level = level_
+    // Reduce a 256-leaf binary tree where any unset slot hashes to ZERO32.
+    // Allocate a single 256-entry buffer up-front and iterate in place,
+    // halving the active span at each level instead of creating a fresh
+    // array per level.
+    const level: Bytes.Bytes[] = new Array(256)
+    for (let i = 0; i < 256; i++) {
+      const v = node.values.get(i)
+      level[i] = v ? hash(v) : ZERO32
+    }
+    let size = 256
+    while (size > 1) {
+      const half = size >> 1
+      for (let i = 0; i < half; i++)
+        level[i] = hash(Bytes.concat(level[2 * i]!, level[2 * i + 1]!))
+      size = half
     }
 
-    return hash(Bytes.concat(node.stem, new Uint8Array(1).fill(0), level[0]!))
+    return hash(Bytes.concat(node.stem, ZERO1, level[0]!))
   }
 
   return inner(tree.root)
@@ -166,54 +173,49 @@ type InternalNode = {
 /** @internal */
 type StemNode = {
   stem: Bytes.Bytes
-  values: (Bytes.Bytes | undefined)[]
+  values: Map<number, Bytes.Bytes>
   type: 'stem'
 }
 
 /** @internal */
+const ZERO32: Bytes.Bytes = new Uint8Array(32)
+
+/** @internal */
+const ZERO1: Bytes.Bytes = new Uint8Array(1)
+
+/** @internal */
+function getBit(stem: Bytes.Bytes, depth: number): number {
+  return (stem[depth >> 3]! >> (7 - (depth & 7))) & 1
+}
+
+/** @internal */
 function splitLeaf(
-  leaf: Node,
-  stemBits: number[],
-  existingStemBits: number[],
+  leaf: StemNode,
+  stem: Bytes.Bytes,
   subIndex: number,
   value: Bytes.Bytes,
   depth: number,
 ): Node {
-  if (stemBits[depth] === existingStemBits[depth]) {
+  const bit = getBit(stem, depth)
+  const existingBit = getBit(leaf.stem, depth)
+  if (bit === existingBit) {
     const internal = internalNode()
-    const bit = stemBits[depth]
     if (bit === 0) {
-      internal.left = splitLeaf(
-        leaf,
-        stemBits,
-        existingStemBits,
-        subIndex,
-        value,
-        depth + 1,
-      )
+      internal.left = splitLeaf(leaf, stem, subIndex, value, depth + 1)
     } else {
-      internal.right = splitLeaf(
-        leaf,
-        stemBits,
-        existingStemBits,
-        subIndex,
-        value,
-        depth + 1,
-      )
+      internal.right = splitLeaf(leaf, stem, subIndex, value, depth + 1)
     }
     return internal
   }
 
   const internal = internalNode()
-  const bit = stemBits[depth]
-  const stem = bitsToBytes(stemBits)
   if (bit === 0) {
     internal.left = stemNode(stem)
-    internal.left.values[subIndex] = value
+    internal.left.values.set(subIndex, value)
     internal.right = leaf
   } else {
     internal.right = stemNode(stem)
-    internal.right.values[subIndex] = value
+    internal.right.values.set(subIndex, value)
     internal.left = leaf
   }
   return internal
@@ -239,33 +241,14 @@ function internalNode(): InternalNode {
 function stemNode(stem: Bytes.Bytes): StemNode {
   return {
     stem,
-    values: Array.from({ length: 256 }, () => undefined),
+    values: new Map(),
     type: 'stem',
   }
 }
 
 /** @internal */
-function bytesToBits(bytes: Bytes.Bytes): number[] {
-  const bits = []
-  for (const byte of bytes)
-    for (let i = 0; i < 8; i++) bits.push((byte >> (7 - i)) & 1)
-  return bits
-}
-
-/** @internal */
-function bitsToBytes(bits: number[]): Bytes.Bytes {
-  const byte_data = new Uint8Array(bits.length / 8)
-  for (let i = 0; i < bits.length; i += 8) {
-    let byte = 0
-    for (let j = 0; j < 8; j++) byte |= bits[i + j]! << (7 - j)
-    byte_data[i / 8] = byte
-  }
-  return byte_data
-}
-
-/** @internal */
 function hash(bytes: Bytes.Bytes | undefined): Bytes.Bytes {
-  if (!bytes) return new Uint8Array(32).fill(0)
-  if (!bytes.some((byte) => byte !== 0)) return new Uint8Array(32).fill(0)
+  if (!bytes) return ZERO32
+  if (!bytes.some((byte) => byte !== 0)) return ZERO32
   return blake3(bytes)
 }

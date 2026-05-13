@@ -137,7 +137,7 @@ describe('insert', () => {
       Bytes.fromHex(('0x' + '02'.repeat(32)) as Hex.Hex),
     )
     expect(getHeight(tree.root)).toBe(1)
-    expect(Hex.fromBytes(tree.root.values![1]!)).toMatchInlineSnapshot(
+    expect(Hex.fromBytes(tree.root.values!.get(1)!)).toMatchInlineSnapshot(
       `"0x0202020202020202020202020202020202020202020202020202020202020202"`,
     )
   })
