@@ -223,3 +223,53 @@ test('exports', () => {
     ]
   `)
 })
+
+describe('as option / serialized inputs', () => {
+  test("sign: as 'Hex' returns hex string", async () => {
+    const { privateKey } = await WebCryptoP256.createKeyPair()
+    const sigHex = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(typeof sigHex).toBe('string')
+    expect((sigHex as Hex.Hex).startsWith('0x')).toBe(true)
+  })
+
+  test("sign: as 'Bytes' returns Uint8Array", async () => {
+    const { privateKey } = await WebCryptoP256.createKeyPair()
+    const sigBytes = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(sigBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('default as remains Object', async () => {
+    const { privateKey } = await WebCryptoP256.createKeyPair()
+    const sig = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+    })
+    expect(typeof sig).toBe('object')
+    expect('r' in sig).toBe(true)
+  })
+
+  test('verify accepts Hex publicKey + Hex signature', async () => {
+    const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+    const sigHex = await WebCryptoP256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    const pkHex = PublicKey.toHex(publicKey)
+    expect(
+      await WebCryptoP256.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkHex,
+        signature: sigHex,
+      }),
+    ).toBe(true)
+  })
+})
