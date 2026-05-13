@@ -102,8 +102,12 @@ export function fromSeed(
   options: fromSeed.Options = {},
 ): HdKey {
   const { versions } = options
-  const key = HDKey.fromMasterSeed(Bytes.from(seed), versions)
-  return internal.fromScure(key)
+  // `seed` is bytes for the vast majority of callers (mnemonic-derived
+  // seeds are already `Uint8Array`). Skip the polymorphic `Bytes.from`
+  // dispatch on the bytes fast path so that the constructor pairs cleanly
+  // with the lazy `internal.fromScure` wrapper.
+  const seedBytes = seed instanceof Uint8Array ? seed : Bytes.fromHex(seed)
+  return internal.fromScure(HDKey.fromMasterSeed(seedBytes, versions))
 }
 
 export declare namespace fromSeed {

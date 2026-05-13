@@ -1,3 +1,4 @@
+import { HDKey } from '@scure/bip32'
 import {
   generateMnemonic,
   mnemonicToSeedSync,
@@ -139,9 +140,15 @@ export function toPrivateKey<as extends 'Bytes' | 'Hex' = 'Bytes'>(
   options: toPrivateKey.Options<as> = {},
 ): toPrivateKey.ReturnType<as> {
   const { as = 'Bytes', path = HdKey.path(), passphrase } = options
-  const hdKey = toHdKey(mnemonic, { passphrase }).derive(path)
-  if (as === 'Hex') return hdKey.privateKey as never
-  return Bytes.from(hdKey.privateKey) as never
+  // Derive directly with `@scure/bip32` rather than going through
+  // `toHdKey().derive()`, which would allocate an ox `HdKey` wrapper
+  // for every node along the path and we would only ever read
+  // `privateKey` from the leaf.
+  const seed = mnemonicToSeedSync(mnemonic, passphrase)
+  const child = HDKey.fromMasterSeed(seed).derive(path)
+  const privateKey = child.privateKey!
+  if (as === 'Hex') return Bytes.toHex(privateKey) as never
+  return privateKey as never
 }
 
 export declare namespace toPrivateKey {
