@@ -29,8 +29,8 @@ describe('sign', () => {
     expect(result.metadata.challengeIndex).toBeTypeOf('number')
     expect(result.metadata.typeIndex).toBeTypeOf('number')
     expect(result.metadata.userVerificationRequired).toBe(true)
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(result.signature.r).toBeTypeOf('string')
+    expect(result.signature.s).toBeTypeOf('string')
     expect(result.raw).toBeDefined()
   })
 
@@ -44,8 +44,8 @@ describe('sign', () => {
       rpId,
     })
 
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(result.signature.r).toBeTypeOf('string')
+    expect(result.signature.s).toBeTypeOf('string')
   })
 
   test('signs with CredentialRequestOptions', async () => {
@@ -60,8 +60,8 @@ describe('sign', () => {
 
     const result = await Authentication.sign(options)
 
-    expect(result.signature.r).toBeTypeOf('bigint')
-    expect(result.signature.s).toBeTypeOf('bigint')
+    expect(result.signature.r).toBeTypeOf('string')
+    expect(result.signature.s).toBeTypeOf('string')
 
     const verified = Authentication.verify({
       metadata: result.metadata,

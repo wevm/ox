@@ -28,8 +28,8 @@ describe('create + verify', () => {
     })
 
     expect(result.credential.id).toBe(credential.id)
-    expect(result.credential.publicKey.x).toBeTypeOf('bigint')
-    expect(result.credential.publicKey.y).toBeTypeOf('bigint')
+    expect(result.credential.publicKey.x).toBeTypeOf('string')
+    expect(result.credential.publicKey.y).toBeTypeOf('string')
     expect(result.counter).toBeTypeOf('number')
     expect(result.userVerified).toBe(true)
   })

@@ -807,7 +807,7 @@ describe('Provider.from', () => {
         ],
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[RpcResponse.InternalError: fetch failed]`,
+      `[RpcResponse.InvalidParamsError: No Signer available]`,
     )
   })
 

@@ -180,7 +180,7 @@ describe('fromHttp', () => {
       [RpcTransport.HttpError: HTTP request failed.
 
       Status: 400
-      URL: http://localhost:64277
+      URL: https://oxlib.sh/rpc
       Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
 
       Details: Bad Request]
@@ -201,7 +201,7 @@ describe('fromHttp', () => {
       [RpcTransport.HttpError: HTTP request failed.
 
       Status: 400
-      URL: http://localhost:64281
+      URL: https://oxlib.sh/rpc
       Body: "{\\"id\\":0,\\"method\\":\\"eth_accounts\\",\\"jsonrpc\\":\\"2.0\\"}"
 
       Details: bad]
