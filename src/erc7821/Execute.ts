@@ -195,3 +195,57 @@ export declare namespace encodeData {
     opData?: Hex.Hex | undefined
   }
 }
+
+/**
+ * Canonical alias for {@link ox#Execute.encodeData}. Encodes calls for the
+ * ERC-7821 `execute` function.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Execute } from 'ox/erc7821'
+ *
+ * const data = Execute.encode([
+ *   {
+ *     data: '0xcafebabe',
+ *     to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+ *     value: 1n,
+ *   }
+ * ])
+ * ```
+ *
+ * @param calls - The calls to encode.
+ * @param options - The options.
+ * @returns The encoded data.
+ */
+export function encode(
+  calls: readonly Call[],
+  options: encodeData.Options = {},
+) {
+  return encodeData(calls, options)
+}
+
+export declare namespace encode {
+  type Options = encodeData.Options
+}
+
+/**
+ * Canonical alias for {@link ox#Execute.decodeData}. Decodes calls from
+ * ERC-7821 `execute` function data.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Execute } from 'ox/erc7821'
+ *
+ * const { calls } = Execute.decode('0x...')
+ * ```
+ *
+ * @param data - The encoded data.
+ * @returns The decoded calls and optional opData.
+ */
+export function decode(data: Hex.Hex): decodeData.ReturnType {
+  return decodeData(data)
+}
+
+export declare namespace decode {
+  type ReturnType = decodeData.ReturnType
+}

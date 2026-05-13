@@ -546,3 +546,55 @@ describe('decodeBatchOfBatchesData', () => {
     expect(result).toEqual(batches)
   })
 })
+
+describe('encode / decode', () => {
+  test('encode matches encodeData', () => {
+    const calls = [
+      {
+        data: '0xcafebabe',
+        to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        value: 1n,
+      },
+    ] as const
+    expect(Execute.encode(calls)).toEqual(Execute.encodeData(calls))
+  })
+
+  test('encode matches encodeData (with opData)', () => {
+    const calls = [
+      {
+        data: '0xcafebabe',
+        to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        value: 1n,
+      },
+    ] as const
+    const opData = '0xdeadbeef' as const
+    expect(Execute.encode(calls, { opData })).toEqual(
+      Execute.encodeData(calls, { opData }),
+    )
+  })
+
+  test('decode matches decodeData', () => {
+    const calls = [
+      {
+        data: '0xcafebabe',
+        to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        value: 1n,
+      },
+    ] as const
+    const data = Execute.encode(calls)
+    expect(Execute.decode(data)).toEqual(Execute.decodeData(data))
+  })
+
+  test('encode / decode roundtrip', () => {
+    const calls = [
+      {
+        data: '0xcafebabe',
+        to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        value: 1n,
+      },
+    ] as const
+    const data = Execute.encode(calls)
+    const decoded = Execute.decode(data)
+    expect(decoded.calls).toEqual(calls)
+  })
+})

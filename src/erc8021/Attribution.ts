@@ -414,6 +414,57 @@ export declare namespace fromData {
     | Errors.GlobalErrorType
 }
 
+/**
+ * Canonical alias for {@link ox#Attribution.toDataSuffix}. Encodes an
+ * {@link ox#Attribution.Attribution} as the trailing data suffix that gets
+ * appended to transaction calldata.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Attribution } from 'ox/erc8021'
+ *
+ * const suffix = Attribution.encode({
+ *   codes: ['baseapp', 'morpho'],
+ * })
+ * ```
+ *
+ * @param attribution - The attribution to encode.
+ * @returns The encoded data suffix as a {@link ox#Hex.Hex} value.
+ */
+export function encode(attribution: Attribution): Hex.Hex {
+  return toDataSuffix(attribution)
+}
+
+export declare namespace encode {
+  type ErrorType = toDataSuffix.ErrorType
+}
+
+/**
+ * Canonical alias for {@link ox#Attribution.fromData}. Decodes an
+ * {@link ox#Attribution.Attribution} from the trailing data suffix on
+ * transaction calldata.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Attribution } from 'ox/erc8021'
+ *
+ * const attribution = Attribution.decode(
+ *   '0xdddddddd62617365617070070080218021802180218021802180218021'
+ * )
+ * // @log: { codes: ['baseapp'], id: 0 }
+ * ```
+ *
+ * @param data - The transaction calldata containing the attribution suffix.
+ * @returns The decoded attribution, or `undefined` if no valid attribution is found.
+ */
+export function decode(data: Hex.Hex): Attribution | undefined {
+  return fromData(data)
+}
+
+export declare namespace decode {
+  type ErrorType = fromData.ErrorType
+}
+
 // ---- Schema 2 helpers ----
 
 /** Internal CBOR map shape matching the ERC-8021 spec. */

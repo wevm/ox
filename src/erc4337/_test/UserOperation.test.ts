@@ -1500,3 +1500,121 @@ describe('v0.8 authorization round-trip', () => {
     expect('authorization' in rpc).toBe(false)
   })
 })
+
+describe('versioned hash helpers', () => {
+  const v06UserOp = {
+    callData: '0x',
+    callGasLimit: 6942069n,
+    maxFeePerGas: 69420n,
+    maxPriorityFeePerGas: 69n,
+    nonce: 0n,
+    preVerificationGas: 6942069n,
+    sender: '0x1234567890123456789012345678901234567890',
+    signature: '0x',
+    verificationGasLimit: 6942069n,
+  } as const
+
+  const v07UserOp = {
+    callData: '0x',
+    callGasLimit: 6942069n,
+    maxFeePerGas: 69420n,
+    maxPriorityFeePerGas: 69n,
+    nonce: 0n,
+    preVerificationGas: 6942069n,
+    sender: '0x1234567890123456789012345678901234567890',
+    signature: '0x',
+    verificationGasLimit: 6942069n,
+  } as const
+
+  const v08UserOp = {
+    callData: '0x',
+    callGasLimit: 6942069n,
+    maxFeePerGas: 69420n,
+    maxPriorityFeePerGas: 69n,
+    nonce: 0n,
+    preVerificationGas: 6942069n,
+    sender: '0x1234567890123456789012345678901234567890',
+    signature: '0x',
+    verificationGasLimit: 6942069n,
+  } as const
+
+  const opts = {
+    chainId: 1,
+    entryPointAddress: '0x1234567890123456789012345678901234567890',
+  } as const
+
+  test('hashV06 matches hash with entryPointVersion 0.6', () => {
+    expect(UserOperation.hashV06(v06UserOp, opts)).toEqual(
+      UserOperation.hash(v06UserOp, { ...opts, entryPointVersion: '0.6' }),
+    )
+  })
+
+  test('hashV07 matches hash with entryPointVersion 0.7', () => {
+    expect(UserOperation.hashV07(v07UserOp, opts)).toEqual(
+      UserOperation.hash(v07UserOp, { ...opts, entryPointVersion: '0.7' }),
+    )
+  })
+
+  test('hashV08 matches hash with entryPointVersion 0.8', () => {
+    const opts8 = {
+      chainId: 1,
+      entryPointAddress: '0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108',
+    } as const
+    expect(UserOperation.hashV08(v08UserOp, opts8)).toEqual(
+      UserOperation.hash(v08UserOp, { ...opts8, entryPointVersion: '0.8' }),
+    )
+  })
+})
+
+describe('versioned RPC helpers', () => {
+  const v06 = {
+    callData: '0xdeadbeef',
+    callGasLimit: 300_000n,
+    maxFeePerGas: 1_000_000_000n,
+    maxPriorityFeePerGas: 100_000_000n,
+    nonce: 69n,
+    preVerificationGas: 100_000n,
+    sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+    signature: '0x',
+    verificationGasLimit: 100_000n,
+  } as const
+
+  const v07 = {
+    ...v06,
+    factory: '0x1234567890123456789012345678901234567890',
+    factoryData: '0xdeadbeef',
+  } as const
+
+  const v08 = {
+    ...v07,
+    authorization: {
+      address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+      chainId: 1,
+      nonce: 69n,
+      yParity: 0,
+      r: 1n,
+      s: 2n,
+    },
+  } as const
+
+  test('toRpcV06 / fromRpcV06 round-trip matches generic helpers', () => {
+    const rpc = UserOperation.toRpcV06(v06)
+    expect(rpc).toEqual(UserOperation.toRpc(v06))
+    expect(UserOperation.fromRpcV06(rpc)).toEqual(UserOperation.fromRpc(rpc))
+  })
+
+  test('toRpcV07 / fromRpcV07 round-trip matches generic helpers', () => {
+    const rpc = UserOperation.toRpcV07(v07)
+    expect(rpc).toEqual(UserOperation.toRpc(v07))
+    expect(UserOperation.fromRpcV07(rpc)).toEqual(UserOperation.fromRpc(rpc))
+  })
+
+  test('toRpcV08 / fromRpcV08 round-trip preserves authorization', () => {
+    const rpc = UserOperation.toRpcV08(v08)
+    expect(rpc).toEqual(UserOperation.toRpc(v08))
+    expect(UserOperation.fromRpcV08(rpc)).toEqual(UserOperation.fromRpc(rpc))
+    expect(UserOperation.fromRpcV08(rpc).authorization).toEqual(
+      v08.authorization,
+    )
+  })
+})

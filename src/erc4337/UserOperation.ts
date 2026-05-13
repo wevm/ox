@@ -408,6 +408,108 @@ export declare namespace fromRpc {
 }
 
 /**
+ * Converts a v0.6 {@link ox#UserOperation.Rpc} to a v0.6
+ * {@link ox#UserOperation.UserOperation}. Versioned variant of
+ * {@link ox#UserOperation.fromRpc} that disambiguates the EntryPoint version
+ * at the type level.
+ *
+ * @example
+ * ```ts twoslash
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOperation = UserOperation.fromRpcV06({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: '0x69420',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   nonce: '0x357',
+ *   preVerificationGas: '0x69420',
+ *   signature: '0x',
+ *   sender: '0x1234567890123456789012345678901234567890',
+ *   verificationGasLimit: '0x69420',
+ * })
+ * ```
+ *
+ * @param rpc - The v0.6 RPC user operation to convert.
+ * @returns A v0.6 {@link ox#UserOperation.UserOperation}.
+ */
+export function fromRpcV06(rpc: RpcV06): UserOperation<'0.6', true> {
+  return fromRpc(rpc as Rpc) as UserOperation<'0.6', true>
+}
+
+export declare namespace fromRpcV06 {
+  type ErrorType = fromRpc.ErrorType
+}
+
+/**
+ * Converts a v0.7 {@link ox#UserOperation.Rpc} to a v0.7
+ * {@link ox#UserOperation.UserOperation}. Versioned variant of
+ * {@link ox#UserOperation.fromRpc} that disambiguates the EntryPoint version
+ * at the type level.
+ *
+ * @example
+ * ```ts twoslash
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOperation = UserOperation.fromRpcV07({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: '0x69420',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   nonce: '0x357',
+ *   preVerificationGas: '0x69420',
+ *   signature: '0x',
+ *   sender: '0x1234567890123456789012345678901234567890',
+ *   verificationGasLimit: '0x69420',
+ * })
+ * ```
+ *
+ * @param rpc - The v0.7 RPC user operation to convert.
+ * @returns A v0.7 {@link ox#UserOperation.UserOperation}.
+ */
+export function fromRpcV07(rpc: RpcV07): UserOperation<'0.7', true> {
+  return fromRpc(rpc as Rpc) as UserOperation<'0.7', true>
+}
+
+export declare namespace fromRpcV07 {
+  type ErrorType = fromRpc.ErrorType
+}
+
+/**
+ * Converts a v0.8 {@link ox#UserOperation.Rpc} to a v0.8
+ * {@link ox#UserOperation.UserOperation}. Versioned variant of
+ * {@link ox#UserOperation.fromRpc} that disambiguates the EntryPoint version
+ * at the type level (notably for the `authorization` field).
+ *
+ * @example
+ * ```ts twoslash
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOperation = UserOperation.fromRpcV08({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: '0x69420',
+ *   maxFeePerGas: '0x2ca6ae494',
+ *   maxPriorityFeePerGas: '0x41cc3c0',
+ *   nonce: '0x357',
+ *   preVerificationGas: '0x69420',
+ *   signature: '0x',
+ *   sender: '0x1234567890123456789012345678901234567890',
+ *   verificationGasLimit: '0x69420',
+ * })
+ * ```
+ *
+ * @param rpc - The v0.8 RPC user operation to convert.
+ * @returns A v0.8 {@link ox#UserOperation.UserOperation}.
+ */
+export function fromRpcV08(rpc: RpcV08): UserOperation<'0.8', true> {
+  return fromRpc(rpc as Rpc) as UserOperation<'0.8', true>
+}
+
+export declare namespace fromRpcV08 {
+  type ErrorType = fromRpc.ErrorType
+}
+
+/**
  * Obtains the signing payload for a {@link ox#UserOperation.UserOperation}.
  *
  * @example
@@ -488,103 +590,14 @@ export function hash<
   userOperation: UserOperation<entrypointVersion>,
   options: hash.Options<entrypointVersion>,
 ): Hex.Hex {
-  const { chainId, entryPointAddress, entryPointVersion } = options
-  const {
-    callData,
-    callGasLimit,
-    initCode,
-    factory,
-    factoryData,
-    maxFeePerGas,
-    maxPriorityFeePerGas,
-    nonce,
-    paymaster,
-    paymasterAndData,
-    paymasterData,
-    paymasterPostOpGasLimit,
-    paymasterVerificationGasLimit,
-    preVerificationGas,
-    sender,
-    verificationGasLimit,
-  } = userOperation as UserOperation
-
-  if (entryPointVersion === '0.8') {
-    const typedData = toTypedData(userOperation as UserOperation<'0.8', true>, {
-      chainId,
-      entryPointAddress,
-    })
-    return TypedData.getSignPayload(typedData)
-  }
-
-  const packedUserOp = (() => {
-    if (entryPointVersion === '0.6') {
-      const initCodeHash =
-        !initCode || initCode === '0x' ? EMPTY_KECCAK : Hash.keccak256(initCode)
-      const paymasterAndDataHash =
-        !paymasterAndData || paymasterAndData === '0x'
-          ? EMPTY_KECCAK
-          : Hash.keccak256(paymasterAndData)
-
-      return AbiParameters.encode(v06HashParameters, [
-        sender,
-        nonce,
-        initCodeHash,
-        Hash.keccak256(callData),
-        callGasLimit,
-        verificationGasLimit,
-        preVerificationGas,
-        maxFeePerGas,
-        maxPriorityFeePerGas,
-        paymasterAndDataHash,
-      ])
-    }
-
-    if (entryPointVersion === '0.7') {
-      const accountGasLimits = packUint128Pair(
-        verificationGasLimit,
-        callGasLimit,
-      )
-      const gasFees = packUint128Pair(maxPriorityFeePerGas, maxFeePerGas)
-      const initCode_hashed =
-        factory && factoryData
-          ? Hash.keccak256(Hex.concat(factory, factoryData))
-          : EMPTY_KECCAK
-      const paymasterAndData_hashed = paymaster
-        ? Hash.keccak256(
-            Hex.concat(
-              paymaster,
-              Hex.padLeft(
-                Hex.fromNumber(paymasterVerificationGasLimit || 0),
-                16,
-              ),
-              Hex.padLeft(Hex.fromNumber(paymasterPostOpGasLimit || 0), 16),
-              paymasterData || '0x',
-            ),
-          )
-        : EMPTY_KECCAK
-
-      return AbiParameters.encode(v07HashParameters, [
-        sender,
-        nonce,
-        initCode_hashed,
-        Hash.keccak256(callData),
-        accountGasLimits,
-        preVerificationGas,
-        gasFees,
-        paymasterAndData_hashed,
-      ])
-    }
-
-    throw new Error(`entryPointVersion "${entryPointVersion}" not supported.`)
-  })()
-
-  return Hash.keccak256(
-    AbiParameters.encode(hashEnvelopeParameters, [
-      Hash.keccak256(packedUserOp),
-      entryPointAddress,
-      BigInt(chainId),
-    ]),
-  )
+  const { entryPointVersion } = options
+  if (entryPointVersion === '0.6')
+    return hashV06(userOperation as UserOperation<'0.6'>, options)
+  if (entryPointVersion === '0.7')
+    return hashV07(userOperation as UserOperation<'0.7'>, options)
+  if (entryPointVersion === '0.8')
+    return hashV08(userOperation as UserOperation<'0.8', true>, options)
+  throw new Error(`entryPointVersion "${entryPointVersion}" not supported.`)
 }
 
 export declare namespace hash {
@@ -603,6 +616,237 @@ export declare namespace hash {
     | Hex.fromNumber.ErrorType
     | Hex.padLeft.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Hashes a v0.6 {@link ox#UserOperation.UserOperation}. Versioned variant of
+ * {@link ox#UserOperation.hash} for EntryPoint v0.6.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOpHash = UserOperation.hashV06({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * }, {
+ *   chainId: 1,
+ *   entryPointAddress: '0x1234567890123456789012345678901234567890',
+ * })
+ * ```
+ *
+ * @param userOperation - The v0.6 user operation to hash.
+ * @param options - The hashing options.
+ * @returns The hash of the user operation.
+ */
+export function hashV06(
+  userOperation: UserOperation<'0.6'>,
+  options: hashV06.Options,
+): Hex.Hex {
+  const { chainId, entryPointAddress } = options
+  const {
+    callData,
+    callGasLimit,
+    initCode,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+    nonce,
+    paymasterAndData,
+    preVerificationGas,
+    sender,
+    verificationGasLimit,
+  } = userOperation
+
+  const initCodeHash =
+    !initCode || initCode === '0x' ? EMPTY_KECCAK : Hash.keccak256(initCode)
+  const paymasterAndDataHash =
+    !paymasterAndData || paymasterAndData === '0x'
+      ? EMPTY_KECCAK
+      : Hash.keccak256(paymasterAndData)
+
+  const packedUserOp = AbiParameters.encode(v06HashParameters, [
+    sender,
+    nonce,
+    initCodeHash,
+    Hash.keccak256(callData),
+    callGasLimit,
+    verificationGasLimit,
+    preVerificationGas,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+    paymasterAndDataHash,
+  ])
+
+  return Hash.keccak256(
+    AbiParameters.encode(hashEnvelopeParameters, [
+      Hash.keccak256(packedUserOp),
+      entryPointAddress,
+      BigInt(chainId),
+    ]),
+  )
+}
+
+export declare namespace hashV06 {
+  type Options = {
+    chainId: number
+    entryPointAddress: Address.Address
+  }
+
+  type ErrorType = hash.ErrorType
+}
+
+/**
+ * Hashes a v0.7 {@link ox#UserOperation.UserOperation}. Versioned variant of
+ * {@link ox#UserOperation.hash} for EntryPoint v0.7.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOpHash = UserOperation.hashV07({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * }, {
+ *   chainId: 1,
+ *   entryPointAddress: '0x1234567890123456789012345678901234567890',
+ * })
+ * ```
+ *
+ * @param userOperation - The v0.7 user operation to hash.
+ * @param options - The hashing options.
+ * @returns The hash of the user operation.
+ */
+export function hashV07(
+  userOperation: UserOperation<'0.7'>,
+  options: hashV07.Options,
+): Hex.Hex {
+  const { chainId, entryPointAddress } = options
+  const {
+    callData,
+    callGasLimit,
+    factory,
+    factoryData,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+    nonce,
+    paymaster,
+    paymasterData,
+    paymasterPostOpGasLimit,
+    paymasterVerificationGasLimit,
+    preVerificationGas,
+    sender,
+    verificationGasLimit,
+  } = userOperation
+
+  const accountGasLimits = packUint128Pair(verificationGasLimit, callGasLimit)
+  const gasFees = packUint128Pair(maxPriorityFeePerGas, maxFeePerGas)
+  const initCode_hashed =
+    factory && factoryData
+      ? Hash.keccak256(Hex.concat(factory, factoryData))
+      : EMPTY_KECCAK
+  const paymasterAndData_hashed = paymaster
+    ? Hash.keccak256(
+        Hex.concat(
+          paymaster,
+          Hex.padLeft(Hex.fromNumber(paymasterVerificationGasLimit || 0), 16),
+          Hex.padLeft(Hex.fromNumber(paymasterPostOpGasLimit || 0), 16),
+          paymasterData || '0x',
+        ),
+      )
+    : EMPTY_KECCAK
+
+  const packedUserOp = AbiParameters.encode(v07HashParameters, [
+    sender,
+    nonce,
+    initCode_hashed,
+    Hash.keccak256(callData),
+    accountGasLimits,
+    preVerificationGas,
+    gasFees,
+    paymasterAndData_hashed,
+  ])
+
+  return Hash.keccak256(
+    AbiParameters.encode(hashEnvelopeParameters, [
+      Hash.keccak256(packedUserOp),
+      entryPointAddress,
+      BigInt(chainId),
+    ]),
+  )
+}
+
+export declare namespace hashV07 {
+  type Options = {
+    chainId: number
+    entryPointAddress: Address.Address
+  }
+
+  type ErrorType = hash.ErrorType
+}
+
+/**
+ * Hashes a v0.8 {@link ox#UserOperation.UserOperation}. Versioned variant of
+ * {@link ox#UserOperation.hash} for EntryPoint v0.8 (delegates to
+ * {@link ox#UserOperation.toTypedData} + {@link ox#TypedData.getSignPayload}).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const userOpHash = UserOperation.hashV08({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   signature: '0x...',
+ *   verificationGasLimit: 100_000n,
+ * }, {
+ *   chainId: 1,
+ *   entryPointAddress: '0x1234567890123456789012345678901234567890',
+ * })
+ * ```
+ *
+ * @param userOperation - The v0.8 user operation to hash.
+ * @param options - The hashing options.
+ * @returns The hash of the user operation.
+ */
+export function hashV08(
+  userOperation: UserOperation<'0.8', true>,
+  options: hashV08.Options,
+): Hex.Hex {
+  const { chainId, entryPointAddress } = options
+  const typedData = toTypedData(userOperation, {
+    chainId,
+    entryPointAddress,
+  })
+  return TypedData.getSignPayload(typedData)
+}
+
+export declare namespace hashV08 {
+  type Options = {
+    chainId: number
+    entryPointAddress: Address.Address
+  }
+
+  type ErrorType = hash.ErrorType
 }
 
 /**
@@ -905,6 +1149,108 @@ export function toRpc(userOperation: UserOperation): Rpc {
 
 export declare namespace toRpc {
   export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a v0.6 {@link ox#UserOperation.UserOperation} to a v0.6
+ * {@link ox#UserOperation.Rpc}. Versioned variant of
+ * {@link ox#UserOperation.toRpc} that disambiguates the EntryPoint version
+ * at the type level.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const rpc = UserOperation.toRpcV06({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * })
+ * ```
+ *
+ * @param userOperation - The v0.6 user operation to convert.
+ * @returns A v0.6 RPC-formatted user operation.
+ */
+export function toRpcV06(userOperation: UserOperation<'0.6'>): RpcV06 {
+  return toRpc(userOperation as UserOperation) as RpcV06
+}
+
+export declare namespace toRpcV06 {
+  type ErrorType = toRpc.ErrorType
+}
+
+/**
+ * Converts a v0.7 {@link ox#UserOperation.UserOperation} to a v0.7
+ * {@link ox#UserOperation.Rpc}. Versioned variant of
+ * {@link ox#UserOperation.toRpc} that disambiguates the EntryPoint version
+ * at the type level.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const rpc = UserOperation.toRpcV07({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * })
+ * ```
+ *
+ * @param userOperation - The v0.7 user operation to convert.
+ * @returns A v0.7 RPC-formatted user operation.
+ */
+export function toRpcV07(userOperation: UserOperation<'0.7'>): RpcV07 {
+  return toRpc(userOperation as UserOperation) as RpcV07
+}
+
+export declare namespace toRpcV07 {
+  type ErrorType = toRpc.ErrorType
+}
+
+/**
+ * Converts a v0.8 {@link ox#UserOperation.UserOperation} to a v0.8
+ * {@link ox#UserOperation.Rpc}. Versioned variant of
+ * {@link ox#UserOperation.toRpc} that disambiguates the EntryPoint version
+ * at the type level (notably for the `authorization` field).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Value } from 'ox'
+ * import { UserOperation } from 'ox/erc4337'
+ *
+ * const rpc = UserOperation.toRpcV08({
+ *   callData: '0xdeadbeef',
+ *   callGasLimit: 300_000n,
+ *   maxFeePerGas: Value.fromGwei('20'),
+ *   maxPriorityFeePerGas: Value.fromGwei('2'),
+ *   nonce: 69n,
+ *   preVerificationGas: 100_000n,
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   verificationGasLimit: 100_000n,
+ * })
+ * ```
+ *
+ * @param userOperation - The v0.8 user operation to convert.
+ * @returns A v0.8 RPC-formatted user operation.
+ */
+export function toRpcV08(userOperation: UserOperation<'0.8'>): RpcV08 {
+  return toRpc(userOperation as UserOperation) as RpcV08
+}
+
+export declare namespace toRpcV08 {
+  type ErrorType = toRpc.ErrorType
 }
 
 /**

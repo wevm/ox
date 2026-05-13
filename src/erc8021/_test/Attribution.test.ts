@@ -770,3 +770,29 @@ describe('schema 2 (CBOR-encoded)', () => {
     )
   })
 })
+
+describe('encode / decode', () => {
+  test('encode matches toDataSuffix', () => {
+    const attribution = { codes: ['baseapp', 'morpho'] } as const
+    expect(Attribution.encode(attribution)).toEqual(
+      Attribution.toDataSuffix(attribution),
+    )
+  })
+
+  test('decode matches fromData', () => {
+    const attribution = { codes: ['baseapp', 'morpho'] } as const
+    const suffix = Attribution.encode(attribution)
+    const data = `0xabcdef${suffix.slice(2)}` as const
+    expect(Attribution.decode(data)).toEqual(Attribution.fromData(data))
+  })
+
+  test('encode / decode roundtrip', () => {
+    const attribution = { codes: ['baseapp', 'morpho'] } as const
+    const suffix = Attribution.encode(attribution)
+    const data = `0xabcdef${suffix.slice(2)}` as const
+    expect(Attribution.decode(data)).toEqual({
+      codes: ['baseapp', 'morpho'],
+      id: 0,
+    })
+  })
+})
