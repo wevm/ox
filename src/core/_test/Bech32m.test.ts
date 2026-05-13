@@ -48,14 +48,19 @@ describe('encode', () => {
   })
 
   test('error: exceeds length limit', () => {
-    expect(() => Bech32m.encode('test', new Uint8Array(100))).toThrow(
-      Bech32m.ExceedsLengthError,
-    )
+    expect(() =>
+      Bech32m.encode('test', new Uint8Array(100), { limit: 90 }),
+    ).toThrow(Bech32m.ExceedsLengthError)
   })
 
   test('custom limit', () => {
     const data = new Uint8Array(100)
     expect(() => Bech32m.encode('test', data, { limit: 200 })).not.toThrow()
+  })
+
+  test('no limit by default', () => {
+    // No `limit` option means no enforced cap — large payloads encode fine.
+    expect(() => Bech32m.encode('test', new Uint8Array(100))).not.toThrow()
   })
 })
 
@@ -109,8 +114,14 @@ describe('decode', () => {
     expect(() =>
       Bech32m.decode(
         'an84characterslonghumanreadablepartthatcontainsthetheexcludedcharactersbioandnumber11d6pts4',
+        { limit: 90 },
       ),
     ).toThrow(Bech32m.ExceedsLengthError)
+  })
+
+  test('no limit by default on decode', () => {
+    const long = Bech32m.encode('test', new Uint8Array(100))
+    expect(() => Bech32m.decode(long)).not.toThrow()
   })
 
   test('custom limit', () => {
@@ -181,6 +192,7 @@ describe('BIP-350 invalid bech32m vectors', () => {
     expect(() =>
       Bech32m.decode(
         'an84characterslonghumanreadablepartthatcontainsthetheexcludedcharactersbioandnumber11d6pts4',
+        { limit: 90 },
       ),
     ).toThrow(Bech32m.ExceedsLengthError)
   })

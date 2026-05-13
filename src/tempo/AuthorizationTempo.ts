@@ -683,7 +683,7 @@ export function hash(
   return Hash.keccak256(
     Hex.concat(
       '0x05',
-      Rlp.fromHex(
+      Rlp.encode(
         toTuple(
           presign
             ? {
@@ -693,6 +693,7 @@ export function hash(
               }
             : authorization,
         ),
+        { as: 'Hex' },
       ),
     ),
   )
@@ -703,7 +704,7 @@ export declare namespace hash {
     | toTuple.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 
   type Options = {

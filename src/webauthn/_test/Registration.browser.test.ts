@@ -491,7 +491,7 @@ describe('vulnerability: tampered clientDataJSON', () => {
     const json = JSON.parse(
       Bytes.toString(new Uint8Array(credential.clientDataJSON)),
     )
-    json.challenge = Base64.fromBytes(new Uint8Array(32), {
+    json.challenge = Base64.encode(new Uint8Array(32), {
       url: true,
       pad: false,
     })
@@ -637,7 +637,7 @@ describe('vulnerability: replay attacks', () => {
     const json = JSON.parse(
       Bytes.toString(new Uint8Array(credential.clientDataJSON)),
     )
-    json.challenge = Base64.fromHex(challengeB, { url: true, pad: false })
+    json.challenge = Base64.encode(challengeB, { url: true, pad: false })
     credential.clientDataJSON = Bytes.fromString(JSON.stringify(json))
       .buffer as ArrayBuffer
 
@@ -660,7 +660,7 @@ describe('vulnerability: replay attacks', () => {
     const json = JSON.parse(
       Bytes.toString(new Uint8Array(credential.clientDataJSON)),
     )
-    json.challenge = Base64.fromHex(challengeB, { url: true, pad: false })
+    json.challenge = Base64.encode(challengeB, { url: true, pad: false })
     credential.clientDataJSON = Bytes.fromString(JSON.stringify(json))
       .buffer as ArrayBuffer
 
@@ -731,7 +731,7 @@ describe('challenge formats', () => {
     const challenge = Hex.random(32)
     const { credential } = await createCredential(challenge)
 
-    const expectedB64 = Base64.fromHex(challenge, { url: true, pad: false })
+    const expectedB64 = Base64.encode(challenge, { url: true, pad: false })
 
     const result = Registration.verify({
       credential,
@@ -811,7 +811,7 @@ function buildPackedCredential(options?: {
   const clientDataJSON = Bytes.fromString(
     JSON.stringify({
       type: 'webauthn.create',
-      challenge: Base64.fromHex(challenge, { url: true, pad: false }),
+      challenge: Base64.encode(challenge, { url: true, pad: false }),
       origin: window.location.origin,
       crossOrigin: false,
     }),
@@ -833,7 +833,7 @@ function buildPackedCredential(options?: {
     }),
   )
 
-  const id = Base64.fromBytes(credentialId, { url: true, pad: false })
+  const id = Base64.encode(credentialId, { url: true, pad: false })
   const credential: Credential.Credential = {
     id,
     publicKey,
@@ -869,7 +869,7 @@ function buildNoneCredential(flagOverride?: number) {
   const clientDataJSON = Bytes.fromString(
     JSON.stringify({
       type: 'webauthn.create',
-      challenge: Base64.fromHex(challenge, { url: true, pad: false }),
+      challenge: Base64.encode(challenge, { url: true, pad: false }),
       origin: window.location.origin,
       crossOrigin: false,
     }),
@@ -877,7 +877,7 @@ function buildNoneCredential(flagOverride?: number) {
   const attestationObject = Hex.toBytes(
     Authenticator.getAttestationObject({ authData, fmt: 'none' }),
   )
-  const id = Base64.fromBytes(credentialId, { url: true, pad: false })
+  const id = Base64.encode(credentialId, { url: true, pad: false })
   const credential: Credential.Credential = {
     id,
     publicKey,

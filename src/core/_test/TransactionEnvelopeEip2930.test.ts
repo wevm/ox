@@ -120,7 +120,9 @@ describe('deserialize', () => {
   describe('errors', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TxEnvelopeEip2930.deserialize(`0x01${Rlp.fromHex([]).slice(2)}`),
+        TxEnvelopeEip2930.deserialize(
+          `0x01${Rlp.encode([], { as: 'Hex' }).slice(2)}`,
+        ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip2930" was provided.
 
@@ -132,7 +134,7 @@ describe('deserialize', () => {
     test('invalid transaction (some missing)', () => {
       expect(() =>
         TxEnvelopeEip2930.deserialize(
-          `0x01${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
+          `0x01${Rlp.encode(['0x00', '0x01'], { as: 'Hex' }).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip2930" was provided.
@@ -145,17 +147,10 @@ describe('deserialize', () => {
     test('invalid transaction (missing signature)', () => {
       expect(() =>
         TxEnvelopeEip2930.deserialize(
-          `0x01${Rlp.fromHex([
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-          ]).slice(2)}`,
+          `0x01${Rlp.encode(
+            ['0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x'],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip2930" was provided.

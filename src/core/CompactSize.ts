@@ -16,17 +16,44 @@ import * as Hex from './Hex.js'
  * ```ts twoslash
  * import { CompactSize } from 'ox'
  *
- * const bytes = CompactSize.toBytes(252)
- * // Uint8Array [252]
+ * CompactSize.encode(252)
+ * // @log: Uint8Array [252]
  *
- * const bytes2 = CompactSize.toBytes(253)
- * // Uint8Array [253, 253, 0]
+ * CompactSize.encode(253, { as: 'Hex' })
+ * // @log: '0xfdfd00'
  * ```
  *
  * @param value - The integer to encode.
- * @returns The CompactSize-encoded bytes.
+ * @param options - Encoding options.
+ * @returns The CompactSize-encoded value.
  */
-export function toBytes(value: bigint | number): Bytes.Bytes {
+export function encode<as extends 'Bytes' | 'Hex' = 'Bytes'>(
+  value: bigint | number,
+  options: encode.Options<as> = {},
+): encode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+  const bytes = encodeToBytes(value)
+  if (as === 'Hex') return Hex.fromBytes(bytes) as encode.ReturnType<as>
+  return bytes as encode.ReturnType<as>
+}
+
+export declare namespace encode {
+  type Options<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> = {
+    /** The format to return the encoded value in. @default 'Bytes' */
+    as?: as | 'Bytes' | 'Hex' | undefined
+  }
+
+  type ReturnType<as extends 'Bytes' | 'Hex' = 'Bytes' | 'Hex'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | InvalidValueError
+    | NegativeValueError
+    | Errors.GlobalErrorType
+}
+
+function encodeToBytes(value: bigint | number): Bytes.Bytes {
   if (typeof value === 'number' && !Number.isSafeInteger(value))
     throw new InvalidValueError({ value })
   const n = BigInt(value)
@@ -53,50 +80,25 @@ export function toBytes(value: bigint | number): Bytes.Bytes {
   return buf
 }
 
-export declare namespace toBytes {
-  type ErrorType =
-    | InvalidValueError
-    | NegativeValueError
-    | Errors.GlobalErrorType
-}
-
 /**
- * Encodes an integer using Bitcoin's CompactSize variable-length encoding and returns it as {@link ox#Hex.Hex}.
+ * Decodes a CompactSize-encoded value from {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex}.
  *
  * @example
  * ```ts twoslash
  * import { CompactSize } from 'ox'
  *
- * const hex = CompactSize.toHex(252)
- * // '0xfc'
+ * CompactSize.decode(new Uint8Array([0xfd, 0x00, 0x01]))
+ * // @log: { value: 256n, size: 3 }
+ *
+ * CompactSize.decode('0xfd0001')
+ * // @log: { value: 256n, size: 3 }
  * ```
  *
- * @param value - The integer to encode.
- * @returns The CompactSize-encoded hex string.
- */
-export function toHex(value: bigint | number): Hex.Hex {
-  return Hex.fromBytes(toBytes(value))
-}
-
-export declare namespace toHex {
-  type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
-}
-
-/**
- * Decodes a CompactSize-encoded value from {@link ox#Bytes.Bytes}.
- *
- * @example
- * ```ts twoslash
- * import { CompactSize } from 'ox'
- *
- * const result = CompactSize.fromBytes(new Uint8Array([0xfd, 0x00, 0x01]))
- * // { value: 256, size: 3 }
- * ```
- *
- * @param data - The bytes to decode from.
+ * @param value - The bytes or hex string to decode from.
  * @returns The decoded value and number of bytes consumed.
  */
-export function fromBytes(data: Bytes.Bytes): fromBytes.ReturnType {
+export function decode(value: Bytes.Bytes | Hex.Hex): decode.ReturnType {
+  const data = value instanceof Uint8Array ? value : Bytes.fromHex(value)
   if (data.length === 0)
     throw new InsufficientBytesError({ expected: 1, actual: 0 })
   const first = data[0]!
@@ -105,28 +107,28 @@ export function fromBytes(data: Bytes.Bytes): fromBytes.ReturnType {
   if (first === 0xfd) {
     if (data.length < 3)
       throw new InsufficientBytesError({ expected: 3, actual: data.length })
-    const value = view.getUint16(1, true)
-    if (value < 0xfd) throw new NonMinimalEncodingError()
-    return { value: BigInt(value), size: 3 }
+    const result = view.getUint16(1, true)
+    if (result < 0xfd) throw new NonMinimalEncodingError()
+    return { value: BigInt(result), size: 3 }
   }
   if (first === 0xfe) {
     if (data.length < 5)
       throw new InsufficientBytesError({ expected: 5, actual: data.length })
-    const value = view.getUint32(1, true)
-    if (value <= 0xffff) throw new NonMinimalEncodingError()
-    return { value: BigInt(value), size: 5 }
+    const result = view.getUint32(1, true)
+    if (result <= 0xffff) throw new NonMinimalEncodingError()
+    return { value: BigInt(result), size: 5 }
   }
   if (data.length < 9)
     throw new InsufficientBytesError({ expected: 9, actual: data.length })
-  const value = view.getBigUint64(1, true)
-  if (value <= 0xffffffffn) throw new NonMinimalEncodingError()
+  const result = view.getBigUint64(1, true)
+  if (result <= 0xffffffffn) throw new NonMinimalEncodingError()
   return {
-    value,
+    value: result,
     size: 9,
   }
 }
 
-export declare namespace fromBytes {
+export declare namespace decode {
   type ReturnType = {
     /** The decoded integer value. */
     value: bigint
@@ -135,31 +137,10 @@ export declare namespace fromBytes {
   }
 
   type ErrorType =
+    | Bytes.fromHex.ErrorType
     | InsufficientBytesError
     | NonMinimalEncodingError
     | Errors.GlobalErrorType
-}
-
-/**
- * Decodes a CompactSize-encoded value from {@link ox#Hex.Hex}.
- *
- * @example
- * ```ts twoslash
- * import { CompactSize } from 'ox'
- *
- * const result = CompactSize.fromHex('0xfd0001')
- * // { value: 256, size: 3 }
- * ```
- *
- * @param data - The hex string to decode from.
- * @returns The decoded value and number of bytes consumed.
- */
-export function fromHex(data: Hex.Hex): fromBytes.ReturnType {
-  return fromBytes(Bytes.fromHex(data))
-}
-
-export declare namespace fromHex {
-  type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /** Thrown when a CompactSize value is negative. */

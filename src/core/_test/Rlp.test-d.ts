@@ -2,20 +2,22 @@ import { Bytes, type Hex, Rlp } from 'ox'
 import { describe, expectTypeOf, test } from 'vitest'
 import type { RecursiveArray } from '../internal/types.js'
 
-describe('Rlp.to', () => {
+describe('Rlp.decode', () => {
   test('default', () => {
-    expectTypeOf(Rlp.toHex('0x')).toEqualTypeOf<RecursiveArray<Hex.Hex>>()
-    expectTypeOf(Rlp.toBytes(Bytes.fromArray([]))).toEqualTypeOf<
-      RecursiveArray<Bytes.Bytes>
+    expectTypeOf(Rlp.decode('0x', { as: 'Hex' })).toEqualTypeOf<
+      RecursiveArray<Hex.Hex>
     >()
+    expectTypeOf(
+      Rlp.decode(Bytes.fromArray([]), { as: 'Bytes' }),
+    ).toEqualTypeOf<RecursiveArray<Bytes.Bytes>>()
   })
 })
 
-describe('Rlp.from', () => {
+describe('Rlp.encode', () => {
   test('default', () => {
-    expectTypeOf(Rlp.fromHex('0x')).toEqualTypeOf<Hex.Hex>()
+    expectTypeOf(Rlp.encode('0x', { as: 'Hex' })).toEqualTypeOf<Hex.Hex>()
     expectTypeOf(
-      Rlp.fromBytes(Bytes.fromArray([])),
+      Rlp.encode(Bytes.fromArray([]), { as: 'Bytes' }),
     ).toEqualTypeOf<Bytes.Bytes>()
   })
 })

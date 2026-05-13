@@ -14,7 +14,7 @@ Modules can be imported via their respective module export in the root `ox` name
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
 
-const rlp = Rlp.fromHex([Hex.fromString('hello'), Hex.fromString('world')])
+const rlp = Rlp.encode([Hex.fromString('hello'), Hex.fromString('world')], { as: 'Hex' })
 ```
 
 This approach does not compromise on [tree-shakability](https://developer.mozilla.org/en-US/docs/Glossary/Tree_shaking), as most modern bundlers support Deep Scope Analysis. As a result, this will not impact the bundle size of your application.
@@ -30,7 +30,7 @@ If your bundler does not support Deep Scope Analysis, you are also able to impor
 import * as Hex from 'ox/Hex'
 import * as Rlp from 'ox/Rlp'
 
-const rlp = Rlp.fromHex([Hex.fromString('hello'), Hex.fromString('world')])
+const rlp = Rlp.encode([Hex.fromString('hello'), Hex.fromString('world')], { as: 'Hex' })
 ```
 
 ## Tree Shakability & Bundle Size

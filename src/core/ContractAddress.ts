@@ -79,7 +79,7 @@ export function fromCreate(options: fromCreate.Options): Address.Address {
   if (nonce[0] === 0) nonce = new Uint8Array([])
 
   return Address.from(
-    `0x${Hash.keccak256(Rlp.fromBytes([from, nonce], { as: 'Hex' })).slice(26)}` as Address.Address,
+    `0x${Hash.keccak256(Rlp.encode([from, nonce], { as: 'Hex' })).slice(26)}` as Address.Address,
   )
 }
 
@@ -96,7 +96,7 @@ export declare namespace fromCreate {
     | Address.from.ErrorType
     | Bytes.fromHex.ErrorType
     | Bytes.fromNumber.ErrorType
-    | Rlp.fromBytes.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -261,7 +261,7 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
       type,
     })
 
-  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.decode(Hex.slice(serialized, 1), { as: 'Hex' })
 
   const [
     chainId,
@@ -737,7 +737,7 @@ export function serialize(
 
   return Hex.concat(
     options.format === 'feePayer' ? feePayerMagic : serializedType,
-    Rlp.fromHex(serialized),
+    Rlp.encode(serialized, { as: 'Hex' }),
   ) as Serialized
 }
 
@@ -781,7 +781,7 @@ export declare namespace serialize {
     | Hex.fromNumber.ErrorType
     | Signature.toTuple.ErrorType
     | Hex.concat.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 }
 

@@ -65,18 +65,18 @@ export function serialize(credential: Credential): Credential<true> {
       new Uint8Array(attestationObject),
     )
     if (attestation.authData)
-      response.authenticatorData = Base64.fromBytes(
+      response.authenticatorData = Base64.encode(
         attestation.authData,
         base64UrlOptions,
       )
   }
 
   return {
-    attestationObject: Base64.fromBytes(
+    attestationObject: Base64.encode(
       new Uint8Array(attestationObject),
       base64UrlOptions,
     ),
-    clientDataJSON: Base64.fromBytes(
+    clientDataJSON: Base64.encode(
       new Uint8Array(clientDataJSON),
       base64UrlOptions,
     ),
@@ -86,7 +86,7 @@ export function serialize(credential: Credential): Credential<true> {
       id: raw.id,
       type: raw.type,
       authenticatorAttachment: raw.authenticatorAttachment,
-      rawId: Base64.fromBytes(bufferSourceToBytes(raw.rawId), base64UrlOptions),
+      rawId: Base64.encode(bufferSourceToBytes(raw.rawId), base64UrlOptions),
       response: response as unknown as Types.AuthenticatorResponse<true>,
     },
   }
@@ -94,7 +94,7 @@ export function serialize(credential: Credential): Credential<true> {
 
 export declare namespace serialize {
   type ErrorType =
-    | Base64.fromBytes.ErrorType
+    | Base64.encode.ErrorType
     | PublicKey.toHex.ErrorType
     | Errors.GlobalErrorType
 }
@@ -132,19 +132,19 @@ export function deserialize(credential: Credential<true>): Credential {
   const response = Object.create(null) as Record<string, ArrayBuffer>
   for (const key of responseKeys) {
     const value = (raw.response as unknown as Record<string, string>)[key]
-    if (value) response[key] = bytesToArrayBuffer(Base64.toBytes(value))
+    if (value) response[key] = bytesToArrayBuffer(Base64.decode(value))
   }
 
   return {
-    attestationObject: bytesToArrayBuffer(Base64.toBytes(attestationObject)),
-    clientDataJSON: bytesToArrayBuffer(Base64.toBytes(clientDataJSON)),
+    attestationObject: bytesToArrayBuffer(Base64.decode(attestationObject)),
+    clientDataJSON: bytesToArrayBuffer(Base64.decode(clientDataJSON)),
     id,
     publicKey: PublicKey.from(publicKey),
     raw: {
       id: raw.id,
       type: raw.type,
       authenticatorAttachment: raw.authenticatorAttachment,
-      rawId: bytesToArrayBuffer(Base64.toBytes(raw.rawId)),
+      rawId: bytesToArrayBuffer(Base64.decode(raw.rawId)),
       response: response as unknown as Types.AuthenticatorResponse,
       getClientExtensionResults: () => ({}),
     },
@@ -153,7 +153,7 @@ export function deserialize(credential: Credential<true>): Credential {
 
 export declare namespace deserialize {
   type ErrorType =
-    | Base64.toBytes.ErrorType
+    | Base64.decode.ErrorType
     | PublicKey.from.ErrorType
     | Errors.GlobalErrorType
 }

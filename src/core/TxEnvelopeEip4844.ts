@@ -134,7 +134,9 @@ export declare namespace assert {
 export function deserialize(
   serialized: Serialized,
 ): Compute<TxEnvelopeEip4844> {
-  const transactionOrWrapperArray = Rlp.toBytes(Hex.slice(serialized, 1))
+  const transactionOrWrapperArray = Rlp.decode(Hex.slice(serialized, 1), {
+    as: 'Bytes',
+  })
 
   const hasNetworkWrapper = transactionOrWrapperArray.length === 4
 
@@ -655,9 +657,9 @@ export function serialize(
     '0x03',
     sidecars
       ? // If sidecars are provided, envelope turns into a "network wrapper":
-        Rlp.fromHex([serialized, blobs, commitments, proofs])
+        Rlp.encode([serialized, blobs, commitments, proofs], { as: 'Hex' })
       : // Otherwise, standard envelope is used:
-        Rlp.fromHex(serialized),
+        Rlp.encode(serialized, { as: 'Hex' }),
   ) as Serialized
 }
 
@@ -674,7 +676,7 @@ export declare namespace serialize {
     | Hex.fromNumber.ErrorType
     | Signature.toTuple.ErrorType
     | Hex.concat.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 }
 

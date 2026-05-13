@@ -683,13 +683,13 @@ export declare namespace getSignPayload {
  * @returns The {@link ox#KeyAuthorization.KeyAuthorization}.
  */
 export function deserialize(serialized: Hex.Hex): KeyAuthorization {
-  const tuple = Rlp.toHex(serialized) as unknown as Tuple
+  const tuple = Rlp.decode(serialized, { as: 'Hex' }) as unknown as Tuple
   return fromTuple(tuple)
 }
 
 export declare namespace deserialize {
   type ErrorType =
-    | Rlp.toHex.ErrorType
+    | Rlp.decode.ErrorType
     | fromTuple.ErrorType
     | Errors.GlobalErrorType
 }
@@ -721,7 +721,7 @@ export declare namespace deserialize {
  */
 export function hash(authorization: KeyAuthorization): Hex.Hex {
   const [authorizationTuple] = toTuple(authorization)
-  const serialized = Rlp.fromHex(authorizationTuple)
+  const serialized = Rlp.encode(authorizationTuple, { as: 'Hex' })
   return Hash.keccak256(serialized)
 }
 
@@ -730,7 +730,7 @@ export declare namespace hash {
     | toTuple.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -761,13 +761,13 @@ export declare namespace hash {
  */
 export function serialize(authorization: KeyAuthorization): Hex.Hex {
   const tuple = toTuple(authorization)
-  return Rlp.fromHex(tuple as any)
+  return Rlp.encode(tuple as any, { as: 'Hex' })
 }
 
 export declare namespace serialize {
   type ErrorType =
     | toTuple.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 }
 

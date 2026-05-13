@@ -63,13 +63,19 @@ const nativeFromBase64:
 ).fromBase64
 
 /**
- * Encodes a {@link ox#Bytes.Bytes} to a Base64-encoded string (with optional padding and/or URL-safe characters).
+ * Encodes a {@link ox#Bytes.Bytes}, {@link ox#Hex.Hex}, or string value to a Base64-encoded string (with optional padding and/or URL-safe characters).
  *
  * @example
  * ```ts twoslash
- * import { Base64, Bytes } from 'ox'
+ * import { Base64, Bytes, Hex } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.fromString('hello world'))
+ * Base64.encode(Bytes.fromString('hello world'))
+ * // @log: 'aGVsbG8gd29ybGQ='
+ *
+ * Base64.encode(Hex.fromString('hello world'))
+ * // @log: 'aGVsbG8gd29ybGQ='
+ *
+ * Base64.encode('hello world')
  * // @log: 'aGVsbG8gd29ybGQ='
  * ```
  *
@@ -79,56 +85,66 @@ const nativeFromBase64:
  * Turn off [padding of encoded data](https://datatracker.ietf.org/doc/html/rfc4648#section-3.2) with the `pad` option:
  *
  * ```ts twoslash
- * import { Base64, Bytes } from 'ox'
+ * import { Base64 } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.fromString('hello world'), { pad: false })
+ * Base64.encode('hello world', { pad: false })
  * // @log: 'aGVsbG8gd29ybGQ'
  * ```
  *
+ * @example
  * ### URL-safe Encoding
  *
  * Turn on [URL-safe encoding](https://datatracker.ietf.org/doc/html/rfc4648#section-5) (Base64 URL) with the `url` option:
  *
  * ```ts twoslash
- * import { Base64, Bytes } from 'ox'
+ * import { Base64 } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.fromString('hello wod'), { url: true })
+ * Base64.encode('hello wod', { url: true })
  * // @log: 'aGVsbG8gd29_77-9ZA=='
  * ```
  *
- * @param value - The byte array to encode.
+ * @param value - The byte array, hex value, or string to encode.
  * @param options - Encoding options.
  * @returns The Base64 encoded string.
  */
-export function fromBytes(value: Bytes.Bytes, options: fromBytes.Options = {}) {
+export function encode(
+  value: Bytes.Bytes | Hex.Hex | string,
+  options: encode.Options = {},
+): string {
+  const bytes =
+    value instanceof Uint8Array
+      ? value
+      : typeof value === 'string' && value.startsWith('0x')
+        ? Bytes.fromHex(value as Hex.Hex)
+        : Bytes.fromString(value)
   const { pad = true, url = false } = options
 
   if (nativeToBase64) {
-    const out = nativeToBase64.call(value, {
+    const out = nativeToBase64.call(bytes, {
       alphabet: url ? 'base64url' : 'base64',
       omitPadding: !pad,
     })
     // Native `base64url` already omits padding; if pad was requested, restore it.
     if (url && pad) {
-      const k = value.length % 3
+      const k = bytes.length % 3
       if (k === 1) return `${out}==`
       if (k === 2) return `${out}=`
     }
     return out
   }
 
-  const encoded = new Uint8Array(Math.ceil(value.length / 3) * 4)
+  const encoded = new Uint8Array(Math.ceil(bytes.length / 3) * 4)
 
-  for (let i = 0, j = 0; j < value.length; i += 4, j += 3) {
-    const y = (value[j]! << 16) + (value[j + 1]! << 8) + (value[j + 2]! | 0)
+  for (let i = 0, j = 0; j < bytes.length; i += 4, j += 3) {
+    const y = (bytes[j]! << 16) + (bytes[j + 1]! << 8) + (bytes[j + 2]! | 0)
     encoded[i] = integerToCharacter[y >> 18]!
     encoded[i + 1] = integerToCharacter[(y >> 12) & 0x3f]!
     encoded[i + 2] = integerToCharacter[(y >> 6) & 0x3f]!
     encoded[i + 3] = integerToCharacter[y & 0x3f]!
   }
 
-  const k = value.length % 3
-  const end = Math.floor(value.length / 3) * 4 + (k && k + 1)
+  const k = bytes.length % 3
+  const end = Math.floor(bytes.length / 3) * 4 + (k && k + 1)
   let base64 = decoder.decode(new Uint8Array(encoded.buffer, 0, end))
   if (pad && k === 1) base64 += '=='
   if (pad && k === 2) base64 += '='
@@ -136,7 +152,7 @@ export function fromBytes(value: Bytes.Bytes, options: fromBytes.Options = {}) {
   return base64
 }
 
-export declare namespace fromBytes {
+export declare namespace encode {
   type Options = {
     /**
      * Whether to [pad](https://datatracker.ietf.org/doc/html/rfc4648#section-3.2) the Base64 encoded string.
@@ -152,146 +168,67 @@ export declare namespace fromBytes {
     url?: boolean | undefined
   }
 
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType =
+    | Bytes.fromHex.ErrorType
+    | Bytes.fromString.ErrorType
+    | Errors.GlobalErrorType
 }
 
 /**
- * Encodes a {@link ox#Hex.Hex} to a Base64-encoded string (with optional padding and/or URL-safe characters).
- *
- * @example
- * ```ts twoslash
- * import { Base64, Hex } from 'ox'
- *
- * const value = Base64.fromHex(Hex.fromString('hello world'))
- * // @log: 'aGVsbG8gd29ybGQ='
- * ```
- *
- * @example
- * ### No Padding
- *
- * Turn off [padding of encoded data](https://datatracker.ietf.org/doc/html/rfc4648#section-3.2) with the `pad` option:
- *
- * ```ts twoslash
- * import { Base64, Hex } from 'ox'
- *
- * const value = Base64.fromHex(Hex.fromString('hello world'), { pad: false })
- * // @log: 'aGVsbG8gd29ybGQ'
- * ```
- *
- * ### URL-safe Encoding
- *
- * Turn on [URL-safe encoding](https://datatracker.ietf.org/doc/html/rfc4648#section-5) (Base64 URL) with the `url` option:
- *
- * ```ts twoslash
- * import { Base64, Hex } from 'ox'
- *
- * const value = Base64.fromHex(Hex.fromString('hello wod'), { url: true })
- * // @log: 'aGVsbG8gd29_77-9ZA=='
- * ```
- *
- * @param value - The hex value to encode.
- * @param options - Encoding options.
- * @returns The Base64 encoded string.
- */
-export function fromHex(value: Hex.Hex, options: fromHex.Options = {}) {
-  return fromBytes(Bytes.fromHex(value), options)
-}
-
-export declare namespace fromHex {
-  type Options = {
-    /**
-     * Whether to [pad](https://datatracker.ietf.org/doc/html/rfc4648#section-3.2) the Base64 encoded string.
-     *
-     * @default true
-     */
-    pad?: boolean | undefined
-    /**
-     * Whether to Base64 encode with [URL safe characters](https://datatracker.ietf.org/doc/html/rfc4648#section-5).
-     *
-     * @default false
-     */
-    url?: boolean | undefined
-  }
-
-  type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
-}
-
-/**
- * Encodes a string to a Base64-encoded string (with optional padding and/or URL-safe characters).
+ * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a {@link ox#Bytes.Bytes}, {@link ox#Hex.Hex}, or string value.
  *
  * @example
  * ```ts twoslash
  * import { Base64 } from 'ox'
  *
- * const value = Base64.fromString('hello world')
- * // @log: 'aGVsbG8gd29ybGQ='
- * ```
- *
- * @example
- * ### No Padding
- *
- * Turn off [padding of encoded data](https://datatracker.ietf.org/doc/html/rfc4648#section-3.2) with the `pad` option:
- *
- * ```ts twoslash
- * import { Base64 } from 'ox'
- *
- * const value = Base64.fromString('hello world', { pad: false })
- * // @log: 'aGVsbG8gd29ybGQ'
- * ```
- *
- * ### URL-safe Encoding
- *
- * Turn on [URL-safe encoding](https://datatracker.ietf.org/doc/html/rfc4648#section-5) (Base64 URL) with the `url` option:
- *
- * ```ts twoslash
- * import { Base64 } from 'ox'
- *
- * const value = Base64.fromString('hello wod', { url: true })
- * // @log: 'aGVsbG8gd29_77-9ZA=='
- * ```
- *
- * @param value - The string to encode.
- * @param options - Encoding options.
- * @returns The Base64 encoded string.
- */
-export function fromString(value: string, options: fromString.Options = {}) {
-  return fromBytes(Bytes.fromString(value), options)
-}
-
-export declare namespace fromString {
-  type Options = {
-    /**
-     * Whether to [pad](https://datatracker.ietf.org/doc/html/rfc4648#section-3.2) the Base64 encoded string.
-     *
-     * @default true
-     */
-    pad?: boolean | undefined
-    /**
-     * Whether to Base64 encode with [URL safe characters](https://datatracker.ietf.org/doc/html/rfc4648#section-5).
-     *
-     * @default false
-     */
-    url?: boolean | undefined
-  }
-
-  type ErrorType = fromBytes.ErrorType | Errors.GlobalErrorType
-}
-
-/**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Bytes.Bytes}.
- *
- * @example
- * ```ts twoslash
- * import { Base64, Bytes } from 'ox'
- *
- * const value = Base64.toBytes('aGVsbG8gd29ybGQ=')
+ * Base64.decode('aGVsbG8gd29ybGQ=')
  * // @log: Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
+ *
+ * Base64.decode('aGVsbG8gd29ybGQ=', { as: 'Hex' })
+ * // @log: '0x68656c6c6f20776f726c64'
+ *
+ * Base64.decode('aGVsbG8gd29ybGQ=', { as: 'String' })
+ * // @log: 'hello world'
  * ```
  *
- * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded {@link ox#Bytes.Bytes}.
+ * @param value - The Base64 encoded string.
+ * @param options - Decoding options.
+ * @returns The decoded value.
  */
-export function toBytes(value: string): Bytes.Bytes {
+export function decode<as extends 'Bytes' | 'Hex' | 'String' = 'Bytes'>(
+  value: string,
+  options: decode.Options<as> = {},
+): decode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+  const bytes = decodeToBytes(value)
+  if (as === 'String') return Bytes.toString(bytes) as decode.ReturnType<as>
+  if (as === 'Hex') return Hex.fromBytes(bytes) as decode.ReturnType<as>
+  return bytes as decode.ReturnType<as>
+}
+
+export declare namespace decode {
+  type Options<
+    as extends 'Bytes' | 'Hex' | 'String' = 'Bytes' | 'Hex' | 'String',
+  > = {
+    /** The format to return the decoded value in. @default 'Bytes' */
+    as?: as | 'Bytes' | 'Hex' | 'String' | undefined
+  }
+
+  type ReturnType<
+    as extends 'Bytes' | 'Hex' | 'String' = 'Bytes' | 'Hex' | 'String',
+  > =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'String' ? string : never)
+
+  type ErrorType =
+    | InvalidCharacterError
+    | InvalidLengthError
+    | InvalidPaddingError
+    | Errors.GlobalErrorType
+}
+
+function decodeToBytes(value: string): Bytes.Bytes {
   // Strip trailing '=' padding (only at the very end).
   let bodyEnd = value.length
   let pad = 0
@@ -340,58 +277,6 @@ export function toBytes(value: string): Bytes.Bytes {
     }
   }
   return decoded
-}
-
-export declare namespace toBytes {
-  type ErrorType =
-    | InvalidCharacterError
-    | InvalidLengthError
-    | InvalidPaddingError
-    | Errors.GlobalErrorType
-}
-
-/**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to {@link ox#Hex.Hex}.
- *
- * @example
- * ```ts twoslash
- * import { Base64, Hex } from 'ox'
- *
- * const value = Base64.toHex('aGVsbG8gd29ybGQ=')
- * // @log: 0x68656c6c6f20776f726c64
- * ```
- *
- * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded {@link ox#Hex.Hex}.
- */
-export function toHex(value: string): Hex.Hex {
-  return Hex.fromBytes(toBytes(value))
-}
-
-export declare namespace toHex {
-  type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
-}
-
-/**
- * Decodes a Base64-encoded string (with optional padding and/or URL-safe characters) to a string.
- *
- * @example
- * ```ts twoslash
- * import { Base64 } from 'ox'
- *
- * const value = Base64.toString('aGVsbG8gd29ybGQ=')
- * // @log: 'hello world'
- * ```
- *
- * @param value - The string, hex value, or byte array to encode.
- * @returns The Base64 decoded string.
- */
-export function toString(value: string): string {
-  return Bytes.toString(toBytes(value))
-}
-
-export declare namespace toString {
-  type ErrorType = toBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /** Thrown when a Base64 string contains an invalid character. */

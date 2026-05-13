@@ -13,33 +13,33 @@ RLP is commonly used for use cases on Ethereum Applications such as:
 
 ### Encoding
 
-We can serialize arbitrary data into RLP-encoded format using the [`Rlp.fromHex`](/api/Rlp/fromHex) or [`Rlp.fromBytes`](/api/Rlp/fromBytes) functions.
+We can serialize arbitrary data into RLP-encoded format using the [`Rlp.encode`](/api/Rlp/encode) function. Pass `{ as: 'Hex' }` to receive a hex string, or omit the option for a `Bytes` value.
 
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
 
-const rlp = Rlp.fromHex([
+const rlp = Rlp.encode([
   Hex.fromString('hello'),
   Hex.fromNumber(1337),
   [Hex.fromString('foo'), Hex.fromString('bar')],
-])
+], { as: 'Hex' })
 // @log: 0xd28568656c6c6f820539c883666f6f83626172
 ```
 
 ### Decoding
 
-We can deserialize RLP-encoded data into its original format using the [`Rlp.toHex`](/api/Rlp/toHex) or [`Rlp.toBytes`](/api/Rlp/toBytes) functions.
+We can deserialize RLP-encoded data into its original format using the [`Rlp.decode`](/api/Rlp/decode) function. Pass `{ as: 'Hex' }` to receive a `Hex` tree, or omit the option for a `Bytes` tree.
 
 ```ts twoslash
 import { Hex, Rlp } from 'ox'
 
-const rlp = Rlp.fromHex([
+const rlp = Rlp.encode([
   Hex.fromString('hello'),
   Hex.fromNumber(1337),
   [Hex.fromString('foo'), Hex.fromString('bar')],
-])
+], { as: 'Hex' })
 
-const values = Rlp.toHex(rlp) // [!code focus]
+const values = Rlp.decode(rlp, { as: 'Hex' }) // [!code focus]
 // @log: [Hex.fromString('hello'), Hex.fromNumber(1337), [Hex.fromString('foo'), Hex.fromString('bar')]]
 ```
 

@@ -14,8 +14,8 @@ describe('Rlp round-trip', () => {
   test.prop({ tree: arbitraryRecursiveRlpHex() }, { numRuns })(
     'toHex(from(tree, { as: "Hex" })) ≡ tree (Hex leaves)',
     ({ tree }) => {
-      const encoded = Rlp.from(tree, { as: 'Hex' })
-      const decoded = Rlp.toHex(encoded)
+      const encoded = Rlp.encode(tree, { as: 'Hex' })
+      const decoded = Rlp.decode(encoded, { as: 'Hex' })
       expect(normalizeHex(decoded)).toEqual(normalizeHex(tree))
     },
   )
@@ -23,8 +23,8 @@ describe('Rlp round-trip', () => {
   test.prop({ tree: arbitraryRecursiveRlpBytes() }, { numRuns })(
     'toBytes(from(tree, { as: "Bytes" })) ≡ tree (Bytes leaves)',
     ({ tree }) => {
-      const encoded = Rlp.from(tree, { as: 'Bytes' })
-      const decoded = Rlp.toBytes(encoded)
+      const encoded = Rlp.encode(tree, { as: 'Bytes' })
+      const decoded = Rlp.decode(encoded, { as: 'Bytes' })
       expect(normalizeBytes(decoded)).toEqual(normalizeBytes(tree))
     },
   )
@@ -32,8 +32,8 @@ describe('Rlp round-trip', () => {
   test.prop({ tree: arbitraryRecursiveRlpHex() }, { numRuns })(
     'hex and bytes encode paths agree',
     ({ tree }) => {
-      const asHex = Rlp.from(tree, { as: 'Hex' })
-      const asBytes = Rlp.from(tree, { as: 'Bytes' })
+      const asHex = Rlp.encode(tree, { as: 'Hex' })
+      const asBytes = Rlp.encode(tree, { as: 'Bytes' })
       expect(asHex).toEqual(Hex.fromBytes(asBytes))
     },
   )

@@ -32,7 +32,7 @@ const authData = Authenticator.getAuthenticatorData({
 const clientDataJSONBytes = Bytes.fromString(
   JSON.stringify({
     type: 'webauthn.create',
-    challenge: Base64.fromHex(challenge, { url: true, pad: false }),
+    challenge: Base64.encode(challenge, { url: true, pad: false }),
     origin,
     crossOrigin: false,
   }),
@@ -50,7 +50,7 @@ const attestationObjectBytes = Hex.toBytes(
 const credential = await Registration.create({
   createFn: () =>
     Promise.resolve({
-      id: Base64.fromBytes(credentialId, { url: true, pad: false }),
+      id: Base64.encode(credentialId, { url: true, pad: false }),
       type: 'public-key',
       authenticatorAttachment: 'platform',
       rawId: credentialId.buffer,
@@ -92,7 +92,7 @@ describe('Registration.verify (none)', () => {
   const noneCredential = {
     attestationObject: noneAttestationObject.buffer as ArrayBuffer,
     clientDataJSON: clientDataJSONBytes.buffer as ArrayBuffer,
-    id: Base64.fromBytes(credentialId, { url: true, pad: false }),
+    id: Base64.encode(credentialId, { url: true, pad: false }),
     publicKey,
     raw: credential.raw,
   }

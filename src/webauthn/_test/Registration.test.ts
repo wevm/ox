@@ -738,7 +738,7 @@ describe('verify', () => {
     const clientDataJSON = Bytes.fromString(
       JSON.stringify({
         type: 'webauthn.create',
-        challenge: Base64.fromHex(challenge, { url: true, pad: false }),
+        challenge: Base64.encode(challenge, { url: true, pad: false }),
         origin,
         crossOrigin: false,
       }),
@@ -767,7 +767,7 @@ describe('verify', () => {
     const credential = await Registration.create({
       createFn: () =>
         Promise.resolve({
-          id: Base64.fromBytes(credentialId, { url: true, pad: false }),
+          id: Base64.encode(credentialId, { url: true, pad: false }),
           type: 'public-key',
           authenticatorAttachment: 'platform',
           rawId: credentialId.buffer,
@@ -822,8 +822,7 @@ describe('verify', () => {
     const result = Registration.verify({
       credential,
       challenge: (c) =>
-        c ===
-        Base64.fromBytes(Hex.toBytes(challenge), { url: true, pad: false }),
+        c === Base64.encode(Hex.toBytes(challenge), { url: true, pad: false }),
       origin,
       rpId,
     })
@@ -866,7 +865,7 @@ describe('verify', () => {
 
     const tamperedClientDataJSON = JSON.stringify({
       type: 'webauthn.get',
-      challenge: Base64.fromHex(challenge, { url: true, pad: false }),
+      challenge: Base64.encode(challenge, { url: true, pad: false }),
       origin,
     })
     credential.clientDataJSON = new TextEncoder().encode(tamperedClientDataJSON)

@@ -15,59 +15,59 @@ const nestedList = [
   medium,
 ]
 
-const encodedSmall = Rlp.fromBytes(small)
-const encodedFlat = Rlp.fromBytes(flatList)
-const encodedNested = Rlp.fromBytes(nestedList)
-const encodedMedium = Rlp.fromBytes(medium)
+const encodedSmall = Rlp.encode(small)
+const encodedFlat = Rlp.encode(flatList)
+const encodedNested = Rlp.encode(nestedList)
+const encodedMedium = Rlp.encode(medium)
 
-const encodedSmallHex = Rlp.fromBytes(small, { as: 'Hex' })
-const encodedFlatHex = Rlp.fromBytes(flatList, { as: 'Hex' })
+const encodedSmallHex = Rlp.encode(small, { as: 'Hex' })
+const encodedFlatHex = Rlp.encode(flatList, { as: 'Hex' })
 
-describe('Rlp.fromBytes (encode)', () => {
+describe('Rlp.encode (Bytes input)', () => {
   bench('single 32-byte string', () => {
-    Rlp.fromBytes(small)
+    Rlp.encode(small)
   })
   bench('single 256-byte string', () => {
-    Rlp.fromBytes(medium)
+    Rlp.encode(medium)
   })
   bench('single 4096-byte string', () => {
-    Rlp.fromBytes(large)
+    Rlp.encode(large)
   })
   bench('flat list of 5x 32-byte strings', () => {
-    Rlp.fromBytes(flatList)
+    Rlp.encode(flatList)
   })
   bench('nested list', () => {
-    Rlp.fromBytes(nestedList)
+    Rlp.encode(nestedList)
   })
 })
 
-describe('Rlp.toBytes (decode)', () => {
+describe('Rlp.decode (Bytes input)', () => {
   bench('single 32-byte string', () => {
-    Rlp.toBytes(encodedSmall)
+    Rlp.decode(encodedSmall, { as: 'Bytes' })
   })
   bench('single 256-byte string', () => {
-    Rlp.toBytes(encodedMedium)
+    Rlp.decode(encodedMedium, { as: 'Bytes' })
   })
   bench('flat list of 5x 32-byte strings', () => {
-    Rlp.toBytes(encodedFlat)
+    Rlp.decode(encodedFlat, { as: 'Bytes' })
   })
   bench('nested list', () => {
-    Rlp.toBytes(encodedNested)
+    Rlp.decode(encodedNested, { as: 'Bytes' })
   })
 })
 
-describe('Rlp.fromHex (encode)', () => {
+describe('Rlp.encode (Hex input)', () => {
   const smallHex = Hex.fromBytes(small)
   bench('single 32-byte string', () => {
-    Rlp.fromHex(smallHex)
+    Rlp.encode(smallHex, { as: 'Hex' })
   })
 })
 
-describe('Rlp.toHex (decode)', () => {
+describe('Rlp.decode (Hex input)', () => {
   bench('single 32-byte string', () => {
-    Rlp.toHex(encodedSmallHex)
+    Rlp.decode(encodedSmallHex, { as: 'Hex' })
   })
   bench('flat list of 5x 32-byte strings', () => {
-    Rlp.toHex(encodedFlatHex)
+    Rlp.decode(encodedFlatHex, { as: 'Hex' })
   })
 })

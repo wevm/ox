@@ -439,65 +439,8 @@ describe('deserialize', () => {
   })
 
   test('feePayerSignature with address', () => {
-    const serialized = `0x76${Rlp.fromHex([
-      Hex.fromNumber(1), // chainId
-      Hex.fromNumber(1), // maxPriorityFeePerGas
-      Hex.fromNumber(1), // maxFeePerGas
-      Hex.fromNumber(1), // gas
+    const serialized = `0x76${Rlp.encode(
       [
-        [
-          '0x0000000000000000000000000000000000000000', // to
-          Hex.fromNumber(0), // value
-          '0x', // data
-        ],
-      ], // calls
-      '0x', // accessList
-      Hex.fromNumber(0), // nonceKey
-      Hex.fromNumber(0), // nonce
-      '0x', // validBefore
-      '0x', // validAfter
-      '0x', // feeToken
-      '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // feePayerSignatureOrSender (address)
-      [], // authorizationList
-    ]).slice(2)}` as const
-    const deserialized = TxEnvelopeTempo.deserialize(serialized)
-    expect(deserialized.feePayerSignature).toBe(null)
-    expect(deserialized.from).toBe('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266')
-  })
-
-  test('feePayerSignature with signature tuple', () => {
-    const serialized = `0x76${Rlp.fromHex([
-      Hex.fromNumber(1), // chainId
-      Hex.fromNumber(1), // maxPriorityFeePerGas
-      Hex.fromNumber(1), // maxFeePerGas
-      Hex.fromNumber(1), // gas
-      [
-        [
-          '0x0000000000000000000000000000000000000000', // to
-          Hex.fromNumber(0), // value
-          '0x', // data
-        ],
-      ], // calls
-      '0x', // accessList
-      Hex.fromNumber(0), // nonceKey
-      Hex.fromNumber(0), // nonce
-      '0x', // validBefore
-      '0x', // validAfter
-      '0x', // feeToken
-      [Hex.fromNumber(0), Hex.fromNumber(1), Hex.fromNumber(2)], // feePayerSignatureOrSender (signature tuple)
-      [], // authorizationList
-    ]).slice(2)}` as const
-    const deserialized = TxEnvelopeTempo.deserialize(serialized)
-    expect(deserialized.feePayerSignature).toEqual({
-      yParity: 0,
-      r: 1n,
-      s: 2n,
-    })
-  })
-
-  describe('raw', () => {
-    test('default', () => {
-      const serialized = `0x76${Rlp.fromHex([
         Hex.fromNumber(1), // chainId
         Hex.fromNumber(1), // maxPriorityFeePerGas
         Hex.fromNumber(1), // maxFeePerGas
@@ -515,9 +458,75 @@ describe('deserialize', () => {
         '0x', // validBefore
         '0x', // validAfter
         '0x', // feeToken
-        '0x', // feePayerSignature
+        '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // feePayerSignatureOrSender (address)
         [], // authorizationList
-      ]).slice(2)}` as const
+      ],
+      { as: 'Hex' },
+    ).slice(2)}` as const
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
+    expect(deserialized.feePayerSignature).toBe(null)
+    expect(deserialized.from).toBe('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266')
+  })
+
+  test('feePayerSignature with signature tuple', () => {
+    const serialized = `0x76${Rlp.encode(
+      [
+        Hex.fromNumber(1), // chainId
+        Hex.fromNumber(1), // maxPriorityFeePerGas
+        Hex.fromNumber(1), // maxFeePerGas
+        Hex.fromNumber(1), // gas
+        [
+          [
+            '0x0000000000000000000000000000000000000000', // to
+            Hex.fromNumber(0), // value
+            '0x', // data
+          ],
+        ], // calls
+        '0x', // accessList
+        Hex.fromNumber(0), // nonceKey
+        Hex.fromNumber(0), // nonce
+        '0x', // validBefore
+        '0x', // validAfter
+        '0x', // feeToken
+        [Hex.fromNumber(0), Hex.fromNumber(1), Hex.fromNumber(2)], // feePayerSignatureOrSender (signature tuple)
+        [], // authorizationList
+      ],
+      { as: 'Hex' },
+    ).slice(2)}` as const
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
+    expect(deserialized.feePayerSignature).toEqual({
+      yParity: 0,
+      r: 1n,
+      s: 2n,
+    })
+  })
+
+  describe('raw', () => {
+    test('default', () => {
+      const serialized = `0x76${Rlp.encode(
+        [
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
+          [
+            [
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
+            ],
+          ], // calls
+          '0x', // accessList
+          Hex.fromNumber(0), // nonceKey
+          Hex.fromNumber(0), // nonce
+          '0x', // validBefore
+          '0x', // validAfter
+          '0x', // feeToken
+          '0x', // feePayerSignature
+          [], // authorizationList
+        ],
+        { as: 'Hex' },
+      ).slice(2)}` as const
       expect(TxEnvelopeTempo.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "calls": [
@@ -538,27 +547,30 @@ describe('deserialize', () => {
     })
 
     test('empty sig', () => {
-      const serialized = `0x76${Rlp.fromHex([
-        Hex.fromNumber(1), // chainId
-        Hex.fromNumber(1), // maxPriorityFeePerGas
-        Hex.fromNumber(1), // maxFeePerGas
-        Hex.fromNumber(1), // gas
+      const serialized = `0x76${Rlp.encode(
         [
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
           [
-            '0x0000000000000000000000000000000000000000', // to
-            Hex.fromNumber(0), // value
-            '0x', // data
-          ],
-        ], // calls
-        '0x', // accessList
-        Hex.fromNumber(0), // nonceKey
-        Hex.fromNumber(0), // nonce
-        '0x', // validBefore
-        '0x', // validAfter
-        '0x', // feeToken
-        '0x', // feePayerSignature
-        [], // authorizationList
-      ]).slice(2)}` as const
+            [
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
+            ],
+          ], // calls
+          '0x', // accessList
+          Hex.fromNumber(0), // nonceKey
+          Hex.fromNumber(0), // nonce
+          '0x', // validBefore
+          '0x', // validAfter
+          '0x', // feeToken
+          '0x', // feePayerSignature
+          [], // authorizationList
+        ],
+        { as: 'Hex' },
+      ).slice(2)}` as const
       expect(TxEnvelopeTempo.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "calls": [
@@ -582,7 +594,9 @@ describe('deserialize', () => {
   describe('errors', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TxEnvelopeTempo.deserialize(`0x76${Rlp.fromHex([]).slice(2)}`),
+        TxEnvelopeTempo.deserialize(
+          `0x76${Rlp.encode([], { as: 'Hex' }).slice(2)}`,
+        ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
 
@@ -594,7 +608,7 @@ describe('deserialize', () => {
     test('invalid transaction (some missing)', () => {
       expect(() =>
         TxEnvelopeTempo.deserialize(
-          `0x76${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
+          `0x76${Rlp.encode(['0x00', '0x01'], { as: 'Hex' }).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
@@ -607,21 +621,24 @@ describe('deserialize', () => {
     test('invalid transaction (empty calls)', () => {
       expect(() =>
         TxEnvelopeTempo.deserialize(
-          `0x76${Rlp.fromHex([
-            Hex.fromNumber(1), // chainId
-            Hex.fromNumber(1), // maxPriorityFeePerGas
-            Hex.fromNumber(1), // maxFeePerGas
-            Hex.fromNumber(1), // gas
-            [], // calls (empty)
-            '0x', // accessList
-            Hex.fromNumber(0), // nonceKey
-            Hex.fromNumber(0), // nonce
-            '0x', // validBefore
-            '0x', // validAfter
-            '0x', // feeToken
-            '0x', // feePayerSignature
-            [], // authorizationList
-          ]).slice(2)}`,
+          `0x76${Rlp.encode(
+            [
+              Hex.fromNumber(1), // chainId
+              Hex.fromNumber(1), // maxPriorityFeePerGas
+              Hex.fromNumber(1), // maxFeePerGas
+              Hex.fromNumber(1), // gas
+              [], // calls (empty)
+              '0x', // accessList
+              Hex.fromNumber(0), // nonceKey
+              Hex.fromNumber(0), // nonce
+              '0x', // validBefore
+              '0x', // validAfter
+              '0x', // feeToken
+              '0x', // feePayerSignature
+              [], // authorizationList
+            ],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(
         `[TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
@@ -632,7 +649,7 @@ describe('deserialize', () => {
       // EIP-1559 prefix byte (0x02) instead of Tempo's 0x76.
       expect(() =>
         TxEnvelopeTempo.deserialize(
-          `0x02${Rlp.fromHex([]).slice(2)}` as TxEnvelopeTempo.Serialized,
+          `0x02${Rlp.encode([], { as: 'Hex' }).slice(2)}` as TxEnvelopeTempo.Serialized,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.
@@ -644,30 +661,33 @@ describe('deserialize', () => {
     test('invalid transaction (too many fields with signature)', () => {
       expect(() =>
         TxEnvelopeTempo.deserialize(
-          `0x76${Rlp.fromHex([
-            Hex.fromNumber(1), // chainId
-            Hex.fromNumber(1), // maxPriorityFeePerGas
-            Hex.fromNumber(1), // maxFeePerGas
-            Hex.fromNumber(1), // gas
+          `0x76${Rlp.encode(
             [
+              Hex.fromNumber(1), // chainId
+              Hex.fromNumber(1), // maxPriorityFeePerGas
+              Hex.fromNumber(1), // maxFeePerGas
+              Hex.fromNumber(1), // gas
               [
-                '0x0000000000000000000000000000000000000000',
-                Hex.fromNumber(0),
-                '0x',
-              ],
-            ], // calls
-            '0x', // accessList
-            Hex.fromNumber(0), // nonceKey
-            Hex.fromNumber(0), // nonce
-            '0x', // validBefore
-            '0x', // validAfter
-            '0x', // feeToken
-            '0x', // feePayerSignature
-            [], // authorizationList
-            [], // keyAuthorization
-            '0x1234', // signature
-            '0x5678', // extra field
-          ]).slice(2)}`,
+                [
+                  '0x0000000000000000000000000000000000000000',
+                  Hex.fromNumber(0),
+                  '0x',
+                ],
+              ], // calls
+              '0x', // accessList
+              Hex.fromNumber(0), // nonceKey
+              Hex.fromNumber(0), // nonce
+              '0x', // validBefore
+              '0x', // validAfter
+              '0x', // feeToken
+              '0x', // feePayerSignature
+              [], // authorizationList
+              [], // keyAuthorization
+              '0x1234', // signature
+              '0x5678', // extra field
+            ],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "tempo" was provided.

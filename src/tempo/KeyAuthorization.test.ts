@@ -1663,8 +1663,8 @@ describe('toTuple', () => {
     `)
 
     const [authorizationTuple] = tuple
-    const rlpEncoded = Rlp.fromHex(authorizationTuple)
-    const rlpDecoded = Rlp.toHex(rlpEncoded)
+    const rlpEncoded = Rlp.encode(authorizationTuple, { as: 'Hex' })
+    const rlpDecoded = Rlp.decode(rlpEncoded, { as: 'Hex' })
     expect(rlpDecoded).toEqual(authorizationTuple)
 
     const restored = KeyAuthorization.fromTuple(tuple)
@@ -1704,8 +1704,8 @@ describe('toTuple', () => {
     `)
 
     const [authorizationTuple] = tuple
-    const rlpEncoded = Rlp.fromHex(authorizationTuple)
-    const rlpDecoded = Rlp.toHex(rlpEncoded)
+    const rlpEncoded = Rlp.encode(authorizationTuple, { as: 'Hex' })
+    const rlpDecoded = Rlp.decode(rlpEncoded, { as: 'Hex' })
     expect(rlpDecoded).toEqual(authorizationTuple)
 
     const restored = KeyAuthorization.fromTuple(tuple)

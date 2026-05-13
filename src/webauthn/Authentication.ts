@@ -69,7 +69,7 @@ export function deserializeOptions(
       ...(allowCredentials && {
         allowCredentials: allowCredentials.map(({ id, ...rest }) => ({
           ...rest,
-          id: Base64.toBytes(id),
+          id: Base64.decode(id),
         })),
       }),
       ...(extensions && {
@@ -80,7 +80,7 @@ export function deserializeOptions(
 }
 
 export declare namespace deserializeOptions {
-  type ErrorType = Base64.toBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Base64.decode.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -118,7 +118,7 @@ export function deserializeResponse(response: Response<true>): Response {
 
   const rawResponse: Record<string, ArrayBuffer> = {}
   for (const [key, value] of Object.entries(raw.response))
-    rawResponse[key] = bytesToArrayBuffer(Base64.toBytes(value))
+    rawResponse[key] = bytesToArrayBuffer(Base64.decode(value))
 
   return {
     id,
@@ -127,7 +127,7 @@ export function deserializeResponse(response: Response<true>): Response {
       id: raw.id,
       type: raw.type,
       authenticatorAttachment: raw.authenticatorAttachment,
-      rawId: bytesToArrayBuffer(Base64.toBytes(raw.rawId)),
+      rawId: bytesToArrayBuffer(Base64.decode(raw.rawId)),
       response: rawResponse as unknown as Types.AuthenticatorResponse,
       getClientExtensionResults: () => ({}),
     },
@@ -137,7 +137,7 @@ export function deserializeResponse(response: Response<true>): Response {
 
 export declare namespace deserializeResponse {
   type ErrorType =
-    | Base64.toBytes.ErrorType
+    | Base64.decode.ErrorType
     | Signature.from.ErrorType
     | Errors.GlobalErrorType
 }
@@ -175,12 +175,12 @@ export function getOptions(
         ? {
             allowCredentials: Array.isArray(credentialId)
               ? credentialId.map((id) => ({
-                  id: Base64.toBytes(id),
+                  id: Base64.decode(id),
                   type: 'public-key',
                 }))
               : [
                   {
-                    id: Base64.toBytes(credentialId),
+                    id: Base64.decode(credentialId),
                     type: 'public-key',
                   },
                 ],
@@ -214,7 +214,7 @@ export declare namespace getOptions {
 
   type ErrorType =
     | Bytes.fromHex.ErrorType
-    | Base64.toBytes.ErrorType
+    | Base64.decode.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -371,7 +371,7 @@ export function serializeOptions(
       ...(allowCredentials && {
         allowCredentials: allowCredentials.map(({ id, ...rest }) => ({
           ...rest,
-          id: Base64.fromBytes(bufferSourceToBytes(id), base64UrlOptions),
+          id: Base64.encode(bufferSourceToBytes(id), base64UrlOptions),
         })),
       }),
       ...(extensions && {
@@ -382,7 +382,7 @@ export function serializeOptions(
 }
 
 export declare namespace serializeOptions {
-  type ErrorType = Base64.fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Base64.encode.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -421,7 +421,7 @@ export function serializeResponse(response: Response): Response<true> {
       id: raw.id,
       type: raw.type,
       authenticatorAttachment: raw.authenticatorAttachment,
-      rawId: Base64.fromBytes(bufferSourceToBytes(raw.rawId), base64UrlOptions),
+      rawId: Base64.encode(bufferSourceToBytes(raw.rawId), base64UrlOptions),
       response: rawResponse as unknown as Types.AuthenticatorResponse<true>,
     },
     signature: Signature.toHex(signature),
@@ -430,7 +430,7 @@ export function serializeResponse(response: Response): Response<true> {
 
 export declare namespace serializeResponse {
   type ErrorType =
-    | Base64.fromBytes.ErrorType
+    | Base64.encode.ErrorType
     | Signature.toHex.ErrorType
     | Errors.GlobalErrorType
 }
@@ -635,7 +635,7 @@ export function verify(options: verify.Options): boolean {
   // Validate the challenge in the clientDataJSON.
   if (
     !clientData.challenge ||
-    Hex.fromBytes(Base64.toBytes(clientData.challenge)) !== challenge
+    Hex.fromBytes(Base64.decode(clientData.challenge)) !== challenge
   )
     return false
 
@@ -675,7 +675,7 @@ export declare namespace verify {
   }
 
   type ErrorType =
-    | Base64.toBytes.ErrorType
+    | Base64.decode.ErrorType
     | Bytes.concat.ErrorType
     | Bytes.fromHex.ErrorType
     | Bytes.isEqual.ErrorType

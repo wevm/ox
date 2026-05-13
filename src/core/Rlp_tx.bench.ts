@@ -23,7 +23,7 @@ const eip1559Tuple = [
   '0xb0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0',
 ] as const
 
-const eip1559TupleHex = Rlp.fromHex(eip1559Tuple as never, { as: 'Hex' })
+const eip1559TupleHex = Rlp.encode(eip1559Tuple as never, { as: 'Hex' })
 
 // Larger 7702-shaped tuple with an access list and authorization list of
 // modest size (2 entries each).
@@ -60,35 +60,35 @@ const eip7702Tuple = [
   '0xb0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0',
 ] as const
 
-const eip7702TupleHex = Rlp.fromHex(eip7702Tuple as never, { as: 'Hex' })
+const eip7702TupleHex = Rlp.encode(eip7702Tuple as never, { as: 'Hex' })
 
-describe('Rlp.fromHex (transaction-shaped)', () => {
+describe('Rlp.encode (transaction-shaped)', () => {
   bench('eip1559 tuple', () => {
-    Rlp.fromHex(eip1559Tuple as never, { as: 'Hex' })
+    Rlp.encode(eip1559Tuple as never, { as: 'Hex' })
   })
 
   bench('eip7702 tuple (with access + authorization lists)', () => {
-    Rlp.fromHex(eip7702Tuple as never, { as: 'Hex' })
+    Rlp.encode(eip7702Tuple as never, { as: 'Hex' })
   })
 })
 
-describe('Rlp.toHex (transaction-shaped)', () => {
+describe('Rlp.decode (transaction-shaped)', () => {
   bench('eip1559 tuple', () => {
-    Rlp.toHex(eip1559TupleHex)
+    Rlp.decode(eip1559TupleHex, { as: 'Hex' })
   })
 
   bench('eip7702 tuple (with access + authorization lists)', () => {
-    Rlp.toHex(eip7702TupleHex)
+    Rlp.decode(eip7702TupleHex, { as: 'Hex' })
   })
 })
 
-describe('Rlp.toBytes (transaction-shaped)', () => {
+describe('Rlp.decode (transaction-shaped)', () => {
   bench('eip1559 tuple', () => {
-    Rlp.toBytes(eip1559TupleHex)
+    Rlp.decode(eip1559TupleHex, { as: 'Bytes' })
   })
 
   bench('eip7702 tuple (with access + authorization lists)', () => {
-    Rlp.toBytes(eip7702TupleHex)
+    Rlp.decode(eip7702TupleHex, { as: 'Bytes' })
   })
 })
 

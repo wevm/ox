@@ -169,7 +169,7 @@ export function getOptions(
       ...(excludeCredentialIds
         ? {
             excludeCredentials: excludeCredentialIds?.map((id) => ({
-              id: Base64.toBytes(id),
+              id: Base64.decode(id),
               type: 'public-key',
             })),
           }
@@ -265,7 +265,7 @@ export declare namespace getOptions {
   >
 
   type ErrorType =
-    | Base64.toBytes.ErrorType
+    | Base64.decode.ErrorType
     | Hash.keccak256.ErrorType
     | Bytes.fromString.ErrorType
     | Errors.GlobalErrorType
@@ -307,11 +307,11 @@ export function serializeResponse(response: Response): Response<true> {
   return {
     ...rest,
     credential: {
-      attestationObject: Base64.fromBytes(
+      attestationObject: Base64.encode(
         new Uint8Array(credential.attestationObject),
         base64UrlOptions,
       ),
-      clientDataJSON: Base64.fromBytes(
+      clientDataJSON: Base64.encode(
         new Uint8Array(credential.clientDataJSON),
         base64UrlOptions,
       ),
@@ -321,7 +321,7 @@ export function serializeResponse(response: Response): Response<true> {
         id: credential.raw.id,
         type: credential.raw.type,
         authenticatorAttachment: credential.raw.authenticatorAttachment,
-        rawId: Base64.fromBytes(
+        rawId: Base64.encode(
           bufferSourceToBytes(credential.raw.rawId),
           base64UrlOptions,
         ),
@@ -333,7 +333,7 @@ export function serializeResponse(response: Response): Response<true> {
 
 export declare namespace serializeResponse {
   type ErrorType =
-    | Base64.fromBytes.ErrorType
+    | Base64.encode.ErrorType
     | PublicKey.toHex.ErrorType
     | Errors.GlobalErrorType
 }
@@ -372,7 +372,7 @@ export function serializeOptions(
       ...(excludeCredentials && {
         excludeCredentials: excludeCredentials.map(({ id, ...rest }) => ({
           ...rest,
-          id: Base64.fromBytes(bufferSourceToBytes(id), base64UrlOptions),
+          id: Base64.encode(bufferSourceToBytes(id), base64UrlOptions),
         })),
       }),
       ...(extensions && {
@@ -380,14 +380,14 @@ export function serializeOptions(
       }),
       user: {
         ...user,
-        id: Base64.fromBytes(bufferSourceToBytes(user.id), base64UrlOptions),
+        id: Base64.encode(bufferSourceToBytes(user.id), base64UrlOptions),
       },
     },
   }
 }
 
 export declare namespace serializeOptions {
-  type ErrorType = Base64.fromBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Base64.encode.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -425,7 +425,7 @@ export function deserializeOptions(
       ...(excludeCredentials && {
         excludeCredentials: excludeCredentials.map(({ id, ...rest }) => ({
           ...rest,
-          id: Base64.toBytes(id),
+          id: Base64.decode(id),
         })),
       }),
       ...(extensions && {
@@ -433,14 +433,14 @@ export function deserializeOptions(
       }),
       user: {
         ...user,
-        id: Base64.toBytes(user.id),
+        id: Base64.decode(user.id),
       },
     },
   }
 }
 
 export declare namespace deserializeOptions {
-  type ErrorType = Base64.toBytes.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Base64.decode.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -470,16 +470,16 @@ export function deserializeResponse(response: Response<true>): Response {
 
   const rawResponse: Record<string, ArrayBuffer> = {}
   for (const [key, value] of Object.entries(credential.raw.response))
-    rawResponse[key] = bytesToArrayBuffer(Base64.toBytes(value))
+    rawResponse[key] = bytesToArrayBuffer(Base64.decode(value))
 
   return {
     ...rest,
     credential: {
       attestationObject: bytesToArrayBuffer(
-        Base64.toBytes(credential.attestationObject),
+        Base64.decode(credential.attestationObject),
       ),
       clientDataJSON: bytesToArrayBuffer(
-        Base64.toBytes(credential.clientDataJSON),
+        Base64.decode(credential.clientDataJSON),
       ),
       id: credential.id,
       publicKey: PublicKey.from(credential.publicKey),
@@ -487,7 +487,7 @@ export function deserializeResponse(response: Response<true>): Response {
         id: credential.raw.id,
         type: credential.raw.type,
         authenticatorAttachment: credential.raw.authenticatorAttachment,
-        rawId: bytesToArrayBuffer(Base64.toBytes(credential.raw.rawId)),
+        rawId: bytesToArrayBuffer(Base64.decode(credential.raw.rawId)),
         response: rawResponse as unknown as Types.AuthenticatorResponse,
         getClientExtensionResults: () => ({}),
       },
@@ -497,7 +497,7 @@ export function deserializeResponse(response: Response<true>): Response {
 
 export declare namespace deserializeResponse {
   type ErrorType =
-    | Base64.toBytes.ErrorType
+    | Base64.decode.ErrorType
     | PublicKey.from.ErrorType
     | Errors.GlobalErrorType
 }
@@ -559,7 +559,7 @@ export function verify(options: verify.Options): verify.ReturnType {
       typeof options.challenge === 'string'
         ? Bytes.fromHex(options.challenge)
         : options.challenge
-    const challenge = Base64.fromBytes(challengeBytes, base64UrlOptions)
+    const challenge = Base64.encode(challengeBytes, base64UrlOptions)
     return clientData.challenge === challenge
   })()
   if (!challengeResult) throw new VerifyError('Challenge mismatch')
@@ -627,7 +627,7 @@ export function verify(options: verify.Options): verify.ReturnType {
 
   // Verify credential ID consistency if caller-supplied id is present
   if (credential.id !== undefined) {
-    const expectedId = Base64.fromBytes(credentialId, base64UrlOptions)
+    const expectedId = Base64.encode(credentialId, base64UrlOptions)
     if (credential.id !== expectedId)
       throw new VerifyError(
         `Credential ID mismatch: supplied "${credential.id}" does not match authData "${expectedId}"`,
@@ -709,7 +709,7 @@ export function verify(options: verify.Options): verify.ReturnType {
   }
 
   // 6. Build credential ID string
-  const id = credential.id ?? Base64.fromBytes(credentialId, base64UrlOptions)
+  const id = credential.id ?? Base64.encode(credentialId, base64UrlOptions)
 
   // 7. Build raw credential
   const raw = credential.raw ?? {
@@ -777,8 +777,8 @@ export declare namespace verify {
   type ReturnType = Response
 
   type ErrorType =
-    | Base64.toBytes.ErrorType
-    | Base64.fromBytes.ErrorType
+    | Base64.decode.ErrorType
+    | Base64.encode.ErrorType
     | Bytes.fromHex.ErrorType
     | Bytes.isEqual.ErrorType
     | Cbor.decode.ErrorType

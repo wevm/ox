@@ -27,7 +27,7 @@ export function encode(
   data: Uint8Array,
   options: encode.Options = {},
 ): string {
-  const { limit = 90 } = options
+  const { limit } = options
 
   hrp = hrp.toLowerCase()
 
@@ -39,7 +39,7 @@ export function encode(
 
   const data5 = convertBits(data, 8, 5, true)
 
-  if (hrp.length + 1 + data5.length + 6 > limit)
+  if (limit !== undefined && hrp.length + 1 + data5.length + 6 > limit)
     throw new ExceedsLengthError({ limit })
 
   const checksum = createChecksum(hrp, data5)
@@ -50,7 +50,11 @@ export function encode(
 
 export declare namespace encode {
   type Options = {
-    /** Maximum length of the encoded string. @default 90 */
+    /**
+     * Maximum length of the encoded string. When `undefined`, no limit is
+     * enforced. Set explicitly (e.g. `90` for BIP-173 segwit addresses) to
+     * cap length.
+     */
     limit?: number | undefined
   }
 
@@ -75,9 +79,10 @@ export function decode(
   str: string,
   options: decode.Options = {},
 ): decode.ReturnType {
-  const { limit = 90 } = options
+  const { limit } = options
 
-  if (str.length > limit) throw new ExceedsLengthError({ limit })
+  if (limit !== undefined && str.length > limit)
+    throw new ExceedsLengthError({ limit })
 
   if (str !== str.toLowerCase() && str !== str.toUpperCase())
     throw new MixedCaseError()
@@ -111,7 +116,11 @@ export function decode(
 
 export declare namespace decode {
   type Options = {
-    /** Maximum length of the encoded string. @default 90 */
+    /**
+     * Maximum length of the encoded string. When `undefined`, no limit is
+     * enforced. Set explicitly (e.g. `90` for BIP-173 segwit addresses) to
+     * cap length.
+     */
     limit?: number | undefined
   }
 

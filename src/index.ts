@@ -847,7 +847,7 @@ export * as Authorization from './core/Authorization.js'
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.fromHex('0x00ff00')
+ * const value = Base32.encode('0x00ff00')
  * ```
  *
  * @example
@@ -856,7 +856,7 @@ export * as Authorization from './core/Authorization.js'
  * ```ts twoslash
  * import { Base32 } from 'ox'
  *
- * const value = Base32.toBytes('qrlsq')
+ * const value = Base32.decode('qrlsq')
  * ```
  *
  * @category Data
@@ -868,48 +868,36 @@ export * as Base32 from './core/Base32.js'
  * @example
  * ### Encoding to Base58
  *
- * Values can be encoded to Base58 with:
- *
- * - {@link ox#Base58.(fromString:function)}, or
- *
- * - {@link ox#Base58.(fromBytes:function)}, or
- *
- * - {@link ox#Base58.(fromHex:function)}
+ * Values can be encoded to Base58 with {@link ox#Base58.(encode:function)}:
  *
  * ```ts twoslash
  * import { Base58 } from 'ox'
  *
- * const value_string = Base58.fromString('Hello World!')
+ * const value_string = Base58.encode('Hello World!')
  * // @log: '2NEpo7TZRRrLZSi2U'
  *
- * const value_bytes = Base58.fromBytes(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const value_bytes = Base58.encode(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // @log: '2NEpo7TZRRrLZSi2U'
  *
- * const value_hex = Base58.fromHex('0x48656c6c6f20576f726c6421')
+ * const value_hex = Base58.encode('0x48656c6c6f20576f726c6421')
  * // @log: '2NEpo7TZRRrLZSi2U'
  * ```
  *
  * @example
  * ### Decoding Base58
  *
- * Values can be decoded from Base58 with:
- *
- * - {@link ox#Base58.(toString:function)}, or
- *
- * - {@link ox#Base58.(toBytes:function)}, or
- *
- * - {@link ox#Base58.(toHex:function)}
+ * Values can be decoded from Base58 with {@link ox#Base58.(decode:function)}:
  *
  * ```ts twoslash
  * import { Base58 } from 'ox'
  *
- * const value_string = Base58.toString('2NEpo7TZRRrLZSi2U')
+ * const value_string = Base58.decode('2NEpo7TZRRrLZSi2U', { as: 'String' })
  * // @log: 'Hello World!'
  *
- * const value_bytes = Base58.toBytes('2NEpo7TZRRrLZSi2U')
+ * const value_bytes = Base58.decode('2NEpo7TZRRrLZSi2U')
  * // @log: Uint8Array [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]
  *
- * const value_hex = Base58.toHex('2NEpo7TZRRrLZSi2U')
+ * const value_hex = Base58.decode('2NEpo7TZRRrLZSi2U', { as: 'Hex' })
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
@@ -922,47 +910,35 @@ export * as Base58 from './core/Base58.js'
  * @example
  * ### Encoding to Base64
  *
- * Values can be encoded to Base64 with:
- *
- * - {@link ox#Base64.(fromString:function)}, or
- *
- * - {@link ox#Base64.(fromBytes:function)}, or
- *
- * - {@link ox#Base64.(fromHex:function)}
+ * Values can be encoded to Base64 with {@link ox#Base64.(encode:function)}:
  *
  * ```ts twoslash
  * import { Base64 } from 'ox'
  *
- * const value_string = Base64.fromString('Hello World!')
+ * const value_string = Base64.encode('Hello World!')
  * // @log: 'SGVsbG8gV29ybGQh=='
  *
- * const value_bytes = Base64.fromBytes(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const value_bytes = Base64.encode(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
  * // @log: 'SGVsbG8gV29ybGQh=='
  *
- * const value_hex = Base64.fromHex('0x48656c6c6f20576f726c6421')
+ * const value_hex = Base64.encode('0x48656c6c6f20576f726c6421')
  * // @log: 'SGVsbG8gV29ybGQh=='
  * ```
  *
  * ### Decoding Base64
  *
- * Values can be decoded from Base64 with:
- *
- * - {@link ox#Base64.(toString:function)}, or
- *
- * - {@link ox#Base64.(toBytes:function)}, or
- *
- * - {@link ox#Base64.(toHex:function)}
+ * Values can be decoded from Base64 with {@link ox#Base64.(decode:function)}:
  *
  * ```ts twoslash
  * import { Base64 } from 'ox'
  *
- * const value_string = Base64.toString('SGVsbG8gV29ybGQh==')
+ * const value_string = Base64.decode('SGVsbG8gV29ybGQh==', { as: 'String' })
  * // @log: 'Hello World!'
  *
- * const value_bytes = Base64.toBytes('SGVsbG8gV29ybGQh==')
+ * const value_bytes = Base64.decode('SGVsbG8gV29ybGQh==')
  * // @log: Uint8Array [72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]
  *
- * const value_hex = Base64.toHex('SGVsbG8gV29ybGQh==')
+ * const value_hex = Base64.decode('SGVsbG8gV29ybGQh==', { as: 'Hex' })
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
@@ -1387,7 +1363,7 @@ export * as Cbor from './core/Cbor.js'
  * ```ts twoslash
  * import { CompactSize } from 'ox'
  *
- * const bytes = CompactSize.toBytes(65535)
+ * const bytes = CompactSize.encode(65535)
  * ```
  *
  * @example
@@ -1396,7 +1372,7 @@ export * as Cbor from './core/Cbor.js'
  * ```ts twoslash
  * import { CompactSize } from 'ox'
  *
- * const { value, size } = CompactSize.fromBytes(new Uint8Array([0xfd, 0xff, 0xff]))
+ * const { value, size } = CompactSize.decode(new Uint8Array([0xfd, 0xff, 0xff]))
  * ```
  *
  * @category Data
@@ -2133,10 +2109,10 @@ export * as PublicKey from './core/PublicKey.js'
  * ```ts twoslash
  * import { Hex, Rlp } from 'ox'
  *
- * const data = Rlp.fromHex([Hex.fromString('hello'), Hex.fromString('world')])
+ * const data = Rlp.encode([Hex.fromString('hello'), Hex.fromString('world')], { as: 'Hex' })
  * // @log: '0xcc8568656c6c6f85776f726c64'
  *
- * const values = Rlp.toHex(data)
+ * const values = Rlp.decode(data, { as: 'Hex' })
  * // @log: [Hex.fromString('hello'), Hex.fromString('world')]
  * ```
  *

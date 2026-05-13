@@ -103,7 +103,7 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
-  const tuple = Rlp.toBytes(serialized)
+  const tuple = Rlp.decode(serialized, { as: 'Bytes' })
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
     tuple as readonly Bytes.Bytes[]
@@ -523,7 +523,7 @@ export function serialize(
   } else if (chainId > 0)
     serialized = [...serialized, Hex.fromNumber(chainId), '0x', '0x']
 
-  return Rlp.fromHex(serialized) as never
+  return Rlp.encode(serialized, { as: 'Hex' }) as never
 }
 
 export declare namespace serialize {
@@ -536,7 +536,7 @@ export declare namespace serialize {
     | assert.ErrorType
     | Hex.fromNumber.ErrorType
     | Hex.trimLeft.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Signature.InvalidVError
     | Errors.GlobalErrorType
 }

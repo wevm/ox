@@ -1,10 +1,10 @@
 import { Base58 } from 'ox'
 import { describe, expect, test } from 'vitest'
 
-describe('fromBytes', () => {
+describe('encode', () => {
   test('default', () => {
     expect(
-      Base58.fromBytes(
+      Base58.encode(
         new Uint8Array([
           72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33,
         ]),
@@ -13,24 +13,24 @@ describe('fromBytes', () => {
   })
 })
 
-describe('fromHex', () => {
+describe('encode', () => {
   test('default', () => {
-    expect(Base58.fromHex('0x00000000287fb4cd')).toBe('1111233QC4')
+    expect(Base58.encode('0x00000000287fb4cd')).toBe('1111233QC4')
   })
 })
 
-describe('fromString', () => {
+describe('encode', () => {
   test('default', () => {
-    expect(Base58.fromString('Hello World!')).toBe('2NEpo7TZRRrLZSi2U')
-    expect(
-      Base58.fromString('The quick brown fox jumps over the lazy dog.'),
-    ).toBe('USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z')
+    expect(Base58.encode('Hello World!')).toBe('2NEpo7TZRRrLZSi2U')
+    expect(Base58.encode('The quick brown fox jumps over the lazy dog.')).toBe(
+      'USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z',
+    )
   })
 })
 
-describe('toBytes', () => {
+describe('decode', () => {
   test('default', () => {
-    expect(Base58.toBytes('2NEpo7TZRRrLZSi2U')).toMatchInlineSnapshot(`
+    expect(Base58.decode('2NEpo7TZRRrLZSi2U')).toMatchInlineSnapshot(`
       Uint8Array [
         72,
         101,
@@ -49,22 +49,27 @@ describe('toBytes', () => {
   })
 })
 
-describe('toHex', () => {
+describe('decode', () => {
   test('default', () => {
-    expect(Base58.toHex('233QC4')).toBe('0x287fb4cd')
-    expect(Base58.toHex('11233QC4')).toBe('0x0000287fb4cd')
-    expect(() => Base58.toHex('233QC4I')).toThrowErrorMatchingInlineSnapshot(
+    expect(Base58.decode('233QC4', { as: 'Hex' })).toBe('0x287fb4cd')
+    expect(Base58.decode('11233QC4', { as: 'Hex' })).toBe('0x0000287fb4cd')
+    expect(() =>
+      Base58.decode('233QC4I', { as: 'Hex' }),
+    ).toThrowErrorMatchingInlineSnapshot(
       `[Base58.InvalidCharacterError: Invalid Base58 character: "I".]`,
     )
   })
 })
 
-describe('toString', () => {
+describe('decode', () => {
   test('default', () => {
-    expect(Base58.toString('2NEpo7TZRRrLZSi2U')).toBe('Hello World!')
+    expect(Base58.decode('2NEpo7TZRRrLZSi2U', { as: 'String' })).toBe(
+      'Hello World!',
+    )
     expect(
-      Base58.toString(
+      Base58.decode(
         'USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z',
+        { as: 'String' },
       ),
     ).toBe('The quick brown fox jumps over the lazy dog.')
   })
@@ -73,12 +78,8 @@ describe('toString', () => {
 test('exports', () => {
   expect(Object.keys(Base58)).toMatchInlineSnapshot(`
     [
-      "fromBytes",
-      "fromHex",
-      "fromString",
-      "toBytes",
-      "toHex",
-      "toString",
+      "encode",
+      "decode",
       "InvalidCharacterError",
     ]
   `)

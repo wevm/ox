@@ -168,26 +168,29 @@ describe('deserialize', () => {
     test('invalid access list (invalid address)', () => {
       expect(() =>
         TxEnvelopeEip4844.deserialize(
-          `0x03${Rlp.fromHex([
-            Hex.fromNumber(1), // chainId
-            Hex.fromNumber(0), // nonce
-            Hex.fromNumber(1), // maxPriorityFeePerGas
-            Hex.fromNumber(1), // maxFeePerGas
-            Hex.fromNumber(1), // gas
-            '0x0000000000000000000000000000000000000000', // to
-            Hex.fromNumber(0), // value
-            '0x', // data
+          `0x03${Rlp.encode(
             [
+              Hex.fromNumber(1), // chainId
+              Hex.fromNumber(0), // nonce
+              Hex.fromNumber(1), // maxPriorityFeePerGas
+              Hex.fromNumber(1), // maxFeePerGas
+              Hex.fromNumber(1), // gas
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
               [
-                '0x',
                 [
-                  '0x0000000000000000000000000000000000000000000000000000000000000001',
+                  '0x',
+                  [
+                    '0x0000000000000000000000000000000000000000000000000000000000000001',
+                  ],
                 ],
-              ],
-            ], // accessList
-            '0x', // maxFeePerBlobGas,
-            ['0x'], // blobVersionedHashes
-          ]).slice(2)}`,
+              ], // accessList
+              '0x', // maxFeePerBlobGas,
+              ['0x'], // blobVersionedHashes
+            ],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [Address.InvalidAddressError: Address "0x" is invalid.
@@ -197,19 +200,22 @@ describe('deserialize', () => {
 
       expect(() =>
         TxEnvelopeEip4844.deserialize(
-          `0x03${Rlp.fromHex([
-            Hex.fromNumber(1), // chainId
-            Hex.fromNumber(0), // nonce
-            Hex.fromNumber(1), // maxPriorityFeePerGas
-            Hex.fromNumber(1), // maxFeePerGas
-            Hex.fromNumber(1), // gas
-            '0x0000000000000000000000000000000000000000', // to
-            Hex.fromNumber(0), // value
-            '0x', // data
-            [['0x123456', ['0x0']]], // accessList
-            '0x', // maxFeePerBlobGas,
-            ['0x'], // blobVersionedHashes
-          ]).slice(2)}`,
+          `0x03${Rlp.encode(
+            [
+              Hex.fromNumber(1), // chainId
+              Hex.fromNumber(0), // nonce
+              Hex.fromNumber(1), // maxPriorityFeePerGas
+              Hex.fromNumber(1), // maxFeePerGas
+              Hex.fromNumber(1), // gas
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
+              [['0x123456', ['0x0']]], // accessList
+              '0x', // maxFeePerBlobGas,
+              ['0x'], // blobVersionedHashes
+            ],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [Address.InvalidAddressError: Address "0x123456" is invalid.
@@ -220,7 +226,9 @@ describe('deserialize', () => {
 
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TxEnvelopeEip4844.deserialize(`0x03${Rlp.fromHex([]).slice(2)}`),
+        TxEnvelopeEip4844.deserialize(
+          `0x03${Rlp.encode([], { as: 'Hex' }).slice(2)}`,
+        ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
 
@@ -232,7 +240,7 @@ describe('deserialize', () => {
     test('invalid transaction (some missing)', () => {
       expect(() =>
         TxEnvelopeEip4844.deserialize(
-          `0x03${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
+          `0x03${Rlp.encode(['0x00', '0x01'], { as: 'Hex' }).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.
@@ -245,20 +253,23 @@ describe('deserialize', () => {
     test('invalid transaction (missing signature)', () => {
       expect(() =>
         TxEnvelopeEip4844.deserialize(
-          `0x03${Rlp.fromHex([
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-          ]).slice(2)}`,
+          `0x03${Rlp.encode(
+            [
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+              '0x',
+            ],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip4844" was provided.

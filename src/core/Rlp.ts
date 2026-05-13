@@ -3,62 +3,109 @@ import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import * as internal_bytes from './internal/bytes.js'
 import * as Cursor from './internal/cursor.js'
-import type { ExactPartial, RecursiveArray } from './internal/types.js'
+import type { RecursiveArray } from './internal/types.js'
 
 /**
- * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
+ * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Bytes, Rlp } from 'ox'
+ *
+ * Rlp.encode('0x68656c6c6f20776f726c64', { as: 'Hex' })
+ * // @log: '0x8b68656c6c6f20776f726c64'
+ *
+ * Rlp.encode(Bytes.from([139, 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100]))
+ * // @log: Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
+ * ```
+ *
+ * @param value - The {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to encode.
+ * @param options - Options.
+ * @returns The RLP value.
+ */
+export function encode<as extends 'Hex' | 'Bytes' = 'Bytes'>(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+  options: encode.Options<as> = {},
+): encode.ReturnType<as> {
+  const { as = 'Bytes' } = options
+
+  // Two-walk encode without the per-node `Encodable` closure tree:
+  // 1. `measure` walks the input once and caches each list's `bodyLength`
+  //    in a side array indexed by visit order. This makes the second walk
+  //    O(N) instead of O(N²) for nested inputs.
+  // 2. `writeEncoded` walks again, reads cached body lengths, and writes
+  //    bytes straight into the pre-sized buffer. Hex leaves are
+  //    nibble-decoded directly into the destination, skipping the per-leaf
+  //    `Bytes.fromHex` allocation.
+  const ctx: EncodeCtx = { lengths: [], cursor: 0 }
+  const totalLength = measure(value, ctx)
+
+  // Hex-output fast path: when the caller asked for hex AND every leaf is
+  // already hex, emit a hex string directly instead of allocating an
+  // intermediate `Uint8Array` and round-tripping through `Hex.fromBytes`.
+  // This is the dominant shape for transaction envelope serialize.
+  if (as === 'Hex' && isAllHex(value)) {
+    const parts: string[] = []
+    writeEncodedHex(parts, value as RecursiveArray<Hex.Hex>, {
+      lengths: ctx.lengths,
+      cursor: 0,
+    })
+    return `0x${parts.join('')}` as encode.ReturnType<as>
+  }
+
+  const bytes = new Uint8Array(totalLength)
+  writeEncoded(bytes, 0, value, { lengths: ctx.lengths, cursor: 0 })
+
+  if (as === 'Hex') return Hex.fromBytes(bytes) as encode.ReturnType<as>
+  return bytes as encode.ReturnType<as>
+}
+
+export declare namespace encode {
+  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = {
+    /** The format to return the encoded value in. @default 'Bytes' */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+
+  type ErrorType =
+    | Cursor.create.ErrorType
+    | Hex.fromBytes.ErrorType
+    | Bytes.fromHex.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value.
+ *
+ * When `as` is omitted, the output type matches the input type:
+ * - `Bytes` input → `Bytes` tree
+ * - `Hex` input → `Hex` tree
  *
  * @example
  * ```ts twoslash
  * import { Rlp } from 'ox'
- * Rlp.toBytes('0x8b68656c6c6f20776f726c64')
- * // Uint8Array([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
+ *
+ * Rlp.decode('0x8b68656c6c6f20776f726c64')
+ * // @log: '0x68656c6c6f20776f726c64'
+ *
+ * Rlp.decode('0x8b68656c6c6f20776f726c64', { as: 'Bytes' })
+ * // @log: Uint8Array([104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100])
  * ```
  *
- * @param value - The value to decode.
- * @returns The decoded {@link ox#Bytes.Bytes} value.
+ * @param value - The RLP-encoded value to decode.
+ * @param options - Options.
+ * @returns The decoded value.
  */
-export function toBytes(
-  value: Bytes.Bytes | Hex.Hex,
-): RecursiveArray<Bytes.Bytes> {
-  return to(value, 'Bytes')
-}
-
-export declare namespace toBytes {
-  type ErrorType = to.ErrorType
-}
-
-/**
- * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Hex.Hex} value.
- *
- * @example
- * ```ts twoslash
- * import { Rlp } from 'ox'
- * Rlp.toHex('0x8b68656c6c6f20776f726c64')
- * // 0x68656c6c6f20776f726c64
- * ```
- *
- * @param value - The value to decode.
- * @returns The decoded {@link ox#Hex.Hex} value.
- */
-export function toHex(value: Bytes.Bytes | Hex.Hex): RecursiveArray<Hex.Hex> {
-  return to(value, 'Hex')
-}
-
-export declare namespace toHex {
-  type ErrorType = to.ErrorType
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-// Internal
-/////////////////////////////////////////////////////////////////////////////////
-
-/** @internal */
-export function to<
+export function decode<
   value extends Bytes.Bytes | Hex.Hex,
-  to extends 'Hex' | 'Bytes',
->(value: value, to: to | 'Hex' | 'Bytes'): to.ReturnType<to> {
-  const to_ = to ?? (typeof value === 'string' ? 'Hex' : 'Bytes')
+  as extends 'Hex' | 'Bytes' = value extends Bytes.Bytes ? 'Bytes' : 'Hex',
+>(value: value, options: decode.Options<as> = {}): decode.ReturnType<as> {
+  const as_ = (options.as ?? (typeof value === 'string' ? 'Hex' : 'Bytes')) as
+    | 'Hex'
+    | 'Bytes'
 
   const bytes =
     typeof value === 'string' ? Bytes.fromHex(value) : (value as Bytes.Bytes)
@@ -66,16 +113,23 @@ export function to<
   const cursor = Cursor.create(bytes, {
     recursiveReadLimit: Number.POSITIVE_INFINITY,
   })
-  const result = decodeRlpCursor(cursor, to_)
+  const result = decodeRlpCursor(cursor, as_)
 
-  return result as to.ReturnType<to>
+  return result as decode.ReturnType<as>
 }
 
-/** @internal */
-export declare namespace to {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (to extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
-    | (to extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
+export declare namespace decode {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> = {
+    /**
+     * The format to return the decoded value in. Defaults to matching the
+     * input type (`'Hex'` for hex strings, `'Bytes'` for byte arrays).
+     */
+    as?: as | 'Hex' | 'Bytes' | undefined
+  }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
+    | (as extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
+    | (as extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
 
   type ErrorType =
     | Bytes.fromHex.ErrorType
@@ -85,7 +139,9 @@ export declare namespace to {
     | Errors.GlobalErrorType
 }
 
-/** @internal */
+/////////////////////////////////////////////////////////////////////////////////
+// Internal
+/////////////////////////////////////////////////////////////////////////////////
 
 /** @internal */
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
@@ -116,7 +172,9 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
 
 /** @internal */
 export declare namespace decodeRlpCursor {
-  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> = to.ReturnType<to>
+  type ReturnType<to extends 'Hex' | 'Bytes' = 'Hex'> =
+    | (to extends 'Bytes' ? RecursiveArray<Bytes.Bytes> : never)
+    | (to extends 'Hex' ? RecursiveArray<Hex.Hex> : never)
   type ErrorType =
     | Hex.fromBytes.ErrorType
     | readLength.ErrorType
@@ -161,148 +219,6 @@ export function readList<to extends 'Hex' | 'Bytes'>(
 export declare namespace readList {
   type ErrorType = Errors.GlobalErrorType
 }
-
-/**
- * Encodes a {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
- *
- * @example
- * ```ts twoslash
- * import { Bytes, Rlp } from 'ox'
- *
- * Rlp.from('0x68656c6c6f20776f726c64', { as: 'Hex' })
- * // @log: 0x8b68656c6c6f20776f726c64
- *
- * Rlp.from(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]), { as: 'Bytes' })
- * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
- * ```
- *
- * @param value - The {@link ox#Bytes.Bytes} or {@link ox#Hex.Hex} value to encode.
- * @param options - Options.
- * @returns The RLP value.
- */
-export function from<as extends 'Hex' | 'Bytes'>(
-  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
-  options: from.Options<as>,
-): from.ReturnType<as> {
-  const { as } = options
-
-  // Two-walk encode without the per-node `Encodable` closure tree:
-  // 1. `measure` walks the input once and caches each list's `bodyLength`
-  //    in a side array indexed by visit order. This makes the second walk
-  //    O(N) instead of O(N²) for nested inputs.
-  // 2. `writeEncoded` walks again, reads cached body lengths, and writes
-  //    bytes straight into the pre-sized buffer. Hex leaves are
-  //    nibble-decoded directly into the destination, skipping the per-leaf
-  //    `Bytes.fromHex` allocation.
-  const ctx: EncodeCtx = { lengths: [], cursor: 0 }
-  const totalLength = measure(value, ctx)
-
-  // Hex-output fast path: when the caller asked for hex AND every leaf is
-  // already hex, emit a hex string directly instead of allocating an
-  // intermediate `Uint8Array` and round-tripping through `Hex.fromBytes`.
-  // This is the dominant shape for transaction envelope serialize.
-  if (as === 'Hex' && isAllHex(value)) {
-    const parts: string[] = []
-    writeEncodedHex(parts, value as RecursiveArray<Hex.Hex>, {
-      lengths: ctx.lengths,
-      cursor: 0,
-    })
-    return `0x${parts.join('')}` as from.ReturnType<as>
-  }
-
-  const bytes = new Uint8Array(totalLength)
-  writeEncoded(bytes, 0, value, { lengths: ctx.lengths, cursor: 0 })
-
-  if (as === 'Hex') return Hex.fromBytes(bytes) as from.ReturnType<as>
-  return bytes as from.ReturnType<as>
-}
-
-export declare namespace from {
-  type Options<as extends 'Hex' | 'Bytes'> = {
-    /** The type to convert the RLP value to. */
-    as: as | 'Hex' | 'Bytes'
-  }
-
-  type ReturnType<as extends 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? Bytes.Bytes : never)
-    | (as extends 'Hex' ? Hex.Hex : never)
-
-  type ErrorType =
-    | Cursor.create.ErrorType
-    | Hex.fromBytes.ErrorType
-    | Bytes.fromHex.ErrorType
-    | Errors.GlobalErrorType
-}
-
-/**
- * Encodes a {@link ox#Bytes.Bytes} value into a Recursive-Length Prefix (RLP) value.
- *
- * @example
- * ```ts twoslash
- * import { Bytes, Rlp } from 'ox'
- *
- * Rlp.fromBytes(Bytes.from([139, 104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100]))
- * // @log: Uint8Array([104, 101, 108, 108, 111,  32, 119, 111, 114, 108, 100])
- * ```
- *
- * @param bytes - The {@link ox#Bytes.Bytes} value to encode.
- * @param options - Options.
- * @returns The RLP value.
- */
-export function fromBytes<as extends 'Hex' | 'Bytes' = 'Bytes'>(
-  bytes: RecursiveArray<Bytes.Bytes>,
-  options: fromBytes.Options<as> = {},
-): fromBytes.ReturnType<as> {
-  const { as = 'Bytes' } = options
-  return from(bytes, { as }) as never
-}
-
-export declare namespace fromBytes {
-  type Options<as extends 'Hex' | 'Bytes' = 'Bytes'> = ExactPartial<
-    from.Options<as>
-  >
-
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Bytes'> = from.ReturnType<as>
-
-  type ErrorType = from.ErrorType | Errors.GlobalErrorType
-}
-
-/**
- * Encodes a {@link ox#Hex.Hex} value into a Recursive-Length Prefix (RLP) value.
- *
- * @example
- * ```ts twoslash
- * import { Rlp } from 'ox'
- *
- * Rlp.fromHex('0x68656c6c6f20776f726c64')
- * // @log: 0x8b68656c6c6f20776f726c64
- * ```
- *
- * @param hex - The {@link ox#Hex.Hex} value to encode.
- * @param options - Options.
- * @returns The RLP value.
- */
-export function fromHex<as extends 'Hex' | 'Bytes' = 'Hex'>(
-  hex: RecursiveArray<Hex.Hex>,
-  options: fromHex.Options<as> = {},
-): fromHex.ReturnType<as> {
-  const { as = 'Hex' } = options
-  return from(hex, { as }) as never
-}
-
-export declare namespace fromHex {
-  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = ExactPartial<
-    from.Options<as>
-  >
-
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = from.ReturnType<as>
-
-  type ErrorType = from.ErrorType | Errors.GlobalErrorType
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-// Internal
-/////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Returns the byte length needed to encode `length` itself (1-4 bytes per
@@ -512,7 +428,7 @@ function writeBytesLeaf(
 
 /**
  * Returns true if every leaf in the (possibly nested) input is a hex string.
- * Used to gate the hex-output fast path in `from`.
+ * Used to gate the hex-output fast path in `encode`.
  *
  * @internal
  */

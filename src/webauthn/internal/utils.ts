@@ -109,7 +109,7 @@ export function serializeResponseFields(
       if (typeof fn === 'function') value = (fn as () => unknown).call(response)
     }
     if (value instanceof ArrayBuffer)
-      out[key] = Base64.fromBytes(new Uint8Array(value), base64UrlOptions)
+      out[key] = Base64.encode(new Uint8Array(value), base64UrlOptions)
   }
   return out
 }
@@ -124,7 +124,7 @@ export function serializeExtensions(
     ...(prf && {
       prf: {
         eval: {
-          first: Base64.fromBytes(prf.eval.first, base64UrlOptions),
+          first: Base64.encode(prf.eval.first, base64UrlOptions),
         },
       },
     }),
@@ -141,7 +141,7 @@ export function deserializeExtensions(
     ...(prf && {
       prf: {
         eval: {
-          first: Base64.toBytes(prf.eval.first),
+          first: Base64.decode(prf.eval.first),
         },
       },
     }),

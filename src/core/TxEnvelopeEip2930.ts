@@ -105,7 +105,7 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Serialized): TxEnvelopeEip2930 {
-  const transactionArray = Rlp.toBytes(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.decode(Hex.slice(serialized, 1), { as: 'Bytes' })
 
   const [
     chainId,
@@ -490,7 +490,7 @@ export function serialize(
     ...(signature ? Signature.toTuple(signature) : []),
   ] as const
 
-  return Hex.concat('0x01', Rlp.fromHex(serialized)) as Serialized
+  return Hex.concat('0x01', Rlp.encode(serialized, { as: 'Hex' })) as Serialized
 }
 
 export declare namespace serialize {
@@ -504,7 +504,7 @@ export declare namespace serialize {
     | Hex.fromNumber.ErrorType
     | Signature.toTuple.ErrorType
     | Hex.concat.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 }
 

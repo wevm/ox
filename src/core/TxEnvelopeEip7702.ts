@@ -120,7 +120,7 @@ export declare namespace assert {
 export function deserialize(
   serialized: Serialized,
 ): Compute<TxEnvelopeEip7702> {
-  const transactionArray = Rlp.toBytes(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.decode(Hex.slice(serialized, 1), { as: 'Bytes' })
 
   const [
     chainId,
@@ -570,7 +570,10 @@ export function serialize(
     ...(signature ? Signature.toTuple(signature) : []),
   ]
 
-  return Hex.concat(serializedType, Rlp.fromHex(serialized)) as Serialized
+  return Hex.concat(
+    serializedType,
+    Rlp.encode(serialized, { as: 'Hex' }),
+  ) as Serialized
 }
 
 export declare namespace serialize {
@@ -584,7 +587,7 @@ export declare namespace serialize {
     | Hex.fromNumber.ErrorType
     | Signature.toTuple.ErrorType
     | Hex.concat.ErrorType
-    | Rlp.fromHex.ErrorType
+    | Rlp.encode.ErrorType
     | Errors.GlobalErrorType
 }
 

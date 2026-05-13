@@ -196,14 +196,17 @@ describe('deserialize', () => {
 
   describe('raw', () => {
     test('default', () => {
-      const serialized = Rlp.fromHex([
-        Hex.fromNumber(0), // nonce
-        Hex.fromNumber(1), // gasPrice
-        Hex.fromNumber(1), // gas
-        '0x0000000000000000000000000000000000000000', // to
-        Hex.fromNumber(0), // value
-        '0x', // data
-      ])
+      const serialized = Rlp.encode(
+        [
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // gasPrice
+          Hex.fromNumber(1), // gas
+          '0x0000000000000000000000000000000000000000', // to
+          Hex.fromNumber(0), // value
+          '0x', // data
+        ],
+        { as: 'Hex' },
+      )
       expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "gas": 1n,
@@ -217,17 +220,20 @@ describe('deserialize', () => {
     })
 
     test('empty sig', () => {
-      const serialized = Rlp.fromHex([
-        Hex.fromNumber(0), // nonce
-        Hex.fromNumber(1), // gasPrice
-        Hex.fromNumber(1), // gas
-        '0x0000000000000000000000000000000000000000', // to
-        Hex.fromNumber(0), // value
-        '0x', // data
-        '0x', // v
-        '0x', // r
-        '0x', // s
-      ])
+      const serialized = Rlp.encode(
+        [
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // gasPrice
+          Hex.fromNumber(1), // gas
+          '0x0000000000000000000000000000000000000000', // to
+          Hex.fromNumber(0), // value
+          '0x', // data
+          '0x', // v
+          '0x', // r
+          '0x', // s
+        ],
+        { as: 'Hex' },
+      )
       expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "gas": 1n,
@@ -241,17 +247,20 @@ describe('deserialize', () => {
     })
 
     test('low sig coords', () => {
-      const serialized = Rlp.fromHex([
-        Hex.fromNumber(0), // nonce
-        Hex.fromNumber(1), // gasPrice
-        Hex.fromNumber(1), // gas
-        '0x0000000000000000000000000000000000000000', // to
-        Hex.fromNumber(0), // value
-        '0x', // data
-        '0x1b', // v
-        Hex.fromNumber(69), // r
-        Hex.fromNumber(420), // s
-      ])
+      const serialized = Rlp.encode(
+        [
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // gasPrice
+          Hex.fromNumber(1), // gas
+          '0x0000000000000000000000000000000000000000', // to
+          Hex.fromNumber(0), // value
+          '0x', // data
+          '0x1b', // v
+          Hex.fromNumber(69), // r
+          Hex.fromNumber(420), // s
+        ],
+        { as: 'Hex' },
+      )
       expect(TxEnvelopeLegacy.deserialize(serialized)).toMatchInlineSnapshot(`
       {
         "gas": 1n,
@@ -272,7 +281,7 @@ describe('deserialize', () => {
   describe('errors', () => {
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TxEnvelopeLegacy.deserialize(Rlp.fromHex([])),
+        TxEnvelopeLegacy.deserialize(Rlp.encode([], { as: 'Hex' })),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
@@ -283,7 +292,9 @@ describe('deserialize', () => {
 
     test('invalid transaction (some missing)', () => {
       expect(() =>
-        TxEnvelopeLegacy.deserialize(Rlp.fromHex(['0x00', '0x01'])),
+        TxEnvelopeLegacy.deserialize(
+          Rlp.encode(['0x00', '0x01'], { as: 'Hex' }),
+        ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
@@ -295,7 +306,7 @@ describe('deserialize', () => {
     test('invalid transaction (missing signature)', () => {
       expect(() =>
         TxEnvelopeLegacy.deserialize(
-          Rlp.fromHex(['0x', '0x', '0x', '0x', '0x', '0x', '0x']),
+          Rlp.encode(['0x', '0x', '0x', '0x', '0x', '0x', '0x'], { as: 'Hex' }),
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
@@ -308,18 +319,10 @@ describe('deserialize', () => {
     test('invalid transaction (attribute overload)', () => {
       expect(() =>
         TxEnvelopeLegacy.deserialize(
-          Rlp.fromHex([
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-          ]),
+          Rlp.encode(
+            ['0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x'],
+            { as: 'Hex' },
+          ),
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
@@ -331,17 +334,20 @@ describe('deserialize', () => {
     test('invalid v', () => {
       expect(() =>
         TxEnvelopeLegacy.deserialize(
-          Rlp.fromHex([
-            Hex.fromNumber(0), // nonce
-            Hex.fromNumber(1), // gasPrice
-            Hex.fromNumber(1), // gas
-            '0x0000000000000000000000000000000000000000', // to
-            Hex.fromNumber(0), // value
-            '0x', // data
-            '0x', // v
-            Hex.fromNumber(69), // r
-            Hex.fromNumber(420), // s
-          ]),
+          Rlp.encode(
+            [
+              Hex.fromNumber(0), // nonce
+              Hex.fromNumber(1), // gasPrice
+              Hex.fromNumber(1), // gas
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
+              '0x', // v
+              Hex.fromNumber(69), // r
+              Hex.fromNumber(420), // s
+            ],
+            { as: 'Hex' },
+          ),
         ),
       ).toThrowErrorMatchingInlineSnapshot(
         '[Signature.InvalidVError: Value `0` is an invalid v value. v must be 27, 28 or >=35.]',
@@ -349,17 +355,20 @@ describe('deserialize', () => {
 
       expect(() =>
         TxEnvelopeLegacy.deserialize(
-          Rlp.fromHex([
-            Hex.fromNumber(0), // nonce
-            Hex.fromNumber(1), // gasPrice
-            Hex.fromNumber(1), // gas
-            '0x0000000000000000000000000000000000000000', // to
-            Hex.fromNumber(0), // value
-            '0x', // data
-            Hex.fromNumber(35), // v
-            Hex.fromNumber(69), // r
-            Hex.fromNumber(420), // s
-          ]),
+          Rlp.encode(
+            [
+              Hex.fromNumber(0), // nonce
+              Hex.fromNumber(1), // gasPrice
+              Hex.fromNumber(1), // gas
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
+              Hex.fromNumber(35), // v
+              Hex.fromNumber(69), // r
+              Hex.fromNumber(420), // s
+            ],
+            { as: 'Hex' },
+          ),
         ),
       ).toThrowErrorMatchingInlineSnapshot(
         '[Signature.InvalidVError: Value `35` is an invalid v value. v must be 27, 28 or >=35.]',

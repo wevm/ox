@@ -84,7 +84,7 @@ export function hexToHexOrUndefined(
 
 /**
  * Decodes a `Bytes` scalar (typically a `Uint8Array.subarray` view returned
- * by `Rlp.toBytes`) into `bigint`, or `undefined` when the field is absent
+ * by `Rlp.decode`) into `bigint`, or `undefined` when the field is absent
  * or empty.
  *
  * For payloads ≤ 6 bytes (the common case for `chainId`, `nonce`, `gas`,
@@ -129,7 +129,7 @@ export function bytesToNumberOrUndefined(
 /**
  * Encodes a `Bytes` scalar to `Hex`, returning `undefined` when the field is
  * absent or empty. Used for opaque hex fields like `to` / `data` after
- * decoding via `Rlp.toBytes`.
+ * decoding via `Rlp.decode`.
  *
  * @internal
  */
@@ -154,7 +154,7 @@ export function bytesToHex(value: Bytes.Bytes): Hex.Hex {
 
 /**
  * Recursively maps a `RecursiveArray<Bytes>` (e.g. as returned by
- * `Rlp.toBytes`) to a `RecursiveArray<Hex>`. Used by envelope decoders to
+ * `Rlp.decode`) to a `RecursiveArray<Hex>`. Used by envelope decoders to
  * hand the (rarely-large) access list / authorization list sub-trees off to
  * their existing hex-typed `fromTupleList` codecs without re-running RLP.
  *

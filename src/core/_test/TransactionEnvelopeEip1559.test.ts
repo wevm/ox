@@ -135,17 +135,20 @@ describe('deserialize', () => {
 
   describe('raw', () => {
     test('default', () => {
-      const serialized = `0x02${Rlp.fromHex([
-        Hex.fromNumber(1), // chainId
-        Hex.fromNumber(0), // nonce
-        Hex.fromNumber(1), // maxPriorityFeePerGas
-        Hex.fromNumber(1), // maxFeePerGas
-        Hex.fromNumber(1), // gas
-        '0x0000000000000000000000000000000000000000', // to
-        Hex.fromNumber(0), // value
-        '0x', // data
-        '0x', // accessList
-      ]).slice(2)}` as const
+      const serialized = `0x02${Rlp.encode(
+        [
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
+          '0x0000000000000000000000000000000000000000', // to
+          Hex.fromNumber(0), // value
+          '0x', // data
+          '0x', // accessList
+        ],
+        { as: 'Hex' },
+      ).slice(2)}` as const
       expect(TxEnvelopeEip1559.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "chainId": 1,
@@ -161,20 +164,23 @@ describe('deserialize', () => {
     })
 
     test('empty sig', () => {
-      const serialized = `0x02${Rlp.fromHex([
-        Hex.fromNumber(1), // chainId
-        Hex.fromNumber(0), // nonce
-        Hex.fromNumber(1), // maxPriorityFeePerGas
-        Hex.fromNumber(1), // maxFeePerGas
-        Hex.fromNumber(1), // gas
-        '0x0000000000000000000000000000000000000000', // to
-        Hex.fromNumber(0), // value
-        '0x', // data
-        '0x', // accessList
-        '0x', // r
-        '0x', // v
-        '0x', // s
-      ]).slice(2)}` as const
+      const serialized = `0x02${Rlp.encode(
+        [
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
+          '0x0000000000000000000000000000000000000000', // to
+          Hex.fromNumber(0), // value
+          '0x', // data
+          '0x', // accessList
+          '0x', // r
+          '0x', // v
+          '0x', // s
+        ],
+        { as: 'Hex' },
+      ).slice(2)}` as const
       expect(TxEnvelopeEip1559.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "chainId": 1,
@@ -193,20 +199,23 @@ describe('deserialize', () => {
     })
 
     test('low sig coords', () => {
-      const serialized = `0x02${Rlp.fromHex([
-        Hex.fromNumber(1), // chainId
-        Hex.fromNumber(0), // nonce
-        Hex.fromNumber(1), // maxPriorityFeePerGas
-        Hex.fromNumber(1), // maxFeePerGas
-        Hex.fromNumber(1), // gas
-        '0x0000000000000000000000000000000000000000', // to
-        Hex.fromNumber(0), // value
-        '0x', // data
-        '0x', // accessList
-        '0x', // r
-        Hex.fromNumber(69), // v
-        Hex.fromNumber(420), // s
-      ]).slice(2)}` as const
+      const serialized = `0x02${Rlp.encode(
+        [
+          Hex.fromNumber(1), // chainId
+          Hex.fromNumber(0), // nonce
+          Hex.fromNumber(1), // maxPriorityFeePerGas
+          Hex.fromNumber(1), // maxFeePerGas
+          Hex.fromNumber(1), // gas
+          '0x0000000000000000000000000000000000000000', // to
+          Hex.fromNumber(0), // value
+          '0x', // data
+          '0x', // accessList
+          '0x', // r
+          Hex.fromNumber(69), // v
+          Hex.fromNumber(420), // s
+        ],
+        { as: 'Hex' },
+      ).slice(2)}` as const
       expect(TxEnvelopeEip1559.deserialize(serialized)).toMatchInlineSnapshot(`
         {
           "chainId": 1,
@@ -229,24 +238,27 @@ describe('deserialize', () => {
     test('invalid access list (invalid address)', () => {
       expect(() =>
         TxEnvelopeEip1559.deserialize(
-          `0x02${Rlp.fromHex([
-            Hex.fromNumber(1), // chainId
-            Hex.fromNumber(0), // nonce
-            Hex.fromNumber(1), // maxPriorityFeePerGas
-            Hex.fromNumber(1), // maxFeePerGas
-            Hex.fromNumber(1), // gas
-            '0x0000000000000000000000000000000000000000', // to
-            Hex.fromNumber(0), // value
-            '0x', // data
+          `0x02${Rlp.encode(
             [
+              Hex.fromNumber(1), // chainId
+              Hex.fromNumber(0), // nonce
+              Hex.fromNumber(1), // maxPriorityFeePerGas
+              Hex.fromNumber(1), // maxFeePerGas
+              Hex.fromNumber(1), // gas
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
               [
-                '0x',
                 [
-                  '0x0000000000000000000000000000000000000000000000000000000000000001',
+                  '0x',
+                  [
+                    '0x0000000000000000000000000000000000000000000000000000000000000001',
+                  ],
                 ],
-              ],
-            ], // accessList
-          ]).slice(2)}`,
+              ], // accessList
+            ],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [Address.InvalidAddressError: Address "0x" is invalid.
@@ -256,17 +268,20 @@ describe('deserialize', () => {
 
       expect(() =>
         TxEnvelopeEip1559.deserialize(
-          `0x02${Rlp.fromHex([
-            Hex.fromNumber(1), // chainId
-            Hex.fromNumber(0), // nonce
-            Hex.fromNumber(1), // maxPriorityFeePerGas
-            Hex.fromNumber(1), // maxFeePerGas
-            Hex.fromNumber(1), // gas
-            '0x0000000000000000000000000000000000000000', // to
-            Hex.fromNumber(0), // value
-            '0x', // data
-            [['0x123456', ['0x0']]], // accessList
-          ]).slice(2)}`,
+          `0x02${Rlp.encode(
+            [
+              Hex.fromNumber(1), // chainId
+              Hex.fromNumber(0), // nonce
+              Hex.fromNumber(1), // maxPriorityFeePerGas
+              Hex.fromNumber(1), // maxFeePerGas
+              Hex.fromNumber(1), // gas
+              '0x0000000000000000000000000000000000000000', // to
+              Hex.fromNumber(0), // value
+              '0x', // data
+              [['0x123456', ['0x0']]], // accessList
+            ],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
         [Address.InvalidAddressError: Address "0x123456" is invalid.
@@ -277,7 +292,9 @@ describe('deserialize', () => {
 
     test('invalid transaction (all missing)', () => {
       expect(() =>
-        TxEnvelopeEip1559.deserialize(`0x02${Rlp.fromHex([]).slice(2)}`),
+        TxEnvelopeEip1559.deserialize(
+          `0x02${Rlp.encode([], { as: 'Hex' }).slice(2)}`,
+        ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip1559" was provided.
 
@@ -289,7 +306,7 @@ describe('deserialize', () => {
     test('invalid transaction (some missing)', () => {
       expect(() =>
         TxEnvelopeEip1559.deserialize(
-          `0x02${Rlp.fromHex(['0x00', '0x01']).slice(2)}`,
+          `0x02${Rlp.encode(['0x00', '0x01'], { as: 'Hex' }).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip1559" was provided.
@@ -302,18 +319,10 @@ describe('deserialize', () => {
     test('invalid transaction (missing signature)', () => {
       expect(() =>
         TxEnvelopeEip1559.deserialize(
-          `0x02${Rlp.fromHex([
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-            '0x',
-          ]).slice(2)}`,
+          `0x02${Rlp.encode(
+            ['0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x', '0x'],
+            { as: 'Hex' },
+          ).slice(2)}`,
         ),
       ).toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "eip1559" was provided.
