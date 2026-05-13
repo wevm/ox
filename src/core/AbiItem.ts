@@ -340,15 +340,28 @@ export function fromAbi<
     {}) as unknown as fromAbi.Options
 
   const isSelector = Hex.validate(name, { strict: false })
-  const abiItems = (abi as Abi.Abi).filter((abiItem) => {
-    if (isSelector) {
+
+  // Selector lookups are always unique on the ABI: precompute the
+  // function/error 4-byte selector once and short-circuit via `find`
+  // instead of building a full `filter` result we'd discard.
+  if (isSelector) {
+    const selector = Hex.slice(name, 0, 4)
+    const abiItem = (abi as Abi.Abi).find((abiItem) => {
       if (abiItem.type === 'function' || abiItem.type === 'error')
-        return getSelector(abiItem) === Hex.slice(name, 0, 4)
+        return getSelector(abiItem) === selector
       if (abiItem.type === 'event') return getSignatureHash(abiItem) === name
       return false
-    }
-    return 'name' in abiItem && abiItem.name === name
-  })
+    })
+    if (!abiItem) throw new NotFoundError({ name: name as string })
+    return {
+      ...abiItem,
+      ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
+    } as never
+  }
+
+  const abiItems = (abi as Abi.Abi).filter(
+    (abiItem) => 'name' in abiItem && abiItem.name === name,
+  )
 
   if (abiItems.length === 0) throw new NotFoundError({ name: name as string })
   if (abiItems.length === 1)

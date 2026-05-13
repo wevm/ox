@@ -20,6 +20,94 @@ export type AbiEvent = abitype.AbiEvent & {
 }
 
 /**
+ * Module-scope regex for matching an array suffix on an indexed event
+ * parameter type (e.g. `uint256[]`, `bytes32[3]`). Hoisted out of
+ * `decode` / `encode` so we don't recompile per call.
+ *
+ * @internal
+ */
+const arraySuffixRegex = /^(.*)\[(\d+)?\]$/
+
+/**
+ * Encodes a primitive (32-byte) indexed event topic directly to a
+ * left-padded 32-byte hex word, skipping the `AbiParameters.encode`
+ * → `prepareParameters` → `Hex.concat` round-trip used for general
+ * parameters. Returns `undefined` if the parameter type isn't a
+ * supported primitive.
+ *
+ * @internal
+ */
+function encodePrimitiveTopic(
+  type: string,
+  value: unknown,
+): Hex.Hex | undefined {
+  if (type === 'address') {
+    Address.assert(value as Address.Address, { strict: false })
+    return `0x000000000000000000000000${(value as string).slice(2).toLowerCase()}` as Hex.Hex
+  }
+  if (type === 'bool') {
+    if (typeof value !== 'boolean') return undefined
+    return value
+      ? '0x0000000000000000000000000000000000000000000000000000000000000001'
+      : '0x0000000000000000000000000000000000000000000000000000000000000000'
+  }
+  // `uintN` / `intN` (covers all 8-bit-aligned widths up to 256).
+  if (type.startsWith('uint') || type.startsWith('int')) {
+    const signed = type[0] === 'i'
+    const sizeStr = signed ? type.slice(3) : type.slice(4)
+    const size = sizeStr === '' ? 256 : Number(sizeStr)
+    if (!Number.isFinite(size)) return undefined
+    return Hex.fromNumber(value as number | bigint, { size: 32, signed })
+  }
+  // `bytesN` (fixed): right-pad to 32 bytes.
+  if (type.startsWith('bytes') && type.length > 5) {
+    if (typeof value !== 'string') return undefined
+    return Hex.padRight(value as Hex.Hex, 32)
+  }
+  return undefined
+}
+
+/**
+ * Decodes a primitive (32-byte) indexed event topic directly to a
+ * primitive value, skipping the `AbiParameters.decode` round-trip.
+ * Returns a `[value]` tuple on hit, or `undefined` on miss.
+ *
+ * @internal
+ */
+function decodePrimitiveTopic(
+  type: string,
+  topic: Hex.Hex,
+): [value: unknown] | undefined {
+  if (type === 'address') {
+    // Trailing 20 bytes; topic is always 66 chars (`0x` + 64 hex).
+    return [`0x${topic.slice(26)}` as Hex.Hex]
+  }
+  if (type === 'bool') {
+    // Last byte determines truthiness (Solidity left-pads booleans).
+    return [topic.charCodeAt(65) === 49 /* '1' */]
+  }
+  if (type.startsWith('uint') || type.startsWith('int')) {
+    const signed = type[0] === 'i'
+    const sizeStr = signed ? type.slice(3) : type.slice(4)
+    const size = sizeStr === '' ? 256 : Number(sizeStr)
+    if (!Number.isFinite(size)) return undefined
+    const big =
+      size > 48
+        ? Hex.toBigInt(topic, { signed })
+        : Hex.toNumber(topic, { signed })
+    return [big]
+  }
+  if (type.startsWith('bytes') && type.length > 5) {
+    const sizeStr = type.slice(5)
+    const size = Number(sizeStr)
+    if (!Number.isFinite(size)) return undefined
+    // Take leading `size` bytes of the 32-byte topic.
+    return [`0x${topic.slice(2, 2 + size * 2)}` as Hex.Hex]
+  }
+  return undefined
+}
+
+/**
  * Extracts an {@link ox#AbiEvent.AbiEvent} item from an {@link ox#Abi.Abi}, given a name.
  *
  * @example
@@ -417,13 +505,19 @@ export function decode(
         param: param as abitype.AbiParameter & { indexed: boolean },
       })
     args[isUnnamed ? i : param.name || i] = (() => {
+      const t = param.type
       if (
-        param.type === 'string' ||
-        param.type === 'bytes' ||
-        param.type === 'tuple' ||
-        param.type.match(/^(.*)\[(\d+)?\]$/)
+        t === 'string' ||
+        t === 'bytes' ||
+        t === 'tuple' ||
+        arraySuffixRegex.test(t)
       )
         return topic
+      // Fast path: 32-byte primitive (`address`, `bool`, `uintN`,
+      // `intN`, `bytesN`). Reads the topic word directly without
+      // allocating a `Cursor` or running `Bytes.fromHex`.
+      const fast = decodePrimitiveTopic(t, topic)
+      if (fast) return fast[0]
       const decoded = AbiParameters.decode([param], topic) || []
       return decoded[0]
     })()
@@ -684,17 +778,21 @@ export function encode(
 
     if (args_.length > 0) {
       const encode = (param: abitype.AbiParameter, value: unknown) => {
-        if (param.type === 'string')
+        const t = param.type
+        if (t === 'string')
           return Hash.keccak256(Hex.fromString(value as string), { as: 'Hex' })
-        if (param.type === 'bytes') {
+        if (t === 'bytes') {
           const hex =
             typeof value === 'string'
               ? (value as Hex.Hex)
               : Hex.fromBytes(value as Bytes.Bytes)
           return Hash.keccak256(hex, { as: 'Hex' })
         }
-        if (param.type === 'tuple' || param.type.match(/^(.*)\[(\d+)?\]$/))
-          throw new FilterTypeNotSupportedError(param.type)
+        if (t === 'tuple' || arraySuffixRegex.test(t))
+          throw new FilterTypeNotSupportedError(t)
+        // Fast path for 32-byte primitives.
+        const fast = encodePrimitiveTopic(t, value)
+        if (fast) return fast
         return AbiParameters.encode([param], [value])
       }
 
