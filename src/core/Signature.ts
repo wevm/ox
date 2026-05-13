@@ -25,16 +25,10 @@ export type Signature<
       }
 >
 
-/**
- * Structured parts of an ECDSA signature.
- *
- * @remarks
- * In a future major (`1.0`), {@link ox#Signature.Signature} will be flipped to a
- * serialized {@link ox#Hex.Hex} string and this `Parts` type will represent the
- * structured object form. Today, `Parts<recovered>` is structurally
- * equivalent to `Signature<recovered>` -- prefer it in new code so the upgrade
- * path is a no-op.
- */
+// TODO(v1): flip `Signature` to a serialized `Hex.Hex` string and let `Parts`
+// represent the structured object form. Today `Parts<recovered>` is
+// structurally equivalent to `Signature<recovered>`.
+/** Structured parts of an ECDSA signature. */
 export type Parts<recovered extends boolean = true> = Compute<
   recovered extends true
     ? {
@@ -646,15 +640,11 @@ export declare namespace fromRecoveredBytes {
   type ErrorType = Bytes.toBigInt.ErrorType | Errors.GlobalErrorType
 }
 
+// TODO(v1): once `Signature` is a serialized `Hex.Hex` string, decode it into
+// the parts form here instead of returning the input directly.
 /**
  * Converts a {@link ox#Signature.Signature} to its structured
  * {@link ox#Signature.Parts} form.
- *
- * @remarks
- * Today this is a structural pass-through (the root `Signature` type is already
- * the structured object). In a future major, `Signature` will be a serialized
- * `Hex.Hex` string and this codec will decode into the parts form. Migrating
- * call sites to `toParts` / `fromParts` now keeps that upgrade a no-op.
  *
  * @example
  * ```ts twoslash
@@ -687,13 +677,11 @@ export declare namespace toParts {
   type ErrorType = Errors.GlobalErrorType
 }
 
+// TODO(v1): once `Signature` is a serialized `Hex.Hex` string, encode the
+// parts into that form here instead of returning the input directly.
 /**
  * Converts a {@link ox#Signature.Parts} into a structured
  * {@link ox#Signature.Signature}.
- *
- * @remarks
- * Today this is a structural pass-through. In a future major, `Signature` will
- * be a serialized `Hex.Hex` string and this codec will encode into that form.
  *
  * @example
  * ```ts twoslash

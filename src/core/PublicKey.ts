@@ -23,16 +23,10 @@ export type PublicKey<
       }
 >
 
-/**
- * Structured parts of an ECDSA public key.
- *
- * @remarks
- * In a future major (`1.0`), {@link ox#PublicKey.PublicKey} will be flipped to
- * a serialized {@link ox#Hex.Hex} string and this `Parts` type will represent
- * the structured object form. Today, `Parts<compressed>` is
- * structurally equivalent to `PublicKey<compressed>` -- prefer it in new code
- * so the upgrade path is a no-op.
- */
+// TODO(v1): flip `PublicKey` to a serialized `Hex.Hex` string and let `Parts`
+// represent the structured object form. Today `Parts<compressed>` is
+// structurally equivalent to `PublicKey<compressed>`.
+/** Structured parts of an ECDSA public key. */
 export type Parts<compressed extends boolean = false> = Compute<
   compressed extends true
     ? {
@@ -410,16 +404,11 @@ export declare namespace toBytes {
     | Errors.GlobalErrorType
 }
 
+// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, decode it into
+// the parts form here instead of returning the input directly.
 /**
  * Converts a {@link ox#PublicKey.PublicKey} to its structured
  * {@link ox#PublicKey.Parts} form.
- *
- * @remarks
- * Today this is a structural pass-through (the root `PublicKey` type is
- * already the structured object). In a future major, `PublicKey` will be a
- * serialized `Hex.Hex` string and this codec will decode into the parts form.
- * Migrating call sites to `toParts` / `fromParts` now keeps that upgrade a
- * no-op.
  *
  * @example
  * ```ts twoslash
@@ -452,13 +441,11 @@ export declare namespace toParts {
   type ErrorType = Errors.GlobalErrorType
 }
 
+// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, encode the
+// parts into that form here instead of returning the input directly.
 /**
  * Converts a {@link ox#PublicKey.Parts} into a structured
  * {@link ox#PublicKey.PublicKey}.
- *
- * @remarks
- * Today this is a structural pass-through. In a future major, `PublicKey` will
- * be a serialized `Hex.Hex` string and this codec will encode into that form.
  *
  * @example
  * ```ts twoslash
