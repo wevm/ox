@@ -1287,30 +1287,31 @@ describe('fromAbi', () => {
     ])
     const item = AbiEvent.fromAbi(abi, 'Foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xe773a60b784586770a963a70fa6ba2bdf31c462939b6ba36852ed45f5f722358",
-      "inputs": [
-        {
-          "indexed": true,
-          "type": "address",
-        },
-      ],
-      "name": "Foo",
-      "overloads": [
-        {
-          "inputs": [
-            {
-              "indexed": true,
-              "type": "uint256",
-            },
-          ],
-          "name": "Foo",
-          "type": "event",
-        },
-      ],
-      "type": "event",
-    }
-  `)
+      {
+        "hash": "0xe773a60b784586770a963a70fa6ba2bdf31c462939b6ba36852ed45f5f722358",
+        "inputs": [
+          {
+            "indexed": true,
+            "type": "address",
+          },
+        ],
+        "name": "Foo",
+        "overloads": [
+          {
+            "hash": "0x1176bd96090075e8a903f0c486668395688fc8c045fd7d1d173b9852e4613ca1",
+            "inputs": [
+              {
+                "indexed": true,
+                "type": "uint256",
+              },
+            ],
+            "name": "Foo",
+            "type": "event",
+          },
+        ],
+        "type": "event",
+      }
+    `)
   })
 
   test('behavior: overloads: no inputs', () => {
@@ -1544,7 +1545,11 @@ test('exports', () => {
       "encode",
       "format",
       "from",
+      "fromHumanReadable",
+      "fromJson",
       "fromAbi",
+      "fromAbiName",
+      "fromAbiSelector",
       "getSelector",
       "ArgsMismatchError",
       "InputNotFoundError",

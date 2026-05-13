@@ -327,6 +327,8 @@ test('exports', () => {
       "decode",
       "encode",
       "format",
+      "fromHumanReadable",
+      "fromJson",
       "from",
       "fromAbi",
       "BytecodeMismatchError",

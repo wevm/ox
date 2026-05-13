@@ -113,21 +113,21 @@ describe('decode', () => {
         })
 
       expect(result).toMatchInlineSnapshot(`
-      [
-        {
-          "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
-          "inputs": [
-            {
-              "name": "message",
-              "type": "string",
-            },
-          ],
-          "name": "Error",
-          "type": "error",
-        },
-        "This is a revert message",
-      ]
-    `)
+        [
+          {
+            "hash": "0x08c379a0afcc32b1a39302f7cb8073359698411ab5fd6e3edb2c02c0b5fba8aa",
+            "inputs": [
+              {
+                "name": "message",
+                "type": "string",
+              },
+            ],
+            "name": "Error",
+            "type": "error",
+          },
+          "This is a revert message",
+        ]
+      `)
     })
 
     test('solidity `Panic` (assert)', async () => {
@@ -151,22 +151,22 @@ describe('decode', () => {
         })
 
       expect(result).toMatchInlineSnapshot(`
-      [
-        {
-          "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
-          "inputs": [
-            {
-              "name": "reason",
-              "type": "uint8",
-            },
-          ],
-          "name": "Panic",
-          "type": "error",
-        },
-        1,
-        "An \`assert\` condition failed.",
-      ]
-    `)
+        [
+          {
+            "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
+            "inputs": [
+              {
+                "name": "reason",
+                "type": "uint8",
+              },
+            ],
+            "name": "Panic",
+            "type": "error",
+          },
+          1,
+          "An \`assert\` condition failed.",
+        ]
+      `)
     })
 
     test('solidity `Panic` (overflow)', async () => {
@@ -190,22 +190,22 @@ describe('decode', () => {
         })
 
       expect(result).toMatchInlineSnapshot(`
-      [
-        {
-          "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
-          "inputs": [
-            {
-              "name": "reason",
-              "type": "uint8",
-            },
-          ],
-          "name": "Panic",
-          "type": "error",
-        },
-        17,
-        "Arithmetic operation resulted in underflow or overflow.",
-      ]
-    `)
+        [
+          {
+            "hash": "0x25fba4f52ccf6f699393995e0f649c9072d088cffa43609495ffad9216c5b1dc",
+            "inputs": [
+              {
+                "name": "reason",
+                "type": "uint8",
+              },
+            ],
+            "name": "Panic",
+            "type": "error",
+          },
+          17,
+          "Arithmetic operation resulted in underflow or overflow.",
+        ]
+      `)
     })
 
     test('custom error', async () => {
@@ -639,28 +639,29 @@ describe('fromAbi', () => {
     ])
     const item = AbiError.fromAbi(abi, 'Foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0xefc9afd358f1472682cf8cc82e1d3ae36be2538ed858a4a604119399d6f22b48",
-      "inputs": [
-        {
-          "type": "bytes",
-        },
-      ],
-      "name": "Foo",
-      "overloads": [
-        {
-          "inputs": [
-            {
-              "type": "uint256",
-            },
-          ],
-          "name": "Foo",
-          "type": "error",
-        },
-      ],
-      "type": "error",
-    }
-  `)
+      {
+        "hash": "0xefc9afd358f1472682cf8cc82e1d3ae36be2538ed858a4a604119399d6f22b48",
+        "inputs": [
+          {
+            "type": "bytes",
+          },
+        ],
+        "name": "Foo",
+        "overloads": [
+          {
+            "hash": "0x1176bd96090075e8a903f0c486668395688fc8c045fd7d1d173b9852e4613ca1",
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "Foo",
+            "type": "error",
+          },
+        ],
+        "type": "error",
+      }
+    `)
   })
 
   test('behavior: overloads: no inputs', () => {
@@ -974,7 +975,11 @@ test('exports', () => {
       "encode",
       "format",
       "from",
+      "fromHumanReadable",
+      "fromJson",
       "fromAbi",
+      "fromAbiName",
+      "fromAbiSelector",
       "getSelector",
       "panicReasons",
       "solidityError",

@@ -618,32 +618,33 @@ describe('fromAbi', () => {
     ])
     const item = AbiFunction.fromAbi(abi, 'foo')
     expect(item).toMatchInlineSnapshot(`
-    {
-      "hash": "0x30c8d1da93067416f4fed4bc024d665b120d7271f9d1000c7632a48d39765324",
-      "inputs": [
-        {
-          "type": "bytes",
-        },
-      ],
-      "name": "foo",
-      "outputs": [],
-      "overloads": [
-        {
-          "inputs": [
-            {
-              "type": "uint256",
-            },
-          ],
-          "name": "foo",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function",
-        },
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function",
-    }
-  `)
+      {
+        "hash": "0x30c8d1da93067416f4fed4bc024d665b120d7271f9d1000c7632a48d39765324",
+        "inputs": [
+          {
+            "type": "bytes",
+          },
+        ],
+        "name": "foo",
+        "outputs": [],
+        "overloads": [
+          {
+            "hash": "0x2fbebd3821c4e005fbe0a9002cc1bd25dc266d788dba1dbcb39cc66a07e7b38b",
+            "inputs": [
+              {
+                "type": "uint256",
+              },
+            ],
+            "name": "foo",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+      }
+    `)
   })
 
   test('behavior: overloads: no inputs', () => {
@@ -1221,7 +1222,11 @@ test('exports', () => {
       "encodeResult",
       "format",
       "from",
+      "fromHumanReadable",
+      "fromJson",
       "fromAbi",
+      "fromAbiName",
+      "fromAbiSelector",
       "getSelector",
     ]
   `)

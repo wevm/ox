@@ -57,29 +57,30 @@ describe('from', () => {
         },
       ])
       expect(abi).toMatchInlineSnapshot(`
-      [
-        {
-          "inputs": [
-            {
-              "name": "spender",
-              "type": "address",
-            },
-            {
-              "name": "amount",
-              "type": "uint256",
-            },
-          ],
-          "name": "approve",
-          "outputs": [
-            {
-              "type": "bool",
-            },
-          ],
-          "stateMutability": "nonpayable",
-          "type": "function",
-        },
-      ]
-    `)
+        [
+          {
+            "hash": "0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address",
+              },
+              {
+                "name": "amount",
+                "type": "uint256",
+              },
+            ],
+            "name": "approve",
+            "outputs": [
+              {
+                "type": "bool",
+              },
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ]
+      `)
     }
 
     {
@@ -87,29 +88,30 @@ describe('from', () => {
         'function approve(address spender, uint256 amount) returns (bool)',
       ])
       expect(abi).toMatchInlineSnapshot(`
-      [
-        {
-          "inputs": [
-            {
-              "name": "spender",
-              "type": "address",
-            },
-            {
-              "name": "amount",
-              "type": "uint256",
-            },
-          ],
-          "name": "approve",
-          "outputs": [
-            {
-              "type": "bool",
-            },
-          ],
-          "stateMutability": "nonpayable",
-          "type": "function",
-        },
-      ]
-    `)
+        [
+          {
+            "hash": "0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba",
+            "inputs": [
+              {
+                "name": "spender",
+                "type": "address",
+              },
+              {
+                "name": "amount",
+                "type": "uint256",
+              },
+            ],
+            "name": "approve",
+            "outputs": [
+              {
+                "type": "bool",
+              },
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function",
+          },
+        ]
+      `)
     }
   })
 })

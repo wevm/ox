@@ -895,6 +895,13 @@ export declare namespace format {
  * @param abiFunction - The ABI Function to parse.
  * @returns Typed ABI Function.
  */
+/**
+ * Internal dispatcher used by `decode` / `encode` shorthand overloads.
+ * Picks {@link AbiFunction.fromHumanReadable} or {@link AbiFunction.fromJson}
+ * based on the input shape.
+ *
+ * @internal
+ */
 export function from<
   const abiFunction extends AbiFunction | string | readonly string[],
 >(
@@ -912,6 +919,7 @@ export function from<
 }
 
 export declare namespace from {
+  /** @internal */
   type Options = {
     /**
      * Whether or not to prepare the extracted function (optimization for encoding performance).
@@ -922,77 +930,126 @@ export declare namespace from {
     prepare?: boolean | undefined
   }
 
+  /** @internal */
   type ReturnType<
     abiFunction extends AbiFunction | string | readonly string[],
   > = AbiItem.from.ReturnType<abiFunction>
 
+  /** @internal */
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
 /**
- * Extracts an {@link ox#AbiFunction.AbiFunction} from an {@link ox#Abi.Abi} given a name and optional arguments.
+ * Parses a **Human Readable ABI Function** signature (or array of signatures with optional structs) into a typed {@link ox#AbiFunction.AbiFunction}.
  *
  * @example
- * ### Extracting by Name
- *
- * ABI Functions can be extracted by their name using the `name` option:
- *
  * ```ts twoslash
- * import { Abi, AbiFunction } from 'ox'
+ * import { AbiFunction } from 'ox'
  *
- * const abi = Abi.from([
- *   'function foo()',
- *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
- * ])
+ * const approve = AbiFunction.fromHumanReadable(
+ *   'function approve(address spender, uint256 amount) returns (bool)'
+ * )
  *
- * const item = AbiFunction.fromAbi(abi, 'foo') // [!code focus]
- * //    ^?
- *
- *
- *
+ * approve
+ * //^?
  *
  *
  *
  * ```
  *
  * @example
- * ### Extracting by Selector
- *
- * ABI Functions can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
+ * It is possible to specify `struct`s along with your definitions by passing an array:
  *
  * ```ts twoslash
- * import { Abi, AbiFunction } from 'ox'
+ * import { AbiFunction } from 'ox'
  *
- * const abi = Abi.from([
- *   'function foo()',
- *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ * const approve = AbiFunction.fromHumanReadable([
+ *   'struct Foo { address spender; uint256 amount; }',
+ *   'function approve(Foo foo) returns (bool)',
  * ])
- * const item = AbiFunction.fromAbi(abi, '0x095ea7b3') // [!code focus]
- * //    ^?
  *
- *
- *
- *
- *
- *
+ * approve
+ * //^?
  *
  *
  *
  * ```
  *
- * :::note
+ * @param signature - The human-readable signature (or array of signatures with optional structs) to parse.
+ * @param options - Parsing options.
+ * @returns Typed ABI Function.
+ */
+export function fromHumanReadable<
+  const signature extends string | readonly string[],
+>(
+  signature: signature &
+    (
+      | (signature extends string ? internal.Signature<signature> : never)
+      | (signature extends readonly string[]
+          ? internal.Signatures<signature>
+          : never)
+    ),
+  options?: AbiItem.fromHumanReadable.Options,
+): fromHumanReadable.ReturnType<signature> {
+  return AbiItem.fromHumanReadable(signature as never, options) as never
+}
+
+export declare namespace fromHumanReadable {
+  type ReturnType<signature extends string | readonly string[]> =
+    AbiItem.fromHumanReadable.ReturnType<signature>
+
+  type ErrorType = AbiItem.fromHumanReadable.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Parses a **JSON ABI Function** into a typed {@link ox#AbiFunction.AbiFunction}.
  *
- * Extracting via a hex selector is useful when extracting an ABI Function from an `eth_call` RPC response or
- * from a Transaction `input`.
+ * @example
+ * ```ts twoslash
+ * import { AbiFunction } from 'ox'
  *
- * :::
+ * const approve = AbiFunction.fromJson({
+ *   type: 'function',
+ *   name: 'approve',
+ *   stateMutability: 'nonpayable',
+ *   inputs: [
+ *     { name: 'spender', type: 'address' },
+ *     { name: 'amount', type: 'uint256' },
+ *   ],
+ *   outputs: [{ type: 'bool' }],
+ * })
  *
- * @param abi - The ABI to extract from.
- * @param name - The name (or selector) of the ABI item to extract.
- * @param options - Extraction options.
- * @returns The ABI item.
+ * approve
+ * //^?
+ *
+ *
+ *
+ * ```
+ *
+ * @param abiFunction - The JSON ABI Function to parse.
+ * @param options - Parsing options.
+ * @returns Typed ABI Function.
+ */
+export function fromJson<const abiFunction extends AbiFunction>(
+  abiFunction: abiFunction | AbiFunction,
+  options?: AbiItem.fromJson.Options,
+): fromJson.ReturnType<abiFunction> {
+  return AbiItem.fromJson(abiFunction as never, options) as never
+}
+
+export declare namespace fromJson {
+  type ReturnType<abiFunction extends AbiFunction> =
+    AbiItem.fromJson.ReturnType<abiFunction>
+
+  type ErrorType = AbiItem.fromJson.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Internal dispatcher used by `decode` / `encode` shorthand overloads on {@link AbiFunction}.
+ * Picks {@link AbiFunction.fromAbiName} or {@link AbiFunction.fromAbiSelector} based on
+ * whether `name` parses as a hex selector.
+ *
+ * @internal
  */
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
@@ -1012,14 +1069,121 @@ export function fromAbi<
     AbiItem_internal.ExtractArgs<abi, name>
   >,
 ): AbiItem.fromAbi.ReturnType<abi, name, args, AbiFunction> {
-  const item = AbiItem.fromAbi(abi, name, options as any)
+  const item = AbiItem.fromAbi(abi, name, options as any) as AbiItem.AbiItem
   if (item.type !== 'function')
     throw new AbiItem.NotFoundError({ name, type: 'function' })
   return item as never
 }
 
 export declare namespace fromAbi {
+  /** @internal */
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiFunction.AbiFunction} from an {@link ox#Abi.Abi} given a function name (and optional arguments to disambiguate overloads).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiFunction.fromAbiName(abi, 'foo')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param name - The name of the function to extract.
+ * @param options - Extraction options.
+ * @returns The ABI Function.
+ */
+export function fromAbiName<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: name extends allNames ? name : never,
+  options?: AbiItem.fromAbiName.Options<
+    abi,
+    name,
+    args,
+    AbiItem_internal.ExtractArgs<abi, name>
+  >,
+): AbiItem.fromAbiName.ReturnType<abi, name, args, AbiFunction> {
+  const item = AbiItem.fromAbiName(abi, name, options as any) as AbiItem.AbiItem
+  if (item.type !== 'function')
+    throw new AbiItem.NotFoundError({ name, type: 'function' })
+  return item as never
+}
+
+export declare namespace fromAbiName {
+  type ErrorType = AbiItem.fromAbiName.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiFunction.AbiFunction} from an {@link ox#Abi.Abi} by 4-byte selector
+ * (or full calldata; the first 4 bytes are sliced).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiFunction.fromAbiSelector(abi, '0x095ea7b3')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param selector - The 4-byte selector (or full calldata) to look up.
+ * @param options - Extraction options.
+ * @returns The ABI Function.
+ */
+export function fromAbiSelector<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  selector: Hex.Hex,
+  options?: AbiItem.fromAbiSelector.Options,
+): AbiFunction {
+  const item = AbiItem.fromAbiSelector(
+    abi,
+    selector,
+    options,
+  ) as AbiItem.AbiItem
+  if (item.type !== 'function')
+    throw new AbiItem.NotFoundError({ name: selector, type: 'function' })
+  return item as AbiFunction
+}
+
+export declare namespace fromAbiSelector {
+  type ErrorType = AbiItem.fromAbiSelector.ErrorType | Errors.GlobalErrorType
 }
 
 /**

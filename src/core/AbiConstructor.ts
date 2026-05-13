@@ -17,7 +17,7 @@ export type AbiConstructor = abitype.AbiConstructor
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ * const constructor = AbiConstructor.fromHumanReadable('constructor(address, uint256)')
  *
  * const bytecode = '0x...'
  *
@@ -126,7 +126,7 @@ export declare namespace decode {
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ * const constructor = AbiConstructor.fromHumanReadable('constructor(address, uint256)')
  *
  * const data = AbiConstructor.encode(constructor, {
  *   bytecode: '0x...',
@@ -161,7 +161,7 @@ export declare namespace decode {
  * import { AbiConstructor, Hex } from 'ox'
  *
  * // 1. Instantiate the ABI Constructor.
- * const constructor = AbiConstructor.from(
+ * const constructor = AbiConstructor.fromHumanReadable(
  *   'constructor(address owner, uint256 amount)',
  * )
  *
@@ -299,31 +299,76 @@ export declare namespace format {
   type ErrorType = Errors.GlobalErrorType
 }
 
-/** @internal */
-export function from<
-  const abiConstructor extends AbiConstructor | string | readonly string[],
->(
-  abiConstructor: (abiConstructor | string | readonly string[]) &
-    (
-      | (abiConstructor extends string
-          ? internal.Signature<abiConstructor>
-          : never)
-      | (abiConstructor extends readonly string[]
-          ? internal.Signatures<abiConstructor>
-          : never)
-      | AbiConstructor
-    ),
-): from.ReturnType<abiConstructor>
 /**
- * Parses an arbitrary **JSON ABI Constructor** or **Human Readable ABI Constructor** into a typed {@link ox#AbiConstructor.AbiConstructor}.
+ * Parses a **Human Readable ABI Constructor** signature (or array of signatures with optional structs) into a typed {@link ox#AbiConstructor.AbiConstructor}.
  *
  * @example
- * ### JSON ABIs
+ * ```ts twoslash
+ * import { AbiConstructor } from 'ox'
+ *
+ * const constructor = AbiConstructor.fromHumanReadable(
+ *   'constructor(address owner)'
+ * )
+ *
+ * constructor
+ * //^?
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * It is possible to specify `struct`s along with your definitions by passing an array:
  *
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from({
+ * const constructor = AbiConstructor.fromHumanReadable([
+ *   'struct Foo { address owner; uint256 amount; }',
+ *   'constructor(Foo foo)',
+ * ])
+ *
+ * constructor
+ * //^?
+ *
+ *
+ *
+ * ```
+ *
+ * @param signature - The human-readable signature (or array of signatures with optional structs) to parse.
+ * @param options - Parsing options.
+ * @returns Typed ABI Constructor.
+ */
+export function fromHumanReadable<
+  const signature extends string | readonly string[],
+>(
+  signature: signature &
+    (
+      | (signature extends string ? internal.Signature<signature> : never)
+      | (signature extends readonly string[]
+          ? internal.Signatures<signature>
+          : never)
+    ),
+  options?: AbiItem.fromHumanReadable.Options,
+): fromHumanReadable.ReturnType<signature> {
+  return AbiItem.fromHumanReadable(signature as never, options) as never
+}
+
+export declare namespace fromHumanReadable {
+  type ReturnType<signature extends string | readonly string[]> =
+    AbiItem.fromHumanReadable.ReturnType<signature>
+
+  type ErrorType = AbiItem.fromHumanReadable.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Parses a **JSON ABI Constructor** into a typed {@link ox#AbiConstructor.AbiConstructor}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiConstructor } from 'ox'
+ *
+ * const constructor = AbiConstructor.fromJson({
  *   inputs: [
  *     { name: 'owner', type: 'address' },
  *   ],
@@ -337,89 +382,58 @@ export function from<
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
- * @example
- * ### Human Readable ABIs
- *
- * A Human Readable ABI can be parsed into a typed ABI object:
- *
- * ```ts twoslash
- * import { AbiConstructor } from 'ox'
- *
- * const constructor = AbiConstructor.from(
- *   'constructor(address owner)' // [!code hl]
- * )
- *
- * constructor
- * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- *
- * @example
- * It is possible to specify `struct`s along with your definitions:
- *
- * ```ts twoslash
- * import { AbiConstructor } from 'ox'
- *
- * const constructor = AbiConstructor.from([
- *   'struct Foo { address owner; uint256 amount; }', // [!code hl]
- *   'constructor(Foo foo)',
- * ])
- *
- * constructor
- * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- *
- *
- *
- * @param abiConstructor - The ABI Constructor to parse.
+ * @param abiConstructor - The JSON ABI Constructor to parse.
+ * @param options - Parsing options.
  * @returns Typed ABI Constructor.
  */
-export function from(
-  abiConstructor: AbiConstructor | string | readonly string[],
-): AbiConstructor
-/** @internal */
-export function from(
-  abiConstructor: AbiConstructor | string | readonly string[],
-): from.ReturnType {
-  return AbiItem.from(abiConstructor as AbiConstructor)
+export function fromJson<const abiConstructor extends AbiConstructor>(
+  abiConstructor: abiConstructor | AbiConstructor,
+  options?: AbiItem.fromJson.Options,
+): fromJson.ReturnType<abiConstructor> {
+  return AbiItem.fromJson(abiConstructor as never, options) as never
+}
+
+export declare namespace fromJson {
+  type ReturnType<abiConstructor extends AbiConstructor> =
+    AbiItem.fromJson.ReturnType<abiConstructor>
+
+  type ErrorType = AbiItem.fromJson.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Internal dispatcher used by `decode` / `encode` shorthand overloads.
+ * Picks {@link AbiConstructor.fromHumanReadable} or {@link AbiConstructor.fromJson}
+ * based on the input shape.
+ *
+ * @internal
+ */
+export function from<
+  const abiConstructor extends AbiConstructor | string | readonly string[],
+>(
+  abiConstructor: (
+    | abiConstructor
+    | AbiConstructor
+    | string
+    | readonly string[]
+  ) &
+    (
+      | (abiConstructor extends string
+          ? internal.Signature<abiConstructor>
+          : never)
+      | (abiConstructor extends readonly string[]
+          ? internal.Signatures<abiConstructor>
+          : never)
+      | AbiConstructor
+    ),
+  options?: AbiItem.from.Options,
+): from.ReturnType<abiConstructor> {
+  return AbiItem.from(abiConstructor as never, options) as never
 }
 
 export declare namespace from {
+  /** @internal */
   type ReturnType<
     abiConstructor extends
       | AbiConstructor
@@ -427,6 +441,7 @@ export declare namespace from {
       | readonly string[] = AbiConstructor,
   > = AbiItem.from.ReturnType<abiConstructor>
 
+  /** @internal */
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
@@ -489,7 +504,7 @@ export declare namespace fromAbi {
  * import { AbiConstructor } from 'ox'
  *
  * AbiConstructor.decode(
- *   AbiConstructor.from('constructor(address)'),
+ *   AbiConstructor.fromHumanReadable('constructor(address)'),
  *   { bytecode: '0x6080...', data: '0xdeadbeef' },
  * )
  * // @error: AbiConstructor.BytecodeMismatchError: Provided `data` does not start with the provided `bytecode`.

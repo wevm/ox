@@ -210,7 +210,7 @@ export function assertArgs<const abiEvent extends AbiEvent>(
         >
     : unknown,
 ) {
-  if (!args || !matchArgs)
+  if (!args || !matchArgs || abiEvent.inputs.length === 0)
     throw new ArgsMismatchError({
       abiEvent,
       expected: args,
@@ -560,7 +560,7 @@ export function decode(
     }
   }
 
-  return Object.values(args).length > 0 ? args : undefined
+  return args
 }
 
 export declare namespace decode {
@@ -574,7 +574,7 @@ export declare namespace decode {
     AbiEvent
   > extends true
     ? abiEvent['inputs'] extends readonly []
-      ? undefined
+      ? Record<string, never> | readonly []
       : internal.ParametersToPrimitiveTypes<
           abiEvent['inputs'],
           { EnableUnion: false; IndexedOnly: false; Required: true }
@@ -952,6 +952,13 @@ export declare namespace format {
  * @param abiEvent - The ABI Event to parse.
  * @returns Typed ABI Event.
  */
+/**
+ * Internal dispatcher used by `decode` / `encode` shorthand overloads on {@link AbiEvent}.
+ * Picks {@link AbiEvent.fromHumanReadable} or {@link AbiEvent.fromJson} based on the
+ * input shape.
+ *
+ * @internal
+ */
 export function from<
   const abiEvent extends AbiEvent | string | readonly string[],
 >(
@@ -969,6 +976,7 @@ export function from<
 }
 
 export declare namespace from {
+  /** @internal */
   type Options = {
     /**
      * Whether or not to prepare the extracted event (optimization for encoding performance).
@@ -979,75 +987,106 @@ export declare namespace from {
     prepare?: boolean | undefined
   }
 
+  /** @internal */
   type ReturnType<abiEvent extends AbiEvent | string | readonly string[]> =
     AbiItem.from.ReturnType<abiEvent>
 
+  /** @internal */
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
 /**
- * Extracts an {@link ox#AbiEvent.AbiEvent} from an {@link ox#Abi.Abi} given a name and optional arguments.
+ * Parses a **Human Readable ABI Event** signature (or array of signatures with optional structs) into a typed {@link ox#AbiEvent.AbiEvent}.
  *
  * @example
- * ### Extracting by Name
- *
- * ABI Events can be extracted by their name using the `name` option:
- *
  * ```ts twoslash
- * import { Abi, AbiEvent } from 'ox'
+ * import { AbiEvent } from 'ox'
  *
- * const abi = Abi.from([
- *   'function foo()',
- *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
- * ])
+ * const transfer = AbiEvent.fromHumanReadable(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * )
  *
- * const item = AbiEvent.fromAbi(abi, 'Transfer') // [!code focus]
- * //    ^?
- *
- *
- *
+ * transfer
+ * //^?
  *
  *
  *
  * ```
  *
+ * @param signature - The human-readable signature (or array of signatures with optional structs) to parse.
+ * @param options - Parsing options.
+ * @returns Typed ABI Event.
+ */
+export function fromHumanReadable<
+  const signature extends string | readonly string[],
+>(
+  signature: signature &
+    (
+      | (signature extends string ? internal.Signature<signature> : never)
+      | (signature extends readonly string[]
+          ? internal.Signatures<signature>
+          : never)
+    ),
+  options?: AbiItem.fromHumanReadable.Options,
+): fromHumanReadable.ReturnType<signature> {
+  return AbiItem.fromHumanReadable(signature as never, options) as never
+}
+
+export declare namespace fromHumanReadable {
+  type ReturnType<signature extends string | readonly string[]> =
+    AbiItem.fromHumanReadable.ReturnType<signature>
+
+  type ErrorType = AbiItem.fromHumanReadable.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Parses a **JSON ABI Event** into a typed {@link ox#AbiEvent.AbiEvent}.
+ *
  * @example
- * ### Extracting by Selector
- *
- * ABI Events can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
- *
  * ```ts twoslash
- * import { Abi, AbiEvent } from 'ox'
+ * import { AbiEvent } from 'ox'
  *
- * const abi = Abi.from([
- *   'function foo()',
- *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
- * ])
- * const item = AbiEvent.fromAbi(abi, '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') // [!code focus]
- * //    ^?
+ * const transfer = AbiEvent.fromJson({
+ *   type: 'event',
+ *   name: 'Transfer',
+ *   inputs: [
+ *     { name: 'from', type: 'address', indexed: true },
+ *     { name: 'to', type: 'address', indexed: true },
+ *     { name: 'value', type: 'uint256', indexed: false },
+ *   ],
+ * })
  *
- *
- *
- *
- *
- *
+ * transfer
+ * //^?
  *
  *
  *
  * ```
  *
- * :::note
+ * @param abiEvent - The JSON ABI Event to parse.
+ * @param options - Parsing options.
+ * @returns Typed ABI Event.
+ */
+export function fromJson<const abiEvent extends AbiEvent>(
+  abiEvent: abiEvent | AbiEvent,
+  options?: AbiItem.fromJson.Options,
+): fromJson.ReturnType<abiEvent> {
+  return AbiItem.fromJson(abiEvent as never, options) as never
+}
+
+export declare namespace fromJson {
+  type ReturnType<abiEvent extends AbiEvent> =
+    AbiItem.fromJson.ReturnType<abiEvent>
+
+  type ErrorType = AbiItem.fromJson.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Internal dispatcher used by `decode` / `encode` shorthand overloads on {@link AbiEvent}.
+ * Picks {@link AbiEvent.fromAbiName} or {@link AbiEvent.fromAbiSelector} based on whether
+ * `name` parses as a hex selector.
  *
- * Extracting via a hex selector is useful when extracting an ABI Event from the first topic of a Log.
- *
- * :::
- *
- * @param abi - The ABI to extract from.
- * @param name - The name (or selector) of the ABI item to extract.
- * @param options - Extraction options.
- * @returns The ABI item.
+ * @internal
  */
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
@@ -1067,14 +1106,120 @@ export function fromAbi<
     AbiItem_internal.ExtractArgs<abi, name>
   >,
 ): AbiItem.fromAbi.ReturnType<abi, name, args, AbiEvent> {
-  const item = AbiItem.fromAbi(abi, name, options as any)
+  const item = AbiItem.fromAbi(abi, name, options as any) as AbiItem.AbiItem
   if (item.type !== 'event')
     throw new AbiItem.NotFoundError({ name, type: 'event' })
   return item as never
 }
 
 export declare namespace fromAbi {
+  /** @internal */
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiEvent.AbiEvent} from an {@link ox#Abi.Abi} given an event name.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiEvent.fromAbiName(abi, 'Transfer')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param name - The name of the event to extract.
+ * @param options - Extraction options.
+ * @returns The ABI Event.
+ */
+export function fromAbiName<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: name extends allNames ? name : never,
+  options?: AbiItem.fromAbiName.Options<
+    abi,
+    name,
+    args,
+    AbiItem_internal.ExtractArgs<abi, name>
+  >,
+): AbiItem.fromAbiName.ReturnType<abi, name, args, AbiEvent> {
+  const item = AbiItem.fromAbiName(abi, name, options as any) as AbiItem.AbiItem
+  if (item.type !== 'event')
+    throw new AbiItem.NotFoundError({ name, type: 'event' })
+  return item as never
+}
+
+export declare namespace fromAbiName {
+  type ErrorType = AbiItem.fromAbiName.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiEvent.AbiEvent} from an {@link ox#Abi.Abi} by topic-0 hash
+ * (a 32-byte event topic hash).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ * const item = AbiEvent.fromAbiSelector(abi, '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param selector - The 32-byte event topic hash to look up.
+ * @param options - Extraction options.
+ * @returns The ABI Event.
+ */
+export function fromAbiSelector<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  selector: Hex.Hex,
+  options?: AbiItem.fromAbiSelector.Options,
+): AbiEvent {
+  const item = AbiItem.fromAbiSelector(
+    abi,
+    selector,
+    options,
+  ) as AbiItem.AbiItem
+  if (item.type !== 'event')
+    throw new AbiItem.NotFoundError({ name: selector, type: 'event' })
+  return item as AbiEvent
+}
+
+export declare namespace fromAbiSelector {
+  type ErrorType = AbiItem.fromAbiSelector.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -1194,13 +1339,17 @@ export class ArgsMismatchError extends Errors.BaseError {
     expected: unknown
     given: unknown
   }) {
+    const isEmpty = (v: unknown) =>
+      !v ||
+      (Array.isArray(v) && v.length === 0) ||
+      (typeof v === 'object' && Object.keys(v as object).length === 0)
     super('Given arguments do not match the expected arguments.', {
       metaMessages: [
         `Event: ${format(abiEvent)}`,
-        `Expected Arguments: ${!expected ? 'None' : ''}`,
-        expected ? prettyPrint(expected) : undefined,
-        `Given Arguments: ${!given ? 'None' : ''}`,
-        given ? prettyPrint(given) : undefined,
+        `Expected Arguments: ${isEmpty(expected) ? 'None' : ''}`,
+        isEmpty(expected) ? undefined : prettyPrint(expected),
+        `Given Arguments: ${isEmpty(given) ? 'None' : ''}`,
+        isEmpty(given) ? undefined : prettyPrint(given),
       ],
     })
   }

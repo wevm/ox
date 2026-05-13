@@ -109,15 +109,137 @@ export declare namespace format {
 }
 
 /**
- * Parses an arbitrary **JSON ABI Item** or **Human Readable ABI Item** into a typed {@link ox#AbiItem.AbiItem}.
+ * Parses a **Human Readable ABI Item** signature (or array of signatures with optional structs) into a typed {@link ox#AbiItem.AbiItem}.
  *
  * @example
- * ### JSON ABIs
+ * ```ts twoslash
+ * import { AbiItem } from 'ox'
+ *
+ * const abiItem = AbiItem.fromHumanReadable(
+ *   'function approve(address spender, uint256 amount) returns (bool)'
+ * )
+ *
+ * abiItem
+ * //^?
+ *
+ *
+ *
+ * ```
+ *
+ * @example
+ * It is possible to specify `struct`s along with your definitions by passing an array of signatures:
  *
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const abiItem = AbiItem.from({
+ * const abiItem = AbiItem.fromHumanReadable([
+ *   'struct Foo { address spender; uint256 amount; }',
+ *   'function approve(Foo foo) returns (bool)',
+ * ])
+ *
+ * abiItem
+ * //^?
+ *
+ *
+ *
+ * ```
+ *
+ * @param signature - The human-readable signature (or array of signatures with optional structs) to parse.
+ * @param options - Parsing options.
+ * @returns The typed ABI Item.
+ */
+export function fromHumanReadable<
+  const signature extends string | readonly string[],
+>(
+  signature: signature &
+    (
+      | (signature extends string ? internal.Signature<signature> : never)
+      | (signature extends readonly string[]
+          ? internal.Signatures<signature>
+          : never)
+    ),
+  options?: fromHumanReadable.Options,
+): fromHumanReadable.ReturnType<signature> {
+  const { prepare = true } = options ?? {}
+  const item = abitype.parseAbiItem(signature as never) as AbiItem
+  return {
+    ...item,
+    ...(prepare ? { hash: getSignatureHash(item) } : {}),
+  } as never
+}
+
+/**
+ * Internal dispatcher used by shorthand entry points that accept either a
+ * human-readable signature, an array of signatures, or a JSON ABI item.
+ * Picks `fromHumanReadable` or `fromJson` based on the input shape.
+ *
+ * @internal
+ */
+export function from<
+  const abiItem extends AbiItem | string | readonly string[],
+>(
+  abiItem: (abiItem | AbiItem | string | readonly string[]) &
+    (
+      | (abiItem extends string ? internal.Signature<abiItem> : never)
+      | (abiItem extends readonly string[]
+          ? internal.Signatures<abiItem>
+          : never)
+      | AbiItem
+    ),
+  options?: fromHumanReadable.Options,
+): from.ReturnType<abiItem> {
+  if (Array.isArray(abiItem))
+    return fromHumanReadable(abiItem as never, options) as never
+  if (typeof abiItem === 'string')
+    return fromHumanReadable(abiItem as never, options) as never
+  return fromJson(abiItem as never, options) as never
+}
+
+export declare namespace from {
+  /** @internal */
+  type Options = fromHumanReadable.Options
+
+  /** @internal */
+  type ReturnType<abiItem extends AbiItem | string | readonly string[]> =
+    abiItem extends string
+      ? abitype.ParseAbiItem<abiItem>
+      : abiItem extends readonly string[]
+        ? abitype.ParseAbiItem<abiItem>
+        : abiItem
+
+  /** @internal */
+  type ErrorType = Errors.GlobalErrorType
+}
+
+export declare namespace fromHumanReadable {
+  type Options = {
+    /**
+     * Whether or not to prepare the extracted item (optimization for encoding performance).
+     * When `true`, the `hash` property is computed and included in the returned value.
+     *
+     * @default true
+     */
+    prepare?: boolean | undefined
+  }
+
+  type ReturnType<signature extends string | readonly string[]> =
+    signature extends string
+      ? abitype.ParseAbiItem<signature>
+      : signature extends readonly string[]
+        ? abitype.ParseAbiItem<signature>
+        : never
+
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Parses a **JSON ABI Item** into a typed {@link ox#AbiItem.AbiItem}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { AbiItem } from 'ox'
+ *
+ * const abiItem = AbiItem.fromJson({
  *   type: 'function',
  *   name: 'approve',
  *   stateMutability: 'nonpayable',
@@ -139,105 +261,24 @@ export declare namespace format {
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
- * @example
- * ### Human Readable ABIs
- *
- * A Human Readable ABI can be parsed into a typed ABI object:
- *
- * ```ts twoslash
- * import { AbiItem } from 'ox'
- *
- * const abiItem = AbiItem.from(
- *   'function approve(address spender, uint256 amount) returns (bool)' // [!code hl]
- * )
- *
- * abiItem
- * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- *
- * @example
- * It is possible to specify `struct`s along with your definitions:
- *
- * ```ts twoslash
- * import { AbiItem } from 'ox'
- *
- * const abiItem = AbiItem.from([
- *   'struct Foo { address spender; uint256 amount; }', // [!code hl]
- *   'function approve(Foo foo) returns (bool)',
- * ])
- *
- * abiItem
- * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- *
- *
- *
- * @param abiItem - The ABI Item to parse.
+ * @param abiItem - The JSON ABI Item to parse.
+ * @param options - Parsing options.
  * @returns The typed ABI Item.
  */
-export function from<
-  const abiItem extends AbiItem | string | readonly string[],
->(
-  abiItem: (abiItem | AbiItem | string | readonly string[]) &
-    (
-      | (abiItem extends string ? internal.Signature<abiItem> : never)
-      | (abiItem extends readonly string[]
-          ? internal.Signatures<abiItem>
-          : never)
-      | AbiItem
-    ),
-  options: from.Options = {},
-): from.ReturnType<abiItem> {
-  const { prepare = true } = options
-  const item = (() => {
-    if (Array.isArray(abiItem)) return abitype.parseAbiItem(abiItem)
-    if (typeof abiItem === 'string')
-      return abitype.parseAbiItem(abiItem as never)
-    return abiItem
-  })() as AbiItem
+export function fromJson<const abiItem extends AbiItem>(
+  abiItem: abiItem | AbiItem,
+  options?: fromJson.Options,
+): fromJson.ReturnType<abiItem> {
+  const { prepare = true } = options ?? {}
   return {
-    ...item,
-    ...(prepare ? { hash: getSignatureHash(item) } : {}),
+    ...(abiItem as AbiItem),
+    ...(prepare ? { hash: getSignatureHash(abiItem as AbiItem) } : {}),
   } as never
 }
 
-export declare namespace from {
+export declare namespace fromJson {
   type Options = {
     /**
      * Whether or not to prepare the extracted item (optimization for encoding performance).
@@ -248,82 +289,17 @@ export declare namespace from {
     prepare?: boolean | undefined
   }
 
-  type ReturnType<abiItem extends AbiItem | string | readonly string[]> =
-    abiItem extends string
-      ? abitype.ParseAbiItem<abiItem>
-      : abiItem extends readonly string[]
-        ? abitype.ParseAbiItem<abiItem>
-        : abiItem
+  type ReturnType<abiItem extends AbiItem> = abiItem
 
   type ErrorType = Errors.GlobalErrorType
 }
 
 /**
- * Extracts an {@link ox#AbiItem.AbiItem} from an {@link ox#Abi.Abi} given a name and optional arguments.
+ * Internal dispatcher used by shorthand `decode`/`encode` overloads on `AbiFunction`,
+ * `AbiEvent`, and `AbiError` that accept `(abi, name | selector)`. Picks `fromAbiName`
+ * or `fromAbiSelector` based on whether `name` parses as a hex selector.
  *
- * @example
- * ABI Items can be extracted by their name using the `name` option:
- *
- * ```ts twoslash
- * import { Abi, AbiItem } from 'ox'
- *
- * const abi = Abi.from([
- *   'function foo()',
- *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
- * ])
- *
- * const item = AbiItem.fromAbi(abi, 'Transfer') // [!code focus]
- * //    ^?
- *
- *
- *
- *
- *
- *
- * ```
- *
- * @example
- * ### Extracting by Selector
- *
- * ABI Items can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
- *
- * ```ts twoslash
- * import { Abi, AbiItem } from 'ox'
- *
- * const abi = Abi.from([
- *   'function foo()',
- *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
- * ])
- * const item = AbiItem.fromAbi(abi, '0x095ea7b3') // [!code focus]
- * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * ```
- *
- * :::note
- *
- * Extracting via a hex selector is useful when extracting an ABI Item from an `eth_call` RPC response,
- * a Transaction `input`, or from Event Log `topics`.
- *
- * :::
- *
- * @param abi - The ABI to extract from.
- * @param name - The name (or selector) of the ABI item to extract.
- * @param options - Extraction options.
- * @returns The ABI item.
+ * @internal
  */
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
@@ -336,28 +312,78 @@ export function fromAbi<
   name: Hex.Hex | (name extends allNames ? name : never),
   options?: fromAbi.Options<abi, name, args>,
 ): fromAbi.ReturnType<abi, name, args> {
+  if (Hex.validate(name as string, { strict: false }))
+    return fromAbiSelector(abi, name as Hex.Hex, options as never) as never
+  return fromAbiName(abi, name as never, options as never) as never
+}
+
+export declare namespace fromAbi {
+  /** @internal */
+  type Options<
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
+    name extends Name<abi> = Name<abi>,
+    args extends
+      | internal.ExtractArgs<abi, name>
+      | undefined = internal.ExtractArgs<abi, name>,
+    ///
+    allArgs = internal.ExtractArgs<abi, name>,
+  > = fromAbiName.Options<abi, name, args, allArgs>
+
+  /** @internal */
+  type ReturnType<
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
+    name extends Name<abi> = Name<abi>,
+    args extends
+      | internal.ExtractArgs<abi, name>
+      | undefined = internal.ExtractArgs<abi, name>,
+    fallback = AbiItem,
+  > = fromAbiName.ReturnType<abi, name, args, fallback>
+
+  /** @internal */
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiItem.AbiItem} from an {@link ox#Abi.Abi} given a name and optional arguments.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiItem.fromAbiName(abi, 'Transfer')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param name - The name of the ABI item to extract.
+ * @param options - Extraction options.
+ * @returns The ABI item.
+ */
+export function fromAbiName<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends internal.ExtractArgs<abi, name> | undefined = undefined,
+  //
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: name extends allNames ? name : never,
+  options?: fromAbiName.Options<abi, name, args>,
+): fromAbiName.ReturnType<abi, name, args> {
   const { args = [], prepare = true } = (options ??
-    {}) as unknown as fromAbi.Options
-
-  const isSelector = Hex.validate(name, { strict: false })
-
-  // Selector lookups are always unique on the ABI: precompute the
-  // function/error 4-byte selector once and short-circuit via `find`
-  // instead of building a full `filter` result we'd discard.
-  if (isSelector) {
-    const selector = Hex.slice(name, 0, 4)
-    const abiItem = (abi as Abi.Abi).find((abiItem) => {
-      if (abiItem.type === 'function' || abiItem.type === 'error')
-        return getSelector(abiItem) === selector
-      if (abiItem.type === 'event') return getSignatureHash(abiItem) === name
-      return false
-    })
-    if (!abiItem) throw new NotFoundError({ name: name as string })
-    return {
-      ...abiItem,
-      ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
-    } as never
-  }
+    {}) as unknown as fromAbiName.Options
 
   const abiItems = (abi as Abi.Abi).filter(
     (abiItem) => 'name' in abiItem && abiItem.name === name,
@@ -390,7 +416,6 @@ export function fromAbi<
       return internal.isArgOfType(arg, abiParameter)
     })
     if (matched) {
-      // Check for ambiguity against already matched parameters (e.g. `address` vs `bytes20`).
       if (
         matchedAbiItem &&
         'inputs' in matchedAbiItem &&
@@ -431,7 +456,7 @@ export function fromAbi<
   } as never
 }
 
-export declare namespace fromAbi {
+export declare namespace fromAbiName {
   type Options<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
@@ -452,8 +477,7 @@ export declare namespace fromAbi {
     readonly [] extends allArgs
       ? {
           args?:
-            | allArgs // show all options
-            // infer value, widen inferred value of `args` conditionally to match `allArgs`
+            | allArgs
             | (abi extends Abi.Abi
                 ? args extends allArgs
                   ? internal.Widen<args>
@@ -463,8 +487,8 @@ export declare namespace fromAbi {
         }
       : {
           args?:
-            | allArgs // show all options
-            | (internal.Widen<args> & (args extends allArgs ? unknown : never)) // infer value, widen inferred value of `args` match `allArgs` (e.g. avoid union `args: readonly [123n] | readonly [bigint]`)
+            | allArgs
+            | (internal.Widen<args> & (args extends allArgs ? unknown : never))
             | undefined
         }
   >
@@ -487,6 +511,84 @@ export declare namespace fromAbi {
             : internal.ExtractArgs<abi, name>
         >
     : fallback
+
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiItem.AbiItem} from an {@link ox#Abi.Abi} by 4-byte selector (or event topic hash).
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiItem } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'event Transfer(address owner, address to, uint256 tokenId)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ * const item = AbiItem.fromAbiSelector(abi, '0x095ea7b3')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @remarks Selectors for functions/errors are the first 4 bytes; event topic hashes are 32 bytes.
+ * Either may be passed directly (or as full calldata for functions/errors — the first 4 bytes are sliced).
+ *
+ * @param abi - The ABI to extract from.
+ * @param selector - The 4-byte selector (or event topic hash, or full calldata) to look up.
+ * @param options - Extraction options.
+ * @returns The ABI item.
+ */
+export function fromAbiSelector<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  selector: Hex.Hex,
+  options?: fromAbiSelector.Options,
+): fromAbiSelector.ReturnType<abi> {
+  const { prepare = true } = options ?? {}
+  const selector_ = Hex.slice(selector, 0, 4)
+  const abiItem = (abi as Abi.Abi).find((abiItem) => {
+    if (abiItem.type === 'function' || abiItem.type === 'error')
+      return getSelector(abiItem) === selector_
+    if (abiItem.type === 'event') return getSignatureHash(abiItem) === selector
+    return false
+  })
+  if (!abiItem) throw new NotFoundError({ name: selector })
+  return {
+    ...abiItem,
+    ...(prepare ? { hash: getSignatureHash(abiItem) } : {}),
+  } as never
+}
+
+export declare namespace fromAbiSelector {
+  type Options = {
+    /**
+     * Whether or not to prepare the extracted item (optimization for encoding performance).
+     * When `true`, the `hash` property is computed and included in the returned value.
+     *
+     * @default true
+     */
+    prepare?: boolean | undefined
+  }
+
+  type ReturnType<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
+    abi extends Abi.Abi
+      ? Abi.Abi extends abi
+        ? AbiItem
+        : abi[number]
+      : AbiItem
 
   type ErrorType = Errors.GlobalErrorType
 }
@@ -546,7 +648,7 @@ export function getSelector(
   const abiItem = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
+      return fromAbiName(abi, name as never)
     }
     return parameters[0] as string | AbiItem
   })()
@@ -613,7 +715,7 @@ export function getSignature(
   const abiItem = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
+      return fromAbiName(abi, name as never)
     }
     return parameters[0] as string | AbiItem
   })()
@@ -687,7 +789,7 @@ export function getSignatureHash(
   const abiItem = (() => {
     if (Array.isArray(parameters[0])) {
       const [abi, name] = parameters as [Abi.Abi | readonly unknown[], string]
-      return fromAbi(abi, name)
+      return fromAbiName(abi, name as never)
     }
     return parameters[0] as string | AbiItem
   })()
@@ -712,7 +814,7 @@ export declare namespace getSignatureHash {
  * import { Abi, AbiFunction } from 'ox'
  *
  * const foo = Abi.from(['function foo(address)', 'function foo(bytes20)'])
- * AbiFunction.fromAbi(foo, 'foo', {
+ * AbiFunction.fromAbiName(foo, 'foo', {
  *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
  * })
  * // @error: AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
@@ -733,7 +835,7 @@ export declare namespace getSignatureHash {
  *   'function foo(address)',
  *   'function foo(bytes20)' // [!code --]
  * ])
- * AbiFunction.fromAbi(foo, 'foo', {
+ * AbiFunction.fromAbiName(foo, 'foo', {
  *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
  * })
  * // @error: AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
@@ -774,7 +876,7 @@ export class AmbiguityError extends Errors.BaseError {
  *   'function foo(address)',
  *   'function bar(uint)'
  * ])
- * AbiFunction.fromAbi(foo, 'baz')
+ * AbiFunction.fromAbiName(foo, 'baz')
  * // @error: AbiItem.NotFoundError: ABI function with name "baz" not found.
  * ```
  *
@@ -791,7 +893,7 @@ export class AmbiguityError extends Errors.BaseError {
  *   'function bar(uint)',
  *   'function baz(bool)' // [!code ++]
  * ])
- * AbiFunction.fromAbi(foo, 'baz')
+ * AbiFunction.fromAbiName(foo, 'baz')
  * ```
  */
 export class NotFoundError extends Errors.BaseError {
@@ -825,7 +927,7 @@ export class NotFoundError extends Errors.BaseError {
  *   'function foo(address)',
  *   'function bar(uint)'
  * ])
- * AbiFunction.fromAbi(foo, '0xaaa')
+ * AbiFunction.fromAbiSelector(foo, '0xaaa')
  * // @error: AbiItem.InvalidSelectorSizeError: Selector size is invalid. Expected 4 bytes. Received 2 bytes ("0xaaa").
  * ```
  *
@@ -841,7 +943,7 @@ export class NotFoundError extends Errors.BaseError {
  *   'function foo(address)',
  *   'function bar(uint)'
  * ])
- * AbiFunction.fromAbi(foo, '0x7af82b1a')
+ * AbiFunction.fromAbiSelector(foo, '0x7af82b1a')
  * ```
  */
 export class InvalidSelectorSizeError extends Errors.BaseError {

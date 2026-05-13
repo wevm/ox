@@ -513,6 +513,12 @@ export declare namespace format {
  * @param abiError - The ABI Error to parse.
  * @returns Typed ABI Error.
  */
+/**
+ * Internal dispatcher used by `decode` / `encode` shorthand overloads on {@link AbiError}.
+ * Picks {@link AbiError.fromHumanReadable} or {@link AbiError.fromJson} based on the input shape.
+ *
+ * @internal
+ */
 export function from<
   const abiError extends AbiError | string | readonly string[],
 >(
@@ -530,6 +536,7 @@ export function from<
 }
 
 export declare namespace from {
+  /** @internal */
   type Options = {
     /**
      * Whether or not to prepare the extracted function (optimization for encoding performance).
@@ -540,75 +547,103 @@ export declare namespace from {
     prepare?: boolean | undefined
   }
 
+  /** @internal */
   type ReturnType<abiError extends AbiError | string | readonly string[]> =
     AbiItem.from.ReturnType<abiError>
 
+  /** @internal */
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType
 }
 
 /**
- * Extracts an {@link ox#AbiError.AbiError} from an {@link ox#Abi.Abi} given a name and optional arguments.
+ * Parses a **Human Readable ABI Error** signature (or array of signatures with optional structs) into a typed {@link ox#AbiError.AbiError}.
  *
  * @example
- * ### Extracting by Name
- *
- * ABI Errors can be extracted by their name using the `name` option:
- *
  * ```ts twoslash
- * import { Abi, AbiError } from 'ox'
+ * import { AbiError } from 'ox'
  *
- * const abi = Abi.from([
- *   'function foo()',
- *   'error BadSignatureV(uint8 v)',
- *   'function bar(string a) returns (uint256 x)',
- * ])
+ * const badSignatureVError = AbiError.fromHumanReadable(
+ *   'error BadSignatureV(uint8 v)'
+ * )
  *
- * const item = AbiError.fromAbi(abi, 'BadSignatureV') // [!code focus]
- * //    ^?
- *
- *
- *
+ * badSignatureVError
+ * //^?
  *
  *
  *
  * ```
  *
+ * @param signature - The human-readable signature (or array of signatures with optional structs) to parse.
+ * @param options - Parsing options.
+ * @returns Typed ABI Error.
+ */
+export function fromHumanReadable<
+  const signature extends string | readonly string[],
+>(
+  signature: signature &
+    (
+      | (signature extends string ? internal.Signature<signature> : never)
+      | (signature extends readonly string[]
+          ? internal.Signatures<signature>
+          : never)
+    ),
+  options?: AbiItem.fromHumanReadable.Options,
+): fromHumanReadable.ReturnType<signature> {
+  return AbiItem.fromHumanReadable(signature as never, options) as never
+}
+
+export declare namespace fromHumanReadable {
+  type ReturnType<signature extends string | readonly string[]> =
+    AbiItem.fromHumanReadable.ReturnType<signature>
+
+  type ErrorType = AbiItem.fromHumanReadable.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Parses a **JSON ABI Error** into a typed {@link ox#AbiError.AbiError}.
+ *
  * @example
- * ### Extracting by Selector
- *
- * ABI Errors can be extract by their selector when {@link ox#Hex.Hex} is provided to `name`.
- *
  * ```ts twoslash
- * import { Abi, AbiError } from 'ox'
+ * import { AbiError } from 'ox'
  *
- * const abi = Abi.from([
- *   'function foo()',
- *   'error BadSignatureV(uint8 v)',
- *   'function bar(string a) returns (uint256 x)',
- * ])
- * const item = AbiError.fromAbi(abi, '0x095ea7b3') // [!code focus]
- * //    ^?
+ * const badSignatureVError = AbiError.fromJson({
+ *   type: 'error',
+ *   name: 'BadSignatureV',
+ *   inputs: [{ name: 'v', type: 'uint8' }],
+ * })
  *
- *
- *
- *
- *
- *
+ * badSignatureVError
+ * //^?
  *
  *
  *
  * ```
  *
- * :::note
+ * @param abiError - The JSON ABI Error to parse.
+ * @param options - Parsing options.
+ * @returns Typed ABI Error.
+ */
+export function fromJson<const abiError extends AbiError>(
+  abiError: abiError | AbiError,
+  options?: AbiItem.fromJson.Options,
+): fromJson.ReturnType<abiError> {
+  return AbiItem.fromJson(abiError as never, options) as never
+}
+
+export declare namespace fromJson {
+  type ReturnType<abiError extends AbiError> =
+    AbiItem.fromJson.ReturnType<abiError>
+
+  type ErrorType = AbiItem.fromJson.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Internal dispatcher used by `decode` / `encode` shorthand overloads on {@link AbiError}.
+ * Picks {@link AbiError.fromAbiName} or {@link AbiError.fromAbiSelector} based on whether
+ * `name` parses as a hex selector. Also handles the built-in Solidity `Error` and `Panic`
+ * errors.
  *
- * Extracting via a hex selector is useful when extracting an ABI Error from JSON-RPC error data.
- *
- * :::
- *
- * @param abi - The ABI to extract from.
- * @param name - The name (or selector) of the ABI item to extract.
- * @param options - Extraction options.
- * @returns The ABI item.
+ * @internal
  */
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
@@ -636,13 +671,14 @@ export function fromAbi<
     if (selector === solidityPanicSelector) return solidityPanic as never
   }
 
-  const item = AbiItem.fromAbi(abi, name, options as any)
+  const item = AbiItem.fromAbi(abi, name, options as any) as AbiItem.AbiItem
   if (item.type !== 'error')
     throw new AbiItem.NotFoundError({ name, type: 'error' })
   return item as never
 }
 
 export declare namespace fromAbi {
+  /** @internal */
   type ReturnType<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
@@ -664,7 +700,144 @@ export declare namespace fromAbi {
         | typeof solidityError
         | typeof solidityPanic
 
+  /** @internal */
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiError.AbiError} from an {@link ox#Abi.Abi} by error name.
+ *
+ * Special-cases the built-in Solidity `Error` and `Panic` errors.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'function foo()',
+ *   'error BadSignatureV(uint8 v)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiError.fromAbiName(abi, 'BadSignatureV')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param name - The name of the error to extract.
+ * @param options - Extraction options.
+ * @returns The ABI Error.
+ */
+export function fromAbiName<
+  const abi extends Abi.Abi | readonly unknown[],
+  name extends Name<abi>,
+  const args extends
+    | AbiItem_internal.ExtractArgs<abi, name>
+    | undefined = undefined,
+  //
+  allNames = Name<abi>,
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  name: name extends allNames ? name : never,
+  options?: AbiItem.fromAbiName.Options<
+    abi,
+    name,
+    args,
+    AbiItem_internal.ExtractArgs<abi, name>
+  >,
+): fromAbiName.ReturnType<abi, name, args> {
+  if ((name as unknown) === 'Error') return solidityError as never
+  if ((name as unknown) === 'Panic') return solidityPanic as never
+  const item = AbiItem.fromAbiName(abi, name, options as any) as AbiItem.AbiItem
+  if (item.type !== 'error')
+    throw new AbiItem.NotFoundError({ name, type: 'error' })
+  return item as never
+}
+
+export declare namespace fromAbiName {
+  type ReturnType<
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
+    name extends Name<abi> = Name<abi>,
+    args extends
+      | AbiItem_internal.ExtractArgs<abi, name>
+      | undefined = AbiItem_internal.ExtractArgs<abi, name>,
+  > = IsNarrowable<name, Name<abi>> extends true
+    ?
+        | (name extends 'Error' ? typeof solidityError : never)
+        | (name extends 'Panic'
+            ? typeof solidityPanic
+            : never) extends infer result
+      ? IsNever<result> extends true
+        ? AbiItem.fromAbiName.ReturnType<abi, name, args, AbiError>
+        : result
+      : never
+    :
+        | AbiItem.fromAbiName.ReturnType<abi, name, args, AbiError>
+        | typeof solidityError
+        | typeof solidityPanic
+
+  type ErrorType = AbiItem.fromAbiName.ErrorType | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiError.AbiError} from an {@link ox#Abi.Abi} by 4-byte selector
+ * (or full error data; the first 4 bytes are sliced).
+ *
+ * Special-cases the built-in Solidity `Error` and `Panic` selectors.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error BadSignatureV(uint8 v)',
+ *   'function bar(string a) returns (uint256 x)',
+ * ])
+ *
+ * const item = AbiError.fromAbiSelector(abi, '0x6352211e')
+ * //    ^?
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param selector - The 4-byte selector (or full error data) to look up.
+ * @param options - Extraction options.
+ * @returns The ABI Error.
+ */
+export function fromAbiSelector<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  selector: Hex.Hex,
+  options?: AbiItem.fromAbiSelector.Options,
+): AbiError | typeof solidityError | typeof solidityPanic {
+  const selector_ = Hex.slice(selector, 0, 4)
+  if (selector_ === solidityErrorSelector) return solidityError
+  if (selector_ === solidityPanicSelector) return solidityPanic
+  const item = AbiItem.fromAbiSelector(
+    abi,
+    selector,
+    options,
+  ) as AbiItem.AbiItem
+  if (item.type !== 'error')
+    throw new AbiItem.NotFoundError({ name: selector, type: 'error' })
+  return item as AbiError
+}
+
+export declare namespace fromAbiSelector {
+  type ErrorType = AbiItem.fromAbiSelector.ErrorType | Errors.GlobalErrorType
 }
 
 /**

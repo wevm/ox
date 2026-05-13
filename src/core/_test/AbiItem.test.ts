@@ -372,6 +372,7 @@ describe('fromAbi', () => {
         "outputs": [],
         "overloads": [
           {
+            "hash": "0x2fbebd3821c4e005fbe0a9002cc1bd25dc266d788dba1dbcb39cc66a07e7b38b",
             "inputs": [
               {
                 "type": "uint256",
@@ -2112,8 +2113,12 @@ test('exports', () => {
   expect(Object.keys(AbiItem)).toMatchInlineSnapshot(`
     [
       "format",
+      "fromHumanReadable",
       "from",
+      "fromJson",
       "fromAbi",
+      "fromAbiName",
+      "fromAbiSelector",
       "getSelector",
       "getSignature",
       "getSignatureHash",
