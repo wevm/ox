@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Refactored `webauthn.Authentication.verify` and `Authentication.serializeResponse` to consume the shared `parseAuthenticatorData` and `serializeResponseFields` internal helpers, removing duplicated bit-twiddling and getter-fallback boilerplate.
+Tightened `webauthn.Authentication.verify` and `webauthn.Authentication.serializeResponse` by consolidating shared authenticator-data parsing and response-field serialization.
