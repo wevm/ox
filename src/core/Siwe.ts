@@ -365,38 +365,102 @@ function splitUri(value: string) {
  * @returns Message fields object.
  */
 export function parseMessage(message: string): ExactPartial<Message> {
-  const { scheme, statement, ...prefix } = (message.match(prefixRegex)
-    ?.groups ?? {}) as {
-    address: Address.Address
-    domain: string
-    scheme?: string
-    statement?: string
-  }
-  const { chainId, expirationTime, issuedAt, notBefore, requestId, ...suffix } =
-    (message.match(suffixRegex)?.groups ?? {}) as {
-      chainId: string
-      expirationTime?: string
-      issuedAt?: string
-      nonce: string
-      notBefore?: string
-      requestId?: string
-      uri: string
-      version: '1'
+  const lines = message.split('\n')
+  const out: Record<string, unknown> = {}
+
+  // Try to parse the prefix block (scheme/domain/address/statement) starting
+  // at the top of the message.
+  let i = 0
+  const prefixMatch = lines[0]?.match(prefixLineRegex)
+  if (prefixMatch?.groups) {
+    if (prefixMatch.groups.scheme) out.scheme = prefixMatch.groups.scheme
+    out.domain = prefixMatch.groups.domain
+    const addressMatch = lines[1]?.match(addressLineRegex)
+    if (addressMatch) {
+      out.address = addressMatch[1]
+      i = 2
+      // Optional statement: blank line, statement line, blank line.
+      if (lines[i] === '') {
+        i++
+        const candidate = lines[i]
+        if (
+          candidate !== undefined &&
+          candidate !== '' &&
+          !labelRegex.test(candidate) &&
+          candidate !== 'Resources:'
+        ) {
+          out.statement = candidate
+          i++
+        }
+        if (lines[i] === '') i++
+      }
+    } else {
+      // Prefix line matched but the address line didn't. The original
+      // regex required them as a pair, so reject the partial prefix to
+      // stay consistent.
+      delete out.scheme
+      delete out.domain
     }
-  const resources = message.split('Resources:')[1]?.split('\n- ').slice(1)
-  return {
-    ...prefix,
-    ...suffix,
-    ...(chainId ? { chainId: Number(chainId) } : {}),
-    ...(expirationTime ? { expirationTime: new Date(expirationTime) } : {}),
-    ...(issuedAt ? { issuedAt: new Date(issuedAt) } : {}),
-    ...(notBefore ? { notBefore: new Date(notBefore) } : {}),
-    ...(requestId ? { requestId } : {}),
-    ...(resources ? { resources } : {}),
-    ...(scheme ? { scheme } : {}),
-    ...(statement ? { statement } : {}),
   }
+
+  // Walk the remainder for `Key: value` labels and the optional resources block.
+  for (; i < lines.length; i++) {
+    const line = lines[i]!
+    if (line === 'Resources:') {
+      const resources: string[] = []
+      while (i + 1 < lines.length && lines[i + 1]!.startsWith('- ')) {
+        i++
+        resources.push(lines[i]!.slice(2))
+      }
+      if (resources.length > 0) out.resources = resources
+      continue
+    }
+    const labelMatch = line.match(labelRegex)
+    if (!labelMatch) continue
+    const [, key, value] = labelMatch as unknown as [string, string, string]
+    switch (key) {
+      case 'URI':
+        out.uri = value
+        break
+      case 'Version':
+        out.version = value
+        break
+      case 'Chain ID': {
+        const n = Number(value)
+        if (Number.isFinite(n)) out.chainId = n
+        break
+      }
+      case 'Nonce':
+        out.nonce = value
+        break
+      case 'Issued At':
+        out.issuedAt = new Date(value)
+        break
+      case 'Expiration Time':
+        out.expirationTime = new Date(value)
+        break
+      case 'Not Before':
+        out.notBefore = new Date(value)
+        break
+      case 'Request ID':
+        out.requestId = value
+        break
+    }
+  }
+
+  return out as ExactPartial<Message>
 }
+
+/** @internal */
+const prefixLineRegex =
+  /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+\-.]*):\/\/)?(?<domain>[a-zA-Z0-9+\-.]*(?::[0-9]{1,5})?) wants you to sign in with your Ethereum account:$/
+
+/** @internal */
+const addressLineRegex = /^(0x[a-fA-F0-9]{40})$/
+
+/** @internal */
+const labelRegex =
+  /^(URI|Version|Chain ID|Nonce|Issued At|Expiration Time|Not Before|Request ID): (.+)$/
 
 /**
  * Validates [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) message.
