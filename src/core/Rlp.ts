@@ -186,13 +186,18 @@ export function from<as extends 'Hex' | 'Bytes'>(
 ): from.ReturnType<as> {
   const { as } = options
 
-  // Single-pass encode: one walk to size the buffer, one walk to write into
-  // it. Avoids the per-node `Encodable` tree allocation and (for hex inputs)
-  // the per-leaf `Bytes.fromHex` allocation by writing nibbles directly into
-  // the destination buffer.
-  const length = encodedLength(value)
-  const bytes = new Uint8Array(length)
-  writeEncoded(bytes, 0, value)
+  // Two-walk encode without the per-node `Encodable` closure tree:
+  // 1. `measure` walks the input once and caches each list's `bodyLength`
+  //    in a side array indexed by visit order. This makes the second walk
+  //    O(N) instead of O(N²) for nested inputs.
+  // 2. `writeEncoded` walks again, reads cached body lengths, and writes
+  //    bytes straight into the pre-sized buffer. Hex leaves are
+  //    nibble-decoded directly into the destination, skipping the per-leaf
+  //    `Bytes.fromHex` allocation.
+  const ctx: EncodeCtx = { lengths: [], cursor: 0 }
+  const totalLength = measure(value, ctx)
+  const bytes = new Uint8Array(totalLength)
+  writeEncoded(bytes, 0, value, { lengths: ctx.lengths, cursor: 0 })
 
   if (as === 'Hex') return Hex.fromBytes(bytes) as from.ReturnType<as>
   return bytes as from.ReturnType<as>
@@ -298,16 +303,32 @@ function getSizeOfLength(length: number) {
 }
 
 /**
- * Returns the byte length of the value once RLP-encoded. Mirrors `getEncodable`
- * but allocates nothing.
+ * Side-channel used by `measure` and `writeEncoded` to share precomputed
+ * list body lengths. `lengths` is filled in pre-order (DFS) by `measure` and
+ * read back in the same order by `writeEncoded` via `cursor`. This avoids
+ * re-walking subtrees from `writeEncoded` (which would be O(N²) on nested
+ * inputs) without allocating a per-node `Encodable` closure tree.
  */
-function encodedLength(
+type EncodeCtx = { lengths: number[]; cursor: number }
+
+/**
+ * Walks `value` once, caches each list's `bodyLength` into `ctx.lengths`,
+ * and returns the total encoded byte length. Allocates nothing per node
+ * beyond the shared `lengths` array entries.
+ */
+function measure(
   value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+  ctx: EncodeCtx,
 ): number {
   if (Array.isArray(value)) {
+    // Reserve this list's slot before descending so children's slots come
+    // after ours; `writeEncoded` walks in the same order and reads slot N
+    // when it visits the Nth list.
+    const slot = ctx.lengths.length
+    ctx.lengths.push(0)
     let bodyLength = 0
-    for (let i = 0; i < value.length; i++)
-      bodyLength += encodedLength(value[i]!)
+    for (let i = 0; i < value.length; i++) bodyLength += measure(value[i]!, ctx)
+    ctx.lengths[slot] = bodyLength
     if (bodyLength <= 55) return 1 + bodyLength
     return 1 + getSizeOfLength(bodyLength) + bodyLength
   }
@@ -342,18 +363,19 @@ function encodedLength(
 
 /**
  * Writes `value`'s RLP encoding into `bytes` starting at `offset` and returns
- * the next free offset. Hex leaves are nibble-decoded directly into the
- * destination, skipping the per-leaf `Bytes.fromHex` allocation.
+ * the next free offset. Reads list body lengths from `ctx.lengths` in the
+ * same DFS order that `measure` filled them. Hex leaves are nibble-decoded
+ * directly into the destination, skipping the per-leaf `Bytes.fromHex`
+ * allocation.
  */
 function writeEncoded(
   bytes: Uint8Array,
   offset: number,
   value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+  ctx: EncodeCtx,
 ): number {
   if (Array.isArray(value)) {
-    let bodyLength = 0
-    for (let i = 0; i < value.length; i++)
-      bodyLength += encodedLength(value[i]!)
+    const bodyLength = ctx.lengths[ctx.cursor++]!
 
     let cursor = offset
     if (bodyLength <= 55) {
@@ -364,7 +386,7 @@ function writeEncoded(
       cursor = writeBigEndian(bytes, cursor, bodyLength, sizeOfBodyLength)
     }
     for (let i = 0; i < value.length; i++)
-      cursor = writeEncoded(bytes, cursor, value[i]!)
+      cursor = writeEncoded(bytes, cursor, value[i]!, ctx)
     return cursor
   }
 
