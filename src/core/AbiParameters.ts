@@ -148,15 +148,19 @@ export declare namespace decode {
     checksumAddress?: boolean | undefined
   }
 
+  // Folded into a single conditional that distributes on `as` so the
+  // parameter walk only happens once per branch (the prior shape walked
+  // `parameters` twice -- once for the empty-tuple short-circuit and
+  // again for `ToObject` / `ToPrimitiveTypes`).
   type ReturnType<
     parameters extends AbiParameters = AbiParameters,
     as extends 'Object' | 'Array' = 'Array',
-  > = parameters extends readonly []
-    ? as extends 'Object'
+  > = as extends 'Object'
+    ? parameters extends readonly []
       ? {}
-      : []
-    : as extends 'Object'
-      ? internal.ToObject<parameters>
+      : internal.ToObject<parameters>
+    : parameters extends readonly []
+      ? []
       : internal.ToPrimitiveTypes<parameters>
 
   type ErrorType =

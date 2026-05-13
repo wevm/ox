@@ -8,9 +8,41 @@ import type {
   Compute,
   IsNever,
   IsUnion,
+  LastInUnion,
   TypeErrorMessage,
-  UnionToTuple,
 } from './types.js'
+
+/**
+ * Maximum number of overloads `ExtractForArgs` will permute when
+ * narrowing by `args`. Beyond this depth the first matching overload
+ * is returned. The original `UnionToTuple` is exponential in the
+ * overload count and trips the TS recursion limit on large ABIs;
+ * capping bounds the inference cost while preserving correctness for
+ * realistic overload arities.
+ *
+ * @internal
+ */
+type OverloadDepthCap = 16
+
+/**
+ * `UnionToTuple`, but bounded by {@link OverloadDepthCap} so it cannot
+ * blow the TS recursion budget when narrowing many overloads.
+ *
+ * @internal
+ */
+type CappedUnionToTuple<
+  union,
+  ///
+  depth extends readonly unknown[] = [],
+  last = LastInUnion<union>,
+> = depth['length'] extends OverloadDepthCap
+  ? []
+  : [union] extends [never]
+    ? []
+    : [
+        ...CappedUnionToTuple<Exclude<union, last>, [...depth, 0]>,
+        last,
+      ]
 
 /** @internal */
 export type ExtractArgs<
@@ -38,14 +70,14 @@ export type ExtractForArgs<
         inputs: readonly abitype.AbiParameter[]
       }
     ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
-      ? UnionToTuple<abiItem> extends infer abiItems extends
+      ? CappedUnionToTuple<abiItem> extends infer abiItems extends
           readonly (AbiItem.AbiItem & {
             inputs: readonly abitype.AbiParameter[]
           })[]
         ? IsNever<TupleToUnion<abiItems, abi, name, args>> extends true
           ? Compute<
               abiItems[0] & {
-                readonly overloads: UnionToTuple<
+                readonly overloads: CappedUnionToTuple<
                   Exclude<abiItems[number], abiItems[0]>
                 >
               }
@@ -334,71 +366,19 @@ export type InvalidFunctionParameters =
   | `${string}) ${MangledReturns}${string}`
   | `${string})${string}${MangledReturns}${string}(${string}`
 
-// r_e_t_u_r_n_s
-/** @internal */
+/**
+ * Detects parameter substrings that contain the literal characters
+ * `r`, `e`, `t`, `u`, `r`, `n`, `s` in order (with arbitrary characters
+ * between them) -- i.e., a `returns` clause that template-literal
+ * inference incorrectly absorbed into the parameters slot. Replaces a
+ * 50+ arm enumeration of every position where `${string}` could split
+ * the keyword, which previously dominated TS check time on files that
+ * passed many literal `function ...` strings.
+ *
+ * @internal
+ */
 export type MangledReturns =
-  // Single
-  | `r${string}eturns`
-  | `re${string}turns`
-  | `ret${string}urns`
-  | `retu${string}rns`
-  | `retur${string}ns`
-  | `return${string}s`
-  // Double
-  // `r_e*`
-  | `r${string}e${string}turns`
-  | `r${string}et${string}urns`
-  | `r${string}etu${string}rns`
-  | `r${string}etur${string}ns`
-  | `r${string}eturn${string}s`
-  // `re_t*`
-  | `re${string}t${string}urns`
-  | `re${string}tu${string}rns`
-  | `re${string}tur${string}ns`
-  | `re${string}turn${string}s`
-  // `ret_u*`
-  | `ret${string}u${string}rns`
-  | `ret${string}ur${string}ns`
-  | `ret${string}urn${string}s`
-  // `retu_r*`
-  | `retu${string}r${string}ns`
-  | `retu${string}rn${string}s`
-  // `retur_n*`
-  | `retur${string}n${string}s`
-  // Triple
-  // `r_e_t*`
-  | `r${string}e${string}t${string}urns`
-  | `r${string}e${string}tu${string}rns`
-  | `r${string}e${string}tur${string}ns`
-  | `r${string}e${string}turn${string}s`
-  // `re_t_u*`
-  | `re${string}t${string}u${string}rns`
-  | `re${string}t${string}ur${string}ns`
-  | `re${string}t${string}urn${string}s`
-  // `ret_u_r*`
-  | `ret${string}u${string}r${string}ns`
-  | `ret${string}u${string}rn${string}s`
-  // `retu_r_n*`
-  | `retu${string}r${string}n${string}s`
-  // Quadruple
-  // `r_e_t_u*`
-  | `r${string}e${string}t${string}u${string}rns`
-  | `r${string}e${string}t${string}ur${string}ns`
-  | `r${string}e${string}t${string}urn${string}s`
-  // `re_t_u_r*`
-  | `re${string}t${string}u${string}r${string}ns`
-  | `re${string}t${string}u${string}rn${string}s`
-  // `ret_u_r_n*`
-  | `ret${string}u${string}r${string}n${string}s`
-  // Quintuple
-  // `r_e_t_u_r*`
-  | `r${string}e${string}t${string}u${string}r${string}ns`
-  | `r${string}e${string}t${string}u${string}rn${string}s`
-  // `re_t_u_r_n*`
-  | `re${string}t${string}u${string}r${string}n${string}s`
-  // Sextuple
-  // `r_e_t_u_r_n_s`
-  | `r${string}e${string}t${string}u${string}r${string}n${string}s`
+  `${string}r${string}e${string}t${string}u${string}r${string}n${string}s${string}`
 
 /** @internal */
 export type Widen<type> =
