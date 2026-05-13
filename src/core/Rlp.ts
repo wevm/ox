@@ -196,6 +196,20 @@ export function from<as extends 'Hex' | 'Bytes'>(
   //    `Bytes.fromHex` allocation.
   const ctx: EncodeCtx = { lengths: [], cursor: 0 }
   const totalLength = measure(value, ctx)
+
+  // Hex-output fast path: when the caller asked for hex AND every leaf is
+  // already hex, emit a hex string directly instead of allocating an
+  // intermediate `Uint8Array` and round-tripping through `Hex.fromBytes`.
+  // This is the dominant shape for transaction envelope serialize.
+  if (as === 'Hex' && isAllHex(value)) {
+    const parts: string[] = []
+    writeEncodedHex(parts, value as RecursiveArray<Hex.Hex>, {
+      lengths: ctx.lengths,
+      cursor: 0,
+    })
+    return `0x${parts.join('')}` as from.ReturnType<as>
+  }
+
   const bytes = new Uint8Array(totalLength)
   writeEncoded(bytes, 0, value, { lengths: ctx.lengths, cursor: 0 })
 
@@ -484,6 +498,95 @@ function writeBytesLeaf(
   }
   bytes.set(leaf, dest)
   return dest + len
+}
+
+/**
+ * Returns true if every leaf in the (possibly nested) input is a hex string.
+ * Used to gate the hex-output fast path in `from`.
+ */
+function isAllHex(
+  value: RecursiveArray<Bytes.Bytes> | RecursiveArray<Hex.Hex>,
+): boolean {
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++)
+      if (!isAllHex(value[i]!)) return false
+    return true
+  }
+  return typeof value === 'string'
+}
+
+/**
+ * Hex-output fast path: writes the RLP encoding of `value` directly as hex
+ * substrings into `parts`. Avoids the intermediate `Uint8Array` allocation
+ * (and the trailing `Hex.fromBytes` round-trip) used by the bytes path.
+ *
+ * Length-prefix bytes are formatted via the cached `hexes[]` table so we
+ * never call `toString(16)` per node.
+ */
+function writeEncodedHex(
+  parts: string[],
+  value: RecursiveArray<Hex.Hex>,
+  ctx: EncodeCtx,
+): void {
+  if (Array.isArray(value)) {
+    const bodyLength = ctx.lengths[ctx.cursor++]!
+    if (bodyLength <= 55) {
+      parts.push(hexes[0xc0 + bodyLength]!)
+    } else {
+      const sizeOfBodyLength = getSizeOfLength(bodyLength)
+      parts.push(hexes[0xc0 + 55 + sizeOfBodyLength]!)
+      parts.push(bigEndianHex(bodyLength, sizeOfBodyLength))
+    }
+    for (let i = 0; i < value.length; i++)
+      writeEncodedHex(parts, value[i]!, ctx)
+    return
+  }
+
+  // Hex leaf: even-pad odd-nibble inputs and skip the `0x` prefix.
+  const hex = value as string
+  const odd = (hex.length & 1) === 1
+  const body = odd ? `0${hex.slice(2)}` : hex.slice(2)
+  const byteLen = body.length >> 1
+
+  if (byteLen === 0) {
+    parts.push(hexes[0x80]!)
+    return
+  }
+  if (byteLen === 1) {
+    const byte = parseInt(body, 16)
+    if (byte < 0x80) {
+      parts.push(body)
+    } else {
+      parts.push(hexes[0x81]!)
+      parts.push(body)
+    }
+    return
+  }
+  if (byteLen <= 55) {
+    parts.push(hexes[0x80 + byteLen]!)
+    parts.push(body)
+    return
+  }
+  const sizeOfBytesLength = getSizeOfLength(byteLen)
+  parts.push(hexes[0x80 + 55 + sizeOfBytesLength]!)
+  parts.push(bigEndianHex(byteLen, sizeOfBytesLength))
+  parts.push(body)
+}
+
+const hexes = /*#__PURE__*/ Array.from({ length: 256 }, (_v, i) =>
+  i.toString(16).padStart(2, '0'),
+)
+
+/**
+ * Returns the big-endian hex encoding of `value` in `size` bytes.
+ */
+function bigEndianHex(value: number, size: number): string {
+  if (size === 1) return hexes[value & 0xff]!
+  if (size === 2)
+    return `${hexes[(value >>> 8) & 0xff]!}${hexes[value & 0xff]!}`
+  if (size === 3)
+    return `${hexes[(value >>> 16) & 0xff]!}${hexes[(value >>> 8) & 0xff]!}${hexes[value & 0xff]!}`
+  return `${hexes[(value >>> 24) & 0xff]!}${hexes[(value >>> 16) & 0xff]!}${hexes[(value >>> 8) & 0xff]!}${hexes[value & 0xff]!}`
 }
 
 function writeBigEndian(
