@@ -2087,6 +2087,29 @@ export * as PersonalMessage from './core/PersonalMessage.js'
  */
 export * as Provider from './core/Provider.js'
 /**
+ * Explicit entry point for [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) Provider event
+ * helpers (re-exports {@link ox#Provider.(createEmitter:function)}).
+ *
+ * Use this module if your bundle is request-only today and you want a stable import path that
+ * will keep working as event helpers move out of the request-only path in a future major.
+ *
+ * @example
+ * ```ts twoslash
+ * import { ProviderEvents } from 'ox'
+ *
+ * const emitter = ProviderEvents.createEmitter()
+ *
+ * emitter.on('accountsChanged', (accounts) => {
+ *   console.log(accounts)
+ * })
+ *
+ * emitter.emit('accountsChanged', ['0x...'])
+ * ```
+ *
+ * @category Providers (EIP-1193)
+ */
+export * as ProviderEvents from './core/ProviderEvents.js'
+/**
  * Utility functions for working with ECDSA public keys.
  *
  * @example

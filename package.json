@@ -406,6 +406,11 @@
       "src": "./src/core/Provider.ts",
       "default": "./dist/core/Provider.js"
     },
+    "./ProviderEvents": {
+      "types": "./dist/core/ProviderEvents.d.ts",
+      "src": "./src/core/ProviderEvents.ts",
+      "default": "./dist/core/ProviderEvents.js"
+    },
     "./PublicKey": {
       "types": "./dist/core/PublicKey.d.ts",
       "src": "./src/core/PublicKey.ts",

@@ -888,6 +888,32 @@ test('Provider.ChainDisconnectedError', () => {
   )
 })
 
+describe('Provider.announce / Provider.discover (no window)', () => {
+  test('announce throws IsUndefinedError without window', () => {
+    expect(() =>
+      Provider.announce({
+        info: {
+          uuid: '00000000-0000-0000-0000-000000000000',
+          name: 'x',
+          icon: 'data:image/svg+xml;base64,',
+          rdns: 'sh.oxlib.example',
+        },
+        provider: { request: async () => '0x' as never } as never,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Provider.IsUndefinedError: `provider` is undefined.]',
+    )
+  })
+
+  test('discover throws IsUndefinedError without window', () => {
+    expect(() =>
+      Provider.discover({ onAnnounce() {} }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Provider.IsUndefinedError: `provider` is undefined.]',
+    )
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(Provider)).toMatchInlineSnapshot(`
     [
@@ -909,6 +935,8 @@ test('exports', () => {
       "from",
       "parseError",
       "IsUndefinedError",
+      "announce",
+      "discover",
     ]
   `)
 })

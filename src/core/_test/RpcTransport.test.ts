@@ -250,12 +250,284 @@ describe('fromHttp', () => {
   })
 })
 
+describe('fromHttp: requestRaw', () => {
+  test('default', async () => {
+    const server = await createHttpServer((_, res) => {
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: '0x1' }))
+    })
+
+    const transport = RpcTransport.fromHttp(server.url)
+
+    const envelope = await transport.requestRaw({ method: 'eth_blockNumber' })
+
+    expect(envelope).toMatchInlineSnapshot(`
+      {
+        "id": 0,
+        "jsonrpc": "2.0",
+        "result": "0x1",
+      }
+    `)
+  })
+
+  test('error envelope', async () => {
+    const server = await createHttpServer((_, res) => {
+      res.end(
+        JSON.stringify({
+          id: 0,
+          jsonrpc: '2.0',
+          error: { code: -32601, message: 'Method does not exist.' },
+        }),
+      )
+    })
+
+    const transport = RpcTransport.fromHttp(server.url)
+
+    const envelope = await transport.requestRaw({ method: 'eth_blockNumber' })
+
+    expect(envelope).toMatchInlineSnapshot(`
+      {
+        "error": {
+          "code": -32601,
+          "message": "Method does not exist.",
+        },
+        "id": 0,
+        "jsonrpc": "2.0",
+      }
+    `)
+  })
+})
+
+describe('fromHttp: batch', () => {
+  test('default', async () => {
+    const server = await createHttpServer((req, res) => {
+      let body = ''
+      req.on('data', (chunk) => {
+        body += chunk
+      })
+      req.on('end', () => {
+        const requests = JSON.parse(body) as Array<{
+          id: number
+          method: string
+        }>
+        const responses = requests.map((r) => ({
+          id: r.id,
+          jsonrpc: '2.0',
+          result: r.method === 'eth_blockNumber' ? '0x1' : '0x2',
+        }))
+        res.end(JSON.stringify(responses))
+      })
+    })
+
+    const transport = RpcTransport.fromHttp(server.url)
+
+    const responses = await transport.batch([
+      { method: 'eth_blockNumber' },
+      { method: 'eth_chainId' },
+    ])
+
+    expect(responses).toMatchInlineSnapshot(`
+      [
+        {
+          "id": 0,
+          "jsonrpc": "2.0",
+          "result": "0x1",
+        },
+        {
+          "id": 1,
+          "jsonrpc": "2.0",
+          "result": "0x2",
+        },
+      ]
+    `)
+  })
+
+  test('reorders responses by id', async () => {
+    const server = await createHttpServer((req, res) => {
+      let body = ''
+      req.on('data', (chunk) => {
+        body += chunk
+      })
+      req.on('end', () => {
+        const requests = JSON.parse(body) as Array<{
+          id: number
+          method: string
+        }>
+        // Return responses in reverse order to verify re-ordering.
+        const responses = requests
+          .map((r) => ({
+            id: r.id,
+            jsonrpc: '2.0',
+            result: r.method,
+          }))
+          .reverse()
+        res.end(JSON.stringify(responses))
+      })
+    })
+
+    const transport = RpcTransport.fromHttp(server.url)
+
+    const responses = await transport.batch([
+      { method: 'eth_blockNumber' },
+      { method: 'eth_chainId' },
+    ])
+
+    expect(responses[0]?.result).toBe('eth_blockNumber')
+    expect(responses[1]?.result).toBe('eth_chainId')
+  })
+
+  test('rejects empty input', async () => {
+    const transport = RpcTransport.fromHttp('http://localhost:0')
+
+    await expect(() =>
+      transport.batch([]),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[RpcTransport.EmptyBatchError: A JSON-RPC batch must contain at least one request.]',
+    )
+  })
+
+  test('throws on malformed response (not array)', async () => {
+    const server = await createHttpServer((_, res) => {
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: '0x1' }))
+    })
+
+    const transport = RpcTransport.fromHttp(server.url)
+
+    await expect(() =>
+      transport.batch([{ method: 'eth_blockNumber' }]),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(`
+      [RpcTransport.MalformedBatchResponseError: JSON-RPC batch response is malformed.
+
+      Details: Expected an array of JSON-RPC responses.]
+    `)
+  })
+
+  test('throws on missing response id', async () => {
+    const server = await createHttpServer((_, res) => {
+      res.end(JSON.stringify([{ id: 999, jsonrpc: '2.0', result: '0x1' }]))
+    })
+
+    const transport = RpcTransport.fromHttp(server.url)
+
+    await expect(() =>
+      transport.batch([{ method: 'eth_blockNumber' }]),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(`
+      [RpcTransport.MalformedBatchResponseError: JSON-RPC batch response is malformed.
+
+      Details: Missing response for id 0.]
+    `)
+  })
+})
+
+describe('fromHttp: retry', () => {
+  test('retries on 5xx and eventually succeeds', async () => {
+    let attempts = 0
+    const server = await createHttpServer((_, res) => {
+      attempts++
+      if (attempts < 3) {
+        res.statusCode = 503
+        res.end()
+        return
+      }
+      res.end(JSON.stringify({ id: 0, jsonrpc: '2.0', result: '0xff' }))
+    })
+
+    const transport = RpcTransport.fromHttp(server.url, {
+      retryCount: 5,
+      retryDelay: 0,
+    })
+
+    const result = await transport.request({ method: 'eth_blockNumber' })
+    expect(result).toBe('0xff')
+    expect(attempts).toBe(3)
+  })
+
+  test('does not retry by default', async () => {
+    let attempts = 0
+    const server = await createHttpServer((_, res) => {
+      attempts++
+      res.statusCode = 503
+      res.end()
+    })
+
+    const transport = RpcTransport.fromHttp(server.url)
+
+    await expect(() =>
+      transport.request({ method: 'eth_blockNumber' }),
+    ).rejects.toThrow(RpcTransport.HttpError)
+    expect(attempts).toBe(1)
+  })
+
+  test('default predicate skips wallet/state-changing methods', async () => {
+    let attempts = 0
+    const server = await createHttpServer((_, res) => {
+      attempts++
+      res.statusCode = 503
+      res.end()
+    })
+
+    const transport = RpcTransport.fromHttp(server.url, {
+      retryCount: 3,
+      retryDelay: 0,
+    })
+
+    await expect(() =>
+      transport.request({
+        method: 'eth_sendTransaction',
+        params: [{} as never],
+      } as never),
+    ).rejects.toThrow(RpcTransport.HttpError)
+    expect(attempts).toBe(1)
+  })
+
+  test('custom shouldRetry overrides default', async () => {
+    let attempts = 0
+    const server = await createHttpServer((_, res) => {
+      attempts++
+      res.statusCode = 503
+      res.end()
+    })
+
+    const transport = RpcTransport.fromHttp(server.url, {
+      retryCount: 2,
+      retryDelay: 0,
+      shouldRetry: () => false,
+    })
+
+    await expect(() =>
+      transport.request({ method: 'eth_blockNumber' }),
+    ).rejects.toThrow(RpcTransport.HttpError)
+    expect(attempts).toBe(1)
+  })
+
+  test('respects retryCount limit', async () => {
+    let attempts = 0
+    const server = await createHttpServer((_, res) => {
+      attempts++
+      res.statusCode = 503
+      res.end()
+    })
+
+    const transport = RpcTransport.fromHttp(server.url, {
+      retryCount: 2,
+      retryDelay: 0,
+    })
+
+    await expect(() =>
+      transport.request({ method: 'eth_blockNumber' }),
+    ).rejects.toThrow(RpcTransport.HttpError)
+    // 1 initial + 2 retries
+    expect(attempts).toBe(3)
+  })
+})
+
 test('exports', () => {
   expect(Object.keys(RpcTransport)).toMatchInlineSnapshot(`
     [
       "fromHttp",
       "HttpError",
       "MalformedResponseError",
+      "EmptyBatchError",
+      "MalformedBatchResponseError",
     ]
   `)
 })

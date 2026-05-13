@@ -676,3 +676,159 @@ export class IsUndefinedError extends Errors.BaseError {
     super('`provider` is undefined.')
   }
 }
+
+/**
+ * [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963) injected provider info.
+ */
+export type EIP6963ProviderInfo = {
+  /** Globally unique identifier for the provider session. */
+  uuid: string
+  /** Human-readable name of the wallet. */
+  name: string
+  /** Data URI (or HTTP URL) of the wallet icon. */
+  icon: string
+  /** Reverse-DNS identifier of the wallet (e.g. `io.metamask`). */
+  rdns: string
+}
+
+/**
+ * [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963) injected provider detail
+ * yielded by {@link ox#Provider.(discover:function)} and accepted by
+ * {@link ox#Provider.(announce:function)}.
+ */
+export type EIP6963ProviderDetail<
+  schema extends RpcSchema.Generic = RpcSchema.Default,
+> = {
+  info: EIP6963ProviderInfo
+  provider: Provider<{ schema: schema }>
+}
+
+/**
+ * `eip6963:announceProvider` event payload -- dispatched by wallets to advertise their
+ * EIP-1193 Provider.
+ */
+export type EIP6963AnnounceProviderEvent<
+  schema extends RpcSchema.Generic = RpcSchema.Default,
+> = CustomEvent<EIP6963ProviderDetail<schema>> & {
+  type: 'eip6963:announceProvider'
+}
+
+/**
+ * `eip6963:requestProvider` event -- dispatched by dapps to request that wallets re-announce
+ * themselves via `eip6963:announceProvider`.
+ */
+export type EIP6963RequestProviderEvent = Event & {
+  type: 'eip6963:requestProvider'
+}
+
+/**
+ * Announces an [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963) injected provider.
+ *
+ * Dispatches an `eip6963:announceProvider` `CustomEvent` on `window`. Wallets typically call
+ * this immediately after they inject themselves and again whenever they receive an
+ * `eip6963:requestProvider` event from a dapp.
+ *
+ * Browser-only: throws if called in a non-browser environment.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import 'ox/window'
+ * import { Provider } from 'ox'
+ *
+ * Provider.announce({
+ *   info: {
+ *     uuid: '350670db-19fa-4704-a166-e52e178b59d2',
+ *     name: 'Example Wallet',
+ *     icon: 'data:image/svg+xml;base64,...',
+ *     rdns: 'sh.oxlib.example',
+ *   },
+ *   provider: window.ethereum!,
+ * })
+ * ```
+ *
+ * @param detail - Provider detail to announce.
+ */
+export function announce<schema extends RpcSchema.Generic = RpcSchema.Default>(
+  detail: EIP6963ProviderDetail<schema>,
+): void {
+  if (typeof window === 'undefined') throw new IsUndefinedError()
+  window.dispatchEvent(
+    new CustomEvent('eip6963:announceProvider', {
+      detail: Object.freeze(detail),
+    }),
+  )
+}
+
+export declare namespace announce {
+  type ErrorType = IsUndefinedError | Errors.GlobalErrorType
+}
+
+/**
+ * Discovers [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963) injected providers.
+ *
+ * Subscribes to `eip6963:announceProvider` events on `window` and dispatches
+ * `eip6963:requestProvider` so already-injected wallets re-announce themselves. Returns a handle
+ * with an `unsubscribe` function. Each unique announcement (deduped by `uuid`) is delivered to the
+ * supplied callback.
+ *
+ * Browser-only: throws if called in a non-browser environment.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import 'ox/window'
+ * import { Provider } from 'ox'
+ *
+ * const handle = Provider.discover({
+ *   onAnnounce(detail) {
+ *     console.log(detail.info.name, detail.provider)
+ *   },
+ * })
+ *
+ * // Stop listening when finished:
+ * handle.unsubscribe()
+ * ```
+ *
+ * @param options - Discovery options.
+ * @returns A handle exposing an `unsubscribe()` function.
+ */
+export function discover<schema extends RpcSchema.Generic = RpcSchema.Default>(
+  options: discover.Options<schema>,
+): discover.Handle {
+  if (typeof window === 'undefined') throw new IsUndefinedError()
+
+  const seen = new Set<string>()
+  const handler = (event: Event) => {
+    const detail = (event as EIP6963AnnounceProviderEvent<schema>).detail
+    if (!detail || !detail.info || !detail.provider) return
+    const { uuid } = detail.info
+    if (seen.has(uuid)) return
+    seen.add(uuid)
+    options.onAnnounce(detail)
+  }
+  window.addEventListener('eip6963:announceProvider', handler as EventListener)
+  window.dispatchEvent(new Event('eip6963:requestProvider'))
+  return {
+    unsubscribe() {
+      window.removeEventListener(
+        'eip6963:announceProvider',
+        handler as EventListener,
+      )
+    },
+  }
+}
+
+export declare namespace discover {
+  type Options<schema extends RpcSchema.Generic = RpcSchema.Default> = {
+    /** Called once per unique announced provider (deduped by `info.uuid`). */
+    onAnnounce: (detail: EIP6963ProviderDetail<schema>) => void
+  }
+
+  type Handle = {
+    /** Stop listening for announced providers. */
+    unsubscribe: () => void
+  }
+
+  type ErrorType = IsUndefinedError | Errors.GlobalErrorType
+}

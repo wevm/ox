@@ -49,6 +49,7 @@ test('exports', () => {
       "P256",
       "PersonalMessage",
       "Provider",
+      "ProviderEvents",
       "PublicKey",
       "Rlp",
       "RpcRequest",
