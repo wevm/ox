@@ -16,5 +16,5 @@ jobs:
 
       - name: Prerelease
         run: |
-          pnpm run build
+          pnpm exec zile publish:prepare
           pnpx pkg-pr-new publish --pnpm
