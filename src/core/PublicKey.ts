@@ -29,11 +29,11 @@ export type PublicKey<
  * @remarks
  * In a future major (`1.0`), {@link ox#PublicKey.PublicKey} will be flipped to
  * a serialized {@link ox#Hex.Hex} string and this `Parts` type will represent
- * the structured object form. Today, `PublicKeyParts<compressed>` is
+ * the structured object form. Today, `Parts<compressed>` is
  * structurally equivalent to `PublicKey<compressed>` -- prefer it in new code
  * so the upgrade path is a no-op.
  */
-export type PublicKeyParts<compressed extends boolean = false> = Compute<
+export type Parts<compressed extends boolean = false> = Compute<
   compressed extends true
     ? {
         prefix: number
@@ -412,7 +412,7 @@ export declare namespace toBytes {
 
 /**
  * Converts a {@link ox#PublicKey.PublicKey} to its structured
- * {@link ox#PublicKey.PublicKeyParts} form.
+ * {@link ox#PublicKey.Parts} form.
  *
  * @remarks
  * Today this is a structural pass-through (the root `PublicKey` type is
@@ -434,11 +434,11 @@ export declare namespace toBytes {
  * ```
  *
  * @param publicKey - The public key to convert.
- * @returns The structured {@link ox#PublicKey.PublicKeyParts}.
+ * @returns The structured {@link ox#PublicKey.Parts}.
  */
 export function toParts<compressed extends boolean = false>(
   publicKey: PublicKey<compressed>,
-): PublicKeyParts<compressed> {
+): Parts<compressed> {
   if (typeof publicKey.y === 'bigint')
     return {
       prefix: publicKey.prefix,
@@ -453,7 +453,7 @@ export declare namespace toParts {
 }
 
 /**
- * Converts a {@link ox#PublicKey.PublicKeyParts} into a structured
+ * Converts a {@link ox#PublicKey.Parts} into a structured
  * {@link ox#PublicKey.PublicKey}.
  *
  * @remarks
@@ -476,7 +476,7 @@ export declare namespace toParts {
  * @returns The {@link ox#PublicKey.PublicKey}.
  */
 export function fromParts<compressed extends boolean = false>(
-  parts: PublicKeyParts<compressed>,
+  parts: Parts<compressed>,
 ): PublicKey<compressed> {
   if (typeof parts.y === 'bigint')
     return {

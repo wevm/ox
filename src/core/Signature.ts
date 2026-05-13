@@ -31,11 +31,11 @@ export type Signature<
  * @remarks
  * In a future major (`1.0`), {@link ox#Signature.Signature} will be flipped to a
  * serialized {@link ox#Hex.Hex} string and this `Parts` type will represent the
- * structured object form. Today, `SignatureParts<recovered>` is structurally
+ * structured object form. Today, `Parts<recovered>` is structurally
  * equivalent to `Signature<recovered>` -- prefer it in new code so the upgrade
  * path is a no-op.
  */
-export type SignatureParts<recovered extends boolean = true> = Compute<
+export type Parts<recovered extends boolean = true> = Compute<
   recovered extends true
     ? {
         r: bigint
@@ -648,7 +648,7 @@ export declare namespace fromRecoveredBytes {
 
 /**
  * Converts a {@link ox#Signature.Signature} to its structured
- * {@link ox#Signature.SignatureParts} form.
+ * {@link ox#Signature.Parts} form.
  *
  * @remarks
  * Today this is a structural pass-through (the root `Signature` type is already
@@ -669,11 +669,11 @@ export declare namespace fromRecoveredBytes {
  * ```
  *
  * @param signature - The signature to convert.
- * @returns The structured {@link ox#Signature.SignatureParts}.
+ * @returns The structured {@link ox#Signature.Parts}.
  */
 export function toParts<recovered extends boolean = true>(
   signature: Signature<recovered>,
-): SignatureParts<recovered> {
+): Parts<recovered> {
   if (typeof signature.yParity === 'number')
     return {
       r: signature.r,
@@ -688,7 +688,7 @@ export declare namespace toParts {
 }
 
 /**
- * Converts a {@link ox#Signature.SignatureParts} into a structured
+ * Converts a {@link ox#Signature.Parts} into a structured
  * {@link ox#Signature.Signature}.
  *
  * @remarks
@@ -711,7 +711,7 @@ export declare namespace toParts {
  * @returns The {@link ox#Signature.Signature}.
  */
 export function fromParts<recovered extends boolean = true>(
-  parts: SignatureParts<recovered>,
+  parts: Parts<recovered>,
 ): Signature<recovered> {
   if (typeof parts.yParity === 'number')
     return {

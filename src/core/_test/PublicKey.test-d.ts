@@ -51,32 +51,32 @@ describe('PublicKey.from', () => {
   })
 })
 
-describe('PublicKeyParts type-equivalence', () => {
-  test('PublicKeyParts<false> matches PublicKey<false> structurally', () => {
-    expectTypeOf<PublicKey.PublicKeyParts<false>>().toEqualTypeOf<
+describe('Parts type-equivalence', () => {
+  test('Parts<false> matches PublicKey<false> structurally', () => {
+    expectTypeOf<PublicKey.Parts<false>>().toEqualTypeOf<
       PublicKey.PublicKey<false>
     >()
   })
 
-  test('PublicKeyParts<true> matches PublicKey<true> structurally', () => {
-    expectTypeOf<PublicKey.PublicKeyParts<true>>().toEqualTypeOf<
+  test('Parts<true> matches PublicKey<true> structurally', () => {
+    expectTypeOf<PublicKey.Parts<true>>().toEqualTypeOf<
       PublicKey.PublicKey<true>
     >()
   })
 
-  test('default PublicKeyParts matches default PublicKey', () => {
-    expectTypeOf<PublicKey.PublicKeyParts>().toEqualTypeOf<PublicKey.PublicKey>()
+  test('default Parts matches default PublicKey', () => {
+    expectTypeOf<PublicKey.Parts>().toEqualTypeOf<PublicKey.PublicKey>()
   })
 
-  test('toParts return is PublicKeyParts', () => {
+  test('toParts return is Parts', () => {
     type Result = ReturnType<typeof PublicKey.toParts<false>>
-    expectTypeOf<Result>().toEqualTypeOf<PublicKey.PublicKeyParts<false>>()
+    expectTypeOf<Result>().toEqualTypeOf<PublicKey.Parts<false>>()
   })
 
-  test('fromParts accepts PublicKeyParts and returns PublicKey', () => {
+  test('fromParts accepts Parts and returns PublicKey', () => {
     type Param = Parameters<typeof PublicKey.fromParts<false>>[0]
     type Result = ReturnType<typeof PublicKey.fromParts<false>>
-    expectTypeOf<Param>().toEqualTypeOf<PublicKey.PublicKeyParts<false>>()
+    expectTypeOf<Param>().toEqualTypeOf<PublicKey.Parts<false>>()
     expectTypeOf<Result>().toEqualTypeOf<PublicKey.PublicKey<false>>()
   })
 })
