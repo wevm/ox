@@ -6,9 +6,9 @@ import * as Hex from './Hex.js'
 import type { Branded, Compute } from './internal/types.js'
 
 /** Type for a field element in the base field of the BLS12-381 curve. */
-export type Fp = bigint
+export type Fp = Hex.Hex
 /** Type for a field element in the extension field of the BLS12-381 curve. */
-export type Fp2 = Compute<{ c0: bigint; c1: bigint }>
+export type Fp2 = Compute<{ c0: Hex.Hex; c1: Hex.Hex }>
 
 /** Root type for a BLS point on the G1 or G2 curve. */
 export type BlsPoint<type = Fp | Fp2> = Compute<{
@@ -31,17 +31,91 @@ export type G2Bytes = Branded<Bytes.Bytes, 'G2'>
 /** Branded type for a hex representation of a G2 point. */
 export type G2Hex = Branded<Hex.Hex, 'G2'>
 
-// TODO(v1): flip `G1` to a branded `G1Hex` string and let `G1Parts` represent
-// the structured projective form. Today `G1Parts` is structurally equivalent
-// to `G1`.
 /** Structured projective parts of a BLS point on the G1 curve. */
 export type G1Parts = BlsPoint<Fp>
 
-// TODO(v1): flip `G2` to a branded `G2Hex` string and let `G2Parts` represent
-// the structured projective form. Today `G2Parts` is structurally equivalent
-// to `G2`.
 /** Structured projective parts of a BLS point on the G2 curve. */
 export type G2Parts = BlsPoint<Fp2>
+
+const FP_SIZE = 48
+
+/** @internal */
+export function fpToBigInt(value: Fp): bigint {
+  return BigInt(value)
+}
+
+/** @internal */
+export function fpFromBigInt(value: bigint): Fp {
+  return Hex.fromNumber(value, { size: FP_SIZE })
+}
+
+/** @internal */
+export function fp2ToBigInt(value: Fp2): { c0: bigint; c1: bigint } {
+  return { c0: BigInt(value.c0), c1: BigInt(value.c1) }
+}
+
+/** @internal */
+export function fp2FromBigInt(value: { c0: bigint; c1: bigint }): Fp2 {
+  return {
+    c0: Hex.fromNumber(value.c0, { size: FP_SIZE }),
+    c1: Hex.fromNumber(value.c1, { size: FP_SIZE }),
+  }
+}
+
+/**
+ * Converts a structured {@link ox#BlsPoint.BlsPoint} into a noble/curves
+ * `Point` instance for the appropriate group (G1 or G2).
+ *
+ * @internal
+ */
+export function toNoblePoint<group extends 'G1' | 'G2'>(
+  point: group extends 'G1' ? G1 : G2,
+  group: group,
+): unknown {
+  if (group === 'G1') {
+    const p = point as G1
+    return new bls.G1.Point(fpToBigInt(p.x), fpToBigInt(p.y), fpToBigInt(p.z))
+  }
+  const p = point as G2
+  // noble's G2.Point ctor accepts Fp2 instances. Construct via the field
+  // helper so we get a real `Fp2` rather than a plain `{c0, c1}`.
+  const Fp2 = (bls.fields as any).Fp2
+  const x = Fp2.create
+    ? Fp2.create(fp2ToBigInt(p.x))
+    : Fp2.fromBigTuple([BigInt(p.x.c0), BigInt(p.x.c1)])
+  const y = Fp2.create
+    ? Fp2.create(fp2ToBigInt(p.y))
+    : Fp2.fromBigTuple([BigInt(p.y.c0), BigInt(p.y.c1)])
+  const z = Fp2.create
+    ? Fp2.create(fp2ToBigInt(p.z))
+    : Fp2.fromBigTuple([BigInt(p.z.c0), BigInt(p.z.c1)])
+  return new bls.G2.Point(x, y, z)
+}
+
+/**
+ * Converts a noble/curves `Point` into a structured
+ * {@link ox#BlsPoint.BlsPoint}.
+ *
+ * @internal
+ */
+export function fromNoblePoint<group extends 'G1' | 'G2'>(
+  point: any,
+  group: group,
+): group extends 'G1' ? G1 : G2 {
+  if (group === 'G1') {
+    return {
+      x: fpFromBigInt(point.X),
+      y: fpFromBigInt(point.Y),
+      z: fpFromBigInt(point.Z),
+    } as never
+  }
+  // G2: `point.X/Y/Z` are Fp2 instances exposing `.c0` / `.c1` bigints.
+  return {
+    x: { c0: fpFromBigInt(point.X.c0), c1: fpFromBigInt(point.X.c1) },
+    y: { c0: fpFromBigInt(point.Y.c0), c1: fpFromBigInt(point.Y.c1) },
+    z: { c0: fpFromBigInt(point.Z.c0), c1: fpFromBigInt(point.Z.c1) },
+  } as never
+}
 
 /**
  * Converts a BLS point to {@link ox#Bytes.Bytes}.
@@ -72,8 +146,9 @@ export type G2Parts = BlsPoint<Fp2>
 export function toBytes<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Bytes : G2Bytes {
-  const group = typeof point.z === 'bigint' ? bls.G1 : bls.G2
-  return new (group as any).Point(point.x, point.y, point.z).toBytes()
+  const isG1 = typeof point.z === 'string'
+  const noblePoint: any = toNoblePoint(point as any, isG1 ? 'G1' : 'G2')
+  return noblePoint.toBytes()
 }
 
 export declare namespace toBytes {
@@ -132,9 +207,9 @@ export declare namespace toHex {
  *
  * const publicKey = BlsPoint.fromBytes(Bytes.from([172, 175, 255, ...]), 'G1')
  * // @log: {
- * // @log:   x: 172...n,
- * // @log:   y: 175...n,
- * // @log:   z: 1n,
+ * // @log:   x: '0x00...ac',
+ * // @log:   y: '0x00...af',
+ * // @log:   z: '0x00...01',
  * // @log: }
  * ```
  *
@@ -147,9 +222,9 @@ export declare namespace toHex {
  *
  * const signature = BlsPoint.fromBytes(Bytes.from([172, 175, 255, ...]), 'G2')
  * // @log: {
- * // @log:   x: 511...n,
- * // @log:   y: 234...n,
- * // @log:   z: 1n,
+ * // @log:   x: { c0: '0x00...11', c1: '0x00...22' },
+ * // @log:   y: { c0: '0x00...33', c1: '0x00...44' },
+ * // @log:   z: { c0: '0x00...01', c1: '0x00...00' },
  * // @log: }
  * ```
  *
@@ -172,11 +247,7 @@ export function fromBytes(
     )
   const Group = group === 'G1' ? bls.G1 : bls.G2
   const point = Group.Point.fromBytes(bytes)
-  return {
-    x: point.X,
-    y: point.Y,
-    z: point.Z,
-  }
+  return fromNoblePoint(point, group) as BlsPoint<any>
 }
 
 export declare namespace fromBytes {
@@ -195,9 +266,9 @@ export declare namespace fromBytes {
  *
  * const publicKey = BlsPoint.fromHex('0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66', 'G1')
  * // @log: {
- * // @log:   x: 172...n,
- * // @log:   y: 175...n,
- * // @log:   z: 1n,
+ * // @log:   x: '0x00...ac',
+ * // @log:   y: '0x00...af',
+ * // @log:   z: '0x00...01',
  * // @log: }
  * ```
  *
@@ -213,9 +284,9 @@ export declare namespace fromBytes {
  *   'G2',
  * )
  * // @log: {
- * // @log:   x: 511...n,
- * // @log:   y: 234...n,
- * // @log:   z: 1n,
+ * // @log:   x: { c0: '0x00...11', c1: '0x00...22' },
+ * // @log:   y: { c0: '0x00...33', c1: '0x00...44' },
+ * // @log:   z: { c0: '0x00...01', c1: '0x00...00' },
  * // @log: }
  * ```
  *
@@ -235,9 +306,6 @@ export declare namespace fromHex {
   type ErrorType = Errors.GlobalErrorType
 }
 
-// TODO(v1): once `G1` / `G2` are branded `Hex.Hex` strings, decode into the
-// parts form here by delegating through `toBytes` / `fromBytes` instead of
-// returning the projective object directly.
 /**
  * Converts a BLS point to its structured projective {@link ox#BlsPoint.G1Parts}
  * / {@link ox#BlsPoint.G2Parts} form.
@@ -250,7 +318,7 @@ export declare namespace fromHex {
  *
  * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
  * const parts = BlsPoint.toParts(publicKey)
- * // @log: { x: 172...n, y: 175...n, z: 1n }
+ * // @log: { x: '0xacaf...', y: '0x09bc...', z: '0x0001' }
  * ```
  *
  * @param point - The BLS point to convert.
@@ -260,8 +328,7 @@ export function toParts<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Parts : G2Parts {
   // Today the root `BlsPoint` is already the projective object form -- copy
-  // the fields so callers don't accidentally mutate the input. In the future
-  // major, this becomes `fromBytes(toBytes(point))`.
+  // the fields so callers don't accidentally mutate the input.
   return { x: point.x, y: point.y, z: point.z } as never
 }
 
@@ -269,8 +336,6 @@ export declare namespace toParts {
   type ErrorType = Errors.GlobalErrorType
 }
 
-// TODO(v1): once `G1` / `G2` are branded `Hex.Hex` strings, encode the parts
-// via `toBytes` here instead of returning the projective object directly.
 /**
  * Converts structured projective parts ({@link ox#BlsPoint.G1Parts} or
  * {@link ox#BlsPoint.G2Parts}) into a {@link ox#BlsPoint.G1} or
@@ -284,10 +349,10 @@ export declare namespace toParts {
  * import { BlsPoint } from 'ox'
  *
  * const publicKey = BlsPoint.fromParts(
- *   { x: 172n, y: 175n, z: 1n },
+ *   { x: '0x00...ac', y: '0x00...af', z: '0x00...01' },
  *   'G1',
  * )
- * // @log: { x: 172n, y: 175n, z: 1n }
+ * // @log: { x: '0x00...ac', y: '0x00...af', z: '0x00...01' }
  * ```
  *
  * @param parts - The structured projective parts to convert.
@@ -303,9 +368,6 @@ export function fromParts(
   parts: G1Parts | G2Parts,
   _group: 'G1' | 'G2',
 ): BlsPoint<any> {
-  // Today the root `BlsPoint` is already the projective object form. In the
-  // future major, this becomes `fromBytes(<bytes encoded from parts>, group)`
-  // -- the `group` argument is kept now so call sites match the future shape.
   return { x: parts.x, y: parts.y, z: parts.z }
 }
 

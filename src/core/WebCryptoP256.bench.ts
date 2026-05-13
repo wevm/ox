@@ -18,8 +18,8 @@ const preparedVerifyKey = await globalThis.crypto.subtle.importKey(
 )
 
 const signatureBytes = Bytes.concat(
-  Bytes.fromNumber(signature.r, { size: 32 }),
-  Bytes.fromNumber(signature.s, { size: 32 }),
+  Bytes.fromHex(signature.r, { size: 32 }),
+  Bytes.fromHex(signature.s, { size: 32 }),
 )
 
 describe('WebCryptoP256.verify', () => {

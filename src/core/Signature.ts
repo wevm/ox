@@ -9,56 +9,51 @@ import * as Solidity from './Solidity.js'
 /** Root type for an ECDSA signature. */
 export type Signature<
   recovered extends boolean = true,
-  bigintType = bigint,
   numberType = number,
 > = Compute<
   recovered extends true
     ? {
-        r: bigintType
-        s: bigintType
+        r: Hex.Hex
+        s: Hex.Hex
         yParity: numberType
       }
     : {
-        r: bigintType
-        s: bigintType
+        r: Hex.Hex
+        s: Hex.Hex
         yParity?: numberType | undefined
       }
 >
 
-// TODO(v1): flip `Signature` to a serialized `Hex.Hex` string and let `Parts`
-// represent the structured object form. Today `Parts<recovered>` is
-// structurally equivalent to `Signature<recovered>`.
 /** Structured parts of an ECDSA signature. */
 export type Parts<recovered extends boolean = true> = Compute<
   recovered extends true
     ? {
-        r: bigint
-        s: bigint
+        r: Hex.Hex
+        s: Hex.Hex
         yParity: number
       }
     : {
-        r: bigint
-        s: bigint
+        r: Hex.Hex
+        s: Hex.Hex
         yParity?: number | undefined
       }
 >
 
-/** RPC-formatted ECDSA signature. */
+/** RPC-formatted ECDSA signature. `yParity` is hex-encoded. */
 export type Rpc<recovered extends boolean = true> = Signature<
   recovered,
-  Hex.Hex,
   Hex.Hex
 >
 
 /** (Legacy) ECDSA signature. */
-export type Legacy<bigintType = bigint, numberType = number> = {
-  r: bigintType
-  s: bigintType
+export type Legacy<numberType = number> = {
+  r: Hex.Hex
+  s: Hex.Hex
   v: numberType
 }
 
 /** RPC-formatted (Legacy) ECDSA signature. */
-export type LegacyRpc = Legacy<Hex.Hex, Hex.Hex>
+export type LegacyRpc = Legacy<Hex.Hex>
 
 export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
 
@@ -70,12 +65,12 @@ export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
  * import { Signature } from 'ox'
  *
  * Signature.assert({
- *   r: -49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '-0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })
  * // @error: InvalidSignatureRError:
- * // @error: Value `-549...n` is an invalid r value.
+ * // @error: Value `-0x...` is an invalid r value.
  * // @error: r must be a positive integer less than 2^256.
  * ```
  *
@@ -92,10 +87,20 @@ export function assert(
     throw new MissingPropertiesError({ signature })
   if (recovered && typeof signature.yParity === 'undefined')
     throw new MissingPropertiesError({ signature })
-  if (signature.r < 0n || signature.r > Solidity.maxUint256)
+  try {
+    const r = BigInt(signature.r)
+    if (r < 0n || r > Solidity.maxUint256)
+      throw new InvalidRError({ value: signature.r })
+  } catch {
     throw new InvalidRError({ value: signature.r })
-  if (signature.s < 0n || signature.s > Solidity.maxUint256)
+  }
+  try {
+    const s = BigInt(signature.s)
+    if (s < 0n || s > Solidity.maxUint256)
+      throw new InvalidSError({ value: signature.s })
+  } catch {
     throw new InvalidSError({ value: signature.s })
+  }
   if (
     typeof signature.yParity === 'number' &&
     signature.yParity !== 0 &&
@@ -127,7 +132,7 @@ export declare namespace assert {
  * import { Signature } from 'ox'
  *
  * Signature.fromBytes(new Uint8Array([128, 3, 131, ...]))
- * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
+ * // @log: { r: '0x6e10...', s: '0x4a90...', yParity: 0 }
  * ```
  *
  * @param signature - The serialized signature.
@@ -149,7 +154,7 @@ export declare namespace fromBytes {
  * import { Signature } from 'ox'
  *
  * Signature.fromHex('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
- * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
+ * // @log: { r: '0x6e10...', s: '0x4a90...', yParity: 0 }
  * ```
  *
  * @param serialized - The serialized signature.
@@ -159,8 +164,8 @@ export function fromHex(signature: Hex.Hex): Signature {
   if (signature.length !== 130 && signature.length !== 132)
     throw new InvalidSerializedSizeError({ signature })
 
-  const r = BigInt(Hex.slice(signature, 0, 32))
-  const s = BigInt(Hex.slice(signature, 32, 64))
+  const r = Hex.slice(signature, 0, 32)
+  const s = Hex.slice(signature, 32, 64)
 
   const yParity = (() => {
     const yParity = Number(`0x${signature.slice(130)}`)
@@ -202,14 +207,14 @@ export declare namespace fromHex {
  * Signature.extract({
  *   baz: 'barry',
  *   foo: 'bar',
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  *   zebra: 'stripes',
  * })
  * // @log: {
- * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ * // @log:   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  * // @log:   yParity: 1
  * // @log: }
  * ```
@@ -225,8 +230,8 @@ export function extract(value: extract.Value): Signature | undefined {
 
 export declare namespace extract {
   type Value = {
-    r?: bigint | Hex.Hex | undefined
-    s?: bigint | Hex.Hex | undefined
+    r?: Hex.Hex | undefined
+    s?: Hex.Hex | undefined
     yParity?: number | Hex.Hex | undefined
     v?: number | Hex.Hex | undefined
   }
@@ -241,13 +246,13 @@ export declare namespace extract {
  * import { Signature } from 'ox'
  *
  * Signature.from({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })
  * // @log: {
- * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ * // @log:   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  * // @log:   yParity: 1
  * // @log: }
  * ```
@@ -260,8 +265,8 @@ export declare namespace extract {
  *
  * Signature.from('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db801')
  * // @log: {
- * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ * // @log:   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  * // @log:   yParity: 1,
  * // @log: }
  * ```
@@ -273,13 +278,13 @@ export declare namespace extract {
  * import { Signature } from 'ox'
  *
  * Signature.from({
- *   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
- *   s: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
+ *   r: '0x68a020a21f5d20c5cf6c9b4d2dccdcdd14a9f7b9c2eb19d3d3acdb2a1a9c1f50',
+ *   s: '0x7e8d44a4a8a3e3a4c6a3c1a3c3a3c1a3c1a3c1a3c1a3c1a3c1a3c1a3c1a3c1a4',
  *   v: 27,
  * })
  * // @log: {
- * // @log:   r: 47323457007453657207889730243826965761922296599680473886588287015755652701072n,
- * // @log:   s: 57228803202727131502949358313456071280488184270258293674242124340113824882788n,
+ * // @log:   r: '0x68a020a21f5d20c5cf6c9b4d2dccdcdd14a9f7b9c2eb19d3d3acdb2a1a9c1f50',
+ * // @log:   s: '0x7e8d44a4a8a3e3a4c6a3c1a3c3a3c1a3c1a3c1a3c1a3c1a3c1a3c1a3c1a3c1a4',
  * // @log:   yParity: 0
  * // @log: }
  * ```
@@ -302,17 +307,23 @@ export function from<
   const signature_ = (() => {
     if (typeof signature === 'string') return fromHex(signature)
     if (signature instanceof Uint8Array) return fromBytes(signature)
-    if (typeof signature.r === 'string') return fromRpc(signature)
-    if (signature.v) return fromLegacy(signature)
+    const sig = signature as Record<string, unknown>
+    if (typeof sig.v !== 'undefined')
+      return fromLegacy(sig as unknown as Legacy)
+    if (typeof sig.yParity === 'string') return fromRpc(sig as unknown as Rpc)
     return {
-      r: signature.r,
-      s: signature.s,
-      ...(typeof signature.yParity !== 'undefined'
-        ? { yParity: signature.yParity }
+      r: sig.r as Hex.Hex,
+      s: sig.s as Hex.Hex,
+      ...(typeof sig.yParity !== 'undefined'
+        ? { yParity: sig.yParity as number }
         : {}),
     }
   })()
-  assert(signature_)
+  assert(signature_ as ExactPartial<Signature>)
+  // Pad after `assert` so that oversized r/s throw the typed `InvalidRError` /
+  // `InvalidSError` rather than `SizeExceedsPaddingSizeError`.
+  signature_.r = Hex.padLeft(signature_.r, 32)
+  signature_.s = Hex.padLeft(signature_.s, 32)
   return signature_ as never
 }
 
@@ -344,8 +355,8 @@ export declare namespace from {
  *
  * const signature = Signature.fromDerBytes(new Uint8Array([132, 51, 23, ...]))
  * // @log: {
- * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ * // @log:   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  * // @log: }
  * ```
  *
@@ -369,8 +380,8 @@ export declare namespace fromDerBytes {
  *
  * const signature = Signature.fromDerHex('0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8')
  * // @log: {
- * // @log:   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- * // @log:   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ * // @log:   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  * // @log: }
  * ```
  *
@@ -382,7 +393,10 @@ export function fromDerHex(signature: Hex.Hex): Signature<false> {
     Hex.from(signature).slice(2),
     'der',
   )
-  return { r, s }
+  return {
+    r: Hex.fromNumber(r, { size: 32 }),
+    s: Hex.fromNumber(s, { size: 32 }),
+  }
 }
 
 export declare namespace fromDerHex {
@@ -396,18 +410,20 @@ export declare namespace fromDerHex {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const legacy = Signature.fromLegacy({ r: 1n, s: 2n, v: 28 })
- * // @log: { r: 1n, s: 2n, yParity: 1 }
+ * const legacy = Signature.fromLegacy({ r: '0x01', s: '0x02', v: 28 })
+ * // @log: { r: '0x01', s: '0x02', yParity: 1 }
  * ```
  *
  * @param signature - The {@link ox#Signature.Legacy} to convert.
  * @returns The converted {@link ox#Signature.Signature}.
  */
-export function fromLegacy(signature: Legacy): Signature {
+export function fromLegacy(signature: Legacy | LegacyRpc): Signature {
   return {
-    r: signature.r,
-    s: signature.s,
-    yParity: vToYParity(signature.v),
+    r: Hex.padLeft(signature.r, 32),
+    s: Hex.padLeft(signature.s, 32),
+    yParity: vToYParity(
+      typeof signature.v === 'string' ? Number(signature.v) : signature.v,
+    ),
   }
 }
 
@@ -449,8 +465,8 @@ export function fromRpc(signature: {
   })()
 
   return {
-    r: BigInt(signature.r),
-    s: BigInt(signature.s),
+    r: Hex.padLeft(signature.r, 32),
+    s: Hex.padLeft(signature.s, 32),
     yParity,
   }
 }
@@ -468,8 +484,8 @@ export declare namespace fromRpc {
  *
  * const signature = Signature.fromTuple(['0x01', '0x7b', '0x1c8'])
  * // @log: {
- * // @log:   r: 123n,
- * // @log:   s: 456n,
+ * // @log:   r: '0x000000000000000000000000000000000000000000000000000000000000007b',
+ * // @log:   s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
  * // @log:   yParity: 1,
  * // @log: }
  * ```
@@ -483,8 +499,8 @@ export function fromTuple(tuple: Tuple): Signature {
   // type discrimination on every TxEnvelope decode. `assert` still validates
   // the result.
   const sig: Signature = {
-    r: r === '0x' ? 0n : BigInt(r),
-    s: s === '0x' ? 0n : BigInt(s),
+    r: Hex.padLeft(r, 32),
+    s: Hex.padLeft(s, 32),
     yParity: yParity === '0x' ? 0 : Number(yParity),
   }
   assert(sig)
@@ -503,8 +519,8 @@ export declare namespace fromTuple {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.toBytes({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1
  * })
  * // @log: Uint8Array [102, 16, 10, ...]
@@ -535,8 +551,8 @@ export declare namespace toBytes {
  * import { Signature } from 'ox'
  *
  * const bytes = Signature.toCompactBytes({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })
  * // @log: Uint8Array [110, 16, 10, ...] // 64 bytes
@@ -547,13 +563,13 @@ export declare namespace toBytes {
  */
 export function toCompactBytes(signature: Signature<boolean>): Bytes.Bytes {
   const bytes = new Uint8Array(64)
-  bytes.set(Bytes.fromNumber(signature.r, { size: 32 }), 0)
-  bytes.set(Bytes.fromNumber(signature.s, { size: 32 }), 32)
+  bytes.set(Bytes.fromHex(signature.r, { size: 32 }), 0)
+  bytes.set(Bytes.fromHex(signature.s, { size: 32 }), 32)
   return bytes
 }
 
 export declare namespace toCompactBytes {
-  type ErrorType = Bytes.fromNumber.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Bytes.fromHex.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -565,7 +581,7 @@ export declare namespace toCompactBytes {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.fromCompactBytes(new Uint8Array(64))
- * // @log: { r: 0n, s: 0n }
+ * // @log: { r: '0x00...0000', s: '0x00...0000' }
  * ```
  *
  * @param bytes - The 64-byte compact representation.
@@ -573,13 +589,13 @@ export declare namespace toCompactBytes {
  */
 export function fromCompactBytes(bytes: Bytes.Bytes): Signature<false> {
   return {
-    r: Bytes.toBigInt(bytes.subarray(0, 32)),
-    s: Bytes.toBigInt(bytes.subarray(32, 64)),
+    r: Hex.fromBytes(bytes.subarray(0, 32)),
+    s: Hex.fromBytes(bytes.subarray(32, 64)),
   }
 }
 
 export declare namespace fromCompactBytes {
-  type ErrorType = Bytes.toBigInt.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -591,8 +607,8 @@ export declare namespace fromCompactBytes {
  * import { Signature } from 'ox'
  *
  * const bytes = Signature.toRecoveredBytes({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })
  * // @log: Uint8Array [1, 110, 16, ...] // 65 bytes
@@ -604,8 +620,8 @@ export declare namespace fromCompactBytes {
 export function toRecoveredBytes(signature: Signature): Bytes.Bytes {
   const bytes = new Uint8Array(65)
   bytes[0] = signature.yParity
-  bytes.set(Bytes.fromNumber(signature.r, { size: 32 }), 1)
-  bytes.set(Bytes.fromNumber(signature.s, { size: 32 }), 33)
+  bytes.set(Bytes.fromHex(signature.r, { size: 32 }), 1)
+  bytes.set(Bytes.fromHex(signature.s, { size: 32 }), 33)
   return bytes
 }
 
@@ -622,7 +638,7 @@ export declare namespace toRecoveredBytes {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.fromRecoveredBytes(new Uint8Array(65))
- * // @log: { r: 0n, s: 0n, yParity: 0 }
+ * // @log: { r: '0x00...0000', s: '0x00...0000', yParity: 0 }
  * ```
  *
  * @param bytes - The 65-byte recovered representation.
@@ -630,18 +646,16 @@ export declare namespace toRecoveredBytes {
  */
 export function fromRecoveredBytes(bytes: Bytes.Bytes): Signature {
   return {
-    r: Bytes.toBigInt(bytes.subarray(1, 33)),
-    s: Bytes.toBigInt(bytes.subarray(33, 65)),
+    r: Hex.fromBytes(bytes.subarray(1, 33)),
+    s: Hex.fromBytes(bytes.subarray(33, 65)),
     yParity: bytes[0]!,
   }
 }
 
 export declare namespace fromRecoveredBytes {
-  type ErrorType = Bytes.toBigInt.ErrorType | Errors.GlobalErrorType
+  type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
 }
 
-// TODO(v1): once `Signature` is a serialized `Hex.Hex` string, decode it into
-// the parts form here instead of returning the input directly.
 /**
  * Converts a {@link ox#Signature.Signature} to its structured
  * {@link ox#Signature.Parts} form.
@@ -651,11 +665,11 @@ export declare namespace fromRecoveredBytes {
  * import { Signature } from 'ox'
  *
  * const parts = Signature.toParts({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })
- * // @log: { r: 49782...n, s: 33726...n, yParity: 1 }
+ * // @log: { r: '0x6e10...', s: '0x4a90...', yParity: 1 }
  * ```
  *
  * @param signature - The signature to convert.
@@ -677,8 +691,6 @@ export declare namespace toParts {
   type ErrorType = Errors.GlobalErrorType
 }
 
-// TODO(v1): once `Signature` is a serialized `Hex.Hex` string, encode the
-// parts into that form here instead of returning the input directly.
 /**
  * Converts a {@link ox#Signature.Parts} into a structured
  * {@link ox#Signature.Signature}.
@@ -688,11 +700,11 @@ export declare namespace toParts {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.fromParts({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })
- * // @log: { r: 49782...n, s: 33726...n, yParity: 1 }
+ * // @log: { r: '0x6e10...', s: '0x4a90...', yParity: 1 }
  * ```
  *
  * @param parts - The structured parts to convert.
@@ -703,11 +715,14 @@ export function fromParts<recovered extends boolean = true>(
 ): Signature<recovered> {
   if (typeof parts.yParity === 'number')
     return {
-      r: parts.r,
-      s: parts.s,
+      r: Hex.padLeft(parts.r, 32),
+      s: Hex.padLeft(parts.s, 32),
       yParity: parts.yParity,
     } as never
-  return { r: parts.r, s: parts.s } as never
+  return {
+    r: Hex.padLeft(parts.r, 32),
+    s: Hex.padLeft(parts.s, 32),
+  } as never
 }
 
 export declare namespace fromParts {
@@ -722,8 +737,8 @@ export declare namespace fromParts {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.toHex({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1
  * })
  * // @log: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
@@ -739,8 +754,8 @@ export function toHex(signature: Signature<boolean>): Hex.Hex {
   const s = signature.s
 
   const signature_ = Hex.concat(
-    Hex.fromNumber(r, { size: 32 }),
-    Hex.fromNumber(s, { size: 32 }),
+    r,
+    s,
     // If the signature is recovered, add the recovery byte to the signature.
     typeof signature.yParity === 'number'
       ? Hex.fromNumber(yParityToV(signature.yParity), { size: 1 })
@@ -765,8 +780,8 @@ export declare namespace toHex {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.from({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  * })
  *
  * const signature_der = Signature.toDerBytes(signature)
@@ -777,7 +792,7 @@ export declare namespace toHex {
  * @returns The DER-encoded signature.
  */
 export function toDerBytes(signature: Signature<boolean>): Bytes.Bytes {
-  const sig = new secp256k1.Signature(signature.r, signature.s)
+  const sig = new secp256k1.Signature(BigInt(signature.r), BigInt(signature.s))
   return sig.toBytes('der')
 }
 
@@ -793,8 +808,8 @@ export declare namespace toDerBytes {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.from({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  * })
  *
  * const signature_der = Signature.toDerHex(signature)
@@ -805,7 +820,7 @@ export declare namespace toDerBytes {
  * @returns The DER-encoded signature.
  */
 export function toDerHex(signature: Signature<boolean>): Hex.Hex {
-  const sig = new secp256k1.Signature(signature.r, signature.s)
+  const sig = new secp256k1.Signature(BigInt(signature.r), BigInt(signature.s))
   return `0x${sig.toHex('der')}`
 }
 
@@ -820,8 +835,8 @@ export declare namespace toDerHex {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const legacy = Signature.toLegacy({ r: 1n, s: 2n, yParity: 1 })
- * // @log: { r: 1n, s: 2n, v: 28 }
+ * const legacy = Signature.toLegacy({ r: '0x01', s: '0x02', yParity: 1 })
+ * // @log: { r: '0x01', s: '0x02', v: 28 }
  * ```
  *
  * @param signature - The {@link ox#Signature.Signature} to convert.
@@ -847,8 +862,8 @@ export declare namespace toLegacy {
  * import { Signature } from 'ox'
  *
  * const signature = Signature.toRpc({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1
  * })
  * ```
@@ -859,8 +874,8 @@ export declare namespace toLegacy {
 export function toRpc(signature: Signature): Rpc {
   const { r, s, yParity } = signature
   return {
-    r: Hex.fromNumber(r, { size: 32 }),
-    s: Hex.fromNumber(s, { size: 32 }),
+    r,
+    s,
     yParity: yParity === 0 ? '0x0' : '0x1',
   }
 }
@@ -877,8 +892,8 @@ export declare namespace toRpc {
  * import { Signature } from 'ox'
  *
  * const signatureTuple = Signature.toTuple({
- *   r: 123n,
- *   s: 456n,
+ *   r: '0x000000000000000000000000000000000000000000000000000000000000007b',
+ *   s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
  *   yParity: 1,
  * })
  * // @log: [yParity: '0x01', r: '0x7b', s: '0x1c8']
@@ -890,13 +905,9 @@ export declare namespace toRpc {
 export function toTuple(signature: Signature): Tuple {
   const { r, s, yParity } = signature
 
-  // Skip the `Hex.fromNumber` + `Hex.trimLeft` round-trip used by previous
-  // versions; bigint -> minimal hex is already what RLP wants.
-  return [
-    yParity ? '0x01' : '0x',
-    r === 0n ? '0x' : (`0x${r.toString(16)}` as Hex.Hex),
-    s === 0n ? '0x' : (`0x${s.toString(16)}` as Hex.Hex),
-  ] as const
+  // RLP wants minimal-length big-endian; strip leading zero nibbles from the
+  // padded hex form (matches the previous `bigint.toString(16)` minimal form).
+  return [yParity ? '0x01' : '0x', Hex.trimLeft(r), Hex.trimLeft(s)] as const
 }
 
 export declare namespace toTuple {
@@ -911,8 +922,8 @@ export declare namespace toTuple {
  * import { Signature } from 'ox'
  *
  * const valid = Signature.validate({
- *   r: -49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: -'0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })
  * // @log: false

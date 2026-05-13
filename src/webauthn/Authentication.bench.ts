@@ -1,6 +1,7 @@
 import { bench, describe } from 'vitest'
 import * as Bytes from '../core/Bytes.js'
 import * as Hash from '../core/Hash.js'
+import * as Hex from '../core/Hex.js'
 import * as P256 from '../core/P256.js'
 import * as Authentication from './Authentication.js'
 import * as Authenticator from './Authenticator.js'
@@ -48,8 +49,8 @@ const derSignature = (() => {
     if (bytes[0]! & 0x80) bytes = Bytes.concat(new Uint8Array([0]), bytes)
     return bytes
   }
-  const rB = toDer(signature.r)
-  const sB = toDer(signature.s)
+  const rB = toDer(Hex.toBigInt(signature.r))
+  const sB = toDer(Hex.toBigInt(signature.s))
   const rTlv = Bytes.concat(new Uint8Array([0x02, rB.length]), rB)
   const sTlv = Bytes.concat(new Uint8Array([0x02, sB.length]), sB)
   const inner = Bytes.concat(rTlv, sTlv)

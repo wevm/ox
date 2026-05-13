@@ -28,11 +28,9 @@ export type AuthorizationTempo<
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
   } & (signed extends true
-    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    ? { signature: SignatureEnvelope.SignatureEnvelope<numberType> }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
       })
 >
 
@@ -403,8 +401,8 @@ export declare namespace fromRpcList {
  * // @log:   chainId: 1,
  * // @log:   nonce: 3n
  * // @log:   signature: {
- * // @log:     r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:     s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:     r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:     s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:     yParity: 0,
  * // @log:   },
  * // @log: }
@@ -476,8 +474,8 @@ export declare namespace fromTuple {
  * // @log:     chainId: 1,
  * // @log:     nonce: 3n,
  * // @log:     signature: {
- * // @log:       r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:       s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:       r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:       s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:       yParity: 0,
  * // @log:     },
  * // @log:   },
@@ -486,8 +484,8 @@ export declare namespace fromTuple {
  * // @log:     chainId: 3,
  * // @log:     nonce: 20n,
  * // @log:     signature: {
- * // @log:       r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:       s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:       r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:       s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:       yParity: 0,
  * // @log:     },
  * // @log:   },

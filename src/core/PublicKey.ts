@@ -7,37 +7,33 @@ import * as Json from './Json.js'
 /** Root type for an ECDSA Public Key. */
 export type PublicKey<
   compressed extends boolean = false,
-  bigintType = bigint,
   numberType = number,
 > = Compute<
   compressed extends true
     ? {
         prefix: numberType
-        x: bigintType
+        x: Hex.Hex
         y?: undefined
       }
     : {
         prefix: numberType
-        x: bigintType
-        y: bigintType
+        x: Hex.Hex
+        y: Hex.Hex
       }
 >
 
-// TODO(v1): flip `PublicKey` to a serialized `Hex.Hex` string and let `Parts`
-// represent the structured object form. Today `Parts<compressed>` is
-// structurally equivalent to `PublicKey<compressed>`.
 /** Structured parts of an ECDSA public key. */
 export type Parts<compressed extends boolean = false> = Compute<
   compressed extends true
     ? {
         prefix: number
-        x: bigint
+        x: Hex.Hex
         y?: undefined
       }
     : {
         prefix: number
-        x: bigint
-        y: bigint
+        x: Hex.Hex
+        y: Hex.Hex
       }
 >
 
@@ -50,9 +46,9 @@ export type Parts<compressed extends boolean = false> = Compute<
  *
  * PublicKey.assert({
  *   prefix: 4,
- *   y: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
  * })
- * // @error: PublicKey.InvalidError: Value \`{"y":"1"}\` is not a valid public key.
+ * // @error: PublicKey.InvalidError: Value \`{"y":"0x..."}\` is not a valid public key.
  * // @error: Public key must contain:
  * // @error: - an `x` and `prefix` value (compressed)
  * // @error: - an `x`, `y`, and `prefix` value (uncompressed)
@@ -69,7 +65,7 @@ export function assert(
 
   // Explicit `compressed: false` -- require uncompressed shape.
   if (compressed === false) {
-    if (typeof x !== 'bigint' || typeof y !== 'bigint')
+    if (typeof x !== 'string' || typeof y !== 'string')
       throw new InvalidError({ publicKey })
     if (prefix !== 4)
       throw new InvalidPrefixError({
@@ -81,7 +77,7 @@ export function assert(
 
   // Explicit `compressed: true` -- require compressed shape.
   if (compressed === true) {
-    if (typeof x !== 'bigint' || typeof y !== 'undefined')
+    if (typeof x !== 'string' || typeof y !== 'undefined')
       throw new InvalidError({ publicKey })
     if (prefix !== 3 && prefix !== 2)
       throw new InvalidPrefixError({
@@ -94,7 +90,7 @@ export function assert(
   // No explicit `compressed` option -- infer from shape.
 
   // Uncompressed
-  if (typeof x === 'bigint' && typeof y === 'bigint') {
+  if (typeof x === 'string' && typeof y === 'string') {
     if (prefix !== 4)
       throw new InvalidPrefixError({
         prefix,
@@ -104,7 +100,7 @@ export function assert(
   }
 
   // Compressed
-  if (typeof x === 'bigint' && typeof y === 'undefined') {
+  if (typeof x === 'string' && typeof y === 'undefined') {
     if (prefix !== 3 && prefix !== 2)
       throw new InvalidPrefixError({
         prefix,
@@ -135,14 +131,14 @@ export declare namespace assert {
  *
  * const publicKey = PublicKey.from({
  *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ *   x: '0x83185...',
+ *   y: '0x35477...',
  * })
  *
  * const compressed = PublicKey.compress(publicKey) // [!code focus]
  * // @log: {
  * // @log:   prefix: 3,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:   x: '0x83185...',
  * // @log: }
  * ```
  *
@@ -152,7 +148,7 @@ export declare namespace assert {
 export function compress(publicKey: PublicKey<false>): PublicKey<true> {
   const { x, y } = publicKey
   return {
-    prefix: y % 2n === 0n ? 2 : 3,
+    prefix: Hex.toBigInt(y) % 2n === 0n ? 2 : 3,
     x,
   }
 }
@@ -170,13 +166,13 @@ export declare namespace compress {
  *
  * const publicKey = PublicKey.from({
  *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * })
  * // @log: {
  * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log: }
  * ```
  *
@@ -189,8 +185,8 @@ export declare namespace compress {
  * const publicKey = PublicKey.from('0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
  * // @log: {
  * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log: }
  * ```
  *
@@ -209,9 +205,13 @@ export function from<
     if (Bytes.validate(value)) return fromBytes(value)
 
     const { prefix, x, y } = value
-    if (typeof x === 'bigint' && typeof y === 'bigint')
-      return { prefix: prefix ?? 0x04, x, y }
-    return { prefix, x }
+    if (typeof x === 'string' && typeof y === 'string')
+      return {
+        prefix: prefix ?? 0x04,
+        x: Hex.padLeft(x, 32),
+        y: Hex.padLeft(y, 32),
+      }
+    return { prefix, x: Hex.padLeft(x as Hex.Hex, 32) }
   })()
 
   assert(publicKey)
@@ -262,8 +262,8 @@ export declare namespace from {
  * const publicKey = PublicKey.fromBytes(new Uint8Array([128, 3, 131, ...]))
  * // @log: {
  * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log: }
  * ```
  *
@@ -291,8 +291,8 @@ export declare namespace fromBytes {
  * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
  * // @log: {
  * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log: }
  * ```
  *
@@ -305,7 +305,7 @@ export declare namespace fromBytes {
  * const publicKey = PublicKey.fromHex('0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75')
  * // @log: {
  * // @log:   prefix: 3,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
  * // @log: }
  * ```
  *
@@ -322,8 +322,8 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
 
   const result = (() => {
     if (publicKey.length === 130) {
-      const x = BigInt(Hex.slice(publicKey, 0, 32))
-      const y = BigInt(Hex.slice(publicKey, 32, 64))
+      const x = Hex.slice(publicKey, 0, 32)
+      const y = Hex.slice(publicKey, 32, 64)
       return {
         prefix: 4,
         x,
@@ -333,8 +333,8 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
 
     if (publicKey.length === 132) {
       const prefix = Number(Hex.slice(publicKey, 0, 1))
-      const x = BigInt(Hex.slice(publicKey, 1, 33))
-      const y = BigInt(Hex.slice(publicKey, 33, 65))
+      const x = Hex.slice(publicKey, 1, 33)
+      const y = Hex.slice(publicKey, 33, 65)
       return {
         prefix,
         x,
@@ -343,7 +343,7 @@ export function fromHex(publicKey: Hex.Hex): PublicKey {
     }
 
     const prefix = Number(Hex.slice(publicKey, 0, 1))
-    const x = BigInt(Hex.slice(publicKey, 1, 33))
+    const x = Hex.slice(publicKey, 1, 33)
     return {
       prefix,
       x,
@@ -371,8 +371,8 @@ export declare namespace fromHex {
  *
  * const publicKey = PublicKey.from({
  *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * })
  *
  * const bytes = PublicKey.toBytes(publicKey) // [!code focus]
@@ -404,8 +404,6 @@ export declare namespace toBytes {
     | Errors.GlobalErrorType
 }
 
-// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, decode it into
-// the parts form here instead of returning the input directly.
 /**
  * Converts a {@link ox#PublicKey.PublicKey} to its structured
  * {@link ox#PublicKey.Parts} form.
@@ -416,10 +414,10 @@ export declare namespace toBytes {
  *
  * const parts = PublicKey.toParts({
  *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * })
- * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
+ * // @log: { prefix: 4, x: '0x83185...', y: '0x35477...' }
  * ```
  *
  * @param publicKey - The public key to convert.
@@ -428,7 +426,7 @@ export declare namespace toBytes {
 export function toParts<compressed extends boolean = false>(
   publicKey: PublicKey<compressed>,
 ): Parts<compressed> {
-  if (typeof publicKey.y === 'bigint')
+  if (typeof publicKey.y === 'string')
     return {
       prefix: publicKey.prefix,
       x: publicKey.x,
@@ -441,8 +439,6 @@ export declare namespace toParts {
   type ErrorType = Errors.GlobalErrorType
 }
 
-// TODO(v1): once `PublicKey` is a serialized `Hex.Hex` string, encode the
-// parts into that form here instead of returning the input directly.
 /**
  * Converts a {@link ox#PublicKey.Parts} into a structured
  * {@link ox#PublicKey.PublicKey}.
@@ -453,10 +449,10 @@ export declare namespace toParts {
  *
  * const publicKey = PublicKey.fromParts({
  *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * })
- * // @log: { prefix: 4, x: 59295...n, y: 24099...n }
+ * // @log: { prefix: 4, x: '0x83185...', y: '0x35477...' }
  * ```
  *
  * @param parts - The structured parts to convert.
@@ -465,13 +461,13 @@ export declare namespace toParts {
 export function fromParts<compressed extends boolean = false>(
   parts: Parts<compressed>,
 ): PublicKey<compressed> {
-  if (typeof parts.y === 'bigint')
+  if (typeof parts.y === 'string')
     return {
       prefix: parts.prefix,
-      x: parts.x,
-      y: parts.y,
+      x: Hex.padLeft(parts.x, 32),
+      y: Hex.padLeft(parts.y, 32),
     } as never
-  return { prefix: parts.prefix, x: parts.x } as never
+  return { prefix: parts.prefix, x: Hex.padLeft(parts.x, 32) } as never
 }
 
 export declare namespace fromParts {
@@ -487,8 +483,8 @@ export declare namespace fromParts {
  *
  * const publicKey = PublicKey.from({
  *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * })
  *
  * const hex = PublicKey.toHex(publicKey) // [!code focus]
@@ -509,9 +505,9 @@ export function toHex(
 
   const publicKey_ = Hex.concat(
     includePrefix ? Hex.fromNumber(prefix, { size: 1 }) : '0x',
-    Hex.fromNumber(x, { size: 32 }),
+    x,
     // If the public key is not compressed, add the y coordinate.
-    typeof y === 'bigint' ? Hex.fromNumber(y, { size: 32 }) : '0x',
+    typeof y === 'string' ? y : '0x',
   )
 
   return publicKey_
@@ -538,7 +534,7 @@ export declare namespace toHex {
  *
  * const valid = PublicKey.validate({
  *   prefix: 4,
- *   y: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
+ *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
  * })
  * // @log: false
  * ```
@@ -573,8 +569,8 @@ export declare namespace validate {
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * PublicKey.assert({ y: 1n })
- * // @error: PublicKey.InvalidError: Value `{"y":1n}` is not a valid public key.
+ * PublicKey.assert({ y: '0x01' })
+ * // @error: PublicKey.InvalidError: Value `{"y":"0x01"}` is not a valid public key.
  * // @error: Public key must contain:
  * // @error: - an `x` and `prefix` value (compressed)
  * // @error: - an `x`, `y`, and `prefix` value (uncompressed)

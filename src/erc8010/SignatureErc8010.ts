@@ -145,8 +145,8 @@ export function unwrap(wrapped: Wrapped): Unwrapped {
     chainId: Number(auth.chainId),
     nonce: auth.nonce,
     yParity: auth.yParity,
-    r: auth.r,
-    s: auth.s,
+    r: Hex.fromNumber(auth.r, { size: 32 }),
+    s: Hex.fromNumber(auth.s, { size: 32 }),
   })
 
   return {
@@ -201,6 +201,8 @@ export function wrap(value: Unwrapped): Wrapped {
       ...value.authorization,
       delegation: value.authorization.address,
       chainId: BigInt(value.authorization.chainId),
+      r: BigInt(value.authorization.r ?? 0n),
+      s: BigInt(value.authorization.s ?? 0n),
     },
     to,
     data ?? '0x',

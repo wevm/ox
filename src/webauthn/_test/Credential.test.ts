@@ -9,8 +9,8 @@ describe('Credential.serialize', () => {
       id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
       publicKey: {
         prefix: 4,
-        x: 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
-        y: 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
+        x: '0xab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7',
+        y: '0xd884318e919fd3b3e5a631d866d8a380b44063e70f0c381ee16e0652f7f97554',
       },
       raw: {
         id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
@@ -58,8 +58,8 @@ describe('Credential.serialize', () => {
       id: 'test-id',
       publicKey: {
         prefix: 4,
-        x: 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
-        y: 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
+        x: '0xab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7',
+        y: '0xd884318e919fd3b3e5a631d866d8a380b44063e70f0c381ee16e0652f7f97554',
       },
       raw: {
         id: 'test-id',
@@ -104,8 +104,8 @@ describe('Credential.deserialize', () => {
 
     expect(credential.id).toBe(serialized.id)
     expect(credential.publicKey.prefix).toBe(4)
-    expect(typeof credential.publicKey.x).toBe('bigint')
-    expect(typeof credential.publicKey.y).toBe('bigint')
+    expect(typeof credential.publicKey.x).toBe('string')
+    expect(typeof credential.publicKey.y).toBe('string')
     expect(credential.raw.rawId).toBeInstanceOf(ArrayBuffer)
     expect(credential.raw.response.clientDataJSON).toBeInstanceOf(ArrayBuffer)
   })
@@ -117,8 +117,8 @@ describe('Credential.deserialize', () => {
       id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
       publicKey: {
         prefix: 4,
-        x: 77587693192652859874025541476425832478302972220661277688017673393936226333095n,
-        y: 97933141135755737384413290261786792525004108403409931527059712582886746584404n,
+        x: '0xab891400140fc4f8e941ce0ff90e419de9470acaca613bbd717a4775435031a7',
+        y: '0xd884318e919fd3b3e5a631d866d8a380b44063e70f0c381ee16e0652f7f97554',
       },
       raw: {
         id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',

@@ -682,7 +682,10 @@ describe('behavior: signature validation', () => {
 
     const n =
       0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n
-    const highS = { r: signature.r, s: n - signature.s }
+    const highS = {
+      r: signature.r,
+      s: Hex.fromNumber(n - Hex.toBigInt(signature.s), { size: 32 }),
+    }
 
     const verified = Authentication.verify({
       metadata,

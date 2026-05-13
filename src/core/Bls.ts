@@ -121,28 +121,22 @@ export function aggregate(
   // Fast path: a single point aggregates to itself.
   if (normalized.length === 1) return first
 
-  const isG1 = typeof first.x === 'bigint'
+  const isG1 = typeof first.x === 'string'
   for (let i = 1; i < normalized.length; i++) {
-    if ((typeof normalized[i]!.x === 'bigint') !== isG1)
+    if ((typeof normalized[i]!.x === 'string') !== isG1)
       throw new Errors.BaseError(
         'Bls.aggregate expects all points to be from the same group (G1 or G2).',
       )
   }
 
+  const groupName = isG1 ? 'G1' : 'G2'
   const group = isG1 ? bls.G1 : bls.G2
-  // Hoist the noble Point ctor reference and accumulate via a tight loop
-  // (avoids the per-iteration callback overhead from `Array.reduce`).
-  const PointCtor = (group as any).Point
   let acc = group.Point.ZERO
   for (let i = 0; i < normalized.length; i++) {
     const p = normalized[i]!
-    acc = acc.add(new PointCtor(p.x, p.y, p.z))
+    acc = acc.add(BlsPoint.toNoblePoint(p as any, groupName) as any)
   }
-  return {
-    x: acc.X,
-    y: acc.Y,
-    z: acc.Z,
-  }
+  return BlsPoint.fromNoblePoint(acc, groupName) as BlsPoint.BlsPoint
 }
 
 export declare namespace aggregate {
@@ -418,15 +412,15 @@ export function getPublicKey<
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function getPublicKey(options: getPublicKey.Options): unknown {
   const { as = 'Object', privateKey, size = 'short-key:long-sig' } = options
-  const group = size === 'short-key:long-sig' ? bls.G1 : bls.G2
+  const groupName = size === 'short-key:long-sig' ? 'G1' : 'G2'
+  const group = groupName === 'G1' ? bls.G1 : bls.G2
   const point = group.Point.BASE.multiply(
     group.Point.Fn.fromBytes(Bytes.from(privateKey)),
   )
-  const publicKey: BlsPoint.BlsPoint = {
-    x: point.X,
-    y: point.Y,
-    z: point.Z,
-  }
+  const publicKey = BlsPoint.fromNoblePoint(
+    point,
+    groupName,
+  ) as BlsPoint.BlsPoint
   return formatBlsPoint(publicKey, as)
 }
 
@@ -588,7 +582,9 @@ export function sign(options: sign.Options): unknown {
     size = 'short-key:long-sig',
   } = options
 
-  const payloadGroup = size === 'short-key:long-sig' ? bls.G2 : bls.G1
+  const signatureGroupName: 'G1' | 'G2' =
+    size === 'short-key:long-sig' ? 'G2' : 'G1'
+  const payloadGroup = signatureGroupName === 'G2' ? bls.G2 : bls.G1
   const payloadPoint = payloadGroup.hashToCurve(
     Bytes.from(payload),
     suite ? { DST: Bytes.fromString(suite) } : undefined,
@@ -599,11 +595,10 @@ export function sign(options: sign.Options): unknown {
     privateKeyGroup.Point.Fn.fromBytes(Bytes.from(privateKey)),
   )
 
-  const result: BlsPoint.BlsPoint = {
-    x: signature.X,
-    y: signature.Y,
-    z: signature.Z,
-  }
+  const result = BlsPoint.fromNoblePoint(
+    signature,
+    signatureGroupName,
+  ) as BlsPoint.BlsPoint
   return formatBlsPoint(result, as)
 }
 
@@ -730,10 +725,11 @@ export function verify(options: verify.Options): boolean {
     !(publicKeyRaw instanceof Uint8Array) &&
     'z' in publicKeyRaw
 
-  // Determine signature group: G1 (short sig, x is bigint) or G2 (long sig).
-  // For serialized signatures, infer from the byte/hex length.
+  // Determine signature group: G1 (short sig, x is hex string) or G2 (long
+  // sig, x is `{ c0, c1 }`). For serialized signatures, infer from the
+  // byte/hex length.
   const signatureGroup: 'G1' | 'G2' = signatureIsStructured
-    ? typeof (signatureRaw as BlsPoint.BlsPoint).x === 'bigint'
+    ? typeof (signatureRaw as BlsPoint.BlsPoint).x === 'string'
       ? 'G1'
       : 'G2'
     : signatureByteLength(signatureRaw as Hex.Hex | Bytes.Bytes) === 48
@@ -752,7 +748,7 @@ export function verify(options: verify.Options): boolean {
       : normalizeBlsPoint(publicKeyRaw as Hex.Hex | Bytes.Bytes, publicKeyGroup)
   ) as BlsPoint.BlsPoint<any>
 
-  const isShortSig = typeof signature.x === 'bigint'
+  const isShortSig = signatureGroup === 'G1'
 
   const group = isShortSig ? bls.G1 : bls.G2
   const payloadPoint = group.hashToCurve(
@@ -764,10 +760,14 @@ export function verify(options: verify.Options): boolean {
     bls.pairingBatch([
       {
         g1: payloadPoint as InstanceType<typeof bls.G1.Point>,
-        g2: new bls.G2.Point(publicKey.x, publicKey.y, publicKey.z),
+        g2: BlsPoint.toNoblePoint(publicKey as any, 'G2') as InstanceType<
+          typeof bls.G2.Point
+        >,
       },
       {
-        g1: new bls.G1.Point(signature.x, signature.y, signature.z),
+        g1: BlsPoint.toNoblePoint(signature as any, 'G1') as InstanceType<
+          typeof bls.G1.Point
+        >,
         g2: bls.G2.Point.BASE.negate(),
       },
     ])
@@ -775,12 +775,18 @@ export function verify(options: verify.Options): boolean {
   const longSigPairing = () =>
     bls.pairingBatch([
       {
-        g1: new bls.G1.Point(publicKey.x, publicKey.y, publicKey.z).negate(),
+        g1: (
+          BlsPoint.toNoblePoint(publicKey as any, 'G1') as InstanceType<
+            typeof bls.G1.Point
+          >
+        ).negate(),
         g2: payloadPoint as InstanceType<typeof bls.G2.Point>,
       },
       {
         g1: bls.G1.Point.BASE,
-        g2: new bls.G2.Point(signature.x, signature.y, signature.z),
+        g2: BlsPoint.toNoblePoint(signature as any, 'G2') as InstanceType<
+          typeof bls.G2.Point
+        >,
       },
     ])
 

@@ -160,8 +160,8 @@ export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
 
   transaction.yParity = Signature.vToYParity(v)
   transaction.v = v
-  transaction.s = Tx.bytesToBigIntOrZero(s)
-  transaction.r = Tx.bytesToBigIntOrZero(r)
+  transaction.s = Hex.fromNumber(Tx.bytesToBigIntOrZero(s), { size: 32 })
+  transaction.r = Hex.fromNumber(Tx.bytesToBigIntOrZero(r), { size: 32 })
 
   assert(transaction)
 
@@ -517,8 +517,8 @@ export function serialize(
     serialized = [
       ...serialized,
       Hex.fromNumber(v),
-      signature.r === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.r)),
-      signature.s === 0n ? '0x' : Hex.trimLeft(Hex.fromNumber(signature.s)),
+      Hex.trimLeft(signature.r),
+      Hex.trimLeft(signature.s),
     ]
   } else if (chainId > 0)
     serialized = [...serialized, Hex.fromNumber(chainId), '0x', '0x']

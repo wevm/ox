@@ -161,7 +161,11 @@ describe('getSharedSecret', () => {
 
   test('error: invalid public key', async () => {
     const { privateKey: privateKeyA } = await WebCryptoP256.createKeyPairECDH()
-    const invalidPublicKey = { prefix: 4, x: 0n, y: 0n } as const
+    const invalidPublicKey = {
+      prefix: 4,
+      x: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      y: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    } as const
 
     await expect(
       WebCryptoP256.getSharedSecret({
@@ -201,7 +205,7 @@ describe('verify', () => {
     const payload = '0xdeadbeef'
     for (let i = 0; i < 256; i++) {
       const signature = await WebCryptoP256.sign({ payload, privateKey })
-      if (signature.r >> 248n === 0n || signature.s >> 248n === 0n) {
+      if (signature.r.startsWith('0x00') || signature.s.startsWith('0x00')) {
         expect(
           await WebCryptoP256.verify({ publicKey, payload, signature }),
         ).toBe(true)
