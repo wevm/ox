@@ -3,9 +3,8 @@ import * as Bytes from './Bytes.js'
 import * as Caches from './Caches.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
+import * as internal from './internal/address.js'
 import * as PublicKey from './PublicKey.js'
-
-const addressRegex = /^0x[a-fA-F0-9]{40}$/
 
 /** Root type for Address. */
 export type Address = abitype_Address
@@ -37,20 +36,19 @@ export function assert(
 ): asserts value is Address {
   const { strict = true } = options
 
-  if (!addressRegex.test(value))
+  const kind = internal.classify(value)
+  if (kind === 0)
     throw new InvalidAddressError({
       address: value,
       cause: new InvalidInputError(),
     })
 
-  if (strict) {
-    if (value.toLowerCase() === value) return
-    if (checksum(value as Address) !== value)
-      throw new InvalidAddressError({
-        address: value,
-        cause: new InvalidChecksumError(),
-      })
-  }
+  // Lowercase inputs are exempt from checksum verification.
+  if (strict && kind === 2 && checksum(value as Address) !== value)
+    throw new InvalidAddressError({
+      address: value,
+      cause: new InvalidChecksumError(),
+    })
 }
 
 export declare namespace assert {
@@ -81,25 +79,48 @@ export declare namespace assert {
  * @returns The checksummed address.
  */
 export function checksum(address: string): Address {
-  if (Caches.checksum.has(address)) return Caches.checksum.get(address)!
+  // Direct cache lookup keeps the common hot path (callers passing the same
+  // string repeatedly) at a single `Map.get`.
+  const direct = Caches.checksum.get(address)
+  if (direct !== undefined) return direct
 
-  assert(address, { strict: false })
+  if (!internal.hasShape(address))
+    throw new InvalidAddressError({
+      address,
+      cause: new InvalidInputError(),
+    })
 
-  const hexAddress = address.substring(2).toLowerCase()
-  const hash = Hash.keccak256(Bytes.fromString(hexAddress), { as: 'Bytes' })
-
-  const characters = hexAddress.split('')
-  for (let i = 0; i < 40; i += 2) {
-    if (hash[i >> 1]! >> 4 >= 8 && characters[i]) {
-      characters[i] = characters[i]!.toUpperCase()
-    }
-    if ((hash[i >> 1]! & 0x0f) >= 8 && characters[i + 1]) {
-      characters[i + 1] = characters[i + 1]!.toUpperCase()
+  // Secondary lookup keyed by the canonical lowercase form so that mixed-case
+  // spellings of the same address share an entry instead of competing for two
+  // slots in a bounded cache.
+  const key = internal.lowercase(address)
+  if (key !== address) {
+    const cached = Caches.checksum.get(key)
+    if (cached !== undefined) {
+      Caches.checksum.set(address, cached)
+      return cached
     }
   }
 
-  const result = `0x${characters.join('')}` as const
-  Caches.checksum.set(address, result)
+  const hash = Hash.keccak256(Bytes.fromString(key.slice(2)), { as: 'Bytes' })
+
+  const out = new Uint16Array(42)
+  out[0] = 48 // '0'
+  out[1] = 120 // 'x'
+  for (let i = 0; i < 40; i++) {
+    const code = key.charCodeAt(i + 2)
+    const nibble = (i & 1) === 0 ? hash[i >> 1]! >> 4 : hash[i >> 1]! & 0x0f
+    // Uppercase a-f when the corresponding nibble is >= 8. ASCII 'a'..'f' are
+    // 97..102; subtracting 32 yields 'A'..'F'.
+    out[i + 2] = nibble >= 8 && code >= 97 ? code - 32 : code
+  }
+
+  const result = String.fromCharCode.apply(
+    null,
+    out as unknown as number[],
+  ) as Address
+  Caches.checksum.set(key, result)
+  if (key !== address) Caches.checksum.set(address, result)
   return result
 }
 
@@ -241,8 +262,17 @@ export declare namespace fromPublicKey {
  * @returns Whether the addresses are equal.
  */
 export function isEqual(addressA: Address, addressB: Address): boolean {
-  assert(addressA, { strict: false })
-  assert(addressB, { strict: false })
+  if (!internal.hasShape(addressA))
+    throw new InvalidAddressError({
+      address: addressA,
+      cause: new InvalidInputError(),
+    })
+  if (!internal.hasShape(addressB))
+    throw new InvalidAddressError({
+      address: addressB,
+      cause: new InvalidInputError(),
+    })
+  if (addressA === addressB) return true
   return addressA.toLowerCase() === addressB.toLowerCase()
 }
 
@@ -278,12 +308,10 @@ export function validate(
   options: validate.Options = {},
 ): address is Address {
   const { strict = true } = options ?? {}
-  try {
-    assert(address, { strict })
-    return true
-  } catch {
-    return false
-  }
+  const kind = internal.classify(address)
+  if (kind === 0) return false
+  if (!strict || kind === 1) return true
+  return checksum(address as Address) === address
 }
 
 export declare namespace validate {

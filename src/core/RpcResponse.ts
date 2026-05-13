@@ -76,12 +76,15 @@ export function from<
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function from(response: RpcResponse, options: any = {}): RpcResponse {
   const { request } = options
-  if (request)
-    return {
-      ...response,
-      id: response.id ?? request.id,
-      jsonrpc: response.jsonrpc ?? request.jsonrpc,
-    }
+  if (request) {
+    const needsId = response.id === undefined
+    const needsJsonrpc = response.jsonrpc === undefined
+    if (!needsId && !needsJsonrpc) return response
+    if (needsId && needsJsonrpc)
+      return { ...response, id: request.id, jsonrpc: request.jsonrpc }
+    if (needsId) return { ...response, id: request.id }
+    return { ...response, jsonrpc: request.jsonrpc }
+  }
   if (response.id === undefined || response.jsonrpc === undefined)
     throw new ParseError({ message: 'Invalid JSON-RPC response.' })
   return response
@@ -307,30 +310,9 @@ export function parseError<const error extends Error | ErrorObject | unknown>(
       stack: error_.stack,
     }) as never
 
-  const { code } = error_
-  if (code === InternalError.code)
-    return new InternalError(error_ as never) as never
-  if (code === InvalidInputError.code)
-    return new InvalidInputError(error_) as never
-  if (code === InvalidParamsError.code)
-    return new InvalidParamsError(error_) as never
-  if (code === InvalidRequestError.code)
-    return new InvalidRequestError(error_) as never
-  if (code === LimitExceededError.code)
-    return new LimitExceededError(error_) as never
-  if (code === MethodNotFoundError.code)
-    return new MethodNotFoundError(error_) as never
-  if (code === MethodNotSupportedError.code)
-    return new MethodNotSupportedError(error_) as never
-  if (code === ParseError.code) return new ParseError(error_) as never
-  if (code === ResourceNotFoundError.code)
-    return new ResourceNotFoundError(error_) as never
-  if (code === ResourceUnavailableError.code)
-    return new ResourceUnavailableError(error_) as never
-  if (code === TransactionRejectedError.code)
-    return new TransactionRejectedError(error_) as never
-  if (code === VersionNotSupportedError.code)
-    return new VersionNotSupportedError(error_) as never
+  const code = (error_ as ErrorObject).code
+  const Constructor = errorCodeMap[code]
+  if (Constructor) return new Constructor(error_ as never) as never
   return new InternalError({
     cause: error_ instanceof Error ? error_ : undefined,
     data: error_,
@@ -637,4 +619,25 @@ export class ParseError extends BaseError {
       message: parameters.message ?? 'Failed to parse JSON-RPC response.',
     })
   }
+}
+
+/** @internal */
+const errorCodeMap: Record<
+  number,
+  new (
+    parameters: Partial<Omit<ErrorObject, 'code'>>,
+  ) => BaseError
+> = {
+  [InternalError.code]: InternalError as never,
+  [InvalidInputError.code]: InvalidInputError,
+  [InvalidParamsError.code]: InvalidParamsError,
+  [InvalidRequestError.code]: InvalidRequestError,
+  [LimitExceededError.code]: LimitExceededError,
+  [MethodNotFoundError.code]: MethodNotFoundError,
+  [MethodNotSupportedError.code]: MethodNotSupportedError,
+  [ParseError.code]: ParseError,
+  [ResourceNotFoundError.code]: ResourceNotFoundError,
+  [ResourceUnavailableError.code]: ResourceUnavailableError,
+  [TransactionRejectedError.code]: TransactionRejectedError,
+  [VersionNotSupportedError.code]: VersionNotSupportedError,
 }

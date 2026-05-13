@@ -1,7 +1,9 @@
 import * as Address from './Address.js'
+import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Branded,
@@ -101,10 +103,10 @@ export declare namespace assert {
  * @returns Deserialized Transaction Envelope.
  */
 export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
-  const tuple = Rlp.toHex(serialized)
+  const tuple = Rlp.toBytes(serialized)
 
   const [nonce, gasPrice, gas, to, value, data, chainIdOrV_, r, s] =
-    tuple as readonly Hex.Hex[]
+    tuple as readonly Bytes.Bytes[]
 
   if (!(tuple.length === 6 || tuple.length === 9))
     throw new TransactionEnvelope.InvalidSerializedError({
@@ -130,23 +132,23 @@ export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
   const transaction = {
     type,
   } as TxEnvelopeLegacy
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(gasPrice) && gasPrice !== '0x')
-    transaction.gasPrice = BigInt(gasPrice)
+  const to_ = Tx.bytesToHexOrUndefined(to)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.bytesToBigIntOrUndefined(gas)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.bytesToHexOrUndefined(data)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined) transaction.nonce = Tx.bytesToBigIntOrZero(nonce)
+  const value_ = Tx.bytesToBigIntOrUndefined(value)
+  if (value_ !== undefined) transaction.value = value_
+  const gasPrice_ = Tx.bytesToBigIntOrUndefined(gasPrice)
+  if (gasPrice_ !== undefined) transaction.gasPrice = gasPrice_
 
   if (tuple.length === 6) return transaction
 
-  const chainIdOrV =
-    Hex.validate(chainIdOrV_) && chainIdOrV_ !== '0x'
-      ? Number(chainIdOrV_ as Hex.Hex)
-      : 0
+  const chainIdOrV = Tx.bytesToNumberOrUndefined(chainIdOrV_) ?? 0
 
-  if (s === '0x' && r === '0x') {
+  if ((s as Bytes.Bytes).length === 0 && (r as Bytes.Bytes).length === 0) {
     if (chainIdOrV > 0) transaction.chainId = Number(chainIdOrV)
     return transaction
   }
@@ -158,8 +160,8 @@ export function deserialize(serialized: Hex.Hex): Compute<TxEnvelopeLegacy> {
 
   transaction.yParity = Signature.vToYParity(v)
   transaction.v = v
-  transaction.s = s === '0x' ? 0n : BigInt(s!)
-  transaction.r = r === '0x' ? 0n : BigInt(r!)
+  transaction.s = Tx.bytesToBigIntOrZero(s)
+  transaction.r = Tx.bytesToBigIntOrZero(r)
 
   assert(transaction)
 
@@ -468,11 +470,11 @@ export function serialize(
   assert(envelope)
 
   let serialized = [
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    gasPrice ? Hex.fromNumber(gasPrice) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(gasPrice),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
+    Tx.quantityToHex(value),
     data ?? input ?? '0x',
   ]
 

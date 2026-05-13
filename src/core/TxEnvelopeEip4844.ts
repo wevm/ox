@@ -1,8 +1,10 @@
 import * as AccessList from './AccessList.js'
 import * as Blobs from './Blobs.js'
+import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Compute,
@@ -132,15 +134,17 @@ export declare namespace assert {
 export function deserialize(
   serialized: Serialized,
 ): Compute<TxEnvelopeEip4844> {
-  const transactionOrWrapperArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionOrWrapperArray = Rlp.toBytes(Hex.slice(serialized, 1))
 
   const hasNetworkWrapper = transactionOrWrapperArray.length === 4
 
   const transactionArray = hasNetworkWrapper
-    ? transactionOrWrapperArray[0]!
-    : transactionOrWrapperArray
+    ? (transactionOrWrapperArray[0]! as ReadonlyArray<Bytes.Bytes>)
+    : (transactionOrWrapperArray as ReadonlyArray<Bytes.Bytes>)
   const wrapperArray = hasNetworkWrapper
-    ? transactionOrWrapperArray.slice(1)
+    ? (transactionOrWrapperArray.slice(1) as ReadonlyArray<
+        ReadonlyArray<Bytes.Bytes>
+      >)
     : []
 
   const [
@@ -158,7 +162,7 @@ export function deserialize(
     yParity,
     r,
     s,
-  ] = transactionArray
+  ] = transactionArray as readonly (Bytes.Bytes | ReadonlyArray<Bytes.Bytes>)[]
   const [blobs, commitments, proofs] = wrapperArray
 
   if (!(transactionArray.length === 11 || transactionArray.length === 14))
@@ -188,32 +192,48 @@ export function deserialize(
     })
 
   let transaction = {
-    blobVersionedHashes: blobVersionedHashes as Hex.Hex[],
-    chainId: Number(chainId),
+    blobVersionedHashes: (
+      blobVersionedHashes as ReadonlyArray<Bytes.Bytes>
+    ).map((b) => Tx.bytesToHex(b)),
+    chainId: Number(Tx.bytesToBigIntOrZero(chainId as Bytes.Bytes)),
     type,
   } as TxEnvelopeEip4844
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(maxFeePerBlobGas) && maxFeePerBlobGas !== '0x')
-    transaction.maxFeePerBlobGas = BigInt(maxFeePerBlobGas)
-  if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
-    transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
-    transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
-  if (accessList?.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList.fromTupleList(accessList as any)
+  const to_ = Tx.bytesToHexOrUndefined(to as Bytes.Bytes | undefined)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.bytesToBigIntOrUndefined(gas as Bytes.Bytes | undefined)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.bytesToHexOrUndefined(data as Bytes.Bytes | undefined)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined)
+    transaction.nonce = Tx.bytesToBigIntOrZero(nonce as Bytes.Bytes)
+  const value_ = Tx.bytesToBigIntOrUndefined(value as Bytes.Bytes | undefined)
+  if (value_ !== undefined) transaction.value = value_
+  const maxFeePerBlobGas_ = Tx.bytesToBigIntOrUndefined(
+    maxFeePerBlobGas as Bytes.Bytes | undefined,
+  )
+  if (maxFeePerBlobGas_ !== undefined)
+    transaction.maxFeePerBlobGas = maxFeePerBlobGas_
+  const maxFeePerGas_ = Tx.bytesToBigIntOrUndefined(
+    maxFeePerGas as Bytes.Bytes | undefined,
+  )
+  if (maxFeePerGas_ !== undefined) transaction.maxFeePerGas = maxFeePerGas_
+  const maxPriorityFeePerGas_ = Tx.bytesToBigIntOrUndefined(
+    maxPriorityFeePerGas as Bytes.Bytes | undefined,
+  )
+  if (maxPriorityFeePerGas_ !== undefined)
+    transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
+  if (accessList && (accessList as readonly unknown[]).length !== 0)
+    transaction.accessList = AccessList.fromTupleList(
+      Tx.bytesTreeToHex(accessList as never) as never,
+    )
   if (blobs && commitments && proofs) {
     // Validate sidecar wrapper cardinality before zipping; otherwise
     // `Blobs.toSidecars` blindly indexes `commitments[i]!` / `proofs[i]!`
     // and fabricates `undefined` entries from a malformed payload.
-    const blobsArr = blobs as readonly Hex.Hex[]
-    const commitmentsArr = commitments as readonly Hex.Hex[]
-    const proofsArr = proofs as readonly Hex.Hex[]
-    const versionedHashesArr = blobVersionedHashes as readonly Hex.Hex[]
+    const blobsArr = blobs as ReadonlyArray<Bytes.Bytes>
+    const commitmentsArr = commitments as ReadonlyArray<Bytes.Bytes>
+    const proofsArr = proofs as ReadonlyArray<Bytes.Bytes>
+    const versionedHashesArr = blobVersionedHashes as ReadonlyArray<Bytes.Bytes>
     if (
       blobsArr.length !== commitmentsArr.length ||
       blobsArr.length !== proofsArr.length ||
@@ -229,15 +249,22 @@ export function deserialize(
         serialized,
         type,
       })
-    transaction.sidecars = Blobs.toSidecars(blobsArr as Hex.Hex[], {
-      commitments: commitmentsArr as Hex.Hex[],
-      proofs: proofsArr as Hex.Hex[],
-    })
+    transaction.sidecars = Blobs.toSidecars(
+      blobsArr.map((b) => Tx.bytesToHex(b)) as Hex.Hex[],
+      {
+        commitments: commitmentsArr.map((b) => Tx.bytesToHex(b)) as Hex.Hex[],
+        proofs: proofsArr.map((b) => Tx.bytesToHex(b)) as Hex.Hex[],
+      },
+    )
   }
 
   const signature =
     r && s && yParity
-      ? Signature.fromTuple([yParity as Hex.Hex, r as Hex.Hex, s as Hex.Hex])
+      ? Signature.fromTuple([
+          Tx.bytesToHex(yParity as Bytes.Bytes),
+          Tx.bytesToHex(r as Bytes.Bytes),
+          Tx.bytesToHex(s as Bytes.Bytes),
+        ])
       : undefined
   if (signature)
     transaction = {
@@ -599,15 +626,15 @@ export function serialize(
 
   const serialized = [
     Hex.fromNumber(chainId),
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
-    maxFeePerGas ? Hex.fromNumber(maxFeePerGas) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(maxPriorityFeePerGas),
+    Tx.quantityToHex(maxFeePerGas),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
+    Tx.quantityToHex(value),
     data ?? input ?? '0x',
     accessTupleList,
-    maxFeePerBlobGas ? Hex.fromNumber(maxFeePerBlobGas) : '0x',
+    Tx.quantityToHex(maxFeePerBlobGas),
     blobVersionedHashes ?? [],
     ...(signature ? Signature.toTuple(signature) : []),
   ] as const

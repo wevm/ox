@@ -118,8 +118,7 @@ export function fromHttp<
               method: fetchOptions?.method ?? 'POST',
               signal: composedSignal,
             }
-            const request = new Request(url, init)
-            return fetchFn(request)
+            return fetchFn(url, init)
           },
           {
             timeout,

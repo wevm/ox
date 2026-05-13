@@ -107,6 +107,15 @@ export declare namespace decodeParameter {
 const sizeOfLength = 32
 const sizeOfOffset = 32
 
+/**
+ * Cached regex for matching array suffixes (e.g. `uint256[]`,
+ * `bytes32[3]`). Hoisted to module scope so we don't allocate a new
+ * regex per `getArrayComponents` call (hot in encode/decode).
+ *
+ * @internal
+ */
+const arraySuffixRegex = /^(.*)\[(\d+)?\]$/
+
 /** @internal */
 export function decodeAddress(
   cursor: Cursor.Cursor,
@@ -781,7 +790,7 @@ export declare namespace encodeTuple {
 export function getArrayComponents(
   type: string,
 ): [length: number | null, innerType: string] | undefined {
-  const matches = type.match(/^(.*)\[(\d+)?\]$/)
+  const matches = arraySuffixRegex.exec(type)
   return matches
     ? // Return `null` if the array is dynamic.
       [matches[2]! ? Number(matches[2]!) : null, matches[1]!]
