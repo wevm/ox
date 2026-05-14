@@ -1,4 +1,13 @@
-import { Address, Hex, P256, Rlp, Secp256k1, Value, WebAuthnP256 } from 'ox'
+import {
+  Address,
+  Hash,
+  Hex,
+  P256,
+  Rlp,
+  Secp256k1,
+  Value,
+  WebAuthnP256,
+} from 'ox'
 import { describe, expect, test } from 'vitest'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import { SignatureEnvelope } from './index.js'
@@ -1429,6 +1438,67 @@ describe('hash', () => {
       TxEnvelopeTempo.hash(transaction, { presign: true }),
     ).toMatchInlineSnapshot(
       `"0xe1222a45806457acbe3a13940aae4c34f3180659fa16613b5a45dc183adae07c"`,
+    )
+  })
+})
+
+describe('encodeForSigning', () => {
+  test('matches getSignPayload preimage', () => {
+    const transaction = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [
+        {
+          to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+        },
+      ],
+      nonce: 0n,
+    })
+
+    const encoded = TxEnvelopeTempo.encodeForSigning(transaction)
+
+    expect(Hash.keccak256(encoded)).toBe(
+      TxEnvelopeTempo.getSignPayload(transaction),
+    )
+    expect(encoded).toMatchInlineSnapshot(
+      `"0x76e501808080d8d79470997970c51812dc3a010c7d01b50e0d17dc79c88080c0808080808080c0"`,
+    )
+  })
+
+  test('normalizes signatures and fee payer-selected fee token', () => {
+    const transaction = TxEnvelopeTempo.from({
+      chainId: 1,
+      calls: [
+        {
+          to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+        },
+      ],
+      feePayerSignature: null,
+      feeToken: 1n,
+      nonce: 0n,
+    })
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction),
+      privateKey,
+    })
+    const signed = TxEnvelopeTempo.from(transaction, {
+      signature: SignatureEnvelope.from(signature),
+    })
+    const feePayerSignature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getFeePayerSignPayload(signed, {
+        sender: address,
+      }),
+      privateKey:
+        '0x59c6995e998f97a5a0044966f094538219447a175e4b9f6d8dae5f4a585d3c55',
+    })
+
+    const sponsored = TxEnvelopeTempo.from({
+      ...signed,
+      feePayerSignature,
+      feeToken: 2n,
+    })
+
+    expect(TxEnvelopeTempo.encodeForSigning(sponsored)).toBe(
+      TxEnvelopeTempo.encodeForSigning(transaction),
     )
   })
 })
