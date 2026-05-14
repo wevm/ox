@@ -36,7 +36,7 @@ export declare namespace contains {
     | Errors.GlobalErrorType
 }
 
-/** Prepared bloom filter for use with {@link Bloom.containsPrepared}/{@link Bloom.containsHash}. */
+/** Prepared bloom filter for use with {@link ox#Bloom.(containsPrepared:function)}/{@link ox#Bloom.(containsHash:function)}. */
 export type Prepared = {
   filter: Uint8Array
 }
@@ -44,8 +44,8 @@ export type Prepared = {
 /**
  * Prepares a bloom filter for repeated membership checks against the same filter.
  *
- * Pairs with {@link Bloom.containsPrepared} (or {@link Bloom.containsHash}) to avoid
- * the per-call hex-to-bytes conversion that {@link Bloom.contains} pays.
+ * Pairs with {@link ox#Bloom.(containsPrepared:function)} (or {@link ox#Bloom.(containsHash:function)}) to avoid
+ * the per-call hex-to-bytes conversion that {@link ox#Bloom.(contains:function)} pays.
  *
  * @example
  * ```ts twoslash
@@ -74,7 +74,7 @@ export declare namespace prepare {
 }
 
 /**
- * Checks if an input is matched in a {@link Bloom.Prepared} bloom filter.
+ * Checks if an input is matched in a {@link ox#Bloom.Prepared} bloom filter.
  *
  * @example
  * ```ts twoslash
@@ -103,7 +103,7 @@ export declare namespace containsPrepared {
 }
 
 /**
- * Checks if a precomputed `keccak256` hash is matched in a {@link Bloom.Prepared}
+ * Checks if a precomputed `keccak256` hash is matched in a {@link ox#Bloom.Prepared}
  * bloom filter. Use when the caller already has the hash and wants to skip the
  * keccak inside `containsPrepared`.
  *
