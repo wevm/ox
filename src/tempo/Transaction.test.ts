@@ -19,6 +19,7 @@ describe('fromRpc', () => {
       blockHash:
         '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
       blockNumber: '0x12f296f',
+      blockTimestamp: '0x66434e07',
       transactionIndex: '0x2',
       feeToken: '0x20c0000000000000000000000000000000000000',
       from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
@@ -39,6 +40,7 @@ describe('fromRpc', () => {
         "accessList": [],
         "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
         "blockNumber": 19868015n,
+        "blockTimestamp": 1715686919n,
         "calls": [
           {
             "data": "0xdeadbeef",
@@ -269,6 +271,7 @@ describe('toRpc', () => {
       blockHash:
         '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
       blockNumber: 19868015n,
+      blockTimestamp: 1715686919n,
       calls: [
         {
           data: '0xdeadbeef',
@@ -302,6 +305,7 @@ describe('toRpc', () => {
         "accessList": [],
         "blockHash": "0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b",
         "blockNumber": "0x12f296f",
+        "blockTimestamp": "0x66434e07",
         "calls": [
           {
             "data": "0xdeadbeef",
