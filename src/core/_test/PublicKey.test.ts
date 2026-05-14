@@ -10,8 +10,6 @@ test('exports', () => {
       "fromBytes",
       "fromHex",
       "toBytes",
-      "toParts",
-      "fromParts",
       "toHex",
       "validate",
       "InvalidError",
@@ -577,78 +575,5 @@ describe('PublicKey.validate', () => {
         y: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
       }),
     ).toBe(false)
-  })
-})
-
-describe('PublicKey.toParts', () => {
-  test('default', () => {
-    const parts = PublicKey.toParts({
-      prefix: 4,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-      y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    })
-    expect(parts).toEqual({
-      prefix: 4,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-      y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    })
-  })
-
-  test('behavior: compressed', () => {
-    const parts = PublicKey.toParts<true>({
-      prefix: 3,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-    })
-    expect(parts).toEqual({
-      prefix: 3,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-    })
-    expect('y' in parts).toBe(false)
-  })
-
-  test('behavior: returns a fresh object (no aliasing)', () => {
-    const pk: PublicKey.PublicKey = {
-      prefix: 4,
-      x: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      y: '0x0000000000000000000000000000000000000000000000000000000000000002',
-    }
-    const parts = PublicKey.toParts(pk)
-    expect(parts).not.toBe(pk)
-  })
-})
-
-describe('PublicKey.fromParts', () => {
-  test('default', () => {
-    const publicKey = PublicKey.fromParts({
-      prefix: 4,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-      y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    })
-    expect(publicKey).toEqual({
-      prefix: 4,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-      y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    })
-  })
-
-  test('behavior: compressed', () => {
-    const publicKey = PublicKey.fromParts<true>({
-      prefix: 2,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-    })
-    expect(publicKey).toEqual({
-      prefix: 2,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-    })
-    expect('y' in publicKey).toBe(false)
-  })
-
-  test('behavior: roundtrip', () => {
-    const original: PublicKey.PublicKey = {
-      prefix: 4,
-      x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
-      y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
-    }
-    expect(PublicKey.fromParts(PublicKey.toParts(original))).toEqual(original)
   })
 })

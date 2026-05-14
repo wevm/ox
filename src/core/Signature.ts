@@ -24,21 +24,6 @@ export type Signature<
       }
 >
 
-/** Structured parts of an ECDSA signature. */
-export type Parts<recovered extends boolean = true> = Compute<
-  recovered extends true
-    ? {
-        r: Hex.Hex
-        s: Hex.Hex
-        yParity: number
-      }
-    : {
-        r: Hex.Hex
-        s: Hex.Hex
-        yParity?: number | undefined
-      }
->
-
 /** RPC-formatted ECDSA signature. `yParity` is hex-encoded. */
 export type Rpc<recovered extends boolean = true> = Signature<
   recovered,
@@ -655,79 +640,6 @@ export function fromRecoveredBytes(bytes: Bytes.Bytes): Signature {
 
 export declare namespace fromRecoveredBytes {
   type ErrorType = Hex.fromBytes.ErrorType | Errors.GlobalErrorType
-}
-
-/**
- * Converts a {@link ox#Signature.Signature} to its structured
- * {@link ox#Signature.Parts} form.
- *
- * @example
- * ```ts twoslash
- * import { Signature } from 'ox'
- *
- * const parts = Signature.toParts({
- *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
- *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
- *   yParity: 1,
- * })
- * // @log: { r: '0x6e10...', s: '0x4a90...', yParity: 1 }
- * ```
- *
- * @param signature - The signature to convert.
- * @returns The structured {@link ox#Signature.Parts}.
- */
-export function toParts<recovered extends boolean = true>(
-  signature: Signature<recovered>,
-): Parts<recovered> {
-  if (typeof signature.yParity === 'number')
-    return {
-      r: signature.r,
-      s: signature.s,
-      yParity: signature.yParity,
-    } as never
-  return { r: signature.r, s: signature.s } as never
-}
-
-export declare namespace toParts {
-  type ErrorType = Errors.GlobalErrorType
-}
-
-/**
- * Converts a {@link ox#Signature.Parts} into a structured
- * {@link ox#Signature.Signature}.
- *
- * @example
- * ```ts twoslash
- * import { Signature } from 'ox'
- *
- * const signature = Signature.fromParts({
- *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
- *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
- *   yParity: 1,
- * })
- * // @log: { r: '0x6e10...', s: '0x4a90...', yParity: 1 }
- * ```
- *
- * @param parts - The structured parts to convert.
- * @returns The {@link ox#Signature.Signature}.
- */
-export function fromParts<recovered extends boolean = true>(
-  parts: Parts<recovered>,
-): Signature<recovered> {
-  if (typeof parts.yParity === 'number')
-    return {
-      r: Hex.padLeft(parts.r, 32),
-      s: Hex.padLeft(parts.s, 32),
-      yParity: parts.yParity,
-    } as never
-  return {
-    r: Hex.padLeft(parts.r, 32),
-    s: Hex.padLeft(parts.s, 32),
-  } as never
-}
-
-export declare namespace fromParts {
-  type ErrorType = Errors.GlobalErrorType
 }
 
 /**

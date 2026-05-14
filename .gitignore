@@ -16,10 +16,12 @@ tsdoc.d.tson
 ox.api.json
 lookup.json
 config-generated.ts
-site/pages/api
-site/pages/ercs
-site/pages/tempo
-site/pages/webauthn
-site/pages/glossary
+site/.vocs
+site/src/pages.gen.ts
+site/src/pages/api
+site/src/pages/ercs
+site/src/pages/tempo
+site/src/pages/webauthn
+site/src/pages/glossary
 tsdoc-metadata.json
 *.timestamp*

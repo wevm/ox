@@ -22,21 +22,6 @@ export type PublicKey<
       }
 >
 
-/** Structured parts of an ECDSA public key. */
-export type Parts<compressed extends boolean = false> = Compute<
-  compressed extends true
-    ? {
-        prefix: number
-        x: Hex.Hex
-        y?: undefined
-      }
-    : {
-        prefix: number
-        x: Hex.Hex
-        y: Hex.Hex
-      }
->
-
 /**
  * Asserts that a {@link ox#PublicKey.PublicKey} is valid.
  *
@@ -402,76 +387,6 @@ export declare namespace toBytes {
     | Hex.fromNumber.ErrorType
     | Bytes.fromHex.ErrorType
     | Errors.GlobalErrorType
-}
-
-/**
- * Converts a {@link ox#PublicKey.PublicKey} to its structured
- * {@link ox#PublicKey.Parts} form.
- *
- * @example
- * ```ts twoslash
- * import { PublicKey } from 'ox'
- *
- * const parts = PublicKey.toParts({
- *   prefix: 4,
- *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- * })
- * // @log: { prefix: 4, x: '0x83185...', y: '0x35477...' }
- * ```
- *
- * @param publicKey - The public key to convert.
- * @returns The structured {@link ox#PublicKey.Parts}.
- */
-export function toParts<compressed extends boolean = false>(
-  publicKey: PublicKey<compressed>,
-): Parts<compressed> {
-  if (typeof publicKey.y === 'string')
-    return {
-      prefix: publicKey.prefix,
-      x: publicKey.x,
-      y: publicKey.y,
-    } as never
-  return { prefix: publicKey.prefix, x: publicKey.x } as never
-}
-
-export declare namespace toParts {
-  type ErrorType = Errors.GlobalErrorType
-}
-
-/**
- * Converts a {@link ox#PublicKey.Parts} into a structured
- * {@link ox#PublicKey.PublicKey}.
- *
- * @example
- * ```ts twoslash
- * import { PublicKey } from 'ox'
- *
- * const publicKey = PublicKey.fromParts({
- *   prefix: 4,
- *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- * })
- * // @log: { prefix: 4, x: '0x83185...', y: '0x35477...' }
- * ```
- *
- * @param parts - The structured parts to convert.
- * @returns The {@link ox#PublicKey.PublicKey}.
- */
-export function fromParts<compressed extends boolean = false>(
-  parts: Parts<compressed>,
-): PublicKey<compressed> {
-  if (typeof parts.y === 'string')
-    return {
-      prefix: parts.prefix,
-      x: Hex.padLeft(parts.x, 32),
-      y: Hex.padLeft(parts.y, 32),
-    } as never
-  return { prefix: parts.prefix, x: Hex.padLeft(parts.x, 32) } as never
-}
-
-export declare namespace fromParts {
-  type ErrorType = Errors.GlobalErrorType
 }
 
 /**

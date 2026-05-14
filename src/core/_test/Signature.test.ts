@@ -824,79 +824,6 @@ describe('yParityToV', () => {
   })
 })
 
-describe('Signature.toParts', () => {
-  test('default', () => {
-    const parts = Signature.toParts({
-      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
-      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
-      yParity: 1,
-    })
-    expect(parts).toEqual({
-      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
-      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
-      yParity: 1,
-    })
-  })
-
-  test('behavior: unrecovered', () => {
-    const parts = Signature.toParts<false>({
-      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-    })
-    expect(parts).toEqual({
-      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-    })
-    expect('yParity' in parts).toBe(false)
-  })
-
-  test('behavior: returns a fresh object (no aliasing)', () => {
-    const sig: Signature.Signature = {
-      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-      yParity: 0,
-    }
-    const parts = Signature.toParts(sig)
-    expect(parts).not.toBe(sig)
-  })
-})
-
-describe('Signature.fromParts', () => {
-  test('default', () => {
-    const signature = Signature.fromParts({
-      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
-      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
-      yParity: 1,
-    })
-    expect(signature).toEqual({
-      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
-      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
-      yParity: 1,
-    })
-  })
-
-  test('behavior: unrecovered', () => {
-    const signature = Signature.fromParts<false>({
-      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-    })
-    expect(signature).toEqual({
-      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
-    })
-    expect('yParity' in signature).toBe(false)
-  })
-
-  test('behavior: roundtrip', () => {
-    const original: Signature.Signature = {
-      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
-      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
-      yParity: 1,
-    }
-    expect(Signature.fromParts(Signature.toParts(original))).toEqual(original)
-  })
-})
-
 test('exports', () => {
   expect(Object.keys(Signature)).toMatchInlineSnapshot(`
     [
@@ -915,8 +842,6 @@ test('exports', () => {
       "fromCompactBytes",
       "toRecoveredBytes",
       "fromRecoveredBytes",
-      "toParts",
-      "fromParts",
       "toHex",
       "toDerBytes",
       "toDerHex",

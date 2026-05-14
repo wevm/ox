@@ -1,6 +1,7 @@
 allowBuilds:
   bun: true
   cpu-features: true
+  es5-ext: true
   esbuild: true
   protobufjs: true
   simple-git-hooks: true
@@ -24,15 +25,17 @@ overrides:
   webpack@>=5.0.0-alpha.0 <5.94.0: '>=5.94.0'
   rollup@>=4.0.0 <4.22.4: '>=4.22.4'
   hono@<4.6.5: '>=4.6.5'
+  # Pin to last version with npm provenance — 5.1.1 lost trust evidence.
+  reselect: '5.1.0'
 
 packages:
   - site
-
-patchedDependencies:
-  vocs@1.0.13: patches/vocs@1.0.13.patch
 
 provenance: false
 
 strictPeerDependencies: false
 
 trustPolicy: no-downgrade
+
+trustPolicyExclude:
+  - semver@6.3.1

@@ -25,7 +25,7 @@ console.log('Generating API docs.')
 ////////////////////////////////////////////////////////////
 
 for (const dir of ['api', 'ercs', 'tempo', 'webauthn']) {
-  fs.removeSync(`./site/pages/${dir}`)
+  fs.removeSync(`./site/src/pages/${dir}`)
 }
 
 ////////////////////////////////////////////////////////////
@@ -100,7 +100,7 @@ type NamespaceItem = {
   sidebarItem: SidebarItem
 }[]
 
-const pagesDir = './site/pages'
+const pagesDir = './site/src/pages'
 const namespaceMap: Record<
   EntrypointCategory,
   Record<NamespaceCategory, NamespaceItem>
@@ -271,7 +271,7 @@ const topNav: TopNav = namespaceEntries.map(({ entrypointCategory }) => ({
 })) satisfies TopNav
 
 fs.writeFileSync(
-  './site/config-generated.ts',
+  './site/src/config-generated.ts',
   `export const sidebar = ${JSON.stringify(sidebar, null, 2)}\n` +
     `export const topNav = ${JSON.stringify(topNav, null, 2)}`,
 )
