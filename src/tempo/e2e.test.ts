@@ -79,6 +79,7 @@ test('behavior: default (secp256k1)', async () => {
     const {
       blockNumber,
       blockHash,
+      blockTimestamp,
       chainId,
       hash,
       feeToken: _,
@@ -94,6 +95,7 @@ test('behavior: default (secp256k1)', async () => {
 
     expect(blockNumber).toBeDefined()
     expect(blockHash).toBeDefined()
+    expect(blockTimestamp).toBeDefined()
     expect(chainId).toBe(chainId)
     expect(hash).toBe(receipt.transactionHash)
     expect(from).toBe(address)
@@ -288,6 +290,7 @@ test('behavior: default (p256)', async () => {
     const {
       blockNumber,
       blockHash,
+      blockTimestamp,
       chainId,
       feeToken: _,
       from,
@@ -303,6 +306,7 @@ test('behavior: default (p256)', async () => {
 
     expect(blockNumber).toBeDefined()
     expect(blockHash).toBeDefined()
+    expect(blockTimestamp).toBeDefined()
     expect(chainId).toBe(chainId)
     expect(from).toBe(address)
     expect(hash).toBe(receipt.transactionHash)
@@ -429,6 +433,7 @@ test('behavior: default (p256 - webcrypto)', async () => {
     const {
       blockNumber,
       blockHash,
+      blockTimestamp,
       chainId,
       feeToken: _,
       from,
@@ -440,10 +445,11 @@ test('behavior: default (p256 - webcrypto)', async () => {
       signature,
       transactionIndex,
       ...rest
-    } = response as any
+    } = response
 
     expect(blockNumber).toBeDefined()
     expect(blockHash).toBeDefined()
+    expect(blockTimestamp).toBeDefined()
     expect(chainId).toBeDefined()
     expect(from).toBeDefined()
     expect(hash).toBe(receipt.transactionHash)
@@ -577,6 +583,7 @@ test('behavior: default (webauthn)', async () => {
     const {
       blockNumber,
       blockHash,
+      blockTimestamp,
       chainId,
       feeToken: _,
       from,
@@ -592,6 +599,7 @@ test('behavior: default (webauthn)', async () => {
 
     expect(blockNumber).toBeDefined()
     expect(blockHash).toBeDefined()
+    expect(blockTimestamp).toBeDefined()
     expect(chainId).toBe(chainId)
     expect(from).toBeDefined()
     expect(hash).toBe(receipt.transactionHash)
@@ -956,6 +964,7 @@ describe('behavior: keyAuthorization', () => {
       const {
         blockNumber,
         blockHash,
+        blockTimestamp,
         chainId: _,
         gasPrice,
         hash,
@@ -971,6 +980,7 @@ describe('behavior: keyAuthorization', () => {
 
       expect(blockNumber).toBeDefined()
       expect(blockHash).toBeDefined()
+      expect(blockTimestamp).toBeDefined()
       expect(gasPrice).toBeDefined()
       expect(maxFeePerGas).toBeDefined()
       expect(maxPriorityFeePerGas).toBeDefined()
@@ -1173,6 +1183,7 @@ describe('behavior: keyAuthorization', () => {
       const {
         blockNumber,
         blockHash,
+        blockTimestamp,
         chainId: _,
         gasPrice,
         hash,
@@ -1188,6 +1199,7 @@ describe('behavior: keyAuthorization', () => {
 
       expect(blockNumber).toBeDefined()
       expect(blockHash).toBeDefined()
+      expect(blockTimestamp).toBeDefined()
       expect(gasPrice).toBeDefined()
       expect(hash).toBe(receipt.transactionHash)
       expect(from).toBe(root.address)
@@ -1392,6 +1404,7 @@ describe('behavior: keyAuthorization', () => {
       const {
         blockNumber,
         blockHash,
+        blockTimestamp,
         chainId: _,
         gasPrice,
         hash,
@@ -1407,6 +1420,7 @@ describe('behavior: keyAuthorization', () => {
 
       expect(blockNumber).toBeDefined()
       expect(blockHash).toBeDefined()
+      expect(blockTimestamp).toBeDefined()
       expect(gasPrice).toBeDefined()
       expect(hash).toBe(receipt.transactionHash)
       expect(from).toBe(root.address)
