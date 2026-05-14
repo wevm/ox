@@ -758,5 +758,14 @@
     }
   },
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts"
+  "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*",
+        "./dist/*/index.d.ts",
+        "./dist/core/*"
+      ]
+    }
+  }
 }

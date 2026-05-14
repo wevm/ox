@@ -1,9 +1,9 @@
 import { equalBytes } from '@noble/curves/utils.js'
 import * as Errors from './Errors.js'
+import type * as Hex from './Hex.js'
 import * as internal from './internal/bytes.js'
 import {
   bytesToHex,
-  type Hex as Hex_codec,
   hexToBytes,
   type InvalidHexValueError,
   type InvalidLengthError,
@@ -16,9 +16,6 @@ import {
 import { decoder, encoder } from './internal/codec/utf8.js'
 import * as internal_hex from './internal/hex.js'
 import * as Json from './Json.js'
-
-/** Local alias of the `Hex` type from `internal/codec/hex.ts` to avoid a runtime import of `./Hex.js`. */
-type HexStr = Hex_codec
 
 /** Root type for a Bytes array. */
 export type Bytes = Uint8Array
@@ -117,7 +114,7 @@ export declare namespace concat {
  * @param value - Value to convert.
  * @returns A {@link ox#Bytes.Bytes} instance.
  */
-export function from(value: HexStr | Bytes | readonly number[]): Bytes {
+export function from(value: Hex.Hex | Bytes | readonly number[]): Bytes {
   if (value instanceof Uint8Array) return value
   if (typeof value === 'string') return fromHex(value)
   return fromArray(value)
@@ -221,7 +218,7 @@ export declare namespace fromBoolean {
  * @param options - Encoding options.
  * @returns Encoded {@link ox#Bytes.Bytes}.
  */
-export function fromHex(value: HexStr, options: fromHex.Options = {}): Bytes {
+export function fromHex(value: Hex.Hex, options: fromHex.Options = {}): Bytes {
   const { size } = options
   if (typeof size === 'number') {
     internal_hex.assertSize(value, size)
@@ -593,7 +590,7 @@ export declare namespace toBoolean {
  * @param options - Options.
  * @returns Decoded {@link ox#Hex.Hex} value.
  */
-export function toHex(value: Bytes, options: toHex.Options = {}): HexStr {
+export function toHex(value: Bytes, options: toHex.Options = {}): Hex.Hex {
   const hex = bytesToHex(value)
   const { size } = options
   if (typeof size === 'number') {

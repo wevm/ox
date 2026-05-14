@@ -28,6 +28,9 @@ overrides:
 packages:
   - site
 
+patchedDependencies:
+  vocs@1.0.13: patches/vocs@1.0.13.patch
+
 provenance: false
 
 strictPeerDependencies: false

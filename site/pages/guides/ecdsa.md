@@ -197,8 +197,8 @@ const payload = '0xdeadbeef' // [!code focus]
 
 Signatures in Ox are represented via the [`Signature.Signature`](/api/Signature/types#signaturesignature) type – an object containing the standard ECDSA signature components of:
 
-- `r`: a `bigint` representing the `r` component of the signature.
-- `s`: a `bigint` representing the `s` component of the signature.
+- `r`: a 32-byte `Hex` string representing the `r` component of the signature.
+- `s`: a 32-byte `Hex` string representing the `s` component of the signature.
 - `yParity` (or "recovery bit"): an optional `number` representing the recovery bit of the signature – typically utilized for recovery operations.
 
 Examples:
@@ -208,15 +208,15 @@ import { Signature } from 'ox'
 
 // Signature with a recovery bit (yParity)
 const signature = Signature.from({
-  r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-  s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+  r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+  s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
   yParity: 0,
 })
 
 // Signature without a recovery bit (yParity)
 const signature_2 = Signature.from({
-  r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-  s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+  r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+  s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
 })
 ```
 
@@ -232,8 +232,8 @@ You may need to serialize a Signature into Hex or Bytes format for specific use 
 import { Signature } from 'ox'
 
 const signature = Signature.from({
-  r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-  s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+  r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+  s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
   yParity: 0,
 })
 const serialized = Signature.toHex(signature)
@@ -253,8 +253,8 @@ Public Keys in Ox can come in two forms: a compressed and uncompressed format. G
 Public Keys are represented via the [`PublicKey.PublicKey`](/api/PublicKey/types#publickeypublickey) type – an object containing the standard ECDSA public key components of:
 
 - `prefix`: a `number` representing the prefix of the public key (`4` for uncompressed, `2` or `3` for compressed).
-- `x`: a `bigint` representing the `x` coordinate of the public key.
-- `y`: (if uncompressed) a `bigint` representing the `y` coordinate of the public key.
+- `x`: a 32-byte `Hex` string representing the `x` coordinate of the public key.
+- `y`: (if uncompressed) a 32-byte `Hex` string representing the `y` coordinate of the public key.
 
 An example Public Key:
 
@@ -264,14 +264,14 @@ import { PublicKey } from 'ox'
 // Uncompressed
 const publicKey = PublicKey.from({
   prefix: 4,
-  x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
-  y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+  x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+  y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
 })
 
 // Compressed
 const publicKey_2 = PublicKey.from({
   prefix: 2,
-  x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
+  x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
 })
 ```
 
@@ -283,8 +283,8 @@ You may need to serialize a Public Key into Hex or Bytes format for specific use
 import { PublicKey } from 'ox'
 
 const publicKey = PublicKey.from({
-  x: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-  y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+  x: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+  y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
 })
 const serialized = PublicKey.toHex(publicKey)
 //    ^?

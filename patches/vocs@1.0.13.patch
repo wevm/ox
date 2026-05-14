@@ -1,0 +1,17 @@
+diff --git a/_lib/vite/plugins/shiki/twoslasher.js b/_lib/vite/plugins/shiki/twoslasher.js
+index 99c817ca953da82037810cd47b97b7f332a332a4..c7427d4e8d0a27325856907b49fb304c2fba15e0 100644
+--- a/_lib/vite/plugins/shiki/twoslasher.js
++++ b/_lib/vite/plugins/shiki/twoslasher.js
+@@ -1,7 +1,11 @@
+ import { createTwoslasher } from 'twoslash';
+ import * as cache_ from '../../utils/cache.js';
+ import { hash } from '../../utils/hash.js';
+-const twoslasher_ = createTwoslasher();
++const twoslasher_ = createTwoslasher({
++    compilerOptions: {
++        moduleResolution: 100, // ts.ModuleResolutionKind.Bundler
++    },
++});
+ export function twoslasher({ cacheDir } = {}) {
+     const cache = cache_.twoslash({ cacheDir });
+     return (...parameters) => {

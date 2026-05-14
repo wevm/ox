@@ -62,6 +62,7 @@ export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
  *
  * @example
  * ```ts twoslash
+ * // @errors: 2322
  * import { Signature } from 'ox'
  *
  * Signature.assert({
@@ -919,10 +920,11 @@ export declare namespace toTuple {
  *
  * @example
  * ```ts twoslash
+ * // @errors: 2322
  * import { Signature } from 'ox'
  *
  * const valid = Signature.validate({
- *   r: -'0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   r: '-0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
  * })

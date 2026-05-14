@@ -1,7 +1,7 @@
 // biome-ignore lint/correctness/noUnusedImports: _
 import React from 'react'
 import { defineConfig } from 'vocs'
-import pkg from '../src/package.json'
+import pkg from '../package.json'
 import { sidebar, topNav } from './config-generated'
 
 export default defineConfig({

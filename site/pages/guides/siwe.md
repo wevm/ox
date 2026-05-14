@@ -115,7 +115,7 @@ Now that we have our message and signature, we can validate them to confirm the 
 
 ```ts twoslash [Server]
 // @errors: 2322
-import { Address, Hash, Hex, PersonalMessage, Secp256k1, Siwe } from 'ox'
+import { Address, Hex, PersonalMessage, Secp256k1, Siwe } from 'ox'
 
 function handler() {
   const payload = {
@@ -136,10 +136,9 @@ function handler() {
   if (!isValid) return false
 
   const personalMessage = PersonalMessage.encode(Hex.fromString(payload.message))
-  const hash = Hash.keccak256(personalMessage)
   const verified = Address.isEqual(
     Address.from(parsed.address),
-    Secp256k1.recoverAddress({ hash, signature: payload.signature }),
+    Secp256k1.recoverAddress({ payload: personalMessage, signature: payload.signature }),
   )
   return verified
 }
