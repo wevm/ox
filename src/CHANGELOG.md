@@ -1,5 +1,13 @@
 # ox
 
+## 0.14.21
+
+### Patch Changes
+
+- [#246](https://github.com/wevm/ox/pull/246) [`32cf459`](https://github.com/wevm/ox/commit/32cf459b263edf8ffb937578e79b5792b0166294) Thanks [@0xrusowsky](https://github.com/0xrusowsky)! - Added `TxEnvelopeTempo.encodeForSigning` to expose the raw Tempo sender-signing preimage bytes.
+
+- [#248](https://github.com/wevm/ox/pull/248) [`e0474e9`](https://github.com/wevm/ox/commit/e0474e982e2d5f961ac1c0f966e542d201c3f1fa) Thanks [@jxom](https://github.com/jxom)! - Added `blockTimestamp` support to transaction RPC conversions.
+
 ## 0.14.20
 
 ### Patch Changes

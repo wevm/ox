@@ -50,7 +50,7 @@ export type Base<
   /** Number of block containing this transaction or `null` if pending */
   blockNumber: pending extends true ? null : bigintType
   /** Timestamp (in seconds) of the block containing this transaction, or `null` if pending. */
-  blockTimestamp?: (pending extends true ? null : bigintType) | undefined
+  blockTimestamp?: pending extends true ? null : bigintType | undefined
   /** Chain ID that this transaction is valid on. */
   chainId: numberType
   /** @alias `input` Added for TransactionEnvelope - Transaction compatibility. */
@@ -291,8 +291,12 @@ export function fromRpc<
   transaction_.blockNumber = transaction.blockNumber
     ? BigInt(transaction.blockNumber)
     : null
-  if (transaction.blockTimestamp)
-    transaction_.blockTimestamp = BigInt(transaction.blockTimestamp)
+  if ('blockTimestamp' in transaction)
+    transaction_.blockTimestamp = transaction.blockTimestamp
+      ? BigInt(transaction.blockTimestamp)
+      : transaction.blockTimestamp === null
+        ? null
+        : undefined
   transaction_.data = transaction.input
   transaction_.gas = BigInt(transaction.gas ?? 0n)
   transaction_.nonce = BigInt(transaction.nonce ?? 0n)
@@ -381,6 +385,7 @@ export function toRpc<pending extends boolean = false>(
       : null
   if (typeof transaction.blockTimestamp === 'bigint')
     rpc.blockTimestamp = Hex.fromNumber(transaction.blockTimestamp)
+  else if (transaction.blockTimestamp === null) rpc.blockTimestamp = null
   rpc.from = transaction.from
   rpc.gas = Hex.fromNumber(transaction.gas ?? 0n)
   rpc.hash = transaction.hash

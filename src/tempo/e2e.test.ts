@@ -445,7 +445,7 @@ test('behavior: default (p256 - webcrypto)', async () => {
       signature,
       transactionIndex,
       ...rest
-    } = response as any
+    } = response
 
     expect(blockNumber).toBeDefined()
     expect(blockHash).toBeDefined()
