@@ -265,6 +265,11 @@
       "src": "./src/core/BinaryStateTree.ts",
       "default": "./dist/core/BinaryStateTree.js"
     },
+    "./BlobCells": {
+      "types": "./dist/core/BlobCells.d.ts",
+      "src": "./src/core/BlobCells.ts",
+      "default": "./dist/core/BlobCells.js"
+    },
     "./Blobs": {
       "types": "./dist/core/Blobs.d.ts",
       "src": "./src/core/Blobs.ts",

@@ -1,9 +1,10 @@
+import * as BlobCells from './BlobCells.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as Cursor from './internal/cursor.js'
-import type { Compute, Mutable, OneOf, UnionCompute } from './internal/types.js'
+import type { Compute } from './internal/types.js'
 import * as Kzg from './Kzg.js'
 
 /** Blob limit per transaction. */
@@ -33,18 +34,6 @@ export type Blob<type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes> =
 /** A list of {@link ox#Blobs.Blob}. */
 export type Blobs<type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes> =
   readonly Blob<type>[]
-
-/** Type for a Blob Sidecar that contains a blob, as well as its KZG commitment and proof. */
-export type BlobSidecar<
-  type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes,
-> = Compute<{
-  /** The blob associated with the transaction. */
-  blob: type
-  /** The KZG commitment corresponding to this blob. */
-  commitment: type
-  /** The KZG proof corresponding to this blob and commitment. */
-  proof: type
-}>
 
 /**
  * Transform a list of Commitments to Blob Versioned Hashes.
@@ -349,99 +338,6 @@ export declare namespace from {
 }
 
 /**
- * Transforms a list of {@link ox#Blobs.BlobSidecars} to their Blob Versioned Hashes.
- *
- * @example
- * ```ts twoslash
- * // @noErrors
- * import { Blobs } from 'ox'
- *
- * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars) // [!code focus]
- * ```
- *
- * @example
- * ### Configuring Return Type
- *
- * It is possible to configure the return type for the Versioned Hashes with the `as` option.
- *
- * ```ts twoslash
- * // @noErrors
- * import { Blobs } from 'ox'
- * import { kzg } from './kzg'
- *
- * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars, {
- *   as: 'Bytes', // [!code focus]
- * })
- * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
- * ```
- *
- * @example
- * ### Versioning Hashes
- *
- * It is possible to configure the version for the Versioned Hashes with the `version` option.
- *
- * ```ts twoslash
- * // @noErrors
- * import { Blobs } from 'ox'
- * import { kzg } from './kzg'
- *
- * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const versionedHashes = Blobs.sidecarsToVersionedHashes(sidecars, {
- *   version: 2, // [!code focus]
- * })
- * ```
- *
- * @param sidecars - The {@link ox#Blobs.BlobSidecars} to transform to Blob Versioned Hashes.
- * @param options - Options.
- * @returns The versioned hashes.
- */
-export function sidecarsToVersionedHashes<
-  const sidecars extends BlobSidecars,
-  as extends 'Hex' | 'Bytes' =
-    | (sidecars extends BlobSidecars<Hex.Hex> ? 'Hex' : never)
-    | (sidecars extends BlobSidecars<Bytes.Bytes> ? 'Bytes' : never),
->(
-  sidecars: sidecars | BlobSidecars,
-  options: sidecarsToVersionedHashes.Options<as> = {},
-): sidecarsToVersionedHashes.ReturnType<as> {
-  const { version } = options
-
-  const as =
-    options.as ?? (typeof sidecars[0]!.blob === 'string' ? 'Hex' : 'Bytes')
-
-  const hashes: Uint8Array[] | Hex.Hex[] = []
-  for (const { commitment } of sidecars) {
-    hashes.push(
-      commitmentToVersionedHash(commitment, {
-        as,
-        version,
-      }) as any,
-    )
-  }
-  return hashes as any
-}
-
-export declare namespace sidecarsToVersionedHashes {
-  type Options<as extends 'Hex' | 'Bytes' | undefined = undefined> = {
-    /** Return type. */
-    as?: as | 'Hex' | 'Bytes' | undefined
-    /** Version to tag onto the hashes. */
-    version?: number | undefined
-  }
-
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
-    | (as extends 'Bytes' ? readonly Bytes.Bytes[] : never)
-    | (as extends 'Hex' ? readonly Hex.Hex[] : never)
-
-  type ErrorType = commitmentToVersionedHash.ErrorType | Errors.GlobalErrorType
-}
-
-/**
  * Transforms Ox-shaped {@link ox#Blobs.Blobs} into the originating data.
  *
  * @example
@@ -657,7 +553,10 @@ export declare namespace toBytes {
 }
 
 /**
- * Compute the proofs for a list of {@link ox#Blobs.Blobs} and their commitments.
+ * Compute the flat list of PeerDAS (EIP-7594) cell KZG proofs for a list of
+ * {@link ox#Blobs.Blobs}. Returns `128 * blobs.length` proofs, where
+ * `proofs[i * 128 + j]` is the proof for cell `j` of `blobs[i]`'s extended
+ * form.
  *
  * @example
  * ```ts twoslash
@@ -666,165 +565,80 @@ export declare namespace toBytes {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const commitments = Blobs.toCommitments(blobs, { kzg })
- * const proofs = Blobs.toProofs(blobs, { commitments, kzg }) // [!code focus]
+ * const cellProofs = Blobs.toCellProofs(blobs, { kzg }) // [!code focus]
  * ```
  *
- * @param blobs - The {@link ox#Blobs.Blobs} to compute proofs for.
+ * @example
+ * ### Configuring Return Type
+ *
+ * It is possible to configure the return type with the `as` option.
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Blobs } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const blobs = Blobs.from('0xdeadbeef')
+ * const cellProofs = Blobs.toCellProofs(blobs, {
+ *   as: 'Bytes', // [!code focus]
+ *   kzg,
+ * })
+ * // @log: [Uint8Array [ ... ], Uint8Array [ ... ], ...]
+ * ```
+ *
+ * @param blobs - The {@link ox#Blobs.Blobs} to transform to cell proofs.
  * @param options - Options.
- * @returns The Blob proofs.
+ * @returns The flat list of cell KZG proofs.
  */
-export function toProofs<
-  const blobs extends readonly Bytes.Bytes[] | readonly Hex.Hex[],
-  const commitments extends readonly Bytes.Bytes[] | readonly Hex.Hex[],
+export function toCellProofs<
+  const blobs extends Blobs<Bytes.Bytes> | Blobs<Hex.Hex>,
   as extends 'Hex' | 'Bytes' =
-    | (blobs extends readonly Hex.Hex[] ? 'Hex' : never)
-    | (blobs extends readonly Bytes.Bytes[] ? 'Bytes' : never),
+    | (blobs extends Blobs<Hex.Hex> ? 'Hex' : never)
+    | (blobs extends Blobs<Bytes.Bytes> ? 'Bytes' : never),
 >(
   blobs: blobs | Blobs<Bytes.Bytes> | Blobs<Hex.Hex>,
-  options: toProofs.Options<blobs, commitments, as>,
-): toProofs.ReturnType<as> {
+  options: toCellProofs.Options<as>,
+): toCellProofs.ReturnType<as> {
   const { kzg } = options
-
   const as = options.as ?? (typeof blobs[0] === 'string' ? 'Hex' : 'Bytes')
 
-  const blobs_ = (
-    typeof blobs[0] === 'string'
-      ? blobs.map((x) => Bytes.fromHex(x as any))
-      : blobs
-  ) as Bytes.Bytes[]
-  const commitments = (
-    typeof options.commitments[0] === 'string'
-      ? options.commitments.map((x) => Bytes.fromHex(x as any))
-      : options.commitments
-  ) as Bytes.Bytes[]
-
-  const proofs: Bytes.Bytes[] = []
-  for (let i = 0; i < blobs_.length; i++) {
-    const blob = blobs_[i]!
-    const commitment = commitments[i]!
-    proofs.push(Uint8Array.from(kzg.computeBlobKzgProof(blob, commitment)))
+  if (as === 'Bytes') {
+    const proofs: Bytes.Bytes[] = []
+    for (const blob of blobs) {
+      const { proofs: cellProofs } = BlobCells.fromBlob(
+        blob as Hex.Hex | Bytes.Bytes,
+        { kzg, as: 'Bytes' },
+      )
+      for (const proof of cellProofs) proofs.push(proof)
+    }
+    return proofs as never
   }
 
-  return (
-    as === 'Bytes' ? proofs : proofs.map((x) => Hex.fromBytes(x))
-  ) as never
+  const proofs: Hex.Hex[] = []
+  for (const blob of blobs) {
+    const { proofs: cellProofs } = BlobCells.fromBlob(
+      blob as Hex.Hex | Bytes.Bytes,
+      { kzg, as: 'Hex' },
+    )
+    for (const proof of cellProofs) proofs.push(proof)
+  }
+  return proofs as never
 }
 
-export declare namespace toProofs {
-  type Options<
-    blobs extends Blobs<Bytes.Bytes> | Blobs<Hex.Hex> =
-      | Blobs<Bytes.Bytes>
-      | Blobs<Hex.Hex>,
-    commitments extends readonly Bytes.Bytes[] | readonly Hex.Hex[] =
-      | readonly Bytes.Bytes[]
-      | readonly Hex.Hex[],
-    as extends 'Hex' | 'Bytes' =
-      | (blobs extends Blobs<Hex.Hex> ? 'Hex' : never)
-      | (blobs extends Blobs<Bytes.Bytes> ? 'Bytes' : never),
-  > = {
-    /** Commitments for the blobs. */
-    commitments: (commitments | readonly Bytes.Bytes[] | readonly Hex.Hex[]) &
-      (commitments extends blobs
-        ? {}
-        : `commitments must be the same type as blobs`)
+export declare namespace toCellProofs {
+  type Options<as extends 'Hex' | 'Bytes' = 'Hex'> = {
     /** KZG implementation. */
-    kzg: Pick<Kzg.Kzg, 'computeBlobKzgProof'>
+    kzg: Pick<Kzg.Kzg, 'computeCellsAndKzgProofs'>
     /** Return type. */
     as?: as | 'Hex' | 'Bytes' | undefined
   }
 
-  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex' | 'Bytes'> =
+  type ReturnType<as extends 'Hex' | 'Bytes' = 'Hex'> = Compute<
     | (as extends 'Bytes' ? readonly Bytes.Bytes[] : never)
     | (as extends 'Hex' ? readonly Hex.Hex[] : never)
-
-  type ErrorType =
-    | Hex.fromBytes.ErrorType
-    | Bytes.fromHex.ErrorType
-    | Errors.GlobalErrorType
-}
-
-/**
- * Transforms {@link ox#Blobs.Blobs} into a {@link ox#Blobs.BlobSidecars} array.
- *
- * @example
- * ```ts twoslash
- * // @noErrors
- * import { Blobs } from 'ox'
- * import { kzg } from './kzg'
- *
- * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg }) // [!code focus]
- * ```
- *
- * @example
- * You can also provide your own commitments and proofs if you do not want `toSidecars`
- * to compute them.
- *
- * ```ts twoslash
- * // @noErrors
- * import { Blobs } from 'ox'
- * import { kzg } from './kzg'
- *
- * const blobs = Blobs.from('0xdeadbeef')
- * const commitments = Blobs.toCommitments(blobs, { kzg })
- * const proofs = Blobs.toProofs(blobs, { commitments, kzg })
- *
- * const sidecars = Blobs.toSidecars(blobs, { commitments, kzg, proofs }) // [!code focus]
- * ```
- *
- * @param blobs - The {@link ox#Blobs.Blobs} to transform into {@link ox#Blobs.BlobSidecars}.
- * @param options - Options.
- * @returns The {@link ox#Blobs.BlobSidecars}.
- */
-export function toSidecars<
-  const blobs extends Blobs<Hex.Hex> | Blobs<Bytes.Bytes>,
->(
-  blobs: blobs,
-  options: toSidecars.Options<blobs>,
-): toSidecars.ReturnType<blobs> {
-  const { kzg } = options
-
-  const commitments = options.commitments ?? toCommitments(blobs, { kzg: kzg! })
-  const proofs =
-    options.proofs ??
-    toProofs(blobs, { commitments: commitments as any, kzg: kzg! })
-
-  const sidecars: Mutable<BlobSidecars> = []
-  for (let i = 0; i < blobs.length; i++)
-    sidecars.push({
-      blob: blobs[i]!,
-      commitment: commitments[i]!,
-      proof: proofs[i]!,
-    })
-
-  return sidecars as never
-}
-
-export declare namespace toSidecars {
-  type Options<
-    blobs extends Blobs<Hex.Hex> | Blobs<Bytes.Bytes> =
-      | Blobs<Hex.Hex>
-      | Blobs<Bytes.Bytes>,
-  > = {
-    kzg?: Kzg.Kzg | undefined
-  } & OneOf<
-    | {}
-    | {
-        /** Commitment for each blob. */
-        commitments: blobs | readonly Hex.Hex[] | readonly Bytes.Bytes[]
-        /** Proof for each blob. */
-        proofs: blobs | readonly Hex.Hex[] | readonly Bytes.Bytes[]
-      }
   >
 
-  type ReturnType<blobs extends Blobs<Hex.Hex> | Blobs<Bytes.Bytes>> =
-    UnionCompute<
-      | (blobs extends Blobs<Hex.Hex> ? BlobSidecars<Hex.Hex> : never)
-      | (blobs extends Blobs<Bytes.Bytes> ? BlobSidecars<Bytes.Bytes> : never)
-    >
-
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = BlobCells.fromBlob.ErrorType | Errors.GlobalErrorType
 }
 
 /**
@@ -875,11 +689,6 @@ export declare namespace toVersionedHashes {
     | commitmentsToVersionedHashes.ErrorType
     | Errors.GlobalErrorType
 }
-
-/** A list of {@link ox#Blobs.BlobSidecar}. */
-export type BlobSidecars<
-  type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes,
-> = readonly Compute<BlobSidecar<type>>[]
 
 /** Thrown when the blob size is too large. */
 export class BlobSizeTooLargeError extends Errors.BaseError {

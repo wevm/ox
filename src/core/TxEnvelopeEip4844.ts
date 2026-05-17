@@ -1,7 +1,7 @@
 import * as AccessList from './AccessList.js'
 import * as Blobs from './Blobs.js'
 import type * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as Tx from './internal/tx.js'
@@ -34,10 +34,36 @@ export type TxEnvelopeEip4844<
     maxFeePerGas?: bigintType | undefined
     /** Max priority fee per gas (in wei). */
     maxPriorityFeePerGas?: bigintType | undefined
-    /** The sidecars associated with this transaction. When defined, the envelope is in the "network wrapper" format. */
-    sidecars?: readonly Blobs.BlobSidecar<Hex.Hex>[] | undefined
+    /**
+     * PeerDAS (EIP-7594) sidecars associated with this transaction. When
+     * defined, the envelope serializes into the 5-element "PooledTransactions"
+     * network wrapper (`rlp([tx_body, wrapper_version, blobs, commitments,
+     * cell_proofs])`).
+     */
+    sidecars?: Sidecars<Hex.Hex> | undefined
   }
 >
+
+/**
+ * PeerDAS (EIP-7594) sidecars carried alongside a type-3 transaction in the
+ * `PooledTransactions` p2p message.
+ *
+ * - `blobs` — one 131,072-byte payload per blob (same shape as 4844).
+ * - `commitments` — one KZG commitment per blob.
+ * - `cellProofs` — flat list of `CELLS_PER_EXT_BLOB * blobs.length` cell KZG
+ *   proofs (128 per blob). `cellProofs[i * 128 + j]` is the proof for cell
+ *   `j` of `blobs[i]`'s extended form.
+ */
+export type Sidecars<
+  type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes,
+> = {
+  blobs: readonly Blobs.Blob<type>[]
+  commitments: readonly type[]
+  cellProofs: readonly type[]
+}
+
+/** Current wire `wrapper_version` for the PeerDAS PooledTransactions wrapper. */
+export const wrapperVersion = '0x01' as const
 
 export type Rpc<signed extends boolean = boolean> = TxEnvelopeEip4844<
   signed,
@@ -136,16 +162,40 @@ export function deserialize(
 ): Compute<TxEnvelopeEip4844> {
   const transactionOrWrapperArray = Rlp.toBytes(Hex.slice(serialized, 1))
 
-  const hasNetworkWrapper = transactionOrWrapperArray.length === 4
+  // PeerDAS (EIP-7594) PooledTransactions wrapper:
+  //   rlp([tx_body, wrapper_version, blobs, commitments, cell_proofs])
+  const hasWrapper =
+    transactionOrWrapperArray.length === 5 &&
+    Array.isArray(transactionOrWrapperArray[0]) &&
+    !Array.isArray(transactionOrWrapperArray[1]) &&
+    transactionOrWrapperArray[1] instanceof Uint8Array &&
+    transactionOrWrapperArray[1].length === 1 &&
+    transactionOrWrapperArray[1][0] === 0x01
 
-  const transactionArray = hasNetworkWrapper
-    ? (transactionOrWrapperArray[0]! as ReadonlyArray<Bytes.Bytes>)
-    : (transactionOrWrapperArray as ReadonlyArray<Bytes.Bytes>)
-  const wrapperArray = hasNetworkWrapper
-    ? (transactionOrWrapperArray.slice(1) as ReadonlyArray<
-        ReadonlyArray<Bytes.Bytes>
-      >)
-    : []
+  // Legacy 4-element wrapper (pre-PeerDAS) is no longer accepted.
+  if (
+    !hasWrapper &&
+    transactionOrWrapperArray.length === 4 &&
+    Array.isArray(transactionOrWrapperArray[0])
+  )
+    throw new LegacyBlobSidecarWrapperError({ serialized })
+
+  const transactionArray = (
+    hasWrapper
+      ? (transactionOrWrapperArray[0] as ReadonlyArray<Bytes.Bytes>)
+      : transactionOrWrapperArray
+  ) as readonly (Bytes.Bytes | ReadonlyArray<Bytes.Bytes>)[]
+
+  let wrapperBlobs: ReadonlyArray<Bytes.Bytes> | undefined
+  let wrapperCommitments: ReadonlyArray<Bytes.Bytes> | undefined
+  let wrapperCellProofs: ReadonlyArray<Bytes.Bytes> | undefined
+  if (hasWrapper) {
+    wrapperBlobs = transactionOrWrapperArray[2] as ReadonlyArray<Bytes.Bytes>
+    wrapperCommitments =
+      transactionOrWrapperArray[3] as ReadonlyArray<Bytes.Bytes>
+    wrapperCellProofs =
+      transactionOrWrapperArray[4] as ReadonlyArray<Bytes.Bytes>
+  }
 
   const [
     chainId,
@@ -162,8 +212,7 @@ export function deserialize(
     yParity,
     r,
     s,
-  ] = transactionArray as readonly (Bytes.Bytes | ReadonlyArray<Bytes.Bytes>)[]
-  const [blobs, commitments, proofs] = wrapperArray
+  ] = transactionArray
 
   if (!(transactionArray.length === 11 || transactionArray.length === 14))
     throw new TransactionEnvelope.InvalidSerializedError({
@@ -226,36 +275,33 @@ export function deserialize(
     transaction.accessList = AccessList.fromTupleList(
       Tx.bytesTreeToHex(accessList as never) as never,
     )
-  if (blobs && commitments && proofs) {
-    // Validate sidecar wrapper cardinality before zipping; otherwise
-    // `Blobs.toSidecars` blindly indexes `commitments[i]!` / `proofs[i]!`
-    // and fabricates `undefined` entries from a malformed payload.
-    const blobsArr = blobs as ReadonlyArray<Bytes.Bytes>
-    const commitmentsArr = commitments as ReadonlyArray<Bytes.Bytes>
-    const proofsArr = proofs as ReadonlyArray<Bytes.Bytes>
-    const versionedHashesArr = blobVersionedHashes as ReadonlyArray<Bytes.Bytes>
+
+  if (hasWrapper) {
+    const blobs = wrapperBlobs as ReadonlyArray<Bytes.Bytes>
+    const commitments = wrapperCommitments as ReadonlyArray<Bytes.Bytes>
+    const cellProofs = wrapperCellProofs as ReadonlyArray<Bytes.Bytes>
+    // PeerDAS cardinality: one commitment per blob, 128 cell proofs per blob,
+    // one versioned hash per blob.
     if (
-      blobsArr.length !== commitmentsArr.length ||
-      blobsArr.length !== proofsArr.length ||
-      blobsArr.length !== versionedHashesArr.length
+      blobs.length !== commitments.length ||
+      cellProofs.length !== blobs.length * 128 ||
+      blobs.length !== transaction.blobVersionedHashes.length
     )
       throw new TransactionEnvelope.InvalidSerializedError({
         attributes: {
-          blobVersionedHashes,
-          blobs: blobsArr.length,
-          commitments: commitmentsArr.length,
-          proofs: proofsArr.length,
+          blobs: blobs.length,
+          blobVersionedHashes: transaction.blobVersionedHashes.length,
+          cellProofs: cellProofs.length,
+          commitments: commitments.length,
         },
         serialized,
         type,
       })
-    transaction.sidecars = Blobs.toSidecars(
-      blobsArr.map((b) => Tx.bytesToHex(b)) as Hex.Hex[],
-      {
-        commitments: commitmentsArr.map((b) => Tx.bytesToHex(b)) as Hex.Hex[],
-        proofs: proofsArr.map((b) => Tx.bytesToHex(b)) as Hex.Hex[],
-      },
-    )
+    transaction.sidecars = {
+      blobs: blobs.map((b) => Tx.bytesToHex(b)),
+      commitments: commitments.map((c) => Tx.bytesToHex(c)),
+      cellProofs: cellProofs.map((p) => Tx.bytesToHex(p)),
+    }
   }
 
   const signature =
@@ -315,8 +361,7 @@ export declare namespace deserialize {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(sidecars)
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -334,7 +379,6 @@ export declare namespace deserialize {
  * })
  *
  * const envelope_signed = TxEnvelopeEip4844.from(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  * // @log: {
@@ -508,9 +552,11 @@ export function hash<presign extends boolean = false>(
   return Hash.keccak256(
     serialize({
       ...envelope,
+      // Hashing must operate on the bare type-3 envelope, never the
+      // PeerDAS PooledTransactions network wrapper.
+      sidecars: undefined,
       ...(presign
         ? {
-            sidecars: undefined,
             r: undefined,
             s: undefined,
             yParity: undefined,
@@ -569,8 +615,7 @@ export declare namespace hash {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
- * const blobVersionedHashes = Blobs.sidecarsToVersionedHashes(blobs)
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -588,7 +633,6 @@ export declare namespace hash {
  * })
  *
  * const serialized = TxEnvelopeEip4844.serialize(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
  *   signature, // [!code focus]
  * }) // [!code focus]
  *
@@ -640,33 +684,30 @@ export function serialize(
   ] as const
 
   const sidecars = options.sidecars || envelope.sidecars
-  const blobs: Hex.Hex[] = []
-  const commitments: Hex.Hex[] = []
-  const proofs: Hex.Hex[] = []
-  if (sidecars)
-    for (let i = 0; i < sidecars.length; i++) {
-      const { blob, commitment, proof } = sidecars[i]!
-      blobs.push(blob)
-      commitments.push(commitment)
-      proofs.push(proof)
-    }
+  if (sidecars) {
+    // PeerDAS (EIP-7594) PooledTransactions wrapper:
+    //   rlp([tx_body, wrapper_version, blobs, commitments, cell_proofs])
+    return Hex.concat(
+      '0x03',
+      Rlp.fromHex([
+        serialized,
+        wrapperVersion,
+        sidecars.blobs as readonly Hex.Hex[],
+        sidecars.commitments as readonly Hex.Hex[],
+        sidecars.cellProofs as readonly Hex.Hex[],
+      ]),
+    ) as Serialized
+  }
 
-  return Hex.concat(
-    '0x03',
-    sidecars
-      ? // If sidecars are provided, envelope turns into a "network wrapper":
-        Rlp.fromHex([serialized, blobs, commitments, proofs])
-      : // Otherwise, standard envelope is used:
-        Rlp.fromHex(serialized),
-  ) as Serialized
+  return Hex.concat('0x03', Rlp.fromHex(serialized)) as Serialized
 }
 
 export declare namespace serialize {
   type Options = {
     /** Signature to append to the serialized Transaction Envelope. */
     signature?: Signature.Signature | undefined
-    /** Sidecars to append to the serialized Transaction Envelope. */
-    sidecars?: Blobs.BlobSidecars<Hex.Hex> | undefined
+    /** PeerDAS sidecars to append, producing the 5-element network wrapper. */
+    sidecars?: Sidecars<Hex.Hex> | undefined
   }
 
   type ErrorType =
@@ -775,4 +816,24 @@ export function validate(envelope: PartialBy<TxEnvelopeEip4844, 'type'>) {
 
 export declare namespace validate {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Thrown when attempting to deserialize a legacy 4-element EIP-4844 network
+ * wrapper. Only the PeerDAS (EIP-7594) 5-element wrapper with
+ * `wrapper_version = 0x01` is accepted.
+ */
+export class LegacyBlobSidecarWrapperError extends Errors.BaseError {
+  override readonly name = 'TxEnvelopeEip4844.LegacyBlobSidecarWrapperError'
+  constructor({ serialized }: { serialized: Hex.Hex }) {
+    super(
+      'Legacy 4-element EIP-4844 blob-sidecar network wrapper is not supported.',
+      {
+        metaMessages: [
+          `Serialized Transaction: "${serialized}"`,
+          'Expected: PeerDAS 5-element wrapper `rlp([tx_body, wrapper_version=0x01, blobs, commitments, cell_proofs])`.',
+        ],
+      },
+    )
+  }
 }

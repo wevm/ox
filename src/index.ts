@@ -1002,6 +1002,25 @@ export * as Bech32m from './core/Bech32m.js'
 export * as BinaryStateTree from './core/BinaryStateTree.js'
 
 /**
+ * Cell-level helpers for [PeerDAS (EIP-7594)](https://eips.ethereum.org/EIPS/eip-7594):
+ * deriving the 128 cells and cell KZG proofs of an extended blob, and verifying
+ * cell proofs against blob commitments.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { BlobCells, Blobs } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const [blob] = Blobs.from('0xdeadbeef')
+ * const { cells, proofs } = BlobCells.fromBlob(blob, { kzg })
+ * ```
+ *
+ * @category Blobs (EIP-7594)
+ */
+export * as BlobCells from './core/BlobCells.js'
+
+/**
  * Utility functions for working with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
  *
  * @category Blobs (EIP-4844)
@@ -3005,7 +3024,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -3024,7 +3042,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  * }) // [!code focus]
  *
  * const envelope_signed = TxEnvelopeEip4844.from(envelope, {
- *   sidecars,
  *   signature
  * })
  * ```
@@ -3070,7 +3087,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  * // Compute the Blob Versioned Hashes.
  * const blobs = Blobs.from('0xdeadbeef')
  * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeEip4844.from({
@@ -3092,7 +3108,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *
  * // Serialize the Envelope with the Signature. // [!code focus]
  * const serialized = TxEnvelopeEip4844.serialize(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
  *   signature  // [!code focus]
  * }) // [!code focus]
  *

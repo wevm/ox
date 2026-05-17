@@ -21,6 +21,7 @@ test('exports', () => {
       "Base64",
       "Bech32m",
       "BinaryStateTree",
+      "BlobCells",
       "Blobs",
       "Block",
       "BlockOverrides",
