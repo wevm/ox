@@ -6,7 +6,6 @@ import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TempoAddress from './TempoAddress.js'
 
 /**
  * Key authorization for provisioning access keys.
@@ -62,12 +61,7 @@ export type KeyAuthorization<
     })
 
 /** Input type for a Key Authorization. */
-export type Input = KeyAuthorization<
-  false,
-  bigint,
-  number,
-  TempoAddress.Address
->
+export type Input = KeyAuthorization<false, bigint, number, Address.Address>
 
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
@@ -353,37 +347,20 @@ export function from<
 ): from.ReturnType<authorization, signature> {
   if ('keyId' in authorization) return fromRpc(authorization as Rpc) as never
   const auth = authorization as KeyAuthorization & {
-    limits?: readonly { token: TempoAddress.Address; limit: bigint }[]
+    limits?: readonly { token: Address.Address; limit: bigint }[]
     scopes?: readonly {
-      address: TempoAddress.Address
+      address: Address.Address
       selector?: Hex.Hex | string
-      recipients?: readonly TempoAddress.Address[]
+      recipients?: readonly Address.Address[]
     }[]
   }
   const resolved = {
     ...auth,
-    address: TempoAddress.resolve(auth.address as TempoAddress.Address),
-    ...(auth.limits
-      ? {
-          limits: auth.limits.map((l) => ({
-            ...l,
-            token: TempoAddress.resolve(l.token as TempoAddress.Address),
-          })),
-        }
-      : {}),
     ...(auth.scopes
       ? {
           scopes: auth.scopes.map((scope) => ({
             ...scope,
-            address: TempoAddress.resolve(scope.address),
             selector: resolveSelector(scope.selector),
-            ...(scope.recipients
-              ? {
-                  recipients: scope.recipients.map((r) =>
-                    TempoAddress.resolve(r),
-                  ),
-                }
-              : {}),
           })),
         }
       : {}),
@@ -414,12 +391,10 @@ export declare namespace from {
   > = Compute<
     authorization extends Rpc
       ? Signed
-      : TempoAddress.ResolveAddresses<
-          authorization &
-            (signature extends SignatureEnvelope.from.Value
-              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-              : {})
-        >
+      : authorization &
+          (signature extends SignatureEnvelope.from.Value
+            ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+            : {})
   >
 
   type ErrorType = Errors.GlobalErrorType
@@ -831,7 +806,7 @@ export function toRpc(authorization: Signed): Rpc {
   return {
     chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
     expiry: typeof expiry === 'number' ? Hex.fromNumber(expiry) : null,
-    keyId: TempoAddress.resolve(address),
+    keyId: address,
     keyType: type,
     limits: limits?.map(({ token, limit, period }) => ({
       token,

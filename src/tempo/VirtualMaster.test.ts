@@ -1,8 +1,7 @@
-import { TempoAddress, VirtualMaster } from 'ox/tempo'
+import { VirtualMaster } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
 const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-const tempoAddress = TempoAddress.format(address)
 const salt =
   '0x00000000000000000000000000000000000000000000000000000000abf52baf'
 const masterId = '0x58e21090'
@@ -16,15 +15,6 @@ describe('getRegistrationHash', () => {
     expect(
       VirtualMaster.getRegistrationHash({
         address,
-        salt,
-      }),
-    ).toBe(registrationHash)
-  })
-
-  test('tempo address', () => {
-    expect(
-      VirtualMaster.getRegistrationHash({
-        address: tempoAddress,
         salt,
       }),
     ).toBe(registrationHash)

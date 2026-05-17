@@ -2,7 +2,6 @@ import { keccak_256 } from '@noble/hashes/sha3.js'
 import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Hex from '../core/Hex.js'
-import * as TempoAddress from './TempoAddress.js'
 
 const tip20Prefix = '0x20c0'
 
@@ -53,11 +52,11 @@ export function from(tokenIdOrAddress: TokenIdOrAddress | number): TokenId {
  * @param address - The token address.
  * @returns The token ID.
  */
-export function fromAddress(address: TempoAddress.Address): TokenId {
-  const resolved = TempoAddress.unwrap(address)
+export function fromAddress(address: Address.Address): TokenId {
+  const resolved = address
   // The TIP-20 prefix check is case-insensitive, but most inputs are already
-  // lowercase (hex inputs and the unwrapped form of Tempo-prefixed addresses),
-  // so peek the prefix bytes before falling back to a full `.toLowerCase()`.
+  // lowercase, so peek the prefix bytes before falling back to a full
+  // `.toLowerCase()`.
   const c2 = resolved.charCodeAt(2)
   const c3 = resolved.charCodeAt(3)
   const c4 = resolved.charCodeAt(4)
@@ -88,12 +87,11 @@ export function fromAddress(address: TempoAddress.Address): TokenId {
  * @returns The address.
  */
 export function toAddress(
-  tokenId: TokenIdOrAddress<TempoAddress.Address>,
+  tokenId: TokenIdOrAddress<Address.Address>,
 ): Address.Address {
   if (typeof tokenId === 'string') {
-    const resolved = TempoAddress.resolve(tokenId as TempoAddress.Address)
-    Address.assert(resolved)
-    return resolved
+    Address.assert(tokenId)
+    return tokenId
   }
 
   const tokenIdHex = Hex.fromNumber(tokenId, { size: 18 })
@@ -125,7 +123,7 @@ export function compute(value: compute.Value): bigint {
   // followed by the 32-byte salt. Build that 64-byte buffer directly and hash
   // it, instead of round-tripping through `AbiParameters.encode`.
   const buffer = new Uint8Array(64)
-  const addressBytes = Bytes.fromHex(TempoAddress.unwrap(value.sender))
+  const addressBytes = Bytes.fromHex(value.sender)
   buffer.set(addressBytes, 12)
   buffer.set(Bytes.fromHex(value.salt, { size: 32 }), 32)
   const hash = keccak_256(buffer)
@@ -139,7 +137,7 @@ export declare namespace compute {
   export type Value = {
     /** The salt (32 bytes). */
     salt: Hex.Hex
-    /** The sender address. Accepts both hex and Tempo bech32m addresses. */
-    sender: TempoAddress.Address
+    /** The sender address. */
+    sender: Address.Address
   }
 }

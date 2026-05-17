@@ -1,6 +1,6 @@
+import type * as Address from '../core/Address.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 
 /**
@@ -36,8 +36,8 @@ export function from(value: from.Value): Hex.Hex {
 export declare namespace from {
   export type Value = {
     /** User token. */
-    userToken: TokenId.TokenIdOrAddress<TempoAddress.Address>
+    userToken: TokenId.TokenIdOrAddress<Address.Address>
     /** Validator token. */
-    validatorToken: TokenId.TokenIdOrAddress<TempoAddress.Address>
+    validatorToken: TokenId.TokenIdOrAddress<Address.Address>
   }
 }

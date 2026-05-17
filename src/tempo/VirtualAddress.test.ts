@@ -1,8 +1,7 @@
-import { TempoAddress, VirtualAddress } from 'ox/tempo'
+import { VirtualAddress } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
 const address = '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
-const tempoAddress = TempoAddress.format(address)
 
 describe('from', () => {
   test('default', () => {
@@ -34,15 +33,6 @@ describe('parse', () => {
     `)
   })
 
-  test('tempo address', () => {
-    expect(VirtualAddress.parse(tempoAddress)).toMatchInlineSnapshot(`
-      {
-        "masterId": "0x58e21090",
-        "userTag": "0x010203040506",
-      }
-    `)
-  })
-
   test('error: not virtual', () => {
     expect(() =>
       VirtualAddress.parse('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
@@ -66,7 +56,7 @@ describe('isVirtual', () => {
 
 describe('validate', () => {
   test('returns true for virtual address', () => {
-    expect(VirtualAddress.validate(tempoAddress)).toBe(true)
+    expect(VirtualAddress.validate(address)).toBe(true)
   })
 
   test('returns false for invalid value', () => {

@@ -650,11 +650,6 @@
       "src": "./src/tempo/SignatureEnvelope.ts",
       "default": "./dist/tempo/SignatureEnvelope.js"
     },
-    "./tempo/TempoAddress": {
-      "types": "./dist/tempo/TempoAddress.d.ts",
-      "src": "./src/tempo/TempoAddress.ts",
-      "default": "./dist/tempo/TempoAddress.js"
-    },
     "./tempo/Tick": {
       "types": "./dist/tempo/Tick.d.ts",
       "src": "./src/tempo/Tick.ts",

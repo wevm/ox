@@ -1,10 +1,10 @@
+import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
 import type { Call } from './TxEnvelopeTempo.js'
@@ -23,7 +23,7 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
-  addressType = TempoAddress.Address,
+  addressType = Address.Address,
 > = Compute<
   Omit<
     ox_TransactionRequest.TransactionRequest<bigintType, numberType, type>,
@@ -93,7 +93,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
     )
   if (request.calls)
     request_.calls = request.calls.map((call) => {
-      const mapped: Call<bigint, TempoAddress.Address> = {
+      const mapped: Call<bigint, Address.Address> = {
         to: call.to,
         data: call.data,
       }
@@ -186,14 +186,14 @@ export function toRpc(request: TransactionRequest): Rpc {
     )
   if (request.calls)
     request_rpc.calls = request.calls.map((call) => ({
-      to: call.to ? TempoAddress.resolve(call.to) : call.to,
+      to: call.to,
       value: call.value ? Hex.fromNumber(call.value) : '0x',
       data: call.data ?? '0x',
     }))
   else if (request.to || request.data || request.value)
     request_rpc.calls = [
       {
-        to: request.to ? TempoAddress.resolve(request.to) : undefined,
+        to: request.to ?? undefined,
         value: request.value ? Hex.fromNumber(request.value) : '0x',
         data: request.data ?? '0x',
       },

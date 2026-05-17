@@ -30,15 +30,6 @@ test('from', () => {
     validatorToken: 1n,
   })
   expect(poolId4).toBe(poolId1)
-
-  // Test with tempo address inputs
-  const tempoAddr0 = 'tempox0x20c0000000000000000000000000000000000000'
-  const tempoAddr1 = 'tempox0x20c0000000000000000000000000000000000001'
-  const poolId5 = PoolId.from({
-    userToken: tempoAddr0,
-    validatorToken: tempoAddr1,
-  })
-  expect(poolId5).toBe(poolId1)
 })
 
 test('order-independent', () => {

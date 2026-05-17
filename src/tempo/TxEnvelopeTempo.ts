@@ -17,7 +17,6 @@ import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 
 /**
@@ -123,13 +122,13 @@ export type TxEnvelopeTempo<
       })
 >
 
-/** Input type that accepts TempoAddress for `calls.to`, `from`, etc. */
+/** Input type for a Tempo transaction envelope. */
 export type Input = TxEnvelopeTempo<
   boolean,
   bigint,
   number,
   Type,
-  TempoAddress.Address
+  Address.Address
 >
 
 export type Rpc<signed extends boolean = boolean> = TxEnvelopeTempo<
@@ -427,7 +426,7 @@ export declare namespace deserialize {
  *   chainId: 1, // [!code focus]
  *   calls: [{ // [!code focus]
  *     data: '0xdeadbeef', // [!code focus]
- *     to: 'tempox0x0000000000000000000000000000000000000000', // [!code focus]
+ *     to: '0x0000000000000000000000000000000000000000', // [!code focus]
  *   }], // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
  *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
@@ -448,7 +447,7 @@ export declare namespace deserialize {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: 'tempox0x0000000000000000000000000000000000000000',
+ *     to: '0x0000000000000000000000000000000000000000',
  *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
@@ -511,19 +510,6 @@ export function from<
     typeof envelope === 'string' ? deserialize(envelope) : envelope
   ) as TxEnvelopeTempo
 
-  // Resolve TempoAddress inputs to hex addresses.
-  if (envelope_.from)
-    envelope_.from = TempoAddress.resolve(
-      envelope_.from as TempoAddress.Address,
-    )
-  if (envelope_.calls)
-    envelope_.calls = (envelope_.calls as readonly Call[]).map((call) => ({
-      ...call,
-      ...(call.to
-        ? { to: TempoAddress.resolve(call.to as TempoAddress.Address) }
-        : {}),
-    })) as readonly Call[]
-
   assert(envelope_)
 
   return {
@@ -552,15 +538,13 @@ export declare namespace from {
   > = Compute<
     envelope extends Hex.Hex
       ? TxEnvelopeTempo
-      : TempoAddress.ResolveAddresses<
-          Assign<
-            envelope,
-            (signature extends SignatureEnvelope.from.Value
-              ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
-              : {}) & {
-              readonly type: 'tempo'
-            }
-          >
+      : Assign<
+          envelope,
+          (signature extends SignatureEnvelope.from.Value
+            ? { signature: SignatureEnvelope.from.ReturnValue<signature> }
+            : {}) & {
+            readonly type: 'tempo'
+          }
         >
   >
 
@@ -588,7 +572,7 @@ export declare namespace from {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: 'tempox0x0000000000000000000000000000000000000000',
+ *     to: '0x0000000000000000000000000000000000000000',
  *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
@@ -610,7 +594,7 @@ export declare namespace from {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: 'tempox0x0000000000000000000000000000000000000000',
+ *     to: '0x0000000000000000000000000000000000000000',
  *   }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
@@ -661,7 +645,7 @@ export function serialize(
 
   // Encode calls as RLP list of [to, value, data] tuples
   const callsTupleList = calls.map((call) => [
-    call.to ? TempoAddress.resolve(call.to) : '0x',
+    call.to ?? '0x',
     call.value ? Hex.fromNumber(call.value) : '0x',
     call.data ?? '0x',
   ])
@@ -797,7 +781,7 @@ export declare namespace serialize {
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   }],
  *   nonce: 0n,
  * })
@@ -843,7 +827,7 @@ export declare namespace encodeForSigning {
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [{
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   }],
  *   nonce: 0n,
  * })
@@ -862,9 +846,7 @@ export function getSignPayload(
 ): getSignPayload.ReturnValue {
   const sigHash = hash(envelope, { presign: true })
   if (options.from)
-    return Hash.keccak256(
-      Hex.concat('0x04', sigHash, TempoAddress.resolve(options.from)),
-    )
+    return Hash.keccak256(Hex.concat('0x04', sigHash, options.from))
   return sigHash
 }
 
@@ -876,7 +858,7 @@ export declare namespace getSignPayload {
      * When provided, computes `keccak256(0x04 || sigHash || from)` instead of
      * the raw `sigHash`, binding the access key signature to the specific user account.
      */
-    from?: TempoAddress.Address | undefined
+    from?: Address.Address | undefined
   }
 
   type ReturnValue = Hex.Hex
@@ -897,7 +879,7 @@ export declare namespace getSignPayload {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -967,7 +949,7 @@ export declare namespace hash {
  *   chainId: 1,
  *   calls: [{
  *     data: '0xdeadbeef',
- *     to: 'tempox0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   }],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
@@ -975,7 +957,7 @@ export declare namespace hash {
  * })
  *
  * const payload = TxEnvelopeTempo.getFeePayerSignPayload(envelope, {
- *   sender: 'tempox0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
+ *   sender: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
  * }) // [!code focus]
  * // @log: '0x...'
  *
@@ -990,11 +972,10 @@ export function getFeePayerSignPayload(
   envelope: TxEnvelopeTempo,
   options: getFeePayerSignPayload.Options,
 ): getFeePayerSignPayload.ReturnValue {
-  const sender = TempoAddress.resolve(options.sender)
   const serialized = serialize(
     { ...envelope, signature: undefined },
     {
-      sender,
+      sender: options.sender,
       format: 'feePayer',
     },
   )
@@ -1006,7 +987,7 @@ export declare namespace getFeePayerSignPayload {
     /**
      * Sender address to cover the fee of.
      */
-    sender: TempoAddress.Address
+    sender: Address.Address
   }
 
   type ReturnValue = Hex.Hex

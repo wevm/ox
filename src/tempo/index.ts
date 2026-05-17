@@ -17,7 +17,7 @@ export type {}
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorization = AuthorizationTempo.from({
- *   address: 'tempox0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
  *   nonce: 40n,
  * })
@@ -58,7 +58,7 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  *   expiry: 1234567890,
  *   type: 'p256',
  *   limits: [{
- *     token: 'tempox0x20c0000000000000000000000000000000000001',
+ *     token: '0x20c0000000000000000000000000000000000001',
  *     limit: Value.from('10', 6),
  *   }],
  * })
@@ -170,25 +170,6 @@ export * as RpcSchemaTempo from './RpcSchemaTempo.js'
  */
 export * as SignatureEnvelope from './SignatureEnvelope.js'
 /**
- * Tempo address encoding/decoding utilities for human-readable addresses.
- *
- * Tempo addresses use a simple `tempox` prefix before the hex address.
- *
- * @example
- * ```ts twoslash
- * import { TempoAddress } from 'ox/tempo'
- *
- * const encoded = TempoAddress.format('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD28')
- * // @log: 'tempox0x742d35cc6634c0532925a3b844bc9e7595f2bd28'
- *
- * const { address } = TempoAddress.parse(encoded)
- * // @log: { address: '0x742d35CC6634c0532925a3B844bc9e7595F2Bd28' }
- * ```
- *
- * @category Reference
- */
-export * as TempoAddress from './TempoAddress.js'
-/**
  * Tick-based pricing utilities for DEX price conversions.
  *
  * Prices on Tempo's stablecoin DEX are discretized into integer ticks with a tick size of 0.1 bps
@@ -223,7 +204,7 @@ export * as Tick from './Tick.js'
  *
  * const tokenId = TokenId.from(1n)
  * const address = TokenId.toAddress(1n)
- * // 'tempox0x20c0000000000000000000000000000000000001'
+ * // '0x20c0000000000000000000000000000000000001'
  * ```
  *
  * @category Reference
@@ -273,7 +254,7 @@ export * as TokenRole from './TokenRole.js'
  *       value: '0x9b6e64a8ec60000',
  *     },
  *   ],
- *   feeToken: 'tempox0x20c0000000000000000000000000000000000000',
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
  *   transactionIndex: '0x2',
  *   from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
  *   value: '0x9b6e64a8ec60000',
@@ -312,7 +293,7 @@ export * as Transaction from './Transaction.js'
  * const receipt = TransactionReceipt.fromRpc({
  *   status: '0x1',
  *   feePayer: '0x...',
- *   feeToken: 'tempox0x20c0000000000000000000000000000000000001',
+ *   feeToken: '0x20c0000000000000000000000000000000000001',
  *   // ... other fields
  * } as any)
  * ```
@@ -333,8 +314,8 @@ export * as TransactionReceipt from './TransactionReceipt.js'
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const request = TransactionRequest.toRpc({
- *   calls: [{ to: 'tempox0xcafebabecafebabecafebabecafebabecafebabe', data: '0xdeadbeef' }],
- *   feeToken: 'tempox0x20c0000000000000000000000000000000000000',
+ *   calls: [{ to: '0xcafebabecafebabecafebabecafebabecafebabe', data: '0xdeadbeef' }],
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
  * })
  * ```
  *
@@ -356,7 +337,7 @@ export * as TransactionRequest from './TransactionRequest.js'
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{ to: 'tempox0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }],
+ *   calls: [{ to: '0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }],
  *   maxFeePerGas: Value.fromGwei('10'),
  * })
  *
@@ -382,7 +363,7 @@ export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
  *
  * @example
  * ```ts twoslash
- * import { TempoAddress, VirtualAddress } from 'ox/tempo'
+ * import { VirtualAddress } from 'ox/tempo'
  *
  * const masterId = '0x58e21090' // derived when the master registers
  * const userTag = '0x010203040506' // operator-defined deposit identifier
@@ -391,8 +372,6 @@ export * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
  *   masterId,
  *   userTag,
  * })
- *
- * const tempoAddress = TempoAddress.format(address) // optional display format
  * ```
  *
  * @category Reference
@@ -465,7 +444,7 @@ export * as ZoneId from './ZoneId.js'
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
  *   zoneId: 26,
- *   zonePortal: 'tempox0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
+ *   zonePortal: '0x0f1b0cedd7e8226e39ecb161f522c8b1ac45e9c8',
  * })
  *
  * const signature = Secp256k1.sign({

@@ -2,7 +2,6 @@ import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
-import * as TempoAddress from './TempoAddress.js'
 
 /** Fixed 10-byte marker used by TIP-1022 virtual addresses. */
 export const magic = '0xfdfdfdfdfdfdfdfdfdfd' as const
@@ -137,7 +136,6 @@ export declare namespace parse {
   type ErrorType =
     | Address.assert.ErrorType
     | InvalidMagicError
-    | TempoAddress.parse.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -185,7 +183,7 @@ export class InvalidMagicError extends Errors.BaseError {
 }
 
 function resolveAddress(address: string): Address.Address {
-  const resolved = TempoAddress.unwrap(address)
+  const resolved = address as Address.Address
   Address.assert(resolved, { strict: false })
   return resolved
 }

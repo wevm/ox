@@ -5,7 +5,6 @@ import * as Errors from '../core/Errors.js'
 import type * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as VirtualMasterPool from './internal/virtualMasterPool.js'
-import * as TempoAddress from './TempoAddress.js'
 import * as VirtualAddress from './VirtualAddress.js'
 
 const tip20Prefix = '0x20c000000000000000000000'
@@ -48,8 +47,8 @@ export function getRegistrationHash(value: getRegistrationHash.Value): Hex.Hex {
 
 export declare namespace getRegistrationHash {
   type Value = {
-    /** Master address. Accepts both hex and Tempo addresses. */
-    address: TempoAddress.Address
+    /** Master address. */
+    address: Address.Address
     /** 32-byte salt used for registration. */
     salt: Salt
   }
@@ -63,7 +62,6 @@ export declare namespace getRegistrationHash {
     | Hex.fromBytes.ErrorType
     | Hex.fromNumber.ErrorType
     | Hex.padLeft.ErrorType
-    | TempoAddress.parse.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -211,8 +209,8 @@ export function mineSalt(
 
 export declare namespace mineSalt {
   type Value = {
-    /** Master address. Accepts both hex and Tempo addresses. */
-    address: TempoAddress.Address
+    /** Master address. */
+    address: Address.Address
     /** Number of consecutive salts to try. */
     count?: number | undefined
     /** Starting salt value. @default 0n */
@@ -238,7 +236,6 @@ export declare namespace mineSalt {
     | Hex.fromBytes.ErrorType
     | Hex.fromNumber.ErrorType
     | Hex.padLeft.ErrorType
-    | TempoAddress.parse.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -327,8 +324,8 @@ export async function mineSaltAsync(
 
 export declare namespace mineSaltAsync {
   type Parameters = {
-    /** Master address. Accepts both hex and Tempo addresses. */
-    address: TempoAddress.Address
+    /** Master address. */
+    address: Address.Address
     /**
      * Number of salts each worker processes before sending a progress update.
      *
@@ -649,7 +646,7 @@ function increment(bytes: Bytes.Bytes): boolean {
  * @internal
  */
 function resolveAddress(address: string): Address.Address {
-  const resolved = TempoAddress.unwrap(address)
+  const resolved = address as Address.Address
   Address.assert(resolved, { strict: false })
   assertValidMasterAddress(resolved)
   return resolved
@@ -663,7 +660,7 @@ function resolveAddress(address: string): Address.Address {
  * @internal
  */
 function buildRegistrationDigest(
-  address: TempoAddress.Address,
+  address: Address.Address,
   salt: Salt,
 ): Bytes.Bytes {
   const buffer = new Uint8Array(52)

@@ -84,31 +84,6 @@ describe('from', () => {
     `)
   })
 
-  test('tempo address input', () => {
-    const tempoAddr = 'tempox0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c'
-    const tempoToken = 'tempox0x20c0000000000000000000000000000000000001'
-
-    const authorization = KeyAuthorization.from({
-      address: tempoAddr,
-      chainId: 1n,
-      expiry,
-      type: 'secp256k1',
-      limits: [
-        {
-          token: tempoToken,
-          limit: Value.from('10', 6),
-        },
-      ],
-    })
-
-    expect(authorization.address).toBe(
-      '0xBE95c3f554e9Fc85ec51bE69a3D807A0D55BCF2C',
-    )
-    expect(authorization.limits?.[0]?.token).toBe(
-      '0x20C0000000000000000000000000000000000001',
-    )
-  })
-
   test('with signature (secp256k1)', () => {
     const authorization = KeyAuthorization.from(
       {

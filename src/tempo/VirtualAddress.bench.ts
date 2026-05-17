@@ -1,9 +1,7 @@
 import { bench, describe } from 'vitest'
-import * as TempoAddress from './TempoAddress.js'
 import * as VirtualAddress from './VirtualAddress.js'
 
 const virtualHex = '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506' as const
-const tempoVirtual = TempoAddress.format(virtualHex)
 
 describe('VirtualAddress.from', () => {
   bench('hex parts', () => {
@@ -31,10 +29,6 @@ describe('VirtualAddress.from', () => {
 describe('VirtualAddress.parse', () => {
   bench('hex address', () => {
     VirtualAddress.parse(virtualHex)
-  })
-
-  bench('tempo address', () => {
-    VirtualAddress.parse(tempoVirtual)
   })
 })
 
