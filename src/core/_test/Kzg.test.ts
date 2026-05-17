@@ -99,13 +99,15 @@ describe('peerdas (EIP-7594)', () => {
     1,
   )[0]!
 
+  // KZG cell-proof computations are CPU-heavy and can exceed the default
+  // 20s testTimeout on busy CI runners; give each peerdas test 60s headroom.
   test('computeCellsAndKzgProofs returns 128 cells + 128 proofs', () => {
     const { cells, proofs } = peerdasKzg.computeCellsAndKzgProofs(blob)
     expect(cells.length).toBe(128)
     expect(proofs.length).toBe(128)
     for (const cell of cells) expect(cell.length).toBe(2048)
     for (const proof of proofs) expect(proof.length).toBe(48)
-  })
+  }, 60_000)
 
   test('computeCells matches the cells from computeCellsAndKzgProofs', () => {
     const cellsOnly = peerdasKzg.computeCells(blob)
@@ -113,7 +115,7 @@ describe('peerdas (EIP-7594)', () => {
     expect(cellsOnly.length).toBe(cells.length)
     for (let i = 0; i < cells.length; i++)
       expect(cellsOnly[i]).toEqual(cells[i])
-  })
+  }, 60_000)
 
   test('verifyCellKzgProofBatch round-trips', () => {
     const commitment = peerdasKzg.blobToKzgCommitment(blob)
@@ -123,7 +125,7 @@ describe('peerdas (EIP-7594)', () => {
     expect(
       peerdasKzg.verifyCellKzgProofBatch(commitments, indices, cells, proofs),
     ).toBe(true)
-  })
+  }, 60_000)
 
   test('verifyCellKzgProofBatch detects a corrupted cell', () => {
     const commitment = peerdasKzg.blobToKzgCommitment(blob)
@@ -144,7 +146,7 @@ describe('peerdas (EIP-7594)', () => {
         proofs,
       ),
     ).toBe(false)
-  })
+  }, 60_000)
 
   test('recoverCellsAndKzgProofs reconstructs the full set from half the cells', () => {
     const { cells, proofs } = peerdasKzg.computeCellsAndKzgProofs(blob)
@@ -165,7 +167,7 @@ describe('peerdas (EIP-7594)', () => {
       expect(recovered.cells[i]).toEqual(cells[i])
       expect(recovered.proofs[i]).toEqual(proofs[i])
     }
-  })
+  }, 60_000)
 })
 
 test('from: preserves `this` binding for method-style implementations', () => {

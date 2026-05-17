@@ -845,6 +845,9 @@ describe('toVersionedHashes', () => {
   })
 })
 
+// KZG cell-proof computations are CPU-heavy and can exceed the default
+// 20s testTimeout on busy CI runners; give each toCellProofs test 60s
+// headroom.
 describe('toCellProofs', () => {
   test('single blob → 128 proofs', () => {
     const blobs = Blobs.from(Hex.fromString('hello'))
@@ -857,7 +860,7 @@ describe('toCellProofs', () => {
       // 48-byte BLS12-381 G1 element → 2 + 96 hex chars
       expect((p as string).length).toBe(98)
     }
-  })
+  }, 60_000)
 
   test('two blobs → 256 proofs', () => {
     const blobs = Blobs.from(Hex.fromString(blobData))
@@ -865,14 +868,14 @@ describe('toCellProofs', () => {
 
     const cellProofs = Blobs.toCellProofs(blobs, { kzg })
     expect(cellProofs.length).toBe(256)
-  })
+  }, 60_000)
 
   test('first 128 match BlobCells.fromBlob(blobs[0]).proofs', () => {
     const blobs = Blobs.from(Hex.fromString(blobData))
     const cellProofs = Blobs.toCellProofs(blobs, { kzg })
     const { proofs } = BlobCells.fromBlob(blobs[0]!, { kzg })
     expect(cellProofs.slice(0, 128)).toEqual(proofs)
-  })
+  }, 60_000)
 
   test('hex/bytes round-trip equivalence', () => {
     const hexBlobs = Blobs.from(Hex.fromString('hello world'))
@@ -886,14 +889,14 @@ describe('toCellProofs', () => {
     for (let i = 0; i < fromHex.length; i++) {
       expect(Hex.fromBytes(fromBytes[i] as Bytes.Bytes)).toBe(fromHex[i])
     }
-  })
+  }, 60_000)
 
   test('options: as', () => {
     const hexBlobs = Blobs.from(Hex.fromString('hello'))
     const proofsAsBytes = Blobs.toCellProofs(hexBlobs, { kzg, as: 'Bytes' })
     expect(proofsAsBytes.length).toBe(128)
     expect(proofsAsBytes[0]).toBeInstanceOf(Uint8Array)
-  })
+  }, 60_000)
 })
 
 test('exports', () => {
