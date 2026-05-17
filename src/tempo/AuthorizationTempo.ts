@@ -18,11 +18,10 @@ export type AuthorizationTempo<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  addressType = Address.Address,
 > = Compute<
   {
     /** Address of the contract to set as code for the Authority. */
-    address: addressType
+    address: Address.Address
     /** Chain ID to authorize. */
     chainId: numberType
     /** Nonce of the Authority to authorize. */

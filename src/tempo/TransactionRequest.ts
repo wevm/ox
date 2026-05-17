@@ -1,4 +1,3 @@
-import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
@@ -23,7 +22,6 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
-  addressType = Address.Address,
 > = Compute<
   Omit<
     ox_TransactionRequest.TransactionRequest<bigintType, numberType, type>,
@@ -32,12 +30,12 @@ export type TransactionRequest<
     authorizationList?:
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
-    calls?: readonly Call<bigintType, addressType>[] | undefined
+    calls?: readonly Call<bigintType>[] | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
     feePayer?: boolean | undefined
-    feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
+    feeToken?: TokenId.TokenIdOrAddress | undefined
     nonceKey?: 'random' | bigintType | undefined
     validBefore?: numberType | undefined
     validAfter?: numberType | undefined
@@ -46,7 +44,7 @@ export type TransactionRequest<
 
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
-  TransactionRequest<Hex.Hex, Hex.Hex, string, Hex.Hex>,
+  TransactionRequest<Hex.Hex, Hex.Hex, string>,
   'authorizationList' | 'feeToken' | 'keyAuthorization'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
@@ -93,7 +91,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
     )
   if (request.calls)
     request_.calls = request.calls.map((call) => {
-      const mapped: Call<bigint, Address.Address> = {
+      const mapped: Call<bigint> = {
         to: call.to,
         data: call.data,
       }

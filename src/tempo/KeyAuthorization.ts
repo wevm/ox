@@ -32,18 +32,15 @@ export type KeyAuthorization<
   signed extends boolean = boolean,
   bigintType = bigint,
   numberType = number,
-  addressType = Address.Address,
 > = {
   /** Address derived from the public key of the key type. */
-  address: addressType
+  address: Address.Address
   /** Chain ID for replay protection. */
   chainId: bigintType
   /** Unix timestamp when key expires (undefined = never expires). */
   expiry?: numberType | null | undefined
   /** TIP20 spending limits for this key. */
-  limits?:
-    | readonly TokenLimit<bigintType, numberType, addressType>[]
-    | undefined
+  limits?: readonly TokenLimit<bigintType, numberType>[] | undefined
   /**
    * Call scopes restricting which contracts/selectors this key can call.
    *
@@ -51,7 +48,7 @@ export type KeyAuthorization<
    * - `[]` = scoped mode with no calls allowed
    * - `[...]` = only listed contract+selector combinations allowed
    */
-  scopes?: readonly Scope<addressType>[] | undefined
+  scopes?: readonly Scope[] | undefined
   /** Key type. (secp256k1, P256, WebAuthn). */
   type: SignatureEnvelope.Type
 } & (signed extends true
@@ -61,7 +58,7 @@ export type KeyAuthorization<
     })
 
 /** Input type for a Key Authorization. */
-export type Input = KeyAuthorization<false, bigint, number, Address.Address>
+export type Input = KeyAuthorization<false, bigint, number>
 
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
@@ -101,11 +98,11 @@ export type RpcSelectorRule = {
 }
 
 /** Signed representation of a Key Authorization. */
-export type Signed<
-  bigintType = bigint,
-  numberType = number,
-  addressType = Address.Address,
-> = KeyAuthorization<true, bigintType, numberType, addressType>
+export type Signed<bigintType = bigint, numberType = number> = KeyAuthorization<
+  true,
+  bigintType,
+  numberType
+>
 
 type BaseTuple = readonly [
   chainId: Hex.Hex,
@@ -154,9 +151,9 @@ export type Tuple<signed extends boolean = boolean> = signed extends true
  *
  * [TIP-1011 Specification](https://docs.tempo.xyz/protocol/transactions/tip-1011)
  */
-export type Scope<addressType = Address.Address> = {
+export type Scope = {
   /** Target contract address. */
-  address: addressType
+  address: Address.Address
   /**
    * 4-byte function selector, or a human-readable ABI signature
    * (e.g. `'transfer(address,uint256)'` or `'function transfer(address,uint256)'`).
@@ -173,7 +170,7 @@ export type Scope<addressType = Address.Address> = {
    *
    * Only valid for constrained selectors: `transfer`, `approve`, `transferWithMemo`.
    */
-  recipients?: readonly addressType[] | undefined
+  recipients?: readonly Address.Address[] | undefined
 }
 
 /**
@@ -184,13 +181,9 @@ export type Scope<addressType = Address.Address> = {
  *
  * [Access Keys Specification](https://docs.tempo.xyz/protocol/transactions/spec-tempo-transaction#access-keys)
  */
-export type TokenLimit<
-  bigintType = bigint,
-  numberType = number,
-  addressType = Address.Address,
-> = {
+export type TokenLimit<bigintType = bigint, numberType = number> = {
   /** Address of the TIP-20 token. */
-  token: addressType
+  token: Address.Address
   /** Maximum spending amount for this token (enforced over the key's lifetime, or per period if `period` \> 0). */
   limit: bigintType
   /**

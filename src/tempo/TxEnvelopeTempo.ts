@@ -26,11 +26,11 @@ import * as TokenId from './TokenId.js'
  *
  * [Batch Calls](https://docs.tempo.xyz/protocol/transactions#batch-calls)
  */
-export type Call<bigintType = bigint, addressType = Address.Address> = {
+export type Call<bigintType = bigint> = {
   /** Call data. */
   data?: Hex.Hex | undefined
   /** The target address or contract creation. */
-  to?: addressType | undefined
+  to?: Address.Address | undefined
   /** Value to send (in wei). */
   value?: bigintType | undefined
 }
@@ -68,7 +68,6 @@ export type TxEnvelopeTempo<
   bigintType = bigint,
   numberType = number,
   type extends string = Type,
-  addressType = Address.Address,
 > = Compute<
   {
     /** EIP-2930 Access List. */
@@ -78,11 +77,11 @@ export type TxEnvelopeTempo<
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
     /** Array of calls to execute. */
-    calls: readonly Call<bigintType, addressType>[]
+    calls: readonly Call<bigintType>[]
     /** EIP-155 Chain ID. */
     chainId: numberType
     /** Sender of the transaction. */
-    from?: addressType | undefined
+    from?: Address.Address | undefined
     /** Gas provided for transaction execution */
     gas?: bigintType | undefined
     /** Fee payer signature. */
@@ -97,7 +96,7 @@ export type TxEnvelopeTempo<
      * The authorization must be signed with the root key, the tx can be signed by the Keychain signature.
      */
     keyAuthorization?:
-      | KeyAuthorization.Signed<bigintType, numberType, addressType>
+      | KeyAuthorization.Signed<bigintType, numberType>
       | undefined
     /** Total fee per gas in wei (gasPrice/baseFeePerGas + maxPriorityFeePerGas). */
     maxFeePerGas?: bigintType | undefined
@@ -123,13 +122,7 @@ export type TxEnvelopeTempo<
 >
 
 /** Input type for a Tempo transaction envelope. */
-export type Input = TxEnvelopeTempo<
-  boolean,
-  bigint,
-  number,
-  Type,
-  Address.Address
->
+export type Input = TxEnvelopeTempo<boolean, bigint, number, Type>
 
 export type Rpc<signed extends boolean = boolean> = TxEnvelopeTempo<
   signed,

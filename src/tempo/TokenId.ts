@@ -6,9 +6,7 @@ import * as Hex from '../core/Hex.js'
 const tip20Prefix = '0x20c0'
 
 export type TokenId = bigint
-export type TokenIdOrAddress<addressType = Address.Address> =
-  | TokenId
-  | addressType
+export type TokenIdOrAddress = TokenId | Address.Address
 
 /**
  * Converts a token ID or address to a token ID.
@@ -86,9 +84,7 @@ export function fromAddress(address: Address.Address): TokenId {
  * @param tokenId - The token ID.
  * @returns The address.
  */
-export function toAddress(
-  tokenId: TokenIdOrAddress<Address.Address>,
-): Address.Address {
+export function toAddress(tokenId: TokenIdOrAddress): Address.Address {
   if (typeof tokenId === 'string') {
     Address.assert(tokenId)
     return tokenId
