@@ -1,5 +1,11 @@
 import type * as Errors from './Errors.js'
 import { BaseError } from './Errors.js'
+import {
+  InvalidPaddingError as SharedInvalidPaddingError,
+  alphabet as sharedAlphabet,
+  alphabetMap as sharedAlphabetMap,
+  convertBits as sharedConvertBits,
+} from './internal/codec/bech32-base32.js'
 
 /**
  * Encodes data bytes with a human-readable part (HRP) into a bech32m string (BIP-350).
@@ -151,13 +157,14 @@ export class InvalidCharacterError extends BaseError {
   }
 }
 
-/** Thrown when the padding bits are invalid during base32 conversion. */
-export class InvalidPaddingError extends BaseError {
-  override readonly name = 'Bech32m.InvalidPaddingError'
-  constructor() {
-    super('Invalid padding in bech32m data.')
-  }
-}
+/**
+ * Thrown when the padding bits are invalid during base32 conversion.
+ *
+ * Re-exported from `internal/codec/bech32-base32.ts` for shared identity
+ * with `Base32`'s padding validation.
+ */
+export const InvalidPaddingError = SharedInvalidPaddingError
+export type InvalidPaddingError = InstanceType<typeof SharedInvalidPaddingError>
 
 /** Thrown when a bech32m string contains mixed case. */
 export class MixedCaseError extends BaseError {
@@ -185,15 +192,9 @@ export class ExceedsLengthError extends BaseError {
   }
 }
 
-/** @internal */
-const alphabet = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
-
-/** @internal */
-const alphabetMap = /*#__PURE__*/ (() => {
-  const map: Record<string, number> = {}
-  for (let i = 0; i < alphabet.length; i++) map[alphabet[i]!] = i
-  return map
-})()
+/** Shared with `Base32` (BIP-173). */
+const alphabet = sharedAlphabet
+const alphabetMap = sharedAlphabetMap
 
 /** @internal */
 const BECH32M_CONST = 0x2bc830a3
@@ -235,29 +236,5 @@ function verifyChecksum(hrp: string, data: number[]): boolean {
   return polymod(hrpExpand(hrp).concat(data)) === BECH32M_CONST
 }
 
-/** @internal */
-function convertBits(
-  data: Iterable<number>,
-  fromBits: number,
-  toBits: number,
-  pad: boolean,
-): number[] {
-  let acc = 0
-  let bits = 0
-  const maxv = (1 << toBits) - 1
-  const ret: number[] = []
-  for (const value of data) {
-    acc = (acc << fromBits) | value
-    bits += fromBits
-    while (bits >= toBits) {
-      bits -= toBits
-      ret.push((acc >> bits) & maxv)
-    }
-  }
-  if (pad) {
-    if (bits > 0) ret.push((acc << (toBits - bits)) & maxv)
-  } else if (bits >= fromBits || (acc << (toBits - bits)) & maxv) {
-    throw new InvalidPaddingError()
-  }
-  return ret
-}
+/** Shared with `Base32`. */
+const convertBits = sharedConvertBits

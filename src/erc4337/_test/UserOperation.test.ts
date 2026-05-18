@@ -30,8 +30,8 @@ describe('from', () => {
       verificationGasLimit: 0n,
     } as const satisfies UserOperation.UserOperation
     const signature = Signature.from({
-      r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
-      s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+      r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+      s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
       yParity: 1,
     })
     const userOperation = UserOperation.from(input, { signature })
@@ -402,8 +402,8 @@ describe('hash', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 0n,
-              s: 0n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000000',
             },
           },
           {
@@ -438,8 +438,8 @@ describe('hash', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 0n,
-              s: 0n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000000',
             },
           },
           {
@@ -881,8 +881,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 69n,
           yParity: 0,
-          r: 1n,
-          s: 2n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
         },
       }),
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357')
@@ -898,8 +898,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 69n,
           yParity: 0,
-          r: 1n,
-          s: 2n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
         },
       }),
     ).toBe('0x9f1fdab6458c5fc642fa0f4c5af7473c46837357deadbeef')
@@ -915,8 +915,8 @@ describe('toInitCode', () => {
           chainId: 1,
           nonce: 42n,
           yParity: 1,
-          r: 123n,
-          s: 456n,
+          r: '0x000000000000000000000000000000000000000000000000000000000000007b',
+          s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
         },
       }),
     ).toBe('0x1234567890123456789012345678901234567890cafebabe')
@@ -1279,8 +1279,8 @@ describe('toTypedData', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 1n,
-              s: 2n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000002',
             },
           },
           {
@@ -1371,8 +1371,8 @@ describe('toTypedData', () => {
               chainId: 1,
               nonce: 0n,
               yParity: 0,
-              r: 1n,
-              s: 2n,
+              r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+              s: '0x0000000000000000000000000000000000000000000000000000000000000002',
             },
           },
           {
@@ -1441,5 +1441,62 @@ describe('toTypedData', () => {
       `,
       )
     })
+  })
+})
+
+describe('v0.8 authorization round-trip', () => {
+  const userOperation = {
+    authorization: {
+      address: '0x1234567890123456789012345678901234567890',
+      chainId: 1,
+      nonce: 0n,
+      yParity: 0,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+    },
+    callData: '0xdeadbeef',
+    callGasLimit: 300_000n,
+    maxFeePerGas: 100_000n,
+    maxPriorityFeePerGas: 100_000n,
+    nonce: 0n,
+    preVerificationGas: 100_000n,
+    sender: '0x1234567890123456789012345678901234567890',
+    signature: '0x',
+    verificationGasLimit: 100_000n,
+  } as const satisfies UserOperation.UserOperation<'0.8', true>
+
+  test('toRpc serializes authorization', () => {
+    const rpc = UserOperation.toRpc(userOperation) as UserOperation.Rpc<'0.8'>
+    expect(rpc.authorization).toMatchInlineSnapshot(`
+      {
+        "address": "0x1234567890123456789012345678901234567890",
+        "chainId": "0x1",
+        "nonce": "0x0",
+        "r": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "s": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "yParity": "0x0",
+      }
+    `)
+  })
+
+  test('fromRpc parses authorization', () => {
+    const rpc = UserOperation.toRpc(userOperation) as UserOperation.Rpc<'0.8'>
+    const parsed = UserOperation.fromRpc(rpc) as UserOperation.UserOperation<
+      '0.8',
+      true
+    >
+    expect(parsed.authorization).toEqual(userOperation.authorization)
+  })
+
+  test('round-trip preserves authorization', () => {
+    const rpc = UserOperation.toRpc(userOperation)
+    const parsed = UserOperation.fromRpc(rpc)
+    expect(parsed).toEqual(userOperation)
+  })
+
+  test('toRpc omits authorization when absent', () => {
+    const { authorization: _omit, ...rest } = userOperation
+    const rpc = UserOperation.toRpc(rest)
+    expect('authorization' in rpc).toBe(false)
   })
 })

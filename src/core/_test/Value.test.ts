@@ -418,6 +418,64 @@ describe('from', () => {
       '[Value.InvalidDecimalNumberError: Value `0o50` is not a valid decimal number.]',
     )
   })
+
+  test('error: requires at least one digit', () => {
+    expect(() => Value.from('', 0)).toThrowErrorMatchingInlineSnapshot(
+      '[Value.InvalidDecimalNumberError: Value `` is not a valid decimal number.]',
+    )
+    expect(() => Value.from('.', 0)).toThrowErrorMatchingInlineSnapshot(
+      '[Value.InvalidDecimalNumberError: Value `.` is not a valid decimal number.]',
+    )
+    expect(() => Value.from('-', 0)).toThrowErrorMatchingInlineSnapshot(
+      '[Value.InvalidDecimalNumberError: Value `-` is not a valid decimal number.]',
+    )
+    expect(() => Value.from('-.', 0)).toThrowErrorMatchingInlineSnapshot(
+      '[Value.InvalidDecimalNumberError: Value `-.` is not a valid decimal number.]',
+    )
+  })
+
+  test('behavior: leading-decimal numbers', () => {
+    expect(Value.from('.5', 0)).toMatchInlineSnapshot('1n')
+    expect(Value.from('.5', 1)).toMatchInlineSnapshot('5n')
+    expect(Value.from('-.5', 1)).toMatchInlineSnapshot('-5n')
+  })
+
+  test('error: invalid decimals', () => {
+    expect(() => Value.from('1', -1)).toThrowErrorMatchingInlineSnapshot(
+      '[Value.InvalidDecimalsError: `decimals` must be a non-negative integer. Got `-1`.]',
+    )
+    expect(() => Value.from('1', 1.5)).toThrowErrorMatchingInlineSnapshot(
+      '[Value.InvalidDecimalsError: `decimals` must be a non-negative integer. Got `1.5`.]',
+    )
+    expect(() =>
+      Value.from('1', Number.NaN),
+    ).toThrowErrorMatchingInlineSnapshot(
+      '[Value.InvalidDecimalsError: `decimals` must be a non-negative integer. Got `NaN`.]',
+    )
+  })
+
+  test('behavior: precise rounding for long fractions', () => {
+    // The carry-based rounding path uses no float arithmetic, so very long
+    // fractions round at the boundary digit without precision loss.
+    expect(
+      Value.from(
+        '1.000000000000000005000000000000000000000000000000000000000000000000000001',
+        18,
+      ),
+    ).toMatchInlineSnapshot('1000000000000000005n')
+    expect(
+      Value.from(
+        '1.000000000000000004999999999999999999999999999999999999999999999999999999',
+        18,
+      ),
+    ).toMatchInlineSnapshot('1000000000000000005n')
+    expect(
+      Value.from(
+        '1.000000000000000004499999999999999999999999999999999999999999999999999999',
+        18,
+      ),
+    ).toMatchInlineSnapshot('1000000000000000004n')
+  })
 })
 
 describe('fromEther', () => {
@@ -651,6 +709,7 @@ test('exports', () => {
       "fromEther",
       "fromGwei",
       "InvalidDecimalNumberError",
+      "InvalidDecimalsError",
     ]
   `)
 })

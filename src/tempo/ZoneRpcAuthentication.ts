@@ -1,9 +1,9 @@
+import type * as Address from '../core/Address.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute, PartialBy } from '../core/internal/types.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TempoAddress from './TempoAddress.js'
 
 /**
  * Header name used to transport Zone RPC authentication tokens.
@@ -37,7 +37,6 @@ export type Version = typeof version
  */
 export type ZoneRpcAuthentication<
   signed extends boolean = boolean,
-  bigintType = bigint,
   numberType = number,
 > = Compute<
   {
@@ -52,11 +51,9 @@ export type ZoneRpcAuthentication<
     /** Numeric zone identifier. */
     zoneId: numberType
   } & (signed extends true
-    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    ? { signature: SignatureEnvelope.SignatureEnvelope<numberType> }
     : {
-        signature?:
-          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-          | undefined
+        signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
       })
 >
 
@@ -70,10 +67,10 @@ export type Fields = Hex.Hex
 export type Serialized = Hex.Hex
 
 /** Signed Zone RPC authentication token. */
-export type Signed<
-  bigintType = bigint,
-  numberType = number,
-> = ZoneRpcAuthentication<true, bigintType, numberType>
+export type Signed<numberType = number> = ZoneRpcAuthentication<
+  true,
+  numberType
+>
 
 /**
  * Instantiates a typed Zone RPC authentication token.
@@ -289,9 +286,7 @@ export function getSignPayload(
 ): Hex.Hex {
   const authHash = hash(authentication)
   if (options.userAddress)
-    return Hash.keccak256(
-      Hex.concat('0x04', authHash, TempoAddress.resolve(options.userAddress)),
-    )
+    return Hash.keccak256(Hex.concat('0x04', authHash, options.userAddress))
   return authHash
 }
 
@@ -303,7 +298,7 @@ export declare namespace getSignPayload {
      * When provided, computes `keccak256(0x04 || authHash || userAddress)`
      * instead of the raw `authHash`.
      */
-    userAddress?: TempoAddress.Address | undefined
+    userAddress?: Address.Address | undefined
   }
 
   type ErrorType = hash.ErrorType | Errors.GlobalErrorType

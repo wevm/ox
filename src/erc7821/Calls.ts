@@ -8,6 +8,19 @@ export type Call<bigintType = bigint> = {
   value?: bigintType | undefined
 }
 
+/** Cached ABI parameters for ERC-7821 calls without `opData`. */
+const callsParameters = /*#__PURE__*/ AbiParameters.from([
+  'struct Call { address target; uint256 value; bytes data; }',
+  'Call[] calls',
+])
+
+/** Cached ABI parameters for ERC-7821 calls with `opData`. */
+const callsWithOpDataParameters = /*#__PURE__*/ AbiParameters.from([
+  'struct Call { address target; uint256 value; bytes data; }',
+  'Call[] calls',
+  'bytes opData',
+])
+
 /**
  * Encodes a set of ERC-7821 calls.
  *
@@ -68,11 +81,7 @@ export declare namespace encode {
  */
 export function getAbiParameters(options: getAbiParameters.Options = {}) {
   const { opData } = options
-  return AbiParameters.from([
-    'struct Call { address target; uint256 value; bytes data; }',
-    'Call[] calls',
-    ...(opData ? ['bytes opData'] : []),
-  ])
+  return opData ? callsWithOpDataParameters : callsParameters
 }
 
 export declare namespace getAbiParameters {

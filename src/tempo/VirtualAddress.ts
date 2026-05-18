@@ -2,7 +2,6 @@ import * as Address from '../core/Address.js'
 import * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
-import * as TempoAddress from './TempoAddress.js'
 
 /** Fixed 10-byte marker used by TIP-1022 virtual addresses. */
 export const magic = '0xfdfdfdfdfdfdfdfdfdfd' as const
@@ -137,7 +136,6 @@ export declare namespace parse {
   type ErrorType =
     | Address.assert.ErrorType
     | InvalidMagicError
-    | TempoAddress.parse.ErrorType
     | Errors.GlobalErrorType
 }
 
@@ -185,11 +183,18 @@ export class InvalidMagicError extends Errors.BaseError {
 }
 
 function resolveAddress(address: string): Address.Address {
-  const resolved = TempoAddress.resolve(address as TempoAddress.Address)
+  const resolved = address as Address.Address
   Address.assert(resolved, { strict: false })
   return resolved
 }
 
+/**
+ * Converts a virtual address {@link Part} to a zero-padded hex string of the
+ * given byte size. Branches by input type so that bytes inputs avoid the
+ * `number -> hex -> bytes -> hex` round trip the audit called out.
+ *
+ * @internal
+ */
 function toFixedHex(value: Part, size: number): Hex.Hex {
   if (typeof value === 'number' || typeof value === 'bigint')
     return Hex.fromNumber(value, { size })

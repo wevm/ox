@@ -303,53 +303,25 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
   if (suffix !== ercSuffix) return undefined
 
   // Extract schema ID (1 byte before the ERC suffix)
-  const schemaIdHex = Hex.slice(data, -ercSuffixSize - 1, -ercSuffixSize)
-  const schemaId = Hex.toNumber(schemaIdHex)
+  const schemaIdEnd = -ercSuffixSize
+  const schemaIdStart = schemaIdEnd - 1
+  const schemaId = Hex.toNumber(Hex.slice(data, schemaIdStart, schemaIdEnd))
 
   // Schema 0: Canonical registry
-  if (schemaId === 0) {
-    // Extract codes length (1 byte before schema ID)
-    const codesLengthHex = Hex.slice(
-      data,
-      -ercSuffixSize - 2,
-      -ercSuffixSize - 1,
-    )
-    const codesLength = Hex.toNumber(codesLengthHex)
-
-    // Extract codes
-    const codesStart = -ercSuffixSize - 2 - codesLength
-    const codesEnd = -ercSuffixSize - 2
-    const codesHex = Hex.slice(data, codesStart, codesEnd)
-    const codesString = Hex.toString(codesHex)
-    const codes = codesString.length > 0 ? codesString.split(',') : []
-
-    return { codes, id: 0 }
-  }
-
   // Schema 1: Custom registry
-  // Format: codeRegistryAddress (20 bytes) ∥ chainId ∥ chainIdLength (1 byte) ∥ codes ∥ codesLength (1 byte) ∥ schemaId (1 byte) ∥ ercSuffix
-  if (schemaId === 1) {
-    // Extract codes length (1 byte before schema ID)
-    const codesLengthHex = Hex.slice(
-      data,
-      -ercSuffixSize - 2,
-      -ercSuffixSize - 1,
-    )
-    const codesLength = Hex.toNumber(codesLengthHex)
+  // Format: [codeRegistryAddress (20) ∥ chainId ∥ chainIdLength (1)]? ∥ codes ∥ codesLength (1) ∥ schemaId (1) ∥ ercSuffix
+  if (schemaId === 0 || schemaId === 1) {
+    const codes = decodeCodesTail(data, schemaIdStart)
+    if (!codes) return undefined
 
-    // Extract codes
-    const codesStart = -ercSuffixSize - 2 - codesLength
-    const codesEnd = -ercSuffixSize - 2
-    const codesHex = Hex.slice(data, codesStart, codesEnd)
-    const codesString = Hex.toString(codesHex)
-    const codes = codesString.length > 0 ? codesString.split(',') : []
+    if (schemaId === 0) return { codes: codes.codes, id: 0 }
 
     // Extract registry by reading backwards from just before codes
-    const codeRegistry = registryFromData(Hex.slice(data, 0, codesStart))
+    const codeRegistry = registryFromData(Hex.slice(data, 0, codes.codesStart))
     if (codeRegistry === undefined) return undefined
 
     return {
-      codes,
+      codes: codes.codes,
       codeRegistry,
       id: 1,
     }
@@ -361,6 +333,31 @@ export function fromData(data: Hex.Hex): Attribution | undefined {
 
   // Unknown schema ID
   return undefined
+}
+
+/**
+ * Reads the trailing `codes ∥ codesLength (1)` segment from a schema-0/1
+ * payload, given the absolute end-offset of the codes-length byte (which is
+ * the start of the schema ID).
+ *
+ * @internal
+ */
+function decodeCodesTail(
+  data: Hex.Hex,
+  schemaIdStart: number,
+): { codes: string[]; codesStart: number } | undefined {
+  const codesLengthEnd = schemaIdStart
+  const codesLengthStart = codesLengthEnd - 1
+  const codesLength = Hex.toNumber(
+    Hex.slice(data, codesLengthStart, codesLengthEnd),
+  )
+
+  const codesEnd = codesLengthStart
+  const codesStart = codesEnd - codesLength
+  const codesHex = Hex.slice(data, codesStart, codesEnd)
+  const codesString = Hex.toString(codesHex)
+  const codes = codesString.length > 0 ? codesString.split(',') : []
+  return { codes, codesStart }
 }
 
 function registryFromData(

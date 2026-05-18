@@ -537,6 +537,33 @@ describe('decode', () => {
       }
     `)
   })
+
+  test('behavior: anonymous event', () => {
+    const abiEvent = AbiEvent.from({
+      type: 'event',
+      name: 'Transfer',
+      anonymous: true,
+      inputs: [
+        { name: 'from', type: 'address', indexed: true },
+        { name: 'to', type: 'address', indexed: true },
+        { name: 'value', type: 'uint256', indexed: false },
+      ],
+    })
+    const decoded = AbiEvent.decode(abiEvent, {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
+      ],
+    })
+    expect(decoded).toMatchInlineSnapshot(`
+      {
+        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+        "value": 1n,
+      }
+    `)
+  })
 })
 
 describe('encode', () => {

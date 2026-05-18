@@ -1,9 +1,11 @@
 import * as AccessList from './AccessList.js'
 import * as Address from './Address.js'
 import * as Authorization from './Authorization.js'
+import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Tx from './internal/tx.js'
 import type {
   Assign,
   Compute,
@@ -118,7 +120,7 @@ export declare namespace assert {
 export function deserialize(
   serialized: Serialized,
 ): Compute<TxEnvelopeEip7702> {
-  const transactionArray = Rlp.toHex(Hex.slice(serialized, 1))
+  const transactionArray = Rlp.toBytes(Hex.slice(serialized, 1))
 
   const [
     chainId,
@@ -134,7 +136,7 @@ export function deserialize(
     yParity,
     r,
     s,
-  ] = transactionArray as readonly Hex.Hex[]
+  ] = transactionArray as readonly Bytes.Bytes[]
 
   if (!(transactionArray.length === 10 || transactionArray.length === 13))
     throw new TransactionEnvelope.InvalidSerializedError({
@@ -162,28 +164,43 @@ export function deserialize(
     })
 
   let transaction = {
-    chainId: Number(chainId),
+    chainId: Number(Tx.bytesToBigIntOrZero(chainId)),
     type,
   } as TxEnvelopeEip7702
-  if (Hex.validate(to) && to !== '0x') transaction.to = to
-  if (Hex.validate(gas) && gas !== '0x') transaction.gas = BigInt(gas)
-  if (Hex.validate(data) && data !== '0x') transaction.data = data
-  if (Hex.validate(nonce))
-    transaction.nonce = nonce === '0x' ? 0n : BigInt(nonce)
-  if (Hex.validate(value) && value !== '0x') transaction.value = BigInt(value)
-  if (Hex.validate(maxFeePerGas) && maxFeePerGas !== '0x')
-    transaction.maxFeePerGas = BigInt(maxFeePerGas)
-  if (Hex.validate(maxPriorityFeePerGas) && maxPriorityFeePerGas !== '0x')
-    transaction.maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas)
-  if (accessList!.length !== 0 && accessList !== '0x')
-    transaction.accessList = AccessList.fromTupleList(accessList as never)
-  if (authorizationList !== '0x')
+  const to_ = Tx.bytesToHexOrUndefined(to)
+  if (to_) transaction.to = to_
+  const gas_ = Tx.bytesToBigIntOrUndefined(gas)
+  if (gas_ !== undefined) transaction.gas = gas_
+  const data_ = Tx.bytesToHexOrUndefined(data)
+  if (data_) transaction.data = data_
+  if (nonce !== undefined) transaction.nonce = Tx.bytesToBigIntOrZero(nonce)
+  const value_ = Tx.bytesToBigIntOrUndefined(value)
+  if (value_ !== undefined) transaction.value = value_
+  const maxFeePerGas_ = Tx.bytesToBigIntOrUndefined(maxFeePerGas)
+  if (maxFeePerGas_ !== undefined) transaction.maxFeePerGas = maxFeePerGas_
+  const maxPriorityFeePerGas_ =
+    Tx.bytesToBigIntOrUndefined(maxPriorityFeePerGas)
+  if (maxPriorityFeePerGas_ !== undefined)
+    transaction.maxPriorityFeePerGas = maxPriorityFeePerGas_
+  if ((accessList as unknown as readonly unknown[]).length !== 0)
+    transaction.accessList = AccessList.fromTupleList(
+      Tx.bytesTreeToHex(accessList as never) as never,
+    )
+  // Authorization list is preserved even when empty for round-trip parity
+  // with the legacy `authorizationList !== '0x'` hex check.
+  if (Array.isArray(authorizationList))
     transaction.authorizationList = Authorization.fromTupleList(
-      authorizationList as never,
+      Tx.bytesTreeToHex(authorizationList as never) as never,
     )
 
   const signature =
-    r && s && yParity ? Signature.fromTuple([yParity, r, s]) : undefined
+    r && s && yParity
+      ? Signature.fromTuple([
+          Tx.bytesToHex(yParity),
+          Tx.bytesToHex(r),
+          Tx.bytesToHex(s),
+        ])
+      : undefined
   if (signature)
     transaction = {
       ...transaction,
@@ -541,12 +558,12 @@ export function serialize(
 
   const serialized = [
     Hex.fromNumber(chainId),
-    nonce ? Hex.fromNumber(nonce) : '0x',
-    maxPriorityFeePerGas ? Hex.fromNumber(maxPriorityFeePerGas) : '0x',
-    maxFeePerGas ? Hex.fromNumber(maxFeePerGas) : '0x',
-    gas ? Hex.fromNumber(gas) : '0x',
+    Tx.quantityToHex(nonce),
+    Tx.quantityToHex(maxPriorityFeePerGas),
+    Tx.quantityToHex(maxFeePerGas),
+    Tx.quantityToHex(gas),
     to ?? '0x',
-    value ? Hex.fromNumber(value) : '0x',
+    Tx.quantityToHex(value),
     data ?? input ?? '0x',
     accessTupleList,
     authorizationTupleList,
@@ -569,6 +586,70 @@ export declare namespace serialize {
     | Hex.concat.ErrorType
     | Rlp.fromHex.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Converts an {@link ox#TxEnvelopeEip7702.TxEnvelopeEip7702} to an {@link ox#TxEnvelopeEip7702.Rpc}.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { Authorization, RpcRequest, TxEnvelopeEip7702, Value } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip7702.from({
+ *   authorizationList: [...],
+ *   chainId: 1,
+ *   nonce: 0n,
+ *   gas: 21000n,
+ *   maxFeePerGas: Value.fromGwei('10'),
+ *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+ *   value: Value.fromEther('1'),
+ * })
+ *
+ * const envelope_rpc = TxEnvelopeEip7702.toRpc(envelope) // [!code focus]
+ *
+ * const request = RpcRequest.from({
+ *   id: 0,
+ *   method: 'eth_sendTransaction',
+ *   params: [envelope_rpc],
+ * })
+ * ```
+ *
+ * @param envelope - The EIP-7702 transaction envelope to convert.
+ * @returns An RPC-formatted EIP-7702 transaction envelope.
+ */
+export function toRpc(envelope: Omit<TxEnvelopeEip7702, 'type'>): Rpc {
+  const signature = Signature.extract(envelope)
+
+  return {
+    ...envelope,
+    authorizationList: Authorization.toRpcList(envelope.authorizationList),
+    chainId: Hex.fromNumber(envelope.chainId),
+    data: envelope.data ?? envelope.input,
+    type: '0x4',
+    ...(typeof envelope.gas === 'bigint'
+      ? { gas: Hex.fromNumber(envelope.gas) }
+      : {}),
+    ...(typeof envelope.nonce === 'bigint'
+      ? { nonce: Hex.fromNumber(envelope.nonce) }
+      : {}),
+    ...(typeof envelope.value === 'bigint'
+      ? { value: Hex.fromNumber(envelope.value) }
+      : {}),
+    ...(typeof envelope.maxFeePerGas === 'bigint'
+      ? { maxFeePerGas: Hex.fromNumber(envelope.maxFeePerGas) }
+      : {}),
+    ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
+      ? {
+          maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas),
+        }
+      : {}),
+    ...(signature ? Signature.toRpc(signature) : {}),
+  } as never
+}
+
+export declare namespace toRpc {
+  export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 
 /**

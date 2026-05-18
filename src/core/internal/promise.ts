@@ -6,23 +6,24 @@ export function withTimeout<data>(
   options: withTimeout.Options,
 ): Promise<data> {
   const { errorInstance = new TimeoutError(), timeout, signal } = options
+  // Fast path: no timeout, skip allocating Promise wrapper and AbortController.
+  if (!(timeout > 0)) return fn({ signal: null })
   return new Promise((resolve, reject) => {
     ;(async () => {
       let timeoutId: any
+      let timedOut = false
+      const controller = signal ? new AbortController() : null
       try {
-        const controller = new AbortController()
-        if (timeout > 0)
-          timeoutId = setTimeout(() => {
-            if (signal) {
-              controller.abort()
-            } else {
-              reject(errorInstance)
-            }
-          }, timeout) as any
-        resolve(await fn({ signal: controller.signal }))
+        timeoutId = setTimeout(() => {
+          timedOut = true
+          if (controller) controller.abort()
+          else reject(errorInstance)
+        }, timeout)
+        resolve(await fn({ signal: controller?.signal ?? null }))
       } catch (err) {
-        if ((err as Error)?.name === 'AbortError') reject(errorInstance)
-        reject(err)
+        if (timedOut || (err as Error)?.name === 'AbortError')
+          reject(errorInstance)
+        else reject(err)
       } finally {
         clearTimeout(timeoutId)
       }

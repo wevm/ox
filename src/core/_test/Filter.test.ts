@@ -121,6 +121,22 @@ describe('toRpc', () => {
       `)
     }
   })
+
+  test('behavior: preserves explicit `address: null`', () => {
+    const filter = Filter.toRpc({
+      address: null,
+    })
+    expect(filter).toMatchInlineSnapshot(`
+      {
+        "address": null,
+      }
+    `)
+  })
+
+  test('behavior: omits absent `address`', () => {
+    const filter = Filter.toRpc({})
+    expect(filter).toMatchInlineSnapshot('{}')
+  })
 })
 
 test('exports', () => {

@@ -1,6 +1,5 @@
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 
 /**
@@ -25,19 +24,19 @@ import * as TokenId from './TokenId.js'
  * @returns The pool ID.
  */
 export function from(value: from.Value): Hex.Hex {
+  const a = TokenId.toAddress(value.userToken)
+  const b = TokenId.toAddress(value.validatorToken)
+  const [left, right] = a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a]
   return Hash.keccak256(
-    Hex.concat(
-      Hex.padLeft(TokenId.toAddress(value.userToken), 32),
-      Hex.padLeft(TokenId.toAddress(value.validatorToken), 32),
-    ),
+    Hex.concat(Hex.padLeft(left, 32), Hex.padLeft(right, 32)),
   )
 }
 
 export declare namespace from {
   export type Value = {
     /** User token. */
-    userToken: TokenId.TokenIdOrAddress<TempoAddress.Address>
+    userToken: TokenId.TokenIdOrAddress
     /** Validator token. */
-    validatorToken: TokenId.TokenIdOrAddress<TempoAddress.Address>
+    validatorToken: TokenId.TokenIdOrAddress
   }
 }

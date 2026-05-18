@@ -83,14 +83,7 @@ export declare namespace encode {
  * @returns The decoded value.
  */
 export function decode<type = unknown>(data: Hex.Hex | Bytes.Bytes): type {
-  const bytes = (() => {
-    if (typeof data === 'string') {
-      if (data.length > 3 && data.length % 2 !== 0)
-        throw new Hex.InvalidLengthError(data)
-      return Bytes.fromHex(data)
-    }
-    return data
-  })()
+  const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
 
   const cursor = Cursor.create(bytes)
 

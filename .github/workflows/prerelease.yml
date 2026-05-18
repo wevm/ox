@@ -14,8 +14,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Prepublish
+      - name: Prerelease
         run: |
-          cd src && pnpm version prerelease --preid $(git rev-parse --short=7 HEAD) && cd ..
-          pnpm changeset:prepublish
-          pnpx pkg-pr-new publish --pnpm --compact './src'
+          pnpm exec zile publish:prepare
+          pnpx pkg-pr-new publish --pnpm

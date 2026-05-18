@@ -1,5 +1,6 @@
 import type * as Address from './Address.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute, OneOf } from './internal/types.js'
 
 /**
@@ -74,15 +75,15 @@ export function fromRpc(rpcStateOverrides: Rpc): StateOverrides {
     rpcStateOverrides,
   )) {
     const accountOverrides: AccountOverrides = {}
-    if (accountOverridesRpc.balance)
-      accountOverrides.balance = BigInt(accountOverridesRpc.balance)
+    if (accountOverridesRpc.balance !== undefined)
+      accountOverrides.balance = Quantity.toBigInt(accountOverridesRpc.balance)
     if (accountOverridesRpc.code)
       accountOverrides.code = accountOverridesRpc.code
     if (accountOverridesRpc.movePrecompileToAddress)
       accountOverrides.movePrecompileToAddress =
         accountOverridesRpc.movePrecompileToAddress
-    if (accountOverridesRpc.nonce)
-      accountOverrides.nonce = BigInt(accountOverridesRpc.nonce)
+    if (accountOverridesRpc.nonce !== undefined)
+      accountOverrides.nonce = Quantity.toBigInt(accountOverridesRpc.nonce)
     if (accountOverridesRpc.state)
       accountOverrides.state = accountOverridesRpc.state
     if (accountOverridesRpc.stateDiff)
@@ -114,13 +115,15 @@ export function toRpc(stateOverrides: StateOverrides): Rpc {
   for (const [address, accountOverrides] of Object.entries(stateOverrides)) {
     const accountOverridesRpc: RpcAccountOverrides = {}
     if (typeof accountOverrides.balance === 'bigint')
-      accountOverridesRpc.balance = Hex.fromNumber(accountOverrides.balance)
+      accountOverridesRpc.balance = Quantity.fromBigInt(
+        accountOverrides.balance,
+      )
     if (accountOverrides.code) accountOverridesRpc.code = accountOverrides.code
     if (accountOverrides.movePrecompileToAddress)
       accountOverridesRpc.movePrecompileToAddress =
         accountOverrides.movePrecompileToAddress
     if (typeof accountOverrides.nonce === 'bigint')
-      accountOverridesRpc.nonce = Hex.fromNumber(accountOverrides.nonce)
+      accountOverridesRpc.nonce = Quantity.fromBigInt(accountOverrides.nonce)
     if (accountOverrides.state)
       accountOverridesRpc.state = accountOverrides.state
     if (accountOverrides.stateDiff)

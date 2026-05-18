@@ -14,12 +14,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-    {
-      "prefix": 4,
-      "x": 10551483369778534213743005046722587423472548496575383028418761641566343103239n,
-      "y": 88295525029668593780823649128376935553570204792365777341876890493798599407244n,
-    }
-  `,
+        {
+          "prefix": 4,
+          "x": "0x1753ed8e23fd6e17922ebdeed8ebe8043e34cd10118271cf2acdee88c1d58307",
+          "y": "0xc3357f052ea5e9a67625fa723ca0e7bc8ce9d069bea5b8b397137f991284b68c",
+        }
+      `,
       )
     }
 
@@ -30,12 +30,12 @@ describe('getPublicKey', () => {
 
       expect(publicKey).toMatchInlineSnapshot(
         `
-    {
-      "prefix": 4,
-      "x": 74284260781974828542656778781460620511024287575108245086657461940925169173577n,
-      "y": 49004966777120461993240735637857463864712305111925716454339081891868780934195n,
-    }
-  `,
+        {
+          "prefix": 4,
+          "x": "0xa43b66d1eaee03f07d64920491f8b3487a90f527f2342c8caccd55d506508449",
+          "y": "0x6c57d409d6db06faefd8a0aa1106acd69501134e11cf74b2e95c81b451da3433",
+        }
+      `,
       )
     }
   })
@@ -55,8 +55,8 @@ describe('createKeyPair', () => {
     expect(keyPair.publicKey).toHaveProperty('x')
     expect(keyPair.publicKey).toHaveProperty('y')
     expect(keyPair.publicKey.prefix).toBe(4)
-    expect(typeof keyPair.publicKey.x).toBe('bigint')
-    expect(typeof keyPair.publicKey.y).toBe('bigint')
+    expect(typeof keyPair.publicKey.x).toBe('string')
+    expect(typeof keyPair.publicKey.y).toBe('string')
   })
 
   test('behavior: deterministic public key derivation', () => {
@@ -312,7 +312,11 @@ describe('getSharedSecret', () => {
 
   test('error: invalid public key', () => {
     const privateKeyA = P256.randomPrivateKey()
-    const invalidPublicKey = { prefix: 4, x: 0n, y: 0n } as const
+    const invalidPublicKey = {
+      prefix: 4,
+      x: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      y: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    } as const
 
     expect(() =>
       P256.getSharedSecret({
@@ -362,8 +366,8 @@ describe('sign', () => {
       expect(signature).toMatchInlineSnapshot(
         `
         {
-          "r": 25696373395957984486324188498890325781005829812399813021478384321951480608605n,
-          "s": 44320676628162932405815850946781131436023797452754174109610070201481442411520n,
+          "r": "0x38cfa1c681a8a8a2dedc9657eda39fce932517ddf6e9595b7da89b400a3af75d",
+          "s": "0x61fc9d2f84a253fe75e8fbd4a6d24a8d5f29bf664ebe5009f827a246807cc400",
           "yParity": 1,
         }
       `,
@@ -395,8 +399,8 @@ describe('sign', () => {
       expect(signature).toMatchInlineSnapshot(
         `
         {
-          "r": 109093915289726021639001379260733771573757231672849462488223442695417941697300n,
-          "s": 6698841733262193840826736319213924566905321252379319222891108166116990474980n,
+          "r": "0xf130f7c7f3c62f6cf141874ccb17c9bd8eba4ea80c078f2354f9bb664137a314",
+          "s": "0x0ecf68f998506c55189f0542198848b979bd727999a60ac573910c5962bf5ae4",
           "yParity": 0,
         }
       `,
@@ -427,12 +431,12 @@ describe('sign', () => {
     })
     expect(signature).toMatchInlineSnapshot(
       `
-  {
-    "r": 38589374264307162948518251922729143918445204519165784874036137623135009958234n,
-    "s": 201259577542353941908945259470130875727678910646252042669727980758229302244n,
-    "yParity": 0,
-  }
-`,
+      {
+        "r": "0x5550cfd3b935570c4e9ace7d36d733368c7a7f755de10c783020b0ff0b74e95a",
+        "s": "0x0071e8aca10952c56847d3a599b62ba0d2ab42985b993f77d762514ee427bbe4",
+        "yParity": 0,
+      }
+    `,
     )
     expect(
       P256.verify({
@@ -550,4 +554,59 @@ test('exports', () => {
       "verify",
     ]
   `)
+})
+
+describe('as option', () => {
+  test("sign + getPublicKey + recoverPublicKey: as 'Hex'", () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+    const sigHex = P256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(typeof sigHex).toBe('string')
+
+    const pkHex = P256.getPublicKey({ privateKey, as: 'Hex' })
+    expect(typeof pkHex).toBe('string')
+
+    const recoveredHex = P256.recoverPublicKey({
+      payload: '0xdeadbeef',
+      signature: sigHex,
+      as: 'Hex',
+    })
+    expect(recoveredHex).toBe(pkHex)
+    expect(
+      P256.verify({ payload: '0xdeadbeef', publicKey, signature: sigHex }),
+    ).toBe(true)
+  })
+
+  test("sign + getPublicKey: as 'Bytes'", () => {
+    const { privateKey } = P256.createKeyPair()
+    const sigBytes = P256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(sigBytes).toBeInstanceOf(Uint8Array)
+
+    const pkBytes = P256.getPublicKey({ privateKey, as: 'Bytes' })
+    expect(pkBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('verify accepts Hex signature + Hex publicKey', () => {
+    const { privateKey } = P256.createKeyPair()
+    const pkHex = P256.getPublicKey({ privateKey, as: 'Hex' })
+    const sigHex = P256.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(
+      P256.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkHex,
+        signature: sigHex,
+      }),
+    ).toBe(true)
+  })
 })

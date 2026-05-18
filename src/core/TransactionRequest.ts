@@ -70,7 +70,7 @@ export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
  * @returns A transaction request.
  */
 export function fromRpc(request: Rpc): TransactionRequest {
-  const request_ = request as TransactionRequest
+  const request_ = { ...request } as TransactionRequest
 
   if (typeof request.authorizationList !== 'undefined')
     request_.authorizationList = Authorization.fromRpcList(
@@ -178,10 +178,6 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.maxFeePerBlobGas = Hex.fromNumber(request.maxFeePerBlobGas)
   if (typeof request.maxFeePerGas !== 'undefined')
     request_rpc.maxFeePerGas = Hex.fromNumber(request.maxFeePerGas)
-  if (typeof request.maxPriorityFeePerGas !== 'undefined')
-    request_rpc.maxPriorityFeePerGas = Hex.fromNumber(
-      request.maxPriorityFeePerGas,
-    )
   if (typeof request.maxPriorityFeePerGas !== 'undefined')
     request_rpc.maxPriorityFeePerGas = Hex.fromNumber(
       request.maxPriorityFeePerGas,

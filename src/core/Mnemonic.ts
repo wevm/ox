@@ -138,10 +138,10 @@ export function toPrivateKey<as extends 'Bytes' | 'Hex' = 'Bytes'>(
   mnemonic: string,
   options: toPrivateKey.Options<as> = {},
 ): toPrivateKey.ReturnType<as> {
-  const { path = HdKey.path(), passphrase } = options
+  const { as = 'Bytes', path = HdKey.path(), passphrase } = options
   const hdKey = toHdKey(mnemonic, { passphrase }).derive(path)
-  if (options.as === 'Bytes') return Bytes.from(hdKey.privateKey) as never
-  return hdKey.privateKey as never
+  if (as === 'Hex') return hdKey.privateKey as never
+  return Bytes.from(hdKey.privateKey) as never
 }
 
 export declare namespace toPrivateKey {

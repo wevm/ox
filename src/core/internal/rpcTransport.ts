@@ -1,5 +1,5 @@
 import type * as Errors from '../Errors.js'
-import * as RpcRequest from '../RpcRequest.js'
+import type * as RpcRequest from '../RpcRequest.js'
 import * as RpcResponse from '../RpcResponse.js'
 import type * as RpcSchema from '../RpcSchema.js'
 import type * as RpcTransport from '../RpcTransport.js'
@@ -38,13 +38,18 @@ export function create<
   transport: create.Transport<options>,
   options_root?: Options<raw, options, schema>,
 ): RpcTransport.RpcTransport<raw, options, schema> {
-  const requestStore = RpcRequest.createStore()
+  let id = 0
 
   return {
-    request: async ({ method, params }, options: any = {}) => {
-      const body = requestStore.prepare({ method, params } as never)
+    request: async (request: any, options: any = {}) => {
+      // Fast path: if the caller already provided a fully-formed JSON-RPC
+      // request (id + jsonrpc), forward it directly without re-allocating.
+      const body =
+        request.jsonrpc === '2.0' && typeof request.id === 'number'
+          ? request
+          : { id: id++, ...request, jsonrpc: '2.0' }
 
-      const data = await transport.request(body as never, options as never)
+      const data = await transport.request(body, options as never)
 
       return RpcResponse.parse(data, {
         raw: options.raw ?? options_root?.raw,

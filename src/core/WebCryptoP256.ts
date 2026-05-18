@@ -1,17 +1,25 @@
-import { p256 } from '@noble/curves/p256'
+import { p256 } from '@noble/curves/nist.js'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import {
+  formatSignature,
+  normalizePublicKey,
+  normalizeSignature,
+} from './internal/cryptoIo.js'
 import type { Compute } from './internal/types.js'
 import * as PublicKey from './PublicKey.js'
 import type * as Signature from './Signature.js'
+
+/** secp256r1 / P-256 curve order. */
+const N = p256.Point.CURVE().n
 
 /**
  * Generates an ECDSA P256 key pair that includes:
  *
  * - a `privateKey` of type [`CryptoKey`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey)
  *
- * - a `publicKey` of type {@link ox#Hex.Hex} or {@link ox#Bytes.Bytes}
+ * - a `publicKey` of type {@link ox#PublicKey.PublicKey}
  *
  * @example
  * ```ts twoslash
@@ -21,8 +29,8 @@ import type * as Signature from './Signature.js'
  * // @log: {
  * // @log:   privateKey: CryptoKey {},
  * // @log:   publicKey: {
- * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:     x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:     y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log:     prefix: 4,
  * // @log:   },
  * // @log: }
@@ -82,8 +90,8 @@ export declare namespace createKeyPair {
  * // @log: {
  * // @log:   privateKey: CryptoKey {},
  * // @log:   publicKey: {
- * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:     x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:     y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log:     prefix: 4,
  * // @log:   },
  * // @log: }
@@ -154,14 +162,12 @@ export async function getSharedSecret<as extends 'Hex' | 'Bytes' = 'Hex'>(
   const { as = 'Hex', privateKey, publicKey } = options
 
   if (privateKey.algorithm.name === 'ECDSA') {
-    throw new Error(
-      'privateKey is not compatible with ECDH. please use `createKeyPairECDH` to create an ECDH key.',
-    )
+    throw new InvalidPrivateKeyAlgorithmError()
   }
 
   const publicKeyCrypto = await globalThis.crypto.subtle.importKey(
     'raw',
-    PublicKey.toBytes(publicKey),
+    PublicKey.toBytes(normalizePublicKey(publicKey)),
     { name: 'ECDH', namedCurve: 'P-256' },
     false,
     [],
@@ -211,6 +217,11 @@ export declare namespace getSharedSecret {
 /**
  * Signs a payload with the provided `CryptoKey` private key and returns a P256 signature.
  *
+ * @remarks
+ * Web Crypto may emit ECDSA signatures with `s` in the upper half of the curve
+ * order. ox always normalizes the result to a low-S signature so it round-trips
+ * with {@link ox#WebCryptoP256.(verify:function)} and other ox ECDSA verifiers.
+ *
  * @example
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
@@ -228,12 +239,12 @@ export declare namespace getSharedSecret {
  * ```
  *
  * @param options - Options for signing the payload.
- * @returns The P256 ECDSA {@link ox#Signature.Signature}.
+ * @returns The P256 ECDSA {@link ox#Signature.Signature} (always low-S normalized).
  */
-export async function sign(
-  options: sign.Options,
-): Promise<Signature.Signature<false>> {
-  const { payload, privateKey } = options
+export async function sign<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'>(
+  options: sign.Options<as>,
+): Promise<sign.ReturnType<as>> {
+  const { as = 'Object', payload, privateKey } = options
   const signature = await globalThis.crypto.subtle.sign(
     {
       name: 'ECDSA',
@@ -245,17 +256,33 @@ export async function sign(
   const signature_bytes = Bytes.fromArray(new Uint8Array(signature))
   const r = Bytes.toBigInt(Bytes.slice(signature_bytes, 0, 32))
   let s = Bytes.toBigInt(Bytes.slice(signature_bytes, 32, 64))
-  if (s > p256.CURVE.n / 2n) s = p256.CURVE.n - s
-  return { r, s }
+  if (s > N / 2n) s = N - s
+  return formatSignature(
+    {
+      r: Hex.fromNumber(r, { size: 32 }),
+      s: Hex.fromNumber(s, { size: 32 }),
+    },
+    as,
+  ) as never
 }
 
 export declare namespace sign {
-  type Options = {
+  type Options<as extends 'Hex' | 'Bytes' | 'Object' = 'Object'> = {
+    /**
+     * Format of the returned signature.
+     * @default 'Object'
+     */
+    as?: as | 'Hex' | 'Bytes' | 'Object' | undefined
     /** Payload to sign. */
     payload: Hex.Hex | Bytes.Bytes
     /** ECDSA private key. */
     privateKey: CryptoKey
   }
+
+  type ReturnType<as extends 'Hex' | 'Bytes' | 'Object'> =
+    | (as extends 'Bytes' ? Bytes.Bytes : never)
+    | (as extends 'Hex' ? Hex.Hex : never)
+    | (as extends 'Object' ? Signature.Signature<false> : never)
 
   type ErrorType = Bytes.fromArray.ErrorType | Errors.GlobalErrorType
 }
@@ -283,14 +310,15 @@ export declare namespace sign {
  * @returns Whether the payload was signed by the provided public key.
  */
 export async function verify(options: verify.Options): Promise<boolean> {
-  const { lowS = true, payload, signature } = options
+  const { lowS = true, payload } = options
+  const signature = normalizeSignature<false>(options.signature)
 
   // Reject high-S signatures if lowS is enabled.
-  if (lowS && signature.s > p256.CURVE.n / 2n) return false
+  if (lowS && BigInt(signature.s) > N / 2n) return false
 
   const publicKey = await globalThis.crypto.subtle.importKey(
     'raw',
-    PublicKey.toBytes(options.publicKey),
+    PublicKey.toBytes(normalizePublicKey(options.publicKey)),
     { name: 'ECDSA', namedCurve: 'P-256' },
     true,
     ['verify'],
@@ -302,7 +330,10 @@ export async function verify(options: verify.Options): Promise<boolean> {
       hash: 'SHA-256',
     },
     publicKey,
-    Bytes.concat(Bytes.fromNumber(signature.r), Bytes.fromNumber(signature.s)),
+    Bytes.concat(
+      Bytes.fromHex(signature.r, { size: 32 }),
+      Bytes.fromHex(signature.s, { size: 32 }),
+    ),
     Bytes.from(payload),
   )
 }
@@ -311,13 +342,37 @@ export declare namespace verify {
   type Options = {
     /** If set to `true`, only low-S signatures will be accepted. @default true */
     lowS?: boolean | undefined
-    /** Public key that signed the payload. */
-    publicKey: PublicKey.PublicKey<boolean>
-    /** Signature of the payload. */
-    signature: Signature.Signature<false>
+    /**
+     * Public key that signed the payload.
+     *
+     * Accepts a structured {@link ox#PublicKey.PublicKey}, a serialized hex
+     * string, or a `Uint8Array` (SEC1 encoding).
+     */
+    publicKey: Hex.Hex | Bytes.Bytes | PublicKey.PublicKey<boolean>
+    /**
+     * Signature of the payload.
+     *
+     * Accepts a structured {@link ox#Signature.Signature}, a serialized hex
+     * string, or a `Uint8Array`.
+     */
+    signature: Hex.Hex | Bytes.Bytes | Signature.Signature<false>
     /** Payload that was signed. */
     payload: Hex.Hex | Bytes.Bytes
   }
 
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Thrown when an ECDSA private key is supplied to {@link ox#WebCryptoP256.(getSharedSecret:function)}.
+ * Only ECDH private keys are valid for shared secret derivation.
+ */
+export class InvalidPrivateKeyAlgorithmError extends Errors.BaseError {
+  override readonly name = 'WebCryptoP256.InvalidPrivateKeyAlgorithmError'
+
+  constructor() {
+    super(
+      'privateKey is not compatible with ECDH. Please use `createKeyPairECDH` to create an ECDH key.',
+    )
+  }
 }

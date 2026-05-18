@@ -112,8 +112,8 @@ export declare namespace fromRpc {
 export function toRpc(filter: Filter): Rpc {
   const { address, topics, fromBlock, toBlock } = filter
   return {
-    ...(address && { address }),
-    ...(topics && { topics }),
+    ...(typeof address !== 'undefined' ? { address } : {}),
+    ...(typeof topics !== 'undefined' ? { topics } : {}),
     ...(typeof fromBlock !== 'undefined'
       ? {
           fromBlock:

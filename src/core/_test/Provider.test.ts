@@ -36,7 +36,9 @@ describe('Provider.from', () => {
           headers: {
             'Content-Type': 'application/json',
           },
-        }).then((res) => res.json())
+        })
+          .then((res) => res.json())
+          .then(RpcResponse.parse)
       },
     })
 
@@ -155,6 +157,48 @@ describe('Provider.from', () => {
     off('accountsChanged')
   })
 
+  test('behavior: preserves prototype methods and accessors', async () => {
+    class CustomProvider {
+      _calls: string[] = []
+      get isCustom() {
+        return true
+      }
+      async request(args: any) {
+        this._calls.push(args.method)
+        return '0x1'
+      }
+    }
+
+    const original = new CustomProvider()
+    const provider = Provider.from(original) as Provider.Provider & {
+      isCustom: boolean
+      _calls: string[]
+    }
+
+    expect(provider.isCustom).toBe(true)
+    expect(await provider.request({ method: 'eth_blockNumber' })).toBe('0x1')
+    expect(original._calls).toEqual(['eth_blockNumber'])
+  })
+
+  test('behavior: does not parse JSON-RPC envelope success payloads', async () => {
+    // EIP-1193 `request` resolves with the method result, not a JSON-RPC
+    // envelope. If a provider returns an envelope-shaped object as the
+    // method result, Provider.from should pass it through verbatim.
+    const envelopeShapedResult = {
+      jsonrpc: '2.0',
+      id: 0,
+      result: '0x1',
+    }
+    const provider = Provider.from({
+      async request(_) {
+        return envelopeShapedResult
+      },
+    })
+
+    const result = await provider.request({ method: 'eth_blockNumber' })
+    expect(result).toEqual(envelopeShapedResult)
+  })
+
   test('behavior: UnauthorizedError', async () => {
     const provider = Provider.from({
       async request(_) {
@@ -174,14 +218,14 @@ describe('Provider.from', () => {
   test('behavior: UnauthorizedError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.UnauthorizedError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -213,14 +257,14 @@ describe('Provider.from', () => {
   test('behavior: UserRejectedRequestError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.UserRejectedRequestError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -252,14 +296,14 @@ describe('Provider.from', () => {
   test('behavior: UnsupportedMethodError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.UnsupportedMethodError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -291,14 +335,14 @@ describe('Provider.from', () => {
   test('behavior: DisconnectedError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.DisconnectedError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -330,14 +374,14 @@ describe('Provider.from', () => {
   test('behavior: ChainDisconnectedError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.ChainDisconnectedError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -369,14 +413,14 @@ describe('Provider.from', () => {
   test('behavior: SwitchChainError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.SwitchChainError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -408,14 +452,14 @@ describe('Provider.from', () => {
   test('behavior: UnsupportedNonOptionalCapabilityError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.UnsupportedNonOptionalCapabilityError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -447,14 +491,14 @@ describe('Provider.from', () => {
   test('behavior: UnsupportedChainIdError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.UnsupportedChainIdError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -486,14 +530,14 @@ describe('Provider.from', () => {
   test('behavior: DuplicateIdError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.DuplicateIdError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -525,14 +569,14 @@ describe('Provider.from', () => {
   test('behavior: UnknownBundleIdError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.UnknownBundleIdError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -564,14 +608,14 @@ describe('Provider.from', () => {
   test('behavior: BundleTooLargeError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.BundleTooLargeError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -603,14 +647,14 @@ describe('Provider.from', () => {
   test('behavior: AtomicReadyWalletRejectedUpgradeError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.AtomicReadyWalletRejectedUpgradeError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -642,14 +686,14 @@ describe('Provider.from', () => {
   test('behavior: AtomicityNotSupportedError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: Provider.AtomicityNotSupportedError.code,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -715,14 +759,14 @@ describe('Provider.from', () => {
   test('behavior: BaseError (raw)', async () => {
     const provider = Provider.from({
       async request(_) {
-        return {
+        return RpcResponse.parse({
           jsonrpc: '2.0',
           id: 0,
           error: {
             code: 1000,
             message: 'foo',
           },
-        }
+        })
       },
     })
 
@@ -746,7 +790,9 @@ describe('Provider.from', () => {
           headers: {
             'Content-Type': 'application/json',
           },
-        }).then((res) => res.json())
+        })
+          .then((res) => res.json())
+          .then(RpcResponse.parse)
       },
     })
 
@@ -761,7 +807,7 @@ describe('Provider.from', () => {
         ],
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      '[RpcResponse.InvalidParamsError: No Signer available]',
+      `[RpcResponse.InvalidParamsError: No Signer available]`,
     )
   })
 

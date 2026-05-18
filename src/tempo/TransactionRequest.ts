@@ -4,7 +4,6 @@ import type { Compute } from '../core/internal/types.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
-import * as TempoAddress from './TempoAddress.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
 import type { Call } from './TxEnvelopeTempo.js'
@@ -23,7 +22,6 @@ export type TransactionRequest<
   bigintType = bigint,
   numberType = number,
   type extends string = string,
-  addressType = TempoAddress.Address,
 > = Compute<
   Omit<
     ox_TransactionRequest.TransactionRequest<bigintType, numberType, type>,
@@ -32,12 +30,12 @@ export type TransactionRequest<
     authorizationList?:
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
-    calls?: readonly Call<bigintType, addressType>[] | undefined
+    calls?: readonly Call<bigintType>[] | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
     feePayer?: boolean | undefined
-    feeToken?: TokenId.TokenIdOrAddress<addressType> | undefined
+    feeToken?: TokenId.TokenIdOrAddress | undefined
     nonceKey?: 'random' | bigintType | undefined
     validBefore?: numberType | undefined
     validAfter?: numberType | undefined
@@ -46,7 +44,7 @@ export type TransactionRequest<
 
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
-  TransactionRequest<Hex.Hex, Hex.Hex, string, Hex.Hex>,
+  TransactionRequest<Hex.Hex, Hex.Hex, string>,
   'authorizationList' | 'feeToken' | 'keyAuthorization'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
@@ -93,7 +91,7 @@ export function fromRpc(request: Rpc): TransactionRequest {
     )
   if (request.calls)
     request_.calls = request.calls.map((call) => {
-      const mapped: Call<bigint, TempoAddress.Address> = {
+      const mapped: Call<bigint> = {
         to: call.to,
         data: call.data,
       }
@@ -186,14 +184,14 @@ export function toRpc(request: TransactionRequest): Rpc {
     )
   if (request.calls)
     request_rpc.calls = request.calls.map((call) => ({
-      to: call.to ? TempoAddress.resolve(call.to) : call.to,
+      to: call.to,
       value: call.value ? Hex.fromNumber(call.value) : '0x',
       data: call.data ?? '0x',
     }))
   else if (request.to || request.data || request.value)
     request_rpc.calls = [
       {
-        to: request.to ? TempoAddress.resolve(request.to) : undefined,
+        to: request.to ?? undefined,
         value: request.value ? Hex.fromNumber(request.value) : '0x',
         data: request.data ?? '0x',
       },
@@ -210,7 +208,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.validAfter = Hex.fromNumber(request.validAfter)
 
   const nonceKey = (() => {
-    if (request.nonceKey === 'random') return Hex.random(6)
+    if (request.nonceKey === 'random') return Hex.random(24)
     if (typeof request.nonceKey === 'bigint')
       return Hex.fromNumber(request.nonceKey)
     return undefined

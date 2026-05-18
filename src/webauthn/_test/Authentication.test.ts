@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import * as Bytes from '../../core/Bytes.js'
+import * as Hash from '../../core/Hash.js'
 import * as P256 from '../../core/P256.js'
 import * as PublicKey from '../../core/PublicKey.js'
 import * as Signature from '../../core/Signature.js'
@@ -362,12 +364,12 @@ describe('getSignPayload', () => {
   test('behavior: Authentication.sign + P256.verify', () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 60047643624523853691583342123967083322395535713181616683944672258158697774181n,
-      y: 49933766055617994255091849813611851260866104136309220262372066694430479376066n,
+      x: '0x84c1c30aa9e8605f16eee6ae9ba545cfd0286da162f8eca74f4fdd7bb029fc65',
+      y: '0x6e658291ce0aadd8da3f81f9191d1b952fe80961d3daf59645324828a6485ec2',
     })
     const signature = Signature.from({
-      r: 51728839035173161960794416403819635570146754182185755610208554815692624617179n,
-      s: 42284206126603545568097288331895750698887263268526215297009386324761546383756n,
+      r: '0x725d7c3f2bfd9ecc3af8e267e6a6ab186b9708cd363eff5e86deae564833dedb',
+      s: '0x5d7c03366ad5e35d3a70fab70e7cad31977f6fb31c3b63b8576509daf50ce18c',
     })
 
     const { payload } = Authentication.getSignPayload({
@@ -440,6 +442,47 @@ describe('getSignPayload', () => {
     }
   `,
     )
+  })
+
+  test('options: hash', () => {
+    const data = {
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+      origin: 'http://localhost:5173',
+      rpId: 'foo',
+    } as const
+    const { payload: unhashed } = Authentication.getSignPayload(data)
+    const { payload: hashed } = Authentication.getSignPayload({
+      ...data,
+      hash: true,
+    })
+    expect(hashed).toBe(Hash.sha256(unhashed))
+  })
+
+  test('options: hash + verify roundtrip', () => {
+    const { privateKey, publicKey } = P256.createKeyPair()
+
+    const challenge =
+      '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf' as const
+
+    const { metadata, payload } = Authentication.getSignPayload({
+      challenge,
+      origin: 'http://localhost:5173',
+      rpId: 'localhost',
+      hash: true,
+    })
+
+    // payload is already hashed, so do not re-hash on sign
+    const signature = P256.sign({ payload, privateKey })
+
+    expect(
+      Authentication.verify({
+        challenge,
+        publicKey,
+        signature,
+        metadata,
+      }),
+    ).toBeTruthy()
   })
 
   test('options: signCount', () => {
@@ -775,8 +818,8 @@ describe('sign', () => {
           },
         },
         "signature": {
-          "r": 66146490382651126845293572181789601948468603642860880862207775049723590741413n,
-          "s": 57826873356635199932884692124441746552975787926982721375689326118223204882059n,
+          "r": "0x923d9639bcb677fa17a26738e8c8a24d58259197283b2a3f2ee135dd4a800da5",
+          "s": "0x7fd8d9b74b66e1180ca160bdd509c73bf95bd20a8cf520904813c310526c968b",
         },
       }
     `)
@@ -822,6 +865,76 @@ describe('sign', () => {
       },
     }
   `)
+  })
+
+  test('behavior: non-ASCII clientDataJSON decodes as UTF-8', async () => {
+    const clientDataJSON = `{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false,"note":"🚀 héllo"}`
+    const clientDataJSONBytes = Bytes.fromString(clientDataJSON)
+
+    const response = await Authentication.sign({
+      getFn() {
+        return Promise.resolve({
+          id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+          response: {
+            authenticatorData: new Uint8Array([
+              73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118,
+              96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153, 92, 243, 186,
+              131, 29, 151, 99, 5, 0, 0, 0, 0,
+            ]),
+            clientDataJSON: clientDataJSONBytes,
+            signature: new Uint8Array([
+              48, 70, 2, 33, 0, 146, 61, 150, 57, 188, 182, 119, 250, 23, 162,
+              103, 56, 232, 200, 162, 77, 88, 37, 145, 151, 40, 59, 42, 63, 46,
+              225, 53, 221, 74, 128, 13, 165, 2, 33, 0, 128, 39, 38, 71, 180,
+              153, 30, 232, 243, 94, 159, 66, 42, 246, 56, 195, 195, 139, 40,
+              163, 26, 34, 125, 244, 171, 166, 7, 178, 169, 246, 142, 198,
+            ]),
+          },
+        } as any)
+      },
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+    })
+
+    expect(response.metadata.clientDataJSON).toBe(clientDataJSON)
+    expect(response.metadata.challengeIndex).toBe(
+      clientDataJSON.indexOf('"challenge"'),
+    )
+    expect(response.metadata.typeIndex).toBe(clientDataJSON.indexOf('"type"'))
+  })
+
+  test('behavior: large clientDataJSON does not throw', async () => {
+    const extra = 'x'.repeat(200_000)
+    const clientDataJSON = `{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false,"note":"${extra}"}`
+    const clientDataJSONBytes = Bytes.fromString(clientDataJSON)
+
+    const response = await Authentication.sign({
+      getFn() {
+        return Promise.resolve({
+          id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
+          response: {
+            authenticatorData: new Uint8Array([
+              73, 150, 13, 229, 136, 14, 140, 104, 116, 52, 23, 15, 100, 118,
+              96, 91, 143, 228, 174, 185, 162, 134, 50, 199, 153, 92, 243, 186,
+              131, 29, 151, 99, 5, 0, 0, 0, 0,
+            ]),
+            clientDataJSON: clientDataJSONBytes,
+            signature: new Uint8Array([
+              48, 70, 2, 33, 0, 146, 61, 150, 57, 188, 182, 119, 250, 23, 162,
+              103, 56, 232, 200, 162, 77, 88, 37, 145, 151, 40, 59, 42, 63, 46,
+              225, 53, 221, 74, 128, 13, 165, 2, 33, 0, 128, 39, 38, 71, 180,
+              153, 30, 232, 243, 94, 159, 66, 42, 246, 56, 195, 195, 139, 40,
+              163, 26, 34, 125, 244, 171, 166, 7, 178, 169, 246, 142, 198,
+            ]),
+          },
+        } as any)
+      },
+      challenge:
+        '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+    })
+
+    expect(response.metadata.clientDataJSON).toBe(clientDataJSON)
+    expect(response.metadata.clientDataJSON.length).toBe(clientDataJSON.length)
   })
 
   test('error: null credential', async () => {
@@ -871,8 +984,8 @@ describe('serializeResponse', () => {
         userVerificationRequired: true,
       },
       signature: Signature.from({
-        r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-        s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+        r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+        s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
       }),
       raw: {
         id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
@@ -928,8 +1041,8 @@ describe('deserializeResponse', () => {
         userVerificationRequired: true,
       },
       signature: Signature.from({
-        r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-        s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+        r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+        s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
       }),
       raw: {
         id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs',
@@ -977,8 +1090,8 @@ describe('deserializeResponse', () => {
           "type": "public-key",
         },
         "signature": {
-          "r": 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-          "s": 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+          "r": "0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f",
+          "s": "0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4",
         },
       }
     `)
@@ -1031,12 +1144,12 @@ describe('verify', () => {
   test('default', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1062,12 +1175,12 @@ describe('verify', () => {
   test('default', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 92217130139243395344713469331864871617892993489147165241879962954542036045090n,
-      s: 25785067610647358687769954197992440351568013796562547723755309225289815468181n,
+      r: '0xcbe10bc71cbbc0552f58aa5b8742c954f10335943abb9cfd186ec4d066e44d22',
+      s: '0x3901d4c1c5e613cfbcd1ce32c9679d4daafda3c73e745017cad55ec2ffd0a895',
     })
     const metadata = {
       authenticatorData:
@@ -1093,12 +1206,12 @@ describe('verify', () => {
   test('behavior: invalid hash', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1124,12 +1237,12 @@ describe('verify', () => {
   test('behavior: invalid signature', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963152n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f8550',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1155,12 +1268,12 @@ describe('verify', () => {
   test('behavior: authenticator data too short', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963152n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f8550',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1186,12 +1299,12 @@ describe('verify', () => {
   test('behavior: invalid flag', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 92217130139243395344713469331864871617892993489147165241879962954542036045090n,
-      s: 25785067610647358687769954197992440351568013796562547723755309225289815468181n,
+      r: '0xcbe10bc71cbbc0552f58aa5b8742c954f10335943abb9cfd186ec4d066e44d22',
+      s: '0x3901d4c1c5e613cfbcd1ce32c9679d4daafda3c73e745017cad55ec2ffd0a895',
     })
     const metadata = {
       authenticatorData:
@@ -1217,12 +1330,12 @@ describe('verify', () => {
   test('behavior: invalid flag', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1248,12 +1361,12 @@ describe('verify', () => {
   test('behavior: invalid flag', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1279,12 +1392,12 @@ describe('verify', () => {
   test('behavior: invalid type', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1308,12 +1421,12 @@ describe('verify', () => {
   test('behavior: invalid challenge', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1339,12 +1452,12 @@ describe('verify', () => {
   test('behavior: invalid challenge match', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1370,12 +1483,12 @@ describe('verify', () => {
   test('options: minimal metadata', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1398,12 +1511,12 @@ describe('verify', () => {
   test('options: challengeIndex omitted', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1428,12 +1541,12 @@ describe('verify', () => {
   test('options: typeIndex omitted', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1458,12 +1571,12 @@ describe('verify', () => {
   test('options: challengeIndex and typeIndex omitted', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1487,12 +1600,12 @@ describe('verify', () => {
   test('behavior: invalid challenge when challengeIndex omitted', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1517,12 +1630,12 @@ describe('verify', () => {
   test('options: origin (valid)', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1546,12 +1659,12 @@ describe('verify', () => {
   test('options: origin (valid, array)', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1575,12 +1688,12 @@ describe('verify', () => {
   test('options: origin (invalid)', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1604,12 +1717,12 @@ describe('verify', () => {
   test('options: rpId (valid)', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1633,12 +1746,12 @@ describe('verify', () => {
   test('options: rpId (invalid)', async () => {
     const publicKey = PublicKey.from({
       prefix: 4,
-      x: 15325272481743543470187210372131079389379804084126119117911265853867256769440n,
-      y: 74947999673872536163854436677160946007685903587557427331495653571111132132212n,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
     })
     const signature = Signature.from({
-      r: 10330677067519063752777069525326520293658884904426299601620960859195372963151n,
-      s: 47017859265388077754498411591757867926785106410894171160067329762716841868244n,
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
     })
     const metadata = {
       authenticatorData:
@@ -1655,6 +1768,103 @@ describe('verify', () => {
         publicKey,
         signature,
         rpId: 'evil.com',
+      }),
+    ).toBeFalsy()
+  })
+
+  test('behavior: AT flag set on assertion is rejected', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
+    })
+    const signature = Signature.from({
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
+    })
+    // Original flag byte was 0x05; flip the AT bit (0x40) to make 0x45.
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634500000000',
+      challengeIndex: 23,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeFalsy()
+  })
+
+  test('behavior: ED flag set with no extension bytes is rejected', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
+    })
+    const signature = Signature.from({
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
+    })
+    // Flag byte 0x85 = UP | UV | ED, but no trailing CBOR map.
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97638500000000',
+      challengeIndex: 23,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
+      }),
+    ).toBeFalsy()
+  })
+
+  test('behavior: ED flag set with malformed CBOR extension is rejected', () => {
+    const publicKey = PublicKey.from({
+      prefix: 4,
+      x: '0x21e1cbfd809fcc978340e1d3442bf9893391628620c065ff9b519b537afceba0',
+      y: '0xa5b31085b870a1de535866d0aec5df21bc6c98de71f356d96886e84510b8f374',
+    })
+    const signature = Signature.from({
+      r: '0x16d6f4bd3231c71c5e58927b9cf2ee701df03b52e3db71efc03d1139122f854f',
+      s: '0x67f32a4fcb17b07ab9b7755b61e999b99139074fc8e1aa6d33d25beccbb2fbd4',
+    })
+    // Flag byte 0x85 = UP | UV | ED, with an obviously malformed trailing
+    // extension (0xff is reserved/break in CBOR and not a valid top-level item).
+    const metadata = {
+      authenticatorData:
+        '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97638500000000ff',
+      challengeIndex: 23,
+      clientDataJSON:
+        '{"type":"webauthn.get","challenge":"9jEFijuhEWrM4SOW-tChJbUEHEP44VcjcJ-Bqo1fTM8","origin":"http://localhost:5173","crossOrigin":false}',
+      typeIndex: 1,
+      userVerificationRequired: true,
+    } as const
+
+    expect(
+      Authentication.verify({
+        metadata,
+        challenge:
+          '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
+        publicKey,
+        signature,
       }),
     ).toBeFalsy()
   })

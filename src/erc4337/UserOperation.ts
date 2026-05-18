@@ -1,6 +1,6 @@
 import * as AbiParameters from '../core/AbiParameters.js'
 import type * as Address from '../core/Address.js'
-import type * as Authorization from '../core/Authorization.js'
+import * as Authorization from '../core/Authorization.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
@@ -8,6 +8,58 @@ import type { Assign, Compute, OneOf } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as TypedData from '../core/TypedData.js'
 import type * as EntryPoint from './EntryPoint.js'
+
+// ---- Module-scoped constants for hot paths ---------------------------------
+
+/** keccak256 of empty bytes (`0x`). Reused for empty initCode/paymasterAndData. */
+const EMPTY_KECCAK = /*#__PURE__*/ Hash.keccak256('0x')
+
+/** ABI parameters for v0.6 user operation packed encoding. */
+const v06HashParameters = [
+  { type: 'address' },
+  { type: 'uint256' },
+  { type: 'bytes32' },
+  { type: 'bytes32' },
+  { type: 'uint256' },
+  { type: 'uint256' },
+  { type: 'uint256' },
+  { type: 'uint256' },
+  { type: 'uint256' },
+  { type: 'bytes32' },
+] as const satisfies readonly AbiParameters.Parameter[]
+
+/** ABI parameters for v0.7 user operation packed encoding. */
+const v07HashParameters = [
+  { type: 'address' },
+  { type: 'uint256' },
+  { type: 'bytes32' },
+  { type: 'bytes32' },
+  { type: 'bytes32' },
+  { type: 'uint256' },
+  { type: 'bytes32' },
+  { type: 'bytes32' },
+] as const satisfies readonly AbiParameters.Parameter[]
+
+/** ABI parameters for the outer hash envelope `(packedUserOpHash, entryPoint, chainId)`. */
+const hashEnvelopeParameters = [
+  { type: 'bytes32' },
+  { type: 'address' },
+  { type: 'uint256' },
+] as const satisfies readonly AbiParameters.Parameter[]
+
+/**
+ * Packs two `uint128` values into a single `bytes32` word, with `high` in the
+ * upper 16 bytes and `low` in the lower 16 bytes. Used for `accountGasLimits`
+ * and `gasFees` packing in v0.7+ user operations.
+ *
+ * @internal
+ */
+function packUint128Pair(high: bigint | number, low: bigint | number): Hex.Hex {
+  return Hex.concat(
+    Hex.padLeft(Hex.fromNumber(high), 16),
+    Hex.padLeft(Hex.fromNumber(low), 16),
+  )
+}
 
 /** User Operation. */
 export type UserOperation<
@@ -330,6 +382,7 @@ export declare namespace from {
  * @returns An instantiated {@link ox#UserOperation.UserOperation}.
  */
 export function fromRpc(rpc: Rpc): UserOperation {
+  const authorization = (rpc as Rpc<'0.8'>).authorization
   return {
     ...rpc,
     callGasLimit: BigInt(rpc.callGasLimit),
@@ -343,6 +396,9 @@ export function fromRpc(rpc: Rpc): UserOperation {
     }),
     ...(rpc.paymasterVerificationGasLimit && {
       paymasterVerificationGasLimit: BigInt(rpc.paymasterVerificationGasLimit),
+    }),
+    ...(authorization && {
+      authorization: Authorization.fromRpc(authorization as Authorization.Rpc),
     }),
   } as UserOperation
 }
@@ -462,49 +518,40 @@ export function hash<
 
   const packedUserOp = (() => {
     if (entryPointVersion === '0.6') {
-      return AbiParameters.encode(
-        [
-          { type: 'address' },
-          { type: 'uint256' },
-          { type: 'bytes32' },
-          { type: 'bytes32' },
-          { type: 'uint256' },
-          { type: 'uint256' },
-          { type: 'uint256' },
-          { type: 'uint256' },
-          { type: 'uint256' },
-          { type: 'bytes32' },
-        ],
-        [
-          sender,
-          nonce,
-          Hash.keccak256(initCode ?? '0x'),
-          Hash.keccak256(callData),
-          callGasLimit,
-          verificationGasLimit,
-          preVerificationGas,
-          maxFeePerGas,
-          maxPriorityFeePerGas,
-          Hash.keccak256(paymasterAndData ?? '0x'),
-        ],
-      )
+      const initCodeHash =
+        !initCode || initCode === '0x' ? EMPTY_KECCAK : Hash.keccak256(initCode)
+      const paymasterAndDataHash =
+        !paymasterAndData || paymasterAndData === '0x'
+          ? EMPTY_KECCAK
+          : Hash.keccak256(paymasterAndData)
+
+      return AbiParameters.encode(v06HashParameters, [
+        sender,
+        nonce,
+        initCodeHash,
+        Hash.keccak256(callData),
+        callGasLimit,
+        verificationGasLimit,
+        preVerificationGas,
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        paymasterAndDataHash,
+      ])
     }
 
     if (entryPointVersion === '0.7') {
-      const accountGasLimits = Hex.concat(
-        Hex.padLeft(Hex.fromNumber(verificationGasLimit), 16),
-        Hex.padLeft(Hex.fromNumber(callGasLimit), 16),
+      const accountGasLimits = packUint128Pair(
+        verificationGasLimit,
+        callGasLimit,
       )
-      const gasFees = Hex.concat(
-        Hex.padLeft(Hex.fromNumber(maxPriorityFeePerGas), 16),
-        Hex.padLeft(Hex.fromNumber(maxFeePerGas), 16),
-      )
-      const initCode_hashed = Hash.keccak256(
-        factory && factoryData ? Hex.concat(factory, factoryData) : '0x',
-      )
-      const paymasterAndData_hashed = Hash.keccak256(
-        paymaster
-          ? Hex.concat(
+      const gasFees = packUint128Pair(maxPriorityFeePerGas, maxFeePerGas)
+      const initCode_hashed =
+        factory && factoryData
+          ? Hash.keccak256(Hex.concat(factory, factoryData))
+          : EMPTY_KECCAK
+      const paymasterAndData_hashed = paymaster
+        ? Hash.keccak256(
+            Hex.concat(
               paymaster,
               Hex.padLeft(
                 Hex.fromNumber(paymasterVerificationGasLimit || 0),
@@ -512,42 +559,31 @@ export function hash<
               ),
               Hex.padLeft(Hex.fromNumber(paymasterPostOpGasLimit || 0), 16),
               paymasterData || '0x',
-            )
-          : '0x',
-      )
+            ),
+          )
+        : EMPTY_KECCAK
 
-      return AbiParameters.encode(
-        [
-          { type: 'address' },
-          { type: 'uint256' },
-          { type: 'bytes32' },
-          { type: 'bytes32' },
-          { type: 'bytes32' },
-          { type: 'uint256' },
-          { type: 'bytes32' },
-          { type: 'bytes32' },
-        ],
-        [
-          sender,
-          nonce,
-          initCode_hashed,
-          Hash.keccak256(callData),
-          accountGasLimits,
-          preVerificationGas,
-          gasFees,
-          paymasterAndData_hashed,
-        ],
-      )
+      return AbiParameters.encode(v07HashParameters, [
+        sender,
+        nonce,
+        initCode_hashed,
+        Hash.keccak256(callData),
+        accountGasLimits,
+        preVerificationGas,
+        gasFees,
+        paymasterAndData_hashed,
+      ])
     }
 
     throw new Error(`entryPointVersion "${entryPointVersion}" not supported.`)
   })()
 
   return Hash.keccak256(
-    AbiParameters.encode(
-      [{ type: 'bytes32' }, { type: 'address' }, { type: 'uint256' }],
-      [Hash.keccak256(packedUserOp), entryPointAddress, BigInt(chainId)],
-    ),
+    AbiParameters.encode(hashEnvelopeParameters, [
+      Hash.keccak256(packedUserOp),
+      entryPointAddress,
+      BigInt(chainId),
+    ]),
   )
 }
 
@@ -583,8 +619,8 @@ export declare namespace hash {
  *     chainId: 1,
  *     nonce: 69n,
  *     yParity: 0,
- *     r: 1n,
- *     s: 2n,
+ *     r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *     s: '0x0000000000000000000000000000000000000000000000000000000000000002',
  *   },
  *   callData: '0xdeadbeef',
  *   callGasLimit: 300_000n,
@@ -657,14 +693,14 @@ export function toPacked(
     verificationGasLimit,
   } = userOperation
 
-  const accountGasLimits = Hex.concat(
-    Hex.padLeft(Hex.fromNumber(verificationGasLimit || 0n), 16),
-    Hex.padLeft(Hex.fromNumber(callGasLimit || 0n), 16),
+  const accountGasLimits = packUint128Pair(
+    verificationGasLimit || 0n,
+    callGasLimit || 0n,
   )
   const initCode = toInitCode(userOperation)
-  const gasFees = Hex.concat(
-    Hex.padLeft(Hex.fromNumber(maxPriorityFeePerGas || 0n), 16),
-    Hex.padLeft(Hex.fromNumber(maxFeePerGas || 0n), 16),
+  const gasFees = packUint128Pair(
+    maxPriorityFeePerGas || 0n,
+    maxFeePerGas || 0n,
   )
   const paymasterAndData = paymaster
     ? Hex.concat(
@@ -718,7 +754,7 @@ export declare namespace toPacked {
  * @param packed - The packed user operation to transform.
  * @returns The structured user operation.
  */
-export function fromPacked(packed: Packed): UserOperation<'0.7' | '0.8', true> {
+export function fromPacked(packed: Packed): UserOperation<'0.7', true> {
   const {
     accountGasLimits,
     callData,
@@ -857,6 +893,13 @@ export function toRpc(userOperation: UserOperation): Rpc {
     )
   if (userOperation.signature) rpc.signature = userOperation.signature
 
+  const authorization = (userOperation as UserOperation<'0.8', true>)
+    .authorization
+  if (authorization)
+    (rpc as Rpc<'0.8'>).authorization = Authorization.toRpc(
+      authorization as Authorization.Signed,
+    ) as Rpc<'0.8'>['authorization']
+
   return rpc
 }
 
@@ -878,8 +921,8 @@ export declare namespace toRpc {
  *     address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
  *     nonce: 69n,
  *     yParity: 0,
- *     r: 1n,
- *     s: 2n,
+ *     r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *     s: '0x0000000000000000000000000000000000000000000000000000000000000002',
  *   },
  *   callData: '0xdeadbeef',
  *   callGasLimit: 300_000n,

@@ -21,6 +21,14 @@ import {
 console.log('Generating API docs.')
 
 ////////////////////////////////////////////////////////////
+/// Clean previously generated pages
+////////////////////////////////////////////////////////////
+
+for (const dir of ['api', 'ercs', 'tempo', 'webauthn']) {
+  fs.removeSync(`./site/src/pages/${dir}`)
+}
+
+////////////////////////////////////////////////////////////
 /// Load API Model
 ////////////////////////////////////////////////////////////
 
@@ -92,7 +100,7 @@ type NamespaceItem = {
   sidebarItem: SidebarItem
 }[]
 
-const pagesDir = './site/pages'
+const pagesDir = './site/src/pages'
 const namespaceMap: Record<
   EntrypointCategory,
   Record<NamespaceCategory, NamespaceItem>
@@ -263,7 +271,7 @@ const topNav: TopNav = namespaceEntries.map(({ entrypointCategory }) => ({
 })) satisfies TopNav
 
 fs.writeFileSync(
-  './site/config-generated.ts',
+  './site/src/config-generated.ts',
   `export const sidebar = ${JSON.stringify(sidebar, null, 2)}\n` +
     `export const topNav = ${JSON.stringify(topNav, null, 2)}`,
 )
@@ -275,20 +283,21 @@ fs.writeFileSync(
 for (const namespace of namespaceEntries) {
   let content = '# API Reference\n\n'
 
-  content += '<table className="vocs_Table">\n'
-  content += '<tbody>\n'
+  const escapeTableCell = (value: string | undefined) =>
+    (value ?? '').replaceAll('\n', ' ').replaceAll('|', '\\|')
+
+  content += '| Module | Description |\n'
+  content += '| --- | --- |\n'
 
   for (const { category, items } of namespace.categories) {
-    content += `<tr><td className="vocs_TableCell" colSpan="2" style={{ backgroundColor: 'var(--vocs-color_background2)' }}>**${category}**</td></tr>\n`
+    content += `| **${escapeTableCell(category)}** | |\n`
     for (const item of items) {
       const description = item.docComment?.summary
         .split('\n\n')[0]
-        ?.replace('\n', ' ')
-      content += `<tr><td className="vocs_TableCell"><a className="vocs_Anchor vocs_Link vocs_Link_accent_underlined" href="${item.sidebarItem.link}">${item.name}</a></td><td className="vocs_TableCell">${description}</td></tr>\n`
+        ?.replaceAll('\n', ' ')
+      content += `| [${escapeTableCell(item.name)}](${item.sidebarItem.link}) | ${escapeTableCell(description)} |\n`
     }
   }
-  content += '</tbody>\n'
-  content += '</table>\n'
 
   const path = `${pagesDir}${getPath(namespace)}`
   fs.writeFileSync(`${path}/index.mdx`, content)

@@ -52,6 +52,30 @@ describe('aggregate', () => {
     })
     expect(valid).toBe(true)
   })
+
+  test('error: empty array', () => {
+    expect(() => Bls.aggregate([])).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Bls.aggregate expects a non-empty array of points.]`,
+    )
+  })
+
+  test('behavior: single-element array fast-returns the input', () => {
+    const publicKey = Bls.getPublicKey({ privateKey })
+    expect(Bls.aggregate([publicKey])).toBe(publicKey)
+  })
+
+  test('error: mixed groups', () => {
+    const g1 = Bls.getPublicKey({ privateKey })
+    const g2 = Bls.getPublicKey({
+      privateKey,
+      size: 'long-key:short-sig',
+    })
+    expect(() =>
+      Bls.aggregate([g1, g2 as any]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[BaseError: Bls.aggregate expects all points to be from the same group (G1 or G2).]`,
+    )
+  })
 })
 
 describe('createKeyPair', () => {
@@ -60,9 +84,9 @@ describe('createKeyPair', () => {
     expect(privateKey).toBeDefined()
     expect(privateKey.length).toBe(66)
     expect(publicKey).toBeDefined()
-    expect(typeof publicKey.x).toBe('bigint')
-    expect(typeof publicKey.y).toBe('bigint')
-    expect(typeof publicKey.z).toBe('bigint')
+    expect(typeof publicKey.x).toBe('string')
+    expect(typeof publicKey.y).toBe('string')
+    expect(typeof publicKey.z).toBe('string')
   })
 
   it('as: bytes', () => {
@@ -70,9 +94,9 @@ describe('createKeyPair', () => {
     expect(privateKey).toBeDefined()
     expect(privateKey.length).toBe(32)
     expect(publicKey).toBeDefined()
-    expect(typeof publicKey.x).toBe('bigint')
-    expect(typeof publicKey.y).toBe('bigint')
-    expect(typeof publicKey.z).toBe('bigint')
+    expect(typeof publicKey.x).toBe('string')
+    expect(typeof publicKey.y).toBe('string')
+    expect(typeof publicKey.z).toBe('string')
   })
 
   it('size: "long-key:short-sig"', () => {
@@ -119,9 +143,9 @@ describe('getPublicKey', () => {
     const publicKey = Bls.getPublicKey({ privateKey })
     expect(publicKey).toMatchInlineSnapshot(`
       {
-        "x": 1952783380189056174522580903352347766701573809635723835268303492562286913265402164399416172997666069723894699105894n,
-        "y": 3394089175947417419526317884165437122243448720528225119792553064107324599006426161993648623279289675312316462718429n,
-        "z": 1n,
+        "x": "0x0cafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66",
+        "y": "0x160d458a5b862815046b66adad35c7fe0848d173219c011aa4d5e552f227c96889ecccafeb0bdba10d54f3713678dddd",
+        "z": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
       }
     `)
   })
@@ -134,16 +158,16 @@ describe('getPublicKey', () => {
     expect(publicKey).toMatchInlineSnapshot(`
       {
         "x": {
-          "c0": 355700073819052008684778820175963255205495140126954969787089018774753222070622698188835174184164179369078130885244n,
-          "c1": 3141747483469678201696152507180044107401052508149828985947848597238369234167677882679751100991611433759974704216489n,
+          "c0": "0x024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c",
+          "c1": "0x14698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9",
         },
         "y": {
-          "c0": 2066498625632373741693121319338450383866133445054897600869581552265032944423583015562782022208222353927807243866749n,
-          "c1": 2094957017561088565638483770249057751981351081887405244515911122357724535677090041039038848651564427361620547334206n,
+          "c0": "0x0d6d22d0d42bb58582c25a8e163ec6ebe866066149b339519a63154674d2299fcf810efa1426ecb4f197eb463b9f527d",
+          "c1": "0x0d9c7848e42f8603207a492877ab9065bbd8f9b048ca0a51159676de3299358565b1a871bfdbd25539700cb4988bf03e",
         },
         "z": {
-          "c0": 1n,
-          "c1": 0n,
+          "c0": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+          "c1": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         },
       }
     `)
@@ -172,16 +196,16 @@ describe('sign', () => {
     expect(signature).toMatchInlineSnapshot(`
       {
         "x": {
-          "c0": 3746086905447253682610543432049782958935576956103835696177151771320417199129097598091428899350812694802984340320507n,
-          "c1": 3283146048622226517954881634398987000360291525283271875090618615961785504260074427269084149051224291832699744536875n,
+          "c0": "0x1856bcc293208adcf1dfe12b752470c7910e8919071b2f03249d0da78ec8f3ad5b01c0b2a675cf0d0b658580616c70fb",
+          "c1": "0x1554be670320ec850f81f6197dc2b42a4586dd11e439b0779bdbb4fbf324d68190b781ee049b685b39c8cfa7387dc92b",
         },
         "y": {
-          "c0": 2635882389000876446384650976799081995605300411488416553944693011070686484045367229225761824211357395609735141830301n,
-          "c1": 3150725065472868899001777665935568609665827996367588938443411055163385844006645735808933132167606601018627944394270n,
+          "c0": "0x11202c22b26cc40874bff43f3be3980eef19f19f8eeddb075c11d2c994d5e86fa3f8d701e56163f07c35e8c45124ae9d",
+          "c1": "0x14787e145ea32f2543c31f187337d4e98dcc2152252d0bd90578fb852d4a4461d18f449deaf47ac837e1887d031cae1e",
         },
         "z": {
-          "c0": 1n,
-          "c1": 0n,
+          "c0": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+          "c1": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         },
       }
     `)
@@ -197,9 +221,9 @@ describe('sign', () => {
 
     expect(signature).toMatchInlineSnapshot(`
       {
-        "x": 3755087731136217504597239089482980992941034609034858157163586991013626465307525157337003693748653301444139684957942n,
-        "y": 1939521305169884934876256226456095365402898060507274143668904400539743214063601510507290152344771164790023535191463n,
-        "z": 1n,
+        "x": "0x1865b546866aa341024c0470d6500272c8bc368f0ae835ba957397b34f0df9896cc410e7314acd1c3260520d541f8ef6",
+        "y": "0x0c99f061f3bc3fe58b13e44f1e8576773a93a95c5a105438aca913350b0088bbf16c808839166f068f49619ab083e5a7",
+        "z": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
       }
     `)
   })
@@ -227,5 +251,100 @@ describe('verify', () => {
     })
     const verified = Bls.verify({ payload, publicKey, signature })
     expect(verified).toBe(true)
+  })
+})
+
+describe('as option / serialized inputs', () => {
+  const privateKey =
+    '0x527f85c60ed7402247da21f1835cea651d0954fc15b7288f096d3608400cb6ac'
+
+  test("getPublicKey: as 'Hex' returns hex string", () => {
+    const pkHex = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    expect(typeof pkHex).toBe('string')
+    expect((pkHex as Hex.Hex).startsWith('0x')).toBe(true)
+  })
+
+  test("getPublicKey: as 'Bytes' returns Uint8Array", () => {
+    const pkBytes = Bls.getPublicKey({ privateKey, as: 'Bytes' })
+    expect(pkBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('getPublicKey default as remains Object', () => {
+    const pk = Bls.getPublicKey({ privateKey })
+    expect(typeof pk).toBe('object')
+    expect('z' in pk).toBe(true)
+  })
+
+  test("sign: as 'Hex' returns hex string", () => {
+    const sigHex = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(typeof sigHex).toBe('string')
+  })
+
+  test("sign: as 'Bytes' returns Uint8Array", () => {
+    const sigBytes = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(sigBytes).toBeInstanceOf(Uint8Array)
+  })
+
+  test('verify accepts Hex publicKey + Hex signature', () => {
+    const pkHex = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    const sigHex = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Hex',
+    })
+    expect(
+      Bls.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkHex,
+        signature: sigHex,
+      }),
+    ).toBe(true)
+  })
+
+  test('verify accepts Bytes publicKey + Bytes signature', () => {
+    const pkBytes = Bls.getPublicKey({ privateKey, as: 'Bytes' })
+    const sigBytes = Bls.sign({
+      payload: '0xdeadbeef',
+      privateKey,
+      as: 'Bytes',
+    })
+    expect(
+      Bls.verify({
+        payload: '0xdeadbeef',
+        publicKey: pkBytes,
+        signature: sigBytes,
+      }),
+    ).toBe(true)
+  })
+
+  test('aggregate accepts hex inputs with group hint', () => {
+    const a = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    const b = Bls.getPublicKey({
+      privateKey:
+        '0x68f9b6c6e0a1f9e7a02e5a6eaae8aa5c4b6b9e1a8f5d8c7b6a5f4e3d2c1b0a9f',
+      as: 'Hex',
+    })
+    const aggregated = Bls.aggregate([a, b], { group: 'G1' })
+    // Should match aggregating from structured inputs.
+    const aObj = Bls.getPublicKey({ privateKey })
+    const bObj = Bls.getPublicKey({
+      privateKey:
+        '0x68f9b6c6e0a1f9e7a02e5a6eaae8aa5c4b6b9e1a8f5d8c7b6a5f4e3d2c1b0a9f',
+    })
+    const aggregatedObj = Bls.aggregate([aObj, bObj])
+    expect(aggregated).toEqual(aggregatedObj)
+  })
+
+  test('aggregate throws if serialized inputs without group hint', () => {
+    const a = Bls.getPublicKey({ privateKey, as: 'Hex' })
+    expect(() => Bls.aggregate([a])).toThrow()
   })
 })

@@ -54,7 +54,7 @@ describe('toHex', () => {
     expect(Base58.toHex('233QC4')).toBe('0x287fb4cd')
     expect(Base58.toHex('11233QC4')).toBe('0x0000287fb4cd')
     expect(() => Base58.toHex('233QC4I')).toThrowErrorMatchingInlineSnapshot(
-      '[Error: invalid base58 character: I]',
+      `[Base58.InvalidCharacterError: Invalid Base58 character: "I".]`,
     )
   })
 })
@@ -79,6 +79,7 @@ test('exports', () => {
       "toBytes",
       "toHex",
       "toString",
+      "InvalidCharacterError",
     ]
   `)
 })

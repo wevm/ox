@@ -97,6 +97,17 @@ export function fromHttp<
 
         const response = await promise.withTimeout(
           ({ signal }) => {
+            const externalSignal = fetchOptions?.signal
+            const timeoutSignal = timeout > 0 ? signal : null
+            const signals = [externalSignal, timeoutSignal].filter(
+              (s): s is AbortSignal => Boolean(s),
+            )
+            const composedSignal =
+              signals.length === 0
+                ? null
+                : signals.length === 1
+                  ? signals[0]!
+                  : AbortSignal.any(signals)
             const init: RequestInit = {
               ...fetchOptions,
               body,
@@ -105,10 +116,9 @@ export function fromHttp<
                 ...fetchOptions?.headers,
               },
               method: fetchOptions?.method ?? 'POST',
-              signal: fetchOptions?.signal ?? (timeout > 0 ? signal : null),
+              signal: composedSignal,
             }
-            const request = new Request(url, init)
-            return fetchFn(request)
+            return fetchFn(url, init)
           },
           {
             timeout,
@@ -122,8 +132,13 @@ export function fromHttp<
           )
             return response.json()
           return response.text().then((data) => {
+            if (data === '') {
+              if (response.ok)
+                throw new MalformedResponseError({ response: data })
+              return { error: undefined }
+            }
             try {
-              return JSON.parse(data || '{}')
+              return JSON.parse(data)
             } catch (_err) {
               if (response.ok)
                 throw new MalformedResponseError({
@@ -134,13 +149,20 @@ export function fromHttp<
           })
         })()
 
-        if (!response.ok)
+        if (!response.ok) {
+          const error = (data as { error?: unknown })?.error
           throw new HttpError({
             body,
-            details: JSON.stringify(data.error) ?? response.statusText,
+            details:
+              typeof error === 'string'
+                ? error
+                : error
+                  ? JSON.stringify(error)
+                  : response.statusText,
             response,
             url,
           })
+        }
 
         return data as never
       },

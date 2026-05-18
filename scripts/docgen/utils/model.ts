@@ -134,7 +134,12 @@ export function createResolveDeclarationReference(
       apiModel,
     )
 
-    if (result.errorMessage)
+    if (result.errorMessage) {
+      const fallback = result.errorMessage.includes('was ambiguous')
+        ? getFallbackLinkForDeclarationReference(declarationReference)
+        : undefined
+      if (fallback) return fallback
+
       throw new Error(
         [
           result.errorMessage,
@@ -142,6 +147,7 @@ export function createResolveDeclarationReference(
           'Declaration Reference Spec: https://github.com/microsoft/tsdoc/blob/0362e09e0a3f6652475b33fbb9ccb4f861323dd0/spec/code-snippets/DeclarationReferences.ts',
         ].join('\n'),
       )
+    }
 
     const item = result.resolvedApiItem
     if (item) {
@@ -154,6 +160,26 @@ export function createResolveDeclarationReference(
     }
 
     return
+  }
+}
+
+function getFallbackLinkForDeclarationReference(
+  declarationReference: DocDeclarationReference,
+) {
+  const match = declarationReference
+    .emitAsTsdoc()
+    .match(/^ox#(?<namespace>[^.#:]+)(?:\.(?<member>[^:]+))?/)
+  const namespace = match?.groups?.namespace
+  if (!namespace) return
+
+  const name = namespace.replace(/_\d+$/, '')
+  const member = match.groups?.member
+  const docComment = namespaceDocComments[name]
+  const basePath = docComment ? getPath(docComment) : '/api'
+  const baseLink = `${basePath === '/' ? '/api' : basePath}/${name}`
+  return {
+    url: member ? `${baseLink}/${member}` : baseLink,
+    text: member ? `${name}.${member}` : name,
   }
 }
 
@@ -198,6 +224,8 @@ function getLinkForApiItem(item: model.ApiItem) {
       return `${basePath}/${item.displayName}/types#${item.displayName.toLowerCase()}`
     return `${baseLink}/types#${item.displayName.toLowerCase()}`
   }
+  if (item.kind === model.ApiItemKind.Variable)
+    return parent.displayName ? baseLink : basePath === '/' ? '/api' : basePath
   if (
     item.kind === model.ApiItemKind.Class &&
     item.displayName.endsWith('Error')

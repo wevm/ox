@@ -1,5 +1,5 @@
 import { Solidity } from 'ox'
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 test('exports', () => {
   expect(Object.keys(Solidity)).toMatchInlineSnapshot(`
@@ -103,6 +103,33 @@ test('exports', () => {
       "maxUint240",
       "maxUint248",
       "maxUint256",
+      "intRange",
+      "maxUint",
     ]
   `)
+})
+
+describe('intRange', () => {
+  test('unsigned 8-bit', () => {
+    expect(Solidity.intRange(8, false)).toEqual({ min: 0n, max: 255n })
+  })
+  test('signed 8-bit', () => {
+    expect(Solidity.intRange(8, true)).toEqual({ min: -128n, max: 127n })
+  })
+  test('matches existing constants', () => {
+    expect(Solidity.intRange(256, false).max).toBe(Solidity.maxUint256)
+    expect(Solidity.intRange(8, true).max).toBe(Solidity.maxInt8)
+  })
+  test('rejects non-multiple-of-8 widths', () => {
+    expect(() => Solidity.intRange(7, false)).toThrowError(
+      '`bits` must be a positive multiple of 8 in [8, 256]. Got `7`.',
+    )
+  })
+})
+
+describe('maxUint', () => {
+  test('matches existing constants', () => {
+    expect(Solidity.maxUint(8)).toBe(Solidity.maxUint8)
+    expect(Solidity.maxUint(256)).toBe(Solidity.maxUint256)
+  })
 })

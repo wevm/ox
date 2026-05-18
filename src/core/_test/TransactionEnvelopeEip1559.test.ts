@@ -182,8 +182,8 @@ describe('deserialize', () => {
           "maxFeePerGas": 1n,
           "maxPriorityFeePerGas": 1n,
           "nonce": 0n,
-          "r": 0n,
-          "s": 0n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "s": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "to": "0x0000000000000000000000000000000000000000",
           "type": "eip1559",
           "value": 0n,
@@ -214,8 +214,8 @@ describe('deserialize', () => {
           "maxFeePerGas": 1n,
           "maxPriorityFeePerGas": 1n,
           "nonce": 0n,
-          "r": 69n,
-          "s": 420n,
+          "r": "0x0000000000000000000000000000000000000000000000000000000000000045",
+          "s": "0x00000000000000000000000000000000000000000000000000000000000001a4",
           "to": "0x0000000000000000000000000000000000000000",
           "type": "eip1559",
           "value": 0n,
@@ -363,8 +363,8 @@ describe('from', () => {
         maxFeePerGas: 69420n,
         nonce: 0n,
         to: '0x0000000000000000000000000000000000000000',
-        r: 0n,
-        s: 1n,
+        r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000001',
         yParity: 0,
       })
       const serialized = TxEnvelopeEip1559.serialize(envelope)
@@ -424,12 +424,8 @@ describe('hash', () => {
       nonce: 665n,
       value: 1000000000000000000n,
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      r: BigInt(
-        '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
-      ),
-      s: BigInt(
-        '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
-      ),
+      r: '0xacf664dcd984d082b68c434feb66ac684711babdeefe6f101bf8df88fc367a37',
+      s: '0x5e0800058a9b5c2250bed60ee969a45b7445e562a8298c2d222d114e6dfbfcb9',
       yParity: 0,
     })
 
@@ -570,12 +566,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip1559.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 1,
         },
       }),
@@ -586,12 +578,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip1559.serialize(transaction, {
         signature: {
-          r: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
-          s: BigInt(
-            '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
-          ),
+          r: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
+          s: '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
           yParity: 0,
         },
       }),
@@ -602,8 +590,8 @@ describe('serialize', () => {
     expect(
       TxEnvelopeEip1559.serialize(transaction, {
         signature: {
-          r: 0n,
-          s: 0n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000000',
           yParity: 0,
         },
       }),
@@ -615,14 +603,14 @@ describe('serialize', () => {
   test('behavior: legacy signature', () => {
     const serialized = TxEnvelopeEip1559.serialize({
       ...transaction,
-      r: 0n,
-      s: 0n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000000',
       v: 27,
     })
     const serialized2 = TxEnvelopeEip1559.serialize({
       ...transaction,
-      r: 0n,
-      s: 0n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000000',
       yParity: 0,
     })
     expect(serialized).toEqual(serialized2)
@@ -688,8 +676,8 @@ describe('toRpc', () => {
       maxPriorityFeePerGas: 100000000n,
       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
       value: 1000000000000000000n,
-      r: 1n,
-      s: 2n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
       yParity: 0,
     })
     expect(transaction).toMatchInlineSnapshot(`

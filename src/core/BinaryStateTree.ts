@@ -1,4 +1,4 @@
-import { blake3 } from '@noble/hashes/blake3'
+import { blake3 } from '@noble/hashes/blake3.js'
 
 import * as Bytes from './Bytes.js'
 import type { OneOf } from './internal/types.js'

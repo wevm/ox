@@ -8,7 +8,7 @@ describe('noble', () => {
     expect(X25519.noble).toBeDefined()
     expect(typeof X25519.noble.getPublicKey).toBe('function')
     expect(typeof X25519.noble.getSharedSecret).toBe('function')
-    expect(typeof X25519.noble.utils.randomPrivateKey).toBe('function')
+    expect(typeof X25519.noble.utils.randomSecretKey).toBe('function')
   })
 })
 

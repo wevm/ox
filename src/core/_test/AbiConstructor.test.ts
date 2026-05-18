@@ -120,6 +120,21 @@ describe('decode', () => {
       ]
     `)
   })
+
+  test('error: bytecode does not match data prefix', () => {
+    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
+    expect(() =>
+      AbiConstructor.decode(abiConstructor, {
+        bytecode: '0x6080604052deadbeef',
+        data: '0xcafebabe000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045000000000000000000000000000000000000000000000000000000000000007b',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiConstructor.BytecodeMismatchError: Provided \`data\` does not start with the provided \`bytecode\`.
+
+      Bytecode: 0x6080604052deadbe...
+      Data:     0xcafebabe00000000...]
+    `)
+  })
 })
 
 describe('encode', () => {
@@ -314,6 +329,7 @@ test('exports', () => {
       "format",
       "from",
       "fromAbi",
+      "BytecodeMismatchError",
     ]
   `)
 })

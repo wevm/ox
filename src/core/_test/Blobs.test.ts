@@ -1,4 +1,4 @@
-import { Blobs, Bytes, Hex } from 'ox'
+import { BlobCells, Blobs, Bytes, Hex } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { blobData, kzg } from '../../../test/kzg.js'
 
@@ -397,126 +397,6 @@ describe('from', () => {
   })
 })
 
-describe('sidecarsToVersionedHashes', () => {
-  test('default', () => {
-    {
-      const blobs = Blobs.from('0xdeadbeef')
-      const sidecars = Blobs.toSidecars(blobs, { kzg })
-      expect(Blobs.sidecarsToVersionedHashes(sidecars)).toMatchInlineSnapshot(`
-        [
-          "0x01a24709d3997e8b217fe5460aef10ee515513ceba0362bf2d02a3ba73d7cb09",
-        ]
-      `)
-    }
-
-    {
-      const blobs = Blobs.from('0xdeadbeef', { as: 'Bytes' })
-      const sidecars = Blobs.toSidecars(blobs, { kzg })
-      expect(Blobs.sidecarsToVersionedHashes(sidecars)).toMatchInlineSnapshot(`
-        [
-          Uint8Array [
-            1,
-            162,
-            71,
-            9,
-            211,
-            153,
-            126,
-            139,
-            33,
-            127,
-            229,
-            70,
-            10,
-            239,
-            16,
-            238,
-            81,
-            85,
-            19,
-            206,
-            186,
-            3,
-            98,
-            191,
-            45,
-            2,
-            163,
-            186,
-            115,
-            215,
-            203,
-            9,
-          ],
-        ]
-      `)
-    }
-  })
-
-  test('args: as', () => {
-    {
-      const blobs = Blobs.from('0xdeadbeef')
-      const sidecars = Blobs.toSidecars(blobs, { kzg })
-      expect(
-        Blobs.sidecarsToVersionedHashes(sidecars, {
-          as: 'Bytes',
-        }),
-      ).toMatchInlineSnapshot(`
-      [
-        Uint8Array [
-          1,
-          162,
-          71,
-          9,
-          211,
-          153,
-          126,
-          139,
-          33,
-          127,
-          229,
-          70,
-          10,
-          239,
-          16,
-          238,
-          81,
-          85,
-          19,
-          206,
-          186,
-          3,
-          98,
-          191,
-          45,
-          2,
-          163,
-          186,
-          115,
-          215,
-          203,
-          9,
-        ],
-      ]
-    `)
-    }
-
-    {
-      const blobs = Blobs.from('0xdeadbeef', { as: 'Bytes' })
-      const sidecars = Blobs.toSidecars(blobs, { kzg })
-      expect(
-        Blobs.sidecarsToVersionedHashes(sidecars, {
-          as: 'Hex',
-        }),
-      ).toMatchInlineSnapshot(`
-        [
-          "0x01a24709d3997e8b217fe5460aef10ee515513ceba0362bf2d02a3ba73d7cb09",
-        ]
-      `)
-    }
-  })
-})
-
 describe('to', () => {
   test('default', () => {
     const data = Hex.fromString('we are all gonna make it'.repeat(5))
@@ -780,397 +660,6 @@ describe('toCommitments', () => {
   })
 })
 
-describe('toProofs', () => {
-  test('default', () => {
-    const blobs = Blobs.from(Hex.fromString(blobData))
-    const commitments = Blobs.toCommitments(blobs, { kzg })
-    expect(Blobs.toProofs(blobs, { commitments, kzg })).toMatchInlineSnapshot(`
-    [
-      "0x91a6c5d19e50b1b85ae2ef07477160381babf00f0906f5219ce09dee2e00d7d347cb0586d90b491637cdb1715e62d152",
-      "0xa660592b94033f9c5f7987005fa5d1f84435585ddaaf4b3adc0a198b983f2ae007db73b90067a96ec214b24d7b9820b9",
-    ]
-  `)
-    expect(
-      Blobs.toProofs(blobs, { commitments, kzg, as: 'Bytes' }),
-    ).toMatchInlineSnapshot(`
-    [
-      Uint8Array [
-        145,
-        166,
-        197,
-        209,
-        158,
-        80,
-        177,
-        184,
-        90,
-        226,
-        239,
-        7,
-        71,
-        113,
-        96,
-        56,
-        27,
-        171,
-        240,
-        15,
-        9,
-        6,
-        245,
-        33,
-        156,
-        224,
-        157,
-        238,
-        46,
-        0,
-        215,
-        211,
-        71,
-        203,
-        5,
-        134,
-        217,
-        11,
-        73,
-        22,
-        55,
-        205,
-        177,
-        113,
-        94,
-        98,
-        209,
-        82,
-      ],
-      Uint8Array [
-        166,
-        96,
-        89,
-        43,
-        148,
-        3,
-        63,
-        156,
-        95,
-        121,
-        135,
-        0,
-        95,
-        165,
-        209,
-        248,
-        68,
-        53,
-        88,
-        93,
-        218,
-        175,
-        75,
-        58,
-        220,
-        10,
-        25,
-        139,
-        152,
-        63,
-        42,
-        224,
-        7,
-        219,
-        115,
-        185,
-        0,
-        103,
-        169,
-        110,
-        194,
-        20,
-        178,
-        77,
-        123,
-        152,
-        32,
-        185,
-      ],
-    ]
-  `)
-  })
-
-  test('behavior: blobs as bytes', () => {
-    const blobs = Blobs.from(Bytes.fromString(blobData))
-    const commitments = Blobs.toCommitments(blobs, { kzg })
-    expect(Blobs.toProofs(blobs, { commitments, kzg })).toMatchInlineSnapshot(`
-    [
-      Uint8Array [
-        145,
-        166,
-        197,
-        209,
-        158,
-        80,
-        177,
-        184,
-        90,
-        226,
-        239,
-        7,
-        71,
-        113,
-        96,
-        56,
-        27,
-        171,
-        240,
-        15,
-        9,
-        6,
-        245,
-        33,
-        156,
-        224,
-        157,
-        238,
-        46,
-        0,
-        215,
-        211,
-        71,
-        203,
-        5,
-        134,
-        217,
-        11,
-        73,
-        22,
-        55,
-        205,
-        177,
-        113,
-        94,
-        98,
-        209,
-        82,
-      ],
-      Uint8Array [
-        166,
-        96,
-        89,
-        43,
-        148,
-        3,
-        63,
-        156,
-        95,
-        121,
-        135,
-        0,
-        95,
-        165,
-        209,
-        248,
-        68,
-        53,
-        88,
-        93,
-        218,
-        175,
-        75,
-        58,
-        220,
-        10,
-        25,
-        139,
-        152,
-        63,
-        42,
-        224,
-        7,
-        219,
-        115,
-        185,
-        0,
-        103,
-        169,
-        110,
-        194,
-        20,
-        178,
-        77,
-        123,
-        152,
-        32,
-        185,
-      ],
-    ]
-  `)
-  })
-
-  test('options: commitments (bytes)', () => {
-    const blobs = Blobs.from(Bytes.fromString(blobData))
-    const commitments = Blobs.toCommitments(blobs, { kzg })
-    expect(Blobs.toProofs(blobs, { commitments, kzg })).toMatchInlineSnapshot(`
-    [
-      Uint8Array [
-        145,
-        166,
-        197,
-        209,
-        158,
-        80,
-        177,
-        184,
-        90,
-        226,
-        239,
-        7,
-        71,
-        113,
-        96,
-        56,
-        27,
-        171,
-        240,
-        15,
-        9,
-        6,
-        245,
-        33,
-        156,
-        224,
-        157,
-        238,
-        46,
-        0,
-        215,
-        211,
-        71,
-        203,
-        5,
-        134,
-        217,
-        11,
-        73,
-        22,
-        55,
-        205,
-        177,
-        113,
-        94,
-        98,
-        209,
-        82,
-      ],
-      Uint8Array [
-        166,
-        96,
-        89,
-        43,
-        148,
-        3,
-        63,
-        156,
-        95,
-        121,
-        135,
-        0,
-        95,
-        165,
-        209,
-        248,
-        68,
-        53,
-        88,
-        93,
-        218,
-        175,
-        75,
-        58,
-        220,
-        10,
-        25,
-        139,
-        152,
-        63,
-        42,
-        224,
-        7,
-        219,
-        115,
-        185,
-        0,
-        103,
-        169,
-        110,
-        194,
-        20,
-        178,
-        77,
-        123,
-        152,
-        32,
-        185,
-      ],
-    ]
-  `)
-  })
-})
-
-describe('toSidecars', () => {
-  test('default', () => {
-    {
-      const data = Hex.fromString(blobData)
-      const blobs = Blobs.from(data)
-      const sidecars = Blobs.toSidecars(blobs, {
-        kzg,
-      })
-      const blobs_ = sidecars.map(({ blob }) => blob)
-      expect(Blobs.toHex(blobs_)).toEqual(data)
-    }
-
-    {
-      const data = Bytes.fromString(blobData)
-      const blobs = Blobs.from(data)
-      const sidecars = Blobs.toSidecars(blobs, {
-        kzg,
-      })
-      const blobs_ = sidecars.map(({ blob }) => blob)
-      expect(Blobs.toBytes(blobs_)).toEqual(data)
-    }
-  })
-
-  test('args: blobs, commitments, proofs', () => {
-    const data = Hex.fromString(blobData)
-    const blobs = Blobs.from(data)
-    const commitments = Blobs.toCommitments(blobs, { kzg })
-    const proofs = Blobs.toProofs(blobs, { commitments, kzg })
-    const sidecars = Blobs.toSidecars(blobs, {
-      commitments,
-      proofs,
-    })
-    const sidecarBlobs = sidecars.map(({ blob }) => blob)
-    expect(Blobs.toHex(sidecarBlobs)).toEqual(data)
-    expect(
-      sidecars.map(({ commitment, proof }) => ({
-        commitment,
-        proof,
-      })),
-    ).toMatchInlineSnapshot(`
-    [
-      {
-        "commitment": "0x93fd6807e033db6b24db5485814f79a98c7e241432e95c2e327042f821f24f4a59315cf4e881205f472e99835729977a",
-        "proof": "0x91a6c5d19e50b1b85ae2ef07477160381babf00f0906f5219ce09dee2e00d7d347cb0586d90b491637cdb1715e62d152",
-      },
-      {
-        "commitment": "0xaa9da85a334c2935e670bd44e9b734481fc5ab72859c76f741008a92c2836932af9e60697b6319f3454a141154fcd583",
-        "proof": "0xa660592b94033f9c5f7987005fa5d1f84435585ddaaf4b3adc0a198b983f2ae007db73b90067a96ec214b24d7b9820b9",
-      },
-    ]
-  `)
-  })
-})
-
 describe('toVersionedHashes', () => {
   test('default', () => {
     {
@@ -1356,6 +845,60 @@ describe('toVersionedHashes', () => {
   })
 })
 
+// KZG cell-proof computations are CPU-heavy and can exceed the default
+// 20s testTimeout on busy CI runners; give each toCellProofs test 60s
+// headroom.
+describe('toCellProofs', () => {
+  test('single blob → 128 proofs', () => {
+    const blobs = Blobs.from(Hex.fromString('hello'))
+    expect(blobs.length).toBe(1)
+
+    const cellProofs = Blobs.toCellProofs(blobs, { kzg })
+    expect(cellProofs.length).toBe(128)
+    for (const p of cellProofs) {
+      expect(typeof p).toBe('string')
+      // 48-byte BLS12-381 G1 element → 2 + 96 hex chars
+      expect((p as string).length).toBe(98)
+    }
+  }, 60_000)
+
+  test('two blobs → 256 proofs', () => {
+    const blobs = Blobs.from(Hex.fromString(blobData))
+    expect(blobs.length).toBe(2)
+
+    const cellProofs = Blobs.toCellProofs(blobs, { kzg })
+    expect(cellProofs.length).toBe(256)
+  }, 60_000)
+
+  test('first 128 match BlobCells.fromBlob(blobs[0]).proofs', () => {
+    const blobs = Blobs.from(Hex.fromString(blobData))
+    const cellProofs = Blobs.toCellProofs(blobs, { kzg })
+    const { proofs } = BlobCells.fromBlob(blobs[0]!, { kzg })
+    expect(cellProofs.slice(0, 128)).toEqual(proofs)
+  }, 60_000)
+
+  test('hex/bytes round-trip equivalence', () => {
+    const hexBlobs = Blobs.from(Hex.fromString('hello world'))
+    const byteBlobs = hexBlobs.map((b) => Hex.toBytes(b))
+
+    const fromHex = Blobs.toCellProofs(hexBlobs, { kzg })
+    const fromBytes = Blobs.toCellProofs(byteBlobs, { kzg })
+
+    expect(fromHex.length).toBe(fromBytes.length)
+    expect(fromHex.length).toBe(128)
+    for (let i = 0; i < fromHex.length; i++) {
+      expect(Hex.fromBytes(fromBytes[i] as Bytes.Bytes)).toBe(fromHex[i])
+    }
+  }, 60_000)
+
+  test('options: as', () => {
+    const hexBlobs = Blobs.from(Hex.fromString('hello'))
+    const proofsAsBytes = Blobs.toCellProofs(hexBlobs, { kzg, as: 'Bytes' })
+    expect(proofsAsBytes.length).toBe(128)
+    expect(proofsAsBytes[0]).toBeInstanceOf(Uint8Array)
+  }, 60_000)
+})
+
 test('exports', () => {
   expect(Object.keys(Blobs)).toMatchInlineSnapshot(`
     [
@@ -1366,13 +909,11 @@ test('exports', () => {
       "commitmentsToVersionedHashes",
       "commitmentToVersionedHash",
       "from",
-      "sidecarsToVersionedHashes",
       "to",
       "toHex",
       "toBytes",
       "toCommitments",
-      "toProofs",
-      "toSidecars",
+      "toCellProofs",
       "toVersionedHashes",
       "BlobSizeTooLargeError",
       "EmptyBlobError",

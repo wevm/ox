@@ -1,6 +1,5 @@
 import * as Address from './Address.js'
 import * as Errors from './Errors.js'
-import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import type { Compute, Mutable } from './internal/types.js'
 
@@ -54,11 +53,15 @@ export function fromTupleList(accessList: Tuple): AccessList {
 
     if (address) Address.assert(address, { strict: false })
 
+    for (let j = 0; j < storageKeys.length; j++)
+      if (Hex.size(storageKeys[j]!) !== 32)
+        throw new InvalidStorageKeySizeError({
+          storageKey: storageKeys[j]!,
+        })
+
     list.push({
       address: address,
-      storageKeys: storageKeys.map((key) =>
-        Hash.validate(key) ? key : Hex.trimLeft(key),
-      ),
+      storageKeys,
     })
   }
   return list

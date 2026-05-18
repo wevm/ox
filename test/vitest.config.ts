@@ -61,6 +61,17 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'fuzz',
+          // Gated behind `FUZZ=true` so the default `pnpm test` run
+          // doesn't pick up stochastic property tests. Run via
+          // `pnpm test:fuzz` (or `pnpm test:fuzz:ci`).
+          include: process.env.FUZZ ? ['src/**/*.fuzz.ts'] : [],
+          setupFiles: [join(__dirname, './setup.ts')],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'browser',
           include: ['src/**/*.browser.test.ts'],
           setupFiles: [join(__dirname, './setup.browser.ts')],

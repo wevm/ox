@@ -1002,6 +1002,25 @@ export * as Bech32m from './core/Bech32m.js'
 export * as BinaryStateTree from './core/BinaryStateTree.js'
 
 /**
+ * Cell-level helpers for [PeerDAS (EIP-7594)](https://eips.ethereum.org/EIPS/eip-7594):
+ * deriving the 128 cells and cell KZG proofs of an extended blob, and verifying
+ * cell proofs against blob commitments.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { BlobCells, Blobs } from 'ox'
+ * import { kzg } from './kzg'
+ *
+ * const [blob] = Blobs.from('0xdeadbeef')
+ * const { cells, proofs } = BlobCells.fromBlob(blob, { kzg })
+ * ```
+ *
+ * @category Blobs (EIP-7594)
+ */
+export * as BlobCells from './core/BlobCells.js'
+
+/**
  * Utility functions for working with [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) Blobs.
  *
  * @category Blobs (EIP-4844)
@@ -2099,8 +2118,8 @@ export * as Provider from './core/Provider.js'
  *
  * const publicKey = PublicKey.from({
  *   prefix: 4,
- *   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- *   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * })
  *
  * const serialized = PublicKey.toHex(publicKey) // [!code focus]
@@ -2118,8 +2137,8 @@ export * as Provider from './core/Provider.js'
  * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
  * // @log: {
  * // @log:   prefix: 4,
- * // @log:   x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:   y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log: }
  * ```
  *
@@ -2377,8 +2396,8 @@ export * as Secp256k1 from './core/Secp256k1.js'
  * import { Signature } from 'ox'
  *
  * const signature = Signature.toHex({
- *   r: 49782753348462494199823712700004552394425719014458918871452329774910450607807n,
- *   s: 33726695977844476214676913201140481102225469284307016937915595756355928419768n,
+ *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1
  * })
  * // @log: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
@@ -3005,7 +3024,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -3024,7 +3042,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  * }) // [!code focus]
  *
  * const envelope_signed = TxEnvelopeEip4844.from(envelope, {
- *   sidecars,
  *   signature
  * })
  * ```
@@ -3070,7 +3087,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  * // Compute the Blob Versioned Hashes.
  * const blobs = Blobs.from('0xdeadbeef')
  * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
- * const sidecars = Blobs.toSidecars(blobs, { kzg })
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeEip4844.from({
@@ -3092,7 +3108,6 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *
  * // Serialize the Envelope with the Signature. // [!code focus]
  * const serialized = TxEnvelopeEip4844.serialize(envelope, { // [!code focus]
- *   sidecars, // [!code focus]
  *   signature  // [!code focus]
  * }) // [!code focus]
  *
@@ -3601,8 +3616,8 @@ export * as WebAuthnP256 from './core/WebAuthnP256.js'
  * // @log: {
  * // @log:   privateKey: CryptoKey {},
  * // @log:   publicKey: {
- * // @log:     x: 59295962801117472859457908919941473389380284132224861839820747729565200149877n,
- * // @log:     y: 24099691209996290925259367678540227198235484593389470330605641003500238088869n,
+ * // @log:     x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:     y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
  * // @log:     prefix: 4,
  * // @log:   },
  * // @log: }

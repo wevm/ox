@@ -1,14 +1,14 @@
-import { bls12_381 as bls } from '@noble/curves/bls12-381'
+import { bls12_381 as bls } from '@noble/curves/bls12-381.js'
 
 import type * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type { Branded, Compute } from './internal/types.js'
 
 /** Type for a field element in the base field of the BLS12-381 curve. */
-export type Fp = bigint
+export type Fp = Hex.Hex
 /** Type for a field element in the extension field of the BLS12-381 curve. */
-export type Fp2 = Compute<{ c0: bigint; c1: bigint }>
+export type Fp2 = Compute<{ c0: Hex.Hex; c1: Hex.Hex }>
 
 /** Root type for a BLS point on the G1 or G2 curve. */
 export type BlsPoint<type = Fp | Fp2> = Compute<{
@@ -30,6 +30,86 @@ export type G2 = BlsPoint<Fp2>
 export type G2Bytes = Branded<Bytes.Bytes, 'G2'>
 /** Branded type for a hex representation of a G2 point. */
 export type G2Hex = Branded<Hex.Hex, 'G2'>
+
+const FP_SIZE = 48
+
+/** @internal */
+export function fpToBigInt(value: Fp): bigint {
+  return BigInt(value)
+}
+
+/** @internal */
+export function fpFromBigInt(value: bigint): Fp {
+  return Hex.fromNumber(value, { size: FP_SIZE })
+}
+
+/** @internal */
+export function fp2ToBigInt(value: Fp2): { c0: bigint; c1: bigint } {
+  return { c0: BigInt(value.c0), c1: BigInt(value.c1) }
+}
+
+/** @internal */
+export function fp2FromBigInt(value: { c0: bigint; c1: bigint }): Fp2 {
+  return {
+    c0: Hex.fromNumber(value.c0, { size: FP_SIZE }),
+    c1: Hex.fromNumber(value.c1, { size: FP_SIZE }),
+  }
+}
+
+/**
+ * Converts a structured {@link ox#BlsPoint.BlsPoint} into a noble/curves
+ * `Point` instance for the appropriate group (G1 or G2).
+ *
+ * @internal
+ */
+export function toNoblePoint<group extends 'G1' | 'G2'>(
+  point: group extends 'G1' ? G1 : G2,
+  group: group,
+): unknown {
+  if (group === 'G1') {
+    const p = point as G1
+    return new bls.G1.Point(fpToBigInt(p.x), fpToBigInt(p.y), fpToBigInt(p.z))
+  }
+  const p = point as G2
+  // noble's G2.Point ctor accepts Fp2 instances. Construct via the field
+  // helper so we get a real `Fp2` rather than a plain `{c0, c1}`.
+  const Fp2 = (bls.fields as any).Fp2
+  const x = Fp2.create
+    ? Fp2.create(fp2ToBigInt(p.x))
+    : Fp2.fromBigTuple([BigInt(p.x.c0), BigInt(p.x.c1)])
+  const y = Fp2.create
+    ? Fp2.create(fp2ToBigInt(p.y))
+    : Fp2.fromBigTuple([BigInt(p.y.c0), BigInt(p.y.c1)])
+  const z = Fp2.create
+    ? Fp2.create(fp2ToBigInt(p.z))
+    : Fp2.fromBigTuple([BigInt(p.z.c0), BigInt(p.z.c1)])
+  return new bls.G2.Point(x, y, z)
+}
+
+/**
+ * Converts a noble/curves `Point` into a structured
+ * {@link ox#BlsPoint.BlsPoint}.
+ *
+ * @internal
+ */
+export function fromNoblePoint<group extends 'G1' | 'G2'>(
+  point: any,
+  group: group,
+): group extends 'G1' ? G1 : G2 {
+  if (group === 'G1') {
+    return {
+      x: fpFromBigInt(point.X),
+      y: fpFromBigInt(point.Y),
+      z: fpFromBigInt(point.Z),
+    } as never
+  }
+  // G2: `point.X/Y/Z` are Fp2 instances exposing `.c0` / `.c1` bigints.
+  return {
+    x: { c0: fpFromBigInt(point.X.c0), c1: fpFromBigInt(point.X.c1) },
+    y: { c0: fpFromBigInt(point.Y.c0), c1: fpFromBigInt(point.Y.c1) },
+    z: { c0: fpFromBigInt(point.Z.c0), c1: fpFromBigInt(point.Z.c1) },
+  } as never
+}
 
 /**
  * Converts a BLS point to {@link ox#Bytes.Bytes}.
@@ -60,12 +140,9 @@ export type G2Hex = Branded<Hex.Hex, 'G2'>
 export function toBytes<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Bytes : G2Bytes {
-  const group = typeof point.z === 'bigint' ? bls.G1 : bls.G2
-  return new (group as any).ProjectivePoint(
-    point.x,
-    point.y,
-    point.z,
-  ).toRawBytes()
+  const isG1 = typeof point.z === 'string'
+  const noblePoint: any = toNoblePoint(point as any, isG1 ? 'G1' : 'G2')
+  return noblePoint.toBytes()
 }
 
 export declare namespace toBytes {
@@ -124,9 +201,9 @@ export declare namespace toHex {
  *
  * const publicKey = BlsPoint.fromBytes(Bytes.from([172, 175, 255, ...]), 'G1')
  * // @log: {
- * // @log:   x: 172...n,
- * // @log:   y: 175...n,
- * // @log:   z: 1n,
+ * // @log:   x: '0x00...ac',
+ * // @log:   y: '0x00...af',
+ * // @log:   z: '0x00...01',
  * // @log: }
  * ```
  *
@@ -139,9 +216,9 @@ export declare namespace toHex {
  *
  * const signature = BlsPoint.fromBytes(Bytes.from([172, 175, 255, ...]), 'G2')
  * // @log: {
- * // @log:   x: 511...n,
- * // @log:   y: 234...n,
- * // @log:   z: 1n,
+ * // @log:   x: { c0: '0x00...11', c1: '0x00...22' },
+ * // @log:   y: { c0: '0x00...33', c1: '0x00...44' },
+ * // @log:   z: { c0: '0x00...01', c1: '0x00...00' },
  * // @log: }
  * ```
  *
@@ -153,14 +230,18 @@ export function fromBytes<group extends 'G1' | 'G2'>(
   group: group,
 ): group extends 'G1' ? G1 : G2
 // eslint-disable-next-line jsdoc/require-jsdoc
-export function fromBytes(bytes: Bytes.Bytes): BlsPoint<any> {
-  const group = bytes.length === 48 ? bls.G1 : bls.G2
-  const point = group.ProjectivePoint.fromHex(bytes)
-  return {
-    x: point.px,
-    y: point.py,
-    z: point.pz,
-  }
+export function fromBytes(
+  bytes: Bytes.Bytes,
+  group: 'G1' | 'G2',
+): BlsPoint<any> {
+  const expectedLength = group === 'G1' ? 48 : 96
+  if (bytes.length !== expectedLength)
+    throw new Errors.BaseError(
+      `Expected ${expectedLength} bytes for a ${group} point, received ${bytes.length}.`,
+    )
+  const Group = group === 'G1' ? bls.G1 : bls.G2
+  const point = Group.Point.fromBytes(bytes)
+  return fromNoblePoint(point, group) as BlsPoint<any>
 }
 
 export declare namespace fromBytes {
@@ -179,9 +260,9 @@ export declare namespace fromBytes {
  *
  * const publicKey = BlsPoint.fromHex('0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66', 'G1')
  * // @log: {
- * // @log:   x: 172...n,
- * // @log:   y: 175...n,
- * // @log:   z: 1n,
+ * // @log:   x: '0x00...ac',
+ * // @log:   y: '0x00...af',
+ * // @log:   z: '0x00...01',
  * // @log: }
  * ```
  *
@@ -197,9 +278,9 @@ export declare namespace fromBytes {
  *   'G2',
  * )
  * // @log: {
- * // @log:   x: 511...n,
- * // @log:   y: 234...n,
- * // @log:   z: 1n,
+ * // @log:   x: { c0: '0x00...11', c1: '0x00...22' },
+ * // @log:   y: { c0: '0x00...33', c1: '0x00...44' },
+ * // @log:   z: { c0: '0x00...01', c1: '0x00...00' },
  * // @log: }
  * ```
  *

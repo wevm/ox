@@ -1,4 +1,4 @@
-import type * as Address from './Address.js'
+import * as Address from './Address.js'
 import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
@@ -24,6 +24,7 @@ import * as Hex from './Hex.js'
  */
 export function encode(value: encode.Value): Hex.Hex {
   const { data, validator } = value
+  Address.assert(validator, { strict: false })
   return Hex.concat(
     // Validator Data Format: `0x19 ‖ 0x00 ‖ <intended validator address> ‖ <data to sign>`
     '0x19',
@@ -40,6 +41,7 @@ export declare namespace encode {
   }
 
   type ErrorType =
+    | Address.assert.ErrorType
     | Hex.concat.ErrorType
     | Hex.from.ErrorType
     | Errors.GlobalErrorType

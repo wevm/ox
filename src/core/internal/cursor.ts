@@ -6,7 +6,8 @@ export type Cursor = {
   bytes: Bytes
   dataView: DataView
   position: number
-  positionReadCount: Map<number, number>
+  /** Lazy: only allocated when slow-path tracking kicks in. */
+  positionReadCount: Map<number, number> | undefined
   recursiveReadCount: number
   recursiveReadLimit: number
   remaining: number
@@ -41,7 +42,7 @@ const staticCursor: Cursor = {
   bytes: new Uint8Array(),
   dataView: new DataView(new ArrayBuffer(0)),
   position: 0,
-  positionReadCount: new Map(),
+  positionReadCount: undefined,
   recursiveReadCount: 0,
   recursiveReadLimit: Number.POSITIVE_INFINITY,
   assertReadLimit() {
@@ -65,7 +66,7 @@ const staticCursor: Cursor = {
     this.position = position
   },
   getReadCount(position) {
-    return this.positionReadCount.get(position || this.position) || 0
+    return this.positionReadCount?.get(position || this.position) || 0
   },
   incrementPosition(offset) {
     if (offset < 0) throw new NegativeOffsetError({ offset })
@@ -190,8 +191,9 @@ const staticCursor: Cursor = {
   },
   _touch() {
     if (this.recursiveReadLimit === Number.POSITIVE_INFINITY) return
-    const count = this.getReadCount()
-    this.positionReadCount.set(this.position, count + 1)
+    const map = (this.positionReadCount ??= new Map())
+    const count = map.get(this.position) || 0
+    map.set(this.position, count + 1)
     if (count > 0) this.recursiveReadCount++
   },
 }
@@ -208,7 +210,7 @@ export function create(
     bytes.byteOffset,
     bytes.byteLength,
   )
-  cursor.positionReadCount = new Map()
+  cursor.positionReadCount = undefined
   cursor.recursiveReadLimit = recursiveReadLimit
   return cursor
 }

@@ -20,7 +20,7 @@ export type Authorization<
     /** Nonce of the Authority to authorize. */
     nonce: bigintType
   } & (signed extends true
-    ? Signature.Signature<true, bigintType, numberType>
+    ? Signature.Signature<true, numberType>
     : Undefined<Signature.Signature>)
 >
 
@@ -254,8 +254,8 @@ export declare namespace fromRpcList {
  * // @log:   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:   chainId: 1,
  * // @log:   nonce: 3n
- * // @log:   r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:   s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:   r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:   s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:   yParity: 0,
  * // @log: }
  * ```
@@ -325,16 +325,16 @@ export declare namespace fromTuple {
  * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 1,
  * // @log:     nonce: 3n,
- * // @log:     r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:     s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:     r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:     s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:     yParity: 0,
  * // @log:   },
  * // @log:   {
  * // @log:     address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  * // @log:     chainId: 3,
  * // @log:     nonce: 20n,
- * // @log:     r: BigInt('0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90'),
- * // @log:     s: BigInt('0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'),
+ * // @log:     r: '0x68a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b90',
+ * // @log:     s: '0x7e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
  * // @log:     yParity: 0,
  * // @log:   },
  * // @log: ]
@@ -353,7 +353,7 @@ export function fromTupleList<const tupleList extends TupleList>(
 
 export declare namespace fromTupleList {
   type ReturnType<tupleList extends TupleList> = Compute<
-    TupleList<tupleList extends TupleList<true> ? true : false>
+    List<tupleList extends TupleList<true> ? true : false>
   >
 
   type ErrorType = Errors.GlobalErrorType
@@ -461,8 +461,8 @@ export declare namespace hash {
  *   address: '0x0000000000000000000000000000000000000000',
  *   chainId: 1,
  *   nonce: 1n,
- *   r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *   s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *   yParity: 0,
  * })
  * ```
@@ -496,8 +496,8 @@ export declare namespace toRpc {
  *   address: '0x0000000000000000000000000000000000000000',
  *   chainId: 1,
  *   nonce: 1n,
- *   r: 44944627813007772897391531230081695102703289123332187696115181104739239197517n,
- *   s: 36528503505192438307355164441104001310566505351980369085208178712678799181120n,
+ *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *   yParity: 0,
  * }])
  * ```
