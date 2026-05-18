@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.22
+
+### Patch Changes
+
+- [#227](https://github.com/wevm/ox/pull/227) [`ffa64c0`](https://github.com/wevm/ox/commit/ffa64c0d56c218a9cf3aaa93570c6fa6ef187864) Thanks [@Genmin](https://github.com/Genmin)! - Fixed `Secp256k1.verify` narrowing signature branches before address recovery.
+
 ## 0.14.21
 
 ### Patch Changes
