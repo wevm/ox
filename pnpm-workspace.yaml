@@ -9,6 +9,8 @@ allowBuilds:
 
 autoInstallPeers: false
 
+verifyDepsBeforeRun: false
+
 linkWorkspacePackages: true
 
 minimumReleaseAge: 1440
