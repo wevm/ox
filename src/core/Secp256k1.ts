@@ -386,13 +386,16 @@ export declare namespace sign {
  * @returns Whether the payload was signed by the provided address.
  */
 export function verify(options: verify.Options): boolean {
-  const { address, hash, payload, publicKey, signature } = options
-  if (address)
-    return Address.isEqual(address, recoverAddress({ payload, signature }))
+  const { hash, payload } = options
+  if (options.address)
+    return Address.isEqual(
+      options.address,
+      recoverAddress({ payload, signature: options.signature }),
+    )
   return secp256k1.verify(
-    signature,
+    options.signature,
     Bytes.from(payload),
-    PublicKey.toBytes(publicKey),
+    PublicKey.toBytes(options.publicKey),
     ...(hash ? [{ prehash: true, lowS: true }] : []),
   )
 }
