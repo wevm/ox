@@ -367,10 +367,18 @@ export function deserialize(serialized: Serialized): Compute<TxEnvelopeTempo> {
       transaction.feePayerSignature = null
       if (Address.validate(feePayerSignatureOrSender))
         transaction.from = feePayerSignatureOrSender
-    } else
-      transaction.feePayerSignature = Signature.fromTuple(
+    } else {
+      const feePayerSignature = Signature.fromTuple(
         feePayerSignatureOrSender as never,
       )
+      transaction.feePayerSignature =
+        // Canonical unsigned fee-payer request encoding.
+        feePayerSignature.yParity === 0 &&
+        feePayerSignature.r === 0n &&
+        feePayerSignature.s === 0n
+          ? null
+          : feePayerSignature
+    }
   }
 
   if (keyAuthorization)

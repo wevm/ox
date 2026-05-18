@@ -474,6 +474,32 @@ describe('deserialize', () => {
     expect(deserialized.from).toBe('0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266')
   })
 
+  test('feePayerSignature with zero signature tuple', () => {
+    const serialized = `0x76${Rlp.fromHex([
+      Hex.fromNumber(1), // chainId
+      Hex.fromNumber(1), // maxPriorityFeePerGas
+      Hex.fromNumber(1), // maxFeePerGas
+      Hex.fromNumber(1), // gas
+      [
+        [
+          '0x0000000000000000000000000000000000000000', // to
+          Hex.fromNumber(0), // value
+          '0x', // data
+        ],
+      ], // calls
+      '0x', // accessList
+      Hex.fromNumber(0), // nonceKey
+      Hex.fromNumber(0), // nonce
+      '0x', // validBefore
+      '0x', // validAfter
+      '0x', // feeToken
+      ['0x', '0x', '0x'], // feePayerSignatureOrSender (zero signature tuple)
+      [], // authorizationList
+    ]).slice(2)}` as const
+    const deserialized = TxEnvelopeTempo.deserialize(serialized)
+    expect(deserialized.feePayerSignature).toBe(null)
+  })
+
   test('feePayerSignature with signature tuple', () => {
     const serialized = `0x76${Rlp.fromHex([
       Hex.fromNumber(1), // chainId
