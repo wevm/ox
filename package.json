@@ -19,7 +19,7 @@
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
     "knip": "knip --production",
     "format": "biome format --write",
-    "postinstall": "git submodule update --init --recursive && pnpm contracts:build && pnpm dev",
+    "postinstall": "node scripts/postinstall.mjs",
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
