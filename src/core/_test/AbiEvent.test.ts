@@ -622,6 +622,107 @@ describe('decodeLog', () => {
   })
 })
 
+describe('decodeLogs', () => {
+  test('behavior: decodes matching logs', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const log = {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(transfer),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    } as const
+    const decoded = AbiEvent.decodeLogs([transfer], [log])
+
+    expect(decoded).toMatchInlineSnapshot(`
+      [
+        {
+          "args": {
+            "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+            "value": 1n,
+          },
+          "event": {
+            "hash": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "inputs": [
+              {
+                "indexed": true,
+                "name": "from",
+                "type": "address",
+              },
+              {
+                "indexed": true,
+                "name": "to",
+                "type": "address",
+              },
+              {
+                "name": "value",
+                "type": "uint256",
+              },
+            ],
+            "name": "Transfer",
+            "type": "event",
+          },
+          "log": {
+            "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "topics": [
+              "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+              "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+              "0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+            ],
+          },
+        },
+      ]
+    `)
+  })
+
+  test('behavior: skips non-matching logs', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const approval = AbiEvent.from(
+      'event Approval(address indexed owner, address indexed spender, uint256 value)',
+    )
+    const decoded = AbiEvent.decodeLogs(
+      [transfer],
+      [
+        {
+          data: '0x',
+          topics: [AbiEvent.getSelector(approval)],
+        },
+        {
+          data: '0x',
+          topics: [],
+        },
+      ],
+    )
+
+    expect(decoded).toMatchInlineSnapshot(`[]`)
+  })
+
+  test('error: strict', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const approval = AbiEvent.from(
+      'event Approval(address indexed owner, address indexed spender, uint256 value)',
+    )
+
+    expect(() =>
+      AbiEvent.decodeLogs(
+        [transfer],
+        [{ data: '0x', topics: [AbiEvent.getSelector(approval)] }],
+        { strict: true },
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiItem.NotFoundError: ABI item with name "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925" not found.]`,
+    )
+  })
+})
+
 describe('encode', () => {
   test('default', () => {
     const transfer = AbiEvent.from('event Transfer()')
@@ -1598,6 +1699,7 @@ test('exports', () => {
       "assertArgs",
       "decode",
       "decodeLog",
+      "decodeLogs",
       "encode",
       "format",
       "from",

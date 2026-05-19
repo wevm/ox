@@ -2,4 +2,4 @@
 "ox": patch
 ---
 
-Added `AbiEvent.decodeLog` for decoding event logs directly from an ABI.
+Added `AbiEvent.decodeLog` and `AbiEvent.decodeLogs` for decoding event logs directly from an ABI.

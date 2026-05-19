@@ -690,6 +690,85 @@ export declare namespace decodeLog {
 }
 
 /**
+ * Decodes a set of Logs into ABI Events and their arguments.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ * ])
+ *
+ * const decoded = AbiEvent.decodeLogs(abi, [
+ *   {
+ *     data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *     topics: [
+ *       '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     ],
+ *   },
+ * ])
+ * // @log: [{
+ * // @log:   event: { name: 'Transfer', type: 'event', ... },
+ * // @log:   args: {
+ * // @log:     from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     value: 1n,
+ * // @log:   },
+ * // @log:   log: { ... },
+ * // @log: }]
+ * ```
+ *
+ * @param abi - The ABI to extract events from.
+ * @param logs - Logs to decode.
+ * @param options - Decoding options.
+ * @returns The decoded events, arguments, and logs.
+ */
+export function decodeLogs<
+  const abi extends Abi.Abi | readonly unknown[],
+  const logs extends readonly decodeLogs.Log[],
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  logs: logs | readonly decodeLogs.Log[],
+  options: decodeLogs.Options = {},
+): decodeLogs.ReturnType<decodeLogs.ExtractEvent<abi>, logs[number]>[] {
+  const out: decodeLogs.ReturnType[] = []
+  const { strict = false } = options
+  for (const log of logs) {
+    try {
+      const decoded = decodeLog(abi, log, options)
+      out.push({ ...decoded, log })
+    } catch (error) {
+      if (strict) throw error
+    }
+  }
+  return out as never
+}
+
+export declare namespace decodeLogs {
+  type ExtractEvent<abi extends Abi.Abi | readonly unknown[]> =
+    decodeLog.ExtractEvent<abi>
+
+  type Log = decodeLog.Log
+
+  type Options = decodeLog.Options & {
+    /** Whether to throw on the first log that cannot be decoded. */
+    strict?: boolean | undefined
+  }
+
+  type ReturnType<
+    abiEvent extends AbiEvent = AbiEvent,
+    log extends Log = Log,
+  > = decodeLog.ReturnType<abiEvent> & {
+    log: log
+  }
+
+  type ErrorType = decodeLog.ErrorType | Errors.GlobalErrorType
+}
+
+/**
  * ABI-encodes the provided event input (`inputs`) into an array of [Event Topics](https://info.etherscan.com/what-is-event-logs/).
  *
  * :::tip
