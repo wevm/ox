@@ -110,6 +110,32 @@ describe('getType', () => {
     )
   })
 
+  test('behavior: ignores undefined discriminator fields', () => {
+    expect(
+      TransactionEnvelope.getType({
+        chainId: 1,
+        gasPrice: undefined,
+        maxFeePerGas: 1n,
+      }),
+    ).toBe('eip1559')
+    expect(
+      TransactionEnvelope.getType({
+        accessList: [],
+        chainId: 1,
+        gasPrice: 1n,
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+      }),
+    ).toBe('eip2930')
+    expect(
+      TransactionEnvelope.getType({
+        gasPrice: 1n,
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+      }),
+    ).toBe('legacy')
+  })
+
   test('behavior: returns explicit transaction types', () => {
     expect(TransactionEnvelope.getType({ type: '0x7e' })).toMatchInlineSnapshot(
       `"0x7e"`,
@@ -159,6 +185,16 @@ describe('getSerializedType', () => {
       [TransactionEnvelope.InvalidSerializedTypeError: Serialized transaction type is invalid.
 
       Serialized Transaction: "0x00"]
+    `)
+  })
+
+  test('behavior: rejects unknown serialized transaction types', () => {
+    expect(() =>
+      TransactionEnvelope.getSerializedType('0x7ec0'),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [TransactionEnvelope.InvalidSerializedTypeError: Serialized transaction type is invalid.
+
+      Serialized Transaction: "0x7ec0"]
     `)
   })
 })
@@ -225,6 +261,18 @@ describe('serialize', () => {
   test('behavior: routes to the matching concrete serializer', () => {
     expect(TransactionEnvelope.serialize(eip1559)).toBe(
       TxEnvelopeEip1559.serialize(eip1559),
+    )
+  })
+
+  test('behavior: rejects transactions without inferrable type', () => {
+    expect(() =>
+      TransactionEnvelope.serialize({
+        chainId: 1,
+        data: '0x1234',
+        nonce: 69n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidTypeError: Cannot infer transaction type from provided envelope.]`,
     )
   })
 })

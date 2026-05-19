@@ -39,6 +39,30 @@ describe('getType', () => {
     ).toEqualTypeOf<'eip7702'>()
   })
 
+  test('behavior: ignores undefined discriminator fields', () => {
+    expectTypeOf(
+      TransactionEnvelope.getType({
+        gasPrice: undefined,
+        maxFeePerGas: 1n,
+      }),
+    ).toEqualTypeOf<'eip1559'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({
+        accessList: [],
+        gasPrice: 1n,
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+      }),
+    ).toEqualTypeOf<'eip2930'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({
+        gasPrice: 1n,
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+      }),
+    ).toEqualTypeOf<'legacy'>()
+  })
+
   test('behavior: falls back to string when fields are not inferrable', () => {
     expectTypeOf(TransactionEnvelope.getType({})).toEqualTypeOf<string>()
   })
@@ -95,6 +119,16 @@ describe('from', () => {
 
 describe('serialize', () => {
   test('behavior: infers serialized envelope return types', () => {
+    expectTypeOf(
+      TransactionEnvelope.serialize({ gasPrice: 1n }),
+    ).toEqualTypeOf<TxEnvelopeLegacy.Serialized>()
+    expectTypeOf(
+      TransactionEnvelope.serialize({
+        accessList: [],
+        chainId: 1,
+        gasPrice: 1n,
+      }),
+    ).toEqualTypeOf<TxEnvelopeEip2930.Serialized>()
     expectTypeOf(
       TransactionEnvelope.serialize({ chainId: 1, maxFeePerGas: 1n }),
     ).toEqualTypeOf<TxEnvelopeEip1559.Serialized>()
