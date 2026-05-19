@@ -435,14 +435,17 @@ export declare namespace sign {
  * @returns Whether the payload was signed by the provided address.
  */
 export function verify(options: verify.Options): boolean {
-  const { address, hash, payload, publicKey, signature } = options
-  if (address)
-    return Address.isEqual(address, recoverAddress({ payload, signature }))
-  const sig = normalizeSignature(signature)
+  const { hash, payload } = options
+  if (options.address)
+    return Address.isEqual(
+      options.address,
+      recoverAddress({ payload, signature: options.signature }),
+    )
+  const sig = normalizeSignature(options.signature)
   return secp256k1.verify(
     toCompactBytes(sig),
     Bytes.from(payload),
-    PublicKey.toBytes(normalizePublicKey(publicKey)),
+    PublicKey.toBytes(normalizePublicKey(options.publicKey)),
     { lowS: true, prehash: hash === true },
   )
 }
