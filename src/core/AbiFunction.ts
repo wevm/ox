@@ -110,10 +110,34 @@ export type ExtractNames<
  * // @log: ['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 69420n]
  * ```
  *
+ * @example
+ * ### ABI selector shorthand
+ *
+ * You can also specify an entire ABI object and calldata. The ABI Function is extracted from the 4-byte selector:
+ *
+ * ```ts twoslash
+ * // @noErrors
+ * import { Abi, AbiFunction } from 'ox'
+ *
+ * const abi = Abi.from([...])
+ * const data = '0x095ea7b3...
+ *
+ * const input = AbiFunction.decodeData(
+ *   abi, // [!code focus]
+ *   data // [!code focus]
+ * )
+ * // @log: ['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 69420n]
+ * ```
+ *
  * @param abiFunction - The ABI Item to decode.
  * @param data - The data to decode.
  * @param options - Decoding options.
  */
+export function decodeData<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  data: Hex.Hex,
+  options?: decodeData.Options | undefined,
+): decodeData.ReturnType<decodeData.ExtractForSelector<abi>>
 export function decodeData<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
@@ -144,6 +168,11 @@ export function decodeData(
   ...parameters:
     | [
         abi: Abi.Abi | readonly unknown[],
+        data: Hex.Hex,
+        options?: decodeData.Options | undefined,
+      ]
+    | [
+        abi: Abi.Abi | readonly unknown[],
         name: Hex.Hex | string,
         data: Hex.Hex,
         options?: decodeData.Options | undefined,
@@ -156,6 +185,14 @@ export function decodeData(
 ) {
   const [abiFunction, data, options] = (() => {
     if (Array.isArray(parameters[0])) {
+      if (typeof parameters[2] !== 'string') {
+        const [abi, data, options] = parameters as [
+          Abi.Abi | readonly unknown[],
+          Hex.Hex,
+          decodeData.Options | undefined,
+        ]
+        return [fromAbi(abi, data), data, options]
+      }
       const [abi, name, data, options] = parameters as [
         Abi.Abi | readonly unknown[],
         Hex.Hex | string,
@@ -195,6 +232,18 @@ export declare namespace decodeData {
      */
     checksumAddress?: boolean | undefined
   }
+
+  type ExtractForSelector<abi extends Abi.Abi | readonly unknown[]> =
+    AbiItem.fromAbi.ReturnType<
+      abi,
+      Name<abi>,
+      undefined,
+      AbiFunction
+    > extends infer abiFunction
+      ? abiFunction extends AbiFunction
+        ? abiFunction
+        : AbiFunction
+      : AbiFunction
 
   type ReturnType<abiFunction extends AbiFunction = AbiFunction> = IsNarrowable<
     abiFunction,

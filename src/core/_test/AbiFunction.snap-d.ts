@@ -21,6 +21,20 @@ describe('decodeData', () => {
     attest(input).type.toString.snap('readonly [`0x${string}`, bigint]')
   })
 
+  test('behavior: selector shorthand', () => {
+    const abi = Abi.from([
+      'function approve(address spender, uint256 value)',
+      'function decimals()',
+    ])
+    const input = AbiFunction.decodeData(
+      abi,
+      '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000000001',
+    )
+    attest(input).type.toString.snap(
+      'readonly [`0x${string}`, bigint] | undefined',
+    )
+  })
+
   test('behavior: with overloads', () => {
     const abi = Abi.from([
       {

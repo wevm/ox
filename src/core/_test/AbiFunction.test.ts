@@ -10,8 +10,10 @@ describe('decodeData', () => {
     const data = AbiFunction.encodeData(abiItem)
     const input = AbiFunction.decodeData(abiItem, data)
     const input2 = AbiFunction.decodeData(erc20Abi, 'decimals', data)
+    const input3 = AbiFunction.decodeData(erc20Abi, data)
     expect(input).toEqual(undefined)
     expect(input2).toEqual(undefined)
+    expect(input3).toEqual(undefined)
   })
 
   test('behavior: with data', () => {
@@ -21,8 +23,10 @@ describe('decodeData', () => {
     const data = AbiFunction.encodeData(abiItem, [address.vitalik, 1n])
     const input = AbiFunction.decodeData(abiItem, data)
     const input2 = AbiFunction.decodeData(erc20Abi, 'approve', data)
+    const input3 = AbiFunction.decodeData(erc20Abi, data)
     expect(input).toEqual(['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 1n])
     expect(input2).toEqual(['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 1n])
+    expect(input3).toEqual(['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 1n])
   })
 
   test('options: checksumAddress = false', () => {
@@ -36,8 +40,12 @@ describe('decodeData', () => {
     const input2 = AbiFunction.decodeData(erc20Abi, 'approve', data, {
       checksumAddress: false,
     })
+    const input3 = AbiFunction.decodeData(erc20Abi, data, {
+      checksumAddress: false,
+    })
     expect(input).toEqual([address.vitalik, 1n])
     expect(input2).toEqual([address.vitalik, 1n])
+    expect(input3).toEqual([address.vitalik, 1n])
   })
 
   test('behavior: with overloads', () => {
@@ -66,7 +74,19 @@ describe('decodeData', () => {
     ).toEqual([1n])
     expect(
       AbiFunction.decodeData(
+        abi,
+        '0x9cc7f7080000000000000000000000000000000000000000000000000000000000000001',
+      ),
+    ).toEqual([1n])
+    expect(
+      AbiFunction.decodeData(
         abiItem,
+        '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
+      ),
+    ).toEqual(['0xdeadbeef'])
+    expect(
+      AbiFunction.decodeData(
+        abi,
         '0x7841536500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004deadbeef00000000000000000000000000000000000000000000000000000000',
       ),
     ).toEqual(['0xdeadbeef'])
