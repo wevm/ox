@@ -332,10 +332,12 @@ export declare namespace extract {
   type ReturnType<
     abiError extends AbiError = AbiError,
     as extends 'Object' | 'Array' = 'Array',
-  > = {
-    args: Args<abiError, as>
-    error: abiError
-  }
+  > = abiError extends AbiError
+    ? {
+        args: Args<abiError, as>
+        error: abiError
+      }
+    : never
 
   type Args<
     abiError extends AbiError = AbiError,

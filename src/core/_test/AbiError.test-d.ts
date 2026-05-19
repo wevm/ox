@@ -85,6 +85,23 @@ describe('AbiError.extract', () => {
     >()
   })
 
+  test('behavior: error name discriminates args', () => {
+    const abi = Abi.from(['error Example(uint r, uint s, uint8 yParity)'])
+    const extracted = AbiError.extract(abi, '0x')
+
+    type Extracted = typeof extracted
+
+    expectTypeOf<
+      Extract<Extracted, { error: { name: 'Example' } }>['args']
+    >().toEqualTypeOf<readonly [bigint, bigint, number]>()
+    expectTypeOf<
+      Extract<Extracted, { error: { name: 'Error' } }>['args']
+    >().toEqualTypeOf<readonly [message: string]>()
+    expectTypeOf<
+      Extract<Extracted, { error: { name: 'Panic' } }>['args']
+    >().toEqualTypeOf<readonly [reason: number]>()
+  })
+
   test('behavior: as = Object', () => {
     const abi = Abi.from(['error Example(uint r, uint s, uint8 yParity)'])
     const extracted = AbiError.extract(abi, '0x', { as: 'Object' })
