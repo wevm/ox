@@ -16,6 +16,8 @@ export type Log<
   blockHash: pending extends true ? null : Hex.Hex
   /** Number of block containing this log or `null` if pending */
   blockNumber: pending extends true ? null : bigintType
+  /** Timestamp of block containing this log or `null` if pending */
+  blockTimestamp?: (pending extends true ? null : bigintType) | undefined
   /** Contains the non-integered arguments of the log */
   data: Hex.Hex
   /** Index of this log within its block or `null` if pending */
@@ -146,6 +148,14 @@ export function fromRpc<
   return {
     ...log,
     blockNumber: Quantity.toBigInt(log.blockNumber) ?? null,
+    ...('blockTimestamp' in log
+      ? {
+          blockTimestamp:
+            log.blockTimestamp === null
+              ? null
+              : Quantity.toBigInt(log.blockTimestamp),
+        }
+      : {}),
     logIndex: Quantity.toNumber(log.logIndex) ?? null,
     transactionIndex: Quantity.toNumber(log.transactionIndex) ?? null,
   } as Log<pending>
@@ -214,6 +224,14 @@ export function toRpc<
     address: log.address,
     blockHash: log.blockHash,
     blockNumber: Quantity.fromBigInt(log.blockNumber) ?? null,
+    ...('blockTimestamp' in log
+      ? {
+          blockTimestamp:
+            log.blockTimestamp === null
+              ? null
+              : Quantity.fromBigInt(log.blockTimestamp),
+        }
+      : {}),
     data: log.data,
     logIndex: Quantity.fromNumber(log.logIndex) ?? null,
     topics: log.topics,
