@@ -690,7 +690,7 @@ export declare namespace decodeLog {
 }
 
 /**
- * Decodes a set of Logs into ABI Events and their arguments.
+ * Extracts and decodes Logs that match an ABI Event in an ABI.
  *
  * @example
  * ```ts twoslash
@@ -700,7 +700,7 @@ export declare namespace decodeLog {
  *   'event Transfer(address indexed from, address indexed to, uint256 value)',
  * ])
  *
- * const decoded = AbiEvent.decodeLogs(abi, [
+ * const logs = AbiEvent.extractLogs(abi, [
  *   {
  *     data: '0x0000000000000000000000000000000000000000000000000000000000000001',
  *     topics: [
@@ -711,61 +711,360 @@ export declare namespace decodeLog {
  *   },
  * ])
  * // @log: [{
- * // @log:   event: { name: 'Transfer', type: 'event', ... },
+ * // @log:   eventName: 'Transfer',
  * // @log:   args: {
  * // @log:     from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:     to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:     value: 1n,
  * // @log:   },
- * // @log:   log: { ... },
+ * // @log:   topics: [...],
+ * // @log:   data: '0x...',
  * // @log: }]
  * ```
  *
  * @param abi - The ABI to extract events from.
- * @param logs - Logs to decode.
- * @param options - Decoding options.
- * @returns The decoded events, arguments, and logs.
+ * @param logs - Logs to extract.
+ * @param options - Extraction options.
+ * @returns The extracted logs.
  */
-export function decodeLogs<
+export function extractLogs<
   const abi extends Abi.Abi | readonly unknown[],
-  const logs extends readonly decodeLogs.Log[],
+  const logs extends readonly extractLogs.Log[],
+  eventName extends
+    | extractLogs.EventName<abi>
+    | readonly extractLogs.EventName<abi>[]
+    | undefined = undefined,
+  strict extends boolean | undefined = true,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
-  logs: logs | readonly decodeLogs.Log[],
-  options: decodeLogs.Options = {},
-): decodeLogs.ReturnType<decodeLogs.ExtractEvent<abi>, logs[number]>[] {
-  const out: decodeLogs.ReturnType[] = []
-  const { strict = false } = options
+  logs: logs | readonly extractLogs.Log[],
+  options: extractLogs.Options<abi, eventName, strict> = {},
+): extractLogs.ReturnType<
+  extractLogs.ExtractEvent<abi, eventName>,
+  logs[number],
+  strict
+>[] {
+  const {
+    args,
+    checksumAddress,
+    strict = true,
+  } = options as extractLogs.Options
+  const eventName = (() => {
+    if (!options.eventName) return undefined
+    if (Array.isArray(options.eventName)) return options.eventName
+    return [options.eventName as string]
+  })()
+  const abiEvents = (abi as Abi.Abi).filter(
+    (item): item is AbiEvent => item.type === 'event',
+  )
+  const out: extractLogs.ReturnType[] = []
   for (const log of logs) {
-    try {
-      const decoded = decodeLog(abi, log, options)
-      out.push({ ...decoded, log })
-    } catch (error) {
-      if (strict) throw error
+    const log_ = formatExtractLog(log)
+    const selector = log_.topics[0]
+    if (!selector) continue
+
+    const items = abiEvents.filter((item) => getSelector(item) === selector)
+    if (items.length === 0) continue
+
+    let event:
+      | {
+          args: unknown
+          event: AbiEvent
+        }
+      | undefined
+
+    for (const item of items) {
+      try {
+        event = {
+          args: decodeForExtract(item, log_, {
+            checksumAddress,
+            strict: true,
+          }),
+          event: item,
+        }
+        break
+      } catch {}
     }
+
+    if (!event && !strict) {
+      const item = items[0]!
+      try {
+        event = {
+          args: decodeForExtract(item, log_, {
+            checksumAddress,
+            strict: false,
+          }),
+          event: item,
+        }
+      } catch {
+        const isUnnamed = item.inputs.some((x) => !('name' in x && x.name))
+        event = {
+          args: isUnnamed ? [] : {},
+          event: item,
+        }
+      }
+    }
+
+    if (!event) continue
+    if (eventName && !eventName.includes(event.event.name)) continue
+    if (!includesArgs(event.event, event.args, args)) continue
+
+    out.push({
+      ...log_,
+      args: event.args,
+      eventName: event.event.name,
+    })
   }
   return out as never
 }
 
-export declare namespace decodeLogs {
-  type ExtractEvent<abi extends Abi.Abi | readonly unknown[]> =
-    decodeLog.ExtractEvent<abi>
+export declare namespace extractLogs {
+  type EventName<abi extends Abi.Abi | readonly unknown[]> = Name<abi>
 
-  type Log = decodeLog.Log
+  type ExtractEvent<
+    abi extends Abi.Abi | readonly unknown[],
+    eventName extends
+      | EventName<abi>
+      | readonly EventName<abi>[]
+      | undefined = EventName<abi>,
+  > = AbiItem.fromAbi.ReturnType<
+    abi,
+    eventName extends readonly (infer name)[]
+      ? name & EventName<abi>
+      : eventName extends EventName<abi>
+        ? eventName
+        : EventName<abi>,
+    undefined,
+    AbiEvent
+  >
 
-  type Options = decodeLog.Options & {
-    /** Whether to throw on the first log that cannot be decoded. */
-    strict?: boolean | undefined
+  type Args<abiEvent extends AbiEvent = AbiEvent> = IsNarrowable<
+    abiEvent,
+    AbiEvent
+  > extends true
+    ? abiEvent['inputs'] extends readonly []
+      ? never
+      : internal.ParametersToPrimitiveTypes<
+          abiEvent['inputs'],
+          { EnableUnion: true; IndexedOnly: false; Required: false }
+        >
+    : unknown
+
+  type Log = decode.Log & {
+    address?: Address.Address | undefined
+    blockHash?: Hex.Hex | null | undefined
+    blockNumber?: bigint | Hex.Hex | null | undefined
+    blockTimestamp?: bigint | Hex.Hex | null | undefined
+    logIndex?: number | Hex.Hex | null | undefined
+    removed?: boolean | undefined
+    transactionHash?: Hex.Hex | null | undefined
+    transactionIndex?: number | Hex.Hex | null | undefined
+  }
+
+  type Options<
+    abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
+    eventName extends
+      | EventName<abi>
+      | readonly EventName<abi>[]
+      | undefined = EventName<abi>,
+    strict extends boolean | undefined = boolean | undefined,
+    abiEvent extends AbiEvent = ExtractEvent<abi, eventName>,
+  > = decode.Options & {
+    /** Arguments to match against decoded event arguments. */
+    args?: Args<abiEvent> | undefined
+    /** Event name, or event names, to extract. */
+    eventName?:
+      | eventName
+      | EventName<abi>
+      | readonly EventName<abi>[]
+      | undefined
+    /**
+     * Whether to strictly decode log topics and data.
+     *
+     * @default true
+     */
+    strict?: strict | boolean | undefined
   }
 
   type ReturnType<
     abiEvent extends AbiEvent = AbiEvent,
     log extends Log = Log,
-  > = decodeLog.ReturnType<abiEvent> & {
-    log: log
+    strict extends boolean | undefined = boolean | undefined,
+  > = Compute<
+    log & {
+      args: IsNarrowable<abiEvent, AbiEvent> extends true
+        ? abiEvent['inputs'] extends readonly []
+          ? undefined
+          : internal.ParametersToPrimitiveTypes<
+              abiEvent['inputs'],
+              {
+                EnableUnion: false
+                IndexedOnly: false
+                Required: strict extends boolean ? strict : false
+              }
+            >
+        : unknown
+      eventName: abiEvent['name']
+    }
+  >
+
+  type ErrorType =
+    | AbiParameters.decode.ErrorType
+    | decode.ErrorType
+    | getSelector.ErrorType
+    | Errors.GlobalErrorType
+}
+
+function decodeForExtract(
+  abiEvent: AbiEvent,
+  log: decode.Log,
+  options: decode.Options & { strict: boolean },
+) {
+  const { data, topics } = log
+  const { strict } = options
+
+  const selector = topics[0]
+  if (selector !== getSelector(abiEvent))
+    throw new SelectorTopicMismatchError({
+      abiEvent,
+      actual: selector,
+      expected: getSelector(abiEvent),
+    })
+
+  const { inputs } = abiEvent
+  const isUnnamed = inputs.some((x) => !('name' in x && x.name))
+  const args: any = isUnnamed ? [] : {}
+
+  const argTopics = topics.slice(1)
+  const indexedInputs: [abitype.AbiEventParameter, number][] = []
+  const nonIndexedInputs: abitype.AbiEventParameter[] = []
+  const missingIndexedInputs: [abitype.AbiEventParameter, number][] = []
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i]!
+    if ('indexed' in input && input.indexed) indexedInputs.push([input, i])
+    else nonIndexedInputs.push(input)
   }
 
-  type ErrorType = decodeLog.ErrorType | Errors.GlobalErrorType
+  for (let i = 0; i < indexedInputs.length; i++) {
+    const [param, index] = indexedInputs[i]!
+    const topic = argTopics[i]
+    if (!topic) {
+      if (strict)
+        throw new TopicsMismatchError({
+          abiEvent,
+          param: param as abitype.AbiParameter & { indexed: boolean },
+        })
+      missingIndexedInputs.push([param, index])
+      continue
+    }
+    args[isUnnamed ? index : param.name || index] = decodeTopic(param, topic, {
+      checksumAddress: options.checksumAddress,
+    })
+  }
+
+  const inputsToDecode = strict
+    ? nonIndexedInputs
+    : [...missingIndexedInputs.map(([param]) => param), ...nonIndexedInputs]
+
+  if (inputsToDecode.length > 0) {
+    if (data && data !== '0x') {
+      try {
+        const decodedData = AbiParameters.decode(inputsToDecode, data, {
+          checksumAddress: options.checksumAddress,
+        })
+        if (decodedData) {
+          let dataIndex = 0
+          if (!strict) {
+            for (const [param, index] of missingIndexedInputs) {
+              args[isUnnamed ? index : param.name || index] =
+                decodedData[dataIndex++]
+            }
+          }
+          if (isUnnamed) {
+            for (let i = 0; i < inputs.length; i++)
+              if (args[i] === undefined && dataIndex < decodedData.length)
+                args[i] = decodedData[dataIndex++]
+          } else {
+            for (let i = 0; i < nonIndexedInputs.length; i++) {
+              const input = nonIndexedInputs[i]!
+              args[input.name!] = decodedData[dataIndex++]
+            }
+          }
+        }
+      } catch (err) {
+        if (strict) {
+          if (
+            err instanceof AbiParameters.DataSizeTooSmallError ||
+            err instanceof Cursor.PositionOutOfBoundsError
+          )
+            throw new DataMismatchError({
+              abiEvent,
+              data: data,
+              parameters: inputsToDecode,
+              size: Hex.size(data),
+            })
+          throw err
+        }
+      }
+    } else if (strict) {
+      throw new DataMismatchError({
+        abiEvent,
+        data: '0x',
+        parameters: inputsToDecode,
+        size: 0,
+      })
+    }
+  }
+
+  return Object.values(args).length > 0 ? args : undefined
+}
+
+function decodeTopic(
+  param: abitype.AbiEventParameter,
+  topic: Hex.Hex,
+  options: decode.Options,
+) {
+  const type = param.type
+  if (
+    type === 'string' ||
+    type === 'bytes' ||
+    type === 'tuple' ||
+    arraySuffixRegex.test(type)
+  )
+    return topic
+  const fast = decodePrimitiveTopic(type, topic, options)
+  if (fast) return fast[0]
+  const decoded = AbiParameters.decode([param], topic, options) || []
+  return decoded[0]
+}
+
+function formatExtractLog<const log extends extractLogs.Log>(log: log) {
+  if (typeof log.blockNumber !== 'string') return log
+  return {
+    ...log,
+    blockHash: log.blockHash ? log.blockHash : null,
+    blockNumber: log.blockNumber ? BigInt(log.blockNumber) : null,
+    blockTimestamp: log.blockTimestamp
+      ? BigInt(log.blockTimestamp)
+      : log.blockTimestamp === null
+        ? null
+        : undefined,
+    logIndex: log.logIndex ? Number(log.logIndex) : null,
+    transactionHash: log.transactionHash ? log.transactionHash : null,
+    transactionIndex: log.transactionIndex
+      ? Number(log.transactionIndex)
+      : null,
+  }
+}
+
+function includesArgs(abiEvent: AbiEvent, args: unknown, matchArgs: unknown) {
+  try {
+    if (!matchArgs) return true
+    assertArgs(abiEvent, args, matchArgs)
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**
