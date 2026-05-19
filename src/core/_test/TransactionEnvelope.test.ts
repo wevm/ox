@@ -97,8 +97,11 @@ describe('getType', () => {
 
   test('behavior: routes implicit transaction types', () => {
     expect(TransactionEnvelope.getType({ gasPrice: 1n })).toBe('legacy')
-    expect(TransactionEnvelope.getType({ accessList: [] })).toBe('eip2930')
+    expect(TransactionEnvelope.getType({ accessList: [], gasPrice: 1n })).toBe(
+      'eip2930',
+    )
     expect(TransactionEnvelope.getType({ maxFeePerGas: 1n })).toBe('eip1559')
+    expect(TransactionEnvelope.getType({ blobs: [] })).toBe('eip4844')
     expect(TransactionEnvelope.getType({ maxFeePerBlobGas: 1n })).toBe(
       'eip4844',
     )
@@ -107,11 +110,17 @@ describe('getType', () => {
     )
   })
 
-  test('behavior: rejects invalid transaction types', () => {
+  test('behavior: returns explicit transaction types', () => {
+    expect(TransactionEnvelope.getType({ type: '0x7e' })).toMatchInlineSnapshot(
+      `"0x7e"`,
+    )
+  })
+
+  test('behavior: rejects transactions without inferrable type', () => {
     expect(() =>
-      TransactionEnvelope.getType({ type: 'invalid' } as never),
+      TransactionEnvelope.getType({ chainId: 1 }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TransactionEnvelope.InvalidTypeError: Transaction type "invalid" is invalid.]`,
+      `[TransactionEnvelope.InvalidTypeError: Cannot infer transaction type from provided envelope.]`,
     )
   })
 })
@@ -169,6 +178,22 @@ describe('from', () => {
     expect(TransactionEnvelope.from({ maxFeePerGas: 10n, chainId: 1 })).toEqual(
       TxEnvelopeEip1559.from({ maxFeePerGas: 10n, chainId: 1 }),
     )
+  })
+
+  test('behavior: falls back unknown explicit types to EIP-1559', () => {
+    expect(
+      TransactionEnvelope.from({
+        chainId: 1,
+        maxFeePerGas: 10n,
+        type: '0x7e',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "chainId": 1,
+        "maxFeePerGas": 10n,
+        "type": "eip1559",
+      }
+    `)
   })
 
   test('behavior: routes serialized envelopes to the matching concrete converter', () => {
