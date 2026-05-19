@@ -566,6 +566,62 @@ describe('decode', () => {
   })
 })
 
+describe('decodeLog', () => {
+  test('behavior: decodes event from selector topic', () => {
+    const transfer = AbiEvent.from(
+      'event Transfer(address indexed from, address indexed to, uint256 value)',
+    )
+    const decoded = AbiEvent.decodeLog([transfer], {
+      data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      topics: [
+        AbiEvent.getSelector(transfer),
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+        '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      ],
+    })
+    expect(decoded).toMatchInlineSnapshot(`
+      {
+        "args": {
+          "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+          "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+          "value": 1n,
+        },
+        "event": {
+          "hash": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "from",
+              "type": "address",
+            },
+            {
+              "indexed": true,
+              "name": "to",
+              "type": "address",
+            },
+            {
+              "name": "value",
+              "type": "uint256",
+            },
+          ],
+          "name": "Transfer",
+          "type": "event",
+        },
+      }
+    `)
+  })
+
+  test('error: selector topic not found', () => {
+    const transfer = AbiEvent.from('event Transfer(address indexed from)')
+
+    expect(() =>
+      AbiEvent.decodeLog([transfer], { data: '0x', topics: [] }),
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [AbiEvent.SelectorTopicNotFoundError: Selector topic not found.]
+    `)
+  })
+})
+
 describe('encode', () => {
   test('default', () => {
     const transfer = AbiEvent.from('event Transfer()')
@@ -1541,6 +1597,7 @@ test('exports', () => {
     [
       "assertArgs",
       "decode",
+      "decodeLog",
       "encode",
       "format",
       "from",
@@ -1551,6 +1608,7 @@ test('exports', () => {
       "DataMismatchError",
       "TopicsMismatchError",
       "SelectorTopicMismatchError",
+      "SelectorTopicNotFoundError",
       "FilterTypeNotSupportedError",
     ]
   `)

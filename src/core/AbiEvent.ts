@@ -467,9 +467,14 @@ export function decode(
         decode.Log,
         decode.Options | undefined,
       ]
-      return [fromAbi(abi, name), log, options]
+      return [fromAbi(abi, name), log, options] as const
     }
-    return parameters as [AbiEvent, decode.Log, decode.Options | undefined]
+    const [abiEvent, log, options] = parameters as [
+      AbiEvent,
+      decode.Log,
+      decode.Options | undefined,
+    ]
+    return [abiEvent, log, options] as const
   })()
 
   const { data, topics } = log
@@ -613,6 +618,74 @@ export declare namespace decode {
     | DataMismatchError
     | SelectorTopicMismatchError
     | TopicsMismatchError
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Extracts an {@link ox#AbiEvent.AbiEvent} from an {@link ox#Abi.Abi} and decodes its arguments from a Log.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ * ])
+ *
+ * const decoded = AbiEvent.decodeLog(abi, {
+ *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   topics: [
+ *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ *   ],
+ * })
+ * // @log: {
+ * // @log:   event: { name: 'Transfer', type: 'event', ... },
+ * // @log:   args: {
+ * // @log:     from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:     value: 1n,
+ * // @log:   },
+ * // @log: }
+ * ```
+ *
+ * @param abi - The ABI to extract an event from.
+ * @param log - `topics` & `data` to decode.
+ * @param options - Decoding options.
+ * @returns The decoded event and arguments.
+ */
+export function decodeLog<const abi extends Abi.Abi | readonly unknown[]>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  log: decodeLog.Log,
+  options?: decodeLog.Options | undefined,
+): decodeLog.ReturnType<decodeLog.ExtractEvent<abi>> {
+  const selector = log.topics[0]
+  if (!selector) throw new SelectorTopicNotFoundError()
+  const abiEvent = fromAbi(abi, selector) as decodeLog.ExtractEvent<abi>
+  return {
+    event: abiEvent,
+    args: decode(abiEvent, log, options),
+  }
+}
+
+export declare namespace decodeLog {
+  type ExtractEvent<abi extends Abi.Abi | readonly unknown[]> =
+    AbiItem.fromAbi.ReturnType<abi, Name<abi>, undefined, AbiEvent>
+
+  type Log = decode.Log
+
+  type Options = decode.Options
+
+  type ReturnType<abiEvent extends AbiEvent = AbiEvent> = {
+    event: abiEvent
+    args: decode.ReturnType<abiEvent>
+  }
+
+  type ErrorType =
+    | decode.ErrorType
+    | fromAbi.ErrorType
+    | SelectorTopicNotFoundError
     | Errors.GlobalErrorType
 }
 
@@ -1519,6 +1592,27 @@ export class SelectorTopicMismatchError extends Errors.BaseError {
         metaMessages: [`Event: ${format(abiEvent)}`, `Selector: ${expected}`],
       },
     )
+  }
+}
+
+/**
+ * Thrown when the selector topic is not found.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiEvent } from 'ox'
+ *
+ * const abi = Abi.from(['event Transfer(address indexed from)'])
+ *
+ * AbiEvent.decodeLog(abi, { topics: [], data: '0x' })
+ * // @error: AbiEvent.SelectorTopicNotFoundError: Selector topic not found.
+ * ```
+ */
+export class SelectorTopicNotFoundError extends Errors.BaseError {
+  override readonly name = 'AbiEvent.SelectorTopicNotFoundError'
+
+  constructor() {
+    super('Selector topic not found.')
   }
 }
 
