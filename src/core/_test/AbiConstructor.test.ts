@@ -21,6 +21,13 @@ describe('decode', () => {
       ).toBe(undefined)
     }
 
+    expect(
+      AbiConstructor.decode([], {
+        bytecode: '0xdeadbeef',
+        data: '0xdeadbeef',
+      }),
+    ).toBe(undefined)
+
     {
       const encoded = AbiConstructor.encode(
         [AbiConstructor.from('constructor()')],
@@ -156,6 +163,17 @@ describe('decode', () => {
       Data:     0xcafebabe00000000...]
     `)
   })
+
+  test('error: no constructor with encoded args', () => {
+    expect(() =>
+      AbiConstructor.decode([], {
+        bytecode: '0xdeadbeef',
+        data: '0xdeadbeef00',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[AbiItem.NotFoundError: ABI item with name "constructor" not found.]`,
+    )
+  })
 })
 
 describe('encode', () => {
@@ -172,6 +190,12 @@ describe('encode', () => {
 
     expect(
       AbiConstructor.encode([AbiConstructor.from('constructor()')], {
+        bytecode: '0xdeadbeef',
+      }),
+    ).toBe('0xdeadbeef')
+
+    expect(
+      AbiConstructor.encode([], {
         bytecode: '0xdeadbeef',
       }),
     ).toBe('0xdeadbeef')

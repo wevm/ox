@@ -10,6 +10,22 @@ import type { IsNarrowable } from './internal/types.js'
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
 export type AbiConstructor = abitype.AbiConstructor
 
+type ExtractConstructor<abi extends Abi.Abi | readonly unknown[]> = [
+  fromAbi.ReturnType<abi>,
+] extends [never]
+  ? undefined
+  : fromAbi.ReturnType<abi> extends AbiConstructor
+    ? fromAbi.ReturnType<abi>
+    : undefined
+
+type ExtractArgs<abiConstructor extends AbiConstructor | undefined> = [
+  abiConstructor,
+] extends [never]
+  ? readonly []
+  : abiConstructor extends AbiConstructor
+    ? abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
+    : readonly []
+
 /**
  * ABI-decodes the provided constructor input (`inputs`).
  *
@@ -60,10 +76,7 @@ export type AbiConstructor = abitype.AbiConstructor
  */
 export function decode<
   const abi extends Abi.Abi | readonly unknown[],
-  abiConstructor extends
-    AbiConstructor = fromAbi.ReturnType<abi> extends AbiConstructor
-    ? fromAbi.ReturnType<abi>
-    : never,
+  abiConstructor extends AbiConstructor | undefined = ExtractConstructor<abi>,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
   options: decode.Options,
@@ -84,11 +97,13 @@ export function decode(
         Abi.Abi | readonly unknown[],
         decode.Options,
       ]
+      if (options.data === options.bytecode) return [undefined, options]
       return [fromAbi(abi), options] as [AbiConstructor, decode.Options]
     }
     return parameters as [AbiConstructor, decode.Options]
   })()
 
+  if (!abiConstructor) return undefined
   const { bytecode } = options
   if (abiConstructor.inputs?.length === 0) return undefined
   if (!options.data.startsWith(bytecode))
@@ -116,10 +131,16 @@ export declare namespace decode {
     checksumAddress?: boolean | undefined
   }
 
-  type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
-    | (abiConstructor['inputs']['length'] extends 0
+  type ReturnType<
+    abiConstructor extends AbiConstructor | undefined = AbiConstructor,
+  > =
+    | (abiConstructor extends undefined
         ? undefined
-        : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>)
+        : abiConstructor extends AbiConstructor
+          ? abiConstructor['inputs']['length'] extends 0
+            ? undefined
+            : abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>
+          : never)
     | (IsNarrowable<abiConstructor, AbiConstructor> extends true
         ? never
         : undefined)
@@ -199,10 +220,7 @@ export declare namespace decode {
  */
 export function encode<
   const abi extends Abi.Abi | readonly unknown[],
-  abiConstructor extends
-    AbiConstructor = fromAbi.ReturnType<abi> extends AbiConstructor
-    ? fromAbi.ReturnType<abi>
-    : never,
+  abiConstructor extends AbiConstructor | undefined = ExtractConstructor<abi>,
 >(
   abi: abi | Abi.Abi | readonly unknown[],
   options: encode.Options<abiConstructor>,
@@ -218,11 +236,12 @@ export function encode(
     | [abiConstructor: AbiConstructor, options: encode.Options]
 ): encode.ReturnType {
   const [abiConstructor, options] = (() => {
+    const options = parameters[1] as encode.Options
+    if (!options.args || options.args.length === 0)
+      return [undefined, options] as [undefined, encode.Options]
+
     if (Array.isArray(parameters[0])) {
-      const [abi, options] = parameters as [
-        Abi.Abi | readonly unknown[],
-        encode.Options,
-      ]
+      const [abi] = parameters as [Abi.Abi | readonly unknown[], encode.Options]
       return [fromAbi(abi), options] as [AbiConstructor, encode.Options]
     }
 
@@ -230,6 +249,7 @@ export function encode(
   })()
 
   const { bytecode, args } = options
+  if (!abiConstructor) return bytecode
   return Hex.concat(
     bytecode,
     abiConstructor.inputs?.length && args?.length
@@ -240,11 +260,9 @@ export function encode(
 
 export declare namespace encode {
   type Options<
-    abiConstructor extends AbiConstructor = AbiConstructor,
+    abiConstructor extends AbiConstructor | undefined = AbiConstructor,
     ///
-    args extends abitype.AbiParametersToPrimitiveTypes<
-      abiConstructor['inputs']
-    > = abitype.AbiParametersToPrimitiveTypes<abiConstructor['inputs']>,
+    args extends ExtractArgs<abiConstructor> = ExtractArgs<abiConstructor>,
   > = {
     /** The bytecode of the contract. */
     bytecode: Hex.Hex

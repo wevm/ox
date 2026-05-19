@@ -23,6 +23,11 @@ describe('AbiConstructor.decode', () => {
     const decoded = AbiConstructor.decode(abiConstructor, options)
     expectTypeOf(decoded).toEqualTypeOf<readonly unknown[] | undefined>()
   })
+
+  test('no constructor', () => {
+    const decoded = AbiConstructor.decode([], options)
+    expectTypeOf(decoded).toEqualTypeOf<undefined>()
+  })
 })
 
 describe('AbiConstructor.encode', () => {
@@ -55,6 +60,23 @@ describe('AbiConstructor.encode', () => {
   test('not narrowable', () => {
     const abiConstructor = {} as AbiConstructor.AbiConstructor
     AbiConstructor.encode(abiConstructor, options)
+  })
+
+  test('no constructor', () => {
+    AbiConstructor.encode([], {
+      bytecode: '0x',
+    })
+
+    AbiConstructor.encode([], {
+      bytecode: '0x',
+      args: [],
+    })
+
+    // @ts-expect-error no constructor args
+    AbiConstructor.encode([], {
+      bytecode: '0x',
+      args: ['0x'],
+    })
   })
 })
 
