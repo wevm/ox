@@ -1,9 +1,11 @@
 import { ens_normalize } from '@adraffy/ens-normalize'
 import * as Bytes from './Bytes.js'
-import type * as Errors from './Errors.js'
+import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import * as internal from './internal/ens.js'
+
+const slip44Msb = 0x80000000n
 
 /**
  * Hashes ENS label.
@@ -101,4 +103,39 @@ export function normalize(name: string): string {
 
 export declare namespace normalize {
   type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a chain ID to an ENSIP-9 compliant coin type.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Ens } from 'ox'
+ *
+ * Ens.toCoinType(10n)
+ * // @log: 2147483658n
+ * ```
+ *
+ * @param chainId - Chain ID to convert.
+ * @returns ENS coin type.
+ */
+export function toCoinType(chainId: bigint): bigint {
+  if (chainId === 1n) return 60n
+  if (chainId >= slip44Msb || chainId < 0n)
+    throw new InvalidChainIdError({ chainId })
+  return slip44Msb | chainId
+}
+
+export declare namespace toCoinType {
+  type ErrorType = typeof InvalidChainIdError | Errors.GlobalErrorType
+}
+
+/** Thrown when an ENS chain ID is invalid. */
+export class InvalidChainIdError extends Errors.BaseError {
+  override readonly name = 'Ens.InvalidChainIdError'
+  constructor({ chainId }: { chainId: bigint }) {
+    super(`Invalid ENSIP-11 chain ID: ${chainId}.`, {
+      metaMessages: ['Must be between 0 and 0x7fffffff, or 1.'],
+    })
+  }
 }
