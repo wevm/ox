@@ -233,6 +233,12 @@ export declare namespace decode {
      * @default "Array"
      */
     as?: as | 'Array' | 'Object' | undefined
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
   }
 
   type ReturnType<

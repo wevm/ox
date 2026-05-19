@@ -55,7 +55,7 @@ describe('decode', () => {
         }),
       ).toMatchInlineSnapshot(`
       [
-        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
         123n,
       ]
     `)
@@ -74,11 +74,32 @@ describe('decode', () => {
         }),
       ).toMatchInlineSnapshot(`
       [
-        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
         123n,
       ]
     `)
     }
+  })
+
+  test('options: checksumAddress = false', () => {
+    const abiConstructor = AbiConstructor.from('constructor(address, uint256)')
+    const encoded = AbiConstructor.encode(abiConstructor, {
+      bytecode: Constructor.bytecode.object,
+      args: [address.vitalik, 123n],
+    })
+
+    expect(
+      AbiConstructor.decode(abiConstructor, {
+        bytecode: Constructor.bytecode.object,
+        checksumAddress: false,
+        data: encoded,
+      }),
+    ).toMatchInlineSnapshot(`
+      [
+        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        123n,
+      ]
+    `)
   })
 
   test('behavior: network', async () => {
@@ -115,7 +136,7 @@ describe('decode', () => {
       }),
     ).toMatchInlineSnapshot(`
       [
-        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
         123n,
       ]
     `)

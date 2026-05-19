@@ -78,7 +78,7 @@ export function decode(
     checksumAddress?: boolean | undefined
   } = {},
 ): readonly unknown[] | Record<string, unknown> {
-  const { as = 'Array', checksumAddress = false } = options
+  const { as = 'Array', checksumAddress = true } = options
 
   const bytes = typeof data === 'string' ? Bytes.fromHex(data) : data
   const cursor = Cursor.create(bytes)
@@ -129,7 +129,7 @@ export declare namespace decode {
     /**
      * Whether decoded addresses should be checksummed.
      *
-     * @default false
+     * @default true
      */
     checksumAddress?: boolean | undefined
   }

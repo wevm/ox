@@ -21,6 +21,21 @@ describe('decodeData', () => {
     const data = AbiFunction.encodeData(abiItem, [address.vitalik, 1n])
     const input = AbiFunction.decodeData(abiItem, data)
     const input2 = AbiFunction.decodeData(erc20Abi, 'approve', data)
+    expect(input).toEqual(['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 1n])
+    expect(input2).toEqual(['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 1n])
+  })
+
+  test('options: checksumAddress = false', () => {
+    const abiItem = AbiFunction.fromAbi(erc20Abi, 'approve', {
+      prepare: false,
+    })
+    const data = AbiFunction.encodeData(abiItem, [address.vitalik, 1n])
+    const input = AbiFunction.decodeData(abiItem, data, {
+      checksumAddress: false,
+    })
+    const input2 = AbiFunction.decodeData(erc20Abi, 'approve', data, {
+      checksumAddress: false,
+    })
     expect(input).toEqual([address.vitalik, 1n])
     expect(input2).toEqual([address.vitalik, 1n])
   })
@@ -87,6 +102,17 @@ describe('decodeResult', () => {
       AbiParameters.encode(abiItem.outputs, args),
     )
     expect(result).toMatchInlineSnapshot('420n')
+  })
+
+  test('options: checksumAddress = false', () => {
+    const abiItem = AbiFunction.from('function owner() returns (address)')
+    const data = AbiParameters.encode(abiItem.outputs, [address.vitalik])
+    expect(AbiFunction.decodeResult(abiItem, data)).toMatchInlineSnapshot(
+      `"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"`,
+    )
+    expect(
+      AbiFunction.decodeResult(abiItem, data, { checksumAddress: false }),
+    ).toMatchInlineSnapshot(`"0xd8da6bf26964af9d7eed9e03e53415d37aa96045"`)
   })
 
   test('behavior: no output parameter', () => {

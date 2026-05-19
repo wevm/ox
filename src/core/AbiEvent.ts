@@ -77,10 +77,14 @@ function encodePrimitiveTopic(
 function decodePrimitiveTopic(
   type: string,
   topic: Hex.Hex,
+  options: decode.Options = {},
 ): [value: unknown] | undefined {
   if (type === 'address') {
     // Trailing 20 bytes; topic is always 66 chars (`0x` + 64 hex).
-    return [`0x${topic.slice(26)}` as Hex.Hex]
+    const address = `0x${topic.slice(26)}` as Address.Address
+    return [
+      options.checksumAddress === false ? address : Address.checksum(address),
+    ]
   }
   if (type === 'bool') {
     // Last byte determines truthiness (Solidity left-pads booleans).
@@ -326,8 +330,8 @@ export declare namespace assertArgs {
  *
  * const decoded = AbiEvent.decode(transfer, log)
  * // @log: {
- * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:   to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:   value: 1n
  * // @log: }
  * ```
@@ -358,8 +362,8 @@ export declare namespace assertArgs {
  *   log
  * )
  * // @log: {
- * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:   to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:   value: 1n
  * // @log: }
  * ```
@@ -397,8 +401,8 @@ export declare namespace assertArgs {
  * // 4. Decode the Log. // [!code focus]
  * const decoded = AbiEvent.decode(transfer, logs[0]!) // [!code focus]
  * // @log: {
- * // @log:   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- * // @log:   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+ * // @log:   from: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
+ * // @log:   to: '0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC',
  * // @log:   value: 603n
  * // @log: }
  * ```
@@ -412,6 +416,7 @@ export declare namespace assertArgs {
  *
  * @param abiEvent - The ABI Event to decode.
  * @param log - `topics` & `data` to decode.
+ * @param options - Decoding options.
  * @returns The decoded event.
  */
 export function decode<
@@ -432,10 +437,12 @@ export function decode<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   log: decode.Log,
+  options?: decode.Options | undefined,
 ): decode.ReturnType<abiEvent>
 export function decode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   log: decode.Log,
+  options?: decode.Options | undefined,
 ): decode.ReturnType<abiEvent>
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function decode(
@@ -444,19 +451,25 @@ export function decode(
         abi: Abi.Abi | readonly unknown[],
         name: Hex.Hex | string,
         log: decode.Log,
+        options?: decode.Options | undefined,
       ]
-    | [abiEvent: AbiEvent, log: decode.Log]
+    | [
+        abiEvent: AbiEvent,
+        log: decode.Log,
+        options?: decode.Options | undefined,
+      ]
 ): decode.ReturnType {
-  const [abiEvent, log] = (() => {
+  const [abiEvent, log, options] = (() => {
     if (Array.isArray(parameters[0])) {
-      const [abi, name, log] = parameters as [
+      const [abi, name, log, options] = parameters as [
         Abi.Abi | readonly unknown[],
         Hex.Hex | string,
         decode.Log,
+        decode.Options | undefined,
       ]
-      return [fromAbi(abi, name), log]
+      return [fromAbi(abi, name), log, options]
     }
-    return parameters as [AbiEvent, decode.Log]
+    return parameters as [AbiEvent, decode.Log, decode.Options | undefined]
   })()
 
   const { data, topics } = log
@@ -516,9 +529,9 @@ export function decode(
       // Fast path: 32-byte primitive (`address`, `bool`, `uintN`,
       // `intN`, `bytesN`). Reads the topic word directly without
       // allocating a `Cursor` or running `Bytes.fromHex`.
-      const fast = decodePrimitiveTopic(t, topic)
+      const fast = decodePrimitiveTopic(t, topic, options)
       if (fast) return fast[0]
-      const decoded = AbiParameters.decode([param], topic) || []
+      const decoded = AbiParameters.decode([param], topic, options) || []
       return decoded[0]
     })()
   }
@@ -527,7 +540,11 @@ export function decode(
   if (nonIndexedInputs.length > 0) {
     if (data && data !== '0x') {
       try {
-        const decodedData = AbiParameters.decode(nonIndexedInputs, data)
+        const decodedData = AbiParameters.decode(
+          nonIndexedInputs,
+          data,
+          options,
+        )
         if (decodedData) {
           if (isUnnamed) args = [...args, ...decodedData]
           else {
@@ -567,6 +584,15 @@ export declare namespace decode {
   type Log = {
     data?: Hex.Hex | undefined
     topics: readonly Hex.Hex[]
+  }
+
+  type Options = {
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
   }
 
   type ReturnType<abiEvent extends AbiEvent = AbiEvent> = IsNarrowable<

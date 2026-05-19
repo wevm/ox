@@ -63,18 +63,18 @@ describe('assertArgs', () => {
         value: 1n,
       }),
     ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
 
-    Event: event Transfer(address indexed from, address indexed to, uint256 value)
-    Expected Arguments: 
-      from:   0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
-      value:  1
-    Given Arguments: 
-      from:   0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
-      to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      value:  1]
-  `)
+      Event: event Transfer(address indexed from, address indexed to, uint256 value)
+      Expected Arguments: 
+        from:   0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        to:     0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad
+        value:  1
+      Given Arguments: 
+        from:   0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad
+        to:     0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
+        value:  1]
+    `)
   })
 
   test('error: args mismatch, unnamed', () => {
@@ -94,16 +94,16 @@ describe('assertArgs', () => {
         '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
       ]),
     ).toThrowErrorMatchingInlineSnapshot(`
-    [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
+      [AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
 
-    Event: event Transfer(address indexed, address indexed, uint256)
-    Expected Arguments: 
-      0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      1:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac
-      2:  1
-    Given Arguments: 
-      0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad]
-  `)
+      Event: event Transfer(address indexed, address indexed, uint256)
+      Expected Arguments: 
+        0:  0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        1:  0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC
+        2:  1
+      Given Arguments: 
+        0:  0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad]
+    `)
   })
 
   test('error: args mismatch, string', () => {
@@ -220,12 +220,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "value": 1n,
-    }
-  `)
+      {
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "value": 1n,
+      }
+    `)
   })
 
   test('behavior: unnamed', () => {
@@ -241,12 +241,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    [
-      "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      1n,
-    ]
-  `)
+      [
+        "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        1n,
+      ]
+    `)
   })
 
   test('behavior: named + unnamed', () => {
@@ -262,12 +262,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "2": 1n,
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-    }
-  `)
+      {
+        "2": 1n,
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+      }
+    `)
   })
 
   test('behavior: named + unnamed', () => {
@@ -283,12 +283,12 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "1": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "value": 1n,
-    }
-  `)
+      {
+        "1": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "value": 1n,
+      }
+    `)
   })
 
   test('behavior: named + unnamed', () => {
@@ -304,13 +304,13 @@ describe('decode', () => {
       ],
     })
     expect(decoded).toMatchInlineSnapshot(`
-    {
-      "1": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "3": 1n,
-      "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-      "value": 1n,
-    }
-  `)
+      {
+        "1": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "3": 1n,
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "value": 1n,
+      }
+    `)
   })
 
   test('behavior: string inputs', () => {
@@ -502,8 +502,8 @@ describe('decode', () => {
     expect(decoded1).toEqual(decoded2)
     expect(decoded2).toMatchInlineSnapshot(`
       {
-        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
         "value": 1n,
       }
     `)
@@ -531,8 +531,8 @@ describe('decode', () => {
 
     expect(decoded).toMatchInlineSnapshot(`
       {
-        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
         "value": 1n,
       }
     `)
@@ -558,8 +558,8 @@ describe('decode', () => {
     })
     expect(decoded).toMatchInlineSnapshot(`
       {
-        "from": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac",
-        "to": "0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad",
+        "from": "0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC",
+        "to": "0xa5Cc3C03994DB5B0d9a5EEdD10CaBab0813678ad",
         "value": 1n,
       }
     `)
@@ -890,12 +890,12 @@ describe('encode', () => {
     })
 
     expect(AbiEvent.decode(transfer, logs[0]!)).toMatchInlineSnapshot(`
-    {
-      "from": "0x0000000000000000000000000000000000000000",
-      "to": "0x0c04d9e9278ec5e4d424476d3ebec70cb5d648d1",
-      "value": 603n,
-    }
-  `)
+      {
+        "from": "0x0000000000000000000000000000000000000000",
+        "to": "0x0C04D9e9278EC5e4D424476D3Ebec70Cb5d648D1",
+        "value": 603n,
+      }
+    `)
   })
 
   test('error: tuple input', () => {
@@ -939,12 +939,12 @@ describe('encode', () => {
     })
 
     expect(AbiEvent.decode(transfer, logs[0]!)).toMatchInlineSnapshot(`
-    {
-      "from": "0x634cf119d1964b88a426e1e782bd09f37b51d949",
-      "to": "0xb77c2290c5e5acd8ca4778876b3caae593741bab",
-      "value": 714357880932609n,
-    }
-  `)
+      {
+        "from": "0x634cf119d1964b88a426E1E782Bd09f37b51d949",
+        "to": "0xB77c2290C5e5ACD8Ca4778876b3CAaE593741BAB",
+        "value": 714357880932609n,
+      }
+    `)
   })
 
   test('https://github.com/wevm/viem/issues/3278', () => {

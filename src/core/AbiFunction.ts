@@ -87,7 +87,7 @@ export type ExtractNames<
  * // '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
  *
  * const input = AbiFunction.decodeData(approve, data) // [!code focus]
- * // @log: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * // @log: ['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 69420n]
  * ```
  *
  * @example
@@ -107,11 +107,12 @@ export type ExtractNames<
  *   'approve', // [!code focus]
  *   data
  * )
- * // @log: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * // @log: ['0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', 69420n]
  * ```
  *
  * @param abiFunction - The ABI Item to decode.
  * @param data - The data to decode.
+ * @param options - Decoding options.
  */
 export function decodeData<
   const abi extends Abi.Abi | readonly unknown[],
@@ -131,27 +132,39 @@ export function decodeData<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   data: Hex.Hex,
+  options?: decodeData.Options | undefined,
 ): decodeData.ReturnType<abiFunction>
 export function decodeData<const abiItem extends AbiFunction>(
   abiFunction: abiItem | AbiFunction,
   data: Hex.Hex,
+  options?: decodeData.Options | undefined,
 ): decodeData.ReturnType<abiItem>
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function decodeData(
   ...parameters:
-    | [abi: Abi.Abi | readonly unknown[], name: Hex.Hex | string, data: Hex.Hex]
-    | [abiFunction: AbiFunction, data: Hex.Hex]
+    | [
+        abi: Abi.Abi | readonly unknown[],
+        name: Hex.Hex | string,
+        data: Hex.Hex,
+        options?: decodeData.Options | undefined,
+      ]
+    | [
+        abiFunction: AbiFunction,
+        data: Hex.Hex,
+        options?: decodeData.Options | undefined,
+      ]
 ) {
-  const [abiFunction, data] = (() => {
+  const [abiFunction, data, options] = (() => {
     if (Array.isArray(parameters[0])) {
-      const [abi, name, data] = parameters as [
+      const [abi, name, data, options] = parameters as [
         Abi.Abi | readonly unknown[],
         Hex.Hex | string,
         Hex.Hex,
+        decodeData.Options | undefined,
       ]
-      return [fromAbi(abi, name), data]
+      return [fromAbi(abi, name), data, options]
     }
-    return parameters as [AbiFunction, Hex.Hex]
+    return parameters as [AbiFunction, Hex.Hex, decodeData.Options | undefined]
   })()
 
   const { overloads } = abiFunction
@@ -170,10 +183,19 @@ export function decodeData(
       size: Math.max(0, Hex.size(data) - 4),
     })
   if (Hex.size(data) <= 4) return undefined
-  return AbiParameters.decode(item.inputs, Hex.slice(data, 4))
+  return AbiParameters.decode(item.inputs, Hex.slice(data, 4), options)
 }
 
 export declare namespace decodeData {
+  type Options = {
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
+  }
+
   type ReturnType<abiFunction extends AbiFunction = AbiFunction> = IsNarrowable<
     abiFunction,
     AbiFunction
@@ -392,6 +414,12 @@ export declare namespace decodeResult {
      * @default "Array"
      */
     as?: as | 'Array' | 'Object' | undefined
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
   }
 
   type ReturnType<

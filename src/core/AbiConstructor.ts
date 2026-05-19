@@ -97,7 +97,9 @@ export function decode(
       data: options.data,
     })
   const data = ('0x' + options.data.slice(bytecode.length)) as Hex.Hex
-  return AbiParameters.decode(abiConstructor.inputs, data)
+  return AbiParameters.decode(abiConstructor.inputs, data, {
+    checksumAddress: options.checksumAddress,
+  })
 }
 
 export declare namespace decode {
@@ -106,6 +108,12 @@ export declare namespace decode {
     bytecode: Hex.Hex
     /** The encoded constructor. */
     data: Hex.Hex
+    /**
+     * Whether decoded addresses should be checksummed.
+     *
+     * @default true
+     */
+    checksumAddress?: boolean | undefined
   }
 
   type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =

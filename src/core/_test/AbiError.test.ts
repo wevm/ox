@@ -2,6 +2,7 @@ import { Abi, AbiError, AbiFunction, AbiItem } from 'ox'
 import { describe, expect, test } from 'vitest'
 import { Errors } from '../../../contracts/generated.js'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
+import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('decode', () => {
@@ -34,6 +35,17 @@ describe('decode', () => {
 
     const decoded = AbiError.decode(error, data)
     expect(decoded).toEqual([420n, 69n, 1])
+  })
+
+  test('options: checksumAddress = false', () => {
+    const error = AbiError.from('error Unauthorized(address account)')
+    const data = AbiError.encode(error, [address.vitalik])
+    expect(AbiError.decode(error, data)).toMatchInlineSnapshot(
+      `"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"`,
+    )
+    expect(
+      AbiError.decode(error, data, { checksumAddress: false }),
+    ).toMatchInlineSnapshot(`"0xd8da6bf26964af9d7eed9e03e53415d37aa96045"`)
   })
 
   test('behavior: as = Object', () => {
