@@ -63,8 +63,15 @@ describe('getType', () => {
     ).toEqualTypeOf<'legacy'>()
   })
 
-  test('behavior: falls back to string when fields are not inferrable', () => {
-    expectTypeOf(TransactionEnvelope.getType({})).toEqualTypeOf<string>()
+  test('behavior: defaults ambiguous transactions to EIP-1559', () => {
+    expectTypeOf(TransactionEnvelope.getType({})).toEqualTypeOf<'eip1559'>()
+    expectTypeOf(
+      TransactionEnvelope.getType({
+        chainId: 1,
+        data: '0x1234',
+        nonce: 69n,
+      }),
+    ).toEqualTypeOf<'eip1559'>()
   })
 })
 
@@ -104,6 +111,14 @@ describe('from', () => {
     })
     expectTypeOf(eip7702.type).toEqualTypeOf<'eip7702'>()
     expectTypeOf(eip7702).toMatchTypeOf<TxEnvelopeEip7702.TxEnvelopeEip7702>()
+
+    const defaulted = TransactionEnvelope.from({
+      chainId: 1,
+      data: '0x1234',
+      nonce: 69n,
+    })
+    expectTypeOf(defaulted.type).toEqualTypeOf<'eip1559'>()
+    expectTypeOf(defaulted).toMatchTypeOf<TxEnvelopeEip1559.TxEnvelopeEip1559>()
   })
 
   test('behavior: falls back unknown explicit types to EIP-1559', () => {
@@ -131,6 +146,13 @@ describe('serialize', () => {
     ).toEqualTypeOf<TxEnvelopeEip2930.Serialized>()
     expectTypeOf(
       TransactionEnvelope.serialize({ chainId: 1, maxFeePerGas: 1n }),
+    ).toEqualTypeOf<TxEnvelopeEip1559.Serialized>()
+    expectTypeOf(
+      TransactionEnvelope.serialize({
+        chainId: 1,
+        data: '0x1234',
+        nonce: 69n,
+      }),
     ).toEqualTypeOf<TxEnvelopeEip1559.Serialized>()
     expectTypeOf(
       TransactionEnvelope.serialize({

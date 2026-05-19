@@ -142,12 +142,15 @@ describe('getType', () => {
     )
   })
 
-  test('behavior: rejects transactions without inferrable type', () => {
-    expect(() =>
-      TransactionEnvelope.getType({ chainId: 1 }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `[TransactionEnvelope.InvalidTypeError: Cannot infer transaction type from provided envelope.]`,
-    )
+  test('behavior: defaults ambiguous transactions to EIP-1559', () => {
+    expect(TransactionEnvelope.getType({})).toBe('eip1559')
+    expect(
+      TransactionEnvelope.getType({
+        chainId: 1,
+        data: '0x1234',
+        nonce: 69n,
+      }),
+    ).toBe('eip1559')
   })
 })
 
@@ -264,15 +267,19 @@ describe('serialize', () => {
     )
   })
 
-  test('behavior: rejects transactions without inferrable type', () => {
-    expect(() =>
+  test('behavior: defaults ambiguous transactions to EIP-1559', () => {
+    expect(
       TransactionEnvelope.serialize({
         chainId: 1,
         data: '0x1234',
         nonce: 69n,
       }),
-    ).toThrowErrorMatchingInlineSnapshot(
-      `[TransactionEnvelope.InvalidTypeError: Cannot infer transaction type from provided envelope.]`,
+    ).toBe(
+      TxEnvelopeEip1559.serialize({
+        chainId: 1,
+        data: '0x1234',
+        nonce: 69n,
+      }),
     )
   })
 })
