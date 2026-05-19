@@ -271,6 +271,93 @@ export declare namespace decode {
 }
 
 /**
+ * Extracts an {@link ox#AbiError.AbiError} from an {@link ox#Abi.Abi} and decodes its arguments from error data.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Abi, AbiError } from 'ox'
+ *
+ * const abi = Abi.from([
+ *   'error InvalidSignature(uint r, uint s, uint8 yParity)',
+ * ])
+ *
+ * const { error, args } = AbiError.extract(
+ *   abi,
+ *   '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ * )
+ * // @log: {
+ * // @log:   error: { name: 'InvalidSignature', type: 'error', ... },
+ * // @log:   args: [420n, 69n, 1],
+ * // @log: }
+ * ```
+ *
+ * @param abi - The ABI to extract from.
+ * @param data - The error data.
+ * @param options - Extraction options.
+ * @returns The extracted ABI Error and decoded arguments.
+ */
+export function extract<
+  const abi extends Abi.Abi | readonly unknown[],
+  as extends 'Object' | 'Array' = 'Array',
+>(
+  abi: abi | Abi.Abi | readonly unknown[],
+  data: Hex.Hex,
+  options: extract.Options<as> = {},
+): extract.ReturnType<extract.ExtractError<abi>, as> {
+  if (Hex.size(data) < 4) throw new AbiItem.InvalidSelectorSizeError({ data })
+  const error = fromAbi(abi, data as never) as AbiError
+  if (error.inputs.length === 0)
+    return {
+      args: undefined,
+      error,
+    } as never
+  return {
+    args: AbiParameters.decode(error.inputs, Hex.slice(data, 4), options),
+    error,
+  } as never
+}
+
+export declare namespace extract {
+  type ExtractError<abi extends Abi.Abi | readonly unknown[]> =
+    | (abi extends Abi.Abi
+        ? Abi.Abi extends abi
+          ? AbiError
+          : abitype.ExtractAbiError<abi, abitype.ExtractAbiErrorNames<abi>>
+        : AbiError)
+    | typeof solidityError
+    | typeof solidityPanic
+
+  type Options<as extends 'Object' | 'Array' = 'Array'> = decode.Options<as>
+
+  type ReturnType<
+    abiError extends AbiError = AbiError,
+    as extends 'Object' | 'Array' = 'Array',
+  > = {
+    args: Args<abiError, as>
+    error: abiError
+  }
+
+  type Args<
+    abiError extends AbiError = AbiError,
+    as extends 'Object' | 'Array' = 'Array',
+  > = abiError extends AbiError
+    ? IsNarrowable<abiError, AbiError> extends true
+      ? abiError['inputs'] extends readonly []
+        ? undefined
+        : AbiParameters.decode.ReturnType<abiError['inputs'], as>
+      : unknown | readonly unknown[] | undefined
+    : never
+
+  type ErrorType =
+    | AbiParameters.decode.ErrorType
+    | fromAbi.ErrorType
+    | Hex.size.ErrorType
+    | Hex.slice.ErrorType
+    | typeof AbiItem.InvalidSelectorSizeError
+    | Errors.GlobalErrorType
+}
+
+/**
  * ABI-encodes the provided error input (`inputs`), prefixed with the 4 byte error selector.
  *
  * @example

@@ -1,4 +1,4 @@
-import { AbiError } from 'ox'
+import { Abi, AbiError } from 'ox'
 import { describe, expectTypeOf, test } from 'vitest'
 
 describe('AbiError.decode', () => {
@@ -67,5 +67,45 @@ describe('AbiError.encode', () => {
   test('behavior: no hash', () => {
     const error = AbiError.from('error Example()')
     AbiError.encode({ ...error, hash: undefined })
+  })
+})
+
+describe('AbiError.extract', () => {
+  test('behavior: multiple args', () => {
+    const abi = Abi.from(['error Example(uint r, uint s, uint8 yParity)'])
+    const extracted = AbiError.extract(abi, '0x')
+
+    expectTypeOf(extracted.error.name).toEqualTypeOf<
+      'Example' | 'Error' | 'Panic'
+    >()
+    expectTypeOf(extracted.args).toEqualTypeOf<
+      | readonly [bigint, bigint, number]
+      | readonly [message: string]
+      | readonly [reason: number]
+    >()
+  })
+
+  test('behavior: as = Object', () => {
+    const abi = Abi.from(['error Example(uint r, uint s, uint8 yParity)'])
+    const extracted = AbiError.extract(abi, '0x', { as: 'Object' })
+
+    expectTypeOf(extracted.args).toEqualTypeOf<
+      | {
+          r: bigint
+          s: bigint
+          yParity: number
+        }
+      | { message: string }
+      | { reason: number }
+    >()
+  })
+
+  test('behavior: single arg does not collapse args', () => {
+    const abi = Abi.from(['error Example(uint8 yParity)'])
+    const extracted = AbiError.extract(abi, '0x')
+
+    expectTypeOf(extracted.args).toEqualTypeOf<
+      readonly [number] | readonly [message: string] | readonly [reason: number]
+    >()
   })
 })
