@@ -171,7 +171,7 @@ describe('serialize', () => {
 })
 
 const credentials = import.meta.env.VITE_TEMPO_CREDENTIALS
-const rpcUrl = 'https://rpc-zone-006.testnet.tempo.xyz'
+const rpcUrl = 'https://rpc-zone-a.testnet.tempo.xyz'
 
 describe('e2e', () => {
   test.skipIf(!credentials)('succeeds with auth token', async () => {
@@ -179,10 +179,10 @@ describe('e2e', () => {
     const now = Math.floor(Date.now() / 1000)
 
     const auth = ZoneRpcAuthentication.from({
-      chainId: 4217000007,
+      chainId: 4217000005,
       expiresAt: now + 600,
       issuedAt: now,
-      zoneId: 7,
+      zoneId: 5,
     })
 
     const serialized = ZoneRpcAuthentication.serialize(auth, {
