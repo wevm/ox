@@ -2,19 +2,31 @@ import type * as Address from './Address.js'
 import type * as Block from './Block.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
-import type { Compute } from './internal/types.js'
+import type { Compute, OneOf } from './internal/types.js'
 
 /** A Filter as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/filter.yaml). */
-export type Filter<bigintType = bigint> = Compute<{
-  /** Address to filter for logs. */
-  address?: Address.Address | readonly Address.Address[] | null | undefined
-  /** Block number or tag to filter logs from. */
-  fromBlock?: Block.Number<bigintType> | Block.Tag | undefined
-  /** Block number or tag to filter logs to. */
-  toBlock?: Block.Number<bigintType> | Block.Tag | undefined
-  /** Topics to filter for logs. */
-  topics?: Topics | undefined
-}>
+export type Filter<bigintType = bigint> = Compute<
+  {
+    /** Address to filter for logs. */
+    address?: Address.Address | readonly Address.Address[] | null | undefined
+    /** Topics to filter for logs. */
+    topics?: Topics | undefined
+  } & OneOf<
+    | {
+        /** Block number or tag to filter logs from. */
+        fromBlock?: Block.Number<bigintType> | Block.Tag | undefined
+        /** Block number or tag to filter logs to. */
+        toBlock?: Block.Number<bigintType> | Block.Tag | undefined
+      }
+    | {
+        /**
+         * Hash of the block to filter logs from. Mutually exclusive with
+         * `fromBlock`/`toBlock`. Added by EIP-234.
+         */
+        blockHash: Block.Hash
+      }
+  >
+>
 
 /** RPC representation of a {@link ox#Filter.Filter}. */
 export type Rpc = Filter<Hex.Hex>
@@ -110,10 +122,11 @@ export declare namespace fromRpc {
  * @returns An RPC filter.
  */
 export function toRpc(filter: Filter): Rpc {
-  const { address, topics, fromBlock, toBlock } = filter
+  const { address, topics, fromBlock, toBlock, blockHash } = filter
   return {
     ...(typeof address !== 'undefined' ? { address } : {}),
     ...(typeof topics !== 'undefined' ? { topics } : {}),
+    ...(typeof blockHash !== 'undefined' ? { blockHash } : {}),
     ...(typeof fromBlock !== 'undefined'
       ? {
           fromBlock:
@@ -128,7 +141,7 @@ export function toRpc(filter: Filter): Rpc {
             typeof toBlock === 'bigint' ? Hex.fromNumber(toBlock) : toBlock,
         }
       : {}),
-  }
+  } as unknown as Rpc
 }
 
 export declare namespace toRpc {
