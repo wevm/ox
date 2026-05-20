@@ -1,11 +1,14 @@
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import type { Compute } from '../core/internal/types.js'
+import * as Signature from '../core/Signature.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
+import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
 type KeyType = 'secp256k1' | 'p256' | 'webAuthn'
@@ -31,12 +34,14 @@ export type TransactionRequest<
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
     calls?: readonly Call<bigintType>[] | undefined
+    feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
     keyType?: KeyType | undefined
     feePayer?: boolean | undefined
     feeToken?: TokenId.TokenIdOrAddress | undefined
     nonceKey?: 'random' | bigintType | undefined
+    signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
     validBefore?: numberType | undefined
     validAfter?: numberType | undefined
   }
@@ -45,12 +50,18 @@ export type TransactionRequest<
 /** RPC representation of a {@link ox#TransactionRequest.TransactionRequest}. */
 export type Rpc = Omit<
   TransactionRequest<Hex.Hex, Hex.Hex, string>,
-  'authorizationList' | 'feeToken' | 'keyAuthorization'
+  | 'authorizationList'
+  | 'feePayerSignature'
+  | 'feeToken'
+  | 'keyAuthorization'
+  | 'signature'
 > & {
   authorizationList?: AuthorizationTempo.ListRpc | undefined
+  feePayerSignature?: Signature.Rpc | null | undefined
   feeToken?: Hex.Hex | undefined
   keyAuthorization?: KeyAuthorization.Rpc | undefined
   nonceKey?: Hex.Hex | undefined
+  signature?: SignatureEnvelope.SignatureEnvelopeRpc | undefined
 }
 
 /**
@@ -89,6 +100,10 @@ export function fromRpc(request: Rpc): TransactionRequest {
     request_.authorizationList = AuthorizationTempo.fromRpcList(
       request.authorizationList,
     )
+  if (request.signature)
+    request_.signature = SignatureEnvelope.fromRpc(request.signature)
+  if (request.feePayerSignature)
+    request_.feePayerSignature = Signature.fromRpc(request.feePayerSignature)
   if (request.calls)
     request_.calls = request.calls.map((call) => {
       const mapped: Call<bigint> = {
@@ -182,6 +197,10 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.authorizationList = AuthorizationTempo.toRpcList(
       request.authorizationList,
     )
+  if (request.signature)
+    request_rpc.signature = SignatureEnvelope.toRpc(request.signature)
+  if (request.feePayerSignature)
+    request_rpc.feePayerSignature = Signature.toRpc(request.feePayerSignature)
   if (request.calls)
     request_rpc.calls = request.calls.map((call) => ({
       to: call.to,
@@ -239,5 +258,115 @@ export declare namespace toRpc {
   export type ErrorType =
     | AuthorizationTempo.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a Tempo {@link ox#TransactionRequest.TransactionRequest} to a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo}.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionRequest } from 'ox/tempo'
+ *
+ * const envelope = TransactionRequest.toEnvelope({
+ *   calls: [{
+ *     data: '0xdeadbeef',
+ *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
+ *   }],
+ *   chainId: 1,
+ *   feeToken: '0x20c0000000000000000000000000000000000000',
+ *   maxFeePerGas: 1n,
+ * })
+ * ```
+ *
+ * @param request - The transaction request to convert.
+ * @param options - Options.
+ * @returns A Tempo transaction envelope.
+ */
+export function toEnvelope(
+  request: TransactionRequest,
+  options: toEnvelope.Options = {},
+): TxEnvelopeTempo.TxEnvelopeTempo {
+  const calls = (() => {
+    if (request.calls) return request.calls
+    if (request.to || request.data || request.value)
+      return [
+        {
+          ...(typeof request.to !== 'undefined' && request.to !== null
+            ? { to: request.to }
+            : {}),
+          ...(typeof request.data !== 'undefined'
+            ? { data: request.data }
+            : {}),
+          ...(typeof request.value !== 'undefined'
+            ? { value: request.value }
+            : {}),
+        },
+      ] satisfies readonly Call[]
+    return [] as readonly Call[]
+  })()
+
+  const nonceKey = (() => {
+    if (request.nonceKey === 'random') return Hex.toBigInt(Hex.random(24))
+    if (typeof request.nonceKey === 'bigint') return request.nonceKey
+    return undefined
+  })()
+
+  type Input = TxEnvelopeTempo.Input
+  const input: Input = {
+    type: 'tempo',
+    calls,
+    chainId: request.chainId!,
+    ...(typeof request.accessList !== 'undefined'
+      ? { accessList: request.accessList }
+      : {}),
+    ...(typeof request.authorizationList !== 'undefined'
+      ? { authorizationList: request.authorizationList }
+      : {}),
+    ...(typeof request.feePayerSignature !== 'undefined'
+      ? { feePayerSignature: request.feePayerSignature }
+      : {}),
+    ...(typeof request.feeToken !== 'undefined'
+      ? { feeToken: request.feeToken }
+      : {}),
+    ...(typeof request.from !== 'undefined' ? { from: request.from } : {}),
+    ...(typeof request.gas !== 'undefined' ? { gas: request.gas } : {}),
+    ...(typeof request.keyAuthorization !== 'undefined'
+      ? { keyAuthorization: request.keyAuthorization }
+      : {}),
+    ...(typeof request.maxFeePerGas !== 'undefined'
+      ? { maxFeePerGas: request.maxFeePerGas }
+      : {}),
+    ...(typeof request.maxPriorityFeePerGas !== 'undefined'
+      ? { maxPriorityFeePerGas: request.maxPriorityFeePerGas }
+      : {}),
+    ...(typeof request.nonce !== 'undefined' ? { nonce: request.nonce } : {}),
+    ...(typeof nonceKey !== 'undefined' ? { nonceKey } : {}),
+    ...(typeof request.signature !== 'undefined'
+      ? { signature: request.signature }
+      : {}),
+    ...(typeof request.validAfter !== 'undefined'
+      ? { validAfter: request.validAfter }
+      : {}),
+    ...(typeof request.validBefore !== 'undefined'
+      ? { validBefore: request.validBefore }
+      : {}),
+  }
+
+  return TxEnvelopeTempo.from(input, options) as TxEnvelopeTempo.TxEnvelopeTempo
+}
+
+export declare namespace toEnvelope {
+  type Options = {
+    /** Optional fee-payer signature to attach to the envelope. */
+    feePayerSignature?: Signature.Signature | null | undefined
+    /** Optional signature envelope to attach. */
+    signature?: SignatureEnvelope.from.Value | undefined
+  }
+
+  type ErrorType =
+    | TxEnvelopeTempo.from.ErrorType
+    | Hex.random.ErrorType
+    | Hex.toBigInt.ErrorType
     | Errors.GlobalErrorType
 }

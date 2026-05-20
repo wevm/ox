@@ -211,3 +211,114 @@ describe('roundtrip', () => {
     expect(rpc.type).toBe('0x76')
   })
 })
+
+describe('toEnvelope', () => {
+  test('default: uses provided calls', () => {
+    const envelope = TransactionRequest.toEnvelope({
+      calls: [
+        {
+          data: '0xdeadbeef',
+          to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        },
+      ],
+      chainId: 1,
+      maxFeePerGas: 1n,
+    })
+    expect(envelope.calls).toEqual([
+      {
+        data: '0xdeadbeef',
+        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      },
+    ])
+    expect(envelope.type).toBe('tempo')
+    expect(envelope.chainId).toBe(1)
+    expect(envelope.maxFeePerGas).toBe(1n)
+  })
+
+  test('behavior: folds flat call into calls[]', () => {
+    const envelope = TransactionRequest.toEnvelope({
+      chainId: 1,
+      data: '0xdeadbeef',
+      maxFeePerGas: 1n,
+      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      value: 100n,
+    })
+    expect(envelope.calls).toEqual([
+      {
+        data: '0xdeadbeef',
+        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        value: 100n,
+      },
+    ])
+  })
+
+  test('behavior: drops core blob fields, gasPrice, r/s/yParity/v', () => {
+    const envelope = TransactionRequest.toEnvelope({
+      blobs: ['0xcafebabe'],
+      blobVersionedHashes: ['0xcafebabe'],
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      gasPrice: 1n,
+      maxFeePerBlobGas: 1n,
+      maxFeePerGas: 1n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      v: 27,
+      yParity: 0,
+    })
+    expect(envelope).not.toHaveProperty('blobs')
+    expect(envelope).not.toHaveProperty('blobVersionedHashes')
+    expect(envelope).not.toHaveProperty('maxFeePerBlobGas')
+    expect(envelope).not.toHaveProperty('gasPrice')
+    expect(envelope).not.toHaveProperty('r')
+    expect(envelope).not.toHaveProperty('s')
+    expect(envelope).not.toHaveProperty('yParity')
+    expect(envelope).not.toHaveProperty('v')
+  })
+
+  test('behavior: resolves nonceKey: "random" to a bigint', () => {
+    const envelope = TransactionRequest.toEnvelope({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxFeePerGas: 1n,
+      nonceKey: 'random',
+    })
+    expect(typeof envelope.nonceKey).toBe('bigint')
+    expect(envelope.nonceKey).toBeGreaterThan(0n)
+  })
+
+  test('behavior: preserves explicit bigint nonceKey', () => {
+    const envelope = TransactionRequest.toEnvelope({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxFeePerGas: 1n,
+      nonceKey: 42n,
+    })
+    expect(envelope.nonceKey).toBe(42n)
+  })
+
+  test('behavior: passes through feeToken, validBefore, validAfter', () => {
+    const envelope = TransactionRequest.toEnvelope({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      feeToken: '0x20c0000000000000000000000000000000000000',
+      maxFeePerGas: 1n,
+      validAfter: 100,
+      validBefore: 200,
+    })
+    expect(envelope.feeToken).toBe('0x20c0000000000000000000000000000000000000')
+    expect(envelope.validBefore).toBe(200)
+    expect(envelope.validAfter).toBe(100)
+  })
+
+  test('error: empty calls throws via envelope assert', () => {
+    expect(() =>
+      TransactionRequest.toEnvelope({
+        chainId: 1,
+        maxFeePerGas: 1n,
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.]`,
+    )
+  })
+})

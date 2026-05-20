@@ -4,6 +4,8 @@ import type * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
 import type { Compute, UnionPartialBy } from './internal/types.js'
 import type * as Signature from './Signature.js'
+import * as Transaction from './Transaction.js'
+import type * as TransactionRequest from './TransactionRequest.js'
 import * as TxEnvelopeEip1559 from './TxEnvelopeEip1559.js'
 import * as TxEnvelopeEip2930 from './TxEnvelopeEip2930.js'
 import * as TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
@@ -25,7 +27,12 @@ export type Base<
     data?: Hex.Hex | undefined
     /** @alias `data` – added for TransactionEnvelope - Transaction compatibility. */
     input?: Hex.Hex | undefined
-    /** Sender of the transaction. */
+    /**
+     * Sender of the transaction. RPC-only metadata; not part of the
+     * serialized envelope. Carried here for parity with
+     * {@link ox#TransactionRequest.TransactionRequest} and
+     * {@link ox#Transaction.Transaction}.
+     */
     from?: Address.Address | undefined
     /** Gas provided for transaction execution */
     gas?: bigintType | undefined
@@ -360,7 +367,17 @@ export function getType<const envelope extends Typeable>(
   envelope: envelope | Typeable,
 ): getType.ReturnType<envelope> {
   const type = envelope.type
-  if (type) return type as never
+  if (type) {
+    // Guard against accidental RPC-style type strings that map to a known
+    // canonical envelope type ('0x0'…'0x4'). Canonical envelopes use
+    // 'legacy' | 'eip2930' | 'eip1559' | 'eip4844' | 'eip7702'. RPC payloads
+    // should be normalized through `TransactionRequest.fromRpc` (which
+    // translates via `Transaction.fromRpcType`) before reaching the envelope
+    // layer. Other custom `0x*` types (e.g. OP-Stack `0x7e`) pass through.
+    if (typeof type === 'string' && type in Transaction.fromRpcType)
+      throw new InvalidTypeError({ type })
+    return type as never
+  }
 
   if (
     'authorizationList' in envelope &&
@@ -647,6 +664,71 @@ export declare namespace toRpc {
     | TxEnvelopeEip7702.toRpc.ErrorType
     | InvalidTypeError
     | Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#(TransactionEnvelope:namespace).TxEnvelope} to a {@link ox#TransactionRequest.TransactionRequest}.
+ *
+ * Flattens any EIP-7594 `sidecars` back into the top-level `blobs` field.
+ * Signature fields (`r`, `s`, `yParity`, `v`) are preserved — Ox's
+ * `TransactionRequest` extends the Execution API `GenericTransaction`
+ * shape to optionally carry signed payloads. Pair with
+ * {@link ox#TransactionRequest.(toRpc:function)} to produce an
+ * `eth_sendTransaction`-shaped payload.
+ *
+ * Note: the 4844 round-trip
+ * `TxEnvelope → TransactionRequest → TxEnvelope` is **lossy** —
+ * `sidecars.commitments` and `sidecars.cellProofs` are not preserved on
+ * the `TransactionRequest` shape. Callers that need full round-trip
+ * parity must carry sidecars out of band.
+ *
+ * @example
+ * ```ts twoslash
+ * import { TransactionEnvelope, TxEnvelopeEip1559 } from 'ox'
+ *
+ * const envelope = TxEnvelopeEip1559.from({
+ *   chainId: 1,
+ *   maxFeePerGas: 1n,
+ *   to: '0x0000000000000000000000000000000000000000',
+ *   value: 1n,
+ * })
+ *
+ * const request = TransactionEnvelope.toTransactionRequest(envelope)
+ * // @log: {
+ * // @log:   chainId: 1,
+ * // @log:   maxFeePerGas: 1n,
+ * // @log:   to: '0x0000000000000000000000000000000000000000',
+ * // @log:   type: 'eip1559',
+ * // @log:   value: 1n,
+ * // @log: }
+ * ```
+ *
+ * @param envelope - The transaction envelope to convert.
+ * @returns A transaction request.
+ */
+export function toTransactionRequest(
+  envelope: TxEnvelope,
+): TransactionRequest.TransactionRequest {
+  const {
+    // Flatten sidecars; surface their `blobs` payload instead.
+    sidecars,
+    blobs,
+    ...rest
+  } = envelope as TxEnvelope & {
+    sidecars?: TxEnvelopeEip4844.Sidecars<Hex.Hex> | undefined
+    blobs?: readonly Hex.Hex[] | undefined
+  }
+
+  const request: TransactionRequest.TransactionRequest = { ...rest }
+
+  const blobs_ = blobs ?? sidecars?.blobs
+  if (blobs_) request.blobs = blobs_
+
+  return request
+}
+
+export declare namespace toTransactionRequest {
+  type ErrorType = Errors.GlobalErrorType
 }
 
 /**

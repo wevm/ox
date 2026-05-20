@@ -1589,3 +1589,55 @@ describe('validate', () => {
     ).toBe(false)
   })
 })
+
+describe('toTransactionRequest', () => {
+  test('default', () => {
+    const envelope = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxFeePerGas: 1n,
+    })
+    const request = TxEnvelopeTempo.toTransactionRequest(envelope)
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "calls": [
+          {
+            "to": "0x0000000000000000000000000000000000000000",
+          },
+        ],
+        "chainId": 1,
+        "maxFeePerGas": 1n,
+        "type": "tempo",
+      }
+    `)
+  })
+
+  test('behavior: preserves signature and feePayerSignature', () => {
+    const envelope = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId: 1,
+      maxFeePerGas: 1n,
+    })
+    const signature = {
+      type: 'secp256k1',
+      signature: {
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        yParity: 0,
+      },
+    } as any
+    const feePayerSignature = {
+      r: '0x0000000000000000000000000000000000000000000000000000000000000003',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000004',
+      yParity: 1,
+    } as any
+    const signed: TxEnvelopeTempo.TxEnvelopeTempo = {
+      ...envelope,
+      signature,
+      feePayerSignature,
+    }
+    const request = TxEnvelopeTempo.toTransactionRequest(signed)
+    expect(request.signature).toEqual(signature)
+    expect(request.feePayerSignature).toEqual(feePayerSignature)
+  })
+})

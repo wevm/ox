@@ -18,6 +18,7 @@ import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TokenId from './TokenId.js'
+import type * as TransactionRequest from './TransactionRequest.js'
 
 /**
  * Represents a single call within a Tempo transaction.
@@ -1019,6 +1020,41 @@ export function validate(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
 }
 
 export declare namespace validate {
+  type ErrorType = Errors.GlobalErrorType
+}
+
+/**
+ * Converts a {@link ox#TxEnvelopeTempo.TxEnvelopeTempo} to a Tempo {@link ox#TransactionRequest.TransactionRequest}.
+ *
+ * Preserves `signature` and `feePayerSignature`. The Tempo
+ * `TransactionRequest` shape carries the same envelope-style signature
+ * fields so signed envelopes can be round-tripped through the request
+ * representation without information loss.
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * const envelope = TxEnvelopeTempo.from({
+ *   calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+ *   chainId: 1,
+ *   maxFeePerGas: 1n,
+ * })
+ *
+ * const request = TxEnvelopeTempo.toTransactionRequest(envelope)
+ * ```
+ *
+ * @param envelope - The Tempo transaction envelope to convert.
+ * @returns A Tempo transaction request.
+ */
+export function toTransactionRequest(
+  envelope: TxEnvelopeTempo,
+): TransactionRequest.TransactionRequest {
+  return { ...envelope } as TransactionRequest.TransactionRequest
+}
+
+export declare namespace toTransactionRequest {
   type ErrorType = Errors.GlobalErrorType
 }
 

@@ -74,6 +74,7 @@ test('exports', () => {
       "hash",
       "serialize",
       "toRpc",
+      "toTransactionRequest",
       "validate",
       "FeeCapTooHighError",
       "GasPriceTooHighError",
@@ -316,5 +317,70 @@ describe('validate', () => {
         maxPriorityFeePerGas: 2n,
       }),
     ).toBe(false)
+  })
+})
+
+describe('getType', () => {
+  test('error: rejects RPC-style type strings', () => {
+    expect(() =>
+      TransactionEnvelope.getType({
+        chainId: 1,
+        maxFeePerGas: 1n,
+        type: '0x2',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[TransactionEnvelope.InvalidTypeError: Transaction type "0x2" is invalid.]`,
+    )
+  })
+})
+
+describe('toTransactionRequest', () => {
+  test('behavior: eip1559', () => {
+    const request = TransactionEnvelope.toTransactionRequest(eip1559)
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "chainId": 1,
+        "gas": 21000n,
+        "maxFeePerGas": 10n,
+        "maxPriorityFeePerGas": 1n,
+        "nonce": 0n,
+        "to": "0x0000000000000000000000000000000000000000",
+        "type": "eip1559",
+        "value": 1n,
+      }
+    `)
+  })
+
+  test('behavior: preserves signature fields', () => {
+    const request = TransactionEnvelope.toTransactionRequest({
+      ...eip1559,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      v: 27,
+      yParity: 0,
+    })
+    expect(request.r).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000001',
+    )
+    expect(request.s).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000002',
+    )
+    expect(request.yParity).toBe(0)
+    expect(request.v).toBe(27)
+  })
+
+  test('behavior: legacy round-trips', () => {
+    const request = TransactionEnvelope.toTransactionRequest(legacy)
+    expect(request).toMatchInlineSnapshot(`
+      {
+        "chainId": 1,
+        "gas": 21000n,
+        "gasPrice": 10n,
+        "nonce": 0n,
+        "to": "0x0000000000000000000000000000000000000000",
+        "type": "legacy",
+        "value": 1n,
+      }
+    `)
   })
 })
