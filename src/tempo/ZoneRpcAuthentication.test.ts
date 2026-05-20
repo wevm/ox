@@ -171,7 +171,7 @@ describe('serialize', () => {
 })
 
 const credentials = import.meta.env.VITE_TEMPO_CREDENTIALS
-const rpcUrl = 'https://rpc-zone-006-private.tempoxyz.dev'
+const rpcUrl = 'https://rpc-zone-006.testnet.tempo.xyz'
 
 describe('e2e', () => {
   test.skipIf(!credentials)('succeeds with auth token', async () => {

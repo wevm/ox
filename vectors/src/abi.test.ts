@@ -20,9 +20,11 @@ describe('AbiParameters.encode', () => {
 describe('AbiParameters.decode', () => {
   vectors.forEach((v: any, i: number) => {
     test(`${i}`, () => {
-      expect(AbiParameters.decode(Json.parse(v.parameters), v.encoded)).toEqual(
-        Json.parse(v.values),
-      )
+      expect(
+        AbiParameters.decode(Json.parse(v.parameters), v.encoded, {
+          checksumAddress: false,
+        }),
+      ).toEqual(Json.parse(v.values))
     })
   })
 })
