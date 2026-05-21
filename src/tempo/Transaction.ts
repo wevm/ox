@@ -145,6 +145,7 @@ export type FromRpcType = typeof fromRpcType & {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Transaction } from 'ox/tempo'
  *
  * const transaction = Transaction.fromRpc({
@@ -249,6 +250,7 @@ export declare namespace fromRpc {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Transaction } from 'ox/tempo'
  *
  * const transaction = Transaction.toRpc({

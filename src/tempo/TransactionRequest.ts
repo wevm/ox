@@ -164,6 +164,7 @@ export declare namespace fromRpc {
  * send a transaction to the Wallet using the `eth_sendTransaction` method.
  *
  * ```ts twoslash
+ * // @noErrors
  * import 'ox/window'
  * import { Provider, Value } from 'ox'
  * import { TransactionRequest } from 'ox/tempo'

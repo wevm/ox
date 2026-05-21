@@ -480,6 +480,7 @@ export declare namespace validateMessage {
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { Siwe } from 'ox'
  *
  * Siwe.createMessage({

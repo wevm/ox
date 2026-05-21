@@ -12,6 +12,7 @@ import type * as UserOperationReceipt from './UserOperationReceipt.js'
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { RpcSchema } from 'ox'
  *
  * type Schema = RpcSchema.Bundler
@@ -93,6 +94,7 @@ export type Bundler<
  *
  * @example
  * ```ts twoslash
+ * // @noErrors
  * import { RpcSchema } from 'ox'
  *
  * type Schema = RpcSchema.BundlerDebug
