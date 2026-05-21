@@ -27,6 +27,9 @@ jobs:
       - name: Check TSDoc
         run: pnpm check:tsdoc
 
+      - name: Check examples
+        run: pnpm zile examples:check
+
   test-core:
     name: Test Runtime (core)
     runs-on: ubuntu-latest
