@@ -126,28 +126,25 @@ export function fromHttp<
           },
         )
 
-        const data = await (async () => {
-          if (
-            response.headers.get('Content-Type')?.startsWith('application/json')
-          )
-            return response.json()
-          return response.text().then((data) => {
-            if (data === '') {
-              if (response.ok)
-                throw new MalformedResponseError({ response: data })
-              return { error: undefined }
-            }
-            try {
-              return JSON.parse(data)
-            } catch {
-              if (response.ok)
-                throw new MalformedResponseError({
-                  response: data,
-                })
-              return { error: data }
-            }
-          })
-        })()
+        // Always read as text so we can handle empty bodies and non-JSON
+        // payloads (some servers return `Content-Type: application/json` with
+        // an empty body for error responses).
+        const data = await response.text().then((data) => {
+          if (data === '') {
+            if (response.ok)
+              throw new MalformedResponseError({ response: data })
+            return { error: undefined }
+          }
+          try {
+            return JSON.parse(data)
+          } catch {
+            if (response.ok)
+              throw new MalformedResponseError({
+                response: data,
+              })
+            return { error: data }
+          }
+        })
 
         if (!response.ok) {
           const error = (data as { error?: unknown })?.error
