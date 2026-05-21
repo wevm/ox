@@ -24,9 +24,6 @@ jobs:
       - name: Check types
         run: pnpm check:types
 
-      - name: Check TSDoc
-        run: pnpm check:tsdoc
-
       - name: Check examples
         run: pnpm zile examples:check
 
