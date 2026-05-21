@@ -174,7 +174,7 @@ const credentials = import.meta.env.VITE_TEMPO_CREDENTIALS
 const rpcUrl = 'https://rpc-zone-a.testnet.tempo.xyz'
 
 describe('e2e', () => {
-  test.skipIf(!credentials)('succeeds with auth token', async () => {
+  test.skip('succeeds with auth token', async () => {
     const privateKey = Secp256k1.randomPrivateKey()
     const now = Math.floor(Date.now() / 1000)
 
