@@ -7,7 +7,8 @@
     "target": "esnext",
     "lib": [
       "ES2022", // By using ES2022 we get access to the `.cause` property on `Error` instances.
-      "DOM" // We are adding `DOM` here to get the `fetch`, etc. types. This should be removed once these types are available via DefinitelyTyped.
+      "DOM", // We are adding `DOM` here to get the `fetch`, etc. types. This should be removed once these types are available via DefinitelyTyped.
+      "DOM.Iterable" // Needed so `Headers`, `FormData`, etc. expose iterator methods.
     ],
 
     // Emit
