@@ -750,7 +750,10 @@ export class BytesSizeMismatchError extends Errors.BaseError {
   constructor({
     expectedSize,
     givenSize,
-  }: { expectedSize: number; givenSize: number }) {
+  }: {
+    expectedSize: number
+    givenSize: number
+  }) {
     super(`Expected bytes${expectedSize}, got bytes${givenSize}.`)
   }
 }
@@ -773,7 +776,10 @@ export class InvalidPrimaryTypeError extends Errors.BaseError {
   constructor({
     primaryType,
     types,
-  }: { primaryType: string; types: TypedData | Record<string, unknown> }) {
+  }: {
+    primaryType: string
+    types: TypedData | Record<string, unknown>
+  }) {
     super(
       `Invalid primary type \`${primaryType}\` must be one of \`${JSON.stringify(Object.keys(types))}\`.`,
       {
@@ -802,7 +808,11 @@ export class InvalidArrayError extends Errors.BaseError {
     name,
     type,
     value,
-  }: { name: string; type: string; value: unknown }) {
+  }: {
+    name: string
+    type: string
+    value: unknown
+  }) {
     super(
       `Value for field \`${name}\` of type \`${type}\` is not an array. Got \`${typeof value}\`.`,
     )
@@ -983,8 +993,9 @@ export function findTypeDependencies(
   results: Set<string> = new Set(),
 ): Set<string> {
   const { primaryType: primaryType_, types } = value
-  const match = primaryType_.match(/^\w*/u)
-  const primaryType = match?.[0]!
+  // `/^\w*/u` always matches, so `match` is never null.
+  const match = primaryType_.match(/^\w*/u)!
+  const primaryType = match[0]!
   if (results.has(primaryType) || types[primaryType] === undefined)
     return results
 

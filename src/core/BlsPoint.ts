@@ -180,7 +180,7 @@ export declare namespace toBytes {
 export function toHex<point extends G1 | G2>(
   point: point,
 ): point extends G1 ? G1Hex : G2Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function toHex(point: G1 | G2): Hex.Hex {
   return Hex.fromBytes(toBytes(point))
 }
@@ -229,7 +229,7 @@ export function fromBytes<group extends 'G1' | 'G2'>(
   bytes: Bytes.Bytes,
   group: group,
 ): group extends 'G1' ? G1 : G2
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function fromBytes(
   bytes: Bytes.Bytes,
   group: 'G1' | 'G2',
@@ -291,7 +291,7 @@ export function fromHex<group extends 'G1' | 'G2'>(
   hex: Hex.Hex,
   group: group,
 ): group extends 'G1' ? G1 : G2
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function fromHex(hex: Hex.Hex, group: 'G1' | 'G2'): BlsPoint<any> {
   return fromBytes(Hex.toBytes(hex), group)
 }

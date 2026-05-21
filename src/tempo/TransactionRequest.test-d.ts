@@ -1,6 +1,6 @@
 import type * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as Signature from '../core/Signature.js'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TransactionRequest from './TransactionRequest.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
@@ -11,7 +11,8 @@ describe('TransactionRequest type', () => {
     // authorizationList?: AuthorizationTempo.ListSigned; ... }`, so a core
     // request without an `authorizationList` is structurally assignable to
     // the Tempo request.
-    const { authorizationList: _, ...core } = {} as ox_TransactionRequest.TransactionRequest
+    const { authorizationList: _, ...core } =
+      {} as ox_TransactionRequest.TransactionRequest
     const tempo: TransactionRequest.TransactionRequest = core
     expectTypeOf(tempo).toMatchTypeOf<TransactionRequest.TransactionRequest>()
   })

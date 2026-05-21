@@ -132,10 +132,7 @@ export declare namespace BaseError {
 }
 
 /** @internal */
-function walk(
-  err: unknown,
-  fn?: ((err: unknown) => boolean) | undefined,
-): unknown {
+function walk(err: unknown, fn?: (err: unknown) => boolean): unknown {
   if (fn?.(err)) return err
   if (err && typeof err === 'object' && 'cause' in err && err.cause)
     return walk(err.cause, fn)

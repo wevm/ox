@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Bytes from './Bytes.js'
 
 const small = new Uint8Array(32).map((_, i) => i)

@@ -529,7 +529,7 @@ export declare namespace sign {
          */
         getFn?:
           | ((
-              options?: Types.CredentialRequestOptions | undefined,
+              options?: Types.CredentialRequestOptions,
             ) => Promise<Types.Credential | null>)
           | undefined
       })

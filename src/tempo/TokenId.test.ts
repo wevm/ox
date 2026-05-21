@@ -1,6 +1,6 @@
 import { Hex } from 'ox'
 import { TokenId } from 'ox/tempo'
-import { expect, test } from 'vitest'
+import { expect, test } from 'vp/test'
 
 test('from', () => {
   expect(TokenId.from(0n)).toBe(0n)

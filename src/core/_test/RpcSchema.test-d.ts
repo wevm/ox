@@ -1,5 +1,5 @@
 import type { RpcSchema } from 'ox'
-import { expectTypeOf, test } from 'vitest'
+import { expectTypeOf, test } from 'vp/test'
 
 test('ToViem: converts ox schema to viem schema', () => {
   type OxSchema =

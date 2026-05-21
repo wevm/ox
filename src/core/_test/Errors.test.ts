@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as Errors from '../Errors.js'
 
 test('exports', () => {
@@ -15,9 +15,8 @@ describe('BaseError', () => {
       `[BaseError: An error occurred.]`,
     )
 
-    expect(
-      new Errors.BaseError('An error occurred.', { details: 'details' }),
-    ).toMatchInlineSnapshot(`
+    expect(new Errors.BaseError('An error occurred.', { details: 'details' }))
+      .toMatchInlineSnapshot(`
       [BaseError: An error occurred.
 
       Details: details]

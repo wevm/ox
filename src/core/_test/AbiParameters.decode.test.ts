@@ -1,5 +1,5 @@
 import { AbiItem, AbiParameters, type Address, Bytes, type Hex } from 'ox'
-import { assertType, describe, expect, test } from 'vitest'
+import { assertType, describe, expect, test } from 'vp/test'
 
 import {
   multicall3Abi,

@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as RpcTransport from './RpcTransport.js'
 
 const jsonHeaders = new Headers({ 'Content-Type': 'application/json' })

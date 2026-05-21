@@ -1,5 +1,5 @@
 import { Abi, AbiEvent, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
@@ -614,9 +614,8 @@ describe('decodeLog', () => {
   test('error: selector topic not found', () => {
     const transfer = AbiEvent.from('event Transfer(address indexed from)')
 
-    expect(() =>
-      AbiEvent.decodeLog([transfer], { data: '0x', topics: [] }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => AbiEvent.decodeLog([transfer], { data: '0x', topics: [] }))
+      .toThrowErrorMatchingInlineSnapshot(`
       [AbiEvent.SelectorTopicNotFoundError: Selector topic not found.]
     `)
   })
@@ -960,9 +959,8 @@ describe('encode', () => {
 
   test('behavior: no hash', () => {
     const transfer = AbiEvent.from('event Transfer()')
-    expect(
-      AbiEvent.encode({ ...transfer, hash: undefined }),
-    ).toMatchInlineSnapshot(`
+    expect(AbiEvent.encode({ ...transfer, hash: undefined }))
+      .toMatchInlineSnapshot(`
     {
       "topics": [
         "0x406dade31f7ae4b5dbc276258c28dde5ae6d5c2773c5745802c493a2360e55e0",
@@ -1543,9 +1541,8 @@ describe('from', () => {
 
 describe('fromAbi', () => {
   test('default', () => {
-    expect(
-      AbiEvent.fromAbi(wagmiContractConfig.abi, 'Approval'),
-    ).toMatchInlineSnapshot(`
+    expect(AbiEvent.fromAbi(wagmiContractConfig.abi, 'Approval'))
+      .toMatchInlineSnapshot(`
     {
       "anonymous": false,
       "hash": "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",

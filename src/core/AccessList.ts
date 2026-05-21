@@ -96,9 +96,7 @@ export function fromTupleList(accessList: Tuple): AccessList {
  * @param accessList - Access list.
  * @returns List of tuples.
  */
-export function toTupleList(
-  accessList?: AccessList | undefined,
-): Compute<Tuple> {
+export function toTupleList(accessList?: AccessList): Compute<Tuple> {
   if (!accessList || accessList.length === 0) return []
 
   const tuple: Mutable<Tuple> = []

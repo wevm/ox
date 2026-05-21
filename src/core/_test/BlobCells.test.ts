@@ -1,5 +1,5 @@
 import { BlobCells, Blobs, Bytes, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { blobData, kzg } from '../../../test/kzg.js'
 
 // KZG cell-proof computations are CPU-heavy and can exceed the default

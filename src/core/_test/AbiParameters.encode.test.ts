@@ -1,5 +1,5 @@
 import { AbiItem, AbiParameters, Solidity } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'

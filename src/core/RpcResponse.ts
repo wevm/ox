@@ -73,7 +73,7 @@ export function from<
   response: from.Response<request, response>,
   options?: from.Options<request>,
 ): Compute<from.ReturnType<response>>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function from(response: RpcResponse, options: any = {}): RpcResponse {
   const { request } = options
   if (request) {
@@ -107,9 +107,10 @@ export declare namespace from {
     request?: request | RpcRequest.RpcRequest | undefined
   }
 
-  type ReturnType<response> = IsNarrowable<response, RpcResponse> extends true
-    ? RpcResponse
-    : response & Readonly<{ id: number; jsonrpc: '2.0' }>
+  type ReturnType<response> =
+    IsNarrowable<response, RpcResponse> extends true
+      ? RpcResponse
+      : response & Readonly<{ id: number; jsonrpc: '2.0' }>
 }
 
 /**
@@ -624,9 +625,7 @@ export class ParseError extends BaseError {
 /** @internal */
 const errorCodeMap: Record<
   number,
-  new (
-    parameters: Partial<Omit<ErrorObject, 'code'>>,
-  ) => BaseError
+  new (parameters: Partial<Omit<ErrorObject, 'code'>>) => BaseError
 > = {
   [InternalError.code]: InternalError as never,
   [InvalidInputError.code]: InvalidInputError,

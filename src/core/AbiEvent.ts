@@ -422,9 +422,8 @@ export declare namespace assertArgs {
 export function decode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiEvent extends AbiEvent = AbiItem.fromAbi.ReturnType<
     abi,
@@ -437,14 +436,14 @@ export function decode<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   log: decode.Log,
-  options?: decode.Options | undefined,
+  options?: decode.Options,
 ): decode.ReturnType<abiEvent>
 export function decode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   log: decode.Log,
-  options?: decode.Options | undefined,
+  options?: decode.Options,
 ): decode.ReturnType<abiEvent>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   ...parameters:
     | [
@@ -600,17 +599,15 @@ export declare namespace decode {
     checksumAddress?: boolean | undefined
   }
 
-  type ReturnType<abiEvent extends AbiEvent = AbiEvent> = IsNarrowable<
-    abiEvent,
-    AbiEvent
-  > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? undefined
-      : internal.ParametersToPrimitiveTypes<
-          abiEvent['inputs'],
-          { EnableUnion: false; IndexedOnly: false; Required: true }
-        >
-    : unknown
+  type ReturnType<abiEvent extends AbiEvent = AbiEvent> =
+    IsNarrowable<abiEvent, AbiEvent> extends true
+      ? abiEvent['inputs'] extends readonly []
+        ? undefined
+        : internal.ParametersToPrimitiveTypes<
+            abiEvent['inputs'],
+            { EnableUnion: false; IndexedOnly: false; Required: true }
+          >
+      : unknown
 
   type ErrorType =
     | AbiParameters.decode.ErrorType
@@ -658,7 +655,7 @@ export declare namespace decode {
 export function decodeLog<const abi extends Abi.Abi | readonly unknown[]>(
   abi: abi | Abi.Abi | readonly unknown[],
   log: decodeLog.Log,
-  options?: decodeLog.Options | undefined,
+  options?: decodeLog.Options,
 ): decodeLog.ReturnType<decodeLog.ExtractEvent<abi>> {
   const selector = log.topics[0]
   if (!selector) throw new SelectorTopicNotFoundError()
@@ -823,10 +820,8 @@ export declare namespace extractLogs {
 
   type ExtractEvent<
     abi extends Abi.Abi | readonly unknown[],
-    eventName extends
-      | EventName<abi>
-      | readonly EventName<abi>[]
-      | undefined = EventName<abi>,
+    eventName extends EventName<abi> | readonly EventName<abi>[] | undefined =
+      EventName<abi>,
   > = AbiItem.fromAbi.ReturnType<
     abi,
     eventName extends readonly (infer name)[]
@@ -838,17 +833,15 @@ export declare namespace extractLogs {
     AbiEvent
   >
 
-  type Args<abiEvent extends AbiEvent = AbiEvent> = IsNarrowable<
-    abiEvent,
-    AbiEvent
-  > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? never
-      : internal.ParametersToPrimitiveTypes<
-          abiEvent['inputs'],
-          { EnableUnion: true; IndexedOnly: false; Required: false }
-        >
-    : unknown
+  type Args<abiEvent extends AbiEvent = AbiEvent> =
+    IsNarrowable<abiEvent, AbiEvent> extends true
+      ? abiEvent['inputs'] extends readonly []
+        ? never
+        : internal.ParametersToPrimitiveTypes<
+            abiEvent['inputs'],
+            { EnableUnion: true; IndexedOnly: false; Required: false }
+          >
+      : unknown
 
   type Log = decode.Log & {
     address?: Address.Address | undefined
@@ -863,10 +856,8 @@ export declare namespace extractLogs {
 
   type Options<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
-    eventName extends
-      | EventName<abi>
-      | readonly EventName<abi>[]
-      | undefined = EventName<abi>,
+    eventName extends EventName<abi> | readonly EventName<abi>[] | undefined =
+      EventName<abi>,
     strict extends boolean | undefined = boolean | undefined,
     abiEvent extends AbiEvent = ExtractEvent<abi, eventName>,
   > = decode.Options & {
@@ -1194,9 +1185,8 @@ function includesArgs(abiEvent: AbiEvent, args: unknown, matchArgs: unknown) {
 export function encode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiEvent extends AbiEvent = AbiItem.fromAbi.ReturnType<
     abi,
@@ -1214,7 +1204,7 @@ export function encode<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
   ...[args]: encode.Args<abiEvent>
 ): encode.ReturnType
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encode(
   ...parameters:
     | [
@@ -1297,20 +1287,18 @@ export function encode(
 }
 
 export declare namespace encode {
-  type Args<abiEvent extends AbiEvent> = IsNarrowable<
-    abiEvent,
-    AbiEvent
-  > extends true
-    ? abiEvent['inputs'] extends readonly []
-      ? []
-      : internal.ParametersToPrimitiveTypes<
-            abiEvent['inputs']
-          > extends infer result
-        ? result extends readonly []
-          ? []
-          : [result] | []
-        : []
-    : [readonly unknown[] | Record<string, unknown>] | []
+  type Args<abiEvent extends AbiEvent> =
+    IsNarrowable<abiEvent, AbiEvent> extends true
+      ? abiEvent['inputs'] extends readonly []
+        ? []
+        : internal.ParametersToPrimitiveTypes<
+              abiEvent['inputs']
+            > extends infer result
+          ? result extends readonly []
+            ? []
+            : [result] | []
+          : []
+      : [readonly unknown[] | Record<string, unknown>] | []
 
   type ReturnType = {
     topics:
@@ -1529,9 +1517,8 @@ export declare namespace from {
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   allNames = Name<abi>,
 >(
@@ -1745,13 +1732,7 @@ export class ArgsMismatchError extends Errors.BaseError {
 export class InputNotFoundError extends Errors.BaseError {
   override readonly name = 'AbiEvent.InputNotFoundError'
 
-  constructor({
-    abiEvent,
-    name,
-  }: {
-    abiEvent: AbiEvent
-    name: string
-  }) {
+  constructor({ abiEvent, name }: { abiEvent: AbiEvent; name: string }) {
     super(`Parameter "${name}" not found on \`${format(abiEvent)}\`.`)
   }
 }

@@ -1,5 +1,5 @@
 import { Hex, TypedData } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as typedData from '../../../test/constants/typedData.js'
 
 describe('assert', () => {
@@ -736,9 +736,8 @@ describe('extractEip712DomainTypes', () => {
   } as const
 
   test('basic', () => {
-    expect(
-      TypedData.extractEip712DomainTypes(FULL_DOMAIN),
-    ).toMatchInlineSnapshot(`
+    expect(TypedData.extractEip712DomainTypes(FULL_DOMAIN))
+      .toMatchInlineSnapshot(`
     [
       {
         "name": "name",

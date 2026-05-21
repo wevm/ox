@@ -745,8 +745,9 @@ function parseAst(code: string) {
     return parseExpression(code, 0)
   } catch (e) {
     /**
-     * This might leave single parts of the API documentation without the right "primary reference type",
-     * but it won't make the docs unusable in any way, so we only log it and don't fail.
+     * This might leave single parts of the API documentation without the right
+     * "primary reference type", but it won't make the docs unusable in any way,
+     * so we only log it and don't fail.
      */
     // biome-ignore lint/suspicious/noConsole: _
     console.warn(

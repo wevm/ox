@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as ZoneId from './ZoneId.js'
 
 describe('fromChainId', () => {

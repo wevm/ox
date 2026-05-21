@@ -477,7 +477,7 @@ export function from<
   provider: provider | from.Value<options> | undefined,
   options?: options | Options,
 ): from.ReturnType<options, provider>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function from(provider: any, _options: Options = {}): Provider {
   if (!provider) throw new IsUndefinedError()
   const wrapped = Object.create(Object.getPrototypeOf(provider))
@@ -557,9 +557,7 @@ export function parseError<
 /** @internal */
 const providerErrorCodeMap: Record<
   number,
-  new (parameters: {
-    message?: string | undefined
-  }) => ProviderRpcError
+  new (parameters: { message?: string | undefined }) => ProviderRpcError
 > = {
   [DisconnectedError.code]: DisconnectedError,
   [ChainDisconnectedError.code]: ChainDisconnectedError,
@@ -663,9 +661,10 @@ export declare namespace parseError {
               ? UnsupportedNonOptionalCapabilityError
               : never)
       : RpcResponse.parseError.ReturnType<RpcResponse.ErrorObject>,
-  > = IsNever<error> extends true
-    ? RpcResponse.parseError.ReturnType<errorObject>
-    : error
+  > =
+    IsNever<error> extends true
+      ? RpcResponse.parseError.ReturnType<errorObject>
+      : error
 }
 
 /** Thrown when the provider is undefined. */

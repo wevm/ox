@@ -1,5 +1,5 @@
 import { BlobCells, Blobs, Bytes, Hex } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { blobData, kzg } from '../../../test/kzg.js'
 
 describe('commitmentsToVersionedHashes', () => {
@@ -100,9 +100,8 @@ describe('commitmentsToVersionedHashes', () => {
     const blobs = Blobs.from(Hex.fromString(blobData))
     const commitments = Blobs.toCommitments(blobs, { kzg })
 
-    expect(
-      Blobs.commitmentsToVersionedHashes(commitments, { version: 2 }),
-    ).toMatchInlineSnapshot(`
+    expect(Blobs.commitmentsToVersionedHashes(commitments, { version: 2 }))
+      .toMatchInlineSnapshot(`
     [
       "0x022580b7683c14cc7540be305587b0eec4e7ec739094213ca080e2526c9237c4",
       "0x02243c18a024c835cce144b3b6b0eb878b7820c7c7b7d9feff80080d76519c45",

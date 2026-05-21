@@ -1,9 +1,9 @@
 import { erc20Abi } from 'abitype/abis'
 import { type Abi, AbiConstructor } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 const error = {} as AbiConstructor.encode.ErrorType
-error.name
+expectTypeOf(error.name).toBeString()
 
 describe('AbiConstructor.decode', () => {
   test('no inputs', () => {

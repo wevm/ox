@@ -1,7 +1,7 @@
 // Vectors from https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
 
 import { Bytes, Keystore } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('encrypt/decrypt', () => {
   test('behavior: pbkdf2', async () => {

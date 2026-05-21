@@ -8,7 +8,7 @@ import {
   WebAuthnP256,
   WebCryptoP256,
 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const publicKey = PublicKey.from({

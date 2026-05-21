@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Block from './Block.js'
 import type * as Hex from './Hex.js'
 import type * as Transaction from './Transaction.js'

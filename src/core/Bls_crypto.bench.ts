@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Bls from './Bls.js'
 
 const sizes = [1, 10, 100, 1000] as const

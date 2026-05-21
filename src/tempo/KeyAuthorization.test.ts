@@ -7,7 +7,7 @@ import {
   Value,
   WebAuthnP256,
 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as Period from './Period.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'

@@ -21,7 +21,7 @@ export function decode<
 >(
   abiError: abiError,
   data: Hex.Hex,
-  options?: decode.Options<as> | undefined,
+  options?: decode.Options<as>,
 ): decode.ReturnType<abiError, as>
 /**
  * ABI-decodes the provided error input (`inputs`).
@@ -161,9 +161,8 @@ export function decode<
 export function decode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   as extends 'Object' | 'Array' = 'Array',
   //
   abiError extends AbiError = AbiItem.fromAbi.ReturnType<
@@ -177,7 +176,7 @@ export function decode<
   abi: abi | Abi.Abi | readonly unknown[],
   name: Hex.Hex | (name extends allNames ? name : never),
   data: Hex.Hex,
-  options?: decode.Options<as> | undefined,
+  options?: decode.Options<as>,
 ): decode.ReturnType<abiError, as>
 export function decode<
   const abiError extends AbiError,
@@ -185,9 +184,9 @@ export function decode<
 >(
   abiError: abiError | AbiError,
   data: Hex.Hex,
-  options?: decode.Options<as> | undefined,
+  options?: decode.Options<as>,
 ): decode.ReturnType<abiError, as>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   ...parameters:
     | [
@@ -244,24 +243,25 @@ export declare namespace decode {
   type ReturnType<
     abiError extends AbiError = AbiError,
     as extends 'Object' | 'Array' = 'Array',
-  > = IsNarrowable<abiError, AbiError> extends true
-    ? abiError['inputs'] extends readonly []
-      ? undefined
-      : abiError['inputs'] extends readonly [
-            infer type extends abitype.AbiParameter,
-          ]
-        ? abitype.AbiParameterToPrimitiveType<type>
-        : AbiParameters.decode.ReturnType<
-              abiError['inputs'],
-              as
-            > extends infer types
-          ? types extends readonly []
-            ? undefined
-            : types extends readonly [infer type]
-              ? type
-              : types
-          : never
-    : unknown | readonly unknown[] | undefined
+  > =
+    IsNarrowable<abiError, AbiError> extends true
+      ? abiError['inputs'] extends readonly []
+        ? undefined
+        : abiError['inputs'] extends readonly [
+              infer type extends abitype.AbiParameter,
+            ]
+          ? abitype.AbiParameterToPrimitiveType<type>
+          : AbiParameters.decode.ReturnType<
+                abiError['inputs'],
+                as
+              > extends infer types
+            ? types extends readonly []
+              ? undefined
+              : types extends readonly [infer type]
+                ? type
+                : types
+            : never
+      : unknown | readonly unknown[] | undefined
 
   type ErrorType =
     | AbiParameters.decode.ErrorType
@@ -402,9 +402,8 @@ export declare namespace extract {
 export function encode<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   abiError extends AbiError = AbiItem.fromAbi.ReturnType<
     abi,
@@ -422,7 +421,7 @@ export function encode<const abiError extends AbiError>(
   abiError: abiError,
   ...args: encode.Args<abiError>
 ): encode.ReturnType
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encode(
   ...parameters:
     | [
@@ -459,16 +458,14 @@ export function encode(
 }
 
 export declare namespace encode {
-  type Args<abiError extends AbiError = AbiError> = IsNarrowable<
-    abiError,
-    AbiError
-  > extends true
-    ? abitype.AbiParametersToPrimitiveTypes<
-        abiError['inputs']
-      > extends readonly []
-      ? []
-      : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
-    : readonly unknown[]
+  type Args<abiError extends AbiError = AbiError> =
+    IsNarrowable<abiError, AbiError> extends true
+      ? abitype.AbiParametersToPrimitiveTypes<
+          abiError['inputs']
+        > extends readonly []
+        ? []
+        : [abitype.AbiParametersToPrimitiveTypes<abiError['inputs']>]
+      : readonly unknown[]
 
   type ReturnType = Hex.Hex
 
@@ -708,9 +705,8 @@ export declare namespace from {
 export function fromAbi<
   const abi extends Abi.Abi | readonly unknown[],
   name extends Name<abi>,
-  const args extends
-    | AbiItem_internal.ExtractArgs<abi, name>
-    | undefined = undefined,
+  const args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+    undefined,
   //
   allNames = Name<abi>,
 >(
@@ -741,23 +737,23 @@ export declare namespace fromAbi {
   type ReturnType<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
-    args extends
-      | AbiItem_internal.ExtractArgs<abi, name>
-      | undefined = AbiItem_internal.ExtractArgs<abi, name>,
-  > = IsNarrowable<name, Name<abi>> extends true
-    ?
-        | (name extends 'Error' ? typeof solidityError : never)
-        | (name extends 'Panic'
-            ? typeof solidityPanic
-            : never) extends infer result
-      ? IsNever<result> extends true
-        ? AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
-        : result
-      : never
-    :
-        | AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
-        | typeof solidityError
-        | typeof solidityPanic
+    args extends AbiItem_internal.ExtractArgs<abi, name> | undefined =
+      AbiItem_internal.ExtractArgs<abi, name>,
+  > =
+    IsNarrowable<name, Name<abi>> extends true
+      ?
+          | (name extends 'Error' ? typeof solidityError : never)
+          | (name extends 'Panic'
+              ? typeof solidityPanic
+              : never) extends infer result
+        ? IsNever<result> extends true
+          ? AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
+          : result
+        : never
+      :
+          | AbiItem.fromAbi.ReturnType<abi, name, args, AbiError>
+          | typeof solidityError
+          | typeof solidityPanic
 
   type ErrorType = AbiItem.fromAbi.ErrorType | Errors.GlobalErrorType
 }

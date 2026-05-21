@@ -1,5 +1,5 @@
 import { Bytes, PublicKey } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 test('exports', () => {
   expect(Object.keys(PublicKey)).toMatchInlineSnapshot(`
@@ -113,9 +113,8 @@ describe('PublicKey.assert', () => {
   })
 
   test('behavior: rejects missing x/y when compressed: false is set', () => {
-    expect(() =>
-      PublicKey.assert({ prefix: 4 }, { compressed: false }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => PublicKey.assert({ prefix: 4 }, { compressed: false }))
+      .toThrowErrorMatchingInlineSnapshot(`
       [PublicKey.InvalidError: Value \`{"prefix":4}\` is not a valid public key.
 
       Public key must contain:
@@ -140,9 +139,8 @@ describe('PublicKey.assert', () => {
   })
 
   test('behavior: rejects missing x or extra y when compressed: true is set', () => {
-    expect(() =>
-      PublicKey.assert({ prefix: 2 }, { compressed: true }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => PublicKey.assert({ prefix: 2 }, { compressed: true }))
+      .toThrowErrorMatchingInlineSnapshot(`
       [PublicKey.InvalidError: Value \`{"prefix":2}\` is not a valid public key.
 
       Public key must contain:
@@ -298,9 +296,8 @@ describe('PublicKey.fromBytes', () => {
     const serialized = Bytes.fromHex(
       '0x058318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
     )
-    expect(() =>
-      PublicKey.fromBytes(serialized),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => PublicKey.fromBytes(serialized))
+      .toThrowErrorMatchingInlineSnapshot(`
       [PublicKey.InvalidPrefixError: Prefix "5" is invalid.
 
       Details: Prefix must be 4 for uncompressed public keys.]

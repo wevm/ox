@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { Authenticator } from '../index.js'
 
 describe('getAuthenticatorData', () => {

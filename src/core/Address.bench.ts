@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 
 import * as Address from './Address.js'
 import * as Caches from './Caches.js'

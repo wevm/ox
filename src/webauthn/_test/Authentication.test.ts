@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vp/test'
 import * as Bytes from '../../core/Bytes.js'
 import * as Hash from '../../core/Hash.js'
 import * as P256 from '../../core/P256.js'

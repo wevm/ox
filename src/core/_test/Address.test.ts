@@ -1,5 +1,5 @@
 import { Address, PublicKey } from 'ox'
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vp/test'
 
 test('exports', () => {
   expect(Object.keys(Address)).toMatchInlineSnapshot(`
@@ -22,9 +22,8 @@ describe('Address.assert', () => {
     Address.assert('0x0000000000000000000000000000000000000000')
     Address.assert('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
 
-    expect(() =>
-      Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678ac" is invalid.
 
     Details: Address does not match its checksum counterpart.]
@@ -42,25 +41,22 @@ describe('Address.assert', () => {
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 
-    expect(() =>
-      Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678az'),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678az'))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678az" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 
-    expect(() =>
-      Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678aff'),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Address.assert('0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678aff'))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xa5cc3c03994db5b0d9a5eEdD10Cabab0813678aff" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
   `)
 
-    expect(() =>
-      Address.assert('a5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Address.assert('a5cc3c03994db5b0d9a5eEdD10Cabab0813678ac'))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "a5cc3c03994db5b0d9a5eEdD10Cabab0813678ac" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
@@ -121,9 +117,8 @@ describe('Address.from', () => {
   })
 
   test('error: invalid address checksum', () => {
-    expect(() =>
-      Address.from('0xA0Cf798816D4b9b9866b5330Eea46a18382f251e'),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => Address.from('0xA0Cf798816D4b9b9866b5330Eea46a18382f251e'))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xA0Cf798816D4b9b9866b5330Eea46a18382f251e" is invalid.
 
     Details: Address does not match its checksum counterpart.]

@@ -1,6 +1,6 @@
 import { attest } from '@ark/attest'
 import { PublicKey } from 'ox'
-import { describe, test } from 'vitest'
+import { describe, test } from 'vp/test'
 
 describe('PublicKey.from', () => {
   test('default', () => {

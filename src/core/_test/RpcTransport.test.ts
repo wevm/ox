@@ -1,6 +1,6 @@
 import { setTimeout } from 'node:timers/promises'
 import { RpcTransport } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { createHttpServer } from '../../../test/http.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
@@ -119,14 +119,12 @@ describe('fromHttp', () => {
       },
     })
 
-    await Promise.all([
-      controller.abort(),
-      expect(() =>
-        transport.request({ method: 'eth_accounts' }),
-      ).rejects.toThrowErrorMatchingInlineSnapshot(
-        '[Promise.TimeoutError: Operation timed out.]',
-      ),
-    ])
+    controller.abort()
+    await expect(() =>
+      transport.request({ method: 'eth_accounts' }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      '[Promise.TimeoutError: Operation timed out.]',
+    )
   })
 
   test('behavior: no timeout', async () => {
@@ -157,9 +155,8 @@ describe('fromHttp', () => {
 
     const transport = RpcTransport.fromHttp(server.url)
 
-    await expect(() =>
-      transport.request({ method: 'eth_accounts' }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(`
+    await expect(() => transport.request({ method: 'eth_accounts' })).rejects
+      .toThrowErrorMatchingInlineSnapshot(`
       [RpcTransport.MalformedResponseError: HTTP Response could not be parsed as JSON.
 
       Response: ]
@@ -174,9 +171,8 @@ describe('fromHttp', () => {
 
     const transport = RpcTransport.fromHttp(server.url)
 
-    await expect(() =>
-      transport.request({ method: 'eth_accounts' }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(`
+    await expect(() => transport.request({ method: 'eth_accounts' })).rejects
+      .toThrowErrorMatchingInlineSnapshot(`
       [RpcTransport.HttpError: HTTP request failed.
 
       Status: 400
@@ -195,9 +191,8 @@ describe('fromHttp', () => {
 
     const transport = RpcTransport.fromHttp(server.url)
 
-    await expect(() =>
-      transport.request({ method: 'eth_accounts' }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(`
+    await expect(() => transport.request({ method: 'eth_accounts' })).rejects
+      .toThrowErrorMatchingInlineSnapshot(`
       [RpcTransport.HttpError: HTTP request failed.
 
       Status: 400
@@ -215,9 +210,8 @@ describe('fromHttp', () => {
 
     const transport = RpcTransport.fromHttp(server.url)
 
-    await expect(() =>
-      transport.request({ method: 'eth_accounts' }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot(`
+    await expect(() => transport.request({ method: 'eth_accounts' })).rejects
+      .toThrowErrorMatchingInlineSnapshot(`
     [RpcTransport.MalformedResponseError: HTTP Response could not be parsed as JSON.
 
     Response: bad]
@@ -246,7 +240,7 @@ describe('fromHttp', () => {
       '[Promise.TimeoutError: Operation timed out.]',
     )
 
-    server.close()
+    await server.close()
   })
 })
 

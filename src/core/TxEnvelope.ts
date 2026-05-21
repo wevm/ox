@@ -266,30 +266,31 @@ export declare namespace from {
   type ReturnType_object<
     envelope extends Typeable,
     signature extends Signature.Signature | undefined = undefined,
-  > = getType.ReturnType<envelope> extends 'legacy'
-    ? TxEnvelopeLegacy.from.ReturnType<
-        envelope & TxEnvelopeLegacy.TxEnvelopeLegacy,
-        signature
-      >
-    : getType.ReturnType<envelope> extends 'eip2930'
-      ? TxEnvelopeEip2930.from.ReturnType<
-          envelope & TxEnvelopeEip2930.TxEnvelopeEip2930,
+  > =
+    getType.ReturnType<envelope> extends 'legacy'
+      ? TxEnvelopeLegacy.from.ReturnType<
+          envelope & TxEnvelopeLegacy.TxEnvelopeLegacy,
           signature
         >
-      : getType.ReturnType<envelope> extends 'eip4844'
-        ? TxEnvelopeEip4844.from.ReturnType<
-            envelope & TxEnvelopeEip4844.TxEnvelopeEip4844,
+      : getType.ReturnType<envelope> extends 'eip2930'
+        ? TxEnvelopeEip2930.from.ReturnType<
+            envelope & TxEnvelopeEip2930.TxEnvelopeEip2930,
             signature
           >
-        : getType.ReturnType<envelope> extends 'eip7702'
-          ? TxEnvelopeEip7702.from.ReturnType<
-              envelope & TxEnvelopeEip7702.TxEnvelopeEip7702,
+        : getType.ReturnType<envelope> extends 'eip4844'
+          ? TxEnvelopeEip4844.from.ReturnType<
+              envelope & TxEnvelopeEip4844.TxEnvelopeEip4844,
               signature
             >
-          : TxEnvelopeEip1559.from.ReturnType<
-              Omit<envelope, 'type'> & TxEnvelopeEip1559.TxEnvelopeEip1559,
-              signature
-            >
+          : getType.ReturnType<envelope> extends 'eip7702'
+            ? TxEnvelopeEip7702.from.ReturnType<
+                envelope & TxEnvelopeEip7702.TxEnvelopeEip7702,
+                signature
+              >
+            : TxEnvelopeEip1559.from.ReturnType<
+                Omit<envelope, 'type'> & TxEnvelopeEip1559.TxEnvelopeEip1559,
+                signature
+              >
 
   type ErrorType =
     | deserialize.ErrorType

@@ -1,5 +1,5 @@
 import { P256, Secp256k1 } from 'ox'
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vp/test'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 

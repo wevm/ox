@@ -22,9 +22,9 @@ const defaults: Required<RlpArbitraryOptions> = {
 }
 
 /**
- * Recursive RLP tree of `Hex.Hex` leaves. Leaf sizes are biased toward
- * RLP length-prefix transition boundaries (`0`, `1`, `55`, `56`,
- * `255`, `256`) where parser bugs typically live.
+ * Recursive RLP tree of `Hex.Hex` leaves. Leaf sizes are biased toward RLP
+ * length-prefix transition boundaries (`0`, `1`, `55`, `56`, `255`, `256`)
+ * where parser bugs typically live.
  */
 export function arbitraryRecursiveRlpHex(
   options: RlpArbitraryOptions = {},
@@ -33,9 +33,7 @@ export function arbitraryRecursiveRlpHex(
   return treeAtDepth(hexLeaf(opts), opts, 0)
 }
 
-/**
- * Recursive RLP tree of `Bytes.Bytes` leaves.
- */
+/** Recursive RLP tree of `Bytes.Bytes` leaves. */
 export function arbitraryRecursiveRlpBytes(
   options: RlpArbitraryOptions = {},
 ): fc.Arbitrary<RecursiveArray<Bytes.Bytes>> {

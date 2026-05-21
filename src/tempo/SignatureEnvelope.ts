@@ -666,7 +666,7 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  */
 export function from<const value extends from.Value>(
   value: value | from.Value,
-  options?: from.Options | undefined,
+  options?: from.Options,
 ): from.ReturnValue<value> {
   if (typeof value === 'string') return deserialize(value) as never
 
@@ -1345,13 +1345,7 @@ export class MissingPropertiesError extends Errors.BaseError {
  */
 export class InvalidSerializedError extends Errors.BaseError {
   override readonly name = 'SignatureEnvelope.InvalidSerializedError'
-  constructor({
-    reason,
-    serialized,
-  }: {
-    reason: string
-    serialized: Hex.Hex
-  }) {
+  constructor({ reason, serialized }: { reason: string; serialized: Hex.Hex }) {
     super(`Unable to deserialize signature envelope: ${reason}`, {
       metaMessages: [`Serialized: ${serialized}`],
     })

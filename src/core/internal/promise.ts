@@ -9,7 +9,7 @@ export function withTimeout<data>(
   // Fast path: no timeout, skip allocating Promise wrapper and AbortController.
   if (!(timeout > 0)) return fn({ signal: null })
   return new Promise((resolve, reject) => {
-    ;(async () => {
+    void (async () => {
       let timeoutId: any
       let timedOut = false
       const controller = signal ? new AbortController() : null

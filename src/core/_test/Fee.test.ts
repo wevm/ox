@@ -1,5 +1,5 @@
 import { Fee } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromHistoryRpc / toHistoryRpc', () => {
   test('round-trips', () => {

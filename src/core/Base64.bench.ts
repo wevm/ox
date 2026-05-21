@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Base64 from './Base64.js'
 
 const small = new Uint8Array(32).map((_, i) => i)

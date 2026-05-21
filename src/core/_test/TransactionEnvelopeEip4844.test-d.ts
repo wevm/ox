@@ -1,5 +1,5 @@
 import { TxEnvelopeEip4844 } from 'ox'
-import { expectTypeOf, test } from 'vitest'
+import { expectTypeOf, test } from 'vp/test'
 
 test('default', () => {
   {

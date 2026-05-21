@@ -597,7 +597,7 @@ export function toTupleList<
   const list extends
     | readonly Authorization<true>[]
     | readonly Authorization<false>[],
->(list?: list | undefined): toTupleList.ReturnType<list> {
+>(list?: list): toTupleList.ReturnType<list> {
   if (!list || list.length === 0) return []
 
   const tupleList: Mutable<TupleList> = []

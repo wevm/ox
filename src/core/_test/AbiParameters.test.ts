@@ -1,5 +1,5 @@
 import { AbiParameters } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { address } from '../../../test/constants/addresses.js'
 
 describe('encodePacked', () => {
@@ -216,9 +216,8 @@ describe('encodePacked', () => {
   )
 
   test('error: invalid address', () => {
-    expect(() =>
-      AbiParameters.encodePacked(['address'], ['0xdeadbeef']),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => AbiParameters.encodePacked(['address'], ['0xdeadbeef']))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0xdeadbeef" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]

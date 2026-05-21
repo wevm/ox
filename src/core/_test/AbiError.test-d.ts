@@ -1,5 +1,5 @@
 import { Abi, AbiError } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('AbiError.decode', () => {
   test('behavior: no args', () => {

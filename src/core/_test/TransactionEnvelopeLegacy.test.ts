@@ -1,5 +1,5 @@
 import { Hex, Rlp, Secp256k1, TxEnvelopeLegacy, Value } from 'ox'
-import { assertType, describe, expect, expectTypeOf, test } from 'vitest'
+import { assertType, describe, expect, expectTypeOf, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
@@ -24,9 +24,8 @@ describe('assert', () => {
   })
 
   test('invalid address', () => {
-    expect(() =>
-      TxEnvelopeLegacy.assert({ to: '0x123', chainId: 1 }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => TxEnvelopeLegacy.assert({ to: '0x123', chainId: 1 }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0x123" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]
@@ -271,9 +270,8 @@ describe('deserialize', () => {
 
   describe('errors', () => {
     test('invalid transaction (all missing)', () => {
-      expect(() =>
-        TxEnvelopeLegacy.deserialize(Rlp.fromHex([])),
-      ).toThrowErrorMatchingInlineSnapshot(`
+      expect(() => TxEnvelopeLegacy.deserialize(Rlp.fromHex([])))
+        .toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
       Serialized Transaction: "0xc0"
@@ -282,9 +280,8 @@ describe('deserialize', () => {
     })
 
     test('invalid transaction (some missing)', () => {
-      expect(() =>
-        TxEnvelopeLegacy.deserialize(Rlp.fromHex(['0x00', '0x01'])),
-      ).toThrowErrorMatchingInlineSnapshot(`
+      expect(() => TxEnvelopeLegacy.deserialize(Rlp.fromHex(['0x00', '0x01'])))
+        .toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedError: Invalid serialized transaction of type "legacy" was provided.
 
       Serialized Transaction: "0xc20001"

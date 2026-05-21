@@ -19,7 +19,7 @@ const generateList = (length: number) => {
 
 export async function generateRlpVectors() {
   const generatedPath = join(import.meta.dir, './rlp.json')
-  Bun.write(generatedPath, '')
+  await Bun.write(generatedPath, '')
 
   const generated = Bun.file(generatedPath)
   const writer = generated.writer()
@@ -98,8 +98,8 @@ export async function generateRlpVectors() {
     writer.write(JSON.stringify(vector, null, 2))
   }
   writer.write(']\n')
-  writer.end()
+  await writer.end()
 
   const gzipped = Bun.gzipSync(new Uint8Array(await generated.arrayBuffer()))
-  Bun.write(`${generatedPath}.gz`, gzipped)
+  await Bun.write(`${generatedPath}.gz`, gzipped)
 }

@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as UserOperation from './UserOperation.js'
 
 const v06 = {

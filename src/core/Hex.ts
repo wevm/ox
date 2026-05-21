@@ -74,7 +74,7 @@ export function concat(...values: readonly Hex[]): Hex {
   if (values.length === 1) return values[0]!
   if (values.length === 2)
     return `0x${(values[0] as string).slice(2)}${(values[1] as string).slice(2)}` as Hex
-  const parts = new Array<string>(values.length)
+  const parts = Array.from<string>({ length: values.length })
   for (let i = 0; i < values.length; i++)
     parts[i] = (values[i] as string).slice(2)
   return `0x${parts.join('')}` as Hex
@@ -387,10 +387,7 @@ export declare namespace isEqual {
  * @param size - The size (in bytes) of the output hex value.
  * @returns The padded {@link ox#Hex.Hex} value.
  */
-export function padLeft(
-  value: Hex,
-  size?: number | undefined,
-): padLeft.ReturnType {
+export function padLeft(value: Hex, size?: number): padLeft.ReturnType {
   return internal.pad(value, { dir: 'left', size })
 }
 
@@ -414,10 +411,7 @@ export declare namespace padLeft {
  * @param size - The size (in bytes) of the output hex value.
  * @returns The padded {@link ox#Hex.Hex} value.
  */
-export function padRight(
-  value: Hex,
-  size?: number | undefined,
-): padRight.ReturnType {
+export function padRight(value: Hex, size?: number): padRight.ReturnType {
   return internal.pad(value, { dir: 'right', size })
 }
 
@@ -466,8 +460,8 @@ export declare namespace random {
  */
 export function slice(
   value: Hex,
-  start?: number | undefined,
-  end?: number | undefined,
+  start?: number,
+  end?: number,
   options: slice.Options = {},
 ): Hex {
   const { strict } = options
@@ -940,7 +934,11 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
     offset,
     position,
     size,
-  }: { offset: number; position: 'start' | 'end'; size: number }) {
+  }: {
+    offset: number
+    position: 'start' | 'end'
+    size: number
+  }) {
     super(
       `Slice ${
         position === 'start' ? 'starting' : 'ending'

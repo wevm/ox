@@ -46,7 +46,7 @@ The example below demonstrates how to construct, sign, and broadcast a transacti
 
 ```ts
 import { Provider, Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
- 
+
 // 1. Construct a transaction envelope.
 const envelope = TxEnvelopeEip1559.from({
   chainId: 1,
@@ -57,10 +57,10 @@ const envelope = TxEnvelopeEip1559.from({
   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
   value: Value.fromEther('1'),
 })
- 
+
 // 2. Get the signing payload for the envelope.
-const payload = TxEnvelopeEip1559.getSignPayload(envelope) 
- 
+const payload = TxEnvelopeEip1559.getSignPayload(envelope)
+
 // 3. Sign the payload with your private key using secp256k1.
 const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
 
@@ -90,4 +90,3 @@ Check out the following places for more Ox-related content:
 - [GitHub Sponsors](https://github.com/sponsors/wevm?metadata_campaign=docs_support)
 - [Gitcoin Grant](https://wagmi.sh/gitcoin)
 - [wevm.eth](https://etherscan.io/enslookup-search?search=wevm.eth)
-

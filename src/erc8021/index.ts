@@ -1,6 +1,5 @@
 /** @entrypointCategory ERCs */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utility functions for working with [ERC-8021 Transaction Attribution](https://eip.tools/eip/8021).

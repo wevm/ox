@@ -1,5 +1,5 @@
 import { Address, HdKey, Mnemonic } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import * as exports from '../HdKey.js'
 

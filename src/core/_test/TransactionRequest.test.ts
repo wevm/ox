@@ -1,5 +1,5 @@
 import { Blobs, Hex, TransactionRequest, Value } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { kzg } from '../../../test/kzg.js'
 import { anvilMainnet } from '../../../test/prool.js'
 

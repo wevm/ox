@@ -1,6 +1,6 @@
 import { Authorization, Secp256k1 } from 'ox'
 import { SignatureErc8010 } from 'ox/erc8010'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 const authorization_unsigned = Authorization.from({

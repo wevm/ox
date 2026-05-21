@@ -3,7 +3,7 @@
 // codec-only bench naming under `src/core/Rlp.bench.ts`; this file scopes
 // to transaction-shaped inputs to avoid collision.
 
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Hex from './Hex.js'
 import * as Rlp from './Rlp.js'
 

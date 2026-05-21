@@ -1,6 +1,6 @@
 import { fc, test } from '@fast-check/vitest'
 import { Hex } from 'ox'
-import { describe, expect } from 'vitest'
+import { describe, expect } from 'vp/test'
 
 import {
   arbitraryBytes,

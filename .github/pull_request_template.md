@@ -10,4 +10,3 @@ Before creating the pull request, please make sure you do the following:
 
 Thank you for contributing to Ox!
 ----------------------------------------------------------------------->
-

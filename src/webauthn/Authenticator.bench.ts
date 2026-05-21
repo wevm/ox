@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as P256 from '../core/P256.js'
 import * as Authenticator from './Authenticator.js'
 

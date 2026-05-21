@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Attribution from './Attribution.js'
 
 const schema0Data =

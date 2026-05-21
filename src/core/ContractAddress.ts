@@ -49,7 +49,7 @@ export function from(options: from.Options): Address.Address {
 export declare namespace from {
   export type Options = OneOf<fromCreate.Options | fromCreate2.Options>
 
-  type ErrorType =
+  export type ErrorType =
     | fromCreate.ErrorType
     | fromCreate2.ErrorType
     | Errors.GlobalErrorType

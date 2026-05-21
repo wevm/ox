@@ -1,5 +1,5 @@
 import { PoolId } from 'ox/tempo'
-import { expect, test } from 'vitest'
+import { expect, test } from 'vp/test'
 
 test('from', () => {
   // Test with bigint token IDs

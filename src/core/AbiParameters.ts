@@ -69,7 +69,7 @@ export function decode<
   options?: decode.Options<as>,
 ): decode.ReturnType<parameters, as>
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   parameters: AbiParameters,
   data: Bytes.Bytes | Hex.Hex,
@@ -282,7 +282,7 @@ export namespace encodePacked {
       : unknown
   }
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
+  // eslint-disable-next-line jsdoc-js/require-jsdoc
   export function encode<const packedAbiType extends PackedAbiType | unknown>(
     type: packedAbiType,
     value: Values<[packedAbiType]>[0],
@@ -532,7 +532,11 @@ export class DataSizeTooSmallError extends Errors.BaseError {
     data,
     parameters,
     size,
-  }: { data: Hex.Hex; parameters: readonly Parameter[]; size: number }) {
+  }: {
+    data: Hex.Hex
+    parameters: readonly Parameter[]
+    size: number
+  }) {
     super(`Data size of ${size} bytes is too small for given parameters.`, {
       metaMessages: [
         `Params: (${abitype.formatAbiParameters(parameters as readonly [Parameter])})`,
@@ -606,7 +610,11 @@ export class ArrayLengthMismatchError extends Errors.BaseError {
     expectedLength,
     givenLength,
     type,
-  }: { expectedLength: number; givenLength: number; type: string }) {
+  }: {
+    expectedLength: number
+    givenLength: number
+    type: string
+  }) {
     super(
       `Array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`,
     )
@@ -644,7 +652,10 @@ export class BytesSizeMismatchError extends Errors.BaseError {
   constructor({
     expectedSize,
     value,
-  }: { expectedSize: number; value: Hex.Hex }) {
+  }: {
+    expectedSize: number
+    value: Hex.Hex
+  }) {
     super(
       `Size of bytes "${value}" (bytes${Hex.size(
         value,
@@ -681,7 +692,10 @@ export class LengthMismatchError extends Errors.BaseError {
   constructor({
     expectedLength,
     givenLength,
-  }: { expectedLength: number; givenLength: number }) {
+  }: {
+    expectedLength: number
+    givenLength: number
+  }) {
     super(
       [
         'ABI encoding parameters/values length mismatch.',

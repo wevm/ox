@@ -1,6 +1,6 @@
 import { test } from '@fast-check/vitest'
 import { AbiParameters } from 'ox'
-import { describe, expect } from 'vitest'
+import { describe, expect } from 'vp/test'
 
 import { arbitraryAbiCase } from '../../../test/fuzz/arbitraries/abi.js'
 

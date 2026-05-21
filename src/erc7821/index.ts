@@ -1,6 +1,5 @@
 /** @entrypointCategory ERCs */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utility functions for encoding and decoding [ERC-7821](https://eips.ethereum.org/EIPS/eip-7821) calls.

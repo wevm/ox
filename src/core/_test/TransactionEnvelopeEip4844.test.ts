@@ -8,7 +8,7 @@ import {
   TxEnvelopeEip4844,
   Value,
 } from 'ox'
-import { assertType, describe, expect, test } from 'vitest'
+import { assertType, describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import { kzg } from '../../../test/kzg.js'
 

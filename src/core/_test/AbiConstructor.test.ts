@@ -1,5 +1,5 @@
 import { AbiConstructor } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { Constructor } from '../../../contracts/generated.js'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'

@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as VirtualAddress from './VirtualAddress.js'
 
 const virtualHex = '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506' as const

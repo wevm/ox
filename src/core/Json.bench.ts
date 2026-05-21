@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Json from './Json.js'
 
 const small = { foo: 'bar', n: 42, ok: true }

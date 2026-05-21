@@ -1,5 +1,5 @@
 import { Bls, BlsPoint } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 const privateKey =
   '0x527f85c60ed7402247da21f1835cea651d0954fc15b7288f096d3608400cb6ac'

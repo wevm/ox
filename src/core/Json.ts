@@ -94,7 +94,7 @@ export declare namespace canonicalize {
  */
 export function parse(
   string: string,
-  reviver?: ((this: any, key: string, value: any) => any) | undefined,
+  reviver?: (this: any, key: string, value: any) => any,
 ) {
   // Fast path: when the bigint sentinel is absent, skip the reviver wrapper
   // entirely. `JSON.parse` is dramatically faster without a reviver because
@@ -136,8 +136,8 @@ export declare namespace parse {
  */
 export function stringify(
   value: any,
-  replacer?: ((this: any, key: string, value: any) => any) | null | undefined,
-  space?: string | number | undefined,
+  replacer?: ((this: any, key: string, value: any) => any) | null,
+  space?: string | number,
 ) {
   return JSON.stringify(
     value,

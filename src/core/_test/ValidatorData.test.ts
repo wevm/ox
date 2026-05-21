@@ -1,5 +1,5 @@
 import { Bytes, Hex, Secp256k1, ValidatorData } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('encode', () => {

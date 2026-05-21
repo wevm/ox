@@ -1,7 +1,7 @@
 import { attest } from '@ark/attest'
 import { Hex } from 'ox'
 import { UserOperation } from 'ox/erc4337'
-import { describe, test } from 'vitest'
+import { describe, test } from 'vp/test'
 
 describe('from', () => {
   test('default', () => {

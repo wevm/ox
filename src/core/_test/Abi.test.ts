@@ -1,5 +1,5 @@
 import { Abi } from 'ox'
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vp/test'
 
 describe('format', () => {
   test('default', () => {

@@ -1,6 +1,6 @@
 import { Secp256k1, Signature } from 'ox'
 import { SignatureErc6492 } from 'ox/erc6492'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('assert', () => {

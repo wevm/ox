@@ -1,5 +1,5 @@
 import { Mnemonic } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('random', () => {
   test('default', () => {
@@ -224,9 +224,8 @@ describe('toSeed', () => {
   })
 
   test('options: passphrase', () => {
-    expect(
-      Mnemonic.toSeed(mnemonic, { passphrase: 'qwerty' }),
-    ).toMatchInlineSnapshot(`
+    expect(Mnemonic.toSeed(mnemonic, { passphrase: 'qwerty' }))
+      .toMatchInlineSnapshot(`
   Uint8Array [
     64,
     108,

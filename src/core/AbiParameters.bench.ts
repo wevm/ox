@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as AbiParameters from './AbiParameters.js'
 
 const uint256_1000 = AbiParameters.from('uint256[]')

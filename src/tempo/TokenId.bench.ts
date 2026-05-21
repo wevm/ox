@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as TokenId from './TokenId.js'
 
 const sender = '0x1234567890123456789012345678901234567890' as const

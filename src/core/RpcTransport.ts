@@ -47,7 +47,7 @@ export type RequestFn<
   parameters: Compute<
     RpcSchema_internal.ExtractRequestOpaque<schema, methodName>
   >,
-  options?: internal.Options<raw_override, options, schema> | undefined,
+  options?: internal.Options<raw_override, options, schema>,
 ) => Promise<
   raw_override extends boolean
     ? raw_override extends true
@@ -113,7 +113,7 @@ export function fromHttp<
               body,
               headers: {
                 'Content-Type': 'application/json',
-                ...fetchOptions?.headers,
+                ...Object.fromEntries(new Headers(fetchOptions?.headers)),
               },
               method: fetchOptions?.method ?? 'POST',
               signal: composedSignal,
@@ -139,7 +139,7 @@ export function fromHttp<
             }
             try {
               return JSON.parse(data)
-            } catch (_err) {
+            } catch {
               if (response.ok)
                 throw new MalformedResponseError({
                   response: data,
@@ -192,7 +192,12 @@ export class HttpError extends Errors.BaseError {
     details,
     response,
     url,
-  }: { body: unknown; details: string; response: Response; url: string }) {
+  }: {
+    body: unknown
+    details: string
+    response: Response
+    url: string
+  }) {
     super('HTTP request failed.', {
       details,
       metaMessages: [

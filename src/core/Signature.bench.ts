@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Secp256k1 from './Secp256k1.js'
 import * as Signature from './Signature.js'
 

@@ -1,5 +1,5 @@
 import { Abi, AbiEvent } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('decodeLog', () => {
   test('behavior: abi', () => {

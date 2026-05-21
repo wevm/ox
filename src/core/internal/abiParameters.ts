@@ -26,29 +26,30 @@ export type PreparedParameter = { dynamic: boolean; encoded: Hex.Hex }
 export type ToObject<
   parameters extends readonly AbiParameter[],
   kind extends AbiParameterKind = AbiParameterKind,
-> = IsNarrowable<parameters, AbiParameters.AbiParameters> extends true
-  ? Compute<
-      UnionToIntersection<
-        {
-          [index in keyof parameters]: parameters[index] extends {
-            name: infer name extends string
-          }
-            ? {
-                [key in name]: AbiParameterToPrimitiveType<
-                  parameters[index],
-                  kind
-                >
-              }
-            : {
-                [key in index]: AbiParameterToPrimitiveType<
-                  parameters[index],
-                  kind
-                >
-              }
-        }[number]
+> =
+  IsNarrowable<parameters, AbiParameters.AbiParameters> extends true
+    ? Compute<
+        UnionToIntersection<
+          {
+            [index in keyof parameters]: parameters[index] extends {
+              name: infer name extends string
+            }
+              ? {
+                  [key in name]: AbiParameterToPrimitiveType<
+                    parameters[index],
+                    kind
+                  >
+                }
+              : {
+                  [key in index]: AbiParameterToPrimitiveType<
+                    parameters[index],
+                    kind
+                  >
+                }
+          }[number]
+        >
       >
-    >
-  : unknown
+    : unknown
 
 /** @internal */
 export type ToPrimitiveTypes<
@@ -343,7 +344,7 @@ export function decodeTuple(
         staticPosition: start,
       })
       consumed += consumed_
-      value[hasUnnamedChild ? i : component?.name!] = data
+      value[hasUnnamedChild ? i : component.name!] = data
     }
 
     // As we have gone wondering, restore to the original position + next slot.
@@ -359,7 +360,7 @@ export function decodeTuple(
       checksumAddress,
       staticPosition,
     })
-    value[hasUnnamedChild ? i : component?.name!] = data
+    value[hasUnnamedChild ? i : component.name!] = data
     consumed += consumed_
   }
   return [value, consumed]
@@ -555,7 +556,7 @@ export function encodeAddress(
   value: Hex.Hex,
   options: { checksum: boolean },
 ): PreparedParameter {
-  const { checksum = false } = options
+  const { checksum } = options
   Address.assert(value, { strict: checksum })
   return {
     dynamic: false,

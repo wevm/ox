@@ -1,6 +1,6 @@
 import { attest } from '@ark/attest'
 import { X25519 } from 'ox'
-import { expectTypeOf, test } from 'vitest'
+import { expectTypeOf, test } from 'vp/test'
 
 test('createKeyPair', () => {
   // Default behavior (Hex)

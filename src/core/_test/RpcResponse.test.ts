@@ -1,5 +1,5 @@
 import { type Hex, RpcRequest, RpcResponse } from 'ox'
-import { assertType, describe, expect, test } from 'vitest'
+import { assertType, describe, expect, test } from 'vp/test'
 import { anvilMainnet } from '../../../test/prool.js'
 
 describe('from', () => {

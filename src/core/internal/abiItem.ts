@@ -16,44 +16,47 @@ import type {
 export type ExtractArgs<
   abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
   name extends AbiItem.Name<abi> = AbiItem.Name<abi>,
-> = abitype.AbiParametersToPrimitiveTypes<
-  AbiItem.FromAbi<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
-  'inputs'
-> extends infer args
-  ? [args] extends [never]
-    ? readonly unknown[]
-    : args
-  : readonly unknown[]
+> =
+  abitype.AbiParametersToPrimitiveTypes<
+    AbiItem.FromAbi<abi extends Abi.Abi ? abi : Abi.Abi, name>['inputs'],
+    'inputs'
+  > extends infer args
+    ? [args] extends [never]
+      ? readonly unknown[]
+      : args
+    : readonly unknown[]
 
 /** @internal */
 export type ExtractForArgs<
   abi extends Abi.Abi,
   name extends AbiItem.Name<abi>,
   args extends ExtractArgs<abi, name>,
-> = IsUnion<name> extends true
-  ? {
-      [key in keyof abi]: abi[key] extends { name: name } ? abi[key] : never
-    }[number]
-  : AbiItem.FromAbi<abi, name> extends infer abiItem extends AbiItem.AbiItem & {
-        inputs: readonly abitype.AbiParameter[]
-      }
-    ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
-      ? UnionToTuple<abiItem> extends infer abiItems extends
-          readonly (AbiItem.AbiItem & {
+> =
+  IsUnion<name> extends true
+    ? {
+        [key in keyof abi]: abi[key] extends { name: name } ? abi[key] : never
+      }[number]
+    : AbiItem.FromAbi<abi, name> extends infer abiItem extends
+          AbiItem.AbiItem & {
             inputs: readonly abitype.AbiParameter[]
-          })[]
-        ? IsNever<TupleToUnion<abiItems, abi, name, args>> extends true
-          ? Compute<
-              abiItems[0] & {
-                readonly overloads: UnionToTuple<
-                  Exclude<abiItems[number], abiItems[0]>
-                >
-              }
-            >
-          : TupleToUnion<abiItems, abi, name, args> // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
-        : never
-      : abiItem
-    : never
+          }
+      ? IsUnion<abiItem> extends true // narrow overloads using `args` by converting to tuple and filtering out overloads that don't match
+        ? UnionToTuple<abiItem> extends infer abiItems extends
+            readonly (AbiItem.AbiItem & {
+              inputs: readonly abitype.AbiParameter[]
+            })[]
+          ? IsNever<TupleToUnion<abiItems, abi, name, args>> extends true
+            ? Compute<
+                abiItems[0] & {
+                  readonly overloads: UnionToTuple<
+                    Exclude<abiItems[number], abiItems[0]>
+                  >
+                }
+              >
+            : TupleToUnion<abiItems, abi, name, args> // convert back to union (removes `never` tuple entries: `['foo', never, 'bar'][number]` => `'foo' | 'bar'`)
+          : never
+        : abiItem
+      : never
 
 /** @internal */
 export type TupleToUnion<
@@ -196,13 +199,14 @@ export type IsSignature<type extends string> =
 export type Signature<
   string1 extends string,
   string2 extends string | unknown = unknown,
-> = IsSignature<string1> extends true
-  ? string1
-  : string extends string1 // if exactly `string` (not narrowed), then pass through as valid
+> =
+  IsSignature<string1> extends true
     ? string1
-    : TypeErrorMessage<`Signature "${string1}" is invalid${string2 extends string
-        ? ` at position ${string2}`
-        : ''}.`>
+    : string extends string1 // if exactly `string` (not narrowed), then pass through as valid
+      ? string1
+      : TypeErrorMessage<`Signature "${string1}" is invalid${string2 extends string
+          ? ` at position ${string2}`
+          : ''}.`>
 
 /** @internal */
 export type Signatures<signatures extends readonly string[]> = {
@@ -316,13 +320,73 @@ export type IsValidCharacter<character extends string> =
 /** @internal */
 export type ValidCharacters =
   // uppercase letters
-  | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+  | 'A'
+  | 'B'
+  | 'C'
+  | 'D'
+  | 'E'
+  | 'F'
+  | 'G'
+  | 'H'
+  | 'I'
+  | 'J'
+  | 'K'
+  | 'L'
+  | 'M'
+  | 'N'
+  | 'O'
+  | 'P'
+  | 'Q'
+  | 'R'
+  | 'S'
+  | 'T'
+  | 'U'
+  | 'V'
+  | 'W'
+  | 'X'
+  | 'Y'
+  | 'Z'
   // lowercase letters
-  | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+  | 'a'
+  | 'b'
+  | 'c'
+  | 'd'
+  | 'e'
+  | 'f'
+  | 'g'
+  | 'h'
+  | 'i'
+  | 'j'
+  | 'k'
+  | 'l'
+  | 'm'
+  | 'n'
+  | 'o'
+  | 'p'
+  | 'q'
+  | 'r'
+  | 's'
+  | 't'
+  | 'u'
+  | 'v'
+  | 'w'
+  | 'x'
+  | 'y'
+  | 'z'
   // numbers
-  | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+  | '0'
+  | '1'
+  | '2'
+  | '3'
+  | '4'
+  | '5'
+  | '6'
+  | '7'
+  | '8'
+  | '9'
   // special characters
-  | '_' | '$'
+  | '_'
+  | '$'
 
 // Template string inference can absorb `returns`:
 // type Result = `function foo(string) return s (uint256)` extends `function ${string}(${infer Parameters})` ? Parameters : never

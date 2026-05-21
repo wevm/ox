@@ -1,5 +1,5 @@
 import { Abi, AbiError, AbiFunction, AbiItem } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { Errors } from '../../../contracts/generated.js'
 import { seaportContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
@@ -366,9 +366,8 @@ describe('extract', () => {
     ])
     const data = AbiError.encode(abi, 'InvalidSignature', [420n, 69n, 1])
 
-    expect(
-      AbiError.extract(abi, data, { as: 'Object' }),
-    ).toMatchInlineSnapshot(`
+    expect(AbiError.extract(abi, data, { as: 'Object' }))
+      .toMatchInlineSnapshot(`
       {
         "args": {
           "r": 420n,
@@ -636,9 +635,8 @@ describe('from', () => {
 
 describe('fromAbi', () => {
   test('default', () => {
-    expect(
-      AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV'),
-    ).toMatchInlineSnapshot(`
+    expect(AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV'))
+      .toMatchInlineSnapshot(`
     {
       "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
       "inputs": [
@@ -675,9 +673,8 @@ describe('fromAbi', () => {
   test('behavior: selector as name', () => {
     const item = AbiError.fromAbi(seaportContractConfig.abi, 'BadSignatureV')
     const selector = AbiItem.getSelector(item)
-    expect(
-      AbiError.fromAbi(seaportContractConfig.abi, selector),
-    ).toMatchInlineSnapshot(`
+    expect(AbiError.fromAbi(seaportContractConfig.abi, selector))
+      .toMatchInlineSnapshot(`
     {
       "hash": "0x1f003d0ab3c21a082e88d5c936eb366321476aa1508b9238066e9f135aa38772",
       "inputs": [

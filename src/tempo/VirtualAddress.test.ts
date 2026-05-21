@@ -1,5 +1,5 @@
 import { VirtualAddress } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 const address = '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
 

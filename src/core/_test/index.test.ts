@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { expect, test } from 'vp/test'
 import * as exports from '../../index.js'
 
 test('exports', () => {

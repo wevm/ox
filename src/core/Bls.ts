@@ -93,7 +93,7 @@ export function aggregate(
   points: readonly (Hex.Hex | Bytes.Bytes | BlsPoint.BlsPoint)[],
   options?: aggregate.Options,
 ): BlsPoint.BlsPoint
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function aggregate(
   points: readonly (Hex.Hex | Bytes.Bytes | BlsPoint.BlsPoint)[],
   options: aggregate.Options = {},
@@ -409,7 +409,7 @@ export function getPublicKey<
   as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
   size extends Size = 'short-key:long-sig',
 >(options: getPublicKey.Options<as, size>): getPublicKey.ReturnType<as, size>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getPublicKey(options: getPublicKey.Options): unknown {
   const { as = 'Object', privateKey, size = 'short-key:long-sig' } = options
   const groupName = size === 'short-key:long-sig' ? 'G1' : 'G2'
@@ -572,7 +572,7 @@ export function sign<
   as extends 'Hex' | 'Bytes' | 'Object' = 'Object',
   size extends Size = 'short-key:long-sig',
 >(options: sign.Options<as, size>): sign.ReturnType<as, size>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function sign(options: sign.Options): unknown {
   const {
     as = 'Object',

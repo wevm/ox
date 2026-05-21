@@ -1,6 +1,6 @@
 import { test } from '@fast-check/vitest'
 import { type Bytes, Hex, Rlp } from 'ox'
-import { describe, expect } from 'vitest'
+import { describe, expect } from 'vp/test'
 
 import {
   arbitraryRecursiveRlpBytes,

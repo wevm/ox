@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { expect, test } from 'vp/test'
 import * as Module from '../Paths.js'
 
 test('exports', () => {

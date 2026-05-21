@@ -1,6 +1,6 @@
 import { attest } from '@ark/attest'
 import { Abi, AbiFunction, AbiParameters } from 'ox'
-import { describe, test } from 'vitest'
+import { describe, test } from 'vp/test'
 import { erc20Abi, wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 

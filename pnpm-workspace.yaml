@@ -16,6 +16,14 @@ linkWorkspacePackages: true
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - abitype
+  - vite-plus
+  - '@voidzero-dev/*'
+  - oxlint
+  - '@oxlint/*'
+  - oxlint-tsgolint
+  - '@oxlint-tsgolint/*'
+  - oxfmt
+  - '@oxfmt/*'
 
 overrides:
   viem>ox: npm:ox@0.11.1
@@ -68,6 +76,8 @@ overrides:
   undici@>=7.0.0 <7.24.0: '>=7.24.0'
   webpack@5: 5.104.1
   yaml@>=2.0.0 <2.8.3: '>=2.8.3'
+  vite: 'catalog:'
+  vitest: 'catalog:'
 
 packages:
   - site
@@ -80,3 +90,15 @@ trustPolicy: no-downgrade
 
 trustPolicyExclude:
   - semver@6.3.1
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@latest
+  vitest: npm:@voidzero-dev/vite-plus-test@latest
+  vite-plus: latest
+  vp: npm:vite-plus@latest
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: '*'
+    vitest: '*'

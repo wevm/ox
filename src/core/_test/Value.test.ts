@@ -1,5 +1,5 @@
 import { Value } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('format', () => {
   test('converts value to number', () => {

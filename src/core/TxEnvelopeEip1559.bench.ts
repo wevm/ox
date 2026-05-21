@@ -3,7 +3,7 @@
 // `tasks/perf-api-audit-transactions.md` Phase 1: ≥ 2× faster envelope
 // serialize and deserialize at the same input.
 
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as TxEnvelopeEip1559 from './TxEnvelopeEip1559.js'
 
 const envelope = TxEnvelopeEip1559.from({

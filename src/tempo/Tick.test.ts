@@ -1,5 +1,5 @@
 import { Tick } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('toPrice', () => {
   test('converts tick 0 to price 1', () => {

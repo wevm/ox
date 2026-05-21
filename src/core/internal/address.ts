@@ -10,8 +10,6 @@ const F_LOWER = 102 // 'f'
 const X_LOWER = 120 // 'x'
 
 /**
- * @internal
- *
  * Combined shape + lowercase classification for an Ethereum address string.
  * Avoids the regex / try-catch / error-allocation overhead in the hot path
  * and avoids a second pass for callers that need both pieces of metadata
@@ -20,6 +18,8 @@ const X_LOWER = 120 // 'x'
  * - `0` = invalid shape (not `0x[0-9a-fA-F]{40}`)
  * - `1` = valid shape, all-lowercase hex body (no checksum to verify)
  * - `2` = valid shape, contains at least one `A-F` upper char
+ *
+ * @internal
  */
 export function classify(value: string): 0 | 1 | 2 {
   if (typeof value !== 'string' || value.length !== length) return 0
@@ -39,23 +39,23 @@ export function classify(value: string): 0 | 1 | 2 {
 }
 
 /**
- * @internal
- *
  * Manual ASCII shape check for an Ethereum address string. Returns `true`
  * when `value` has the shape `0x[0-9a-fA-F]{40}`. Does not verify checksum
  * casing.
+ *
+ * @internal
  */
 export function hasShape(value: string): boolean {
   return classify(value) !== 0
 }
 
 /**
- * @internal
- *
  * Returns the canonical lowercase form of a shape-validated address, or the
  * input unchanged when it is already all-lowercase. Pre-condition: caller has
  * already verified the string is shape-valid via {@link hasShape} or
  * {@link classify}.
+ *
+ * @internal
  */
 export function lowercase(value: string): string {
   let hasUpper = false

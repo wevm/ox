@@ -1,5 +1,5 @@
 ---
-"ox": major
+'ox': major
 ---
 
 Removed the `TempoAddress` module and its `tempox`-prefixed address format. All Tempo modules now accept plain hex `Address.Address` values; remove any `TempoAddress.format` / `TempoAddress.parse` / `TempoAddress.resolve` calls at the boundary. The `addressType` type parameter has also been dropped from `Call`, `TxEnvelopeTempo`, `KeyAuthorization`, `AuthorizationTempo`, `TransactionRequest`, and `TokenId.TokenIdOrAddress`.

@@ -5,7 +5,7 @@ import {
   type TxEnvelopeEip1559,
   type TxEnvelopeEip4844,
 } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('TransactionRequest type', () => {
   test('carries optional signature fields (r, s, yParity, v)', () => {
@@ -100,7 +100,9 @@ describe('TxEnvelope.toTransactionRequest', () => {
     expectTypeOf<
       TxEnvelopeEip4844.TxEnvelopeEip4844['blobVersionedHashes']
     >().toMatchTypeOf<
-      NonNullable<TransactionRequestNs.TransactionRequest['blobVersionedHashes']>
+      NonNullable<
+        TransactionRequestNs.TransactionRequest['blobVersionedHashes']
+      >
     >()
   })
 })

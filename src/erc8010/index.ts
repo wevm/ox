@@ -1,6 +1,5 @@
 /** @entrypointCategory ERCs */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utility functions for working with [ERC-8010 wrapped signatures](https://eips.ethereum.org/EIPS/eip-8010#specification).

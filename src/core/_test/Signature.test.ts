@@ -1,5 +1,5 @@
 import { Bytes, Hex, Signature, Solidity, TxEnvelopeEip1559 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('assert', () => {
   test('default', () => {

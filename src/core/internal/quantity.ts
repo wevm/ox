@@ -36,7 +36,7 @@ export function toBigInt(
 export function toBigIntRequired(
   value: Hex.Hex | undefined | null,
   field: string,
-  container?: string | undefined,
+  container?: string,
 ): bigint {
   if (value === undefined || value === null)
     throw new MissingFieldError(container ? { field, container } : { field })

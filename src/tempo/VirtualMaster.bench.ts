@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as VirtualMaster from './VirtualMaster.js'
 
 const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' as const

@@ -59,9 +59,9 @@ export function extractNamespaceDocComments(
 }
 
 export function processDocComment(
-  docComment?: tsdoc.DocComment | undefined,
+  docComment?: tsdoc.DocComment,
   resolveDeclarationReference?: ResolveDeclarationReference,
-  entrypointCategory?: string | undefined,
+  entrypointCategory?: string,
 ) {
   if (!docComment) return
 
@@ -132,14 +132,14 @@ export function processDocComment(
   }
 }
 
-export function cleanDoc(docString: string, removeTag?: undefined | string) {
+export function cleanDoc(docString: string, removeTag?: string) {
   if (removeTag)
     return docString.replace(new RegExp(`^\\s*${removeTag}`, 'g'), '').trim()
   return docString.trim()
 }
 
 export function renderDocNode(
-  node?: tsdoc.DocNode | ReadonlyArray<tsdoc.DocNode> | undefined,
+  node?: tsdoc.DocNode | ReadonlyArray<tsdoc.DocNode>,
   resolveDeclarationReference?: ResolveDeclarationReference,
 ): string {
   if (!node) return ''

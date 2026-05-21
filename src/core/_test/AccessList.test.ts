@@ -1,5 +1,5 @@
 import { AccessList } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromTupleList', () => {
   test('default', () => {

@@ -1,6 +1,6 @@
 import { setTimeout } from 'node:timers/promises'
 import { Actions } from 'viem/tempo'
-import { afterAll, beforeAll } from 'vitest'
+import { afterAll, beforeAll } from 'vp/test'
 import { accounts } from '../constants/accounts.js'
 import { client, mintFeeTokenLiquidity, nodeEnv } from './config.js'
 import { rpcUrl } from './prool.js'

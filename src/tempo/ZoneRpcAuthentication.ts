@@ -146,9 +146,8 @@ export declare namespace from {
   }
 
   type ReturnType<
-    authentication extends
-      | ZoneRpcAuthentication
-      | Input = ZoneRpcAuthentication,
+    authentication extends ZoneRpcAuthentication | Input =
+      ZoneRpcAuthentication,
     signature extends SignatureEnvelope.from.Value | undefined =
       | SignatureEnvelope.from.Value
       | undefined,

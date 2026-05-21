@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Abi from './Abi.js'
 import * as AbiFunction from './AbiFunction.js'
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import * as Base64 from '../../core/Base64.js'
 import * as Bytes from '../../core/Bytes.js'
 import * as Cbor from '../../core/Cbor.js'

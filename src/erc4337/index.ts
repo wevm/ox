@@ -1,6 +1,5 @@
 /** @entrypointCategory ERCs */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utility functions and types for working with [ERC-4337 EntryPoints](https://eips.ethereum.org/EIPS/eip-4337).

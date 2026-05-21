@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as AesGcm from './AesGcm.js'
 import * as Bytes from './Bytes.js'
 

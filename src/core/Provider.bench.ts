@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Provider from './Provider.js'
 
 describe('Provider.createEmitter', () => {

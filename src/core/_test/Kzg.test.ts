@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { trustedSetup as fastSetup } from '@paulmillr/trusted-setups/fast-peerdas.js'
 import { KZG } from 'micro-eth-signer/advanced/kzg.js'
 import { Bytes, Hex, Kzg } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { blobData, kzg as peerdasKzg } from '../../../test/kzg.js'
 import * as Blobs from '../Blobs.js'
 

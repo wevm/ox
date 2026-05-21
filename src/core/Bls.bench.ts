@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Bls from './Bls.js'
 import * as Hex from './Hex.js'
 

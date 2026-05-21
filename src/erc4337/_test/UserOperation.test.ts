@@ -1,6 +1,6 @@
 import { Hex, Signature } from 'ox'
 import { UserOperation } from 'ox/erc4337'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('from', () => {
   test('default', () => {

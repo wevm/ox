@@ -1,6 +1,6 @@
 import { attest } from '@ark/attest'
 import { Hex, Signature } from 'ox'
-import { test } from 'vitest'
+import { test } from 'vp/test'
 
 const r = '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf'
 const s = '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'

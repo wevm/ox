@@ -1,6 +1,6 @@
 import { Address, type Hex, Mnemonic, Secp256k1 } from 'ox'
 
-export const accounts = new Array(20).fill(0).map((_, i) => {
+export const accounts = Array.from({ length: 20 }, (_, i) => {
   const privateKey = Mnemonic.toPrivateKey(
     'test test test test test test test test test test test junk',
     { as: 'Hex', path: Mnemonic.path({ index: i }) },

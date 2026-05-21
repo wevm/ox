@@ -19,10 +19,7 @@ export declare namespace assertSize {
 }
 
 /** @internal */
-export function assertStartOffset(
-  value: Bytes.Bytes,
-  start?: number | undefined,
-) {
+export function assertStartOffset(value: Bytes.Bytes, start?: number) {
   if (typeof start === 'number' && start > 0 && start > Bytes.size(value) - 1)
     throw new Bytes.SliceOffsetOutOfBoundsError({
       offset: start,
@@ -41,8 +38,8 @@ export declare namespace assertStartOffset {
 /** @internal */
 export function assertEndOffset(
   value: Bytes.Bytes,
-  start?: number | undefined,
-  end?: number | undefined,
+  start?: number,
+  end?: number,
 ) {
   if (
     typeof start === 'number' &&

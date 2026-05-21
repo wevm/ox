@@ -9,35 +9,26 @@ import {
 
 /**
  * Width set for `uint<M>` / `int<M>` arbitraries. Restricted to a
- * representative subset; the encoder accepts any multiple of 8 from 8
- * to 256, but exhaustive coverage isn't useful for fuzz purposes.
+ * representative subset; the encoder accepts any multiple of 8 from 8 to 256,
+ * but exhaustive coverage isn't useful for fuzz purposes.
  */
 const intBits = [8, 16, 32, 64, 128, 256] as const
 
-/**
- * Width set for fixed-length `bytes<M>` arbitraries.
- */
+/** Width set for fixed-length `bytes<M>` arbitraries. */
 const fixedBytesSizes = [1, 4, 20, 32] as const
 
 /** Caps for the recursive ABI parameter arbitrary. */
 export type AbiArbitraryOptions = {
-  /**
-   * Max nesting depth (tuples + arrays). Default `3`.
-   */
+  /** Max nesting depth (tuples + arrays). Default `3`. */
   maxDepth?: number
-  /**
-   * Max number of components in a tuple. Default `4`.
-   */
+  /** Max number of components in a tuple. Default `4`. */
   maxTupleArity?: number
   /**
-   * Max length of a dynamic array, and exclusive upper bound for
-   * fixed-length array sizes. Default `4`.
+   * Max length of a dynamic array, and exclusive upper bound for fixed-length
+   * array sizes. Default `4`.
    */
   maxArrayLength?: number
-  /**
-   * Max byte length for dynamic `string` and `bytes` values. Default
-   * `128`.
-   */
+  /** Max byte length for dynamic `string` and `bytes` values. Default `128`. */
   maxBytesLength?: number
 }
 
@@ -49,8 +40,8 @@ const defaults: Required<AbiArbitraryOptions> = {
 }
 
 /**
- * Generates a single ABI parameter schema, possibly nested as a tuple
- * or array, capped by `options`.
+ * Generates a single ABI parameter schema, possibly nested as a tuple or array,
+ * capped by `options`.
  */
 export function arbitraryAbiParameter(
   options: AbiArbitraryOptions = {},
@@ -59,9 +50,7 @@ export function arbitraryAbiParameter(
   return parameterAtDepth(opts, 0)
 }
 
-/**
- * Generates a non-empty array of ABI parameters.
- */
+/** Generates a non-empty array of ABI parameters. */
 export function arbitraryAbiParameters(
   options: AbiArbitraryOptions = {},
 ): fc.Arbitrary<readonly AbiParameters.Parameter[]> {
@@ -73,8 +62,8 @@ export function arbitraryAbiParameters(
 }
 
 /**
- * Generates a `(parameters, values)` pair where `values` is shape-
- * compatible with `parameters`. Use this for round-trip fuzz.
+ * Generates a `(parameters, values)` pair where `values` is shape- compatible
+ * with `parameters`. Use this for round-trip fuzz.
  */
 export function arbitraryAbiCase(
   options: AbiArbitraryOptions = {},
@@ -89,9 +78,7 @@ export function arbitraryAbiCase(
   )
 }
 
-/**
- * Generates a value matching the given parameter schema.
- */
+/** Generates a value matching the given parameter schema. */
 export function arbitraryAbiValueFor(
   parameter: AbiParameters.Parameter,
 ): fc.Arbitrary<unknown> {

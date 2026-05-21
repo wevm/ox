@@ -1,5 +1,5 @@
 import { Authorization, type Hex, Secp256k1 } from 'ox'
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 describe('from', () => {

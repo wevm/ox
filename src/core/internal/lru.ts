@@ -1,8 +1,8 @@
 /**
- * @internal
- *
  * Map with a LRU (Least recently used) policy.
+ *
  * @see https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU
+ * @internal
  */
 export class LruMap<value = unknown> extends Map<string, value> {
   maxSize: number
@@ -34,11 +34,11 @@ export class LruMap<value = unknown> extends Map<string, value> {
 }
 
 /**
- * @internal
- *
  * Map with a bounded FIFO eviction policy. Cheaper than {@link LruMap} on hot
  * `get` paths because reads do not reorder entries; only writes touch the
  * eviction queue.
+ *
+ * @internal
  */
 export class BoundedMap<value = unknown> extends Map<string, value> {
   maxSize: number

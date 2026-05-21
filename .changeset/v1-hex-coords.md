@@ -1,5 +1,5 @@
 ---
-"ox": major
+'ox': major
 ---
 
 Migrated ECDSA and BLS coordinate fields (`r`, `s`, `x`, `y`, BLS `Fp`/`Fp2`) from `bigint` to padded `Hex.Hex` strings (32-byte for `secp256k1`/`P256`/`WebAuthnP256`, 48-byte for BLS12-381) on `Signature`, `PublicKey`, `BlsPoint`, `Transaction`, `Authorization`, `TxEnvelope`, and related Tempo and ERC envelopes, dropping the `bigintType` generic.

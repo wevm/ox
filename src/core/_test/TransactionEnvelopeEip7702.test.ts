@@ -7,7 +7,7 @@ import {
   TxEnvelopeEip7702,
   Value,
 } from 'ox'
-import { assertType, describe, expect, test } from 'vitest'
+import { assertType, describe, expect, test } from 'vp/test'
 import { wagmiContractConfig } from '../../../test/constants/abis.js'
 import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'

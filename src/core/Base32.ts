@@ -23,7 +23,7 @@ import {
 export function fromBytes(value: Bytes.Bytes): string {
   const data5 = convertBits(value, 8, 5, true)
   const len = data5.length
-  const out = new Array<string>(len)
+  const out = Array.from<string>({ length: len })
   for (let i = 0; i < len; i++) out[i] = alphabet[data5[i]!]!
   return out.join('')
 }
@@ -68,7 +68,7 @@ export declare namespace fromHex {
  */
 export function toBytes(value: string): Bytes.Bytes {
   const len = value.length
-  const values = new Array<number>(len)
+  const values = Array.from<number>({ length: len })
   for (let i = 0; i < len; i++) {
     const ch = value[i]!
     const v = alphabetMap[ch]

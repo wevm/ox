@@ -6,7 +6,7 @@ import {
   type TxEnvelopeEip7702,
   type TxEnvelopeLegacy,
 } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('getType', () => {
   test('behavior: infers explicit transaction types', () => {

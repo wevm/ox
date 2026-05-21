@@ -1,5 +1,5 @@
 import { Cbor, CoseKey, P256, PublicKey } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromPublicKey', () => {
   test('default', () => {

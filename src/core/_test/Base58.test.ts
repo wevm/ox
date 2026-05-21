@@ -1,5 +1,5 @@
 import { Base58 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromBytes', () => {
   test('default', () => {

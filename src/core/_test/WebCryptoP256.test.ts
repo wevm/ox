@@ -1,5 +1,5 @@
 import { Hex, PublicKey, WebCryptoP256 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
 

@@ -110,7 +110,7 @@ export declare namespace create {
          */
         createFn?:
           | ((
-              options?: Types.CredentialCreationOptions | undefined,
+              options?: Types.CredentialCreationOptions,
             ) => Promise<Types.Credential | null>)
           | undefined
       })

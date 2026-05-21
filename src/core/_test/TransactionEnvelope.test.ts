@@ -6,7 +6,7 @@ import {
   TxEnvelopeEip7702,
   TxEnvelopeLegacy,
 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 const legacy = TxEnvelopeLegacy.from({
   chainId: 1,
@@ -183,9 +183,8 @@ describe('getSerializedType', () => {
   })
 
   test('behavior: rejects invalid serialized transaction types', () => {
-    expect(() =>
-      TransactionEnvelope.getSerializedType('0x00'),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => TransactionEnvelope.getSerializedType('0x00'))
+      .toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedTypeError: Serialized transaction type is invalid.
 
       Serialized Transaction: "0x00"]
@@ -193,9 +192,8 @@ describe('getSerializedType', () => {
   })
 
   test('behavior: rejects unknown serialized transaction types', () => {
-    expect(() =>
-      TransactionEnvelope.getSerializedType('0x7ec0'),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => TransactionEnvelope.getSerializedType('0x7ec0'))
+      .toThrowErrorMatchingInlineSnapshot(`
       [TransactionEnvelope.InvalidSerializedTypeError: Serialized transaction type is invalid.
 
       Serialized Transaction: "0x7ec0"]

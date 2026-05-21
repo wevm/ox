@@ -1,6 +1,6 @@
 import { test } from '@fast-check/vitest'
 import { Base32, Base58, Base64 } from 'ox'
-import { describe, expect } from 'vitest'
+import { describe, expect } from 'vp/test'
 
 import { arbitraryBytes } from '../../../test/fuzz/arbitraries/bytes.js'
 

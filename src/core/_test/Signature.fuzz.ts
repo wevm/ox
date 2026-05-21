@@ -1,6 +1,6 @@
 import { fc, test } from '@fast-check/vitest'
 import { Hex, Signature } from 'ox'
-import { describe, expect } from 'vitest'
+import { describe, expect } from 'vp/test'
 
 const numRuns = Number(process.env.FC_NUM_RUNS) || 100
 

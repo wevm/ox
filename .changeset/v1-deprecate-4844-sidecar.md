@@ -1,5 +1,5 @@
 ---
-"ox": major
+'ox': major
 ---
 
 **Breaking:** Removed the 4844-only blob-sidecar surface in favor of PeerDAS

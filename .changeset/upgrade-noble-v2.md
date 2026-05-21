@@ -1,5 +1,5 @@
 ---
-"ox": major
+'ox': major
 ---
 
 Upgraded `@noble/ciphers`, `@noble/curves`, `@noble/hashes`, `@scure/bip32`, and `@scure/bip39` to v2.

@@ -1,6 +1,5 @@
 /** @entrypointCategory Tempo */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utilities for Tempo-flavoured EIP-7702 authorizations.

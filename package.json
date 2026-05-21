@@ -4,9 +4,8 @@
     "build": "pnpm exports:update && zile",
     "changeset:publish": "zile publish:prepare && changeset publish && zile publish:post",
     "changeset:version": "changeset version && pnpm version:update && pnpm format",
-    "check": "biome check . --fix --unsafe",
+    "check": "vp check --fix",
     "check:repo": "sherif",
-    "check:tsdoc": "eslint src -c scripts/docgen/tsdoc.config.js",
     "check:types": "tsc -b",
     "contracts:build": "forge build --config-path ./contracts/foundry.toml && node --import tsx contracts/scripts/generate-typed-artifacts.ts",
     "deps": "pnpx taze -r",
@@ -18,24 +17,22 @@
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
     "knip": "knip --production",
-    "format": "biome format --write",
     "postinstall": "git submodule update --init --recursive && pnpm contracts:build && pnpm dev",
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
     "size": "size-limit",
-    "bench": "vitest bench -c ./test/vitest.config.ts",
-    "test": "vitest -c ./test/vitest.config.ts",
-    "test:cov": "vitest -c ./test/vitest.config.ts --coverage",
-    "test:fuzz": "FUZZ=true vitest -c ./test/vitest.config.ts --project fuzz",
-    "test:fuzz:ci": "FUZZ=true FC_NUM_RUNS=200 vitest run -c ./test/vitest.config.ts --project fuzz --bail=1",
-    "test:types": "TYPES=true vitest -c ./test/vitest.config.ts",
+    "bench": "vp test bench",
+    "test": "vp test",
+    "test:cov": "vp test --coverage",
+    "test:fuzz": "FUZZ=true vp test --project fuzz",
+    "test:fuzz:ci": "FUZZ=true FC_NUM_RUNS=200 vp test run --project fuzz --bail=1",
+    "test:types": "TYPES=true vp test",
     "vectors": "bun test vectors/**/*.test.ts",
     "vectors:generate": "bun vectors/generate.ts",
     "version:update": "node --import tsx ./scripts/version:update.ts"
   },
   "devDependencies": {
     "@ark/attest": "^0.16.0",
-    "@biomejs/biome": "^2.2.2",
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.7",
     "@fast-check/vitest": "^0.3.0",
@@ -48,7 +45,6 @@
     "@types/bun": "^1.1.6",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.5.4",
-    "@vitest/browser-playwright": "^4.0.18",
     "@vitest/coverage-v8": "^4.0.18",
     "bun": "^1.1.24",
     "eslint": "^9.9.0",
@@ -67,10 +63,11 @@
     "ts-morph": "^24.0.0",
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
-    "typescript-eslint": "^8.1.0",
     "viem": "^2.45.0",
-    "vitest": "^4.0.18",
-    "zile": "^0.0.25"
+    "vitest": "catalog:",
+    "zile": "^0.0.25",
+    "vite-plus": "catalog:",
+    "vp": "catalog:"
   },
   "packageManager": "pnpm@11.0.8",
   "engines": {
@@ -87,8 +84,7 @@
       "src/_test/**",
       "site/**",
       "test/**",
-      "vectors/**",
-      "tsdoc.config.js"
+      "vectors/**"
     ],
     "ignoreBinaries": [
       "dev",
@@ -101,7 +97,7 @@
     ],
     "vitest": {
       "config": [
-        "test/vitest.config.ts"
+        "vite.config.ts"
       ],
       "entry": [
         "**/*.{bench,bench-d,test,test-d,spec}.?(c|m)[jt]s?(x)"

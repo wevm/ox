@@ -19,7 +19,7 @@ export declare namespace assertSize {
 }
 
 /** @internal */
-export function assertStartOffset(value: Hex.Hex, start?: number | undefined) {
+export function assertStartOffset(value: Hex.Hex, start?: number) {
   if (typeof start !== 'number' || start <= 0) return
   const size = (value.length - 2 + 1) >> 1
   if (start > size - 1)
@@ -38,11 +38,7 @@ export declare namespace assertStartOffset {
 }
 
 /** @internal */
-export function assertEndOffset(
-  value: Hex.Hex,
-  start?: number | undefined,
-  end?: number | undefined,
-) {
+export function assertEndOffset(value: Hex.Hex, start?: number, end?: number) {
   if (typeof start !== 'number' || typeof end !== 'number') return
   const size = (value.length - 2 + 1) >> 1
   if (size !== end - start)

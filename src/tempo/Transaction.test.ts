@@ -1,5 +1,5 @@
 import { Transaction } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('fromRpc', () => {
   test('default', () => {

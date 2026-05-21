@@ -1,5 +1,5 @@
 import { Secp256k1, type Signature } from 'ox'
-import { expect, expectTypeOf, test } from 'vitest'
+import { expect, expectTypeOf, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 
 test('verify', () => {

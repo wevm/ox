@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Mnemonic from './Mnemonic.js'
 
 const mnemonic = Mnemonic.random(Mnemonic.english)

@@ -268,7 +268,7 @@ export declare namespace fromHex {
  */
 export function fromNumber(
   value: bigint | number,
-  options?: fromNumber.Options | undefined,
+  options?: fromNumber.Options,
 ) {
   return bigIntToBytes(value, options)
 }
@@ -369,10 +369,7 @@ export declare namespace isEqual {
  * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
  * @returns Padded {@link ox#Bytes.Bytes} value.
  */
-export function padLeft(
-  value: Bytes,
-  size?: number | undefined,
-): padLeft.ReturnType {
+export function padLeft(value: Bytes, size?: number): padLeft.ReturnType {
   return internal.pad(value, { dir: 'left', size })
 }
 
@@ -396,10 +393,7 @@ export declare namespace padLeft {
  * @param size - Size to pad the {@link ox#Bytes.Bytes} value to.
  * @returns Padded {@link ox#Bytes.Bytes} value.
  */
-export function padRight(
-  value: Bytes,
-  size?: number | undefined,
-): padRight.ReturnType {
+export function padRight(value: Bytes, size?: number): padRight.ReturnType {
   return internal.pad(value, { dir: 'right', size })
 }
 
@@ -475,8 +469,8 @@ export declare namespace size {
  */
 export function slice(
   value: Bytes,
-  start?: number | undefined,
-  end?: number | undefined,
+  start?: number,
+  end?: number,
   options: slice.Options = {},
 ): Bytes {
   const { strict } = options
@@ -487,7 +481,7 @@ export function slice(
 }
 
 export declare namespace slice {
-  type Options = {
+  export type Options = {
     /** Asserts that the sliced value is the same size as the given start/end offsets. */
     strict?: boolean | undefined
   }
@@ -844,7 +838,11 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
     offset,
     position,
     size,
-  }: { offset: number; position: 'start' | 'end'; size: number }) {
+  }: {
+    offset: number
+    position: 'start' | 'end'
+    size: number
+  }) {
     super(
       `Slice ${
         position === 'start' ? 'starting' : 'ending'

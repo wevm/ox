@@ -1,5 +1,5 @@
 import { Provider, RpcSchema } from 'ox'
-import { describe, expectTypeOf, test } from 'vitest'
+import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('Provider.createEmitter', () => {
   test('default', () => {

@@ -1,5 +1,5 @@
 import { Hex, Rlp, Secp256k1, TxEnvelopeEip1559, Value } from 'ox'
-import { assertType, describe, expect, test } from 'vitest'
+import { assertType, describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'
 
@@ -36,9 +36,8 @@ describe('assert', () => {
   })
 
   test('invalid address', () => {
-    expect(() =>
-      TxEnvelopeEip1559.assert({ to: '0x123', chainId: 1 }),
-    ).toThrowErrorMatchingInlineSnapshot(`
+    expect(() => TxEnvelopeEip1559.assert({ to: '0x123', chainId: 1 }))
+      .toThrowErrorMatchingInlineSnapshot(`
     [Address.InvalidAddressError: Address "0x123" is invalid.
 
     Details: Address is not a 20 byte (40 hexadecimal character) value.]

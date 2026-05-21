@@ -85,7 +85,7 @@ export function decode<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor | AbiConstructor,
   options: decode.Options,
 ): decode.ReturnType<abiConstructor>
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function decode(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], options: decode.Options]
@@ -229,7 +229,7 @@ export function encode<const abiConstructor extends AbiConstructor>(
   abiConstructor: abiConstructor | AbiConstructor,
   options: encode.Options<abiConstructor>,
 ): encode.ReturnType
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function encode(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], options: encode.Options]
@@ -447,10 +447,8 @@ export function from(
 
 export declare namespace from {
   type ReturnType<
-    abiConstructor extends
-      | AbiConstructor
-      | string
-      | readonly string[] = AbiConstructor,
+    abiConstructor extends AbiConstructor | string | readonly string[] =
+      AbiConstructor,
   > = AbiItem.from.ReturnType<abiConstructor>
 
   type ErrorType = AbiItem.from.ErrorType | Errors.GlobalErrorType

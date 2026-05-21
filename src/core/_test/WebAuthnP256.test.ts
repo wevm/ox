@@ -1,5 +1,5 @@
 import { P256, PublicKey, Signature, WebAuthnP256, WebCryptoP256 } from 'ox'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vp/test'
 
 beforeAll(() => {
   vi.stubGlobal('window', {

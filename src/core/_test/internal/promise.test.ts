@@ -1,5 +1,5 @@
 import { setTimeout } from 'node:timers/promises'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 import { createHttpServer } from '../../../../test/http.js'
 import { withTimeout } from '../../internal/promise.js'
@@ -33,7 +33,7 @@ describe('withTimeout', () => {
       ),
     ).rejects.toThrowError('timed out')
 
-    server.close()
+    await server.close()
   })
 
   test('behavior: does not double-reject on inner error', async () => {

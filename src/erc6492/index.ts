@@ -1,6 +1,5 @@
 /** @entrypointCategory ERCs */
 // biome-ignore lint/complexity/noUselessEmptyExport: tsdoc
-export type {}
 
 /**
  * Utility functions for working with [ERC-6492 wrapped signatures](https://eips.ethereum.org/EIPS/eip-6492#specification).

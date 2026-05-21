@@ -435,9 +435,8 @@ export declare namespace fromAbi {
   type Options<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
-    args extends
-      | internal.ExtractArgs<abi, name>
-      | undefined = internal.ExtractArgs<abi, name>,
+    args extends internal.ExtractArgs<abi, name> | undefined =
+      internal.ExtractArgs<abi, name>,
     ///
     allArgs = internal.ExtractArgs<abi, name>,
   > = {
@@ -472,9 +471,8 @@ export declare namespace fromAbi {
   type ReturnType<
     abi extends Abi.Abi | readonly unknown[] = Abi.Abi,
     name extends Name<abi> = Name<abi>,
-    args extends
-      | internal.ExtractArgs<abi, name>
-      | undefined = internal.ExtractArgs<abi, name>,
+    args extends internal.ExtractArgs<abi, name> | undefined =
+      internal.ExtractArgs<abi, name>,
     fallback = AbiItem,
   > = abi extends Abi.Abi
     ? Abi.Abi extends abi
@@ -537,7 +535,7 @@ export function getSelector<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
 export function getSelector(abiItem: string | AbiItem): Hex.Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSelector(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
@@ -604,7 +602,7 @@ export function getSignature<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): string
 export function getSignature(abiItem: string | AbiItem): string
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignature(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]
@@ -678,7 +676,7 @@ export function getSignatureHash<
   name extends Name<abi>,
 >(abi: abi | Abi.Abi | readonly unknown[], name: name): Hex.Hex
 export function getSignatureHash(abiItem: string | AbiItem): Hex.Hex
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc-js/require-jsdoc
 export function getSignatureHash(
   ...parameters:
     | [abi: Abi.Abi | readonly unknown[], name: string]

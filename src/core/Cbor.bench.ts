@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Cbor from './Cbor.js'
 
 const small = { ok: true, n: 42, msg: 'hello' }

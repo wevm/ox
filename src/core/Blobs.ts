@@ -373,7 +373,7 @@ export function to<
     | (blobs extends Blobs<Bytes.Bytes> ? 'Bytes' : never),
 >(
   blobs: blobs | Blobs<Hex.Hex> | Blobs<Bytes.Bytes>,
-  to?: to | 'Hex' | 'Bytes' | undefined,
+  to?: to | 'Hex' | 'Bytes',
 ): to.ReturnType<to> {
   const to_ = to ?? (typeof blobs[0] === 'string' ? 'Hex' : 'Bytes')
   const blobs_ = (
@@ -396,7 +396,7 @@ export function to<
       if (blob.length - cursor.position < 31)
         consume = blob.length - cursor.position
 
-      for (const _ in Array.from({ length: consume })) {
+      for (let i = 0; i < consume; i++) {
         const byte = cursor.readByte()
         const isTerminator =
           byte === 0x80 && !cursor.inspectBytes(cursor.remaining).includes(0x80)
@@ -719,13 +719,7 @@ export class EmptyBlobVersionedHashesError extends Errors.BaseError {
 /** Thrown when the blob versioned hash size is invalid. */
 export class InvalidVersionedHashSizeError extends Errors.BaseError {
   override readonly name = 'Blobs.InvalidVersionedHashSizeError'
-  constructor({
-    hash,
-    size,
-  }: {
-    hash: Hex.Hex
-    size: number
-  }) {
+  constructor({ hash, size }: { hash: Hex.Hex; size: number }) {
     super(`Versioned hash "${hash}" size is invalid.`, {
       metaMessages: ['Expected: 32', `Received: ${size}`],
     })
@@ -735,13 +729,7 @@ export class InvalidVersionedHashSizeError extends Errors.BaseError {
 /** Thrown when the blob versioned hash version is invalid. */
 export class InvalidVersionedHashVersionError extends Errors.BaseError {
   override readonly name = 'Blobs.InvalidVersionedHashVersionError'
-  constructor({
-    hash,
-    version,
-  }: {
-    hash: Hex.Hex
-    version: number
-  }) {
+  constructor({ hash, version }: { hash: Hex.Hex; version: number }) {
     super(`Versioned hash "${hash}" version is invalid.`, {
       metaMessages: [
         `Expected: ${Kzg.versionedHashVersion}`,

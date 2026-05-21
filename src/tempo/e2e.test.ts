@@ -9,7 +9,7 @@ import {
   WebCryptoP256,
 } from 'ox'
 import { getTransactionCount } from 'viem/actions'
-import { beforeEach, describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vp/test'
 import { chain, client, fundAddress, nodeEnv } from '../../test/tempo/config.js'
 import {
   AuthorizationTempo,

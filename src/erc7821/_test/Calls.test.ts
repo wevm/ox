@@ -1,5 +1,5 @@
 import { Calls } from 'ox/erc7821'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 describe('encode', () => {
   test('default', () => {

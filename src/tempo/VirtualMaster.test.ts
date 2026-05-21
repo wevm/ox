@@ -1,5 +1,5 @@
 import { VirtualMaster } from 'ox/tempo'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 const salt =

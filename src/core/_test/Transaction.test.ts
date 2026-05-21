@@ -5,7 +5,7 @@ import {
   TxEnvelopeEip1559,
   TxEnvelopeLegacy,
 } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
 import { anvilMainnet } from '../../../test/prool.js'
 

@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Bytes from './Bytes.js'
 import * as PublicKey from './PublicKey.js'
 import * as WebCryptoP256 from './WebCryptoP256.js'

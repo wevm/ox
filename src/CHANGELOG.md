@@ -180,7 +180,6 @@
 ### Minor Changes
 
 - [`c8c6229`](https://github.com/wevm/ox/commit/c8c62297ac43161095482176e1846ce61bb62eb5) Thanks [@jxom](https://github.com/jxom)! - Overhauled WebAuthn support with a dedicated `ox/webauthn` entrypoint for server-side registration & authentication ceremonies, credential management, and authenticator data parsing.
-
   - `Registration` – Full registration ceremony: `create`, `getOptions`, `verify`, with `serializeOptions`/`deserializeOptions` for server↔client transport
   - `Authentication` – Full authentication ceremony: `sign`, `getOptions`, `verify`, with `serializeOptions`/`deserializeOptions` for server↔client transport
   - `Credential` – `serialize`/`deserialize` for persisting and transporting WebAuthn credentials as JSON
@@ -388,7 +387,6 @@
 ### Patch Changes
 
 - [#113](https://github.com/wevm/ox/pull/113) [`e21cb3c`](https://github.com/wevm/ox/commit/e21cb3cf0b7412f9ca72824247d22ba25e8be4c9) Thanks [@jxom](https://github.com/jxom)! - Added support for specifying the ABI and signature name to:
-
   - `AbiFunction.{encodeData,encodeResult,decodeData,decodeResult}`
   - `AbiError.{encode,decode}`
   - `AbiEvent.{encode,decode}`
@@ -396,13 +394,13 @@
   Example:
 
   ```ts twoslash
-  import { AbiFunction } from "ox";
-  import { abi } from "./abi";
+  import { AbiFunction } from 'ox'
+  import { abi } from './abi'
 
-  const data = AbiFunction.encodeData(abi, "approve", [
-    "0x0000000000000000000000000000000000000000",
+  const data = AbiFunction.encodeData(abi, 'approve', [
+    '0x0000000000000000000000000000000000000000',
     1n,
-  ]);
+  ])
   ```
 
 ## 0.9.4
@@ -434,7 +432,6 @@
 ### Minor Changes
 
 - [#104](https://github.com/wevm/ox/pull/104) [`4f4b635`](https://github.com/wevm/ox/commit/4f4b635dfb399ca9df07bab843857743f389639e) Thanks [@jxom](https://github.com/jxom)! - **Breaking(`ox/erc6492`:**
-
   - Renamed `WrappedSignature` to `SignatureErc6492`
   - Renamed `WrappedSignature.WrappedSignature` to `SignatureErc6492.Unwrapped`
   - Renamed `WrappedSignature.toHex` to `SignatureErc6492.wrap`
@@ -489,7 +486,6 @@
 ### Patch Changes
 
 - [`9fd0bf0`](https://github.com/wevm/ox/commit/9fd0bf0460694709566805bc29f50cad25816620) Thanks [@jxom](https://github.com/jxom)! - Added [ECDH (Elliptic Curve Diffie-Hellman)](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey#ecdh) shared secrets to `P256`, `Secp256k1`, and `WebCryptoP256` modules. This enables secure key agreement between parties using elliptic curve cryptography for both secp256k1 and secp256r1 (P256) curves, with support for both `@noble/curves` (for `P256` and `Secp256k1`) implementation and Web Crypto APIs (`WebCryptoP256`).
-
   - `P256.getSharedSecret`
   - `Secp256k1.getSharedSecret`
   - `WebCryptoP256.getSharedSecret`

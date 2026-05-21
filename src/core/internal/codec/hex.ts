@@ -44,7 +44,7 @@ export function bytesToHex(value: Uint8Array): Hex {
   if (_Buffer)
     return `0x${_Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('hex')}` as Hex
   const length = value.length
-  const parts = new Array<string>(length)
+  const parts = Array.from<string>({ length })
   for (let i = 0; i < length; i++) parts[i] = hexes[value[i]!]!
   return `0x${parts.join('')}` as Hex
 }

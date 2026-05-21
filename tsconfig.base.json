@@ -27,10 +27,6 @@
     "noUnusedParameters": true,
     "useDefineForClassFields": true,
     "useUnknownInCatchVariables": true,
-
-    // Interop constraints
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": false,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,

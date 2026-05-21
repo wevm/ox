@@ -1,5 +1,5 @@
 import { Solidity } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 
 test('exports', () => {
   expect(Object.keys(Solidity)).toMatchInlineSnapshot(`

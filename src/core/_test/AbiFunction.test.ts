@@ -1,5 +1,5 @@
 import { Abi, AbiFunction, AbiParameters } from 'ox'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vp/test'
 import { erc20Abi, wagmiContractConfig } from '../../../test/constants/abis.js'
 import { address } from '../../../test/constants/addresses.js'
 import { anvilMainnet } from '../../../test/prool.js'
@@ -549,9 +549,8 @@ describe('from', () => {
 
 describe('fromAbi', () => {
   test('default', () => {
-    expect(
-      AbiFunction.fromAbi(wagmiContractConfig.abi, 'balanceOf'),
-    ).toMatchInlineSnapshot(`
+    expect(AbiFunction.fromAbi(wagmiContractConfig.abi, 'balanceOf'))
+      .toMatchInlineSnapshot(`
     {
       "hash": "0x70a08231b98ef4ca268c9cc3f6b4590e4bfec28280db06bb5d45e689f2a360be",
       "inputs": [
@@ -606,9 +605,8 @@ describe('fromAbi', () => {
       '0x0000000000000000000000000000000000000000',
       1n,
     ])
-    expect(
-      AbiFunction.fromAbi(wagmiContractConfig.abi, data),
-    ).toMatchInlineSnapshot(`
+    expect(AbiFunction.fromAbi(wagmiContractConfig.abi, data))
+      .toMatchInlineSnapshot(`
       {
         "hash": "0x095ea7b334ae44009aa867bfb386f5c3b4b443ac6f0ee573fa91c4608fbadfba",
         "inputs": [

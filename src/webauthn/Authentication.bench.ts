@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { bench, describe } from 'vp/test'
 import * as Bytes from '../core/Bytes.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'

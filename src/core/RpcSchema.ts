@@ -338,17 +338,14 @@ type ViemSchemaItem = {
 // --- Union-to-tuple helpers (order is not guaranteed, but stable) ---
 /** @internal */
 type UnionToIntersection<union> = (
-  union extends unknown
-    ? (arg: () => union) => void
-    : never
+  union extends unknown ? (arg: () => union) => void : never
 ) extends (arg: infer intersection) => void
   ? intersection
   : never
 
 /** @internal */
-type UnionLast<union> = UnionToIntersection<union> extends () => infer last
-  ? last
-  : never
+type UnionLast<union> =
+  UnionToIntersection<union> extends () => infer last ? last : never
 
 /** @internal */
 type UnionToTuple<union, last = UnionLast<union>> = [union] extends [never]

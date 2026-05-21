@@ -1,5 +1,5 @@
 import { PublicKey, RpcTransport, Secp256k1, Signature, WebAuthnP256 } from 'ox'
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vp/test'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as ZoneRpcAuthentication from './ZoneRpcAuthentication.js'
 
