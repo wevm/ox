@@ -641,14 +641,17 @@ export function encodeData(
 ) {
   const [abiFunction, args] = (() => {
     if (Array.isArray(parameters[0])) {
-      const [abi, name, args] = parameters as [
+      const [abi, name, args = []] = parameters as [
         Abi.Abi | readonly unknown[],
         Hex.Hex | string,
-        readonly unknown[],
+        readonly unknown[] | undefined,
       ]
       return [fromAbi(abi, name, { args }), args]
     }
-    const [abiFunction, args] = parameters as [AbiFunction, readonly unknown[]]
+    const [abiFunction, args = []] = parameters as [
+      AbiFunction,
+      readonly unknown[] | undefined,
+    ]
     return [abiFunction, args]
   })()
 
