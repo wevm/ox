@@ -70,7 +70,7 @@ describe('from', () => {
     const args = {
       data: '0xdeadbeef',
       signature: Signature.toHex(signature),
-      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
     } as const
 
     const serialized = SignatureErc6492.wrap(args)
@@ -89,7 +89,7 @@ describe('unwrap', () => {
     const args = {
       data: '0xdeadbeef',
       signature: Signature.toHex(signature),
-      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
     } as const
 
     const wrapped = SignatureErc6492.wrap(args)
@@ -122,7 +122,7 @@ describe('unwrap: strips trailing magic bytes', () => {
     const args = {
       data: '0xdeadbeef',
       signature: `0x${'ab'.repeat(96)}`,
-      to: '0xcafebabecafebabecafebabecafebabecafebabe',
+      to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
     } as const
 
     const wrapped = SignatureErc6492.wrap(args)

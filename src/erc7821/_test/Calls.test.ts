@@ -137,12 +137,12 @@ describe('decode', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1n,
       },
       {
         data: '0xcafebabe',
-        to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        to: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
         value: 2n,
       },
     ] as const
@@ -157,7 +157,7 @@ describe('decode', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1000000000000000000n,
       },
     ] as const
@@ -181,7 +181,7 @@ describe('decode', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1n,
       },
     ] as const
@@ -197,7 +197,7 @@ describe('decode', () => {
     const calls = [
       {
         data: '0xdeadbeef',
-        to: '0xcafebabecafebabecafebabecafebabecafebabe',
+        to: '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe',
         value: 1n,
       },
     ] as const

@@ -1,4 +1,4 @@
-import { Authorization, Secp256k1 } from 'ox'
+import { Address, Authorization, Secp256k1 } from 'ox'
 import { SignatureErc8010 } from 'ox/erc8010'
 import { describe, expect, test } from 'vp/test'
 import { accounts } from '../../../test/constants/accounts.js'
@@ -101,7 +101,7 @@ describe('from', () => {
 
     const serialized = SignatureErc8010.wrap(args)
     const { to, ...wrapped } = SignatureErc8010.from(serialized)
-    expect(to).toBe(accounts[0].address)
+    expect(to).toBe(Address.checksum(accounts[0].address))
     expect(wrapped).toEqual(args)
   })
 })
@@ -116,7 +116,7 @@ describe('unwrap', () => {
 
     const wrapped = SignatureErc8010.wrap(args)
     const { to, ...unwrapped } = SignatureErc8010.unwrap(wrapped)
-    expect(to).toBe(accounts[0].address)
+    expect(to).toBe(Address.checksum(accounts[0].address))
     expect(unwrapped).toEqual(args)
   })
 
@@ -172,7 +172,7 @@ describe('assert: validates unwrapped objects', () => {
 
 describe('wrap: skips recovery when `to` is provided', () => {
   test('uses caller-supplied `to` verbatim', () => {
-    const customTo = '0xcafebabecafebabecafebabecafebabecafebabe' as const
+    const customTo = '0xCafEBAbECAFEbAbEcaFEbabECAfebAbEcAFEBaBe' as const
     const wrapped = SignatureErc8010.wrap({
       authorization,
       data: '0xdeadbeef',
@@ -190,7 +190,7 @@ describe('wrap: skips recovery when `to` is provided', () => {
       signature,
     })
     const unwrapped = SignatureErc8010.unwrap(wrapped)
-    expect(unwrapped.to).toBe(accounts[0].address)
+    expect(unwrapped.to).toBe(Address.checksum(accounts[0].address))
   })
 })
 
