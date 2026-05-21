@@ -17,6 +17,7 @@ export default defineConfig({
       '**/tsconfig.json',
       '**/tsconfig.*.json',
       '**/package.json',
+      '**/*.md',
     ],
   },
   lint: {
