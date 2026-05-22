@@ -4,20 +4,25 @@
   "type": "module",
   "scripts": {
     "dev": "vocs dev",
-    "build": "NODE_OPTIONS='--max-old-space-size=8192' vocs build",
-    "preview": "vocs preview"
+    "build": "node --import tsx scripts/copy-vocs-theme.ts && NODE_OPTIONS='--max-old-space-size=8192' vocs build",
+    "preview": "vocs preview",
+    "sync:vocs": "node --import tsx scripts/copy-vocs-theme.ts"
   },
   "dependencies": {
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "tailwindcss": "^4.2.4",
     "vocs": "https://pkg.pr.new/wevm/vocs@dc18ab3",
     "waku": "1.0.0-alpha.10"
   },
   "devDependencies": {
+    "@iconify-json/vscode-icons": "^1.2.50",
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "ox": "workspace:*",
+    "shiki": "3.23.0",
+    "tsx": "^4.17.0",
     "typescript": "^5"
   },
   "packageManager": "pnpm@11.0.8"

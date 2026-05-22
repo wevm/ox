@@ -1,0 +1,15 @@
+```ts twoslash
+// @noErrors
+import { Address, HdKey, Mnemonic, Secp256k1 } from 'ox'
+
+const phrase = Mnemonic.random(Mnemonic.english)
+// @log: 'wide bracket angry hover crystal flag ...'
+
+const seed = Mnemonic.toSeed(phrase)
+const hdKey = HdKey.fromSeed(seed)
+const account = hdKey.derive(HdKey.path({ account: 0, index: 0 }))
+
+const publicKey = Secp256k1.getPublicKey({ privateKey: account.privateKey })
+const address = Address.fromPublicKey(publicKey)
+// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
+```

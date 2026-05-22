@@ -1,9 +1,10 @@
 import { defineConfig } from 'vocs/config'
 import pkg from '../package.json' with { type: 'json' }
 import { sidebar, topNav } from './src/config-generated'
+import { shikiDark, shikiLight } from './src/shiki-themes'
 
 export default defineConfig({
-  accentColor: 'light-dark(#4b7b2b, #bd976a)',
+  accentColor: 'light-dark(#b8421d, #e85d35)',
   baseUrl:
     process.env.VERCEL_ENV === 'production'
       ? 'https://oxlib.sh'
@@ -19,8 +20,8 @@ export default defineConfig({
   logoUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   codeHighlight: {
     themes: {
-      light: 'vitesse-light',
-      dark: 'vitesse-dark',
+      light: shikiLight,
+      dark: shikiDark,
     },
   },
   rootDir: '.',

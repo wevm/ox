@@ -1,0 +1,19 @@
+```ts twoslash
+// @noErrors
+import { Address, Hash, Hex, Secp256k1, Signature } from 'ox'
+
+const payload = Hash.keccak256(Hex.fromString('login'))
+// @log: '0xee15…8b3a'
+
+const signature = Signature.fromHex('0x…')
+// @log: { r: '0x1234…', s: '0x5678…', yParity: 0 }
+
+const publicKey = Secp256k1.recoverPublicKey({ payload, signature })
+// @log: { prefix: 4, x: '0xd6c2…', y: '0x9a47…' }
+
+const signer = Address.fromPublicKey(publicKey)
+// @log: '0x71bE63f3384f5fb98995898A86B02Fb2426c5788'
+
+Signature.toHex(signature)
+// @log: '0x1234…1c'
+```

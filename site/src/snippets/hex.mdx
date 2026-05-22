@@ -1,0 +1,19 @@
+```ts twoslash
+// @noErrors
+import { Hex, Value } from 'ox'
+
+const amount = Hex.fromNumber(Value.fromEther('1.5'), { size: 32 })
+// @log: '0x000000000000000000000000000000000000000000000000…14d1120d7b160000'
+
+const owner = Hex.padLeft('0x7099970C51812dc3A010C7d01b50e0d17dc79C8', 32)
+// @log: '0x0000000000000000000000007099970c51812dc3a010c7d01b50e0d17dc79c8'
+
+const packed = Hex.concat(amount, owner)
+// @log: '0x0000…14d1120d7b1600000000000000000000007099…79c8'
+
+const sliced = Hex.slice(packed, 0, 32)
+// @log: '0x000000000000000000000000000000000000000000000000…14d1120d7b160000'
+
+Hex.toBigInt(sliced)
+// @log: 1500000000000000000n
+```

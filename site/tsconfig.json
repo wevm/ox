@@ -15,7 +15,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "types": ["node"]
+    "types": ["node", "vocs/globals"]
   },
   "include": ["src", "vocs.config.ts"],
   "exclude": ["src/pages.gen.ts", "src/config-generated.ts"]
