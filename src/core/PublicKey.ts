@@ -26,18 +26,18 @@ export type PublicKey<
  * Asserts that a {@link ox#PublicKey.PublicKey} is valid.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   PublicKey.assert({
+ * PublicKey.assert({
  *   prefix: 4,
  *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
- *   })
- *   // @error: PublicKey.InvalidError: Value \`{"y":"0x..."}\` is not a valid public key.
- *   // @error: Public key must contain:
- *   // @error: - an `x` and `prefix` value (compressed)
- *   // @error: - an `x`, `y`, and `prefix` value (uncompressed)
- *   ```
+ * })
+ * // @error: PublicKey.InvalidError: Value \`{"y":"0x..."}\` is not a valid public key.
+ * // @error: Public key must contain:
+ * // @error: - an `x` and `prefix` value (compressed)
+ * // @error: - an `x`, `y`, and `prefix` value (uncompressed)
+ * ```
  *
  * @param publicKey - The public key object to assert.
  */
@@ -111,21 +111,21 @@ export declare namespace assert {
  * Compresses a {@link ox#PublicKey.PublicKey}.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.from({
+ * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x83185...',
  *   y: '0x35477...',
- *   })
+ * })
  *
- *   const compressed = PublicKey.compress(publicKey) // [!code focus]
- *   // @log: {
- *   // @log:   prefix: 3,
- *   // @log:   x: '0x83185...',
- *   // @log: }
- *   ```
+ * const compressed = PublicKey.compress(publicKey) // [!code focus]
+ * // @log: {
+ * // @log:   prefix: 3,
+ * // @log:   x: '0x83185...',
+ * // @log: }
+ * ```
  *
  * @param publicKey - The public key to compress.
  * @returns The compressed public key.
@@ -147,34 +147,34 @@ export declare namespace compress {
  * {@link ox#PublicKey.PublicKey}, {@link ox#Bytes.Bytes}, or {@link ox#Hex.Hex}.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.from({
+ * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
  *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- *   })
- *   // @log: {
- *   // @log:   prefix: 4,
- *   // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- *   // @log: }
- *   ```
+ * })
+ * // @log: {
+ * // @log:   prefix: 4,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ * // @log: }
+ * ```
  *
  * @example
- *   ### From Serialized
+ * ### From Serialized
  *
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.from('0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
- *   // @log: {
- *   // @log:   prefix: 4,
- *   // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- *   // @log: }
- *   ```
+ * const publicKey = PublicKey.from('0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * // @log: {
+ * // @log:   prefix: 4,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ * // @log: }
+ * ```
  *
  * @param value - The public key value to instantiate.
  * @returns The instantiated {@link ox#PublicKey.PublicKey}.
@@ -242,17 +242,17 @@ export declare namespace from {
  * value.
  *
  * @example
- *   ```ts twoslash
- *   // @noErrors
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * // @noErrors
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.fromBytes(new Uint8Array([128, 3, 131, ...]))
- *   // @log: {
- *   // @log:   prefix: 4,
- *   // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- *   // @log: }
- *   ```
+ * const publicKey = PublicKey.fromBytes(new Uint8Array([128, 3, 131, ...]))
+ * // @log: {
+ * // @log:   prefix: 4,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ * // @log: }
+ * ```
  *
  * @param publicKey - The serialized public key.
  * @returns The deserialized public key.
@@ -272,29 +272,29 @@ export declare namespace fromBytes {
  * Deserializes a {@link ox#PublicKey.PublicKey} from a {@link ox#Hex.Hex} value.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
- *   // @log: {
- *   // @log:   prefix: 4,
- *   // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- *   // @log: }
- *   ```
+ * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * // @log: {
+ * // @log:   prefix: 4,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log:   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ * // @log: }
+ * ```
  *
  * @example
- *   ### Deserializing a Compressed Public Key
+ * ### Deserializing a Compressed Public Key
  *
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.fromHex('0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75')
- *   // @log: {
- *   // @log:   prefix: 3,
- *   // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   // @log: }
- *   ```
+ * const publicKey = PublicKey.fromHex('0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75')
+ * // @log: {
+ * // @log:   prefix: 3,
+ * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
+ * // @log: }
+ * ```
  *
  * @param publicKey - The serialized public key.
  * @returns The deserialized public key.
@@ -353,18 +353,18 @@ export declare namespace fromHex {
  * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Bytes.Bytes}.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.from({
+ * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
  *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- *   })
+ * })
  *
- *   const bytes = PublicKey.toBytes(publicKey) // [!code focus]
- *   // @log: Uint8Array [128, 3, 131, ...]
- *   ```
+ * const bytes = PublicKey.toBytes(publicKey) // [!code focus]
+ * // @log: Uint8Array [128, 3, 131, ...]
+ * ```
  *
  * @param publicKey - The public key to serialize.
  * @returns The serialized public key.
@@ -396,18 +396,18 @@ export declare namespace toBytes {
  * Serializes a {@link ox#PublicKey.PublicKey} to {@link ox#Hex.Hex}.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const publicKey = PublicKey.from({
+ * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
  *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
- *   })
+ * })
  *
- *   const hex = PublicKey.toHex(publicKey) // [!code focus]
- *   // @log: '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
- *   ```
+ * const hex = PublicKey.toHex(publicKey) // [!code focus]
+ * // @log: '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
+ * ```
  *
  * @param publicKey - The public key to serialize.
  * @returns The serialized public key.
@@ -449,15 +449,15 @@ export declare namespace toHex {
  * otherwise.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   const valid = PublicKey.validate({
+ * const valid = PublicKey.validate({
  *   prefix: 4,
  *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
- *   })
- *   // @log: false
- *   ```
+ * })
+ * // @log: false
+ * ```
  *
  * @param publicKey - The public key object to assert.
  */
@@ -486,15 +486,15 @@ export declare namespace validate {
  * Thrown when a public key is invalid.
  *
  * @example
- *   ```ts twoslash
- *   import { PublicKey } from 'ox'
+ * ```ts twoslash
+ * import { PublicKey } from 'ox'
  *
- *   PublicKey.assert({ y: '0x01' })
- *   // @error: PublicKey.InvalidError: Value `{"y":"0x01"}` is not a valid public key.
- *   // @error: Public key must contain:
- *   // @error: - an `x` and `prefix` value (compressed)
- *   // @error: - an `x`, `y`, and `prefix` value (uncompressed)
- *   ```
+ * PublicKey.assert({ y: '0x01' })
+ * // @error: PublicKey.InvalidError: Value `{"y":"0x01"}` is not a valid public key.
+ * // @error: Public key must contain:
+ * // @error: - an `x` and `prefix` value (compressed)
+ * // @error: - an `x`, `y`, and `prefix` value (uncompressed)
+ * ```
  */
 export class InvalidError extends Errors.BaseError {
   override readonly name = 'PublicKey.InvalidError'

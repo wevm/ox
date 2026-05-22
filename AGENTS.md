@@ -123,3 +123,4 @@
 - **Generated site pages** -- API/reference pages under `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/webauthn`, and `site/src/pages/glossary` are generated.
 - **Contracts submodule** -- `contracts/lib/forge-std` is a submodule path. Treat submodule status changes as user work unless the task is specifically about contracts setup.
 - **Secrets are local** -- `.env` is local. Do not print, rewrite, or commit secrets.
+- **Docgen export comments** -- `extractNamespaceDocComments` should read the nearest JSDoc on an export declaration. ts-morph can include earlier file-level JSDoc descendants on the first export.

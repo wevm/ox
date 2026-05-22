@@ -41,7 +41,7 @@ export function extractNamespaceDocComments(
       ?.getText()
     if (!namespace) continue
 
-    const tsDoc = node.getDescendantsOfKind(SyntaxKind.JSDoc)[0]?.getText()
+    const tsDoc = node.getDescendantsOfKind(SyntaxKind.JSDoc).at(-1)?.getText()
     if (!tsDoc) continue
 
     const parserContext = tsdocParser.parseString(tsDoc)

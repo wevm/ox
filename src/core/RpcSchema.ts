@@ -52,10 +52,7 @@ export function from<schema extends Generic>(): schema {
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Item = RpcSchema.ExtractItem<
- *   RpcSchema.Eth,
- *   'eth_getBlockByNumber'
- * >
+ * type Item = RpcSchema.ExtractItem<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  * ```
  */
@@ -74,10 +71,7 @@ export type ExtractItem<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Request = RpcSchema.ExtractRequest<
- *   RpcSchema.Eth,
- *   'eth_getBlockByNumber'
- * >
+ * type Request = RpcSchema.ExtractRequest<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  * ```
  */
@@ -108,10 +102,7 @@ export type ExtractMethodName<schema extends Generic> =
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<
- *   RpcSchema.Eth,
- *   'eth_getBlockByNumber'
- * >
+ * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  * ```
  */
@@ -127,10 +118,7 @@ export type ExtractParams<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type ReturnType = RpcSchema.ExtractReturnType<
- *   RpcSchema.Eth,
- *   'eth_getBlockByNumber'
- * >
+ * type ReturnType = RpcSchema.ExtractReturnType<RpcSchema.Eth, 'eth_getBlockByNumber'>
  * //   ^?
  * ```
  */
