@@ -141,8 +141,10 @@ export type TupleListSigned = TupleList<true>
  *
  * ```ts twoslash
  * import { P256 } from 'ox'
- * import { AuthorizationTempo } from 'ox/tempo'
- * import { SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
  * const { privateKey, publicKey } = P256.createKeyPair()
  *
@@ -177,8 +179,10 @@ export type TupleListSigned = TupleList<true>
  * ```ts twoslash
  * // @noErrors
  * import { WebCryptoP256 } from 'ox'
- * import { AuthorizationTempo } from 'ox/tempo'
- * import { SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
  * const { privateKey, publicKey } =
  *   await WebCryptoP256.createKeyPair()
@@ -215,8 +219,10 @@ export type TupleListSigned = TupleList<true>
  * ```ts twoslash
  * // @noErrors
  * import { WebAuthnP256 } from 'ox'
- * import { AuthorizationTempo } from 'ox/tempo'
- * import { SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
  * const credential = await WebAuthnP256.createCredential({
  *   name: 'Example'
@@ -572,26 +578,29 @@ export declare namespace fromTupleList {
  *
  * ```ts twoslash
  * import { P256 } from 'ox'
- * import * as Tempo from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
  * const { privateKey, publicKey } = P256.createKeyPair()
  *
- * const authorization = Tempo.AuthorizationTempo.from({
+ * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
  *   nonce: 69n
  * })
  *
  * const payload =
- *   Tempo.AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ *   AuthorizationTempo.getSignPayload(authorization) // [!code focus]
  *
  * const signature = P256.sign({ payload, privateKey })
- * const signatureEnvelope = Tempo.SignatureEnvelope.from({
+ * const signatureEnvelope = SignatureEnvelope.from({
  *   prehash: false,
  *   publicKey,
  *   signature
  * })
- * const authorization_signed = Tempo.AuthorizationTempo.from(
+ * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
  *   { signature: signatureEnvelope }
  * )

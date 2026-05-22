@@ -706,10 +706,12 @@ export * as AesGcm from './core/AesGcm.js'
  * A signature can be attached to an Authorization using {@link ox#Authorization.(from:function)}:
  *
  * ```ts twoslash
- * import { Authorization } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeEip7702 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
@@ -2731,10 +2733,12 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { RpcTransport } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeEip1559 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   RpcTransport,
+ *   TxEnvelopeEip1559,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeEip1559.from({
@@ -2901,10 +2905,12 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { RpcTransport } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeEip2930 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   RpcTransport,
+ *   TxEnvelopeEip2930,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeEip2930.from({
@@ -3212,10 +3218,12 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  * Transaction Envelopes can be instantiated using {@link ox#TxEnvelopeEip7702.(from:function)}:
  *
  * ```ts twoslash
- * import { Authorization } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeEip7702 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
@@ -3255,10 +3263,12 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  * Transaction Envelopes can be signed using {@link ox#TxEnvelopeEip7702.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
  * ```ts twoslash
- * import { Authorization } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeEip7702 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
@@ -3305,11 +3315,13 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { Authorization } from 'ox'
- * import { RpcTransport } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeEip7702 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   RpcTransport,
+ *   TxEnvelopeEip7702,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
@@ -3436,10 +3448,12 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { RpcTransport } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeLegacy } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   RpcTransport,
+ *   TxEnvelopeLegacy,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeLegacy.from({

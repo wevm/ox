@@ -6,10 +6,12 @@
  *
  * @example
  * ```ts twoslash
- * import { Authorization } from 'ox'
- * import { PersonalMessage } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { Signature } from 'ox'
+ * import {
+ *   Authorization,
+ *   PersonalMessage,
+ *   Secp256k1,
+ *   Signature
+ * } from 'ox'
  * import { SignatureErc8010 } from 'ox/erc8010' // [!code focus]
  *
  * const authorization = Authorization.from({

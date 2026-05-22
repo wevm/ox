@@ -49,12 +49,16 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  *
  * @example
  * ```ts twoslash
- * import { KeyAuthorization } from 'ox/tempo'
- * import { SignatureEnvelope } from 'ox/tempo'
- * import { Address } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { WebCryptoP256 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   KeyAuthorization,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
+ * import {
+ *   Address,
+ *   Secp256k1,
+ *   WebCryptoP256,
+ *   Value
+ * } from 'ox'
  *
  * const keyPair = await WebCryptoP256.createKeyPair()
  * const address = Address.fromPublicKey(keyPair.publicKey)

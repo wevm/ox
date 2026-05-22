@@ -223,10 +223,12 @@ export declare namespace deserialize {
  *
  * @example
  * ```ts twoslash
- * import { Authorization } from 'ox'
- * import { Secp256k1 } from 'ox'
- * import { TxEnvelopeEip7702 } from 'ox'
- * import { Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',

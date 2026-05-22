@@ -109,8 +109,8 @@ catalogs:
       specifier: npm:vite-plus@latest
       version: 0.1.22
     zile:
-      specifier: ^0.0.26
-      version: 0.0.26
+      specifier: ^0.0.28
+      version: 0.0.28
 
 overrides:
   '@babel/helpers@<7.26.10': '>=7.26.10'
@@ -298,7 +298,7 @@ importers:
         version: vite-plus@0.1.22(@types/node@22.5.4)(@vitest/coverage-v8@4.0.18)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)
       zile:
         specifier: 'catalog:'
-        version: 0.0.26(typescript@5.5.4)
+        version: 0.0.28(typescript@5.5.4)
 
   site:
     dependencies:
@@ -5498,8 +5498,8 @@ packages:
     resolution: {integrity: sha512-GQHQqAopRhwU8Kt1DDM8NjibDXHC8eoh1erhGAJPEyveY9qqVeXvVikNKrDz69sHowPMorbPUrH/mx8c50eiBQ==}
     engines: {node: '>=18'}
 
-  zile@0.0.26:
-    resolution: {integrity: sha512-5PVQYNQURgMHlLBS2CyHjEinWgZYaFon/fVgCq7in13Fbw93P9hVpS12wohq+XXNbJ1Xe/nwfV1uMkVZC2kbew==}
+  zile@0.0.28:
+    resolution: {integrity: sha512-FGh4VKyXXPeuK/K51i1bdE1Ut4O1uGannMVqhPn5naaSjDy5+wLNz8GOUyBfYcC7tEt2XKRaUPX3O5ri7enLEg==}
     hasBin: true
     peerDependencies:
       '@typescript/native-preview': '>=7.0.0'
@@ -11575,7 +11575,7 @@ snapshots:
 
   yoctocolors@2.1.1: {}
 
-  zile@0.0.26(typescript@5.5.4):
+  zile@0.0.28(typescript@5.5.4):
     dependencies:
       '@clack/prompts': 1.2.0
       cac: 6.7.14
