@@ -23,7 +23,7 @@ export type Part = Hex.Hex | Bytes.Bytes | number | bigint
  *
  * const address = VirtualAddress.from({
  *   masterId: '0x58e21090',
- *   userTag: '0x010203040506',
+ *   userTag: '0x010203040506'
  * })
  *
  * address
@@ -74,7 +74,7 @@ export declare namespace from {
  * import { VirtualAddress } from 'ox/tempo'
  *
  * const isVirtual = VirtualAddress.isVirtual(
- *   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506',
+ *   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
  * )
  *
  * isVirtual
@@ -103,7 +103,7 @@ export function isVirtual(address: string): boolean {
  * import { VirtualAddress } from 'ox/tempo'
  *
  * const parsed = VirtualAddress.parse(
- *   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506',
+ *   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
  * )
  *
  * parsed
@@ -152,7 +152,7 @@ export declare namespace parse {
  * import { VirtualAddress } from 'ox/tempo'
  *
  * const valid = VirtualAddress.validate(
- *   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506',
+ *   '0x58e21090fdfdfdfdfdfdfdfdfdfd010203040506'
  * )
  *
  * valid

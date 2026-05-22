@@ -129,7 +129,10 @@ export function fromNoblePoint<group extends 'G1' | 'G2'>(
  * ```ts twoslash
  * import { Bls, BlsPoint } from 'ox'
  *
- * const signature = Bls.sign({ payload: '0x...', privateKey: '0x...' })
+ * const signature = Bls.sign({
+ *   payload: '0x...',
+ *   privateKey: '0x...'
+ * })
  * const signatureBytes = BlsPoint.toBytes(signature)
  * // @log: Uint8Array [172, 175, 255, ...]
  * ```
@@ -169,7 +172,10 @@ export declare namespace toBytes {
  * ```ts twoslash
  * import { Bls, BlsPoint } from 'ox'
  *
- * const signature = Bls.sign({ payload: '0x...', privateKey: '0x...' })
+ * const signature = Bls.sign({
+ *   payload: '0x...',
+ *   privateKey: '0x...'
+ * })
  * const signatureHex = BlsPoint.toHex(signature)
  * // @log: '0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c'
  * ```
@@ -258,7 +264,10 @@ export declare namespace fromBytes {
  * // @noErrors
  * import { BlsPoint } from 'ox'
  *
- * const publicKey = BlsPoint.fromHex('0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66', 'G1')
+ * const publicKey = BlsPoint.fromHex(
+ *   '0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66',
+ *   'G1'
+ * )
  * // @log: {
  * // @log:   x: '0x00...ac',
  * // @log:   y: '0x00...af',
@@ -275,7 +284,7 @@ export declare namespace fromBytes {
  *
  * const signature = BlsPoint.fromHex(
  *   '0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c',
- *   'G2',
+ *   'G2'
  * )
  * // @log: {
  * // @log:   x: { c0: '0x00...11', c1: '0x00...22' },

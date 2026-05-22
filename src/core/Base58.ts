@@ -10,7 +10,9 @@ import * as internal from './internal/base58.js'
  * ```ts twoslash
  * import { Base58, Bytes } from 'ox'
  *
- * const value = Base58.fromBytes(Bytes.fromString('Hello World!'))
+ * const value = Base58.fromBytes(
+ *   Bytes.fromString('Hello World!')
+ * )
  * // @log: '2NEpo7TZRRrLZSi2U'
  * ```
  *

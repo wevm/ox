@@ -213,7 +213,7 @@ export declare namespace toRpc {
  *   hash: '0xebc3644804e4040c0a74c5a5bbbc6b46a71a5d4010fe0c92ebb2fdf4a43ea5dd',
  *   number: '0xec6fc6',
  *   size: '0x208',
- *   timestamp: '0x63198f6f',
+ *   timestamp: '0x63198f6f'
  *   // ...
  * })
  * // @log: {
@@ -235,10 +235,10 @@ export declare namespace toRpc {
  * import 'ox/window'
  * import { Block } from 'ox'
  *
- * const block = await window.ethereum!
- *   .request({
+ * const block = await window
+ *   .ethereum!.request({
  *     method: 'eth_getBlockByNumber',
- *     params: ['latest', false],
+ *     params: ['latest', false]
  *   })
  *   .then(Block.fromRpc) // [!code hl]
  * // @log: {

@@ -47,17 +47,19 @@ export type StorageProofRpc = StorageProof<Hex.Hex>
  * const proof = AccountProof.fromRpc({
  *   address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *   balance: '0x1',
- *   codeHash: '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
+ *   codeHash:
+ *     '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
  *   nonce: '0x2',
- *   storageHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+ *   storageHash:
+ *     '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
  *   accountProof: [],
  *   storageProof: [
  *     {
  *       key: '0x0000000000000000000000000000000000000000000000000000000000000000',
  *       proof: [],
- *       value: '0x3',
- *     },
- *   ],
+ *       value: '0x3'
+ *     }
+ *   ]
  * })
  * // @log: {
  * // @log:   address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
@@ -109,17 +111,19 @@ export declare namespace fromRpc {
  * const proof = AccountProof.toRpc({
  *   address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *   balance: 1n,
- *   codeHash: '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
+ *   codeHash:
+ *     '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
  *   nonce: 2,
- *   storageHash: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+ *   storageHash:
+ *     '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
  *   accountProof: [],
  *   storageProof: [
  *     {
  *       key: '0x0000000000000000000000000000000000000000000000000000000000000000',
  *       proof: [],
- *       value: 3n,
- *     },
- *   ],
+ *       value: 3n
+ *     }
+ *   ]
  * })
  * ```
  *

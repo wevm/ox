@@ -58,7 +58,7 @@ export declare namespace assert {
  * const bytes = Bytes.concat(
  *   Bytes.from([1]),
  *   Bytes.from([69]),
- *   Bytes.from([420, 69]),
+ *   Bytes.from([420, 69])
  * )
  * // @log: Uint8Array [ 1, 69, 420, 69 ]
  * ```
@@ -210,7 +210,9 @@ export declare namespace fromBoolean {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', { size: 32 })
+ * const data = Bytes.fromHex('0x48656c6c6f20776f726c6421', {
+ *   size: 32
+ * })
  * // @log: Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
  * ```
  *
@@ -453,11 +455,7 @@ export declare namespace size {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * Bytes.slice(
- *   Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]),
- *   1,
- *   4,
- * )
+ * Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1, 4)
  * // @log: Uint8Array([2, 3, 4])
  * ```
  *
@@ -576,7 +574,11 @@ export declare namespace toBoolean {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * Bytes.toHex(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * Bytes.toHex(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // '0x48656c6c6f20576f726c6421'
  * ```
  *
@@ -645,7 +647,11 @@ export declare namespace toNumber {
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * const data = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const data = Bytes.toString(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: 'Hello world'
  * ```
  *

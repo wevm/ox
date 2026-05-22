@@ -21,19 +21,6 @@ import type * as TransactionRequest from '../../TransactionRequest.js'
  *
  * type Schema = RpcSchema.Eth
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Eth = RpcSchema.From<

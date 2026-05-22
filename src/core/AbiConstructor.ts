@@ -33,18 +33,21 @@ type ExtractArgs<abiConstructor extends AbiConstructor | undefined> = [
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ * const constructor = AbiConstructor.from(
+ *   'constructor(address, uint256)'
+ * )
  *
  * const bytecode = '0x...'
  *
  * const data = AbiConstructor.encode(constructor, {
  *   bytecode,
- *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n]
  * })
  *
- * const decoded = AbiConstructor.decode(constructor, { // [!code focus]
+ * const decoded = AbiConstructor.decode(constructor, {
+ *   // [!code focus]
  *   bytecode, // [!code focus]
- *   data, // [!code focus]
+ *   data // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -155,11 +158,13 @@ export declare namespace decode {
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ * const constructor = AbiConstructor.from(
+ *   'constructor(address, uint256)'
+ * )
  *
  * const data = AbiConstructor.encode(constructor, {
  *   bytecode: '0x...',
- *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n]
  * })
  * ```
  *
@@ -191,19 +196,19 @@ export declare namespace decode {
  *
  * // 1. Instantiate the ABI Constructor.
  * const constructor = AbiConstructor.from(
- *   'constructor(address owner, uint256 amount)',
+ *   'constructor(address owner, uint256 amount)'
  * )
  *
  * // 2. Encode the ABI Constructor.
  * const data = AbiConstructor.encode(constructor, {
  *   bytecode: '0x...',
- *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n],
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n]
  * })
  *
  * // 3. Deploy the contract.
  * const hash = await window.ethereum!.request({
  *   method: 'eth_sendTransaction',
- *   params: [{ data }],
+ *   params: [{ data }]
  * })
  * ```
  *
@@ -295,18 +300,14 @@ export function format<const abiConstructor extends AbiConstructor>(
  * import { AbiConstructor } from 'ox'
  *
  * const formatted = AbiConstructor.format({
- *   inputs: [
- *     { name: 'owner', type: 'address' },
- *   ],
+ *   inputs: [{ name: 'owner', type: 'address' }],
  *   payable: false,
  *   stateMutability: 'nonpayable',
- *   type: 'constructor',
+ *   type: 'constructor'
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiConstructor - The ABI Constructor to format.
@@ -350,28 +351,14 @@ export function from<
  * import { AbiConstructor } from 'ox'
  *
  * const constructor = AbiConstructor.from({
- *   inputs: [
- *     { name: 'owner', type: 'address' },
- *   ],
+ *   inputs: [{ name: 'owner', type: 'address' }],
  *   payable: false,
  *   stateMutability: 'nonpayable',
- *   type: 'constructor',
+ *   type: 'constructor'
  * })
  *
  * constructor
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -388,19 +375,6 @@ export function from<
  *
  * constructor
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -411,23 +385,11 @@ export function from<
  *
  * const constructor = AbiConstructor.from([
  *   'struct Foo { address owner; uint256 amount; }', // [!code hl]
- *   'constructor(Foo foo)',
+ *   'constructor(Foo foo)'
  * ])
  *
  * constructor
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -473,17 +435,11 @@ export function fromAbi<const abi extends Abi.Abi | readonly unknown[]>(
  *   'constructor(address owner)',
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiConstructor.fromAbi(abi) // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @returns The ABI constructor.
@@ -514,7 +470,7 @@ export declare namespace fromAbi {
  *
  * AbiConstructor.decode(
  *   AbiConstructor.from('constructor(address)'),
- *   { bytecode: '0x6080...', data: '0xdeadbeef' },
+ *   { bytecode: '0x6080...', data: '0xdeadbeef' }
  * )
  * // @error: AbiConstructor.BytecodeMismatchError: Provided `data` does not start with the provided `bytecode`.
  * ```

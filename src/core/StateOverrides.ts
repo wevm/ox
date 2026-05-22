@@ -61,8 +61,8 @@ export type AccountStorage = Compute<{
  *
  * const stateOverrides = StateOverrides.fromRpc({
  *   '0x0000000000000000000000000000000000000000': {
- *     balance: '0x1',
- *   },
+ *     balance: '0x1'
+ *   }
  * })
  * ```
  *
@@ -102,8 +102,8 @@ export function fromRpc(rpcStateOverrides: Rpc): StateOverrides {
  *
  * const stateOverrides = StateOverrides.toRpc({
  *   '0x0000000000000000000000000000000000000000': {
- *     balance: 1n,
- *   },
+ *     balance: 1n
+ *   }
  * })
  * ```
  *

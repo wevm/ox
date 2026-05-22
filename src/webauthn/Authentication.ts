@@ -39,14 +39,16 @@ export type Response<serialized extends boolean = false> = {
  * import { Authentication } from 'ox/webauthn'
  *
  * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  * const serialized = Authentication.serializeOptions(options)
  *
  * // ... send to server and back ...
  *
- * const deserialized = Authentication.deserializeOptions(serialized) // [!code focus]
- * const credential = await window.navigator.credentials.get(deserialized)
+ * const deserialized =
+ *   Authentication.deserializeOptions(serialized) // [!code focus]
+ * const credential =
+ *   await window.navigator.credentials.get(deserialized)
  * ```
  *
  * @param options - The serialized credential request options.
@@ -90,23 +92,28 @@ export declare namespace deserializeOptions {
  * ```ts twoslash
  * import { Authentication } from 'ox/webauthn'
  *
- * const response = Authentication.deserializeResponse({ // [!code focus]
+ * const response = Authentication.deserializeResponse({
+ *   // [!code focus]
  *   id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
- *   metadata: { // [!code focus]
+ *   metadata: {
+ *     // [!code focus]
  *     authenticatorData: '0x49960de5...', // [!code focus]
  *     clientDataJSON: '{"type":"webauthn.get",...}', // [!code focus]
  *     challengeIndex: 23, // [!code focus]
  *     typeIndex: 1, // [!code focus]
- *     userVerificationRequired: true, // [!code focus]
+ *     userVerificationRequired: true // [!code focus]
  *   }, // [!code focus]
- *   raw: { // [!code focus]
+ *   raw: {
+ *     // [!code focus]
  *     id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
  *     type: 'public-key', // [!code focus]
  *     authenticatorAttachment: 'platform', // [!code focus]
  *     rawId: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
- *     response: { clientDataJSON: 'eyJ0eXBlIjoid2ViYXV0aG4uZ2V0In0' }, // [!code focus]
+ *     response: {
+ *       clientDataJSON: 'eyJ0eXBlIjoid2ViYXV0aG4uZ2V0In0'
+ *     } // [!code focus]
  *   }, // [!code focus]
- *   signature: '0x...', // [!code focus]
+ *   signature: '0x...' // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -150,10 +157,11 @@ export declare namespace deserializeResponse {
  * import { Authentication } from 'ox/webauthn'
  *
  * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const credential = await window.navigator.credentials.get(options)
+ * const credential =
+ *   await window.navigator.credentials.get(options)
  * ```
  *
  * @param options - Options.
@@ -237,15 +245,19 @@ export declare namespace getOptions {
  * import { Authentication } from 'ox/webauthn'
  * import { WebCryptoP256 } from 'ox'
  *
- * const { metadata, payload } = Authentication.getSignPayload({ // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
- * }) // [!code focus]
+ * const { metadata, payload } = Authentication.getSignPayload(
+ *   {
+ *     // [!code focus]
+ *     challenge: '0xdeadbeef' // [!code focus]
+ *   }
+ * ) // [!code focus]
  *
- * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * const { publicKey, privateKey } =
+ *   await WebCryptoP256.createKeyPair()
  *
  * const signature = await WebCryptoP256.sign({
  *   payload,
- *   privateKey,
+ *   privateKey
  * })
  * ```
  *
@@ -342,7 +354,7 @@ export declare namespace getSignPayload {
  * import { Authentication } from 'ox/webauthn'
  *
  * const options = Authentication.getOptions({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
  * const serialized = Authentication.serializeOptions(options) // [!code focus]
@@ -395,10 +407,11 @@ export declare namespace serializeOptions {
  * import { Authentication } from 'ox/webauthn'
  *
  * const response = await Authentication.sign({
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const serialized = Authentication.serializeResponse(response) // [!code focus]
+ * const serialized =
+ *   Authentication.serializeResponse(response) // [!code focus]
  *
  * // `serialized` is JSON-serializable — send it to a server, store it, etc.
  * const json = JSON.stringify(serialized)
@@ -445,12 +458,13 @@ export declare namespace serializeResponse {
  * import { Registration, Authentication } from 'ox/webauthn'
  *
  * const credential = await Registration.create({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await Authentication.sign({ // [!code focus]
+ * const { metadata, signature } = await Authentication.sign({
+ *   // [!code focus]
  *   credentialId: credential.id, // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
+ *   challenge: '0xdeadbeef' // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   metadata: {
@@ -563,19 +577,20 @@ export class SignFailedError extends Errors.BaseError<Error> {
  * import { Registration, Authentication } from 'ox/webauthn'
  *
  * const credential = await Registration.create({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
  * const { metadata, signature } = await Authentication.sign({
  *   credentialId: credential.id,
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const result = Authentication.verify({ // [!code focus]
+ * const result = Authentication.verify({
+ *   // [!code focus]
  *   metadata, // [!code focus]
  *   challenge: '0xdeadbeef', // [!code focus]
  *   publicKey: credential.publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```

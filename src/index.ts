@@ -18,40 +18,27 @@
  * ```ts twoslash
  * import { Abi } from 'ox'
  *
- * const abi = Abi.from([{
- *   type: 'function',
- *   name: 'approve',
- *   stateMutability: 'nonpayable',
- *   inputs: [
- *     {
- *       name: 'spender',
- *       type: 'address',
- *     },
- *     {
- *       name: 'amount',
- *       type: 'uint256',
- *     },
- *   ],
- *   outputs: [{ type: 'bool' }],
- * }])
+ * const abi = Abi.from([
+ *   {
+ *     type: 'function',
+ *     name: 'approve',
+ *     stateMutability: 'nonpayable',
+ *     inputs: [
+ *       {
+ *         name: 'spender',
+ *         type: 'address'
+ *       },
+ *       {
+ *         name: 'amount',
+ *         type: 'uint256'
+ *       }
+ *     ],
+ *     outputs: [{ type: 'bool' }]
+ *   }
+ * ])
  *
  * abi
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -63,23 +50,11 @@
  * import { Abi } from 'ox'
  *
  * const abi = Abi.from([
- *   'function approve(address spender, uint256 amount) returns (bool)',
+ *   'function approve(address spender, uint256 amount) returns (bool)'
  * ])
  *
  * abi
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -89,29 +64,29 @@
  *
  * ```ts twoslash
  * import { Abi } from 'ox'
- * const abi = Abi.from([{
- *   type: 'function',
- *   name: 'approve',
- *   stateMutability: 'nonpayable',
- *   inputs: [
- *     {
- *       name: 'spender',
- *       type: 'address',
- *     },
- *     {
- *       name: 'amount',
- *       type: 'uint256',
- *     },
- *   ],
- *   outputs: [{ type: 'bool' }],
- * }])
+ * const abi = Abi.from([
+ *   {
+ *     type: 'function',
+ *     name: 'approve',
+ *     stateMutability: 'nonpayable',
+ *     inputs: [
+ *       {
+ *         name: 'spender',
+ *         type: 'address'
+ *       },
+ *       {
+ *         name: 'amount',
+ *         type: 'uint256'
+ *       }
+ *     ],
+ *     outputs: [{ type: 'bool' }]
+ *   }
+ * ])
  * //---cut---
  * const formatted = Abi.format(abi)
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @category ABI
@@ -135,20 +110,11 @@ export * as Abi from './core/Abi.js'
  *   'constructor(address owner)',
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiConstructor.fromAbi(abi) // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -159,19 +125,12 @@ export * as Abi from './core/Abi.js'
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address owner)')
+ * const constructor = AbiConstructor.from(
+ *   'constructor(address owner)'
+ * )
  *
  * constructor
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -182,11 +141,14 @@ export * as Abi from './core/Abi.js'
  * ```ts twoslash
  * import { AbiConstructor } from 'ox'
  *
- * const constructor = AbiConstructor.from('constructor(address, uint256)')
+ * const constructor = AbiConstructor.from(
+ *   'constructor(address, uint256)'
+ * )
  *
- * const data = AbiConstructor.encode(constructor, { // [!code focus]
+ * const data = AbiConstructor.encode(constructor, {
+ *   // [!code focus]
  *   bytecode: '0x...', // [!code focus]
- *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n], // [!code focus]
+ *   args: ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 123n] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -210,17 +172,11 @@ export * as AbiConstructor from './core/AbiConstructor.js'
  * const abi = Abi.from([
  *   'function foo()',
  *   'error BadSignatureV(uint8 v)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiError.fromAbi(abi, 'BadSignatureV') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -235,15 +191,6 @@ export * as AbiConstructor from './core/AbiConstructor.js'
  *
  * error
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -282,17 +229,11 @@ export * as AbiError from './core/AbiError.js'
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiEvent.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -309,19 +250,6 @@ export * as AbiError from './core/AbiError.js'
  *
  * transfer
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -365,8 +293,8 @@ export * as AbiError from './core/AbiError.js'
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * } as const
  *
  * const decoded = AbiEvent.decode(transfer, log)
@@ -397,17 +325,11 @@ export * as AbiEvent from './core/AbiEvent.js'
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiFunction.fromAbi(abi, 'bar') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -418,23 +340,12 @@ export * as AbiEvent from './core/AbiEvent.js'
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const bar = AbiFunction.from('function bar(string a) returns (uint256 x)')
+ * const bar = AbiFunction.from(
+ *   'function bar(string a) returns (uint256 x)'
+ * )
  *
  * bar
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -445,9 +356,12 @@ export * as AbiEvent from './core/AbiEvent.js'
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const approve = AbiFunction.from('function approve(address, uint256)')
+ * const approve = AbiFunction.from(
+ *   'function approve(address, uint256)'
+ * )
  *
- * const data = AbiFunction.encodeData( // [!code focus]
+ * const data = AbiFunction.encodeData(
+ *   // [!code focus]
  *   approve, // [!code focus]
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n] // [!code focus]
  * ) // [!code focus]
@@ -462,10 +376,13 @@ export * as AbiEvent from './core/AbiEvent.js'
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * const data =
+ *   '0x000000000000000000000000000000000000000000000000000000000000002a'
  * //    ↑ Example data that could be returned from a contract call via `eth_call`.
  *
- * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
+ * const totalSupply = AbiFunction.from(
+ *   'function totalSupply() returns (uint256)'
+ * )
  *
  * const output = AbiFunction.decodeResult(totalSupply, data) // [!code focus]
  * // @log: 42n
@@ -495,17 +412,11 @@ export * as AbiFunction from './core/AbiFunction.js'
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiItem.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -516,23 +427,12 @@ export * as AbiFunction from './core/AbiFunction.js'
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const abiItem = AbiItem.from('function approve(address spender, uint256 amount) returns (bool)')
+ * const abiItem = AbiItem.from(
+ *   'function approve(address spender, uint256 amount) returns (bool)'
+ * )
  *
  * abiItem
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -543,7 +443,9 @@ export * as AbiFunction from './core/AbiFunction.js'
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const abiItem = AbiItem.from('function approve(address spender, uint256 amount) returns (bool)')
+ * const abiItem = AbiItem.from(
+ *   'function approve(address spender, uint256 amount) returns (bool)'
+ * )
  *
  * const formatted = AbiItem.format(abiItem)
  * // @log: 'function approve(address spender, uint256 amount) returns (bool)'
@@ -566,7 +468,7 @@ export * as AbiItem from './core/AbiItem.js'
  *
  * const data = AbiParameters.encode(
  *   AbiParameters.from('string, uint, bool'),
- *   ['wagmi', 420n, true],
+ *   ['wagmi', 420n, true]
  * )
  * ```
  *
@@ -581,7 +483,7 @@ export * as AbiItem from './core/AbiItem.js'
  *
  * const data = AbiParameters.encode(
  *   [{ type: 'string' }, { type: 'uint' }, { type: 'bool' }],
- *   ['wagmi', 420n, true],
+ *   ['wagmi', 420n, true]
  * )
  * ```
  *
@@ -597,7 +499,7 @@ export * as AbiItem from './core/AbiItem.js'
  *
  * const data = AbiParameters.decode(
  *   AbiParameters.from('string, uint, bool'),
- *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
+ *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000'
  * )
  * // @log: ['wagmi', 420n, true]
  * ```
@@ -613,23 +515,16 @@ export * as AbiItem from './core/AbiItem.js'
  * const parameters = AbiParameters.from([
  *   {
  *     name: 'spender',
- *     type: 'address',
+ *     type: 'address'
  *   },
  *   {
  *     name: 'amount',
- *     type: 'uint256',
- *   },
+ *     type: 'uint256'
+ *   }
  * ])
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -640,17 +535,12 @@ export * as AbiItem from './core/AbiItem.js'
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * const parameters = AbiParameters.from('address spender, uint256 amount')
+ * const parameters = AbiParameters.from(
+ *   'address spender, uint256 amount'
+ * )
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @category ABI
@@ -682,7 +572,9 @@ export * as AccountProof from './core/AccountProof.js'
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * const address = Address.from('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+ * const address = Address.from(
+ *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e'
+ * )
  * // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * ```
  *
@@ -694,7 +586,9 @@ export * as AccountProof from './core/AccountProof.js'
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * const valid = Address.validate('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+ * const valid = Address.validate(
+ *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+ * )
  * // @log: true
  * ```
  *
@@ -753,7 +647,10 @@ export * as Address from './core/Address.js'
  * import { AesGcm, Hex } from 'ox'
  *
  * const key = await AesGcm.getKey({ password: 'qwerty' })
- * const encrypted = await AesGcm.encrypt(Hex.fromString('i am a secret message'), key)
+ * const encrypted = await AesGcm.encrypt(
+ *   Hex.fromString('i am a secret message'),
+ *   key
+ * )
  *
  * const decrypted = await AesGcm.decrypt(encrypted, key) // [!code focus]
  * // @log: Hex.fromString('i am a secret message')
@@ -777,7 +674,7 @@ export * as AesGcm from './core/AesGcm.js'
  * const authorization = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  * ```
  *
@@ -792,14 +689,14 @@ export * as AesGcm from './core/AesGcm.js'
  * const authorization = Authorization.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
  * const payload = Authorization.getSignPayload(authorization) // [!code focus]
  *
  * const signature = Secp256k1.sign({
  *   payload,
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  * ```
  *
@@ -809,27 +706,35 @@ export * as AesGcm from './core/AesGcm.js'
  * A signature can be attached to an Authorization using {@link ox#Authorization.(from:function)}:
  *
  * ```ts twoslash
- * import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
- *   nonce: 40n,
+ *   nonce: 40n
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: Authorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const authorization_signed = Authorization.from(authorization, { signature }) // [!code focus]
+ * const authorization_signed = Authorization.from(
+ *   authorization,
+ *   { signature }
+ * ) // [!code focus]
  *
  * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList: [authorization_signed],
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * ```
  *
@@ -881,10 +786,16 @@ export * as Base32 from './core/Base32.js'
  * const value_string = Base58.fromString('Hello World!')
  * // @log: '2NEpo7TZRRrLZSi2U'
  *
- * const value_bytes = Base58.fromBytes(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const value_bytes = Base58.fromBytes(
+ *   new Uint8Array([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: '2NEpo7TZRRrLZSi2U'
  *
- * const value_hex = Base58.fromHex('0x48656c6c6f20576f726c6421')
+ * const value_hex = Base58.fromHex(
+ *   '0x48656c6c6f20576f726c6421'
+ * )
  * // @log: '2NEpo7TZRRrLZSi2U'
  * ```
  *
@@ -935,10 +846,16 @@ export * as Base58 from './core/Base58.js'
  * const value_string = Base64.fromString('Hello World!')
  * // @log: 'SGVsbG8gV29ybGQh=='
  *
- * const value_bytes = Base64.fromBytes(new Uint8Array([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const value_bytes = Base64.fromBytes(
+ *   new Uint8Array([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: 'SGVsbG8gV29ybGQh=='
  *
- * const value_hex = Base64.fromHex('0x48656c6c6f20576f726c6421')
+ * const value_hex = Base64.fromHex(
+ *   '0x48656c6c6f20576f726c6421'
+ * )
  * // @log: 'SGVsbG8gV29ybGQh=='
  * ```
  *
@@ -986,7 +903,9 @@ export * as Base64 from './core/Base64.js'
  * ```ts twoslash
  * import { Bech32m } from 'ox'
  *
- * const { hrp, data } = Bech32m.decode('tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq7w9gdx')
+ * const { hrp, data } = Bech32m.decode(
+ *   'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq7w9gdx'
+ * )
  * ```
  *
  * @category Data
@@ -1038,10 +957,10 @@ export * as Blobs from './core/Blobs.js'
  * import 'ox/window'
  * import { Block } from 'ox'
  *
- * const block = await window.ethereum!
- *   .request({
+ * const block = await window
+ *   .ethereum!.request({
  *     method: 'eth_getBlockByNumber',
- *     params: ['latest', false],
+ *     params: ['latest', false]
  *   })
  *   .then(Block.fromRpc) // [!code hl]
  * // @log: {
@@ -1115,7 +1034,10 @@ export * as Bloom from './core/Bloom.js'
  * import { Bls } from 'ox'
  *
  * const privateKey = Bls.randomPrivateKey()
- * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Bls.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  * // @log: { x: 1251...5152n, y: 1251...5152n, z: 1n }
  * ```
  *
@@ -1129,12 +1051,16 @@ export * as Bloom from './core/Bloom.js'
  *
  * const privateKey = Bls.randomPrivateKey()
  * const publicKey = Bls.getPublicKey({ privateKey })
- * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Bls.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const isValid = Bls.verify({ // [!code focus]
+ * const isValid = Bls.verify({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```
@@ -1149,13 +1075,13 @@ export * as Bloom from './core/Bloom.js'
  *
  * const publicKeys = [
  *   Bls.getPublicKey({ privateKey: '0x...' }),
- *   Bls.getPublicKey({ privateKey: '0x...' }),
+ *   Bls.getPublicKey({ privateKey: '0x...' })
  * ]
  * const publicKey = Bls.aggregate(publicKeys)
  *
  * const signatures = [
  *   Bls.sign({ payload: '0x...', privateKey: '0x...' }),
- *   Bls.sign({ payload: '0x...', privateKey: '0x...' }),
+ *   Bls.sign({ payload: '0x...', privateKey: '0x...' })
  * ]
  * const signature = Bls.aggregate(signatures)
  * ```
@@ -1169,13 +1095,15 @@ export * as Bloom from './core/Bloom.js'
  * import { Bls, Hex } from 'ox'
  *
  * const payload = Hex.random(32)
- * const privateKeys = Array.from({ length: 100 }, () => Bls.randomPrivateKey())
+ * const privateKeys = Array.from({ length: 100 }, () =>
+ *   Bls.randomPrivateKey()
+ * )
  *
  * const publicKeys = privateKeys.map((privateKey) =>
- *   Bls.getPublicKey({ privateKey }),
+ *   Bls.getPublicKey({ privateKey })
  * )
  * const signatures = privateKeys.map((privateKey) =>
- *   Bls.sign({ payload, privateKey }),
+ *   Bls.sign({ payload, privateKey })
  * )
  *
  * const publicKey = Bls.aggregate(publicKeys) // [!code focus]
@@ -1209,7 +1137,10 @@ export * as Bls from './core/Bls.js'
  * const publicKeyHex = BlsPoint.toHex(publicKey)
  * // @log: '0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66'
  *
- * const signature = Bls.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
+ * const signature = Bls.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey: '0x...'
+ * })
  * const signatureHex = BlsPoint.toHex(signature)
  * // @log: '0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c'
  * ```
@@ -1222,10 +1153,16 @@ export * as Bls from './core/Bls.js'
  * ```ts twoslash
  * import { Bls, BlsPoint } from 'ox'
  *
- * const publicKey = BlsPoint.fromHex('0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66', 'G1')
+ * const publicKey = BlsPoint.fromHex(
+ *   '0xacafff52270773ad1728df2807c0f1b0b271fa6b37dfb8b2f75448573c76c81bcd6790328a60e40ef5a13343b32d9e66',
+ *   'G1'
+ * )
  * // @log: { x: 172...514n, y: 175...235n, z: 1n }
  *
- * const signature = BlsPoint.fromHex('0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c', 'G2')
+ * const signature = BlsPoint.fromHex(
+ *   '0xb4698f7611999fba87033b9cf72312c76c683bbc48175e2d4cb275907d6a267ab9840a66e3051e5ed36fd13aa712f9a9024f9fa9b67f716dfb74ae4efb7d9f1b7b43b4679abed6644cf476c12e79f309351ea8452487cd93f66e29e04ebe427c',
+ *   'G2'
+ * )
  * // @log: { x: 1251...5152n, y: 1251...5152n, z: 1n }
  * ```
  *
@@ -1288,19 +1225,29 @@ export * as BlsPoint from './core/BlsPoint.js'
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * const value_bigint = Bytes.toBigInt(Bytes.from([4, 160, 216]))
+ * const value_bigint = Bytes.toBigInt(
+ *   Bytes.from([4, 160, 216])
+ * )
  * // @log: 1234567890n
  *
  * const value_boolean = Bytes.toBoolean(Bytes.from([1]))
  * // @log: true
  *
- * const value_hex = Bytes.toHex(Bytes.from([222, 173, 190, 239]))
+ * const value_hex = Bytes.toHex(
+ *   Bytes.from([222, 173, 190, 239])
+ * )
  * // @log: '0xdeadbeef'
  *
- * const value_number = Bytes.toNumber(Bytes.from([4, 160, 216]))
+ * const value_number = Bytes.toNumber(
+ *   Bytes.from([4, 160, 216])
+ * )
  * // @log: 1234567890
  *
- * const value_string = Bytes.toString(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * const value_string = Bytes.toString(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: 'Hello World!'
  * ```
  *
@@ -1326,7 +1273,11 @@ export * as BlsPoint from './core/BlsPoint.js'
  * ```ts twoslash
  * import { Bytes } from 'ox'
  *
- * const value = Bytes.slice(Bytes.from([1, 2, 3, 4, 5, 6]), 2, 4)
+ * const value = Bytes.slice(
+ *   Bytes.from([1, 2, 3, 4, 5, 6]),
+ *   2,
+ *   4
+ * )
  * // @log: Uint8Array [3, 4]
  * ```
  *
@@ -1414,7 +1365,9 @@ export * as Cbor from './core/Cbor.js'
  * ```ts twoslash
  * import { CompactSize } from 'ox'
  *
- * const { value, size } = CompactSize.fromBytes(new Uint8Array([0xfd, 0xff, 0xff]))
+ * const { value, size } = CompactSize.fromBytes(
+ *   new Uint8Array([0xfd, 0xff, 0xff])
+ * )
  * ```
  *
  * @category Data
@@ -1434,7 +1387,7 @@ export * as CompactSize from './core/CompactSize.js'
  *
  * ContractAddress.fromCreate({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  * // @log: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2'
  * ```
@@ -1449,8 +1402,10 @@ export * as CompactSize from './core/CompactSize.js'
  *
  * ContractAddress.fromCreate2({
  *   from: '0x1a1e021a302c237453d3d45c7b82b19ceeb7e2e6',
- *   bytecode: Bytes.from('0x6394198df16000526103ff60206004601c335afa6040516060f3'),
- *   salt: Hex.fromString('hello world'),
+ *   bytecode: Bytes.from(
+ *     '0x6394198df16000526103ff60206004601c335afa6040516060f3'
+ *   ),
+ *   salt: Hex.fromString('hello world')
  * })
  * // @log: '0x59fbB593ABe27Cb193b6ee5C5DC7bbde312290aB'
  * ```
@@ -1516,7 +1471,11 @@ export * as CoseKey from './core/CoseKey.js'
  * const payload = '0xdeadbeef'
  *
  * const signature = Ed25519.sign({ payload, privateKey })
- * const isValid = Ed25519.verify({ payload, publicKey, signature })
+ * const isValid = Ed25519.verify({
+ *   payload,
+ *   publicKey,
+ *   signature
+ * })
  * ```
  *
  * @category Crypto
@@ -1649,7 +1608,9 @@ export * as HdKey from './core/HdKey.js'
  * const value_number = Hex.toNumber('0x499602d2')
  * // @log: 1234567890
  *
- * const value_string = Hex.toString('0x48656c6c6f20576f726c6421')
+ * const value_string = Hex.toString(
+ *   '0x48656c6c6f20576f726c6421'
+ * )
  * // @log: 'Hello World!'
  * ```
  *
@@ -1699,7 +1660,9 @@ export * as HdKey from './core/HdKey.js'
  * ```ts twoslash
  * import { Hex } from 'ox'
  *
- * const value = Hex.trimLeft('0x00000000000000001234567890abcdef')
+ * const value = Hex.trimLeft(
+ *   '0x00000000000000001234567890abcdef'
+ * )
  * // @log: '0x1234567890abcdef'
  * ```
  *
@@ -1720,7 +1683,7 @@ export type { Register } from './core/internal/register.js'
  *
  * const json = Json.stringify({
  *   foo: 'bar',
- *   baz: 69420694206942069420694206942069420694206942069420n,
+ *   baz: 69420694206942069420694206942069420694206942069420n
  * })
  * // @log: '{"foo":"bar","baz":69420694206942069420694206942069420694206942069420}'
  * ```
@@ -1733,7 +1696,9 @@ export type { Register } from './core/internal/register.js'
  * ```ts twoslash
  * import { Json } from 'ox'
  *
- * const value = Json.parse('{"foo":"bar","baz":69420694206942069420694206942069420694206942069420}')
+ * const value = Json.parse(
+ *   '{"foo":"bar","baz":69420694206942069420694206942069420694206942069420}'
+ * )
  * // @log: { foo: 'bar', baz: 69420694206942069420694206942069420694206942069420n }
  * ```
  *
@@ -1755,7 +1720,9 @@ export * as Json from './core/Json.js'
  * const privateKey = Secp256k1.randomPrivateKey()
  *
  * // Derive a key from a password.
- * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({
+ *   password: 'testpassword'
+ * })
  *
  * // Encrypt the private key.
  * const keystore = Keystore.encrypt(privateKey, key, opts)
@@ -1830,7 +1797,7 @@ export * as Kzg from './core/Kzg.js'
  * import { AbiEvent, Hex, Log } from 'ox'
  *
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)'
  * )
  *
  * const { topics } = AbiEvent.encode(transfer)
@@ -1842,9 +1809,9 @@ export * as Kzg from './core/Kzg.js'
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
  *       fromBlock: Hex.fromNumber(19760235n),
  *       toBlock: Hex.fromNumber(19760240n),
- *       topics,
- *     },
- *   ],
+ *       topics
+ *     }
+ *   ]
  * })
  *
  * const log = Log.fromRpc(logs[0]) // [!code focus]
@@ -1898,7 +1865,9 @@ export * as Log from './core/Log.js'
  * ```ts twoslash
  * import { Mnemonic } from 'ox'
  *
- * const privateKey = Mnemonic.toPrivateKey('buyer zoo end danger ice capable shrug naive twist relief mass bonus')
+ * const privateKey = Mnemonic.toPrivateKey(
+ *   'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+ * )
  * // @log: '0x...'
  * ```
  *
@@ -1910,7 +1879,9 @@ export * as Log from './core/Log.js'
  * ```ts twoslash
  * import { Mnemonic } from 'ox'
  *
- * const hdKey = Mnemonic.toHdKey('buyer zoo end danger ice capable shrug naive twist relief mass bonus')
+ * const hdKey = Mnemonic.toHdKey(
+ *   'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+ * )
  * ```
  *
  * @example
@@ -1921,7 +1892,8 @@ export * as Log from './core/Log.js'
  * ```ts twoslash
  * import { Mnemonic } from 'ox'
  *
- * const mnemonic = 'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
+ * const mnemonic =
+ *   'buyer zoo end danger ice capable shrug naive twist relief mass bonus'
  * const seed = Mnemonic.toSeed(mnemonic)
  * // @log: Uint8Array [...64 bytes]
  * ```
@@ -1974,7 +1946,10 @@ export * as Mnemonic from './core/Mnemonic.js'
  *
  * const privateKey = P256.randomPrivateKey()
  *
- * const signature = P256.sign({ payload: '0xdeadbeef', privateKey }) // [!code focus]
+ * const signature = P256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * }) // [!code focus]
  * // @log: { r: 1251...5152n, s: 1251...5152n, yParity: 1 }
  * ```
  *
@@ -1988,12 +1963,16 @@ export * as Mnemonic from './core/Mnemonic.js'
  *
  * const privateKey = P256.randomPrivateKey()
  * const publicKey = P256.getPublicKey({ privateKey })
- * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = P256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const isValid = P256.verify({ // [!code focus]
+ * const isValid = P256.verify({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```
@@ -2012,9 +1991,14 @@ export * as P256 from './core/P256.js'
  * ```ts twoslash
  * import { Hex, PersonalMessage, Secp256k1 } from 'ox'
  *
- * const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world')) // [!code focus]
+ * const payload = PersonalMessage.getSignPayload(
+ *   Hex.fromString('hello world')
+ * ) // [!code focus]
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @category Signed & Typed Data
@@ -2034,7 +2018,9 @@ export * as PersonalMessage from './core/PersonalMessage.js'
  *
  * const provider = Provider.from(window.ethereum)
  *
- * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await provider.request({
+ *   method: 'eth_blockNumber'
+ * })
  * ```
  *
  * :::tip
@@ -2061,7 +2047,9 @@ export * as PersonalMessage from './core/PersonalMessage.js'
  * ```ts twoslash
  * import { Provider, RpcTransport } from 'ox'
  *
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * )
  * const provider = Provider.from(transport)
  * ```
  *
@@ -2089,12 +2077,12 @@ export * as PersonalMessage from './core/PersonalMessage.js'
  *       body: JSON.stringify(store.prepare(args)),
  *       method: 'POST',
  *       headers: {
- *         'Content-Type': 'application/json',
- *       },
+ *         'Content-Type': 'application/json'
+ *       }
  *     })
  *       .then((res) => res.json())
  *       .then(RpcResponse.parse)
- *   },
+ *   }
  * })
  *
  * // 3. Emit Provider Events.
@@ -2118,7 +2106,7 @@ export * as Provider from './core/Provider.js'
  * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
  * })
  *
  * const serialized = PublicKey.toHex(publicKey) // [!code focus]
@@ -2133,7 +2121,9 @@ export * as Provider from './core/Provider.js'
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * const publicKey = PublicKey.fromHex(
+ *   '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
+ * )
  * // @log: {
  * // @log:   prefix: 4,
  * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
@@ -2151,7 +2141,10 @@ export * as PublicKey from './core/PublicKey.js'
  * ```ts twoslash
  * import { Hex, Rlp } from 'ox'
  *
- * const data = Rlp.fromHex([Hex.fromString('hello'), Hex.fromString('world')])
+ * const data = Rlp.fromHex([
+ *   Hex.fromString('hello'),
+ *   Hex.fromString('world')
+ * ])
  * // @log: '0xcc8568656c6c6f85776f726c64'
  *
  * const values = Rlp.toHex(data)
@@ -2177,7 +2170,7 @@ export * as Rlp from './core/Rlp.js'
  * const store = RpcRequest.createStore()
  *
  * const request_1 = store.prepare({
- *   method: 'eth_blockNumber',
+ *   method: 'eth_blockNumber'
  * })
  * // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }
  *
@@ -2186,9 +2179,9 @@ export * as Rlp from './core/Rlp.js'
  *   params: [
  *     {
  *       to: '0x0000000000000000000000000000000000000000',
- *       data: '0xdeadbeef',
- *     },
- *   ],
+ *       data: '0xdeadbeef'
+ *     }
+ *   ]
  * })
  * // @log: { id: 1, jsonrpc: '2.0', method: 'eth_call', params: [{ to: '0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }] }
  * ```
@@ -2211,7 +2204,7 @@ export * as RpcRequest from './core/RpcRequest.js'
  * const response = RpcResponse.from({
  *   id: 0,
  *   jsonrpc: '2.0',
- *   result: '0x69420',
+ *   result: '0x69420'
  * })
  * ```
  *
@@ -2222,11 +2215,14 @@ export * as RpcRequest from './core/RpcRequest.js'
  * ```ts twoslash
  * import { RpcRequest, RpcResponse } from 'ox'
  *
- * const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
+ * const request = RpcRequest.from({
+ *   id: 0,
+ *   method: 'eth_blockNumber'
+ * })
  *
  * const response = RpcResponse.from(
  *   { result: '0x69420' },
- *   { request },
+ *   { request }
  * )
  * ```
  *
@@ -2246,34 +2242,25 @@ export * as RpcRequest from './core/RpcRequest.js'
  * // 2. Get a request object.
  * const request = store.prepare({
  *   method: 'eth_getBlockByNumber',
- *   params: ['0x1', false],
+ *   params: ['0x1', false]
  * })
  *
  * // 3. Send the JSON-RPC request via HTTP.
  * const block = await fetch('https://1.rpc.thirdweb.com', {
  *   body: JSON.stringify(request),
  *   headers: {
- *     'Content-Type': 'application/json',
+ *     'Content-Type': 'application/json'
  *   },
- *   method: 'POST',
+ *   method: 'POST'
  * })
- *  .then((response) => response.json())
- *  // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
- *  .then((response) => RpcResponse.parse(response, { request })) // [!code focus]
+ *   .then((response) => response.json())
+ *   // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
+ *   .then((response) =>
+ *     RpcResponse.parse(response, { request })
+ *   ) // [!code focus]
  *
  * block // [!code focus]
  * // ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @category JSON-RPC
@@ -2301,9 +2288,13 @@ export * as RpcSchema from './core/RpcSchema.js'
  * ```ts twoslash
  * import { RpcTransport } from 'ox'
  *
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * )
  *
- * const blockNumber = await transport.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await transport.request({
+ *   method: 'eth_blockNumber'
+ * })
  * // @log: '0x1a2b3c'
  * ```
  *
@@ -2355,7 +2346,10 @@ export * as RpcTransport from './core/RpcTransport.js'
  *
  * const privateKey = Secp256k1.randomPrivateKey()
  *
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey }) // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * }) // [!code focus]
  * // @log: { r: 1251...5152n, s: 1251...5152n, yParity: 1 }
  * ```
  *
@@ -2369,12 +2363,16 @@ export * as RpcTransport from './core/RpcTransport.js'
  *
  * const privateKey = Secp256k1.randomPrivateKey()
  * const publicKey = Secp256k1.getPublicKey({ privateKey })
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const isValid = Secp256k1.verify({ // [!code focus]
+ * const isValid = Secp256k1.verify({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```
@@ -2410,7 +2408,9 @@ export * as Secp256k1 from './core/Secp256k1.js'
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * Signature.fromHex('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
+ * Signature.fromHex(
+ *   '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
+ * )
  * // @log: { r: 5231...n, s: 3522...n, yParity: 0 }
  * ```
  *
@@ -2436,7 +2436,7 @@ export * as Signature from './core/Signature.js'
  *   domain: 'example.com',
  *   nonce: 'foobarbaz',
  *   uri: 'https://example.com/path',
- *   version: '1',
+ *   version: '1'
  * })
  * // @log: "example.com wants you to sign in with your Ethereum account:
  * // @log: 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
@@ -2508,9 +2508,9 @@ export * as Signature from './core/Signature.js'
  *     domain: 'example.com',
  *     nonce: 'foobarbaz',
  *     uri: 'https://example.com/path',
- *     version: '1',
+ *     version: '1'
  *   },
- *   nonce: 'foobarbaz',
+ *   nonce: 'foobarbaz'
  * })
  * // @log: true
  * ```
@@ -2559,7 +2559,7 @@ export * as StateOverrides from './core/StateOverrides.js'
  *   yParity: '0x0',
  *   chainId: '0x1',
  *   accessList: [],
- *   type: '0x2',
+ *   type: '0x2'
  * })
  * ```
  *
@@ -2578,12 +2578,12 @@ export * as Transaction from './core/Transaction.js'
  * import 'ox/window'
  * import { TransactionReceipt } from 'ox'
  *
- * const receipt = await window.ethereum!
- *   .request({
+ * const receipt = await window
+ *   .ethereum!.request({
  *     method: 'eth_getTransactionReceipt',
  *     params: [
- *       '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
- *     ],
+ *       '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0'
+ *     ]
  *   })
  *   .then(TransactionReceipt.fromRpc) // [!code hl]
  * // @log: {
@@ -2620,14 +2620,15 @@ export * as TransactionReceipt from './core/TransactionReceipt.js'
  *
  * const provider = Provider.from(window.ethereum!)
  *
- * const request = TransactionRequest.toRpc({ // [!code focus]
+ * const request = TransactionRequest.toRpc({
+ *   // [!code focus]
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8', // [!code focus]
- *   value: Value.fromEther('0.01'), // [!code focus]
+ *   value: Value.fromEther('0.01') // [!code focus]
  * }) // [!code focus]
  *
  * const hash = await provider.request({
  *   method: 'eth_sendTransaction',
- *   params: [request],
+ *   params: [request]
  * })
  * ```
  *
@@ -2665,7 +2666,7 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @log: {
  * // @log:   chainId: 1,
@@ -2691,15 +2692,18 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  *   gasPrice: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
- * const signature = Secp256k1.sign({ // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   // [!code focus]
  *   payload: TxEnvelopeEip1559.getSignPayload(envelope), // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
  *
- * const envelope_signed = TxEnvelopeEip1559.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip1559.from(envelope, {
+ *   signature
+ * })
  * ```
  *
  * @example
@@ -2715,7 +2719,7 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeEip1559.serialize(envelope) // [!code focus]
@@ -2729,7 +2733,12 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { RpcTransport, TxEnvelopeEip1559, Secp256k1, Value } from 'ox'
+ * import {
+ *   RpcTransport,
+ *   TxEnvelopeEip1559,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeEip1559.from({
@@ -2738,25 +2747,29 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   nonce: 69n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * // Sign over the Envelope.
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip1559.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * // Serialize the Envelope with the Signature. // [!code focus]
- * const serialized = TxEnvelopeEip1559.serialize(envelope, { // [!code focus]
- *   signature  // [!code focus]
+ * const serialized = TxEnvelopeEip1559.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
- * const hash = await transport.request({ // [!code focus]
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * ) // [!code focus]
+ * const hash = await transport.request({
+ *   // [!code focus]
  *   method: 'eth_sendRawTransaction', // [!code focus]
- *   params: [serialized], // [!code focus]
+ *   params: [serialized] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -2771,7 +2784,7 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  * const envelope = TxEnvelopeEip1559.from({
  *   chainId: 1,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * const envelope_rpc = TxEnvelopeEip1559.toRpc(envelope)
@@ -2779,7 +2792,7 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  * const provider = Provider.from(window.ethereum)
  * const hash = await provider.request({
  *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
+ *   params: [envelope_rpc]
  * })
  * ```
  *
@@ -2799,7 +2812,7 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: 1000000000000000000n,
- *   data: '0x',
+ *   data: '0x'
  * })
  *
  * const signature = Secp256k1.sign({
@@ -2807,7 +2820,9 @@ export * as TransactionEnvelope from './core/TxEnvelope.js'
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip1559.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip1559.from(envelope, {
+ *   signature
+ * })
  *
  * const hash = TxEnvelopeEip1559.hash(envelope_signed) // [!code focus]
  * ```
@@ -2850,13 +2865,16 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  *   gasPrice: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const payload = TxEnvelopeEip2930.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @example
@@ -2873,7 +2891,7 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  *   gasPrice: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const serialized = TxEnvelopeEip2930.serialize(envelope) // [!code focus]
@@ -2887,7 +2905,12 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { RpcTransport, TxEnvelopeEip2930, Secp256k1, Value } from 'ox'
+ * import {
+ *   RpcTransport,
+ *   TxEnvelopeEip2930,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeEip2930.from({
@@ -2896,25 +2919,29 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  *   gasPrice: Value.fromGwei('10'),
  *   nonce: 69n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * // Sign over the Envelope.
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip2930.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * // Serialize the Envelope with the Signature. // [!code focus]
- * const serialized = TxEnvelopeEip2930.serialize(envelope, { // [!code focus]
- *   signature  // [!code focus]
+ * const serialized = TxEnvelopeEip2930.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
- * const hash = await transport.request({ // [!code focus]
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * ) // [!code focus]
+ * const hash = await transport.request({
+ *   // [!code focus]
  *   method: 'eth_sendRawTransaction', // [!code focus]
- *   params: [serialized], // [!code focus]
+ *   params: [serialized] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -2930,7 +2957,7 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  *   accessList: [],
  *   chainId: 1,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * const envelope_rpc = TxEnvelopeEip2930.toRpc(envelope)
@@ -2938,7 +2965,7 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  * const provider = Provider.from(window.ethereum)
  * const hash = await provider.request({
  *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
+ *   params: [envelope_rpc]
  * })
  * ```
  *
@@ -2957,7 +2984,7 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: 1000000000000000000n,
- *   data: '0x',
+ *   data: '0x'
  * })
  *
  * const signature = Secp256k1.sign({
@@ -2965,7 +2992,9 @@ export * as TxEnvelopeEip1559 from './core/TxEnvelopeEip1559.js'
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip2930.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip2930.from(envelope, {
+ *   signature
+ * })
  *
  * const hash = TxEnvelopeEip2930.hash(envelope_signed) // [!code focus]
  * ```
@@ -2998,7 +3027,9 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from(Hex.fromString('Hello World!'))
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   chainId: 1,
@@ -3007,7 +3038,7 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * ```
  *
@@ -3022,7 +3053,9 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -3032,10 +3065,11 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
- * const signature = Secp256k1.sign({ // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   // [!code focus]
  *   payload: TxEnvelopeEip4844.getSignPayload(envelope), // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
@@ -3056,7 +3090,9 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -3065,7 +3101,7 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeEip4844.serialize(envelope) // [!code focus]
@@ -3080,12 +3116,20 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, RpcTransport, TxEnvelopeEip4844, Secp256k1, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   RpcTransport,
+ *   TxEnvelopeEip4844,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * // Compute the Blob Versioned Hashes.
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeEip4844.from({
@@ -3096,25 +3140,29 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   nonce: 0n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * // Sign over the Envelope.
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip4844.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * // Serialize the Envelope with the Signature. // [!code focus]
- * const serialized = TxEnvelopeEip4844.serialize(envelope, { // [!code focus]
- *   signature  // [!code focus]
+ * const serialized = TxEnvelopeEip4844.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
- * const hash = await transport.request({ // [!code focus]
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * ) // [!code focus]
+ * const hash = await transport.request({
+ *   // [!code focus]
  *   method: 'eth_sendRawTransaction', // [!code focus]
- *   params: [serialized], // [!code focus]
+ *   params: [serialized] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -3125,18 +3173,25 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   Secp256k1,
+ *   TxEnvelopeEip4844,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
@@ -3144,7 +3199,9 @@ export * as TxEnvelopeEip2930 from './core/TxEnvelopeEip2930.js'
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip4844.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip4844.from(envelope, {
+ *   signature
+ * })
  *
  * const hash = TxEnvelopeEip4844.hash(envelope_signed) // [!code focus]
  * ```
@@ -3161,28 +3218,36 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  * Transaction Envelopes can be instantiated using {@link ox#TxEnvelopeEip7702.(from:function)}:
  *
  * ```ts twoslash
- * import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   chainId: 1,
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: Authorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const authorizationList = [Authorization.from(authorization, { signature })]
+ * const authorizationList = [
+ *   Authorization.from(authorization, { signature })
+ * ]
  *
- * const envelope = TxEnvelopeEip7702.from({ // [!code focus]
+ * const envelope = TxEnvelopeEip7702.from({
+ *   // [!code focus]
  *   authorizationList, // [!code focus]
  *   chainId: 1, // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
  *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
  *   to: '0x0000000000000000000000000000000000000000', // [!code focus]
- *   value: Value.fromEther('1'), // [!code focus]
+ *   value: Value.fromEther('1') // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -3198,20 +3263,29 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  * Transaction Envelopes can be signed using {@link ox#TxEnvelopeEip7702.(getSignPayload:function)} and a signing function such as {@link ox#Secp256k1.(sign:function)} or {@link ox#P256.(sign:function)}:
  *
  * ```ts twoslash
- * import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   chainId: 1,
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  *
  * const signature_auth = Secp256k1.sign({
  *   payload: Authorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const authorizationList = [Authorization.from(authorization, { signature: signature_auth })]
+ * const authorizationList = [
+ *   Authorization.from(authorization, {
+ *     signature: signature_auth
+ *   })
+ * ]
  *
  * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList,
@@ -3219,15 +3293,18 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
- * const signature = Secp256k1.sign({ // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   // [!code focus]
  *   payload: TxEnvelopeEip7702.getSignPayload(envelope), // [!code focus]
- *   privateKey: '0x...', // [!code focus]
+ *   privateKey: '0x...' // [!code focus]
  * })
  *
- * const envelope_signed = TxEnvelopeEip7702.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeEip7702.from(envelope, {
+ *   signature
+ * })
  * ```
  *
  * @example
@@ -3238,20 +3315,30 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { Authorization, RpcTransport, TxEnvelopeEip7702, Secp256k1, Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   RpcTransport,
+ *   TxEnvelopeEip7702,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   chainId: 1,
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  *
  * const signature_auth = Secp256k1.sign({
  *   payload: Authorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const authorizationList = [Authorization.from(authorization, { signature: signature_auth })]
+ * const authorizationList = [
+ *   Authorization.from(authorization, {
+ *     signature: signature_auth
+ *   })
+ * ]
  *
  * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList,
@@ -3260,24 +3347,28 @@ export * as TxEnvelopeEip4844 from './core/TxEnvelopeEip4844.js'
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   nonce: 69n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip7702.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * // Serialize the Envelope with the Signature. // [!code focus]
- * const serialized = TxEnvelopeEip7702.serialize(envelope, { // [!code focus]
- *   signature  // [!code focus]
+ * const serialized = TxEnvelopeEip7702.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
- * const hash = await transport.request({ // [!code focus]
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * ) // [!code focus]
+ * const hash = await transport.request({
+ *   // [!code focus]
  *   method: 'eth_sendRawTransaction', // [!code focus]
- *   params: [serialized], // [!code focus]
+ *   params: [serialized] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -3299,7 +3390,7 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  * const envelope = TxEnvelopeLegacy.from({
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * ```
  *
@@ -3317,15 +3408,18 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  *   gasPrice: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
- * const signature = Secp256k1.sign({ // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   // [!code focus]
  *   payload: TxEnvelopeLegacy.getSignPayload(envelope), // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
  *
- * const envelope_signed = TxEnvelopeLegacy.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeLegacy.from(envelope, {
+ *   signature
+ * })
  * ```
  *
  * @example
@@ -3340,7 +3434,7 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  *   chainId: 1,
  *   gasPrice: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeLegacy.serialize(envelope) // [!code focus]
@@ -3354,7 +3448,12 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  * In this example, we will use {@link ox#RpcTransport.(fromHttp:function)} to broadcast a `eth_sendRawTransaction` request over HTTP JSON-RPC.
  *
  * ```ts twoslash
- * import { RpcTransport, TxEnvelopeLegacy, Secp256k1, Value } from 'ox'
+ * import {
+ *   RpcTransport,
+ *   TxEnvelopeLegacy,
+ *   Secp256k1,
+ *   Value
+ * } from 'ox'
  *
  * // Construct the Envelope.
  * const envelope = TxEnvelopeLegacy.from({
@@ -3362,25 +3461,29 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  *   gasPrice: Value.fromGwei('10'),
  *   nonce: 69n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * // Sign over the Envelope.
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeLegacy.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * // Serialize the Envelope with the Signature. // [!code focus]
- * const serialized = TxEnvelopeLegacy.serialize(envelope, { // [!code focus]
- *   signature  // [!code focus]
+ * const serialized = TxEnvelopeLegacy.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // Broadcast the Envelope with `eth_sendRawTransaction`. // [!code focus]
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com') // [!code focus]
- * const hash = await transport.request({ // [!code focus]
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * ) // [!code focus]
+ * const hash = await transport.request({
+ *   // [!code focus]
  *   method: 'eth_sendRawTransaction', // [!code focus]
- *   params: [serialized], // [!code focus]
+ *   params: [serialized] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -3395,7 +3498,7 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  * const envelope = TxEnvelopeLegacy.from({
  *   chainId: 1,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1.5'),
+ *   value: Value.fromEther('1.5')
  * })
  *
  * const envelope_rpc = TxEnvelopeLegacy.toRpc(envelope)
@@ -3403,7 +3506,7 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  * const provider = Provider.from(window.ethereum)
  * const hash = await provider.request({
  *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
+ *   params: [envelope_rpc]
  * })
  * ```
  *
@@ -3422,7 +3525,7 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   value: 1000000000000000000n,
- *   data: '0x',
+ *   data: '0x'
  * })
  *
  * const signature = Secp256k1.sign({
@@ -3430,7 +3533,9 @@ export * as TxEnvelopeEip7702 from './core/TxEnvelopeEip7702.js'
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeLegacy.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeLegacy.from(envelope, {
+ *   signature
+ * })
  *
  * const hash = TxEnvelopeLegacy.hash(envelope_signed) // [!code focus]
  * ```
@@ -3450,39 +3555,44 @@ export * as TxEnvelopeLegacy from './core/TxEnvelopeLegacy.js'
  * ```ts twoslash
  * import { Secp256k1, TypedData, Hash } from 'ox'
  *
- * const payload = TypedData.getSignPayload({ // [!code focus:99]
+ * const payload = TypedData.getSignPayload({
+ *   // [!code focus:99]
  *   domain: {
  *     name: 'Ether Mail',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0x0000000000000000000000000000000000000000',
+ *     verifyingContract:
+ *       '0x0000000000000000000000000000000000000000'
  *   },
  *   types: {
  *     Person: [
  *       { name: 'name', type: 'string' },
- *       { name: 'wallet', type: 'address' },
+ *       { name: 'wallet', type: 'address' }
  *     ],
  *     Mail: [
  *       { name: 'from', type: 'Person' },
  *       { name: 'to', type: 'Person' },
- *       { name: 'contents', type: 'string' },
- *     ],
+ *       { name: 'contents', type: 'string' }
+ *     ]
  *   },
  *   primaryType: 'Mail',
  *   message: {
  *     from: {
  *       name: 'Cow',
- *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+ *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826'
  *     },
  *     to: {
  *       name: 'Bob',
- *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+ *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
  *     },
- *     contents: 'Hello, Bob!',
- *   },
+ *     contents: 'Hello, Bob!'
+ *   }
  * })
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @category Signed & Typed Data
@@ -3529,7 +3639,9 @@ export * as Value from './core/Value.js'
  * ```ts twoslash
  * import { WebAuthnP256 } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({ name: 'Example' }) // [!code focus]
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example'
+ * }) // [!code focus]
  * // @log: {
  * // @log:   id: 'oZ48...',
  * // @log:   publicKey: { x: 51421...5123n, y: 12345...6789n },
@@ -3538,7 +3650,7 @@ export * as Value from './core/Value.js'
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   credentialId: credential.id,
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  * ```
  *
@@ -3551,12 +3663,13 @@ export * as Value from './core/Value.js'
  * import { WebAuthnP256 } from 'ox'
  *
  * const credential = await WebAuthnP256.createCredential({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
- * const { metadata, signature } = await WebAuthnP256.sign({ // [!code focus]
+ * const { metadata, signature } = await WebAuthnP256.sign({
+ *   // [!code focus]
  *   credentialId: credential.id, // [!code focus]
- *   challenge: '0xdeadbeef', // [!code focus]
+ *   challenge: '0xdeadbeef' // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   metadata: {
@@ -3579,19 +3692,20 @@ export * as Value from './core/Value.js'
  * import { WebAuthnP256 } from 'ox'
  *
  * const credential = await WebAuthnP256.createCredential({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   credentialId: credential.id,
- *   challenge: '0xdeadbeef',
+ *   challenge: '0xdeadbeef'
  * })
  *
- * const result = await WebAuthnP256.verify({ // [!code focus]
+ * const result = await WebAuthnP256.verify({
+ *   // [!code focus]
  *   metadata, // [!code focus]
  *   challenge: '0xdeadbeef', // [!code focus]
  *   publicKey: credential.publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```
@@ -3611,7 +3725,8 @@ export * as WebAuthnP256 from './core/WebAuthnP256.js'
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
  *
- * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * const { publicKey, privateKey } =
+ *   await WebCryptoP256.createKeyPair()
  * // @log: {
  * // @log:   privateKey: CryptoKey {},
  * // @log:   publicKey: {
@@ -3632,9 +3747,10 @@ export * as WebAuthnP256 from './core/WebAuthnP256.js'
  *
  * const { privateKey } = await WebCryptoP256.createKeyPair()
  *
- * const signature = await WebCryptoP256.sign({ // [!code focus]
+ * const signature = await WebCryptoP256.sign({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   privateKey, // [!code focus]
+ *   privateKey // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   r: 151231...4423n,
@@ -3650,13 +3766,18 @@ export * as WebAuthnP256 from './core/WebAuthnP256.js'
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
  *
- * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
- * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
+ * const { privateKey, publicKey } =
+ *   await WebCryptoP256.createKeyPair()
+ * const signature = await WebCryptoP256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const verified = await WebCryptoP256.verify({ // [!code focus]
+ * const verified = await WebCryptoP256.verify({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```

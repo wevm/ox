@@ -64,7 +64,9 @@ export declare namespace createKeyPair {
  * ```ts twoslash
  * import { Ed25519 } from 'ox'
  *
- * const publicKey = Ed25519.getPublicKey({ privateKey: '0x...' })
+ * const publicKey = Ed25519.getPublicKey({
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param options - The options to compute the public key.
@@ -148,7 +150,8 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { Ed25519 } from 'ox'
  *
- * const signature = Ed25519.sign({ // [!code focus]
+ * const signature = Ed25519.sign({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
@@ -203,12 +206,16 @@ export declare namespace sign {
  * import { Ed25519 } from 'ox'
  *
  * const { privateKey, publicKey } = Ed25519.createKeyPair()
- * const signature = Ed25519.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Ed25519.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const verified = Ed25519.verify({ // [!code focus]
+ * const verified = Ed25519.verify({
+ *   // [!code focus]
  *   publicKey, // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -248,7 +255,9 @@ export declare namespace verify {
  *
  * const { privateKey, publicKey } = Ed25519.createKeyPair()
  *
- * const x25519PublicKey = Ed25519.toX25519PublicKey({ publicKey })
+ * const x25519PublicKey = Ed25519.toX25519PublicKey({
+ *   publicKey
+ * })
  * ```
  *
  * @param options - The options.
@@ -297,7 +306,9 @@ export declare namespace toX25519PublicKey {
  *
  * const { privateKey, publicKey } = Ed25519.createKeyPair()
  *
- * const x25519PrivateKey = Ed25519.toX25519PrivateKey({ privateKey })
+ * const x25519PrivateKey = Ed25519.toX25519PrivateKey({
+ *   privateKey
+ * })
  * ```
  *
  * @param options - The options.

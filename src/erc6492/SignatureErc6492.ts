@@ -134,7 +134,7 @@ export declare namespace assert {
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
  * // Instantiate from serialized format. // [!code focus]
@@ -142,10 +142,11 @@ export declare namespace assert {
  * // @log: { data: '0x...', signature: { ... }, to: '0x...', } // [!code focus]
  *
  * // Instantiate from constituent parts. // [!code focus]
- * const wrapped = SignatureErc6492.from({ // [!code focus]
+ * const wrapped = SignatureErc6492.from({
+ *   // [!code focus]
  *   data: '0x...', // [!code focus]
  *   signature, // [!code focus]
- *   to: '0x...', // [!code focus]
+ *   to: '0x...' // [!code focus]
  * })
  * // @log: { data: '0x...', signature: { ... }, to: '0x...', }
  * ```
@@ -176,7 +177,8 @@ export declare namespace from {
  * ```ts twoslash
  * import { SignatureErc6492 } from 'ox/erc6492'
  *
- * const { data, signature, to } = SignatureErc6492.unwrap('0x...')
+ * const { data, signature, to } =
+ *   SignatureErc6492.unwrap('0x...')
  * ```
  *
  * @param wrapped - Wrapped signature to parse.
@@ -209,13 +211,14 @@ export declare namespace unwrap {
  *
  * const signature = Secp256k1.sign({
  *   payload: '0x...',
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const wrapped = SignatureErc6492.wrap({ // [!code focus]
+ * const wrapped = SignatureErc6492.wrap({
+ *   // [!code focus]
  *   data: '0xdeadbeef', // [!code focus]
  *   signature: Signature.toHex(signature), // [!code focus]
- *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa', // [!code focus]
+ *   to: '0x00000000219ab540356cBB839Cbe05303d7705Fa' // [!code focus]
  * }) // [!code focus]
  * ```
  *

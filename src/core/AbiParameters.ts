@@ -31,7 +31,7 @@ export type PackedAbiType =
  *
  * const data = AbiParameters.decode(
  *   AbiParameters.from(['string', 'uint', 'bool']),
- *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
+ *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000'
  * )
  * // @log: ['wagmi', 420n, true]
  * ```
@@ -48,9 +48,9 @@ export type PackedAbiType =
  *   [
  *     { name: 'x', type: 'string' },
  *     { name: 'y', type: 'uint' },
- *     { name: 'z', type: 'bool' },
+ *     { name: 'z', type: 'bool' }
  *   ],
- *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000',
+ *   '0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000'
  * )
  * // @log: ['wagmi', 420n, true]
  * ```
@@ -162,7 +162,7 @@ export declare namespace decode {
  *
  * const data = AbiParameters.encode(
  *   AbiParameters.from(['string', 'uint', 'bool']),
- *   ['wagmi', 420n, true],
+ *   ['wagmi', 420n, true]
  * )
  * ```
  *
@@ -178,9 +178,9 @@ export declare namespace decode {
  *   [
  *     { type: 'string', name: 'name' },
  *     { type: 'uint', name: 'age' },
- *     { type: 'bool', name: 'isOwner' },
+ *     { type: 'bool', name: 'isOwner' }
  *   ],
- *   ['wagmi', 420n, true],
+ *   ['wagmi', 420n, true]
  * )
  * ```
  *
@@ -241,7 +241,10 @@ export declare namespace encode {
  *
  * const encoded = AbiParameters.encodePacked(
  *   ['address', 'string'],
- *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 'hello world'],
+ *   [
+ *     '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *     'hello world'
+ *   ]
  * )
  * // @log: '0xd8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
  * ```
@@ -356,18 +359,16 @@ export namespace encodePacked {
  * const formatted = AbiParameters.format([
  *   {
  *     name: 'spender',
- *     type: 'address',
+ *     type: 'address'
  *   },
  *   {
  *     name: 'amount',
- *     type: 'uint256',
- *   },
+ *     type: 'uint256'
+ *   }
  * ])
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param parameters - The ABI Parameters to format.
@@ -405,23 +406,16 @@ export declare namespace format {
  * const parameters = AbiParameters.from([
  *   {
  *     name: 'spender',
- *     type: 'address',
+ *     type: 'address'
  *   },
  *   {
  *     name: 'amount',
- *     type: 'uint256',
- *   },
+ *     type: 'uint256'
+ *   }
  * ])
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -432,17 +426,12 @@ export declare namespace format {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * const parameters = AbiParameters.from('address spender, uint256 amount')
+ * const parameters = AbiParameters.from(
+ *   'address spender, uint256 amount'
+ * )
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -453,23 +442,11 @@ export declare namespace format {
  *
  * const parameters = AbiParameters.from([
  *   'struct Foo { address spender; uint256 amount; }', // [!code hl]
- *   'Foo foo, address bar',
+ *   'Foo foo, address bar'
  * ])
  *
  * parameters
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -522,7 +499,10 @@ export declare namespace from {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * AbiParameters.decode([{ type: 'uint256' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * AbiParameters.decode(
+ *   [{ type: 'uint256' }],
+ *   '0x00000000000000000000000000000000000000000000000000000000000010f'
+ * )
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
@@ -567,7 +547,10 @@ export class DataSizeTooSmallError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * AbiParameters.decode([{ type: 'uint256' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * AbiParameters.decode(
+ *   [{ type: 'uint256' }],
+ *   '0x00000000000000000000000000000000000000000000000000000000000010f'
+ * )
  * //                                             ↑ ✅ 32 bytes
  * ```
  */
@@ -587,7 +570,9 @@ export class ZeroDataError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from('uint256[3]'), [[69n, 420n]])
+ * AbiParameters.encode(AbiParameters.from('uint256[3]'), [
+ *   [69n, 420n]
+ * ])
  * //                                               ↑ expected: 3  ↑ ❌ length: 2
  * // @error: AbiParameters.ArrayLengthMismatchError: ABI encoding array length mismatch
  * // @error: for type `uint256[3]`. Expected: `3`. Given: `2`.
@@ -600,7 +585,9 @@ export class ZeroDataError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [[69n, 420n, 69n]])
+ * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [
+ *   [69n, 420n, 69n]
+ * ])
  * //                                                         ↑ ✅ length: 3
  * ```
  */
@@ -630,7 +617,9 @@ export class ArrayLengthMismatchError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from('bytes8'), [['0xdeadbeefdeadbeefdeadbeef']])
+ * AbiParameters.encode(AbiParameters.from('bytes8'), [
+ *   ['0xdeadbeefdeadbeefdeadbeef']
+ * ])
  * //                                            ↑ expected: 8 bytes  ↑ ❌ size: 12 bytes
  * // @error: BytesSizeMismatchError: Size of bytes "0xdeadbeefdeadbeefdeadbeef"
  * // @error: (bytes12) does not match expected size (bytes8).
@@ -643,7 +632,9 @@ export class ArrayLengthMismatchError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['bytes8']), ['0xdeadbeefdeadbeef'])
+ * AbiParameters.encode(AbiParameters.from(['bytes8']), [
+ *   '0xdeadbeefdeadbeef'
+ * ])
  * //                                                       ↑ ✅ size: 8 bytes
  * ```
  */
@@ -673,7 +664,10 @@ export class BytesSizeMismatchError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['string', 'uint256']), ['hello'])
+ * AbiParameters.encode(
+ *   AbiParameters.from(['string', 'uint256']),
+ *   ['hello']
+ * )
  * // @error: LengthMismatchError: ABI encoding params/values length mismatch.
  * // @error: Expected length (params): 2
  * // @error: Given length (values): 1
@@ -715,7 +709,10 @@ export class LengthMismatchError extends Errors.BaseError {
  * // @noErrors
  * import { AbiParameters } from 'ox'
  * // ---cut---
- * AbiParameters.encode(AbiParameters.from(['uint256[3]']), [69])
+ * AbiParameters.encode(
+ *   AbiParameters.from(['uint256[3]']),
+ *   [69]
+ * )
  * ```
  *
  * ### Solution
@@ -736,7 +733,10 @@ export class InvalidArrayError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiParameters } from 'ox'
  *
- * AbiParameters.decode([{ type: 'lol' }], '0x00000000000000000000000000000000000000000000000000000000000010f')
+ * AbiParameters.decode(
+ *   [{ type: 'lol' }],
+ *   '0x00000000000000000000000000000000000000000000000000000000000010f'
+ * )
  * //                             ↑ ❌ invalid type
  * // @error: AbiParameters.InvalidTypeError: Type `lol` is not a valid ABI Type.
  * ```

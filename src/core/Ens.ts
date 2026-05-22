@@ -16,7 +16,7 @@ const slip44Msb = 0x80000000n
  * ```ts twoslash
  * import { Ens } from 'ox'
  * Ens.labelhash('eth')
- * '0x4f5b812789fc606be1b3b16908db13fc7a9adf7ca72641f84d75b47069d3d7f0'
+ * ;('0x4f5b812789fc606be1b3b16908db13fc7a9adf7ca72641f84d75b47069d3d7f0')
  * ```
  *
  * @param label - ENS label.

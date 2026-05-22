@@ -154,9 +154,16 @@ export type Type = typeof type
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: Address.from('0x0000000000000000000000000000000000000000'), value: 0n }],
+ *   calls: [
+ *     {
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       ),
+ *       value: 0n
+ *     }
+ *   ],
  *   chainId: 1,
- *   maxFeePerGas: 1000000000n,
+ *   maxFeePerGas: 1000000000n
  * })
  * ```
  *
@@ -228,7 +235,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TxEnvelopeTempo.deserialize('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
+ * const envelope = TxEnvelopeTempo.deserialize(
+ *   '0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080'
+ * )
  * // @log: {
  * // @log:   type: 'tempo',
  * // @log:   nonce: 785n,
@@ -416,14 +425,18 @@ export declare namespace deserialize {
  * import { Value } from 'ox'
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TxEnvelopeTempo.from({ // [!code focus]
+ * const envelope = TxEnvelopeTempo.from({
+ *   // [!code focus]
  *   chainId: 1, // [!code focus]
- *   calls: [{ // [!code focus]
- *     data: '0xdeadbeef', // [!code focus]
- *     to: '0x0000000000000000000000000000000000000000', // [!code focus]
- *   }], // [!code focus]
+ *   calls: [
+ *     {
+ *       // [!code focus]
+ *       data: '0xdeadbeef', // [!code focus]
+ *       to: '0x0000000000000000000000000000000000000000' // [!code focus]
+ *     }
+ *   ], // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
- *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
+ *   maxPriorityFeePerGas: Value.fromGwei('1') // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -439,21 +452,24 @@ export declare namespace deserialize {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0x0000000000000000000000000000000000000000',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x0000000000000000000000000000000000000000'
+ *     }
+ *   ],
  *   maxFeePerGas: Value.fromGwei('10'),
- *   maxPriorityFeePerGas: Value.fromGwei('1'),
+ *   maxPriorityFeePerGas: Value.fromGwei('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeTempo.from(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   chainId: 1,
@@ -475,7 +491,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
- * const envelope = TxEnvelopeTempo.from('0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080')
+ * const envelope = TxEnvelopeTempo.from(
+ *   '0x76f84a0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0808080'
+ * )
  * // @log: {
  * // @log:   chainId: 1,
  * // @log:   calls: [{
@@ -564,11 +582,13 @@ export declare namespace from {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0x0000000000000000000000000000000000000000',
- *   }],
- *   maxFeePerGas: Value.fromGwei('10'),
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x0000000000000000000000000000000000000000'
+ *     }
+ *   ],
+ *   maxFeePerGas: Value.fromGwei('10')
  * })
  *
  * const serialized = TxEnvelopeTempo.serialize(envelope) // [!code focus]
@@ -586,20 +606,23 @@ export declare namespace from {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0x0000000000000000000000000000000000000000',
- *   }],
- *   maxFeePerGas: Value.fromGwei('10'),
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x0000000000000000000000000000000000000000'
+ *     }
+ *   ],
+ *   maxFeePerGas: Value.fromGwei('10')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = TxEnvelopeTempo.serialize(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const serialized = TxEnvelopeTempo.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
@@ -774,10 +797,12 @@ export declare namespace serialize {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
- *   nonce: 0n,
+ *   calls: [
+ *     {
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
+ *   nonce: 0n
  * })
  *
  * const encoded = TxEnvelopeTempo.encodeForSigning(envelope) // [!code focus]
@@ -820,14 +845,19 @@ export declare namespace encodeForSigning {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
- *   nonce: 0n,
+ *   calls: [
+ *     {
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
+ *   nonce: 0n
  * })
  *
  * const payload = TxEnvelopeTempo.getSignPayload(envelope) // [!code focus]
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
@@ -871,13 +901,15 @@ export declare namespace getSignPayload {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
- *   gas: 21000n,
+ *   gas: 21000n
  * })
  *
  * const signature = Secp256k1.sign({
@@ -885,7 +917,9 @@ export declare namespace getSignPayload {
  *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeTempo.from(envelope, { signature })
+ * const envelope_signed = TxEnvelopeTempo.from(envelope, {
+ *   signature
+ * })
  *
  * const hash = TxEnvelopeTempo.hash(envelope_signed) // [!code focus]
  * ```
@@ -941,21 +975,29 @@ export declare namespace hash {
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'
+ *     }
+ *   ],
  *   nonce: 0n,
  *   maxFeePerGas: 1000000000n,
- *   gas: 21000n,
+ *   gas: 21000n
  * })
  *
- * const payload = TxEnvelopeTempo.getFeePayerSignPayload(envelope, {
- *   sender: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
- * }) // [!code focus]
+ * const payload = TxEnvelopeTempo.getFeePayerSignPayload(
+ *   envelope,
+ *   {
+ *     sender: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
+ *   }
+ * ) // [!code focus]
  * // @log: '0x...'
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the fee payer sign payload for.
@@ -998,12 +1040,16 @@ export declare namespace getFeePayerSignPayload {
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * const valid = TxEnvelopeTempo.validate({
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: Address.from('0x0000000000000000000000000000000000000000'),
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       )
+ *     }
+ *   ],
  *   chainId: 1,
- *   maxFeePerGas: 1000000000n,
+ *   maxFeePerGas: 1000000000n
  * })
  * // @log: true
  * ```
@@ -1037,12 +1083,15 @@ export declare namespace validate {
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * const envelope = TxEnvelopeTempo.from({
- *   calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+ *   calls: [
+ *     { to: '0x0000000000000000000000000000000000000000' }
+ *   ],
  *   chainId: 1,
- *   maxFeePerGas: 1n,
+ *   maxFeePerGas: 1n
  * })
  *
- * const request = TxEnvelopeTempo.toTransactionRequest(envelope)
+ * const request =
+ *   TxEnvelopeTempo.toTransactionRequest(envelope)
  * ```
  *
  * @param envelope - The Tempo transaction envelope to convert.
@@ -1067,7 +1116,7 @@ export declare namespace toTransactionRequest {
  *
  * TxEnvelopeTempo.assert({
  *   calls: [],
- *   chainId: 1,
+ *   chainId: 1
  * })
  * // @error: TxEnvelopeTempo.CallsEmptyError: Calls list cannot be empty.
  * ```
@@ -1088,10 +1137,16 @@ export class CallsEmptyError extends Errors.BaseError {
  * import { TxEnvelopeTempo } from 'ox/tempo'
  *
  * TxEnvelopeTempo.assert({
- *   calls: [{ to: Address.from('0x0000000000000000000000000000000000000000') }],
+ *   calls: [
+ *     {
+ *       to: Address.from(
+ *         '0x0000000000000000000000000000000000000000'
+ *       )
+ *     }
+ *   ],
  *   chainId: 1,
  *   validBefore: 100,
- *   validAfter: 200,
+ *   validAfter: 200
  * })
  * // @error: TxEnvelopeTempo.InvalidValidityWindowError: validBefore (100) must be greater than validAfter (200).
  * ```

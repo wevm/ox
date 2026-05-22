@@ -92,7 +92,7 @@ export type Message = {
  *   domain: 'example.com',
  *   nonce: 'foobarbaz',
  *   uri: 'https://example.com/path',
- *   version: '1',
+ *   version: '1'
  * })
  * // @log: "example.com wants you to sign in with your Ethereum account:
  * // @log: 0xA0Cf798816D4b9b9866b5330EEa46a18382f251e
@@ -414,9 +414,9 @@ export function parseMessage(message: string): ExactPartial<Message> {
  *     domain: 'example.com',
  *     nonce: 'foobarbaz',
  *     uri: 'https://example.com/path',
- *     version: '1',
+ *     version: '1'
  *   },
- *   nonce: 'foobarbaz',
+ *   nonce: 'foobarbaz'
  * })
  * // @log: true
  * ```
@@ -489,7 +489,7 @@ export declare namespace validateMessage {
  *   domain: 'example.com',
  *   nonce: 'foobarbaz',
  *   uri: 'https://example.com/path',
- *   version: '1',
+ *   version: '1'
  * })
  * // @error: Siwe.InvalidMessageFieldError: Invalid Sign-In with Ethereum message field "chainId".
  * // @error: - Chain ID must be a EIP-155 chain ID.

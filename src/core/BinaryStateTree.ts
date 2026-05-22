@@ -38,10 +38,15 @@ export function create(): BinaryStateTree {
  *
  * const tree = BinaryStateTree.create()
  *
- * BinaryStateTree.insert( // [!code focus]
+ * BinaryStateTree.insert(
+ *   // [!code focus]
  *   tree, // [!code focus]
- *   Bytes.fromHex('0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54'), // [!code focus]
- *   Bytes.fromHex('0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1') // [!code focus]
+ *   Bytes.fromHex(
+ *     '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54'
+ *   ), // [!code focus]
+ *   Bytes.fromHex(
+ *     '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1'
+ *   ) // [!code focus]
  * ) // [!code focus]
  * ```
  *
@@ -114,8 +119,12 @@ export function insert(
  *
  * BinaryStateTree.insert(
  *   tree,
- *   Bytes.fromHex('0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54'),
- *   Bytes.fromHex('0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1')
+ *   Bytes.fromHex(
+ *     '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54'
+ *   ),
+ *   Bytes.fromHex(
+ *     '0xd4fd4e189132273036449fc9e11198c739161b4c0116a9a2dccdfa1c492006f1'
+ *   )
  * )
  *
  * const hash = BinaryStateTree.merkelize(tree) // [!code focus]

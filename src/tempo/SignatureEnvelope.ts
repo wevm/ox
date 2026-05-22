@@ -35,7 +35,11 @@ export const magicBytes =
  * ```ts twoslash
  * import type { SignatureEnvelope } from 'ox/tempo'
  *
- * type Type = SignatureEnvelope.GetType<{ r: `0x${string}`; s: `0x${string}`; yParity: number }>
+ * type Type = SignatureEnvelope.GetType<{
+ *   r: `0x${string}`
+ *   s: `0x${string}`
+ *   yParity: number
+ * }>
  * // @log: 'secp256k1'
  * ```
  */
@@ -220,8 +224,8 @@ export type Type = (typeof types)[number]
  *   signature: {
  *     r: '0x0000000000000000000000000000000000000000000000000000000000000000',
  *     s: '0x0000000000000000000000000000000000000000000000000000000000000000',
- *     yParity: 0,
- *   },
+ *     yParity: 0
+ *   }
  * })
  * ```
  *
@@ -307,12 +311,16 @@ export declare namespace assert {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const payload = '0xdeadbeef'
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * const envelope = SignatureEnvelope.from(signature)
  *
- * const address = SignatureEnvelope.extractAddress({ // [!code focus]
+ * const address = SignatureEnvelope.extractAddress({
+ *   // [!code focus]
  *   payload, // [!code focus]
- *   signature: envelope, // [!code focus]
+ *   signature: envelope // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -361,12 +369,16 @@ export declare namespace extractAddress {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const payload = '0xdeadbeef'
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * const envelope = SignatureEnvelope.from(signature)
  *
- * const publicKey = SignatureEnvelope.extractPublicKey({ // [!code focus]
+ * const publicKey = SignatureEnvelope.extractPublicKey({
+ *   // [!code focus]
  *   payload, // [!code focus]
- *   signature: envelope, // [!code focus]
+ *   signature: envelope // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -569,7 +581,10 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const privateKey = Secp256k1.randomPrivateKey()
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
  * const envelope = SignatureEnvelope.from(signature)
  * ```
@@ -585,11 +600,14 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const { privateKey, publicKey } = P256.createKeyPair()
- * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = P256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
  * const envelope = SignatureEnvelope.from({
  *   signature,
- *   publicKey,
+ *   publicKey
  * })
  * ```
  *
@@ -604,13 +622,17 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  * import { WebCryptoP256 } from 'ox'
  * import { SignatureEnvelope } from 'ox/tempo'
  *
- * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
- * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
+ * const { privateKey, publicKey } =
+ *   await WebCryptoP256.createKeyPair()
+ * const signature = await WebCryptoP256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
  * const envelope = SignatureEnvelope.from({
  *   signature,
  *   publicKey,
- *   prehash: true,
+ *   prehash: true
  * })
  * ```
  *
@@ -627,18 +649,18 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const credential = await WebAuthnP256.createCredential({
- *   name: 'Example',
+ *   name: 'Example'
  * })
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   challenge: '0xdeadbeef',
- *   credentialId: credential.id,
+ *   credentialId: credential.id
  * })
  *
  * const envelope = SignatureEnvelope.from({
  *   signature,
  *   publicKey: credential.publicKey,
- *   metadata,
+ *   metadata
  * })
  * ```
  *
@@ -653,11 +675,14 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const privateKey = Secp256k1.randomPrivateKey()
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
  * const envelope = SignatureEnvelope.from({
  *   userAddress: '0x1234567890123456789012345678901234567890',
- *   inner: SignatureEnvelope.from(signature),
+ *   inner: SignatureEnvelope.from(signature)
  * })
  * ```
  *
@@ -758,7 +783,7 @@ export declare namespace from {
  *   r: '0x0',
  *   s: '0x0',
  *   yParity: '0x0',
- *   type: 'secp256k1',
+ *   type: 'secp256k1'
  * })
  * ```
  *
@@ -865,7 +890,11 @@ export declare namespace fromRpc {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const type = SignatureEnvelope.getType({
- *   signature: { r: '0x0000000000000000000000000000000000000000000000000000000000000000', s: '0x0000000000000000000000000000000000000000000000000000000000000000', yParity: 0 },
+ *   signature: {
+ *     r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     yParity: 0
+ *   }
  * })
  * // @log: 'secp256k1'
  * ```
@@ -944,8 +973,12 @@ export function getType<
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const serialized = SignatureEnvelope.serialize({
- *   signature: { r: '0x0000000000000000000000000000000000000000000000000000000000000000', s: '0x0000000000000000000000000000000000000000000000000000000000000000', yParity: 0 },
- *   type: 'secp256k1',
+ *   signature: {
+ *     r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     yParity: 0
+ *   },
+ *   type: 'secp256k1'
  * })
  * ```
  *
@@ -1036,8 +1069,12 @@ export declare namespace serialize {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const rpc = SignatureEnvelope.toRpc({
- *   signature: { r: '0x0000000000000000000000000000000000000000000000000000000000000000', s: '0x0000000000000000000000000000000000000000000000000000000000000000', yParity: 0 },
- *   type: 'secp256k1',
+ *   signature: {
+ *     r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     yParity: 0
+ *   },
+ *   type: 'secp256k1'
  * })
  * ```
  *
@@ -1113,8 +1150,12 @@ export declare namespace toRpc {
  * import { SignatureEnvelope } from 'ox/tempo'
  *
  * const valid = SignatureEnvelope.validate({
- *   signature: { r: '0x0000000000000000000000000000000000000000000000000000000000000000', s: '0x0000000000000000000000000000000000000000000000000000000000000000', yParity: 0 },
- *   type: 'secp256k1',
+ *   signature: {
+ *     r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *     yParity: 0
+ *   },
+ *   type: 'secp256k1'
  * })
  * // @log: true
  * ```
@@ -1162,7 +1203,7 @@ export declare namespace validate {
  *
  * const valid = SignatureEnvelope.verify(envelope, {
  *   payload,
- *   publicKey,
+ *   publicKey
  * })
  * // @log: true
  * ```
@@ -1182,11 +1223,15 @@ export declare namespace validate {
  * const payload = '0xdeadbeef'
  *
  * const signature = P256.sign({ payload, privateKey })
- * const envelope = SignatureEnvelope.from({ prehash: false, publicKey, signature })
+ * const envelope = SignatureEnvelope.from({
+ *   prehash: false,
+ *   publicKey,
+ *   signature
+ * })
  *
  * const valid = SignatureEnvelope.verify(envelope, {
  *   payload,
- *   publicKey,
+ *   publicKey
  * })
  * // @log: true
  * ```
@@ -1198,15 +1243,23 @@ export declare namespace validate {
  * import { SignatureEnvelope } from 'ox/tempo'
  * import { WebCryptoP256 } from 'ox'
  *
- * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ * const { privateKey, publicKey } =
+ *   await WebCryptoP256.createKeyPair()
  * const payload = '0xdeadbeef'
  *
- * const signature = await WebCryptoP256.sign({ payload, privateKey })
- * const envelope = SignatureEnvelope.from({ prehash: true, publicKey, signature })
+ * const signature = await WebCryptoP256.sign({
+ *   payload,
+ *   privateKey
+ * })
+ * const envelope = SignatureEnvelope.from({
+ *   prehash: true,
+ *   publicKey,
+ *   signature
+ * })
  *
  * const valid = SignatureEnvelope.verify(envelope, {
  *   payload,
- *   publicKey,
+ *   publicKey
  * })
  * // @log: true
  * ```
@@ -1218,22 +1271,24 @@ export declare namespace validate {
  * import { SignatureEnvelope } from 'ox/tempo'
  * import { WebAuthnP256 } from 'ox'
  *
- * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example'
+ * })
  * const payload = '0xdeadbeef'
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   challenge: payload,
- *   credentialId: credential.id,
+ *   credentialId: credential.id
  * })
  * const envelope = SignatureEnvelope.from({
  *   metadata,
  *   signature,
- *   publicKey: credential.publicKey,
+ *   publicKey: credential.publicKey
  * })
  *
  * const valid = SignatureEnvelope.verify(envelope, {
  *   payload,
- *   publicKey: credential.publicKey,
+ *   publicKey: credential.publicKey
  * })
  * // @log: true
  * ```

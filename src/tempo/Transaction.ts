@@ -158,8 +158,8 @@ export type FromRpcType = typeof fromRpcType & {
  *     {
  *       input: '0xdeadbeef',
  *       to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
- *       value: '0x9b6e64a8ec60000',
- *     },
+ *       value: '0x9b6e64a8ec60000'
+ *     }
  *   ],
  *   feeToken: '0x20c0000000000000000000000000000000000000',
  *   transactionIndex: '0x2',
@@ -174,11 +174,11 @@ export type FromRpcType = typeof fromRpcType & {
  *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
  *     type: 'secp256k1',
- *     yParity: '0x0',
+ *     yParity: '0x0'
  *   },
  *   chainId: '0x1',
  *   accessList: [],
- *   type: '0x76',
+ *   type: '0x76'
  * })
  * ```
  *
@@ -262,8 +262,8 @@ export declare namespace fromRpc {
  *     {
  *       data: '0xdeadbeef',
  *       to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
- *       value: 700000000000000000n,
- *     },
+ *       value: 700000000000000000n
+ *     }
  *   ],
  *   chainId: 1,
  *   feeToken: '0x20c0000000000000000000000000000000000000',
@@ -279,12 +279,12 @@ export declare namespace fromRpc {
  *     signature: {
  *       r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *       s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *       yParity: 0,
+ *       yParity: 0
  *     },
- *     type: 'secp256k1',
+ *     type: 'secp256k1'
  *   },
  *   transactionIndex: 2,
- *   type: 'tempo',
+ *   type: 'tempo'
  * })
  * ```
  *

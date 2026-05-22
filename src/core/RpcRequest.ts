@@ -51,7 +51,7 @@ export type Store<schema extends RpcSchema.Generic | undefined = undefined> =
  * const store = RpcRequest.createStore()
  *
  * const request_1 = store.prepare({
- *   method: 'eth_blockNumber',
+ *   method: 'eth_blockNumber'
  * })
  * // @log: { id: 0, jsonrpc: '2.0', method: 'eth_blockNumber' }
  *
@@ -60,9 +60,9 @@ export type Store<schema extends RpcSchema.Generic | undefined = undefined> =
  *   params: [
  *     {
  *       to: '0x0000000000000000000000000000000000000000',
- *       data: '0xdeadbeef',
- *     },
- *   ],
+ *       data: '0xdeadbeef'
+ *     }
+ *   ]
  * })
  * // @log: { id: 1, jsonrpc: '2.0', method: 'eth_call', params: [{ to: '0x0000000000000000000000000000000000000000', data: '0xdeadbeef' }] }
  * ```
@@ -75,26 +75,33 @@ export type Store<schema extends RpcSchema.Generic | undefined = undefined> =
  * ```ts twoslash
  * import { RpcSchema, RpcRequest } from 'ox'
  *
- * const schema = RpcSchema.from<{ // [!code focus]
- *   Request: { // [!code focus]
- *     method: 'eth_foobar' // [!code focus]
- *     params: [number] // [!code focus]
- *   } // [!code focus]
- *   ReturnType: string // [!code focus]
- * } | { // [!code focus]
- *   Request: { // [!code focus]
- *     method: 'eth_foobaz' // [!code focus]
- *     params: [string] // [!code focus]
- *   } // [!code focus]
- *   ReturnType: string // [!code focus]
- * }>() // [!code focus]
+ * const schema = RpcSchema.from<
+ *   | {
+ *       // [!code focus]
+ *       Request: {
+ *         // [!code focus]
+ *         method: 'eth_foobar' // [!code focus]
+ *         params: [number] // [!code focus]
+ *       } // [!code focus]
+ *       ReturnType: string // [!code focus]
+ *     }
+ *   | {
+ *       // [!code focus]
+ *       Request: {
+ *         // [!code focus]
+ *         method: 'eth_foobaz' // [!code focus]
+ *         params: [string] // [!code focus]
+ *       } // [!code focus]
+ *       ReturnType: string // [!code focus]
+ *     }
+ * >() // [!code focus]
  *
  * const store = RpcRequest.createStore({ schema }) // [!code focus]
  *
  * const request = store.prepare({
  *   method: 'eth_foobar', // [!code focus]
  *   // ^?
- *   params: [42],
+ *   params: [42]
  * })
  * ```
  *
@@ -143,29 +150,34 @@ export declare namespace createStore {
  * import { RpcRequest, RpcResponse } from 'ox'
  *
  * // 1. Build a request object.
- * const request = RpcRequest.from({ // [!code focus]
+ * const request = RpcRequest.from({
+ *   // [!code focus]
  *   id: 0, // [!code focus]
  *   method: 'eth_estimateGas', // [!code focus]
- *   params: [ // [!code focus]
- *     { // [!code focus]
+ *   params: [
+ *     // [!code focus]
+ *     {
+ *       // [!code focus]
  *       from: '0xd2135CfB216b74109775236E36d4b433F1DF507B', // [!code focus]
  *       to: '0x0D44f617435088c947F00B31160f64b074e412B4', // [!code focus]
- *       value: '0x69420', // [!code focus]
- *     }, // [!code focus]
- *   ], // [!code focus]
+ *       value: '0x69420' // [!code focus]
+ *     } // [!code focus]
+ *   ] // [!code focus]
  * }) // [!code focus]
  *
  * // 2. Send the JSON-RPC request via HTTP.
  * const gas = await fetch('https://1.rpc.thirdweb.com', {
  *   body: JSON.stringify(request),
  *   headers: {
- *     'Content-Type': 'application/json',
+ *     'Content-Type': 'application/json'
  *   },
- *   method: 'POST',
+ *   method: 'POST'
  * })
- *  .then((response) => response.json())
- *  // 3. Parse the JSON-RPC response into a type-safe result.
- *  .then((response) => RpcResponse.parse(response, { request }))
+ *   .then((response) => response.json())
+ *   // 3. Parse the JSON-RPC response into a type-safe result.
+ *   .then((response) =>
+ *     RpcResponse.parse(response, { request })
+ *   )
  * ```
  *
  * @param options - JSON-RPC request options.

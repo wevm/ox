@@ -64,7 +64,7 @@ export type Type = typeof type
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @error: FeeCapTooHighError:
  * // @error: The fee cap (`masFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913 gwei) cannot be
@@ -102,7 +102,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeEip7702 } from 'ox'
  *
- * const envelope = TxEnvelopeEip7702.deserialize('0x04ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip7702.deserialize(
+ *   '0x04ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0'
+ * )
  * // @log: {
  * // @log:   authorizationList: [...],
  * // @log:   type: 'eip7702',
@@ -221,28 +223,36 @@ export declare namespace deserialize {
  *
  * @example
  * ```ts twoslash
- * import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   chainId: 1,
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: Authorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const authorizationList = [Authorization.from(authorization, { signature })]
+ * const authorizationList = [
+ *   Authorization.from(authorization, { signature })
+ * ]
  *
- * const envelope = TxEnvelopeEip7702.from({ // [!code focus]
+ * const envelope = TxEnvelopeEip7702.from({
+ *   // [!code focus]
  *   authorizationList, // [!code focus]
  *   chainId: 1, // [!code focus]
  *   maxFeePerGas: Value.fromGwei('10'), // [!code focus]
  *   maxPriorityFeePerGas: Value.fromGwei('1'), // [!code focus]
  *   to: '0x0000000000000000000000000000000000000000', // [!code focus]
- *   value: Value.fromEther('1'), // [!code focus]
+ *   value: Value.fromEther('1') // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -294,7 +304,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * import { TxEnvelopeEip7702 } from 'ox'
  *
- * const envelope = TxEnvelopeEip7702.from('0x04f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip7702.from(
+ *   '0x04f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261'
+ * )
  * // @log: {
  * // @log:   authorizationList: [...],
  * // @log:   chainId: 1,
@@ -472,27 +484,34 @@ export declare namespace hash {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Authorization, Secp256k1, TxEnvelopeEip7702, Value } from 'ox'
+ * import {
+ *   Authorization,
+ *   Secp256k1,
+ *   TxEnvelopeEip7702,
+ *   Value
+ * } from 'ox'
  *
  * const authorization = Authorization.from({
  *   address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
  *   chainId: 1,
- *   nonce: 0n,
+ *   nonce: 0n
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: Authorization.getSignPayload(authorization),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const authorizationList = [Authorization.from(authorization, { signature })]
+ * const authorizationList = [
+ *   Authorization.from(authorization, { signature })
+ * ]
  *
  * const envelope = TxEnvelopeEip7702.from({
  *   authorizationList,
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeEip7702.serialize(envelope) // [!code focus]
@@ -664,7 +683,7 @@ export declare namespace toRpc {
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @log: false
  * ```

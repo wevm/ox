@@ -20,7 +20,9 @@ const erc191PrefixHex = /*#__PURE__*/ ('0x19' +
  * ```ts twoslash
  * import { Hex, PersonalMessage } from 'ox'
  *
- * const data = PersonalMessage.encode(Hex.fromString('hello world'))
+ * const data = PersonalMessage.encode(
+ *   Hex.fromString('hello world')
+ * )
  * // @log: '0x19457468657265756d205369676e6564204d6573736167653a0a313168656c6c6f20776f726c64'
  * // @log: (0x19 ‖ 'Ethereum Signed Message:\n11' ‖ 'hello world')
  * ```
@@ -53,9 +55,14 @@ export declare namespace encode {
  * ```ts twoslash
  * import { Hex, PersonalMessage, Secp256k1 } from 'ox'
  *
- * const payload = PersonalMessage.getSignPayload(Hex.fromString('hello world')) // [!code focus]
+ * const payload = PersonalMessage.getSignPayload(
+ *   Hex.fromString('hello world')
+ * ) // [!code focus]
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param data - The data to get the sign payload for.

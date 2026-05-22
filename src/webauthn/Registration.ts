@@ -41,7 +41,9 @@ export type Response<serialized extends boolean = false> = {
  * ```ts twoslash
  * import { Registration } from 'ox/webauthn'
  *
- * const credential = await Registration.create({ name: 'Example' }) // [!code focus]
+ * const credential = await Registration.create({
+ *   name: 'Example'
+ * }) // [!code focus]
  * // @log: {
  * // @log:   id: 'oZ48...',
  * // @log:   publicKey: { x: 51421...5123n, y: 12345...6789n },
@@ -133,7 +135,8 @@ export declare namespace create {
  *
  * const options = Registration.getOptions({ name: 'Example' })
  *
- * const credential = await window.navigator.credentials.create(options)
+ * const credential =
+ *   await window.navigator.credentials.create(options)
  * ```
  *
  * @param options - Options.
@@ -280,12 +283,14 @@ export declare namespace getOptions {
  * ```ts twoslash
  * import { Registration } from 'ox/webauthn'
  *
- * const credential = await Registration.create({ name: 'Example' })
+ * const credential = await Registration.create({
+ *   name: 'Example'
+ * })
  * const response = Registration.verify({
  *   credential,
  *   challenge: '0x...',
  *   origin: 'https://example.com',
- *   rpId: 'example.com',
+ *   rpId: 'example.com'
  * })
  *
  * const serialized = Registration.serializeResponse(response) // [!code focus]
@@ -403,8 +408,10 @@ export declare namespace serializeOptions {
  *
  * // ... send to server and back ...
  *
- * const deserialized = Registration.deserializeOptions(serialized) // [!code focus]
- * const credential = await window.navigator.credentials.create(deserialized)
+ * const deserialized =
+ *   Registration.deserializeOptions(serialized) // [!code focus]
+ * const credential =
+ *   await window.navigator.credentials.create(deserialized)
  * ```
  *
  * @param options - The serialized credential creation options.
@@ -450,15 +457,23 @@ export declare namespace deserializeOptions {
  * ```ts twoslash
  * import { Registration } from 'ox/webauthn'
  *
- * const response = Registration.deserializeResponse({ // [!code focus]
- *   credential: { // [!code focus]
+ * const response = Registration.deserializeResponse({
+ *   // [!code focus]
+ *   credential: {
+ *     // [!code focus]
  *     attestationObject: 'o2NmbXRkbm9uZQ...', // [!code focus]
  *     clientDataJSON: 'eyJ0eXBlIjoid2Vi...', // [!code focus]
  *     id: 'm1-bMPuAqpWhCxHZQZTT6e-lSPntQbh3opIoGe7g4Qs', // [!code focus]
  *     publicKey: '0x04ab891400...', // [!code focus]
- *     raw: { id: '...', type: 'public-key', authenticatorAttachment: 'platform', rawId: '...', response: { clientDataJSON: 'eyJ0eXBlIjoid2Vi...' } }, // [!code focus]
+ *     raw: {
+ *       id: '...',
+ *       type: 'public-key',
+ *       authenticatorAttachment: 'platform',
+ *       rawId: '...',
+ *       response: { clientDataJSON: 'eyJ0eXBlIjoid2Vi...' }
+ *     } // [!code focus]
  *   }, // [!code focus]
- *   counter: 0, // [!code focus]
+ *   counter: 0 // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -511,13 +526,16 @@ export declare namespace deserializeResponse {
  * ```ts twoslash
  * import { Registration } from 'ox/webauthn'
  *
- * const credential = await Registration.create({ name: 'Example' })
+ * const credential = await Registration.create({
+ *   name: 'Example'
+ * })
  *
- * const result = Registration.verify({ // [!code focus]
+ * const result = Registration.verify({
+ *   // [!code focus]
  *   credential, // [!code focus]
  *   challenge: '0x69abb4b5a0de4bc62a2a201f8d25bae9', // [!code focus]
  *   origin: 'https://example.com', // [!code focus]
- *   rpId: 'example.com', // [!code focus]
+ *   rpId: 'example.com' // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   credential: {

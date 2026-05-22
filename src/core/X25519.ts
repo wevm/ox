@@ -64,7 +64,9 @@ export declare namespace createKeyPair {
  * ```ts twoslash
  * import { X25519 } from 'ox'
  *
- * const publicKey = X25519.getPublicKey({ privateKey: '0x...' })
+ * const publicKey = X25519.getPublicKey({
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param options - The options to compute the public key.

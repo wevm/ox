@@ -19,19 +19,11 @@ export type AbiItem = Abi.Abi[number]
  * const abi = Abi.from([
  *   'error Foo(string)',
  *   'function foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type Foo = AbiItem.FromAbi<typeof abi, 'Foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -49,12 +41,11 @@ export type FromAbi<
  * const abi = Abi.from([
  *   'error Foo(string)',
  *   'function foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type names = AbiItem.Name<typeof abi>
  * //   ^?
- *
  * ```
  */
 export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
@@ -79,20 +70,18 @@ export type ExtractNames<abi extends Abi.Abi> = Extract<
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiItem - The ABI Item to format.
@@ -124,30 +113,18 @@ export declare namespace format {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * abiItem
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -164,19 +141,6 @@ export declare namespace format {
  *
  * abiItem
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -187,23 +151,11 @@ export declare namespace format {
  *
  * const abiItem = AbiItem.from([
  *   'struct Foo { address spender; uint256 amount; }', // [!code hl]
- *   'function approve(Foo foo) returns (bool)',
+ *   'function approve(Foo foo) returns (bool)'
  * ])
  *
  * abiItem
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -270,17 +222,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiItem.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -294,23 +240,10 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  * const item = AbiItem.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -498,7 +431,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const selector = AbiItem.getSelector('function ownerOf(uint256 tokenId)')
+ * const selector = AbiItem.getSelector(
+ *   'function ownerOf(uint256 tokenId)'
+ * )
  * // @log: '0x6352211e'
  * ```
  *
@@ -565,7 +500,9 @@ export declare namespace getSelector {
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const signature = AbiItem.getSignature('function ownerOf(uint256 tokenId)')
+ * const signature = AbiItem.getSignature(
+ *   'function ownerOf(uint256 tokenId)'
+ * )
  * // @log: 'ownerOf(uint256)'
  * ```
  *
@@ -589,7 +526,7 @@ export declare namespace getSelector {
  *   type: 'function',
  *   inputs: [{ name: 'tokenId', type: 'uint256' }],
  *   outputs: [],
- *   stateMutability: 'view',
+ *   stateMutability: 'view'
  * })
  * // @log: 'ownerOf(uint256)'
  * ```
@@ -637,7 +574,9 @@ export declare namespace getSignature {
  * ```ts twoslash
  * import { AbiItem } from 'ox'
  *
- * const hash = AbiItem.getSignatureHash('event Transfer(address indexed from, address indexed to, uint256 amount)')
+ * const hash = AbiItem.getSignatureHash(
+ *   'event Transfer(address indexed from, address indexed to, uint256 amount)'
+ * )
  * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
  *
@@ -662,8 +601,8 @@ export declare namespace getSignature {
  *   inputs: [
  *     { name: 'from', type: 'address', indexed: true },
  *     { name: 'to', type: 'address', indexed: true },
- *     { name: 'amount', type: 'uint256', indexed: false },
- *   ],
+ *     { name: 'amount', type: 'uint256', indexed: false }
+ *   ]
  * })
  * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * ```
@@ -709,9 +648,12 @@ export declare namespace getSignatureHash {
  * ```ts twoslash
  * import { Abi, AbiFunction } from 'ox'
  *
- * const foo = Abi.from(['function foo(address)', 'function foo(bytes20)'])
+ * const foo = Abi.from([
+ *   'function foo(address)',
+ *   'function foo(bytes20)'
+ * ])
  * AbiFunction.fromAbi(foo, 'foo', {
- *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+ *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']
  * })
  * // @error: AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
  * // @error: `bytes20` in `foo(bytes20)`, and
@@ -732,7 +674,7 @@ export declare namespace getSignatureHash {
  *   'function foo(bytes20)' // [!code --]
  * ])
  * AbiFunction.fromAbi(foo, 'foo', {
- *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'],
+ *   args: ['0xA0Cf798816D4b9b9866b5330EEa46a18382f251e']
  * })
  * // @error: AbiItem.AmbiguityError: Found ambiguous types in overloaded ABI Items.
  * // @error: `bytes20` in `foo(bytes20)`, and

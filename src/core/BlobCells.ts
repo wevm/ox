@@ -144,7 +144,7 @@ export declare namespace fromBlob {
  *   cellIndices: cells.map((_, i) => i),
  *   commitments: cells.map(() => commitment),
  *   proofs,
- *   kzg,
+ *   kzg
  * })
  * ```
  *
@@ -194,7 +194,7 @@ export declare namespace verify {
  * const { cells, proofs } = BlobCells.recover(
  *   knownIndices, // e.g. [0, 2, 4, …]
  *   knownCells,
- *   { kzg },
+ *   { kzg }
  * )
  * ```
  *

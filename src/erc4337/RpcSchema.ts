@@ -17,17 +17,6 @@ import type * as UserOperationReceipt from './UserOperationReceipt.js'
  *
  * type Schema = RpcSchema.Bundler
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Bundler<
@@ -99,17 +88,6 @@ export type Bundler<
  *
  * type Schema = RpcSchema.BundlerDebug
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type BundlerDebug<

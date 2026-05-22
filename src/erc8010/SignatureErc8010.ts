@@ -120,7 +120,8 @@ export declare namespace from {
  * ```ts twoslash
  * import { SignatureErc8010 } from 'ox/erc8010'
  *
- * const { authorization, data, signature } = SignatureErc8010.unwrap('0x...')
+ * const { authorization, data, signature } =
+ *   SignatureErc8010.unwrap('0x...')
  * ```
  *
  * @param wrapped - Wrapped signature to unwrap.

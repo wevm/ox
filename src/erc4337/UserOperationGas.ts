@@ -55,7 +55,7 @@ export type RpcV08 = V08<Hex.Hex>
  * const userOperationGas = UserOperationGas.fromRpc({
  *   callGasLimit: '0x69420',
  *   preVerificationGas: '0x69420',
- *   verificationGasLimit: '0x69420',
+ *   verificationGasLimit: '0x69420'
  * })
  * ```
  *
@@ -87,7 +87,7 @@ export function fromRpc(rpc: Rpc): UserOperationGas {
  * const userOperationGas = UserOperationGas.toRpc({
  *   callGasLimit: 300_000n,
  *   preVerificationGas: 100_000n,
- *   verificationGasLimit: 100_000n,
+ *   verificationGasLimit: 100_000n
  * })
  * ```
  *

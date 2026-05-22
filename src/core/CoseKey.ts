@@ -77,9 +77,12 @@ export declare namespace fromPublicKey {
  * const { publicKey } = P256.createKeyPair()
  * const coseKey = CoseKey.fromPublicKey(publicKey)
  *
- * const { publicKey: pk, byteLength } = CoseKey.toPublicKey(coseKey, {
- *   returnByteLength: true,
- * })
+ * const { publicKey: pk, byteLength } = CoseKey.toPublicKey(
+ *   coseKey,
+ *   {
+ *     returnByteLength: true
+ *   }
+ * )
  * ```
  *
  * @param coseKey - The CBOR-encoded COSE_Key as hex or bytes.

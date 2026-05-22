@@ -74,7 +74,7 @@ export type Rpc = TransactionRequest<Hex.Hex, Hex.Hex, string>
  *
  * const request = TransactionRequest.fromRpc({
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: '0x2386f26fc10000',
+ *   value: '0x2386f26fc10000'
  * })
  * ```
  *
@@ -133,7 +133,7 @@ export declare namespace fromRpc {
  *
  * const request = TransactionRequest.toRpc({
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('0.01'),
+ *   value: Value.fromEther('0.01')
  * })
  * ```
  *
@@ -151,12 +151,13 @@ export declare namespace fromRpc {
  *
  * const request = TransactionRequest.toRpc({
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('0.01'),
+ *   value: Value.fromEther('0.01')
  * })
  *
- * const hash = await provider.request({ // [!code focus]
+ * const hash = await provider.request({
+ *   // [!code focus]
  *   method: 'eth_sendTransaction', // [!code focus]
- *   params: [request], // [!code focus]
+ *   params: [request] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -248,7 +249,7 @@ export declare namespace toRpc {
  *   chainId: 1,
  *   maxFeePerGas: 1n,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: 1n,
+ *   value: 1n
  * })
  * // @log: {
  * // @log:   chainId: 1,

@@ -37,7 +37,7 @@ export type ErrorObject = {
  * const response = RpcResponse.from({
  *   id: 0,
  *   jsonrpc: '2.0',
- *   result: '0x69420',
+ *   result: '0x69420'
  * })
  * ```
  *
@@ -50,11 +50,14 @@ export type ErrorObject = {
  * ```ts twoslash
  * import { RpcRequest, RpcResponse } from 'ox'
  *
- * const request = RpcRequest.from({ id: 0, method: 'eth_blockNumber' })
+ * const request = RpcRequest.from({
+ *   id: 0,
+ *   method: 'eth_blockNumber'
+ * })
  *
  * const response = RpcResponse.from(
  *   { result: '0x69420' },
- *   { request },
+ *   { request }
  * )
  * ```
  *
@@ -126,34 +129,25 @@ export declare namespace from {
  * // 2. Get a request object.
  * const request = store.prepare({
  *   method: 'eth_getBlockByNumber',
- *   params: ['0x1', false],
+ *   params: ['0x1', false]
  * })
  *
  * // 3. Send the JSON-RPC request via HTTP.
  * const block = await fetch('https://1.rpc.thirdweb.com', {
  *   body: JSON.stringify(request),
  *   headers: {
- *     'Content-Type': 'application/json',
+ *     'Content-Type': 'application/json'
  *   },
- *   method: 'POST',
+ *   method: 'POST'
  * })
- *  .then((response) => response.json())
- *  // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
- *  .then((response) => RpcResponse.parse(response, { request })) // [!code focus]
+ *   .then((response) => response.json())
+ *   // 4. Parse the JSON-RPC response into a type-safe result. // [!code focus]
+ *   .then((response) =>
+ *     RpcResponse.parse(response, { request })
+ *   ) // [!code focus]
  *
  * block // [!code focus]
  * // ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::tip
@@ -165,9 +159,11 @@ export declare namespace from {
  * import { RpcResponse } from 'ox'
  *
  * const block = await fetch('https://1.rpc.thirdweb.com', {})
- *  .then((response) => response.json())
- *  .then((response) => RpcResponse.parse(response, { request })) // [!code --]
- *  .then(RpcResponse.parse) // [!code ++]
+ *   .then((response) => response.json())
+ *   .then((response) =>
+ *     RpcResponse.parse(response, { request })
+ *   ) // [!code --]
+ *   .then(RpcResponse.parse) // [!code ++]
  * ```
  * :::
  *
@@ -182,22 +178,22 @@ export declare namespace from {
  * const store = RpcRequest.createStore()
  *
  * const request = store.prepare({
- *   method: 'eth_blockNumber',
+ *   method: 'eth_blockNumber'
  * })
  *
- * const response = RpcResponse.parse({}, {
- *   request,
- *   raw: true, // [!code hl]
- * })
+ * const response = RpcResponse.parse(
+ *   {},
+ *   {
+ *     request,
+ *     raw: true // [!code hl]
+ *   }
+ * )
  *
  * response.result
  * //       ^?
  *
- *
  * response.error
  * //       ^?
- *
- *
  * ```
  *
  * @param response - Opaque JSON-RPC response object.
@@ -286,11 +282,13 @@ export declare namespace parse {
  * ```ts twoslash
  * import { RpcResponse } from 'ox'
  *
- * const error = RpcResponse.parseError({ code: -32000, message: 'unsupported method' })
+ * const error = RpcResponse.parseError({
+ *   code: -32000,
+ *   message: 'unsupported method'
+ * })
  *
  * error
  * // ^?
- *
  * ```
  *
  * @param error - Error.

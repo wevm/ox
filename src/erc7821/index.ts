@@ -16,7 +16,7 @@
  *   {
  *     data: '0xcafebabe',
  *     to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
- *     value: 1n,
+ *     value: 1n
  *   }
  * ])
  * ```
@@ -51,7 +51,7 @@ export * as Calls from './Calls.js'
  *   {
  *     data: '0xcafebabe',
  *     to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
- *     value: 1n,
+ *     value: 1n
  *   }
  * ])
  * ```

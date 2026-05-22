@@ -72,12 +72,14 @@ export type Rpc = Omit<
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const request = TransactionRequest.fromRpc({
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0xcafebabecafebabecafebabecafebabecafebabe'
+ *     }
+ *   ],
  *   feeToken: '0x20c0000000000000000000000000000000000000',
- *   type: '0x76',
+ *   type: '0x76'
  * })
  * ```
  *
@@ -149,11 +151,13 @@ export declare namespace fromRpc {
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const request = TransactionRequest.toRpc({
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
- *   }],
- *   feeToken: '0x20c0000000000000000000000000000000000000',
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0xcafebabecafebabecafebabecafebabecafebabe'
+ *     }
+ *   ],
+ *   feeToken: '0x20c0000000000000000000000000000000000000'
  * })
  * ```
  *
@@ -172,16 +176,19 @@ export declare namespace fromRpc {
  * const provider = Provider.from(window.ethereum!)
  *
  * const request = TransactionRequest.toRpc({
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
- *   }],
- *   feeToken: '0x20c0000000000000000000000000000000000000',
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0xcafebabecafebabecafebabecafebabecafebabe'
+ *     }
+ *   ],
+ *   feeToken: '0x20c0000000000000000000000000000000000000'
  * })
  *
- * const hash = await provider.request({ // [!code focus]
+ * const hash = await provider.request({
+ *   // [!code focus]
  *   method: 'eth_sendTransaction', // [!code focus]
- *   params: [request], // [!code focus]
+ *   params: [request] // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -270,13 +277,15 @@ export declare namespace toRpc {
  * import { TransactionRequest } from 'ox/tempo'
  *
  * const envelope = TransactionRequest.toEnvelope({
- *   calls: [{
- *     data: '0xdeadbeef',
- *     to: '0xcafebabecafebabecafebabecafebabecafebabe',
- *   }],
+ *   calls: [
+ *     {
+ *       data: '0xdeadbeef',
+ *       to: '0xcafebabecafebabecafebabecafebabecafebabe'
+ *     }
+ *   ],
  *   chainId: 1,
  *   feeToken: '0x20c0000000000000000000000000000000000000',
- *   maxFeePerGas: 1n,
+ *   maxFeePerGas: 1n
  * })
  * ```
  *

@@ -52,7 +52,7 @@ export type Rpc<pending extends boolean = false> = Log<
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x0000000000000000000000000000000000000000000000000000000000000000',
  *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
- *     '0x000000000000000000000000000000000000000000000000000000000000025b',
+ *     '0x000000000000000000000000000000000000000000000000000000000000025b'
  *   ],
  *   data: '0x',
  *   blockHash:
@@ -62,7 +62,7 @@ export type Rpc<pending extends boolean = false> = Log<
  *     '0xcfa52db0bc2cb5bdcb2c5bd8816df7a2f018a0e3964ab1ef4d794cf327966e93',
  *   transactionIndex: '0x91',
  *   logIndex: '0x10f',
- *   removed: false,
+ *   removed: false
  * })
  * // @log: {
  * // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
@@ -92,7 +92,7 @@ export type Rpc<pending extends boolean = false> = Log<
  * import { AbiEvent, Hex, Log } from 'ox'
  *
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 indexed value)'
  * )
  *
  * const { topics } = AbiEvent.encode(transfer)
@@ -104,9 +104,9 @@ export type Rpc<pending extends boolean = false> = Log<
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
  *       fromBlock: Hex.fromNumber(19760235n),
  *       toBlock: Hex.fromNumber(19760240n),
- *       topics,
- *     },
- *   ],
+ *       topics
+ *     }
+ *   ]
  * })
  *
  * const log = Log.fromRpc(logs[0]) // [!code focus]
@@ -188,11 +188,11 @@ export declare namespace fromRpc {
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x0000000000000000000000000000000000000000000000000000000000000000',
  *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
- *     '0x000000000000000000000000000000000000000000000000000000000000025b',
+ *     '0x000000000000000000000000000000000000000000000000000000000000025b'
  *   ],
  *   transactionHash:
  *     '0xcfa52db0bc2cb5bdcb2c5bd8816df7a2f018a0e3964ab1ef4d794cf327966e93',
- *   transactionIndex: 145,
+ *   transactionIndex: 145
  * })
  * // @log: {
  * // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',

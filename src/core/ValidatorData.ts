@@ -13,7 +13,7 @@ import * as Hex from './Hex.js'
  *
  * const encoded = ValidatorData.encode({
  *   data: Hex.fromString('hello world'),
- *   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
  * })
  * // @log: '0x1900d8da6bf26964af9d7eed9e03e53415d37aa9604568656c6c6f20776f726c64'
  * // @log: '0x19 ‖ 0x00 ‖ 0xd8da6bf26964af9d7eed9e03e53415d37aa96045 ‖ "hello world"'
@@ -54,12 +54,16 @@ export declare namespace encode {
  * ```ts twoslash
  * import { Hex, Secp256k1, ValidatorData } from 'ox'
  *
- * const payload = ValidatorData.getSignPayload({ // [!code focus]
+ * const payload = ValidatorData.getSignPayload({
+ *   // [!code focus]
  *   data: Hex.fromString('hello world'), // [!code focus]
- *   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045', // [!code focus]
+ *   validator: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045' // [!code focus]
  * }) // [!code focus]
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param value - The data to get the sign payload for.

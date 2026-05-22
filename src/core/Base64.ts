@@ -69,7 +69,9 @@ const nativeFromBase64:
  * ```ts twoslash
  * import { Base64, Bytes } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.fromString('hello world'))
+ * const value = Base64.fromBytes(
+ *   Bytes.fromString('hello world')
+ * )
  * // @log: 'aGVsbG8gd29ybGQ='
  * ```
  *
@@ -81,7 +83,10 @@ const nativeFromBase64:
  * ```ts twoslash
  * import { Base64, Bytes } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.fromString('hello world'), { pad: false })
+ * const value = Base64.fromBytes(
+ *   Bytes.fromString('hello world'),
+ *   { pad: false }
+ * )
  * // @log: 'aGVsbG8gd29ybGQ'
  * ```
  *
@@ -92,7 +97,10 @@ const nativeFromBase64:
  * ```ts twoslash
  * import { Base64, Bytes } from 'ox'
  *
- * const value = Base64.fromBytes(Bytes.fromString('hello wod'), { url: true })
+ * const value = Base64.fromBytes(
+ *   Bytes.fromString('hello wod'),
+ *   { url: true }
+ * )
  * // @log: 'aGVsbG8gd29_77-9ZA=='
  * ```
  *
@@ -174,7 +182,10 @@ export declare namespace fromBytes {
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.fromHex(Hex.fromString('hello world'), { pad: false })
+ * const value = Base64.fromHex(
+ *   Hex.fromString('hello world'),
+ *   { pad: false }
+ * )
  * // @log: 'aGVsbG8gd29ybGQ'
  * ```
  *
@@ -185,7 +196,9 @@ export declare namespace fromBytes {
  * ```ts twoslash
  * import { Base64, Hex } from 'ox'
  *
- * const value = Base64.fromHex(Hex.fromString('hello wod'), { url: true })
+ * const value = Base64.fromHex(Hex.fromString('hello wod'), {
+ *   url: true
+ * })
  * // @log: 'aGVsbG8gd29_77-9ZA=='
  * ```
  *
@@ -235,7 +248,9 @@ export declare namespace fromHex {
  * ```ts twoslash
  * import { Base64 } from 'ox'
  *
- * const value = Base64.fromString('hello world', { pad: false })
+ * const value = Base64.fromString('hello world', {
+ *   pad: false
+ * })
  * // @log: 'aGVsbG8gd29ybGQ'
  * ```
  *

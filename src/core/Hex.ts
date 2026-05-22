@@ -106,7 +106,11 @@ export declare namespace concat {
  * Hex.from('0x48656c6c6f20576f726c6421')
  * // @log: '0x48656c6c6f20576f726c6421'
  *
- * Hex.from(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * Hex.from(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
@@ -181,7 +185,11 @@ export declare namespace fromBoolean {
  * ```ts twoslash
  * import { Bytes, Hex } from 'ox'
  *
- * Hex.fromBytes(Bytes.from([72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]))
+ * Hex.fromBytes(
+ *   Bytes.from([
+ *     72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33
+ *   ])
+ * )
  * // @log: '0x48656c6c6f20576f726c6421'
  * ```
  *
@@ -577,7 +585,10 @@ export declare namespace trimRight {
  * Hex.toBigInt('0x1a4')
  * // @log: 420n
  *
- * Hex.toBigInt('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
+ * Hex.toBigInt(
+ *   '0x00000000000000000000000000000000000000000000000000000000000001a4',
+ *   { size: 32 }
+ * )
  * // @log: 420n
  * ```
  *
@@ -623,7 +634,10 @@ export declare namespace toBigInt {
  * Hex.toBoolean('0x01')
  * // @log: true
  *
- * Hex.toBoolean('0x0000000000000000000000000000000000000000000000000000000000000001', { size: 32 })
+ * Hex.toBoolean(
+ *   '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   { size: 32 }
+ * )
  * // @log: true
  * ```
  *
@@ -699,7 +713,10 @@ export declare namespace toBytes {
  * Hex.toNumber('0x1a4')
  * // @log: 420
  *
- * Hex.toNumber('0x00000000000000000000000000000000000000000000000000000000000001a4', { size: 32 })
+ * Hex.toNumber(
+ *   '0x00000000000000000000000000000000000000000000000000000000000001a4',
+ *   { size: 32 }
+ * )
  * // @log: 420
  * ```
  *
@@ -737,9 +754,12 @@ export declare namespace toNumber {
  * Hex.toString('0x48656c6c6f20576f726c6421')
  * // @log: 'Hello world!'
  *
- * Hex.toString('0x48656c6c6f20576f726c64210000000000000000000000000000000000000000', {
- *  size: 32,
- * })
+ * Hex.toString(
+ *   '0x48656c6c6f20576f726c64210000000000000000000000000000000000000000',
+ *   {
+ *     size: 32
+ *   }
+ * )
  * // @log: 'Hello world'
  * ```
  *
@@ -954,7 +974,10 @@ export class SliceOffsetOutOfBoundsError extends Errors.BaseError {
  * ```ts twoslash
  * import { Hex } from 'ox'
  *
- * Hex.padLeft('0x1a4e12a45a21323123aaa87a897a897a898a6567a578a867a98778a667a85a875a87a6a787a65a675a6a9', 32)
+ * Hex.padLeft(
+ *   '0x1a4e12a45a21323123aaa87a897a897a898a6567a578a867a98778a667a85a875a87a6a787a65a675a6a9',
+ *   32
+ * )
  * // @error: Hex.SizeExceedsPaddingSizeError: Hex size (`43`) exceeds padding size (`32`).
  * ```
  */

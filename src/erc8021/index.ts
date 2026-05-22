@@ -16,12 +16,15 @@
  *
  * const dataSuffix2 = Attribution.toDataSuffix({
  *   codes: ['baseapp', 'morpho'],
- *   codeRegistry: { address: '0x0000000000000000000000000000000000000000', chainId: 1 },
+ *   codeRegistry: {
+ *     address: '0x0000000000000000000000000000000000000000',
+ *     chainId: 1
+ *   }
  * })
  *
  * const dataSuffix3 = Attribution.toDataSuffix({
  *   appCode: 'baseapp',
- *   walletCode: 'privy',
+ *   walletCode: 'privy'
  * })
  * ```
  *

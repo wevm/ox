@@ -23,7 +23,7 @@ export type Rpc = Withdrawal<Hex.Hex, Hex.Hex>
  *   address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',
  *   amount: '0x620323',
  *   index: '0x0',
- *   validatorIndex: '0x1',
+ *   validatorIndex: '0x1'
  * })
  * // @log: {
  * // @log:   address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',
@@ -60,7 +60,7 @@ export declare namespace fromRpc {
  *   address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',
  *   amount: 6423331n,
  *   index: 0,
- *   validatorIndex: 1,
+ *   validatorIndex: 1
  * })
  * // @log: {
  * // @log:   address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',

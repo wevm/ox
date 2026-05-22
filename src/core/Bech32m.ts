@@ -64,7 +64,9 @@ export declare namespace encode {
  * ```ts twoslash
  * import { Bech32m } from 'ox'
  *
- * const { hrp, data } = Bech32m.decode('tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqwa7xtm')
+ * const { hrp, data } = Bech32m.decode(
+ *   'tempo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqwa7xtm'
+ * )
  * // @log: { hrp: 'tempo', data: Uint8Array(20) }
  * ```
  *

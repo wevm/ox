@@ -16,7 +16,7 @@ import * as TokenId from './TokenId.js'
  *
  * const poolId = PoolId.from({
  *   userToken: 1n,
- *   validatorToken: 2n,
+ *   validatorToken: 2n
  * })
  * ```
  *

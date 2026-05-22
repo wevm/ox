@@ -28,9 +28,9 @@ export type Tuple = readonly ItemTuple[]
  *     '0x0000000000000000000000000000000000000000',
  *     [
  *       '0x0000000000000000000000000000000000000000000000000000000000000001',
- *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe',
- *     ],
- *   ],
+ *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe'
+ *     ]
+ *   ]
  * ])
  * // @log: [
  * // @log:   {
@@ -79,8 +79,9 @@ export function fromTupleList(accessList: Tuple): AccessList {
  *     address: '0x0000000000000000000000000000000000000000',
  *     storageKeys: [
  *       '0x0000000000000000000000000000000000000000000000000000000000000001',
- *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe'],
- *   },
+ *       '0x60fdd29ff912ce880cd3edaf9f932dc61d3dae823ea77e0323f94adb9f6a72fe'
+ *     ]
+ *   }
  * ])
  * // @log: [
  * // @log:   [

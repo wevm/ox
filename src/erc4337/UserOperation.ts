@@ -257,7 +257,7 @@ export type RpcV08<signed extends boolean = true> = V08<
  *   nonce: 69n,
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   verificationGasLimit: 100_000n,
+ *   verificationGasLimit: 100_000n
  * })
  * ```
  *
@@ -276,7 +276,7 @@ export type RpcV08<signed extends boolean = true> = V08<
  *   paymasterAndData: '0x',
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   signature: '0x',
+ *   signature: '0x'
  * }
  *
  * const userOperation = UserOperation.from(packed)
@@ -297,18 +297,28 @@ export type RpcV08<signed extends boolean = true> = V08<
  *   nonce: 69n,
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   verificationGasLimit: 100_000n,
+ *   verificationGasLimit: 100_000n
  * })
  *
- * const payload = UserOperation.getSignPayload(userOperation, {
- *   chainId: 1,
- *   entryPointAddress: '0x1234567890123456789012345678901234567890',
- *   entryPointVersion: '0.7',
+ * const payload = UserOperation.getSignPayload(
+ *   userOperation,
+ *   {
+ *     chainId: 1,
+ *     entryPointAddress:
+ *       '0x1234567890123456789012345678901234567890',
+ *     entryPointVersion: '0.7'
+ *   }
+ * )
+ *
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
  * })
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
- *
- * const userOperation_signed = UserOperation.from(userOperation, { signature }) // [!code focus]
+ * const userOperation_signed = UserOperation.from(
+ *   userOperation,
+ *   { signature }
+ * ) // [!code focus]
  * ```
  *
  * @param userOperation - The user operation to instantiate (structured or packed format).
@@ -374,7 +384,7 @@ export declare namespace from {
  *   preVerificationGas: '0x69420',
  *   signature: '0x',
  *   sender: '0x1234567890123456789012345678901234567890',
- *   verificationGasLimit: '0x69420',
+ *   verificationGasLimit: '0x69420'
  * })
  * ```
  *
@@ -423,16 +433,24 @@ export declare namespace fromRpc {
  *   nonce: 69n,
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   verificationGasLimit: 100_000n,
+ *   verificationGasLimit: 100_000n
  * })
  *
- * const payload = UserOperation.getSignPayload(userOperation, { // [!code focus]
- *   chainId: 1, // [!code focus]
- *   entryPointAddress: '0x1234567890123456789012345678901234567890', // [!code focus]
- *   entryPointVersion: '0.6', // [!code focus]
- * }) // [!code focus]
+ * const payload = UserOperation.getSignPayload(
+ *   userOperation,
+ *   {
+ *     // [!code focus]
+ *     chainId: 1, // [!code focus]
+ *     entryPointAddress:
+ *       '0x1234567890123456789012345678901234567890', // [!code focus]
+ *     entryPointVersion: '0.6' // [!code focus]
+ *   }
+ * ) // [!code focus]
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param userOperation - The user operation to get the sign payload for.
@@ -463,20 +481,24 @@ export declare namespace getSignPayload {
  * import { Value } from 'ox'
  * import { UserOperation } from 'ox/erc4337'
  *
- * const userOperation = UserOperation.hash({
- *   callData: '0xdeadbeef',
- *   callGasLimit: 300_000n,
- *   maxFeePerGas: Value.fromGwei('20'),
- *   maxPriorityFeePerGas: Value.fromGwei('2'),
- *   nonce: 69n,
- *   preVerificationGas: 100_000n,
- *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   verificationGasLimit: 100_000n,
- * }, {
- *   chainId: 1,
- *   entryPointAddress: '0x1234567890123456789012345678901234567890',
- *   entryPointVersion: '0.6',
- * })
+ * const userOperation = UserOperation.hash(
+ *   {
+ *     callData: '0xdeadbeef',
+ *     callGasLimit: 300_000n,
+ *     maxFeePerGas: Value.fromGwei('20'),
+ *     maxPriorityFeePerGas: Value.fromGwei('2'),
+ *     nonce: 69n,
+ *     preVerificationGas: 100_000n,
+ *     sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *     verificationGasLimit: 100_000n
+ *   },
+ *   {
+ *     chainId: 1,
+ *     entryPointAddress:
+ *       '0x1234567890123456789012345678901234567890',
+ *     entryPointVersion: '0.6'
+ *   }
+ * )
  * ```
  *
  * @param userOperation - The user operation to hash.
@@ -620,7 +642,7 @@ export declare namespace hash {
  *     nonce: 69n,
  *     yParity: 0,
  *     r: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *     s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+ *     s: '0x0000000000000000000000000000000000000000000000000000000000000002'
  *   },
  *   callData: '0xdeadbeef',
  *   callGasLimit: 300_000n,
@@ -630,7 +652,7 @@ export declare namespace hash {
  *   maxPriorityFeePerGas: Value.fromGwei('2'),
  *   nonce: 69n,
  *   preVerificationGas: 100_000n,
- *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357'
  * })
  * ```
  *
@@ -668,7 +690,7 @@ export function toInitCode(userOperation: Partial<UserOperation>): Hex.Hex {
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
  *   signature: '0x...',
- *   verificationGasLimit: 100_000n,
+ *   verificationGasLimit: 100_000n
  * })
  * ```
  *
@@ -745,7 +767,7 @@ export declare namespace toPacked {
  *   paymasterAndData: '0x',
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   signature: '0x...',
+ *   signature: '0x...'
  * }
  *
  * const userOperation = UserOperation.fromPacked(packed)
@@ -858,7 +880,7 @@ export declare namespace fromPacked {
  *   nonce: 69n,
  *   preVerificationGas: 100_000n,
  *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   verificationGasLimit: 100_000n,
+ *   verificationGasLimit: 100_000n
  * })
  * ```
  *
@@ -915,28 +937,32 @@ export declare namespace toRpc {
  * import { Value } from 'ox'
  * import { UserOperation } from 'ox/erc4337'
  *
- * const typedData = UserOperation.toTypedData({
- *   authorization: {
- *     chainId: 1,
- *     address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ * const typedData = UserOperation.toTypedData(
+ *   {
+ *     authorization: {
+ *       chainId: 1,
+ *       address: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *       nonce: 69n,
+ *       yParity: 0,
+ *       r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *       s: '0x0000000000000000000000000000000000000000000000000000000000000002'
+ *     },
+ *     callData: '0xdeadbeef',
+ *     callGasLimit: 300_000n,
+ *     maxFeePerGas: Value.fromGwei('20'),
+ *     maxPriorityFeePerGas: Value.fromGwei('2'),
  *     nonce: 69n,
- *     yParity: 0,
- *     r: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *     s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+ *     preVerificationGas: 100_000n,
+ *     sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
+ *     signature: '0x...',
+ *     verificationGasLimit: 100_000n
  *   },
- *   callData: '0xdeadbeef',
- *   callGasLimit: 300_000n,
- *   maxFeePerGas: Value.fromGwei('20'),
- *   maxPriorityFeePerGas: Value.fromGwei('2'),
- *   nonce: 69n,
- *   preVerificationGas: 100_000n,
- *   sender: '0x9f1fdab6458c5fc642fa0f4c5af7473c46837357',
- *   signature: '0x...',
- *   verificationGasLimit: 100_000n,
- * }, {
- *   chainId: 1,
- *   entryPointAddress: '0x1234567890123456789012345678901234567890',
- * })
+ *   {
+ *     chainId: 1,
+ *     entryPointAddress:
+ *       '0x1234567890123456789012345678901234567890'
+ *   }
+ * )
  * ```
  *
  * @param userOperation - The user operation to convert.

@@ -87,7 +87,7 @@ export const toRpcType = {
  *   transactionHash:
  *     '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
  *   transactionIndex: '0x2',
- *   type: '0x2',
+ *   type: '0x2'
  * })
  * // @log: {
  * // @log:   blobGasPrice: 270441n,
@@ -156,7 +156,7 @@ export declare namespace fromRpc {
  *   transactionHash:
  *     '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
  *   transactionIndex: 2,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * // @log: {
  * // @log:   blobGasPrice: "0x042069",

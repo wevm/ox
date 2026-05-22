@@ -120,14 +120,14 @@ export const ercSuffixSize = /*#__PURE__*/ Hex.size(ercSuffix)
  * const schemaId2 = Attribution.getSchemaId({
  *   codes: ['baseapp'],
  *   codeRegistry: {
- *      address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
- *      chainId: 8453,
+ *     address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+ *     chainId: 8453
  *   }
  * })
  * // @log: 1
  *
  * const schemaId3 = Attribution.getSchemaId({
- *   appCode: 'baseapp',
+ *   appCode: 'baseapp'
  * })
  * // @log: 2
  * ```
@@ -174,8 +174,8 @@ export declare namespace getSchemaId {
  * const suffix = Attribution.toDataSuffix({
  *   codes: ['baseapp'],
  *   codeRegistry: {
- *      address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
- *      chainId: 8453,
+ *     address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+ *     chainId: 8453
  *   }
  * })
  * ```
@@ -189,7 +189,7 @@ export declare namespace getSchemaId {
  * const suffix = Attribution.toDataSuffix({
  *   appCode: 'baseapp',
  *   walletCode: 'privy',
- *   metadata: { source: 'webapp' },
+ *   metadata: { source: 'webapp' }
  * })
  * ```
  *

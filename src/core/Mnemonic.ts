@@ -78,7 +78,9 @@ export declare namespace random {
  * import { Mnemonic } from 'ox'
  *
  * const mnemonic = Mnemonic.random(Mnemonic.english)
- * const hdKey = Mnemonic.toHdKey(mnemonic).derive(Mnemonic.path({ index: 1 }))
+ * const hdKey = Mnemonic.toHdKey(mnemonic).derive(
+ *   Mnemonic.path({ index: 1 })
+ * )
  * ```
  *
  * @param mnemonic - The mnemonic to convert.

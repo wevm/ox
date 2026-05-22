@@ -127,7 +127,7 @@ type HasDefined<envelope, key extends string> = envelope extends {
  * TransactionEnvelope.assert({
  *   chainId: 1,
  *   maxFeePerGas: 1n,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * ```
  *
@@ -162,7 +162,7 @@ export declare namespace assert {
  * import { TransactionEnvelope } from 'ox'
  *
  * const envelope = TransactionEnvelope.deserialize(
- *   '0x02df0180808080808080c0' as TransactionEnvelope.Serialized,
+ *   '0x02df0180808080808080c0' as TransactionEnvelope.Serialized
  * )
  * ```
  *
@@ -218,7 +218,7 @@ export declare namespace deserialize {
  * const envelope = TransactionEnvelope.from({
  *   chainId: 1,
  *   maxFeePerGas: 1n,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * ```
  *
@@ -313,7 +313,7 @@ export declare namespace from {
  * const payload = TransactionEnvelope.getSignPayload({
  *   chainId: 1,
  *   maxFeePerGas: 1n,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * ```
  *
@@ -356,7 +356,7 @@ export declare namespace getSignPayload {
  * import { TransactionEnvelope } from 'ox'
  *
  * const type = TransactionEnvelope.getType({
- *   maxFeePerGas: 1n,
+ *   maxFeePerGas: 1n
  * })
  * // @log: 'eip1559'
  * ```
@@ -442,7 +442,9 @@ export declare namespace getType {
  * ```ts twoslash
  * import { TransactionEnvelope } from 'ox'
  *
- * const type = TransactionEnvelope.getSerializedType('0x02df0180808080808080c0')
+ * const type = TransactionEnvelope.getSerializedType(
+ *   '0x02df0180808080808080c0'
+ * )
  * // @log: 'eip1559'
  * ```
  *
@@ -503,9 +505,9 @@ export declare namespace getSerializedType {
  *   {
  *     chainId: 1,
  *     maxFeePerGas: 1n,
- *     type: 'eip1559',
+ *     type: 'eip1559'
  *   },
- *   { presign: true },
+ *   { presign: true }
  * )
  * ```
  *
@@ -556,7 +558,7 @@ export declare namespace hash {
  * const serialized = TransactionEnvelope.serialize({
  *   chainId: 1,
  *   maxFeePerGas: 1n,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * ```
  *
@@ -621,7 +623,7 @@ export declare namespace serialize {
  * const envelope_rpc = TransactionEnvelope.toRpc({
  *   chainId: 1,
  *   maxFeePerGas: 1n,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * ```
  *
@@ -691,10 +693,11 @@ export declare namespace toRpc {
  *   chainId: 1,
  *   maxFeePerGas: 1n,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: 1n,
+ *   value: 1n
  * })
  *
- * const request = TransactionEnvelope.toTransactionRequest(envelope)
+ * const request =
+ *   TransactionEnvelope.toTransactionRequest(envelope)
  * // @log: {
  * // @log:   chainId: 1,
  * // @log:   maxFeePerGas: 1n,
@@ -742,7 +745,7 @@ export declare namespace toTransactionRequest {
  * const valid = TransactionEnvelope.validate({
  *   chainId: 1,
  *   maxFeePerGas: 1n,
- *   type: 'eip1559',
+ *   type: 'eip1559'
  * })
  * // @log: true
  * ```
@@ -771,7 +774,7 @@ export declare namespace validate {
  *
  * TxEnvelopeEip1559.assert({
  *   maxFeePerGas: 2n ** 256n - 1n + 1n,
- *   chainId: 1,
+ *   chainId: 1
  * })
  * // @error: TransactionEnvelope.FeeCapTooHighError: The fee cap (`maxFeePerGas`/`maxPriorityFeePerGas` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).
  * ```
@@ -800,7 +803,7 @@ export class FeeCapTooHighError extends Errors.BaseError {
  *
  * TxEnvelopeLegacy.assert({
  *   gasPrice: 2n ** 256n - 1n + 1n,
- *   chainId: 1,
+ *   chainId: 1
  * })
  * // @error: TransactionEnvelope.GasPriceTooHighError: The gas price (`gasPrice` = 115792089237316195423570985008687907853269984665640564039457584007913.129639936 gwei) cannot be higher than the maximum allowed value (2^256-1).
  * ```
@@ -912,7 +915,7 @@ export class InvalidTypeError extends Errors.BaseError {
  * TxEnvelopeEip1559.assert({
  *   chainId: 1,
  *   maxFeePerGas: 10n,
- *   maxPriorityFeePerGas: 11n,
+ *   maxPriorityFeePerGas: 11n
  * })
  * // @error: TransactionEnvelope.TipAboveFeeCapError: The provided tip (`maxPriorityFeePerGas` = 11 gwei) cannot be higher than the fee cap (`maxFeePerGas` = 10 gwei).
  * ```

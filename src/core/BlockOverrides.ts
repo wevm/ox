@@ -40,7 +40,8 @@ export type Rpc = BlockOverrides<Hex.Hex, Hex.Hex>
  * const blockOverrides = BlockOverrides.fromRpc({
  *   baseFeePerGas: '0x1',
  *   blobBaseFee: '0x2',
- *   feeRecipient: '0x0000000000000000000000000000000000000000',
+ *   feeRecipient:
+ *     '0x0000000000000000000000000000000000000000',
  *   gasLimit: '0x4',
  *   number: '0x5',
  *   prevRandao: '0x6',
@@ -50,9 +51,9 @@ export type Rpc = BlockOverrides<Hex.Hex, Hex.Hex>
  *       address: '0x0000000000000000000000000000000000000000',
  *       amount: '0x1',
  *       index: '0x0',
- *       validatorIndex: '0x1',
- *     },
- *   ],
+ *       validatorIndex: '0x1'
+ *     }
+ *   ]
  * })
  * ```
  *
@@ -92,7 +93,8 @@ export function fromRpc(rpcBlockOverrides: Rpc): BlockOverrides {
  * const blockOverrides = BlockOverrides.toRpc({
  *   baseFeePerGas: 1n,
  *   blobBaseFee: 2n,
- *   feeRecipient: '0x0000000000000000000000000000000000000000',
+ *   feeRecipient:
+ *     '0x0000000000000000000000000000000000000000',
  *   gasLimit: 4n,
  *   number: 5n,
  *   prevRandao: 6n,
@@ -102,9 +104,9 @@ export function fromRpc(rpcBlockOverrides: Rpc): BlockOverrides {
  *       address: '0x0000000000000000000000000000000000000000',
  *       amount: 1n,
  *       index: 0,
- *       validatorIndex: 1,
- *     },
- *   ],
+ *       validatorIndex: 1
+ *     }
+ *   ]
  * })
  * ```
  *

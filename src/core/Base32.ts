@@ -14,7 +14,9 @@ import {
  * ```ts twoslash
  * import { Base32, Bytes } from 'ox'
  *
- * const value = Base32.fromBytes(new Uint8Array([0x00, 0xff, 0x00]))
+ * const value = Base32.fromBytes(
+ *   new Uint8Array([0x00, 0xff, 0x00])
+ * )
  * ```
  *
  * @param value - The byte array to encode.

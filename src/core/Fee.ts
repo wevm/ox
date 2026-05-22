@@ -68,7 +68,7 @@ export type FeeValuesType = 'legacy' | 'eip1559' | 'eip4844'
  *   baseFeePerGas: ['0x01', '0x02'],
  *   gasUsedRatio: [0.5, 0.6],
  *   oldestBlock: '0x10',
- *   reward: [['0x01']],
+ *   reward: [['0x01']]
  * })
  * // @log: { baseFeePerGas: [1n, 2n], gasUsedRatio: [0.5, 0.6], oldestBlock: 16n, reward: [[1n]] }
  * ```
@@ -106,7 +106,7 @@ export declare namespace fromHistoryRpc {
  *   baseFeePerGas: [1n, 2n],
  *   gasUsedRatio: [0.5, 0.6],
  *   oldestBlock: 16n,
- *   reward: [[1n]],
+ *   reward: [[1n]]
  * })
  * ```
  *
@@ -150,7 +150,7 @@ export declare namespace toHistoryRpc {
  *
  * Fee.estimateMaxFeePerGas({
  *   baseFeePerGas: 100n,
- *   maxPriorityFeePerGas: 5n,
+ *   maxPriorityFeePerGas: 5n
  * })
  * // @log: 205n
  *
@@ -158,7 +158,7 @@ export declare namespace toHistoryRpc {
  *   baseFeePerGas: 100n,
  *   maxPriorityFeePerGas: 5n,
  *   multiplierNumerator: 3n,
- *   multiplierDenominator: 2n,
+ *   multiplierDenominator: 2n
  * })
  * // @log: 155n  (= 100n * 3n / 2n + 5n)
  * ```
@@ -205,14 +205,14 @@ export declare namespace estimateMaxFeePerGas {
  * Fee.effectiveGasPrice({
  *   baseFeePerGas: 100n,
  *   maxFeePerGas: 200n,
- *   maxPriorityFeePerGas: 50n,
+ *   maxPriorityFeePerGas: 50n
  * })
  * // @log: 150n  (= 100n + 50n)
  *
  * Fee.effectiveGasPrice({
  *   baseFeePerGas: 100n,
  *   maxFeePerGas: 120n,
- *   maxPriorityFeePerGas: 50n,
+ *   maxPriorityFeePerGas: 50n
  * })
  * // @log: 120n  (capped at maxFeePerGas)
  * ```

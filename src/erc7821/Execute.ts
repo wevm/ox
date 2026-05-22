@@ -127,7 +127,7 @@ export declare namespace decodeBatchOfBatchesData {
  *       {
  *         data: '0xcafebabe',
  *         to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
- *         value: 1n,
+ *         value: 1n
  *       }
  *     ]
  *   },
@@ -136,10 +136,10 @@ export declare namespace decodeBatchOfBatchesData {
  *       {
  *         data: '0xdeadbeef',
  *         to: '0xcafebabecafebabecafebabecafebabecafebabe',
- *         value: 2n,
+ *         value: 2n
  *       }
  *     ],
- *     opData: '0xcafebabe',
+ *     opData: '0xcafebabe'
  *   }
  * ])
  * ```
@@ -171,7 +171,7 @@ export function encodeBatchOfBatchesData(batches: readonly Batch[]) {
  *   {
  *     data: '0xcafebabe',
  *     to: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
- *     value: 1n,
+ *     value: 1n
  *   }
  * ])
  * ```

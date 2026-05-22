@@ -94,7 +94,9 @@ export declare namespace keccak256 {
  * ```ts twoslash
  * import { Hash, Hex } from 'ox'
  *
- * Hash.hmac256(Hex.fromString('key'), '0xdeadbeef', { as: 'Bytes' })
+ * Hash.hmac256(Hex.fromString('key'), '0xdeadbeef', {
+ *   as: 'Bytes'
+ * })
  * // @log: Uint8Array [...]
  * ```
  *
@@ -246,7 +248,9 @@ export declare namespace sha256 {
  * Hash.validate('0x')
  * // @log: false
  *
- * Hash.validate('0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0')
+ * Hash.validate(
+ *   '0x3ea2f1d0abf3fc66cf29eebb70cbd4e7fe762ef8a09bcc06c8edf641230afec0'
+ * )
  * // @log: true
  * ```
  *

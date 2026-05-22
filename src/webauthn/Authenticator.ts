@@ -25,10 +25,11 @@ import type * as Types from './Types.js'
  * ```ts twoslash
  * import { Authenticator } from 'ox/webauthn'
  *
- * const authenticatorData = Authenticator.getAuthenticatorData({
- *   rpId: 'example.com',
- *   signCount: 420,
- * })
+ * const authenticatorData =
+ *   Authenticator.getAuthenticatorData({
+ *     rpId: 'example.com',
+ *     signCount: 420
+ *   })
  * // @log: "0xa379a6f6eeafb9a55e378c118034e2751e682fab9f2d30ab13d2125586ce194705000001a4"
  * ```
  *
@@ -43,14 +44,15 @@ import type * as Types from './Types.js'
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const authenticatorData = Authenticator.getAuthenticatorData({
- *   rpId: 'example.com',
- *   flag: 0x41, // UP + AT
- *   credential: {
- *     id: new Uint8Array(32),
- *     publicKey,
- *   },
- * })
+ * const authenticatorData =
+ *   Authenticator.getAuthenticatorData({
+ *     rpId: 'example.com',
+ *     flag: 0x41, // UP + AT
+ *     credential: {
+ *       id: new Uint8Array(32),
+ *       publicKey
+ *     }
+ *   })
  * ```
  *
  * @param options - Options to construct the authenticator data.
@@ -158,7 +160,7 @@ export declare namespace getAuthenticatorData {
  * import { Authenticator } from 'ox/webauthn'
  *
  * const signCount = Authenticator.getSignCount(
- *   '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000001',
+ *   '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000001'
  * )
  * // @log: 1
  * ```
@@ -205,7 +207,7 @@ export declare namespace getSignCount {
  *
  * const clientDataJSON = Authenticator.getClientDataJSON({
  *   challenge: '0xdeadbeef',
- *   origin: 'https://example.com',
+ *   origin: 'https://example.com'
  * })
  * // @log: "{"type":"webauthn.get","challenge":"3q2-7w","origin":"https://example.com","crossOrigin":false}"
  * ```
@@ -266,13 +268,14 @@ export declare namespace getClientDataJSON {
  *
  * const { publicKey } = P256.createKeyPair()
  *
- * const attestationObject = Authenticator.getAttestationObject({
- *   authData: Authenticator.getAuthenticatorData({
- *     rpId: 'example.com',
- *     flag: 0x41,
- *     credential: { id: new Uint8Array(32), publicKey },
- *   }),
- * })
+ * const attestationObject =
+ *   Authenticator.getAttestationObject({
+ *     authData: Authenticator.getAuthenticatorData({
+ *       rpId: 'example.com',
+ *       flag: 0x41,
+ *       credential: { id: new Uint8Array(32), publicKey }
+ *     })
+ *   })
  * ```
  *
  * @param options - Options to construct the attestation object.

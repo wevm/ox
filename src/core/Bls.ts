@@ -65,7 +65,7 @@ export const noble = bls
  *
  * const signatures = [
  *   Bls.sign({ payload, privateKey: '0x...' }),
- *   Bls.sign({ payload, privateKey: '0x...' }),
+ *   Bls.sign({ payload, privateKey: '0x...' })
  * ]
  * const signature = Bls.aggregate(signatures)
  * ```
@@ -78,7 +78,7 @@ export const noble = bls
  *
  * const publicKeys = [
  *   Bls.getPublicKey({ privateKey: '0x...' }),
- *   Bls.getPublicKey({ privateKey: '0x...' }),
+ *   Bls.getPublicKey({ privateKey: '0x...' })
  * ]
  * const publicKey = Bls.aggregate(publicKeys)
  * ```
@@ -170,13 +170,6 @@ export declare namespace aggregate {
  *
  * const { publicKey } = Bls.createKeyPair()
  * //      ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -190,27 +183,11 @@ export declare namespace aggregate {
  * import { Bls } from 'ox'
  *
  * const { publicKey } = Bls.createKeyPair({
- *   size: 'long-key:short-sig',
+ *   size: 'long-key:short-sig'
  * })
  *
  * publicKey
  * // ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * ### Serializing
@@ -225,10 +202,8 @@ export declare namespace aggregate {
  * const publicKeyHex = BlsPoint.toHex(publicKey)
  * //    ^?
  *
- *
  * const publicKeyBytes = BlsPoint.toBytes(publicKey)
  * //    ^?
- *
  * ```
  *
  * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
@@ -240,13 +215,6 @@ export declare namespace aggregate {
  *
  * const publicKey = BlsPoint.fromHex(publicKeyHex, 'G1')
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param options - The options to generate the key pair.
@@ -322,13 +290,6 @@ export declare namespace createKeyPair {
  *
  * const publicKey = Bls.getPublicKey({ privateKey: '0x...' })
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -343,27 +304,11 @@ export declare namespace createKeyPair {
  *
  * const publicKey = Bls.getPublicKey({
  *   privateKey: '0x...',
- *   size: 'long-key:short-sig',
+ *   size: 'long-key:short-sig'
  * })
  *
  * publicKey
  * // ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * ### Serializing
@@ -378,10 +323,8 @@ export declare namespace createKeyPair {
  * const publicKeyHex = BlsPoint.toHex(publicKey)
  * //    ^?
  *
- *
  * const publicKeyBytes = BlsPoint.toBytes(publicKey)
  * //    ^?
- *
  * ```
  *
  * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
@@ -393,13 +336,6 @@ export declare namespace createKeyPair {
  *
  * const publicKey = BlsPoint.fromHex(publicKeyHex, 'G1')
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param options - The options to compute the public key.
@@ -514,7 +450,8 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { Bls, Hex } from 'ox'
  *
- * const signature = Bls.sign({ // [!code focus]
+ * const signature = Bls.sign({
+ *   // [!code focus]
  *   payload: Hex.random(32), // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
@@ -528,17 +465,16 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { Bls, BlsPoint, Hex } from 'ox'
  *
- * const signature = Bls.sign({ payload: Hex.random(32), privateKey: '0x...' })
+ * const signature = Bls.sign({
+ *   payload: Hex.random(32),
+ *   privateKey: '0x...'
+ * })
  *
  * const signatureHex = BlsPoint.toHex(signature)
  * //    ^?
  *
- *
- *
  * const signatureBytes = BlsPoint.toBytes(signature)
  * //    ^?
- *
- *
  * ```
  *
  * They can also be deserialized from hex or bytes using {@link ox#BlsPoint.(fromHex:function)} or {@link ox#BlsPoint.(fromBytes:function)}:
@@ -550,19 +486,6 @@ export declare namespace randomPrivateKey {
  *
  * const signature = BlsPoint.fromHex(signatureHex, 'G2')
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param options - The signing options.
@@ -672,10 +595,11 @@ export declare namespace sign {
  * const publicKey = Bls.getPublicKey({ privateKey })
  * const signature = Bls.sign({ payload, privateKey })
  *
- * const verified = Bls.verify({ // [!code focus]
+ * const verified = Bls.verify({
+ *   // [!code focus]
  *   payload, // [!code focus]
  *   publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -688,13 +612,15 @@ export declare namespace sign {
  * import { Bls, Hex } from 'ox'
  *
  * const payload = Hex.random(32)
- * const privateKeys = Array.from({ length: 100 }, () => Bls.randomPrivateKey())
+ * const privateKeys = Array.from({ length: 100 }, () =>
+ *   Bls.randomPrivateKey()
+ * )
  *
  * const publicKeys = privateKeys.map((privateKey) =>
- *   Bls.getPublicKey({ privateKey }),
+ *   Bls.getPublicKey({ privateKey })
  * )
  * const signatures = privateKeys.map((privateKey) =>
- *   Bls.sign({ payload, privateKey }),
+ *   Bls.sign({ payload, privateKey })
  * )
  *
  * const publicKey = Bls.aggregate(publicKeys) // [!code focus]

@@ -271,12 +271,12 @@ export class AtomicityNotSupportedError extends ProviderRpcError {
  *       body: JSON.stringify(store.prepare(args)),
  *       method: 'POST',
  *       headers: {
- *         'Content-Type': 'application/json',
- *       },
+ *         'Content-Type': 'application/json'
+ *       }
  *     })
  *       .then((res) => res.json())
  *       .then(RpcResponse.parse)
- *   },
+ *   }
  * })
  *
  * // 3. Emit Provider Events. // [!code focus]
@@ -326,7 +326,9 @@ export declare namespace createEmitter {
  * ```ts twoslash
  * import { Provider, RpcTransport } from 'ox'
  *
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * )
  * const provider = Provider.from(transport)
  * ```
  *
@@ -342,7 +344,9 @@ export declare namespace createEmitter {
  *
  * const provider = Provider.from(window.ethereum)
  *
- * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await provider.request({
+ *   method: 'eth_blockNumber'
+ * })
  * ```
  *
  * :::tip
@@ -380,15 +384,17 @@ export declare namespace createEmitter {
  *       body: JSON.stringify(store.prepare(args)),
  *       method: 'POST',
  *       headers: {
- *         'Content-Type': 'application/json',
- *       },
+ *         'Content-Type': 'application/json'
+ *       }
  *     })
  *       .then((res) => res.json())
  *       .then(RpcResponse.parse)
- *   },
+ *   }
  * })
  *
- * const blockNumber = await provider.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await provider.request({
+ *   method: 'eth_blockNumber'
+ * })
  * ```
  *
  * @example
@@ -405,15 +411,15 @@ export declare namespace createEmitter {
  *   | RpcSchema.Default
  *   | {
  *       Request: {
- *         method: 'abe_foo',
- *         params: [id: number],
+ *         method: 'abe_foo'
+ *         params: [id: number]
  *       }
  *       ReturnType: string
  *     }
  *   | {
  *       Request: {
- *         method: 'abe_bar',
- *         params: [id: string],
+ *         method: 'abe_bar'
+ *         params: [id: string]
  *       }
  *       ReturnType: string
  *     }
@@ -423,11 +429,6 @@ export declare namespace createEmitter {
  *
  * const blockNumber = await provider.request({ method: 'e' })
  * //                                                    ^|
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -454,12 +455,12 @@ export declare namespace createEmitter {
  *       body: JSON.stringify(store.prepare(args)),
  *       method: 'POST',
  *       headers: {
- *         'Content-Type': 'application/json',
- *       },
+ *         'Content-Type': 'application/json'
+ *       }
  *     })
  *       .then((res) => res.json())
  *       .then(RpcResponse.parse)
- *   },
+ *   }
  * })
  *
  * // 3. Emit Provider Events.
@@ -528,11 +529,13 @@ export declare namespace from {
  * ```ts twoslash
  * import { Provider } from 'ox'
  *
- * const error = Provider.parseError({ code: 4200, message: 'foo' })
+ * const error = Provider.parseError({
+ *   code: 4200,
+ *   message: 'foo'
+ * })
  *
  * error
  * // ^?
- *
  * ```
  *
  * @param error - The error object to parse.

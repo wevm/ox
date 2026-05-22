@@ -24,19 +24,11 @@ export type AbiFunction = abitype.AbiFunction & {
  *
  * const abi = Abi.from([
  *   'function foo(string)',
- *   'function bar(uint256)',
+ *   'function bar(uint256)'
  * ])
  *
  * type Foo = AbiFunction.FromAbi<typeof abi, 'foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -53,13 +45,11 @@ export type FromAbi<
  *
  * const abi = Abi.from([
  *   'function foo(string)',
- *   'function bar(uint256)',
+ *   'function bar(uint256)'
  * ])
  *
  * type names = AbiFunction.Name<typeof abi>
  * //   ^?
- *
- *
  * ```
  */
 export type Name<abi extends Abi.Abi | readonly unknown[] = Abi.Abi> =
@@ -78,12 +68,14 @@ export type ExtractNames<
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const approve = AbiFunction.from('function approve(address, uint256)')
- *
- * const data = AbiFunction.encodeData(
- *   approve,
- *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
+ * const approve = AbiFunction.from(
+ *   'function approve(address, uint256)'
  * )
+ *
+ * const data = AbiFunction.encodeData(approve, [
+ *   '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *   69420n
+ * ])
  * // '0x095ea7b3000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000000000000010f2c'
  *
  * const input = AbiFunction.decodeData(approve, data) // [!code focus]
@@ -280,9 +272,12 @@ export declare namespace decodeData {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const data = '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * const data =
+ *   '0x000000000000000000000000000000000000000000000000000000000000002a'
  *
- * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
+ * const totalSupply = AbiFunction.from(
+ *   'function totalSupply() returns (uint256)'
+ * )
  *
  * const output = AbiFunction.decodeResult(totalSupply, data)
  * // @log: 42n
@@ -342,17 +337,16 @@ export declare namespace decodeData {
  *     type: 'function',
  *     inputs: [{ name: 'account', type: 'address' }],
  *     outputs: [{ name: 'balance', type: 'uint256' }],
- *     stateMutability: 'view',
- *   },
+ *     stateMutability: 'view'
+ *   }
  *   // ...
  * ])
  * const balanceOf = AbiFunction.fromAbi(abi, 'balanceOf')
  *
  * // 2. Encode the Function Input.
- * const data = AbiFunction.encodeData(
- *   balanceOf,
- *   ['0xd2135CfB216b74109775236E36d4b433F1DF507B']
- * )
+ * const data = AbiFunction.encodeData(balanceOf, [
+ *   '0xd2135CfB216b74109775236E36d4b433F1DF507B'
+ * ])
  *
  * // 3. Perform the Contract Call.
  * const response = await window.ethereum!.request({
@@ -360,13 +354,16 @@ export declare namespace decodeData {
  *   params: [
  *     {
  *       data,
- *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *     },
- *   ],
+ *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2'
+ *     }
+ *   ]
  * })
  *
  * // 4. Decode the Function Output. // [!code focus]
- * const balance = AbiFunction.decodeResult(balanceOf, response) // [!code focus]
+ * const balance = AbiFunction.decodeResult(
+ *   balanceOf,
+ *   response
+ * ) // [!code focus]
  * // @log: 42n
  * ```
  *
@@ -508,9 +505,12 @@ export declare namespace decodeResult {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const approve = AbiFunction.from('function approve(address, uint256)')
+ * const approve = AbiFunction.from(
+ *   'function approve(address, uint256)'
+ * )
  *
- * const data = AbiFunction.encodeData( // [!code focus]
+ * const data = AbiFunction.encodeData(
+ *   // [!code focus]
  *   approve, // [!code focus]
  *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n] // [!code focus]
  * ) // [!code focus]
@@ -569,14 +569,15 @@ export declare namespace decodeResult {
  *     type: 'function',
  *     inputs: [{ name: 'account', type: 'address' }],
  *     outputs: [{ name: 'balance', type: 'uint256' }],
- *     stateMutability: 'view',
- *   },
+ *     stateMutability: 'view'
+ *   }
  *   // ...
  * ])
  * const balanceOf = AbiFunction.fromAbi(abi, 'balanceOf')
  *
  * // 2. Encode the Function Input. // [!code focus]
- * const data = AbiFunction.encodeData( // [!code focus]
+ * const data = AbiFunction.encodeData(
+ *   // [!code focus]
  *   balanceOf, // [!code focus]
  *   ['0xd2135CfB216b74109775236E36d4b433F1DF507B'] // [!code focus]
  * ) // [!code focus]
@@ -587,13 +588,16 @@ export declare namespace decodeResult {
  *   params: [
  *     {
  *       data,
- *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *     },
- *   ],
+ *       to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2'
+ *     }
+ *   ]
  * })
  *
  * // 4. Decode the Function Output.
- * const balance = AbiFunction.decodeResult(balanceOf, response)
+ * const balance = AbiFunction.decodeResult(
+ *   balanceOf,
+ *   response
+ * )
  * ```
  *
  * :::note
@@ -699,8 +703,13 @@ export declare namespace encodeData {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const totalSupply = AbiFunction.from('function totalSupply() returns (uint256)')
- * const output = AbiFunction.decodeResult(totalSupply, '0x000000000000000000000000000000000000000000000000000000000000002a')
+ * const totalSupply = AbiFunction.from(
+ *   'function totalSupply() returns (uint256)'
+ * )
+ * const output = AbiFunction.decodeResult(
+ *   totalSupply,
+ *   '0x000000000000000000000000000000000000000000000000000000000000002a'
+ * )
  * // 42n
  *
  * const data = AbiFunction.encodeResult(totalSupply, 42n) // [!code focus]
@@ -836,20 +845,18 @@ export declare namespace encodeResult {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiFunction - The ABI Function to format.
@@ -881,30 +888,18 @@ export declare namespace format {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
+ *       type: 'uint256'
+ *     }
  *   ],
- *   outputs: [{ type: 'bool' }],
+ *   outputs: [{ type: 'bool' }]
  * })
  *
  * approve
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -921,19 +916,6 @@ export declare namespace format {
  *
  * approve
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -944,23 +926,11 @@ export declare namespace format {
  *
  * const approve = AbiFunction.from([
  *   'struct Foo { address spender; uint256 amount; }', // [!code hl]
- *   'function approve(Foo foo) returns (bool)',
+ *   'function approve(Foo foo) returns (bool)'
  * ])
  *
  * approve
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -1016,17 +986,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiFunction.fromAbi(abi, 'foo') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -1040,19 +1004,10 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  * const item = AbiFunction.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -1103,7 +1058,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiFunction } from 'ox'
  *
- * const selector = AbiFunction.getSelector('function ownerOf(uint256 tokenId)')
+ * const selector = AbiFunction.getSelector(
+ *   'function ownerOf(uint256 tokenId)'
+ * )
  * // @log: '0x6352211e'
  * ```
  *

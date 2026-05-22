@@ -15,28 +15,27 @@ export function format<const abi extends Abi>(abi: abi): format.ReturnType<abi>
  * ```ts twoslash
  * import { Abi } from 'ox'
  *
- * const formatted = Abi.format([{
- *   type: 'function',
- *   name: 'approve',
- *   stateMutability: 'nonpayable',
- *   inputs: [
- *     {
- *       name: 'spender',
- *       type: 'address',
- *     },
- *     {
- *       name: 'amount',
- *       type: 'uint256',
- *     },
- *   ],
- *   outputs: [{ type: 'bool' }],
- * }])
+ * const formatted = Abi.format([
+ *   {
+ *     type: 'function',
+ *     name: 'approve',
+ *     stateMutability: 'nonpayable',
+ *     inputs: [
+ *       {
+ *         name: 'spender',
+ *         type: 'address'
+ *       },
+ *       {
+ *         name: 'amount',
+ *         type: 'uint256'
+ *       }
+ *     ],
+ *     outputs: [{ type: 'bool' }]
+ *   }
+ * ])
  *
  * formatted
  * //    ^?
- *
- *
- *
  * ```
  *
  * @param abi - The ABI to format.
@@ -71,40 +70,27 @@ export function from<const abi extends Abi | readonly string[]>(
  * ```ts twoslash
  * import { Abi } from 'ox'
  *
- * const abi = Abi.from([{
- *   type: 'function',
- *   name: 'approve',
- *   stateMutability: 'nonpayable',
- *   inputs: [
- *     {
- *       name: 'spender',
- *       type: 'address',
- *     },
- *     {
- *       name: 'amount',
- *       type: 'uint256',
- *     },
- *   ],
- *   outputs: [{ type: 'bool' }],
- * }])
+ * const abi = Abi.from([
+ *   {
+ *     type: 'function',
+ *     name: 'approve',
+ *     stateMutability: 'nonpayable',
+ *     inputs: [
+ *       {
+ *         name: 'spender',
+ *         type: 'address'
+ *       },
+ *       {
+ *         name: 'amount',
+ *         type: 'uint256'
+ *       }
+ *     ],
+ *     outputs: [{ type: 'bool' }]
+ *   }
+ * ])
  *
  * abi
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -119,21 +105,6 @@ export function from<const abi extends Abi | readonly string[]>(
  *
  * abi
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param abi - The ABI to parse.

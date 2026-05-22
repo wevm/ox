@@ -149,7 +149,9 @@ export declare namespace decrypt {
  * const privateKey = Secp256k1.randomPrivateKey()
  *
  * // Derive key from password.
- * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({
+ *   password: 'testpassword'
+ * })
  *
  * // Encrypt the private key.
  * const encrypted = Keystore.encrypt(privateKey, key, opts)
@@ -223,7 +225,9 @@ export declare namespace encrypt {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = Keystore.pbkdf2({ password: 'testpassword' })
+ * const [key, opts] = Keystore.pbkdf2({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - PBKDF2 options.
@@ -270,7 +274,9 @@ export declare namespace pbkdf2 {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = await Keystore.pbkdf2Async({ password: 'testpassword' })
+ * const [key, opts] = await Keystore.pbkdf2Async({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - PBKDF2 options.
@@ -311,7 +317,9 @@ export declare namespace pbkdf2Async {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = Keystore.scrypt({ password: 'testpassword' })
+ * const [key, opts] = Keystore.scrypt({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - Scrypt options.
@@ -363,7 +371,9 @@ export declare namespace scrypt {
  * ```ts twoslash
  * import { Keystore } from 'ox'
  *
- * const [key, opts] = await Keystore.scryptAsync({ password: 'testpassword' })
+ * const [key, opts] = await Keystore.scryptAsync({
+ *   password: 'testpassword'
+ * })
  * ```
  *
  * @param options - Scrypt options.

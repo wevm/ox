@@ -25,7 +25,8 @@ const N = p256.Point.CURVE().n
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
  *
- * const { publicKey, privateKey } = await WebCryptoP256.createKeyPair()
+ * const { publicKey, privateKey } =
+ *   await WebCryptoP256.createKeyPair()
  * // @log: {
  * // @log:   privateKey: CryptoKey {},
  * // @log:   publicKey: {
@@ -86,7 +87,8 @@ export declare namespace createKeyPair {
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
  *
- * const { publicKey, privateKey } = await WebCryptoP256.createKeyPairECDH()
+ * const { publicKey, privateKey } =
+ *   await WebCryptoP256.createKeyPairECDH()
  * // @log: {
  * // @log:   privateKey: CryptoKey {},
  * // @log:   publicKey: {
@@ -144,8 +146,10 @@ export declare namespace createKeyPairECDH {
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
  *
- * const { privateKey: privateKeyA } = await WebCryptoP256.createKeyPairECDH()
- * const { publicKey: publicKeyB } = await WebCryptoP256.createKeyPairECDH()
+ * const { privateKey: privateKeyA } =
+ *   await WebCryptoP256.createKeyPairECDH()
+ * const { publicKey: publicKeyB } =
+ *   await WebCryptoP256.createKeyPairECDH()
  *
  * const sharedSecret = await WebCryptoP256.getSharedSecret({
  *   privateKey: privateKeyA,
@@ -228,9 +232,10 @@ export declare namespace getSharedSecret {
  *
  * const { privateKey } = await WebCryptoP256.createKeyPair()
  *
- * const signature = await WebCryptoP256.sign({ // [!code focus]
+ * const signature = await WebCryptoP256.sign({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   privateKey, // [!code focus]
+ *   privateKey // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   r: 151231...4423n,
@@ -295,13 +300,18 @@ export declare namespace sign {
  * ```ts twoslash
  * import { WebCryptoP256 } from 'ox'
  *
- * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
- * const signature = await WebCryptoP256.sign({ payload: '0xdeadbeef', privateKey })
+ * const { privateKey, publicKey } =
+ *   await WebCryptoP256.createKeyPair()
+ * const signature = await WebCryptoP256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const verified = await WebCryptoP256.verify({ // [!code focus]
+ * const verified = await WebCryptoP256.verify({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   publicKey, // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: true
  * ```

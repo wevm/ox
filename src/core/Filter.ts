@@ -57,8 +57,8 @@ export type Topic = Hex.Hex | readonly Hex.Hex[] | null
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     null,
- *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
- *   ],
+ *     '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1'
+ *   ]
  * })
  * // @log: {
  * // @log:   address: '0xd3cda913deb6f67967b99d671a681250403edf27',
@@ -103,12 +103,14 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { AbiEvent, Filter } from 'ox'
  *
- * const transfer = AbiEvent.from('event Transfer(address indexed, address indexed, uint256)')
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(address indexed, address indexed, uint256)'
+ * )
  * const { topics } = AbiEvent.encode(transfer)
  *
  * const filter = Filter.toRpc({
  *   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *   topics,
+ *   topics
  * })
  * // @log: {
  * // @log:   address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',

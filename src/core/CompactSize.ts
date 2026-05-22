@@ -89,7 +89,9 @@ export declare namespace toHex {
  * ```ts twoslash
  * import { CompactSize } from 'ox'
  *
- * const result = CompactSize.fromBytes(new Uint8Array([0xfd, 0x00, 0x01]))
+ * const result = CompactSize.fromBytes(
+ *   new Uint8Array([0xfd, 0x00, 0x01])
+ * )
  * // { value: 256, size: 3 }
  * ```
  *

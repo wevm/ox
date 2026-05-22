@@ -22,7 +22,10 @@ const bigIntSuffix = '#__bigint'
  * ```ts twoslash
  * import { Json } from 'ox'
  *
- * const json = Json.canonicalize({ z: [3, { y: 1, x: 2 }], a: 'hello' })
+ * const json = Json.canonicalize({
+ *   z: [3, { y: 1, x: 2 }],
+ *   a: 'hello'
+ * })
  * // @log: '{"a":"hello","z":[3,{"x":2,"y":1}]}'
  * ```
  *
@@ -81,7 +84,9 @@ export declare namespace canonicalize {
  * ```ts twoslash
  * import { Json } from 'ox'
  *
- * const json = Json.parse('{"foo":"bar","baz":"69420694206942069420694206942069420694206942069420#__bigint"}')
+ * const json = Json.parse(
+ *   '{"foo":"bar","baz":"69420694206942069420694206942069420694206942069420#__bigint"}'
+ * )
  * // @log: {
  * // @log:   foo: 'bar',
  * // @log:   baz: 69420694206942069420694206942069420694206942069420n
@@ -124,7 +129,7 @@ export declare namespace parse {
  *
  * const json = Json.stringify({
  *   foo: 'bar',
- *   baz: 69420694206942069420694206942069420694206942069420n,
+ *   baz: 69420694206942069420694206942069420694206942069420n
  * })
  * // @log: '{"foo":"bar","baz":"69420694206942069420694206942069420694206942069420#__bigint"}'
  * ```

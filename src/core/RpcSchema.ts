@@ -21,15 +21,15 @@ export type { Wallet } from './internal/rpcSchemas/wallet.js'
  *   | RpcSchema.Default
  *   | {
  *       Request: {
- *         method: 'abe_foo',
- *         params: [id: number],
+ *         method: 'abe_foo'
+ *         params: [id: number]
  *       }
  *       ReturnType: string
  *     }
  *   | {
  *       Request: {
- *         method: 'abe_bar',
- *         params: [id: string],
+ *         method: 'abe_bar'
+ *         params: [id: string]
  *       }
  *       ReturnType: string
  *     }
@@ -39,11 +39,6 @@ export type { Wallet } from './internal/rpcSchemas/wallet.js'
  *
  * const blockNumber = await provider.request({ method: 'e' })
  * //                                                    ^|
- *
- *
- *
- *
- *
  * ```
  */
 export function from<schema extends Generic>(): schema {
@@ -57,21 +52,11 @@ export function from<schema extends Generic>(): schema {
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Item = RpcSchema.ExtractItem<RpcSchema.Eth, 'eth_getBlockByNumber'>
+ * type Item = RpcSchema.ExtractItem<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type ExtractItem<
@@ -89,19 +74,11 @@ export type ExtractItem<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Request = RpcSchema.ExtractRequest<RpcSchema.Eth, 'eth_getBlockByNumber'>
+ * type Request = RpcSchema.ExtractRequest<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type ExtractRequest<
@@ -116,16 +93,9 @@ export type ExtractRequest<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type MethodName = RpcSchema.ExtractMethodName<RpcSchema.Default>
+ * type MethodName =
+ *   RpcSchema.ExtractMethodName<RpcSchema.Default>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type ExtractMethodName<schema extends Generic> =
@@ -138,13 +108,11 @@ export type ExtractMethodName<schema extends Generic> =
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<RpcSchema.Eth, 'eth_getBlockByNumber'>
+ * type Eth_GetBlockByNumber = RpcSchema.ExtractParams<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
  * //   ^?
- *
- *
- *
- *
- *
  * ```
  */
 export type ExtractParams<
@@ -159,19 +127,11 @@ export type ExtractParams<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type ReturnType = RpcSchema.ExtractReturnType<RpcSchema.Eth, 'eth_getBlockByNumber'>
+ * type ReturnType = RpcSchema.ExtractReturnType<
+ *   RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * >
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type ExtractReturnType<
@@ -192,8 +152,8 @@ export type ExtractReturnType<
  *
  * type Schema = RpcSchema.From<{
  *   Request: {
- *     method: 'eth_foobar',
- *     params: [id: number],
+ *     method: 'eth_foobar'
+ *     params: [id: number]
  *   }
  *   ReturnType: string
  * }>
@@ -210,12 +170,6 @@ export type From<schema extends Generic> = schema
  *
  * type Schema = RpcSchema.Generic
  * //   ^?
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Generic<name extends string = string, params = unknown> = {
@@ -235,19 +189,6 @@ export type Generic<name extends string = string, params = unknown> = {
  *
  * type Schema = RpcSchema.Default
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type Default = ResolvedRegister['RpcSchema']
@@ -261,11 +202,6 @@ export type Default = ResolvedRegister['RpcSchema']
  *
  * type Name = RpcSchema.MethodNameGeneric
  * //   ^?
- *
- *
- *
- *
- *
  * ```
  */
 export type MethodNameGeneric<schema extends Generic = Generic> =
@@ -282,7 +218,10 @@ export type MethodNameGeneric<schema extends Generic = Generic> =
  *
  * type ViemSchema = RpcSchema.ToViem<
  *   | {
- *       Request: { method: 'eth_blockNumber'; params?: undefined }
+ *       Request: {
+ *         method: 'eth_blockNumber'
+ *         params?: undefined
+ *       }
  *       ReturnType: `0x${string}`
  *     }
  *   | {
@@ -310,10 +249,20 @@ export type ToViem<schema extends Generic> = UnionToTuple<
  * ```ts twoslash
  * import { RpcSchema } from 'ox'
  *
- * type OxSchema = RpcSchema.FromViem<[
- *   { Method: 'eth_blockNumber'; Parameters?: undefined; ReturnType: `0x${string}` },
- *   { Method: 'eth_chainId'; Parameters?: undefined; ReturnType: `0x${string}` },
- * ]>
+ * type OxSchema = RpcSchema.FromViem<
+ *   [
+ *     {
+ *       Method: 'eth_blockNumber'
+ *       Parameters?: undefined
+ *       ReturnType: `0x${string}`
+ *     },
+ *     {
+ *       Method: 'eth_chainId'
+ *       Parameters?: undefined
+ *       ReturnType: `0x${string}`
+ *     }
+ *   ]
+ * >
  * ```
  */
 export type FromViem<schema extends readonly ViemSchemaItem[]> = {

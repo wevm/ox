@@ -65,9 +65,13 @@ export type RequestFn<
  * ```ts twoslash
  * import { RpcTransport } from 'ox'
  *
- * const transport = RpcTransport.fromHttp('https://1.rpc.thirdweb.com')
+ * const transport = RpcTransport.fromHttp(
+ *   'https://1.rpc.thirdweb.com'
+ * )
  *
- * const blockNumber = await transport.request({ method: 'eth_blockNumber' })
+ * const blockNumber = await transport.request({
+ *   method: 'eth_blockNumber'
+ * })
  * // @log: '0x1a2b3c'
  * ```
  *

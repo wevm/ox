@@ -71,7 +71,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * Address.checksum('0xa0cf798816d4b9b9866b5330eea46a18382f251e')
+ * Address.checksum(
+ *   '0xa0cf798816d4b9b9866b5330eea46a18382f251e'
+ * )
  * // @log: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
  * ```
  *
@@ -196,7 +198,7 @@ export declare namespace from {
  * import { Address, PublicKey } from 'ox'
  *
  * const publicKey = PublicKey.from(
- *   '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ *   '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
  * )
  * const address = Address.fromPublicKey(publicKey)
  * // @log: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
@@ -287,7 +289,9 @@ export declare namespace isEqual {
  * ```ts twoslash
  * import { Address } from 'ox'
  *
- * Address.validate('0xA0Cf798816D4b9b9866b5330EEa46a18382f251e')
+ * Address.validate(
+ *   '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e'
+ * )
  * // @log: true
  * ```
  *

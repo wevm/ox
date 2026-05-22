@@ -120,19 +120,11 @@ function decodePrimitiveTopic(
  *
  * const abi = Abi.from([
  *   'event Foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type Foo = AbiEvent.FromAbi<typeof abi, 'Foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -149,7 +141,7 @@ export type FromAbi<
  *
  * const abi = Abi.from([
  *   'event Foo(string)',
- *   'event Bar(uint256)',
+ *   'event Bar(uint256)'
  * ])
  *
  * type names = AbiEvent.Name<typeof abi>
@@ -169,21 +161,23 @@ export type ExtractNames<abi extends Abi.Abi> =
  * ```ts twoslash
  * import { AbiEvent } from 'ox'
  *
- * const abiEvent = AbiEvent.from('event Transfer(address indexed from, address indexed to, uint256 value)')
+ * const abiEvent = AbiEvent.from(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * )
  *
  * const args = AbiEvent.decode(abiEvent, {
  *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   value: 1n,
+ *   value: 1n
  * })
  *
  * // @error: AbiEvent.ArgsMismatchError: Given arguments to not match the arguments decoded from the log.
@@ -324,8 +318,8 @@ export declare namespace assertArgs {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * } as const
  *
  * const decoded = AbiEvent.decode(transfer, log)
@@ -379,7 +373,7 @@ export declare namespace assertArgs {
  *
  * // 1. Instantiate the `Transfer` ABI Event.
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * // 2. Encode the ABI Event into Event Topics.
@@ -393,9 +387,9 @@ export declare namespace assertArgs {
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
  *       fromBlock: Hex.fromNumber(19760235n),
  *       toBlock: Hex.fromNumber(19760240n),
- *       topics,
- *     },
- *   ],
+ *       topics
+ *     }
+ *   ]
  * })
  *
  * // 4. Decode the Log. // [!code focus]
@@ -626,7 +620,7 @@ export declare namespace decode {
  * import { Abi, AbiEvent } from 'ox'
  *
  * const abi = Abi.from([
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * ])
  *
  * const decoded = AbiEvent.decodeLog(abi, {
@@ -634,8 +628,8 @@ export declare namespace decode {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * })
  * // @log: {
  * // @log:   event: { name: 'Transfer', type: 'event', ... },
@@ -694,7 +688,7 @@ export declare namespace decodeLog {
  * import { Abi, AbiEvent } from 'ox'
  *
  * const abi = Abi.from([
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * ])
  *
  * const logs = AbiEvent.extractLogs(abi, [
@@ -703,9 +697,9 @@ export declare namespace decodeLog {
  *     topics: [
  *       '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     ],
- *   },
+ *       '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *     ]
+ *   }
  * ])
  * // @log: [{
  * // @log:   eventName: 'Transfer',
@@ -1145,7 +1139,7 @@ function includesArgs(abiEvent: AbiEvent, args: unknown, matchArgs: unknown) {
  *
  * // 1. Instantiate the `Transfer` ABI Event.
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * // 2. Encode the ABI Event into Event Topics.
@@ -1159,9 +1153,9 @@ function includesArgs(abiEvent: AbiEvent, args: unknown, matchArgs: unknown) {
  *       address: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
  *       fromBlock: Hex.fromNumber(19760235n),
  *       toBlock: Hex.fromNumber(19760240n),
- *       topics,
- *     },
- *   ],
+ *       topics
+ *     }
+ *   ]
  * })
  * // @log: [
  * // @log:   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
@@ -1327,14 +1321,12 @@ export declare namespace encode {
  *   inputs: [
  *     { name: 'from', type: 'address', indexed: true },
  *     { name: 'to', type: 'address', indexed: true },
- *     { name: 'value', type: 'uint256' },
- *   ],
+ *     { name: 'value', type: 'uint256' }
+ *   ]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiEvent - The ABI Event to format.
@@ -1365,24 +1357,12 @@ export declare namespace format {
  *   inputs: [
  *     { name: 'from', type: 'address', indexed: true },
  *     { name: 'to', type: 'address', indexed: true },
- *     { name: 'value', type: 'uint256' },
- *   ],
+ *     { name: 'value', type: 'uint256' }
+ *   ]
  * })
  *
  * transfer
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -1399,19 +1379,6 @@ export declare namespace format {
  *
  * transfer
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @param abiEvent - The ABI Event to parse.
@@ -1464,17 +1431,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiEvent.fromAbi(abi, 'Transfer') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -1488,19 +1449,13 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'event Transfer(address owner, address to, uint256 tokenId)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
- * const item = AbiEvent.fromAbi(abi, '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') // [!code focus]
+ * const item = AbiEvent.fromAbi(
+ *   abi,
+ *   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * ) // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -1548,7 +1503,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiEvent } from 'ox'
  *
- * const selector = AbiEvent.getSelector('event Transfer(address indexed from, address indexed to, uint256 value)')
+ * const selector = AbiEvent.getSelector(
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
+ * )
  * // @log: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f556a2'
  * ```
  *
@@ -1587,7 +1544,7 @@ export declare namespace getSelector {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1595,14 +1552,14 @@ export declare namespace getSelector {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   value: 1n,
+ *   value: 1n
  * })
  * // @error: AbiEvent.ArgsMismatchError: Given arguments do not match the expected arguments.
  * // @error: Event: event Transfer(address indexed from, address indexed to, uint256 value)
@@ -1625,7 +1582,7 @@ export declare namespace getSelector {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1633,8 +1590,8 @@ export declare namespace getSelector {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
@@ -1642,7 +1599,7 @@ export declare namespace getSelector {
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac', // [!code ++]
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac', // [!code --]
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad', // [!code ++]
- *   value: 1n,
+ *   value: 1n
  * })
  * ```
  */
@@ -1679,7 +1636,7 @@ export class ArgsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1687,15 +1644,15 @@ export class ArgsMismatchError extends Errors.BaseError {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   a: 'b',
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   value: 1n,
+ *   value: 1n
  * })
  * // @error: AbiEvent.InputNotFoundError: Parameter "a" not found on `event Transfer(address indexed from, address indexed to, uint256 value)`.
  * ```
@@ -1709,7 +1666,7 @@ export class ArgsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1717,15 +1674,15 @@ export class ArgsMismatchError extends Errors.BaseError {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ad'
+ *   ]
  * })
  *
  * AbiEvent.assertArgs(abiEvent, args, {
  *   a: 'b', // [!code --]
  *   from: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
  *   to: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ad',
- *   value: 1n,
+ *   value: 1n
  * })
  * ```
  */
@@ -1745,7 +1702,7 @@ export class InputNotFoundError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address to, uint256 value)',
+ *   'event Transfer(address indexed from, address to, uint256 value)'
  *   //                                    ↑ 32 bytes + ↑ 32 bytes = 64 bytes
  * )
  *
@@ -1754,8 +1711,8 @@ export class InputNotFoundError extends Errors.BaseError {
  *   //       ↑ 32 bytes ❌
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * // @error: AbiEvent.DataMismatchError: Data size of 32 bytes is too small for non-indexed event parameters.
  * // @error: Non-indexed Parameters: (address to, uint256 value)
@@ -1770,7 +1727,7 @@ export class InputNotFoundError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address to, uint256 value)',
+ *   'event Transfer(address indexed from, address to, uint256 value)'
  *   //                                    ↑ 32 bytes + ↑ 32 bytes = 64 bytes
  * )
  *
@@ -1779,8 +1736,8 @@ export class InputNotFoundError extends Errors.BaseError {
  *   //       ↑ 64 bytes ✅
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * ```
  */
@@ -1830,15 +1787,15 @@ export class DataMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
  *   data: '0x0000000000000000000000000000000000000000000000000000000000000001',
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
- *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *   ],
+ *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac'
+ *   ]
  * })
  * // @error: AbiEvent.TopicsMismatchError: Expected a topic for indexed event parameter "to" for "event Transfer(address indexed from, address indexed to, uint256 value)".
  * ```
@@ -1851,7 +1808,7 @@ export class DataMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const abiEvent = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, uint256 value)',
+ *   'event Transfer(address indexed from, address indexed to, uint256 value)'
  * )
  *
  * const args = AbiEvent.decode(abiEvent, {
@@ -1859,8 +1816,8 @@ export class DataMismatchError extends Errors.BaseError {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000a5cc3c03994db5b0d9a5eedd10cabab0813678ac',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code ++]
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266' // [!code ++]
+ *   ]
  * })
  * ```
  *
@@ -1897,15 +1854,15 @@ export class TopicsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, bool sender)',
+ *   'event Transfer(address indexed from, address indexed to, bool sender)'
  * )
  *
  * AbiEvent.decode(transfer, {
  *   topics: [
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
  *     '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * // @error: AbiEvent.SelectorTopicMismatchError: topics[0]="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" does not match the expected topics[0]="0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f".
  * // @error: Event: event Transfer(address indexed from, address indexed to, bool sender)
@@ -1920,7 +1877,7 @@ export class TopicsMismatchError extends Errors.BaseError {
  * import { AbiEvent } from 'ox'
  *
  * const transfer = AbiEvent.from(
- *   'event Transfer(address indexed from, address indexed to, bool sender)',
+ *   'event Transfer(address indexed from, address indexed to, bool sender)'
  * )
  *
  * AbiEvent.decode(transfer, {
@@ -1928,8 +1885,8 @@ export class TopicsMismatchError extends Errors.BaseError {
  *     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // [!code --]
  *     '0x3da3cd3cf420c78f8981e7afeefa0eab1f0de0eb56e78ad9ba918ed01c0b402f', // [!code ++]
  *     '0x000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045',
- *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266',
- *   ],
+ *     '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+ *   ]
  * })
  * ```
  */
@@ -1961,7 +1918,9 @@ export class SelectorTopicMismatchError extends Errors.BaseError {
  * ```ts twoslash
  * import { Abi, AbiEvent } from 'ox'
  *
- * const abi = Abi.from(['event Transfer(address indexed from)'])
+ * const abi = Abi.from([
+ *   'event Transfer(address indexed from)'
+ * ])
  *
  * AbiEvent.decodeLog(abi, { topics: [], data: '0x' })
  * // @error: AbiEvent.SelectorTopicNotFoundError: Selector topic not found.
@@ -1982,10 +1941,12 @@ export class SelectorTopicNotFoundError extends Errors.BaseError {
  * ```ts twoslash
  * import { AbiEvent } from 'ox'
  *
- * const transfer = AbiEvent.from('event Transfer((string) indexed a, string b)')
+ * const transfer = AbiEvent.from(
+ *   'event Transfer((string) indexed a, string b)'
+ * )
  *
  * AbiEvent.encode(transfer, {
- *   a: ['hello'],
+ *   a: ['hello']
  * })
  * // @error: AbiEvent.FilterTypeNotSupportedError: Filter type "tuple" is not supported.
  * ```
@@ -1998,8 +1959,12 @@ export class SelectorTopicNotFoundError extends Errors.BaseError {
  * // @noErrors
  * import { AbiEvent } from 'ox'
  *
- * const transfer = AbiEvent.from('event Transfer((string) indexed a, string b)') // [!code --]
- * const transfer = AbiEvent.from('event Transfer(string indexed a, string b)') // [!code ++]
+ * const transfer = AbiEvent.from(
+ *   'event Transfer((string) indexed a, string b)'
+ * ) // [!code --]
+ * const transfer = AbiEvent.from(
+ *   'event Transfer(string indexed a, string b)'
+ * ) // [!code ++]
  * ```
  *
  *

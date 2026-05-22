@@ -79,21 +79,22 @@ export type MessageDefinition<
  *     name: 'Ether!',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *     verifyingContract:
+ *       '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  *   },
  *   primaryType: 'Foo',
  *   types: {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   message: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * ```
  *
@@ -219,7 +220,8 @@ export declare namespace assert {
  *   name: 'Ether!',
  *   version: '1',
  *   chainId: 1,
- *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *   verifyingContract:
+ *     '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  * })
  * // @log: '0x9911ee4f58a7059a8f5385248040e6984d80e2c849500fe6a4d11c4fa98c2af3'
  * ```
@@ -244,36 +246,38 @@ export declare namespace domainSeparator {
  * ```ts twoslash
  * import { TypedData, Hash } from 'ox'
  *
- * const data = TypedData.encode({ // [!code focus:33]
+ * const data = TypedData.encode({
+ *   // [!code focus:33]
  *   domain: {
  *     name: 'Ether Mail',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0x0000000000000000000000000000000000000000',
+ *     verifyingContract:
+ *       '0x0000000000000000000000000000000000000000'
  *   },
  *   types: {
  *     Person: [
  *       { name: 'name', type: 'string' },
- *       { name: 'wallet', type: 'address' },
+ *       { name: 'wallet', type: 'address' }
  *     ],
  *     Mail: [
  *       { name: 'from', type: 'Person' },
  *       { name: 'to', type: 'Person' },
- *       { name: 'contents', type: 'string' },
- *     ],
+ *       { name: 'contents', type: 'string' }
+ *     ]
  *   },
  *   primaryType: 'Mail',
  *   message: {
  *     from: {
  *       name: 'Cow',
- *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+ *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826'
  *     },
  *     to: {
  *       name: 'Bob',
- *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+ *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
  *     },
- *     contents: 'Hello, Bob!',
- *   },
+ *     contents: 'Hello, Bob!'
+ *   }
  * })
  * // @log: '0x19012fdf3441fcaf4f30c7e16292b258a5d7054a4e2e00dbd7b7d2f467f2b8fb9413c52c0ee5d84264471806290a3f2c4cecfc5490626bf912d01f240d7a274b371e'
  * // @log: (0x19 ‖ 0x01 ‖ domainSeparator ‖ hashStruct(message))
@@ -358,10 +362,10 @@ export declare namespace encode {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
- *   primaryType: 'Foo',
+ *   primaryType: 'Foo'
  * })
  * // @log: 'Foo(address address,string name,string foo)'
  * ```
@@ -406,7 +410,8 @@ export declare namespace encodeType {
  *   name: 'Ether!',
  *   version: '1',
  *   chainId: 1,
- *   verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *   verifyingContract:
+ *     '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  * })
  * // @log: [
  * // @log:   { 'name': 'name', 'type': 'string' },
@@ -449,39 +454,44 @@ export declare namespace extractEip712DomainTypes {
  * ```ts twoslash
  * import { Secp256k1, TypedData, Hash } from 'ox'
  *
- * const payload = TypedData.getSignPayload({ // [!code focus:99]
+ * const payload = TypedData.getSignPayload({
+ *   // [!code focus:99]
  *   domain: {
  *     name: 'Ether Mail',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0x0000000000000000000000000000000000000000',
+ *     verifyingContract:
+ *       '0x0000000000000000000000000000000000000000'
  *   },
  *   types: {
  *     Person: [
  *       { name: 'name', type: 'string' },
- *       { name: 'wallet', type: 'address' },
+ *       { name: 'wallet', type: 'address' }
  *     ],
  *     Mail: [
  *       { name: 'from', type: 'Person' },
  *       { name: 'to', type: 'Person' },
- *       { name: 'contents', type: 'string' },
- *     ],
+ *       { name: 'contents', type: 'string' }
+ *     ]
  *   },
  *   primaryType: 'Mail',
  *   message: {
  *     from: {
  *       name: 'Cow',
- *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+ *       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826'
  *     },
  *     to: {
  *       name: 'Bob',
- *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+ *       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB'
  *     },
- *     contents: 'Hello, Bob!',
- *   },
+ *     contents: 'Hello, Bob!'
+ *   }
  * })
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param value - The typed data to get the sign payload for.
@@ -513,8 +523,9 @@ export declare namespace getSignPayload {
  *     name: 'Ether Mail',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0x0000000000000000000000000000000000000000',
- *   },
+ *     verifyingContract:
+ *       '0x0000000000000000000000000000000000000000'
+ *   }
  * })
  * // @log: '0x6192106f129ce05c9075d319c1fa6ea9b3ae37cbd0c1ef92e2be7137bb07baa1'
  * ```
@@ -565,15 +576,15 @@ export declare namespace hashDomain {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   primaryType: 'Foo',
  *   data: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * // @log: '0x996fb3b6d48c50312d69abdd4c1b6fb02057c85aa86bb8d04c6f023326a168ce'
  * ```
@@ -622,21 +633,22 @@ export declare namespace hashStruct {
  *     name: 'Ether!',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *     verifyingContract:
+ *       '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  *   },
  *   primaryType: 'Foo',
  *   types: {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   message: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * // @log: "{"domain":{},"message":{"address":"0xb9cab4f0e46f7f6b1024b5a7463734fa68e633f9","name":"jxom","foo":"0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9"},"primaryType":"Foo","types":{"Foo":[{"name":"address","type":"address"},{"name":"name","type":"string"},{"name":"foo","type":"string"}]}}"
  * ```
@@ -706,21 +718,22 @@ export declare namespace serialize {
  *     name: 'Ether!',
  *     version: '1',
  *     chainId: 1,
- *     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+ *     verifyingContract:
+ *       '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
  *   },
  *   primaryType: 'Foo',
  *   types: {
  *     Foo: [
  *       { name: 'address', type: 'address' },
  *       { name: 'name', type: 'string' },
- *       { name: 'foo', type: 'string' },
- *     ],
+ *       { name: 'foo', type: 'string' }
+ *     ]
  *   },
  *   message: {
  *     address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
  *     name: 'jxom',
- *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
- *   },
+ *     foo: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9'
+ *   }
  * })
  * // @log: true
  * ```

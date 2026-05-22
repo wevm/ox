@@ -93,7 +93,7 @@ export type Type = 'eip4844'
  *   blobVersionedHashes: [],
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @error: EmptyBlobVersionedHashesError: Blob versioned hashes must not be empty.
  * ```
@@ -142,7 +142,9 @@ export declare namespace assert {
  * ```ts twoslash
  * import { TxEnvelopeEip4844 } from 'ox'
  *
- * const envelope = TxEnvelopeEip4844.deserialize('0x03ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0')
+ * const envelope = TxEnvelopeEip4844.deserialize(
+ *   '0x03ef0182031184773594008477359400809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0'
+ * )
  * // @log: {
  * // @log:   blobVersionedHashes: [...],
  * // @log:   type: 'eip4844',
@@ -337,7 +339,9 @@ export declare namespace deserialize {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   chainId: 1,
@@ -346,7 +350,7 @@ export declare namespace deserialize {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * ```
  *
@@ -357,11 +361,18 @@ export declare namespace deserialize {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   Secp256k1,
+ *   TxEnvelopeEip4844,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -370,16 +381,17 @@ export declare namespace deserialize {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip4844.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const envelope_signed = TxEnvelopeEip4844.from(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const envelope_signed = TxEnvelopeEip4844.from(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * // @log: {
  * // @log:   blobVersionedHashes: [...],
@@ -404,7 +416,9 @@ export declare namespace deserialize {
  * ```ts twoslash
  * import { TxEnvelopeEip4844 } from 'ox'
  *
- * const envelope = TxEnvelopeEip4844.from('0x03f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261')
+ * const envelope = TxEnvelopeEip4844.from(
+ *   '0x03f858018203118502540be4008504a817c800809470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c08477359400e1a001627c687261b0e7f8638af1112efa8a77e23656f6e7945275b19e9deed80261'
+ * )
  * // @log: {
  * // @log:   blobVersionedHashes: [...],
  * // @log:   chainId: 1,
@@ -482,7 +496,9 @@ export declare namespace from {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -491,13 +507,16 @@ export declare namespace from {
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const payload = TxEnvelopeEip4844.getSignPayload(envelope) // [!code focus]
  * // @log: '0x...'
  *
- * const signature = Secp256k1.sign({ payload, privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload,
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param envelope - The transaction envelope to get the sign payload for.
@@ -525,7 +544,9 @@ export declare namespace getSignPayload {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -534,7 +555,7 @@ export declare namespace getSignPayload {
  *   maxFeePerGas: 1000000000n,
  *   gas: 21000n,
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: 1000000000000000000n,
+ *   value: 1000000000000000000n
  * })
  *
  * const hash = TxEnvelopeEip4844.hash(envelope) // [!code focus]
@@ -591,14 +612,16 @@ export declare namespace hash {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
  *   chainId: 1,
  *   maxFeePerGas: Value.fromGwei('10'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const serialized = TxEnvelopeEip4844.serialize(envelope) // [!code focus]
@@ -611,11 +634,18 @@ export declare namespace hash {
  *
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, Secp256k1, TxEnvelopeEip4844, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   Secp256k1,
+ *   TxEnvelopeEip4844,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -624,16 +654,17 @@ export declare namespace hash {
  *   maxFeePerGas: Value.fromGwei('10'),
  *   maxPriorityFeePerGas: Value.fromGwei('1'),
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: TxEnvelopeEip4844.getSignPayload(envelope),
- *   privateKey: '0x...',
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = TxEnvelopeEip4844.serialize(envelope, { // [!code focus]
- *   signature, // [!code focus]
+ * const serialized = TxEnvelopeEip4844.serialize(envelope, {
+ *   // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  *
  * // ... send `serialized` transaction to JSON-RPC `eth_sendRawTransaction`
@@ -725,11 +756,18 @@ export declare namespace serialize {
  * @example
  * ```ts twoslash
  * // @noErrors
- * import { Blobs, RpcRequest, TxEnvelopeEip4844, Value } from 'ox'
+ * import {
+ *   Blobs,
+ *   RpcRequest,
+ *   TxEnvelopeEip4844,
+ *   Value
+ * } from 'ox'
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, { kzg })
+ * const blobVersionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * })
  *
  * const envelope = TxEnvelopeEip4844.from({
  *   blobVersionedHashes,
@@ -738,7 +776,7 @@ export declare namespace serialize {
  *   gas: 21000n,
  *   maxFeePerBlobGas: Value.fromGwei('20'),
  *   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  *
  * const envelope_rpc = TxEnvelopeEip4844.toRpc(envelope) // [!code focus]
@@ -746,7 +784,7 @@ export declare namespace serialize {
  * const request = RpcRequest.from({
  *   id: 0,
  *   method: 'eth_sendTransaction',
- *   params: [envelope_rpc],
+ *   params: [envelope_rpc]
  * })
  * ```
  *
@@ -798,7 +836,7 @@ export declare namespace toRpc {
  *   blobVersionedHashes: [],
  *   chainId: 1,
  *   to: '0x0000000000000000000000000000000000000000',
- *   value: Value.fromEther('1'),
+ *   value: Value.fromEther('1')
  * })
  * // @log: false
  * ```

@@ -38,9 +38,14 @@ export function decode<
  * ```ts twoslash
  * import { AbiError } from 'ox'
  *
- * const error = AbiError.from('error InvalidSignature(uint r, uint s, uint8 yParity)')
+ * const error = AbiError.from(
+ *   'error InvalidSignature(uint r, uint s, uint8 yParity)'
+ * )
  *
- * const value = AbiError.decode(error, '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001')
+ * const value = AbiError.decode(
+ *   error,
+ *   '0xecde634900000000000000000000000000000000000000000000000000000000000001a400000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001'
+ * )
  * // @log: [420n, 69n, 1]
  * ```
  *
@@ -109,22 +114,22 @@ export function decode<
  *   {
  *     inputs: [
  *       { name: 'to', type: 'address' },
- *       { name: 'tokenId', type: 'uint256' },
+ *       { name: 'tokenId', type: 'uint256' }
  *     ],
  *     name: 'approve',
  *     outputs: [],
  *     stateMutability: 'nonpayable',
- *     type: 'function',
- *   },
+ *     type: 'function'
+ *   }
  *   // ...
  * ])
  * const approve = AbiFunction.fromAbi(abi, 'approve')
  *
  * // 2. Encode the Function Input.
- * const data = AbiFunction.encodeData(
- *   approve,
- *   ['0xd8da6bf26964af9d7eed9e03e53415d37aa96045', 69420n]
- * )
+ * const data = AbiFunction.encodeData(approve, [
+ *   '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+ *   69420n
+ * ])
  *
  * try {
  *   // 3. Attempt to perform the the Contract Call.
@@ -133,16 +138,17 @@ export function decode<
  *     params: [
  *       {
  *         data,
- *         to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
- *       },
- *     ],
+ *         to: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2'
+ *       }
+ *     ]
  *   })
- * } catch (e) { // [!code focus]
+ * } catch (e) {
+ *   // [!code focus]
  *   // 4. Extract and decode the Error. // [!code focus]
  *   const error = AbiError.fromAbi(abi, e.data) // [!code focus]
  *   const value = AbiError.decode(error, e.data) // [!code focus]
  *   console.error(`${error.name}(${value})`) // [!code focus]
- * // @error:   Error(ERC721: approve caller is not owner nor approved for all)
+ *   // @error:   Error(ERC721: approve caller is not owner nor approved for all)
  * } // [!code focus]
  * ```
  *
@@ -278,7 +284,7 @@ export declare namespace decode {
  * import { Abi, AbiError } from 'ox'
  *
  * const abi = Abi.from([
- *   'error InvalidSignature(uint r, uint s, uint8 yParity)',
+ *   'error InvalidSignature(uint r, uint s, uint8 yParity)'
  * ])
  *
  * const { error, args } = AbiError.extract(
@@ -370,7 +376,8 @@ export declare namespace extract {
  *   'error InvalidSignature(uint r, uint s, uint8 yParity)'
  * )
  *
- * const data = AbiError.encode( // [!code focus]
+ * const data = AbiError.encode(
+ *   // [!code focus]
  *   error, // [!code focus]
  *   [1n, 2n, 0] // [!code focus]
  * ) // [!code focus]
@@ -485,19 +492,17 @@ export declare namespace encode {
  *   inputs: [
  *     {
  *       name: 'spender',
- *       type: 'address',
+ *       type: 'address'
  *     },
  *     {
  *       name: 'amount',
- *       type: 'uint256',
- *     },
- *   ],
+ *       type: 'uint256'
+ *     }
+ *   ]
  * })
  *
  * formatted
  * //    ^?
- *
- *
  * ```
  *
  * @param abiError - The ABI Error to format.
@@ -525,23 +530,11 @@ export declare namespace format {
  * const badSignatureVError = AbiError.from({
  *   inputs: [{ name: 'v', type: 'uint8' }],
  *   name: 'BadSignatureV',
- *   type: 'error',
+ *   type: 'error'
  * })
  *
  * badSignatureVError
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -558,19 +551,6 @@ export declare namespace format {
  *
  * badSignatureVError
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -581,23 +561,11 @@ export declare namespace format {
  *
  * const badSignatureVError = AbiError.from([
  *   'struct Signature { uint8 v; }', // [!code hl]
- *   'error BadSignatureV(Signature signature)',
+ *   'error BadSignatureV(Signature signature)'
  * ])
  *
  * badSignatureVError
  * //^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  *
@@ -652,17 +620,11 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'error BadSignatureV(uint8 v)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  *
  * const item = AbiError.fromAbi(abi, 'BadSignatureV') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
  * ```
  *
  * @example
@@ -676,19 +638,10 @@ export declare namespace from {
  * const abi = Abi.from([
  *   'function foo()',
  *   'error BadSignatureV(uint8 v)',
- *   'function bar(string a) returns (uint256 x)',
+ *   'function bar(string a) returns (uint256 x)'
  * ])
  * const item = AbiError.fromAbi(abi, '0x095ea7b3') // [!code focus]
  * //    ^?
- *
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  *
  * :::note
@@ -765,7 +718,9 @@ export declare namespace fromAbi {
  * ```ts twoslash
  * import { AbiError } from 'ox'
  *
- * const selector = AbiError.getSelector('error BadSignatureV(uint8 v)')
+ * const selector = AbiError.getSelector(
+ *   'error BadSignatureV(uint8 v)'
+ * )
  * // @log: '0x6352211e'
  * ```
  *
@@ -840,19 +795,11 @@ export const solidityPanicSelector = '0x4e487b71'
  *
  * const abi = Abi.from([
  *   'error Foo(string)',
- *   'error Bar(uint256)',
+ *   'error Bar(uint256)'
  * ])
  *
  * type Foo = AbiError.FromAbi<typeof abi, 'Foo'>
  * //   ^?
- *
- *
- *
- *
- *
- *
- *
- *
  * ```
  */
 export type FromAbi<
@@ -869,7 +816,7 @@ export type FromAbi<
  *
  * const abi = Abi.from([
  *   'error Foo(string)',
- *   'error Bar(uint256)',
+ *   'error Bar(uint256)'
  * ])
  *
  * type names = AbiError.Name<typeof abi>

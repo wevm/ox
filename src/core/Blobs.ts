@@ -46,7 +46,8 @@ export type Blobs<type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes> =
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const commitments = Blobs.toCommitments(blobs, { kzg })
- * const versionedHashes = Blobs.commitmentsToVersionedHashes(commitments) // [!code focus]
+ * const versionedHashes =
+ *   Blobs.commitmentsToVersionedHashes(commitments) // [!code focus]
  * // @log: ['0x...', '0x...']
  * ```
  *
@@ -62,9 +63,12 @@ export type Blobs<type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes> =
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const commitments = Blobs.toCommitments(blobs, { kzg })
- * const versionedHashes = Blobs.commitmentsToVersionedHashes(commitments, {
- *   as: 'Bytes', // [!code focus]
- * })
+ * const versionedHashes = Blobs.commitmentsToVersionedHashes(
+ *   commitments,
+ *   {
+ *     as: 'Bytes' // [!code focus]
+ *   }
+ * )
  * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
  * ```
  *
@@ -80,9 +84,12 @@ export type Blobs<type extends Hex.Hex | Bytes.Bytes = Hex.Hex | Bytes.Bytes> =
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const commitments = Blobs.toCommitments(blobs, { kzg })
- * const versionedHashes = Blobs.commitmentsToVersionedHashes(commitments, {
- *   version: 2, // [!code focus]
- * })
+ * const versionedHashes = Blobs.commitmentsToVersionedHashes(
+ *   commitments,
+ *   {
+ *     version: 2 // [!code focus]
+ *   }
+ * )
  * ```
  *
  * @param commitments - A list of commitments.
@@ -141,7 +148,8 @@ export declare namespace commitmentsToVersionedHashes {
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const [commitment] = Blobs.toCommitments(blobs, { kzg })
- * const versionedHash = Blobs.commitmentToVersionedHash(commitment) // [!code focus]
+ * const versionedHash =
+ *   Blobs.commitmentToVersionedHash(commitment) // [!code focus]
  * ```
  *
  * @example
@@ -156,9 +164,12 @@ export declare namespace commitmentsToVersionedHashes {
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const [commitment] = Blobs.toCommitments(blobs, { kzg })
- * const versionedHashes = Blobs.commitmentToVersionedHash(commitment, {
- *   as: 'Bytes', // [!code focus]
- * })
+ * const versionedHashes = Blobs.commitmentToVersionedHash(
+ *   commitment,
+ *   {
+ *     as: 'Bytes' // [!code focus]
+ *   }
+ * )
  * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
  * ```
  *
@@ -174,9 +185,12 @@ export declare namespace commitmentsToVersionedHashes {
  *
  * const blobs = Blobs.from('0xdeadbeef')
  * const [commitment] = Blobs.toCommitments(blobs, { kzg })
- * const versionedHashes = Blobs.commitmentToVersionedHash(commitment, {
- *   version: 2, // [!code focus]
- * })
+ * const versionedHashes = Blobs.commitmentToVersionedHash(
+ *   commitment,
+ *   {
+ *     version: 2 // [!code focus]
+ *   }
+ * )
  * ```
  *
  * @param commitment - The commitment.
@@ -248,8 +262,6 @@ export declare namespace commitmentToVersionedHash {
  *
  * const blobs = Blobs.from('0xdeadbeef', { as: 'Bytes' })
  * //    ^?
- *
- *
  * ```
  *
  * @param data - The data to convert to {@link ox#Blobs.Blobs}.
@@ -492,7 +504,7 @@ export function toBytes(
  * const blobs = Blobs.from('0xdeadbeef')
  * const commitments = Blobs.toCommitments(blobs, {
  *   as: 'Bytes', // [!code focus]
- *   kzg,
+ *   kzg
  * })
  * // @log: [Uint8Array [ ... ], Uint8Array [ ... ]]
  * ```
@@ -581,7 +593,7 @@ export declare namespace toBytes {
  * const blobs = Blobs.from('0xdeadbeef')
  * const cellProofs = Blobs.toCellProofs(blobs, {
  *   as: 'Bytes', // [!code focus]
- *   kzg,
+ *   kzg
  * })
  * // @log: [Uint8Array [ ... ], Uint8Array [ ... ], ...]
  * ```
@@ -651,7 +663,9 @@ export declare namespace toCellProofs {
  * import { kzg } from './kzg'
  *
  * const blobs = Blobs.from('0xdeadbeef')
- * const versionedHashes = Blobs.toVersionedHashes(blobs, { kzg }) // [!code focus]
+ * const versionedHashes = Blobs.toVersionedHashes(blobs, {
+ *   kzg
+ * }) // [!code focus]
  * ```
  *
  * @param blobs - The {@link ox#Blobs.Blobs} to transform into Blob Versioned Hashes.

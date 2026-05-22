@@ -138,10 +138,10 @@ export type MaybePromise<T> = T | Promise<T>
  * @example
  * ```ts
  * // @noErrors
- * MaybeRequired<{ a: string, b?: number }, true>
+ * MaybeRequired<{ a: string; b?: number }, true>
  * // { a: string, b: number }
  *
- * MaybeRequired<{ a: string, b?: number }, false>
+ * MaybeRequired<{ a: string; b?: number }, false>
  * // { a: string, b?: number }
  * ```
  *
@@ -157,7 +157,10 @@ export type MaybeRequired<T, required extends boolean> = required extends true
  * @example
  * ```ts
  * // @noErrors
- * Assign<{ a: string, b: number }, { a: undefined, c: boolean }>
+ * Assign<
+ *   { a: string; b: number },
+ *   { a: undefined; c: boolean }
+ * >
  * // { a: undefined, b: number, c: boolean }
  * ```
  *
@@ -204,7 +207,7 @@ export type Omit<type, keys extends keyof type> = Pick<
  * @example
  * ```ts
  * // @noErrors
- * PartialBy<{ a: string, b: number }, 'a'>
+ * PartialBy<{ a: string; b: number }, 'a'>
  * // { a?: string, b: number }
  * ```
  *
@@ -221,7 +224,7 @@ export type RecursiveArray<T> = T | readonly RecursiveArray<T>[]
  * @example
  * ```ts
  * // @noErrors
- * RequiredBy<{ a?: string, b: number }, 'a'>
+ * RequiredBy<{ a?: string; b: number }, 'a'>
  * // { a: string, b: number }
  * ```
  *
@@ -374,7 +377,11 @@ export type UnionLooseOmit<type, keys extends string> = type extends any
  * @example
  * ```ts
  * // @noErrors
- * type Result = UnionOmit<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
+ * type Result = UnionOmit<
+ *   | { a: string; b: number }
+ *   | { a: string; b: undefined; c: number },
+ *   'a'
+ * >
  * // { b: number } | { b: undefined, c: number }
  * ```
  *
@@ -389,7 +396,11 @@ export type UnionOmit<type, keys extends keyof type> = type extends any
  * @example
  * ```ts
  * // @noErrors
- * type Result = UnionOmit<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
+ * type Result = UnionOmit<
+ *   | { a: string; b: number }
+ *   | { a: string; b: undefined; c: number },
+ *   'a'
+ * >
  * // { b: number } | { b: undefined, c: number }
  * ```
  *
@@ -405,7 +416,11 @@ export type UnionPick<type, keys extends keyof type> = type extends any
  * @example
  * ```ts
  * // @noErrors
- * PartialBy<{ a: string, b: number } | { a: string, b: undefined, c: number }, 'a'>
+ * PartialBy<
+ *   | { a: string; b: number }
+ *   | { a: string; b: undefined; c: number },
+ *   'a'
+ * >
  * // { a?: string, b: number } | { a?: string, b: undefined, c: number }
  * ```
  *
@@ -421,7 +436,10 @@ export type UnionPartialBy<T, K extends keyof T> = T extends any
  * @example
  * ```ts
  * // @noErrors
- * RequiredBy<{ a?: string, b: number } | { a?: string, c?: number }, 'a'>
+ * RequiredBy<
+ *   { a?: string; b: number } | { a?: string; c?: number },
+ *   'a'
+ * >
  * // { a: string, b: number } | { a: string, c?: number }
  * ```
  *

@@ -218,11 +218,15 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { P256 } from 'ox'
  *
- * const signature = P256.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
+ * const signature = P256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey: '0x...'
+ * })
  *
- * const publicKey = P256.recoverPublicKey({ // [!code focus]
+ * const publicKey = P256.recoverPublicKey({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -278,7 +282,8 @@ export declare namespace recoverPublicKey {
  * ```ts twoslash
  * import { P256 } from 'ox'
  *
- * const signature = P256.sign({ // [!code focus]
+ * const signature = P256.sign({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
@@ -358,12 +363,16 @@ export declare namespace sign {
  * import { P256 } from 'ox'
  *
  * const { privateKey, publicKey } = P256.createKeyPair()
- * const signature = P256.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = P256.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const verified = P256.verify({ // [!code focus]
+ * const verified = P256.verify({
+ *   // [!code focus]
  *   publicKey, // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *

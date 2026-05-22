@@ -100,7 +100,7 @@ export type TupleListSigned = TupleList<true>
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  * ```
  *
@@ -118,17 +118,17 @@ export type TupleListSigned = TupleList<true>
  * const authorization = AuthorizationTempo.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
- *   nonce: 40n,
+ *   nonce: 40n
  * })
  *
  * const signature = Secp256k1.sign({
  *   payload: AuthorizationTempo.getSignPayload(authorization),
- *   privateKey,
+ *   privateKey
  * })
  *
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
- *   { signature }, // [!code focus]
+ *   { signature } // [!code focus]
  * )
  * ```
  *
@@ -141,29 +141,32 @@ export type TupleListSigned = TupleList<true>
  *
  * ```ts twoslash
  * import { P256 } from 'ox'
- * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
  * const { privateKey, publicKey } = P256.createKeyPair()
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
- *   nonce: 40n,
+ *   nonce: 40n
  * })
  *
  * const signature = P256.sign({
  *   payload: AuthorizationTempo.getSignPayload(authorization),
- *   privateKey,
+ *   privateKey
  * })
  * const signatureEnvelope = SignatureEnvelope.from({
  *   signature,
  *   publicKey,
- *   prehash: false,
+ *   prehash: false
  * })
  *
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
- *   { signature: signatureEnvelope }, // [!code focus]
+ *   { signature: signatureEnvelope } // [!code focus]
  * )
  * ```
  *
@@ -176,29 +179,33 @@ export type TupleListSigned = TupleList<true>
  * ```ts twoslash
  * // @noErrors
  * import { WebCryptoP256 } from 'ox'
- * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
- * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ * const { privateKey, publicKey } =
+ *   await WebCryptoP256.createKeyPair()
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
- *   nonce: 40n,
+ *   nonce: 40n
  * })
  *
  * const signature = await WebCryptoP256.sign({
  *   payload: AuthorizationTempo.getSignPayload(authorization),
- *   privateKey,
+ *   privateKey
  * })
  * const signatureEnvelope = SignatureEnvelope.from({
  *   signature,
  *   publicKey,
- *   prehash: true,
+ *   prehash: true
  * })
  *
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
- *   { signature: signatureEnvelope }, // [!code focus]
+ *   { signature: signatureEnvelope } // [!code focus]
  * )
  * ```
  *
@@ -212,29 +219,35 @@ export type TupleListSigned = TupleList<true>
  * ```ts twoslash
  * // @noErrors
  * import { WebAuthnP256 } from 'ox'
- * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
- * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example'
+ * })
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   chainId: 1,
- *   nonce: 40n,
+ *   nonce: 40n
  * })
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
- *   challenge: AuthorizationTempo.getSignPayload(authorization),
- *   credentialId: credential.id,
+ *   challenge:
+ *     AuthorizationTempo.getSignPayload(authorization),
+ *   credentialId: credential.id
  * })
  * const signatureEnvelope = SignatureEnvelope.from({
  *   signature,
  *   publicKey: credential.publicKey,
- *   metadata,
+ *   metadata
  * })
  *
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
- *   { signature: signatureEnvelope }, // [!code focus]
+ *   { signature: signatureEnvelope } // [!code focus]
  * )
  * ```
  *
@@ -306,8 +319,8 @@ export declare namespace from {
  *     type: 'secp256k1',
  *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *     yParity: '0x0',
- *   },
+ *     yParity: '0x0'
+ *   }
  * })
  * ```
  *
@@ -336,17 +349,19 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { AuthorizationTempo } from 'ox/tempo'
  *
- * const authorizationList = AuthorizationTempo.fromRpcList([{
- *   address: '0x0000000000000000000000000000000000000000',
- *   chainId: '0x1',
- *   nonce: '0x1',
- *   signature: {
- *     type: 'secp256k1',
- *     r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
- *     s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *     yParity: '0x0',
- *   },
- * }])
+ * const authorizationList = AuthorizationTempo.fromRpcList([
+ *   {
+ *     address: '0x0000000000000000000000000000000000000000',
+ *     chainId: '0x1',
+ *     nonce: '0x1',
+ *     signature: {
+ *       type: 'secp256k1',
+ *       r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *       s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *       yParity: '0x0'
+ *     }
+ *   }
+ * ])
  * ```
  *
  * @param authorizationList - The RPC-formatted AA Authorization list.
@@ -389,7 +404,7 @@ export declare namespace fromRpcList {
  *   '0x1',
  *   '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
  *   '0x3',
- *   '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064',
+ *   '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
  * ])
  * // @log: {
  * // @log:   address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
@@ -436,8 +451,16 @@ export declare namespace fromTuple {
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorizationList = AuthorizationTempo.fromTupleList([
- *   ['0x1', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x3'],
- *   ['0x3', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x14'],
+ *   [
+ *     '0x1',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x3'
+ *   ],
+ *   [
+ *     '0x3',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x14'
+ *   ]
  * ])
  * // @log: [
  * // @log:   {
@@ -460,8 +483,18 @@ export declare namespace fromTuple {
  * import { AuthorizationTempo } from 'ox/tempo'
  *
  * const authorizationList = AuthorizationTempo.fromTupleList([
- *   ['0x1', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x3', '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'],
- *   ['0x3', '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c', '0x14', '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'],
+ *   [
+ *     '0x1',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x3',
+ *     '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
+ *   ],
+ *   [
+ *     '0x3',
+ *     '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+ *     '0x14',
+ *     '0x01a068a020a209d3d56c46f38cc50a33f704f4a9a10a59377f8dd762ac66910e9b907e865ad05c4035ab5792787d4a0297a43617ae897930a6fe4d822b8faea52064'
+ *   ]
  * ])
  * // @log: [
  * // @log:   {
@@ -523,10 +556,11 @@ export declare namespace fromTupleList {
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
- * const payload = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ * const payload =
+ *   AuthorizationTempo.getSignPayload(authorization) // [!code focus]
  *
  * const signature = Secp256k1.sign({ payload, privateKey })
  * const authorization_signed = AuthorizationTempo.from(
@@ -544,23 +578,27 @@ export declare namespace fromTupleList {
  *
  * ```ts twoslash
  * import { P256 } from 'ox'
- * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
  * const { privateKey, publicKey } = P256.createKeyPair()
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
- * const payload = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ * const payload =
+ *   AuthorizationTempo.getSignPayload(authorization) // [!code focus]
  *
  * const signature = P256.sign({ payload, privateKey })
  * const signatureEnvelope = SignatureEnvelope.from({
  *   prehash: false,
  *   publicKey,
- *   signature,
+ *   signature
  * })
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
@@ -577,23 +615,31 @@ export declare namespace fromTupleList {
  * ```ts twoslash
  * // @noErrors
  * import { WebCryptoP256 } from 'ox'
- * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
- * const { privateKey, publicKey } = await WebCryptoP256.createKeyPair()
+ * const { privateKey, publicKey } =
+ *   await WebCryptoP256.createKeyPair()
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
- * const payload = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ * const payload =
+ *   AuthorizationTempo.getSignPayload(authorization) // [!code focus]
  *
- * const signature = await WebCryptoP256.sign({ payload, privateKey })
+ * const signature = await WebCryptoP256.sign({
+ *   payload,
+ *   privateKey
+ * })
  * const signatureEnvelope = SignatureEnvelope.from({
  *   prehash: true,
  *   publicKey,
- *   signature,
+ *   signature
  * })
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
@@ -611,26 +657,32 @@ export declare namespace fromTupleList {
  * ```ts twoslash
  * // @noErrors
  * import { WebAuthnP256 } from 'ox'
- * import { AuthorizationTempo, SignatureEnvelope } from 'ox/tempo'
+ * import {
+ *   AuthorizationTempo,
+ *   SignatureEnvelope
+ * } from 'ox/tempo'
  *
- * const credential = await WebAuthnP256.createCredential({ name: 'Example' })
+ * const credential = await WebAuthnP256.createCredential({
+ *   name: 'Example'
+ * })
  *
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
- * const challenge = AuthorizationTempo.getSignPayload(authorization) // [!code focus]
+ * const challenge =
+ *   AuthorizationTempo.getSignPayload(authorization) // [!code focus]
  *
  * const { metadata, signature } = await WebAuthnP256.sign({
  *   challenge,
- *   credentialId: credential.id,
+ *   credentialId: credential.id
  * })
  * const signatureEnvelope = SignatureEnvelope.from({
  *   signature,
  *   publicKey: credential.publicKey,
- *   metadata,
+ *   metadata
  * })
  * const authorization_signed = AuthorizationTempo.from(
  *   authorization,
@@ -659,7 +711,7 @@ export declare namespace getSignPayload {
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
  * const hash = AuthorizationTempo.hash(authorization) // [!code focus]
@@ -721,9 +773,9 @@ export declare namespace hash {
  *     signature: {
  *       r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *       s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *       yParity: 0,
- *     },
- *   },
+ *       yParity: 0
+ *     }
+ *   }
  * })
  * ```
  *
@@ -752,19 +804,21 @@ export declare namespace toRpc {
  * ```ts twoslash
  * import { AuthorizationTempo } from 'ox/tempo'
  *
- * const authorization = AuthorizationTempo.toRpcList([{
- *   address: '0x0000000000000000000000000000000000000000',
- *   chainId: 1,
- *   nonce: 1n,
- *   signature: {
- *     type: 'secp256k1',
+ * const authorization = AuthorizationTempo.toRpcList([
+ *   {
+ *     address: '0x0000000000000000000000000000000000000000',
+ *     chainId: 1,
+ *     nonce: 1n,
  *     signature: {
- *       r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
- *       s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *       yParity: 0,
- *     },
- *   },
- * }])
+ *       type: 'secp256k1',
+ *       signature: {
+ *         r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+ *         s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+ *         yParity: 0
+ *       }
+ *     }
+ *   }
+ * ])
  * ```
  *
  * @param authorizationList - An AA Authorization List.
@@ -788,7 +842,7 @@ export declare namespace toRpcList {
  * const authorization = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  *
  * const tuple = AuthorizationTempo.toTuple(authorization) // [!code focus]
@@ -837,15 +891,18 @@ export declare namespace toTuple {
  * const authorization_1 = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 1,
- *   nonce: 69n,
+ *   nonce: 69n
  * })
  * const authorization_2 = AuthorizationTempo.from({
  *   address: '0x1234567890abcdef1234567890abcdef12345678',
  *   chainId: 3,
- *   nonce: 20n,
+ *   nonce: 20n
  * })
  *
- * const tuple = AuthorizationTempo.toTupleList([authorization_1, authorization_2]) // [!code focus]
+ * const tuple = AuthorizationTempo.toTupleList([
+ *   authorization_1,
+ *   authorization_2
+ * ]) // [!code focus]
  * // @log: [
  * // @log:   [
  * // @log:     address: '0x1234567890abcdef1234567890abcdef12345678',

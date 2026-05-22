@@ -53,7 +53,7 @@ export type Tuple = readonly [yParity: Hex.Hex, r: Hex.Hex, s: Hex.Hex]
  * Signature.assert({
  *   r: '-0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
  *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
- *   yParity: 1,
+ *   yParity: 1
  * })
  * // @error: InvalidSignatureRError:
  * // @error: Value `-0x...` is an invalid r value.
@@ -139,7 +139,9 @@ export declare namespace fromBytes {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * Signature.fromHex('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c')
+ * Signature.fromHex(
+ *   '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c'
+ * )
  * // @log: { r: '0x6e10...', s: '0x4a90...', yParity: 0 }
  * ```
  *
@@ -196,7 +198,7 @@ export declare namespace fromHex {
  *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
  *   yParity: 1,
- *   zebra: 'stripes',
+ *   zebra: 'stripes'
  * })
  * // @log: {
  * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
@@ -234,7 +236,7 @@ export declare namespace extract {
  * Signature.from({
  *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
- *   yParity: 1,
+ *   yParity: 1
  * })
  * // @log: {
  * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
@@ -249,7 +251,9 @@ export declare namespace extract {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * Signature.from('0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db801')
+ * Signature.from(
+ *   '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db801'
+ * )
  * // @log: {
  * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  * // @log:   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
@@ -266,7 +270,7 @@ export declare namespace extract {
  * Signature.from({
  *   r: '0x68a020a21f5d20c5cf6c9b4d2dccdcdd14a9f7b9c2eb19d3d3acdb2a1a9c1f50',
  *   s: '0x7e8d44a4a8a3e3a4c6a3c1a3c3a3c1a3c1a3c1a3c1a3c1a3c1a3c1a3c1a3c1a4',
- *   v: 27,
+ *   v: 27
  * })
  * // @log: {
  * // @log:   r: '0x68a020a21f5d20c5cf6c9b4d2dccdcdd14a9f7b9c2eb19d3d3acdb2a1a9c1f50',
@@ -364,7 +368,9 @@ export declare namespace fromDerBytes {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const signature = Signature.fromDerHex('0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8')
+ * const signature = Signature.fromDerHex(
+ *   '0x304402206e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf02204a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
+ * )
  * // @log: {
  * // @log:   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  * // @log:   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
@@ -396,7 +402,11 @@ export declare namespace fromDerHex {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const legacy = Signature.fromLegacy({ r: '0x01', s: '0x02', v: 28 })
+ * const legacy = Signature.fromLegacy({
+ *   r: '0x01',
+ *   s: '0x02',
+ *   v: 28
+ * })
  * // @log: { r: '0x01', s: '0x02', yParity: 1 }
  * ```
  *
@@ -427,7 +437,7 @@ export declare namespace fromLegacy {
  * const signature = Signature.fromRpc({
  *   r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
  *   s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
- *   yParity: '0x0',
+ *   yParity: '0x0'
  * })
  * ```
  *
@@ -468,7 +478,11 @@ export declare namespace fromRpc {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const signature = Signature.fromTuple(['0x01', '0x7b', '0x1c8'])
+ * const signature = Signature.fromTuple([
+ *   '0x01',
+ *   '0x7b',
+ *   '0x1c8'
+ * ])
  * // @log: {
  * // @log:   r: '0x000000000000000000000000000000000000000000000000000000000000007b',
  * // @log:   s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
@@ -539,7 +553,7 @@ export declare namespace toBytes {
  * const bytes = Signature.toCompactBytes({
  *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
- *   yParity: 1,
+ *   yParity: 1
  * })
  * // @log: Uint8Array [110, 16, 10, ...] // 64 bytes
  * ```
@@ -566,7 +580,9 @@ export declare namespace toCompactBytes {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const signature = Signature.fromCompactBytes(new Uint8Array(64))
+ * const signature = Signature.fromCompactBytes(
+ *   new Uint8Array(64)
+ * )
  * // @log: { r: '0x00...0000', s: '0x00...0000' }
  * ```
  *
@@ -595,7 +611,7 @@ export declare namespace fromCompactBytes {
  * const bytes = Signature.toRecoveredBytes({
  *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
- *   yParity: 1,
+ *   yParity: 1
  * })
  * // @log: Uint8Array [1, 110, 16, ...] // 65 bytes
  * ```
@@ -623,7 +639,9 @@ export declare namespace toRecoveredBytes {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const signature = Signature.fromRecoveredBytes(new Uint8Array(65))
+ * const signature = Signature.fromRecoveredBytes(
+ *   new Uint8Array(65)
+ * )
  * // @log: { r: '0x00...0000', s: '0x00...0000', yParity: 0 }
  * ```
  *
@@ -694,7 +712,7 @@ export declare namespace toHex {
  *
  * const signature = Signature.from({
  *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
- *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
  * })
  *
  * const signature_der = Signature.toDerBytes(signature)
@@ -722,7 +740,7 @@ export declare namespace toDerBytes {
  *
  * const signature = Signature.from({
  *   r: '0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
- *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
+ *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8'
  * })
  *
  * const signature_der = Signature.toDerHex(signature)
@@ -748,7 +766,11 @@ export declare namespace toDerHex {
  * ```ts twoslash
  * import { Signature } from 'ox'
  *
- * const legacy = Signature.toLegacy({ r: '0x01', s: '0x02', yParity: 1 })
+ * const legacy = Signature.toLegacy({
+ *   r: '0x01',
+ *   s: '0x02',
+ *   yParity: 1
+ * })
  * // @log: { r: '0x01', s: '0x02', v: 28 }
  * ```
  *
@@ -807,7 +829,7 @@ export declare namespace toRpc {
  * const signatureTuple = Signature.toTuple({
  *   r: '0x000000000000000000000000000000000000000000000000000000000000007b',
  *   s: '0x00000000000000000000000000000000000000000000000000000000000001c8',
- *   yParity: 1,
+ *   yParity: 1
  * })
  * // @log: [yParity: '0x01', r: '0x7b', s: '0x1c8']
  * ```
@@ -838,7 +860,7 @@ export declare namespace toTuple {
  * const valid = Signature.validate({
  *   r: '-0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf',
  *   s: '0x4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db8',
- *   yParity: 1,
+ *   yParity: 1
  * })
  * // @log: false
  * ```

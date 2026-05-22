@@ -77,7 +77,9 @@ export declare namespace createKeyPair {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const publicKey = Secp256k1.getPublicKey({ privateKey: '0x...' })
+ * const publicKey = Secp256k1.getPublicKey({
+ *   privateKey: '0x...'
+ * })
  * ```
  *
  * @param options - The options to compute the public key.
@@ -123,7 +125,8 @@ export declare namespace getPublicKey {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const { privateKey: privateKeyA } = Secp256k1.createKeyPair()
+ * const { privateKey: privateKeyA } =
+ *   Secp256k1.createKeyPair()
  * const { publicKey: publicKeyB } = Secp256k1.createKeyPair()
  *
  * const sharedSecret = Secp256k1.getSharedSecret({
@@ -224,11 +227,15 @@ export declare namespace randomPrivateKey {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey: '0x...'
+ * })
  *
- * const address = Secp256k1.recoverAddress({ // [!code focus]
+ * const address = Secp256k1.recoverAddress({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -269,11 +276,15 @@ export declare namespace recoverAddress {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey: '0x...'
+ * })
  *
- * const publicKey = Secp256k1.recoverPublicKey({ // [!code focus]
+ * const publicKey = Secp256k1.recoverPublicKey({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -329,7 +340,8 @@ export declare namespace recoverPublicKey {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const signature = Secp256k1.sign({ // [!code focus]
+ * const signature = Secp256k1.sign({
+ *   // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
  *   privateKey: '0x...' // [!code focus]
  * }) // [!code focus]
@@ -405,12 +417,16 @@ export declare namespace sign {
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
  *
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey: '0x...' })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey: '0x...'
+ * })
  *
- * const verified = Secp256k1.verify({ // [!code focus]
+ * const verified = Secp256k1.verify({
+ *   // [!code focus]
  *   address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *
@@ -422,12 +438,16 @@ export declare namespace sign {
  *
  * const privateKey = '0x...'
  * const publicKey = Secp256k1.getPublicKey({ privateKey })
- * const signature = Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
+ * const signature = Secp256k1.sign({
+ *   payload: '0xdeadbeef',
+ *   privateKey
+ * })
  *
- * const verified = Secp256k1.verify({ // [!code focus]
+ * const verified = Secp256k1.verify({
+ *   // [!code focus]
  *   publicKey, // [!code focus]
  *   payload: '0xdeadbeef', // [!code focus]
- *   signature, // [!code focus]
+ *   signature // [!code focus]
  * }) // [!code focus]
  * ```
  *

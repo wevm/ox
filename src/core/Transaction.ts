@@ -265,7 +265,7 @@ export type FromRpcType = typeof fromRpcType & {
  *   yParity: '0x0',
  *   chainId: '0x1',
  *   accessList: [],
- *   type: '0x2',
+ *   type: '0x2'
  * })
  * ```
  *
@@ -365,7 +365,7 @@ export declare namespace fromRpc {
  *   type: 'eip1559',
  *   v: 27,
  *   value: 700000000000000000n,
- *   yParity: 0,
+ *   yParity: 0
  * })
  * ```
  *

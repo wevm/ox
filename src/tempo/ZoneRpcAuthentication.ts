@@ -83,7 +83,7 @@ export type Signed<numberType = number> = ZoneRpcAuthentication<
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  * ```
  *
@@ -98,17 +98,21 @@ export type Signed<numberType = number> = ZoneRpcAuthentication<
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: ZoneRpcAuthentication.getSignPayload(authentication),
- *   privateKey: '0x...',
+ *   payload:
+ *     ZoneRpcAuthentication.getSignPayload(authentication),
+ *   privateKey: '0x...'
  * })
  *
- * const authentication_signed = ZoneRpcAuthentication.from(authentication, {
- *   signature,
- * })
+ * const authentication_signed = ZoneRpcAuthentication.from(
+ *   authentication,
+ *   {
+ *     signature
+ *   }
+ * )
  * ```
  *
  * @param authentication - Zone RPC authentication token fields.
@@ -172,7 +176,8 @@ export declare namespace from {
  * ```ts twoslash
  * import { ZoneRpcAuthentication } from 'ox/tempo'
  *
- * const authentication = ZoneRpcAuthentication.deserialize('0x...')
+ * const authentication =
+ *   ZoneRpcAuthentication.deserialize('0x...')
  * ```
  *
  * @param serialized - The serialized Zone RPC authentication token.
@@ -229,7 +234,7 @@ export declare namespace deserialize {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  * ```
  *
@@ -269,10 +274,11 @@ export declare namespace getFields {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
- * const payload = ZoneRpcAuthentication.getSignPayload(authentication)
+ * const payload =
+ *   ZoneRpcAuthentication.getSignPayload(authentication)
  * ```
  *
  * @param authentication - The Zone RPC authentication token.
@@ -316,7 +322,7 @@ export declare namespace getSignPayload {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
  * const hash = ZoneRpcAuthentication.hash(authentication)
@@ -353,17 +359,21 @@ export declare namespace hash {
  *   chainId: 4217000026,
  *   expiresAt: 1711235160,
  *   issuedAt: 1711234560,
- *   zoneId: 26,
+ *   zoneId: 26
  * })
  *
  * const signature = Secp256k1.sign({
- *   payload: ZoneRpcAuthentication.getSignPayload(authentication),
- *   privateKey: '0x...',
+ *   payload:
+ *     ZoneRpcAuthentication.getSignPayload(authentication),
+ *   privateKey: '0x...'
  * })
  *
- * const serialized = ZoneRpcAuthentication.serialize(authentication, {
- *   signature,
- * })
+ * const serialized = ZoneRpcAuthentication.serialize(
+ *   authentication,
+ *   {
+ *     signature
+ *   }
+ * )
  * ```
  *
  * @param authentication - The Zone RPC authentication token.
