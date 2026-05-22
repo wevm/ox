@@ -1451,7 +1451,8 @@ export declare namespace from {
  *   'event Transfer(address owner, address to, uint256 tokenId)',
  *   'function bar(string a) returns (uint256 x)'
  * ])
- * const selector = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+ * const selector =
+ *   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
  * const item = AbiEvent.fromAbi(abi, selector) // [!code focus]
  * //    ^?
  * ```

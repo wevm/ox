@@ -31,7 +31,7 @@ export type PublicKey<
  *
  * PublicKey.assert({
  *   prefix: 4,
- *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
+ *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000'
  * })
  * // @error: PublicKey.InvalidError: Value \`{"y":"0x..."}\` is not a valid public key.
  * // @error: Public key must contain:
@@ -117,7 +117,7 @@ export declare namespace assert {
  * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x83185...',
- *   y: '0x35477...',
+ *   y: '0x35477...'
  * })
  *
  * const compressed = PublicKey.compress(publicKey) // [!code focus]
@@ -153,7 +153,7 @@ export declare namespace compress {
  * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
  * })
  * // @log: {
  * // @log:   prefix: 4,
@@ -168,7 +168,9 @@ export declare namespace compress {
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.from('0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * const publicKey = PublicKey.from(
+ *   '0x048318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
+ * )
  * // @log: {
  * // @log:   prefix: 4,
  * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
@@ -275,7 +277,9 @@ export declare namespace fromBytes {
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.fromHex('0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5')
+ * const publicKey = PublicKey.fromHex(
+ *   '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed753547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
+ * )
  * // @log: {
  * // @log:   prefix: 4,
  * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
@@ -289,7 +293,9 @@ export declare namespace fromBytes {
  * ```ts twoslash
  * import { PublicKey } from 'ox'
  *
- * const publicKey = PublicKey.fromHex('0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75')
+ * const publicKey = PublicKey.fromHex(
+ *   '0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75'
+ * )
  * // @log: {
  * // @log:   prefix: 3,
  * // @log:   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
@@ -359,7 +365,7 @@ export declare namespace fromHex {
  * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
  * })
  *
  * const bytes = PublicKey.toBytes(publicKey) // [!code focus]
@@ -402,7 +408,7 @@ export declare namespace toBytes {
  * const publicKey = PublicKey.from({
  *   prefix: 4,
  *   x: '0x8318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75',
- *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5',
+ *   y: '0x3547f11ca8696646f2f3acb08e31016afac23e630c5d11f59f61fef57b0d2aa5'
  * })
  *
  * const hex = PublicKey.toHex(publicKey) // [!code focus]
@@ -454,7 +460,7 @@ export declare namespace toHex {
  *
  * const valid = PublicKey.validate({
  *   prefix: 4,
- *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000',
+ *   y: '0x6e1c1f59ee1cf25b75a8d57b3c89e7e6b3b1da823df8b3b89497f30c1f000000'
  * })
  * // @log: false
  * ```
