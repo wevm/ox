@@ -10,24 +10,11 @@ const abi = Abi.from([
 abi
 // ^?
 
-
-
-
-
-
-
-
-
-
-
-
 const data = AbiFunction.encodeData(abi, 'transfer', ['0x7099…', 1000n])
 // @log: '0xa9059cbb000000…00000000000000003e8'
 
 const balance = AbiFunction.decodeResult(abi, 'balanceOf', '0x…0064')
 //    ^?
 
-
 // @log: 100n
-
 ```

@@ -175,7 +175,11 @@ const modules: Module[] = [
 const containerCls =
   'mx-auto w-full max-w-[var(--max-w)] px-[var(--container-pad)]'
 
-export function Landing({ installCommands, installHtml, snippets }: LandingProps) {
+export function Landing({
+  installCommands,
+  installHtml,
+  snippets,
+}: LandingProps) {
   const [pkg, setPkg] = useState<Pkg>('npm')
   const [active, setActive] = useState(modules[0]!.id)
   const [copiedInstall, setCopiedInstall] = useState(false)
@@ -250,12 +254,15 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
             <h1 className="m-0 mb-3 font-display text-[clamp(36px,4.5vw,56px)] font-medium leading-none tracking-[-0.025em]">
               EVM Standard Library,
               <br />
-              <em className="font-normal italic text-accent">for Agents &amp; Humans.</em>
+              <em className="font-normal italic text-accent">
+                for Agents &amp; Humans.
+              </em>
             </h1>
             <p className="m-0 mb-5 max-w-[620px] text-[18px] leading-[1.55] text-secondary">
-              Ox provides composable, type-safe primitives for agents and developers shipping EVM
-              software – ABIs, signers, transactions, and more. The foundation that Viem, Wagmi,
-              and your stack are built on.
+              Ox provides composable, type-safe primitives for agents and
+              developers shipping EVM software – ABIs, signers, transactions,
+              and more. The foundation that Viem, Wagmi, and your stack are
+              built on.
             </p>
             <div className="mb-10 flex flex-wrap gap-3">
               <a
@@ -282,7 +289,13 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
                 href="https://github.com/wevm/ox"
                 className="inline-flex items-center gap-2 border border-dashed border-primary bg-elevated px-[22px] py-3 text-[14px] font-medium text-primary transition hover:border-hover hover:bg-surface"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.35-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.74 1.27 3.41.97.1-.76.4-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.89-.39.98 0 1.97.13 2.89.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z" />
                 </svg>
                 GitHub
@@ -329,11 +342,29 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
                     className="absolute top-1/2 right-3 inline-flex -translate-y-1/2 cursor-pointer items-center justify-center border-none bg-transparent p-1.5 text-muted transition-colors hover:text-primary"
                   >
                     {copiedInstall ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <rect x="9" y="9" width="13" height="13" rx="2" />
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                       </svg>
@@ -349,11 +380,15 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
                 <span
                   className={
                     'inline-block h-[7px] w-[7px] ' +
-                    (copiedAgent ? 'bg-success shadow-[0_0_8px_rgba(74,222,128,0.4)]' : 'bg-accent shadow-[0_0_8px_var(--accent-glow)]')
+                    (copiedAgent
+                      ? 'bg-success shadow-[0_0_8px_rgba(74,222,128,0.4)]'
+                      : 'bg-accent shadow-[0_0_8px_var(--accent-glow)]')
                   }
                 />
                 <span>
-                  {copiedAgent ? 'Copied to clipboard' : 'Copy setup instructions for agent'}
+                  {copiedAgent
+                    ? 'Copied to clipboard'
+                    : 'Copy setup instructions for agent'}
                 </span>
               </button>
             </div>
@@ -369,11 +404,12 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
         <div className={containerCls}>
           <div className="mb-16 max-w-[720px]">
             <h2 className="m-0 mb-4 font-display text-[clamp(32px,4vw,48px)] font-medium leading-[1.05] tracking-[-0.025em]">
-              <em className="font-normal italic text-accent">Primitives</em>, one import away.
+              <em className="font-normal italic text-accent">Primitives</em>,
+              one import away.
             </h2>
             <p className="m-0 text-[18px] leading-[1.55] text-secondary">
-              A categorical, module-driven API. Named imports stay fully tree-shakable, so your
-              bundle only includes what you reach for.
+              A categorical, module-driven API. Named imports stay fully
+              tree-shakable, so your bundle only includes what you reach for.
             </p>
           </div>
           <div
@@ -430,7 +466,10 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
               <div className="relative flex items-center justify-between gap-3 px-4 py-[14.5px]">
                 <div className="flex items-center gap-3">
                   <h3 className="m-0 flex items-center gap-2.5 font-mono text-[15px] font-semibold text-primary">
-                    <ActiveIcon aria-hidden className="h-4 w-4 shrink-0 text-accent" />
+                    <ActiveIcon
+                      aria-hidden
+                      className="h-4 w-4 shrink-0 text-accent"
+                    />
                     {activeModule.name}
                   </h3>
                   <a
@@ -466,7 +505,9 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
                 />
               </div>
               <div className="px-4 py-4">
-                <p className="m-0 mb-4 text-[14px] leading-[1.55] text-secondary">{activeModule.desc}</p>
+                <p className="m-0 mb-4 text-[14px] leading-[1.55] text-secondary">
+                  {activeModule.desc}
+                </p>
                 <div className="module-snippet [&_pre]:m-0 [&_pre]:overflow-x-auto [&_pre]:whitespace-pre [&_pre]:border [&_pre]:border-dashed [&_pre]:border-hover [&_pre]:bg-code [&_pre]:px-0 [&_pre]:py-[18px] [&_pre]:font-mono [&_pre]:text-[13px] [&_pre]:leading-[1.65]">
                   {snippets?.[activeModule.id]}
                 </div>
@@ -510,7 +551,12 @@ export function Landing({ installCommands, installHtml, snippets }: LandingProps
                   aria-label={s.label}
                   className="inline-flex h-8 w-8 items-center justify-center border border-dashed border-hover bg-elevated text-secondary transition-colors hover:border-primary hover:text-primary"
                 >
-                  <svg width={s.size} height={s.size} viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    width={s.size}
+                    height={s.size}
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <path d={s.path} />
                   </svg>
                 </a>

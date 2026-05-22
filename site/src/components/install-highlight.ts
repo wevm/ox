@@ -19,7 +19,10 @@ async function render(cmd: string) {
 
 export const installHtml: Record<InstallPkg, string> = Object.fromEntries(
   await Promise.all(
-    (Object.keys(commands) as InstallPkg[]).map(async (k) => [k, await render(commands[k])]),
+    (Object.keys(commands) as InstallPkg[]).map(async (k) => [
+      k,
+      await render(commands[k]),
+    ]),
   ),
 ) as Record<InstallPkg, string>
 

@@ -1,6 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap");
-@import "tailwindcss";
-@import "./_vocs.generated.css";
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap');
+@import 'tailwindcss';
+@import './_vocs.generated.css';
 
 @source "../";
 
@@ -18,7 +18,10 @@
   --background-color-elevated: light-dark(#f6efde, #18140e);
   --background-color-surface: light-dark(#e8e0cc, #25211a);
   --background-color-accent: light-dark(#b8421d, #e85d35);
-  --background-color-accent-soft: light-dark(rgba(184, 66, 29, 0.10), rgba(232, 93, 53, 0.12));
+  --background-color-accent-soft: light-dark(
+    rgba(184, 66, 29, 0.1),
+    rgba(232, 93, 53, 0.12)
+  );
   --background-color-code: light-dark(#ebe2cb, #100d09);
   --background-color-success: #4ade80;
 
@@ -37,11 +40,15 @@
   /* Borders */
   --border-color-primary: light-dark(#d6cdb6, #2e2920);
   --border-color-soft: light-dark(#e3dbc7, #24201a);
-  --border-color-hover: light-dark(rgba(29, 26, 20, 0.14), rgba(241, 235, 222, 0.09));
+  --border-color-hover: light-dark(
+    rgba(29, 26, 20, 0.14),
+    rgba(241, 235, 222, 0.09)
+  );
   --border-color-accent: light-dark(#b8421d, #e85d35);
 
   /* Fonts */
-  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans:
+    'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Instrument Serif', 'Geist', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
@@ -55,7 +62,9 @@
 }
 
 @media (max-width: 640px) {
-  :root { --container-pad: 20px; }
+  :root {
+    --container-pad: 20px;
+  }
 }
 
 /* Vocs token overrides → our palette */
@@ -108,11 +117,11 @@
   --vocs-text-color-link-hover: var(--text-color-strong);
 
   /* Semantic colors — warm/earthy palette aligned with our accent */
-  --vocs-color-blue: light-dark(#1857aa, #8eb5e6);      /* info */
-  --vocs-color-green: light-dark(#2c7c2c, #b8d690);     /* success */
-  --vocs-color-red: light-dark(#b8421d, #e85d35);       /* destructive */
-  --vocs-color-yellow: light-dark(#b8651d, #d6a55a);    /* warning */
-  --vocs-color-iris: light-dark(#6f42c1, #d6a3ec);      /* tip */
+  --vocs-color-blue: light-dark(#1857aa, #8eb5e6); /* info */
+  --vocs-color-green: light-dark(#2c7c2c, #b8d690); /* success */
+  --vocs-color-red: light-dark(#b8421d, #e85d35); /* destructive */
+  --vocs-color-yellow: light-dark(#b8651d, #d6a55a); /* warning */
+  --vocs-color-iris: light-dark(#6f42c1, #d6a3ec); /* tip */
 }
 
 body,
@@ -121,19 +130,25 @@ body,
 }
 
 /* Geist letter-spacing on headings (vocs only sets tracking-[-0.04em] on h1) */
-[data-v-app] h2 { letter-spacing: -0.04em; }
-[data-v-app] h3 { letter-spacing: -0.02em; }
+[data-v-app] h2 {
+  letter-spacing: -0.04em;
+}
+[data-v-app] h3 {
+  letter-spacing: -0.02em;
+}
 [data-v-app] h4,
 [data-v-app] h5,
-[data-v-app] h6 { letter-spacing: -0.02em; }
+[data-v-app] h6 {
+  letter-spacing: -0.02em;
+}
 
 * {
   border-style: dashed;
 }
 
 [data-active],
-[data-v-active="true"],
-[aria-current="page"] {
+[data-v-active='true'],
+[aria-current='page'] {
   border-style: solid;
 }
 
@@ -144,12 +159,12 @@ body,
 }
 
 /* Landing page (blank layout) gets a wider content container */
-[data-layout="blank"] {
+[data-layout='blank'] {
   --vocs-spacing-content: var(--max-w);
 }
 
 /* Landing page: tighten top padding above the header */
-[data-layout="blank"]:has(.landing-pattern) [data-v-content] {
+[data-layout='blank']:has(.landing-pattern) [data-v-content] {
   padding-top: 2em;
 }
 
@@ -158,13 +173,13 @@ body,
  * (rather than the landing component) so it spans the full page
  * height including Vocs's article/main padding. The `:has(.landing-pattern)`
  * scopes it to pages that opt in via the `landing-pattern` class. */
-[data-layout="blank"]:has(.landing-pattern) {
+[data-layout='blank']:has(.landing-pattern) {
   position: relative;
   isolation: isolate;
 }
 
-[data-layout="blank"]:has(.landing-pattern)::before {
-  content: "";
+[data-layout='blank']:has(.landing-pattern)::before {
+  content: '';
   position: absolute;
   top: 0;
   bottom: 0;
@@ -192,8 +207,8 @@ body,
   color: var(--shiki-light);
   background-color: var(--shiki-light-bg);
 }
-html[style*="color-scheme: dark"] .install-shiki .shiki,
-html[style*="color-scheme: dark"] .install-shiki .shiki span {
+html[style*='color-scheme: dark'] .install-shiki .shiki,
+html[style*='color-scheme: dark'] .install-shiki .shiki span {
   color: var(--shiki-dark);
   background-color: var(--shiki-dark-bg);
 }
@@ -252,7 +267,11 @@ body > div:has(> div > .twoslash-completion-list) {
 [data-v-content] a:not([data-v-anchor]) {
   font-weight: lighter;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--text-color-accent) 50%, transparent);
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--text-color-accent) 50%,
+    transparent
+  );
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   transition: text-decoration-color 0.15s ease;
@@ -271,7 +290,7 @@ body > div:has(> div > .twoslash-completion-list) {
   font-weight: 400;
 }
 
-[data-layout="blank"] [data-v-content] a:not([data-v-anchor]) {
+[data-layout='blank'] [data-v-content] a:not([data-v-anchor]) {
   text-decoration: none;
 }
 
@@ -281,11 +300,11 @@ body > div:has(> div > .twoslash-completion-list) {
  * preference, not vocs's inline color-scheme toggle. Override the
  * polyfill vars to respect the inline attribute on <html>.
  */
-html[style*="color-scheme: light"] {
+html[style*='color-scheme: light'] {
   --lightningcss-light: initial;
   --lightningcss-dark: ;
 }
-html[style*="color-scheme: dark"] {
+html[style*='color-scheme: dark'] {
   --lightningcss-light: ;
   --lightningcss-dark: initial;
 }
