@@ -36,6 +36,32 @@ export type {}
  */
 export * as AuthorizationTempo from './AuthorizationTempo.js'
 /**
+ * TIP-20 channel reserve constants and deterministic hashing utilities.
+ *
+ * The channel reserve precompile exposes helper methods for channel identifiers,
+ * voucher sign payloads, and its EIP-712 domain separator. These utilities compute the
+ * same values locally when the chain id and channel fields are known.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Channel } from 'ox/tempo'
+ *
+ * const channelId = Channel.computeId({
+ *   authorizedSigner: '0x0000000000000000000000000000000000000000',
+ *   chainId: 4217,
+ *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *   operator: '0x0000000000000000000000000000000000000000',
+ *   payee: '0x2222222222222222222222222222222222222222',
+ *   payer: '0x1111111111111111111111111111111111111111',
+ *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   token: 1n,
+ * })
+ * ```
+ *
+ * @category Reference
+ */
+export * as Channel from './Channel.js'
+/**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
  * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary
