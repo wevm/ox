@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.25
+
+### Patch Changes
+
+- [#256](https://github.com/wevm/ox/pull/256) [`ad7610b`](https://github.com/wevm/ox/commit/ad7610b115c1ebc20739289bfacead52652160be) Thanks [@jxom](https://github.com/jxom)! - Renamed `ChannelDescriptor.from` to `Channel.from`, made `Channel.Channel` the descriptor type, and changed `Channel.computeId` to receive channel and options separately.
+
 ## 0.14.24
 
 ### Patch Changes
