@@ -2,8 +2,7 @@ import * as AbiParameters from '../core/AbiParameters.js'
 import type * as Address from '../core/Address.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import * as TempoAddress from './TempoAddress.js'
-import * as TokenId from './TokenId.js'
+import * as ChannelDescriptor from './ChannelDescriptor.js'
 
 const channelIdParameters = AbiParameters.from(
   'address, address, address, address, bytes32, address, bytes32, address, uint256',
@@ -42,22 +41,7 @@ export const voucherTypehash = Hash.keccak256(
 /**
  * TIP-20 channel descriptor.
  */
-export type Descriptor = {
-  /** Account that funded the channel and receives refunds. */
-  payer: TempoAddress.Address
-  /** Account that receives settled voucher payments. */
-  payee: TempoAddress.Address
-  /** Optional relayer allowed to submit `settle` for the payee. */
-  operator: TempoAddress.Address
-  /** TIP-20 token address held by the channel. */
-  token: TokenId.TokenIdOrAddress<TempoAddress.Address>
-  /** User-supplied salt to distinguish otherwise identical channels. */
-  salt: Hex.Hex
-  /** Optional signer for vouchers. Zero means `payer` signs. */
-  authorizedSigner: TempoAddress.Address
-  /** Transaction-derived hash assigned when the channel was opened. */
-  expiringNonceHash: Hex.Hex
-}
+export type Descriptor = ChannelDescriptor.ChannelDescriptor
 
 /**
  * Computes the canonical TIP-20 channel id for a descriptor.
@@ -85,15 +69,16 @@ export type Descriptor = {
  * @returns The channel id.
  */
 export function computeId(value: computeId.Value): Hex.Hex {
+  const descriptor = ChannelDescriptor.from(value)
   return Hash.keccak256(
     AbiParameters.encode(channelIdParameters, [
-      TempoAddress.resolve(value.payer),
-      TempoAddress.resolve(value.payee),
-      TempoAddress.resolve(value.operator),
-      TokenId.toAddress(value.token),
-      value.salt,
-      TempoAddress.resolve(value.authorizedSigner),
-      value.expiringNonceHash,
+      descriptor.payer,
+      descriptor.payee,
+      descriptor.operator,
+      descriptor.token,
+      descriptor.salt,
+      descriptor.authorizedSigner,
+      descriptor.expiringNonceHash,
       address,
       BigInt(value.chainId),
     ]),
@@ -101,15 +86,15 @@ export function computeId(value: computeId.Value): Hex.Hex {
 }
 
 export declare namespace computeId {
-  type Value = Descriptor & {
+  type Value = ChannelDescriptor.from.Value & {
     /** Chain id used by the channel reserve precompile. */
     chainId: number | bigint
   }
 
   type ErrorType =
     | AbiParameters.encode.ErrorType
+    | ChannelDescriptor.from.ErrorType
     | Hash.keccak256.ErrorType
-    | TempoAddress.parse.ErrorType
 }
 
 /**
