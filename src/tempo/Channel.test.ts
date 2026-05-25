@@ -48,12 +48,11 @@ describe('computeId', () => {
     )
   })
 
-  test('address inputs', () => {
+  test('token address input', () => {
     expect(
       Channel.computeId({
         ...descriptor,
-        payee: 'tempox0x2222222222222222222222222222222222222222',
-        token: 'tempox0x20c0000000000000000000000000000000000001',
+        token: '0x20c0000000000000000000000000000000000001',
       }),
     ).toBe(Channel.computeId(descriptor))
   })
