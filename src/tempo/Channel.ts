@@ -1,8 +1,9 @@
 import * as AbiParameters from '../core/AbiParameters.js'
-import type * as Address from '../core/Address.js'
+import * as Address from '../core/Address.js'
+import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import * as ChannelDescriptor from './ChannelDescriptor.js'
+import * as TokenId from './TokenId.js'
 
 const channelIdParameters = AbiParameters.from(
   'address, address, address, address, bytes32, address, bytes32, address, uint256',
@@ -19,6 +20,8 @@ const eip712DomainTypehash = Hash.keccak256(
 )
 const nameHash = Hash.keccak256(Hex.fromString('TIP20 Channel Reserve'))
 const versionHash = Hash.keccak256(Hex.fromString('1'))
+const zeroAddress =
+  '0x0000000000000000000000000000000000000000' as const satisfies Address.Address
 
 /**
  * TIP-20 channel reserve precompile address.
@@ -41,7 +44,102 @@ export const voucherTypehash = Hash.keccak256(
 /**
  * TIP-20 channel descriptor.
  */
-export type Descriptor = ChannelDescriptor.ChannelDescriptor
+export type Channel<
+  addressType = Address.Address,
+  tokenType = TokenId.TokenIdOrAddress<addressType>,
+> = {
+  /** Optional signer for vouchers. Zero means `payer` signs. */
+  authorizedSigner: addressType
+  /** Transaction-derived hash assigned when the channel was opened. */
+  expiringNonceHash: Hex.Hex
+  /** Optional relayer allowed to submit `settle` for the payee. */
+  operator: addressType
+  /** Account that receives settled voucher payments. */
+  payee: addressType
+  /** Account that funded the channel and receives refunds. */
+  payer: addressType
+  /** User-supplied salt to distinguish otherwise identical channels. */
+  salt: Hex.Hex
+  /** TIP-20 token address held by the channel. */
+  token: tokenType
+}
+
+/** Hex-address-normalized {@link ox#Channel.Channel}. */
+export type Resolved = Channel<Address.Address, Address.Address>
+
+/**
+ * Instantiates a TIP-20 channel reserve descriptor.
+ *
+ * Accepts a TIP-20 token ID or address, and defaults `operator` and
+ * `authorizedSigner` to the zero address.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Channel } from 'ox/tempo'
+ *
+ * const channel = Channel.from({
+ *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000002',
+ *   payee: '0x2222222222222222222222222222222222222222',
+ *   payer: '0x1111111111111111111111111111111111111111',
+ *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   token: 1n,
+ * })
+ * ```
+ *
+ * @param value - The channel descriptor input.
+ * @returns The normalized channel descriptor.
+ */
+export function from(value: from.Value): from.ReturnType {
+  const {
+    authorizedSigner = zeroAddress,
+    expiringNonceHash,
+    operator = zeroAddress,
+    payee,
+    payer,
+    salt,
+    token,
+  } = value
+
+  return {
+    authorizedSigner: resolveAddress(authorizedSigner),
+    expiringNonceHash,
+    operator: resolveAddress(operator),
+    payee: resolveAddress(payee),
+    payer: resolveAddress(payer),
+    salt,
+    token:
+      typeof token === 'string'
+        ? resolveAddress(token)
+        : TokenId.toAddress(token),
+  }
+}
+
+export declare namespace from {
+  type Value = {
+    /** Optional signer for vouchers. Zero means `payer` signs. */
+    authorizedSigner?: Address.Address | undefined
+    /** Transaction-derived hash assigned when the channel was opened. */
+    expiringNonceHash: Hex.Hex
+    /** Optional relayer allowed to submit `settle` for the payee. */
+    operator?: Address.Address | undefined
+    /** Account that receives settled voucher payments. */
+    payee: Address.Address
+    /** Account that funded the channel and receives refunds. */
+    payer: Address.Address
+    /** User-supplied salt to distinguish otherwise identical channels. */
+    salt: Hex.Hex
+    /** TIP-20 token address or ID held by the channel. */
+    token: TokenId.TokenIdOrAddress<Address.Address>
+  }
+
+  type ReturnType = Resolved
+
+  type ErrorType =
+    | Address.from.ErrorType
+    | Hex.concat.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Errors.GlobalErrorType
+}
 
 /**
  * Computes the canonical TIP-20 channel id for a descriptor.
@@ -55,45 +153,52 @@ export type Descriptor = ChannelDescriptor.ChannelDescriptor
  *
  * const channelId = Channel.computeId({
  *   authorizedSigner: '0x0000000000000000000000000000000000000000',
- *   chainId: 4217,
  *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
  *   operator: '0x0000000000000000000000000000000000000000',
  *   payee: '0x2222222222222222222222222222222222222222',
  *   payer: '0x1111111111111111111111111111111111111111',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
  *   token: 1n,
+ * }, {
+ *   chainId: 4217,
  * })
  * ```
  *
- * @param value - Channel descriptor and chain id.
+ * @param channel - Channel descriptor.
+ * @param options - Options.
  * @returns The channel id.
  */
-export function computeId(value: computeId.Value): Hex.Hex {
-  const descriptor = ChannelDescriptor.from(value)
+export function computeId(
+  channel: computeId.Channel,
+  options: computeId.Options,
+): Hex.Hex {
+  const channel_ = from(channel)
   return Hash.keccak256(
     AbiParameters.encode(channelIdParameters, [
-      descriptor.payer,
-      descriptor.payee,
-      descriptor.operator,
-      descriptor.token,
-      descriptor.salt,
-      descriptor.authorizedSigner,
-      descriptor.expiringNonceHash,
+      channel_.payer,
+      channel_.payee,
+      channel_.operator,
+      channel_.token,
+      channel_.salt,
+      channel_.authorizedSigner,
+      channel_.expiringNonceHash,
       address,
-      BigInt(value.chainId),
+      BigInt(options.chainId),
     ]),
   )
 }
 
 export declare namespace computeId {
-  type Value = ChannelDescriptor.from.Value & {
-    /** Chain id used by the channel reserve precompile. */
+  type Channel = from.Value
+
+  type Options = {
+    /** Chain ID used by the channel reserve precompile. */
     chainId: number | bigint
   }
 
   type ErrorType =
     | AbiParameters.encode.ErrorType
-    | ChannelDescriptor.from.ErrorType
+    | from.ErrorType
     | Hash.keccak256.ErrorType
 }
 
@@ -187,4 +292,8 @@ export declare namespace getVoucherSignPayload {
     | AbiParameters.encode.ErrorType
     | domainSeparator.ErrorType
     | Hash.keccak256.ErrorType
+}
+
+function resolveAddress(address: Address.Address): Address.Address {
+  return Address.from(address)
 }
