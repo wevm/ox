@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.24
+
+### Patch Changes
+
+- [#254](https://github.com/wevm/ox/pull/254) [`d837628`](https://github.com/wevm/ox/commit/d8376284988f6c2b56d9cb18ac2b677465f3b835) Thanks [@jxom](https://github.com/jxom)! - Added `ChannelDescriptor.from` for normalizing TIP-20 channel reserve descriptors.
+
 ## 0.14.23
 
 ### Patch Changes
