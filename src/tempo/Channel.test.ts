@@ -1,10 +1,9 @@
-import { Hash, Hex, TypedData } from 'ox'
+import { type Address, Hash, Hex, TypedData } from 'ox'
 import { Channel } from 'ox/tempo'
 import { describe, expect, test } from 'vitest'
 
-const descriptor = {
+const channel = {
   authorizedSigner: '0x3333333333333333333333333333333333333333',
-  chainId: 4217,
   expiringNonceHash:
     '0x0000000000000000000000000000000000000000000000000000000000000002',
   operator: '0x0000000000000000000000000000000000000000',
@@ -13,6 +12,8 @@ const descriptor = {
   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
   token: 1n,
 } as const
+
+const chainId = 4217
 
 describe('address', () => {
   test('default', () => {
@@ -41,38 +42,120 @@ describe('voucherTypehash', () => {
   })
 })
 
+describe('from', () => {
+  test('default', () => {
+    expect(
+      Channel.from({
+        ...channel,
+        operator: '0x4444444444444444444444444444444444444444',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "authorizedSigner": "0x3333333333333333333333333333333333333333",
+        "expiringNonceHash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "operator": "0x4444444444444444444444444444444444444444",
+        "payee": "0x2222222222222222222222222222222222222222",
+        "payer": "0x1111111111111111111111111111111111111111",
+        "salt": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "token": "0x20c0000000000000000000000000000000000001",
+      }
+    `)
+  })
+
+  test('default values', () => {
+    expect(
+      Channel.from({
+        expiringNonceHash: channel.expiringNonceHash,
+        payee: channel.payee,
+        payer: channel.payer,
+        salt: channel.salt,
+        token: channel.token,
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "authorizedSigner": "0x0000000000000000000000000000000000000000",
+        "expiringNonceHash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "operator": "0x0000000000000000000000000000000000000000",
+        "payee": "0x2222222222222222222222222222222222222222",
+        "payer": "0x1111111111111111111111111111111111111111",
+        "salt": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "token": "0x20c0000000000000000000000000000000000001",
+      }
+    `)
+  })
+
+  test('token address input', () => {
+    expect(
+      Channel.from({
+        ...channel,
+        operator: '0x4444444444444444444444444444444444444444',
+        token: '0x20c0000000000000000000000000000000000001',
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "authorizedSigner": "0x3333333333333333333333333333333333333333",
+        "expiringNonceHash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "operator": "0x4444444444444444444444444444444444444444",
+        "payee": "0x2222222222222222222222222222222222222222",
+        "payer": "0x1111111111111111111111111111111111111111",
+        "salt": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "token": "0x20c0000000000000000000000000000000000001",
+      }
+    `)
+  })
+
+  test('return type', () => {
+    const resolved = Channel.from({
+      expiringNonceHash:
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+      payee: '0x2222222222222222222222222222222222222222',
+      payer: '0x1111111111111111111111111111111111111111',
+      salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      token: 1n,
+    })
+
+    resolved satisfies Channel.Resolved
+    resolved satisfies Channel.Channel
+    resolved.payer satisfies Address.Address
+    resolved.token satisfies Address.Address
+  })
+})
+
 describe('computeId', () => {
   test('default', () => {
-    expect(Channel.computeId(descriptor)).toMatchInlineSnapshot(
+    expect(Channel.computeId(channel, { chainId })).toMatchInlineSnapshot(
       `"0xa392474fdbb5c6753e8789236893343f11200f43ba53cca09c0cda3651946ef2"`,
     )
   })
 
   test('token address input', () => {
     expect(
-      Channel.computeId({
-        ...descriptor,
-        token: '0x20c0000000000000000000000000000000000001',
-      }),
-    ).toBe(Channel.computeId(descriptor))
+      Channel.computeId(
+        {
+          ...channel,
+          token: '0x20c0000000000000000000000000000000000001',
+        },
+        { chainId },
+      ),
+    ).toBe(Channel.computeId(channel, { chainId }))
   })
 
   test('chain id bigint', () => {
-    expect(Channel.computeId({ ...descriptor, chainId: 4217n })).toBe(
-      Channel.computeId(descriptor),
+    expect(Channel.computeId(channel, { chainId: 4217n })).toBe(
+      Channel.computeId(channel, { chainId }),
     )
   })
 })
 
 describe('domainSeparator', () => {
   test('default', () => {
-    const separator = Channel.domainSeparator({ chainId: descriptor.chainId })
+    const separator = Channel.domainSeparator({ chainId })
 
     expect(separator).toBe(
       TypedData.domainSeparator({
         name: 'TIP20 Channel Reserve',
         version: '1',
-        chainId: descriptor.chainId,
+        chainId,
         verifyingContract: Channel.address,
       }),
     )
@@ -84,10 +167,10 @@ describe('domainSeparator', () => {
 
 describe('getVoucherSignPayload', () => {
   test('default', () => {
-    const channelId = Channel.computeId(descriptor)
+    const channelId = Channel.computeId(channel, { chainId })
     const cumulativeAmount = 100n
     const payload = Channel.getVoucherSignPayload({
-      chainId: descriptor.chainId,
+      chainId,
       channelId,
       cumulativeAmount,
     })
@@ -97,7 +180,7 @@ describe('getVoucherSignPayload', () => {
         domain: {
           name: 'TIP20 Channel Reserve',
           version: '1',
-          chainId: descriptor.chainId,
+          chainId,
           verifyingContract: Channel.address,
         },
         message: {

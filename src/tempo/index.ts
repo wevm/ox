@@ -36,53 +36,32 @@ export type {}
  */
 export * as AuthorizationTempo from './AuthorizationTempo.js'
 /**
- * TIP-20 channel reserve constants and deterministic hashing utilities.
+ * TIP-20 channel reserve descriptor, constants, and deterministic hashing utilities.
  *
- * The channel reserve precompile exposes helper methods for channel identifiers,
- * voucher sign payloads, and its EIP-712 domain separator. These utilities compute the
- * same values locally when the chain id and channel fields are known.
+ * Channel descriptors are emitted by `Channel.open` and then reused to settle,
+ * top up, close, request close, withdraw, or compute the channel ID. The channel
+ * reserve precompile exposes helper methods for channel identifiers, voucher sign
+ * payloads, and its EIP-712 domain separator. These utilities compute the same
+ * values locally when the chain id and channel fields are known.
  *
  * @example
  * ```ts twoslash
  * import { Channel } from 'ox/tempo'
  *
- * const channelId = Channel.computeId({
- *   authorizedSigner: '0x0000000000000000000000000000000000000000',
- *   chainId: 4217,
+ * const channel = Channel.from({
  *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
- *   operator: '0x0000000000000000000000000000000000000000',
  *   payee: '0x2222222222222222222222222222222222222222',
  *   payer: '0x1111111111111111111111111111111111111111',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
  *   token: 1n,
  * })
+ *
+ * const channelId = Channel.computeId(channel, { chainId: 4217 })
  * ```
  *
  * @category Reference
  */
 export * as Channel from './Channel.js'
-/**
- * TIP-20 channel reserve descriptor utilities.
- *
- * Channel descriptors are emitted by `Channel.open` and then reused to settle,
- * top up, close, request close, withdraw, or compute the channel ID.
- *
- * @example
- * ```ts twoslash
- * import { ChannelDescriptor } from 'ox/tempo'
- *
- * const descriptor = ChannelDescriptor.from({
- *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
- *   payee: '0x2222222222222222222222222222222222222222',
- *   payer: '0x1111111111111111111111111111111111111111',
- *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   token: 1n,
- * })
- * ```
- *
- * @category Reference
- */
-export * as ChannelDescriptor from './ChannelDescriptor.js'
 /**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
