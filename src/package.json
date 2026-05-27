@@ -12,8 +12,7 @@
     "*",
     "!**/_test/**",
     "!**/*.tsbuildinfo",
-    "!tsconfig.build.json",
-    "!jsr.json"
+    "!tsconfig.build.json"
   ],
   "dependencies": {
     "@adraffy/ens-normalize": "^1.11.0",

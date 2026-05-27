@@ -3,25 +3,32 @@ on:
   push:
     branches: [main]
 
+permissions: {} # each job should declare only the permissions it needs
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify:
     name: Verify
+    permissions:
+      contents: read # checkout repository contents in the reusable workflow
     uses: ./.github/workflows/verify.yml
     secrets: inherit
 
   changesets:
     name: Changesets
     needs: verify
+    # prevents this action from running on forks
+    if: github.repository == 'wevm/ox'
     permissions:
-      contents: write
-      id-token: write
-      pull-requests: write
+      contents: write # commit version/changelog updates to the release pull request
+      pull-requests: write # create or update the Changesets release pull request
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
 
     steps:
       - name: Clone repository
@@ -33,14 +40,45 @@ jobs:
 
       - name: Install dependencies
         uses: ./.github/actions/install-dependencies
+        with:
+          skip-cache: true # avoid cache poisoning attacks
 
-      - name: PR or publish
+      - name: Create version pull request
+        id: changesets
         uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
         with:
           title: 'chore: version packages'
           commit: 'chore: version packages'
-          createGithubReleases: ${{ github.ref == 'refs/heads/main' }}
-          publish: pnpm changeset:publish
           version: pnpm changeset:version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Release
+    needs: [verify, changesets]
+    # prevents this action from running on forks
+    if: github.repository == 'wevm/ox' && needs.changesets.outputs.hasChangesets == 'false'
+    permissions:
+      contents: write # create GitHub releases and tags after npm publish
+      id-token: write # authenticate to npm via trusted publishing
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          skip-cache: true # avoid cache poisoning attacks
+
+      - name: Publish to npm
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
+        with:
+          createGithubReleases: true
+          publish: pnpm changeset:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

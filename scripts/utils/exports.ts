@@ -6,7 +6,6 @@ const exclude = [
   '_esm',
   '_cjs',
   'node_modules',
-  'jsr.json',
   'tsdoc.json',
   'version.ts',
 ]
