@@ -8,6 +8,9 @@
   "types": "./_types/index.d.ts",
   "typings": "./_types/index.d.ts",
   "sideEffects": false,
+  "publishConfig": {
+    "provenance": true
+  },
   "files": [
     "*",
     "!**/_test/**",
