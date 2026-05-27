@@ -82,3 +82,34 @@ jobs:
           publish: pnpm changeset:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  canary:
+    name: Canary release
+    needs: [verify, changesets]
+    # prevents this action from running on forks
+    if: github.repository == 'wevm/ox' && needs.changesets.outputs.hasChangesets == 'true'
+    permissions:
+      contents: read # checkout repository contents
+      id-token: write # authenticate to npm via trusted publishing
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          skip-cache: true # avoid cache poisoning attacks
+
+      - name: Publish snapshot packages
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pnpm changeset version --no-git-tag --snapshot canary
+          pnpm changeset:prepublish
+          pnpm changeset publish --no-git-tag --snapshot canary --tag canary
