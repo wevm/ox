@@ -2280,15 +2280,7 @@ describe('witness (TIP-1053)', () => {
 
   test('fromTuple: extracts trailing witness', () => {
     const restored = KeyAuthorization.fromTuple([
-      [
-        '0x01',
-        '0x',
-        address,
-        '0x',
-        [],
-        [],
-        witness,
-      ],
+      ['0x01', '0x', address, '0x', [], [], witness],
     ])
     expect(restored.witness).toBe(witness)
   })
