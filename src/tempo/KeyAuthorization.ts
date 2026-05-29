@@ -66,20 +66,20 @@ export type KeyAuthorization<
    */
   witness?: Hex.Hex | undefined
 } & OneOf<
-    // TIP-1049 admin access keys: `account` and `isAdmin` are paired — either
-    // both are specified or neither. The `account` binding scopes the signing
-    // hash to a specific account, and `isAdmin: true` provisions an admin
-    // access key with unrestricted keychain mutator privileges.
-    //
-    // [TIP-1049 Specification](https://tips.sh/1049)
-    | {
-        /** Account address this authorization is bound to. */
-        account: addressType
-        /** Whether this authorization provisions an admin access key. */
-        isAdmin: boolean
-      }
-    | {}
-  > &
+  // TIP-1049 admin access keys: `account` and `isAdmin` are paired — either
+  // both are specified or neither. The `account` binding scopes the signing
+  // hash to a specific account, and `isAdmin: true` provisions an admin
+  // access key with unrestricted keychain mutator privileges.
+  //
+  // [TIP-1049 Specification](https://tips.sh/1049)
+  | {
+      /** Account address this authorization is bound to. */
+      account: addressType
+      /** Whether this authorization provisions an admin access key. */
+      isAdmin: boolean
+    }
+  | {}
+> &
   (signed extends true
     ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
     : {

@@ -1,5 +1,13 @@
 # ox
 
+## 0.14.26
+
+### Patch Changes
+
+- [#262](https://github.com/wevm/ox/pull/262) [`b1ac8c8`](https://github.com/wevm/ox/commit/b1ac8c83f9f5f7a89e14f3486a1e32305e019292) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Added support for TIP-1049 (admin access keys) via optional `isAdmin` and `account` fields on `KeyAuthorization` that bind into the signing hash.
+
+- [#260](https://github.com/wevm/ox/pull/260) [`581ccee`](https://github.com/wevm/ox/commit/581ccee2d9dab4a2c2f12aad0b2a63b1d4d0d62d) Thanks [@jxom](https://github.com/jxom)! - `ox/tempo`: Added support for TIP-1053 (witnesses in key authorizations) via an optional 32-byte `witness` field on `KeyAuthorization` that is included in the signing hash.
+
 ## 0.14.25
 
 ### Patch Changes
