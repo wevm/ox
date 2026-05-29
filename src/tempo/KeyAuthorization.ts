@@ -55,6 +55,16 @@ export type KeyAuthorization<
   scopes?: readonly Scope<addressType>[] | undefined
   /** Key type. (secp256k1, P256, WebAuthn). */
   type: SignatureEnvelope.Type
+  /**
+   * Optional 32-byte witness bound into the signing hash.
+   *
+   * Applications use this to bind a single signature to an arbitrary offchain
+   * context (e.g. a server-issued challenge), or as a revocation handle that
+   * can be burned onchain to invalidate the authorization before submission.
+   *
+   * [TIP-1053 Specification](https://tips.sh/1053)
+   */
+  witness?: Hex.Hex | undefined
 } & (signed extends true
   ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
   : {
@@ -87,6 +97,8 @@ export type Rpc = {
   limits?: readonly RpcTokenLimit[] | undefined
   /** Signature envelope. */
   signature: SignatureEnvelope.SignatureEnvelopeRpc
+  /** Optional 32-byte witness (hex). */
+  witness?: Hex.Hex | null | undefined
 }
 
 /** RPC representation of a token limit (matches node's `TokenLimit` serde). */
@@ -144,6 +156,13 @@ type AuthorizationTuple =
       expiry: Hex.Hex,
       limits: readonly TokenLimitTuple[],
       calls: readonly CallScopeTuple[],
+    ]
+  | readonly [
+      ...BaseTuple,
+      expiry: Hex.Hex,
+      limits: readonly TokenLimitTuple[],
+      calls: readonly CallScopeTuple[],
+      witness: Hex.Hex,
     ]
 
 /** Tuple representation of a Key Authorization. */
@@ -362,6 +381,7 @@ export function from<
       recipients?: readonly TempoAddress.Address[]
     }[]
   }
+  if (auth.witness !== undefined) assertWitness(auth.witness)
   const resolved = {
     ...auth,
     address: TempoAddress.resolve(auth.address as TempoAddress.Address),
@@ -455,7 +475,9 @@ export declare namespace from {
 export function fromRpc(authorization: Rpc): Signed {
   const { allowedCalls, chainId, keyId, expiry, limits, keyType } =
     authorization
+  const witness = authorization.witness ?? undefined
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
+  if (witness !== undefined) assertWitness(witness)
 
   // Unflatten nested allowedCalls into flat scopes
   const scopes = allowedCalls
@@ -488,6 +510,7 @@ export function fromRpc(authorization: Rpc): Signed {
     ...(scopes ? { scopes } : {}),
     signature,
     type: keyType,
+    ...(witness !== undefined ? { witness } : {}),
   }
 }
 
@@ -538,7 +561,17 @@ export function fromTuple<const tuple extends Tuple>(
   tuple: tuple,
 ): fromTuple.ReturnType<tuple> {
   const [authorization, signatureSerialized] = tuple
-  const [chainId, keyType_hex, keyId, expiry, limits, scopes] = authorization
+  const [chainId, keyType_hex, keyId, expiry, limits, scopes, witness] =
+    authorization as unknown as [
+      Hex.Hex,
+      Hex.Hex,
+      Address.Address,
+      Hex.Hex | undefined,
+      readonly TokenLimitTuple[] | undefined,
+      readonly CallScopeTuple[] | undefined,
+      Hex.Hex | undefined,
+    ]
+  if (witness !== undefined) assertWitness(witness)
   const keyType = (() => {
     switch (keyType_hex) {
       case '0x':
@@ -579,6 +612,7 @@ export function fromTuple<const tuple extends Tuple>(
           }),
         }
       : {}),
+    ...(witness !== undefined ? { witness } : {}),
     ...(typeof scopes !== 'undefined' && Array.isArray(scopes)
       ? {
           scopes: scopes.flatMap((scopeTuple: any) => {
@@ -803,8 +837,17 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: Signed): Rpc {
-  const { address, scopes, chainId, expiry, limits, type, signature } =
-    authorization
+  const {
+    address,
+    scopes,
+    chainId,
+    expiry,
+    limits,
+    type,
+    signature,
+    witness,
+  } = authorization
+  if (witness !== undefined) assertWitness(witness)
 
   // Group flat scopes by address into nested allowedCalls wire format
   const allowedCalls = (() => {
@@ -842,6 +885,7 @@ export function toRpc(authorization: Signed): Rpc {
     })),
     signature: SignatureEnvelope.toRpc(signature),
     ...(allowedCalls ? { allowedCalls } : {}),
+    ...(witness !== undefined ? { witness } : {}),
   }
 }
 
@@ -883,7 +927,8 @@ export declare namespace toRpc {
 export function toTuple<const authorization extends KeyAuthorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
-  const { address, chainId, scopes, expiry, limits } = authorization
+  const { address, chainId, scopes, expiry, limits, witness } = authorization
+  if (witness !== undefined) assertWitness(witness)
   const signature = authorization.signature
     ? SignatureEnvelope.serialize(authorization.signature)
     : undefined
@@ -930,20 +975,32 @@ export function toTuple<const authorization extends KeyAuthorization>(
       selectorRules.map(([selector, recipients]) => [selector, recipients]),
     ])
   })()
+  // RLP placeholder for absent optional fields when a later field is present.
+  // `'0x'` encodes as RLP null (0x80), which the node decodes as `None` —
+  // semantically distinct from `[]` (empty list) which (for `scopes`) means
+  // "scoped with no calls allowed".
+  const absent = '0x' as const
   const authorizationTuple = [
     bigintToHex(chainId),
     type,
     address,
-    // expiry is required in the tuple when limits or scopes are present
+    // expiry is required in the tuple when limits, scopes, or witness are present
     // expiry=0 is treated the same as undefined (never expires)
     (expiry !== null && expiry !== undefined && expiry !== 0) ||
     limitsValue ||
-    callsValue
+    callsValue ||
+    witness !== undefined
       ? numberToHex(expiry ?? 0)
       : undefined,
-    // limits is required in the tuple when scopes are present
-    limitsValue || callsValue ? (limitsValue ?? []) : undefined,
-    callsValue,
+    // limits is required in the tuple when scopes or witness are present
+    limitsValue || callsValue || witness !== undefined
+      ? (limitsValue ?? (witness !== undefined && !callsValue ? absent : []))
+      : undefined,
+    // scopes is required in the tuple when witness is present.
+    // When absent, use the RLP null placeholder so the node interprets it as
+    // "unrestricted" rather than `[]` (scoped, no calls allowed).
+    callsValue || witness !== undefined ? (callsValue ?? absent) : undefined,
+    witness,
   ].filter((x) => typeof x !== 'undefined')
   return [authorizationTuple, ...(signature ? [signature] : [])] as never
 }
@@ -984,4 +1041,18 @@ function resolveSelector(
   if (!selector) return undefined
   if (selector.startsWith('0x')) return selector as Hex.Hex
   return AbiItem.getSelector(selector)
+}
+
+function assertWitness(witness: Hex.Hex): void {
+  if (Hex.size(witness) !== 32) throw new InvalidWitnessSizeError(witness)
+}
+
+/** Thrown when a `witness` field is not exactly 32 bytes. */
+export class InvalidWitnessSizeError extends Error {
+  override readonly name = 'KeyAuthorization.InvalidWitnessSizeError'
+  constructor(witness: Hex.Hex) {
+    super(
+      `Witness \`${witness}\` must be exactly 32 bytes (got ${Hex.size(witness)} bytes).`,
+    )
+  }
 }

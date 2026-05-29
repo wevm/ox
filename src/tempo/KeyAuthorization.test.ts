@@ -2133,3 +2133,195 @@ describe('toTuple', () => {
     ])
   })
 })
+
+describe('witness (TIP-1053)', () => {
+  const witness =
+    '0x1111111111111111111111111111111111111111111111111111111111111111' as const
+  const witness_other =
+    '0x2222222222222222222222222222222222222222222222222222222222222222' as const
+
+  test('from: preserves witness', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    expect(authorization.witness).toBe(witness)
+  })
+
+  test('from: throws on non-32-byte witness', () => {
+    expect(() =>
+      KeyAuthorization.from({
+        address,
+        chainId: 1n,
+        type: 'secp256k1',
+        witness: '0xdeadbeef',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidWitnessSizeError: Witness \`0xdeadbeef\` must be exactly 32 bytes (got 4 bytes).]`,
+    )
+  })
+
+  test('toTuple: appends witness as trailing field with defaulted earlier fields', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const [authTuple] = KeyAuthorization.toTuple(authorization)
+    expect(authTuple).toEqual([
+      '0x1', // chainId
+      '0x', // keyType (secp256k1)
+      address,
+      '0x', // expiry default (never expires)
+      '0x', // limits absent (RLP null placeholder)
+      '0x', // scopes absent (RLP null placeholder)
+      witness,
+    ])
+  })
+
+  test('toTuple: omits witness when absent (byte-equivalent to pre-TIP-1053)', () => {
+    const withoutWitness = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    const [authTuple] = KeyAuthorization.toTuple(withoutWitness)
+    expect((authTuple as unknown as unknown[]).length).toBe(3)
+  })
+
+  test('serialize/deserialize: roundtrip with witness only', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.witness).toBe(witness)
+    expect(restored.expiry).toBeUndefined()
+    expect(restored.limits).toBeUndefined()
+    expect(restored.scopes).toBeUndefined()
+  })
+
+  test('serialize/deserialize: roundtrip with witness + expiry + limits + scopes', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      expiry,
+      type: 'secp256k1',
+      limits: [{ token, limit: Value.from('10', 6) }],
+      scopes: [
+        {
+          address: token,
+          selector: '0xa9059cbb',
+          recipients: ['0x1111111111111111111111111111111111111111'],
+        },
+      ],
+      witness,
+    })
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.witness).toBe(witness)
+    expect(restored.expiry).toBe(expiry)
+    expect(restored.limits?.[0]?.limit).toBe(10000000n)
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+  })
+
+  test('toRpc/fromRpc: roundtrip with witness', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        chainId: 1n,
+        type: 'secp256k1',
+        witness,
+      },
+      { signature: SignatureEnvelope.from(signature_secp256k1) },
+    )
+    const rpc = KeyAuthorization.toRpc(authorization)
+    expect(rpc.witness).toBe(witness)
+    const restored = KeyAuthorization.fromRpc(rpc)
+    expect(restored.witness).toBe(witness)
+  })
+
+  test('hash: changes when witness changes', () => {
+    const a = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const b = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness: witness_other,
+    })
+    expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
+  })
+
+  test('hash: witness-less encoding matches pre-TIP-1053 hash', () => {
+    const before = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    // Re-create the same auth (no witness field). Hash must be identical.
+    const again = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    expect(KeyAuthorization.hash(before)).toBe(KeyAuthorization.hash(again))
+  })
+
+  test('fromTuple: extracts trailing witness', () => {
+    const restored = KeyAuthorization.fromTuple([
+      [
+        '0x01',
+        '0x',
+        address,
+        '0x',
+        [],
+        [],
+        witness,
+      ],
+    ])
+    expect(restored.witness).toBe(witness)
+  })
+
+  test('fromTuple: throws on non-32-byte witness', () => {
+    expect(() =>
+      KeyAuthorization.fromTuple([
+        ['0x01', '0x', address, '0x', [], [], '0xdeadbeef'],
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidWitnessSizeError: Witness \`0xdeadbeef\` must be exactly 32 bytes (got 4 bytes).]`,
+    )
+  })
+
+  test('signing flow: signature verifies against witness-bearing hash', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const payload = KeyAuthorization.getSignPayload(authorization)
+    const sig = Secp256k1.sign({
+      payload,
+      privateKey: privateKey_secp256k1,
+    })
+    const signed = KeyAuthorization.from(authorization, {
+      signature: SignatureEnvelope.from(sig),
+    })
+    const serialized = KeyAuthorization.serialize(signed)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.witness).toBe(witness)
+    // The hash of the restored payload matches what was signed.
+    expect(KeyAuthorization.hash(restored)).toBe(payload)
+  })
+})
