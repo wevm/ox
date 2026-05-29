@@ -2662,4 +2662,167 @@ describe('behavior: keyAuthorization', () => {
       ).rejects.toThrow()
     },
   )
+
+  // TODO: remove skipIf when devnet/testnet have T5 (TIP-1053).
+  test.skipIf(nodeEnv !== 'localnet')(
+    'behavior: TIP-1053 witness round-trips through registration',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+
+      // Application-defined challenge digest, bound to the authorization.
+      const witness = Hex.random(32)
+
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+        witness,
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId,
+        feeToken: '0x20c0000000000000000000000000000000000001',
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 1_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt.status).toBe('success')
+
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+
+      // The witness must survive the round trip through the node.
+      expect(response.keyAuthorization?.witness).toBe(witness)
+
+      // The signing hash of the round-tripped authorization equals the witness-bearing hash.
+      expect(KeyAuthorization.hash(response.keyAuthorization!)).toBe(
+        KeyAuthorization.hash(keyAuth_signed),
+      )
+    },
+  )
+
+  // TODO: remove skipIf when devnet/testnet have T5
+  test.skipIf(nodeEnv !== 'localnet')(
+    'behavior: TIP-1053 witness-less authorization is byte-equivalent to pre-TIP-1053',
+    async () => {
+      // Two authorizations with identical fields but different access keys; the witness-less
+      // shape must encode without a trailing witness slot.
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+      })
+      const [authTuple] = KeyAuthorization.toTuple(keyAuth)
+      expect((authTuple as unknown as unknown[]).length).toBe(3)
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId,
+        feeToken: '0x20c0000000000000000000000000000000000001',
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 1_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt.status).toBe('success')
+
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+
+      expect(response.keyAuthorization?.witness).toBeUndefined()
+    },
+  )
 })
