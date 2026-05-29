@@ -562,7 +562,12 @@ export function fromTuple<const tuple extends Tuple>(
 ): fromTuple.ReturnType<tuple> {
   const [authorization, signatureSerialized] = tuple
   const [chainId, keyType_hex, keyId, ...trailing] =
-    authorization as unknown as [Hex.Hex, Hex.Hex, Address.Address, ...unknown[]]
+    authorization as unknown as [
+      Hex.Hex,
+      Hex.Hex,
+      Address.Address,
+      ...unknown[],
+    ]
   const keyType = (() => {
     switch (keyType_hex) {
       case '0x':
@@ -583,16 +588,17 @@ export function fromTuple<const tuple extends Tuple>(
   const expiry = isAbsent(rawExpiry)
     ? undefined
     : hexToNumber(rawExpiry as Hex.Hex) || undefined
-  const limits = Array.isArray(rawLimits) && rawLimits.length > 0
-    ? rawLimits.map((limitTuple: any) => {
-        const [token, limit, period] = limitTuple
-        return {
-          token,
-          limit: hexToBigint(limit),
-          ...(period !== undefined ? { period: hexToNumber(period) } : {}),
-        }
-      })
-    : undefined
+  const limits =
+    Array.isArray(rawLimits) && rawLimits.length > 0
+      ? rawLimits.map((limitTuple: any) => {
+          const [token, limit, period] = limitTuple
+          return {
+            token,
+            limit: hexToBigint(limit),
+            ...(period !== undefined ? { period: hexToNumber(period) } : {}),
+          }
+        })
+      : undefined
   const scopes = Array.isArray(rawScopes)
     ? rawScopes.flatMap((scopeTuple: any) => {
         const [address, selectorRules] = scopeTuple
@@ -991,12 +997,7 @@ export function toTuple<const authorization extends KeyAuthorization>(
   const trailing = optionals
     .slice(0, lastPresent + 1)
     .map(({ value, placeholder }) => value ?? placeholder)
-  const authorizationTuple = [
-    bigintToHex(chainId),
-    type,
-    address,
-    ...trailing,
-  ]
+  const authorizationTuple = [bigintToHex(chainId), type, address, ...trailing]
   return [authorizationTuple, ...(signature ? [signature] : [])] as never
 }
 
@@ -1042,15 +1043,6 @@ function assertWitness(witness: Hex.Hex): void {
   if (Hex.size(witness) !== 32) throw new InvalidWitnessSizeError(witness)
 }
 
-/**
- * Whether a raw RLP-decoded trailing field is absent. A field is absent when
- * the tuple is shorter than its position, or when the slot holds the RLP-null
- * placeholder (`'0x'`) used to skip an optional field while still emitting a
- * later one.
- *
- * Callers that need to distinguish a meaningful empty list (`[]`) from an
- * absent field (e.g. `scopes`) must inspect the raw value directly.
- */
 function isAbsent(value: unknown): boolean {
   return value === undefined || value === '0x'
 }
