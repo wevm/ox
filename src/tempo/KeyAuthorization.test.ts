@@ -2317,3 +2317,152 @@ describe('witness (TIP-1053)', () => {
     expect(KeyAuthorization.hash(restored)).toBe(payload)
   })
 })
+
+describe('admin keys (TIP-1049)', () => {
+  const account = '0x1111111111111111111111111111111111111111' as const
+
+  test('from: preserves isAdmin and account', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    expect(authorization.isAdmin).toBe(true)
+    expect(authorization.account).toBe(account)
+  })
+
+  test('toTuple: emits isAdmin + account together', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    const [authTuple] = KeyAuthorization.toTuple(authorization)
+    expect(authTuple).toEqual([
+      '0x1',
+      '0x',
+      address,
+      '0x', // expiry placeholder
+      '0x', // limits placeholder
+      '0x', // scopes placeholder
+      '0x', // witness placeholder
+      '0x01', // isAdmin = true
+      account,
+    ])
+  })
+
+  test('toTuple: omits both when neither is set (byte-equivalent to pre-TIP-1049)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    const [authTuple] = KeyAuthorization.toTuple(authorization)
+    expect((authTuple as unknown as unknown[]).length).toBe(3)
+  })
+
+  test('fromTuple: drops orphan isAdmin without account', () => {
+    const restored = KeyAuthorization.fromTuple([
+      ['0x01', '0x', address, '0x', [], [], '0x', '0x01'],
+    ])
+    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.account).toBeUndefined()
+  })
+
+  test('fromTuple: drops orphan account without isAdmin', () => {
+    const restored = KeyAuthorization.fromTuple([
+      ['0x01', '0x', address, '0x', [], [], '0x', '0x', account],
+    ])
+    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.account).toBeUndefined()
+  })
+
+  test('fromTuple: extracts isAdmin + account together', () => {
+    const restored = KeyAuthorization.fromTuple([
+      ['0x01', '0x', address, '0x', [], [], '0x', '0x01', account],
+    ])
+    expect(restored.isAdmin).toBe(true)
+    expect(restored.account).toBe(account)
+  })
+
+  test('fromTuple: throws on invalid admin marker', () => {
+    expect(() =>
+      KeyAuthorization.fromTuple([
+        ['0x01', '0x', address, '0x', [], [], '0x', '0x02'],
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidAdminMarkerError: Admin marker \`0x02\` is invalid; expected \`0x01\` (TIP-1049).]`,
+    )
+  })
+
+  test('serialize/deserialize: roundtrip with isAdmin + account', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.isAdmin).toBe(true)
+    expect(restored.account).toBe(account)
+  })
+
+  test('toRpc/fromRpc: roundtrip with isAdmin + account', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        account,
+        chainId: 1n,
+        isAdmin: true,
+        type: 'secp256k1',
+      },
+      { signature: SignatureEnvelope.from(signature_secp256k1) },
+    )
+    const rpc = KeyAuthorization.toRpc(authorization)
+    expect(rpc.isAdmin).toBe(true)
+    expect(rpc.account).toBe(account)
+    const restored = KeyAuthorization.fromRpc(rpc)
+    expect(restored.isAdmin).toBe(true)
+    expect(restored.account).toBe(account)
+  })
+
+  test('hash: changes when admin pair is added', () => {
+    const plain = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    const admin = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    expect(KeyAuthorization.hash(plain)).not.toBe(KeyAuthorization.hash(admin))
+  })
+
+  test('hash: changes when account in admin pair changes', () => {
+    const a = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    const b = KeyAuthorization.from({
+      address,
+      account: '0x2222222222222222222222222222222222222222',
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
+  })
+})

@@ -2825,4 +2825,171 @@ describe('behavior: keyAuthorization', () => {
       expect(response.keyAuthorization?.witness).toBeUndefined()
     },
   )
+
+  // TODO: remove skipIf when devnet/testnet have T6 (TIP-1049).
+  test.skipIf(nodeEnv !== 'localnet')(
+    'behavior: TIP-1049 admin access key round-trips through registration',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        account: root.address,
+        chainId: BigInt(chainId),
+        isAdmin: true,
+        type: 'secp256k1',
+      })
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId,
+        feeToken: '0x20c0000000000000000000000000000000000001',
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 1_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      // The admin access key signs and authorizes itself in the same tx
+      // (the canonical "auth+use" registration pattern).
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt.status).toBe('success')
+
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+
+      // isAdmin + account must survive the round trip through the node.
+      expect(response.keyAuthorization?.isAdmin).toBe(true)
+      expect(response.keyAuthorization?.account).toBe(root.address)
+
+      // The signing hash of the round-tripped authorization equals the
+      // admin-bearing hash.
+      expect(KeyAuthorization.hash(response.keyAuthorization!)).toBe(
+        KeyAuthorization.hash(keyAuth_signed),
+      )
+    },
+  )
+
+  // TODO: remove skipIf when devnet/testnet have T6.
+  test.skipIf(nodeEnv !== 'localnet')(
+    'behavior: TIP-1049 non-admin authorization is byte-equivalent to pre-TIP-1049',
+    async () => {
+      const accessPrivateKey = Secp256k1.randomPrivateKey()
+      const accessAddress = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+      )
+
+      // Without isAdmin or account, the encoded tuple must not carry trailing
+      // TIP-1049 slots.
+      const keyAuth = KeyAuthorization.from({
+        address: accessAddress,
+        chainId: BigInt(chainId),
+        type: 'secp256k1',
+      })
+      const [authTuple] = KeyAuthorization.toTuple(keyAuth)
+      expect((authTuple as unknown as unknown[]).length).toBe(3)
+
+      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+        signature: SignatureEnvelope.from(
+          Secp256k1.sign({
+            payload: KeyAuthorization.getSignPayload(keyAuth),
+            privateKey: root.privateKey,
+          }),
+        ),
+      })
+
+      const nonce = await getTransactionCount(client, {
+        address: root.address,
+        blockTag: 'pending',
+      })
+
+      const transaction = TxEnvelopeTempo.from({
+        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+        chainId,
+        feeToken: '0x20c0000000000000000000000000000000000001',
+        keyAuthorization: keyAuth_signed,
+        nonce: BigInt(nonce),
+        gas: 1_000_000n,
+        maxFeePerGas: Value.fromGwei('20'),
+        maxPriorityFeePerGas: Value.fromGwei('10'),
+      })
+
+      const signature = Secp256k1.sign({
+        payload: TxEnvelopeTempo.getSignPayload(transaction, {
+          from: root.address,
+        }),
+        privateKey: accessPrivateKey,
+      })
+
+      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+        signature: SignatureEnvelope.from({
+          userAddress: root.address,
+          inner: SignatureEnvelope.from(signature),
+          type: 'keychain',
+        }),
+      })
+
+      const receipt = (await client
+        .request({
+          method: 'eth_sendRawTransactionSync',
+          params: [serialized_signed],
+        })
+        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+      expect(receipt.status).toBe('success')
+
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+
+      expect(response.keyAuthorization?.isAdmin).toBeUndefined()
+      expect(response.keyAuthorization?.account).toBeUndefined()
+    },
+  )
 })

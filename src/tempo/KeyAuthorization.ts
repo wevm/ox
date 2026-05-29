@@ -3,7 +3,7 @@ import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type { Compute } from '../core/internal/types.js'
+import type { Compute, OneOf } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TempoAddress from './TempoAddress.js'
@@ -65,13 +65,28 @@ export type KeyAuthorization<
    * [TIP-1053 Specification](https://tips.sh/1053)
    */
   witness?: Hex.Hex | undefined
-} & (signed extends true
-  ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
-  : {
-      signature?:
-        | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
-        | undefined
-    })
+} & OneOf<
+    // TIP-1049 admin access keys: `account` and `isAdmin` are paired — either
+    // both are specified or neither. The `account` binding scopes the signing
+    // hash to a specific account, and `isAdmin: true` provisions an admin
+    // access key with unrestricted keychain mutator privileges.
+    //
+    // [TIP-1049 Specification](https://tips.sh/1049)
+    | {
+        /** Account address this authorization is bound to. */
+        account: addressType
+        /** Whether this authorization provisions an admin access key. */
+        isAdmin: boolean
+      }
+    | {}
+  > &
+  (signed extends true
+    ? { signature: SignatureEnvelope.SignatureEnvelope<bigintType, numberType> }
+    : {
+        signature?:
+          | SignatureEnvelope.SignatureEnvelope<bigintType, numberType>
+          | undefined
+      })
 
 /** Input type for a Key Authorization. */
 export type Input = KeyAuthorization<
@@ -83,12 +98,16 @@ export type Input = KeyAuthorization<
 
 /** RPC representation matching the node's wire format. */
 export type Rpc = {
+  /** Optional account address binding (TIP-1049). */
+  account?: Address.Address | null | undefined
   /** Allowed call scopes (node field: `allowedCalls`). */
   allowedCalls?: readonly RpcCallScope[] | undefined
   /** Chain ID (hex quantity). */
   chainId: Hex.Hex
   /** Expiry timestamp (hex quantity or null). */
   expiry: Hex.Hex | null | undefined
+  /** Whether this authorization provisions an admin access key (TIP-1049). */
+  isAdmin?: boolean | null | undefined
   /** Key identifier. */
   keyId: Address.Address
   /** Key type. */
@@ -163,6 +182,23 @@ type AuthorizationTuple =
       limits: readonly TokenLimitTuple[],
       calls: readonly CallScopeTuple[],
       witness: Hex.Hex,
+    ]
+  | readonly [
+      ...BaseTuple,
+      expiry: Hex.Hex,
+      limits: readonly TokenLimitTuple[],
+      calls: readonly CallScopeTuple[],
+      witness: Hex.Hex,
+      isAdmin: Hex.Hex,
+    ]
+  | readonly [
+      ...BaseTuple,
+      expiry: Hex.Hex,
+      limits: readonly TokenLimitTuple[],
+      calls: readonly CallScopeTuple[],
+      witness: Hex.Hex,
+      isAdmin: Hex.Hex,
+      account: Address.Address,
     ]
 
 /** Tuple representation of a Key Authorization. */
@@ -476,6 +512,8 @@ export function fromRpc(authorization: Rpc): Signed {
   const { allowedCalls, chainId, keyId, expiry, limits, keyType } =
     authorization
   const witness = authorization.witness ?? undefined
+  const isAdmin = authorization.isAdmin ?? undefined
+  const account = authorization.account ?? undefined
   const signature = SignatureEnvelope.fromRpc(authorization.signature)
   if (witness !== undefined) assertWitness(witness)
 
@@ -511,6 +549,8 @@ export function fromRpc(authorization: Rpc): Signed {
     signature,
     type: keyType,
     ...(witness !== undefined ? { witness } : {}),
+    ...(isAdmin ? { isAdmin: true } : {}),
+    ...(account !== undefined ? { account } : {}),
   }
 }
 
@@ -584,7 +624,8 @@ export function fromTuple<const tuple extends Tuple>(
   // Trailing optional fields in wire order. Each entry pulls one slot off the
   // trailing array and decodes it (treating absent or RLP-null placeholders as
   // missing). To add a new optional trailing field, append a single entry.
-  const [rawExpiry, rawLimits, rawScopes, rawWitness] = trailing
+  const [rawExpiry, rawLimits, rawScopes, rawWitness, rawIsAdmin, rawAccount] =
+    trailing
   const expiry = isAbsent(rawExpiry)
     ? undefined
     : hexToNumber(rawExpiry as Hex.Hex) || undefined
@@ -620,6 +661,22 @@ export function fromTuple<const tuple extends Tuple>(
     : undefined
   const witness = isAbsent(rawWitness) ? undefined : (rawWitness as Hex.Hex)
   if (witness !== undefined) assertWitness(witness)
+  const isAdmin = (() => {
+    if (isAbsent(rawIsAdmin)) return undefined
+    // TIP-1049: the admin marker is strictly `0x01`. Any other value is a
+    // protocol-level decode error on the node, so reject it here too.
+    if (rawIsAdmin !== '0x01')
+      throw new InvalidAdminMarkerError(rawIsAdmin as Hex.Hex)
+    return true
+  })()
+  const account = isAbsent(rawAccount)
+    ? undefined
+    : (rawAccount as Address.Address)
+  // TIP-1049 admin fields are paired: only emit both when both are present on
+  // the wire. Wire shapes carrying only one are tolerated for forward-compat
+  // but the orphan field is dropped (since the public API requires both).
+  const adminPair =
+    account !== undefined && isAdmin ? { account, isAdmin: true as const } : {}
   const args: KeyAuthorization = {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
@@ -628,6 +685,7 @@ export function fromTuple<const tuple extends Tuple>(
     ...(limits !== undefined ? { limits } : {}),
     ...(scopes !== undefined ? { scopes } : {}),
     ...(witness !== undefined ? { witness } : {}),
+    ...adminPair,
   }
   if (signatureSerialized)
     args.signature = SignatureEnvelope.deserialize(signatureSerialized)
@@ -831,8 +889,18 @@ export declare namespace serialize {
  * @returns An RPC-formatted Key Authorization.
  */
 export function toRpc(authorization: Signed): Rpc {
-  const { address, scopes, chainId, expiry, limits, type, signature, witness } =
-    authorization
+  const {
+    address,
+    scopes,
+    chainId,
+    expiry,
+    limits,
+    type,
+    signature,
+    witness,
+    isAdmin,
+    account,
+  } = authorization
   if (witness !== undefined) assertWitness(witness)
 
   // Group flat scopes by address into nested allowedCalls wire format
@@ -872,6 +940,8 @@ export function toRpc(authorization: Signed): Rpc {
     signature: SignatureEnvelope.toRpc(signature),
     ...(allowedCalls ? { allowedCalls } : {}),
     ...(witness !== undefined ? { witness } : {}),
+    ...(isAdmin ? { isAdmin: true } : {}),
+    ...(account !== undefined ? { account } : {}),
   }
 }
 
@@ -913,7 +983,16 @@ export declare namespace toRpc {
 export function toTuple<const authorization extends KeyAuthorization>(
   authorization: authorization,
 ): toTuple.ReturnType<authorization> {
-  const { address, chainId, scopes, expiry, limits, witness } = authorization
+  const {
+    address,
+    chainId,
+    scopes,
+    expiry,
+    limits,
+    witness,
+    isAdmin,
+    account,
+  } = authorization
   if (witness !== undefined) assertWitness(witness)
   const signature = authorization.signature
     ? SignatureEnvelope.serialize(authorization.signature)
@@ -967,12 +1046,15 @@ export function toTuple<const authorization extends KeyAuthorization>(
   // Placeholder convention:
   // - `'0x'` (RLP null) is the canonical placeholder for fields added at or
   //   after TIP-1053. The node decodes it as `None` (unrestricted).
-  // - `limits` keeps `[]` as its skipped placeholder when no witness is
-  //   present — preserving byte-for-byte equivalence with pre-TIP-1053
-  //   signed payloads.
+  // - `limits` keeps `[]` as its skipped placeholder for pre-TIP-1053 wire
+  //   shapes — preserving byte-for-byte equivalence with signed payloads
+  //   produced before TIP-1053 was added. When any TIP-1053+ field is
+  //   present, the canonical `'0x'` placeholder is used instead.
   //
   // To add a new optional trailing field (e.g. from a future TIP): append a
   // single entry to this list with `placeholder: '0x'`.
+  const hasTip1053Plus =
+    witness !== undefined || isAdmin || account !== undefined
   const optionals: readonly { value: unknown; placeholder: unknown }[] = [
     {
       value:
@@ -983,10 +1065,15 @@ export function toTuple<const authorization extends KeyAuthorization>(
     },
     {
       value: limitsValue,
-      placeholder: witness !== undefined ? '0x' : [],
+      placeholder: hasTip1053Plus ? '0x' : [],
     },
     { value: callsValue, placeholder: '0x' },
     { value: witness, placeholder: '0x' },
+    // TIP-1049: admin marker. Present = `0x01` (RLP integer 1); absent
+    // skipped or omitted. Any other value is a hard decode error on the node.
+    { value: isAdmin ? '0x01' : undefined, placeholder: '0x' },
+    // TIP-1049: optional account binding. Last field — never a placeholder.
+    { value: account, placeholder: '0x' },
   ]
   let lastPresent = -1
   for (let i = optionals.length - 1; i >= 0; i--)
@@ -1053,6 +1140,16 @@ export class InvalidWitnessSizeError extends Error {
   constructor(witness: Hex.Hex) {
     super(
       `Witness \`${witness}\` must be exactly 32 bytes (got ${Hex.size(witness)} bytes).`,
+    )
+  }
+}
+
+/** Thrown when a TIP-1049 admin marker has any value other than `0x01`. */
+export class InvalidAdminMarkerError extends Error {
+  override readonly name = 'KeyAuthorization.InvalidAdminMarkerError'
+  constructor(marker: Hex.Hex) {
+    super(
+      `Admin marker \`${marker}\` is invalid; expected \`0x01\` (TIP-1049).`,
     )
   }
 }
