@@ -154,6 +154,28 @@ export * as Period from './Period.js'
  */
 export * as PoolId from './PoolId.js'
 /**
+ * TIP-1028 receive-policy claim receipt utilities.
+ *
+ * When an inbound transfer or mint violates the recipient's receive policy, the
+ * funds are redirected to the `ReceivePolicyGuard` and a `ClaimReceiptV1`
+ * witness is emitted. This module decodes those witnesses (required to later
+ * `claim` or `burn` the blocked funds) from raw bytes or transaction receipts.
+ *
+ * [TIP-1028](https://docs.tempo.xyz/protocol/tips/tip-1028)
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { ReceivePolicyReceipt } from 'ox/tempo'
+ *
+ * const receipts = ReceivePolicyReceipt.fromTransactionReceipt(receipt)
+ * const decoded = ReceivePolicyReceipt.decode('0x...')
+ * ```
+ *
+ * @category Reference
+ */
+export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
+/**
  * Union of all JSON-RPC Methods for the `tempo_` namespace.
  *
  * @example
