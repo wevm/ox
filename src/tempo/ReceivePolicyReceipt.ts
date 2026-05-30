@@ -11,8 +11,8 @@ import type { Compute } from '../core/internal/types.js'
  * receive policy.
  *
  * This is the canonical, on-chain representation – the value passed to the
- * `ReceivePolicyGuard`'s `claim` and `burn` functions. Use
- * {@link ox#ReceivePolicyReceipt.decode} to read its fields.
+ * `ReceivePolicyGuard`'s `claim` and `burn` functions. Use `decode` to read its
+ * fields.
  */
 export type ReceivePolicyReceipt = Hex.Hex
 
@@ -114,8 +114,7 @@ export declare namespace decode {
 
 /**
  * Encodes decoded fields into a
- * {@link ox#ReceivePolicyReceipt.ReceivePolicyReceipt}. Inverse of
- * {@link ox#ReceivePolicyReceipt.decode}.
+ * {@link ox#ReceivePolicyReceipt.ReceivePolicyReceipt}. Inverse of `decode`.
  *
  * [TIP-1028](https://docs.tempo.xyz/protocol/tips/tip-1028)
  *
@@ -189,8 +188,8 @@ export declare namespace from {
  * `ReceivePolicyGuard` `TransferBlocked` log.
  *
  * Throws if the log is not a `TransferBlocked` event. Use
- * {@link ox#ReceivePolicyReceipt.fromTransactionReceipt} to extract every
- * blocked transfer in a transaction (which skips unrelated logs).
+ * `fromTransactionReceipt` to extract every blocked transfer in a transaction
+ * (which skips unrelated logs).
  *
  * [TIP-1028](https://docs.tempo.xyz/protocol/tips/tip-1028)
  *
