@@ -117,9 +117,8 @@ describe('encode', () => {
 
 describe('fromLog', () => {
   test('default', () => {
-    expect(ReceivePolicyReceipt.fromLog(blockedLog(encodeWitness()))).toEqual(
-      ReceivePolicyReceipt.decode(encodeWitness()),
-    )
+    const witness = encodeWitness()
+    expect(ReceivePolicyReceipt.fromLog(blockedLog(witness))).toBe(witness)
   })
 
   test('error: non-matching log', () => {
@@ -130,25 +129,27 @@ describe('fromLog', () => {
 })
 
 describe('from', () => {
-  test('from encoded witness', () => {
-    expect(ReceivePolicyReceipt.from(encodeWitness())).toEqual(
-      ReceivePolicyReceipt.decode(encodeWitness()),
-    )
+  test('passthrough encoded receipt', () => {
+    const witness = encodeWitness()
+    expect(ReceivePolicyReceipt.from(witness)).toBe(witness)
   })
 
-  test('passthrough decoded receipt', () => {
-    const receipt = ReceivePolicyReceipt.decode(encodeWitness())
-    expect(ReceivePolicyReceipt.from(receipt)).toBe(receipt)
+  test('from decoded fields', () => {
+    const witness = encodeWitness()
+    expect(
+      ReceivePolicyReceipt.from(ReceivePolicyReceipt.decode(witness)),
+    ).toBe(witness)
   })
 })
 
 describe('fromTransactionReceipt', () => {
   test('single blocked transfer', () => {
+    const witness = encodeWitness()
     const receipts = ReceivePolicyReceipt.fromTransactionReceipt({
-      logs: [blockedLog(encodeWitness())],
+      logs: [blockedLog(witness)],
     })
     expect(receipts).toHaveLength(1)
-    expect(receipts[0]).toEqual(ReceivePolicyReceipt.decode(encodeWitness()))
+    expect(receipts[0]).toBe(witness)
   })
 
   test('multiple blocked transfers', () => {
@@ -159,8 +160,8 @@ describe('fromTransactionReceipt', () => {
       ],
     })
     expect(receipts).toHaveLength(2)
-    expect(receipts[0]!.kind).toBe('transfer')
-    expect(receipts[1]!.kind).toBe('mint')
+    expect(ReceivePolicyReceipt.decode(receipts[0]!).kind).toBe('transfer')
+    expect(ReceivePolicyReceipt.decode(receipts[1]!).kind).toBe('mint')
   })
 
   test('ignores unrelated logs', () => {
