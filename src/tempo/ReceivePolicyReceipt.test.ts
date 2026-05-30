@@ -98,6 +98,37 @@ describe('decode', () => {
   })
 })
 
+describe('encode', () => {
+  test('round-trips with decode', () => {
+    const witness = encodeWitness()
+    expect(
+      ReceivePolicyReceipt.encode(ReceivePolicyReceipt.decode(witness)),
+    ).toBe(witness)
+  })
+
+  test('behavior: maps enum strings back to indices', () => {
+    const receipt = ReceivePolicyReceipt.decode(
+      encodeWitness({ blockedReason: 1, kind: 1 }),
+    )
+    const reencoded = ReceivePolicyReceipt.encode(receipt)
+    expect(ReceivePolicyReceipt.decode(reencoded)).toEqual(receipt)
+  })
+})
+
+describe('fromLog', () => {
+  test('default', () => {
+    expect(ReceivePolicyReceipt.fromLog(blockedLog(encodeWitness()))).toEqual(
+      ReceivePolicyReceipt.decode(encodeWitness()),
+    )
+  })
+
+  test('error: non-matching log', () => {
+    expect(() =>
+      ReceivePolicyReceipt.fromLog({ data: '0x', topics: [zeroHash] }),
+    ).toThrow()
+  })
+})
+
 describe('from', () => {
   test('from encoded witness', () => {
     expect(ReceivePolicyReceipt.from(encodeWitness())).toEqual(
@@ -157,7 +188,9 @@ test('exports', () => {
   expect(Object.keys(ReceivePolicyReceipt)).toMatchInlineSnapshot(`
     [
       "decode",
+      "encode",
       "from",
+      "fromLog",
       "fromTransactionReceipt",
     ]
   `)

@@ -109,6 +109,49 @@ export declare namespace decode {
 }
 
 /**
+ * Encodes a receive-policy receipt into an ABI-encoded `ClaimReceiptV1`
+ * witness. Inverse of {@link ox#ReceivePolicyReceipt.decode}.
+ *
+ * Useful for reconstructing the witness bytes required by the
+ * `ReceivePolicyGuard`'s `claim` and `burn` functions from a decoded receipt.
+ *
+ * [TIP-1028](https://docs.tempo.xyz/protocol/tips/tip-1028)
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { ReceivePolicyReceipt } from 'ox/tempo'
+ *
+ * const [receipt] = ReceivePolicyReceipt.fromTransactionReceipt(txReceipt)
+ * const witness = ReceivePolicyReceipt.encode(receipt)
+ * // @log: '0x...' (pass to `claim` / `burn`)
+ * ```
+ *
+ * @param receipt - The decoded receive-policy receipt.
+ * @returns The ABI-encoded `ClaimReceiptV1` witness.
+ */
+export function encode(receipt: ReceivePolicyReceipt): Hex.Hex {
+  return AbiParameters.encode(parameters, [
+    {
+      version: receipt.version,
+      token: receipt.token,
+      recoveryAuthority: receipt.recoveryAuthority,
+      originator: receipt.originator,
+      recipient: receipt.recipient,
+      blockedAt: receipt.blockedAt,
+      blockedNonce: receipt.blockedNonce,
+      blockedReason: blockedReasons.indexOf(receipt.blockedReason),
+      kind: kinds.indexOf(receipt.kind),
+      memo: receipt.memo,
+    },
+  ])
+}
+
+export declare namespace encode {
+  type ErrorType = AbiParameters.encode.ErrorType | Errors.GlobalErrorType
+}
+
+/**
  * Normalizes a receive-policy receipt from either an ABI-encoded
  * `ClaimReceiptV1` witness or an already-decoded receipt.
  *
@@ -140,6 +183,41 @@ export declare namespace from {
 }
 
 /**
+ * Decodes a `ReceivePolicyGuard` `TransferBlocked` log into a
+ * {@link ox#ReceivePolicyReceipt.ReceivePolicyReceipt}.
+ *
+ * Throws if the log is not a `TransferBlocked` event. Use
+ * {@link ox#ReceivePolicyReceipt.fromTransactionReceipt} to decode every
+ * blocked transfer in a transaction (which skips unrelated logs).
+ *
+ * [TIP-1028](https://docs.tempo.xyz/protocol/tips/tip-1028)
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { ReceivePolicyReceipt } from 'ox/tempo'
+ *
+ * const receipt = ReceivePolicyReceipt.fromLog(log)
+ * ```
+ *
+ * @param log - A `TransferBlocked` log (`data` & `topics`).
+ * @returns The decoded receive-policy receipt.
+ */
+export function fromLog(log: fromLog.Log): ReceivePolicyReceipt {
+  const { receipt } = AbiEvent.decode(transferBlocked, log)
+  return decode(receipt)
+}
+
+export declare namespace fromLog {
+  type Log = AbiEvent.decode.Log
+
+  type ErrorType =
+    | AbiEvent.decode.ErrorType
+    | decode.ErrorType
+    | Errors.GlobalErrorType
+}
+
+/**
  * Extracts every receive-policy receipt from a transaction receipt's logs.
  *
  * A single transaction may block multiple inbound transfers (e.g. a batched
@@ -168,8 +246,7 @@ export function fromTransactionReceipt(
   const receipts: ReceivePolicyReceipt[] = []
   for (const log of receipt.logs ?? []) {
     if (log.topics[0] !== selector) continue
-    const { receipt: witness } = AbiEvent.decode(transferBlocked, log)
-    receipts.push(decode(witness))
+    receipts.push(fromLog(log))
   }
   return receipts
 }
@@ -181,8 +258,7 @@ export declare namespace fromTransactionReceipt {
   }
 
   type ErrorType =
-    | AbiEvent.decode.ErrorType
     | AbiEvent.getSelector.ErrorType
-    | decode.ErrorType
+    | fromLog.ErrorType
     | Errors.GlobalErrorType
 }
