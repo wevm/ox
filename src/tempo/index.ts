@@ -63,6 +63,32 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  */
 export * as Channel from './Channel.js'
 /**
+ * Native multisig account utilities (TIP-1061).
+ *
+ * Derives stable multisig account addresses and permanent config IDs from a weighted
+ * owner configuration, and computes the owner approval digest that owners sign.
+ *
+ * [TIP-1061](https://tips.sh/1061)
+ *
+ * @example
+ * ```ts twoslash
+ * import { ConfigurableAccount } from 'ox/tempo'
+ *
+ * const config = ConfigurableAccount.from({
+ *   threshold: 2,
+ *   owners: [
+ *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
+ *   ],
+ * })
+ *
+ * const account = ConfigurableAccount.getAddress({ config })
+ * ```
+ *
+ * @category Reference
+ */
+export * as ConfigurableAccount from './ConfigurableAccount.js'
+/**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
  * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary
