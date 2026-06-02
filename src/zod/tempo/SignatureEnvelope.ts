@@ -1,8 +1,9 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
-import type * as core_SignatureEnvelope from '../../tempo/SignatureEnvelope.js'
+import * as core_SignatureEnvelope from '../../tempo/SignatureEnvelope.js'
 import * as core_Hex from '../../core/Hex.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
+import * as z_MultisigConfig from './MultisigConfig.js'
 import * as z from 'zod/mini'
 
 /** Signature envelope key type schema. */
@@ -79,8 +80,24 @@ export const KeychainRpc = z.object({
   version: z.optional(KeychainVersion),
 })
 
+/** RPC native multisig signature envelope schema. */
+export const MultisigRpc = z.object({
+  account: z_Address.Address,
+  configId: z_Hex.Hex,
+  init: z.optional(z_MultisigConfig.Config),
+  // Owner approvals are raw serialized signatures (node `Vec<Bytes>`).
+  signatures: z.readonly(z.array(z_Hex.Hex)),
+  type: z.literal('multisig'),
+})
+
 /** RPC signature envelope schema. */
-export const Rpc = z.union([Secp256k1Rpc, P256Rpc, WebAuthnRpc, KeychainRpc])
+export const Rpc = z.union([
+  Secp256k1Rpc,
+  P256Rpc,
+  WebAuthnRpc,
+  KeychainRpc,
+  MultisigRpc,
+])
 
 /** secp256k1 signature envelope schema. */
 export const Secp256k1 = z.object({
@@ -120,8 +137,21 @@ export const Keychain = z.object({
   version: z.optional(KeychainVersion),
 })
 
+/** Native multisig signature envelope schema. */
+export const Multisig = z.object({
+  account: z_Address.Address,
+  configId: z_Hex.Hex,
+  init: z.optional(z_MultisigConfig.Config),
+  // `signatures` is recursive; type the getter concretely to break the cycle.
+  signatures: z.lazy(
+    (): z.ZodMiniType<readonly core_SignatureEnvelope.SignatureEnvelope[]> =>
+      z.readonly(z.array(Domain)) as never,
+  ),
+  type: z.literal('multisig'),
+})
+
 /** Decoded signature envelope schema. */
-export const Domain = z.union([Secp256k1, P256, WebAuthn, Keychain])
+export const Domain = z.union([Secp256k1, P256, WebAuthn, Keychain, Multisig])
 
 /** Codec decoding an RPC signature envelope into a signature envelope. */
 export const SignatureEnvelope = z.codec(Rpc, Domain, {
@@ -182,6 +212,11 @@ function fromRpc(
     }
   }
 
+  if (value.type === 'multisig')
+    return core_SignatureEnvelope.fromRpc(
+      value as core_SignatureEnvelope.MultisigRpc,
+    )
+
   const keychain = value as core_SignatureEnvelope.KeychainRpc
   return {
     inner: fromRpc(keychain.signature),
@@ -232,6 +267,11 @@ function toRpc(
       ),
     }
   }
+
+  if (value.type === 'multisig')
+    return core_SignatureEnvelope.toRpc(
+      value as core_SignatureEnvelope.Multisig,
+    )
 
   const keychain = value as core_SignatureEnvelope.Keychain
   return {

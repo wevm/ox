@@ -9,6 +9,7 @@ import {
   WebCryptoP256,
 } from 'ox'
 import { describe, expect, test } from 'vp/test'
+import * as MultisigConfig from './MultisigConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const publicKey = PublicKey.from({
@@ -528,7 +529,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize('0xdeadbeef'),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), or 0x04 (Keychain V2)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xde. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Multisig)
 
         Serialized: 0xdeadbeef]
       `,
@@ -688,7 +689,7 @@ describe('deserialize', () => {
         SignatureEnvelope.deserialize(unknownType),
       ).toThrowErrorMatchingInlineSnapshot(
         `
-        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), or 0x04 (Keychain V2)
+        [SignatureEnvelope.InvalidSerializedError: Unable to deserialize signature envelope: Unknown signature type identifier: 0xff. Expected 0x01 (P256), 0x02 (WebAuthn), 0x03 (Keychain V1), 0x04 (Keychain V2), or 0x05 (Multisig)
 
         Serialized: 0xff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
       `,
@@ -1720,6 +1721,67 @@ describe('serialize', () => {
   })
 })
 
+describe('sortMultisigApprovals', () => {
+  const account = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as const
+  const configId = `0x${'11'.repeat(32)}` as const
+  const payload = `0x${'42'.repeat(32)}` as const
+  const digest = MultisigConfig.getSignPayload({
+    account,
+    configId,
+    payload,
+  })
+
+  const owners = Array.from({ length: 3 }, () => {
+    const privateKey = Secp256k1.randomPrivateKey()
+    const address = Address.fromPublicKey(
+      Secp256k1.getPublicKey({ privateKey }),
+    )
+    const signature = SignatureEnvelope.from(
+      Secp256k1.sign({ payload: digest, privateKey }),
+    )
+    return { address, signature } as const
+  })
+  const ascending = [...owners].sort((a, b) =>
+    Hex.toBigInt(a.address) < Hex.toBigInt(b.address) ? -1 : 1,
+  )
+
+  test('behavior: orders approvals ascending by recovered owner address', () => {
+    const ordered = SignatureEnvelope.sortMultisigApprovals({
+      account,
+      configId,
+      payload,
+      // Provide approvals in reverse of the canonical order.
+      signatures: [...ascending].reverse().map((owner) => owner.signature),
+    })
+    expect(ordered).toEqual(ascending.map((owner) => owner.signature))
+  })
+
+  test('behavior: already-sorted input is unchanged', () => {
+    const signatures = ascending.map((owner) => owner.signature)
+    expect(
+      SignatureEnvelope.sortMultisigApprovals({
+        account,
+        configId,
+        payload,
+        signatures,
+      }),
+    ).toEqual(signatures)
+  })
+
+  test('behavior: recovered order matches the config owner order', () => {
+    const ordered = SignatureEnvelope.sortMultisigApprovals({
+      account,
+      configId,
+      payload,
+      signatures: owners.map((owner) => owner.signature),
+    })
+    const recovered = ordered.map((signature) =>
+      SignatureEnvelope.extractAddress({ payload: digest, signature }),
+    )
+    expect(recovered).toEqual(ascending.map((owner) => owner.address))
+  })
+})
+
 describe('validate', () => {
   describe('secp256k1', () => {
     test('behavior: returns true for valid signature', () => {
@@ -2718,5 +2780,154 @@ describe('CoercionError', () => {
     expect(error).toMatchInlineSnapshot(
       `[SignatureEnvelope.CoercionError: Unable to coerce value (\`{"r":"0x0000000000000000000000000000000000000000000000000000000000000000","s":"0x0000000000000000000000000000000000000000000000000000000000000000","yParity":0}\`) to a valid signature envelope.]`,
     )
+  })
+})
+
+describe('multisig', () => {
+  const account = '0x8ba6d26ff5c4e82ba0c8caf8c8ca794e1489a7ae'
+  const configId =
+    '0x01781fe551182476f2422c759e82d81c92e3263737afbbad57def6e8b69d21f5'
+
+  // P256 signatures do not carry `yParity` in the wire format, so use a clean
+  // inner signature for round-trip equality checks.
+  const innerP256 = SignatureEnvelope.from({
+    signature: { r: p256Signature.r, s: p256Signature.s },
+    publicKey,
+    prehash: true,
+  })
+
+  const envelope = SignatureEnvelope.from({
+    type: 'multisig',
+    account,
+    configId,
+    signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
+  })
+
+  test('serialize: type byte 0x05 prefix', () => {
+    const serialized = SignatureEnvelope.serialize(envelope)
+    expect(serialized.startsWith('0x05')).toBe(true)
+  })
+
+  test('serialize/deserialize round-trip', () => {
+    const serialized = SignatureEnvelope.serialize(envelope)
+    expect(SignatureEnvelope.deserialize(serialized)).toEqual(envelope)
+  })
+
+  test('getType', () => {
+    expect(SignatureEnvelope.getType(envelope)).toBe('multisig')
+  })
+
+  test('extractAddress returns the multisig account', () => {
+    expect(
+      SignatureEnvelope.extractAddress({
+        payload: '0xdeadbeef',
+        signature: envelope,
+      }),
+    ).toBe(account)
+  })
+
+  test('toRpc/fromRpc round-trip', () => {
+    const rpc = SignatureEnvelope.toRpc(envelope)
+    expect(rpc.type).toBe('multisig')
+    expect(SignatureEnvelope.fromRpc(rpc)).toEqual(envelope)
+  })
+
+  test('assert: missing properties', () => {
+    expect(() =>
+      SignatureEnvelope.assert({ type: 'multisig', account } as never),
+    ).toThrowError()
+  })
+
+  describe('init (bootstrap)', () => {
+    const init = {
+      salt: `0x${'00'.repeat(32)}` as const,
+      threshold: 1,
+      owners: [
+        {
+          owner: '0x1111111111111111111111111111111111111111' as const,
+          weight: 1,
+        },
+      ],
+    }
+
+    const bootstrapEnvelope = SignatureEnvelope.from({
+      type: 'multisig',
+      account,
+      configId,
+      signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
+      init,
+    })
+
+    test('serialize/deserialize round-trip with init', () => {
+      const serialized = SignatureEnvelope.serialize(bootstrapEnvelope)
+      expect(SignatureEnvelope.deserialize(serialized)).toEqual(
+        bootstrapEnvelope,
+      )
+    })
+
+    test('serialize/deserialize round-trip preserves non-zero salt', () => {
+      const salted = SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        configId,
+        signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
+        init: { ...init, salt: `0x${'42'.repeat(32)}` },
+      })
+      const serialized = SignatureEnvelope.serialize(salted)
+      const deserialized = SignatureEnvelope.deserialize(
+        serialized,
+      ) as SignatureEnvelope.Multisig
+      expect(deserialized.init?.salt).toBe(`0x${'42'.repeat(32)}`)
+      expect(deserialized).toEqual(salted)
+    })
+
+    test('absent init has no `init` key after deserialize', () => {
+      const serialized = SignatureEnvelope.serialize(envelope)
+      const deserialized = SignatureEnvelope.deserialize(serialized)
+      expect('init' in deserialized).toBe(false)
+    })
+
+    test('init absent vs present produce different serializations', () => {
+      expect(SignatureEnvelope.serialize(envelope)).not.toBe(
+        SignatureEnvelope.serialize(bootstrapEnvelope),
+      )
+    })
+
+    test('toRpc/fromRpc round-trip with init', () => {
+      const rpc = SignatureEnvelope.toRpc(bootstrapEnvelope)
+      expect(rpc.init).toEqual(init)
+      expect(SignatureEnvelope.fromRpc(rpc)).toEqual(bootstrapEnvelope)
+    })
+
+    test('toRpc encodes owner approvals as serialized hex (node `Vec<Bytes>`)', () => {
+      const multisig = bootstrapEnvelope as SignatureEnvelope.Multisig
+      const rpc = SignatureEnvelope.toRpc(
+        multisig,
+      ) as SignatureEnvelope.MultisigRpc
+      expect(rpc.signatures).toEqual(
+        multisig.signatures.map((s) => SignatureEnvelope.serialize(s)),
+      )
+    })
+
+    test('fromRpc detects multisig by shape (no `type` field)', () => {
+      const rpc = SignatureEnvelope.toRpc(bootstrapEnvelope)
+      // The node omits the `type` discriminant; detection is shape-based.
+      const { type: _type, ...untyped } = rpc
+      expect(SignatureEnvelope.fromRpc(untyped as never)).toEqual(
+        bootstrapEnvelope,
+      )
+    })
+
+    test('assert: invalid init config throws', () => {
+      expect(() =>
+        SignatureEnvelope.assert({
+          type: 'multisig',
+          account,
+          configId,
+          signatures: [],
+          init: { threshold: 1, owners: [] },
+        } as never),
+      ).toThrowError()
+    })
   })
 })

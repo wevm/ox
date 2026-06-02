@@ -10,9 +10,3 @@ fs.writeFileSync(
   versionFilePath,
   `/** @internal */\nexport const version = '${packageJson.version}'\n`,
 )
-
-// Update JSR version.
-const jsrJsonPath = join(import.meta.dirname, '../src/jsr.json')
-const jsrJson = fs.readJsonSync(jsrJsonPath)
-jsrJson.version = packageJson.version
-fs.writeJsonSync(jsrJsonPath, jsrJson, { spaces: 2 })

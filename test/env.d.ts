@@ -1,5 +1,6 @@
 interface ImportMetaEnv {
   readonly VITE_TEMPO_ENV?: string
+  readonly VITE_TEMPO_RPC_URL?: string
   readonly VITE_TEMPO_TAG?: string
   readonly VITE_TEMPO_LOG?: string
   readonly VITE_TEMPO_HTTP_LOG?: string

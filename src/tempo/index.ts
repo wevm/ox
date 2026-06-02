@@ -39,6 +39,33 @@
  */
 export * as AuthorizationTempo from './AuthorizationTempo.js'
 /**
+ * TIP-20 channel reserve descriptor, constants, and deterministic hashing utilities.
+ *
+ * Channel descriptors are emitted by `Channel.open` and then reused to settle,
+ * top up, close, request close, withdraw, or compute the channel ID. The channel
+ * reserve precompile exposes helper methods for channel identifiers, voucher sign
+ * payloads, and its EIP-712 domain separator. These utilities compute the same
+ * values locally when the chain id and channel fields are known.
+ *
+ * @example
+ * ```ts twoslash
+ * import { Channel } from 'ox/tempo'
+ *
+ * const channel = Channel.from({
+ *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *   payee: '0x2222222222222222222222222222222222222222',
+ *   payer: '0x1111111111111111111111111111111111111111',
+ *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
+ *   token: 1n,
+ * })
+ *
+ * const channelId = Channel.computeId(channel, { chainId: 4217 })
+ * ```
+ *
+ * @category Reference
+ */
+export * as Channel from './Channel.js'
+/**
  * Tempo key authorization utilities for provisioning and signing access keys.
  *
  * Access keys allow a root key (e.g., a passkey) to delegate transaction signing to secondary
@@ -89,6 +116,32 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  * @category Reference
  */
 export * as KeyAuthorization from './KeyAuthorization.js'
+/**
+ * Native multisig account utilities (TIP-1061).
+ *
+ * Derives stable multisig account addresses and permanent config IDs from a weighted
+ * owner configuration, and computes the owner approval digest that owners sign.
+ *
+ * [TIP-1061](https://tips.sh/1061)
+ *
+ * @example
+ * ```ts twoslash
+ * import { MultisigConfig } from 'ox/tempo'
+ *
+ * const config = MultisigConfig.from({
+ *   threshold: 2,
+ *   owners: [
+ *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
+ *   ],
+ * })
+ *
+ * const account = MultisigConfig.getAddress({ config })
+ * ```
+ *
+ * @category Reference
+ */
+export * as MultisigConfig from './MultisigConfig.js'
 /**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
@@ -142,6 +195,28 @@ export * as Period from './Period.js'
  * @category Reference
  */
 export * as PoolId from './PoolId.js'
+/**
+ * TIP-1028 receive-policy claim receipt utilities.
+ *
+ * When an inbound transfer or mint violates the recipient's receive policy, the
+ * funds are redirected to the `ReceivePolicyGuard` and a `ClaimReceiptV1`
+ * witness is emitted. This module decodes those witnesses (required to later
+ * `claim` or `burn` the blocked funds) from raw bytes or transaction receipts.
+ *
+ * [TIP-1028](https://docs.tempo.xyz/protocol/tips/tip-1028)
+ *
+ * @example
+ * ```ts twoslash
+ * // @noErrors
+ * import { ReceivePolicyReceipt } from 'ox/tempo'
+ *
+ * const receipts = ReceivePolicyReceipt.fromTransactionReceipt(receipt)
+ * const decoded = ReceivePolicyReceipt.decode('0x...')
+ * ```
+ *
+ * @category Reference
+ */
+export * as ReceivePolicyReceipt from './ReceivePolicyReceipt.js'
 /**
  * Union of all JSON-RPC Methods for the `tempo_` namespace.
  *

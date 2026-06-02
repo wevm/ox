@@ -628,10 +628,20 @@
       "types": "./dist/tempo/AuthorizationTempo.d.ts",
       "default": "./dist/tempo/AuthorizationTempo.js"
     },
+    "./tempo/Channel": {
+      "src": "./src/tempo/Channel.ts",
+      "types": "./dist/tempo/Channel.d.ts",
+      "default": "./dist/tempo/Channel.js"
+    },
     "./tempo/KeyAuthorization": {
       "src": "./src/tempo/KeyAuthorization.ts",
       "types": "./dist/tempo/KeyAuthorization.d.ts",
       "default": "./dist/tempo/KeyAuthorization.js"
+    },
+    "./tempo/MultisigConfig": {
+      "src": "./src/tempo/MultisigConfig.ts",
+      "types": "./dist/tempo/MultisigConfig.d.ts",
+      "default": "./dist/tempo/MultisigConfig.js"
     },
     "./tempo/Period": {
       "src": "./src/tempo/Period.ts",
@@ -642,6 +652,11 @@
       "src": "./src/tempo/PoolId.ts",
       "types": "./dist/tempo/PoolId.d.ts",
       "default": "./dist/tempo/PoolId.js"
+    },
+    "./tempo/ReceivePolicyReceipt": {
+      "src": "./src/tempo/ReceivePolicyReceipt.ts",
+      "types": "./dist/tempo/ReceivePolicyReceipt.d.ts",
+      "default": "./dist/tempo/ReceivePolicyReceipt.js"
     },
     "./tempo/RpcSchemaTempo": {
       "src": "./src/tempo/RpcSchemaTempo.ts",

@@ -2108,3 +2108,336 @@ describe('toTuple', () => {
     ])
   })
 })
+
+describe('witness (TIP-1053)', () => {
+  const witness =
+    '0x1111111111111111111111111111111111111111111111111111111111111111' as const
+  const witness_other =
+    '0x2222222222222222222222222222222222222222222222222222222222222222' as const
+
+  test('from: preserves witness', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    expect(authorization.witness).toBe(witness)
+  })
+
+  test('from: throws on non-32-byte witness', () => {
+    expect(() =>
+      KeyAuthorization.from({
+        address,
+        chainId: 1n,
+        type: 'secp256k1',
+        witness: '0xdeadbeef',
+      }),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidWitnessSizeError: Witness \`0xdeadbeef\` must be exactly 32 bytes (got 4 bytes).]`,
+    )
+  })
+
+  test('toTuple: appends witness as trailing field with defaulted earlier fields', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const [authTuple] = KeyAuthorization.toTuple(authorization)
+    expect(authTuple).toEqual([
+      '0x1', // chainId
+      '0x', // keyType (secp256k1)
+      address,
+      '0x', // expiry default (never expires)
+      '0x', // limits absent (RLP null placeholder)
+      '0x', // scopes absent (RLP null placeholder)
+      witness,
+    ])
+  })
+
+  test('toTuple: omits witness when absent (byte-equivalent to pre-TIP-1053)', () => {
+    const withoutWitness = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    const [authTuple] = KeyAuthorization.toTuple(withoutWitness)
+    expect((authTuple as unknown as unknown[]).length).toBe(3)
+  })
+
+  test('serialize/deserialize: roundtrip with witness only', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.witness).toBe(witness)
+    expect(restored.expiry).toBeUndefined()
+    expect(restored.limits).toBeUndefined()
+    expect(restored.scopes).toBeUndefined()
+  })
+
+  test('serialize/deserialize: roundtrip with witness + expiry + limits + scopes', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      expiry,
+      type: 'secp256k1',
+      limits: [{ token, limit: Value.from('10', 6) }],
+      scopes: [
+        {
+          address: token,
+          selector: '0xa9059cbb',
+          recipients: ['0x1111111111111111111111111111111111111111'],
+        },
+      ],
+      witness,
+    })
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.witness).toBe(witness)
+    expect(restored.expiry).toBe(expiry)
+    expect(restored.limits?.[0]?.limit).toBe(10000000n)
+    expect(restored.scopes?.[0]?.selector).toBe('0xa9059cbb')
+  })
+
+  test('toRpc/fromRpc: roundtrip with witness', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        chainId: 1n,
+        type: 'secp256k1',
+        witness,
+      },
+      { signature: SignatureEnvelope.from(signature_secp256k1) },
+    )
+    const rpc = KeyAuthorization.toRpc(authorization)
+    expect(rpc.witness).toBe(witness)
+    const restored = KeyAuthorization.fromRpc(rpc)
+    expect(restored.witness).toBe(witness)
+  })
+
+  test('hash: changes when witness changes', () => {
+    const a = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const b = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness: witness_other,
+    })
+    expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
+  })
+
+  test('hash: witness-less encoding matches pre-TIP-1053 hash', () => {
+    const before = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    // Re-create the same auth (no witness field). Hash must be identical.
+    const again = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    expect(KeyAuthorization.hash(before)).toBe(KeyAuthorization.hash(again))
+  })
+
+  test('fromTuple: extracts trailing witness', () => {
+    const restored = KeyAuthorization.fromTuple([
+      ['0x01', '0x', address, '0x', [], [], witness],
+    ])
+    expect(restored.witness).toBe(witness)
+  })
+
+  test('fromTuple: throws on non-32-byte witness', () => {
+    expect(() =>
+      KeyAuthorization.fromTuple([
+        ['0x01', '0x', address, '0x', [], [], '0xdeadbeef'],
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidWitnessSizeError: Witness \`0xdeadbeef\` must be exactly 32 bytes (got 4 bytes).]`,
+    )
+  })
+
+  test('signing flow: signature verifies against witness-bearing hash', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+      witness,
+    })
+    const payload = KeyAuthorization.getSignPayload(authorization)
+    const sig = Secp256k1.sign({
+      payload,
+      privateKey: privateKey_secp256k1,
+    })
+    const signed = KeyAuthorization.from(authorization, {
+      signature: SignatureEnvelope.from(sig),
+    })
+    const serialized = KeyAuthorization.serialize(signed)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.witness).toBe(witness)
+    // The hash of the restored payload matches what was signed.
+    expect(KeyAuthorization.hash(restored)).toBe(payload)
+  })
+})
+
+describe('admin keys (TIP-1049)', () => {
+  const account = '0x1111111111111111111111111111111111111111' as const
+
+  test('from: preserves isAdmin and account', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    expect(authorization.isAdmin).toBe(true)
+    expect(authorization.account).toBe(account)
+  })
+
+  test('toTuple: emits isAdmin + account together', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    const [authTuple] = KeyAuthorization.toTuple(authorization)
+    expect(authTuple).toEqual([
+      '0x1',
+      '0x',
+      address,
+      '0x', // expiry placeholder
+      '0x', // limits placeholder
+      '0x', // scopes placeholder
+      '0x', // witness placeholder
+      '0x01', // isAdmin = true
+      account,
+    ])
+  })
+
+  test('toTuple: omits both when neither is set (byte-equivalent to pre-TIP-1049)', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    const [authTuple] = KeyAuthorization.toTuple(authorization)
+    expect((authTuple as unknown as unknown[]).length).toBe(3)
+  })
+
+  test('fromTuple: drops orphan isAdmin without account', () => {
+    const restored = KeyAuthorization.fromTuple([
+      ['0x01', '0x', address, '0x', [], [], '0x', '0x01'],
+    ])
+    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.account).toBeUndefined()
+  })
+
+  test('fromTuple: drops orphan account without isAdmin', () => {
+    const restored = KeyAuthorization.fromTuple([
+      ['0x01', '0x', address, '0x', [], [], '0x', '0x', account],
+    ])
+    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.account).toBeUndefined()
+  })
+
+  test('fromTuple: extracts isAdmin + account together', () => {
+    const restored = KeyAuthorization.fromTuple([
+      ['0x01', '0x', address, '0x', [], [], '0x', '0x01', account],
+    ])
+    expect(restored.isAdmin).toBe(true)
+    expect(restored.account).toBe(account)
+  })
+
+  test('fromTuple: throws on invalid admin marker', () => {
+    expect(() =>
+      KeyAuthorization.fromTuple([
+        ['0x01', '0x', address, '0x', [], [], '0x', '0x02'],
+      ]),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[KeyAuthorization.InvalidAdminMarkerError: Admin marker \`0x02\` is invalid; expected \`0x01\` (TIP-1049).]`,
+    )
+  })
+
+  test('serialize/deserialize: roundtrip with isAdmin + account', () => {
+    const authorization = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    const serialized = KeyAuthorization.serialize(authorization)
+    const restored = KeyAuthorization.deserialize(serialized)
+    expect(restored.isAdmin).toBe(true)
+    expect(restored.account).toBe(account)
+  })
+
+  test('toRpc/fromRpc: roundtrip with isAdmin + account', () => {
+    const authorization = KeyAuthorization.from(
+      {
+        address,
+        account,
+        chainId: 1n,
+        isAdmin: true,
+        type: 'secp256k1',
+      },
+      { signature: SignatureEnvelope.from(signature_secp256k1) },
+    )
+    const rpc = KeyAuthorization.toRpc(authorization)
+    expect(rpc.isAdmin).toBe(true)
+    expect(rpc.account).toBe(account)
+    const restored = KeyAuthorization.fromRpc(rpc)
+    expect(restored.isAdmin).toBe(true)
+    expect(restored.account).toBe(account)
+  })
+
+  test('hash: changes when admin pair is added', () => {
+    const plain = KeyAuthorization.from({
+      address,
+      chainId: 1n,
+      type: 'secp256k1',
+    })
+    const admin = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    expect(KeyAuthorization.hash(plain)).not.toBe(KeyAuthorization.hash(admin))
+  })
+
+  test('hash: changes when account in admin pair changes', () => {
+    const a = KeyAuthorization.from({
+      address,
+      account,
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    const b = KeyAuthorization.from({
+      address,
+      account: '0x2222222222222222222222222222222222222222',
+      chainId: 1n,
+      isAdmin: true,
+      type: 'secp256k1',
+    })
+    expect(KeyAuthorization.hash(a)).not.toBe(KeyAuthorization.hash(b))
+  })
+})

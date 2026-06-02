@@ -1,6 +1,7 @@
 /* eslint-disable jsdoc-js/require-jsdoc, jsdoc-js/require-description, jsdoc-js/require-example */
 export * as AuthorizationTempo from './AuthorizationTempo.js'
 export * as KeyAuthorization from './KeyAuthorization.js'
+export * as MultisigConfig from './MultisigConfig.js'
 export * as PoolId from './PoolId.js'
 export * as RpcSchemaTempo from './RpcSchemaTempo.js'
 export * as SignatureEnvelope from './SignatureEnvelope.js'

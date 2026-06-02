@@ -149,7 +149,8 @@ export function renderZodMemberPage(options: {
   const parameters = renderParameters(data)
   if (parameters) content.push(parameters)
 
-  if (data.returnType?.type) content.push('## Return Type', `\`${data.returnType.type}\``)
+  if (data.returnType?.type)
+    content.push('## Return Type', `\`${data.returnType.type}\``)
 
   const source = sourceLink(data)
   if (source) content.push(source)
