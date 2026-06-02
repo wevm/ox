@@ -1,0 +1,182 @@
+import * as Errors from '../core/Errors.js'
+import * as eth from './internal/rpcSchemas/Eth.js'
+import type { Item } from './internal/rpcSchemas/from.js'
+import * as wallet from './internal/rpcSchemas/Wallet.js'
+import * as z from 'zod/mini'
+
+export { from } from './internal/rpcSchemas/from.js'
+export type { Item } from './internal/rpcSchemas/from.js'
+
+/** A namespace of JSON-RPC method schemas, keyed by method name. */
+export type Namespace = Record<string, Item>
+
+/** Extracts the method names of a `RpcSchema.Namespace`. */
+export type MethodName<namespace extends Namespace> = keyof namespace & string
+
+/** JSON-RPC method schemas for the `eth_` namespace. */
+export const Eth = eth
+
+/** JSON-RPC method schemas for the `wallet_` namespace. */
+export const Wallet = wallet
+
+/** JSON-RPC method schemas for the `eth_` and `wallet_` namespaces. */
+export const Default = { ...eth, ...wallet }
+
+const requestCache = new WeakMap<Namespace, z.ZodMiniType>()
+
+// Builds (and caches) the discriminated-union request schema for a namespace.
+function requestSchema(namespace: Namespace): z.ZodMiniType {
+  const cached = requestCache.get(namespace)
+  if (cached) return cached
+  const schema = z.discriminatedUnion(
+    'method',
+    Object.values(namespace).map((item) => item.request) as never,
+  )
+  requestCache.set(namespace, schema)
+  return schema
+}
+
+/**
+ * Looks up the `RpcSchema.Item` for a method on a namespace.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const item = z.RpcSchema.parseItem(
+ *   z.RpcSchema.Eth,
+ *   'eth_blockNumber'
+ * )
+ * ```
+ *
+ * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
+ */
+export function parseItem<
+  const namespace extends Namespace,
+  method extends MethodName<namespace>,
+>(namespace: namespace, method: method): namespace[method] {
+  const item = namespace[method]
+  if (!item) throw new MethodNotFoundError({ method })
+  return item
+}
+
+/**
+ * Validates and decodes the `params` for a method on a namespace.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const params = z.RpcSchema.parseParams(
+ *   z.RpcSchema.Eth,
+ *   'eth_getBlockByNumber',
+ *   ['0x1', true]
+ * )
+ * ```
+ *
+ * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
+ */
+export function parseParams<
+  const namespace extends Namespace,
+  method extends MethodName<namespace>,
+>(
+  namespace: namespace,
+  method: method,
+  params: z.input<namespace[method]['params']>,
+): z.output<namespace[method]['params']> {
+  return z.decode(parseItem(namespace, method).params, params as never) as never
+}
+
+/**
+ * Validates and decodes the `returns` value for a method on a namespace.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const result = z.RpcSchema.parseReturns(
+ *   z.RpcSchema.Eth,
+ *   'eth_blockNumber',
+ *   '0x1b4'
+ * )
+ * ```
+ *
+ * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
+ */
+export function parseReturns<
+  const namespace extends Namespace,
+  method extends MethodName<namespace>,
+>(
+  namespace: namespace,
+  method: method,
+  returns: z.input<namespace[method]['returns']>,
+): z.output<namespace[method]['returns']> {
+  return z.decode(
+    parseItem(namespace, method).returns,
+    returns as never,
+  ) as never
+}
+
+/**
+ * Validates and decodes a full JSON-RPC request (`{ method, params }`) against
+ * a namespace, dispatching on `method`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const request = z.RpcSchema.parseRequest(z.RpcSchema.Eth, {
+ *   method: 'eth_getBlockByNumber',
+ *   params: ['0x1', true]
+ * })
+ * ```
+ */
+export function parseRequest<const namespace extends Namespace>(
+  namespace: namespace,
+  request: RequestInput<namespace>,
+): RequestOutput<namespace> {
+  return z.decode(requestSchema(namespace), request as never) as never
+}
+
+/**
+ * Alias for `RpcSchema.parseRequest`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const request = z.RpcSchema.parse(z.RpcSchema.Eth, {
+ *   method: 'eth_getBalance',
+ *   params: [
+ *     '0x0000000000000000000000000000000000000000',
+ *     'latest'
+ *   ]
+ * })
+ * ```
+ */
+export const parse = parseRequest
+
+/** Wire (input) request envelope for a namespace. */
+export type RequestInput<namespace extends Namespace> = {
+  [method in MethodName<namespace>]: {
+    method: namespace[method]['method']
+    params: z.input<namespace[method]['params']>
+  }
+}[MethodName<namespace>]
+
+/** Decoded (output) request envelope for a namespace. */
+export type RequestOutput<namespace extends Namespace> = {
+  [method in MethodName<namespace>]: {
+    method: namespace[method]['method']
+    params: z.output<namespace[method]['params']>
+  }
+}[MethodName<namespace>]
+
+/** Thrown when a method does not exist on a namespace. */
+export class MethodNotFoundError extends Errors.BaseError {
+  override readonly name = 'RpcSchema.MethodNotFoundError'
+
+  constructor({ method }: { method: string }) {
+    super(`Method \`${method}\` does not exist on the schema.`)
+  }
+}

@@ -46,7 +46,8 @@ catalog:
   vite-plus: latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
   vp: npm:vite-plus@latest
-  zile: ^0.0.28
+  zile: ^0.0.29
+  zod: ^4.4.3
 
 linkWorkspacePackages: true
 

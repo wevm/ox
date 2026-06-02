@@ -12,7 +12,8 @@
       "ox/tempo": ["../src/tempo/index.ts"],
       "ox/trusted-setups": ["../src/trusted-setups/index.ts"],
       "ox/webauthn": ["../src/webauthn/index.ts"],
-      "ox/window": ["../src/window/index.ts"]
+      "ox/window": ["../src/window/index.ts"],
+      "ox/zod": ["../src/zod/index.ts"]
     }
   },
   "include": [

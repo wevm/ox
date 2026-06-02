@@ -7,12 +7,15 @@ import fs from 'fs-extra'
 // Conventions:
 // - `./src/index.ts`            → `.`
 // - `./src/index.docs.ts`       → `./index.docs`
-// - `./src/core/<Name>.ts`      → `./<Name>`              (flattened)
-// - `./src/<dir>/index.ts`      → `./<dir>`
-// - `./src/<dir>/<Name>.ts`     → `./<dir>/<Name>`
+// - `./src/core/<Name>.ts`           → `./<Name>`              (flattened)
+// - `./src/<dir>/index.ts`           → `./<dir>`
+// - `./src/<dir>/<Name>.ts`          → `./<dir>/<Name>`
+// - `./src/<dir>/<sub>/index.ts`     → `./<dir>/<sub>`
+// - `./src/<dir>/<sub>/<Name>.ts`    → `./<dir>/<sub>/<Name>`
 //
 // Files starting with `_`, `.`, or a lowercase letter are ignored, as are
 // `*.test.ts`, `*.test-d.ts`, `*.bench.ts`, `*.bench-d.ts`, and `*.snap-d.ts`.
+// `internal/` directories are never exported.
 
 const srcPath = join(import.meta.dirname, '../src')
 const packageJsonPath = join(import.meta.dirname, '../package.json')
@@ -39,8 +42,8 @@ function entry(key: string, srcPath: string) {
   return [
     key,
     {
-      types: `${distPath}.d.ts`,
       src: srcPath,
+      types: `${distPath}.d.ts`,
       default: `${distPath}.js`,
     },
   ] as const
@@ -83,6 +86,33 @@ for (const dir of dirs) {
     const name = file.replace(/\.ts$/, '')
     if (name === 'index') continue
     subExports.push(entry(`./${dir}/${name}`, `./src/${dir}/${file}`))
+  }
+
+  // Nested namespaces: `<dir>/<sub>/...` (skipping `internal` and `_`-prefixed).
+  const subdirs = readdirSync(dirPath, { withFileTypes: true })
+    .filter(
+      (d) =>
+        d.isDirectory() && !d.name.startsWith('_') && d.name !== 'internal',
+    )
+    .map((d) => d.name)
+    .sort()
+
+  for (const subdir of subdirs) {
+    const subdirPath = join(dirPath, subdir)
+    const subFiles = readdirSync(subdirPath).filter(isExportable).sort()
+
+    if (subFiles.includes('index.ts'))
+      subExports.push(
+        entry(`./${dir}/${subdir}`, `./src/${dir}/${subdir}/index.ts`),
+      )
+
+    for (const file of subFiles) {
+      const name = file.replace(/\.ts$/, '')
+      if (name === 'index') continue
+      subExports.push(
+        entry(`./${dir}/${subdir}/${name}`, `./src/${dir}/${subdir}/${file}`),
+      )
+    }
   }
 }
 

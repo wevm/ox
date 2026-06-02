@@ -365,11 +365,15 @@ function extraData(item: model.ApiItem): ExtraData {
         ? {
             type: formatType(item.propertyTypeExcerpt.text),
           }
-        : item instanceof model.ApiClass
+        : item instanceof model.ApiVariable
           ? {
-              implements: item.implementsTypes.map((p) => p.excerpt.text),
+              type: formatType(item.variableTypeExcerpt.text),
             }
-          : {},
+          : item instanceof model.ApiClass
+            ? {
+                implements: item.implementsTypes.map((p) => p.excerpt.text),
+              }
+            : {},
   )
 }
 

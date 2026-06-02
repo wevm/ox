@@ -65,10 +65,10 @@
     "tsx": "catalog:",
     "typescript": "catalog:",
     "viem": "catalog:",
-    "vitest": "catalog:",
-    "zile": "catalog:",
     "vite-plus": "catalog:",
-    "vp": "catalog:"
+    "vitest": "catalog:",
+    "vp": "catalog:",
+    "zile": "catalog:"
   },
   "packageManager": "pnpm@11.0.8",
   "engines": {
@@ -156,7 +156,8 @@
     "@scure/bip32": "^2.0.0",
     "@scure/bip39": "^2.0.0",
     "abitype": "^1.2.3",
-    "eventemitter3": "5.0.1"
+    "eventemitter3": "5.0.1",
+    "zod": "catalog:"
   },
   "peerDependencies": {
     "typescript": ">=5.4.0"
@@ -751,6 +752,246 @@
       "src": "./src/window/index.ts",
       "types": "./dist/window/index.d.ts",
       "default": "./dist/window/index.js"
+    },
+    "./zod": {
+      "src": "./src/zod/index.ts",
+      "types": "./dist/zod/index.d.ts",
+      "default": "./dist/zod/index.js"
+    },
+    "./zod/AccessList": {
+      "src": "./src/zod/AccessList.ts",
+      "types": "./dist/zod/AccessList.d.ts",
+      "default": "./dist/zod/AccessList.js"
+    },
+    "./zod/AccountProof": {
+      "src": "./src/zod/AccountProof.ts",
+      "types": "./dist/zod/AccountProof.d.ts",
+      "default": "./dist/zod/AccountProof.js"
+    },
+    "./zod/Address": {
+      "src": "./src/zod/Address.ts",
+      "types": "./dist/zod/Address.d.ts",
+      "default": "./dist/zod/Address.js"
+    },
+    "./zod/Authorization": {
+      "src": "./src/zod/Authorization.ts",
+      "types": "./dist/zod/Authorization.d.ts",
+      "default": "./dist/zod/Authorization.js"
+    },
+    "./zod/BigInt": {
+      "src": "./src/zod/BigInt.ts",
+      "types": "./dist/zod/BigInt.d.ts",
+      "default": "./dist/zod/BigInt.js"
+    },
+    "./zod/Block": {
+      "src": "./src/zod/Block.ts",
+      "types": "./dist/zod/Block.d.ts",
+      "default": "./dist/zod/Block.js"
+    },
+    "./zod/BlockOverrides": {
+      "src": "./src/zod/BlockOverrides.ts",
+      "types": "./dist/zod/BlockOverrides.d.ts",
+      "default": "./dist/zod/BlockOverrides.js"
+    },
+    "./zod/Bytes": {
+      "src": "./src/zod/Bytes.ts",
+      "types": "./dist/zod/Bytes.d.ts",
+      "default": "./dist/zod/Bytes.js"
+    },
+    "./zod/Fee": {
+      "src": "./src/zod/Fee.ts",
+      "types": "./dist/zod/Fee.d.ts",
+      "default": "./dist/zod/Fee.js"
+    },
+    "./zod/Filter": {
+      "src": "./src/zod/Filter.ts",
+      "types": "./dist/zod/Filter.d.ts",
+      "default": "./dist/zod/Filter.js"
+    },
+    "./zod/Hash": {
+      "src": "./src/zod/Hash.ts",
+      "types": "./dist/zod/Hash.d.ts",
+      "default": "./dist/zod/Hash.js"
+    },
+    "./zod/Hex": {
+      "src": "./src/zod/Hex.ts",
+      "types": "./dist/zod/Hex.d.ts",
+      "default": "./dist/zod/Hex.js"
+    },
+    "./zod/Int": {
+      "src": "./src/zod/Int.ts",
+      "types": "./dist/zod/Int.d.ts",
+      "default": "./dist/zod/Int.js"
+    },
+    "./zod/Log": {
+      "src": "./src/zod/Log.ts",
+      "types": "./dist/zod/Log.d.ts",
+      "default": "./dist/zod/Log.js"
+    },
+    "./zod/Number": {
+      "src": "./src/zod/Number.ts",
+      "types": "./dist/zod/Number.d.ts",
+      "default": "./dist/zod/Number.js"
+    },
+    "./zod/RpcResponse": {
+      "src": "./src/zod/RpcResponse.ts",
+      "types": "./dist/zod/RpcResponse.d.ts",
+      "default": "./dist/zod/RpcResponse.js"
+    },
+    "./zod/RpcSchema": {
+      "src": "./src/zod/RpcSchema.ts",
+      "types": "./dist/zod/RpcSchema.d.ts",
+      "default": "./dist/zod/RpcSchema.js"
+    },
+    "./zod/Signature": {
+      "src": "./src/zod/Signature.ts",
+      "types": "./dist/zod/Signature.d.ts",
+      "default": "./dist/zod/Signature.js"
+    },
+    "./zod/StateOverrides": {
+      "src": "./src/zod/StateOverrides.ts",
+      "types": "./dist/zod/StateOverrides.d.ts",
+      "default": "./dist/zod/StateOverrides.js"
+    },
+    "./zod/Transaction": {
+      "src": "./src/zod/Transaction.ts",
+      "types": "./dist/zod/Transaction.d.ts",
+      "default": "./dist/zod/Transaction.js"
+    },
+    "./zod/TransactionEnvelope": {
+      "src": "./src/zod/TransactionEnvelope.ts",
+      "types": "./dist/zod/TransactionEnvelope.d.ts",
+      "default": "./dist/zod/TransactionEnvelope.js"
+    },
+    "./zod/TransactionReceipt": {
+      "src": "./src/zod/TransactionReceipt.ts",
+      "types": "./dist/zod/TransactionReceipt.d.ts",
+      "default": "./dist/zod/TransactionReceipt.js"
+    },
+    "./zod/TransactionRequest": {
+      "src": "./src/zod/TransactionRequest.ts",
+      "types": "./dist/zod/TransactionRequest.d.ts",
+      "default": "./dist/zod/TransactionRequest.js"
+    },
+    "./zod/TxEnvelopeEip1559": {
+      "src": "./src/zod/TxEnvelopeEip1559.ts",
+      "types": "./dist/zod/TxEnvelopeEip1559.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip1559.js"
+    },
+    "./zod/TxEnvelopeEip2930": {
+      "src": "./src/zod/TxEnvelopeEip2930.ts",
+      "types": "./dist/zod/TxEnvelopeEip2930.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip2930.js"
+    },
+    "./zod/TxEnvelopeEip4844": {
+      "src": "./src/zod/TxEnvelopeEip4844.ts",
+      "types": "./dist/zod/TxEnvelopeEip4844.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip4844.js"
+    },
+    "./zod/TxEnvelopeEip7702": {
+      "src": "./src/zod/TxEnvelopeEip7702.ts",
+      "types": "./dist/zod/TxEnvelopeEip7702.d.ts",
+      "default": "./dist/zod/TxEnvelopeEip7702.js"
+    },
+    "./zod/TxEnvelopeLegacy": {
+      "src": "./src/zod/TxEnvelopeLegacy.ts",
+      "types": "./dist/zod/TxEnvelopeLegacy.d.ts",
+      "default": "./dist/zod/TxEnvelopeLegacy.js"
+    },
+    "./zod/Uint": {
+      "src": "./src/zod/Uint.ts",
+      "types": "./dist/zod/Uint.d.ts",
+      "default": "./dist/zod/Uint.js"
+    },
+    "./zod/Withdrawal": {
+      "src": "./src/zod/Withdrawal.ts",
+      "types": "./dist/zod/Withdrawal.d.ts",
+      "default": "./dist/zod/Withdrawal.js"
+    },
+    "./zod/z": {
+      "src": "./src/zod/z.ts",
+      "types": "./dist/zod/z.d.ts",
+      "default": "./dist/zod/z.js"
+    },
+    "./zod/tempo/AuthorizationTempo": {
+      "src": "./src/zod/tempo/AuthorizationTempo.ts",
+      "types": "./dist/zod/tempo/AuthorizationTempo.d.ts",
+      "default": "./dist/zod/tempo/AuthorizationTempo.js"
+    },
+    "./zod/tempo/KeyAuthorization": {
+      "src": "./src/zod/tempo/KeyAuthorization.ts",
+      "types": "./dist/zod/tempo/KeyAuthorization.d.ts",
+      "default": "./dist/zod/tempo/KeyAuthorization.js"
+    },
+    "./zod/tempo/PoolId": {
+      "src": "./src/zod/tempo/PoolId.ts",
+      "types": "./dist/zod/tempo/PoolId.d.ts",
+      "default": "./dist/zod/tempo/PoolId.js"
+    },
+    "./zod/tempo/RpcSchemaTempo": {
+      "src": "./src/zod/tempo/RpcSchemaTempo.ts",
+      "types": "./dist/zod/tempo/RpcSchemaTempo.d.ts",
+      "default": "./dist/zod/tempo/RpcSchemaTempo.js"
+    },
+    "./zod/tempo/SignatureEnvelope": {
+      "src": "./src/zod/tempo/SignatureEnvelope.ts",
+      "types": "./dist/zod/tempo/SignatureEnvelope.d.ts",
+      "default": "./dist/zod/tempo/SignatureEnvelope.js"
+    },
+    "./zod/tempo/Tick": {
+      "src": "./src/zod/tempo/Tick.ts",
+      "types": "./dist/zod/tempo/Tick.d.ts",
+      "default": "./dist/zod/tempo/Tick.js"
+    },
+    "./zod/tempo/TokenId": {
+      "src": "./src/zod/tempo/TokenId.ts",
+      "types": "./dist/zod/tempo/TokenId.d.ts",
+      "default": "./dist/zod/tempo/TokenId.js"
+    },
+    "./zod/tempo/TokenRole": {
+      "src": "./src/zod/tempo/TokenRole.ts",
+      "types": "./dist/zod/tempo/TokenRole.d.ts",
+      "default": "./dist/zod/tempo/TokenRole.js"
+    },
+    "./zod/tempo/Transaction": {
+      "src": "./src/zod/tempo/Transaction.ts",
+      "types": "./dist/zod/tempo/Transaction.d.ts",
+      "default": "./dist/zod/tempo/Transaction.js"
+    },
+    "./zod/tempo/TransactionReceipt": {
+      "src": "./src/zod/tempo/TransactionReceipt.ts",
+      "types": "./dist/zod/tempo/TransactionReceipt.d.ts",
+      "default": "./dist/zod/tempo/TransactionReceipt.js"
+    },
+    "./zod/tempo/TransactionRequest": {
+      "src": "./src/zod/tempo/TransactionRequest.ts",
+      "types": "./dist/zod/tempo/TransactionRequest.d.ts",
+      "default": "./dist/zod/tempo/TransactionRequest.js"
+    },
+    "./zod/tempo/TxEnvelopeTempo": {
+      "src": "./src/zod/tempo/TxEnvelopeTempo.ts",
+      "types": "./dist/zod/tempo/TxEnvelopeTempo.d.ts",
+      "default": "./dist/zod/tempo/TxEnvelopeTempo.js"
+    },
+    "./zod/tempo/VirtualAddress": {
+      "src": "./src/zod/tempo/VirtualAddress.ts",
+      "types": "./dist/zod/tempo/VirtualAddress.d.ts",
+      "default": "./dist/zod/tempo/VirtualAddress.js"
+    },
+    "./zod/tempo/ZoneId": {
+      "src": "./src/zod/tempo/ZoneId.ts",
+      "types": "./dist/zod/tempo/ZoneId.d.ts",
+      "default": "./dist/zod/tempo/ZoneId.js"
+    },
+    "./zod/tempo/ZoneRpcAuthentication": {
+      "src": "./src/zod/tempo/ZoneRpcAuthentication.ts",
+      "types": "./dist/zod/tempo/ZoneRpcAuthentication.d.ts",
+      "default": "./dist/zod/tempo/ZoneRpcAuthentication.js"
+    },
+    "./zod/tempo/z": {
+      "src": "./src/zod/tempo/z.ts",
+      "types": "./dist/zod/tempo/z.d.ts",
+      "default": "./dist/zod/tempo/z.js"
     }
   },
   "module": "./dist/index.js",

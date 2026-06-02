@@ -1,7 +1,6 @@
 import { relative, resolve } from 'node:path'
 import * as model from '@microsoft/api-extractor-model'
 import fs from 'fs-extra'
-import type { SidebarItem, TopNav } from 'vocs'
 
 import { getExports } from '../utils/exports.js'
 import { renderApiFunction } from './render/apiFunction.js'
@@ -11,6 +10,13 @@ import {
   renderNamespaceErrors,
   renderNamespaceTypes,
 } from './render/apiNamespace.js'
+import {
+  getZodAnchor,
+  type ZodMember,
+  renderZodMemberGroup,
+  renderZodMemberPage,
+  renderZodNamespace,
+} from './render/apiZod.js'
 import { createDataLookup, getId, getPath } from './utils/model.js'
 import { namespaceRegex } from './utils/regex.js'
 import {
@@ -18,13 +24,24 @@ import {
   type processDocComment,
 } from './utils/tsdoc.js'
 
+// Minimal structural subset of Vocs' sidebar/top-nav config types. Vocs is only
+// installed in the `site` workspace, so it can't be imported from here; the
+// generated config is validated against the real Vocs types on the site side.
+type SidebarItem = {
+  collapsed?: boolean
+  items?: SidebarItem[]
+  link?: string
+  text: string
+}
+type TopNav = { link: string; text: string }[]
+
 console.log('Generating API docs.')
 
 ////////////////////////////////////////////////////////////
 /// Clean previously generated pages
 ////////////////////////////////////////////////////////////
 
-for (const dir of ['api', 'ercs', 'tempo', 'webauthn']) {
+for (const dir of ['api', 'ercs', 'tempo', 'webauthn', 'zod']) {
   fs.removeSync(`./site/src/pages/${dir}`)
 }
 
@@ -81,6 +98,7 @@ const excludeNamespaces = ['Caches', 'Errors', 'Solidity', 'Types']
 const namespaces = []
 for (const member of apiEntryPoint.members) {
   if (member.kind !== model.ApiItemKind.Namespace) continue
+  if (member.displayName === 'z') continue // handled by the dedicated Zod pass
   if (!namespaceRegex.test(getId(member))) continue
   if (excludeNamespaces.includes(member.displayName)) continue
   if (testNamespaces.length && !testNamespaces.includes(member.displayName))
@@ -95,7 +113,9 @@ for (const member of apiEntryPoint.members) {
 type EntrypointCategory = string
 type NamespaceCategory = string
 type NamespaceItem = {
-  docComment: ReturnType<typeof processDocComment>
+  docComment:
+    | Pick<NonNullable<ReturnType<typeof processDocComment>>, 'summary'>
+    | undefined
   name: string
   sidebarItem: SidebarItem
 }[]
@@ -222,6 +242,262 @@ for (const namespace of namespaces) {
     types,
   })
   fs.writeFileSync(`${dir}/index.md`, content)
+}
+
+////////////////////////////////////////////////////////////
+/// Build Zod entrypoint docs
+////////////////////////////////////////////////////////////
+
+const zodEntrypointCategory = 'Zod'
+
+// Renders a Zod reference namespace as an overview page plus a dedicated page
+// per exported schema/function (mirroring the per-member layout used by the
+// Core/Tempo modules), and registers it in the sidebar with sub-items.
+function writeZodPage(options: {
+  category: string
+  displayName: string
+  members: readonly model.ApiItem[]
+  pageName: string
+  sidebarText: string
+  summary?: string | undefined
+  title: string
+}) {
+  const {
+    category,
+    displayName,
+    members,
+    pageName,
+    sidebarText,
+    summary,
+    title,
+  } = options
+
+  const basePath = getPath({
+    entrypointCategory: zodEntrypointCategory,
+    category,
+  })
+  const baseLink = `${basePath}/${pageName}`
+  const dir = `${pagesDir}${baseLink}`
+  fs.ensureDirSync(dir)
+
+  const items: SidebarItem[] = []
+  const variables: ZodMember[] = []
+  const functions: ZodMember[] = []
+  const types: ZodMember[] = []
+  const errors: ZodMember[] = []
+
+  for (const member of [...members].toSorted((a, b) =>
+    a.displayName.localeCompare(b.displayName),
+  )) {
+    const data = dataLookup[getId(member)]
+    if (!data) throw new Error(`Could not find data for ${getId(member)}`)
+    const fullName = `${displayName}.${data.displayName}`
+
+    if (
+      member.kind === model.ApiItemKind.Variable ||
+      member.kind === model.ApiItemKind.Function
+    ) {
+      const link = `${baseLink}/${data.displayName}`
+      const entry = { apiItem: member, description: data.description, link }
+      if (member.kind === model.ApiItemKind.Variable) variables.push(entry)
+      else functions.push(entry)
+      items.push({ text: `.${data.displayName}`, link })
+      fs.writeFileSync(
+        `${dir}/${data.displayName}.md`,
+        renderZodMemberPage({ data, displayName, member }),
+      )
+    } else if (member.kind === model.ApiItemKind.TypeAlias) {
+      types.push({
+        apiItem: member,
+        description: data.description,
+        link: `${baseLink}/types#${getZodAnchor(fullName)}`,
+      })
+    } else if (
+      member.kind === model.ApiItemKind.Class &&
+      member.displayName.endsWith('Error')
+    ) {
+      errors.push({
+        apiItem: member,
+        description: data.description,
+        link: `${baseLink}/errors#${getZodAnchor(fullName)}`,
+      })
+    }
+  }
+
+  if (types.length) {
+    items.push({ text: 'Types', link: `${baseLink}/types` })
+    fs.writeFileSync(
+      `${dir}/types.md`,
+      renderZodMemberGroup({
+        dataLookup,
+        displayName,
+        members: types,
+        title: `${displayName} Types`,
+      }),
+    )
+  }
+
+  if (errors.length) {
+    items.push({ text: 'Errors', link: `${baseLink}/errors` })
+    fs.writeFileSync(
+      `${dir}/errors.md`,
+      renderZodMemberGroup({
+        dataLookup,
+        displayName,
+        members: errors,
+        title: `${displayName} Errors`,
+      }),
+    )
+  }
+
+  fs.writeFileSync(
+    `${dir}/index.md`,
+    renderZodNamespace({
+      errors,
+      functions,
+      summary,
+      title,
+      types,
+      variables,
+    }),
+  )
+
+  namespaceMap[zodEntrypointCategory] ??= {}
+  namespaceMap[zodEntrypointCategory][category] ??= []
+  namespaceMap[zodEntrypointCategory][category].push({
+    docComment: { summary: summary ?? `${displayName} schemas.` },
+    name: sidebarText,
+    sidebarItem: { collapsed: true, items, link: baseLink, text: sidebarText },
+  })
+}
+
+// Renders a single inline Zod reference page (used for synthetic groupings such
+// as the direct integer schemas, where dedicated per-member pages would be
+// excessive). Registers a single sidebar entry without sub-items.
+function writeZodInlinePage(options: {
+  category: string
+  displayName: string
+  members: readonly model.ApiItem[]
+  pageName: string
+  sidebarText: string
+  summary?: string | undefined
+  title: string
+}) {
+  const {
+    category,
+    displayName,
+    members,
+    pageName,
+    sidebarText,
+    summary,
+    title,
+  } = options
+
+  const basePath = getPath({
+    entrypointCategory: zodEntrypointCategory,
+    category,
+  })
+  const baseLink = `${basePath}/${pageName}`
+  const dir = `${pagesDir}${baseLink}`
+  fs.ensureDirSync(dir)
+
+  const sorted = [...members].toSorted((a, b) =>
+    a.displayName.localeCompare(b.displayName),
+  )
+  const memberEntries: ZodMember[] = sorted.map((member) => {
+    const data = dataLookup[getId(member)]
+    if (!data) throw new Error(`Could not find data for ${getId(member)}`)
+    return {
+      apiItem: member,
+      description: data.description,
+      link: `${baseLink}#${getZodAnchor(`${displayName}.${data.displayName}`)}`,
+    }
+  })
+
+  fs.writeFileSync(
+    `${dir}/index.md`,
+    renderZodMemberGroup({
+      dataLookup,
+      displayName,
+      members: memberEntries,
+      summary,
+      title,
+    }),
+  )
+
+  namespaceMap[zodEntrypointCategory] ??= {}
+  namespaceMap[zodEntrypointCategory][category] ??= []
+  namespaceMap[zodEntrypointCategory][category].push({
+    docComment: { summary: summary ?? `${displayName} schemas.` },
+    name: sidebarText,
+    sidebarItem: { link: baseLink, text: sidebarText },
+  })
+}
+
+// Recursively collects renderable `z.*` namespaces (e.g. `z.Address`,
+// `z.RpcSchema`, `z.tempo.Transaction`), skipping container-only namespaces.
+function collectZodNamespaces(
+  namespace: model.ApiNamespace,
+  parts: string[] = [],
+): { namespace: model.ApiNamespace; parts: string[] }[] {
+  const out: { namespace: model.ApiNamespace; parts: string[] }[] = []
+  for (const member of namespace.members) {
+    if (member.kind !== model.ApiItemKind.Namespace) continue
+    const child = member as model.ApiNamespace
+    const childParts = [...parts, child.displayName]
+    const renderable = child.members.some(
+      (m) =>
+        m.kind === model.ApiItemKind.Variable ||
+        m.kind === model.ApiItemKind.Function ||
+        m.kind === model.ApiItemKind.TypeAlias ||
+        (m.kind === model.ApiItemKind.Class && m.displayName.endsWith('Error')),
+    )
+    if (renderable) out.push({ namespace: child, parts: childParts })
+    out.push(...collectZodNamespaces(child, childParts))
+  }
+  return out
+}
+
+const zodNamespace = apiEntryPoint.members.find(
+  (member) =>
+    member.kind === model.ApiItemKind.Namespace &&
+    getId(member) === 'ox!z:namespace',
+) as model.ApiNamespace | undefined
+
+if (zodNamespace) {
+  // Direct integer schema variables on `z` (Uint*, Int*, Number, BigInt).
+  const integerVars = zodNamespace.members.filter(
+    (m) => m.kind === model.ApiItemKind.Variable,
+  )
+  if (integerVars.length)
+    writeZodInlinePage({
+      category: 'Schemas',
+      displayName: 'z',
+      members: integerVars,
+      pageName: 'Integers',
+      sidebarText: 'Integers',
+      summary: 'Integer quantity schemas exported directly from `z`.',
+      title: 'Integer Schemas',
+    })
+
+  // Nested Ox schema namespaces (z.Address, z.RpcSchema, z.tempo.Transaction, …).
+  for (const { namespace, parts } of collectZodNamespaces(zodNamespace)) {
+    const category =
+      parts[0] === 'tempo'
+        ? 'Tempo'
+        : parts[0] === 'RpcSchema'
+          ? 'JSON-RPC'
+          : 'Schemas'
+    const displayName = ['z', ...parts].join('.')
+    writeZodPage({
+      category,
+      displayName,
+      members: namespace.members,
+      pageName: parts.at(-1)!,
+      sidebarText: displayName,
+      title: displayName,
+    })
+  }
 }
 
 ////////////////////////////////////////////////////////////

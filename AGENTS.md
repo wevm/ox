@@ -11,6 +11,7 @@
 - **`type` over `interface` by default** -- use `type` for project-owned shapes. Ambient declarations and DOM-shaped compatibility types may use `interface`.
 - **`.js` extensions** -- all relative source imports include `.js` for ESM compatibility.
 - **Follow local import style** -- ox uses both namespace imports and named internal imports. Match the surrounding file instead of mass-converting import lists.
+- **Zod import aliases** -- import `zod/mini` as `z`, and import zod module namespaces as `z_<Module>` (for example, `import * as z_Hex from '../Hex.js'`).
 - **Classes for errors only** -- all other APIs use functions and plain data.
 - **Errors live next to the code that throws them** -- module-specific failure classes live inside the module that owns the failure mode. Place each error class near the bottom of the module so the public functions and types are what the reader sees first. Set `name` to the namespaced form (`'Hex.InvalidHexValueError'`, `'SignatureEnvelope.VerificationError'`, etc.).
 - **No enums** -- use union types or `as const` objects for fixed sets.

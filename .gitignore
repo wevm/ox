@@ -22,6 +22,7 @@ site/src/pages/api
 site/src/pages/ercs
 site/src/pages/tempo
 site/src/pages/webauthn
+site/src/pages/zod
 site/src/pages/glossary
 tsdoc-metadata.json
 *.timestamp*

@@ -61,6 +61,7 @@ export default defineConfig({
             link: '/guides/transaction-envelopes',
           },
           { text: 'WebAuthn Signers', link: '/guides/webauthn' },
+          { text: 'Zod Schemas', link: '/guides/zod' },
         ],
       },
       {
@@ -81,6 +82,10 @@ export default defineConfig({
           {
             text: 'Tempo',
             link: '/tempo',
+          },
+          {
+            text: 'Zod',
+            link: '/zod',
           },
         ],
       },
