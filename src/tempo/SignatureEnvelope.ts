@@ -1203,7 +1203,7 @@ export declare namespace serialize {
  *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
  *   ],
  * })
- * const configId = MultisigConfig.toConfigId(config)
+ * const configId = MultisigConfig.toId(config)
  * const account = MultisigConfig.getAddress({ configId })
  *
  * const tx = TxEnvelopeTempo.from({ chainId: 1, calls: [] })

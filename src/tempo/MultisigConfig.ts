@@ -217,7 +217,7 @@ export function fromTuple(tuple: Tuple): Config {
  * @returns The multisig account address.
  */
 export function getAddress(value: getAddress.Value): Address.Address {
-  const id = 'configId' in value ? value.configId : toConfigId(value.config)
+  const id = 'configId' in value ? value.configId : toId(value.config)
   const hash = Hash.keccak256(Hex.concat(Hex.fromString(accountDomain), id))
   return Address.from(Hex.slice(hash, 12, 32))
 }
@@ -226,7 +226,7 @@ export declare namespace getAddress {
   type Value = { config: Config } | { configId: Hex.Hex }
 
   type ErrorType =
-    | toConfigId.ErrorType
+    | toId.ErrorType
     | Address.from.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
@@ -251,7 +251,7 @@ export declare namespace getAddress {
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
- * const configId = MultisigConfig.toConfigId(config)
+ * const configId = MultisigConfig.toId(config)
  * const account = MultisigConfig.getAddress({ configId })
  *
  * const envelope = TxEnvelopeTempo.from({
@@ -317,13 +317,13 @@ export declare namespace getSignPayload {
  *   ],
  * })
  *
- * const configId = MultisigConfig.toConfigId(config)
+ * const configId = MultisigConfig.toId(config)
  * ```
  *
  * @param config - The multisig config.
  * @returns The 32-byte config ID.
  */
-export function toConfigId(config: Config): Hex.Hex {
+export function toId(config: Config): Hex.Hex {
   assert(config)
   const id = Hash.keccak256(
     Hex.concat(
@@ -342,7 +342,7 @@ export function toConfigId(config: Config): Hex.Hex {
   return id
 }
 
-export declare namespace toConfigId {
+export declare namespace toId {
   type ErrorType =
     | assert.ErrorType
     | Hash.keccak256.ErrorType

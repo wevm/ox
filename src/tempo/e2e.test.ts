@@ -3017,7 +3017,7 @@ describe('behavior: multisig (TIP-1061)', () => {
         weight: 1,
       })),
     })
-    const configId = MultisigConfig.toConfigId(config)
+    const configId = MultisigConfig.toId(config)
     const account = MultisigConfig.getAddress({ configId })
 
     return { account, config, configId, ownerKeys } as const

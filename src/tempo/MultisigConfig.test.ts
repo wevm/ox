@@ -32,20 +32,20 @@ describe('from', () => {
 
 describe('configId', () => {
   test('matches independent ground truth', () => {
-    expect(MultisigConfig.toConfigId(singleOwnerConfig)).toMatchInlineSnapshot(
+    expect(MultisigConfig.toId(singleOwnerConfig)).toMatchInlineSnapshot(
       `"0xd1f20e1a5bfdd89488f57f68db5bd1aae9a51b510f4a042b2604b57a0b7b471d"`,
     )
   })
 
   test('is stable across calls', () => {
-    expect(MultisigConfig.toConfigId(singleOwnerConfig)).toBe(
-      MultisigConfig.toConfigId(singleOwnerConfig),
+    expect(MultisigConfig.toId(singleOwnerConfig)).toBe(
+      MultisigConfig.toId(singleOwnerConfig),
     )
   })
 
   test('differs for a different salt', () => {
-    expect(MultisigConfig.toConfigId(singleOwnerConfig)).not.toBe(
-      MultisigConfig.toConfigId({
+    expect(MultisigConfig.toId(singleOwnerConfig)).not.toBe(
+      MultisigConfig.toId({
         ...singleOwnerConfig,
         salt: `0x${'42'.repeat(32)}`,
       }),
@@ -54,7 +54,7 @@ describe('configId', () => {
 
   test('throws on invalid config', () => {
     expect(() =>
-      MultisigConfig.toConfigId({
+      MultisigConfig.toId({
         threshold: 5,
         owners: singleOwnerConfig.owners,
       }),
@@ -70,7 +70,7 @@ describe('getAddress', () => {
   })
 
   test('derives from config or configId identically', () => {
-    const configId = MultisigConfig.toConfigId(singleOwnerConfig)
+    const configId = MultisigConfig.toId(singleOwnerConfig)
     expect(MultisigConfig.getAddress({ configId })).toBe(
       MultisigConfig.getAddress({ config: singleOwnerConfig }),
     )
@@ -78,15 +78,15 @@ describe('getAddress', () => {
 
   test('config ID and address are chain-independent', () => {
     // Derivation does not include chain ID; identical config → identical id/address.
-    const a = MultisigConfig.toConfigId(singleOwnerConfig)
-    const b = MultisigConfig.toConfigId(MultisigConfig.from(singleOwnerConfig))
+    const a = MultisigConfig.toId(singleOwnerConfig)
+    const b = MultisigConfig.toId(MultisigConfig.from(singleOwnerConfig))
     expect(a).toBe(b)
   })
 })
 
 describe('getSignPayload', () => {
   test('matches independent ground truth', () => {
-    const configId = MultisigConfig.toConfigId(singleOwnerConfig)
+    const configId = MultisigConfig.toId(singleOwnerConfig)
     const account = MultisigConfig.getAddress({ configId })
     expect(
       MultisigConfig.getSignPayload({
