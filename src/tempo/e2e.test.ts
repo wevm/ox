@@ -13,8 +13,8 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { chain, client, fundAddress, nodeEnv } from '../../test/tempo/config.js'
 import {
   AuthorizationTempo,
-  ConfigurableAccount,
   KeyAuthorization,
+  MultisigConfig,
   Period,
   SignatureEnvelope,
 } from './index.js'
@@ -3007,7 +3007,7 @@ describe('behavior: multisig (TIP-1061)', () => {
       return { address, privateKey } as const
     })
 
-    const config = ConfigurableAccount.from({
+    const config = MultisigConfig.from({
       // A fresh random salt yields a distinct account each run, exercising the
       // salt-inclusive config-ID derivation against the node.
       salt: Hex.random(32),
@@ -3017,8 +3017,8 @@ describe('behavior: multisig (TIP-1061)', () => {
         weight: 1,
       })),
     })
-    const configId = ConfigurableAccount.toConfigId(config)
-    const account = ConfigurableAccount.getAddress({ configId })
+    const configId = MultisigConfig.toConfigId(config)
+    const account = MultisigConfig.getAddress({ configId })
 
     return { account, config, configId, ownerKeys } as const
   }
@@ -3034,7 +3034,7 @@ describe('behavior: multisig (TIP-1061)', () => {
     signers: readonly { privateKey: Hex.Hex }[]
   }) {
     const { account, configId, payload, signers } = parameters
-    const digest = ConfigurableAccount.getSignPayload({
+    const digest = MultisigConfig.getSignPayload({
       account,
       configId,
       payload,

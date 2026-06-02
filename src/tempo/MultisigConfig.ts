@@ -33,7 +33,7 @@ const signatureDomain = 'tempo:multisig:signature'
 export type Config<numberType = number> = Compute<{
   /**
    * Caller-chosen 32-byte salt mixed into the permanent config ID. Defaults to
-   * the {@link ox#ConfigurableAccount.zeroSalt} when omitted.
+   * the {@link ox#MultisigConfig.zeroSalt} when omitted.
    */
   salt?: Hex.Hex | undefined
   /** Minimum total owner weight required to authorize a transaction. */
@@ -50,7 +50,7 @@ export type Owner<numberType = number> = {
   weight: numberType
 }
 
-/** RLP tuple representation of a {@link ox#ConfigurableAccount.Config}. */
+/** RLP tuple representation of a {@link ox#MultisigConfig.Config}. */
 export type Tuple = readonly [
   salt: Hex.Hex,
   threshold: Hex.Hex,
@@ -58,7 +58,7 @@ export type Tuple = readonly [
 ]
 
 /**
- * Asserts that a native multisig {@link ox#ConfigurableAccount.Config} is valid.
+ * Asserts that a native multisig {@link ox#MultisigConfig.Config} is valid.
  *
  * Mirrors the Tempo `validate_multisig_config` rules: owners non-empty and
  * `<= maxOwners`, strictly ascending unique nonzero owner addresses, nonzero
@@ -67,9 +67,9 @@ export type Tuple = readonly [
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount } from 'ox/tempo'
+ * import { MultisigConfig } from 'ox/tempo'
  *
- * ConfigurableAccount.assert({
+ * MultisigConfig.assert({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -124,16 +124,16 @@ export declare namespace assert {
 }
 
 /**
- * Normalizes a native multisig {@link ox#ConfigurableAccount.Config}.
+ * Normalizes a native multisig {@link ox#MultisigConfig.Config}.
  *
  * Sorts owners into strictly ascending `owner` address order (the canonical
  * form required for config ID derivation) and asserts the config is valid.
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount } from 'ox/tempo'
+ * import { MultisigConfig } from 'ox/tempo'
  *
- * const config = ConfigurableAccount.from({
+ * const config = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
  *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
@@ -162,14 +162,14 @@ export function from<numberType = number>(
 }
 
 /**
- * Converts an RLP {@link ox#ConfigurableAccount.Tuple} back to a
- * {@link ox#ConfigurableAccount.Config}.
+ * Converts an RLP {@link ox#MultisigConfig.Tuple} back to a
+ * {@link ox#MultisigConfig.Config}.
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount } from 'ox/tempo'
+ * import { MultisigConfig } from 'ox/tempo'
  *
- * const config = ConfigurableAccount.fromTuple([
+ * const config = MultisigConfig.fromTuple([
  *   `0x${'00'.repeat(32)}`,
  *   '0x01',
  *   [['0x1111111111111111111111111111111111111111', '0x01']],
@@ -201,16 +201,16 @@ export function fromTuple(tuple: Tuple): Config {
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount } from 'ox/tempo'
+ * import { MultisigConfig } from 'ox/tempo'
  *
- * const config = ConfigurableAccount.from({
+ * const config = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
  *
- * const address = ConfigurableAccount.getAddress({ config })
+ * const address = MultisigConfig.getAddress({ config })
  * ```
  *
  * @param value - The config or config ID to derive the address from.
@@ -243,23 +243,23 @@ export declare namespace getAddress {
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount, TxEnvelopeTempo } from 'ox/tempo'
+ * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
  *
- * const config = ConfigurableAccount.from({
+ * const config = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
- * const configId = ConfigurableAccount.toConfigId(config)
- * const account = ConfigurableAccount.getAddress({ configId })
+ * const configId = MultisigConfig.toConfigId(config)
+ * const account = MultisigConfig.getAddress({ configId })
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
  *   calls: [],
  * })
  *
- * const digest = ConfigurableAccount.getSignPayload({
+ * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  *   account,
  *   configId,
@@ -300,7 +300,7 @@ export declare namespace getSignPayload {
 
 /**
  * Derives the permanent config ID for a native multisig
- * {@link ox#ConfigurableAccount.Config}.
+ * {@link ox#MultisigConfig.Config}.
  *
  * Preimage (fixed-width big-endian, **not** RLP):
  * `keccak256("tempo:multisig:config" || salt || be_u32(threshold) || be_u32(owners.length)
@@ -308,16 +308,16 @@ export declare namespace getSignPayload {
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount } from 'ox/tempo'
+ * import { MultisigConfig } from 'ox/tempo'
  *
- * const config = ConfigurableAccount.from({
+ * const config = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
  *
- * const configId = ConfigurableAccount.toConfigId(config)
+ * const configId = MultisigConfig.toConfigId(config)
  * ```
  *
  * @param config - The multisig config.
@@ -353,7 +353,7 @@ export declare namespace toConfigId {
 }
 
 /**
- * Converts a {@link ox#ConfigurableAccount.Config} to its RLP tuple form (carried
+ * Converts a {@link ox#MultisigConfig.Config} to its RLP tuple form (carried
  * by the multisig signature `init`).
  *
  * Tuple shape: `[salt, threshold, [[owner, weight], ...]]`. The
@@ -362,9 +362,9 @@ export declare namespace toConfigId {
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount } from 'ox/tempo'
+ * import { MultisigConfig } from 'ox/tempo'
  *
- * const tuple = ConfigurableAccount.toTuple({
+ * const tuple = MultisigConfig.toTuple({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -387,14 +387,14 @@ export function toTuple(config: Config): Tuple {
 }
 
 /**
- * Validates a native multisig {@link ox#ConfigurableAccount.Config}. Returns `true`
+ * Validates a native multisig {@link ox#MultisigConfig.Config}. Returns `true`
  * if valid, `false` otherwise.
  *
  * @example
  * ```ts twoslash
- * import { ConfigurableAccount } from 'ox/tempo'
+ * import { MultisigConfig } from 'ox/tempo'
  *
- * const valid = ConfigurableAccount.validate({
+ * const valid = MultisigConfig.validate({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
@@ -417,7 +417,7 @@ export function validate(config: Config): boolean {
 
 /** Thrown when a native multisig config is invalid. */
 export class InvalidConfigError extends Errors.BaseError {
-  override readonly name = 'ConfigurableAccount.InvalidConfigError'
+  override readonly name = 'MultisigConfig.InvalidConfigError'
   constructor({ reason }: { reason: string }) {
     super(`Invalid native multisig config: ${reason}.`)
   }

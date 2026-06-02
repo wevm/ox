@@ -9,7 +9,7 @@ import {
   WebCryptoP256,
 } from 'ox'
 import { describe, expect, test } from 'vitest'
-import * as ConfigurableAccount from './ConfigurableAccount.js'
+import * as MultisigConfig from './MultisigConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 
 const publicKey = PublicKey.from({
@@ -1701,7 +1701,7 @@ describe('sortMultisigApprovals', () => {
   const account = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as const
   const configId = `0x${'11'.repeat(32)}` as const
   const payload = `0x${'42'.repeat(32)}` as const
-  const digest = ConfigurableAccount.getSignPayload({
+  const digest = MultisigConfig.getSignPayload({
     account,
     configId,
     payload,

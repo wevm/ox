@@ -18,7 +18,7 @@ import * as ox_Secp256k1 from '../core/Secp256k1.js'
 import * as Signature from '../core/Signature.js'
 import type * as WebAuthnP256 from '../core/WebAuthnP256.js'
 import * as ox_WebAuthnP256 from '../core/WebAuthnP256.js'
-import * as ConfigurableAccount from './ConfigurableAccount.js'
+import * as MultisigConfig from './MultisigConfig.js'
 
 /** Signature type identifiers for encoding/decoding */
 const serializedP256Type = '0x01'
@@ -169,7 +169,7 @@ export type Multisig<bigintType = bigint, numberType = number> = {
    * the first (bootstrap) transaction from the derived account; absent on every
    * subsequent transaction.
    */
-  init?: ConfigurableAccount.Config<numberType> | undefined
+  init?: MultisigConfig.Config<numberType> | undefined
 }
 
 export type MultisigRpc = {
@@ -181,7 +181,7 @@ export type MultisigRpc = {
    * node's `Vec<Bytes>` representation.
    */
   signatures: readonly Serialized[]
-  init?: ConfigurableAccount.Config | undefined
+  init?: MultisigConfig.Config | undefined
 }
 
 export type P256<bigintType = bigint, numberType = number> = {
@@ -333,7 +333,7 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     if (missing.length > 0)
       throw new MissingPropertiesError({ envelope, missing, type: 'multisig' })
     for (const inner of multisig.signatures) assert(inner)
-    if (multisig.init) ConfigurableAccount.assert(multisig.init)
+    if (multisig.init) MultisigConfig.assert(multisig.init)
     return
   }
 }
@@ -342,7 +342,7 @@ export declare namespace assert {
   type ErrorType =
     | CoercionError
     | MissingPropertiesError
-    | ConfigurableAccount.assert.ErrorType
+    | MultisigConfig.assert.ErrorType
     | Signature.assert.ErrorType
     | Errors.GlobalErrorType
 }
@@ -620,7 +620,7 @@ export function deserialize(value: Serialized): SignatureEnvelope {
       Hex.Hex,
       Hex.Hex,
       readonly Hex.Hex[],
-      (Hex.Hex | ConfigurableAccount.Tuple)?,
+      (Hex.Hex | MultisigConfig.Tuple)?,
     ]
     return {
       type: 'multisig',
@@ -629,9 +629,7 @@ export function deserialize(value: Serialized): SignatureEnvelope {
       signatures: signatures.map((signature) => deserialize(signature)),
       ...(init && init !== '0x'
         ? {
-            init: ConfigurableAccount.fromTuple(
-              init as ConfigurableAccount.Tuple,
-            ),
+            init: MultisigConfig.fromTuple(init as MultisigConfig.Tuple),
           }
         : {}),
     } satisfies Multisig
@@ -782,9 +780,7 @@ export function from<const value extends from.Value>(
       signatures: multisig.signatures.map((signature) => from(signature)),
       // Normalize the bootstrap config (sorts owners, defaults the salt) so the
       // in-memory envelope matches what `deserialize` reconstructs.
-      ...(multisig.init
-        ? { init: ConfigurableAccount.from(multisig.init) }
-        : {}),
+      ...(multisig.init ? { init: MultisigConfig.from(multisig.init) } : {}),
       type,
     } as never
   }
@@ -972,9 +968,7 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
       signatures: multisig.signatures.map((signature) =>
         deserialize(signature),
       ),
-      ...(multisig.init
-        ? { init: ConfigurableAccount.from(multisig.init) }
-        : {}),
+      ...(multisig.init ? { init: MultisigConfig.from(multisig.init) } : {}),
     }
   }
 
@@ -1167,7 +1161,7 @@ export function serialize(
         multisig.account,
         multisig.configId,
         multisig.signatures.map((signature) => serialize(signature)),
-        multisig.init ? ConfigurableAccount.toTuple(multisig.init) : '0x',
+        multisig.init ? MultisigConfig.toTuple(multisig.init) : '0x',
       ]),
       options.magic ? magicBytes : '0x',
     )
@@ -1192,7 +1186,7 @@ export declare namespace serialize {
  * array (the node enforces "recovered owners must be strictly ascending").
  *
  * Each approval is signed over the multisig owner approval digest
- * ({@link ox#ConfigurableAccount.(getSignPayload:function)}), so the signer of
+ * ({@link ox#MultisigConfig.(getSignPayload:function)}), so the signer of
  * every approval is recovered against that digest and the list is sorted by the
  * recovered owner address. Works for any owner key type (secp256k1, p256,
  * webAuthn, keychain).
@@ -1200,21 +1194,21 @@ export declare namespace serialize {
  * @example
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
- * import { ConfigurableAccount, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+ * import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
  *
- * const config = ConfigurableAccount.from({
+ * const config = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
  *   ],
  * })
- * const configId = ConfigurableAccount.toConfigId(config)
- * const account = ConfigurableAccount.getAddress({ configId })
+ * const configId = MultisigConfig.toConfigId(config)
+ * const account = MultisigConfig.getAddress({ configId })
  *
  * const tx = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  * const payload = TxEnvelopeTempo.getSignPayload(tx)
- * const digest = ConfigurableAccount.getSignPayload({ payload, account, configId })
+ * const digest = MultisigConfig.getSignPayload({ payload, account, configId })
  *
  * const signatures = ['0x...', '0x...'].map((privateKey) =>
  *   SignatureEnvelope.from(Secp256k1.sign({ payload: digest, privateKey })),
@@ -1235,7 +1229,7 @@ export function sortMultisigApprovals(
   value: sortMultisigApprovals.Value,
 ): readonly SignatureEnvelope[] {
   const { account, configId, payload, signatures } = value
-  const digest = ConfigurableAccount.getSignPayload({
+  const digest = MultisigConfig.getSignPayload({
     account,
     configId,
     payload,
@@ -1264,7 +1258,7 @@ export declare namespace sortMultisigApprovals {
   }
 
   type ErrorType =
-    | ConfigurableAccount.getSignPayload.ErrorType
+    | MultisigConfig.getSignPayload.ErrorType
     | extractAddress.ErrorType
     | Errors.GlobalErrorType
 }
