@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.28
+
+### Patch Changes
+
+- [#265](https://github.com/wevm/ox/pull/265) [`f5328d2`](https://github.com/wevm/ox/commit/f5328d2fb5f76f4d037ecb1ae5974a078e7b5034) Thanks [@jxom](https://github.com/jxom)! - `viem/tempo`: Added support for TIP-1061 native multisig accounts.
+
 ## 0.14.27
 
 ### Patch Changes
