@@ -14,6 +14,7 @@ import { chain, client, fundAddress, nodeEnv } from '../../test/tempo/config.js'
 import {
   AuthorizationTempo,
   KeyAuthorization,
+  MultisigConfig,
   Period,
   SignatureEnvelope,
 } from './index.js'
@@ -2992,4 +2993,215 @@ describe('behavior: keyAuthorization', () => {
       expect(response.keyAuthorization?.account).toBeUndefined()
     },
   )
+})
+
+// TODO: unskip once TIP-1061 native multisig is deployed to the standard
+// localnet/testnet nodes. Until then these only pass against the dedicated
+// PR-5178 devnet (run with VITE_TEMPO_RPC_URL pointed at it).
+describe.skip('behavior: multisig (TIP-1061)', () => {
+  // Helper: builds a fresh set of secp256k1 owners + the derived config.
+  function setup(parameters: { count: number; threshold: number }) {
+    const { count, threshold } = parameters
+    const ownerKeys = Array.from({ length: count }, () => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      return { address, privateKey } as const
+    })
+
+    const config = MultisigConfig.from({
+      // A fresh random salt yields a distinct account each run, exercising the
+      // salt-inclusive config-ID derivation against the node.
+      salt: Hex.random(32),
+      threshold,
+      owners: ownerKeys.map((key) => ({
+        owner: key.address,
+        weight: 1,
+      })),
+    })
+    const configId = MultisigConfig.toId(config)
+    const account = MultisigConfig.getAddress({ configId })
+
+    return { account, config, configId, ownerKeys } as const
+  }
+
+  // Signs the multisig owner digest with the provided owner keys, returning
+  // primitive approval envelopes ordered strictly ascending by recovered owner
+  // address (required by the node: "recovered owners must be strictly
+  // ascending").
+  function approve(parameters: {
+    account: Address.Address
+    configId: Hex.Hex
+    payload: Hex.Hex
+    signers: readonly { privateKey: Hex.Hex }[]
+  }) {
+    const { account, configId, payload, signers } = parameters
+    const digest = MultisigConfig.getSignPayload({
+      account,
+      configId,
+      payload,
+    })
+    const signatures = signers.map((signer) =>
+      SignatureEnvelope.from(
+        Secp256k1.sign({ payload: digest, privateKey: signer.privateKey }),
+      ),
+    )
+    return SignatureEnvelope.sortMultisigApprovals({
+      account,
+      configId,
+      payload,
+      signatures,
+    })
+  }
+
+  test('behavior: bootstrap + spend (2-of-3 secp256k1)', async () => {
+    const { account, config, configId, ownerKeys } = setup({
+      count: 3,
+      threshold: 2,
+    })
+
+    // The derived multisig account pays its own fees.
+    await fundAddress(client, { address: account })
+
+    // Bootstrap (first transaction): the bootstrap config travels in the
+    // multisig signature `init`, nonce 0.
+    const bootstrap = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: 0n,
+      gas: 2_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const bootstrap_signed = TxEnvelopeTempo.serialize(bootstrap, {
+      signature: SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        configId,
+        // The bootstrap config is carried by the signature `init`.
+        init: config,
+        // Approve with 2 of the 3 owners to satisfy the threshold.
+        signatures: approve({
+          account,
+          configId,
+          payload: TxEnvelopeTempo.getSignPayload(bootstrap),
+          signers: [ownerKeys[0]!, ownerKeys[1]!],
+        }),
+      }),
+    })
+
+    const bootstrap_receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [bootstrap_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(bootstrap_receipt).toBeDefined()
+    expect(bootstrap_receipt.status).toBe('success')
+    expect(bootstrap_receipt.from).toBe(account)
+
+    {
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [bootstrap_receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+      expect(response.from).toBe(account)
+      expect(response.signature?.type).toBe('multisig')
+      // The bootstrap config is carried by the multisig signature `init`.
+      expect(
+        (response.signature as SignatureEnvelope.Multisig | undefined)?.init,
+      ).toEqual(config)
+    }
+
+    // Spend (subsequent transaction): no signature `init`, nonce 1, uses the
+    // stored config loaded by the node.
+    const nonce = await getTransactionCount(client, {
+      address: account,
+      blockTag: 'pending',
+    })
+
+    const spend = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: BigInt(nonce),
+      gas: 2_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const spend_signed = TxEnvelopeTempo.serialize(spend, {
+      signature: SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        configId,
+        // A different 2-of-3 subset still authorizes the transaction.
+        signatures: approve({
+          account,
+          configId,
+          payload: TxEnvelopeTempo.getSignPayload(spend),
+          signers: [ownerKeys[1]!, ownerKeys[2]!],
+        }),
+      }),
+    })
+
+    const spend_receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [spend_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(spend_receipt).toBeDefined()
+    expect(spend_receipt.status).toBe('success')
+    expect(spend_receipt.from).toBe(account)
+  })
+
+  test('behavior: rejects below-threshold approvals', async () => {
+    const { account, config, configId, ownerKeys } = setup({
+      count: 3,
+      threshold: 2,
+    })
+
+    await fundAddress(client, { address: account })
+
+    const bootstrap = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: 0n,
+      gas: 2_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const serialized_signed = TxEnvelopeTempo.serialize(bootstrap, {
+      signature: SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        configId,
+        // The bootstrap config is carried by the signature `init`.
+        init: config,
+        // Only one approval — below the threshold of 2.
+        signatures: approve({
+          account,
+          configId,
+          payload: TxEnvelopeTempo.getSignPayload(bootstrap),
+          signers: [ownerKeys[0]!],
+        }),
+      }),
+    })
+
+    await expect(
+      client.request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized_signed],
+      }),
+    ).rejects.toThrow()
+  })
 })

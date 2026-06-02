@@ -103,6 +103,32 @@ export * as Channel from './Channel.js'
  */
 export * as KeyAuthorization from './KeyAuthorization.js'
 /**
+ * Native multisig account utilities (TIP-1061).
+ *
+ * Derives stable multisig account addresses and permanent config IDs from a weighted
+ * owner configuration, and computes the owner approval digest that owners sign.
+ *
+ * [TIP-1061](https://tips.sh/1061)
+ *
+ * @example
+ * ```ts twoslash
+ * import { MultisigConfig } from 'ox/tempo'
+ *
+ * const config = MultisigConfig.from({
+ *   threshold: 2,
+ *   owners: [
+ *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
+ *   ],
+ * })
+ *
+ * const account = MultisigConfig.getAddress({ config })
+ * ```
+ *
+ * @category Reference
+ */
+export * as MultisigConfig from './MultisigConfig.js'
+/**
  * Utilities for constructing period durations (in seconds) for recurring spending limits.
  *
  * Periods define the reset interval for access key spending limits. A spending limit with a
