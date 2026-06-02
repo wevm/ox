@@ -2995,7 +2995,10 @@ describe('behavior: keyAuthorization', () => {
   )
 })
 
-describe('behavior: multisig (TIP-1061)', () => {
+// TODO: unskip once TIP-1061 native multisig is deployed to the standard
+// localnet/testnet nodes. Until then these only pass against the dedicated
+// PR-5178 devnet (run with VITE_TEMPO_RPC_URL pointed at it).
+describe.skip('behavior: multisig (TIP-1061)', () => {
   // Helper: builds a fresh set of secp256k1 owners + the derived config.
   function setup(parameters: { count: number; threshold: number }) {
     const { count, threshold } = parameters
