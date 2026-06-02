@@ -2827,92 +2827,99 @@ describe('behavior: keyAuthorization', () => {
     },
   )
 
-  // TODO: remove skipIf when devnet/testnet have T6 (TIP-1049).
-  test.skipIf(nodeEnv !== 'localnet')(
-    'behavior: TIP-1049 admin access key round-trips through registration',
-    async () => {
-      const accessPrivateKey = Secp256k1.randomPrivateKey()
-      const accessAddress = Address.fromPublicKey(
-        Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
-      )
+  // TODO: re-enable once a tempo release ships TIP-1049.
+  //
+  // The released `:latest` image is `v1.8.2` (commit `ae0ba07`), whose
+  // `KeyAuthorizationWire` only has 7 fields
+  // (`[chain_id, key_type, key_id, expiry?, limits?, allowed_calls?, witness?]`).
+  // TIP-1049 adds two trailing fields (`is_admin?`, `account?`) on tempo
+  // `main` (commit `d3b33344`, PR #4265) but has not been included in any
+  // released tag. When ox emits the 9-field admin layout, the released
+  // decoder leaves the trailing `is_admin`/`account` bytes unconsumed and
+  // `AASigned::rlp_decode` returns `UnexpectedLength`, surfaced as
+  // `failed to decode signed transaction` from `recover_raw_transaction`.
+  test.skip('behavior: TIP-1049 admin access key round-trips through registration', async () => {
+    const accessPrivateKey = Secp256k1.randomPrivateKey()
+    const accessAddress = Address.fromPublicKey(
+      Secp256k1.getPublicKey({ privateKey: accessPrivateKey }),
+    )
 
-      const keyAuth = KeyAuthorization.from({
-        address: accessAddress,
-        account: root.address,
-        chainId: BigInt(chainId),
-        isAdmin: true,
-        type: 'secp256k1',
-      })
+    const keyAuth = KeyAuthorization.from({
+      address: accessAddress,
+      account: root.address,
+      chainId: BigInt(chainId),
+      isAdmin: true,
+      type: 'secp256k1',
+    })
 
-      const keyAuth_signed = KeyAuthorization.from(keyAuth, {
-        signature: SignatureEnvelope.from(
-          Secp256k1.sign({
-            payload: KeyAuthorization.getSignPayload(keyAuth),
-            privateKey: root.privateKey,
-          }),
-        ),
-      })
-
-      const nonce = await getTransactionCount(client, {
-        address: root.address,
-        blockTag: 'pending',
-      })
-
-      const transaction = TxEnvelopeTempo.from({
-        calls: [{ to: '0x0000000000000000000000000000000000000000' }],
-        chainId,
-        feeToken: '0x20c0000000000000000000000000000000000001',
-        keyAuthorization: keyAuth_signed,
-        nonce: BigInt(nonce),
-        gas: 1_000_000n,
-        maxFeePerGas: Value.fromGwei('20'),
-        maxPriorityFeePerGas: Value.fromGwei('10'),
-      })
-
-      // The admin access key signs and authorizes itself in the same tx
-      // (the canonical "auth+use" registration pattern).
-      const signature = Secp256k1.sign({
-        payload: TxEnvelopeTempo.getSignPayload(transaction, {
-          from: root.address,
+    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+      signature: SignatureEnvelope.from(
+        Secp256k1.sign({
+          payload: KeyAuthorization.getSignPayload(keyAuth),
+          privateKey: root.privateKey,
         }),
-        privateKey: accessPrivateKey,
+      ),
+    })
+
+    const nonce = await getTransactionCount(client, {
+      address: root.address,
+      blockTag: 'pending',
+    })
+
+    const transaction = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      keyAuthorization: keyAuth_signed,
+      nonce: BigInt(nonce),
+      gas: 1_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    // The admin access key signs and authorizes itself in the same tx
+    // (the canonical "auth+use" registration pattern).
+    const signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(transaction, {
+        from: root.address,
+      }),
+      privateKey: accessPrivateKey,
+    })
+
+    const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
+      signature: SignatureEnvelope.from({
+        userAddress: root.address,
+        inner: SignatureEnvelope.from(signature),
+        type: 'keychain',
+      }),
+    })
+
+    const receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized_signed],
       })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(receipt.status).toBe('success')
 
-      const serialized_signed = TxEnvelopeTempo.serialize(transaction, {
-        signature: SignatureEnvelope.from({
-          userAddress: root.address,
-          inner: SignatureEnvelope.from(signature),
-          type: 'keychain',
-        }),
+    const response = await client
+      .request({
+        method: 'eth_getTransactionByHash',
+        params: [receipt.transactionHash],
       })
+      .then((tx) => Transaction.fromRpc(tx as any))
+    if (!response) throw new Error()
 
-      const receipt = (await client
-        .request({
-          method: 'eth_sendRawTransactionSync',
-          params: [serialized_signed],
-        })
-        .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
-      expect(receipt.status).toBe('success')
+    // isAdmin + account must survive the round trip through the node.
+    expect(response.keyAuthorization?.isAdmin).toBe(true)
+    expect(response.keyAuthorization?.account).toBe(root.address)
 
-      const response = await client
-        .request({
-          method: 'eth_getTransactionByHash',
-          params: [receipt.transactionHash],
-        })
-        .then((tx) => Transaction.fromRpc(tx as any))
-      if (!response) throw new Error()
-
-      // isAdmin + account must survive the round trip through the node.
-      expect(response.keyAuthorization?.isAdmin).toBe(true)
-      expect(response.keyAuthorization?.account).toBe(root.address)
-
-      // The signing hash of the round-tripped authorization equals the
-      // admin-bearing hash.
-      expect(KeyAuthorization.hash(response.keyAuthorization!)).toBe(
-        KeyAuthorization.hash(keyAuth_signed),
-      )
-    },
-  )
+    // The signing hash of the round-tripped authorization equals the
+    // admin-bearing hash.
+    expect(KeyAuthorization.hash(response.keyAuthorization!)).toBe(
+      KeyAuthorization.hash(keyAuth_signed),
+    )
+  })
 
   // TODO: remove skipIf when devnet/testnet have T6.
   test.skipIf(nodeEnv !== 'localnet')(
