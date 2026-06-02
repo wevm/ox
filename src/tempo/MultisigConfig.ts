@@ -33,7 +33,7 @@ const signatureDomain = 'tempo:multisig:signature'
 export type Config<numberType = number> = Compute<{
   /**
    * Caller-chosen 32-byte salt mixed into the permanent config ID. Defaults to
-   * the {@link ox#MultisigConfig.zeroSalt} when omitted.
+   * the zero salt (`MultisigConfig.zeroSalt`) when omitted.
    */
   salt?: Hex.Hex | undefined
   /** Minimum total owner weight required to authorize a transaction. */
