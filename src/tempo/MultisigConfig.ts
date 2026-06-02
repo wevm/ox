@@ -303,8 +303,7 @@ export declare namespace getSignPayload {
  * {@link ox#MultisigConfig.Config}.
  *
  * Preimage (fixed-width big-endian, **not** RLP):
- * `keccak256("tempo:multisig:config" || salt || be_u32(threshold) || be_u32(owners.length)
- * || (owner || be_u32(weight)) for each owner)`.
+ * `keccak256("tempo:multisig:config" || salt || be_u32(threshold) || be_u32(owners.length) || (owner || be_u32(weight)) for each owner)`.
  *
  * @example
  * ```ts twoslash
