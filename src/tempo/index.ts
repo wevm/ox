@@ -52,14 +52,17 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  * import { Channel } from 'ox/tempo'
  *
  * const channel = Channel.from({
- *   expiringNonceHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+ *   expiringNonceHash:
+ *     '0x0000000000000000000000000000000000000000000000000000000000000000',
  *   payee: '0x2222222222222222222222222222222222222222',
  *   payer: '0x1111111111111111111111111111111111111111',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   token: 1n,
+ *   token: 1n
  * })
  *
- * const channelId = Channel.computeId(channel, { chainId: 4217 })
+ * const channelId = Channel.computeId(channel, {
+ *   chainId: 4217
+ * })
  * ```
  *
  * @category Reference
@@ -131,9 +134,15 @@ export * as KeyAuthorization from './KeyAuthorization.js'
  * const config = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     },
+ *     {
+ *       owner: '0x2222222222222222222222222222222222222222',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  *
  * const account = MultisigConfig.getAddress({ config })
@@ -210,7 +219,8 @@ export * as PoolId from './PoolId.js'
  * // @noErrors
  * import { ReceivePolicyReceipt } from 'ox/tempo'
  *
- * const receipts = ReceivePolicyReceipt.fromTransactionReceipt(receipt)
+ * const receipts =
+ *   ReceivePolicyReceipt.fromTransactionReceipt(receipt)
  * const decoded = ReceivePolicyReceipt.decode('0x...')
  * ```
  *

@@ -174,7 +174,9 @@ export declare namespace encode {
  * const a = ReceivePolicyReceipt.from('0x...')
  *
  * // From decoded fields.
- * const b = ReceivePolicyReceipt.from(ReceivePolicyReceipt.decode('0x...'))
+ * const b = ReceivePolicyReceipt.from(
+ *   ReceivePolicyReceipt.decode('0x...')
+ * )
  * ```
  *
  * @param value - An encoded receipt or decoded fields.
@@ -239,7 +241,8 @@ export declare namespace fromLog {
  * // @noErrors
  * import { ReceivePolicyReceipt } from 'ox/tempo'
  *
- * const receipts = ReceivePolicyReceipt.fromTransactionReceipt(receipt)
+ * const receipts =
+ *   ReceivePolicyReceipt.fromTransactionReceipt(receipt)
  * // @log: ['0x...'] (pass each to `claim` / `burn`)
  * ```
  *

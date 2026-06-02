@@ -938,6 +938,11 @@
       "types": "./dist/zod/tempo/KeyAuthorization.d.ts",
       "default": "./dist/zod/tempo/KeyAuthorization.js"
     },
+    "./zod/tempo/MultisigConfig": {
+      "src": "./src/zod/tempo/MultisigConfig.ts",
+      "types": "./dist/zod/tempo/MultisigConfig.d.ts",
+      "default": "./dist/zod/tempo/MultisigConfig.js"
+    },
     "./zod/tempo/PoolId": {
       "src": "./src/zod/tempo/PoolId.ts",
       "types": "./dist/zod/tempo/PoolId.d.ts",

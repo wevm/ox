@@ -72,8 +72,11 @@ export type Tuple = readonly [
  * MultisigConfig.assert({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  * ```
  *
@@ -136,9 +139,15 @@ export declare namespace assert {
  * const config = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
- *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x2222222222222222222222222222222222222222',
+ *       weight: 1
+ *     },
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  * // owners are now sorted ascending by address
  * ```
@@ -172,7 +181,7 @@ export function from<numberType = number>(
  * const config = MultisigConfig.fromTuple([
  *   `0x${'00'.repeat(32)}`,
  *   '0x01',
- *   [['0x1111111111111111111111111111111111111111', '0x01']],
+ *   [['0x1111111111111111111111111111111111111111', '0x01']]
  * ])
  * ```
  *
@@ -206,8 +215,11 @@ export function fromTuple(tuple: Tuple): Config {
  * const config = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  *
  * const address = MultisigConfig.getAddress({ config })
@@ -248,21 +260,24 @@ export declare namespace getAddress {
  * const config = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  * const configId = MultisigConfig.toId(config)
  * const account = MultisigConfig.getAddress({ configId })
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
- *   calls: [],
+ *   calls: []
  * })
  *
  * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  *   account,
- *   configId,
+ *   configId
  * })
  * ```
  *
@@ -312,8 +327,11 @@ export declare namespace getSignPayload {
  * const config = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  *
  * const configId = MultisigConfig.toId(config)
@@ -366,8 +384,11 @@ export declare namespace toId {
  * const tuple = MultisigConfig.toTuple({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  * ```
  *
@@ -396,8 +417,11 @@ export function toTuple(config: Config): Tuple {
  * const valid = MultisigConfig.validate({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  * // @log: true
  * ```

@@ -1227,32 +1227,52 @@ export declare namespace serialize {
  * @example
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
- * import { MultisigConfig, SignatureEnvelope, TxEnvelopeTempo } from 'ox/tempo'
+ * import {
+ *   MultisigConfig,
+ *   SignatureEnvelope,
+ *   TxEnvelopeTempo
+ * } from 'ox/tempo'
  *
  * const config = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *     { owner: '0x2222222222222222222222222222222222222222', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     },
+ *     {
+ *       owner: '0x2222222222222222222222222222222222222222',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  * const configId = MultisigConfig.toId(config)
  * const account = MultisigConfig.getAddress({ configId })
  *
  * const tx = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  * const payload = TxEnvelopeTempo.getSignPayload(tx)
- * const digest = MultisigConfig.getSignPayload({ payload, account, configId })
+ * const digest = MultisigConfig.getSignPayload({
+ *   payload,
+ *   account,
+ *   configId
+ * })
  *
- * const privateKeys = [Secp256k1.randomPrivateKey(), Secp256k1.randomPrivateKey()]
+ * const privateKeys = [
+ *   Secp256k1.randomPrivateKey(),
+ *   Secp256k1.randomPrivateKey()
+ * ]
  * const signatures = privateKeys.map((privateKey) =>
- *   SignatureEnvelope.from(Secp256k1.sign({ payload: digest, privateKey })),
+ *   SignatureEnvelope.from(
+ *     Secp256k1.sign({ payload: digest, privateKey })
+ *   )
  * )
  *
- * const ordered = SignatureEnvelope.sortMultisigApprovals({ // [!code focus]
+ * const ordered = SignatureEnvelope.sortMultisigApprovals({
+ *   // [!code focus]
  *   account, // [!code focus]
  *   configId, // [!code focus]
  *   payload, // [!code focus]
- *   signatures, // [!code focus]
+ *   signatures // [!code focus]
  * }) // [!code focus]
  * ```
  *

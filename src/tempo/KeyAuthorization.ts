@@ -531,7 +531,12 @@ export function fromRpc(authorization: Rpc): Signed {
       })
     : undefined
 
-  return {
+  // TIP-1049 admin fields are paired: only emit both when both are present on
+  // the wire. Orphan fields are dropped since the public API requires both.
+  const adminPair =
+    account !== undefined && isAdmin ? { account, isAdmin: true as const } : {}
+
+  const args: KeyAuthorization = {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
     ...(expiry != null ? { expiry: Number(expiry) } : {}),
@@ -546,9 +551,9 @@ export function fromRpc(authorization: Rpc): Signed {
     signature,
     type: keyType,
     ...(witness !== undefined ? { witness } : {}),
-    ...(isAdmin ? { isAdmin: true } : {}),
-    ...(account !== undefined ? { account } : {}),
+    ...adminPair,
   }
+  return args as Signed
 }
 
 export declare namespace fromRpc {
