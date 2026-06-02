@@ -69,8 +69,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # `edge` tracks `tempoxyz/tempo` main and includes unreleased
+        # features the tests depend on (e.g. TIP-1049 admin keys). The
+        # `latest` tag is pinned to released versions and lags behind.
         tag: 
-          - latest
+          - edge
           # - https://rpc.moderato.tempo.xyz
 
     steps:

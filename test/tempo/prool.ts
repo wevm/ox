@@ -21,10 +21,13 @@ export const rpcUrl = (() => {
 
 export async function createServer() {
   const tag = await (async () => {
-    if (!import.meta.env.VITE_TEMPO_TAG?.startsWith('http'))
-      return import.meta.env.VITE_TEMPO_TAG
+    // Default to `edge` which tracks `tempoxyz/tempo` main and includes
+    // unreleased features the tests depend on (e.g. TIP-1049 admin keys).
+    // The `latest` tag lags behind released versions.
+    const envTag = import.meta.env.VITE_TEMPO_TAG ?? 'edge'
+    if (!envTag.startsWith('http')) return envTag
 
-    const transport = RpcTransport.fromHttp(import.meta.env.VITE_TEMPO_TAG)
+    const transport = RpcTransport.fromHttp(envTag)
     const result = (await transport.request({
       method: 'web3_clientVersion',
     })) as string
