@@ -1210,7 +1210,8 @@ export declare namespace serialize {
  * const payload = TxEnvelopeTempo.getSignPayload(tx)
  * const digest = MultisigConfig.getSignPayload({ payload, account, configId })
  *
- * const signatures = ['0x...', '0x...'].map((privateKey) =>
+ * const privateKeys = [Secp256k1.randomPrivateKey(), Secp256k1.randomPrivateKey()]
+ * const signatures = privateKeys.map((privateKey) =>
  *   SignatureEnvelope.from(Secp256k1.sign({ payload: digest, privateKey })),
  * )
  *
