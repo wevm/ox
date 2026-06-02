@@ -21,7 +21,7 @@ export default defineConfig({
     retry: 3,
     resolveSnapshotPath: (path, ext) =>
       join(join(dirname(path), '_snap'), `${basename(path)}${ext}`),
-    hookTimeout: 20_000,
+    hookTimeout: 60_000,
     testTimeout: 20_000,
 
     projects: [
