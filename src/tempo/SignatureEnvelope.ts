@@ -177,8 +177,8 @@ export type MultisigRpc = {
   account: Address.Address
   /**
    * The permanent multisig config ID (TIP-1061 wire field `config_id`).
-   * Maps to {@link ox#SignatureEnvelope.Multisig.genesisConfigId} on the
-   * typed envelope.
+   * Maps to `genesisConfigId` on the typed
+   * {@link ox#SignatureEnvelope.Multisig} envelope.
    */
   configId: Hex.Hex
   /**
