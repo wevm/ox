@@ -3015,7 +3015,7 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
       return { address, privateKey } as const
     })
 
-    const config = MultisigConfig.from({
+    const genesisConfig = MultisigConfig.from({
       // A fresh random salt yields a distinct account each run, exercising the
       // salt-inclusive config-ID derivation against the node.
       salt: Hex.random(32),
@@ -3025,10 +3025,9 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
         weight: 1,
       })),
     })
-    const configId = MultisigConfig.toId(config)
-    const account = MultisigConfig.getAddress({ configId })
+    const account = MultisigConfig.getAddress(genesisConfig)
 
-    return { account, config, configId, ownerKeys } as const
+    return { account, genesisConfig, ownerKeys } as const
   }
 
   // Signs the multisig owner digest with the provided owner keys, returning
@@ -3036,32 +3035,26 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
   // address (required by the node: "recovered owners must be strictly
   // ascending").
   function approve(parameters: {
-    account: Address.Address
-    configId: Hex.Hex
+    genesisConfig: MultisigConfig.Config
     payload: Hex.Hex
     signers: readonly { privateKey: Hex.Hex }[]
   }) {
-    const { account, configId, payload, signers } = parameters
-    const digest = MultisigConfig.getSignPayload({
-      account,
-      configId,
-      payload,
-    })
+    const { genesisConfig, payload, signers } = parameters
+    const digest = MultisigConfig.getSignPayload({ payload, genesisConfig })
     const signatures = signers.map((signer) =>
       SignatureEnvelope.from(
         Secp256k1.sign({ payload: digest, privateKey: signer.privateKey }),
       ),
     )
     return SignatureEnvelope.sortMultisigApprovals({
-      account,
-      configId,
+      genesisConfig,
       payload,
       signatures,
     })
   }
 
   test('behavior: bootstrap + spend (2-of-3 secp256k1)', async () => {
-    const { account, config, configId, ownerKeys } = setup({
+    const { account, genesisConfig, ownerKeys } = setup({
       count: 3,
       threshold: 2,
     })
@@ -3083,15 +3076,12 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
 
     const bootstrap_signed = TxEnvelopeTempo.serialize(bootstrap, {
       signature: SignatureEnvelope.from({
-        type: 'multisig',
-        account,
-        configId,
-        // The bootstrap config is carried by the signature `init`.
-        init: config,
+        genesisConfig,
+        // Initialize multisig.
+        init: true,
         // Approve with 2 of the 3 owners to satisfy the threshold.
         signatures: approve({
-          account,
-          configId,
+          genesisConfig,
           payload: TxEnvelopeTempo.getSignPayload(bootstrap),
           signers: [ownerKeys[0]!, ownerKeys[1]!],
         }),
@@ -3121,7 +3111,7 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
       // The bootstrap config is carried by the multisig signature `init`.
       expect(
         (response.signature as SignatureEnvelope.Multisig | undefined)?.init,
-      ).toEqual(config)
+      ).toEqual(genesisConfig)
     }
 
     // Spend (subsequent transaction): no signature `init`, nonce 1, uses the
@@ -3143,13 +3133,10 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
 
     const spend_signed = TxEnvelopeTempo.serialize(spend, {
       signature: SignatureEnvelope.from({
-        type: 'multisig',
-        account,
-        configId,
+        genesisConfig,
         // A different 2-of-3 subset still authorizes the transaction.
         signatures: approve({
-          account,
-          configId,
+          genesisConfig,
           payload: TxEnvelopeTempo.getSignPayload(spend),
           signers: [ownerKeys[1]!, ownerKeys[2]!],
         }),
@@ -3168,7 +3155,7 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
   })
 
   test('behavior: rejects below-threshold approvals', async () => {
-    const { account, config, configId, ownerKeys } = setup({
+    const { account, genesisConfig, ownerKeys } = setup({
       count: 3,
       threshold: 2,
     })
@@ -3187,15 +3174,12 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
 
     const serialized_signed = TxEnvelopeTempo.serialize(bootstrap, {
       signature: SignatureEnvelope.from({
-        type: 'multisig',
-        account,
-        configId,
-        // The bootstrap config is carried by the signature `init`.
-        init: config,
+        genesisConfig,
+        // Opt into bootstrap: writes `genesisConfig` into the signature `init`.
+        init: true,
         // Only one approval — below the threshold of 2.
         signatures: approve({
-          account,
-          configId,
+          genesisConfig,
           payload: TxEnvelopeTempo.getSignPayload(bootstrap),
           signers: [ownerKeys[0]!],
         }),

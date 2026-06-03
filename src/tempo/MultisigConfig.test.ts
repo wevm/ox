@@ -30,7 +30,7 @@ describe('from', () => {
   })
 })
 
-describe('configId', () => {
+describe('genesisConfigId', () => {
   test('matches independent ground truth', () => {
     expect(MultisigConfig.toId(singleOwnerConfig)).toMatchInlineSnapshot(
       `"0xd1f20e1a5bfdd89488f57f68db5bd1aae9a51b510f4a042b2604b57a0b7b471d"`,
@@ -65,14 +65,14 @@ describe('configId', () => {
 describe('getAddress', () => {
   test('matches independent ground truth', () => {
     expect(
-      MultisigConfig.getAddress({ config: singleOwnerConfig }),
+      MultisigConfig.getAddress(singleOwnerConfig),
     ).toMatchInlineSnapshot(`"0x6ca655065b1de473d903eebd50e5cb4996e10468"`)
   })
 
-  test('derives from config or configId identically', () => {
-    const configId = MultisigConfig.toId(singleOwnerConfig)
-    expect(MultisigConfig.getAddress({ configId })).toBe(
-      MultisigConfig.getAddress({ config: singleOwnerConfig }),
+  test('derives from positional config or `{ genesisConfigId }` identically', () => {
+    const genesisConfigId = MultisigConfig.toId(singleOwnerConfig)
+    expect(MultisigConfig.getAddress({ genesisConfigId })).toBe(
+      MultisigConfig.getAddress(singleOwnerConfig),
     )
   })
 
@@ -86,17 +86,26 @@ describe('getAddress', () => {
 
 describe('getSignPayload', () => {
   test('matches independent ground truth', () => {
-    const configId = MultisigConfig.toId(singleOwnerConfig)
-    const account = MultisigConfig.getAddress({ configId })
     expect(
       MultisigConfig.getSignPayload({
         payload: `0x${'42'.repeat(32)}`,
-        account,
-        configId,
+        genesisConfig: singleOwnerConfig,
       }),
     ).toMatchInlineSnapshot(
       `"0xe3d66f6118b89a67c71c8137c46abf0c829056a46ee6a038a1b42c84529fc17e"`,
     )
+  })
+
+  test('behavior: `genesisConfig` and `{account, genesisConfigId}` produce identical digests', () => {
+    const genesisConfigId = MultisigConfig.toId(singleOwnerConfig)
+    const account = MultisigConfig.getAddress({ genesisConfigId })
+    const payload = `0x${'42'.repeat(32)}` as const
+    expect(
+      MultisigConfig.getSignPayload({
+        payload,
+        genesisConfig: singleOwnerConfig,
+      }),
+    ).toBe(MultisigConfig.getSignPayload({ payload, account, genesisConfigId }))
   })
 })
 
