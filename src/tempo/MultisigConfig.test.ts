@@ -64,9 +64,9 @@ describe('genesisConfigId', () => {
 
 describe('getAddress', () => {
   test('matches independent ground truth', () => {
-    expect(
-      MultisigConfig.getAddress(singleOwnerConfig),
-    ).toMatchInlineSnapshot(`"0x6ca655065b1de473d903eebd50e5cb4996e10468"`)
+    expect(MultisigConfig.getAddress(singleOwnerConfig)).toMatchInlineSnapshot(
+      `"0x6ca655065b1de473d903eebd50e5cb4996e10468"`,
+    )
   })
 
   test('derives from positional config or `{ genesisConfigId }` identically', () => {

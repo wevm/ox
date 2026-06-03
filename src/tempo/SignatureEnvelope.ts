@@ -1318,7 +1318,8 @@ export function sortMultisigApprovals(
       : {
           payload,
           account: (value as { account: Address.Address }).account,
-          genesisConfigId: (value as { genesisConfigId: Hex.Hex }).genesisConfigId,
+          genesisConfigId: (value as { genesisConfigId: Hex.Hex })
+            .genesisConfigId,
         },
   )
   // Recover each signer once (decorate–sort–undecorate) rather than inside the
