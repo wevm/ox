@@ -3,7 +3,7 @@ import type * as Bytes from '../core/Bytes.js'
 import * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import type { Compute } from '../core/internal/types.js'
+import type { Compute, OneOf } from '../core/internal/types.js'
 
 /** Maximum number of owners allowed in a native multisig config. */
 export const maxOwners = 10
@@ -203,27 +203,53 @@ export function fromTuple(tuple: Tuple): Config {
  * ```ts twoslash
  * import { MultisigConfig } from 'ox/tempo'
  *
- * const config = MultisigConfig.from({
+ * const genesisConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
  *
- * const address = MultisigConfig.getAddress({ config })
+ * const address = MultisigConfig.getAddress(genesisConfig)
  * ```
  *
- * @param value - The config or config ID to derive the address from.
+ * @example
+ * ### From an genesis config ID
+ *
+ * If you already have the permanent `genesisConfigId`, pass it directly:
+ *
+ * ```ts twoslash
+ * import { MultisigConfig } from 'ox/tempo'
+ *
+ * const genesisConfigId =
+ *   `0x${'00'.repeat(32)}` as const
+ *
+ * const address = MultisigConfig.getAddress({ genesisConfigId })
+ * ```
+ *
+ * @param value - The genesis config (positional) or `{ genesisConfigId }`.
  * @returns The multisig account address.
  */
 export function getAddress(value: getAddress.Value): Address.Address {
-  const id = 'configId' in value ? value.configId : toId(value.config)
+  const id =
+    typeof value === 'object' && 'genesisConfigId' in value
+      ? value.genesisConfigId
+      : toId(value)
   const hash = Hash.keccak256(Hex.concat(Hex.fromString(accountDomain), id))
   return Address.from(Hex.slice(hash, 12, 32))
 }
 
 export declare namespace getAddress {
-  type Value = { config: Config } | { configId: Hex.Hex }
+  type Value =
+    | Config
+    | {
+        /**
+         * The permanent genesis config ID (`MultisigConfig.toId(genesisConfig)`).
+         * Config updates never change this value, so it identifies the
+         * account permanently.
+         */
+        genesisConfigId: Hex.Hex
+      }
 
   type ErrorType =
     | toId.ErrorType
@@ -241,18 +267,21 @@ export declare namespace getAddress {
  * where `inner_digest` is the transaction sign payload
  * ({@link ox#TxEnvelopeTempo.(getSignPayload:function)}).
  *
+ * The digest is always keyed on the permanent `account`/`genesisConfigId`
+ * derived from the genesis (bootstrap) config — config updates never change
+ * these values, so the genesis config is the correct input even for
+ * post-update transactions.
+ *
  * @example
  * ```ts twoslash
  * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
  *
- * const config = MultisigConfig.from({
+ * const genesisConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
- * const configId = MultisigConfig.toId(config)
- * const account = MultisigConfig.getAddress({ configId })
  *
  * const envelope = TxEnvelopeTempo.from({
  *   chainId: 1,
@@ -261,8 +290,34 @@ export declare namespace getAddress {
  *
  * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
+ *   genesisConfig,
+ * })
+ * ```
+ *
+ * @example
+ * ### From `account` + `genesisConfigId`
+ *
+ * If you already have the permanent `account` and `genesisConfigId` (for
+ * example, recovered from a stored envelope), pass them directly:
+ *
+ * ```ts twoslash
+ * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
+ *
+ * const genesisConfig = MultisigConfig.from({
+ *   threshold: 1,
+ *   owners: [
+ *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *   ],
+ * })
+ * const genesisConfigId = MultisigConfig.toId(genesisConfig)
+ * const account = MultisigConfig.getAddress(genesisConfig)
+ *
+ * const envelope = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
+ *
+ * const digest = MultisigConfig.getSignPayload({
+ *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  *   account,
- *   configId,
+ *   genesisConfigId,
  * })
  * ```
  *
@@ -270,13 +325,21 @@ export declare namespace getAddress {
  * @returns The owner approval digest.
  */
 export function getSignPayload(value: getSignPayload.Value): Hex.Hex {
-  const { payload, account, configId } = value
+  const { payload } = value
+  const account =
+    'account' in value && value.account
+      ? value.account
+      : getAddress((value as { genesisConfig: Config }).genesisConfig)
+  const genesisConfigId =
+    'genesisConfigId' in value && value.genesisConfigId
+      ? value.genesisConfigId
+      : toId((value as { genesisConfig: Config }).genesisConfig)
   return Hash.keccak256(
     Hex.concat(
       Hex.fromString(signatureDomain),
       Hex.from(payload),
       account,
-      configId,
+      genesisConfigId,
     ),
   )
 }
@@ -285,13 +348,28 @@ export declare namespace getSignPayload {
   type Value = {
     /** The inner transaction sign payload (`tx.signature_hash()`). */
     payload: Hex.Hex | Bytes.Bytes
-    /** The native multisig account address. */
-    account: Address.Address
-    /** The permanent config ID. */
-    configId: Hex.Hex
-  }
+  } & OneOf<
+    | {
+        /** The native multisig account address. */
+        account: Address.Address
+        /** The permanent config ID. */
+        genesisConfigId: Hex.Hex
+      }
+    | {
+        /**
+         * The initial multisig config (the bootstrap config that derived the
+         * permanent `account` and `genesisConfigId`). Used to derive both values
+         * automatically. Config updates never change `account`/`genesisConfigId`,
+         * so the genesis config is also the correct input for post-update
+         * transactions.
+         */
+        genesisConfig: Config
+      }
+  >
 
   type ErrorType =
+    | getAddress.ErrorType
+    | toId.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
     | Hex.from.ErrorType
@@ -316,7 +394,7 @@ export declare namespace getSignPayload {
  *   ],
  * })
  *
- * const configId = MultisigConfig.toId(config)
+ * const genesisConfigId = MultisigConfig.toId(config)
  * ```
  *
  * @param config - The multisig config.
