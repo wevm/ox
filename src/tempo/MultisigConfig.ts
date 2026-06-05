@@ -233,10 +233,11 @@ export function fromTuple(tuple: Tuple): Config {
  * ```ts twoslash
  * import { MultisigConfig } from 'ox/tempo'
  *
- * const genesisConfigId =
- *   `0x${'00'.repeat(32)}` as const
+ * const genesisConfigId = `0x${'00'.repeat(32)}` as const
  *
- * const address = MultisigConfig.getAddress({ genesisConfigId })
+ * const address = MultisigConfig.getAddress({
+ *   genesisConfigId
+ * })
  * ```
  *
  * @param value - The genesis config (positional) or `{ genesisConfigId }`.
@@ -305,7 +306,7 @@ export declare namespace getAddress {
  *
  * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   genesisConfig,
+ *   genesisConfig
  * })
  * ```
  *
@@ -321,18 +322,24 @@ export declare namespace getAddress {
  * const genesisConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  * const genesisConfigId = MultisigConfig.toId(genesisConfig)
  * const account = MultisigConfig.getAddress(genesisConfig)
  *
- * const envelope = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
+ * const envelope = TxEnvelopeTempo.from({
+ *   chainId: 1,
+ *   calls: []
+ * })
  *
  * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
  *   account,
- *   genesisConfigId,
+ *   genesisConfigId
  * })
  * ```
  *

@@ -797,26 +797,29 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  * const genesisConfig = MultisigConfig.from({
  *   threshold: 1,
  *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
+ *     {
+ *       owner: '0x1111111111111111111111111111111111111111',
+ *       weight: 1
+ *     }
+ *   ]
  * })
  *
  * const privateKey = Secp256k1.randomPrivateKey()
  * const signature = SignatureEnvelope.from(
- *   Secp256k1.sign({ payload: '0xdeadbeef', privateKey }),
+ *   Secp256k1.sign({ payload: '0xdeadbeef', privateKey })
  * )
  *
  * // Bootstrap transaction
  * const bootstrap = SignatureEnvelope.from({
  *   genesisConfig,
  *   signatures: [signature],
- *   init: true,
+ *   init: true
  * })
  *
  * // Subsequent (non-bootstrap) transactions
  * const subsequent = SignatureEnvelope.from({
  *   genesisConfig,
- *   signatures: [signature],
+ *   signatures: [signature]
  * })
  * ```
  *
@@ -1335,15 +1338,22 @@ export declare namespace serialize {
  * const tx = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  * const payload = TxEnvelopeTempo.getSignPayload(tx)
  *
- * const privateKeys = [Secp256k1.randomPrivateKey(), Secp256k1.randomPrivateKey()]
- * const digest = MultisigConfig.getSignPayload({ payload, genesisConfig })
+ * const privateKeys = [
+ *   Secp256k1.randomPrivateKey(),
+ *   Secp256k1.randomPrivateKey()
+ * ]
+ * const digest = MultisigConfig.getSignPayload({
+ *   payload,
+ *   genesisConfig
+ * })
  * const signatures = privateKeys.map((privateKey) =>
  *   SignatureEnvelope.from(
  *     Secp256k1.sign({ payload: digest, privateKey })
  *   )
  * )
  *
- * const ordered = SignatureEnvelope.sortMultisigApprovals({ // [!code focus]
+ * const ordered = SignatureEnvelope.sortMultisigApprovals({
+ *   // [!code focus]
  *   genesisConfig, // [!code focus]
  *   payload, // [!code focus]
  *   signatures // [!code focus]
