@@ -75,7 +75,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          pnpm changeset:version
+          pnpm exec changeset version
+          pnpm version:update
           if ! git diff --quiet; then
             git add .changeset package.json src/CHANGELOG.md src/version.ts
             git commit -m "chore: version beta packages"
