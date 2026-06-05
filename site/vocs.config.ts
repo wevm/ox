@@ -5,12 +5,11 @@ import { shikiDark, shikiLight } from './src/shiki-themes'
 
 export default defineConfig({
   accentColor: 'light-dark(#b8421d, #e85d35)',
-  baseUrl:
-    pkg.version.includes('-beta.')
-      ? 'https://v1.oxlib.sh'
-      : process.env.VERCEL_ENV === 'production'
-        ? 'https://oxlib.sh'
-        : process.env.VERCEL_URL,
+  baseUrl: pkg.version.includes('-beta.')
+    ? 'https://v1.oxlib.sh'
+    : process.env.VERCEL_ENV === 'production'
+      ? 'https://oxlib.sh'
+      : process.env.VERCEL_URL,
   title: 'Ox',
   titleTemplate: '%s · Ox',
   description: 'Ethereum Standard Library',

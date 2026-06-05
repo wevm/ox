@@ -22,8 +22,8 @@ catalog:
   '@size-limit/preset-big-lib': ^11.1.4
   '@types/bun': ^1.1.6
   '@types/fs-extra': ^11.0.4
-  '@types/node': ^22.5.4
-  '@vitest/coverage-v8': ^4.0.18
+  '@types/node': 24.10.2
+  '@vitest/coverage-v8': ^4.1.8
   bun: ^1.1.24
   eslint: ^9.9.0
   eslint-plugin-jsdoc: ^50.0.1
@@ -34,6 +34,7 @@ catalog:
   micro-eth-signer: ^0.18.1
   playwright: ^1.58.2
   prool: ~0.2.3
+  rollup: ^4.61.1
   sherif: ^0.11.0
   simple-git-hooks: ^2.11.1
   size-limit: ^11.1.4
@@ -42,10 +43,10 @@ catalog:
   tsx: ^4.17.0
   typescript: ^5.5.4
   viem: ^2.45.0
-  vite: npm:@voidzero-dev/vite-plus-core@0.1.22
-  vite-plus: 0.1.22
-  vitest: npm:@voidzero-dev/vite-plus-test@0.1.22
-  vp: npm:vite-plus@0.1.22
+  vite: npm:@voidzero-dev/vite-plus-core@0.1.24
+  vite-plus: 0.1.24
+  vitest: npm:@voidzero-dev/vite-plus-test@0.1.24
+  vp: npm:vite-plus@0.1.24
   zile: ^0.0.29
   zod: ^4.4.3
 
@@ -63,9 +64,11 @@ minimumReleaseAgeExclude:
   - oxlint
   - oxlint-tsgolint
   - vite-plus
+  - vocs
   - zile
 
 overrides:
+  '@types/node': 24.10.2
   '@babel/helpers@<7.26.10': '>=7.26.10'
   '@babel/runtime@<7.26.10': '>=7.26.10'
   '@microsoft/api-extractor>typescript': ^5.5.4
