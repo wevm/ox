@@ -272,6 +272,7 @@ body > div:has(> div > .twoslash-completion-list) {
 /* Content links: heading text color with an accent underline.
    Skip the blank layout (landing page) which styles its own anchors. */
 [data-v-content] a:not([data-v-anchor]) {
+  font-weight: 500;
   text-decoration: underline;
   text-decoration-color: color-mix(
     in srgb,
