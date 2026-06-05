@@ -140,7 +140,7 @@ export const Keychain = z.object({
 /** Native multisig signature envelope schema. */
 export const Multisig = z.object({
   account: z_Address.Address,
-  configId: z_Hex.Hex,
+  genesisConfigId: z_Hex.Hex,
   init: z.optional(z_MultisigConfig.Config),
   // `signatures` is recursive; type the getter concretely to break the cycle.
   signatures: z.lazy(

@@ -19,6 +19,15 @@ const p256 = {
   type: 'p256',
 } as const
 
+const multisig = {
+  account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+  configId: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  signatures: [
+    core_SignatureEnvelope.serialize(core_SignatureEnvelope.fromRpc(secp256k1)),
+  ],
+  type: 'multisig',
+} as const
+
 describe('SignatureEnvelope', () => {
   test('decodes a secp256k1 envelope', () => {
     expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, secp256k1)).toEqual(
@@ -43,8 +52,21 @@ describe('SignatureEnvelope', () => {
     )
   })
 
+  test('decodes a multisig envelope', () => {
+    expect(z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)).toEqual(
+      core_SignatureEnvelope.fromRpc(multisig),
+    )
+  })
+
   test('round-trips secp256k1 via encode', () => {
     const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, secp256k1)
+    expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
+      core_SignatureEnvelope.toRpc(decoded),
+    )
+  })
+
+  test('round-trips multisig via encode', () => {
+    const decoded = z.decode(z_SignatureEnvelope.SignatureEnvelope, multisig)
     expect(z.encode(z_SignatureEnvelope.SignatureEnvelope, decoded)).toEqual(
       core_SignatureEnvelope.toRpc(decoded),
     )
