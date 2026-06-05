@@ -3,16 +3,14 @@ import pkg from '../package.json' with { type: 'json' }
 import { sidebar, topNav } from './src/config-generated'
 import { shikiDark, shikiLight } from './src/shiki-themes'
 
-const baseUrl =
-  process.env.VERCEL_GIT_COMMIT_REF === 'v1'
-    ? 'https://v1.oxlib.sh'
-    : process.env.VERCEL_ENV === 'production'
-      ? 'https://oxlib.sh'
-      : process.env.VERCEL_URL
-
 export default defineConfig({
   accentColor: 'light-dark(#b8421d, #e85d35)',
-  baseUrl,
+  baseUrl:
+    pkg.version.includes('-beta.')
+      ? 'https://v1.oxlib.sh'
+      : process.env.VERCEL_ENV === 'production'
+        ? 'https://oxlib.sh'
+        : process.env.VERCEL_URL,
   title: 'Ox',
   titleTemplate: '%s · Ox',
   description: 'Ethereum Standard Library',
