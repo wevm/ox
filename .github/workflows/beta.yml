@@ -1,0 +1,48 @@
+name: Beta
+on:
+  push:
+    branches: [v1]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish beta
+    if: >-
+      github.repository == 'wevm/ox' &&
+      (github.event_name == 'workflow_dispatch' ||
+      github.event.head_commit.message != 'chore: version beta packages')
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Version and publish beta
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          npm config set "//registry.npmjs.org/:_authToken" "$NPM_TOKEN"
+          pnpm changeset:version
+          if ! git diff --quiet; then
+            git add .changeset package.json src/CHANGELOG.md src/version.ts
+            git commit -m "chore: version beta packages"
+            git push
+          fi
+          pnpm changeset:publish
