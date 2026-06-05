@@ -201,6 +201,12 @@ body,
   mask-repeat: repeat;
 }
 
+.landing-primary-cta,
+.landing-primary-cta * {
+  color: var(--background-color-primary) !important;
+  text-decoration-color: transparent !important;
+}
+
 /* Shiki dual-theme color-scheme switching for inline-rendered snippets. */
 .install-shiki .shiki,
 .install-shiki .shiki span {
