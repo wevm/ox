@@ -1,21 +1,23 @@
 name: Changesets
 on:
   push:
-    branches: [main]
+    branches: [main, v1]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
   verify:
     name: Verify
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/verify.yml
     secrets: inherit
 
   changesets:
     name: Changesets
     needs: verify
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
       id-token: write
@@ -44,3 +46,39 @@ jobs:
           version: pnpm changeset:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  beta:
+    name: Publish beta
+    if: >-
+      github.repository == 'wevm/ox' &&
+      github.ref == 'refs/heads/v1' &&
+      github.event.head_commit.message != 'chore: version beta packages'
+    permissions:
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Version and publish beta
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          pnpm changeset:version
+          if ! git diff --quiet; then
+            git add .changeset package.json src/CHANGELOG.md src/version.ts
+            git commit -m "chore: version beta packages"
+            git push
+          fi
+          pnpm changeset:publish

@@ -12,7 +12,7 @@ autoInstallPeers: false
 catalog:
   '@ark/attest': ^0.16.0
   '@changesets/changelog-github': ^0.5.0
-  '@changesets/cli': ^2.27.7
+  '@changesets/cli': ^2.31.0
   '@fast-check/vitest': ^0.3.0
   '@microsoft/api-extractor': ^7.47.7
   '@microsoft/api-extractor-model': ^7.29.6
