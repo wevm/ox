@@ -269,7 +269,7 @@ export function Landing({
               <Link
                 to="/installation"
                 style={{ color: 'var(--background-color-primary)' }}
-                className="landing-primary-cta group inline-flex items-center gap-2 border border-dashed border-[var(--text-color-primary)] bg-[var(--text-color-primary)] px-[22px] py-3 text-[14px] font-medium transition hover:bg-[var(--text-color-strong)]"
+                className="landing-primary-cta group inline-flex items-center gap-2 border border-dashed border-[var(--text-color-primary)] bg-[var(--text-color-primary)] px-[22px] py-3 text-[14px] font-semibold transition hover:bg-[var(--text-color-strong)]"
               >
                 Read the docs
                 <svg
