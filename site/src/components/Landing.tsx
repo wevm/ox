@@ -14,6 +14,7 @@ import IconLock from '~icons/lucide/lock'
 import IconPenLine from '~icons/lucide/pen-line'
 import IconPlug from '~icons/lucide/plug'
 import IconSend from '~icons/lucide/send'
+import IconShieldCheck from '~icons/lucide/shield-check'
 import IconSignature from '~icons/lucide/signature'
 import IconWallet from '~icons/lucide/wallet'
 import IconBun from '~icons/vscode-icons/file-type-bun'
@@ -135,6 +136,13 @@ const modules: Module[] = [
     icon: IconPlug,
     desc: 'Wrap any EIP-1193 provider with type-safe requests and structured errors.',
     docHref: '/api/Provider',
+  },
+  {
+    id: 'zod',
+    name: 'Zod',
+    icon: IconShieldCheck,
+    desc: 'Validate, decode, and encode Ethereum JSON-RPC shapes with composable Zod schemas.',
+    docHref: '/guides/zod',
   },
   {
     id: 'secp256k1',
