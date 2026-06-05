@@ -20,6 +20,7 @@ import IconBun from '~icons/vscode-icons/file-type-bun'
 import IconNpm from '~icons/vscode-icons/file-type-npm'
 import IconPnpm from '~icons/vscode-icons/file-type-pnpm'
 import { type ComponentType, type SVGProps, useState } from 'react'
+import { Link } from 'vocs'
 
 type Pkg = 'npm' | 'pnpm' | 'bun'
 
@@ -265,8 +266,8 @@ export function Landing({
               built on.
             </p>
             <div className="mb-10 flex flex-wrap gap-3">
-              <a
-                href="/installation"
+              <Link
+                to="/installation"
                 style={{ color: 'var(--background-color-primary)' }}
                 className="group inline-flex items-center gap-2 border border-dashed border-[var(--text-color-primary)] bg-[var(--text-color-primary)] px-[22px] py-3 text-[14px] font-medium transition hover:bg-[var(--text-color-strong)]"
               >
@@ -284,7 +285,7 @@ export function Landing({
                 >
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
-              </a>
+              </Link>
               <a
                 href="https://github.com/wevm/ox"
                 className="inline-flex items-center gap-2 border border-dashed border-primary bg-elevated px-[22px] py-3 text-[14px] font-medium text-primary transition hover:border-hover hover:bg-surface"
