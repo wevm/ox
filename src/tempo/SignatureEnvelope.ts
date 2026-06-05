@@ -86,7 +86,7 @@ export type GetType<
               ? 'keychain'
               : envelope extends {
                     account: Address.Address
-                    configId: `0x${string}`
+                    genesisConfigId: `0x${string}`
                     signatures: any
                   }
                 ? 'multisig'
@@ -173,7 +173,7 @@ export type Multisig<numberType = number> = {
   /** Native multisig account address. */
   account: Address.Address
   /** Permanent config ID derived from the initial multisig config. */
-  configId: Hex.Hex
+  genesisConfigId: Hex.Hex
   /** Primitive owner approvals over the multisig owner approval digest. */
   signatures: readonly SignatureEnvelope<numberType>[]
   /**
@@ -187,6 +187,11 @@ export type Multisig<numberType = number> = {
 export type MultisigRpc = {
   type: 'multisig'
   account: Address.Address
+  /**
+   * The permanent multisig config ID (TIP-1061 wire field `config_id`).
+   * Maps to `genesisConfigId` on the typed
+   * {@link ox#SignatureEnvelope.Multisig} envelope.
+   */
   configId: Hex.Hex
   /**
    * Encoded primitive owner approvals (raw serialized signatures), matching the
@@ -340,7 +345,7 @@ export function assert(envelope: PartialBy<SignatureEnvelope, 'type'>): void {
     const multisig = envelope as Multisig
     const missing: string[] = []
     if (!multisig.account) missing.push('account')
-    if (!multisig.configId) missing.push('configId')
+    if (!multisig.genesisConfigId) missing.push('genesisConfigId')
     if (!Array.isArray(multisig.signatures)) missing.push('signatures')
     if (missing.length > 0)
       throw new MissingPropertiesError({ envelope, missing, type: 'multisig' })
@@ -625,10 +630,10 @@ export function deserialize(value: Serialized): SignatureEnvelope {
   }
 
   if (typeId === serializedMultisigType) {
-    // Wire format: `0x05 || rlp([account, configId, signatures, init])`. `init`
+    // Wire format: `0x05 || rlp([account, genesisConfigId, signatures, init])`. `init`
     // is optional: absent when the element is missing or the `0x80` placeholder
     // (decoded as the empty string `0x`), otherwise the bootstrap config list.
-    const [account, configId, signatures, init] = Rlp.toHex(data) as [
+    const [account, genesisConfigId, signatures, init] = Rlp.toHex(data) as [
       Hex.Hex,
       Hex.Hex,
       readonly Hex.Hex[],
@@ -637,7 +642,7 @@ export function deserialize(value: Serialized): SignatureEnvelope {
     return {
       type: 'multisig',
       account,
-      configId,
+      genesisConfigId,
       signatures: signatures.map((signature) => deserialize(signature)),
       ...(init && init !== '0x'
         ? {
@@ -778,6 +783,43 @@ export function deserialize(value: Serialized): SignatureEnvelope {
  * })
  * ```
  *
+ * @example
+ * ### Multisig (from genesis config)
+ *
+ * Pass `genesisConfig` to derive `account` and `genesisConfigId` automatically.
+ * Set `init: true` to opt into bootstrap (uses `genesisConfig` as the
+ * bootstrap `init`); omit `init` for subsequent (non-bootstrap) transactions.
+ *
+ * ```ts twoslash
+ * import { Secp256k1 } from 'ox'
+ * import { MultisigConfig, SignatureEnvelope } from 'ox/tempo'
+ *
+ * const genesisConfig = MultisigConfig.from({
+ *   threshold: 1,
+ *   owners: [
+ *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
+ *   ],
+ * })
+ *
+ * const privateKey = Secp256k1.randomPrivateKey()
+ * const signature = SignatureEnvelope.from(
+ *   Secp256k1.sign({ payload: '0xdeadbeef', privateKey }),
+ * )
+ *
+ * // Bootstrap transaction
+ * const bootstrap = SignatureEnvelope.from({
+ *   genesisConfig,
+ *   signatures: [signature],
+ *   init: true,
+ * })
+ *
+ * // Subsequent (non-bootstrap) transactions
+ * const subsequent = SignatureEnvelope.from({
+ *   genesisConfig,
+ *   signatures: [signature],
+ * })
+ * ```
+ *
  * @param value - The value to coerce (either a hex string or signature envelope).
  * @returns The signature envelope.
  */
@@ -799,20 +841,42 @@ export function from<const value extends from.Value>(
   const type = getType(value)
 
   if (type === 'multisig') {
-    const multisig = value as Multisig
+    const multisig = value as Multisig & {
+      genesisConfig?: MultisigConfig.Config | undefined
+      init?: MultisigConfig.Config | boolean | undefined
+    }
+    const { genesisConfig, init, ...rest } = multisig
+    // Derive `account`/`genesisConfigId` from `genesisConfig` when not provided
+    // explicitly.
+    const account = (() => {
+      if (rest.account) return rest.account
+      if (genesisConfig) return MultisigConfig.getAddress(genesisConfig)
+      return rest.account
+    })()
+    const genesisConfigId = (() => {
+      if (rest.genesisConfigId) return rest.genesisConfigId
+      if (genesisConfig) return MultisigConfig.toId(genesisConfig)
+      return rest.genesisConfigId
+    })()
+    // `init: true` opts into bootstrap using the supplied `genesisConfig`.
+    // Otherwise, `init` is treated as the explicit bootstrap config (or
+    // omitted).
+    const initSource = init === true ? genesisConfig : init || undefined
     return {
-      ...multisig,
-      signatures: multisig.signatures.map((signature) => from(signature)),
+      ...rest,
+      account,
+      genesisConfigId,
+      signatures: rest.signatures.map((signature) => from(signature)),
       // Normalize the bootstrap config (sorts owners, defaults the salt) so the
       // in-memory envelope matches what `deserialize` reconstructs.
-      ...(multisig.init ? { init: MultisigConfig.from(multisig.init) } : {}),
+      ...(initSource ? { init: MultisigConfig.from(initSource) } : {}),
       type,
     } as never
   }
 
   return {
     ...value,
-    ...(type === 'p256' ? { prehash: value.prehash } : {}),
+    ...(type === 'p256' ? { prehash: (value as P256).prehash } : {}),
     ...(type === 'keychain'
       ? {
           ...(!(
@@ -852,10 +916,24 @@ export declare namespace from {
     payload?: Hex.Hex | Bytes.Bytes | undefined
   }
 
+  /**
+   * Multisig envelope input variant where `account` and `genesisConfigId` are derived
+   * from the supplied `genesisConfig`. Pass `init: true` to opt into bootstrap
+   * (uses `genesisConfig` as the bootstrap `init`); omit `init` for subsequent
+   * (non-bootstrap) transactions.
+   */
+  type MultisigFromGenesisConfig = {
+    type?: 'multisig' | undefined
+    genesisConfig: MultisigConfig.Config
+    signatures: readonly SignatureEnvelope[]
+    init?: MultisigConfig.Config | boolean | undefined
+  }
+
   type Value =
     | UnionPartialBy<SignatureEnvelope, 'prehash' | 'type'>
     | Secp256k1Flat
     | Serialized
+    | MultisigFromGenesisConfig
 
   type ReturnValue<value extends Value> = Compute<
     OneOf<
@@ -863,16 +941,18 @@ export declare namespace from {
         ? SignatureEnvelope
         : value extends Secp256k1Flat
           ? Secp256k1
-          : IsNarrowable<value, SignatureEnvelope> extends true
-            ? SignatureEnvelope
-            : Assign<
-                value,
-                {
-                  readonly type: GetType<value>
-                } & (GetType<value> extends 'keychain'
-                  ? { keyId?: Address.Address | undefined }
-                  : {})
-              >
+          : value extends MultisigFromGenesisConfig
+            ? Multisig
+            : IsNarrowable<value, SignatureEnvelope> extends true
+              ? SignatureEnvelope
+              : Assign<
+                  value,
+                  {
+                    readonly type: GetType<value>
+                  } & (GetType<value> extends 'keychain'
+                    ? { keyId?: Address.Address | undefined }
+                    : {})
+                >
     >
   >
 }
@@ -988,7 +1068,9 @@ export function fromRpc(envelope: SignatureEnvelopeRpc): SignatureEnvelope {
     return {
       type: 'multisig',
       account: multisig.account,
-      configId: multisig.configId,
+      // Map RPC wire field `configId` (TIP-1061 spec name) to the typed
+      // envelope's `genesisConfigId`.
+      genesisConfigId: multisig.configId,
       // Owner approvals are raw serialized signatures (node `Vec<Bytes>`).
       signatures: multisig.signatures.map((signature) =>
         deserialize(signature),
@@ -1079,8 +1161,8 @@ export function getType<
 
   // Detect Multisig signature
   if (
-    'account' in envelope &&
-    'configId' in envelope &&
+    (('account' in envelope && 'genesisConfigId' in envelope) ||
+      'genesisConfig' in envelope) &&
     'signatures' in envelope
   )
     return 'multisig' as never
@@ -1184,7 +1266,7 @@ export function serialize(
 
   if (type === 'multisig') {
     const multisig = envelope as Multisig
-    // Format: `0x05 || rlp([account, configId, signatures, init])`, where each
+    // Format: `0x05 || rlp([account, genesisConfigId, signatures, init])`, where each
     // owner approval is an encoded primitive signature. `init` is the bootstrap
     // config (an RLP list) when present, otherwise the canonical empty-string
     // placeholder (`0x` → RLP `0x80`).
@@ -1192,7 +1274,7 @@ export function serialize(
       serializedMultisigType,
       Rlp.fromHex([
         multisig.account,
-        multisig.configId,
+        multisig.genesisConfigId,
         multisig.signatures.map((signature) => serialize(signature)),
         multisig.init ? MultisigConfig.toTuple(multisig.init) : '0x',
       ]),
@@ -1224,6 +1306,9 @@ export declare namespace serialize {
  * recovered owner address. Works for any owner key type (secp256k1, p256,
  * webAuthn, keychain).
  *
+ * Config updates never change `account`/`genesisConfigId`, so the genesis
+ * config is the correct input even for post-update transactions.
+ *
  * @example
  * ```ts twoslash
  * import { Secp256k1 } from 'ox'
@@ -1233,7 +1318,7 @@ export declare namespace serialize {
  *   TxEnvelopeTempo
  * } from 'ox/tempo'
  *
- * const config = MultisigConfig.from({
+ * const genesisConfig = MultisigConfig.from({
  *   threshold: 2,
  *   owners: [
  *     {
@@ -1246,31 +1331,20 @@ export declare namespace serialize {
  *     }
  *   ]
  * })
- * const configId = MultisigConfig.toId(config)
- * const account = MultisigConfig.getAddress({ configId })
  *
  * const tx = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  * const payload = TxEnvelopeTempo.getSignPayload(tx)
- * const digest = MultisigConfig.getSignPayload({
- *   payload,
- *   account,
- *   configId
- * })
  *
- * const privateKeys = [
- *   Secp256k1.randomPrivateKey(),
- *   Secp256k1.randomPrivateKey()
- * ]
+ * const privateKeys = [Secp256k1.randomPrivateKey(), Secp256k1.randomPrivateKey()]
+ * const digest = MultisigConfig.getSignPayload({ payload, genesisConfig })
  * const signatures = privateKeys.map((privateKey) =>
  *   SignatureEnvelope.from(
  *     Secp256k1.sign({ payload: digest, privateKey })
  *   )
  * )
  *
- * const ordered = SignatureEnvelope.sortMultisigApprovals({
- *   // [!code focus]
- *   account, // [!code focus]
- *   configId, // [!code focus]
+ * const ordered = SignatureEnvelope.sortMultisigApprovals({ // [!code focus]
+ *   genesisConfig, // [!code focus]
  *   payload, // [!code focus]
  *   signatures // [!code focus]
  * }) // [!code focus]
@@ -1282,12 +1356,17 @@ export declare namespace serialize {
 export function sortMultisigApprovals(
   value: sortMultisigApprovals.Value,
 ): readonly SignatureEnvelope[] {
-  const { account, configId, payload, signatures } = value
-  const digest = MultisigConfig.getSignPayload({
-    account,
-    configId,
-    payload,
-  })
+  const { payload, signatures } = value
+  const digest = MultisigConfig.getSignPayload(
+    'genesisConfig' in value && value.genesisConfig
+      ? { payload, genesisConfig: value.genesisConfig }
+      : {
+          payload,
+          account: (value as { account: Address.Address }).account,
+          genesisConfigId: (value as { genesisConfigId: Hex.Hex })
+            .genesisConfigId,
+        },
+  )
   // Recover each signer once (decorate–sort–undecorate) rather than inside the
   // comparator.
   return signatures
@@ -1301,15 +1380,26 @@ export function sortMultisigApprovals(
 
 export declare namespace sortMultisigApprovals {
   type Value = {
-    /** The native multisig account address. */
-    account: Address.Address
-    /** The permanent config ID. */
-    configId: Hex.Hex
     /** The inner transaction sign payload (`tx.signature_hash()`). */
     payload: Hex.Hex | Bytes.Bytes
     /** The primitive owner approvals to order. */
     signatures: readonly SignatureEnvelope[]
-  }
+  } & OneOf<
+    | {
+        /** The native multisig account address. */
+        account: Address.Address
+        /** The permanent config ID. */
+        genesisConfigId: Hex.Hex
+      }
+    | {
+        /**
+         * The initial multisig config (the bootstrap config that derived the
+         * permanent `account` and `genesisConfigId`). Used to derive both values
+         * automatically.
+         */
+        genesisConfig: MultisigConfig.Config
+      }
+  >
 
   type ErrorType =
     | MultisigConfig.getSignPayload.ErrorType
@@ -1393,7 +1483,9 @@ export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
     return {
       type: 'multisig',
       account: multisig.account,
-      configId: multisig.configId,
+      // Map the typed envelope's `genesisConfigId` to the RPC wire field
+      // `configId` (TIP-1061 spec name).
+      configId: multisig.genesisConfigId,
       // Owner approvals are raw serialized signatures (node `Vec<Bytes>`).
       signatures: multisig.signatures.map((signature) => serialize(signature)),
       ...(multisig.init ? { init: multisig.init } : {}),

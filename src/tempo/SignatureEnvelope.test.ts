@@ -1113,6 +1113,80 @@ describe('from', () => {
       expect(envelope.keyId).toBe(explicitKeyId)
     })
   })
+
+  describe('multisig', () => {
+    const genesisConfig = MultisigConfig.from({
+      threshold: 1,
+      owners: [
+        {
+          owner: '0x1111111111111111111111111111111111111111',
+          weight: 1,
+        },
+      ],
+    })
+
+    test('behavior: derives `account`/`genesisConfigId` from `genesisConfig`', () => {
+      const envelope = SignatureEnvelope.from({
+        genesisConfig,
+        signatures: [SignatureEnvelope.from(signature_secp256k1)],
+      })
+
+      expect(envelope).toMatchObject({
+        type: 'multisig',
+        account: MultisigConfig.getAddress(genesisConfig),
+        genesisConfigId: MultisigConfig.toId(genesisConfig),
+      })
+      expect('genesisConfig' in envelope).toBe(false)
+      expect((envelope as SignatureEnvelope.Multisig).init).toBeUndefined()
+    })
+
+    test('behavior: `init: true` opts into bootstrap (uses `genesisConfig` as `init`)', () => {
+      const envelope = SignatureEnvelope.from({
+        genesisConfig,
+        signatures: [SignatureEnvelope.from(signature_secp256k1)],
+        init: true,
+      })
+
+      expect((envelope as SignatureEnvelope.Multisig).init).toEqual(
+        genesisConfig,
+      )
+    })
+
+    test('behavior: `init` accepts an explicit config', () => {
+      const otherConfig = MultisigConfig.from({
+        threshold: 1,
+        owners: [
+          {
+            owner: '0x2222222222222222222222222222222222222222',
+            weight: 1,
+          },
+        ],
+      })
+      const envelope = SignatureEnvelope.from({
+        genesisConfig,
+        signatures: [SignatureEnvelope.from(signature_secp256k1)],
+        init: otherConfig,
+      })
+
+      expect((envelope as SignatureEnvelope.Multisig).init).toEqual(otherConfig)
+    })
+
+    test('behavior: `{account, genesisConfigId}` form still works', () => {
+      const account = MultisigConfig.getAddress(genesisConfig)
+      const genesisConfigId = MultisigConfig.toId(genesisConfig)
+      const envelope = SignatureEnvelope.from({
+        account,
+        genesisConfigId,
+        signatures: [SignatureEnvelope.from(signature_secp256k1)],
+      })
+
+      expect(envelope).toMatchObject({
+        type: 'multisig',
+        account,
+        genesisConfigId,
+      })
+    })
+  })
 })
 
 describe('getType', () => {
@@ -1722,33 +1796,40 @@ describe('serialize', () => {
 })
 
 describe('sortMultisigApprovals', () => {
-  const account = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as const
-  const configId = `0x${'11'.repeat(32)}` as const
-  const payload = `0x${'42'.repeat(32)}` as const
-  const digest = MultisigConfig.getSignPayload({
-    account,
-    configId,
-    payload,
-  })
-
-  const owners = Array.from({ length: 3 }, () => {
+  // Build owner key pairs first so we can construct a real genesis config
+  // whose owner set matches the keys that produce the approvals below.
+  const ownerKeys = Array.from({ length: 3 }, () => {
     const privateKey = Secp256k1.randomPrivateKey()
     const address = Address.fromPublicKey(
       Secp256k1.getPublicKey({ privateKey }),
     )
-    const signature = SignatureEnvelope.from(
-      Secp256k1.sign({ payload: digest, privateKey }),
-    )
-    return { address, signature } as const
+    return { address, privateKey } as const
   })
-  const ascending = [...owners].sort((a, b) =>
+  const ascendingOwners = [...ownerKeys].sort((a, b) =>
     Hex.toBigInt(a.address) < Hex.toBigInt(b.address) ? -1 : 1,
   )
 
+  const genesisConfig = MultisigConfig.from({
+    threshold: 2,
+    owners: ascendingOwners.map((o) => ({ owner: o.address, weight: 1 })),
+  })
+  const payload = `0x${'42'.repeat(32)}` as const
+  const digest = MultisigConfig.getSignPayload({ payload, genesisConfig })
+
+  const owners = ownerKeys.map((owner) => ({
+    address: owner.address,
+    signature: SignatureEnvelope.from(
+      Secp256k1.sign({ payload: digest, privateKey: owner.privateKey }),
+    ),
+  }))
+  const ascending = ascendingOwners.map((o) => ({
+    address: o.address,
+    signature: owners.find((x) => x.address === o.address)!.signature,
+  }))
+
   test('behavior: orders approvals ascending by recovered owner address', () => {
     const ordered = SignatureEnvelope.sortMultisigApprovals({
-      account,
-      configId,
+      genesisConfig,
       payload,
       // Provide approvals in reverse of the canonical order.
       signatures: [...ascending].reverse().map((owner) => owner.signature),
@@ -1760,8 +1841,7 @@ describe('sortMultisigApprovals', () => {
     const signatures = ascending.map((owner) => owner.signature)
     expect(
       SignatureEnvelope.sortMultisigApprovals({
-        account,
-        configId,
+        genesisConfig,
         payload,
         signatures,
       }),
@@ -1770,8 +1850,7 @@ describe('sortMultisigApprovals', () => {
 
   test('behavior: recovered order matches the config owner order', () => {
     const ordered = SignatureEnvelope.sortMultisigApprovals({
-      account,
-      configId,
+      genesisConfig,
       payload,
       signatures: owners.map((owner) => owner.signature),
     })
@@ -1779,6 +1858,25 @@ describe('sortMultisigApprovals', () => {
       SignatureEnvelope.extractAddress({ payload: digest, signature }),
     )
     expect(recovered).toEqual(ascending.map((owner) => owner.address))
+  })
+
+  test('behavior: `genesisConfig` and `{account, genesisConfigId}` produce identical ordering', () => {
+    const account = MultisigConfig.getAddress(genesisConfig)
+    const genesisConfigId = MultisigConfig.toId(genesisConfig)
+    const signatures = owners.map((owner) => owner.signature)
+
+    const fromConfig = SignatureEnvelope.sortMultisigApprovals({
+      genesisConfig,
+      payload,
+      signatures,
+    })
+    const fromIds = SignatureEnvelope.sortMultisigApprovals({
+      account,
+      genesisConfigId,
+      payload,
+      signatures,
+    })
+    expect(fromConfig).toEqual(fromIds)
   })
 })
 
@@ -2785,7 +2883,7 @@ describe('CoercionError', () => {
 
 describe('multisig', () => {
   const account = '0x8ba6d26ff5c4e82ba0c8caf8c8ca794e1489a7ae'
-  const configId =
+  const genesisConfigId =
     '0x01781fe551182476f2422c759e82d81c92e3263737afbbad57def6e8b69d21f5'
 
   // P256 signatures do not carry `yParity` in the wire format, so use a clean
@@ -2799,7 +2897,7 @@ describe('multisig', () => {
   const envelope = SignatureEnvelope.from({
     type: 'multisig',
     account,
-    configId,
+    genesisConfigId,
     signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
   })
 
@@ -2853,7 +2951,7 @@ describe('multisig', () => {
     const bootstrapEnvelope = SignatureEnvelope.from({
       type: 'multisig',
       account,
-      configId,
+      genesisConfigId,
       signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
       init,
     })
@@ -2869,7 +2967,7 @@ describe('multisig', () => {
       const salted = SignatureEnvelope.from({
         type: 'multisig',
         account,
-        configId,
+        genesisConfigId,
         signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
         init: { ...init, salt: `0x${'42'.repeat(32)}` },
       })
@@ -2923,7 +3021,7 @@ describe('multisig', () => {
         SignatureEnvelope.assert({
           type: 'multisig',
           account,
-          configId,
+          genesisConfigId,
           signatures: [],
           init: { threshold: 1, owners: [] },
         } as never),

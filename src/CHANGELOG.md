@@ -1,5 +1,11 @@
 # ox
 
+## 0.14.29
+
+### Patch Changes
+
+- [#268](https://github.com/wevm/ox/pull/268) [`ed93945`](https://github.com/wevm/ox/commit/ed93945197dd505d4848535de72a93c225fa8466) Thanks [@jxom](https://github.com/jxom)! - `viem/tempo`: Added `genesisConfig` shorthand to TIP-1061 multisig helpers and renamed `configId` → `genesisConfigId` on the typed `SignatureEnvelope.Multisig`.
+
 ## 0.14.28
 
 ### Patch Changes
