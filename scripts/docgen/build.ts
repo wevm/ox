@@ -117,6 +117,7 @@ type NamespaceItem = {
   docComment:
     | Pick<NonNullable<ReturnType<typeof processDocComment>>, 'summary'>
     | undefined
+  link: string
   name: string
   sidebarItem: SidebarItem
 }[]
@@ -142,7 +143,7 @@ for (const namespace of namespaces) {
     filePath,
   ).replace(/\/?index\.ts?$/, '')
 
-  const items = []
+  const items: SidebarItem[] = [{ text: 'Overview', link: baseLink }]
   const errors: ModuleItem[] = []
   const functions: ModuleItem[] = []
   const types: ModuleItem[] = []
@@ -226,11 +227,11 @@ for (const namespace of namespaces) {
   namespaceMap[entrypointCategory][category] ??= []
   namespaceMap[entrypointCategory][category].push({
     docComment,
+    link: baseLink,
     name,
     sidebarItem: {
       collapsed: true,
       items,
-      link: baseLink,
       text: name,
     },
   })
@@ -281,7 +282,7 @@ function writeZodPage(options: {
   const dir = `${pagesDir}${baseLink}`
   fs.ensureDirSync(dir)
 
-  const items: SidebarItem[] = []
+  const items: SidebarItem[] = [{ text: 'Overview', link: baseLink }]
   const variables: ZodMember[] = []
   const functions: ZodMember[] = []
   const types: ZodMember[] = []
@@ -367,8 +368,9 @@ function writeZodPage(options: {
   namespaceMap[zodEntrypointCategory][category] ??= []
   namespaceMap[zodEntrypointCategory][category].push({
     docComment: { summary: summary ?? `${displayName} schemas.` },
+    link: baseLink,
     name: sidebarText,
-    sidebarItem: { collapsed: true, items, link: baseLink, text: sidebarText },
+    sidebarItem: { collapsed: true, items, text: sidebarText },
   })
 }
 
@@ -430,6 +432,7 @@ function writeZodInlinePage(options: {
   namespaceMap[zodEntrypointCategory][category] ??= []
   namespaceMap[zodEntrypointCategory][category].push({
     docComment: { summary: summary ?? `${displayName} schemas.` },
+    link: baseLink,
     name: sidebarText,
     sidebarItem: { link: baseLink, text: sidebarText },
   })
@@ -574,7 +577,7 @@ for (const namespace of namespaceEntries) {
       const description = item.docComment?.summary
         .split('\n\n')[0]
         ?.replaceAll('\n', ' ')
-      content += `| [${escapeTableCell(item.name)}](${item.sidebarItem.link}) | ${escapeTableCell(description)} |\n`
+      content += `| [${escapeTableCell(item.name)}](${item.link}) | ${escapeTableCell(description)} |\n`
     }
   }
 
