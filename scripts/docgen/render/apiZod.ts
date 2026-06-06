@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import * as model from '@microsoft/api-extractor-model'
 
+import { frontmatter, toMetaDescription } from '../utils/description.js'
 import { type Data, getId } from '../utils/model.js'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
@@ -135,7 +136,11 @@ export function renderZodMemberPage(options: {
   const { data, displayName, member } = options
   const fullName = `${displayName}.${data.displayName}`
 
-  const content = [`# ${fullName}`]
+  const description = toMetaDescription(
+    data.comment?.description ?? data.comment?.summary,
+    { fallback: `${fullName} schema reference` },
+  )
+  const content = [frontmatter({ description }), `# ${fullName}`]
   if (data.comment?.summary) content.push(data.comment.summary)
 
   content.push(renderImports(fullName))
@@ -193,7 +198,10 @@ export function renderZodNamespace(options: {
     variablesTitle = 'Schemas',
   } = options
 
-  const content = ['---\nshowOutline: 1\n---', `# ${title}`]
+  const description = toMetaDescription(summary, {
+    fallback: `${title} schemas`,
+  })
+  const content = [frontmatter({ showOutline: 1, description }), `# ${title}`]
   if (summary) content.push(summary)
 
   for (const section of [
@@ -216,7 +224,10 @@ export function renderZodMemberGroup(options: {
   title: string
 }) {
   const { dataLookup, displayName, members, summary, title } = options
-  const content = ['---\nshowOutline: 1\n---', `# ${title}`]
+  const description = toMetaDescription(summary, {
+    fallback: `${title} reference`,
+  })
+  const content = [frontmatter({ showOutline: 1, description }), `# ${title}`]
   if (summary) content.push(summary)
 
   for (const { apiItem } of members) {

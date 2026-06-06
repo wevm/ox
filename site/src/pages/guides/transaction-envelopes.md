@@ -1,3 +1,7 @@
+---
+description: "Build, sign, and serialize Ethereum transaction envelopes."
+---
+
 # Transaction Envelopes
 
 ## Overview 

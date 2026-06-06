@@ -1,3 +1,7 @@
+---
+description: "Create and verify WebAuthn passkey signatures."
+---
+
 # WebAuthn Signers
 
 ## Overview

@@ -1,3 +1,7 @@
+---
+description: "Convert and manipulate Bytes and Hex values."
+---
+
 # Bytes & Hex
 
 ## Overview

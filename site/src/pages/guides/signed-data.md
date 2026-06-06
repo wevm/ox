@@ -1,3 +1,7 @@
+---
+description: "Sign and verify EIP-191 and EIP-712 typed data."
+---
+
 # Signed & Typed Data 
 
 ## Overview

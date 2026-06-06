@@ -1,3 +1,7 @@
+---
+description: "Install via a package manager, CDN, or from source."
+---
+
 # Installation
 
 Install Ox via your package manager, a `<script>` tag, or build from source.

@@ -17,6 +17,7 @@ import {
   renderZodMemberPage,
   renderZodNamespace,
 } from './render/apiZod.js'
+import { frontmatter } from './utils/description.js'
 import { createDataLookup, getId, getPath } from './utils/model.js'
 import { namespaceRegex } from './utils/regex.js'
 import {
@@ -557,7 +558,9 @@ fs.writeFileSync(
 ////////////////////////////////////////////////////////////
 
 for (const namespace of namespaceEntries) {
-  let content = '# API Reference\n\n'
+  let content = `${frontmatter({
+    description: `API reference for ${namespace.entrypointCategory} modules, functions, types, and errors.`,
+  })}\n\n# API Reference\n\n`
 
   const escapeTableCell = (value: string | undefined) =>
     (value ?? '').replaceAll('\n', ' ').replaceAll('|', '\\|')

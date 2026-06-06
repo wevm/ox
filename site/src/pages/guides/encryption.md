@@ -1,5 +1,6 @@
 ---
 showOutline: 1
+description: "Encrypt and decrypt data using AES-GCM encryption."
 ---
 
 # AES-GCM Encryption

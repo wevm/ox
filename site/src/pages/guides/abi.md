@@ -1,5 +1,6 @@
 ---
 showOutline: 2
+description: "Encode, decode, and parse Ethereum ABIs."
 ---
 
 # Application Binary Interface (ABI)

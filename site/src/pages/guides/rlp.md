@@ -1,3 +1,7 @@
+---
+description: "Encode and decode Recursive Length Prefix (RLP) data."
+---
+
 # Recursive Length Prefix (RLP)
 
 ## Overview

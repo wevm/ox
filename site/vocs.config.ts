@@ -15,7 +15,7 @@ export default defineConfig({
   description: 'Ethereum Standard Library',
   ogImageUrl: (path, { baseUrl }) => {
     if (path === '/') return `${baseUrl ?? ''}/og-image.png`
-    return `https://og.oxlib.sh?title=%title&description=%description`
+    return `${baseUrl ?? ''}/api/og?title=%title&description=%description`
   },
   iconUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },
   logoUrl: { light: '/logo-light.png', dark: '/logo-dark.png' },

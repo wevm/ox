@@ -1,3 +1,7 @@
+---
+description: "Generate and derive BIP-39 mnemonics and keys."
+---
+
 # Mnemonics
 
 A [BIP-39 mnemonic phrase](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) is a list of words that is a representation of a seed, which can be used to derive the keys of a [BIP-32 Hierarchical Deterministic (HD) Wallet](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki).

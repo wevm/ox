@@ -1,3 +1,7 @@
+---
+description: "Sign, verify, and recover ECDSA signatures."
+---
+
 # ECDSA & Signers
 
 ## Signers

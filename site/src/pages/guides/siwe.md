@@ -1,3 +1,7 @@
+---
+description: "Create and verify Sign-In with Ethereum (SIWE) messages."
+---
+
 # Sign-In With Ethereum (SIWE)
 
 ```

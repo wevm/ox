@@ -312,6 +312,12 @@ importers:
 
   site:
     dependencies:
+      '@takumi-rs/image-response':
+        specifier: 0.62.8
+        version: 0.62.8
+      '@takumi-rs/wasm':
+        specifier: 0.62.8
+        version: 0.62.8
       react:
         specifier: ^19.2.7
         version: 19.2.7

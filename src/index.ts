@@ -1515,6 +1515,8 @@ export * as Ens from './core/Ens.js'
 
 export * as Errors from './core/Errors.js'
 /**
+ * Utility types for working with Ethereum transaction fees and fee history.
+ *
  * @category Execution Spec
  */
 export * as Fee from './core/Fee.js'

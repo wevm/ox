@@ -1,3 +1,7 @@
+---
+description: "Import modules and optimize your application bundle size."
+---
+
 # Imports & Bundle Size
 
 ## Imports

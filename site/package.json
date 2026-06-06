@@ -9,6 +9,8 @@
     "sync:vocs": "node --import tsx scripts/copy-vocs-theme.ts"
   },
   "dependencies": {
+    "@takumi-rs/image-response": "0.62.8",
+    "@takumi-rs/wasm": "0.62.8",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-server-dom-webpack": "19.2.7",

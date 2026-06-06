@@ -1,3 +1,7 @@
+---
+description: "Supported browsers and JavaScript runtime environments."
+---
+
 # Platform Compatibility [Platforms compatible with Ox]
 
 **Ox supports all modern browsers (Chrome, Edge, Firefox, etc) & runtime environments (Node 18+, Deno, Bun, etc).**

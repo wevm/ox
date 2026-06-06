@@ -94,6 +94,15 @@ export function processDocComment(
       renderDocNode(docComment?.deprecatedBlock, resolveDeclarationReference),
       '@deprecated',
     ),
+    description: cleanDoc(
+      renderDocNode(
+        docComment.customBlocks.find(
+          (v) => v.blockTag.tagName === '@description',
+        ),
+        resolveDeclarationReference,
+      ),
+      '@description',
+    ),
     docGroup: cleanDoc(
       renderDocNode(
         docComment.customBlocks.find((v) => v.blockTag.tagName === '@docGroup'),

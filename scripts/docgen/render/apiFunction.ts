@@ -1,6 +1,7 @@
 import * as model from '@microsoft/api-extractor-model'
 import * as ts from 'ts-morph'
 
+import { frontmatter, toMetaDescription } from '../utils/description.js'
 import { createResolveDeclarationReference, type Data } from '../utils/model.js'
 import { processDocComment, tsdocParser } from '../utils/tsdoc.js'
 import { project } from '../utils/tsmorph.js'
@@ -17,7 +18,13 @@ export function renderApiFunction(options: {
   const { comment, displayName, module } = data
   if (!module) throw new Error('Module not found')
 
-  const content = [`# ${module}.${displayName}`]
+  const description = toMetaDescription(
+    comment?.description ?? comment?.summary,
+    {
+      fallback: `${module}.${displayName} function reference`,
+    },
+  )
+  const content = [frontmatter({ description }), `# ${module}.${displayName}`]
   if (comment?.summary) content.push(comment.summary)
 
   content.push(renderImports({ entrypoint, module }))

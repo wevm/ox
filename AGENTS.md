@@ -61,6 +61,7 @@
 - **Site pages** -- human guides live under `site/src/pages/`.
 - **Generated docs** -- `site/src/pages/api`, `site/src/pages/ercs`, `site/src/pages/tempo`, `site/src/pages/webauthn`, `site/src/pages/glossary`, and `site/src/pages.gen.ts` are generated outputs. Do not edit them by hand unless explicitly requested.
 - **Check TSDoc when touching docs** -- run `pnpm check:tsdoc` after changing public comments or examples.
+- **SEO descriptions are auto-derived** -- every generated docs page emits a `description` frontmatter (used for `<meta name="description">` and OG images), targeting 5-15 words. It is derived from the TSDoc summary (markdown stripped, first paragraph, clamped). Add an optional `@description` TSDoc block tag to a function/namespace/schema to override the auto-derived text with hand-written SEO copy. Hand-written site pages should set their own `description` frontmatter (or a `# Title [description]` heading).
 
 ## Type Conventions
 

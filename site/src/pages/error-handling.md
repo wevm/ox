@@ -1,3 +1,7 @@
+---
+description: "Type-safe error handling with ErrorType and parseError utilities."
+---
+
 # Error Handling 
 
 Every function namespace in Ox exports an accompanying error type (`ErrorType`) and parser (`parseError`) that you can use to strongly type your `catch` statements, or inject into a custom type-safe error handling library (e.g. [`neverthrow`](https://github.com/supermacro/neverthrow), [`Effect`](https://effect.website/), etc.).

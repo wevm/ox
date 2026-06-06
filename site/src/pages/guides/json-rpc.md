@@ -1,3 +1,7 @@
+---
+description: "Build and handle type-safe JSON-RPC requests."
+---
+
 # JSON-RPC
 
 ## Overview

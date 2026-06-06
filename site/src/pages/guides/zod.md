@@ -1,3 +1,7 @@
+---
+description: "Validate Ethereum data with Zod schemas."
+---
+
 # Zod Schemas
 
 ## Overview
