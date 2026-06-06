@@ -63,26 +63,6 @@ const element = (
       }}
     />
 
-    {/* Brand badge */}
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: s(18),
-        position: 'absolute',
-        top: s(64),
-        left: s(80),
-      }}
-    >
-      <img src={logoDataUri} style={{ width: s(52), height: s(52) }} />
-      <div
-        style={{ display: 'flex', fontSize: s(28), color: colors.secondary }}
-      >
-        <span style={{ marginRight: s(10) }}>by</span>
-        <span style={{ color: colors.primary, fontWeight: 600 }}>Wevm</span>
-      </div>
-    </div>
-
     {/* Content */}
     <div
       style={{
@@ -130,7 +110,6 @@ const element = (
       <div
         style={{
           display: 'flex',
-          alignSelf: 'flex-start',
           alignItems: 'center',
           marginTop: s(44),
           padding: `${s(22)}px ${s(40)}px`,
