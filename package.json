@@ -13,7 +13,7 @@
     "deps:ci": "pnpx actions-up",
     "dev": "pnpm exports:update && zile dev",
     "docs:dev": "pnpm --filter site dev",
-    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && node --import tsx scripts/docgen/build.ts",
+    "docs:extract": "pnpm api-extractor run -c scripts/docgen/api-extractor.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.erc4337.json --local && pnpm api-extractor run -c scripts/docgen/api-extractor.tempo.json --local && node --import tsx scripts/docgen/build.ts",
     "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",

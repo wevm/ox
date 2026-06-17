@@ -2,19 +2,25 @@ import * as model from '@microsoft/api-extractor-model'
 import * as ts from 'ts-morph'
 
 import { frontmatter, toMetaDescription } from '../utils/description.js'
-import { createResolveDeclarationReference, type Data } from '../utils/model.js'
+import {
+  createResolveDeclarationReference,
+  type Data,
+  getModulePath,
+  type NamespaceDocComments,
+} from '../utils/model.js'
 import { processDocComment, tsdocParser } from '../utils/tsdoc.js'
 import { project } from '../utils/tsmorph.js'
 
 export function renderApiFunction(options: {
   apiItem: model.ApiItem
-  basePath: string
   data: Data
   dataLookup: Record<string, Data>
+  docComments: NamespaceDocComments
   entrypoint: string
   overloads: string[]
 }) {
-  const { apiItem, basePath, data, dataLookup, entrypoint, overloads } = options
+  const { apiItem, data, dataLookup, docComments, entrypoint, overloads } =
+    options
   const { comment, displayName, module } = data
   if (!module) throw new Error('Module not found')
 
@@ -38,9 +44,9 @@ export function renderApiFunction(options: {
     content.push(
       renderParameters({
         apiItem,
-        basePath,
         data,
         dataLookup,
+        docComments,
         overloads,
         parameters: data.parameters,
       }),
@@ -49,9 +55,9 @@ export function renderApiFunction(options: {
   if (data.returnType && !data.returnType.type.startsWith('asserts '))
     content.push(
       renderReturnType({
-        basePath,
         comment: comment?.returns,
         dataLookup,
+        docComments,
         returnType: data.returnType,
       }),
     )
@@ -63,9 +69,9 @@ export function renderApiFunction(options: {
   if (errorIds.size)
     content.push(
       renderErrors({
-        basePath,
         data,
         dataLookup,
+        docComments,
         errorIds: Array.from(errorIds).sort((a, b) => (a > b ? 1 : -1)),
       }),
     )
@@ -146,13 +152,14 @@ function renderSignature(options: {
 
 function renderParameters(options: {
   apiItem: model.ApiItem
-  basePath: string
   data: Data
   dataLookup: Record<string, Data>
+  docComments: NamespaceDocComments
   overloads: string[]
   parameters: NonNullable<Data['parameters']>
 }) {
-  const { apiItem, basePath, data, dataLookup, overloads, parameters } = options
+  const { apiItem, data, dataLookup, docComments, overloads, parameters } =
+    options
 
   const parameterDeclarations = extractParameterDeclarations(data)
 
@@ -174,7 +181,7 @@ function renderParameters(options: {
     })
     parameterIndex += 1
 
-    const link = getTypeLink({ basePath, dataLookup, type: parameter })
+    const link = getTypeLink({ dataLookup, docComments, type: parameter })
 
     const c = `\`${type}\``
     const listContent = link
@@ -186,7 +193,8 @@ function renderParameters(options: {
     if (parameter.comment) content.push(parameter.comment)
 
     const node = extractParameterTypeNode(parameter, parameterDeclarations)
-    if (node) content.push(renderProperties({ apiItem, node, parameter }))
+    if (node)
+      content.push(renderProperties({ apiItem, docComments, node, parameter }))
   }
 
   return content.join('\n\n')
@@ -194,10 +202,11 @@ function renderParameters(options: {
 
 function renderProperties(options: {
   apiItem: model.ApiItem
+  docComments: NamespaceDocComments
   node: ts.TypeNode
   parameter: NonNullable<Data['parameters']>[number]
 }) {
-  const { apiItem, node, parameter } = options
+  const { apiItem, docComments, node, parameter } = options
 
   const contentMap = new Map<string, string>()
 
@@ -223,7 +232,7 @@ function renderProperties(options: {
       const content = [`#### ${parameter.name}.${propertyName}`, '']
 
       const comment = property.getJsDocs().at(0)?.getDescription()
-      const tsDoc = getTsDoc(comment, apiItem)
+      const tsDoc = getTsDoc(comment, apiItem, docComments)
 
       if (type)
         content.push(
@@ -282,16 +291,16 @@ function renderProperties(options: {
 }
 
 function renderReturnType(options: {
-  basePath: string
   comment: NonNullable<Data['comment']>['returns'] | undefined
   dataLookup: Record<string, Data>
+  docComments: NamespaceDocComments
   returnType: NonNullable<Data['returnType']>
 }) {
-  const { basePath, comment, dataLookup, returnType } = options
+  const { comment, dataLookup, docComments, returnType } = options
 
   const content = ['## Return Type']
   if (comment) content.push(comment)
-  const link = getTypeLink({ basePath, dataLookup, type: returnType })
+  const link = getTypeLink({ dataLookup, docComments, type: returnType })
   const type = expandInlineType({ dataLookup, type: returnType })
   const c = `\`${type}\``
   content.push(link ? `[${c}](${link})` : c)
@@ -300,12 +309,12 @@ function renderReturnType(options: {
 }
 
 function renderErrors(options: {
-  basePath: string
   data: Data
   dataLookup: Record<string, Data>
+  docComments: NamespaceDocComments
   errorIds: string[]
 }) {
-  const { basePath, errorIds, data, dataLookup } = options
+  const { docComments, errorIds, data, dataLookup } = options
 
   const namespaceMemberId = data.canonicalReference.split(':')[0]
   const errorTypeData = dataLookup[`${namespaceMemberId}.ErrorType:type`]
@@ -326,9 +335,11 @@ function renderErrors(options: {
     for (const errorId of errorIds) {
       const errorData = dataLookup[errorId]
       if (!errorData) continue
+      if (!errorData.module) continue
       const name = errorData.module + '.' + errorData.displayName
+      const modulePath = getModulePath(errorData.module, docComments)
       errorsContent.push(
-        `- [\`${name}\`](${basePath}/${errorData.module}/errors#${name.toLowerCase().replace('.', '')})`,
+        `- [\`${name}\`](${modulePath}/${errorData.module}/errors#${name.toLowerCase().replace('.', '')})`,
       )
     }
     content.push(errorsContent.join('\n'))
@@ -450,24 +461,28 @@ function extractParameterTypeNode(
   return typeAliasDeclaration.getTypeNode()
 }
 
-function getTsDoc(comment: string | undefined, apiItem: model.ApiItem) {
+function getTsDoc(
+  comment: string | undefined,
+  apiItem: model.ApiItem,
+  docComments: NamespaceDocComments,
+) {
   if (!comment) return
   const context = tsdocParser.parseString(`/**${comment}*/`)
   return processDocComment(
     context.docComment,
-    createResolveDeclarationReference(apiItem),
+    createResolveDeclarationReference(apiItem, docComments),
   )
 }
 
 function getTypeLink(options: {
-  basePath: string
   dataLookup: Record<string, Data>
+  docComments: NamespaceDocComments
   type: Pick<
     NonNullable<Data['returnType']>,
     'primaryCanonicalReference' | 'primaryGenericArguments' | 'type'
   >
 }) {
-  const { basePath, dataLookup, type } = options
+  const { dataLookup, docComments, type } = options
 
   const data = (() => {
     // TODO: fix `type` link resolution.
@@ -480,8 +495,9 @@ function getTypeLink(options: {
       )
     return
   })()
-  if (!data) return
+  if (!data?.module) return
 
+  const basePath = getModulePath(data.module, docComments)
   const displayNameWithNamespace = `${data.module}.${data.displayName}`
   return `${basePath}/${data.module}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`
 }

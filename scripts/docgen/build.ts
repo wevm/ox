@@ -18,7 +18,7 @@ import {
   renderZodNamespace,
 } from './render/apiZod.js'
 import { frontmatter } from './utils/description.js'
-import { createDataLookup, getId, getPath } from './utils/model.js'
+import { createDataLookup, type Data, getId, getPath } from './utils/model.js'
 import { namespaceRegex } from './utils/regex.js'
 import {
   extractNamespaceDocComments,
@@ -59,9 +59,10 @@ const apiPackage = new model.ApiModel().loadPackage(fileName)
 
 const exports = getExports()
 
-export let namespaceDocComments: ReturnType<
-  typeof extractNamespaceDocComments
-> = {}
+type DocComments = ReturnType<typeof extractNamespaceDocComments>
+
+export let namespaceDocComments: DocComments = {}
+const docCommentsByPath: Record<string, DocComments> = {}
 for (const path of Object.values(exports.src)) {
   if (!path.endsWith('index.ts')) continue
   const comments = extractNamespaceDocComments(
@@ -69,6 +70,7 @@ for (const path of Object.values(exports.src)) {
     apiPackage,
   )
   if (!comments) continue
+  docCommentsByPath[path] = comments
   // First writer wins. When a namespace name is exported from multiple
   // entrypoints (e.g. `Transaction` from both `./index.ts` and
   // `./tempo/index.ts`), api-extractor keeps the first-encountered export as
@@ -94,24 +96,39 @@ fs.writeFileSync(
 /// Get API entrypoints and namespaces
 ////////////////////////////////////////////////////////////
 
-const apiEntryPoint = apiPackage.members.find(
-  (x) =>
-    x.kind === model.ApiItemKind.EntryPoint &&
-    x.canonicalReference.toString() === 'ox!',
-) as model.ApiEntryPoint
-if (!apiEntryPoint) throw new Error('Could not find api entrypoint')
-
 const testNamespaces: string[] = []
 const excludeNamespaces = ['Caches', 'Errors', 'Solidity', 'Types']
-const namespaces = []
-for (const member of apiEntryPoint.members) {
-  if (member.kind !== model.ApiItemKind.Namespace) continue
-  if (member.displayName === 'z') continue // handled by the dedicated Zod pass
-  if (!namespaceRegex.test(getId(member))) continue
-  if (excludeNamespaces.includes(member.displayName)) continue
-  if (testNamespaces.length && !testNamespaces.includes(member.displayName))
-    continue
-  namespaces.push(member)
+
+function getApiEntryPoint(apiPackage: model.ApiPackage) {
+  const apiEntryPoint = apiPackage.members.find(
+    (x) =>
+      x.kind === model.ApiItemKind.EntryPoint &&
+      x.canonicalReference.toString() === 'ox!',
+  ) as model.ApiEntryPoint | undefined
+  if (!apiEntryPoint) throw new Error('Could not find api entrypoint')
+  return apiEntryPoint
+}
+
+// Collects renderable top-level namespaces from an entry point. Pass `include`
+// to restrict to a set of namespace names (used to render only the
+// Tempo-flavoured modules whose names collide with Core in the merged model).
+function collectNamespaces(
+  apiEntryPoint: model.ApiEntryPoint,
+  include?: ReadonlySet<string>,
+) {
+  const namespaces: model.ApiItem[] = []
+  for (const member of apiEntryPoint.members) {
+    if (member.kind !== model.ApiItemKind.Namespace) continue
+    if (member.displayName === 'z') continue // handled by the dedicated Zod pass
+    if (!namespaceRegex.test(getId(member))) continue
+    if (excludeNamespaces.includes(member.displayName)) continue
+    const name = member.displayName.replace(/_\d+$/, '')
+    if (include && !include.has(name)) continue
+    if (testNamespaces.length && !testNamespaces.includes(member.displayName))
+      continue
+    namespaces.push(member)
+  }
+  return namespaces
 }
 
 ////////////////////////////////////////////////////////////
@@ -135,122 +152,172 @@ const namespaceMap: Record<
   Record<NamespaceCategory, NamespaceItem>
 > = {}
 
-for (const namespace of namespaces) {
-  const name = namespace.displayName.replace(/_\d+$/, '')
-  const docComment = namespaceDocComments[name]
-  const basePath = docComment ? getPath(docComment) : '/'
-  const baseLink = `${basePath}/${name}`
-  const dir = `${pagesDir}${baseLink}`
-  fs.ensureDirSync(dir)
+function renderNamespaces(options: {
+  apiPackage: model.ApiPackage
+  dataLookup: Record<string, Data>
+  docComments: typeof namespaceDocComments
+  namespaces: readonly model.ApiItem[]
+}) {
+  const { apiPackage, dataLookup, docComments, namespaces } = options
 
-  const data = dataLookup[getId(namespace)]
-  const filePath = data?.file.path ?? ''
-  const entrypoint = relative(
-    resolve(import.meta.dirname, '../../src'),
-    filePath,
-  ).replace(/\/?index\.ts?$/, '')
+  for (const namespace of namespaces) {
+    const name = namespace.displayName.replace(/_\d+$/, '')
+    const docComment = docComments[name]
+    const basePath = docComment ? getPath(docComment) : '/'
+    const baseLink = `${basePath}/${name}`
+    const dir = `${pagesDir}${baseLink}`
+    fs.ensureDirSync(dir)
 
-  const items: SidebarItem[] = [{ text: 'Overview', link: baseLink }]
-  const errors: ModuleItem[] = []
-  const functions: ModuleItem[] = []
-  const types: ModuleItem[] = []
+    const data = dataLookup[getId(namespace)]
+    const filePath = data?.file.path ?? ''
+    const entrypoint = relative(
+      resolve(import.meta.dirname, '../../src'),
+      filePath,
+    ).replace(/\/?index\.ts?$/, '')
 
-  for (const member of namespace.members) {
-    const id = getId(member)
-    const data = dataLookup[id]
-    if (!data) throw new Error(`Could not find data for ${id}`)
+    const items: SidebarItem[] = [{ text: 'Overview', link: baseLink }]
+    const errors: ModuleItem[] = []
+    const functions: ModuleItem[] = []
+    const types: ModuleItem[] = []
 
-    const { description, displayName } = data
-    const displayNameWithNamespace = `${name}.${displayName}`
+    for (const member of namespace.members) {
+      const id = getId(member)
+      const data = dataLookup[id]
+      if (!data) throw new Error(`Could not find data for ${id}`)
 
-    if (member.kind === model.ApiItemKind.Function) {
-      // Resolve overloads for function
-      const overloads = member
-        .getMergedSiblings()
-        .map(getId)
-        .filter((x) => !x.endsWith('namespace'))
-      // Skip overloads without TSDoc attached
-      if (
-        overloads.length > 1 &&
-        overloads.find((x) => dataLookup[x]?.comment?.summary) !== id
-      )
-        continue
+      const { description, displayName } = data
+      const displayNameWithNamespace = `${name}.${displayName}`
 
-      const link = `${baseLink}/${displayName}`
-      items.push({ text: `.${displayName}`, link })
-      functions.push({ apiItem: member, description, link })
+      if (member.kind === model.ApiItemKind.Function) {
+        // Resolve overloads for function
+        const overloads = member
+          .getMergedSiblings()
+          .map(getId)
+          .filter((x) => !x.endsWith('namespace'))
+        // Skip overloads without TSDoc attached
+        if (
+          overloads.length > 1 &&
+          overloads.find((x) => dataLookup[x]?.comment?.summary) !== id
+        )
+          continue
 
-      const content = renderApiFunction({
-        apiItem: apiPackage,
-        basePath,
-        data,
-        dataLookup,
-        entrypoint,
-        overloads,
-      })
-      fs.writeFileSync(`${dir}/${displayName}.md`, content)
-    } else if (member.kind === model.ApiItemKind.Class) {
-      if (displayName.endsWith('Error'))
-        errors.push({
+        const link = `${baseLink}/${displayName}`
+        items.push({ text: `.${displayName}`, link })
+        functions.push({ apiItem: member, description, link })
+
+        const content = renderApiFunction({
+          apiItem: apiPackage,
+          data,
+          dataLookup,
+          docComments,
+          entrypoint,
+          overloads,
+        })
+        fs.writeFileSync(`${dir}/${displayName}.md`, content)
+      } else if (member.kind === model.ApiItemKind.Class) {
+        if (displayName.endsWith('Error'))
+          errors.push({
+            apiItem: member,
+            description,
+            link: `${baseLink}/errors#${displayNameWithNamespace.toLowerCase().replace('.', '')}`,
+          })
+        else throw new Error(`Unsupported class: ${displayName}`)
+      } else if (member.kind === model.ApiItemKind.TypeAlias) {
+        types.push({
           apiItem: member,
           description,
-          link: `${baseLink}/errors#${displayNameWithNamespace.toLowerCase().replace('.', '')}`,
+          link: `${baseLink}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`,
         })
-      else throw new Error(`Unsupported class: ${displayName}`)
-    } else if (member.kind === model.ApiItemKind.TypeAlias) {
-      types.push({
-        apiItem: member,
-        description,
-        link: `${baseLink}/types#${displayNameWithNamespace.toLowerCase().replace('.', '')}`,
-      })
+      }
     }
+
+    if (errors.length) {
+      items.push({ text: 'Errors', link: `${baseLink}/errors` })
+      const content = renderNamespaceErrors({ dataLookup, errors, name })
+      fs.writeFileSync(`${dir}/errors.md`, content)
+    }
+
+    if (types.length) {
+      items.push({ text: 'Types', link: `${baseLink}/types` })
+      const content = renderNamespaceTypes({ dataLookup, types, name })
+      fs.writeFileSync(`${dir}/types.md`, content)
+    }
+
+    const category = docComments[name]?.category
+    if (!category)
+      throw new Error(
+        `Could not find category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
+      )
+
+    const entrypointCategory = docComments[name]?.entrypointCategory
+    if (!entrypointCategory)
+      throw new Error(
+        `Could not find entrypoint for namespace: ${name}. Please add a TSDoc \`@entrypointCategory\` tag.`,
+      )
+
+    namespaceMap[entrypointCategory] ??= {}
+    namespaceMap[entrypointCategory][category] ??= []
+    namespaceMap[entrypointCategory][category].push({
+      docComment,
+      link: baseLink,
+      name,
+      sidebarItem: {
+        collapsed: true,
+        items,
+        text: name,
+      },
+    })
+
+    const content = renderNamespace({
+      apiItem: namespace,
+      docComment,
+      errors,
+      functions,
+      types,
+    })
+    fs.writeFileSync(`${dir}/index.md`, content)
   }
+}
 
-  if (errors.length) {
-    items.push({ text: 'Errors', link: `${baseLink}/errors` })
-    const content = renderNamespaceErrors({ dataLookup, errors, name })
-    fs.writeFileSync(`${dir}/errors.md`, content)
-  }
+// Render Core plus every uniquely-named module from the merged `ox` model.
+renderNamespaces({
+  apiPackage,
+  dataLookup,
+  docComments: namespaceDocComments,
+  namespaces: collectNamespaces(getApiEntryPoint(apiPackage)),
+})
 
-  if (types.length) {
-    items.push({ text: 'Types', link: `${baseLink}/types` })
-    const content = renderNamespaceTypes({ dataLookup, types, name })
-    fs.writeFileSync(`${dir}/types.md`, content)
-  }
+// Recover modules whose names collide with Core. When a non-Core entrypoint
+// exports a namespace whose name also exists in Core (e.g. `RpcSchema` in
+// `erc4337`, `Transaction` in `tempo`), api-extractor keeps Core as the
+// canonical export in the merged `ox` model and drops the other. Each such
+// module is recovered from its own single-entrypoint model and rendered with
+// that entrypoint's doc comments, so its pages and self-links resolve under the
+// entrypoint's own path while links to Core types still resolve to `/api/...`.
+const coreNames = new Set(Object.keys(docCommentsByPath['./index.ts'] ?? {}))
+const secondaryModels: Record<string, string> = {
+  './erc4337/index.ts': './scripts/docgen/erc4337.api.json',
+  './tempo/index.ts': './scripts/docgen/tempo.api.json',
+}
+for (const [path, modelPath] of Object.entries(secondaryModels)) {
+  const comments = docCommentsByPath[path]
+  if (!comments) continue
+  const collidingNames = new Set(
+    Object.keys(comments).filter((name) => coreNames.has(name)),
+  )
+  if (!collidingNames.size) continue
 
-  const category = namespaceDocComments[name]?.category
-  if (!category)
-    throw new Error(
-      `Could not find category for namespace: ${name}. Please add a TSDoc \`@category\` tag.`,
-    )
-
-  const entrypointCategory = namespaceDocComments[name]?.entrypointCategory
-  if (!entrypointCategory)
-    throw new Error(
-      `Could not find entrypoint for namespace: ${name}. Please add a TSDoc \`@entrypointCategory\` tag.`,
-    )
-
-  namespaceMap[entrypointCategory] ??= {}
-  namespaceMap[entrypointCategory][category] ??= []
-  namespaceMap[entrypointCategory][category].push({
-    docComment,
-    link: baseLink,
-    name,
-    sidebarItem: {
-      collapsed: true,
-      items,
-      text: name,
-    },
+  const secondaryApiPackage = new model.ApiModel().loadPackage(modelPath)
+  const docComments = { ...namespaceDocComments, ...comments }
+  renderNamespaces({
+    apiPackage: secondaryApiPackage,
+    dataLookup: createDataLookup(secondaryApiPackage, docComments, true),
+    docComments,
+    namespaces: collectNamespaces(
+      getApiEntryPoint(secondaryApiPackage),
+      collidingNames,
+    ),
   })
-
-  const content = renderNamespace({
-    apiItem: namespace,
-    docComment,
-    errors,
-    functions,
-    types,
-  })
-  fs.writeFileSync(`${dir}/index.md`, content)
 }
 
 ////////////////////////////////////////////////////////////
@@ -469,7 +536,7 @@ function collectZodNamespaces(
   return out
 }
 
-const zodNamespace = apiEntryPoint.members.find(
+const zodNamespace = getApiEntryPoint(apiPackage).members.find(
   (member) =>
     member.kind === model.ApiItemKind.Namespace &&
     getId(member) === 'ox!z:namespace',
@@ -526,7 +593,10 @@ const namespaceEntries: {
 for (const [entrypointCategory, categories] of Object.entries(namespaceMap)) {
   let alphabetized = []
   for (const [category, items] of Object.entries(categories)) {
-    alphabetized.push({ category, items })
+    alphabetized.push({
+      category,
+      items: items.toSorted((a, b) => a.name.localeCompare(b.name)),
+    })
   }
   alphabetized = alphabetized.toSorted((a, b) =>
     a.category.localeCompare(b.category),

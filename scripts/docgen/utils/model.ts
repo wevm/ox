@@ -47,83 +47,97 @@ export type Data = Pick<model.ApiItem, 'displayName' | 'kind'> &
     releaseTag: string
   }
 
-const dataLookup: Record<string, Data> = {}
+export type NamespaceDocComments = typeof namespaceDocComments
 
-export function createDataLookup(apiItem: model.ApiItem) {
-  for (const child of apiItem.members) createDataLookup(child)
+export function createDataLookup(
+  apiItem: model.ApiItem,
+  docComments: NamespaceDocComments = namespaceDocComments,
+  lenient = false,
+) {
+  const dataLookup: Record<string, Data> = {}
 
-  const id = getId(apiItem)
-  if (
-    apiItem instanceof model.ApiClass ||
-    apiItem instanceof model.ApiConstructor ||
-    apiItem instanceof model.ApiEnum ||
-    apiItem instanceof model.ApiEnumMember ||
-    apiItem instanceof model.ApiFunction ||
-    apiItem instanceof model.ApiInterface ||
-    apiItem instanceof model.ApiMethod ||
-    apiItem instanceof model.ApiMethodSignature ||
-    apiItem instanceof model.ApiNamespace ||
-    apiItem instanceof model.ApiProperty ||
-    apiItem instanceof model.ApiPropertySignature ||
-    apiItem instanceof model.ApiTypeAlias ||
-    apiItem instanceof model.ApiVariable
-  ) {
-    const comment = processDocComment(
-      apiItem.tsdocComment,
-      createResolveDeclarationReference(apiItem),
-    )
-    const parent = apiItem.parent ? getId(apiItem.parent) : null
-    const module = (
-      parent?.match(namespaceRegex) ?? parent?.match(moduleNameRegex)
-    )?.groups?.module
-    const sourceFilePath =
-      apiItem.fileUrlPath ??
-      apiItem.sourceLocation.fileUrl?.replace(
-        'https://github.com/wevm/ox/blob/main/',
-        '',
+  function visit(apiItem: model.ApiItem) {
+    for (const child of apiItem.members) visit(child)
+
+    const id = getId(apiItem)
+    if (
+      apiItem instanceof model.ApiClass ||
+      apiItem instanceof model.ApiConstructor ||
+      apiItem instanceof model.ApiEnum ||
+      apiItem instanceof model.ApiEnumMember ||
+      apiItem instanceof model.ApiFunction ||
+      apiItem instanceof model.ApiInterface ||
+      apiItem instanceof model.ApiMethod ||
+      apiItem instanceof model.ApiMethodSignature ||
+      apiItem instanceof model.ApiNamespace ||
+      apiItem instanceof model.ApiProperty ||
+      apiItem instanceof model.ApiPropertySignature ||
+      apiItem instanceof model.ApiTypeAlias ||
+      apiItem instanceof model.ApiVariable
+    ) {
+      const comment = processDocComment(
+        apiItem.tsdocComment,
+        createResolveDeclarationReference(apiItem, docComments, lenient),
       )
-
-    const data = {
-      id,
-      ...extractChildren(apiItem),
-      canonicalReference: apiItem.canonicalReference.toString(),
-      comment,
-      description: comment?.summary.split('\n')[0]?.trim() ?? '',
-      displayName: apiItem.displayName,
-      excerpt: apiItem.excerpt.text,
-      file: {
-        lineNumber: processLocation(sourceFilePath, module, apiItem),
-        path: sourceFilePath,
-        url: apiItem.sourceLocation.fileUrl,
-      },
-      kind: apiItem.kind,
-      module,
-      parent,
-      references: apiItem.excerpt.tokens
-        .filter(
-          (token, index) =>
-            token.kind === 'Reference' &&
-            token.canonicalReference &&
-            // prevent duplicates
-            apiItem.excerpt.tokens.findIndex(
-              (other) => other.canonicalReference === token.canonicalReference,
-            ) === index,
+      const parent = apiItem.parent ? getId(apiItem.parent) : null
+      const module = (
+        parent?.match(namespaceRegex) ?? parent?.match(moduleNameRegex)
+      )?.groups?.module
+      const sourceFilePath =
+        apiItem.fileUrlPath ??
+        apiItem.sourceLocation.fileUrl?.replace(
+          'https://github.com/wevm/ox/blob/main/',
+          '',
         )
-        .map((token) => ({
-          canonicalReference: token.canonicalReference?.toString(),
-          text: formatType(token.text),
-        })),
-      releaseTag: model.ReleaseTag[apiItem.releaseTag],
-      ...extraData(apiItem),
-    } satisfies Data
-    dataLookup[id] = data
+
+      const data = {
+        id,
+        ...extractChildren(apiItem),
+        canonicalReference: apiItem.canonicalReference.toString(),
+        comment,
+        description: comment?.summary.split('\n')[0]?.trim() ?? '',
+        displayName: apiItem.displayName,
+        excerpt: apiItem.excerpt.text,
+        file: {
+          lineNumber: processLocation(sourceFilePath, module, apiItem),
+          path: sourceFilePath,
+          url: apiItem.sourceLocation.fileUrl,
+        },
+        kind: apiItem.kind,
+        module,
+        parent,
+        references: apiItem.excerpt.tokens
+          .filter(
+            (token, index) =>
+              token.kind === 'Reference' &&
+              token.canonicalReference &&
+              // prevent duplicates
+              apiItem.excerpt.tokens.findIndex(
+                (other) => other.canonicalReference === token.canonicalReference,
+              ) === index,
+          )
+          .map((token) => ({
+            canonicalReference: token.canonicalReference?.toString(),
+            text: formatType(token.text),
+          })),
+        releaseTag: model.ReleaseTag[apiItem.releaseTag],
+        ...extraData(apiItem, docComments, lenient),
+      } satisfies Data
+      dataLookup[id] = data
+    }
   }
 
+  visit(apiItem)
   return dataLookup
 }
 
 export function createResolveDeclarationReference(
   contextApiItem: model.ApiItem,
+  docComments: NamespaceDocComments = namespaceDocComments,
+  // When true, unresolved references fall back to name-based links (or are
+  // dropped) instead of throwing. Used when resolving against a single-entry
+  // model (e.g. the Tempo-only model) that omits cross-entrypoint declarations.
+  lenient = false,
 ) {
   const hierarchy = contextApiItem.getHierarchy()
   const apiModel = hierarchy[0] as model.ApiModel
@@ -135,10 +149,15 @@ export function createResolveDeclarationReference(
     )
 
     if (result.errorMessage) {
-      const fallback = result.errorMessage.includes('was ambiguous')
-        ? getFallbackLinkForDeclarationReference(declarationReference)
-        : undefined
+      const fallback =
+        result.errorMessage.includes('was ambiguous') || lenient
+          ? getFallbackLinkForDeclarationReference(
+              declarationReference,
+              docComments,
+            )
+          : undefined
       if (fallback) return fallback
+      if (lenient) return
 
       throw new Error(
         [
@@ -151,7 +170,7 @@ export function createResolveDeclarationReference(
 
     const item = result.resolvedApiItem
     if (item) {
-      const url = getLinkForApiItem(item)
+      const url = getLinkForApiItem(item, docComments)
       const namespaceName = item.parent?.displayName.replace(/_\d+$/, '')
       const text = namespaceName
         ? `${namespaceName}.${item.displayName}`
@@ -165,6 +184,7 @@ export function createResolveDeclarationReference(
 
 function getFallbackLinkForDeclarationReference(
   declarationReference: DocDeclarationReference,
+  docComments: NamespaceDocComments = namespaceDocComments,
 ) {
   const match = declarationReference
     .emitAsTsdoc()
@@ -174,7 +194,7 @@ function getFallbackLinkForDeclarationReference(
 
   const name = namespace.replace(/_\d+$/, '')
   const member = match.groups?.member
-  const docComment = namespaceDocComments[name]
+  const docComment = docComments[name]
   const basePath = docComment ? getPath(docComment) : '/api'
   const baseLink = `${basePath === '/' ? '/api' : basePath}/${name}`
   return {
@@ -206,13 +226,30 @@ export function getPath({
   return path
 }
 
-function getLinkForApiItem(item: model.ApiItem) {
+/**
+ * Resolves the base path (`/api` or `/<entrypoint>/<category>`) that a module's
+ * pages live under, from its namespace doc comment. Used to build cross-module
+ * links that point at the target module's own page rather than the page that is
+ * currently being rendered.
+ */
+export function getModulePath(
+  module: string,
+  docComments: NamespaceDocComments = namespaceDocComments,
+) {
+  const name = module.replace(/_\d+$/, '')
+  const basePath = getPath(docComments[name] ?? {})
+  return basePath === '/' ? '/api' : basePath
+}
+
+function getLinkForApiItem(
+  item: model.ApiItem,
+  docComments: NamespaceDocComments = namespaceDocComments,
+) {
   const parent = item.parent
   if (!parent) throw new Error('Parent not found')
 
   const parentName = parent.displayName.replace(/_\d+$/, '')
-  const { entrypointCategory, category } =
-    namespaceDocComments[parentName] || {}
+  const { entrypointCategory, category } = docComments[parentName] || {}
   const basePath = getPath({ category, entrypointCategory })
 
   const baseLink = `${basePath === '/' ? '/api' : basePath}/${parentName}`
@@ -319,7 +356,11 @@ type ExtraData = {
   }[]
 }
 
-function extraData(item: model.ApiItem): ExtraData {
+function extraData(
+  item: model.ApiItem,
+  docComments: NamespaceDocComments = namespaceDocComments,
+  lenient = false,
+): ExtraData {
   const ret: ExtraData = {}
   if (model.ApiParameterListMixin.isBaseClassOf(item)) {
     ret.parameters = item.parameters.map((p) => ({
@@ -328,7 +369,7 @@ function extraData(item: model.ApiItem): ExtraData {
       optional: p.isOptional,
       comment: renderDocNode(
         p.tsdocParamBlock?.content.nodes,
-        createResolveDeclarationReference(item),
+        createResolveDeclarationReference(item, docComments, lenient),
       ).trim(),
     }))
   }
@@ -341,7 +382,7 @@ function extraData(item: model.ApiItem): ExtraData {
       constraint: p.constraintExcerpt.text,
       comment: renderDocNode(
         p.tsdocTypeParamBlock?.content.nodes,
-        createResolveDeclarationReference(item),
+        createResolveDeclarationReference(item, docComments, lenient),
       ),
     }))
   }

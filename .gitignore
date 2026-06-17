@@ -14,6 +14,8 @@ tsconfig.tsbuildinfo
 tsdoc.d.tson
 
 ox.api.json
+erc4337.api.json
+tempo.api.json
 lookup.json
 config-generated.ts
 site/.vocs
