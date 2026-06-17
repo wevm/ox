@@ -69,7 +69,14 @@ for (const path of Object.values(exports.src)) {
     apiPackage,
   )
   if (!comments) continue
-  namespaceDocComments = { ...namespaceDocComments, ...comments }
+  // First writer wins. When a namespace name is exported from multiple
+  // entrypoints (e.g. `Transaction` from both `./index.ts` and
+  // `./tempo/index.ts`), api-extractor keeps the first-encountered export as
+  // the canonical top-level namespace. `./index.ts` (Core) is processed first,
+  // so its doc comment must take precedence to keep the rendered page on the
+  // correct (`/api/...`) path rather than being hijacked by a later entrypoint.
+  for (const [name, comment] of Object.entries(comments))
+    namespaceDocComments[name] ??= comment
 }
 
 ////////////////////////////////////////////////////////////
