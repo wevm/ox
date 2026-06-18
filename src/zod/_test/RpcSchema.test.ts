@@ -233,3 +233,59 @@ describe('parseRequest', () => {
     ).toThrow()
   })
 })
+
+describe('from', () => {
+  test('single method returns an Item', () => {
+    const item = z_RpcSchema.from({
+      method: 'eth_blockNumber',
+      params: z.optional(z.tuple([])),
+      returns: z.string(),
+    })
+    expect(item.method).toMatchInlineSnapshot(`"eth_blockNumber"`)
+    expect(item.request).toBeDefined()
+  })
+
+  test('namespace normalizes keyed params/returns into Items', () => {
+    const schema = z_RpcSchema.from({
+      abe_foo: {
+        params: z.tuple([z.number()]),
+        returns: z.string(),
+      },
+    })
+
+    expect(schema.abe_foo.method).toMatchInlineSnapshot(`"abe_foo"`)
+    expect(z_RpcSchema.parseParams(schema, 'abe_foo', [1]))
+      .toMatchInlineSnapshot(`
+      [
+        1,
+      ]
+    `)
+    expect(
+      z_RpcSchema.parseReturns(schema, 'abe_foo', 'hello'),
+    ).toMatchInlineSnapshot(`"hello"`)
+    expect(z_RpcSchema.parseRequest(schema, { method: 'abe_foo', params: [1] }))
+      .toMatchInlineSnapshot(`
+      {
+        "method": "abe_foo",
+        "params": [
+          1,
+        ],
+      }
+    `)
+  })
+
+  test('namespace spreads existing ox/zod namespaces', () => {
+    const schema = z_RpcSchema.from({
+      ...z_RpcSchema.Eth,
+      abe_foo: {
+        params: z.tuple([z.number()]),
+        returns: z.string(),
+      },
+    })
+
+    expect(schema.eth_blockNumber.method).toMatchInlineSnapshot(
+      `"eth_blockNumber"`,
+    )
+    expect(schema.abe_foo.method).toMatchInlineSnapshot(`"abe_foo"`)
+  })
+})

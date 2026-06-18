@@ -1,3 +1,4 @@
+import type * as z from 'zod/mini'
 import type { ResolvedRegister } from './internal/register.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
 
@@ -280,6 +281,63 @@ export type FromViem<schema extends readonly ViemSchemaItem[]> = {
       }
     : never
 }[number]
+
+/**
+ * Converts a record of Zod `params`/`returns` schemas (keyed by method name) to
+ * an Ox {@link ox#RpcSchema.Generic} (union of `{ Request, ReturnType }`).
+ *
+ * Each method's name comes from its key, `params` is derived from the Zod
+ * schema's input type, and `ReturnType` from the Zod schema's output type.
+ *
+ * @example
+ * ```ts twoslash
+ * import { RpcSchema } from 'ox'
+ * import { z } from 'ox/zod'
+ *
+ * type Schema = RpcSchema.FromZod<typeof z.RpcSchema.Eth>
+ * //   ^?
+ * ```
+ */
+export type FromZod<namespace extends FromZod.Namespace> = {
+  [method in keyof namespace & string]: Compute<{
+    Request: {
+      method: method
+      params: z.input<namespace[method]['params']>
+    }
+    ReturnType: z.output<namespace[method]['returns']>
+  }>
+}[keyof namespace & string]
+
+export declare namespace FromZod {
+  /** A single method schema: Zod `params`/`returns`, keyed by method name. */
+  type Item = {
+    params: z.ZodMiniType
+    returns: z.ZodMiniType
+  }
+
+  /** A record of Zod method schemas keyed by method name. */
+  type Namespace = Record<string, Item>
+}
+
+/**
+ * Schema input accepted by APIs that statically type JSON-RPC requests
+ * (e.g. {@link ox#Provider.(from:function)}, {@link ox#RpcTransport.(fromHttp:function)}):
+ * either an Ox {@link ox#RpcSchema.Generic} or a record of Zod `params`/`returns`
+ * schemas (keyed by method name) from `ox/zod`.
+ */
+export type Schema = Generic | FromZod.Namespace
+
+/**
+ * Resolves a {@link ox#RpcSchema.Schema} input to an Ox {@link ox#RpcSchema.Generic}.
+ * A Zod namespace is converted via {@link ox#RpcSchema.FromZod}; a `Generic` is
+ * passed through; otherwise falls back to {@link ox#RpcSchema.Default}.
+ */
+export type ToGeneric<schema extends Schema | undefined> =
+  schema extends FromZod.Namespace
+    ? FromZod<schema>
+    : schema extends Generic
+      ? schema
+      : Default
 
 /** @internal */
 type ViemSchemaItem = {

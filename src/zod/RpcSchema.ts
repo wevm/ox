@@ -1,11 +1,97 @@
 import * as Errors from '../core/Errors.js'
 import * as eth from './internal/rpcSchemas/Eth.js'
+import { from as fromItem } from './internal/rpcSchemas/from.js'
 import type { Item } from './internal/rpcSchemas/from.js'
 import * as wallet from './internal/rpcSchemas/Wallet.js'
 import * as z from 'zod/mini'
 
-export { from } from './internal/rpcSchemas/from.js'
 export type { Item } from './internal/rpcSchemas/from.js'
+
+/**
+ * Instantiates JSON-RPC method schema(s) from Zod `params`/`returns` schemas.
+ *
+ * Two forms are supported:
+ *
+ * - A single method `{ method, params, returns }`, returning a `RpcSchema.Item`.
+ * - A record of `{ params, returns }` keyed by method name, returning a
+ *   normalized `RpcSchema.Namespace` (each method's name is taken from its key
+ *   and its `request` schema is derived). The result is usable with the
+ *   `RpcSchema.parse*` methods and as a schema for `Provider`/`RpcTransport`.
+ *
+ * @example
+ * ### Single Method
+ *
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const eth_blockNumber = z.RpcSchema.from({
+ *   method: 'eth_blockNumber',
+ *   params: z.optional(z.tuple([])),
+ *   returns: z.Hex.Hex,
+ * })
+ * ```
+ *
+ * @example
+ * ### Namespace
+ *
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const schema = z.RpcSchema.from({
+ *   ...z.RpcSchema.Eth,
+ *   abe_foo: {
+ *     params: z.tuple([z.number()]),
+ *     returns: z.string(),
+ *   },
+ * })
+ *
+ * const params = z.RpcSchema.parseParams(schema, 'abe_foo', [123])
+ * ```
+ */
+export function from<
+  const method extends string,
+  params extends z.ZodMiniType,
+  returns extends z.ZodMiniType,
+>(parameters: {
+  method: method
+  params: params
+  returns: returns
+}): Item<method, params, returns>
+export function from<const namespace extends from.Namespace>(
+  namespace: namespace,
+): from.ReturnType<namespace>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function from(
+  input:
+    | { method?: string; params?: z.ZodMiniType; returns?: z.ZodMiniType }
+    | from.Namespace,
+): unknown {
+  if (typeof input.method === 'string')
+    return fromItem(input as Parameters<typeof fromItem>[0])
+  return Object.fromEntries(
+    Object.entries(input as from.Namespace).map(([method, item]) => [
+      method,
+      fromItem({ method, params: item.params, returns: item.returns }),
+    ]),
+  )
+}
+
+export declare namespace from {
+  /** A record of `{ params, returns }` Zod schemas keyed by method name. */
+  type Namespace = Record<
+    string,
+    { params: z.ZodMiniType; returns: z.ZodMiniType }
+  >
+
+  /** The normalized `RpcSchema.Namespace` derived from a {@link from.Namespace}. */
+  type ReturnType<namespace extends Namespace> = {
+    [method in keyof namespace & string]: Item<
+      method,
+      namespace[method]['params'],
+      namespace[method]['returns']
+    >
+  }
+}
 
 /** A namespace of JSON-RPC method schemas, keyed by method name. */
 export type Namespace = Record<string, Item>

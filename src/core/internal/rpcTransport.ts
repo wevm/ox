@@ -9,7 +9,7 @@ import type { Compute } from './types.js'
 export type Options<
   raw extends boolean | undefined = undefined,
   options extends Record<string, unknown> = {},
-  schema extends RpcSchema.Generic = RpcSchema.Default,
+  schema extends RpcSchema.Schema = RpcSchema.Default,
 > = {
   /**
    * Enables raw mode – responses will return an object with `result` and `error` properties instead of returning the `result` directly and throwing errors.

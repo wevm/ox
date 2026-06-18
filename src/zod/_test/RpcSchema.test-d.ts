@@ -2,8 +2,8 @@ import type * as core_Address from '../../core/Address.js'
 import type * as core_Block from '../../core/Block.js'
 import type * as core_Fee from '../../core/Fee.js'
 import type * as core_Hex from '../../core/Hex.js'
-import type * as z from 'zod/mini'
 import { expectTypeOf, test } from 'vp/test'
+import * as z from 'zod/mini'
 import * as z_RpcSchema from '../RpcSchema.js'
 
 test('method items mirror wire (input) and domain (output) shapes', () => {
@@ -47,4 +47,33 @@ test('parse helpers infer params/returns by method', () => {
   expectTypeOf(
     z_RpcSchema.parseItem(z_RpcSchema.Eth, 'eth_blockNumber').method,
   ).toEqualTypeOf<'eth_blockNumber'>()
+})
+
+test('from: namespace returns a parseable namespace', () => {
+  const schema = z_RpcSchema.from({
+    abe_foo: {
+      params: z.tuple([z.number()]),
+      returns: z.string(),
+    },
+  })
+
+  // Method name taken from the key.
+  expectTypeOf(schema.abe_foo.method).toEqualTypeOf<'abe_foo'>()
+
+  // Usable with parse* methods.
+  expectTypeOf(z_RpcSchema.parseParams(schema, 'abe_foo', [1])).toEqualTypeOf<
+    [number]
+  >()
+  expectTypeOf(
+    z_RpcSchema.parseReturns(schema, 'abe_foo', 'hello'),
+  ).toEqualTypeOf<string>()
+})
+
+test('from: single method returns an Item', () => {
+  const item = z_RpcSchema.from({
+    method: 'abe_foo',
+    params: z.tuple([z.number()]),
+    returns: z.string(),
+  })
+  expectTypeOf(item.method).toEqualTypeOf<'abe_foo'>()
 })

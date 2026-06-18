@@ -1,4 +1,5 @@
 import { Provider, RpcSchema } from 'ox'
+import { z } from 'ox/zod'
 import { describe, expectTypeOf, test } from 'vp/test'
 
 describe('Provider.createEmitter', () => {
@@ -130,6 +131,26 @@ describe('Provider.from', () => {
     expectTypeOf(
       provider.request({ method: 'eth_blockNumber' }),
     ).resolves.toEqualTypeOf<`0x${string}`>()
+  })
+
+  test('with zod schema', () => {
+    const schema = z.RpcSchema.from({
+      abe_foo: {
+        params: z.tuple([z.number()]),
+        returns: z.string(),
+      },
+    })
+
+    const provider = Provider.from(
+      {
+        request: async (args) => args,
+      },
+      { schema },
+    )
+
+    expectTypeOf(
+      provider.request({ method: 'abe_foo', params: [123] }),
+    ).resolves.toEqualTypeOf<string>()
   })
 
   test('with emitter', () => {

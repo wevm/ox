@@ -14,7 +14,7 @@ export type Options = {
    *
    * @default `RpcSchema.Generic`
    */
-  schema?: RpcSchema.Generic | undefined
+  schema?: RpcSchema.Schema | undefined
 }
 
 /** Root type for an EIP-1193 Provider. */
@@ -23,9 +23,9 @@ export type Provider<
   eventMap extends boolean | Record<string, unknown> = false,
   ///
   _schema extends RpcSchema.Generic = options extends {
-    schema: infer schema extends RpcSchema.Generic
+    schema: infer schema extends RpcSchema.Schema
   }
-    ? schema
+    ? RpcSchema.ToGeneric<schema>
     : RpcSchema.Default,
 > = Compute<
   {
@@ -499,9 +499,9 @@ export declare namespace from {
   > & {
     request: (
       parameters: options extends {
-        schema: infer schema extends RpcSchema.Generic
+        schema: infer schema extends RpcSchema.Schema
       }
-        ? schema['Request']
+        ? RpcSchema.ToGeneric<schema>['Request']
         : RpcSchema.Generic['Request'],
     ) => unknown
   }
@@ -513,8 +513,8 @@ export declare namespace from {
       | undefined,
   > = Omit<provider, 'request'> & {
     request: RequestFn<
-      options extends { schema: infer schema extends RpcSchema.Generic }
-        ? schema
+      options extends { schema: infer schema extends RpcSchema.Schema }
+        ? RpcSchema.ToGeneric<schema>
         : RpcSchema.Default
     >
   }

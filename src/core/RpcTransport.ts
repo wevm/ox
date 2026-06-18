@@ -81,9 +81,12 @@ export type RequestFn<
  */
 export function fromHttp<
   raw extends boolean = false,
-  schema extends RpcSchema.Generic = RpcSchema.Default,
->(url: string, options: fromHttp.Options<raw, schema> = {}): Http<raw, schema> {
-  return internal.create<HttpOptions, schema, raw>(
+  schema extends RpcSchema.Schema = RpcSchema.Default,
+>(
+  url: string,
+  options: fromHttp.Options<raw, schema> = {},
+): Http<raw, RpcSchema.ToGeneric<schema>> {
+  return internal.create<HttpOptions, RpcSchema.ToGeneric<schema>, raw>(
     {
       async request(body_, options_) {
         const {
@@ -175,7 +178,7 @@ export function fromHttp<
 export declare namespace fromHttp {
   type Options<
     raw extends boolean = false,
-    schema extends RpcSchema.Generic = RpcSchema.Default,
+    schema extends RpcSchema.Schema = RpcSchema.Default,
   > = internal.Options<raw, HttpOptions, schema>
 
   type ErrorType =
