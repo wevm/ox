@@ -58,6 +58,7 @@
     "rpc-response-from-validation",
     "rpc-response-parse-error-preserve",
     "rpc-response-parse-validation",
+    "rpc-schema-from-zod",
     "rpc-transport-empty-body",
     "rpc-transport-http-error-details",
     "rpc-transport-json-empty-error",
