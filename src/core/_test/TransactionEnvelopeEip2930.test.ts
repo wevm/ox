@@ -499,6 +499,44 @@ describe('toRpc', () => {
     `)
   })
 
+  test('numberish inputs', () => {
+    const fromBigint = TxEnvelopeEip2930.toRpc({
+      chainId: 1,
+      nonce: 0n,
+      gas: 21000n,
+      gasPrice: 1000n,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromNumber = TxEnvelopeEip2930.toRpc({
+      chainId: 1,
+      nonce: 0,
+      gas: 21000,
+      gasPrice: 1000,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromHex = TxEnvelopeEip2930.toRpc({
+      chainId: '0x1',
+      nonce: '0x0',
+      gas: '0x5208',
+      gasPrice: '0x3e8',
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: '0x3e8',
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: '0x0',
+    })
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
+  })
+
   test('behavior: nullish', () => {
     const transaction = TxEnvelopeEip2930.toRpc({
       chainId: 1,

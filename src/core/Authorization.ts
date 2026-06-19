@@ -2,6 +2,7 @@ import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute, Mutable, Undefined } from './internal/types.js'
 import * as Rlp from './Rlp.js'
 import * as Signature from './Signature.js'
@@ -497,18 +498,21 @@ export declare namespace hash {
  * @param authorization - An Authorization.
  * @returns An RPC-formatted Authorization.
  */
-export function toRpc(authorization: Signed): Rpc {
+export function toRpc(authorization: toRpc.Input): Rpc {
   const { address, chainId, nonce, ...signature } = authorization
 
   return {
     address,
-    chainId: Hex.fromNumber(chainId),
-    nonce: Hex.fromNumber(nonce),
+    chainId: Quantity.fromNumberish(chainId),
+    nonce: Quantity.fromNumberish(nonce),
     ...Signature.toRpc(signature),
   }
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Authorization.(toRpc:function)}. */
+  type Input = Signed<Hex.Hex | bigint | number, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -534,11 +538,14 @@ export declare namespace toRpc {
  * @param authorizationList - An Authorization List.
  * @returns An RPC-formatted Authorization List.
  */
-export function toRpcList(authorizationList: ListSigned): ListRpc {
+export function toRpcList(authorizationList: toRpcList.Input): ListRpc {
   return authorizationList.map(toRpc)
 }
 
 export declare namespace toRpcList {
+  /** Numberish input accepted by {@link ox#Authorization.(toRpcList:function)}. */
+  type Input = ListSigned<Hex.Hex | bigint | number, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }
 

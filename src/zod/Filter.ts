@@ -12,8 +12,6 @@ const blockTag = z.union([
   z.literal('finalized'),
 ])
 
-const blockNumber = z.union([z_Uint.Uint, blockTag])
-
 const address = z.union([
   z_Address.Address,
   z.readonly(z.array(z_Address.Address)),
@@ -30,23 +28,30 @@ export const Topic = z.union([
 /** Filter topics schema. */
 export const Topics = z.readonly(z.array(Topic))
 
-const base = {
-  address: z.optional(address),
-  topics: z.optional(Topics),
-}
-
 /** Filter schema. */
-export const Filter = z.union([
-  z.object({
-    ...base,
-    blockHash: z_Hex.Hex,
-    fromBlock: z.optional(z.undefined()),
-    toBlock: z.optional(z.undefined()),
-  }),
-  z.object({
-    ...base,
-    blockHash: z.optional(z.undefined()),
-    fromBlock: z.optional(blockNumber),
-    toBlock: z.optional(blockNumber),
-  }),
-])
+export const Filter = filter(z_Uint.Uint)
+
+/** Encode-only filter schema accepting numberish `toRpc` inputs. */
+export const FilterToRpc = filter(z_Uint.UintToRpc)
+
+function filter<uint extends z.ZodMiniType>(uint: uint) {
+  const blockNumber = z.union([uint, blockTag])
+  const base = {
+    address: z.optional(address),
+    topics: z.optional(Topics),
+  }
+  return z.union([
+    z.object({
+      ...base,
+      blockHash: z_Hex.Hex,
+      fromBlock: z.optional(z.undefined()),
+      toBlock: z.optional(z.undefined()),
+    }),
+    z.object({
+      ...base,
+      blockHash: z.optional(z.undefined()),
+      fromBlock: z.optional(blockNumber),
+      toBlock: z.optional(blockNumber),
+    }),
+  ])
+}

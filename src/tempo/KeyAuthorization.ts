@@ -3,6 +3,7 @@ import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { Compute, OneOf } from '../core/internal/types.js'
 import * as Rlp from '../core/Rlp.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
@@ -914,7 +915,7 @@ export declare namespace serialize {
  * @param authorization - A Key Authorization.
  * @returns An RPC-formatted Key Authorization.
  */
-export function toRpc(authorization: Signed): Rpc {
+export function toRpc(authorization: toRpc.Input): Rpc {
   const {
     address,
     scopes,
@@ -953,15 +954,17 @@ export function toRpc(authorization: Signed): Rpc {
     )
   })()
 
+  const chainIdHex = Quantity.fromNumberish(chainId)
+
   return {
-    chainId: chainId === 0n ? '0x' : Hex.fromNumber(chainId),
-    expiry: typeof expiry === 'number' ? Hex.fromNumber(expiry) : null,
+    chainId: chainIdHex === '0x0' ? '0x' : chainIdHex,
+    expiry: expiry != null ? Quantity.fromNumberish(expiry) : null,
     keyId: address,
     keyType: type,
     limits: limits?.map(({ token, limit, period }) => ({
       token,
-      limit: Hex.fromNumber(limit),
-      ...(period ? { period: numberToHex(period) } : {}),
+      limit: Quantity.fromNumberish(limit),
+      ...(period ? { period: Quantity.fromNumberish(period) } : {}),
     })),
     signature: SignatureEnvelope.toRpc(signature),
     ...(allowedCalls ? { allowedCalls } : {}),
@@ -972,6 +975,9 @@ export function toRpc(authorization: Signed): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#KeyAuthorization.(toRpc:function)}. */
+  type Input = Signed<Hex.Hex | bigint | number, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }
 

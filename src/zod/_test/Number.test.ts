@@ -1,4 +1,4 @@
-import { expect, test } from 'vp/test'
+import { describe, expect, test } from 'vp/test'
 import * as z_Number from '../Number.js'
 import * as z from 'zod/mini'
 
@@ -8,4 +8,11 @@ test('Number decodes and encodes hex quantities', () => {
   expect(
     z.safeEncode(z_Number.Number, Number.MAX_SAFE_INTEGER + 1).success,
   ).toBe(false)
+})
+
+describe('NumberToRpc', () => {
+  test('accepts numberish encode inputs', () => {
+    expect(z.encode(z_Number.NumberToRpc, 42)).toBe('0x2a')
+    expect(z.encode(z_Number.NumberToRpc, '0x2a')).toBe('0x2a')
+  })
 })

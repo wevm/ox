@@ -48,36 +48,89 @@ const Call = z.codec(
   },
 )
 
+/** Encode-only tempo transaction call schema accepting numberish `toRpc` inputs. */
+const CallToRpc = z.codec(
+  z.object({
+    input: z.optional(z_Hex.Hex),
+    to: z.optional(z_Hex.Hex),
+    value: z.optional(z_Hex.Hex),
+  }),
+  z.object({
+    data: z.optional(z_Hex.Hex),
+    to: z.optional(z_Hex.Hex),
+    value: z.optional(z_Uint.UintToRpc),
+  }),
+  {
+    decode: (value) => ({
+      data: value.input,
+      to: value.to,
+      value: value.value === '0x' ? undefined : value.value,
+    }),
+    encode: (value) => ({
+      input: value.data,
+      to: value.to,
+      value: value.value,
+    }),
+  },
+)
+
 /** Tempo transaction schema (type `0x76`). */
-export const Tempo = z.object({
-  accessList: z_AccessList.AccessList,
-  authorizationList: z.optional(z_AuthorizationTempo.ListSigned),
-  blockHash: z_Hex.Hex,
-  blockNumber: z_Uint.Uint,
-  blockTimestamp: z.optional(z_Uint.Uint),
-  calls: z.readonly(z.array(Call)),
-  chainId: z_Number.Number,
-  feePayer: z.optional(z_Address.Address),
-  feePayerSignature: z.optional(FeePayerSignature),
-  feeToken: z_Address.Address,
-  from: z_Address.Address,
-  gas: z_Uint.Uint,
-  gasPrice: z.optional(z_Uint.Uint),
-  hash: z_Hex.Hex,
-  keyAuthorization: z.optional(z_KeyAuthorization.KeyAuthorization),
-  maxFeePerGas: z_Uint.Uint,
-  maxPriorityFeePerGas: z_Uint.Uint,
-  nonce: z_Uint.Uint,
-  nonceKey: z.optional(z_Uint.Uint),
-  signature: z_SignatureEnvelope.SignatureEnvelope,
-  transactionIndex: z_Number.Number,
-  type: Type,
-  validAfter: z.optional(z_Number.Number),
-  validBefore: z.optional(z_Number.Number),
-})
+export const Tempo = z.object(
+  fields(z_Uint.Uint, z_Number.Number, Call, z_AuthorizationTempo.ListSigned),
+)
+
+/** Encode-only tempo transaction schema accepting numberish `toRpc` inputs. */
+export const TempoToRpc = z.object(
+  fields(
+    z_Uint.UintToRpc,
+    z_Number.NumberToRpc,
+    CallToRpc,
+    z_AuthorizationTempo.ListSignedToRpc,
+  ),
+)
+
+function fields<
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+  call extends z.ZodMiniType,
+  authList extends z.ZodMiniType,
+>(uint: uint, num: num, call: call, authList: authList) {
+  return {
+    accessList: z_AccessList.AccessList,
+    authorizationList: z.optional(authList),
+    blockHash: z_Hex.Hex,
+    blockNumber: uint,
+    blockTimestamp: z.optional(uint),
+    calls: z.readonly(z.array(call)),
+    chainId: num,
+    feePayer: z.optional(z_Address.Address),
+    feePayerSignature: z.optional(FeePayerSignature),
+    feeToken: z_Address.Address,
+    from: z_Address.Address,
+    gas: uint,
+    gasPrice: z.optional(uint),
+    hash: z_Hex.Hex,
+    keyAuthorization: z.optional(z_KeyAuthorization.KeyAuthorization),
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
+    nonce: uint,
+    nonceKey: z.optional(uint),
+    signature: z_SignatureEnvelope.SignatureEnvelope,
+    transactionIndex: num,
+    type: Type,
+    validAfter: z.optional(num),
+    validBefore: z.optional(num),
+  }
+}
 
 /** Tempo transaction schema (union of tempo + standard transaction types). */
 export const Transaction = z.union([Tempo, z_Transaction.Transaction])
+
+/** Encode-only tempo transaction schema accepting numberish `toRpc` inputs. */
+export const TransactionToRpc = z.union([
+  TempoToRpc,
+  z_Transaction.TransactionToRpc,
+])
 
 /** Pending tempo transaction schema. */
 export const Pending = z_Transaction.Pending

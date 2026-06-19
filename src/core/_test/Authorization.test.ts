@@ -425,6 +425,35 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('numberish inputs', () => {
+    const fromBigint = Authorization.toRpc({
+      address: '0x0000000000000000000000000000000000000000',
+      chainId: 1,
+      nonce: 1n,
+      r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+      yParity: 0,
+    })
+    const fromNumber = Authorization.toRpc({
+      address: '0x0000000000000000000000000000000000000000',
+      chainId: 1,
+      nonce: 1,
+      r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+      yParity: 0,
+    })
+    const fromHex = Authorization.toRpc({
+      address: '0x0000000000000000000000000000000000000000',
+      chainId: '0x1',
+      nonce: '0x1',
+      r: '0x635dc2033e60185bb36709c29c75d64ea51dfbd91c32ef4be198e4ceb169fb4d',
+      s: '0x50c2667ac4c771072746acfdcf1f1483336dcca8bd2df47cd83175dbe60f0540',
+      yParity: 0,
+    })
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
+  })
 })
 
 describe('toRpcList', () => {

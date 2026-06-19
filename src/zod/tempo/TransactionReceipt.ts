@@ -51,24 +51,39 @@ export const Type = z.codec(z.string(), z.string(), {
 })
 
 /** Tempo transaction receipt schema. */
-export const TransactionReceipt = z.object({
-  blobGasPrice: z.optional(z_Uint.Uint),
-  blobGasUsed: z.optional(z_Uint.Uint),
-  blockHash: z_Hex.Hex,
-  blockNumber: z_Uint.Uint,
-  contractAddress: z.optional(z.union([z_Address.Address, z.null()])),
-  cumulativeGasUsed: z_Uint.Uint,
-  effectiveGasPrice: z_Uint.Uint,
-  feePayer: z.optional(z_Address.Address),
-  feeToken: z.optional(z_Address.Address),
-  from: z_Address.Address,
-  gasUsed: z_Uint.Uint,
-  logs: z.array(z_Log.Log),
-  logsBloom: z_Hex.Hex,
-  root: z.optional(z_Hex.Hex),
-  status: Status,
-  to: z.union([z_Address.Address, z.null()]),
-  transactionHash: z_Hex.Hex,
-  transactionIndex: z_Number.Number,
-  type: Type,
-})
+export const TransactionReceipt = z.object(
+  fields(z_Uint.Uint, z_Number.Number, z_Log.Log),
+)
+
+/** Encode-only tempo transaction receipt schema accepting numberish `toRpc` inputs. */
+export const TransactionReceiptToRpc = z.object(
+  fields(z_Uint.UintToRpc, z_Number.NumberToRpc, z_Log.LogToRpc),
+)
+
+function fields<
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+  log extends z.ZodMiniType,
+>(uint: uint, num: num, log: log) {
+  return {
+    blobGasPrice: z.optional(uint),
+    blobGasUsed: z.optional(uint),
+    blockHash: z_Hex.Hex,
+    blockNumber: uint,
+    contractAddress: z.optional(z.union([z_Address.Address, z.null()])),
+    cumulativeGasUsed: uint,
+    effectiveGasPrice: uint,
+    feePayer: z.optional(z_Address.Address),
+    feeToken: z.optional(z_Address.Address),
+    from: z_Address.Address,
+    gasUsed: uint,
+    logs: z.array(log),
+    logsBloom: z_Hex.Hex,
+    root: z.optional(z_Hex.Hex),
+    status: Status,
+    to: z.union([z_Address.Address, z.null()]),
+    transactionHash: z_Hex.Hex,
+    transactionIndex: num,
+    type: Type,
+  }
+}

@@ -630,8 +630,8 @@ export declare namespace serialize {
  * @param envelope - The transaction envelope.
  * @returns RPC representation.
  */
-export function toRpc<const envelope extends TxEnvelope>(
-  envelope: envelope | TxEnvelope,
+export function toRpc<const envelope extends toRpc.Input>(
+  envelope: envelope | toRpc.Input,
 ): toRpc.ReturnType<envelope> {
   const type = getType(envelope) as Type | string
   if (type === 'legacy')
@@ -648,6 +648,13 @@ export function toRpc<const envelope extends TxEnvelope>(
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#(TransactionEnvelope:namespace).(toRpc:function)}. */
+  export type Input = TxEnvelope<
+    boolean,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   export type ReturnType<envelope extends Typeable = TxEnvelope> =
     getType.ReturnType<envelope> extends 'legacy'
       ? TxEnvelopeLegacy.Rpc

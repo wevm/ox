@@ -48,6 +48,38 @@ describe('KeyAuthorization', () => {
     )
   })
 
+  test('KeyAuthorizationToRpc accepts numberish encode inputs', () => {
+    const decoded = z.decode(z_KeyAuthorization.KeyAuthorization, rpc)
+    const strict = z.encode(z_KeyAuthorization.KeyAuthorization, decoded)
+
+    expect(
+      z.encode(z_KeyAuthorization.KeyAuthorizationToRpc, {
+        ...decoded,
+        chainId: 1,
+        expiry: 1234567890,
+        limits: [
+          {
+            limit: 10000000,
+            token: '0x20c0000000000000000000000000000000000001',
+          },
+        ],
+      }),
+    ).toEqual(strict)
+    expect(
+      z.encode(z_KeyAuthorization.KeyAuthorizationToRpc, {
+        ...decoded,
+        chainId: '0x1',
+        expiry: '0x499602d2',
+        limits: [
+          {
+            limit: '0x989680',
+            token: '0x20c0000000000000000000000000000000000001',
+          },
+        ],
+      }),
+    ).toEqual(strict)
+  })
+
   test('rejects an invalid key authorization', () => {
     expect(
       z.safeDecode(z_KeyAuthorization.KeyAuthorization, {

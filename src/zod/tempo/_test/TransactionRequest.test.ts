@@ -52,3 +52,32 @@ describe('TransactionRequest', () => {
     ).toBe(false)
   })
 })
+
+describe('TransactionRequestToRpc', () => {
+  test('accepts numberish encode inputs', () => {
+    const decoded = z.decode(z_TransactionRequest.TransactionRequest, rpc)
+    const strict = z.encode(z_TransactionRequest.TransactionRequest, decoded)
+
+    // numberish: bigint quantities as `number`/hex, calls value as `number`
+    expect(
+      z.encode(z_TransactionRequest.TransactionRequestToRpc, {
+        ...decoded,
+        maxFeePerGas: 2,
+        calls: [
+          {
+            data: '0xdeadbeef',
+            to: '0xcafebabecafebabecafebabecafebabecafebabe',
+            value: 700000000000000000n,
+          },
+        ],
+      }),
+    ).toEqual(strict)
+
+    expect(
+      z.encode(z_TransactionRequest.TransactionRequestToRpc, {
+        ...decoded,
+        maxFeePerGas: '0x2',
+      }),
+    ).toEqual(strict)
+  })
+})

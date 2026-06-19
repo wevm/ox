@@ -8,7 +8,11 @@ import * as z_TxEnvelopeEip2930 from './TxEnvelopeEip2930.js'
 import * as z_TxEnvelopeEip4844 from './TxEnvelopeEip4844.js'
 import * as z_TxEnvelopeEip7702 from './TxEnvelopeEip7702.js'
 import * as z_TxEnvelopeLegacy from './TxEnvelopeLegacy.js'
-import { baseFields, signedBaseFields } from './internal/TransactionEnvelope.js'
+import {
+  baseFields,
+  signedBaseFields,
+  strict,
+} from './internal/TransactionEnvelope.js'
 import * as z from 'zod/mini'
 
 const fromRpcType = {
@@ -34,10 +38,12 @@ export const Type = z.codec(z.string(), z.string(), {
 })
 
 /** Base transaction envelope schema. */
-export const Base = z.object(baseFields(Type))
+export const Base = z.object(baseFields(Type, strict.uint, strict.num))
 
 /** Signed base transaction envelope schema. */
-export const BaseSigned = z.object(signedBaseFields(Type))
+export const BaseSigned = z.object(
+  signedBaseFields(Type, strict.uint, strict.num),
+)
 
 /** Transaction envelope schema. */
 export const TransactionEnvelope = z.union([
@@ -48,6 +54,15 @@ export const TransactionEnvelope = z.union([
   z_TxEnvelopeEip7702.TxEnvelopeEip7702,
 ])
 
+/** Encode-only transaction envelope schema accepting numberish `toRpc` inputs. */
+export const TransactionEnvelopeToRpc = z.union([
+  z_TxEnvelopeLegacy.TxEnvelopeLegacyToRpc,
+  z_TxEnvelopeEip2930.TxEnvelopeEip2930ToRpc,
+  z_TxEnvelopeEip1559.TxEnvelopeEip1559ToRpc,
+  z_TxEnvelopeEip4844.TxEnvelopeEip4844ToRpc,
+  z_TxEnvelopeEip7702.TxEnvelopeEip7702ToRpc,
+])
+
 /** Signed transaction envelope schema. */
 export const Signed = z.union([
   z_TxEnvelopeLegacy.Signed,
@@ -55,6 +70,15 @@ export const Signed = z.union([
   z_TxEnvelopeEip1559.Signed,
   z_TxEnvelopeEip4844.Signed,
   z_TxEnvelopeEip7702.Signed,
+])
+
+/** Encode-only signed transaction envelope schema accepting numberish `toRpc` inputs. */
+export const SignedToRpc = z.union([
+  z_TxEnvelopeLegacy.SignedToRpc,
+  z_TxEnvelopeEip2930.SignedToRpc,
+  z_TxEnvelopeEip1559.SignedToRpc,
+  z_TxEnvelopeEip4844.SignedToRpc,
+  z_TxEnvelopeEip7702.SignedToRpc,
 ])
 
 /** Serialized transaction envelope schema. */

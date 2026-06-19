@@ -8,18 +8,10 @@ import * as z from 'zod/mini'
 const topics = z.tuple([z_Hex.Hex], z_Hex.Hex)
 
 /** Log schema. */
-export const Log = z.object({
-  address: z_Address.Address,
-  blockHash: z_Hex.Hex,
-  blockNumber: z_Uint.Uint,
-  blockTimestamp: z.optional(z_Uint.Uint),
-  data: z_Hex.Hex,
-  logIndex: z_Number.Number,
-  topics,
-  transactionHash: z_Hex.Hex,
-  transactionIndex: z_Number.Number,
-  removed: z.boolean(),
-})
+export const Log = z.object(fields(z_Uint.Uint, z_Number.Number))
+
+/** Encode-only log schema accepting numberish `toRpc` inputs. */
+export const LogToRpc = z.object(fields(z_Uint.UintToRpc, z_Number.NumberToRpc))
 
 /** Pending log schema. */
 export const Pending = z.object({
@@ -34,3 +26,21 @@ export const Pending = z.object({
   transactionIndex: z.null(),
   removed: z.boolean(),
 })
+
+function fields<uint extends z.ZodMiniType, num extends z.ZodMiniType>(
+  uint: uint,
+  num: num,
+) {
+  return {
+    address: z_Address.Address,
+    blockHash: z_Hex.Hex,
+    blockNumber: uint,
+    blockTimestamp: z.optional(uint),
+    data: z_Hex.Hex,
+    logIndex: num,
+    topics,
+    transactionHash: z_Hex.Hex,
+    transactionIndex: num,
+    removed: z.boolean(),
+  }
+}

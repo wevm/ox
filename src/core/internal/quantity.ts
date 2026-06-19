@@ -59,6 +59,35 @@ export function toNumber(
 }
 
 /**
+ * Converts a "numberish" value (`Hex.Hex | bigint | number`) to an RPC quantity
+ * (`Hex.Hex`). Hex values are passed through unchanged; numbers and bigints are
+ * encoded via {@link ox#Hex.(fromNumber:function)}.
+ *
+ * @internal
+ */
+export function fromNumberish(
+  value: Hex.Hex | bigint | number,
+  options?: Hex.fromNumber.Options,
+): Hex.Hex {
+  if (typeof value === 'string') return value
+  return Hex.fromNumber(value, options)
+}
+
+/**
+ * Converts an optional "numberish" value to an RPC quantity (`Hex.Hex | undefined`).
+ * Returns `undefined` for both `undefined` and `null`.
+ *
+ * @internal
+ */
+export function fromNumberishOptional(
+  value: Hex.Hex | bigint | number | undefined | null,
+  options?: Hex.fromNumber.Options,
+): Hex.Hex | undefined {
+  if (value === undefined || value === null) return undefined
+  return fromNumberish(value, options)
+}
+
+/**
  * Converts an optional `bigint` to an RPC quantity (`Hex.Hex | undefined`).
  *
  * @internal

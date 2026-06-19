@@ -65,6 +65,32 @@ describe('StateOverrides', () => {
     `)
   })
 
+  test('AccountOverridesToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      balance: 1n,
+      code: '0xdeadbeef',
+      movePrecompileToAddress: movedAddress,
+      nonce: 2n,
+      stateDiff: { [slot]: value },
+    } as const
+    const expected = z.encode(z_StateOverrides.AccountOverrides, decoded)
+
+    expect(
+      z.encode(z_StateOverrides.AccountOverridesToRpc, {
+        ...decoded,
+        balance: 1,
+        nonce: 2,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_StateOverrides.AccountOverridesToRpc, {
+        ...decoded,
+        balance: '0x1',
+        nonce: '0x2',
+      }),
+    ).toEqual(expected)
+  })
+
   test('rejects invalid addresses and storage keys', () => {
     expect(
       z.safeDecode(z_StateOverrides.StateOverrides, {

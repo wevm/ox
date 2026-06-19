@@ -312,6 +312,60 @@ describe('toRpc', () => {
     `)
   })
 
+  test('numberish inputs', () => {
+    const base = {
+      blockHash:
+        '0xc350d807505fb835650f0013632c5515592987ba169bbc6626d9fc54d91f0f0b',
+      contractAddress: null,
+      from: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+      logs: [],
+      logsBloom:
+        '0x00200000000000000000008080000000000000000040000000000000000000000000000000000000000000000000000022000000080000000000000000000000000000080000000000000008000000200000000000000000000200008020400000000000000000280000000000100000000000000000000000000010000000000000000000020000000000000020000000000001000000080000004000000000000000000000000000000000000000000000400000000000001000000000000000000002000000000000000020000000000000000000001000000000000000000000200000000000000000000000000000001000000000c00000000000000000',
+      root: undefined,
+      status: 'success',
+      to: '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+      transactionHash:
+        '0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0',
+      type: 'eip1559',
+    } as const
+    const fromBigint = TransactionReceipt.toRpc({
+      ...base,
+      blobGasPrice: 1000n,
+      blobGasUsed: 100n,
+      blockNumber: 100n,
+      cumulativeGasUsed: 21000n,
+      effectiveGasPrice: 1000n,
+      gasUsed: 21000n,
+      logs: [],
+      transactionIndex: 3,
+    })
+    const fromNumber = TransactionReceipt.toRpc({
+      ...base,
+      blobGasPrice: 1000,
+      blobGasUsed: 100,
+      blockNumber: 100,
+      cumulativeGasUsed: 21000,
+      effectiveGasPrice: 1000,
+      gasUsed: 21000,
+      logs: [],
+      transactionIndex: 3,
+    })
+    const fromHex = TransactionReceipt.toRpc({
+      ...base,
+      blobGasPrice: '0x3e8',
+      blobGasUsed: '0x64',
+      blockNumber: '0x64',
+      cumulativeGasUsed: '0x5208',
+      effectiveGasPrice: '0x3e8',
+      gasUsed: '0x5208',
+      logs: [],
+      transactionIndex: '0x3',
+    })
+
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
+  })
+
   test('behavior: nullish values', () => {
     const receipt = TransactionReceipt.toRpc({
       blobGasPrice: undefined,

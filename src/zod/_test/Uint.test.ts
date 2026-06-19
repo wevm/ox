@@ -43,3 +43,18 @@ describe('Uint', () => {
     expect(z.safeEncode(z_Uint.Uint64, 1n << 64n).success).toBe(false)
   })
 })
+
+describe('UintToRpc', () => {
+  test('accepts numberish encode inputs', () => {
+    expect(z.encode(z_Uint.UintToRpc, 42n)).toBe('0x2a')
+    expect(z.encode(z_Uint.UintToRpc, 42)).toBe('0x2a')
+    expect(z.encode(z_Uint.UintToRpc, '0x2a')).toBe('0x2a')
+  })
+})
+
+describe('Uint8ToRpc', () => {
+  test('accepts numberish encode inputs', () => {
+    expect(z.encode(z_Uint.Uint8ToRpc, 42)).toBe('0x2a')
+    expect(z.encode(z_Uint.Uint8ToRpc, '0x2a')).toBe('0x2a')
+  })
+})

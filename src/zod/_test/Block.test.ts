@@ -203,6 +203,60 @@ describe('Block', () => {
     ).toMatchObject({ hash: null, number: null })
   })
 
+  test('BlockToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      baseFeePerGas: 1n,
+      blobGasUsed: 2n,
+      difficulty: 3n,
+      excessBlobGas: 4n,
+      extraData: '0x',
+      gasLimit: 5n,
+      gasUsed: 6n,
+      hash,
+      logsBloom: '0x',
+      miner: address,
+      mixHash: hash,
+      nonce: '0x0000000000000000',
+      number: 7n,
+      parentBeaconBlockRoot: hash,
+      parentHash: hash,
+      receiptsRoot: hash,
+      sealFields: [hash, '0x0000000000000000'],
+      sha3Uncles: hash,
+      size: 8n,
+      stateRoot: hash,
+      timestamp: 9n,
+      totalDifficulty: 10n,
+      transactions: [hash2],
+      transactionsRoot: hash,
+      uncles: [hash2],
+      withdrawals: [{ address, amount: 11n, index: 12, validatorIndex: 13 }],
+      withdrawalsRoot: hash,
+    } as const
+    const expected = z.encode(z_Block.Block, decoded)
+
+    expect(
+      z.encode(z_Block.BlockToRpc, {
+        ...decoded,
+        baseFeePerGas: 1,
+        gasLimit: 5,
+        number: 7,
+        size: 8,
+        timestamp: 9,
+        totalDifficulty: 10,
+        withdrawals: [{ address, amount: 11, index: 12, validatorIndex: 13 }],
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_Block.BlockToRpc, {
+        ...decoded,
+        baseFeePerGas: '0x1',
+        gasLimit: '0x5',
+        number: '0x7',
+      }),
+    ).toEqual(expected)
+  })
+
   test('decodes identifiers and rejects invalid blocks', () => {
     expect(
       z.decode(z_Block.Identifier, {

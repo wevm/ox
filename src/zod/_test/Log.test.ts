@@ -101,6 +101,39 @@ describe('Log', () => {
     `)
   })
 
+  test('LogToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      address,
+      blockHash,
+      blockNumber: 19760236n,
+      blockTimestamp: 1n,
+      data: '0xdeadbeef',
+      logIndex: 271,
+      topics: [topic],
+      transactionHash,
+      transactionIndex: 145,
+      removed: false,
+    } as const
+    const expected = z.encode(z_Log.Log, { ...decoded, topics: [topic] })
+
+    expect(
+      z.encode(z_Log.LogToRpc, {
+        ...decoded,
+        topics: [topic],
+        blockNumber: 19760236,
+        blockTimestamp: 1,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_Log.LogToRpc, {
+        ...decoded,
+        topics: [topic],
+        blockNumber: '0x12d846c',
+        blockTimestamp: '0x1',
+      }),
+    ).toEqual(expected)
+  })
+
   test('rejects invalid topics and quantities', () => {
     expect(
       z.safeDecode(z_Log.Log, {

@@ -82,6 +82,41 @@ describe('BlockOverrides', () => {
     `)
   })
 
+  test('BlockOverridesToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      baseFeePerGas: 1n,
+      blobBaseFee: 2n,
+      feeRecipient: address,
+      gasLimit: 3n,
+      number: 4n,
+      prevRandao: 5n,
+      time: 6n,
+      withdrawals: [{ address, amount: 7n, index: 0, validatorIndex: 1 }],
+    } as const
+    const expected = z.encode(z_BlockOverrides.BlockOverrides, {
+      ...decoded,
+      withdrawals: [{ address, amount: 7n, index: 0, validatorIndex: 1 }],
+    })
+
+    expect(
+      z.encode(z_BlockOverrides.BlockOverridesToRpc, {
+        ...decoded,
+        baseFeePerGas: 1,
+        gasLimit: 3,
+        time: 6,
+        withdrawals: [{ address, amount: 7, index: 0, validatorIndex: 1 }],
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_BlockOverrides.BlockOverridesToRpc, {
+        ...decoded,
+        baseFeePerGas: '0x1',
+        number: '0x4',
+        withdrawals: [{ address, amount: '0x7', index: 0, validatorIndex: 1 }],
+      }),
+    ).toEqual(expected)
+  })
+
   test('rejects invalid nested withdrawals', () => {
     expect(
       z.safeDecode(z_BlockOverrides.BlockOverrides, {

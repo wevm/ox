@@ -110,20 +110,20 @@ export function fromRpc(rpcStateOverrides: Rpc): StateOverrides {
  * @param stateOverrides - The state overrides to convert.
  * @returns An instantiated {@link ox#StateOverrides.Rpc}.
  */
-export function toRpc(stateOverrides: StateOverrides): Rpc {
+export function toRpc(stateOverrides: toRpc.Input): Rpc {
   const rpcStateOverrides: Rpc = {}
   for (const [address, accountOverrides] of Object.entries(stateOverrides)) {
     const accountOverridesRpc: RpcAccountOverrides = {}
-    if (typeof accountOverrides.balance === 'bigint')
-      accountOverridesRpc.balance = Quantity.fromBigInt(
+    if (accountOverrides.balance !== undefined)
+      accountOverridesRpc.balance = Quantity.fromNumberish(
         accountOverrides.balance,
       )
     if (accountOverrides.code) accountOverridesRpc.code = accountOverrides.code
     if (accountOverrides.movePrecompileToAddress)
       accountOverridesRpc.movePrecompileToAddress =
         accountOverrides.movePrecompileToAddress
-    if (typeof accountOverrides.nonce === 'bigint')
-      accountOverridesRpc.nonce = Quantity.fromBigInt(accountOverrides.nonce)
+    if (accountOverrides.nonce !== undefined)
+      accountOverridesRpc.nonce = Quantity.fromNumberish(accountOverrides.nonce)
     if (accountOverrides.state)
       accountOverridesRpc.state = accountOverrides.state
     if (accountOverrides.stateDiff)
@@ -131,4 +131,9 @@ export function toRpc(stateOverrides: StateOverrides): Rpc {
     ;(rpcStateOverrides as any)[address] = accountOverridesRpc
   }
   return rpcStateOverrides
+}
+
+export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#StateOverrides.(toRpc:function)}. */
+  type Input = StateOverrides<Hex.Hex | bigint | number>
 }

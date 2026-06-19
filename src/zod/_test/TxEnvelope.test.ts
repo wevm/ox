@@ -146,6 +146,38 @@ describe('TxEnvelope', () => {
     })
   })
 
+  test('TxEnvelopeEip1559ToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      ...base,
+      accessList: [],
+      maxFeePerGas: 4n,
+      maxPriorityFeePerGas: 5n,
+      type: 'eip1559',
+    } as const
+    const expected = z.encode(z_TxEnvelopeEip1559.TxEnvelopeEip1559, decoded)
+
+    expect(
+      z.encode(z_TxEnvelopeEip1559.TxEnvelopeEip1559ToRpc, {
+        ...decoded,
+        gas: 21000,
+        maxFeePerGas: 4,
+        maxPriorityFeePerGas: 5,
+        nonce: 2,
+        value: 3,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_TxEnvelopeEip1559.TxEnvelopeEip1559ToRpc, {
+        ...decoded,
+        gas: '0x5208',
+        maxFeePerGas: '0x4',
+        maxPriorityFeePerGas: '0x5',
+        nonce: '0x2',
+        value: '0x3',
+      }),
+    ).toEqual(expected)
+  })
+
   test('validates signed envelopes and rejects invalid variants', () => {
     expect(
       z.decode(z_TxEnvelopeEip1559.Signed, {

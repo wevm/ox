@@ -1437,7 +1437,7 @@ export declare namespace sortMultisigApprovals {
  * @param envelope - The signature envelope to convert.
  * @returns The RPC signature envelope with hex values.
  */
-export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
+export function toRpc(envelope: toRpc.Input): SignatureEnvelopeRpc {
   const type = getType(envelope)
 
   if (type === 'secp256k1') {
@@ -1506,6 +1506,9 @@ export function toRpc(envelope: SignatureEnvelope): SignatureEnvelopeRpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#SignatureEnvelope.(toRpc:function)}. */
+  type Input = SignatureEnvelope<Hex.Hex | number>
+
   type ErrorType =
     | CoercionError
     | Signature.toRpc.ErrorType

@@ -5,6 +5,20 @@ import * as z from 'zod/mini'
 
 export type SmallBits = 8 | 16 | 24 | 32 | 40 | 48
 
+/** "Numberish" value accepted by `*ToRpc` bigint schemas. */
+export type BigintNumberish = z.output<typeof z_Hex.Hex> | bigint | number
+/** "Numberish" value accepted by `*ToRpc` number schemas. */
+export type NumberNumberish = z.output<typeof z_Hex.Hex> | number
+
+/** Encodes a "numberish" value to an RPC quantity hex (hex passes through). */
+export function encodeNumberish(
+  value: BigintNumberish,
+  options?: core_Hex.fromNumber.Options,
+): z.output<typeof z_Hex.Hex> {
+  if (typeof value === 'string') return value
+  return core_Hex.fromNumber(value, options)
+}
+
 export function decodeInteger(
   value: z.output<typeof z_Hex.Hex>,
   bits: number,
@@ -58,6 +72,50 @@ export function intBigint(bits: number) {
   const max = (1n << globalThis.BigInt(bits - 1)) - 1n
   const message = `expected int${bits}`
   return z.bigint().check(z.gte(min, message), z.lte(max, message))
+}
+
+/** Numberish output schema for unsized/bigint-width unsigned integers. */
+export function uintBigintNumberish(bits?: number) {
+  return z.union([quantityHex(bits), uintBigint(bits), uintSafeNumber(bits)])
+}
+
+/** Numberish output schema for number-width unsigned integers. */
+export function uintNumberNumberish(bits?: SmallBits) {
+  return z.union([quantityHex(bits), uintNumber(bits)])
+}
+
+/** Numberish output schema for unsized/bigint-width signed integers. */
+export function intBigintNumberish(bits: number) {
+  return z.union([quantityHex(bits), intBigint(bits), intSafeNumber(bits)])
+}
+
+/** Numberish output schema for number-width signed integers. */
+export function intNumberNumberish(bits: SmallBits) {
+  return z.union([quantityHex(bits), intNumber(bits)])
+}
+
+function uintSafeNumber(bits?: number) {
+  const max =
+    bits === undefined || bits > 53
+      ? globalThis.Number.MAX_SAFE_INTEGER
+      : 2 ** bits - 1
+  const message =
+    bits === undefined ? 'expected uint number' : `expected uint${bits}`
+  return z.int(message).check(z.gte(0, message), z.lte(max, message))
+}
+
+function intSafeNumber(bits?: number) {
+  const max =
+    bits === undefined || bits > 53
+      ? globalThis.Number.MAX_SAFE_INTEGER
+      : 2 ** (bits - 1) - 1
+  const min =
+    bits === undefined || bits > 53
+      ? globalThis.Number.MIN_SAFE_INTEGER
+      : -(2 ** (bits - 1))
+  const message =
+    bits === undefined ? 'expected int number' : `expected int${bits}`
+  return z.int(message).check(z.gte(min, message), z.lte(max, message))
 }
 
 function isIntegerHex(value: z.output<typeof z_Hex.Hex>, bits?: number) {

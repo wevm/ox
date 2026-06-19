@@ -1,6 +1,7 @@
 import type * as Address from './Address.js'
 import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 import * as Log from './Log.js'
 
@@ -302,32 +303,40 @@ export declare namespace fromRpc {
  * @param receipt - The receipt to convert.
  * @returns An RPC receipt.
  */
-export function toRpc(receipt: TransactionReceipt): Rpc {
+export function toRpc(receipt: toRpc.Input): Rpc {
   return {
     blobGasPrice: receipt.blobGasPrice
-      ? Hex.fromNumber(receipt.blobGasPrice)
+      ? Quantity.fromNumberish(receipt.blobGasPrice)
       : undefined,
     blobGasUsed: receipt.blobGasUsed
-      ? Hex.fromNumber(receipt.blobGasUsed)
+      ? Quantity.fromNumberish(receipt.blobGasUsed)
       : undefined,
     blockHash: receipt.blockHash,
-    blockNumber: Hex.fromNumber(receipt.blockNumber),
+    blockNumber: Quantity.fromNumberish(receipt.blockNumber),
     contractAddress: receipt.contractAddress,
-    cumulativeGasUsed: Hex.fromNumber(receipt.cumulativeGasUsed),
-    effectiveGasPrice: Hex.fromNumber(receipt.effectiveGasPrice),
+    cumulativeGasUsed: Quantity.fromNumberish(receipt.cumulativeGasUsed),
+    effectiveGasPrice: Quantity.fromNumberish(receipt.effectiveGasPrice),
     from: receipt.from,
-    gasUsed: Hex.fromNumber(receipt.gasUsed),
+    gasUsed: Quantity.fromNumberish(receipt.gasUsed),
     logs: receipt.logs.map(Log.toRpc as never),
     logsBloom: receipt.logsBloom,
     root: receipt.root,
     status: toRpcStatus[receipt.status],
     to: receipt.to,
     transactionHash: receipt.transactionHash,
-    transactionIndex: Hex.fromNumber(receipt.transactionIndex),
+    transactionIndex: Quantity.fromNumberish(receipt.transactionIndex),
     type: (toRpcType as any)[receipt.type] ?? receipt.type,
   }
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TransactionReceipt.(toRpc:function)}. */
+  export type Input = TransactionReceipt<
+    Status,
+    Type,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }

@@ -4,6 +4,7 @@ import * as Authorization from './Authorization.js'
 import * as Blobs from './Blobs.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute } from './internal/types.js'
 import type * as Kzg from './Kzg.js'
 import * as Transaction from './Transaction.js'
@@ -164,7 +165,7 @@ export declare namespace fromRpc {
  * @param request - The request to convert.
  * @returns An RPC request.
  */
-export function toRpc(request: TransactionRequest): Rpc {
+export function toRpc(request: toRpc.Input): Rpc {
   const request_rpc: Rpc = {}
 
   if (typeof request.accessList !== 'undefined')
@@ -177,7 +178,7 @@ export function toRpc(request: TransactionRequest): Rpc {
     request_rpc.blobVersionedHashes = request.blobVersionedHashes
   if (typeof request.blobs !== 'undefined') request_rpc.blobs = request.blobs
   if (typeof request.chainId !== 'undefined')
-    request_rpc.chainId = Hex.fromNumber(request.chainId)
+    request_rpc.chainId = Quantity.fromNumberish(request.chainId)
   if (typeof request.data !== 'undefined') {
     request_rpc.data = request.data
     request_rpc.input = request.data
@@ -187,19 +188,21 @@ export function toRpc(request: TransactionRequest): Rpc {
   }
   if (typeof request.from !== 'undefined') request_rpc.from = request.from
   if (typeof request.gas !== 'undefined')
-    request_rpc.gas = Hex.fromNumber(request.gas)
+    request_rpc.gas = Quantity.fromNumberish(request.gas)
   if (typeof request.gasPrice !== 'undefined')
-    request_rpc.gasPrice = Hex.fromNumber(request.gasPrice)
+    request_rpc.gasPrice = Quantity.fromNumberish(request.gasPrice)
   if (typeof request.maxFeePerBlobGas !== 'undefined')
-    request_rpc.maxFeePerBlobGas = Hex.fromNumber(request.maxFeePerBlobGas)
+    request_rpc.maxFeePerBlobGas = Quantity.fromNumberish(
+      request.maxFeePerBlobGas,
+    )
   if (typeof request.maxFeePerGas !== 'undefined')
-    request_rpc.maxFeePerGas = Hex.fromNumber(request.maxFeePerGas)
+    request_rpc.maxFeePerGas = Quantity.fromNumberish(request.maxFeePerGas)
   if (typeof request.maxPriorityFeePerGas !== 'undefined')
-    request_rpc.maxPriorityFeePerGas = Hex.fromNumber(
+    request_rpc.maxPriorityFeePerGas = Quantity.fromNumberish(
       request.maxPriorityFeePerGas,
     )
   if (typeof request.nonce !== 'undefined')
-    request_rpc.nonce = Hex.fromNumber(request.nonce)
+    request_rpc.nonce = Quantity.fromNumberish(request.nonce)
   if (typeof request.to !== 'undefined') request_rpc.to = request.to
   if (typeof request.type !== 'undefined')
     request_rpc.type =
@@ -207,18 +210,25 @@ export function toRpc(request: TransactionRequest): Rpc {
         request.type as keyof typeof Transaction.toRpcType
       ] || request.type
   if (typeof request.value !== 'undefined')
-    request_rpc.value = Hex.fromNumber(request.value)
+    request_rpc.value = Quantity.fromNumberish(request.value)
   if (typeof request.r !== 'undefined') request_rpc.r = request.r
   if (typeof request.s !== 'undefined') request_rpc.s = request.s
   if (typeof request.yParity !== 'undefined')
-    request_rpc.yParity = Hex.fromNumber(request.yParity)
+    request_rpc.yParity = Quantity.fromNumberish(request.yParity)
   if (typeof request.v !== 'undefined')
-    request_rpc.v = Hex.fromNumber(request.v)
+    request_rpc.v = Quantity.fromNumberish(request.v)
 
   return request_rpc
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TransactionRequest.(toRpc:function)}. */
+  export type Input = TransactionRequest<
+    Hex.Hex | bigint | number,
+    Hex.Hex | number,
+    string
+  >
+
   export type ErrorType =
     | Authorization.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType

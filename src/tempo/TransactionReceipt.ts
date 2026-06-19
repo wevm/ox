@@ -184,7 +184,7 @@ export declare namespace fromRpc {
  * @param receipt - The receipt to convert.
  * @returns An RPC receipt.
  */
-export function toRpc(receipt: TransactionReceipt): Rpc {
+export function toRpc(receipt: toRpc.Input): Rpc {
   const rpc = ox_TransactionReceipt.toRpc(
     receipt as ox_TransactionReceipt.TransactionReceipt,
   ) as Rpc
@@ -196,5 +196,13 @@ export function toRpc(receipt: TransactionReceipt): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TransactionReceipt.(toRpc:function)}. */
+  export type Input = TransactionReceipt<
+    ox_TransactionReceipt.Status,
+    ox_TransactionReceipt.Type,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   export type ErrorType = ox_TransactionReceipt.toRpc.ErrorType
 }

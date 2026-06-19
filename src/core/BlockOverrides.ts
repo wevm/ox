@@ -113,23 +113,28 @@ export function fromRpc(rpcBlockOverrides: Rpc): BlockOverrides {
  * @param blockOverrides - The block overrides to convert.
  * @returns An instantiated {@link ox#BlockOverrides.Rpc}.
  */
-export function toRpc(blockOverrides: BlockOverrides): Rpc {
+export function toRpc(blockOverrides: toRpc.Input): Rpc {
   const rpc: Rpc = {}
-  if (typeof blockOverrides.baseFeePerGas === 'bigint')
-    rpc.baseFeePerGas = Quantity.fromBigInt(blockOverrides.baseFeePerGas)
-  if (typeof blockOverrides.blobBaseFee === 'bigint')
-    rpc.blobBaseFee = Quantity.fromBigInt(blockOverrides.blobBaseFee)
+  if (blockOverrides.baseFeePerGas !== undefined)
+    rpc.baseFeePerGas = Quantity.fromNumberish(blockOverrides.baseFeePerGas)
+  if (blockOverrides.blobBaseFee !== undefined)
+    rpc.blobBaseFee = Quantity.fromNumberish(blockOverrides.blobBaseFee)
   if (typeof blockOverrides.feeRecipient === 'string')
     rpc.feeRecipient = blockOverrides.feeRecipient
-  if (typeof blockOverrides.gasLimit === 'bigint')
-    rpc.gasLimit = Quantity.fromBigInt(blockOverrides.gasLimit)
-  if (typeof blockOverrides.number === 'bigint')
-    rpc.number = Quantity.fromBigInt(blockOverrides.number)
-  if (typeof blockOverrides.prevRandao === 'bigint')
-    rpc.prevRandao = Quantity.fromBigInt(blockOverrides.prevRandao)
-  if (typeof blockOverrides.time === 'bigint')
-    rpc.time = Quantity.fromBigInt(blockOverrides.time)
+  if (blockOverrides.gasLimit !== undefined)
+    rpc.gasLimit = Quantity.fromNumberish(blockOverrides.gasLimit)
+  if (blockOverrides.number !== undefined)
+    rpc.number = Quantity.fromNumberish(blockOverrides.number)
+  if (blockOverrides.prevRandao !== undefined)
+    rpc.prevRandao = Quantity.fromNumberish(blockOverrides.prevRandao)
+  if (blockOverrides.time !== undefined)
+    rpc.time = Quantity.fromNumberish(blockOverrides.time)
   if (blockOverrides.withdrawals !== undefined)
     rpc.withdrawals = blockOverrides.withdrawals.map(Withdrawal.toRpc)
   return rpc
+}
+
+export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#BlockOverrides.(toRpc:function)}. */
+  type Input = BlockOverrides<Hex.Hex | bigint | number, Hex.Hex | number>
 }

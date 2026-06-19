@@ -148,7 +148,7 @@ export function toRpc<
   includeTransactions extends boolean = false,
   blockTag extends Tag = 'latest',
 >(
-  block: Block<includeTransactions, blockTag>,
+  block: toRpc.Input<includeTransactions, blockTag>,
   _options: toRpc.Options<includeTransactions, blockTag> = {},
 ): Rpc<boolean, blockTag> {
   const transactions = block.transactions.map((transaction) => {
@@ -156,30 +156,30 @@ export function toRpc<
     return Transaction.toRpc(transaction as any) as any
   })
   return {
-    baseFeePerGas: Quantity.fromBigInt(block.baseFeePerGas),
-    blobGasUsed: Quantity.fromBigInt(block.blobGasUsed),
-    excessBlobGas: Quantity.fromBigInt(block.excessBlobGas),
+    baseFeePerGas: Quantity.fromNumberishOptional(block.baseFeePerGas),
+    blobGasUsed: Quantity.fromNumberishOptional(block.blobGasUsed),
+    excessBlobGas: Quantity.fromNumberishOptional(block.excessBlobGas),
     extraData: block.extraData,
-    difficulty: Quantity.fromBigInt(block.difficulty),
-    gasLimit: Hex.fromNumber(block.gasLimit),
-    gasUsed: Hex.fromNumber(block.gasUsed),
+    difficulty: Quantity.fromNumberishOptional(block.difficulty),
+    gasLimit: Quantity.fromNumberish(block.gasLimit),
+    gasUsed: Quantity.fromNumberish(block.gasUsed),
     hash: block.hash,
     logsBloom: block.logsBloom,
     miner: block.miner,
     mixHash: block.mixHash,
     nonce: block.nonce,
-    number: (typeof block.number === 'bigint'
-      ? Hex.fromNumber(block.number)
-      : null) as never,
+    number: (block.number === null
+      ? null
+      : Quantity.fromNumberish(block.number)) as never,
     parentBeaconBlockRoot: block.parentBeaconBlockRoot,
     parentHash: block.parentHash,
     receiptsRoot: block.receiptsRoot,
     sealFields: block.sealFields,
     sha3Uncles: block.sha3Uncles,
-    size: Hex.fromNumber(block.size),
+    size: Quantity.fromNumberish(block.size),
     stateRoot: block.stateRoot,
-    timestamp: Hex.fromNumber(block.timestamp),
-    totalDifficulty: Quantity.fromBigInt(block.totalDifficulty),
+    timestamp: Quantity.fromNumberish(block.timestamp),
+    totalDifficulty: Quantity.fromNumberishOptional(block.totalDifficulty),
     transactions,
     transactionsRoot: block.transactionsRoot,
     uncles: block.uncles,
@@ -189,6 +189,17 @@ export function toRpc<
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Block.(toRpc:function)}. */
+  type Input<
+    includeTransactions extends boolean = false,
+    blockTag extends Tag = 'latest',
+  > = Block<
+    includeTransactions,
+    blockTag,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   type Options<
     includeTransactions extends boolean = false,
     blockTag extends Tag = 'latest',

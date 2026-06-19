@@ -3,6 +3,7 @@ import type * as Bytes from './Bytes.js'
 import type * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import * as Tx from './internal/tx.js'
 import type {
   Assign,
@@ -579,7 +580,7 @@ export declare namespace serialize {
  * @param envelope - The legacy transaction envelope to convert.
  * @returns An RPC-formatted legacy transaction envelope.
  */
-export function toRpc(envelope: Omit<TxEnvelopeLegacy, 'type'>): Rpc {
+export function toRpc(envelope: toRpc.Input): Rpc {
   const signature = Signature.extract(envelope)!
 
   return {
@@ -590,17 +591,17 @@ export function toRpc(envelope: Omit<TxEnvelopeLegacy, 'type'>): Rpc {
         : undefined,
     data: envelope.data ?? envelope.input,
     type: '0x0',
-    ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex.fromNumber(envelope.gas) }
+    ...(envelope.gas !== undefined
+      ? { gas: Quantity.fromNumberish(envelope.gas) }
       : {}),
-    ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex.fromNumber(envelope.nonce) }
+    ...(envelope.nonce !== undefined
+      ? { nonce: Quantity.fromNumberish(envelope.nonce) }
       : {}),
-    ...(typeof envelope.value === 'bigint'
-      ? { value: Hex.fromNumber(envelope.value) }
+    ...(envelope.value !== undefined
+      ? { value: Quantity.fromNumberish(envelope.value) }
       : {}),
-    ...(typeof envelope.gasPrice === 'bigint'
-      ? { gasPrice: Hex.fromNumber(envelope.gasPrice) }
+    ...(envelope.gasPrice !== undefined
+      ? { gasPrice: Quantity.fromNumberish(envelope.gasPrice) }
       : {}),
     ...(signature
       ? {
@@ -624,6 +625,16 @@ export function toRpc(envelope: Omit<TxEnvelopeLegacy, 'type'>): Rpc {
 }
 
 export declare namespace toRpc {
+  /**
+   * Numberish input accepted by {@link ox#TxEnvelopeLegacy.(toRpc:function)}.
+   * `bigint` fields also accept `Hex.Hex | number`; `chainId`/`v` stay `number`
+   * to preserve EIP-155 `v` derivation.
+   */
+  export type Input = Omit<
+    TxEnvelopeLegacy<boolean, Hex.Hex | bigint | number, number>,
+    'type'
+  >
+
   export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 

@@ -29,26 +29,45 @@ const type = z.codec(z.string(), z.string(), {
 })
 
 /** Transaction request schema. */
-export const TransactionRequest = z.object({
-  accessList: z.optional(z_AccessList.AccessList),
-  authorizationList: z.optional(z_Authorization.ListSigned),
-  blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
-  chainId: z.optional(z_Number.Number),
-  data: z.optional(z_Hex.Hex),
-  input: z.optional(z_Hex.Hex),
-  from: z.optional(z_Address.Address),
-  gas: z.optional(z_Uint.Uint),
-  gasPrice: z.optional(z_Uint.Uint),
-  maxFeePerBlobGas: z.optional(z_Uint.Uint),
-  maxFeePerGas: z.optional(z_Uint.Uint),
-  maxPriorityFeePerGas: z.optional(z_Uint.Uint),
-  nonce: z.optional(z_Uint.Uint),
-  to: z.optional(z.union([z_Address.Address, z.null()])),
-  type: z.optional(type),
-  value: z.optional(z_Uint.Uint),
-  r: z.optional(z_Hex.Hex),
-  s: z.optional(z_Hex.Hex),
-  yParity: z.optional(z_Number.Number),
-  v: z.optional(z_Number.Number),
-})
+export const TransactionRequest = z.object(
+  fields(z_Uint.Uint, z_Number.Number, z_Authorization.ListSigned),
+)
+
+/** Encode-only transaction request schema accepting numberish `toRpc` inputs. */
+export const TransactionRequestToRpc = z.object(
+  fields(
+    z_Uint.UintToRpc,
+    z_Number.NumberToRpc,
+    z_Authorization.ListSignedToRpc,
+  ),
+)
+
+function fields<
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+  authorizationList extends z.ZodMiniType,
+>(uint: uint, num: num, authorizationList: authorizationList) {
+  return {
+    accessList: z.optional(z_AccessList.AccessList),
+    authorizationList: z.optional(authorizationList),
+    blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
+    blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
+    chainId: z.optional(num),
+    data: z.optional(z_Hex.Hex),
+    input: z.optional(z_Hex.Hex),
+    from: z.optional(z_Address.Address),
+    gas: z.optional(uint),
+    gasPrice: z.optional(uint),
+    maxFeePerBlobGas: z.optional(uint),
+    maxFeePerGas: z.optional(uint),
+    maxPriorityFeePerGas: z.optional(uint),
+    nonce: z.optional(uint),
+    to: z.optional(z.union([z_Address.Address, z.null()])),
+    type: z.optional(type),
+    value: z.optional(uint),
+    r: z.optional(z_Hex.Hex),
+    s: z.optional(z_Hex.Hex),
+    yParity: z.optional(num),
+    v: z.optional(num),
+  }
+}

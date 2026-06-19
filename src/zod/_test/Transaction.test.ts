@@ -109,6 +109,36 @@ describe('Transaction', () => {
     `)
   })
 
+  test('TransactionToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      ...base,
+      accessList: [],
+      gasPrice: 4n,
+      maxFeePerGas: 5n,
+      maxPriorityFeePerGas: 6n,
+      type: 'eip1559',
+    } as const
+    const expected = z.encode(z_Transaction.Transaction, decoded)
+
+    expect(
+      z.encode(z_Transaction.TransactionToRpc, {
+        ...decoded,
+        blockNumber: 1,
+        gas: 21000,
+        maxFeePerGas: 5,
+        value: 3,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_Transaction.TransactionToRpc, {
+        ...decoded,
+        blockNumber: '0x1',
+        gas: '0x5208',
+        maxFeePerGas: '0x5',
+      }),
+    ).toEqual(expected)
+  })
+
   test('decodes legacy and pending transactions', () => {
     expect(
       z.decode(z_Transaction.Legacy, {

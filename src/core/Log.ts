@@ -217,31 +217,35 @@ export declare namespace fromRpc {
  * @returns An RPC log.
  */
 export function toRpc<
-  const log extends Log<boolean>,
+  const log extends toRpc.Input,
   pending extends boolean = false,
 >(log: log, _options: toRpc.Options<pending> = {}): Rpc<pending> {
   return {
     address: log.address,
     blockHash: log.blockHash,
-    blockNumber: Quantity.fromBigInt(log.blockNumber) ?? null,
+    blockNumber: Quantity.fromNumberishOptional(log.blockNumber) ?? null,
     ...('blockTimestamp' in log
       ? {
           blockTimestamp:
             log.blockTimestamp === null
               ? null
-              : Quantity.fromBigInt(log.blockTimestamp),
+              : Quantity.fromNumberishOptional(log.blockTimestamp),
         }
       : {}),
     data: log.data,
-    logIndex: Quantity.fromNumber(log.logIndex) ?? null,
+    logIndex: Quantity.fromNumberishOptional(log.logIndex) ?? null,
     topics: log.topics,
     transactionHash: log.transactionHash,
-    transactionIndex: Quantity.fromNumber(log.transactionIndex) ?? null,
+    transactionIndex:
+      Quantity.fromNumberishOptional(log.transactionIndex) ?? null,
     removed: log.removed,
   } as Rpc as never
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Log.(toRpc:function)}. */
+  type Input = Log<boolean, Hex.Hex | bigint | number, Hex.Hex | number>
+
   type Options<pending extends boolean = false> = {
     pending?: pending | boolean | undefined
   }

@@ -2,6 +2,10 @@
 import * as core_KeyAuthorization from '../../tempo/KeyAuthorization.js'
 import * as z_Address from '../Address.js'
 import * as z_Hex from '../Hex.js'
+import {
+  uintBigintNumberish,
+  uintNumberNumberish,
+} from '../internal/Integer.js'
 import * as z from 'zod/mini'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
 
@@ -42,6 +46,13 @@ export const TokenLimit = z.object({
   token: z_Address.Address,
 })
 
+/** Encode-only token spending limit schema accepting numberish `toRpc` inputs. */
+export const TokenLimitToRpc = z.object({
+  limit: uintBigintNumberish(),
+  period: z.optional(uintNumberNumberish()),
+  token: z_Address.Address,
+})
+
 /** Call scope schema. */
 export const Scope = z.object({
   address: z_Address.Address,
@@ -60,11 +71,31 @@ export const Domain = z.object({
   type: z_SignatureEnvelope.Type,
 })
 
+/** Encode-only decoded key authorization schema accepting numberish `toRpc` inputs. */
+export const DomainToRpc = z.object({
+  address: z_Address.Address,
+  chainId: uintBigintNumberish(),
+  expiry: z.optional(uintNumberNumberish()),
+  limits: z.optional(z.readonly(z.array(TokenLimitToRpc))),
+  scopes: z.optional(z.readonly(z.array(Scope))),
+  signature: z_SignatureEnvelope.Domain,
+  type: z_SignatureEnvelope.Type,
+})
+
 /** Codec decoding an RPC key authorization into a signed key authorization. */
 export const KeyAuthorization = z.codec(Rpc, Domain, {
   decode: (value) => core_KeyAuthorization.fromRpc(value as never) as never,
   encode: (value) => core_KeyAuthorization.toRpc(value as never) as never,
 })
 
+/** Encode-only key authorization codec accepting numberish `toRpc` inputs. */
+export const KeyAuthorizationToRpc = z.codec(Rpc, DomainToRpc, {
+  decode: (value) => core_KeyAuthorization.fromRpc(value as never) as never,
+  encode: (value) => core_KeyAuthorization.toRpc(value as never) as never,
+})
+
 /** Signed key authorization schema. */
 export const Signed = KeyAuthorization
+
+/** Encode-only signed key authorization schema accepting numberish `toRpc` inputs. */
+export const SignedToRpc = KeyAuthorizationToRpc

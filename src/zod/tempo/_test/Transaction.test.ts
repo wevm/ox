@@ -79,6 +79,29 @@ describe('Transaction', () => {
     expect(decoded).toMatchObject({ type: 'tempo' })
   })
 
+  test('TempoToRpc accepts numberish encode inputs', () => {
+    const decoded = z.decode(z_Transaction.Tempo, rpc)
+    const strict = z.encode(z_Transaction.Tempo, decoded)
+
+    expect(
+      z.encode(z_Transaction.TempoToRpc, {
+        ...decoded,
+        chainId: 1,
+        gas: 278365,
+        maxFeePerGas: 2,
+        transactionIndex: 2,
+      }),
+    ).toEqual(strict)
+    expect(
+      z.encode(z_Transaction.TempoToRpc, {
+        ...decoded,
+        chainId: '0x1',
+        gas: '0x43f5d',
+        maxFeePerGas: '0x2',
+      }),
+    ).toEqual(strict)
+  })
+
   test('rejects an invalid transaction', () => {
     expect(
       z.safeDecode(z_Transaction.Transaction, { type: '0x76' } as never)

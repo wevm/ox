@@ -41,6 +41,30 @@ describe('AuthorizationTempo', () => {
     ])
   })
 
+  test('UnsignedToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      address: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
+      chainId: 1,
+      nonce: 42n,
+    } as const
+    const expected = z.encode(z_AuthorizationTempo.Unsigned, decoded)
+
+    expect(
+      z.encode(z_AuthorizationTempo.UnsignedToRpc, {
+        ...decoded,
+        chainId: 1,
+        nonce: 42,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_AuthorizationTempo.UnsignedToRpc, {
+        ...decoded,
+        chainId: '0x1',
+        nonce: '0x2a',
+      }),
+    ).toEqual(expected)
+  })
+
   test('rejects an invalid authorization', () => {
     expect(
       z.safeDecode(z_AuthorizationTempo.Signed, { chainId: '0x1' } as never)

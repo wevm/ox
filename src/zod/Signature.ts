@@ -11,13 +11,28 @@ const yParityHex = z_Hex.Hex.check(
   ),
 )
 
+const yParityUint = z_Uint.Uint8.check(
+  z.refine((value) => value === 0 || value === 1, 'expected yParity'),
+)
+const yParityUintToRpc = z_Uint.Uint8ToRpc.check(
+  z.refine(
+    (value) => value === 0 || value === 1 || value === '0x0' || value === '0x1',
+    'expected yParity',
+  ),
+)
+
 /** RPC signature schema decoded to a recovered signature. */
 export const Signature = z.object({
   r: z_Hex.Hex32,
   s: z_Hex.Hex32,
-  yParity: z_Uint.Uint8.check(
-    z.refine((value) => value === 0 || value === 1, 'expected yParity'),
-  ),
+  yParity: yParityUint,
+})
+
+/** Encode-only recovered signature schema accepting numberish `toRpc` inputs. */
+export const SignatureToRpc = z.object({
+  r: z_Hex.Hex32,
+  s: z_Hex.Hex32,
+  yParity: yParityUintToRpc,
 })
 
 /** Legacy RPC signature schema decoded to a legacy signature. */

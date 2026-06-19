@@ -2,6 +2,7 @@ import type * as AccessList from '../core/AccessList.js'
 import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { Compute, OneOf, UnionCompute } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as ox_Transaction from '../core/Transaction.js'
@@ -292,7 +293,7 @@ export declare namespace fromRpc {
  * @returns An RPC-formatted transaction.
  */
 export function toRpc<pending extends boolean = false>(
-  transaction: Transaction<pending>,
+  transaction: toRpc.Input<pending>,
   _options?: toRpc.Options<pending>,
 ): Rpc<pending> {
   const rpc = ox_Transaction.toRpc(
@@ -308,7 +309,7 @@ export function toRpc<pending extends boolean = false>(
   if (transaction.calls)
     rpc.calls = transaction.calls.map((call) => ({
       to: call.to,
-      value: call.value ? Hex.fromNumber(call.value) : undefined,
+      value: call.value ? Quantity.fromNumberish(call.value) : undefined,
       data: call.data,
     }))
   if (transaction.feeToken) rpc.feeToken = transaction.feeToken
@@ -319,20 +320,27 @@ export function toRpc<pending extends boolean = false>(
       transaction.feePayerSignature,
     ) as any
     ;(rpc.feePayerSignature as any).v = Hex.fromNumber(
-      Signature.yParityToV(transaction.feePayerSignature?.yParity),
+      Signature.yParityToV(Number(transaction.feePayerSignature.yParity)),
     )
   }
   if (transaction.signature)
     rpc.signature = SignatureEnvelope.toRpc(transaction.signature)
-  if (typeof transaction.validAfter === 'number')
-    rpc.validAfter = Hex.fromNumber(transaction.validAfter)
-  if (typeof transaction.validBefore === 'number')
-    rpc.validBefore = Hex.fromNumber(transaction.validBefore)
+  if (transaction.validAfter !== undefined)
+    rpc.validAfter = Quantity.fromNumberish(transaction.validAfter)
+  if (transaction.validBefore !== undefined)
+    rpc.validBefore = Quantity.fromNumberish(transaction.validBefore)
 
   return rpc as Rpc<pending>
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#(Transaction:namespace).(toRpc:function)}. */
+  type Input<pending extends boolean = false> = Transaction<
+    pending,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   type Options<pending extends boolean = false> = {
     pending?: pending | boolean | undefined
   }

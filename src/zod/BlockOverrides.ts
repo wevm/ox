@@ -5,13 +5,27 @@ import * as z_Withdrawal from './Withdrawal.js'
 import * as z from 'zod/mini'
 
 /** Block overrides schema. */
-export const BlockOverrides = z.object({
-  baseFeePerGas: z.optional(z_Uint.Uint),
-  blobBaseFee: z.optional(z_Uint.Uint),
-  feeRecipient: z.optional(z_Address.Address),
-  gasLimit: z.optional(z_Uint.Uint),
-  number: z.optional(z_Uint.Uint),
-  prevRandao: z.optional(z_Uint.Uint),
-  time: z.optional(z_Uint.Uint),
-  withdrawals: z.optional(z.array(z_Withdrawal.Withdrawal)),
-})
+export const BlockOverrides = z.object(
+  fields(z_Uint.Uint, z_Withdrawal.Withdrawal),
+)
+
+/** Encode-only block overrides schema accepting numberish `toRpc` inputs. */
+export const BlockOverridesToRpc = z.object(
+  fields(z_Uint.UintToRpc, z_Withdrawal.WithdrawalToRpc),
+)
+
+function fields<uint extends z.ZodMiniType, withdrawal extends z.ZodMiniType>(
+  uint: uint,
+  withdrawal: withdrawal,
+) {
+  return {
+    baseFeePerGas: z.optional(uint),
+    blobBaseFee: z.optional(uint),
+    feeRecipient: z.optional(z_Address.Address),
+    gasLimit: z.optional(uint),
+    number: z.optional(uint),
+    prevRandao: z.optional(uint),
+    time: z.optional(uint),
+    withdrawals: z.optional(z.array(withdrawal)),
+  }
+}

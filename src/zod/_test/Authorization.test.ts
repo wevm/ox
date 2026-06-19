@@ -77,6 +77,48 @@ describe('Authorization', () => {
     `)
   })
 
+  test('AuthorizationToRpc accepts numberish encode inputs', () => {
+    const expected = {
+      address,
+      chainId: '0x1',
+      nonce: '0x2',
+      r,
+      s,
+      yParity: '0x1',
+    }
+
+    expect(
+      z.encode(z_Authorization.SignedToRpc, {
+        address,
+        chainId: 1,
+        nonce: 2n,
+        r,
+        s,
+        yParity: 1,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_Authorization.SignedToRpc, {
+        address,
+        chainId: 1,
+        nonce: 2,
+        r,
+        s,
+        yParity: 1,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_Authorization.SignedToRpc, {
+        address,
+        chainId: '0x1',
+        nonce: '0x2',
+        r,
+        s,
+        yParity: 1,
+      }),
+    ).toEqual(expected)
+  })
+
   test('validates lists and tuples', () => {
     expect(
       z.decode(z_Authorization.ListSigned, [

@@ -4,6 +4,7 @@ import type * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import * as Tx from './internal/tx.js'
 import type {
   Assign,
@@ -791,30 +792,34 @@ export declare namespace serialize {
  * @param envelope - The EIP-4844 transaction envelope to convert.
  * @returns An RPC-formatted EIP-4844 transaction envelope.
  */
-export function toRpc(envelope: Omit<TxEnvelopeEip4844, 'type'>): Rpc {
+export function toRpc(envelope: toRpc.Input): Rpc {
   const signature = Signature.extract(envelope)
 
   return {
     ...envelope,
-    chainId: Hex.fromNumber(envelope.chainId),
+    chainId: Quantity.fromNumberish(envelope.chainId),
     data: envelope.data ?? envelope.input,
-    ...(typeof envelope.gas === 'bigint'
-      ? { gas: Hex.fromNumber(envelope.gas) }
+    ...(envelope.gas !== undefined
+      ? { gas: Quantity.fromNumberish(envelope.gas) }
       : {}),
-    ...(typeof envelope.nonce === 'bigint'
-      ? { nonce: Hex.fromNumber(envelope.nonce) }
+    ...(envelope.nonce !== undefined
+      ? { nonce: Quantity.fromNumberish(envelope.nonce) }
       : {}),
-    ...(typeof envelope.value === 'bigint'
-      ? { value: Hex.fromNumber(envelope.value) }
+    ...(envelope.value !== undefined
+      ? { value: Quantity.fromNumberish(envelope.value) }
       : {}),
-    ...(typeof envelope.maxFeePerBlobGas === 'bigint'
-      ? { maxFeePerBlobGas: Hex.fromNumber(envelope.maxFeePerBlobGas) }
+    ...(envelope.maxFeePerBlobGas !== undefined
+      ? { maxFeePerBlobGas: Quantity.fromNumberish(envelope.maxFeePerBlobGas) }
       : {}),
-    ...(typeof envelope.maxFeePerGas === 'bigint'
-      ? { maxFeePerGas: Hex.fromNumber(envelope.maxFeePerGas) }
+    ...(envelope.maxFeePerGas !== undefined
+      ? { maxFeePerGas: Quantity.fromNumberish(envelope.maxFeePerGas) }
       : {}),
-    ...(typeof envelope.maxPriorityFeePerGas === 'bigint'
-      ? { maxPriorityFeePerGas: Hex.fromNumber(envelope.maxPriorityFeePerGas) }
+    ...(envelope.maxPriorityFeePerGas !== undefined
+      ? {
+          maxPriorityFeePerGas: Quantity.fromNumberish(
+            envelope.maxPriorityFeePerGas,
+          ),
+        }
       : {}),
     type: '0x3',
     ...(signature ? Signature.toRpc(signature) : {}),
@@ -822,6 +827,12 @@ export function toRpc(envelope: Omit<TxEnvelopeEip4844, 'type'>): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TxEnvelopeEip4844.(toRpc:function)}. */
+  export type Input = Omit<
+    TxEnvelopeEip4844<boolean, Hex.Hex | bigint | number, Hex.Hex | number>,
+    'type'
+  >
+
   export type ErrorType = Signature.extract.ErrorType | Errors.GlobalErrorType
 }
 

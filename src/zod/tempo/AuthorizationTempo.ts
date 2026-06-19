@@ -14,11 +14,27 @@ export const Unsigned = z.object({
   signature: z.optional(z.undefined()),
 })
 
+/** Encode-only unsigned AA authorization schema accepting numberish `toRpc` inputs. */
+export const UnsignedToRpc = z.object({
+  address: z_Address.Address,
+  chainId: z_Number.NumberToRpc,
+  nonce: z_Uint.UintToRpc,
+  signature: z.optional(z.undefined()),
+})
+
 /** Signed AA authorization schema. */
 export const Signed = z.object({
   address: z_Address.Address,
   chainId: z_Number.Number,
   nonce: z_Uint.Uint,
+  signature: z_SignatureEnvelope.SignatureEnvelope,
+})
+
+/** Encode-only signed AA authorization schema accepting numberish `toRpc` inputs. */
+export const SignedToRpc = z.object({
+  address: z_Address.Address,
+  chainId: z_Number.NumberToRpc,
+  nonce: z_Uint.UintToRpc,
   signature: z_SignatureEnvelope.SignatureEnvelope,
 })
 
@@ -36,11 +52,20 @@ export const DomainList = z.readonly(z.array(Domain))
 /** AA authorization schema. */
 export const AuthorizationTempo = z.union([Signed, Unsigned])
 
+/** Encode-only AA authorization schema accepting numberish `toRpc` inputs. */
+export const AuthorizationTempoToRpc = z.union([SignedToRpc, UnsignedToRpc])
+
 /** AA authorization list schema. */
 export const List = z.readonly(z.array(AuthorizationTempo))
 
+/** Encode-only AA authorization list schema accepting numberish `toRpc` inputs. */
+export const ListToRpc = z.readonly(z.array(AuthorizationTempoToRpc))
+
 /** Signed AA authorization list schema. */
 export const ListSigned = z.readonly(z.array(Signed))
+
+/** Encode-only signed AA authorization list schema accepting numberish `toRpc` inputs. */
+export const ListSignedToRpc = z.readonly(z.array(SignedToRpc))
 
 /** RPC AA authorization schema. */
 export const Rpc = z.object({

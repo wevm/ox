@@ -153,6 +153,37 @@ describe('TransactionRequest', () => {
     `)
   })
 
+  test('TransactionRequestToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      chainId: 1,
+      from: address,
+      gas: 21000n,
+      maxFeePerGas: 5n,
+      maxPriorityFeePerGas: 6n,
+      nonce: 7n,
+      to: null,
+      type: 'eip1559',
+      value: 8n,
+    } as const
+    const expected = z.encode(z_TransactionRequest.TransactionRequest, decoded)
+
+    expect(
+      z.encode(z_TransactionRequest.TransactionRequestToRpc, {
+        ...decoded,
+        gas: 21000,
+        maxFeePerGas: 5,
+        value: 8,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_TransactionRequest.TransactionRequestToRpc, {
+        ...decoded,
+        gas: '0x5208',
+        nonce: '0x7',
+      }),
+    ).toEqual(expected)
+  })
+
   test('preserves unknown transaction types', () => {
     expect(z.decode(z_TransactionRequest.TransactionRequest, { type: '0x99' }))
       .toMatchInlineSnapshot(`

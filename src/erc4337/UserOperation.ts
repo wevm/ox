@@ -4,6 +4,7 @@ import * as Authorization from '../core/Authorization.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { Assign, Compute, OneOf } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as TypedData from '../core/TypedData.js'
@@ -887,17 +888,23 @@ export declare namespace fromPacked {
  * @param userOperation - The user operation to convert.
  * @returns An RPC-formatted user operation.
  */
-export function toRpc(userOperation: UserOperation): Rpc {
+export function toRpc(userOperation: toRpc.Input): Rpc {
   const rpc = {} as Rpc
 
   rpc.callData = userOperation.callData
-  rpc.callGasLimit = Hex.fromNumber(userOperation.callGasLimit)
-  rpc.maxFeePerGas = Hex.fromNumber(userOperation.maxFeePerGas)
-  rpc.maxPriorityFeePerGas = Hex.fromNumber(userOperation.maxPriorityFeePerGas)
-  rpc.nonce = Hex.fromNumber(userOperation.nonce)
-  rpc.preVerificationGas = Hex.fromNumber(userOperation.preVerificationGas)
+  rpc.callGasLimit = Quantity.fromNumberish(userOperation.callGasLimit)
+  rpc.maxFeePerGas = Quantity.fromNumberish(userOperation.maxFeePerGas)
+  rpc.maxPriorityFeePerGas = Quantity.fromNumberish(
+    userOperation.maxPriorityFeePerGas,
+  )
+  rpc.nonce = Quantity.fromNumberish(userOperation.nonce)
+  rpc.preVerificationGas = Quantity.fromNumberish(
+    userOperation.preVerificationGas,
+  )
   rpc.sender = userOperation.sender
-  rpc.verificationGasLimit = Hex.fromNumber(userOperation.verificationGasLimit)
+  rpc.verificationGasLimit = Quantity.fromNumberish(
+    userOperation.verificationGasLimit,
+  )
 
   if (userOperation.factory) rpc.factory = userOperation.factory
   if (userOperation.factoryData) rpc.factoryData = userOperation.factoryData
@@ -905,12 +912,12 @@ export function toRpc(userOperation: UserOperation): Rpc {
   if (userOperation.paymaster) rpc.paymaster = userOperation.paymaster
   if (userOperation.paymasterData)
     rpc.paymasterData = userOperation.paymasterData
-  if (typeof userOperation.paymasterPostOpGasLimit === 'bigint')
-    rpc.paymasterPostOpGasLimit = Hex.fromNumber(
+  if (userOperation.paymasterPostOpGasLimit !== undefined)
+    rpc.paymasterPostOpGasLimit = Quantity.fromNumberish(
       userOperation.paymasterPostOpGasLimit,
     )
-  if (typeof userOperation.paymasterVerificationGasLimit === 'bigint')
-    rpc.paymasterVerificationGasLimit = Hex.fromNumber(
+  if (userOperation.paymasterVerificationGasLimit !== undefined)
+    rpc.paymasterVerificationGasLimit = Quantity.fromNumberish(
       userOperation.paymasterVerificationGasLimit,
     )
   if (userOperation.signature) rpc.signature = userOperation.signature
@@ -926,6 +933,14 @@ export function toRpc(userOperation: UserOperation): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#UserOperation.(toRpc:function)}. */
+  export type Input = UserOperation<
+    EntryPoint.Version,
+    boolean,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   export type ErrorType = Hex.fromNumber.ErrorType | Errors.GlobalErrorType
 }
 

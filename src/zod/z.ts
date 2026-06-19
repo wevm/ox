@@ -27,7 +27,7 @@ export * as TxEnvelopeEip7702 from './TxEnvelopeEip7702.js'
 export * as TxEnvelopeLegacy from './TxEnvelopeLegacy.js'
 export * as Withdrawal from './Withdrawal.js'
 export * as tempo from './tempo/z.js'
-export { BigInt } from './BigInt.js'
+export { BigInt, BigIntToRpc } from './BigInt.js'
 export {
   Int,
   Int8,
@@ -63,9 +63,11 @@ export {
   Int248,
   Int256,
 } from './Int.js'
-export { Number } from './Number.js'
+export { Number, NumberToRpc } from './Number.js'
 export {
   Uint,
+  UintToRpc,
+  Uint8ToRpc,
   Uint8,
   Uint16,
   Uint24,

@@ -52,3 +52,29 @@ describe('TransactionReceipt', () => {
     expect(z.encode(z_TransactionReceipt.Type, 'tempo')).toBe('0x76')
   })
 })
+
+describe('TransactionReceiptToRpc', () => {
+  test('accepts numberish encode inputs', () => {
+    const decoded = z.decode(z_TransactionReceipt.TransactionReceipt, rpc)
+    const strict = z.encode(z_TransactionReceipt.TransactionReceipt, decoded)
+
+    // numberish: bigint quantities as `number`, number quantities as `number`
+    expect(
+      z.encode(z_TransactionReceipt.TransactionReceiptToRpc, {
+        ...decoded,
+        cumulativeGasUsed: 533781,
+        gasUsed: 175034,
+        transactionIndex: 2,
+      }),
+    ).toEqual(strict)
+
+    // numberish: quantities as hex pass-through
+    expect(
+      z.encode(z_TransactionReceipt.TransactionReceiptToRpc, {
+        ...decoded,
+        blockNumber: '0x12f296f',
+        gasUsed: '0x2abba',
+      }),
+    ).toEqual(strict)
+  })
+})

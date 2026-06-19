@@ -130,22 +130,25 @@ export declare namespace fromRpc {
  * @param proof - The account proof to convert.
  * @returns An RPC account proof.
  */
-export function toRpc(proof: AccountProof): Rpc {
+export function toRpc(proof: toRpc.Input): Rpc {
   return {
     address: proof.address,
-    balance: Hex.fromNumber(proof.balance),
+    balance: Quantity.fromNumberish(proof.balance),
     codeHash: proof.codeHash,
-    nonce: Hex.fromNumber(proof.nonce),
+    nonce: Quantity.fromNumberish(proof.nonce),
     storageHash: proof.storageHash,
     accountProof: proof.accountProof,
     storageProof: proof.storageProof.map((slot) => ({
       key: slot.key,
       proof: slot.proof,
-      value: Quantity.fromBigInt(slot.value)!,
+      value: Quantity.fromNumberish(slot.value),
     })),
   }
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#AccountProof.(toRpc:function)}. */
+  type Input = AccountProof<Hex.Hex | bigint | number, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }

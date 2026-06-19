@@ -946,6 +946,77 @@ describe('toRpc', () => {
       }
     `)
   })
+
+  test('numberish inputs', () => {
+    const fromBigint = TxEnvelopeEip7702.toRpc({
+      authorizationList: [
+        {
+          address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+          chainId: 1,
+          nonce: 0n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          yParity: 0,
+        },
+      ],
+      chainId: 1,
+      nonce: 0n,
+      gas: 21000n,
+      maxFeePerGas: 1000n,
+      maxPriorityFeePerGas: 100n,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000n,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromNumber = TxEnvelopeEip7702.toRpc({
+      authorizationList: [
+        {
+          address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+          chainId: 1,
+          nonce: 0n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          yParity: 0,
+        },
+      ],
+      chainId: 1,
+      nonce: 0,
+      gas: 21000,
+      maxFeePerGas: 1000,
+      maxPriorityFeePerGas: 100,
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: 1000,
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: 0,
+    })
+    const fromHex = TxEnvelopeEip7702.toRpc({
+      authorizationList: [
+        {
+          address: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+          chainId: 1,
+          nonce: 0n,
+          r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+          s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+          yParity: 0,
+        },
+      ],
+      chainId: '0x1',
+      nonce: '0x0',
+      gas: '0x5208',
+      maxFeePerGas: '0x3e8',
+      maxPriorityFeePerGas: '0x64',
+      to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      value: '0x3e8',
+      r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+      yParity: '0x0',
+    })
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
+  })
 })
 
 describe('validate', () => {

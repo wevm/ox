@@ -42,92 +42,111 @@ const UnknownType = z_Hex.Hex.check(
 )
 
 /** Base transaction schema. */
-export const Base = z.object(baseFields(Type))
+export const Base = z.object(baseFields(Type, z_Uint.Uint, z_Number.Number))
 
 /** Pending base transaction schema. */
-export const PendingBase = z.object(pendingBaseFields(Type))
+export const PendingBase = z.object(
+  pendingBaseFields(Type, z_Uint.Uint, z_Number.Number),
+)
 
 /** Legacy transaction schema. */
-export const Legacy = z.object(legacyFields(LegacyType))
+export const Legacy = z.object(
+  legacyFields(LegacyType, z_Uint.Uint, z_Number.Number),
+)
+/** Encode-only legacy transaction schema accepting numberish `toRpc` inputs. */
+export const LegacyToRpc = z.object(
+  legacyFields(LegacyType, z_Uint.UintToRpc, z_Number.NumberToRpc),
+)
 
 /** Pending legacy transaction schema. */
-export const PendingLegacy = z.object(pendingLegacyFields(LegacyType))
+export const PendingLegacy = z.object(
+  pendingLegacyFields(LegacyType, z_Uint.Uint, z_Number.Number),
+)
 
 /** EIP-1559 transaction schema. */
-export const Eip1559 = z.object({
-  ...baseFields(Eip1559Type),
-  accessList: z_AccessList.AccessList,
-  gasPrice: z.optional(z_Uint.Uint),
-  maxFeePerGas: z_Uint.Uint,
-  maxPriorityFeePerGas: z_Uint.Uint,
-})
+export const Eip1559 = z.object(
+  eip1559Fields(Eip1559Type, z_Uint.Uint, z_Number.Number),
+)
+/** Encode-only EIP-1559 transaction schema accepting numberish `toRpc` inputs. */
+export const Eip1559ToRpc = z.object(
+  eip1559Fields(Eip1559Type, z_Uint.UintToRpc, z_Number.NumberToRpc),
+)
 
 /** Pending EIP-1559 transaction schema. */
-export const PendingEip1559 = z.object({
-  ...pendingBaseFields(Eip1559Type),
-  accessList: z_AccessList.AccessList,
-  gasPrice: z.optional(z_Uint.Uint),
-  maxFeePerGas: z_Uint.Uint,
-  maxPriorityFeePerGas: z_Uint.Uint,
-})
+export const PendingEip1559 = z.object(
+  pendingEip1559Fields(Eip1559Type, z_Uint.Uint, z_Number.Number),
+)
 
 /** EIP-2930 transaction schema. */
-export const Eip2930 = z.object({
-  ...baseFields(Eip2930Type),
-  accessList: z_AccessList.AccessList,
-  gasPrice: z_Uint.Uint,
-})
+export const Eip2930 = z.object(
+  eip2930Fields(Eip2930Type, z_Uint.Uint, z_Number.Number),
+)
+/** Encode-only EIP-2930 transaction schema accepting numberish `toRpc` inputs. */
+export const Eip2930ToRpc = z.object(
+  eip2930Fields(Eip2930Type, z_Uint.UintToRpc, z_Number.NumberToRpc),
+)
 
 /** Pending EIP-2930 transaction schema. */
-export const PendingEip2930 = z.object({
-  ...pendingBaseFields(Eip2930Type),
-  accessList: z_AccessList.AccessList,
-  gasPrice: z_Uint.Uint,
-})
+export const PendingEip2930 = z.object(
+  pendingEip2930Fields(Eip2930Type, z_Uint.Uint, z_Number.Number),
+)
 
 /** EIP-4844 transaction schema. */
-export const Eip4844 = z.object({
-  ...baseFields(Eip4844Type),
-  accessList: z_AccessList.AccessList,
-  blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
-  maxFeePerBlobGas: z_Uint.Uint,
-  maxFeePerGas: z_Uint.Uint,
-  maxPriorityFeePerGas: z_Uint.Uint,
-})
+export const Eip4844 = z.object(
+  eip4844Fields(Eip4844Type, z_Uint.Uint, z_Number.Number),
+)
+/** Encode-only EIP-4844 transaction schema accepting numberish `toRpc` inputs. */
+export const Eip4844ToRpc = z.object(
+  eip4844Fields(Eip4844Type, z_Uint.UintToRpc, z_Number.NumberToRpc),
+)
 
 /** Pending EIP-4844 transaction schema. */
-export const PendingEip4844 = z.object({
-  ...pendingBaseFields(Eip4844Type),
-  accessList: z_AccessList.AccessList,
-  blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
-  maxFeePerBlobGas: z_Uint.Uint,
-  maxFeePerGas: z_Uint.Uint,
-  maxPriorityFeePerGas: z_Uint.Uint,
-})
+export const PendingEip4844 = z.object(
+  pendingEip4844Fields(Eip4844Type, z_Uint.Uint, z_Number.Number),
+)
 
 /** EIP-7702 transaction schema. */
-export const Eip7702 = z.object({
-  ...baseFields(Eip7702Type),
-  accessList: z_AccessList.AccessList,
-  authorizationList: z_Authorization.ListSigned,
-  maxFeePerGas: z_Uint.Uint,
-  maxPriorityFeePerGas: z_Uint.Uint,
-})
+export const Eip7702 = z.object(
+  eip7702Fields(
+    Eip7702Type,
+    z_Uint.Uint,
+    z_Number.Number,
+    z_Authorization.ListSigned,
+  ),
+)
+/** Encode-only EIP-7702 transaction schema accepting numberish `toRpc` inputs. */
+export const Eip7702ToRpc = z.object(
+  eip7702Fields(
+    Eip7702Type,
+    z_Uint.UintToRpc,
+    z_Number.NumberToRpc,
+    z_Authorization.ListSignedToRpc,
+  ),
+)
 
 /** Pending EIP-7702 transaction schema. */
-export const PendingEip7702 = z.object({
-  ...pendingBaseFields(Eip7702Type),
-  accessList: z_AccessList.AccessList,
-  authorizationList: z_Authorization.ListSigned,
-  maxFeePerGas: z_Uint.Uint,
-  maxPriorityFeePerGas: z_Uint.Uint,
-})
+export const PendingEip7702 = z.object(
+  pendingEip7702Fields(
+    Eip7702Type,
+    z_Uint.Uint,
+    z_Number.Number,
+    z_Authorization.ListSigned,
+  ),
+)
 
 /** Unknown typed transaction schema. */
-export const Unknown = z.object(baseFields(UnknownType))
+export const Unknown = z.object(
+  baseFields(UnknownType, z_Uint.Uint, z_Number.Number),
+)
+/** Encode-only unknown typed transaction schema accepting numberish `toRpc` inputs. */
+export const UnknownToRpc = z.object(
+  baseFields(UnknownType, z_Uint.UintToRpc, z_Number.NumberToRpc),
+)
 
 /** Pending unknown typed transaction schema. */
-export const PendingUnknown = z.object(pendingBaseFields(UnknownType))
+export const PendingUnknown = z.object(
+  pendingBaseFields(UnknownType, z_Uint.Uint, z_Number.Number),
+)
 
 /** Transaction schema. */
 export const Transaction = z.union([
@@ -137,6 +156,16 @@ export const Transaction = z.union([
   Eip4844,
   Eip7702,
   Unknown,
+])
+
+/** Encode-only transaction schema accepting numberish `toRpc` inputs. */
+export const TransactionToRpc = z.union([
+  LegacyToRpc,
+  Eip2930ToRpc,
+  Eip1559ToRpc,
+  Eip4844ToRpc,
+  Eip7702ToRpc,
+  UnknownToRpc,
 ])
 
 /** Pending transaction schema. */
@@ -159,92 +188,216 @@ function type<input extends string, output extends string>(
   })
 }
 
-function baseFields<const schema extends z.ZodMiniType<string, string>>(
-  type: schema,
-) {
+function eip1559Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
   return {
-    ...commonFields(type),
-    chainId: z_Number.Number,
-    yParity: z_Number.Number,
+    ...baseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    gasPrice: z.optional(uint),
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
   }
 }
 
-function pendingBaseFields<const schema extends z.ZodMiniType<string, string>>(
-  type: schema,
-) {
+function pendingEip1559Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
   return {
-    ...pendingCommonFields(type),
-    chainId: z_Number.Number,
-    yParity: z_Number.Number,
+    ...pendingBaseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    gasPrice: z.optional(uint),
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
   }
 }
 
-function legacyFields<const schema extends z.ZodMiniType<string, string>>(
-  type: schema,
-) {
+function eip2930Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
   return {
-    ...commonFields(type),
-    chainId: z.optional(z_Number.Number),
-    gasPrice: z_Uint.Uint,
-    v: z_Number.Number,
-    yParity: z.optional(z_Number.Number),
+    ...baseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    gasPrice: uint,
+  }
+}
+
+function pendingEip2930Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
+  return {
+    ...pendingBaseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    gasPrice: uint,
+  }
+}
+
+function eip4844Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
+  return {
+    ...baseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
+    maxFeePerBlobGas: uint,
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
+  }
+}
+
+function pendingEip4844Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
+  return {
+    ...pendingBaseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    blobVersionedHashes: z.readonly(z.array(z_Hex.Hex)),
+    maxFeePerBlobGas: uint,
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
+  }
+}
+
+function eip7702Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+  authorizationList extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num, authorizationList: authorizationList) {
+  return {
+    ...baseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    authorizationList,
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
+  }
+}
+
+function pendingEip7702Fields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+  authorizationList extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num, authorizationList: authorizationList) {
+  return {
+    ...pendingBaseFields(type, uint, num),
+    accessList: z_AccessList.AccessList,
+    authorizationList,
+    maxFeePerGas: uint,
+    maxPriorityFeePerGas: uint,
+  }
+}
+
+function baseFields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
+  return {
+    ...commonFields(type, uint, num),
+    chainId: num,
+    yParity: num,
+  }
+}
+
+function pendingBaseFields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
+  return {
+    ...pendingCommonFields(type, uint, num),
+    chainId: num,
+    yParity: num,
+  }
+}
+
+function legacyFields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
+  return {
+    ...commonFields(type, uint, num),
+    chainId: z.optional(num),
+    gasPrice: uint,
+    v: num,
+    yParity: z.optional(num),
   }
 }
 
 function pendingLegacyFields<
   const schema extends z.ZodMiniType<string, string>,
->(type: schema) {
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
   return {
-    ...pendingCommonFields(type),
-    chainId: z.optional(z_Number.Number),
-    gasPrice: z_Uint.Uint,
-    v: z_Number.Number,
-    yParity: z.optional(z_Number.Number),
+    ...pendingCommonFields(type, uint, num),
+    chainId: z.optional(num),
+    gasPrice: uint,
+    v: num,
+    yParity: z.optional(num),
   }
 }
 
-function commonFields<const schema extends z.ZodMiniType<string, string>>(
-  type: schema,
-) {
+function commonFields<
+  const schema extends z.ZodMiniType<string, string>,
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
   return {
     blockHash: z_Hex.Hex,
-    blockNumber: z_Uint.Uint,
-    blockTimestamp: z.optional(z_Uint.Uint),
+    blockNumber: uint,
+    blockTimestamp: z.optional(uint),
     data: z.optional(z_Hex.Hex),
     from: z_Address.Address,
-    gas: z_Uint.Uint,
+    gas: uint,
     hash: z_Hex.Hex,
     input: z_Hex.Hex,
-    nonce: z_Uint.Uint,
+    nonce: uint,
     to: z.union([z_Address.Address, z.null()]),
-    transactionIndex: z_Number.Number,
+    transactionIndex: num,
     type,
-    value: z_Uint.Uint,
+    value: uint,
     r: z_Hex.Hex,
     s: z_Hex.Hex,
-    v: z.optional(z_Number.Number),
+    v: z.optional(num),
   }
 }
 
 function pendingCommonFields<
   const schema extends z.ZodMiniType<string, string>,
->(type: schema) {
+  uint extends z.ZodMiniType,
+  num extends z.ZodMiniType,
+>(type: schema, uint: uint, num: num) {
   return {
     blockHash: z.null(),
     blockNumber: z.null(),
     blockTimestamp: z.optional(z.null()),
     data: z.optional(z_Hex.Hex),
     from: z_Address.Address,
-    gas: z_Uint.Uint,
+    gas: uint,
     hash: z_Hex.Hex,
     input: z_Hex.Hex,
-    nonce: z_Uint.Uint,
+    nonce: uint,
     to: z.union([z_Address.Address, z.null()]),
     transactionIndex: z.null(),
     type,
-    value: z_Uint.Uint,
+    value: uint,
     r: z_Hex.Hex,
     s: z_Hex.Hex,
-    v: z.optional(z_Number.Number),
+    v: z.optional(num),
   }
 }

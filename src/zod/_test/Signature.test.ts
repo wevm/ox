@@ -25,6 +25,16 @@ describe('Signature', () => {
       `)
   })
 
+  test('SignatureToRpc accepts numberish encode inputs', () => {
+    const expected = { r, s, yParity: '0x1' }
+    expect(z.encode(z_Signature.SignatureToRpc, { r, s, yParity: 1 })).toEqual(
+      expected,
+    )
+    expect(
+      z.encode(z_Signature.SignatureToRpc, { r, s, yParity: '0x1' }),
+    ).toEqual(expected)
+  })
+
   test('validates signature variants', () => {
     expect(z.decode(z_Signature.Legacy, { r, s, v: '0x1b' }))
       .toMatchInlineSnapshot(`

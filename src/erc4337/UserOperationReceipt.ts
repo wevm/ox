@@ -1,5 +1,6 @@
 import type * as Address from '../core/Address.js'
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import * as Log from '../core/Log.js'
 import * as TransactionReceipt from '../core/TransactionReceipt.js'
 import type * as EntryPoint from './EntryPoint.js'
@@ -118,14 +119,14 @@ export function fromRpc(rpc: Rpc): UserOperationReceipt {
  * @param userOperationReceipt - The user operation receipt to convert.
  * @returns An RPC-formatted user operation receipt.
  */
-export function toRpc(userOperationReceipt: UserOperationReceipt): Rpc {
+export function toRpc(userOperationReceipt: toRpc.Input): Rpc {
   const rpc = {} as Rpc
 
-  rpc.actualGasCost = Hex.fromNumber(userOperationReceipt.actualGasCost)
-  rpc.actualGasUsed = Hex.fromNumber(userOperationReceipt.actualGasUsed)
+  rpc.actualGasCost = Quantity.fromNumberish(userOperationReceipt.actualGasCost)
+  rpc.actualGasUsed = Quantity.fromNumberish(userOperationReceipt.actualGasUsed)
   rpc.entryPoint = userOperationReceipt.entryPoint
   rpc.logs = userOperationReceipt.logs.map((log) => Log.toRpc(log))
-  rpc.nonce = Hex.fromNumber(userOperationReceipt.nonce)
+  rpc.nonce = Quantity.fromNumberish(userOperationReceipt.nonce)
   rpc.receipt = TransactionReceipt.toRpc(userOperationReceipt.receipt)
   rpc.sender = userOperationReceipt.sender
   rpc.success = userOperationReceipt.success
@@ -136,4 +137,13 @@ export function toRpc(userOperationReceipt: UserOperationReceipt): Rpc {
   if (userOperationReceipt.reason) rpc.reason = userOperationReceipt.reason
 
   return rpc
+}
+
+export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#UserOperationReceipt.(toRpc:function)}. */
+  export type Input = UserOperationReceipt<
+    EntryPoint.Version,
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
 }

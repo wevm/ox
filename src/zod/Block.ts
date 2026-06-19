@@ -36,40 +36,80 @@ export const Identifier = z.union([
 ])
 
 /** Block schema with transaction hashes. */
-export const Block = z.object(blockFields(z.readonly(z.array(z_Hex.Hex))))
+export const Block = z.object(
+  blockFields(
+    z.readonly(z.array(z_Hex.Hex)),
+    z_Uint.Uint,
+    z_Withdrawal.Withdrawal,
+  ),
+)
+
+/** Encode-only block schema (transaction hashes) accepting numberish `toRpc` inputs. */
+export const BlockToRpc = z.object(
+  blockFields(
+    z.readonly(z.array(z_Hex.Hex)),
+    z_Uint.UintToRpc,
+    z_Withdrawal.WithdrawalToRpc,
+  ),
+)
 
 /** Block schema with full transactions. */
 export const WithTransactions = z.object(
-  blockFields(z.readonly(z.array(z_Transaction.Transaction))),
+  blockFields(
+    z.readonly(z.array(z_Transaction.Transaction)),
+    z_Uint.Uint,
+    z_Withdrawal.Withdrawal,
+  ),
+)
+
+/** Encode-only block schema (full transactions) accepting numberish `toRpc` inputs. */
+export const WithTransactionsToRpc = z.object(
+  blockFields(
+    z.readonly(z.array(z_Transaction.TransactionToRpc)),
+    z_Uint.UintToRpc,
+    z_Withdrawal.WithdrawalToRpc,
+  ),
 )
 
 /** Pending block schema with transaction hashes. */
 export const Pending = z.object(
-  pendingBlockFields(z.readonly(z.array(z_Hex.Hex))),
+  pendingBlockFields(
+    z.readonly(z.array(z_Hex.Hex)),
+    z_Uint.Uint,
+    z_Withdrawal.Withdrawal,
+  ),
 )
 
 /** Pending block schema with full transactions. */
 export const PendingWithTransactions = z.object(
-  pendingBlockFields(z.readonly(z.array(z_Transaction.Pending))),
+  pendingBlockFields(
+    z.readonly(z.array(z_Transaction.Pending)),
+    z_Uint.Uint,
+    z_Withdrawal.Withdrawal,
+  ),
 )
 
-function blockFields<const transactions extends z.ZodMiniType>(
-  transactions: transactions,
-) {
+function blockFields<
+  const transactions extends z.ZodMiniType,
+  uint extends z.ZodMiniType,
+  withdrawal extends z.ZodMiniType,
+>(transactions: transactions, uint: uint, withdrawal: withdrawal) {
   return {
-    ...commonFields(transactions),
+    ...commonFields(transactions, uint, withdrawal),
     hash: z_Hex.Hex,
     logsBloom: z_Hex.Hex,
     nonce: z_Hex.Hex,
-    number: Number,
+    number: uint,
   }
 }
 
-function pendingBlockFields<const transactions extends z.ZodMiniType>(
-  transactions: transactions,
-) {
+function pendingBlockFields<
+  const transactions extends z.ZodMiniType,
+  uint extends z.ZodMiniType,
+  withdrawal extends z.ZodMiniType,
+>(transactions: transactions, uint: uint, withdrawal: withdrawal) {
   return {
-    ...commonFields(transactions),
+    ...commonFields(transactions, uint, withdrawal),
     hash: z.null(),
     logsBloom: z.null(),
     nonce: z.null(),
@@ -77,17 +117,19 @@ function pendingBlockFields<const transactions extends z.ZodMiniType>(
   }
 }
 
-function commonFields<const transactions extends z.ZodMiniType>(
-  transactions: transactions,
-) {
+function commonFields<
+  const transactions extends z.ZodMiniType,
+  uint extends z.ZodMiniType,
+  withdrawal extends z.ZodMiniType,
+>(transactions: transactions, uint: uint, withdrawal: withdrawal) {
   return {
-    baseFeePerGas: z.optional(z_Uint.Uint),
-    blobGasUsed: z.optional(z_Uint.Uint),
-    difficulty: z.optional(z_Uint.Uint),
-    excessBlobGas: z.optional(z_Uint.Uint),
+    baseFeePerGas: z.optional(uint),
+    blobGasUsed: z.optional(uint),
+    difficulty: z.optional(uint),
+    excessBlobGas: z.optional(uint),
     extraData: z.optional(z_Hex.Hex),
-    gasLimit: z_Uint.Uint,
-    gasUsed: z_Uint.Uint,
+    gasLimit: uint,
+    gasUsed: uint,
     miner: z_Address.Address,
     mixHash: z_Hex.Hex,
     parentBeaconBlockRoot: z.optional(z_Hex.Hex),
@@ -95,14 +137,14 @@ function commonFields<const transactions extends z.ZodMiniType>(
     receiptsRoot: z_Hex.Hex,
     sealFields: z.optional(z.readonly(z.array(z_Hex.Hex))),
     sha3Uncles: z_Hex.Hex,
-    size: z_Uint.Uint,
+    size: uint,
     stateRoot: z_Hex.Hex,
-    timestamp: z_Uint.Uint,
-    totalDifficulty: z.optional(z_Uint.Uint),
+    timestamp: uint,
+    totalDifficulty: z.optional(uint),
     transactions,
     transactionsRoot: z_Hex.Hex,
     uncles: z.readonly(z.array(z_Hex.Hex)),
-    withdrawals: z.optional(z.readonly(z.array(z_Withdrawal.Withdrawal))),
+    withdrawals: z.optional(z.readonly(z.array(withdrawal))),
     withdrawalsRoot: z.optional(z_Hex.Hex),
   }
 }

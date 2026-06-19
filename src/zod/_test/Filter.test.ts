@@ -74,6 +74,40 @@ describe('Filter', () => {
     `)
   })
 
+  test('FilterToRpc accepts numberish encode inputs', () => {
+    const expected = {
+      address: [address, address2],
+      fromBlock: 'latest',
+      toBlock: '0x10f2c',
+      topics: [topic, null, [topic2]],
+    }
+
+    expect(
+      z.encode(z_Filter.FilterToRpc, {
+        address: [address, address2],
+        fromBlock: 'latest',
+        toBlock: 69420n,
+        topics: [topic, null, [topic2]],
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_Filter.FilterToRpc, {
+        address: [address, address2],
+        fromBlock: 'latest',
+        toBlock: 69420,
+        topics: [topic, null, [topic2]],
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_Filter.FilterToRpc, {
+        address: [address, address2],
+        fromBlock: 'latest',
+        toBlock: '0x10f2c',
+        topics: [topic, null, [topic2]],
+      }),
+    ).toEqual(expected)
+  })
+
   test('rejects invalid filters', () => {
     const invalidBlockRange: never = {
       blockHash,

@@ -2,6 +2,7 @@ import { secp256k1 } from '@noble/curves/secp256k1.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 import type { Compute, ExactPartial, OneOf } from './internal/types.js'
 import * as Json from './Json.js'
 import * as Solidity from './Solidity.js'
@@ -806,16 +807,19 @@ export declare namespace toLegacy {
  * @param signature - The {@link ox#Signature.Signature} to convert.
  * @returns The converted {@link ox#Signature.Rpc}.
  */
-export function toRpc(signature: Signature): Rpc {
+export function toRpc(signature: toRpc.Input): Rpc {
   const { r, s, yParity } = signature
   return {
     r,
     s,
-    yParity: yParity === 0 ? '0x0' : '0x1',
+    yParity: Quantity.fromNumberish(yParity),
   }
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Signature.(toRpc:function)}. */
+  type Input = Signature<true, Hex.Hex | number>
+
   type ErrorType = Errors.GlobalErrorType
 }
 

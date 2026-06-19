@@ -134,6 +134,40 @@ describe('TransactionEnvelope', () => {
     ).toMatchInlineSnapshot(`false`)
   })
 
+  test('TransactionEnvelopeToRpc accepts numberish encode inputs', () => {
+    const expected = {
+      chainId: '0x1',
+      maxFeePerGas: '0x2',
+      maxPriorityFeePerGas: '0x1',
+      type: '0x2',
+    }
+
+    expect(
+      z.encode(z_TransactionEnvelope.TransactionEnvelopeToRpc, {
+        chainId: 1,
+        maxFeePerGas: 2n,
+        maxPriorityFeePerGas: 1n,
+        type: 'eip1559',
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_TransactionEnvelope.TransactionEnvelopeToRpc, {
+        chainId: 1,
+        maxFeePerGas: 2,
+        maxPriorityFeePerGas: 1,
+        type: 'eip1559',
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_TransactionEnvelope.TransactionEnvelopeToRpc, {
+        chainId: '0x1',
+        maxFeePerGas: '0x2',
+        maxPriorityFeePerGas: '0x1',
+        type: 'eip1559',
+      }),
+    ).toEqual(expected)
+  })
+
   test('serialized codec round-trips signed envelopes against core', () => {
     const envelopes = {
       legacy: {

@@ -1,5 +1,6 @@
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { Compute } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
@@ -195,7 +196,7 @@ export declare namespace fromRpc {
  * @param request - The request to convert.
  * @returns An RPC request.
  */
-export function toRpc(request: TransactionRequest): Rpc {
+export function toRpc(request: toRpc.Input): Rpc {
   const request_rpc = ox_TransactionRequest.toRpc({
     ...request,
     authorizationList: undefined,
@@ -212,14 +213,14 @@ export function toRpc(request: TransactionRequest): Rpc {
   if (request.calls)
     request_rpc.calls = request.calls.map((call) => ({
       to: call.to,
-      value: call.value ? Hex.fromNumber(call.value) : '0x',
+      value: call.value ? Quantity.fromNumberish(call.value) : '0x',
       data: call.data ?? '0x',
     }))
   else if (request.to || request.data || request.value)
     request_rpc.calls = [
       {
         to: request.to ?? undefined,
-        value: request.value ? Hex.fromNumber(request.value) : '0x',
+        value: request.value ? Quantity.fromNumberish(request.value) : '0x',
         data: request.data ?? '0x',
       },
     ]
@@ -230,14 +231,14 @@ export function toRpc(request: TransactionRequest): Rpc {
       request.keyAuthorization,
     )
   if (typeof request.validBefore !== 'undefined')
-    request_rpc.validBefore = Hex.fromNumber(request.validBefore)
+    request_rpc.validBefore = Quantity.fromNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
-    request_rpc.validAfter = Hex.fromNumber(request.validAfter)
+    request_rpc.validAfter = Quantity.fromNumberish(request.validAfter)
 
   const nonceKey = (() => {
     if (request.nonceKey === 'random') return Hex.random(24)
-    if (typeof request.nonceKey === 'bigint')
-      return Hex.fromNumber(request.nonceKey)
+    if (request.nonceKey !== undefined)
+      return Quantity.fromNumberish(request.nonceKey)
     return undefined
   })()
   if (nonceKey) request_rpc.nonceKey = nonceKey
@@ -263,6 +264,12 @@ export function toRpc(request: TransactionRequest): Rpc {
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#TransactionRequest.(toRpc:function)}. */
+  export type Input = TransactionRequest<
+    Hex.Hex | bigint | number,
+    Hex.Hex | number
+  >
+
   export type ErrorType =
     | AuthorizationTempo.toRpcList.ErrorType
     | Hex.fromNumber.ErrorType

@@ -1,4 +1,5 @@
 import * as Hex from '../core/Hex.js'
+import * as Quantity from '../core/internal/quantity.js'
 import type { OneOf } from '../core/internal/types.js'
 import type * as EntryPoint from './EntryPoint.js'
 
@@ -94,23 +95,33 @@ export function fromRpc(rpc: Rpc): UserOperationGas {
  * @param userOperationGas - The user operation gas to convert.
  * @returns An RPC-formatted user operation gas.
  */
-export function toRpc(userOperationGas: UserOperationGas): Rpc {
+export function toRpc(userOperationGas: toRpc.Input): Rpc {
   const rpc = {} as Rpc
 
-  rpc.callGasLimit = Hex.fromNumber(userOperationGas.callGasLimit)
-  rpc.preVerificationGas = Hex.fromNumber(userOperationGas.preVerificationGas)
-  rpc.verificationGasLimit = Hex.fromNumber(
+  rpc.callGasLimit = Quantity.fromNumberish(userOperationGas.callGasLimit)
+  rpc.preVerificationGas = Quantity.fromNumberish(
+    userOperationGas.preVerificationGas,
+  )
+  rpc.verificationGasLimit = Quantity.fromNumberish(
     userOperationGas.verificationGasLimit,
   )
 
-  if (typeof userOperationGas.paymasterVerificationGasLimit === 'bigint')
-    rpc.paymasterVerificationGasLimit = Hex.fromNumber(
+  if (userOperationGas.paymasterVerificationGasLimit !== undefined)
+    rpc.paymasterVerificationGasLimit = Quantity.fromNumberish(
       userOperationGas.paymasterVerificationGasLimit,
     )
-  if (typeof userOperationGas.paymasterPostOpGasLimit === 'bigint')
-    rpc.paymasterPostOpGasLimit = Hex.fromNumber(
+  if (userOperationGas.paymasterPostOpGasLimit !== undefined)
+    rpc.paymasterPostOpGasLimit = Quantity.fromNumberish(
       userOperationGas.paymasterPostOpGasLimit,
     )
 
   return rpc
+}
+
+export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#UserOperationGas.(toRpc:function)}. */
+  export type Input = UserOperationGas<
+    EntryPoint.Version,
+    Hex.Hex | bigint | number
+  >
 }

@@ -1,5 +1,6 @@
 import type * as Errors from './Errors.js'
-import * as Hex from './Hex.js'
+import type * as Hex from './Hex.js'
+import * as Quantity from './internal/quantity.js'
 
 /** A Withdrawal as defined in the [Execution API specification](https://github.com/ethereum/execution-apis/blob/main/src/schemas/withdrawal.yaml). */
 export type Withdrawal<bigintType = bigint, numberType = number> = {
@@ -73,15 +74,18 @@ export declare namespace fromRpc {
  * @param withdrawal - The Withdrawal to convert.
  * @returns An RPC Withdrawal.
  */
-export function toRpc(withdrawal: Withdrawal): Rpc {
+export function toRpc(withdrawal: toRpc.Input): Rpc {
   return {
     address: withdrawal.address,
-    amount: Hex.fromNumber(withdrawal.amount),
-    index: Hex.fromNumber(withdrawal.index),
-    validatorIndex: Hex.fromNumber(withdrawal.validatorIndex),
+    amount: Quantity.fromNumberish(withdrawal.amount),
+    index: Quantity.fromNumberish(withdrawal.index),
+    validatorIndex: Quantity.fromNumberish(withdrawal.validatorIndex),
   }
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Withdrawal.(toRpc:function)}. */
+  export type Input = Withdrawal<Hex.Hex | bigint | number, Hex.Hex | number>
+
   export type ErrorType = Errors.GlobalErrorType
 }

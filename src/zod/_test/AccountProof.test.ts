@@ -81,6 +81,38 @@ describe('AccountProof', () => {
     `)
   })
 
+  test('AccountProofToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      ...proof,
+      balance: 1n,
+      nonce: 2,
+      storageProof: [
+        { key: proof.storageProof[0].key, proof: ['0xdead'], value: 3n },
+      ],
+    } as const
+    const expected = z.encode(z_AccountProof.AccountProof, decoded)
+
+    expect(
+      z.encode(z_AccountProof.AccountProofToRpc, {
+        ...decoded,
+        balance: 1,
+        storageProof: [
+          { key: proof.storageProof[0].key, proof: ['0xdead'], value: 3 },
+        ],
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_AccountProof.AccountProofToRpc, {
+        ...decoded,
+        balance: '0x1',
+        nonce: '0x2',
+        storageProof: [
+          { key: proof.storageProof[0].key, proof: ['0xdead'], value: '0x3' },
+        ],
+      }),
+    ).toEqual(expected)
+  })
+
   test('validates storage proofs', () => {
     expect(z.decode(z_AccountProof.StorageProof, proof.storageProof[0]))
       .toMatchInlineSnapshot(`

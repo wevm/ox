@@ -151,6 +151,50 @@ describe('TransactionReceipt', () => {
     expect(z.encode(z_TransactionReceipt.Type, 'custom')).toBe('custom')
   })
 
+  test('TransactionReceiptToRpc accepts numberish encode inputs', () => {
+    const decoded = {
+      blobGasPrice: 270441n,
+      blobGasUsed: 4919n,
+      blockHash,
+      blockNumber: 19868015n,
+      contractAddress: null,
+      cumulativeGasUsed: 533781n,
+      effectiveGasPrice: 9062804489n,
+      from: address,
+      gasUsed: 175034n,
+      logs: [],
+      logsBloom,
+      root: '0x',
+      status: 'success',
+      to: address,
+      transactionHash,
+      transactionIndex: 2,
+      type: 'eip1559',
+    } as const
+    const expected = z.encode(z_TransactionReceipt.TransactionReceipt, {
+      ...decoded,
+      logs: [],
+    })
+
+    expect(
+      z.encode(z_TransactionReceipt.TransactionReceiptToRpc, {
+        ...decoded,
+        logs: [],
+        blobGasUsed: 4919,
+        cumulativeGasUsed: 533781,
+        gasUsed: 175034,
+      }),
+    ).toEqual(expected)
+    expect(
+      z.encode(z_TransactionReceipt.TransactionReceiptToRpc, {
+        ...decoded,
+        logs: [],
+        blockNumber: '0x12f296f',
+        gasUsed: '0x2abba',
+      }),
+    ).toEqual(expected)
+  })
+
   test('rejects invalid statuses and nested logs', () => {
     const invalidStatus: unknown = '0x2'
     const invalidReceiptStatus: unknown = {

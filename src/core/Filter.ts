@@ -123,7 +123,7 @@ export declare namespace fromRpc {
  * @param filter - The filter to convert.
  * @returns An RPC filter.
  */
-export function toRpc(filter: Filter): Rpc {
+export function toRpc(filter: toRpc.Input): Rpc {
   const { address, topics, fromBlock, toBlock, blockHash } = filter
   return {
     ...(typeof address !== 'undefined' ? { address } : {}),
@@ -132,20 +132,23 @@ export function toRpc(filter: Filter): Rpc {
     ...(typeof fromBlock !== 'undefined'
       ? {
           fromBlock:
-            typeof fromBlock === 'bigint'
-              ? Hex.fromNumber(fromBlock)
-              : fromBlock,
+            typeof fromBlock === 'string'
+              ? fromBlock
+              : Hex.fromNumber(fromBlock),
         }
       : {}),
     ...(typeof toBlock !== 'undefined'
       ? {
           toBlock:
-            typeof toBlock === 'bigint' ? Hex.fromNumber(toBlock) : toBlock,
+            typeof toBlock === 'string' ? toBlock : Hex.fromNumber(toBlock),
         }
       : {}),
   } as unknown as Rpc
 }
 
 export declare namespace toRpc {
+  /** Numberish input accepted by {@link ox#Filter.(toRpc:function)}. */
+  type Input = Filter<Hex.Hex | bigint | number>
+
   type ErrorType = Errors.GlobalErrorType
 }

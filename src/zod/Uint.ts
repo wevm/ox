@@ -2,10 +2,13 @@
 import * as core_Hex from '../core/Hex.js'
 import {
   decodeInteger,
+  encodeNumberish,
   quantityHex,
   type SmallBits,
   uintBigint,
+  uintBigintNumberish,
   uintNumber,
+  uintNumberNumberish,
 } from './internal/Integer.js'
 import * as z from 'zod/mini'
 
@@ -14,6 +17,15 @@ export const Uint = z.codec(quantityHex(), uintBigint(), {
   decode: (value) => core_Hex.toBigInt(value),
   encode: (value) => core_Hex.fromNumber(value),
 })
+
+/** Encode-only unsized unsigned integer accepting `Hex | bigint | number`. */
+export const UintToRpc = z.codec(quantityHex(), uintBigintNumberish(), {
+  decode: (value) => core_Hex.toBigInt(value),
+  encode: (value) => encodeNumberish(value),
+})
+
+/** Encode-only 8-bit unsigned integer accepting `Hex | number`. */
+export const Uint8ToRpc = unsignedToRpc(8)
 
 /** 8-bit unsigned integer decoded as `number` and encoded as hex. */
 export const Uint8 = unsigned(8)
@@ -84,6 +96,13 @@ function unsigned(bits: SmallBits) {
   return z.codec(quantityHex(bits), uintNumber(bits), {
     decode: (value) => globalThis.Number(decodeInteger(value, bits, false)),
     encode: (value) => core_Hex.fromNumber(value),
+  })
+}
+
+function unsignedToRpc(bits: SmallBits) {
+  return z.codec(quantityHex(bits), uintNumberNumberish(bits), {
+    decode: (value) => globalThis.Number(decodeInteger(value, bits, false)),
+    encode: (value) => encodeNumberish(value),
   })
 }
 

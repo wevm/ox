@@ -122,6 +122,38 @@ describe('toRpc', () => {
     }
   })
 
+  test('numberish inputs', () => {
+    const fromBigint = Filter.toRpc({
+      fromBlock: 69420n,
+      toBlock: 69421n,
+      topics: [
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        null,
+        '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
+      ],
+    })
+    const fromNumber = Filter.toRpc({
+      fromBlock: 69420,
+      toBlock: 69421,
+      topics: [
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        null,
+        '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
+      ],
+    })
+    const fromHex = Filter.toRpc({
+      fromBlock: '0x10f2c',
+      toBlock: '0x10f2d',
+      topics: [
+        '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+        null,
+        '0x0000000000000000000000000c04d9e9278ec5e4d424476d3ebec70cb5d648d1',
+      ],
+    })
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
+  })
+
   test('behavior: preserves explicit `address: null`', () => {
     const filter = Filter.toRpc({
       address: null,

@@ -90,6 +90,62 @@ describe('toRpc', () => {
     `)
   })
 
+  test('numberish inputs', () => {
+    const fromBigint = AccountProof.toRpc({
+      address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+      balance: 1n,
+      codeHash:
+        '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
+      nonce: 2,
+      storageHash:
+        '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      accountProof: ['0xabcd', '0x1234'],
+      storageProof: [
+        {
+          key: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          proof: ['0xdead'],
+          value: 3n,
+        },
+      ],
+    })
+    const fromNumber = AccountProof.toRpc({
+      address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+      balance: 1,
+      codeHash:
+        '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
+      nonce: 2,
+      storageHash:
+        '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      accountProof: ['0xabcd', '0x1234'],
+      storageProof: [
+        {
+          key: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          proof: ['0xdead'],
+          value: 3,
+        },
+      ],
+    })
+    const fromHex = AccountProof.toRpc({
+      address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
+      balance: '0x1',
+      codeHash:
+        '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
+      nonce: '0x2',
+      storageHash:
+        '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      accountProof: ['0xabcd', '0x1234'],
+      storageProof: [
+        {
+          key: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          proof: ['0xdead'],
+          value: '0x3',
+        },
+      ],
+    })
+    expect(fromBigint).toEqual(fromNumber)
+    expect(fromBigint).toEqual(fromHex)
+  })
+
   test('round-trip', () => {
     const value = {
       address: '0xb9CAB4F0E46F7F6b1024b5A7463734fa68E633f9',
