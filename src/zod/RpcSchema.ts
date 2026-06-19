@@ -128,7 +128,9 @@ function requestSchema(namespace: Namespace): z.ZodMiniType {
 }
 
 /**
- * Looks up the `RpcSchema.Item` for a method on a namespace.
+ * Looks up the `RpcSchema.Item` for a method on a namespace. Resolve a method
+ * once and pass the item to the `decode*`/`encode*` codecs to encode params and
+ * decode returns without repeating the namespace and method name.
  *
  * @example
  * ```ts twoslash
@@ -136,8 +138,11 @@ function requestSchema(namespace: Namespace): z.ZodMiniType {
  *
  * const item = z.RpcSchema.parseItem(
  *   z.RpcSchema.Eth,
- *   'eth_blockNumber'
+ *   'eth_getBlockTransactionCountByNumber'
  * )
+ *
+ * const params = z.RpcSchema.encodeParams(item, [1n])
+ * const count = z.RpcSchema.decodeReturns(item, '0x1')
  * ```
  *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
@@ -151,10 +156,18 @@ export function parseItem<
   return item
 }
 
+// Resolves a codec function's arguments into `[item, value]`, accepting either
+// `(item, value)` or `(namespace, method, value)`.
+function resolveItem(args: readonly unknown[]): [item: Item, value: unknown] {
+  if (args.length === 2) return [args[0] as Item, args[1]]
+  return [parseItem(args[0] as Namespace, args[1] as string), args[2]]
+}
+
 /**
- * Decodes (wire → native) the `params` for a method on a namespace. Use on the
- * receiving side (e.g. a server) to coerce incoming wire params into their
- * native representation.
+ * Decodes (wire → native) the `params` for a method. Use on the receiving side
+ * (e.g. a server) to coerce incoming wire params into their native
+ * representation. Accepts either a namespace + method name, or a resolved
+ * `RpcSchema.Item` (from {@link parseItem}/{@link from}).
  *
  * @example
  * ```ts twoslash
@@ -167,8 +180,26 @@ export function parseItem<
  * )
  * ```
  *
+ * @example
+ * ### From a Resolved Item
+ *
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const item = z.RpcSchema.parseItem(
+ *   z.RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * )
+ *
+ * const params = z.RpcSchema.decodeParams(item, ['0x1', true])
+ * ```
+ *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
+export function decodeParams<const item extends Item>(
+  item: item,
+  params: z.input<item['params']>,
+): z.output<item['params']>
 export function decodeParams<
   const namespace extends Namespace,
   method extends MethodName<namespace>,
@@ -176,14 +207,18 @@ export function decodeParams<
   namespace: namespace,
   method: method,
   params: z.input<namespace[method]['params']>,
-): z.output<namespace[method]['params']> {
-  return z.decode(parseItem(namespace, method).params, params as never) as never
+): z.output<namespace[method]['params']>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function decodeParams(...args: readonly unknown[]): unknown {
+  const [item, params] = resolveItem(args)
+  return z.decode(item.params, params as never) as never
 }
 
 /**
- * Encodes (native → wire) the `params` for a method on a namespace. Use on the
- * sending side (e.g. a client) to serialize native params into the wire shape
- * a JSON-RPC endpoint expects.
+ * Encodes (native → wire) the `params` for a method. Use on the sending side
+ * (e.g. a client) to serialize native params into the wire shape a JSON-RPC
+ * endpoint expects. Accepts either a namespace + method name, or a resolved
+ * `RpcSchema.Item` (from {@link parseItem}/{@link from}).
  *
  * @example
  * ```ts twoslash
@@ -196,8 +231,26 @@ export function decodeParams<
  * )
  * ```
  *
+ * @example
+ * ### From a Resolved Item
+ *
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const item = z.RpcSchema.parseItem(
+ *   z.RpcSchema.Eth,
+ *   'eth_getBlockByNumber'
+ * )
+ *
+ * const params = z.RpcSchema.encodeParams(item, [1n, true])
+ * ```
+ *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
+export function encodeParams<const item extends Item>(
+  item: item,
+  params: z.output<item['params']>,
+): z.input<item['params']>
 export function encodeParams<
   const namespace extends Namespace,
   method extends MethodName<namespace>,
@@ -205,14 +258,18 @@ export function encodeParams<
   namespace: namespace,
   method: method,
   params: z.output<namespace[method]['params']>,
-): z.input<namespace[method]['params']> {
-  return z.encode(parseItem(namespace, method).params, params as never) as never
+): z.input<namespace[method]['params']>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function encodeParams(...args: readonly unknown[]): unknown {
+  const [item, params] = resolveItem(args)
+  return z.encode(item.params, params as never) as never
 }
 
 /**
- * Decodes (wire → native) the `returns` value for a method on a namespace. Use
- * on the receiving side (e.g. a client) to coerce a wire result into its native
- * representation.
+ * Decodes (wire → native) the `returns` value for a method. Use on the
+ * receiving side (e.g. a client) to coerce a wire result into its native
+ * representation. Accepts either a namespace + method name, or a resolved
+ * `RpcSchema.Item` (from {@link parseItem}/{@link from}).
  *
  * @example
  * ```ts twoslash
@@ -225,8 +282,26 @@ export function encodeParams<
  * )
  * ```
  *
+ * @example
+ * ### From a Resolved Item
+ *
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const item = z.RpcSchema.parseItem(
+ *   z.RpcSchema.Eth,
+ *   'eth_blockNumber'
+ * )
+ *
+ * const result = z.RpcSchema.decodeReturns(item, '0x1b4')
+ * ```
+ *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
+export function decodeReturns<const item extends Item>(
+  item: item,
+  returns: z.input<item['returns']>,
+): z.output<item['returns']>
 export function decodeReturns<
   const namespace extends Namespace,
   method extends MethodName<namespace>,
@@ -234,17 +309,18 @@ export function decodeReturns<
   namespace: namespace,
   method: method,
   returns: z.input<namespace[method]['returns']>,
-): z.output<namespace[method]['returns']> {
-  return z.decode(
-    parseItem(namespace, method).returns,
-    returns as never,
-  ) as never
+): z.output<namespace[method]['returns']>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function decodeReturns(...args: readonly unknown[]): unknown {
+  const [item, returns] = resolveItem(args)
+  return z.decode(item.returns, returns as never) as never
 }
 
 /**
- * Encodes (native → wire) the `returns` value for a method on a namespace. Use
- * on the sending side (e.g. a server) to serialize a native result into the
- * wire shape.
+ * Encodes (native → wire) the `returns` value for a method. Use on the sending
+ * side (e.g. a server) to serialize a native result into the wire shape.
+ * Accepts either a namespace + method name, or a resolved `RpcSchema.Item`
+ * (from {@link parseItem}/{@link from}).
  *
  * @example
  * ```ts twoslash
@@ -257,8 +333,26 @@ export function decodeReturns<
  * )
  * ```
  *
+ * @example
+ * ### From a Resolved Item
+ *
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const item = z.RpcSchema.parseItem(
+ *   z.RpcSchema.Eth,
+ *   'eth_blockNumber'
+ * )
+ *
+ * const result = z.RpcSchema.encodeReturns(item, 436n)
+ * ```
+ *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
+export function encodeReturns<const item extends Item>(
+  item: item,
+  returns: z.output<item['returns']>,
+): z.input<item['returns']>
 export function encodeReturns<
   const namespace extends Namespace,
   method extends MethodName<namespace>,
@@ -266,11 +360,11 @@ export function encodeReturns<
   namespace: namespace,
   method: method,
   returns: z.output<namespace[method]['returns']>,
-): z.input<namespace[method]['returns']> {
-  return z.encode(
-    parseItem(namespace, method).returns,
-    returns as never,
-  ) as never
+): z.input<namespace[method]['returns']>
+// eslint-disable-next-line jsdoc-js/require-jsdoc
+export function encodeReturns(...args: readonly unknown[]): unknown {
+  const [item, returns] = resolveItem(args)
+  return z.encode(item.returns, returns as never) as never
 }
 
 /**

@@ -211,6 +211,25 @@ describe('parseItem', () => {
       `[RpcSchema.MethodNotFoundError: Method \`eth_unknownMethod\` does not exist on the schema.]`,
     )
   })
+
+  test('codecs accept a resolved item', () => {
+    const item = z_RpcSchema.parseItem(
+      z_RpcSchema.Eth,
+      'eth_getBlockTransactionCountByNumber',
+    )
+    expect(z_RpcSchema.encodeParams(item, [1n])).toMatchInlineSnapshot(`
+      [
+        "0x1",
+      ]
+    `)
+    expect(z_RpcSchema.decodeParams(item, ['0x1'])).toMatchInlineSnapshot(`
+      [
+        1n,
+      ]
+    `)
+    expect(z_RpcSchema.decodeReturns(item, '0x1')).toMatchInlineSnapshot(`1`)
+    expect(z_RpcSchema.encodeReturns(item, 1)).toMatchInlineSnapshot(`"0x1"`)
+  })
 })
 
 describe('decodeRequest', () => {

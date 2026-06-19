@@ -86,6 +86,33 @@ test('encode helpers infer params/returns by method', () => {
   >()
 })
 
+test('codecs accept a resolved item and infer params/returns', () => {
+  const item = z_RpcSchema.parseItem(z_RpcSchema.Eth, 'eth_getTransactionCount')
+
+  // Params: native on encode input, wire on encode output.
+  expectTypeOf(
+    z_RpcSchema.encodeParams(item, [
+      '0x0000000000000000000000000000000000000000',
+      { blockNumber: 436n },
+    ]),
+  ).toMatchTypeOf<
+    readonly [
+      core_Address.Address,
+      (
+        | core_Block.Number<core_Hex.Hex>
+        | core_Block.Tag
+        | core_Block.Identifier<core_Hex.Hex>
+      ),
+    ]
+  >()
+
+  // Returns: wire hex on decode input, native number on decode output.
+  expectTypeOf(z_RpcSchema.decodeReturns(item, '0x1b4')).toEqualTypeOf<number>()
+  expectTypeOf(
+    z_RpcSchema.encodeReturns(item, 436),
+  ).toEqualTypeOf<core_Hex.Hex>()
+})
+
 test('from: namespace returns a decodable namespace', () => {
   const schema = z_RpcSchema.from({
     abe_foo: {
