@@ -22,6 +22,10 @@ yarn add ox
 ```bash [bun]
 bun install ox
 ```
+
+```bash [deno]
+deno add ox
+```
 :::
 
 ## CDN
