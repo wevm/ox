@@ -74,6 +74,7 @@
     "tempo-poolid-canonical",
     "tempo-transaction-request-envelope-conversion",
     "tempo-txenvelope-validate-prefix",
+    "torpc-numberish-inputs",
     "transaction-request-envelope-conversion",
     "transactions-access-list-strict-storage-keys",
     "transactions-authorization-fromtuplelist-return-type",
