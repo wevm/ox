@@ -28,7 +28,7 @@ export type { Item } from './internal/rpcSchemas/from.js'
  * const eth_blockNumber = z.RpcSchema.from({
  *   method: 'eth_blockNumber',
  *   params: z.optional(z.tuple([])),
- *   returns: z.Hex.Hex,
+ *   returns: z.Hex.Hex
  * })
  * ```
  *
@@ -42,11 +42,15 @@ export type { Item } from './internal/rpcSchemas/from.js'
  *   ...z.RpcSchema.Eth,
  *   abe_foo: {
  *     params: z.tuple([z.number()]),
- *     returns: z.string(),
- *   },
+ *     returns: z.string()
+ *   }
  * })
  *
- * const params = z.RpcSchema.decodeParams(schema, 'abe_foo', [123])
+ * const params = z.RpcSchema.decodeParams(
+ *   schema,
+ *   'abe_foo',
+ *   [123]
+ * )
  * ```
  */
 export function from<
