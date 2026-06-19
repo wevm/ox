@@ -88,7 +88,7 @@ export declare namespace from {
     { params: z.ZodMiniType; returns: z.ZodMiniType }
   >
 
-  /** The normalized `RpcSchema.Namespace` derived from a {@link from.Namespace}. */
+  /** The normalized `RpcSchema.Namespace` derived from `from.Namespace`. */
   type ReturnType<namespace extends Namespace> = {
     [method in keyof namespace & string]: Item<
       method,
@@ -167,7 +167,7 @@ function resolveItem(args: readonly unknown[]): [item: Item, value: unknown] {
  * Decodes (wire → native) the `params` for a method. Use on the receiving side
  * (e.g. a server) to coerce incoming wire params into their native
  * representation. Accepts either a namespace + method name, or a resolved
- * `RpcSchema.Item` (from {@link parseItem}/{@link from}).
+ * `RpcSchema.Item` (from `parseItem`/`from`).
  *
  * @example
  * ```ts twoslash
@@ -218,7 +218,7 @@ export function decodeParams(...args: readonly unknown[]): unknown {
  * Encodes (native → wire) the `params` for a method. Use on the sending side
  * (e.g. a client) to serialize native params into the wire shape a JSON-RPC
  * endpoint expects. Accepts either a namespace + method name, or a resolved
- * `RpcSchema.Item` (from {@link parseItem}/{@link from}).
+ * `RpcSchema.Item` (from `parseItem`/`from`).
  *
  * @example
  * ```ts twoslash
@@ -269,7 +269,7 @@ export function encodeParams(...args: readonly unknown[]): unknown {
  * Decodes (wire → native) the `returns` value for a method. Use on the
  * receiving side (e.g. a client) to coerce a wire result into its native
  * representation. Accepts either a namespace + method name, or a resolved
- * `RpcSchema.Item` (from {@link parseItem}/{@link from}).
+ * `RpcSchema.Item` (from `parseItem`/`from`).
  *
  * @example
  * ```ts twoslash
@@ -320,7 +320,7 @@ export function decodeReturns(...args: readonly unknown[]): unknown {
  * Encodes (native → wire) the `returns` value for a method. Use on the sending
  * side (e.g. a server) to serialize a native result into the wire shape.
  * Accepts either a namespace + method name, or a resolved `RpcSchema.Item`
- * (from {@link parseItem}/{@link from}).
+ * (from `parseItem`/`from`).
  *
  * @example
  * ```ts twoslash

@@ -7,6 +7,7 @@ import * as Hex from './Hex.js'
 import type * as internal from './internal/abiFunction.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
 import type * as AbiParameters_internal from './internal/abiParameters.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `function` type. */
@@ -864,11 +865,14 @@ export declare namespace encodeResult {
  */
 export function format<const abiFunction extends AbiFunction>(
   abiFunction: abiFunction | AbiFunction,
-): abitype.FormatAbiItem<abiFunction> {
-  return abitype.formatAbiItem(abiFunction) as never
+): format.ReturnType<abiFunction> {
+  return formatAbiItem.formatAbiItem(abiFunction) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiFunction extends AbiFunction = AbiFunction> =
+    formatAbiItem.FormatAbiItem<abiFunction>
+
   type ErrorType = Errors.GlobalErrorType
 }
 

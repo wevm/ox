@@ -5,6 +5,7 @@ import * as AbiParameters from './AbiParameters.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiConstructor.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with a `constructor` type. */
@@ -316,12 +317,12 @@ export function format<const abiConstructor extends AbiConstructor>(
 export function format(abiConstructor: AbiConstructor): string
 /** @internal */
 export function format(abiConstructor: AbiConstructor): format.ReturnType {
-  return abitype.formatAbiItem(abiConstructor)
+  return formatAbiItem.formatAbiItem(abiConstructor)
 }
 
 export declare namespace format {
   type ReturnType<abiConstructor extends AbiConstructor = AbiConstructor> =
-    abitype.FormatAbiItem<abiConstructor>
+    formatAbiItem.FormatAbiItem<abiConstructor>
 
   type ErrorType = Errors.GlobalErrorType
 }

@@ -2107,6 +2107,9 @@ describe('getSignatureHash', () => {
 test('exports', () => {
   expect(Object.keys(AbiItem)).toMatchInlineSnapshot(`
     [
+      "InvalidAbiItemError",
+      "UnknownSolidityTypeError",
+      "UnknownTypeError",
       "format",
       "from",
       "fromAbi",

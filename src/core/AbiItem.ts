@@ -1,13 +1,20 @@
-import * as abitype from 'abitype'
 import type * as Abi from './Abi.js'
 import * as Errors from './Errors.js'
 import * as Hash from './Hash.js'
 import * as Hex from './Hex.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
+import * as parseAbiItem from './internal/human-readable/parseAbiItem.js'
 import * as internal from './internal/abiItem.js'
 import type { UnionCompute } from './internal/types.js'
 
 /** Root type for an item on an {@link ox#Abi.Abi}. */
 export type AbiItem = Abi.Abi[number]
+
+export {
+  InvalidAbiItemError,
+  UnknownSolidityTypeError,
+  UnknownTypeError,
+} from './internal/human-readable/errors.js'
 
 /**
  * Extracts an {@link ox#AbiItem.AbiItem} item from an {@link ox#Abi.Abi}, given a name.
@@ -89,11 +96,14 @@ export type ExtractNames<abi extends Abi.Abi> = Extract<
  */
 export function format<const abiItem extends AbiItem>(
   abiItem: abiItem | AbiItem,
-): abitype.FormatAbiItem<abiItem> {
-  return abitype.formatAbiItem(abiItem) as never
+): format.ReturnType<abiItem> {
+  return formatAbiItem.formatAbiItem(abiItem) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiItem extends AbiItem = AbiItem> =
+    formatAbiItem.FormatAbiItem<abiItem>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -125,6 +135,30 @@ export declare namespace format {
  *
  * abiItem
  * //^?
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  * @example
@@ -141,6 +175,30 @@ export declare namespace format {
  *
  * abiItem
  * //^?
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  * @example
@@ -156,6 +214,30 @@ export declare namespace format {
  *
  * abiItem
  * //^?
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  *
@@ -178,9 +260,9 @@ export function from<
 ): from.ReturnType<abiItem> {
   const { prepare = true } = options
   const item = (() => {
-    if (Array.isArray(abiItem)) return abitype.parseAbiItem(abiItem)
+    if (Array.isArray(abiItem)) return parseAbiItem.parseAbiItem(abiItem)
     if (typeof abiItem === 'string')
-      return abitype.parseAbiItem(abiItem as never)
+      return parseAbiItem.parseAbiItem(abiItem as never)
     return abiItem
   })() as AbiItem
   return {
@@ -202,9 +284,9 @@ export declare namespace from {
 
   type ReturnType<abiItem extends AbiItem | string | readonly string[]> =
     abiItem extends string
-      ? abitype.ParseAbiItem<abiItem>
+      ? parseAbiItem.ParseAbiItem<abiItem>
       : abiItem extends readonly string[]
-        ? abitype.ParseAbiItem<abiItem>
+        ? parseAbiItem.ParseAbiItem<abiItem>
         : abiItem
 
   type ErrorType = Errors.GlobalErrorType
@@ -554,7 +636,7 @@ export function getSignature(
   })()
   const signature = (() => {
     if (typeof abiItem === 'string') return abiItem
-    return abitype.formatAbiItem(abiItem)
+    return formatAbiItem.formatAbiItem(abiItem)
   })()
   return internal.normalizeSignature(signature)
 }
@@ -692,8 +774,8 @@ export class AmbiguityError extends Errors.BaseError {
     super('Found ambiguous types in overloaded ABI Items.', {
       metaMessages: [
         // TODO: abitype to add support for signature-formatted ABI items.
-        `\`${x.type}\` in \`${internal.normalizeSignature(abitype.formatAbiItem(x.abiItem))}\`, and`,
-        `\`${y.type}\` in \`${internal.normalizeSignature(abitype.formatAbiItem(y.abiItem))}\``,
+        `\`${x.type}\` in \`${internal.normalizeSignature(formatAbiItem.formatAbiItem(x.abiItem))}\`, and`,
+        `\`${y.type}\` in \`${internal.normalizeSignature(formatAbiItem.formatAbiItem(y.abiItem))}\``,
         '',
         'These types encode differently and cannot be distinguished at runtime.',
         'Remove one of the ambiguous items in the ABI.',
