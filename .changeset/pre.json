@@ -61,6 +61,7 @@
     "rpc-schema-block-identifier-wire-type",
     "rpc-schema-codecs",
     "rpc-schema-from-zod",
+    "rpc-schema-item-codecs",
     "rpc-transport-empty-body",
     "rpc-transport-http-error-details",
     "rpc-transport-json-empty-error",
