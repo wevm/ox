@@ -65,6 +65,25 @@ test('encode helpers infer params/returns by method', () => {
   expectTypeOf(
     z_RpcSchema.encodeReturns(z_RpcSchema.Eth, 'eth_blockNumber', 436n),
   ).toEqualTypeOf<core_Hex.Hex>()
+
+  // Params: block selector encodes to the wire shape. The EIP-1898 identifier
+  // branch must encode `blockNumber` as wire hex (matching the core request
+  // param type `Block.Identifier<Hex.Hex>`), not native bigint.
+  expectTypeOf(
+    z_RpcSchema.encodeParams(z_RpcSchema.Eth, 'eth_getTransactionCount', [
+      '0x0000000000000000000000000000000000000000',
+      { blockNumber: 436n },
+    ]),
+  ).toMatchTypeOf<
+    readonly [
+      core_Address.Address,
+      (
+        | core_Block.Number<core_Hex.Hex>
+        | core_Block.Tag
+        | core_Block.Identifier<core_Hex.Hex>
+      ),
+    ]
+  >()
 })
 
 test('from: namespace returns a decodable namespace', () => {

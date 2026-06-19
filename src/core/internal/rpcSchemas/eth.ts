@@ -87,11 +87,17 @@ export type Eth = RpcSchema.From<
           | [transaction: TransactionRequest.Rpc]
           | [
               transaction: TransactionRequest.Rpc,
-              block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+              block:
+                | Block.Number<Hex.Hex>
+                | Block.Tag
+                | Block.Identifier<Hex.Hex>,
             ]
           | [
               transaction: TransactionRequest.Rpc,
-              block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+              block:
+                | Block.Number<Hex.Hex>
+                | Block.Tag
+                | Block.Identifier<Hex.Hex>,
               stateOverrides: StateOverrides.Rpc,
             ]
       }
@@ -148,11 +154,17 @@ export type Eth = RpcSchema.From<
           | [transaction: TransactionRequest.Rpc]
           | [
               transaction: TransactionRequest.Rpc,
-              block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+              block:
+                | Block.Number<Hex.Hex>
+                | Block.Tag
+                | Block.Identifier<Hex.Hex>,
             ]
           | [
               transaction: TransactionRequest.Rpc,
-              block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+              block:
+                | Block.Number<Hex.Hex>
+                | Block.Tag
+                | Block.Identifier<Hex.Hex>,
               stateOverrides: StateOverrides.Rpc,
             ]
       }
@@ -217,7 +229,7 @@ export type Eth = RpcSchema.From<
         method: 'eth_getBalance'
         params: [
           address: Address.Address,
-          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier<Hex.Hex>,
         ]
       }
       ReturnType: Hex.Hex
@@ -317,7 +329,7 @@ export type Eth = RpcSchema.From<
         method: 'eth_getCode'
         params: [
           address: Address.Address,
-          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier<Hex.Hex>,
         ]
       }
       ReturnType: Hex.Hex
@@ -390,7 +402,7 @@ export type Eth = RpcSchema.From<
           /** An array of storage-keys that should be proofed and included. */
           storageKeys: Hex.Hex[],
           /** Block identifier to pull the proof from. */
-          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier<Hex.Hex>,
         ]
       }
       ReturnType: AccountProof.Rpc
@@ -410,7 +422,7 @@ export type Eth = RpcSchema.From<
         params: [
           address: Address.Address,
           index: Hex.Hex,
-          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier<Hex.Hex>,
         ]
       }
       ReturnType: Hex.Hex
@@ -477,7 +489,7 @@ export type Eth = RpcSchema.From<
         method: 'eth_getTransactionCount'
         params: [
           address: Address.Address,
-          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier<Hex.Hex>,
         ]
       }
       ReturnType: Hex.Hex
@@ -690,7 +702,7 @@ export type Eth = RpcSchema.From<
             traceTransfers?: boolean | undefined
             validation?: boolean | undefined
           },
-          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier,
+          block: Block.Number<Hex.Hex> | Block.Tag | Block.Identifier<Hex.Hex>,
         ]
       }
       ReturnType: readonly (Block.Rpc & {
