@@ -58,6 +58,7 @@
     "rpc-response-from-validation",
     "rpc-response-parse-error-preserve",
     "rpc-response-parse-validation",
+    "rpc-schema-block-identifier-wire-type",
     "rpc-schema-codecs",
     "rpc-schema-from-zod",
     "rpc-transport-empty-body",
