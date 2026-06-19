@@ -5,7 +5,7 @@ import * as z from 'zod/mini'
 
 describe('tempo_simulateV1', () => {
   test('decodes params', () => {
-    const params = z_RpcSchema.parseParams(
+    const params = z_RpcSchema.decodeParams(
       z_RpcSchemaTempo.Tempo,
       'tempo_simulateV1',
       [

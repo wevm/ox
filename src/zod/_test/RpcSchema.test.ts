@@ -6,10 +6,10 @@ const address = '0x0000000000000000000000000000000000000000'
 const hash = `0x${'11'.repeat(32)}` as const
 const topic = `0x${'33'.repeat(32)}` as const
 
-describe('parseParams', () => {
+describe('decodeParams', () => {
   test('decodes params (block number / tag coercion)', () => {
     expect(
-      z_RpcSchema.parseParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
+      z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
         '0x1b4',
         true,
       ]),
@@ -20,7 +20,7 @@ describe('parseParams', () => {
       ]
     `)
     expect(
-      z_RpcSchema.parseParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
+      z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
         'latest',
         false,
       ]),
@@ -34,7 +34,7 @@ describe('parseParams', () => {
 
   test('decodes wallet params', () => {
     expect(
-      z_RpcSchema.parseParams(
+      z_RpcSchema.decodeParams(
         z_RpcSchema.Wallet,
         'wallet_switchEthereumChain',
         [{ chainId: '0x1' }],
@@ -49,13 +49,27 @@ describe('parseParams', () => {
   })
 })
 
-describe('parseReturns', () => {
+describe('decodeReturns', () => {
   test('decodes scalar return types', () => {
     expect(
-      z_RpcSchema.parseReturns(z_RpcSchema.Eth, 'eth_blockNumber', '0x1b4'),
-    ).toMatchInlineSnapshot(`"0x1b4"`)
-    expect(z_RpcSchema.parseReturns(z_RpcSchema.Eth, 'eth_accounts', [address]))
-      .toMatchInlineSnapshot(`
+      z_RpcSchema.decodeReturns(z_RpcSchema.Eth, 'eth_blockNumber', '0x1b4'),
+    ).toMatchInlineSnapshot(`436n`)
+    expect(
+      z_RpcSchema.decodeReturns(z_RpcSchema.Eth, 'eth_chainId', '0x1'),
+    ).toMatchInlineSnapshot(`1`)
+    expect(
+      z_RpcSchema.decodeReturns(
+        z_RpcSchema.Eth,
+        'eth_getTransactionCount',
+        '0x2',
+      ),
+    ).toMatchInlineSnapshot(`2`)
+    expect(
+      z_RpcSchema.decodeReturns(z_RpcSchema.Eth, 'eth_call', '0x1234'),
+    ).toMatchInlineSnapshot(`"0x1234"`)
+    expect(
+      z_RpcSchema.decodeReturns(z_RpcSchema.Eth, 'eth_accounts', [address]),
+    ).toMatchInlineSnapshot(`
       [
         "0x0000000000000000000000000000000000000000",
       ]
@@ -64,7 +78,7 @@ describe('parseReturns', () => {
 
   test('decodes fee history return type', () => {
     expect(
-      z_RpcSchema.parseReturns(z_RpcSchema.Eth, 'eth_feeHistory', {
+      z_RpcSchema.decodeReturns(z_RpcSchema.Eth, 'eth_feeHistory', {
         baseFeePerGas: ['0x1', '0x2'],
         gasUsedRatio: [0.5],
         oldestBlock: '0x10',
@@ -91,7 +105,7 @@ describe('parseReturns', () => {
 
   test('decodes log return types', () => {
     expect(
-      z_RpcSchema.parseReturns(z_RpcSchema.Eth, 'eth_getLogs', [
+      z_RpcSchema.decodeReturns(z_RpcSchema.Eth, 'eth_getLogs', [
         {
           address,
           blockHash: hash,
@@ -125,12 +139,61 @@ describe('parseReturns', () => {
 
   test('decodes nullable return types', () => {
     expect(
-      z_RpcSchema.parseReturns(
+      z_RpcSchema.decodeReturns(
         z_RpcSchema.Eth,
         'eth_getTransactionReceipt',
         null,
       ),
     ).toMatchInlineSnapshot(`null`)
+  })
+})
+
+describe('encodeParams', () => {
+  test('encodes params (native → wire)', () => {
+    expect(
+      z_RpcSchema.encodeParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
+        436n,
+        true,
+      ]),
+    ).toMatchInlineSnapshot(`
+      [
+        "0x1b4",
+        true,
+      ]
+    `)
+  })
+})
+
+describe('encodeReturns', () => {
+  test('encodes scalar return types (native → wire)', () => {
+    expect(
+      z_RpcSchema.encodeReturns(z_RpcSchema.Eth, 'eth_blockNumber', 436n),
+    ).toMatchInlineSnapshot(`"0x1b4"`)
+    expect(
+      z_RpcSchema.encodeReturns(z_RpcSchema.Eth, 'eth_chainId', 1),
+    ).toMatchInlineSnapshot(`"0x1"`)
+    expect(
+      z_RpcSchema.encodeReturns(z_RpcSchema.Eth, 'eth_call', '0x1234'),
+    ).toMatchInlineSnapshot(`"0x1234"`)
+  })
+})
+
+describe('encodeRequest', () => {
+  test('encodes a request (native → wire)', () => {
+    expect(
+      z_RpcSchema.encodeRequest(z_RpcSchema.Eth, {
+        method: 'eth_getBlockByNumber',
+        params: [436n, true],
+      }),
+    ).toMatchInlineSnapshot(`
+      {
+        "method": "eth_getBlockByNumber",
+        "params": [
+          "0x1b4",
+          true,
+        ],
+      }
+    `)
   })
 })
 
@@ -150,10 +213,10 @@ describe('parseItem', () => {
   })
 })
 
-describe('parseRequest', () => {
+describe('decodeRequest', () => {
   test('dispatches by method', () => {
     expect(
-      z_RpcSchema.parseRequest(z_RpcSchema.Eth, {
+      z_RpcSchema.decodeRequest(z_RpcSchema.Eth, {
         method: 'eth_getBlockByNumber',
         params: ['0x1', true],
       }),
@@ -168,7 +231,7 @@ describe('parseRequest', () => {
     `)
   })
 
-  test('parse is an alias of parseRequest', () => {
+  test('parse is an alias of decodeRequest', () => {
     expect(
       z_RpcSchema.parse(z_RpcSchema.Wallet, {
         method: 'wallet_switchEthereumChain',
@@ -188,7 +251,7 @@ describe('parseRequest', () => {
 
   test('Default dispatches across eth_ and wallet_ methods', () => {
     expect(
-      z_RpcSchema.parseRequest(z_RpcSchema.Default, {
+      z_RpcSchema.decodeRequest(z_RpcSchema.Default, {
         method: 'eth_getBlockByNumber',
         params: ['0x1', true],
       }),
@@ -202,7 +265,7 @@ describe('parseRequest', () => {
       }
     `)
     expect(
-      z_RpcSchema.parseRequest(z_RpcSchema.Default, {
+      z_RpcSchema.decodeRequest(z_RpcSchema.Default, {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x1' }],
       }),
@@ -226,7 +289,7 @@ describe('parseRequest', () => {
       ).success,
     ).toMatchInlineSnapshot(`false`)
     expect(() =>
-      z_RpcSchema.parseRequest(z_RpcSchema.Eth, {
+      z_RpcSchema.decodeRequest(z_RpcSchema.Eth, {
         method: 'eth_unknownMethod',
         params: [],
       } as never),
@@ -254,17 +317,18 @@ describe('from', () => {
     })
 
     expect(schema.abe_foo.method).toMatchInlineSnapshot(`"abe_foo"`)
-    expect(z_RpcSchema.parseParams(schema, 'abe_foo', [1]))
+    expect(z_RpcSchema.decodeParams(schema, 'abe_foo', [1]))
       .toMatchInlineSnapshot(`
       [
         1,
       ]
     `)
     expect(
-      z_RpcSchema.parseReturns(schema, 'abe_foo', 'hello'),
+      z_RpcSchema.decodeReturns(schema, 'abe_foo', 'hello'),
     ).toMatchInlineSnapshot(`"hello"`)
-    expect(z_RpcSchema.parseRequest(schema, { method: 'abe_foo', params: [1] }))
-      .toMatchInlineSnapshot(`
+    expect(
+      z_RpcSchema.decodeRequest(schema, { method: 'abe_foo', params: [1] }),
+    ).toMatchInlineSnapshot(`
       {
         "method": "abe_foo",
         "params": [

@@ -16,7 +16,8 @@ export type { Item } from './internal/rpcSchemas/from.js'
  * - A record of `{ params, returns }` keyed by method name, returning a
  *   normalized `RpcSchema.Namespace` (each method's name is taken from its key
  *   and its `request` schema is derived). The result is usable with the
- *   `RpcSchema.parse*` methods and as a schema for `Provider`/`RpcTransport`.
+ *   `RpcSchema.decode*`/`RpcSchema.encode*` methods and as a schema for
+ *   `Provider`/`RpcTransport`.
  *
  * @example
  * ### Single Method
@@ -45,7 +46,7 @@ export type { Item } from './internal/rpcSchemas/from.js'
  *   },
  * })
  *
- * const params = z.RpcSchema.parseParams(schema, 'abe_foo', [123])
+ * const params = z.RpcSchema.decodeParams(schema, 'abe_foo', [123])
  * ```
  */
 export function from<
@@ -147,13 +148,15 @@ export function parseItem<
 }
 
 /**
- * Validates and decodes the `params` for a method on a namespace.
+ * Decodes (wire → native) the `params` for a method on a namespace. Use on the
+ * receiving side (e.g. a server) to coerce incoming wire params into their
+ * native representation.
  *
  * @example
  * ```ts twoslash
  * import { z } from 'ox/zod'
  *
- * const params = z.RpcSchema.parseParams(
+ * const params = z.RpcSchema.decodeParams(
  *   z.RpcSchema.Eth,
  *   'eth_getBlockByNumber',
  *   ['0x1', true]
@@ -162,7 +165,7 @@ export function parseItem<
  *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
-export function parseParams<
+export function decodeParams<
   const namespace extends Namespace,
   method extends MethodName<namespace>,
 >(
@@ -174,13 +177,44 @@ export function parseParams<
 }
 
 /**
- * Validates and decodes the `returns` value for a method on a namespace.
+ * Encodes (native → wire) the `params` for a method on a namespace. Use on the
+ * sending side (e.g. a client) to serialize native params into the wire shape
+ * a JSON-RPC endpoint expects.
  *
  * @example
  * ```ts twoslash
  * import { z } from 'ox/zod'
  *
- * const result = z.RpcSchema.parseReturns(
+ * const params = z.RpcSchema.encodeParams(
+ *   z.RpcSchema.Eth,
+ *   'eth_getBlockByNumber',
+ *   [1n, true]
+ * )
+ * ```
+ *
+ * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
+ */
+export function encodeParams<
+  const namespace extends Namespace,
+  method extends MethodName<namespace>,
+>(
+  namespace: namespace,
+  method: method,
+  params: z.output<namespace[method]['params']>,
+): z.input<namespace[method]['params']> {
+  return z.encode(parseItem(namespace, method).params, params as never) as never
+}
+
+/**
+ * Decodes (wire → native) the `returns` value for a method on a namespace. Use
+ * on the receiving side (e.g. a client) to coerce a wire result into its native
+ * representation.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const result = z.RpcSchema.decodeReturns(
  *   z.RpcSchema.Eth,
  *   'eth_blockNumber',
  *   '0x1b4'
@@ -189,7 +223,7 @@ export function parseParams<
  *
  * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
  */
-export function parseReturns<
+export function decodeReturns<
   const namespace extends Namespace,
   method extends MethodName<namespace>,
 >(
@@ -204,20 +238,52 @@ export function parseReturns<
 }
 
 /**
- * Validates and decodes a full JSON-RPC request (`{ method, params }`) against
- * a namespace, dispatching on `method`.
+ * Encodes (native → wire) the `returns` value for a method on a namespace. Use
+ * on the sending side (e.g. a server) to serialize a native result into the
+ * wire shape.
  *
  * @example
  * ```ts twoslash
  * import { z } from 'ox/zod'
  *
- * const request = z.RpcSchema.parseRequest(z.RpcSchema.Eth, {
+ * const result = z.RpcSchema.encodeReturns(
+ *   z.RpcSchema.Eth,
+ *   'eth_blockNumber',
+ *   436n
+ * )
+ * ```
+ *
+ * @throws `RpcSchema.MethodNotFoundError` if the method does not exist.
+ */
+export function encodeReturns<
+  const namespace extends Namespace,
+  method extends MethodName<namespace>,
+>(
+  namespace: namespace,
+  method: method,
+  returns: z.output<namespace[method]['returns']>,
+): z.input<namespace[method]['returns']> {
+  return z.encode(
+    parseItem(namespace, method).returns,
+    returns as never,
+  ) as never
+}
+
+/**
+ * Decodes (wire → native) a full JSON-RPC request (`{ method, params }`)
+ * against a namespace, dispatching on `method`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const request = z.RpcSchema.decodeRequest(z.RpcSchema.Eth, {
  *   method: 'eth_getBlockByNumber',
  *   params: ['0x1', true]
  * })
  * ```
  */
-export function parseRequest<const namespace extends Namespace>(
+export function decodeRequest<const namespace extends Namespace>(
   namespace: namespace,
   request: RequestInput<namespace>,
 ): RequestOutput<namespace> {
@@ -225,7 +291,28 @@ export function parseRequest<const namespace extends Namespace>(
 }
 
 /**
- * Alias for `RpcSchema.parseRequest`.
+ * Encodes (native → wire) a full JSON-RPC request (`{ method, params }`)
+ * against a namespace, dispatching on `method`.
+ *
+ * @example
+ * ```ts twoslash
+ * import { z } from 'ox/zod'
+ *
+ * const request = z.RpcSchema.encodeRequest(z.RpcSchema.Eth, {
+ *   method: 'eth_getBlockByNumber',
+ *   params: [1n, true]
+ * })
+ * ```
+ */
+export function encodeRequest<const namespace extends Namespace>(
+  namespace: namespace,
+  request: RequestOutput<namespace>,
+): RequestInput<namespace> {
+  return z.encode(requestSchema(namespace), request as never) as never
+}
+
+/**
+ * Alias for `RpcSchema.decodeRequest`.
  *
  * @example
  * ```ts twoslash
@@ -240,7 +327,7 @@ export function parseRequest<const namespace extends Namespace>(
  * })
  * ```
  */
-export const parse = parseRequest
+export const parse = decodeRequest
 
 /** Wire (input) request envelope for a namespace. */
 export type RequestInput<namespace extends Namespace> = {

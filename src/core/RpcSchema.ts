@@ -286,8 +286,10 @@ export type FromViem<schema extends readonly ViemSchemaItem[]> = {
  * Converts a record of Zod `params`/`returns` schemas (keyed by method name) to
  * an Ox {@link ox#RpcSchema.Generic} (union of `{ Request, ReturnType }`).
  *
- * Each method's name comes from its key, `params` is derived from the Zod
- * schema's input type, and `ReturnType` from the Zod schema's output type.
+ * Each method's name comes from its key. Both `params` and `ReturnType` are
+ * derived from the Zod schema's input (wire) type, since raw JSON-RPC clients
+ * send and receive wire values. Decode wire results to their native
+ * representation explicitly via {@link ox#zod/RpcSchema.decodeReturns}.
  *
  * @example
  * ```ts twoslash
@@ -304,7 +306,7 @@ export type FromZod<namespace extends FromZod.Namespace> = {
       method: method
       params: z.input<namespace[method]['params']>
     }
-    ReturnType: z.output<namespace[method]['returns']>
+    ReturnType: z.input<namespace[method]['returns']>
   }>
 }[keyof namespace & string]
 

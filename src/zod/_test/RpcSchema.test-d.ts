@@ -7,12 +7,23 @@ import * as z from 'zod/mini'
 import * as z_RpcSchema from '../RpcSchema.js'
 
 test('method items mirror wire (input) and domain (output) shapes', () => {
-  // Scalar return types stay as wire hex.
+  // Scalar quantity return types are wire hex on input, native on output.
   expectTypeOf<
     z.input<typeof z_RpcSchema.Eth.eth_blockNumber.returns>
   >().toEqualTypeOf<core_Hex.Hex>()
   expectTypeOf<
     z.output<typeof z_RpcSchema.Eth.eth_blockNumber.returns>
+  >().toEqualTypeOf<bigint>()
+  expectTypeOf<
+    z.output<typeof z_RpcSchema.Eth.eth_chainId.returns>
+  >().toEqualTypeOf<number>()
+
+  // Data/bytecode return types stay as wire hex.
+  expectTypeOf<
+    z.output<typeof z_RpcSchema.Eth.eth_call.returns>
+  >().toEqualTypeOf<core_Hex.Hex>()
+  expectTypeOf<
+    z.output<typeof z_RpcSchema.Eth.eth_getCode.returns>
   >().toEqualTypeOf<core_Hex.Hex>()
 
   // Address arrays.
@@ -29,10 +40,10 @@ test('method items mirror wire (input) and domain (output) shapes', () => {
   >().toEqualTypeOf<core_Fee.FeeHistory>()
 })
 
-test('parse helpers infer params/returns by method', () => {
+test('decode helpers infer params/returns by method', () => {
   // Params: block number is wire hex on input, bigint on output.
   expectTypeOf(
-    z_RpcSchema.parseParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
+    z_RpcSchema.decodeParams(z_RpcSchema.Eth, 'eth_getBlockByNumber', [
       '0x1',
       true,
     ]),
@@ -40,8 +51,8 @@ test('parse helpers infer params/returns by method', () => {
 
   // Returns: decoded to domain values.
   expectTypeOf(
-    z_RpcSchema.parseReturns(z_RpcSchema.Eth, 'eth_blockNumber', '0x1b4'),
-  ).toEqualTypeOf<core_Hex.Hex>()
+    z_RpcSchema.decodeReturns(z_RpcSchema.Eth, 'eth_blockNumber', '0x1b4'),
+  ).toEqualTypeOf<bigint>()
 
   // Item lookup preserves the literal method name.
   expectTypeOf(
@@ -49,7 +60,14 @@ test('parse helpers infer params/returns by method', () => {
   ).toEqualTypeOf<'eth_blockNumber'>()
 })
 
-test('from: namespace returns a parseable namespace', () => {
+test('encode helpers infer params/returns by method', () => {
+  // Returns: native bigint on input, wire hex on output.
+  expectTypeOf(
+    z_RpcSchema.encodeReturns(z_RpcSchema.Eth, 'eth_blockNumber', 436n),
+  ).toEqualTypeOf<core_Hex.Hex>()
+})
+
+test('from: namespace returns a decodable namespace', () => {
   const schema = z_RpcSchema.from({
     abe_foo: {
       params: z.tuple([z.number()]),
@@ -60,12 +78,12 @@ test('from: namespace returns a parseable namespace', () => {
   // Method name taken from the key.
   expectTypeOf(schema.abe_foo.method).toEqualTypeOf<'abe_foo'>()
 
-  // Usable with parse* methods.
-  expectTypeOf(z_RpcSchema.parseParams(schema, 'abe_foo', [1])).toEqualTypeOf<
+  // Usable with decode* methods.
+  expectTypeOf(z_RpcSchema.decodeParams(schema, 'abe_foo', [1])).toEqualTypeOf<
     [number]
   >()
   expectTypeOf(
-    z_RpcSchema.parseReturns(schema, 'abe_foo', 'hello'),
+    z_RpcSchema.decodeReturns(schema, 'abe_foo', 'hello'),
   ).toEqualTypeOf<string>()
 })
 

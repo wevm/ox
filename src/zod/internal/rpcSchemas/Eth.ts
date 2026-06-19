@@ -7,10 +7,12 @@ import * as z_Fee from '../../Fee.js'
 import * as z_Filter from '../../Filter.js'
 import * as z_Hex from '../../Hex.js'
 import * as z_Log from '../../Log.js'
+import * as z_Number from '../../Number.js'
 import * as z_StateOverrides from '../../StateOverrides.js'
 import * as z_Transaction from '../../Transaction.js'
 import * as z_TransactionReceipt from '../../TransactionReceipt.js'
 import * as z_TransactionRequest from '../../TransactionRequest.js'
+import * as z_Uint from '../../Uint.js'
 import * as z from 'zod/mini'
 import { from } from './from.js'
 
@@ -60,13 +62,13 @@ export const eth_accounts = from({
 export const eth_blobBaseFee = from({
   method: 'eth_blobBaseFee',
   params: NoParams,
-  returns: z_Hex.Hex,
+  returns: z_Uint.Uint,
 })
 
 export const eth_blockNumber = from({
   method: 'eth_blockNumber',
   params: NoParams,
-  returns: z_Hex.Hex,
+  returns: z_Uint.Uint,
 })
 
 export const eth_call = from({
@@ -78,7 +80,7 @@ export const eth_call = from({
 export const eth_chainId = from({
   method: 'eth_chainId',
   params: NoParams,
-  returns: z_Hex.Hex,
+  returns: z_Number.Number,
 })
 
 export const eth_coinbase = from({
@@ -90,7 +92,7 @@ export const eth_coinbase = from({
 export const eth_estimateGas = from({
   method: 'eth_estimateGas',
   params: Call,
-  returns: z_Hex.Hex,
+  returns: z_Uint.Uint,
 })
 
 export const eth_feeHistory = from({
@@ -106,13 +108,13 @@ export const eth_feeHistory = from({
 export const eth_gasPrice = from({
   method: 'eth_gasPrice',
   params: NoParams,
-  returns: z_Hex.Hex,
+  returns: z_Uint.Uint,
 })
 
 export const eth_getBalance = from({
   method: 'eth_getBalance',
   params: z.tuple([z_Address.Address, BlockNumberOrTagOrIdentifier]),
-  returns: z_Hex.Hex,
+  returns: z_Uint.Uint,
 })
 
 export const eth_getBlockByHash = from({
@@ -130,13 +132,13 @@ export const eth_getBlockByNumber = from({
 export const eth_getBlockTransactionCountByHash = from({
   method: 'eth_getBlockTransactionCountByHash',
   params: z.tuple([z_Hex.Hex]),
-  returns: z_Hex.Hex,
+  returns: z_Number.Number,
 })
 
 export const eth_getBlockTransactionCountByNumber = from({
   method: 'eth_getBlockTransactionCountByNumber',
   params: z.tuple([BlockNumberOrTag]),
-  returns: z_Hex.Hex,
+  returns: z_Number.Number,
 })
 
 export const eth_getCode = from({
@@ -200,7 +202,7 @@ export const eth_getTransactionByHash = from({
 export const eth_getTransactionCount = from({
   method: 'eth_getTransactionCount',
   params: z.tuple([z_Address.Address, BlockNumberOrTagOrIdentifier]),
-  returns: z_Hex.Hex,
+  returns: z_Number.Number,
 })
 
 export const eth_getTransactionReceipt = from({
@@ -212,19 +214,19 @@ export const eth_getTransactionReceipt = from({
 export const eth_getUncleCountByBlockHash = from({
   method: 'eth_getUncleCountByBlockHash',
   params: z.tuple([z_Hex.Hex]),
-  returns: z_Hex.Hex,
+  returns: z_Number.Number,
 })
 
 export const eth_getUncleCountByBlockNumber = from({
   method: 'eth_getUncleCountByBlockNumber',
   params: z.tuple([BlockNumberOrTag]),
-  returns: z_Hex.Hex,
+  returns: z_Number.Number,
 })
 
 export const eth_maxPriorityFeePerGas = from({
   method: 'eth_maxPriorityFeePerGas',
   params: NoParams,
-  returns: z_Hex.Hex,
+  returns: z_Uint.Uint,
 })
 
 export const eth_newBlockFilter = from({
