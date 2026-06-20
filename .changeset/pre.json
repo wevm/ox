@@ -60,6 +60,7 @@
     "rpc-response-parse-validation",
     "rpc-schema-block-identifier-wire-type",
     "rpc-schema-codecs",
+    "rpc-schema-eth-call-block-overrides",
     "rpc-schema-from-zod",
     "rpc-schema-item-codecs",
     "rpc-schema-request-numberish-params",
