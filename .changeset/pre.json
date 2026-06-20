@@ -62,6 +62,7 @@
     "rpc-schema-codecs",
     "rpc-schema-from-zod",
     "rpc-schema-item-codecs",
+    "rpc-schema-request-numberish-params",
     "rpc-transport-empty-body",
     "rpc-transport-http-error-details",
     "rpc-transport-json-empty-error",
