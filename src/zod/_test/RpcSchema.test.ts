@@ -190,6 +190,29 @@ describe('encodeParams', () => {
       ]
     `)
   })
+
+  test('encodes eth_call request params with state + block overrides', () => {
+    expect(
+      z_RpcSchema.encodeParams(z_RpcSchema.Eth, 'eth_call', [
+        { to: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2', value: 1n },
+        'latest',
+        {},
+        { number: 420n },
+      ]),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "to": "0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2",
+          "value": "0x1",
+        },
+        "latest",
+        {},
+        {
+          "number": "0x1a4",
+        },
+      ]
+    `)
+  })
 })
 
 describe('encodeReturns', () => {

@@ -51,6 +51,12 @@ const Call = z.union([
     BlockNumberOrTagOrIdentifier,
     z_StateOverrides.StateOverrides,
   ]),
+  z.tuple([
+    z_TransactionRequest.TransactionRequestToRpc,
+    BlockNumberOrTagOrIdentifier,
+    z_StateOverrides.StateOverrides,
+    z_BlockOverrides.BlockOverrides,
+  ]),
 ])
 
 export const eth_accounts = from({

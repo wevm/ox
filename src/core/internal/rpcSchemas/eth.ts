@@ -100,6 +100,15 @@ export type Eth = RpcSchema.From<
                 | Block.Identifier<Hex.Hex>,
               stateOverrides: StateOverrides.Rpc,
             ]
+          | [
+              transaction: TransactionRequest.Rpc,
+              block:
+                | Block.Number<Hex.Hex>
+                | Block.Tag
+                | Block.Identifier<Hex.Hex>,
+              stateOverrides: StateOverrides.Rpc,
+              blockOverrides: BlockOverrides.Rpc,
+            ]
       }
       ReturnType: Hex.Hex
     }
@@ -166,6 +175,15 @@ export type Eth = RpcSchema.From<
                 | Block.Tag
                 | Block.Identifier<Hex.Hex>,
               stateOverrides: StateOverrides.Rpc,
+            ]
+          | [
+              transaction: TransactionRequest.Rpc,
+              block:
+                | Block.Number<Hex.Hex>
+                | Block.Tag
+                | Block.Identifier<Hex.Hex>,
+              stateOverrides: StateOverrides.Rpc,
+              blockOverrides: BlockOverrides.Rpc,
             ]
       }
       ReturnType: Hex.Hex

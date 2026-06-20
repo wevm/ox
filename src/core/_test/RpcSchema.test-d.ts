@@ -202,3 +202,15 @@ test('from: no-arg type tag still works', () => {
     RpcSchema.ExtractReturnType<typeof schema, 'abe_bar'>
   >().toEqualTypeOf<string>()
 })
+
+test('eth_call accepts a 4-tuple with state + block overrides', () => {
+  type Params = RpcSchema.ExtractParams<RpcSchema.Default, 'eth_call'>
+  expectTypeOf<
+    [
+      transaction: { to: `0x${string}` },
+      block: 'latest',
+      stateOverrides: {},
+      blockOverrides: { number: `0x${string}` },
+    ]
+  >().toExtend<Params>()
+})
