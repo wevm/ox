@@ -162,6 +162,34 @@ describe('encodeParams', () => {
       ]
     `)
   })
+
+  test('encodes eth_call request params with numberish quantities', () => {
+    expect(
+      z_RpcSchema.encodeParams(z_RpcSchema.Eth, 'eth_call', [
+        {
+          gas: '0x2dc6c0',
+          maxFeePerGas: 100_000_000_000n,
+          maxPriorityFeePerGas: 1,
+          nonce: 0,
+          to: '0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2',
+          value: '0x0',
+        },
+        'latest',
+      ]),
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "gas": "0x2dc6c0",
+          "maxFeePerGas": "0x174876e800",
+          "maxPriorityFeePerGas": "0x1",
+          "nonce": "0x0",
+          "to": "0xFBA3912Ca04dd458c843e2EE08967fC04f3579c2",
+          "value": "0x0",
+        },
+        "latest",
+      ]
+    `)
+  })
 })
 
 describe('encodeReturns', () => {

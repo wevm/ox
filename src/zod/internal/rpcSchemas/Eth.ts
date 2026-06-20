@@ -41,13 +41,13 @@ const Transaction = z.union([z_Transaction.Transaction, z_Transaction.Pending])
 
 /** Call request shape shared by `eth_call` / `eth_estimateGas`. */
 const Call = z.union([
-  z.tuple([z_TransactionRequest.TransactionRequest]),
+  z.tuple([z_TransactionRequest.TransactionRequestToRpc]),
   z.tuple([
-    z_TransactionRequest.TransactionRequest,
+    z_TransactionRequest.TransactionRequestToRpc,
     BlockNumberOrTagOrIdentifier,
   ]),
   z.tuple([
-    z_TransactionRequest.TransactionRequest,
+    z_TransactionRequest.TransactionRequestToRpc,
     BlockNumberOrTagOrIdentifier,
     z_StateOverrides.StateOverrides,
   ]),
@@ -273,7 +273,7 @@ export const eth_sendRawTransactionSync = from({
 
 export const eth_sendTransaction = from({
   method: 'eth_sendTransaction',
-  params: z.tuple([z_TransactionRequest.TransactionRequest]),
+  params: z.tuple([z_TransactionRequest.TransactionRequestToRpc]),
   returns: z_Hex.Hex,
 })
 
@@ -284,7 +284,9 @@ export const eth_simulateV1 = from({
       blockStateCalls: z.array(
         z.object({
           blockOverrides: z.optional(z_BlockOverrides.BlockOverrides),
-          calls: z.optional(z.array(z_TransactionRequest.TransactionRequest)),
+          calls: z.optional(
+            z.array(z_TransactionRequest.TransactionRequestToRpc),
+          ),
           stateOverrides: z.optional(z_StateOverrides.StateOverrides),
         }),
       ),
@@ -322,7 +324,7 @@ export const eth_simulateV1 = from({
 
 export const eth_signTransaction = from({
   method: 'eth_signTransaction',
-  params: z.tuple([z_TransactionRequest.TransactionRequest]),
+  params: z.tuple([z_TransactionRequest.TransactionRequestToRpc]),
   returns: z_Hex.Hex,
 })
 
