@@ -134,6 +134,22 @@ describe('Log', () => {
     ).toEqual(expected)
   })
 
+  test('decodes logs with no topics', () => {
+    expect(
+      z.decode(z_Log.Log, {
+        address,
+        blockHash,
+        blockNumber: '0x12d846c',
+        data: '0xdeadbeef',
+        logIndex: '0x10f',
+        topics: [],
+        transactionHash,
+        transactionIndex: '0x91',
+        removed: false,
+      }).topics,
+    ).toEqual([])
+  })
+
   test('rejects invalid topics and quantities', () => {
     expect(
       z.safeDecode(z_Log.Log, {

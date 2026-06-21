@@ -23,7 +23,7 @@ export type Log<
   /** Index of this log within its block or `null` if pending */
   logIndex: pending extends true ? null : numberType
   /** List of topics associated with this log */
-  topics: [Hex.Hex, ...(readonly Hex.Hex[])]
+  topics: Hex.Hex[]
   /** Hash of the transaction that created this log or `null` if pending */
   transactionHash: pending extends true ? null : Hex.Hex
   /** Index of the transaction that created this log or `null` if pending */

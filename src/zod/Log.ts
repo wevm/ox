@@ -5,7 +5,7 @@ import * as z_Number from './Number.js'
 import * as z_Uint from './Uint.js'
 import * as z from 'zod/mini'
 
-const topics = z.tuple([z_Hex.Hex], z_Hex.Hex)
+const topics = z.array(z_Hex.Hex)
 
 /** Log schema. */
 export const Log = z.object(fields(z_Uint.Uint, z_Number.Number))

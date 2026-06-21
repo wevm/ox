@@ -226,7 +226,7 @@ describe('TransactionReceipt', () => {
           blockNumber: '0x1',
           data: '0x',
           logIndex: '0x0',
-          topics: [],
+          topics: ['0xz'],
           transactionHash,
           transactionIndex: '0x0',
           removed: false,
