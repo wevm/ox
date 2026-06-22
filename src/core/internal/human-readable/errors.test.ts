@@ -18,9 +18,8 @@ import {
 } from './errors.js'
 
 test('InvalidAbiItemError', () => {
-  expect(
-    new InvalidAbiItemError({ signature: 'address' }),
-  ).toMatchInlineSnapshot(`
+  expect(new InvalidAbiItemError({ signature: 'address' }))
+    .toMatchInlineSnapshot(`
     [AbiItem.InvalidAbiItemError: Failed to parse ABI item.
 
     Details: parseAbiItem("address")
@@ -45,9 +44,8 @@ test('UnknownSolidityTypeError', () => {
 })
 
 test('InvalidAbiParamterError', () => {
-  expect(
-    new InvalidAbiParameterError({ param: 'address owner' }),
-  ).toMatchInlineSnapshot(`
+  expect(new InvalidAbiParameterError({ param: 'address owner' }))
+    .toMatchInlineSnapshot(`
     [AbiParameter.InvalidAbiParameterError: Failed to parse ABI parameter.
 
     Details: parseAbiParameter("address owner")
@@ -56,9 +54,8 @@ test('InvalidAbiParamterError', () => {
 })
 
 test('InvalidAbiParamtersError', () => {
-  expect(
-    new InvalidAbiParametersError({ params: 'address owner' }),
-  ).toMatchInlineSnapshot(`
+  expect(new InvalidAbiParametersError({ params: 'address owner' }))
+    .toMatchInlineSnapshot(`
     [AbiParameters.InvalidAbiParametersError: Failed to parse ABI parameters.
 
     Details: parseAbiParameters("address owner")
@@ -213,9 +210,8 @@ test('InvalidSignatureError', () => {
 })
 
 test('UnknownSignatureError', () => {
-  expect(
-    new UnknownSignatureError({ signature: 'invalid' }),
-  ).toMatchInlineSnapshot(`
+  expect(new UnknownSignatureError({ signature: 'invalid' }))
+    .toMatchInlineSnapshot(`
     [Abi.UnknownSignatureError: Unknown signature.
 
     Details: invalid]
@@ -223,9 +219,8 @@ test('UnknownSignatureError', () => {
 })
 
 test('InvalidStructSignatureError', () => {
-  expect(
-    new InvalidStructSignatureError({ signature: 'struct Foo{}' }),
-  ).toMatchInlineSnapshot(`
+  expect(new InvalidStructSignatureError({ signature: 'struct Foo{}' }))
+    .toMatchInlineSnapshot(`
     [Abi.InvalidStructSignatureError: Invalid struct signature.
 
     No properties exist.
@@ -235,9 +230,8 @@ test('InvalidStructSignatureError', () => {
 })
 
 test('InvalidParenthesisError', () => {
-  expect(
-    new InvalidParenthesisError({ current: '(Foo))', depth: -1 }),
-  ).toMatchInlineSnapshot(`
+  expect(new InvalidParenthesisError({ current: '(Foo))', depth: -1 }))
+    .toMatchInlineSnapshot(`
     [HumanReadableAbi.InvalidParenthesisError: Unbalanced parentheses.
 
     "(Foo))" has too many closing parentheses.
@@ -245,9 +239,8 @@ test('InvalidParenthesisError', () => {
     Details: Depth "-1"]
   `)
 
-  expect(
-    new InvalidParenthesisError({ current: '((Foo)', depth: 1 }),
-  ).toMatchInlineSnapshot(`
+  expect(new InvalidParenthesisError({ current: '((Foo)', depth: 1 }))
+    .toMatchInlineSnapshot(`
     [HumanReadableAbi.InvalidParenthesisError: Unbalanced parentheses.
 
     "((Foo)" has too many opening parentheses.

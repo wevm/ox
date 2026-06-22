@@ -42,9 +42,8 @@ describe('human-readable ABI type instantiations', () => {
   })
 
   test('AbiParameters.from.ReturnType: nested tuple parameters', () => {
-    type Result = AbiParameters.from.ReturnType<
-      '(uint8 a, uint8[] b, (uint8 x, uint8 y)[] c) s, (uint x, uint y) t, uint256 a'
-    >
+    type Result =
+      AbiParameters.from.ReturnType<'(uint8 a, uint8[] b, (uint8 x, uint8 y)[] c) s, (uint x, uint y) t, uint256 a'>
     attest.instantiations([20_000, 'instantiations'])
     attest<Result>({} as Result)
   })

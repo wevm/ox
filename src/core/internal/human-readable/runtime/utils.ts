@@ -6,12 +6,7 @@ import type {
   SolidityString,
   SolidityTuple,
 } from 'abitype'
-import {
-  bytesRegex,
-  execTyped,
-  integerRegex,
-  isTupleRegex,
-} from '../regex.js'
+import { bytesRegex, execTyped, integerRegex, isTupleRegex } from '../regex.js'
 import { UnknownSolidityTypeError } from '../errors.js'
 import {
   InvalidFunctionModifierError,
@@ -19,10 +14,7 @@ import {
   InvalidParameterError,
   SolidityProtectedKeywordError,
 } from '../errors.js'
-import {
-  InvalidSignatureError,
-  UnknownSignatureError,
-} from '../errors.js'
+import { InvalidSignatureError, UnknownSignatureError } from '../errors.js'
 import { InvalidParenthesisError } from '../errors.js'
 import type { FunctionModifier, Modifier } from '../types/signatures.js'
 import type { StructLookup } from '../types/structs.js'

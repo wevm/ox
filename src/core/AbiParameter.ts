@@ -38,7 +38,9 @@ export { InvalidParenthesisError } from './internal/human-readable/errors.js'
  * @param parameter - The ABI Parameter to format.
  * @returns The formatted ABI Parameter.
  */
-export function format<const parameter extends AbiParameter | AbiEventParameter>(
+export function format<
+  const parameter extends AbiParameter | AbiEventParameter,
+>(
   parameter: parameter | AbiParameter | AbiEventParameter,
 ): format.ReturnType<parameter> {
   return formatAbiParameter.formatAbiParameter(parameter as parameter) as never

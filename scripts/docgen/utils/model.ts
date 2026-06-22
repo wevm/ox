@@ -113,7 +113,8 @@ export function createDataLookup(
               token.canonicalReference &&
               // prevent duplicates
               apiItem.excerpt.tokens.findIndex(
-                (other) => other.canonicalReference === token.canonicalReference,
+                (other) =>
+                  other.canonicalReference === token.canonicalReference,
               ) === index,
           )
           .map((token) => ({

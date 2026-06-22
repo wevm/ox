@@ -2,7 +2,8 @@
 export type Error<messages extends string | string[]> = messages extends string
   ? [`Error: ${messages}`]
   : {
-      [key in keyof messages]: messages[key] extends infer message extends string
+      [key in keyof messages]: messages[key] extends infer message extends
+        string
         ? `Error: ${message}`
         : never
     }
@@ -12,21 +13,25 @@ export type Filter<
   items extends readonly unknown[],
   item,
   acc extends readonly unknown[] = [],
-> = items extends readonly [infer head, ...infer tail extends readonly unknown[]]
+> = items extends readonly [
+  infer head,
+  ...infer tail extends readonly unknown[],
+]
   ? [head] extends [item]
     ? Filter<tail, item, acc>
     : Filter<tail, item, [...acc, head]>
   : readonly [...acc]
 
 /** @internal */
-export type IsNarrowable<type, type2> = IsUnknown<type> extends true
-  ? false
-  : IsNever<
-        (type extends type2 ? true : false) &
-          (type2 extends type ? false : true)
-      > extends true
+export type IsNarrowable<type, type2> =
+  IsUnknown<type> extends true
     ? false
-    : true
+    : IsNever<
+          (type extends type2 ? true : false) &
+            (type2 extends type ? false : true)
+        > extends true
+      ? false
+      : true
 
 /** @internal */
 export type IsNever<type> = [type] extends [never] ? true : false
@@ -58,6 +63,7 @@ export type Trim<type, chars extends string = ' '> = TrimLeft<
 type TrimLeft<t, chars extends string = ' '> = t extends `${chars}${infer tail}`
   ? TrimLeft<tail>
   : t
-type TrimRight<t, chars extends string = ' '> = t extends `${infer head}${chars}`
-  ? TrimRight<head>
-  : t
+type TrimRight<
+  t,
+  chars extends string = ' ',
+> = t extends `${infer head}${chars}` ? TrimRight<head> : t

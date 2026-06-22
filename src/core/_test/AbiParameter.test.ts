@@ -3,9 +3,8 @@ import { describe, expect, test } from 'vp/test'
 
 describe('from', () => {
   test('json parameter', () => {
-    expect(
-      AbiParameter.from({ name: 'spender', type: 'address' }),
-    ).toMatchInlineSnapshot(`
+    expect(AbiParameter.from({ name: 'spender', type: 'address' }))
+      .toMatchInlineSnapshot(`
       {
         "name": "spender",
         "type": "address",
@@ -64,9 +63,7 @@ describe('format', () => {
         name: 'foo',
         type: 'tuple',
       }),
-    ).toMatchInlineSnapshot(
-      `"(address spender, uint256 amount) foo"`,
-    )
+    ).toMatchInlineSnapshot(`"(address spender, uint256 amount) foo"`)
   })
 })
 
