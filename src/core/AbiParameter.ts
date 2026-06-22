@@ -33,18 +33,6 @@ export { InvalidParenthesisError } from './internal/human-readable/errors.js'
  *
  * formatted
  * //    ^?
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
  * ```
  *
  * @param parameter - The ABI Parameter to format.
@@ -80,18 +68,6 @@ export declare namespace format {
  *
  * parameter
  * //^?
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
  * ```
  *
  * @example
@@ -104,18 +80,6 @@ export declare namespace format {
  *
  * parameter
  * //^?
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
  * ```
  *
  * @example
@@ -131,18 +95,6 @@ export declare namespace format {
  *
  * parameter
  * //^?
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
  * ```
  *
  * @param parameter - The ABI Parameter to parse.

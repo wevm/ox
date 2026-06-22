@@ -45,30 +45,6 @@ export function format<const abi extends Abi>(abi: abi): format.ReturnType<abi>
  *
  * formatted
  * //    ^?
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
  * ```
  *
  * @param abi - The ABI to format.
@@ -124,30 +100,6 @@ export function from<const abi extends Abi | readonly string[]>(
  *
  * abi
  * //^?
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
  * ```
  *
  * @example
@@ -162,30 +114,6 @@ export function from<const abi extends Abi | readonly string[]>(
  *
  * abi
  * //^?
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
- * //
  * ```
  *
  * @param abi - The ABI to parse.
