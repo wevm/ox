@@ -665,7 +665,12 @@ export declare namespace toBytes {
  */
 export function toNumber(hex: Hex, options: toNumber.Options = {}): number {
   const { signed, size } = options
-  if (!signed && !size) return Number(hex)
+  if (!signed && !size) {
+    const number = Number(hex)
+    // `Number('0x')` is `NaN`; defer to `toBigInt` so empty hex throws
+    // instead of silently returning `NaN` (consistent with `Hex.toBigInt`).
+    if (!Number.isNaN(number)) return number
+  }
   return Number(toBigInt(hex, options))
 }
 

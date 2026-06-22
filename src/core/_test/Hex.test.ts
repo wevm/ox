@@ -641,6 +641,11 @@ describe('toNumber', () => {
       '[Hex.SizeOverflowError: Size cannot exceed `32` bytes. Given size: `64` bytes.]',
     )
   })
+
+  test('error: empty hex', () => {
+    // Consistent with `Hex.toBigInt('0x')`, which throws. Must not return `NaN`.
+    expect(() => Hex.toNumber('0x')).toThrow()
+  })
 })
 
 describe('toString', () => {
