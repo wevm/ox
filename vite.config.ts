@@ -65,6 +65,14 @@ export default defineConfig({
         },
       },
       {
+        files: ['src/core/internal/**/*.ts'],
+        rules: {
+          'jsdoc-js/require-jsdoc': 'off',
+          'jsdoc-js/require-description': 'off',
+          'jsdoc-js/require-example': 'off',
+        },
+      },
+      {
         files: ['scripts/**', 'test/**'],
         rules: {
           'no-console': ['error', { allow: ['log', 'warn', 'error'] }],
