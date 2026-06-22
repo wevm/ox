@@ -22,132 +22,24 @@ const abi = Abi.from([
 ])
 abi
 //^?
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 const item = AbiItem.from(
   'function approve(address spender, uint256 amount) returns (bool)',
 )
 item
 //  ^?
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 const parameters = AbiParameters.from('address spender, uint256 amount')
 parameters
 //  ^?
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 const parameter = AbiParameter.from('address spender')
 parameter
 //  ^?
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 const formatted = Abi.format(abi)
 formatted
 //   ^?
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 ```
 
 Human-readable signatures support functions, events, errors, constructors, fallback functions, receive functions, structs, and ABI parameters.
