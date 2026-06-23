@@ -77,6 +77,7 @@ export function from(value: Hex.Hex | Bytes.Bytes) {
   let integer = (() => {
     let hex = value
     if (value instanceof Uint8Array) hex = Hex.fromBytes(bytes)
+    if (hex === '0x') return 0n
     return BigInt(hex as string)
   })()
 
@@ -87,7 +88,7 @@ export function from(value: Hex.Hex | Bytes.Bytes) {
     result = integerToAlphabet[remainder] + result
   }
 
-  while (bytes.length > 1 && bytes[0] === 0) {
+  while (bytes.length > 0 && bytes[0] === 0) {
     result = '1' + result
     bytes = bytes.slice(1)
   }

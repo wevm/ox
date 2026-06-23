@@ -125,8 +125,9 @@ export function toHex(value: string): Hex.Hex {
     integer = integer + internal.alphabetToInteger[char]!
   }
 
-  if (!pad) return `0x${integer.toString(16)}` as Hex.Hex
-  return `0x${'0'.repeat(pad * 2)}${integer.toString(16)}` as Hex.Hex
+  const body = integer === 0n ? '' : integer.toString(16)
+  if (!pad) return `0x${body}` as Hex.Hex
+  return `0x${'0'.repeat(pad * 2)}${body}` as Hex.Hex
 }
 
 export declare namespace toHex {
