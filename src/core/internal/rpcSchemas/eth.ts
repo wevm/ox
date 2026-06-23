@@ -219,6 +219,26 @@ export type Eth = RpcSchema.From<
       ReturnType: Fee.FeeHistoryRpc
     }
   /**
+   * Fills the defaults (nonce, gas, gasPrice, or 1559 fields) on a given unsigned transaction, and returns the unsigned transaction along with its raw form
+   *
+   * @example
+   * ```
+   * request({ method: 'eth_fillTransaction', params: [{ from: '0x...', to: '0x...', value: '0x...' }] })
+   * // { raw: '0x...', tx: { ... } }
+   * ```
+   */
+  | {
+      Request: {
+        method: 'eth_fillTransaction'
+        params: [transaction: TransactionRequest.Rpc]
+      }
+      ReturnType: {
+        capabilities?: Record<string, unknown> | undefined
+        raw: Hex.Hex
+        tx: Transaction.Rpc
+      }
+    }
+  /**
    * Returns the current price of gas expressed in wei
    *
    * ```
