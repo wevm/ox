@@ -13,6 +13,7 @@
     "abi-event-hex-topic-normalization",
     "abi-function-decode-data-selector",
     "abi-function-selector-only-calldata",
+    "abi-human-readable-ox",
     "abi-parameters-data-size-bound",
     "abi-parameters-encode-packed",
     "account-proof-converters",
