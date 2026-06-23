@@ -269,6 +269,77 @@ body > div:has(> div > .twoslash-completion-list) {
   z-index: 50;
 }
 
+/*
+ * Twoslash popup theme fix.
+ *
+ * Vocs renders hover/completion content through popup-specific surfaces, but
+ * ox's global dashed-border treatment is intentionally broader than Vocs's
+ * component layer. Keep dashed borders for page chrome and normal code blocks,
+ * while letting Twoslash popovers read as floating UI.
+ */
+.twoslash-popup-container,
+.twoslash-completion-list {
+  background-color: var(--background-color-code);
+  border-color: var(--border-color-primary);
+  border-style: solid;
+  box-shadow: 0 12px 32px color-mix(in srgb, black 22%, transparent);
+}
+
+.twoslash-popup-container pre,
+.twoslash-popup-container code,
+.twoslash-popup-container .line,
+.twoslash-completion-list,
+.twoslash-completion-list * {
+  border-style: solid;
+}
+
+.twoslash-popup-container pre[data-v],
+.twoslash-popup-container pre {
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.module-snippet .twoslash-popup-container pre {
+  padding-block: 0 !important;
+}
+
+.twoslash-popup-container code {
+  background-color: transparent;
+}
+
+.twoslash-query-persisted.twoslash-popup-container[data-v-twoslash-inline-popup],
+.twoslash-query-persisted.twoslash-popup-container[data-v-twoslash-inline-popup]
+  [data-v-content],
+.twoslash-query-persisted.twoslash-popup-container[data-v-twoslash-inline-popup]
+  [data-v-content]
+  > *,
+.twoslash-query-persisted.twoslash-popup-container[data-v-twoslash-inline-popup]
+  pre,
+.twoslash-query-persisted.twoslash-popup-container[data-v-twoslash-inline-popup]
+  code {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.twoslash-query-persisted.twoslash-popup-container[data-v-twoslash-inline-popup] {
+  top: calc(100% + 1px) !important;
+}
+
+.twoslash-popup-container [data-v-content] {
+  padding: 0 !important;
+}
+
+.twoslash-popup-container [data-v-content] > * {
+  padding-block: 0.25rem !important;
+}
+
+.twoslash-popup-container [data-v-content] > *:not(:last-child) {
+  border-style: solid;
+}
+
 /* Content links: heading text color with an accent underline.
    Skip the blank layout (landing page) which styles its own anchors. */
 [data-v-content] a:not([data-v-anchor]) {

@@ -456,6 +456,44 @@ export * as AbiFunction from './core/AbiFunction.js'
 export * as AbiItem from './core/AbiItem.js'
 
 /**
+ * Utilities & types for working with a single [ABI Parameter](https://docs.soliditylang.org/en/latest/abi-spec.html#types).
+ *
+ * @example
+ * ### Instantiating Human Readable ABI Parameters
+ *
+ * A Human Readable ABI Parameter can be instantiated by using {@link ox#AbiParameter.(from:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiParameter } from 'ox'
+ *
+ * const parameter = AbiParameter.from('address spender')
+ *
+ * parameter
+ * //^?
+ * ```
+ *
+ * @example
+ * ### Formatting ABI Parameters
+ *
+ * An ABI Parameter can be formatted into a human-readable ABI Parameter by using {@link ox#AbiParameter.(format:function)}:
+ *
+ * ```ts twoslash
+ * import { AbiParameter } from 'ox'
+ *
+ * const formatted = AbiParameter.format({
+ *   name: 'spender',
+ *   type: 'address'
+ * })
+ *
+ * formatted
+ * //    ^?
+ * ```
+ *
+ * @category ABI
+ */
+export * as AbiParameter from './core/AbiParameter.js'
+
+/**
  * Utilities & types for encoding, decoding, and working with [ABI Parameters](https://docs.soliditylang.org/en/latest/abi-spec.html#types)
  *
  * @example

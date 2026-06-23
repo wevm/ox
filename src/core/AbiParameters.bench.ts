@@ -80,3 +80,25 @@ describe('AbiParameters.decode', () => {
     AbiParameters.decode(tuple_nested, tuple_nested_encoded)
   })
 })
+
+describe('AbiParameters.from', () => {
+  bench('address spender, uint256 amount', () => {
+    AbiParameters.from('address spender, uint256 amount')
+  })
+
+  bench('struct Foo', () => {
+    AbiParameters.from([
+      'struct Foo { address spender; uint256 amount; }',
+      'Foo foo, address bar',
+    ])
+  })
+})
+
+describe('AbiParameters.format', () => {
+  bench('address spender, uint256 amount', () => {
+    AbiParameters.format([
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ])
+  })
+})

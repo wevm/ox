@@ -6,6 +6,7 @@ import type * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
 import type * as internal from './internal/abiError.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { IsNarrowable, IsNever } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `error` type. */
@@ -510,11 +511,14 @@ export declare namespace encode {
  */
 export function format<const abiError extends AbiError>(
   abiError: abiError | AbiError,
-): abitype.FormatAbiItem<abiError> {
-  return abitype.formatAbiItem(abiError) as never
+): format.ReturnType<abiError> {
+  return formatAbiItem.formatAbiItem(abiError) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiError extends AbiError = AbiError> =
+    formatAbiItem.FormatAbiItem<abiError>
+
   type ErrorType = Errors.GlobalErrorType
 }
 

@@ -11,6 +11,7 @@ import type * as internal from './internal/abiEvent.js'
 import type * as AbiItem_internal from './internal/abiItem.js'
 import * as Cursor from './internal/cursor.js'
 import { prettyPrint } from './internal/errors.js'
+import * as formatAbiItem from './internal/human-readable/formatAbiItem.js'
 import type { Compute, IsNarrowable } from './internal/types.js'
 
 /** Root type for an {@link ox#AbiItem.AbiItem} with an `event` type. */
@@ -1334,11 +1335,14 @@ export declare namespace encode {
  */
 export function format<const abiEvent extends AbiEvent>(
   abiEvent: abiEvent | AbiEvent,
-): abitype.FormatAbiItem<abiEvent> {
-  return abitype.formatAbiItem(abiEvent) as never
+): format.ReturnType<abiEvent> {
+  return formatAbiItem.formatAbiItem(abiEvent) as never
 }
 
 export declare namespace format {
+  type ReturnType<abiEvent extends AbiEvent = AbiEvent> =
+    formatAbiItem.FormatAbiItem<abiEvent>
+
   type ErrorType = Errors.GlobalErrorType
 }
 

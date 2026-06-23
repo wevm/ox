@@ -117,6 +117,10 @@ describe('from', () => {
 test('exports', () => {
   expect(Object.keys(Abi)).toMatchInlineSnapshot(`
     [
+      "InvalidSignatureError",
+      "InvalidStructSignatureError",
+      "UnknownSignatureError",
+      "CircularReferenceError",
       "format",
       "from",
     ]

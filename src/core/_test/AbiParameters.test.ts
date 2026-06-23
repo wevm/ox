@@ -360,6 +360,13 @@ describe('format', () => {
 test('exports', () => {
   expect(Object.keys(AbiParameters)).toMatchInlineSnapshot(`
     [
+      "InvalidAbiParametersError",
+      "InvalidAbiTypeParameterError",
+      "InvalidFunctionModifierError",
+      "InvalidModifierError",
+      "InvalidParameterError",
+      "SolidityProtectedKeywordError",
+      "InvalidParenthesisError",
       "decode",
       "encode",
       "encodePacked",

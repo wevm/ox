@@ -3,6 +3,8 @@ import * as Address from './Address.js'
 import * as Bytes from './Bytes.js'
 import * as Errors from './Errors.js'
 import * as Hex from './Hex.js'
+import * as formatAbiParameters from './internal/human-readable/formatAbiParameters.js'
+import * as parseAbiParameters from './internal/human-readable/parseAbiParameters.js'
 import * as internal from './internal/abiParameters.js'
 import * as Cursor from './internal/cursor.js'
 import * as Solidity from './Solidity.js'
@@ -12,6 +14,16 @@ export type AbiParameters = readonly abitype.AbiParameter[]
 
 /** A parameter on an {@link ox#AbiParameters.AbiParameters}. */
 export type Parameter = abitype.AbiParameter
+
+export {
+  InvalidAbiParametersError,
+  InvalidAbiTypeParameterError,
+  InvalidFunctionModifierError,
+  InvalidModifierError,
+  InvalidParameterError,
+  SolidityProtectedKeywordError,
+} from './internal/human-readable/errors.js'
+export { InvalidParenthesisError } from './internal/human-readable/errors.js'
 
 /** A packed ABI type. */
 export type PackedAbiType =
@@ -386,11 +398,18 @@ export function format<
         Parameter | abitype.AbiEventParameter,
         ...(readonly (Parameter | abitype.AbiEventParameter)[]),
       ],
-): abitype.FormatAbiParameters<parameters> {
-  return abitype.formatAbiParameters(parameters)
+): format.ReturnType<parameters> {
+  return formatAbiParameters.formatAbiParameters(parameters)
 }
 
 export declare namespace format {
+  type ReturnType<
+    parameters extends readonly [
+      Parameter | abitype.AbiEventParameter,
+      ...(readonly (Parameter | abitype.AbiEventParameter)[]),
+    ] = readonly [Parameter, ...(readonly Parameter[])],
+  > = formatAbiParameters.FormatAbiParameters<parameters>
+
   type ErrorType = Errors.GlobalErrorType
 }
 
@@ -416,6 +435,22 @@ export declare namespace format {
  *
  * parameters
  * //^?
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  * @example
@@ -432,6 +467,22 @@ export declare namespace format {
  *
  * parameters
  * //^?
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  * @example
@@ -447,6 +498,22 @@ export declare namespace format {
  *
  * parameters
  * //^?
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
+ * //
  * ```
  *
  *
@@ -460,9 +527,9 @@ export function from<
   parameters: parameters | AbiParameters | string | readonly string[],
 ): from.ReturnType<parameters> {
   if (Array.isArray(parameters) && typeof parameters[0] === 'string')
-    return abitype.parseAbiParameters(parameters) as never
+    return parseAbiParameters.parseAbiParameters(parameters) as never
   if (typeof parameters === 'string')
-    return abitype.parseAbiParameters(parameters) as never
+    return parseAbiParameters.parseAbiParameters(parameters) as never
   return parameters as never
 }
 
@@ -470,9 +537,9 @@ export declare namespace from {
   type ReturnType<
     parameters extends AbiParameters | string | readonly string[],
   > = parameters extends string
-    ? abitype.ParseAbiParameters<parameters>
+    ? parseAbiParameters.ParseAbiParameters<parameters>
     : parameters extends readonly string[]
-      ? abitype.ParseAbiParameters<parameters>
+      ? parseAbiParameters.ParseAbiParameters<parameters>
       : parameters
 
   type ErrorType = Errors.GlobalErrorType
@@ -519,7 +586,7 @@ export class DataSizeTooSmallError extends Errors.BaseError {
   }) {
     super(`Data size of ${size} bytes is too small for given parameters.`, {
       metaMessages: [
-        `Params: (${abitype.formatAbiParameters(parameters as readonly [Parameter])})`,
+        `Params: (${formatAbiParameters.formatAbiParameters(parameters as readonly [Parameter])})`,
         `Data:   ${data} (${size} bytes)`,
       ],
     })

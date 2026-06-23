@@ -209,6 +209,11 @@
       "types": "./dist/core/AbiItem.d.ts",
       "default": "./dist/core/AbiItem.js"
     },
+    "./AbiParameter": {
+      "src": "./src/core/AbiParameter.ts",
+      "types": "./dist/core/AbiParameter.d.ts",
+      "default": "./dist/core/AbiParameter.js"
+    },
     "./AbiParameters": {
       "src": "./src/core/AbiParameters.ts",
       "types": "./dist/core/AbiParameters.d.ts",

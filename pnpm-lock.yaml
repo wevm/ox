@@ -331,8 +331,8 @@ importers:
         specifier: ^4.3.0
         version: 4.3.0
       vocs:
-        specifier: 2.0.14
-        version: 2.0.14(@types/node@24.10.2)(@types/react@19.2.16)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.0(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))
+        specifier: 2.0.17
+        version: 2.0.17(@types/node@24.10.2)(@types/react@19.2.16)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.0(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0))
       waku:
         specifier: 1.0.0-beta.0
         version: 1.0.0-beta.0(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)
@@ -5405,15 +5405,15 @@ packages:
       vite:
         optional: true
 
-  vocs@2.0.14:
-    resolution: {integrity: sha512-gisU/6AXY8lZHuns3DcTd/ogw83aTD5ff8cGFc9pTuwW33oZGoYxyszQIQ5AECbTFr8iicQR4KyxzhKeum2v8Q==}
+  vocs@2.0.17:
+    resolution: {integrity: sha512-U4iHyLt6e8XR8TtMky6vmzIv5Sckc9y3QL4xrvbAGk4USUXRoS1GUkkQ3+lDCDLZ/2isO/IdAyLjIdupdtPobw==}
     hasBin: true
     peerDependencies:
       '@vocs/twoslash-rust': ^0.1.0
       mermaid: ^11
       react: ^19
       react-dom: ^19
-      waku: ^1.0.0-beta.0
+      waku: ^1.0.0-beta.3
     peerDependenciesMeta:
       '@vocs/twoslash-rust':
         optional: true
@@ -11218,7 +11218,7 @@ snapshots:
     optionalDependencies:
       vite: '@voidzero-dev/vite-plus-core@0.1.24(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)'
 
-  vocs@2.0.14(@types/node@24.10.2)(@types/react@19.2.16)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.0(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)):
+  vocs@2.0.17(@types/node@24.10.2)(@types/react@19.2.16)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(rollup@4.61.1)(terser@5.31.5)(typescript@5.5.4)(waku@1.0.0-beta.0(@types/node@24.10.2)(esbuild@0.27.7)(jiti@2.7.0)(react-dom@19.2.7(react@19.2.7))(react-server-dom-webpack@19.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(webpack@5.104.1(esbuild@0.27.7)))(react@19.2.7)(terser@5.31.5)(tsx@4.21.0)(typescript@5.5.4)(yaml@2.9.0)):
     dependencies:
       '@base-ui/react': 1.4.1(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@codesandbox/sandpack-react': 2.20.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

@@ -9,6 +9,62 @@ description: "Encode, decode, and parse Ethereum ABIs."
 
 The **Application Binary Interface (ABI)** is the standardized protocol for interacting with smart contracts in the Ethereum ecosystem. It defines how data is encoded and decoded for **Consumer (e.g. Application, Wallet, Server, etc) ↔ Contract** communication, as well as **Contract → Contract** communication.
 
+## Human-readable ABIs
+
+Ox can parse Solidity-style human-readable ABI signatures into JSON ABI objects, and format JSON ABI objects back into human-readable signatures.
+
+```ts twoslash
+import { Abi, AbiItem, AbiParameter, AbiParameters } from 'ox'
+
+const abi = Abi.from([
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'event Transfer(address indexed from, address indexed to, uint256 amount)',
+])
+abi
+//^?
+
+const item = AbiItem.from(
+  'function approve(address spender, uint256 amount) returns (bool)',
+)
+item
+//  ^?
+
+const parameters = AbiParameters.from('address spender, uint256 amount')
+parameters
+//  ^?
+
+const parameter = AbiParameter.from('address spender')
+parameter
+//  ^?
+
+const formatted = Abi.format(abi)
+formatted
+//   ^?
+```
+
+Human-readable signatures support functions, events, errors, constructors, fallback functions, receive functions, structs, and ABI parameters.
+
+```ts
+'function balanceOf(address owner) view returns (uint256)'
+'event Transfer(address indexed from, address indexed to, uint256 amount)'
+'error Unauthorized(address caller)'
+'constructor(address owner) payable'
+'fallback() external payable'
+'receive() external payable'
+'struct Account { address owner; uint256 balance; }'
+'address spender'
+'address spender, uint256 amount'
+```
+
+Some syntax rules are enforced for parity between runtime parsing and type-level inference:
+
+- **Whitespace matters.** For example, `'function name() returns (string)'` is valid, but `'function name()returns(string)'` is not.
+- **Semicolons are omitted.** Write `'function name()'`, not `'function name();'`.
+- **Named and unnamed parameters are both supported.** For example, `'address owner'` and `'address'` are both valid.
+- **Inline tuples are supported.** For example, `'(uint256 id, string name) account'` maps to a `tuple` ABI parameter.
+- **Struct signatures can be provided before the signature that uses them.** Recursive structs are not supported.
+- **Parameter modifiers are normalized.** Modifiers like `indexed`, `calldata`, `memory`, and `storage` are accepted where Solidity allows them and omitted from the JSON ABI shape when they are not represented there.
+
 ## Encoding and Decoding ABI Parameters
 
 To start, let's take a look at how we can encode and decode primitive ABI types and parameters using Ox. While encoding and decoding ABI parameters might not be directly useful in isolation, they form the foundation of interacting with smart contracts, as listed in the [Applications](#applications) section below.

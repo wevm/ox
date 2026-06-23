@@ -289,7 +289,7 @@ export type FromViem<schema extends readonly ViemSchemaItem[]> = {
  * Each method's name comes from its key. Both `params` and `ReturnType` are
  * derived from the Zod schema's input (wire) type, since raw JSON-RPC clients
  * send and receive wire values. Decode wire results to their native
- * representation explicitly via {@link ox#zod/RpcSchema.decodeReturns}.
+ * representation explicitly via `zod.RpcSchema.decodeReturns`.
  *
  * @example
  * ```ts twoslash

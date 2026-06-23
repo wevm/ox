@@ -38,3 +38,22 @@ describe('AbiItem.fromAbi (name)', () => {
     AbiItem.fromAbi(abi200, 'fn179')
   })
 })
+
+describe('AbiItem.from', () => {
+  bench('function transfer(address to, uint256 amount)', () => {
+    AbiItem.from('function transfer(address to, uint256 amount) returns (bool)')
+  })
+
+  bench('struct Foo', () => {
+    AbiItem.from([
+      'struct Foo { address spender; uint256 amount; }',
+      'function approve(Foo foo) returns (bool)',
+    ])
+  })
+})
+
+describe('AbiItem.format', () => {
+  bench('function transfer(address to, uint256 amount)', () => {
+    AbiItem.format(lastFn)
+  })
+})
