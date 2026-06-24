@@ -18,8 +18,5 @@ export function isTip20(address: TempoAddress.Address): boolean {
 }
 
 export declare namespace isTip20 {
-  type ErrorType =
-    | Address.assert.ErrorType
-    | TempoAddress.parse.ErrorType
-    | TempoAddress.validate.ErrorType
+  type ErrorType = Address.assert.ErrorType | TempoAddress.parse.ErrorType
 }
