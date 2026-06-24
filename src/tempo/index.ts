@@ -284,6 +284,12 @@ export * as TempoAddress from './TempoAddress.js'
  */
 export * as Tick from './Tick.js'
 /**
+ * TIP-20 token address utilities.
+ *
+ * @category Reference
+ */
+export * as TokenAddress from './TokenAddress.js'
+/**
  * TIP-20 token ID utilities for converting between token IDs and addresses.
  *
  * TIP-20 is Tempo's native token standard for stablecoins with deterministic addresses

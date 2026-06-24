@@ -6,9 +6,9 @@ import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as VirtualMasterPool from './internal/virtualMasterPool.js'
 import * as TempoAddress from './TempoAddress.js'
+import * as TokenAddress from './TokenAddress.js'
 import * as VirtualAddress from './VirtualAddress.js'
 
-const tip20Prefix = '0x20c000000000000000000000'
 const zeroAddress = '0x0000000000000000000000000000000000000000'
 
 /** A valid salt input for TIP-1022 master registration. */
@@ -680,7 +680,7 @@ function assertValidMasterAddress(address: Address.Address) {
       'Virtual master address cannot itself be a virtual address.',
     )
 
-  if (normalized.startsWith(tip20Prefix))
+  if (TokenAddress.isTip20(address))
     throw new Errors.BaseError(
       'Virtual master address cannot be a TIP-20 token address.',
     )

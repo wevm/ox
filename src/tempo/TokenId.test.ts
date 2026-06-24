@@ -1,5 +1,5 @@
 import { Hex } from 'ox'
-import { TokenId } from 'ox/tempo'
+import { TokenAddress, TokenId } from 'ox/tempo'
 import { expect, test } from 'vitest'
 
 test('from', () => {
@@ -27,6 +27,24 @@ test('fromAddress', () => {
   // tempo address input
   const tempoAddr = 'tempox0x20c0000000000000000000000000000000000001'
   expect(TokenId.fromAddress(tempoAddr)).toBe(1n)
+})
+
+test('fromAddress: invalid address', () => {
+  expect(() =>
+    TokenId.fromAddress('0x20c1000000000000000000000000000000000001'),
+  ).toThrow('invalid tip20 address.')
+})
+
+test('TokenAddress.isTip20', () => {
+  expect(
+    TokenAddress.isTip20('0x20c0000000000000000000000000000000000001'),
+  ).toBe(true)
+  expect(
+    TokenAddress.isTip20('tempox0x20c0000000000000000000000000000000000001'),
+  ).toBe(true)
+  expect(
+    TokenAddress.isTip20('0x20c1000000000000000000000000000000000001'),
+  ).toBe(false)
 })
 
 test('toAddress', () => {

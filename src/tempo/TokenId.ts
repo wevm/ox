@@ -3,8 +3,10 @@ import * as Address from '../core/Address.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as TempoAddress from './TempoAddress.js'
+import * as TokenAddress from './TokenAddress.js'
 
-const tip20Prefix = '0x20c0'
+const tip20Prefix = TokenAddress.prefix
+const tip20PrefixSize = 12
 
 export type TokenId = bigint
 export type TokenIdOrAddress<addressType = Address.Address> =
@@ -55,9 +57,8 @@ export function from(tokenIdOrAddress: TokenIdOrAddress | number): TokenId {
  */
 export function fromAddress(address: TempoAddress.Address): TokenId {
   const resolved = TempoAddress.resolve(address)
-  if (!resolved.toLowerCase().startsWith(tip20Prefix))
-    throw new Error('invalid tip20 address.')
-  return Hex.toBigInt(Hex.slice(resolved, tip20Prefix.length))
+  if (!TokenAddress.isTip20(resolved)) throw new Error('invalid tip20 address.')
+  return Hex.toBigInt(Hex.slice(resolved, tip20PrefixSize))
 }
 
 /**
@@ -84,7 +85,7 @@ export function toAddress(
     return resolved
   }
 
-  const tokenIdHex = Hex.fromNumber(tokenId, { size: 18 })
+  const tokenIdHex = Hex.fromNumber(tokenId, { size: 8 })
   return Hex.concat(tip20Prefix, tokenIdHex)
 }
 
