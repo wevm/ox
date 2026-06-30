@@ -57,6 +57,7 @@
     "promise-with-timeout-single-reject",
     "provider-from-prototype",
     "provider-from-strict-eip1193",
+    "rlp-decode-depth-limit",
     "rpc-response-from-validation",
     "rpc-response-parse-error-preserve",
     "rpc-response-parse-validation",
