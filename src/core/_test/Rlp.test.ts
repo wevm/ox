@@ -13,6 +13,7 @@ test('exports', () => {
       "from",
       "fromBytes",
       "fromHex",
+      "DepthLimitExceededError",
     ]
   `)
 })
@@ -334,6 +335,46 @@ describe('Rlp.to', () => {
 
     It must be an even length.]
   `,
+    )
+  })
+})
+
+describe('decode depth limit', () => {
+  // Builds an RLP-encoded value of `depth` nested empty lists without recursing
+  // (so we can exceed the decoder's depth limit without overflowing the encoder).
+  const nestedEmptyLists = (depth: number) => {
+    let bytes = Uint8Array.from([0xc0])
+    for (let i = 0; i < depth; i++) {
+      const length = bytes.length
+      const prefix =
+        length <= 55
+          ? [0xc0 + length]
+          : (() => {
+              const lengthBytes: number[] = []
+              let n = length
+              while (n > 0) {
+                lengthBytes.unshift(n & 0xff)
+                n >>= 8
+              }
+              return [0xf7 + lengthBytes.length, ...lengthBytes]
+            })()
+      const next = new Uint8Array(prefix.length + bytes.length)
+      next.set(prefix, 0)
+      next.set(bytes, prefix.length)
+      bytes = next
+    }
+    return bytes
+  }
+
+  test('decodes up to the depth limit', () => {
+    expect(() => Rlp.toBytes(nestedEmptyLists(1_023))).not.toThrow()
+  })
+
+  test('throws when the depth limit is exceeded', () => {
+    expect(() =>
+      Rlp.toBytes(nestedEmptyLists(2_000)),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[Rlp.DepthLimitExceededError: RLP depth limit of \`1024\` exceeded.]`,
     )
   })
 })
