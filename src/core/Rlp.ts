@@ -5,6 +5,9 @@ import * as internal_bytes from './internal/bytes.js'
 import * as Cursor from './internal/cursor.js'
 import type { ExactPartial, RecursiveArray } from './internal/types.js'
 
+/** Maximum nesting depth permitted when decoding an RLP value. */
+const depthLimit = 1_024
+
 /**
  * Decodes a Recursive-Length Prefix (RLP) value into a {@link ox#Bytes.Bytes} value.
  *
@@ -91,7 +94,11 @@ export declare namespace to {
 export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
   cursor: Cursor.Cursor,
   to: to | 'Hex' | 'Bytes' | undefined = 'Hex',
+  depth = 0,
 ): decodeRlpCursor.ReturnType<to> {
+  if (depth >= depthLimit)
+    throw new DepthLimitExceededError({ limit: depthLimit })
+
   if (cursor.bytes.length === 0)
     return (
       to === 'Hex' ? Hex.fromBytes(cursor.bytes) : cursor.bytes
@@ -111,7 +118,12 @@ export function decodeRlpCursor<to extends 'Hex' | 'Bytes' = 'Hex'>(
 
   // list
   const length = readLength(cursor, prefix, 0xc0)
-  return readList(cursor, length, to) as {} as decodeRlpCursor.ReturnType<to>
+  return readList(
+    cursor,
+    length,
+    to,
+    depth + 1,
+  ) as {} as decodeRlpCursor.ReturnType<to>
 }
 
 /** @internal */
@@ -121,6 +133,7 @@ export declare namespace decodeRlpCursor {
     | Hex.fromBytes.ErrorType
     | readLength.ErrorType
     | readList.ErrorType
+    | DepthLimitExceededError
     | Errors.GlobalErrorType
 }
 
@@ -149,17 +162,18 @@ export function readList<to extends 'Hex' | 'Bytes'>(
   cursor: Cursor.Cursor,
   length: number,
   to: to | 'Hex' | 'Bytes',
+  depth = 0,
 ) {
   const position = cursor.position
   const value: decodeRlpCursor.ReturnType<to>[] = []
   while (cursor.position - position < length)
-    value.push(decodeRlpCursor(cursor, to))
+    value.push(decodeRlpCursor(cursor, to, depth))
   return value
 }
 
 /** @internal */
 export declare namespace readList {
-  type ErrorType = Errors.GlobalErrorType
+  type ErrorType = DepthLimitExceededError | Errors.GlobalErrorType
 }
 
 /**
@@ -642,4 +656,13 @@ function writeBigEndian(
 
 function invalidNibble(hex: Hex.Hex): Errors.BaseError {
   return new Errors.BaseError(`Invalid hex string \`${hex}\`.`)
+}
+
+/** Thrown when an RLP value nests deeper than the decode depth limit. */
+export class DepthLimitExceededError extends Errors.BaseError {
+  override readonly name = 'Rlp.DepthLimitExceededError'
+
+  constructor({ limit }: { limit: number }) {
+    super(`RLP depth limit of \`${limit}\` exceeded.`)
+  }
 }
