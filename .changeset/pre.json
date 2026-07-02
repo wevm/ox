@@ -54,6 +54,7 @@
     "filter-blockhash-branch",
     "hex-tobytes-buffer-pool-fix",
     "log-empty-topics",
+    "multisig-remove-config-id",
     "promise-with-timeout-single-reject",
     "provider-from-prototype",
     "provider-from-strict-eip1193",
