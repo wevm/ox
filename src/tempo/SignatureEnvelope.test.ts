@@ -3,6 +3,7 @@ import {
   Hex,
   P256,
   PublicKey,
+  Rlp,
   Secp256k1,
   Signature,
   WebAuthnP256,
@@ -1109,7 +1110,7 @@ describe('from', () => {
       ],
     })
 
-    test('behavior: derives `account`/`genesisConfigId` from `genesisConfig`', () => {
+    test('behavior: derives `account` from `genesisConfig`', () => {
       const envelope = SignatureEnvelope.from({
         genesisConfig,
         signatures: [SignatureEnvelope.from(signature_secp256k1)],
@@ -1118,7 +1119,6 @@ describe('from', () => {
       expect(envelope).toMatchObject({
         type: 'multisig',
         account: MultisigConfig.getAddress(genesisConfig),
-        genesisConfigId: MultisigConfig.toId(genesisConfig),
       })
       expect('genesisConfig' in envelope).toBe(false)
       expect((envelope as SignatureEnvelope.Multisig).init).toBeUndefined()
@@ -1155,19 +1155,16 @@ describe('from', () => {
       expect((envelope as SignatureEnvelope.Multisig).init).toEqual(otherConfig)
     })
 
-    test('behavior: `{account, genesisConfigId}` form still works', () => {
+    test('behavior: `{ account }` form still works', () => {
       const account = MultisigConfig.getAddress(genesisConfig)
-      const genesisConfigId = MultisigConfig.toId(genesisConfig)
       const envelope = SignatureEnvelope.from({
         account,
-        genesisConfigId,
         signatures: [SignatureEnvelope.from(signature_secp256k1)],
       })
 
       expect(envelope).toMatchObject({
         type: 'multisig',
         account,
-        genesisConfigId,
       })
     })
   })
@@ -1836,9 +1833,8 @@ describe('sortMultisigApprovals', () => {
     expect(recovered).toEqual(ascending.map((owner) => owner.address))
   })
 
-  test('behavior: `genesisConfig` and `{account, genesisConfigId}` produce identical ordering', () => {
+  test('behavior: `genesisConfig` and `{ account }` produce identical ordering', () => {
     const account = MultisigConfig.getAddress(genesisConfig)
-    const genesisConfigId = MultisigConfig.toId(genesisConfig)
     const signatures = owners.map((owner) => owner.signature)
 
     const fromConfig = SignatureEnvelope.sortMultisigApprovals({
@@ -1846,13 +1842,12 @@ describe('sortMultisigApprovals', () => {
       payload,
       signatures,
     })
-    const fromIds = SignatureEnvelope.sortMultisigApprovals({
+    const fromAccount = SignatureEnvelope.sortMultisigApprovals({
       account,
-      genesisConfigId,
       payload,
       signatures,
     })
-    expect(fromConfig).toEqual(fromIds)
+    expect(fromConfig).toEqual(fromAccount)
   })
 })
 
@@ -2855,8 +2850,6 @@ describe('CoercionError', () => {
 
 describe('multisig', () => {
   const account = '0x8ba6d26ff5c4e82ba0c8caf8c8ca794e1489a7ae'
-  const genesisConfigId =
-    '0x01781fe551182476f2422c759e82d81c92e3263737afbbad57def6e8b69d21f5'
 
   // P256 signatures do not carry `yParity` in the wire format, so use a clean
   // inner signature for round-trip equality checks.
@@ -2869,7 +2862,6 @@ describe('multisig', () => {
   const envelope = SignatureEnvelope.from({
     type: 'multisig',
     account,
-    genesisConfigId,
     signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
   })
 
@@ -2878,9 +2870,30 @@ describe('multisig', () => {
     expect(serialized.startsWith('0x05')).toBe(true)
   })
 
+  test('serialize: wire shape is `0x05 || rlp([account, signatures])`', () => {
+    const deterministic = SignatureEnvelope.from({
+      type: 'multisig',
+      account,
+      signatures: [innerP256],
+    })
+    expect(SignatureEnvelope.serialize(deterministic)).toMatchInlineSnapshot(
+      `"0x05f89b948ba6d26ff5c4e82ba0c8caf8c8ca794e1489a7aef884b88201ccbb3485d4726235f13cb15ef394fb7158179fb7b1925eccec0147671090c52e77c3c53373cc1e3b05e7c23f609deb17cea8fe097300c45411237e9fe4166b35ad8ac16e167d6992c3e120d7f17d2376bc1cbcf30c46ba6dd00ce07303e742f511edf6ce1c32de66846f56afa7be1cbd729bc35750b6d0cdcf3ec9d75461aba001"`,
+    )
+  })
+
   test('serialize/deserialize round-trip', () => {
     const serialized = SignatureEnvelope.serialize(envelope)
     expect(SignatureEnvelope.deserialize(serialized)).toEqual(envelope)
+  })
+
+  test('deserialize: rejects the empty `init` placeholder (`0x80`)', () => {
+    const withPlaceholder = Hex.concat(
+      '0x05',
+      Rlp.fromHex([account, [SignatureEnvelope.serialize(innerP256)], '0x']),
+    )
+    expect(() => SignatureEnvelope.deserialize(withPlaceholder)).toThrowError(
+      SignatureEnvelope.InvalidSerializedError,
+    )
   })
 
   test('getType', () => {
@@ -2908,6 +2921,97 @@ describe('multisig', () => {
     ).toThrowError()
   })
 
+  test('assert: rejects keychain owner approvals', () => {
+    expect(() =>
+      SignatureEnvelope.assert({
+        type: 'multisig',
+        account,
+        signatures: [signature_keychain_secp256k1],
+      } as never),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: keychain owner approvals are not allowed.]`,
+    )
+  })
+
+  describe('nested approvals', () => {
+    const nestedAccount = '0x1111111111111111111111111111111111111111'
+    const nested = SignatureEnvelope.from({
+      type: 'multisig',
+      account: nestedAccount,
+      signatures: [innerP256],
+    })
+
+    test('serialize/deserialize round-trip with a nested multisig approval', () => {
+      const parent = SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        signatures: [innerP256, nested],
+      })
+      const serialized = SignatureEnvelope.serialize(parent)
+      expect(SignatureEnvelope.deserialize(serialized)).toEqual(parent)
+    })
+
+    test('assert: accepts the maximum nesting depth', () => {
+      const depth3 = SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        signatures: [
+          SignatureEnvelope.from({
+            type: 'multisig',
+            account: nestedAccount,
+            signatures: [nested],
+          }),
+        ],
+      })
+      expect(() => SignatureEnvelope.assert(depth3)).not.toThrowError()
+    })
+
+    test('assert: rejects nesting deeper than the maximum', () => {
+      const depth4 = SignatureEnvelope.from({
+        type: 'multisig',
+        account,
+        signatures: [
+          SignatureEnvelope.from({
+            type: 'multisig',
+            account: nestedAccount,
+            signatures: [
+              SignatureEnvelope.from({
+                type: 'multisig',
+                account: nestedAccount,
+                signatures: [nested],
+              }),
+            ],
+          }),
+        ],
+      })
+      expect(() =>
+        SignatureEnvelope.assert(depth4),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: multisig nesting depth exceeds 3.]`,
+      )
+    })
+
+    test('assert: rejects nested approvals carrying `init`', () => {
+      expect(() =>
+        SignatureEnvelope.assert({
+          type: 'multisig',
+          account,
+          signatures: [
+            {
+              ...nested,
+              init: {
+                threshold: 1,
+                owners: [{ owner: nestedAccount, weight: 1 }],
+              },
+            },
+          ],
+        } as never),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[SignatureEnvelope.InvalidMultisigApprovalError: Invalid native multisig owner approval: nested multisig owner approvals cannot carry \`init\`.]`,
+      )
+    })
+  })
+
   describe('init (bootstrap)', () => {
     const init = {
       salt: `0x${'00'.repeat(32)}` as const,
@@ -2923,7 +3027,6 @@ describe('multisig', () => {
     const bootstrapEnvelope = SignatureEnvelope.from({
       type: 'multisig',
       account,
-      genesisConfigId,
       signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
       init,
     })
@@ -2939,7 +3042,6 @@ describe('multisig', () => {
       const salted = SignatureEnvelope.from({
         type: 'multisig',
         account,
-        genesisConfigId,
         signatures: [SignatureEnvelope.from(signature_secp256k1), innerP256],
         init: { ...init, salt: `0x${'42'.repeat(32)}` },
       })
@@ -2993,7 +3095,6 @@ describe('multisig', () => {
         SignatureEnvelope.assert({
           type: 'multisig',
           account,
-          genesisConfigId,
           signatures: [],
           init: { threshold: 1, owners: [] },
         } as never),
