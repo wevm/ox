@@ -3204,4 +3204,224 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
       }),
     ).rejects.toThrow()
   })
+
+  test('behavior: keychain access key (authorize via AccountKeychain + spend)', async () => {
+    const { account, genesisConfig, ownerKeys } = setup({
+      count: 2,
+      threshold: 2,
+    })
+
+    await fundAddress(client, { address: account })
+
+    // Fresh secp256k1 access key for the multisig account.
+    const access = (() => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      return { address, privateKey } as const
+    })()
+
+    // Bootstrap the multisig (nonce 0).
+    const bootstrap = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: 0n,
+      gas: 2_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const bootstrap_signed = TxEnvelopeTempo.serialize(bootstrap, {
+      signature: SignatureEnvelope.from({
+        genesisConfig,
+        init: true,
+        signatures: approve({
+          genesisConfig,
+          payload: TxEnvelopeTempo.getSignPayload(bootstrap),
+          signers: ownerKeys,
+        }),
+      }),
+    })
+
+    const bootstrap_receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [bootstrap_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(bootstrap_receipt.status).toBe('success')
+
+    // Authorize the access key (nonce 1): multisig transactions cannot carry
+    // a TIP-1049 `keyAuthorization`, so the multisig account calls the
+    // AccountKeychain precompile's `authorizeKey` directly.
+    const authorizeKey = AbiFunction.from(
+      'function authorizeKey(address keyId, uint8 signatureType, (uint64 expiry, bool enforceLimits, (address token, uint256 amount, uint64 period)[] limits, bool allowAnyCalls, (address target, (bytes4 selector, address[] recipients)[] selectorRules)[] allowedCalls) config)',
+    )
+
+    const authorize = TxEnvelopeTempo.from({
+      calls: [
+        {
+          to: '0xaaaaaaaa00000000000000000000000000000000',
+          data: AbiFunction.encodeData(authorizeKey, [
+            access.address,
+            0, // secp256k1
+            {
+              expiry: 18446744073709551615n, // u64 max (never expires)
+              enforceLimits: false,
+              limits: [],
+              allowAnyCalls: true,
+              allowedCalls: [],
+            },
+          ]),
+        },
+      ],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: 1n,
+      gas: 2_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const authorize_signed = TxEnvelopeTempo.serialize(authorize, {
+      signature: SignatureEnvelope.from({
+        genesisConfig,
+        signatures: approve({
+          genesisConfig,
+          payload: TxEnvelopeTempo.getSignPayload(authorize),
+          signers: ownerKeys,
+        }),
+      }),
+    })
+
+    const authorize_receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [authorize_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(authorize_receipt.status).toBe('success')
+    expect(authorize_receipt.from).toBe(account)
+
+    // Spend with the access key (nonce 2): outer keychain signature with the
+    // multisig account as `userAddress` — no owner approvals involved.
+    const nonce = await getTransactionCount(client, {
+      address: account,
+      blockTag: 'pending',
+    })
+
+    const spend = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      nonce: BigInt(nonce),
+      gas: 2_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const spend_signature = Secp256k1.sign({
+      payload: TxEnvelopeTempo.getSignPayload(spend, { from: account }),
+      privateKey: access.privateKey,
+    })
+
+    const spend_signed = TxEnvelopeTempo.serialize(spend, {
+      signature: SignatureEnvelope.from({
+        userAddress: account,
+        inner: SignatureEnvelope.from(spend_signature),
+        type: 'keychain',
+      }),
+    })
+
+    const spend_receipt = (await client
+      .request({
+        method: 'eth_sendRawTransactionSync',
+        params: [spend_signed],
+      })
+      .then((tx) => TransactionReceipt.fromRpc(tx as any)))!
+    expect(spend_receipt.status).toBe('success')
+    expect(spend_receipt.from).toBe(account)
+
+    {
+      const response = await client
+        .request({
+          method: 'eth_getTransactionByHash',
+          params: [spend_receipt.transactionHash],
+        })
+        .then((tx) => Transaction.fromRpc(tx as any))
+      if (!response) throw new Error()
+      expect(response.from).toBe(account)
+      expect(response.signature?.type).toBe('keychain')
+      expect(
+        (response.signature as SignatureEnvelope.Keychain | undefined)
+          ?.userAddress,
+      ).toBe(account)
+    }
+  })
+
+  test('behavior: rejects `keyAuthorization` on multisig transactions', async () => {
+    const { account, genesisConfig, ownerKeys } = setup({
+      count: 1,
+      threshold: 1,
+    })
+
+    await fundAddress(client, { address: account })
+
+    const access = (() => {
+      const privateKey = Secp256k1.randomPrivateKey()
+      const address = Address.fromPublicKey(
+        Secp256k1.getPublicKey({ privateKey }),
+      )
+      return { address, privateKey } as const
+    })()
+
+    // TIP-1049 key authorizations are only valid on primitive/keychain
+    // transactions; multisig accounts must call the AccountKeychain
+    // precompile instead.
+    const keyAuth = KeyAuthorization.from({
+      address: access.address,
+      chainId: BigInt(chainId),
+      type: 'secp256k1',
+    })
+    const keyAuth_signed = KeyAuthorization.from(keyAuth, {
+      signature: SignatureEnvelope.from(
+        Secp256k1.sign({
+          payload: KeyAuthorization.getSignPayload(keyAuth),
+          privateKey: ownerKeys[0]!.privateKey,
+        }),
+      ),
+    })
+
+    const bootstrap = TxEnvelopeTempo.from({
+      calls: [{ to: '0x0000000000000000000000000000000000000000' }],
+      chainId,
+      feeToken: '0x20c0000000000000000000000000000000000001',
+      keyAuthorization: keyAuth_signed,
+      nonce: 0n,
+      gas: 2_000_000n,
+      maxFeePerGas: Value.fromGwei('20'),
+      maxPriorityFeePerGas: Value.fromGwei('10'),
+    })
+
+    const serialized_signed = TxEnvelopeTempo.serialize(bootstrap, {
+      signature: SignatureEnvelope.from({
+        genesisConfig,
+        init: true,
+        signatures: approve({
+          genesisConfig,
+          payload: TxEnvelopeTempo.getSignPayload(bootstrap),
+          signers: ownerKeys,
+        }),
+      }),
+    })
+
+    await expect(
+      client.request({
+        method: 'eth_sendRawTransactionSync',
+        params: [serialized_signed],
+      }),
+    ).rejects.toThrow()
+  })
 })
