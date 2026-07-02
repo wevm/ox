@@ -122,8 +122,8 @@ export * as KeyAuthorization from './KeyAuthorization.js'
 /**
  * Native multisig account utilities (TIP-1061).
  *
- * Derives stable multisig account addresses and permanent config IDs from a weighted
- * owner configuration, and computes the owner approval digest that owners sign.
+ * Derives stable multisig account addresses from a weighted owner
+ * configuration, and computes the owner approval digest that owners sign.
  *
  * [TIP-1061](https://tips.sh/1061)
  *
