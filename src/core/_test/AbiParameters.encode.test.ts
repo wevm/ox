@@ -1963,3 +1963,71 @@ test('https://github.com/wevm/viem/issues/1960', () => {
     `[BaseError: Invalid boolean value: "true" (type: string). Expected: \`true\` or \`false\`.]`,
   )
 })
+
+describe('zero-width types', () => {
+  // Per the ABI spec, `enc(T[0])` and `enc(())` are zero-length: a zero-length
+  // fixed array or empty tuple contributes no bytes. Expected values verified
+  // against ethers `AbiCoder.defaultAbiCoder()`.
+  test('zero-length fixed array', () => {
+    expect(
+      AbiParameters.encode(
+        [{ type: 'uint256[0]' }, { type: 'uint256' }],
+        [[], 3n],
+      ),
+    ).toBe('0x0000000000000000000000000000000000000000000000000000000000000003')
+  })
+
+  test('empty tuple', () => {
+    expect(
+      AbiParameters.encode(
+        [{ type: 'uint256' }, { type: 'tuple', components: [] }],
+        [5n, []],
+      ),
+    ).toBe('0x0000000000000000000000000000000000000000000000000000000000000005')
+  })
+
+  test('empty tuple only', () => {
+    expect(
+      AbiParameters.encode([{ type: 'tuple', components: [] }], [[]]),
+    ).toBe('0x')
+  })
+
+  test('nested zero-length fixed arrays', () => {
+    expect(
+      AbiParameters.encode(
+        [{ type: 'uint256[0][2]' }, { type: 'uint256' }],
+        [[[], []], 9n],
+      ),
+    ).toBe('0x0000000000000000000000000000000000000000000000000000000000000009')
+    expect(
+      AbiParameters.encode(
+        [{ type: 'uint256[2][0]' }, { type: 'uint256' }],
+        [[], 9n],
+      ),
+    ).toBe('0x0000000000000000000000000000000000000000000000000000000000000009')
+  })
+
+  test('offsets skip zero-width parameters', () => {
+    expect(
+      AbiParameters.encode(
+        [{ type: 'uint256[0]' }, { type: 'string' }],
+        [[], 'hello'],
+      ),
+    ).toBe(
+      '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000',
+    )
+  })
+
+  // `T[0]` of a dynamic `T` is dynamic per the ABI spec: 32-byte offset
+  // pointing at a zero-length tail.
+  test('zero-length fixed array of dynamic type', () => {
+    expect(
+      AbiParameters.encode(
+        [{ type: 'string[0]' }, { type: 'uint256' }],
+        [[], 3n],
+      ),
+    ).toBe(
+      '0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000003',
+    )
+  })
+})
