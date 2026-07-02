@@ -83,7 +83,6 @@ export const KeychainRpc = z.object({
 /** RPC native multisig signature envelope schema. */
 export const MultisigRpc = z.object({
   account: z_Address.Address,
-  configId: z_Hex.Hex,
   init: z.optional(z_MultisigConfig.Config),
   // Owner approvals are raw serialized signatures (node `Vec<Bytes>`).
   signatures: z.readonly(z.array(z_Hex.Hex)),
@@ -140,7 +139,6 @@ export const Keychain = z.object({
 /** Native multisig signature envelope schema. */
 export const Multisig = z.object({
   account: z_Address.Address,
-  genesisConfigId: z_Hex.Hex,
   init: z.optional(z_MultisigConfig.Config),
   // `signatures` is recursive; type the getter concretely to break the cycle.
   signatures: z.lazy(

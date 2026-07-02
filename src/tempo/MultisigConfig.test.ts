@@ -30,31 +30,51 @@ describe('from', () => {
   })
 })
 
-describe('genesisConfigId', () => {
+describe('getAddress', () => {
   test('matches independent ground truth', () => {
-    expect(MultisigConfig.toId(singleOwnerConfig)).toMatchInlineSnapshot(
-      `"0xd1f20e1a5bfdd89488f57f68db5bd1aae9a51b510f4a042b2604b57a0b7b471d"`,
+    expect(MultisigConfig.getAddress(singleOwnerConfig)).toMatchInlineSnapshot(
+      `"0x8820d1497eeaf4f68e00b2cfc00a2f3b1dbb00da"`,
     )
   })
 
+  test('matches independent ground truth (salt + weights)', () => {
+    expect(
+      MultisigConfig.getAddress({
+        salt: `0x${'42'.repeat(32)}`,
+        threshold: 2,
+        owners: [
+          { owner: owner1, weight: 1 },
+          { owner: owner2, weight: 2 },
+        ],
+      }),
+    ).toMatchInlineSnapshot(`"0x0773e28146400643e42cb28f6659b74e7c0b451d"`)
+  })
+
   test('is stable across calls', () => {
-    expect(MultisigConfig.toId(singleOwnerConfig)).toBe(
-      MultisigConfig.toId(singleOwnerConfig),
+    expect(MultisigConfig.getAddress(singleOwnerConfig)).toBe(
+      MultisigConfig.getAddress(singleOwnerConfig),
     )
   })
 
   test('differs for a different salt', () => {
-    expect(MultisigConfig.toId(singleOwnerConfig)).not.toBe(
-      MultisigConfig.toId({
+    expect(MultisigConfig.getAddress(singleOwnerConfig)).not.toBe(
+      MultisigConfig.getAddress({
         ...singleOwnerConfig,
         salt: `0x${'42'.repeat(32)}`,
       }),
     )
   })
 
+  test('address is chain-independent', () => {
+    // Derivation does not include chain ID; identical config → identical address.
+    const a = MultisigConfig.getAddress(singleOwnerConfig)
+    const b = MultisigConfig.getAddress(MultisigConfig.from(singleOwnerConfig))
+    expect(a).toBe(b)
+  })
+
   test('throws on invalid config', () => {
     expect(() =>
-      MultisigConfig.toId({
+      MultisigConfig.getAddress({
         threshold: 5,
         owners: singleOwnerConfig.owners,
       }),
@@ -62,50 +82,27 @@ describe('genesisConfigId', () => {
   })
 })
 
-describe('getAddress', () => {
-  test('matches independent ground truth', () => {
-    expect(MultisigConfig.getAddress(singleOwnerConfig)).toMatchInlineSnapshot(
-      `"0x6ca655065b1de473d903eebd50e5cb4996e10468"`,
-    )
-  })
-
-  test('derives from positional config or `{ genesisConfigId }` identically', () => {
-    const genesisConfigId = MultisigConfig.toId(singleOwnerConfig)
-    expect(MultisigConfig.getAddress({ genesisConfigId })).toBe(
-      MultisigConfig.getAddress(singleOwnerConfig),
-    )
-  })
-
-  test('config ID and address are chain-independent', () => {
-    // Derivation does not include chain ID; identical config → identical id/address.
-    const a = MultisigConfig.toId(singleOwnerConfig)
-    const b = MultisigConfig.toId(MultisigConfig.from(singleOwnerConfig))
-    expect(a).toBe(b)
-  })
-})
-
 describe('getSignPayload', () => {
   test('matches independent ground truth', () => {
     expect(
       MultisigConfig.getSignPayload({
-        payload: `0x${'42'.repeat(32)}`,
+        payload: `0x${'de'.repeat(32)}`,
         genesisConfig: singleOwnerConfig,
       }),
     ).toMatchInlineSnapshot(
-      `"0xe3d66f6118b89a67c71c8137c46abf0c829056a46ee6a038a1b42c84529fc17e"`,
+      `"0x7df8cb9fef4fc2aeb271b617d1a4c6178b720ae1d7564f48a363069b7d77a079"`,
     )
   })
 
-  test('behavior: `genesisConfig` and `{account, genesisConfigId}` produce identical digests', () => {
-    const genesisConfigId = MultisigConfig.toId(singleOwnerConfig)
-    const account = MultisigConfig.getAddress({ genesisConfigId })
+  test('behavior: `genesisConfig` and `{ account }` produce identical digests', () => {
+    const account = MultisigConfig.getAddress(singleOwnerConfig)
     const payload = `0x${'42'.repeat(32)}` as const
     expect(
       MultisigConfig.getSignPayload({
         payload,
         genesisConfig: singleOwnerConfig,
       }),
-    ).toBe(MultisigConfig.getSignPayload({ payload, account, genesisConfigId }))
+    ).toBe(MultisigConfig.getSignPayload({ payload, account }))
   })
 })
 
@@ -152,8 +149,16 @@ describe('assert / validate', () => {
     expect(MultisigConfig.validate({ threshold: 1, owners: [] })).toBe(false)
   })
 
+  test('accepts 255 owners', () => {
+    const owners = Array.from({ length: 255 }, (_, i) => ({
+      owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
+      weight: 1,
+    }))
+    expect(MultisigConfig.validate({ threshold: 255, owners })).toBe(true)
+  })
+
   test('too many owners', () => {
-    const owners = Array.from({ length: 11 }, (_, i) => ({
+    const owners = Array.from({ length: 256 }, (_, i) => ({
       owner: `0x${(i + 1).toString(16).padStart(40, '0')}` as `0x${string}`,
       weight: 1,
     }))
@@ -174,6 +179,18 @@ describe('assert / validate', () => {
       MultisigConfig.validate({
         threshold: 2,
         owners: singleOwnerConfig.owners,
+      }),
+    ).toBe(false)
+  })
+
+  test('total weight exceeds u8 max', () => {
+    expect(
+      MultisigConfig.validate({
+        threshold: 255,
+        owners: [
+          { owner: owner1, weight: 128 },
+          { owner: owner2, weight: 128 },
+        ],
       }),
     ).toBe(false)
   })

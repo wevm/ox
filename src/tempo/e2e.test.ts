@@ -3028,7 +3028,7 @@ describe.skip('behavior: multisig (TIP-1061)', () => {
 
     const genesisConfig = MultisigConfig.from({
       // A fresh random salt yields a distinct account each run, exercising the
-      // salt-inclusive config-ID derivation against the node.
+      // salt-inclusive account derivation against the node.
       salt: Hex.random(32),
       threshold,
       owners: ownerKeys.map((key) => ({

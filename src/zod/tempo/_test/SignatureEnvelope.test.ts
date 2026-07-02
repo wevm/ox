@@ -21,8 +21,6 @@ const p256 = {
 
 const multisig = {
   account: '0xbe95c3f554e9fc85ec51be69a3d807a0d55bcf2c',
-  configId:
-    '0x0000000000000000000000000000000000000000000000000000000000000000',
   signatures: [
     core_SignatureEnvelope.serialize(core_SignatureEnvelope.fromRpc(secp256k1)),
   ],
