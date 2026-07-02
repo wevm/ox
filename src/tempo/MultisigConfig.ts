@@ -6,7 +6,13 @@ import * as Hex from '../core/Hex.js'
 import type { Compute, OneOf } from '../core/internal/types.js'
 
 /** Maximum number of owners allowed in a native multisig config. */
-export const maxOwners = 10
+export const maxOwners = 255
+
+/**
+ * Maximum number of native multisig signatures in one nested authorization
+ * path, including the top-level transaction signature.
+ */
+export const maxNestingDepth = 3
 
 /** Maximum encoded byte length for one primitive owner approval. */
 export const maxOwnerSignatureBytes = 2049
@@ -20,20 +26,17 @@ export const zeroSalt = `0x${'00'.repeat(32)}` as const
 /** Domain prefix for the native multisig account address derivation. */
 const accountDomain = 'tempo:multisig:account'
 
-/** Domain prefix for the native multisig config ID derivation. */
-const configDomain = 'tempo:multisig:config'
-
 /** Domain prefix for native multisig owner approvals. */
 const signatureDomain = 'tempo:multisig:signature'
 
 /**
- * Native multisig configuration. Determines the permanent config ID and the
- * stable multisig account address.
+ * Native multisig configuration. Determines the stable multisig account
+ * address.
  */
 export type Config<numberType = number> = Compute<{
   /**
-   * Caller-chosen 32-byte salt mixed into the permanent config ID. Defaults to
-   * the zero salt (`MultisigConfig.zeroSalt`) when omitted.
+   * Caller-chosen 32-byte salt mixed into the derived account address.
+   * Defaults to the zero salt (`MultisigConfig.zeroSalt`) when omitted.
    */
   salt?: Hex.Hex | undefined
   /** Minimum total owner weight required to authorize a transaction. */
@@ -44,7 +47,7 @@ export type Config<numberType = number> = Compute<{
 
 /** Native multisig owner entry. */
 export type Owner<numberType = number> = {
-  /** Owner address (recovered from the owner's primitive signature). */
+  /** Owner address (recovered from the owner's approval). */
   owner: Address.Address
   /** Nonzero owner weight. */
   weight: numberType
@@ -60,9 +63,9 @@ export type Tuple = readonly [
 /**
  * Asserts that a native multisig {@link ox#MultisigConfig.Config} is valid.
  *
- * Mirrors the Tempo `validate_multisig_config` rules: owners non-empty and
+ * Mirrors the Tempo `InitMultisig::validate` rules: owners non-empty and
  * `<= maxOwners`, strictly ascending unique nonzero owner addresses, nonzero
- * owner weights, `threshold >= 1`, total weight `<= u32::MAX`, and
+ * owner weights, `threshold >= 1`, total weight `<= 255` (u8 max), and
  * `threshold <= total weight`.
  *
  * @example
@@ -109,9 +112,9 @@ export function assert<numberType = number>(config: Config<numberType>): void {
     totalWeight += Number(owner.weight)
   }
 
-  if (totalWeight > 0xffffffff)
+  if (totalWeight > 0xff)
     throw new InvalidConfigError({
-      reason: 'total owner weight exceeds u32 max',
+      reason: 'total owner weight exceeds u8 max',
     })
   if (Number(threshold) > totalWeight)
     throw new InvalidConfigError({
@@ -127,7 +130,7 @@ export declare namespace assert {
  * Normalizes a native multisig {@link ox#MultisigConfig.Config}.
  *
  * Sorts owners into strictly ascending `owner` address order (the canonical
- * form required for config ID derivation) and asserts the config is valid.
+ * form required for account derivation) and asserts the config is valid.
  *
  * @example
  * ```ts twoslash
@@ -197,7 +200,11 @@ export function fromTuple(tuple: Tuple): Config {
 /**
  * Derives the stable native multisig account address.
  *
- * `keccak256("tempo:multisig:account" || config_id)[12:32]`.
+ * Preimage (fixed-width big-endian, **not** RLP):
+ * `keccak256("tempo:multisig:account" || salt || u8(threshold) || u8(owners.length) || (owner || u8(weight)) for each owner)[12:32]`.
+ *
+ * The address is derived once from the initial (bootstrap) config and never
+ * changes — config updates do not affect it.
  *
  * @example
  * ```ts twoslash
@@ -213,49 +220,37 @@ export function fromTuple(tuple: Tuple): Config {
  * const address = MultisigConfig.getAddress(genesisConfig)
  * ```
  *
- * @example
- * ### From an genesis config ID
- *
- * If you already have the permanent `genesisConfigId`, pass it directly:
- *
- * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
- *
- * const genesisConfigId =
- *   `0x${'00'.repeat(32)}` as const
- *
- * const address = MultisigConfig.getAddress({ genesisConfigId })
- * ```
- *
- * @param value - The genesis config (positional) or `{ genesisConfigId }`.
+ * @param config - The initial (bootstrap) multisig config.
  * @returns The multisig account address.
  */
-export function getAddress(value: getAddress.Value): Address.Address {
-  const id =
-    typeof value === 'object' && 'genesisConfigId' in value
-      ? value.genesisConfigId
-      : toId(value)
-  const hash = Hash.keccak256(Hex.concat(Hex.fromString(accountDomain), id))
-  return Address.from(Hex.slice(hash, 12, 32))
+export function getAddress(config: Config): Address.Address {
+  assert(config)
+  const hash = Hash.keccak256(
+    Hex.concat(
+      Hex.fromString(accountDomain),
+      Hex.padLeft(config.salt ?? zeroSalt, 32),
+      Hex.fromNumber(config.threshold, { size: 1 }),
+      Hex.fromNumber(config.owners.length, { size: 1 }),
+      ...config.owners.flatMap((owner) => [
+        owner.owner,
+        Hex.fromNumber(owner.weight, { size: 1 }),
+      ]),
+    ),
+  )
+  const account = Address.from(Hex.slice(hash, 12, 32))
+  if (Hex.toBigInt(account) === 0n)
+    throw new InvalidConfigError({ reason: 'derived account cannot be zero' })
+  return account
 }
 
 export declare namespace getAddress {
-  type Value =
-    | Config
-    | {
-        /**
-         * The permanent genesis config ID (`MultisigConfig.toId(genesisConfig)`).
-         * Config updates never change this value, so it identifies the
-         * account permanently.
-         */
-        genesisConfigId: Hex.Hex
-      }
-
   type ErrorType =
-    | toId.ErrorType
+    | assert.ErrorType
     | Address.from.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
+    | Hex.fromNumber.ErrorType
+    | Hex.fromString.ErrorType
     | Hex.slice.ErrorType
     | Errors.GlobalErrorType
 }
@@ -263,14 +258,16 @@ export declare namespace getAddress {
 /**
  * Computes the digest a native multisig owner approves (signs).
  *
- * `keccak256("tempo:multisig:signature" || inner_digest || account || config_id)`,
+ * `keccak256("tempo:multisig:signature" || inner_digest || account)`,
  * where `inner_digest` is the transaction sign payload
  * ({@link ox#TxEnvelopeTempo.(getSignPayload:function)}).
  *
- * The digest is always keyed on the permanent `account`/`genesisConfigId`
- * derived from the genesis (bootstrap) config — config updates never change
- * these values, so the genesis config is the correct input even for
- * post-update transactions.
+ * The digest is keyed on the permanent `account` derived from the genesis
+ * (bootstrap) config — config updates never change it, so the genesis config
+ * is the correct input even for post-update transactions.
+ *
+ * For a nested multisig owner approval, the parent digest becomes the nested
+ * approval's `payload`, with the nested multisig `account`.
  *
  * @example
  * ```ts twoslash
@@ -295,10 +292,10 @@ export declare namespace getAddress {
  * ```
  *
  * @example
- * ### From `account` + `genesisConfigId`
+ * ### From `account`
  *
- * If you already have the permanent `account` and `genesisConfigId` (for
- * example, recovered from a stored envelope), pass them directly:
+ * If you already have the permanent `account` (for example, recovered from a
+ * stored envelope), pass it directly:
  *
  * ```ts twoslash
  * import { MultisigConfig, TxEnvelopeTempo } from 'ox/tempo'
@@ -309,15 +306,13 @@ export declare namespace getAddress {
  *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
  *   ],
  * })
- * const genesisConfigId = MultisigConfig.toId(genesisConfig)
  * const account = MultisigConfig.getAddress(genesisConfig)
  *
  * const envelope = TxEnvelopeTempo.from({ chainId: 1, calls: [] })
  *
  * const digest = MultisigConfig.getSignPayload({
  *   payload: TxEnvelopeTempo.getSignPayload(envelope),
- *   account,
- *   genesisConfigId,
+ *   account
  * })
  * ```
  *
@@ -330,17 +325,8 @@ export function getSignPayload(value: getSignPayload.Value): Hex.Hex {
     'account' in value && value.account
       ? value.account
       : getAddress((value as { genesisConfig: Config }).genesisConfig)
-  const genesisConfigId =
-    'genesisConfigId' in value && value.genesisConfigId
-      ? value.genesisConfigId
-      : toId((value as { genesisConfig: Config }).genesisConfig)
   return Hash.keccak256(
-    Hex.concat(
-      Hex.fromString(signatureDomain),
-      Hex.from(payload),
-      account,
-      genesisConfigId,
-    ),
+    Hex.concat(Hex.fromString(signatureDomain), Hex.from(payload), account),
   )
 }
 
@@ -352,16 +338,13 @@ export declare namespace getSignPayload {
     | {
         /** The native multisig account address. */
         account: Address.Address
-        /** The permanent config ID. */
-        genesisConfigId: Hex.Hex
       }
     | {
         /**
          * The initial multisig config (the bootstrap config that derived the
-         * permanent `account` and `genesisConfigId`). Used to derive both values
-         * automatically. Config updates never change `account`/`genesisConfigId`,
-         * so the genesis config is also the correct input for post-update
-         * transactions.
+         * permanent `account`). Used to derive the account automatically.
+         * Config updates never change `account`, so the genesis config is
+         * also the correct input for post-update transactions.
          */
         genesisConfig: Config
       }
@@ -369,63 +352,9 @@ export declare namespace getSignPayload {
 
   type ErrorType =
     | getAddress.ErrorType
-    | toId.ErrorType
     | Hash.keccak256.ErrorType
     | Hex.concat.ErrorType
     | Hex.from.ErrorType
-    | Errors.GlobalErrorType
-}
-
-/**
- * Derives the permanent config ID for a native multisig
- * {@link ox#MultisigConfig.Config}.
- *
- * Preimage (fixed-width big-endian, **not** RLP):
- * `keccak256("tempo:multisig:config" || salt || be_u32(threshold) || be_u32(owners.length) || (owner || be_u32(weight)) for each owner)`.
- *
- * @example
- * ```ts twoslash
- * import { MultisigConfig } from 'ox/tempo'
- *
- * const config = MultisigConfig.from({
- *   threshold: 1,
- *   owners: [
- *     { owner: '0x1111111111111111111111111111111111111111', weight: 1 },
- *   ],
- * })
- *
- * const genesisConfigId = MultisigConfig.toId(config)
- * ```
- *
- * @param config - The multisig config.
- * @returns The 32-byte config ID.
- */
-export function toId(config: Config): Hex.Hex {
-  assert(config)
-  const id = Hash.keccak256(
-    Hex.concat(
-      Hex.fromString(configDomain),
-      Hex.padLeft(config.salt ?? zeroSalt, 32),
-      Hex.fromNumber(config.threshold, { size: 4 }),
-      Hex.fromNumber(config.owners.length, { size: 4 }),
-      ...config.owners.flatMap((owner) => [
-        owner.owner,
-        Hex.fromNumber(owner.weight, { size: 4 }),
-      ]),
-    ),
-  )
-  if (Hex.toBigInt(id) === 0n)
-    throw new InvalidConfigError({ reason: 'config ID cannot be zero' })
-  return id
-}
-
-export declare namespace toId {
-  type ErrorType =
-    | assert.ErrorType
-    | Hash.keccak256.ErrorType
-    | Hex.concat.ErrorType
-    | Hex.fromNumber.ErrorType
-    | Hex.fromString.ErrorType
     | Errors.GlobalErrorType
 }
 
