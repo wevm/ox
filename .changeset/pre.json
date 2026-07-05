@@ -50,6 +50,7 @@
     "erc6492-strip-magic-and-validate",
     "erc7821-execute-structural-detection",
     "erc8010-assert-suffix-and-recovery",
+    "eth-get-raw-transaction-by-hash",
     "fee-helpers",
     "filter-blockhash-branch",
     "hex-tobytes-buffer-pool-fix",
