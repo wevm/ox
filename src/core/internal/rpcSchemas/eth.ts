@@ -446,6 +446,22 @@ export type Eth = RpcSchema.From<
       ReturnType: AccountProof.Rpc
     }
   /**
+   * Returns the raw, serialized transaction specified by hash
+   *
+   * @example
+   * ```
+   * request({ method: 'eth_getRawTransactionByHash', params: ['0x...'] })
+   * // '0x...'
+   * ```
+   */
+  | {
+      Request: {
+        method: 'eth_getRawTransactionByHash'
+        params: [hash: Hex.Hex]
+      }
+      ReturnType: Hex.Hex | null
+    }
+  /**
    * Returns the value from a storage position at an address
    *
    * @example

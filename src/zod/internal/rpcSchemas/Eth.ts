@@ -181,6 +181,12 @@ export const eth_getProof = from({
   returns: z_AccountProof.AccountProof,
 })
 
+export const eth_getRawTransactionByHash = from({
+  method: 'eth_getRawTransactionByHash',
+  params: z.tuple([z_Hex.Hex]),
+  returns: z.nullable(z_Hex.Hex),
+})
+
 export const eth_getStorageAt = from({
   method: 'eth_getStorageAt',
   params: z.tuple([z_Address.Address, z_Hex.Hex, BlockNumberOrTagOrIdentifier]),
