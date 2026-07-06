@@ -80,6 +80,7 @@
     "tempo-authorization-signature-normalize",
     "tempo-noncekey-random",
     "tempo-poolid-canonical",
+    "tempo-request-wire-fields",
     "tempo-transaction-request-envelope-conversion",
     "tempo-txenvelope-validate-prefix",
     "torpc-numberish-inputs",
