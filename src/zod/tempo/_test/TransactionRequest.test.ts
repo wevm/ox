@@ -44,6 +44,50 @@ describe('TransactionRequest', () => {
     )
   })
 
+  test('gas-model hints and capabilities round-trip', () => {
+    const hints = {
+      capabilities: { balanceDiffs: true },
+      keyData: '0x0578',
+      keyId: '0xcccccccccccccccccccccccccccccccccccccccc',
+      keyType: 'webAuthn',
+      multisigInit: {
+        salt: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        threshold: 2,
+        owners: [
+          {
+            owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            weight: 1,
+          },
+          {
+            owner: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+            weight: 1,
+          },
+        ],
+      },
+      multisigSignatureCount: 2,
+    } as const
+
+    const decoded = z.decode(z_TransactionRequest.TransactionRequest, {
+      ...rpc,
+      ...hints,
+    })
+    expect(decoded).toMatchObject(hints)
+
+    const encoded = z.encode(z_TransactionRequest.TransactionRequest, decoded)
+    expect(encoded).toMatchObject(hints)
+    expect(encoded).toEqual(core_TransactionRequest.toRpc(decoded))
+  })
+
+  test('feeToken is withheld until the fee payer signs (TIP-76)', () => {
+    const decoded = z.decode(z_TransactionRequest.TransactionRequest, rpc)
+    const pending = z.encode(z_TransactionRequest.TransactionRequest, {
+      ...decoded,
+      feePayer: true,
+    })
+    expect(pending.feeToken).toBeUndefined()
+    expect(pending.feePayer).toBe(true)
+  })
+
   test('rejects an invalid request', () => {
     expect(
       z.safeDecode(z_TransactionRequest.TransactionRequest, {

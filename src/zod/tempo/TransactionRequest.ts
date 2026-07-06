@@ -57,6 +57,16 @@ const CallToRpc = z.object({
   value: z.optional(uintBigintNumberish()),
 })
 
+const Capabilities = z.record(z.string(), z.unknown())
+
+const MultisigInit = z.object({
+  salt: z_Hex.Hex,
+  threshold: z.number(),
+  owners: z.readonly(
+    z.array(z.object({ owner: z_Address.Address, weight: z.number() })),
+  ),
+})
+
 /** RPC tempo transaction request schema. */
 export const Rpc = z.object({
   accessList: z.optional(z_AccessList.AccessList),
@@ -64,6 +74,7 @@ export const Rpc = z.object({
   blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
   blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
   calls: z.optional(z.readonly(z.array(CallRpc))),
+  capabilities: z.optional(Capabilities),
   chainId: z.optional(z_Hex.Hex),
   data: z.optional(z_Hex.Hex),
   feePayer: z.optional(z.boolean()),
@@ -75,10 +86,13 @@ export const Rpc = z.object({
   input: z.optional(z_Hex.Hex),
   keyAuthorization: z.optional(z_KeyAuthorization.Rpc),
   keyData: z.optional(z_Hex.Hex),
+  keyId: z.optional(z_Address.Address),
   keyType: z.optional(KeyType),
   maxFeePerBlobGas: z.optional(z_Hex.Hex),
   maxFeePerGas: z.optional(z_Hex.Hex),
   maxPriorityFeePerGas: z.optional(z_Hex.Hex),
+  multisigInit: z.optional(MultisigInit),
+  multisigSignatureCount: z.optional(z.number()),
   nonce: z.optional(z_Hex.Hex),
   nonceKey: z.optional(z_Hex.Hex),
   r: z.optional(z_Hex.Hex),
@@ -114,6 +128,7 @@ export const Domain = z.object({
   blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
   blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
   calls: z.optional(z.readonly(z.array(Call))),
+  capabilities: z.optional(Capabilities),
   chainId: z.optional(z.number()),
   data: z.optional(z_Hex.Hex),
   feePayer: z.optional(z.boolean()),
@@ -125,10 +140,13 @@ export const Domain = z.object({
   input: z.optional(z_Hex.Hex),
   keyAuthorization: z.optional(z_KeyAuthorization.Domain),
   keyData: z.optional(z_Hex.Hex),
+  keyId: z.optional(z_Address.Address),
   keyType: z.optional(KeyType),
   maxFeePerBlobGas: z.optional(z.bigint()),
   maxFeePerGas: z.optional(z.bigint()),
   maxPriorityFeePerGas: z.optional(z.bigint()),
+  multisigInit: z.optional(MultisigInit),
+  multisigSignatureCount: z.optional(z.number()),
   nonce: z.optional(z.bigint()),
   nonceKey: z.optional(z.union([z.bigint(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -150,6 +168,7 @@ export const DomainToRpc = z.object({
   blobVersionedHashes: z.optional(z.readonly(z.array(z_Hex.Hex))),
   blobs: z.optional(z.readonly(z.array(z_Hex.Hex))),
   calls: z.optional(z.readonly(z.array(CallToRpc))),
+  capabilities: z.optional(Capabilities),
   chainId: z.optional(uintNumberNumberish()),
   data: z.optional(z_Hex.Hex),
   feePayer: z.optional(z.boolean()),
@@ -161,10 +180,13 @@ export const DomainToRpc = z.object({
   input: z.optional(z_Hex.Hex),
   keyAuthorization: z.optional(z_KeyAuthorization.DomainToRpc),
   keyData: z.optional(z_Hex.Hex),
+  keyId: z.optional(z_Address.Address),
   keyType: z.optional(KeyType),
   maxFeePerBlobGas: z.optional(uintBigintNumberish()),
   maxFeePerGas: z.optional(uintBigintNumberish()),
   maxPriorityFeePerGas: z.optional(uintBigintNumberish()),
+  multisigInit: z.optional(MultisigInit),
+  multisigSignatureCount: z.optional(z.number()),
   nonce: z.optional(uintBigintNumberish()),
   nonceKey: z.optional(z.union([uintBigintNumberish(), z.literal('random')])),
   r: z.optional(z_Hex.Hex),
@@ -232,6 +254,17 @@ function fromRpc(
       z_KeyAuthorization.KeyAuthorization,
       request.keyAuthorization as never,
     ) as never
+  if (typeof request.capabilities !== 'undefined')
+    request_.capabilities = request.capabilities
+  if (typeof request.feePayer !== 'undefined')
+    request_.feePayer = request.feePayer
+  if (typeof request.keyData !== 'undefined') request_.keyData = request.keyData
+  if (typeof request.keyId !== 'undefined') request_.keyId = request.keyId
+  if (typeof request.keyType !== 'undefined') request_.keyType = request.keyType
+  if (typeof request.multisigInit !== 'undefined')
+    request_.multisigInit = request.multisigInit
+  if (typeof request.multisigSignatureCount !== 'undefined')
+    request_.multisigSignatureCount = request.multisigSignatureCount
   if (typeof request.validBefore !== 'undefined')
     request_.validBefore = core_Hex.toNumber(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -251,6 +284,22 @@ function toRpc(
     authorizationList: undefined,
   } as never) as core_TransactionRequest.Rpc
 
+  const tempo =
+    typeof request.calls !== 'undefined' ||
+    typeof request.capabilities !== 'undefined' ||
+    typeof request.feePayer !== 'undefined' ||
+    typeof request.feeToken !== 'undefined' ||
+    typeof request.keyAuthorization !== 'undefined' ||
+    typeof request.keyData !== 'undefined' ||
+    typeof request.keyId !== 'undefined' ||
+    typeof request.keyType !== 'undefined' ||
+    typeof request.multisigInit !== 'undefined' ||
+    typeof request.multisigSignatureCount !== 'undefined' ||
+    typeof request.nonceKey !== 'undefined' ||
+    typeof request.validBefore !== 'undefined' ||
+    typeof request.validAfter !== 'undefined' ||
+    request.type === 'tempo'
+
   if (request.authorizationList)
     request_rpc.authorizationList = z.encode(
       z_AuthorizationTempo.ListSignedToRpc,
@@ -269,15 +318,22 @@ function toRpc(
       value: call.value ? encodeNumberish(call.value) : '0x',
       data: call.data ?? '0x',
     }))
-  else if (request.to || request.data || request.value)
+  else if (request.to || request.data || request.value || tempo)
     request_rpc.calls = [
       {
-        to: request.to ?? undefined,
+        to:
+          request.to ||
+          (tempo && (!request.data || request.data === '0x')
+            ? '0x0000000000000000000000000000000000000000'
+            : undefined),
         value: request.value ? encodeNumberish(request.value) : '0x',
         data: request.data ?? '0x',
       },
     ]
-  if (typeof request.feeToken !== 'undefined')
+  if (
+    typeof request.feeToken !== 'undefined' &&
+    !(request.feePayer === true && !request.feePayerSignature)
+  )
     request_rpc.feeToken =
       typeof request.feeToken === 'bigint'
         ? z.encode(z_TokenId.address, request.feeToken)
@@ -287,6 +343,19 @@ function toRpc(
       z_KeyAuthorization.KeyAuthorizationToRpc,
       request.keyAuthorization as never,
     ) as never
+  if (typeof request.capabilities !== 'undefined')
+    request_rpc.capabilities = request.capabilities
+  if (typeof request.feePayer !== 'undefined')
+    request_rpc.feePayer = request.feePayer
+  if (typeof request.keyData !== 'undefined')
+    request_rpc.keyData = shimKeyData(request.keyData)
+  if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
+  if (typeof request.keyType !== 'undefined')
+    request_rpc.keyType = request.keyType
+  if (typeof request.multisigInit !== 'undefined')
+    request_rpc.multisigInit = request.multisigInit
+  if (typeof request.multisigSignatureCount !== 'undefined')
+    request_rpc.multisigSignatureCount = request.multisigSignatureCount
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = encodeNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -300,16 +369,7 @@ function toRpc(
   })()
   if (nonceKey) request_rpc.nonceKey = nonceKey
 
-  if (
-    typeof request.calls !== 'undefined' ||
-    typeof request.feePayer !== 'undefined' ||
-    typeof request.feeToken !== 'undefined' ||
-    typeof request.keyAuthorization !== 'undefined' ||
-    typeof request.nonceKey !== 'undefined' ||
-    typeof request.validBefore !== 'undefined' ||
-    typeof request.validAfter !== 'undefined' ||
-    request.type === 'tempo'
-  ) {
+  if (tempo) {
     request_rpc.type = toRpcType.tempo
     delete request_rpc.data
     delete request_rpc.input
@@ -318,6 +378,16 @@ function toRpc(
   }
 
   return request_rpc
+}
+
+/**
+ * Shims key data longer than 4 bytes into a 2-byte big-endian length hint
+ * (the node's gas estimator only accepts 1, 2, or 4-byte key data).
+ */
+function shimKeyData(data: core_Hex.Hex): core_Hex.Hex {
+  const byteLength = core_Hex.size(data)
+  if (byteLength <= 4) return data
+  return core_Hex.fromNumber(byteLength, { size: 2 })
 }
 
 /** Decodes an RPC signature into a recovered signature. */

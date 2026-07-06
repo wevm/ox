@@ -1,3 +1,4 @@
+import type * as Address from '../core/Address.js'
 import type * as Errors from '../core/Errors.js'
 import * as Hex from '../core/Hex.js'
 import * as Quantity from '../core/internal/quantity.js'
@@ -6,6 +7,7 @@ import * as Signature from '../core/Signature.js'
 import * as ox_TransactionRequest from '../core/TransactionRequest.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
+import type * as MultisigConfig from './MultisigConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
 import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
@@ -13,6 +15,13 @@ import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 import type { Call } from './TxEnvelopeTempo.js'
 
 type KeyType = 'secp256k1' | 'p256' | 'webAuthn'
+
+/**
+ * Bootstrap multisig config hint for node-side gas modeling (TIP-1061).
+ * The node prices multisig gas from it during simulation, and ignores it
+ * for registered senders.
+ */
+export type MultisigInit = Compute<MultisigConfig.Config & { salt: Hex.Hex }>
 
 /**
  * A Transaction Request that is generic to all transaction types.
@@ -35,12 +44,16 @@ export type TransactionRequest<
       | AuthorizationTempo.ListSigned<bigintType, numberType>
       | undefined
     calls?: readonly Call<bigintType>[] | undefined
+    capabilities?: Record<string, unknown> | undefined
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
     keyAuthorization?: KeyAuthorization.KeyAuthorization<true> | undefined
     keyData?: Hex.Hex | undefined
+    keyId?: Address.Address | undefined
     keyType?: KeyType | undefined
     feePayer?: boolean | undefined
     feeToken?: TokenId.TokenIdOrAddress | undefined
+    multisigInit?: MultisigInit | undefined
+    multisigSignatureCount?: number | undefined
     nonceKey?: 'random' | bigintType | undefined
     signature?: SignatureEnvelope.SignatureEnvelope<numberType> | undefined
     validBefore?: numberType | undefined
@@ -202,6 +215,22 @@ export function toRpc(request: toRpc.Input): Rpc {
     authorizationList: undefined,
   }) as Rpc
 
+  const tempo =
+    typeof request.calls !== 'undefined' ||
+    typeof request.capabilities !== 'undefined' ||
+    typeof request.feePayer !== 'undefined' ||
+    typeof request.feeToken !== 'undefined' ||
+    typeof request.keyAuthorization !== 'undefined' ||
+    typeof request.keyData !== 'undefined' ||
+    typeof request.keyId !== 'undefined' ||
+    typeof request.keyType !== 'undefined' ||
+    typeof request.multisigInit !== 'undefined' ||
+    typeof request.multisigSignatureCount !== 'undefined' ||
+    typeof request.nonceKey !== 'undefined' ||
+    typeof request.validBefore !== 'undefined' ||
+    typeof request.validAfter !== 'undefined' ||
+    request.type === 'tempo'
+
   if (request.authorizationList)
     request_rpc.authorizationList = AuthorizationTempo.toRpcList(
       request.authorizationList,
@@ -216,20 +245,40 @@ export function toRpc(request: toRpc.Input): Rpc {
       value: call.value ? Quantity.fromNumberish(call.value) : '0x',
       data: call.data ?? '0x',
     }))
-  else if (request.to || request.data || request.value)
+  else if (request.to || request.data || request.value || tempo)
     request_rpc.calls = [
       {
-        to: request.to ?? undefined,
+        to:
+          request.to ||
+          (tempo && (!request.data || request.data === '0x')
+            ? '0x0000000000000000000000000000000000000000'
+            : undefined),
         value: request.value ? Quantity.fromNumberish(request.value) : '0x',
         data: request.data ?? '0x',
       },
     ]
-  if (typeof request.feeToken !== 'undefined')
+  if (
+    typeof request.feeToken !== 'undefined' &&
+    !(request.feePayer === true && !request.feePayerSignature)
+  )
     request_rpc.feeToken = TokenId.toAddress(request.feeToken)
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,
     )
+  if (typeof request.capabilities !== 'undefined')
+    request_rpc.capabilities = request.capabilities
+  if (typeof request.feePayer !== 'undefined')
+    request_rpc.feePayer = request.feePayer
+  if (typeof request.keyData !== 'undefined')
+    request_rpc.keyData = shimKeyData(request.keyData)
+  if (typeof request.keyId !== 'undefined') request_rpc.keyId = request.keyId
+  if (typeof request.keyType !== 'undefined')
+    request_rpc.keyType = request.keyType
+  if (typeof request.multisigInit !== 'undefined')
+    request_rpc.multisigInit = request.multisigInit
+  if (typeof request.multisigSignatureCount !== 'undefined')
+    request_rpc.multisigSignatureCount = request.multisigSignatureCount
   if (typeof request.validBefore !== 'undefined')
     request_rpc.validBefore = Quantity.fromNumberish(request.validBefore)
   if (typeof request.validAfter !== 'undefined')
@@ -243,16 +292,7 @@ export function toRpc(request: toRpc.Input): Rpc {
   })()
   if (nonceKey) request_rpc.nonceKey = nonceKey
 
-  if (
-    typeof request.calls !== 'undefined' ||
-    typeof request.feePayer !== 'undefined' ||
-    typeof request.feeToken !== 'undefined' ||
-    typeof request.keyAuthorization !== 'undefined' ||
-    typeof request.nonceKey !== 'undefined' ||
-    typeof request.validBefore !== 'undefined' ||
-    typeof request.validAfter !== 'undefined' ||
-    request.type === 'tempo'
-  ) {
+  if (tempo) {
     request_rpc.type = Transaction.toRpcType.tempo
     delete request_rpc.data
     delete request_rpc.input
@@ -306,21 +346,20 @@ export function toEnvelope(
 ): TxEnvelopeTempo.TxEnvelopeTempo {
   const calls = (() => {
     if (request.calls) return request.calls
-    if (request.to || request.data || request.value)
-      return [
-        {
-          ...(typeof request.to !== 'undefined' && request.to !== null
-            ? { to: request.to }
-            : {}),
-          ...(typeof request.data !== 'undefined'
-            ? { data: request.data }
-            : {}),
-          ...(typeof request.value !== 'undefined'
-            ? { value: request.value }
-            : {}),
-        },
-      ] satisfies readonly Call[]
-    return [] as readonly Call[]
+    const to =
+      request.to ||
+      (!request.data || request.data === '0x'
+        ? '0x0000000000000000000000000000000000000000'
+        : undefined)
+    return [
+      {
+        ...(typeof to !== 'undefined' ? { to } : {}),
+        ...(typeof request.data !== 'undefined' ? { data: request.data } : {}),
+        ...(typeof request.value !== 'undefined'
+          ? { value: request.value }
+          : {}),
+      },
+    ] satisfies readonly Call[]
   })()
 
   const nonceKey = (() => {
@@ -342,7 +381,9 @@ export function toEnvelope(
       : {}),
     ...(typeof request.feePayerSignature !== 'undefined'
       ? { feePayerSignature: request.feePayerSignature }
-      : {}),
+      : request.feePayer
+        ? { feePayerSignature: null }
+        : {}),
     ...(typeof request.feeToken !== 'undefined'
       ? { feeToken: request.feeToken }
       : {}),
@@ -386,4 +427,16 @@ export declare namespace toEnvelope {
     | Hex.random.ErrorType
     | Hex.toBigInt.ErrorType
     | Errors.GlobalErrorType
+}
+
+/**
+ * Shims key data longer than 4 bytes into a 2-byte big-endian length hint.
+ * The node's gas estimator only accepts 1, 2, or 4-byte key data as a
+ * signature-size hint; anything else silently falls back to the default.
+ * @internal
+ */
+function shimKeyData(data: Hex.Hex): Hex.Hex {
+  const byteLength = Hex.size(data)
+  if (byteLength <= 4) return data
+  return Hex.fromNumber(byteLength, { size: 2 })
 }
