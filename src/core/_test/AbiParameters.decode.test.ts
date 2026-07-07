@@ -1601,22 +1601,12 @@ test('zst', () => {
   expect(() =>
     AbiParameters.decode([{ type: 'uint256[0][4294967295]' }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [AbiParameters.DataSizeTooSmallError: Data size of 64 bytes is too small for given parameters.
-
-    Params: (uint256[0][4294967295])
-    Data:   0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000FFFFFFFF (64 bytes)]
-  `,
+    '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
   expect(() =>
     AbiParameters.decode([{ type: 'uint32[0][4294967295]' }], payload),
   ).toThrowErrorMatchingInlineSnapshot(
-    `
-    [AbiParameters.DataSizeTooSmallError: Data size of 64 bytes is too small for given parameters.
-
-    Params: (uint32[0][4294967295])
-    Data:   0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000FFFFFFFF (64 bytes)]
-  `,
+    '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
   expect(() =>
     AbiParameters.decode(
@@ -1797,4 +1787,66 @@ test('recursive 2', () => {
   ).toThrowErrorMatchingInlineSnapshot(
     '[Cursor.RecursiveReadLimitExceededError: Recursive read limit of `8192` exceeded (recursive read count: `8193`).]',
   )
+})
+
+describe('zero-width types', () => {
+  test('zero-length fixed array', () => {
+    expect(
+      AbiParameters.decode(
+        [{ type: 'uint256[0]' }, { type: 'uint256' }],
+        '0x0000000000000000000000000000000000000000000000000000000000000003',
+      ),
+    ).toEqual([[], 3n])
+  })
+
+  test('trailing empty tuple', () => {
+    expect(
+      AbiParameters.decode(
+        [{ type: 'uint256' }, { type: 'tuple', components: [] }],
+        '0x0000000000000000000000000000000000000000000000000000000000000005',
+      ),
+    ).toEqual([5n, []])
+  })
+
+  test('zero-length fixed array of dynamic type', () => {
+    expect(
+      AbiParameters.decode(
+        [{ type: 'string[0]' }, { type: 'uint256' }],
+        '0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000003',
+      ),
+    ).toEqual([[], 3n])
+  })
+
+  test('round-trip', () => {
+    const cases = [
+      {
+        parameters: [{ type: 'uint256[0]' }, { type: 'uint256' }],
+        values: [[], 3n],
+      },
+      {
+        parameters: [{ type: 'uint256' }, { type: 'tuple', components: [] }],
+        values: [5n, []],
+      },
+      {
+        parameters: [{ type: 'string[0]' }, { type: 'uint256' }],
+        values: [[], 3n],
+      },
+      {
+        parameters: [{ type: 'uint256[0]' }, { type: 'string' }],
+        values: [[], 'hello'],
+      },
+      {
+        parameters: [{ type: 'uint256[0][2]' }, { type: 'uint256' }],
+        values: [[[], []], 9n],
+      },
+    ] as const
+    for (const { parameters, values } of cases) {
+      expect(
+        AbiParameters.decode(
+          parameters,
+          AbiParameters.encode(parameters, values as never),
+        ),
+      ).toEqual(values)
+    }
+  })
 })

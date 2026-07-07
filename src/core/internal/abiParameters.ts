@@ -150,7 +150,8 @@ export function decodeArray(
 
   // If the length of the array is not known in advance (dynamic array),
   // this means we will need to wonder off to the pointer and decode.
-  if (!length) {
+  // Note: zero-length fixed arrays (`T[0]`) are not dynamic.
+  if (length === null) {
     // Dealing with a dynamic type, so get the offset of the array data.
     const offset = Bytes.toNumber(cursor.readBytes(sizeOfOffset))
 
@@ -177,6 +178,12 @@ export function decodeArray(
       })
       consumed += consumed_
       value.push(data)
+      // Charge zero-width elements against the read limit to bound work
+      // on huge lengths of zero-width types (e.g. `uint256[0][]`).
+      if (consumed_ === 0) {
+        cursor.assertReadLimit()
+        cursor._touch()
+      }
     }
 
     // As we have gone wondering, restore to the original position + next slot.
@@ -221,6 +228,12 @@ export function decodeArray(
     })
     consumed += consumed_
     value.push(data)
+    // Charge zero-width elements against the read limit to bound work
+    // on huge lengths of zero-width types (e.g. `uint256[0][4294967295]`).
+    if (consumed_ === 0) {
+      cursor.assertReadLimit()
+      cursor._touch()
+    }
   }
   return [value, consumed]
 }
@@ -593,7 +606,9 @@ export function encodeArray<const parameter extends AbiParameters.Parameter>(
       type: `${parameter.type}[${length}]`,
     })
 
-  let dynamicChild = false
+  // Zero-length fixed arrays of dynamic types (e.g. `string[0]`) are dynamic
+  // per the ABI spec, even though they have no elements to inspect.
+  let dynamicChild = value.length === 0 && hasDynamicChild(parameter)
   const preparedParameters: PreparedParameter[] = []
   for (let i = 0; i < value.length; i++) {
     const preparedParam = prepareParameter({
