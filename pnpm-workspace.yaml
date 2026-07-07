@@ -6,6 +6,7 @@ allowBuilds:
   protobufjs: true
   simple-git-hooks: true
   ssh2: true
+  vue-demi: false
 
 autoInstallPeers: false
 
