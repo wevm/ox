@@ -293,27 +293,6 @@ export * as SignatureEnvelope from './SignatureEnvelope.js'
  */
 export * as Tick from './Tick.js'
 /**
- * TIP-20 token ID utilities for converting between token IDs and addresses.
- *
- * TIP-20 is Tempo's native token standard for stablecoins with deterministic addresses
- * derived from sequential token IDs. TIP-20 extends ERC-20 with payment features like
- * configurable fee tokens, transfer memos, and built-in role-based access control.
- *
- * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
- *
- * @example
- * ```ts twoslash
- * import { TokenId } from 'ox/tempo'
- *
- * const tokenId = TokenId.from(1n)
- * const address = TokenId.toAddress(1n)
- * // '0x20c0000000000000000000000000000000000001'
- * ```
- *
- * @category Reference
- */
-export * as TokenId from './TokenId.js'
-/**
  * Token role utilities for serializing role identifiers to keccak256 hashes.
  *
  * TIP-20 includes a built-in RBAC system with roles like `ISSUER_ROLE` (mint/burn),

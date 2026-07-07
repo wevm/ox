@@ -2,14 +2,12 @@
 'ox': major
 ---
 
-Narrowed Tempo token inputs (`feeToken`, `Channel.token`, `PoolId.from` tokens) to `Address.Address` (convert token IDs with `TokenId.toAddress`) and removed the now-redundant `Channel.Resolved` type.
+Removed the Tempo `TokenId` module and narrowed Tempo token inputs (`feeToken`, `Channel.token`, `PoolId.from` tokens) to `Address.Address`; also removed the now-redundant `Channel.Resolved` type.
 
 ```diff
-+ import { TokenId } from 'ox/tempo'
-
   TxEnvelopeTempo.from({
     // ...
 -   feeToken: 1n,
-+   feeToken: TokenId.toAddress(1n),
++   feeToken: '0x20c0000000000000000000000000000000000001',
   })
 ```

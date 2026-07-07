@@ -679,11 +679,6 @@
       "types": "./dist/tempo/Tick.d.ts",
       "default": "./dist/tempo/Tick.js"
     },
-    "./tempo/TokenId": {
-      "src": "./src/tempo/TokenId.ts",
-      "types": "./dist/tempo/TokenId.d.ts",
-      "default": "./dist/tempo/TokenId.js"
-    },
     "./tempo/TokenRole": {
       "src": "./src/tempo/TokenRole.ts",
       "types": "./dist/tempo/TokenRole.d.ts",
@@ -968,11 +963,6 @@
       "src": "./src/zod/tempo/Tick.ts",
       "types": "./dist/zod/tempo/Tick.d.ts",
       "default": "./dist/zod/tempo/Tick.js"
-    },
-    "./zod/tempo/TokenId": {
-      "src": "./src/zod/tempo/TokenId.ts",
-      "types": "./dist/zod/tempo/TokenId.d.ts",
-      "default": "./dist/zod/tempo/TokenId.js"
     },
     "./zod/tempo/TokenRole": {
       "src": "./src/zod/tempo/TokenRole.ts",
