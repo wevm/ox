@@ -57,7 +57,7 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  *   payee: '0x2222222222222222222222222222222222222222',
  *   payer: '0x1111111111111111111111111111111111111111',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   token: 1n
+ *   token: '0x20c0000000000000000000000000000000000001'
  * })
  *
  * const channelId = Channel.computeId(channel, {
@@ -196,8 +196,8 @@ export * as Period from './Period.js'
  * import { PoolId } from 'ox/tempo'
  *
  * const poolId = PoolId.from({
- *   userToken: 1n,
- *   validatorToken: 2n
+ *   userToken: '0x20c0000000000000000000000000000000000001',
+ *   validatorToken: '0x20c0000000000000000000000000000000000002'
  * })
  * ```
  *

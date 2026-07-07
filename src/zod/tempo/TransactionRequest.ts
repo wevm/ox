@@ -14,7 +14,6 @@ import * as z from 'zod/mini'
 import * as z_AuthorizationTempo from './AuthorizationTempo.js'
 import * as z_KeyAuthorization from './KeyAuthorization.js'
 import * as z_SignatureEnvelope from './SignatureEnvelope.js'
-import * as z_TokenId from './TokenId.js'
 
 const fromRpcType = { '0x76': 'tempo' } as const
 const toRpcType = { tempo: '0x76' } as const
@@ -133,7 +132,7 @@ export const Domain = z.object({
   data: z.optional(z_Hex.Hex),
   feePayer: z.optional(z.boolean()),
   feePayerSignature: z.optional(z.union([SignatureDecoded, z.null()])),
-  feeToken: z.optional(z.union([z_Address.Address, z.bigint()])),
+  feeToken: z.optional(z_Address.Address),
   from: z.optional(z_Address.Address),
   gas: z.optional(z.bigint()),
   gasPrice: z.optional(z.bigint()),
@@ -173,7 +172,7 @@ export const DomainToRpc = z.object({
   data: z.optional(z_Hex.Hex),
   feePayer: z.optional(z.boolean()),
   feePayerSignature: z.optional(z.union([SignatureDecoded, z.null()])),
-  feeToken: z.optional(z.union([z_Address.Address, z.bigint()])),
+  feeToken: z.optional(z_Address.Address),
   from: z.optional(z_Address.Address),
   gas: z.optional(uintBigintNumberish()),
   gasPrice: z.optional(uintBigintNumberish()),
@@ -334,10 +333,7 @@ function toRpc(
     typeof request.feeToken !== 'undefined' &&
     !(request.feePayer === true && !request.feePayerSignature)
   )
-    request_rpc.feeToken =
-      typeof request.feeToken === 'bigint'
-        ? z.encode(z_TokenId.address, request.feeToken)
-        : request.feeToken
+    request_rpc.feeToken = request.feeToken
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = z.encode(
       z_KeyAuthorization.KeyAuthorizationToRpc,
