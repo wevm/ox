@@ -31,7 +31,7 @@ const baseFields = {
   calls: z.readonly(z.array(Call)),
   chainId: z.number(),
   feePayerSignature: z.optional(z.union([FeePayerSignature, z.null()])),
-  feeToken: z.optional(z.union([z_Address.Address, z.bigint()])),
+  feeToken: z.optional(z_Address.Address),
   from: z.optional(z_Address.Address),
   gas: z.optional(z.bigint()),
   keyAuthorization: z.optional(z_KeyAuthorization.Domain),

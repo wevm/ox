@@ -1464,7 +1464,7 @@ describe('encodeForSigning', () => {
         },
       ],
       feePayerSignature: null,
-      feeToken: 1n,
+      feeToken: '0x20c0000000000000000000000000000000000001',
       nonce: 0n,
     })
     const signature = Secp256k1.sign({
@@ -1485,7 +1485,7 @@ describe('encodeForSigning', () => {
     const sponsored = TxEnvelopeTempo.from({
       ...signed,
       feePayerSignature,
-      feeToken: 2n,
+      feeToken: '0x20c0000000000000000000000000000000000002',
     })
 
     expect(TxEnvelopeTempo.encodeForSigning(sponsored)).toBe(

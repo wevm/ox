@@ -57,7 +57,7 @@ export * as AuthorizationTempo from './AuthorizationTempo.js'
  *   payee: '0x2222222222222222222222222222222222222222',
  *   payer: '0x1111111111111111111111111111111111111111',
  *   salt: '0x0000000000000000000000000000000000000000000000000000000000000001',
- *   token: 1n
+ *   token: '0x20c0000000000000000000000000000000000001'
  * })
  *
  * const channelId = Channel.computeId(channel, {
@@ -196,8 +196,8 @@ export * as Period from './Period.js'
  * import { PoolId } from 'ox/tempo'
  *
  * const poolId = PoolId.from({
- *   userToken: 1n,
- *   validatorToken: 2n
+ *   userToken: '0x20c0000000000000000000000000000000000001',
+ *   validatorToken: '0x20c0000000000000000000000000000000000002'
  * })
  * ```
  *
@@ -292,27 +292,6 @@ export * as SignatureEnvelope from './SignatureEnvelope.js'
  * @category Reference
  */
 export * as Tick from './Tick.js'
-/**
- * TIP-20 token ID utilities for converting between token IDs and addresses.
- *
- * TIP-20 is Tempo's native token standard for stablecoins with deterministic addresses
- * derived from sequential token IDs. TIP-20 extends ERC-20 with payment features like
- * configurable fee tokens, transfer memos, and built-in role-based access control.
- *
- * [TIP-20 Token Standard](https://docs.tempo.xyz/protocol/tip20/overview)
- *
- * @example
- * ```ts twoslash
- * import { TokenId } from 'ox/tempo'
- *
- * const tokenId = TokenId.from(1n)
- * const address = TokenId.toAddress(1n)
- * // '0x20c0000000000000000000000000000000000001'
- * ```
- *
- * @category Reference
- */
-export * as TokenId from './TokenId.js'
 /**
  * Token role utilities for serializing role identifiers to keccak256 hashes.
  *

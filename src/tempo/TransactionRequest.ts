@@ -9,7 +9,6 @@ import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import type * as MultisigConfig from './MultisigConfig.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TokenId from './TokenId.js'
 import * as Transaction from './Transaction.js'
 import * as TxEnvelopeTempo from './TxEnvelopeTempo.js'
 import type { Call } from './TxEnvelopeTempo.js'
@@ -51,7 +50,7 @@ export type TransactionRequest<
     keyId?: Address.Address | undefined
     keyType?: KeyType | undefined
     feePayer?: boolean | undefined
-    feeToken?: TokenId.TokenIdOrAddress | undefined
+    feeToken?: Address.Address | undefined
     multisigInit?: MultisigInit | undefined
     multisigSignatureCount?: number | undefined
     nonceKey?: 'random' | bigintType | undefined
@@ -261,7 +260,7 @@ export function toRpc(request: toRpc.Input): Rpc {
     typeof request.feeToken !== 'undefined' &&
     !(request.feePayer === true && !request.feePayerSignature)
   )
-    request_rpc.feeToken = TokenId.toAddress(request.feeToken)
+    request_rpc.feeToken = request.feeToken
   if (request.keyAuthorization)
     request_rpc.keyAuthorization = KeyAuthorization.toRpc(
       request.keyAuthorization,

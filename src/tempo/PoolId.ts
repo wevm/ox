@@ -1,6 +1,6 @@
+import * as Address from '../core/Address.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
-import * as TokenId from './TokenId.js'
 
 /**
  * Converts a user token and validator token to a pool ID.
@@ -15,8 +15,8 @@ import * as TokenId from './TokenId.js'
  * import { PoolId } from 'ox/tempo'
  *
  * const poolId = PoolId.from({
- *   userToken: 1n,
- *   validatorToken: 2n
+ *   userToken: '0x20c0000000000000000000000000000000000001',
+ *   validatorToken: '0x20c0000000000000000000000000000000000002'
  * })
  * ```
  *
@@ -24,9 +24,13 @@ import * as TokenId from './TokenId.js'
  * @returns The pool ID.
  */
 export function from(value: from.Value): Hex.Hex {
-  const a = TokenId.toAddress(value.userToken)
-  const b = TokenId.toAddress(value.validatorToken)
-  const [left, right] = a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a]
+  const { userToken, validatorToken } = value
+  Address.assert(userToken)
+  Address.assert(validatorToken)
+  const [left, right] =
+    userToken.toLowerCase() < validatorToken.toLowerCase()
+      ? [userToken, validatorToken]
+      : [validatorToken, userToken]
   return Hash.keccak256(
     Hex.concat(Hex.padLeft(left, 32), Hex.padLeft(right, 32)),
   )
@@ -34,9 +38,9 @@ export function from(value: from.Value): Hex.Hex {
 
 export declare namespace from {
   export type Value = {
-    /** User token. */
-    userToken: TokenId.TokenIdOrAddress
-    /** Validator token. */
-    validatorToken: TokenId.TokenIdOrAddress
+    /** User token address. */
+    userToken: Address.Address
+    /** Validator token address. */
+    validatorToken: Address.Address
   }
 }

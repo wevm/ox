@@ -17,7 +17,6 @@ import * as TransactionEnvelope from '../core/TxEnvelope.js'
 import * as AuthorizationTempo from './AuthorizationTempo.js'
 import * as KeyAuthorization from './KeyAuthorization.js'
 import * as SignatureEnvelope from './SignatureEnvelope.js'
-import * as TokenId from './TokenId.js'
 import type * as TransactionRequest from './TransactionRequest.js'
 
 /**
@@ -87,8 +86,8 @@ export type TxEnvelopeTempo<
     gas?: bigintType | undefined
     /** Fee payer signature. */
     feePayerSignature?: Signature.Signature<true, numberType> | null | undefined
-    /** Fee token preference. Address or ID of the TIP-20 token. */
-    feeToken?: TokenId.TokenIdOrAddress | undefined
+    /** Fee token preference. Address of the TIP-20 token. */
+    feeToken?: Address.Address | undefined
     /**
      * Key authorization for provisioning a new access key.
      *
@@ -173,6 +172,7 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   const {
     calls,
     chainId,
+    feeToken,
     maxFeePerGas,
     maxPriorityFeePerGas,
     validBefore,
@@ -198,6 +198,9 @@ export function assert(envelope: PartialBy<TxEnvelopeTempo, 'type'>) {
   if (calls)
     for (const call of calls)
       if (call.to) Address.assert(call.to, { strict: false })
+
+  // Validate fee token
+  if (feeToken) Address.assert(feeToken, { strict: false })
 
   // Validate chain ID
   if (chainId <= 0)
@@ -719,10 +722,7 @@ export function serialize(
     nonce ? Hex.fromNumber(nonce) : '0x',
     typeof validBefore === 'number' ? Hex.fromNumber(validBefore) : '0x',
     typeof validAfter === 'number' ? Hex.fromNumber(validAfter) : '0x',
-    !skipFeeToken &&
-    (typeof feeToken === 'bigint' || typeof feeToken === 'string')
-      ? TokenId.toAddress(feeToken)
-      : '0x',
+    !skipFeeToken && feeToken ? feeToken : '0x',
     feePayerSignatureOrSender,
     authorizationTupleList,
     ...(keyAuthorization ? [KeyAuthorization.toTuple(keyAuthorization)] : []),
