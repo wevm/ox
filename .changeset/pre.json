@@ -108,6 +108,7 @@
     "webauthn-authentication-verify-at-ed-flags",
     "webauthn-authenticator-bytes-first",
     "webauthn-registration-verify-attestation-default-docs",
+    "zero-width-abi-types",
     "zod-schema-entrypoint"
   ]
 }
