@@ -15,15 +15,24 @@ try {
   process.loadEnvFile(fileURLToPath(new URL('./.env', import.meta.url)))
 } catch {}
 
+// Only enable AI search when Cloudflare credentials are present.
+const hasCloudflareCredentials = Boolean(
+  process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN,
+)
+
 export default defineConfig({
-  ai: {
-    retriever: Retriever.local({
-      embedding: Embedding.cloudflare(),
-      reranker: Reranker.cloudflare(),
-      // int8 quantization keeps the server AI manifest under Vercel's 250MB function limit.
-      vectorStore: VectorStore.static({ format: 'int8' }),
-    }),
-  },
+  ...(hasCloudflareCredentials
+    ? {
+        ai: {
+          retriever: Retriever.local({
+            embedding: Embedding.cloudflare(),
+            reranker: Reranker.cloudflare(),
+            // int8 quantization keeps the server AI manifest under Vercel's 250MB function limit.
+            vectorStore: VectorStore.static({ format: 'int8' }),
+          }),
+        },
+      }
+    : {}),
   accentColor: 'light-dark(#b8421d, #e85d35)',
   baseUrl: pkg.version.includes('-beta.')
     ? 'https://v1.oxlib.sh'

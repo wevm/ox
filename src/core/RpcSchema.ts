@@ -331,7 +331,7 @@ export type Schema = Generic | FromZod.Namespace
 
 /**
  * Resolves a {@link ox#RpcSchema.Schema} input to an Ox {@link ox#RpcSchema.Generic}.
- * A Zod namespace is converted via {@link ox#RpcSchema.FromZod}; a `Generic` is
+ * A Zod namespace is converted via {@link ox#RpcSchema.(FromZod:type)}; a `Generic` is
  * passed through; otherwise falls back to {@link ox#RpcSchema.Default}.
  */
 export type ToGeneric<schema extends Schema | undefined> =
