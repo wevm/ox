@@ -1,9 +1,29 @@
-import { defineConfig } from 'vocs/config'
+import { fileURLToPath } from 'node:url'
+import {
+  defineConfig,
+  Embedding,
+  Reranker,
+  Retriever,
+  VectorStore,
+} from 'vocs/config'
 import pkg from '../package.json' with { type: 'json' }
 import { sidebar, topNav } from './src/config-generated'
 import { shikiDark, shikiLight } from './src/shiki-themes'
 
+// Load `site/.env` (e.g. `CLOUDFLARE_*` for AI search). No-op if absent.
+try {
+  process.loadEnvFile(fileURLToPath(new URL('./.env', import.meta.url)))
+} catch {}
+
 export default defineConfig({
+  ai: {
+    retriever: Retriever.local({
+      embedding: Embedding.cloudflare(),
+      reranker: Reranker.cloudflare(),
+      // int8 quantization keeps the server AI manifest under Vercel's 250MB function limit.
+      vectorStore: VectorStore.static({ format: 'int8' }),
+    }),
+  },
   accentColor: 'light-dark(#b8421d, #e85d35)',
   baseUrl: pkg.version.includes('-beta.')
     ? 'https://v1.oxlib.sh'
