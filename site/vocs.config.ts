@@ -27,8 +27,8 @@ export default defineConfig({
           retriever: Retriever.local({
             embedding: Embedding.cloudflare(),
             reranker: Reranker.cloudflare(),
-            // int8 quantization keeps the server AI manifest under Vercel's 250MB function limit.
-            vectorStore: VectorStore.static({ format: 'int8' }),
+            // Remote store keeps vectors out of the server bundle entirely.
+            vectorStore: VectorStore.cloudflare({ index: 'ox-docs' }),
           }),
         },
       }

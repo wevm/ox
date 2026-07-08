@@ -1,5 +1,6 @@
 *.map
 .bench
+.claude/
 .DS_Store
 .attest
 .env
