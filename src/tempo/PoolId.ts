@@ -16,7 +16,8 @@ import * as Hex from '../core/Hex.js'
  *
  * const poolId = PoolId.from({
  *   userToken: '0x20c0000000000000000000000000000000000001',
- *   validatorToken: '0x20c0000000000000000000000000000000000002'
+ *   validatorToken:
+ *     '0x20c0000000000000000000000000000000000002'
  * })
  * ```
  *
