@@ -78,6 +78,7 @@
     "siwe-bigint-chain-id",
     "solidity-helpers",
     "tempo-authorization-signature-normalize",
+    "tempo-key-authorization-null-rpc-fields",
     "tempo-noncekey-random",
     "tempo-poolid-canonical",
     "tempo-request-wire-fields",
