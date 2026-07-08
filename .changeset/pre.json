@@ -82,6 +82,7 @@
     "tempo-poolid-canonical",
     "tempo-request-wire-fields",
     "tempo-token-address-inputs",
+    "tempo-transaction-null-rpc-fields",
     "tempo-transaction-request-envelope-conversion",
     "tempo-txenvelope-validate-prefix",
     "torpc-numberish-inputs",
