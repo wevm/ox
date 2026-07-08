@@ -26,6 +26,59 @@ describe('KeyAuthorization', () => {
     )
   })
 
+  test('decodes node-null optional fields', () => {
+    const withNulls = {
+      ...rpc,
+      allowedCalls: null,
+      expiry: null,
+      limits: null,
+    } as const
+    expect(z.decode(z_KeyAuthorization.KeyAuthorization, withNulls)).toEqual(
+      core_KeyAuthorization.fromRpc(withNulls),
+    )
+  })
+
+  test('decodes nested node-null optional fields', () => {
+    const withNestedNulls = {
+      ...rpc,
+      allowedCalls: [
+        {
+          selectorRules: [{ recipients: null, selector: '0xa9059cbb' }],
+          target: '0x20c0000000000000000000000000000000000001',
+        },
+        {
+          selectorRules: null,
+          target: '0x20c0000000000000000000000000000000000002',
+        },
+      ],
+      limits: [
+        {
+          limit: '0x989680',
+          period: null,
+          token: '0x20c0000000000000000000000000000000000001',
+        },
+      ],
+    } as const
+    expect(
+      z.decode(z_KeyAuthorization.KeyAuthorization, withNestedNulls),
+    ).toEqual(core_KeyAuthorization.fromRpc(withNestedNulls))
+  })
+
+  test('decodes witness and admin fields', () => {
+    const withAdmin = {
+      ...rpc,
+      account: '0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6',
+      isAdmin: true,
+      witness:
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
+    } as const
+    const decoded = z.decode(z_KeyAuthorization.KeyAuthorization, withAdmin)
+    expect(decoded).toEqual(core_KeyAuthorization.fromRpc(withAdmin))
+    expect(z.encode(z_KeyAuthorization.KeyAuthorization, decoded)).toEqual(
+      core_KeyAuthorization.toRpc(decoded),
+    )
+  })
+
   test('decodes nested allowedCalls into scopes', () => {
     const withScopes = {
       ...rpc,

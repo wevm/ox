@@ -91,7 +91,7 @@ export type Rpc = {
   /** Optional account address binding (TIP-1049). */
   account?: Address.Address | null | undefined
   /** Allowed call scopes (node field: `allowedCalls`). */
-  allowedCalls?: readonly RpcCallScope[] | undefined
+  allowedCalls?: readonly RpcCallScope[] | null | undefined
   /** Chain ID (hex quantity). */
   chainId: Hex.Hex
   /** Expiry timestamp (hex quantity or null). */
@@ -103,7 +103,7 @@ export type Rpc = {
   /** Key type. */
   keyType: SignatureEnvelope.Type
   /** Token spending limits. */
-  limits?: readonly RpcTokenLimit[] | undefined
+  limits?: readonly RpcTokenLimit[] | null | undefined
   /** Signature envelope. */
   signature: SignatureEnvelope.SignatureEnvelopeRpc
   /** Optional 32-byte witness (hex). */
@@ -114,19 +114,19 @@ export type Rpc = {
 export type RpcTokenLimit = {
   token: Address.Address
   limit: Hex.Hex
-  period?: Hex.Hex | undefined
+  period?: Hex.Hex | null | undefined
 }
 
 /** RPC representation of a call scope (matches node's `CallScope` serde). */
 export type RpcCallScope = {
   target: Address.Address
-  selectorRules?: readonly RpcSelectorRule[]
+  selectorRules?: readonly RpcSelectorRule[] | null | undefined
 }
 
 /** RPC representation of a selector rule (matches node's `SelectorRule` serde). */
 export type RpcSelectorRule = {
   selector: Hex.Hex
-  recipients?: readonly Address.Address[]
+  recipients?: readonly Address.Address[] | null | undefined
 }
 
 /** Signed representation of a Key Authorization. */
