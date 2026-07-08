@@ -49,7 +49,6 @@ describe('fromRpc', () => {
           },
         ],
         "chainId": 1,
-        "data": undefined,
         "feeToken": "0x20c0000000000000000000000000000000000000",
         "from": "0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6",
         "gas": 278365n,
@@ -68,7 +67,6 @@ describe('fromRpc', () => {
         },
         "transactionIndex": 2,
         "type": "tempo",
-        "value": 0n,
       }
     `)
   })
@@ -125,7 +123,6 @@ describe('fromRpc', () => {
           },
         ],
         "chainId": 1,
-        "data": undefined,
         "feePayerSignature": {
           "r": "0x12f4d9e9924f62b19de816252efc125006298f43e62d394151e62600e2c2f91e",
           "s": "0x31daa78bb3e95dd22f6370e59617c60d109bf28e55c92b25994ddbed420e2a80",
@@ -150,7 +147,6 @@ describe('fromRpc', () => {
         },
         "transactionIndex": 2,
         "type": "tempo",
-        "value": 0n,
       }
     `)
   })
@@ -219,7 +215,6 @@ describe('fromRpc', () => {
           },
         ],
         "chainId": 1,
-        "data": undefined,
         "feeToken": "0x20c0000000000000000000000000000000000000",
         "from": "0x814e5e0e31016b9a7f138c76b7e7b2bb5c1ab6a6",
         "gas": 278365n,
@@ -258,7 +253,6 @@ describe('fromRpc', () => {
         },
         "transactionIndex": 2,
         "type": "tempo",
-        "value": 0n,
       }
     `)
   })
@@ -319,7 +313,6 @@ describe('toRpc', () => {
         "gas": "0x43f5d",
         "gasPrice": "0x2ca6ae494",
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
-        "input": undefined,
         "maxFeePerGas": "0x2",
         "maxPriorityFeePerGas": "0x1",
         "nonce": "0x357",
@@ -329,10 +322,8 @@ describe('toRpc', () => {
           "type": "secp256k1",
           "yParity": "0x0",
         },
-        "to": undefined,
         "transactionIndex": "0x2",
         "type": "0x76",
-        "value": "0x0",
       }
     `)
   })
@@ -401,7 +392,6 @@ describe('toRpc', () => {
         "gas": "0x43f5d",
         "gasPrice": "0x2ca6ae494",
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
-        "input": undefined,
         "maxFeePerGas": "0x2",
         "maxPriorityFeePerGas": "0x1",
         "nonce": "0x357",
@@ -411,10 +401,8 @@ describe('toRpc', () => {
           "type": "secp256k1",
           "yParity": "0x0",
         },
-        "to": undefined,
         "transactionIndex": "0x2",
         "type": "0x76",
-        "value": "0x0",
       }
     `)
   })
@@ -491,7 +479,6 @@ describe('toRpc', () => {
         "gas": "0x43f5d",
         "gasPrice": "0x2ca6ae494",
         "hash": "0x353fdfc38a2f26115daadee9f5b8392ce62b84f410957967e2ed56b35338cdd0",
-        "input": undefined,
         "keyAuthorization": {
           "chainId": "0x1",
           "expiry": "0xffffffffffff",
@@ -519,10 +506,8 @@ describe('toRpc', () => {
           "type": "secp256k1",
           "yParity": "0x0",
         },
-        "to": undefined,
         "transactionIndex": "0x2",
         "type": "0x76",
-        "value": "0x0",
       }
     `)
   })

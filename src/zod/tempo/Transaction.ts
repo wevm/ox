@@ -22,12 +22,16 @@ const FeePayerSignature = z.object({
   yParity: z_Number.Number,
 })
 
+/** Nullable RPC call field schema (the node serializes absent fields as `null`). */
+const NullableHex = z.optional(z.union([z_Hex.Hex, z.null()]))
+
 /** Tempo transaction call schema (decodes the RPC `input` field to `data`). */
 const Call = z.codec(
   z.object({
-    input: z.optional(z_Hex.Hex),
-    to: z.optional(z_Hex.Hex),
-    value: z.optional(z_Hex.Hex),
+    data: NullableHex,
+    input: NullableHex,
+    to: NullableHex,
+    value: NullableHex,
   }),
   z.object({
     data: z.optional(z_Hex.Hex),
@@ -36,9 +40,9 @@ const Call = z.codec(
   }),
   {
     decode: (value) => ({
-      data: value.input,
-      to: value.to,
-      value: value.value === '0x' ? undefined : value.value,
+      data: value.input ?? value.data ?? undefined,
+      to: value.to ?? undefined,
+      value: !value.value || value.value === '0x' ? undefined : value.value,
     }),
     encode: (value) => ({
       input: value.data,
@@ -51,9 +55,10 @@ const Call = z.codec(
 /** Encode-only tempo transaction call schema accepting numberish `toRpc` inputs. */
 const CallToRpc = z.codec(
   z.object({
-    input: z.optional(z_Hex.Hex),
-    to: z.optional(z_Hex.Hex),
-    value: z.optional(z_Hex.Hex),
+    data: NullableHex,
+    input: NullableHex,
+    to: NullableHex,
+    value: NullableHex,
   }),
   z.object({
     data: z.optional(z_Hex.Hex),
@@ -62,9 +67,9 @@ const CallToRpc = z.codec(
   }),
   {
     decode: (value) => ({
-      data: value.input,
-      to: value.to,
-      value: value.value === '0x' ? undefined : value.value,
+      data: value.input ?? value.data ?? undefined,
+      to: value.to ?? undefined,
+      value: !value.value || value.value === '0x' ? undefined : value.value,
     }),
     encode: (value) => ({
       input: value.data,
@@ -74,19 +79,76 @@ const CallToRpc = z.codec(
   },
 )
 
+/** Optional fields the node serializes as `null` when absent. */
+const nullableFields = [
+  'feePayer',
+  'feePayerSignature',
+  'gasPrice',
+  'keyAuthorization',
+  'nonceKey',
+  'validAfter',
+  'validBefore',
+] as const
+
+/**
+ * Wraps a tempo transaction object schema in a wire-shape codec: scrubs
+ * node-null optionals and maps the `aaAuthorizationList` RPC field to
+ * `authorizationList` (and back on encode).
+ */
+function wire<schema extends z.ZodMiniType>(schema: schema) {
+  return z.codec(z.looseObject({ type: z.literal('0x76') }), schema, {
+    decode: (rpc) => {
+      const { aaAuthorizationList, ...rest } = rpc as Record<string, unknown>
+      for (const key of nullableFields) if (rest[key] === null) delete rest[key]
+      if (Array.isArray(aaAuthorizationList) && aaAuthorizationList.length > 0)
+        rest.authorizationList = aaAuthorizationList
+      return rest as never
+    },
+    encode: (rpc) => {
+      const { authorizationList, ...rest } = rpc as Record<string, unknown>
+      return {
+        ...rest,
+        ...(authorizationList
+          ? { aaAuthorizationList: authorizationList }
+          : {}),
+      } as never
+    },
+  })
+}
+
 /** Tempo transaction schema (type `0x76`). */
-export const Tempo = z.object(
-  fields(z_Uint.Uint, z_Number.Number, Call, z_AuthorizationTempo.ListSigned),
+export const Tempo = wire(
+  z.object(
+    fields(z_Uint.Uint, z_Number.Number, Call, z_AuthorizationTempo.ListSigned),
+  ),
 )
 
 /** Encode-only tempo transaction schema accepting numberish `toRpc` inputs. */
-export const TempoToRpc = z.object(
-  fields(
-    z_Uint.UintToRpc,
-    z_Number.NumberToRpc,
-    CallToRpc,
-    z_AuthorizationTempo.ListSignedToRpc,
+export const TempoToRpc = wire(
+  z.object(
+    fields(
+      z_Uint.UintToRpc,
+      z_Number.NumberToRpc,
+      CallToRpc,
+      z_AuthorizationTempo.ListSignedToRpc,
+    ),
   ),
+)
+
+/** Pending tempo transaction schema (type `0x76`, not yet included in a block). */
+export const PendingTempo = wire(
+  z.object({
+    ...fields(
+      z_Uint.Uint,
+      z_Number.Number,
+      Call,
+      z_AuthorizationTempo.ListSigned,
+    ),
+    blockHash: z.null(),
+    blockNumber: z.null(),
+    blockTimestamp: z.optional(z.null()),
+    transactionIndex: z.null(),
+  }),
 )
 
 function fields<
@@ -132,5 +194,5 @@ export const TransactionToRpc = z.union([
   z_Transaction.TransactionToRpc,
 ])
 
-/** Pending tempo transaction schema. */
-export const Pending = z_Transaction.Pending
+/** Pending tempo transaction schema (union of tempo + standard transaction types). */
+export const Pending = z.union([PendingTempo, z_Transaction.Pending])

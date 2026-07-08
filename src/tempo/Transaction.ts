@@ -103,18 +103,40 @@ export type Tempo<
 export type TempoRpc<pending extends boolean = false> = Compute<
   Omit<
     Tempo<pending, Hex.Hex, Hex.Hex, ToRpcType['tempo']>,
-    'authorizationList' | 'calls' | 'keyAuthorization' | 'signature'
+    | 'authorizationList'
+    | 'calls'
+    | 'feePayerSignature'
+    | 'gasPrice'
+    | 'keyAuthorization'
+    | 'nonceKey'
+    | 'signature'
+    | 'validAfter'
+    | 'validBefore'
   > & {
     aaAuthorizationList?: AuthorizationTempo.ListRpc | undefined
     calls:
       | readonly {
-          input?: Hex.Hex | undefined
-          to?: Hex.Hex | undefined
-          value?: Hex.Hex | undefined
+          data?: Hex.Hex | null | undefined
+          input?: Hex.Hex | null | undefined
+          to?: Hex.Hex | null | undefined
+          value?: Hex.Hex | null | undefined
         }[]
       | undefined
-    keyAuthorization?: KeyAuthorization.Rpc | undefined
+    feePayerSignature?:
+      | {
+          r: Hex.Hex
+          s: Hex.Hex
+          v?: Hex.Hex | undefined
+          yParity: Hex.Hex
+        }
+      | null
+      | undefined
+    gasPrice?: Hex.Hex | null | undefined
+    keyAuthorization?: KeyAuthorization.Rpc | null | undefined
+    nonceKey?: Hex.Hex | null | undefined
     signature: SignatureEnvelope.SignatureEnvelopeRpc
+    validAfter?: Hex.Hex | null | undefined
+    validBefore?: Hex.Hex | null | undefined
   }
 >
 
@@ -199,19 +221,26 @@ export function fromRpc<
     transaction as ox_Transaction.Rpc<pending>,
   ) as Transaction<pending>
 
-  transaction_.type = fromRpcType[transaction.type as keyof typeof fromRpcType]
+  if (transaction.type !== '0x76') return transaction_ as never
 
-  if (transaction.aaAuthorizationList) {
+  transaction_.type = 'tempo'
+
+  // Tempo transactions carry `calls`; scrub the flat call fields the generic
+  // decoder fabricates.
+  delete (transaction_ as any).data
+  delete (transaction_ as any).input
+  delete (transaction_ as any).to
+  delete (transaction_ as any).value
+
+  if (transaction.aaAuthorizationList?.length)
     transaction_.authorizationList = AuthorizationTempo.fromRpcList(
       transaction.aaAuthorizationList,
     )
-    delete (transaction_ as any).aaAuthorizationList
-  }
+  delete (transaction_ as any).aaAuthorizationList
   if (transaction.calls)
     transaction_.calls = transaction.calls.map((call) => ({
-      to: call.to,
+      to: call.to ?? undefined,
       value: call.value && call.value !== '0x' ? BigInt(call.value) : undefined,
-      // @ts-expect-error
       data: call.input || call.data || '0x',
     }))
   if (transaction.feeToken) transaction_.feeToken = transaction.feeToken
@@ -234,6 +263,18 @@ export function fromRpc<
       transaction_.feePayerSignature.yParity,
     )
   }
+
+  // The node serializes absent optional fields as `null`; scrub them.
+  for (const key of [
+    'feePayer',
+    'feePayerSignature',
+    'gasPrice',
+    'keyAuthorization',
+    'nonceKey',
+    'validAfter',
+    'validBefore',
+  ] as const)
+    if ((transaction_ as any)[key] === null) delete (transaction_ as any)[key]
 
   return transaction_ as never
 }
@@ -300,7 +341,15 @@ export function toRpc<pending extends boolean = false>(
     transaction as ox_Transaction.Transaction<pending>,
   ) as Rpc<pending>
 
-  rpc.type = toRpcType[transaction.type as keyof typeof toRpcType]
+  if (transaction.type !== 'tempo') return rpc
+
+  rpc.type = '0x76'
+
+  // Tempo transactions carry `calls`; scrub the flat call fields the generic
+  // encoder fabricates.
+  delete (rpc as any).input
+  delete (rpc as any).to
+  delete (rpc as any).value
 
   if (transaction.authorizationList)
     rpc.aaAuthorizationList = AuthorizationTempo.toRpcList(
@@ -323,6 +372,8 @@ export function toRpc<pending extends boolean = false>(
       Signature.yParityToV(Number(transaction.feePayerSignature.yParity)),
     )
   }
+  if (transaction.nonceKey !== undefined)
+    rpc.nonceKey = Quantity.fromNumberish(transaction.nonceKey)
   if (transaction.signature)
     rpc.signature = SignatureEnvelope.toRpc(transaction.signature)
   if (transaction.validAfter !== undefined)
