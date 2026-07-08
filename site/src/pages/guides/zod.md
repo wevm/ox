@@ -102,14 +102,14 @@ The namespaces are:
 import { z } from 'ox/zod'
 
 // Decode the `params` for a method.
-const params = z.RpcSchema.parseParams(
+const params = z.RpcSchema.decodeParams(
   z.RpcSchema.Eth,
   'eth_getBlockByNumber',
   ['0x1', true],
 )
 
 // Decode the `result` for a method.
-const result = z.RpcSchema.parseReturns(
+const result = z.RpcSchema.decodeReturns(
   z.RpcSchema.Eth,
   'eth_blockNumber',
   '0x1b4',
@@ -119,12 +119,12 @@ const result = z.RpcSchema.parseReturns(
 
 ### Decoding a Full Request
 
-`z.RpcSchema.parseRequest` (aliased as `z.RpcSchema.parse`) validates and decodes a full `{ method, params }` request, dispatching on `method`:
+`z.RpcSchema.decodeRequest` (aliased as `z.RpcSchema.parse`) validates and decodes a full `{ method, params }` request, dispatching on `method`:
 
 ```ts twoslash
 import { z } from 'ox/zod'
 
-const request = z.RpcSchema.parseRequest(z.RpcSchema.Eth, {
+const request = z.RpcSchema.decodeRequest(z.RpcSchema.Eth, {
   method: 'eth_getBlockByNumber',
   params: ['0x1', true],
 })
