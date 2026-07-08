@@ -110,7 +110,6 @@ test('behavior: default (secp256k1)', async () => {
     expect(rest).toMatchInlineSnapshot(`
       {
         "accessList": [],
-        "authorizationList": [],
         "calls": [
           {
             "data": "0x",
@@ -118,14 +117,9 @@ test('behavior: default (secp256k1)', async () => {
             "value": 0n,
           },
         ],
-        "data": undefined,
-        "feePayerSignature": null,
         "gas": 500000n,
         "nonceKey": 0n,
         "type": "tempo",
-        "validAfter": null,
-        "validBefore": null,
-        "value": 0n,
       }
     `)
   }
@@ -323,7 +317,6 @@ test('behavior: default (p256)', async () => {
     expect(rest).toMatchInlineSnapshot(`
       {
         "accessList": [],
-        "authorizationList": [],
         "calls": [
           {
             "data": "0x",
@@ -331,14 +324,9 @@ test('behavior: default (p256)', async () => {
             "value": 0n,
           },
         ],
-        "data": undefined,
-        "feePayerSignature": null,
         "gas": 500000n,
         "nonceKey": 0n,
         "type": "tempo",
-        "validAfter": null,
-        "validBefore": null,
-        "value": 0n,
       }
     `)
   }
@@ -468,7 +456,6 @@ test('behavior: default (p256 - webcrypto)', async () => {
     expect(rest).toMatchInlineSnapshot(`
       {
         "accessList": [],
-        "authorizationList": [],
         "calls": [
           {
             "data": "0x",
@@ -476,14 +463,9 @@ test('behavior: default (p256 - webcrypto)', async () => {
             "value": 0n,
           },
         ],
-        "data": undefined,
-        "feePayerSignature": null,
         "gas": 500000n,
         "nonceKey": 0n,
         "type": "tempo",
-        "validAfter": null,
-        "validBefore": null,
-        "value": 0n,
       }
     `)
   }
@@ -620,7 +602,6 @@ test('behavior: default (webauthn)', async () => {
     expect(rest).toMatchInlineSnapshot(`
       {
         "accessList": [],
-        "authorizationList": [],
         "calls": [
           {
             "data": "0x",
@@ -628,14 +609,9 @@ test('behavior: default (webauthn)', async () => {
             "value": 0n,
           },
         ],
-        "data": undefined,
-        "feePayerSignature": null,
         "gas": 500000n,
         "nonceKey": 0n,
         "type": "tempo",
-        "validAfter": null,
-        "validBefore": null,
-        "value": 0n,
       }
     `)
   }
@@ -1003,7 +979,6 @@ describe('behavior: keyAuthorization', () => {
       expect(rest).toMatchInlineSnapshot(`
         {
           "accessList": [],
-          "authorizationList": [],
           "calls": [
             {
               "data": "0x",
@@ -1011,15 +986,10 @@ describe('behavior: keyAuthorization', () => {
               "value": 0n,
             },
           ],
-          "data": undefined,
-          "feePayerSignature": null,
           "feeToken": "0x20c0000000000000000000000000000000000001",
           "gas": 1000000n,
           "nonceKey": 0n,
           "type": "tempo",
-          "validAfter": null,
-          "validBefore": null,
-          "value": 0n,
         }
       `)
     }
@@ -1223,7 +1193,6 @@ describe('behavior: keyAuthorization', () => {
       expect(rest).toMatchInlineSnapshot(`
         {
           "accessList": [],
-          "authorizationList": [],
           "calls": [
             {
               "data": "0x",
@@ -1231,15 +1200,10 @@ describe('behavior: keyAuthorization', () => {
               "value": 0n,
             },
           ],
-          "data": undefined,
-          "feePayerSignature": null,
           "feeToken": "0x20c0000000000000000000000000000000000001",
           "gas": 500000n,
           "nonceKey": 0n,
           "type": "tempo",
-          "validAfter": null,
-          "validBefore": null,
-          "value": 0n,
         }
       `)
     }
@@ -1445,7 +1409,6 @@ describe('behavior: keyAuthorization', () => {
       expect(rest).toMatchInlineSnapshot(`
         {
           "accessList": [],
-          "authorizationList": [],
           "calls": [
             {
               "data": "0x",
@@ -1453,15 +1416,10 @@ describe('behavior: keyAuthorization', () => {
               "value": 0n,
             },
           ],
-          "data": undefined,
-          "feePayerSignature": null,
           "feeToken": "0x20c0000000000000000000000000000000000001",
           "gas": 500000n,
           "nonceKey": 0n,
           "type": "tempo",
-          "validAfter": null,
-          "validBefore": null,
-          "value": 0n,
         }
       `)
     }
