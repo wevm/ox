@@ -71,6 +71,12 @@ export function to<
   })
   const result = decodeRlpCursor(cursor, to_)
 
+  // RLP payloads encode exactly one item (Yellow Paper, Appendix B).
+  if (cursor.position < cursor.bytes.length)
+    throw new TrailingBytesError({
+      count: cursor.bytes.length - cursor.position,
+    })
+
   return result as to.ReturnType<to>
 }
 
@@ -85,6 +91,7 @@ export declare namespace to {
     | decodeRlpCursor.ErrorType
     | Cursor.create.ErrorType
     | Hex.InvalidLengthError
+    | TrailingBytesError
     | Errors.GlobalErrorType
 }
 
@@ -168,12 +175,21 @@ export function readList<to extends 'Hex' | 'Bytes'>(
   const value: decodeRlpCursor.ReturnType<to>[] = []
   while (cursor.position - position < length)
     value.push(decodeRlpCursor(cursor, to, depth))
+  // Items must consume exactly the declared list length.
+  if (cursor.position - position !== length)
+    throw new ListBoundaryExceededError({
+      consumed: cursor.position - position,
+      declared: length,
+    })
   return value
 }
 
 /** @internal */
 export declare namespace readList {
-  type ErrorType = DepthLimitExceededError | Errors.GlobalErrorType
+  type ErrorType =
+    | DepthLimitExceededError
+    | ListBoundaryExceededError
+    | Errors.GlobalErrorType
 }
 
 /**
@@ -664,5 +680,29 @@ export class DepthLimitExceededError extends Errors.BaseError {
 
   constructor({ limit }: { limit: number }) {
     super(`RLP depth limit of \`${limit}\` exceeded.`)
+  }
+}
+
+/** Thrown when RLP list items overrun the list's declared length. */
+export class ListBoundaryExceededError extends Errors.BaseError {
+  override readonly name = 'Rlp.ListBoundaryExceededError'
+
+  constructor({ consumed, declared }: { consumed: number; declared: number }) {
+    super(
+      `RLP list items consumed \`${consumed}\` bytes but the list declared a length of \`${declared}\`.`,
+    )
+  }
+}
+
+/** Thrown when an RLP payload contains bytes after the decoded item. */
+export class TrailingBytesError extends Errors.BaseError {
+  override readonly name = 'Rlp.TrailingBytesError'
+
+  constructor({ count }: { count: number }) {
+    super(
+      `RLP payload encodes a single item, but \`${count}\` trailing ${
+        count === 1 ? 'byte remains' : 'bytes remain'
+      }.`,
+    )
   }
 }
