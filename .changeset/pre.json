@@ -55,6 +55,7 @@
     "fee-helpers",
     "filter-blockhash-branch",
     "hex-tobytes-buffer-pool-fix",
+    "keyauthorization-fromrpc-type",
     "log-empty-topics",
     "multisig-remove-config-id",
     "promise-with-timeout-single-reject",
