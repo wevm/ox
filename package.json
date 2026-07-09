@@ -774,6 +774,56 @@
       "types": "./dist/zod/index.d.ts",
       "default": "./dist/zod/index.js"
     },
+    "./zod/Abi": {
+      "src": "./src/zod/Abi.ts",
+      "types": "./dist/zod/Abi.d.ts",
+      "default": "./dist/zod/Abi.js"
+    },
+    "./zod/AbiConstructor": {
+      "src": "./src/zod/AbiConstructor.ts",
+      "types": "./dist/zod/AbiConstructor.d.ts",
+      "default": "./dist/zod/AbiConstructor.js"
+    },
+    "./zod/AbiError": {
+      "src": "./src/zod/AbiError.ts",
+      "types": "./dist/zod/AbiError.d.ts",
+      "default": "./dist/zod/AbiError.js"
+    },
+    "./zod/AbiEvent": {
+      "src": "./src/zod/AbiEvent.ts",
+      "types": "./dist/zod/AbiEvent.d.ts",
+      "default": "./dist/zod/AbiEvent.js"
+    },
+    "./zod/AbiFallback": {
+      "src": "./src/zod/AbiFallback.ts",
+      "types": "./dist/zod/AbiFallback.d.ts",
+      "default": "./dist/zod/AbiFallback.js"
+    },
+    "./zod/AbiFunction": {
+      "src": "./src/zod/AbiFunction.ts",
+      "types": "./dist/zod/AbiFunction.d.ts",
+      "default": "./dist/zod/AbiFunction.js"
+    },
+    "./zod/AbiItem": {
+      "src": "./src/zod/AbiItem.ts",
+      "types": "./dist/zod/AbiItem.d.ts",
+      "default": "./dist/zod/AbiItem.js"
+    },
+    "./zod/AbiParameter": {
+      "src": "./src/zod/AbiParameter.ts",
+      "types": "./dist/zod/AbiParameter.d.ts",
+      "default": "./dist/zod/AbiParameter.js"
+    },
+    "./zod/AbiParameters": {
+      "src": "./src/zod/AbiParameters.ts",
+      "types": "./dist/zod/AbiParameters.d.ts",
+      "default": "./dist/zod/AbiParameters.js"
+    },
+    "./zod/AbiReceive": {
+      "src": "./src/zod/AbiReceive.ts",
+      "types": "./dist/zod/AbiReceive.d.ts",
+      "default": "./dist/zod/AbiReceive.js"
+    },
     "./zod/AccessList": {
       "src": "./src/zod/AccessList.ts",
       "types": "./dist/zod/AccessList.d.ts",
@@ -864,6 +914,11 @@
       "types": "./dist/zod/Signature.d.ts",
       "default": "./dist/zod/Signature.js"
     },
+    "./zod/Solidity": {
+      "src": "./src/zod/Solidity.ts",
+      "types": "./dist/zod/Solidity.d.ts",
+      "default": "./dist/zod/Solidity.js"
+    },
     "./zod/StateOverrides": {
       "src": "./src/zod/StateOverrides.ts",
       "types": "./dist/zod/StateOverrides.d.ts",
@@ -913,6 +968,11 @@
       "src": "./src/zod/TxEnvelopeLegacy.ts",
       "types": "./dist/zod/TxEnvelopeLegacy.d.ts",
       "default": "./dist/zod/TxEnvelopeLegacy.js"
+    },
+    "./zod/TypedData": {
+      "src": "./src/zod/TypedData.ts",
+      "types": "./dist/zod/TypedData.d.ts",
+      "default": "./dist/zod/TypedData.js"
     },
     "./zod/Uint": {
       "src": "./src/zod/Uint.ts",
