@@ -1,5 +1,6 @@
 import type * as core_AccountProof from '../../core/AccountProof.js'
 import type * as core_AccessList from '../../core/AccessList.js'
+import type * as core_Abi from '../../core/Abi.js'
 import type * as core_Authorization from '../../core/Authorization.js'
 import type * as core_Block from '../../core/Block.js'
 import type * as core_BlockOverrides from '../../core/BlockOverrides.js'
@@ -12,12 +13,17 @@ import type * as core_Transaction from '../../core/Transaction.js'
 import type * as core_TransactionEnvelope from '../../core/TxEnvelope.js'
 import type * as core_TransactionReceipt from '../../core/TransactionReceipt.js'
 import type * as core_TransactionRequest from '../../core/TransactionRequest.js'
+import type * as core_TypedData from '../../core/TypedData.js'
 import type * as core_TxEnvelopeEip1559 from '../../core/TxEnvelopeEip1559.js'
 import { z } from 'ox/zod'
 import type * as zod from 'zod/mini'
 import { expectTypeOf, test } from 'vp/test'
 
 test('z entrypoint exposes module and direct integer schema types', () => {
+  expectTypeOf<zod.output<typeof z.Abi.Abi>>().toMatchTypeOf<core_Abi.Abi>()
+  expectTypeOf<
+    zod.output<typeof z.TypedData.TypedData>
+  >().toMatchTypeOf<core_TypedData.TypedData>()
   expectTypeOf<
     zod.output<typeof z.AccountProof.AccountProof>
   >().toEqualTypeOf<core_AccountProof.AccountProof>()

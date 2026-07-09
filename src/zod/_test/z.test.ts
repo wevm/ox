@@ -6,6 +6,23 @@ const storageKey = `0x${'11'.repeat(32)}` as const
 
 test('exports zod mini utilities, modules, and integer schemas', () => {
   expect(
+    z.decode(z.Abi.Abi, [
+      {
+        inputs: [],
+        name: 'totalSupply',
+        outputs: [{ type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ]),
+  ).toMatchObject([{ name: 'totalSupply', type: 'function' }])
+  expect(z.decode(z.Solidity.Int, 'uint256')).toBe('uint256')
+  expect(
+    z.decode(z.TypedData.TypedData, {
+      Person: [{ name: 'wallet', type: 'address' }],
+    }),
+  ).toMatchObject({ Person: [{ name: 'wallet', type: 'address' }] })
+  expect(
     z.decode(z.AccountProof.AccountProof, {
       address,
       balance: '0x1',
