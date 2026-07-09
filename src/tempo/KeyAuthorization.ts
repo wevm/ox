@@ -534,6 +534,12 @@ export function fromRpc(authorization: Rpc): Signed {
       })
     : undefined
 
+  // TIP-1049 admin fields are paired: emit both or neither; orphan wire
+  // fields are dropped. Separate conditional spreads break `Signed`
+  // assignability without `exactOptionalPropertyTypes` (#290).
+  const adminPair =
+    account !== undefined && isAdmin ? { account, isAdmin: true as const } : {}
+
   return {
     address: keyId,
     chainId: chainId === '0x' ? 0n : Hex.toBigInt(chainId),
@@ -549,8 +555,7 @@ export function fromRpc(authorization: Rpc): Signed {
     signature,
     type: keyType,
     ...(witness !== undefined ? { witness } : {}),
-    ...(isAdmin ? { isAdmin: true } : {}),
-    ...(account !== undefined ? { account } : {}),
+    ...adminPair,
   }
 }
 

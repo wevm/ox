@@ -2432,6 +2432,28 @@ describe('admin keys (TIP-1049)', () => {
     expect(restored.account).toBe(account)
   })
 
+  test('fromRpc: drops orphan isAdmin without account', () => {
+    const authorization = KeyAuthorization.from(
+      { address, chainId: 1n, type: 'secp256k1' },
+      { signature: SignatureEnvelope.from(signature_secp256k1) },
+    )
+    const rpc = KeyAuthorization.toRpc(authorization)
+    const restored = KeyAuthorization.fromRpc({ ...rpc, isAdmin: true })
+    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.account).toBeUndefined()
+  })
+
+  test('fromRpc: drops orphan account without isAdmin', () => {
+    const authorization = KeyAuthorization.from(
+      { address, chainId: 1n, type: 'secp256k1' },
+      { signature: SignatureEnvelope.from(signature_secp256k1) },
+    )
+    const rpc = KeyAuthorization.toRpc(authorization)
+    const restored = KeyAuthorization.fromRpc({ ...rpc, account })
+    expect(restored.isAdmin).toBeUndefined()
+    expect(restored.account).toBeUndefined()
+  })
+
   test('hash: changes when admin pair is added', () => {
     const plain = KeyAuthorization.from({
       address,
