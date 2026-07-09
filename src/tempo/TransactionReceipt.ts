@@ -13,7 +13,7 @@ import * as ox_TransactionReceipt from '../core/TransactionReceipt.js'
  */
 export type TransactionReceipt<
   status = ox_TransactionReceipt.Status,
-  type = ox_TransactionReceipt.Type,
+  type = Type,
   bigintType = bigint,
   numberType = number,
 > = Compute<
@@ -32,7 +32,7 @@ export type TransactionReceipt<
 
 export type Rpc = TransactionReceipt<
   ox_TransactionReceipt.RpcStatus,
-  ox_TransactionReceipt.RpcType,
+  RpcType,
   Hex.Hex,
   Hex.Hex
 >
@@ -118,9 +118,14 @@ export const toRpcType = {
 export function fromRpc<const receipt extends Rpc | null>(
   receipt: receipt | Rpc | null,
 ): receipt extends Rpc ? TransactionReceipt : null {
-  return ox_TransactionReceipt.fromRpc(
+  const decoded = ox_TransactionReceipt.fromRpc(
     receipt as ox_TransactionReceipt.Rpc,
-  ) as never
+  )
+  if (!decoded) return null as never
+  return {
+    ...decoded,
+    type: (fromRpcType as any)[receipt!.type] ?? receipt!.type,
+  } as never
 }
 
 export declare namespace fromRpc {
@@ -192,6 +197,7 @@ export function toRpc(receipt: toRpc.Input): Rpc {
     ...rpc,
     feePayer: receipt.feePayer,
     feeToken: receipt.feeToken,
+    type: (toRpcType as any)[receipt.type] ?? receipt.type,
   }
 }
 
@@ -199,7 +205,7 @@ export declare namespace toRpc {
   /** Numberish input accepted by {@link ox#TransactionReceipt.(toRpc:function)}. */
   export type Input = TransactionReceipt<
     ox_TransactionReceipt.Status,
-    ox_TransactionReceipt.Type,
+    Type,
     Hex.Hex | bigint | number,
     Hex.Hex | number
   >

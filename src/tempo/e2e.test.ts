@@ -158,7 +158,7 @@ test('behavior: default (secp256k1)', async () => {
       "contractAddress": null,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
-      "type": "0x76",
+      "type": "tempo",
     }
   `)
 })
@@ -365,7 +365,7 @@ test('behavior: default (p256)', async () => {
       "contractAddress": null,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
-      "type": "0x76",
+      "type": "tempo",
     }
   `)
 })
@@ -504,7 +504,7 @@ test('behavior: default (p256 - webcrypto)', async () => {
       "contractAddress": null,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
-      "type": "0x76",
+      "type": "tempo",
     }
   `)
 })
@@ -650,7 +650,7 @@ test('behavior: default (webauthn)', async () => {
       "contractAddress": null,
       "status": "success",
       "to": "0x0000000000000000000000000000000000000000",
-      "type": "0x76",
+      "type": "tempo",
     }
   `)
 })
@@ -759,7 +759,7 @@ test('behavior: feePayerSignature (user → feePayer)', async () => {
         "contractAddress": null,
         "status": "success",
         "to": "0x0000000000000000000000000000000000000000",
-        "type": "0x76",
+        "type": "tempo",
       }
     `)
   }
@@ -1029,7 +1029,7 @@ describe('behavior: keyAuthorization', () => {
         "contractAddress": null,
         "status": "success",
         "to": "0x0000000000000000000000000000000000000000",
-        "type": "0x76",
+        "type": "tempo",
       }
     `)
 
@@ -1243,7 +1243,7 @@ describe('behavior: keyAuthorization', () => {
         "contractAddress": null,
         "status": "success",
         "to": "0x0000000000000000000000000000000000000000",
-        "type": "0x76",
+        "type": "tempo",
       }
     `)
 
