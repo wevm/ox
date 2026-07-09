@@ -84,6 +84,7 @@
     "tempo-key-authorization-null-rpc-fields",
     "tempo-noncekey-random",
     "tempo-poolid-canonical",
+    "tempo-receipt-type",
     "tempo-request-wire-fields",
     "tempo-token-address-inputs",
     "tempo-transaction-null-rpc-fields",
