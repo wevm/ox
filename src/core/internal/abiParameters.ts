@@ -213,7 +213,10 @@ export function decodeArray(
     }
 
     // As we have gone wondering, restore to the original position + next slot.
-    cursor.setPosition(staticPosition + 32)
+    // Zero-length arrays of dynamic types (e.g. `string[0]`) have no tail, so
+    // the next slot may sit past the end of the data.
+    if (staticPosition + 32 < cursor.bytes.length)
+      cursor.setPosition(staticPosition + 32)
     return [value, 32]
   }
 

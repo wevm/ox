@@ -1817,6 +1817,22 @@ describe('zero-width types', () => {
     ).toEqual([[], 3n])
   })
 
+  test('standalone zero-length fixed array of dynamic type', () => {
+    // The head is a single offset word pointing at an empty tail.
+    expect(
+      AbiParameters.decode(
+        [{ type: 'string[0]' }],
+        '0x0000000000000000000000000000000000000000000000000000000000000020',
+      ),
+    ).toEqual([[]])
+    expect(
+      AbiParameters.decode(
+        [{ type: 'bytes[0]' }],
+        '0x0000000000000000000000000000000000000000000000000000000000000020',
+      ),
+    ).toEqual([[]])
+  })
+
   test('round-trip', () => {
     const cases = [
       {
@@ -1838,6 +1854,14 @@ describe('zero-width types', () => {
       {
         parameters: [{ type: 'uint256[0][2]' }, { type: 'uint256' }],
         values: [[[], []], 9n],
+      },
+      {
+        parameters: [{ type: 'string[0]' }],
+        values: [[]],
+      },
+      {
+        parameters: [{ type: 'tuple', components: [{ type: 'string[0]' }] }],
+        values: [[[]]],
       },
     ] as const
     for (const { parameters, values } of cases) {
