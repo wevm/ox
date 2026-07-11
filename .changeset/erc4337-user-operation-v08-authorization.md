@@ -2,4 +2,4 @@
 'ox': patch
 ---
 
-Fixed `UserOperation.fromRpc` and `UserOperation.toRpc` to parse and serialize the v0.8 `authorization` field instead of dropping it.
+Fixed `UserOperation` RPC codecs to map native `authorization` to wire `eip7702Auth` for EntryPoint 0.8 and 0.9.

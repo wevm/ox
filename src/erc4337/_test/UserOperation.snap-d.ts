@@ -54,3 +54,34 @@ describe('from', () => {
 }`)
   })
 })
+
+describe('v0.9', () => {
+  test('RPC round-trip', () => {
+    const rpc = {
+      callData: '0xdeadbeef',
+      callGasLimit: '0x0',
+      eip7702Auth: {
+        address: '0x1234567890123456789012345678901234567890',
+        chainId: '0x1',
+        nonce: '0x0',
+        r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+        s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+        yParity: '0x0',
+      },
+      maxFeePerGas: '0x0',
+      maxPriorityFeePerGas: '0x0',
+      nonce: '0x0',
+      paymasterSignature: '0xcafebabe',
+      preVerificationGas: '0x0',
+      sender: '0x1234567890123456789012345678901234567890',
+      signature: '0x',
+      verificationGasLimit: '0x0',
+    } as const satisfies UserOperation.Rpc<'0.9'>
+
+    const userOperation = UserOperation.fromRpc(rpc)
+    const rpc_roundTrip = UserOperation.toRpc(userOperation)
+
+    attest<UserOperation.UserOperation<'0.9', true>, typeof userOperation>()
+    attest<UserOperation.Rpc<'0.9'>, typeof rpc_roundTrip>()
+  })
+})

@@ -2,4 +2,4 @@
 'ox': patch
 ---
 
-Added v0.8 EntryPoint support to `UserOperationGas` (and `RpcSchema.Bundler` via inheritance) by introducing `V08` and `RpcV08` aliases over the v0.7 gas shape.
+Added EntryPoint 0.8 and 0.9 support to `UserOperationGas` through version-specific aliases over the 0.7 gas shape.

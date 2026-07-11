@@ -45,7 +45,7 @@ export type UserOperationReceipt<
   userOpHash: Hex.Hex
 }
 
-/** RPC User Operation Receipt on EntryPoint 0.6 */
+/** RPC User Operation Receipt. */
 export type Rpc<
   entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
 > = UserOperationReceipt<
@@ -84,7 +84,9 @@ export type Rpc<
  * @param rpc - The RPC user operation receipt to convert.
  * @returns An instantiated {@link ox#UserOperationReceipt.UserOperationReceipt}.
  */
-export function fromRpc(rpc: Rpc): UserOperationReceipt {
+export function fromRpc<
+  entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+>(rpc: Rpc<entryPointVersion>): UserOperationReceipt<entryPointVersion> {
   return {
     ...rpc,
     actualGasCost: BigInt(rpc.actualGasCost),
@@ -92,7 +94,7 @@ export function fromRpc(rpc: Rpc): UserOperationReceipt {
     logs: rpc.logs.map((log) => Log.fromRpc(log)),
     nonce: BigInt(rpc.nonce),
     receipt: TransactionReceipt.fromRpc(rpc.receipt),
-  } as UserOperationReceipt
+  } as UserOperationReceipt<entryPointVersion>
 }
 
 /**
@@ -119,7 +121,11 @@ export function fromRpc(rpc: Rpc): UserOperationReceipt {
  * @param userOperationReceipt - The user operation receipt to convert.
  * @returns An RPC-formatted user operation receipt.
  */
-export function toRpc(userOperationReceipt: toRpc.Input): Rpc {
+export function toRpc<
+  entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+>(
+  userOperationReceipt: toRpc.Input<entryPointVersion>,
+): Rpc<entryPointVersion> {
   const rpc = {} as Rpc
 
   rpc.actualGasCost = Quantity.fromNumberish(userOperationReceipt.actualGasCost)
@@ -136,13 +142,15 @@ export function toRpc(userOperationReceipt: toRpc.Input): Rpc {
     rpc.paymaster = userOperationReceipt.paymaster
   if (userOperationReceipt.reason) rpc.reason = userOperationReceipt.reason
 
-  return rpc
+  return rpc as Rpc<entryPointVersion>
 }
 
 export declare namespace toRpc {
   /** Numberish input accepted by {@link ox#UserOperationReceipt.(toRpc:function)}. */
-  export type Input = UserOperationReceipt<
-    EntryPoint.Version,
+  export type Input<
+    entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+  > = UserOperationReceipt<
+    entryPointVersion,
     Hex.Hex | bigint | number,
     Hex.Hex | number
   >

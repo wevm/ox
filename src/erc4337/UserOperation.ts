@@ -5,7 +5,7 @@ import type * as Errors from '../core/Errors.js'
 import * as Hash from '../core/Hash.js'
 import * as Hex from '../core/Hex.js'
 import * as Quantity from '../core/internal/quantity.js'
-import type { Assign, Compute, OneOf } from '../core/internal/types.js'
+import type { Assign, Compute, Omit, OneOf } from '../core/internal/types.js'
 import * as Signature from '../core/Signature.js'
 import * as TypedData from '../core/TypedData.js'
 import type * as EntryPoint from './EntryPoint.js'
@@ -14,6 +14,9 @@ import type * as EntryPoint from './EntryPoint.js'
 
 /** keccak256 of empty bytes (`0x`). Reused for empty initCode/paymasterAndData. */
 const EMPTY_KECCAK = /*#__PURE__*/ Hash.keccak256('0x')
+
+/** Magic suffix for an independently encoded paymaster signature. */
+const paymasterSignatureMagic = '0x22e325a297439656' as const
 
 /** ABI parameters for v0.6 user operation packed encoding. */
 const v06HashParameters = [
@@ -74,6 +77,9 @@ export type UserOperation<
   | (entryPointVersion extends '0.8'
       ? V08<signed, bigintType, numberType>
       : never)
+  | (entryPointVersion extends '0.9'
+      ? V09<signed, bigintType, numberType>
+      : never)
 >
 
 /**
@@ -107,9 +113,10 @@ export type Rpc<
   entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
   signed extends boolean = true,
 > = OneOf<
-  | (entryPointVersion extends '0.6' ? V06<signed, Hex.Hex> : never)
-  | (entryPointVersion extends '0.7' ? V07<signed, Hex.Hex> : never)
-  | (entryPointVersion extends '0.8' ? V08<signed, Hex.Hex, Hex.Hex> : never)
+  | (entryPointVersion extends '0.6' ? RpcV06<signed> : never)
+  | (entryPointVersion extends '0.7' ? RpcV07<signed> : never)
+  | (entryPointVersion extends '0.8' ? RpcV08<signed> : never)
+  | (entryPointVersion extends '0.9' ? RpcV09<signed> : never)
 >
 
 /** Transaction Info. */
@@ -127,7 +134,18 @@ export type TransactionInfo<
 /** RPC Transaction Info. */
 export type RpcTransactionInfo<
   entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
-> = TransactionInfo<entryPointVersion, Hex.Hex>
+> = {
+  /** Block hash containing the User Operation, or `null` while pending. */
+  blockHash: Hex.Hex | null
+  /** Block number containing the User Operation, or `null` while pending. */
+  blockNumber: Hex.Hex | null
+  /** EntryPoint that handled the User Operation. */
+  entryPoint: Address.Address
+  /** Transaction hash containing the User Operation, or `null` while pending. */
+  transactionHash: Hex.Hex | null
+  /** RPC User Operation included in the transaction. */
+  userOperation: Rpc<entryPointVersion>
+}
 
 /** Type for User Operation on EntryPoint 0.6 */
 export type V06<signed extends boolean = boolean, bigintType = bigint> = {
@@ -236,11 +254,32 @@ export type V08<
 } & (signed extends true ? { signature: Hex.Hex } : {})
 
 /** RPC User Operation on EntryPoint 0.8 */
-export type RpcV08<signed extends boolean = true> = V08<
-  signed,
-  Hex.Hex,
-  Hex.Hex
->
+export type RpcV08<signed extends boolean = true> = Omit<
+  V08<signed, Hex.Hex, Hex.Hex>,
+  'authorization'
+> & {
+  /** EIP-7702 authorization carried by Bundler RPC methods. */
+  eip7702Auth?: Authorization.Rpc | undefined
+}
+
+/** Type for User Operation on EntryPoint 0.9 */
+export type V09<
+  signed extends boolean = boolean,
+  bigintType = bigint,
+  numberType = number,
+> = V08<signed, bigintType, numberType> & {
+  /** Paymaster signature provided independently from account signing. */
+  paymasterSignature?: Hex.Hex | undefined
+}
+
+/** RPC User Operation on EntryPoint 0.9 */
+export type RpcV09<signed extends boolean = true> = Omit<
+  V09<signed, Hex.Hex, Hex.Hex>,
+  'authorization'
+> & {
+  /** EIP-7702 authorization carried by Bundler RPC methods. */
+  eip7702Auth?: Authorization.Rpc | undefined
+}
 
 /**
  * Instantiates a {@link ox#UserOperation.UserOperation} from a provided input.
@@ -392,26 +431,31 @@ export declare namespace from {
  * @param rpc - The RPC user operation to convert.
  * @returns An instantiated {@link ox#UserOperation.UserOperation}.
  */
-export function fromRpc(rpc: Rpc): UserOperation {
-  const authorization = (rpc as Rpc<'0.8'>).authorization
+export function fromRpc<
+  entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+>(rpc: Rpc<entryPointVersion>): UserOperation<entryPointVersion, true> {
+  const rpc_ = rpc as Rpc
+  const { eip7702Auth, ...userOperation } = rpc_ as Rpc & {
+    eip7702Auth?: Authorization.Rpc | undefined
+  }
   return {
-    ...rpc,
-    callGasLimit: BigInt(rpc.callGasLimit),
-    maxFeePerGas: BigInt(rpc.maxFeePerGas),
-    maxPriorityFeePerGas: BigInt(rpc.maxPriorityFeePerGas),
-    nonce: BigInt(rpc.nonce),
-    preVerificationGas: BigInt(rpc.preVerificationGas),
-    verificationGasLimit: BigInt(rpc.verificationGasLimit),
-    ...(rpc.paymasterPostOpGasLimit && {
-      paymasterPostOpGasLimit: BigInt(rpc.paymasterPostOpGasLimit),
+    ...userOperation,
+    callGasLimit: BigInt(rpc_.callGasLimit),
+    maxFeePerGas: BigInt(rpc_.maxFeePerGas),
+    maxPriorityFeePerGas: BigInt(rpc_.maxPriorityFeePerGas),
+    nonce: BigInt(rpc_.nonce),
+    preVerificationGas: BigInt(rpc_.preVerificationGas),
+    verificationGasLimit: BigInt(rpc_.verificationGasLimit),
+    ...(rpc_.paymasterPostOpGasLimit && {
+      paymasterPostOpGasLimit: BigInt(rpc_.paymasterPostOpGasLimit),
     }),
-    ...(rpc.paymasterVerificationGasLimit && {
-      paymasterVerificationGasLimit: BigInt(rpc.paymasterVerificationGasLimit),
+    ...(rpc_.paymasterVerificationGasLimit && {
+      paymasterVerificationGasLimit: BigInt(rpc_.paymasterVerificationGasLimit),
     }),
-    ...(authorization && {
-      authorization: Authorization.fromRpc(authorization as Authorization.Rpc),
+    ...(eip7702Auth && {
+      authorization: Authorization.fromRpc(eip7702Auth),
     }),
-  } as UserOperation
+  } as UserOperation<entryPointVersion, true>
 }
 
 export declare namespace fromRpc {
@@ -531,11 +575,11 @@ export function hash<
     verificationGasLimit,
   } = userOperation as UserOperation
 
-  if (entryPointVersion === '0.8') {
-    const typedData = toTypedData(userOperation as UserOperation<'0.8', true>, {
-      chainId,
-      entryPointAddress,
-    })
+  if (entryPointVersion === '0.8' || entryPointVersion === '0.9') {
+    const typedData = toTypedData(
+      userOperation as UserOperation<'0.8' | '0.9', true>,
+      { chainId, entryPointAddress },
+    )
     return TypedData.getSignPayload(typedData)
   }
 
@@ -699,7 +743,8 @@ export function toInitCode(userOperation: Partial<UserOperation>): Hex.Hex {
  * @returns The packed user operation.
  */
 export function toPacked(
-  userOperation: UserOperation<'0.7' | '0.8', true>,
+  userOperation: UserOperation<'0.7' | '0.8' | '0.9', true>,
+  options: toPacked.Options = {},
 ): Packed {
   const {
     callGasLimit,
@@ -715,6 +760,7 @@ export function toPacked(
     signature,
     verificationGasLimit,
   } = userOperation
+  const { paymasterSignature } = userOperation as V09<true>
 
   const accountGasLimits = packUint128Pair(
     verificationGasLimit || 0n,
@@ -731,6 +777,15 @@ export function toPacked(
         Hex.padLeft(Hex.fromNumber(paymasterVerificationGasLimit || 0n), 16),
         Hex.padLeft(Hex.fromNumber(paymasterPostOpGasLimit || 0n), 16),
         paymasterData || '0x',
+        ...(paymasterSignature
+          ? options.forHash
+            ? [paymasterSignatureMagic]
+            : [
+                paymasterSignature,
+                Hex.padLeft(Hex.fromNumber(Hex.size(paymasterSignature)), 2),
+                paymasterSignatureMagic,
+              ]
+          : []),
       )
     : '0x'
   const preVerificationGas = userOperation.preVerificationGas ?? 0n
@@ -749,6 +804,12 @@ export function toPacked(
 }
 
 export declare namespace toPacked {
+  /** Packing options. */
+  export type Options = {
+    /** Omits the paymaster signature while retaining its marker. */
+    forHash?: boolean | undefined
+  }
+
   export type ErrorType = Errors.GlobalErrorType
 }
 
@@ -888,54 +949,63 @@ export declare namespace fromPacked {
  * @param userOperation - The user operation to convert.
  * @returns An RPC-formatted user operation.
  */
-export function toRpc(userOperation: toRpc.Input): Rpc {
+export function toRpc<
+  entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+>(userOperation: toRpc.Input<entryPointVersion>): Rpc<entryPointVersion> {
+  const userOperation_ = userOperation as toRpc.Input
   const rpc = {} as Rpc
 
-  rpc.callData = userOperation.callData
-  rpc.callGasLimit = Quantity.fromNumberish(userOperation.callGasLimit)
-  rpc.maxFeePerGas = Quantity.fromNumberish(userOperation.maxFeePerGas)
+  rpc.callData = userOperation_.callData
+  rpc.callGasLimit = Quantity.fromNumberish(userOperation_.callGasLimit)
+  rpc.maxFeePerGas = Quantity.fromNumberish(userOperation_.maxFeePerGas)
   rpc.maxPriorityFeePerGas = Quantity.fromNumberish(
-    userOperation.maxPriorityFeePerGas,
+    userOperation_.maxPriorityFeePerGas,
   )
-  rpc.nonce = Quantity.fromNumberish(userOperation.nonce)
+  rpc.nonce = Quantity.fromNumberish(userOperation_.nonce)
   rpc.preVerificationGas = Quantity.fromNumberish(
-    userOperation.preVerificationGas,
+    userOperation_.preVerificationGas,
   )
-  rpc.sender = userOperation.sender
+  rpc.sender = userOperation_.sender
   rpc.verificationGasLimit = Quantity.fromNumberish(
-    userOperation.verificationGasLimit,
+    userOperation_.verificationGasLimit,
   )
 
-  if (userOperation.factory) rpc.factory = userOperation.factory
-  if (userOperation.factoryData) rpc.factoryData = userOperation.factoryData
-  if (userOperation.initCode) rpc.initCode = userOperation.initCode
-  if (userOperation.paymaster) rpc.paymaster = userOperation.paymaster
-  if (userOperation.paymasterData)
-    rpc.paymasterData = userOperation.paymasterData
-  if (userOperation.paymasterPostOpGasLimit !== undefined)
+  if (userOperation_.factory) rpc.factory = userOperation_.factory
+  if (userOperation_.factoryData) rpc.factoryData = userOperation_.factoryData
+  if (userOperation_.initCode) rpc.initCode = userOperation_.initCode
+  if (userOperation_.paymaster) rpc.paymaster = userOperation_.paymaster
+  if (userOperation_.paymasterAndData !== undefined)
+    rpc.paymasterAndData = userOperation_.paymasterAndData
+  if (userOperation_.paymasterData)
+    rpc.paymasterData = userOperation_.paymasterData
+  if (userOperation_.paymasterPostOpGasLimit !== undefined)
     rpc.paymasterPostOpGasLimit = Quantity.fromNumberish(
-      userOperation.paymasterPostOpGasLimit,
+      userOperation_.paymasterPostOpGasLimit,
     )
-  if (userOperation.paymasterVerificationGasLimit !== undefined)
+  if (userOperation_.paymasterVerificationGasLimit !== undefined)
     rpc.paymasterVerificationGasLimit = Quantity.fromNumberish(
-      userOperation.paymasterVerificationGasLimit,
+      userOperation_.paymasterVerificationGasLimit,
     )
-  if (userOperation.signature) rpc.signature = userOperation.signature
+  if (userOperation_.paymasterSignature)
+    rpc.paymasterSignature = userOperation_.paymasterSignature
+  if (userOperation_.signature) rpc.signature = userOperation_.signature
 
-  const authorization = (userOperation as UserOperation<'0.8', true>)
+  const authorization = (userOperation_ as UserOperation<'0.8' | '0.9', true>)
     .authorization
   if (authorization)
-    (rpc as Rpc<'0.8'>).authorization = Authorization.toRpc(
+    (rpc as Rpc<'0.8' | '0.9'>).eip7702Auth = Authorization.toRpc(
       authorization as Authorization.Signed,
-    ) as Rpc<'0.8'>['authorization']
+    )
 
-  return rpc
+  return rpc as Rpc<entryPointVersion>
 }
 
 export declare namespace toRpc {
   /** Numberish input accepted by {@link ox#UserOperation.(toRpc:function)}. */
-  export type Input = UserOperation<
-    EntryPoint.Version,
+  export type Input<
+    entryPointVersion extends EntryPoint.Version = EntryPoint.Version,
+  > = UserOperation<
+    entryPointVersion,
     boolean,
     Hex.Hex | bigint | number,
     Hex.Hex | number
@@ -984,12 +1054,12 @@ export declare namespace toRpc {
  * @returns A Typed Data definition.
  */
 export function toTypedData(
-  userOperation: UserOperation<'0.8', true>,
+  userOperation: UserOperation<'0.8' | '0.9', true>,
   options: toTypedData.Options,
 ): TypedData.Definition<typeof toTypedData.types, 'PackedUserOperation'> {
   const { chainId, entryPointAddress } = options
 
-  const packedUserOp = toPacked(userOperation)
+  const packedUserOp = toPacked(userOperation, { forHash: true })
 
   return {
     domain: {
