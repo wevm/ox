@@ -99,7 +99,7 @@
 - **Repo checks** -- run `pnpm check:repo` when package metadata or workspace shape changes.
 - **Docs dev server** -- use `pnpm docs:dev` for documentation UI work.
 - **`pnpm check` mutates** -- it runs `biome check . --fix --unsafe`. Use it only when intentionally applying lint/format fixes.
-- **`pnpm format` mutates** -- it runs `biome format --write`.
+- **`pnpm format` mutates** -- it runs `vp fmt`.
 - **`pnpm exports:update` mutates** -- it rewrites `package.json#exports`.
 - **`pnpm docs:gen` and `pnpm docs:build` mutate generated docs output** -- run only when docs generation is part of the task.
 - **`pnpm contracts:build` mutates generated contract artifacts** -- it runs Forge and `contracts/scripts/generate-typed-artifacts.ts`.

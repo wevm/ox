@@ -143,7 +143,7 @@ export default defineConfig({
       items: [
         {
           text: 'Changelog',
-          link: 'https://github.com/wevm/ox/blob/main/src/CHANGELOG.md',
+          link: 'https://github.com/wevm/ox/blob/main/CHANGELOG.md',
         },
         {
           text: 'Contributing',

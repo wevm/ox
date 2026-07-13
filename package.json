@@ -17,6 +17,7 @@
     "docs:gen": "pnpm build && pnpm docs:extract",
     "docs:build": "pnpm docs:gen && pnpm --filter site build",
     "exports:update": "node --import tsx ./scripts/exports:update.ts",
+    "format": "vp fmt",
     "knip": "knip --production",
     "postinstall": "git submodule update --init --recursive && pnpm contracts:build && pnpm dev",
     "preinstall": "pnpx only-allow pnpm",
@@ -146,6 +147,7 @@
     "evm"
   ],
   "files": [
+    "CHANGELOG.md",
     "dist",
     "src"
   ],
