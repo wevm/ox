@@ -147,6 +147,7 @@
     "evm"
   ],
   "files": [
+    "CHANGELOG.md",
     "dist",
     "src"
   ],
