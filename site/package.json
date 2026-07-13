@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vocs dev",
-    "build": "node --import tsx scripts/copy-vocs-theme.ts && NODE_OPTIONS='--max-old-space-size=8192' vocs build",
+    "build": "node --import tsx scripts/copy-vocs-theme.ts && NODE_OPTIONS='--max-old-space-size=8192 --import=./scripts/log-cloudflare-requests.mjs' vocs build",
     "preview": "vocs preview",
     "sync:vocs": "node --import tsx scripts/copy-vocs-theme.ts"
   },
